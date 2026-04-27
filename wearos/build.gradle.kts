@@ -1,4 +1,4 @@
-// Top-level build file for FitWiz Wear OS
+// Top-level build file for Zealova Wear OS
 //
 // MODULE DISABLED 2026-04-25 — see settings.gradle.kts for context.
 // Plugins remain declared so the file stays valid; no project applies them

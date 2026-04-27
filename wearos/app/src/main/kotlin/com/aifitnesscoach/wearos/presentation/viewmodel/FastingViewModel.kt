@@ -1,10 +1,10 @@
-package com.fitwiz.wearos.presentation.viewmodel
+package com.aifitnesscoach.wearos.presentation.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.fitwiz.wearos.data.models.*
-import com.fitwiz.wearos.data.repository.FastingHistoryEntry
-import com.fitwiz.wearos.data.repository.FastingRepository
+import com.aifitnesscoach.wearos.data.models.*
+import com.aifitnesscoach.wearos.data.repository.FastingHistoryEntry
+import com.aifitnesscoach.wearos.data.repository.FastingRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*

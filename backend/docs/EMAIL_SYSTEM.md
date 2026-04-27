@@ -1,8 +1,8 @@
-# FitWiz Email System
+# Zealova Email System
 
 ## Overview
 
-FitWiz sends lifecycle and transactional emails via **Resend** to drive engagement, convert trials, recover churned users, and retain paying subscribers.
+Zealova sends lifecycle and transactional emails via **Resend** to drive engagement, convert trials, recover churned users, and retain paying subscribers.
 
 ```
 Resend SDK
@@ -21,8 +21,8 @@ RevenueCat events        Render Cron Job (daily 6 AM UTC)
 
 | # | Type | Trigger | Subject | Preference Gate | Cooldown |
 |---|------|---------|---------|----------------|---------|
-| S1 | Purchase Confirmation | `_handle_initial_purchase` (non-trial) | "Welcome to FitWiz Premium, {name}" | Always send | — |
-| S2 | Billing Issue | `_handle_billing_issue` | "Action required: Your FitWiz payment failed" | Always send | 1 day |
+| S1 | Purchase Confirmation | `_handle_initial_purchase` (non-trial) | "Welcome to Zealova Premium, {name}" | Always send | — |
+| S2 | Billing Issue | `_handle_billing_issue` | "Action required: Your Zealova payment failed" | Always send | 1 day |
 | S3 | Cancellation Retention | `_handle_cancellation` | "We're sorry to see you go — offer inside" | `promotional` | — |
 | S4 | Trial Expired → Convert | `_handle_expiration` (is_trial=True) | "Your trial just ended — but it's not too late" | Always send | — |
 | E1 | Trial Ending (3d + 1d) | Daily cron: trial_end_date in 3 or 1 days | "Your free trial ends in N days — here's what you'll lose" | `product_updates` | 2 days |
@@ -98,7 +98,7 @@ curl -s -X POST http://localhost:8000/api/v1/emails/cron \
 | Variable | Required | Description |
 |---------|---------|-------------|
 | `RESEND_API_KEY` | Yes | Resend API key (get from resend.com dashboard) |
-| `RESEND_FROM_EMAIL` | No | From address (default: `FitWiz <onboarding@resend.dev>`) |
+| `RESEND_FROM_EMAIL` | No | From address (default: `Zealova <onboarding@resend.dev>`) |
 | `BACKEND_BASE_URL` | Yes | Public backend URL for logo + open links |
 | `CRON_SECRET` | Yes | Random 32-char string for cron endpoint auth |
 

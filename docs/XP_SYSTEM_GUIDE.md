@@ -1,4 +1,4 @@
-# FitWiz XP System Guide
+# Zealova XP System Guide
 
 ## How to Earn XP
 
@@ -485,10 +485,10 @@ At ~400 XP/day average:
 VIP Status unlocks exclusive perks for dedicated users:
 
 - **Early Access**: Try new features before public release
-- **Priority Support**: Direct chat with the FitWiz team
+- **Priority Support**: Direct chat with the Zealova team
 - **VIP Badge**: Exclusive animated profile badge
 - **Custom Themes**: Access to limited-edition app themes
-- **Beta Tester**: Help shape the future of FitWiz
+- **Beta Tester**: Help shape the future of Zealova
 - **Community Recognition**: Featured on leaderboards with VIP icon
 - **Exclusive Events**: Invite to VIP-only challenges and competitions
 
@@ -503,7 +503,7 @@ Reaching Level 250 grants permanent benefits that never expire:
 - **Legacy Profile**: Your profile preserved in the Hall of Fame
 - **Merch for Life**: Annual merch drop shipped to you free
 - **Real-World Perks**: Partner gym discounts, supplement deals
-- **Direct Line**: Personal contact with FitWiz founders
+- **Direct Line**: Personal contact with Zealova founders
 
 ### Mini Milestones (Every 5 Levels)
 

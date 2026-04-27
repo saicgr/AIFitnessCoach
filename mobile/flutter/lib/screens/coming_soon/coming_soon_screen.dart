@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_links.dart';
 import '../../widgets/pill_app_bar.dart';
+import 'package:fitwiz/core/constants/branding.dart';
 
 class ComingSoonScreen extends ConsumerStatefulWidget {
   const ComingSoonScreen({super.key});
@@ -303,7 +304,7 @@ class _RoadmapTabState extends State<_RoadmapTab> {
           textSecondary: textSecondary,
           textMuted: textMuted,
           features: [
-            _Feature(Icons.star_outline, AppColors.yellow, 'Rate & Review', 'Rate FitWiz on the App Store & Play Store', eta: 'After Launch'),
+            _Feature(Icons.star_outline, AppColors.yellow, 'Rate & Review', 'Rate ${Branding.appName} on the App Store & Play Store', eta: 'After Launch'),
             _Feature(Icons.bloodtype_outlined, AppColors.error, 'Diabetes Dashboard', 'Track glucose and insulin levels', eta: '2027'),
             _Feature(Icons.accessibility_new_outlined, AppColors.purple, 'Senior Mode', 'Simplified interface with larger text & easier navigation', eta: '2027'),
             _Feature(Icons.child_care_outlined, AppColors.green, 'Kids Mode', 'Age-appropriate fitness tracking', eta: '2027'),

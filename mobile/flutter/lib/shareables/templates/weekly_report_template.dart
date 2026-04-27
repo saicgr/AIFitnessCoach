@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../shareable_canvas.dart';
 import '../shareable_data.dart';
-import '../widgets/fitwiz_watermark.dart';
+import '../widgets/app_watermark.dart';
 
 /// Weekly Report — receipt-card style with a 7-day bar chart driven by
 /// `subMetrics` (one entry per weekday, value parses as 0/1 for hit/miss).
@@ -130,7 +130,7 @@ class WeeklyReportTemplate extends StatelessWidget {
             if (showWatermark)
               Align(
                 alignment: Alignment.centerRight,
-                child: FitWizWatermark(textColor: Colors.white),
+                child: AppWatermark(textColor: Colors.white),
               ),
           ],
         ),

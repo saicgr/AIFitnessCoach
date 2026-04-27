@@ -813,8 +813,11 @@ async def _maybe_send_first_workout_email(
         from services.email_service import get_email_service
         from services.email_helpers import first_name
         from api.v1.email_cron import _get_user_stats
+        from core.supabase_client import get_supabase
 
-        stats = _get_user_stats(supabase, user)
+        # _get_user_stats and its helpers expect the SupabaseManager (which exposes
+        # `.client`), not the raw Client we receive here from `db.client` upstream.
+        stats = _get_user_stats(get_supabase(), user)
         email_svc = get_email_service()
         await email_svc.send_first_workout_done(
             to_email=user["email"],

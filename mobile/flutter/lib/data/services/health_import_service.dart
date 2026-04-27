@@ -9,14 +9,14 @@ import 'health_service.dart';
 
 // ---------------------------------------------------------------------------
 // PendingWorkoutImport - model for a workout discovered in Health Connect /
-// Apple Health that has not yet been imported into FitWiz. After enrichment
+// Apple Health that has not yet been imported into Zealova. After enrichment
 // it carries everything we were able to pull from the platform for the
 // workout's time window (HR series, zones, splits, vitals, etc).
 // ---------------------------------------------------------------------------
 
 class PendingWorkoutImport {
   final String uuid;
-  /// Legacy FitWiz bucket: `cardio | strength | flexibility | hiit`.
+  /// Legacy Zealova bucket: `cardio | strength | flexibility | hiit`.
   /// Kept for compatibility with achievements/home/schedule code that groups
   /// by `Workout.type`.
   final String activityType;
@@ -219,7 +219,7 @@ class PendingWorkoutImport {
     );
   }
 
-  /// Legacy user-override to switch the FitWiz bucket (strength/cardio/…)
+  /// Legacy user-override to switch the Zealova bucket (strength/cardio/…)
   /// from the import sheet. Keeps granular [activityKind] unchanged.
   PendingWorkoutImport copyWithActivityType(String newType) =>
       copyWith(activityType: newType);
@@ -285,7 +285,7 @@ class PendingWorkoutImport {
         ...toMetadata(),
       };
 
-  /// Legacy FitWiz bucket mapper — unchanged in taxonomy. Do NOT widen
+  /// Legacy Zealova bucket mapper — unchanged in taxonomy. Do NOT widen
   /// beyond `strength | cardio | flexibility | hiit`; the achievements,
   /// home hero, and schedule-week code group on these four values.
   static String _mapActivityType(HealthWorkoutActivityType type) {

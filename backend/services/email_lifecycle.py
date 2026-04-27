@@ -7,7 +7,7 @@ Voice split (see plan):
 - Motivational/lifecycle emails (day3, streak, trial-ending, onboarding-incomplete)
   use the user's selected coach persona (`stats.coach_name`), branch on
   `stats.schedule_state`/`stats.time_band`, and carry a stats grid.
-- Transactional emails (cancellation retention, trial expired) use the FitWiz
+- Transactional emails (cancellation retention, trial expired) use the Zealova
   brand voice — no mascot, no persona signature.
 
 All methods take a pre-resolved `first_name_value` from the caller (via
@@ -18,6 +18,7 @@ render safety-net variants rather than crashing if called in an unexpected state
 import resend
 from typing import Dict, Any, Optional
 
+from core import branding
 from core.logger import get_logger
 from models.email import UserStats, ScheduleState, TimeBand
 from services.email_helpers import (
@@ -38,7 +39,7 @@ class EmailLifecycleMixin:
     """
 
     # ────────────────────────────────────────────────────────────────────────
-    # Transactional — FitWiz brand voice
+    # Transactional — Zealova brand voice
     # ────────────────────────────────────────────────────────────────────────
 
     async def send_cancellation_retention(
@@ -46,7 +47,7 @@ class EmailLifecycleMixin:
     ) -> Dict[str, Any]:
         """Transactional cancellation email with user's real stats as reason to stay.
 
-        Opens with FitWiz brand voice on the cancel fact; closes with the persona's
+        Opens with Zealova brand voice on the cancel fact; closes with the persona's
         voice on what they'll lose. References their actual workout count so it
         feels earned, not generic.
         """
@@ -63,10 +64,10 @@ class EmailLifecycleMixin:
         workouts = stats.workouts_total
         streak = stats.longest_streak_days or stats.current_streak_days
 
-        subject = f"{name}, before you leave FitWiz"
+        subject = f"{name}, before you leave {branding.APP_NAME}"
         title = f"Before you go, {name}"
         subtitle = (
-            f"You've logged {workouts} workouts with FitWiz"
+            f"You've logged {workouts} workouts with {branding.APP_NAME}"
             + (f" and built a {streak}-day streak" if streak > 0 else "")
             + f". {coach} remembers all of it. Don't throw it out."
         )
@@ -85,7 +86,7 @@ class EmailLifecycleMixin:
             title=title, subtitle=subtitle,
             cta_text="Keep my access",
             features=features,
-            footer_text="You received this because you cancelled your FitWiz subscription.",
+            footer_text=f"You received this because you cancelled your {branding.APP_NAME} subscription.",
             persona_signature_html=build_persona_signature_html(stats),
             stats_row_html=build_stats_grid_html(stats) if stats.has_any_activity else build_zero_state_row_html(stats),
             category_name="offers",
@@ -103,7 +104,7 @@ class EmailLifecycleMixin:
     async def send_trial_expired(
         self, to_email: str, first_name_value: str, stats: UserStats,
     ) -> Dict[str, Any]:
-        """Trial-expired email — FitWiz voice (transactional) with stats as loss aversion."""
+        """Trial-expired email — Zealova voice (transactional) with stats as loss aversion."""
         if not self.is_configured():
             return {"error": "Email service not configured"}
 
@@ -116,8 +117,8 @@ class EmailLifecycleMixin:
         workouts = stats.workouts_total
         workout_word = "workouts" if workouts != 1 else "workout"
 
-        subject = f"Your FitWiz trial just ended, {name}."
-        title = f"Your FitWiz trial just ended, {name}"
+        subject = f"Your {branding.APP_NAME} trial just ended, {name}."
+        title = f"Your {branding.APP_NAME} trial just ended, {name}"
         subtitle = (
             f"You completed {workouts} {workout_word} during your trial. "
             f"That's real progress. Subscribe now to keep it going."
@@ -137,7 +138,7 @@ class EmailLifecycleMixin:
             title=title, subtitle=subtitle,
             cta_text="Subscribe now",
             features=features,
-            footer_text="You received this because your FitWiz trial ended.",
+            footer_text=f"You received this because your {branding.APP_NAME} trial ended.",
             persona_signature_html="",  # transactional, no persona card
             stats_row_html=build_stats_grid_html(stats) if stats.has_any_activity else "",
             category_name="offers",
@@ -153,14 +154,14 @@ class EmailLifecycleMixin:
             return {"error": str(e)}
 
     # ────────────────────────────────────────────────────────────────────────
-    # Hybrid — FitWiz for billing fact, persona for loss aversion
+    # Hybrid — Zealova for billing fact, persona for loss aversion
     # ────────────────────────────────────────────────────────────────────────
 
     async def send_trial_ending(
         self, to_email: str, first_name_value: str, stats: UserStats,
         days_remaining: int, trial_end_date: str, discount_percent: int = 25,
     ) -> Dict[str, Any]:
-        """Trial ending soon — FitWiz opens, persona closes. Uses stats for urgency."""
+        """Trial ending soon — Zealova opens, persona closes. Uses stats for urgency."""
         if not self.is_configured():
             return {"error": "Email service not configured"}
 
@@ -174,7 +175,7 @@ class EmailLifecycleMixin:
         days_word = "days" if days_remaining != 1 else "day"
         workouts = stats.workouts_total
 
-        subject = f"{days_remaining} {days_word} left on your FitWiz trial, {name}."
+        subject = f"{days_remaining} {days_word} left on your {branding.APP_NAME} trial, {name}."
         title = f"{days_remaining} {days_word} left, {name}"
         subtitle = (
             f"Your trial ends {trial_end_date}. "
@@ -197,7 +198,7 @@ class EmailLifecycleMixin:
             title=title, subtitle=subtitle,
             cta_text=f"Subscribe — save {discount_percent}%",
             features=features,
-            footer_text="You received this because your FitWiz trial is ending soon.",
+            footer_text=f"You received this because your {branding.APP_NAME} trial is ending soon.",
             persona_signature_html=build_persona_signature_html(stats),
             stats_row_html=build_stats_grid_html(stats) if stats.has_any_activity else "",
             category_name="offers",
@@ -465,7 +466,7 @@ class EmailLifecycleMixin:
             ("&#127919;", "2 minutes to finish",
              f"Goals, training days, equipment. {coach} only needs what makes your plan yours."),
             ("&#129303;", "Plan generates instantly",
-             "Once you finish setup, FitWiz builds your full monthly workout plan in seconds."),
+             f"Once you finish setup, {branding.APP_NAME} builds your full monthly workout plan in seconds."),
             ("&#127947;", "Built around your life",
              "Your schedule, home or gym, beginner or advanced — every detail is yours."),
         ]
@@ -475,7 +476,7 @@ class EmailLifecycleMixin:
             title=title, subtitle=subtitle,
             cta_text="Finish setup",
             features=features,
-            footer_text="You received this because your FitWiz setup is incomplete.",
+            footer_text=f"You received this because your {branding.APP_NAME} setup is incomplete.",
             persona_signature_html=build_persona_signature_html(stats),
             stats_row_html="",
             category_name="motivational check-ins",
@@ -689,9 +690,9 @@ class EmailLifecycleMixin:
             logo_url=logo_url, open_url=open_url,
             title=f"Day 1, {name}",
             subtitle="Your plan is ready — 20 minutes starts the pattern.",
-            cta_text="Open FitWiz",
+            cta_text=f"Open {branding.APP_NAME}",
             features=features,
-            footer_text="You received this because you just joined FitWiz.",
+            footer_text=f"You received this because you just joined {branding.APP_NAME}.",
             persona_signature_html=build_persona_signature_html(stats),
             stats_row_html=build_stats_grid_html(stats),
             category_name="onboarding",
@@ -812,7 +813,7 @@ class EmailLifecycleMixin:
             logo_url=logo_url, open_url=open_url,
             title=f"Halfway, {name}",
             subtitle="You're building the pattern that sticks for 6 months. Keep showing up.",
-            cta_text="Open FitWiz",
+            cta_text=f"Open {branding.APP_NAME}",
             features=features,
             footer_text="You received this because you're halfway through week 1.",
             persona_signature_html=build_persona_signature_html(stats),
@@ -845,7 +846,7 @@ class EmailLifecycleMixin:
             ("&#127942;", f"{workouts_count} workout{'s' if workouts_count != 1 else ''} this week",
              "You showed up. That's the whole game in week 1."),
             ("&#128293;", "You cleared the cliff",
-             "80% of FitWiz users who hit day 7 are still active in month 3. You're officially one of them."),
+             f"80% of {branding.APP_NAME} users who hit day 7 are still active in month 3. You're officially one of them."),
             ("&#128640;", "Week 2 builds on week 1",
              f"{coach} has next week's plan ready — slightly harder, because you can handle it now."),
         ]
@@ -872,9 +873,9 @@ class EmailLifecycleMixin:
     # ─── Merch Milestone Emails (migration 1931) ────────────────────────
 
     MERCH_DISPLAY_NAMES = {
-        "sticker_pack": "FitWiz Sticker Pack",
-        "t_shirt": "FitWiz T-Shirt",
-        "hoodie": "FitWiz Hoodie",
+        "sticker_pack": f"{branding.MERCH_PRODUCT_PREFIX} Sticker Pack",
+        "t_shirt": f"{branding.MERCH_PRODUCT_PREFIX} T-Shirt",
+        "hoodie": f"{branding.MERCH_PRODUCT_PREFIX} Hoodie",
         "full_merch_kit": "Full Merch Kit (Tee + Hoodie + Shaker)",
         "signed_premium_kit": "Signed Premium Kit",
     }
@@ -898,7 +899,7 @@ class EmailLifecycleMixin:
 
         features = [
             ("&#127873;", f"FREE {merch_name} at Level {next_level}",
-             f"Keep earning XP and real FitWiz gear ships to you — on us."),
+             f"Keep earning XP and real {branding.APP_NAME} gear ships to you — on us."),
             ("&#128202;", f"Level {stats.xp_level} · {stats.xp_total:,} XP",
              f"{stats.xp_to_next_level:,} XP to next level" if stats.xp_to_next_level else "Keep pushing."),
             ("&#128293;", "No subscriptions, no catches",
@@ -909,7 +910,7 @@ class EmailLifecycleMixin:
             logo_url=logo_url, open_url=open_url,
             title=f"So close, {name}",
             subtitle=f"{levels_away} levels stand between you and a FREE {merch_name}.",
-            cta_text="Open FitWiz",
+            cta_text=f"Open {branding.APP_NAME}",
             features=features,
             footer_text="You received this because you're close to a merch milestone. Manage notifications in Settings.",
             persona_signature_html=build_persona_signature_html(stats),
@@ -944,7 +945,7 @@ class EmailLifecycleMixin:
 
         features = [
             ("&#127873;", f"FREE {merch_name} — earned at Level {awarded_at_level}",
-             "Real FitWiz gear, shipped to you. No purchase needed."),
+             f"Real {branding.APP_NAME} gear, shipped to you. No purchase needed."),
             ("&#9989;", "Tap Accept in the Rewards tab",
              "We'll email you when we're ready to ship to collect your size and shipping address."),
             ("&#128293;", f"Level {stats.xp_level} · {stats.xp_total:,} XP",

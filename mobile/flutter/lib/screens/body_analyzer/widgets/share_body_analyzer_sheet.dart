@@ -9,6 +9,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../data/models/body_analyzer.dart';
 import 'body_analyzer_hero.dart';
 import 'score_ring.dart';
+import 'package:fitwiz/core/constants/branding.dart';
 
 /// Exports a shareable snapshot of the Body Analyzer result.
 ///
@@ -83,7 +84,7 @@ class ShareBodyAnalyzerSheet extends StatelessWidget {
                     ),
                     const SizedBox(height: 14),
                     Text(
-                      '@FitWiz · Body Analyzer',
+                      '@${Branding.appName} · Body Analyzer',
                       style: TextStyle(
                         color: isDark
                             ? AppColors.textMuted

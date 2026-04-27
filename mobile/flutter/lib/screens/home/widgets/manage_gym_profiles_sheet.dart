@@ -509,6 +509,46 @@ class _ManageGymProfilesSheetState
                           color: textSecondary,
                         ),
                       ),
+                      // Show workout-day chips + training split below the
+                      // equipment line so users can see a profile's schedule
+                      // at a glance from the manage list. Profiles with no
+                      // workout_days set render no chips (empty Row collapses).
+                      if (profile.workoutDays.isNotEmpty) ...[
+                        const SizedBox(height: 6),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _ScheduleChipRow(
+                                workoutDays: profile.workoutDays,
+                                color: profileColor,
+                                isDark: isDark,
+                              ),
+                            ),
+                            if ((profile.trainingSplit ?? '').isNotEmpty &&
+                                profile.trainingSplit != 'nothing_structured') ...[
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: profileColor.withOpacity(0.10),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(
+                                  _splitShortLabel(profile.trainingSplit!),
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w600,
+                                    color: profileColor,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -635,5 +675,87 @@ class _ManageGymProfilesSheetState
       default:
         return Icons.fitness_center_rounded;
     }
+  }
+
+  String _splitShortLabel(String split) {
+    switch (split) {
+      case 'full_body':
+        return 'Full Body';
+      case 'upper_lower':
+        return 'Upper/Lower';
+      case 'push_pull_legs':
+        return 'PPL';
+      case 'phul':
+        return 'PHUL';
+      case 'pplul':
+        return 'PPLUL';
+      case 'arnold_split':
+        return 'Arnold';
+      case 'body_part':
+        return 'Body Part';
+      case 'ai_decide':
+      case 'nothing_structured':
+        return 'AI';
+      default:
+        return split;
+    }
+  }
+}
+
+/// Compact M T W T F S S row showing which days the profile trains. Active
+/// days fill with the profile color; inactive days render as faint dots.
+/// Used in the manage sheet so users can scan a profile's schedule without
+/// opening the edit sheet.
+class _ScheduleChipRow extends StatelessWidget {
+  final List<int> workoutDays;
+  final Color color;
+  final bool isDark;
+
+  const _ScheduleChipRow({
+    required this.workoutDays,
+    required this.color,
+    required this.isDark,
+  });
+
+  static const List<String> _labels = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: List.generate(7, (i) {
+        final isActive = workoutDays.contains(i);
+        return Padding(
+          padding: const EdgeInsets.only(right: 4),
+          child: Container(
+            width: 18,
+            height: 18,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: isActive
+                  ? color.withOpacity(0.18)
+                  : (isDark
+                      ? Colors.white.withOpacity(0.04)
+                      : Colors.black.withOpacity(0.04)),
+              borderRadius: BorderRadius.circular(4),
+              border: isActive
+                  ? Border.all(color: color.withOpacity(0.6), width: 1)
+                  : null,
+            ),
+            child: Text(
+              _labels[i],
+              style: TextStyle(
+                fontSize: 9,
+                fontWeight: FontWeight.w700,
+                color: isActive
+                    ? color
+                    : (isDark
+                        ? Colors.white.withOpacity(0.35)
+                        : Colors.black.withOpacity(0.35)),
+              ),
+            ),
+          ),
+        );
+      }),
+    );
   }
 }

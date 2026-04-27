@@ -1218,27 +1218,9 @@ async def regenerate_workout_streaming(request: Request, body: RegenerateWorkout
                 f"original={body.workout_id} exercises={len(exercises)}"
             )
 
-            # Record analytics (fire-and-forget). Attributed to preview_id —
-            # the real workout id doesn't exist until /regenerate-commit.
-            try:
-                db.record_workout_regeneration(
-                    user_id=body.user_id,
-                    original_workout_id=body.workout_id,
-                    new_workout_id=preview_id,
-                    difficulty=user_difficulty,
-                    duration_minutes=body.duration_minutes,
-                    workout_type=workout_type_override,
-                    equipment=equipment if isinstance(equipment, list) else [],
-                    focus_areas=focus_areas if focus_areas else [],
-                    injuries=injuries if injuries else [],
-                    custom_focus_area=None,
-                    custom_injury=None,
-                    generation_method="rag_regenerate_stream" if used_rag else "ai_regenerate_stream",
-                    used_rag=used_rag,
-                    generation_time_ms=elapsed_ms(),
-                )
-            except Exception as analytics_error:
-                logger.warning(f"[STREAM] Failed to record analytics: {analytics_error}", exc_info=True)
+            # Analytics is recorded at /regenerate-commit time, not here —
+            # workout_regenerations.new_workout_id has a FK to workouts(id)
+            # and the preview row doesn't exist in workouts until commit.
 
             # Emit the final `done` event with preview payload. The client
             # reads `preview_id` from here and passes it to commit/discard/
@@ -1248,7 +1230,7 @@ async def regenerate_workout_streaming(request: Request, body: RegenerateWorkout
                 "workout": _serialize_preview_workout(preview_payload),
                 "total_time_ms": elapsed_ms(),
             }
-            yield f"event: done\ndata: {json.dumps(workout_response)}\n\n"
+            yield f"event: done\ndata: {json.dumps(workout_response, default=str)}\n\n"
 
         except Exception as e:
             logger.error(f"[STREAM] Regeneration error: {e}", exc_info=True)
@@ -1483,6 +1465,47 @@ async def regenerate_commit(
         await index_workout_to_rag(committed)
     except Exception as e:
         logger.warning(f"RAG re-index after commit failed (non-fatal): {e}", exc_info=True)
+
+    # Record regeneration analytics now that the workout actually exists in
+    # the workouts table (workout_regenerations.new_workout_id has a FK).
+    try:
+        gen_meta_raw = commit_data.get("generation_metadata") or "{}"
+        gen_meta = (
+            json.loads(gen_meta_raw)
+            if isinstance(gen_meta_raw, str)
+            else (gen_meta_raw or {})
+        )
+        equipment_meta = gen_meta.get("equipment") or []
+        if not isinstance(equipment_meta, list):
+            equipment_meta = []
+        injuries_meta = gen_meta.get("injuries_considered") or []
+        if not isinstance(injuries_meta, list):
+            injuries_meta = []
+        focus_area_meta = gen_meta.get("focus_area")
+        focus_areas_meta = (
+            [focus_area_meta] if focus_area_meta else []
+        )
+        db.record_workout_regeneration(
+            user_id=user_id,
+            original_workout_id=body.original_workout_id,
+            new_workout_id=new_workout["id"],
+            difficulty=gen_meta.get("difficulty"),
+            duration_minutes=commit_data.get("duration_minutes"),
+            workout_type=gen_meta.get("workout_type"),
+            equipment=equipment_meta,
+            focus_areas=focus_areas_meta,
+            injuries=injuries_meta,
+            custom_focus_area=None,
+            custom_injury=None,
+            generation_method=commit_data.get("generation_method", "ai"),
+            used_rag=bool(gen_meta.get("used_rag", False)),
+            generation_time_ms=None,
+        )
+    except Exception as analytics_error:
+        logger.warning(
+            f"[Commit] Failed to record regeneration analytics: {analytics_error}",
+            exc_info=True,
+        )
 
     return {
         "workout": committed.model_dump(mode="json"),

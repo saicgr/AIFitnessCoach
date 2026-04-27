@@ -6,7 +6,7 @@ cancelled. Now each stage references the user's actual completed workouts
 and stats history as a reason to come back.
 
 All methods take `first_name_value` + `UserStats`. The first two (grace,
-access-expired) are transactional in tone (FitWiz voice opens) and the
+access-expired) are transactional in tone (Zealova voice opens) and the
 offers (C3-C6) + sunset (C7) use the persona voice for warmth.
 
 Stages:
@@ -20,6 +20,7 @@ Stages:
 import resend
 from typing import Dict, Any, Optional
 
+from core import branding
 from core.logger import get_logger
 from models.email import UserStats
 from services.email_helpers import (
@@ -39,7 +40,7 @@ class EmailCancelLadderMixin:
     ) -> Dict[str, Any]:
         """C1. Day after cancel, while access still active. Hybrid voice.
 
-        Opens with FitWiz framing on the billing fact, closes with persona
+        Opens with Zealova framing on the billing fact, closes with persona
         voice asking what went wrong. Includes a "tell us what didn't click"
         soft-feedback link as an alternative to the subscribe CTA.
         """
@@ -55,10 +56,10 @@ class EmailCancelLadderMixin:
         coach = stats.coach_name
         workouts = stats.workouts_total
 
-        subject = f"{days_until_expiry} days of FitWiz left, {name}. What happened?"
+        subject = f"{days_until_expiry} days of {branding.APP_NAME} left, {name}. What happened?"
         title = f"{days_until_expiry} days left, {name}"
         subtitle = (
-            f"You cancelled FitWiz yesterday. You've got {days_until_expiry} days of access "
+            f"You cancelled {branding.APP_NAME} yesterday. You've got {days_until_expiry} days of access "
             f"before it winds down. {coach} is wondering what stopped working."
         )
 
@@ -76,7 +77,7 @@ class EmailCancelLadderMixin:
             title=title, subtitle=subtitle,
             cta_text="Reactivate",
             features=features,
-            footer_text="You received this because you cancelled your FitWiz subscription.",
+            footer_text=f"You received this because you cancelled your {branding.APP_NAME} subscription.",
             persona_signature_html=build_persona_signature_html(stats),
             stats_row_html=build_stats_grid_html(stats) if stats.has_any_activity else "",
             category_name="offers",
@@ -94,7 +95,7 @@ class EmailCancelLadderMixin:
     async def send_access_expired(
         self, to_email: str, first_name_value: str, stats: UserStats,
     ) -> Dict[str, Any]:
-        """C2. Sent the day access actually ends. FitWiz brand voice — this is
+        """C2. Sent the day access actually ends. Zealova brand voice — this is
         a billing fact, not a guilt trip. But we use their stats as nostalgia."""
         if not self.is_configured():
             return {"error": "Email service not configured"}
@@ -110,7 +111,7 @@ class EmailCancelLadderMixin:
         subject = f"You're on the free plan now, {name}."
         title = f"You're on the free plan now, {name}"
         subtitle = (
-            f"Your FitWiz Premium access ended today. "
+            f"Your {branding.APP_NAME} Premium access ended today. "
             + (f"You logged {workouts} workouts along the way — all of that history stays. "
                if workouts > 0 else "")
             + f"Here's what the free plan looks like."
@@ -120,7 +121,7 @@ class EmailCancelLadderMixin:
             ("&#128200;", "Your history stays",
              "Every workout, every PR, every photo you logged is still yours to access."),
             ("&#128274;", "Plan adaptation pauses",
-             "FitWiz will stop adjusting your plan week-to-week. Premium is what re-runs the math."),
+             f"{branding.APP_NAME} will stop adjusting your plan week-to-week. Premium is what re-runs the math."),
             ("&#128172;", "Coach chat limited",
              "Daily message cap on free tier. Premium gives unlimited conversations."),
         ]
@@ -130,7 +131,7 @@ class EmailCancelLadderMixin:
             title=title, subtitle=subtitle,
             cta_text="Come back to Premium",
             features=features,
-            footer_text="You received this because your FitWiz subscription ended.",
+            footer_text=f"You received this because your {branding.APP_NAME} subscription ended.",
             persona_signature_html="",  # transactional, brand voice only
             stats_row_html=build_stats_grid_html(stats) if stats.has_any_activity else "",
             category_name="billing & account",
@@ -206,7 +207,7 @@ class EmailCancelLadderMixin:
             title=title, subtitle=subtitle,
             cta_text=f"Come back — {discount_percent}% off",
             features=features,
-            footer_text="You received this because you were a FitWiz Premium member.",
+            footer_text=f"You received this because you were a {branding.APP_NAME} Premium member.",
             persona_signature_html=build_persona_signature_html(stats),
             stats_row_html=build_stats_grid_html(stats) if stats.has_any_activity else "",
             category_name="offers",
@@ -243,7 +244,7 @@ class EmailCancelLadderMixin:
         subject = f"We'll stop emailing you, {name}."
         title = f"Going quiet, {name}"
         subtitle = (
-            f"You've been off FitWiz for 90+ days. We'll stop sending nudges now — "
+            f"You've been off {branding.APP_NAME} for 90+ days. We'll stop sending nudges now — "
             + (f"but your {workouts} logged workouts and your account stay. " if workouts > 0 else "")
             + "Tap below if you ever want to hear from us again."
         )

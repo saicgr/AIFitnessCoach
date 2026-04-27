@@ -1,4 +1,4 @@
-package com.fitwiz.wearos.data.sync
+package com.aifitnesscoach.wearos.data.sync
 
 import android.content.Context
 import android.util.Log
@@ -20,7 +20,7 @@ class SyncWorker @AssistedInject constructor(
 
     companion object {
         private const val TAG = "SyncWorker"
-        private const val WORK_NAME = "fitwiz_sync_worker"
+        private const val WORK_NAME = "aifitnesscoach_sync_worker"
 
         fun schedule(context: Context) {
             val constraints = Constraints.Builder()

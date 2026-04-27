@@ -83,7 +83,7 @@ def tour_config():
     return {
         "version": "1.0",
         "steps": [
-            {"id": "welcome", "title": "Welcome to FitWiz", "index": 0},
+            {"id": "welcome", "title": "Welcome to Zealova", "index": 0},
             {"id": "ai_workouts", "title": "AI-Generated Workouts", "index": 1},
             {"id": "chat_coach", "title": "Your AI Coach", "index": 2},
             {"id": "library", "title": "Exercise Library", "index": 3},

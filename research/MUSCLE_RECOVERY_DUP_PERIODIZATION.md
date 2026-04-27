@@ -1,7 +1,7 @@
 # Deep Research: Muscle Recovery, DUP, Post-Workout Feedback, and Volume Landmarks
 
 **Date:** 2026-02-20
-**Purpose:** Algorithmic constants, formulas, and research citations for FitWiz workout engine implementation
+**Purpose:** Algorithmic constants, formulas, and research citations for Zealova workout engine implementation
 
 ---
 

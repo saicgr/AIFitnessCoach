@@ -5,6 +5,7 @@ import '../core/constants/app_colors.dart';
 import '../core/theme/accent_color_provider.dart';
 import '../data/models/level_reward.dart';
 import '../data/services/haptic_service.dart';
+import 'package:fitwiz/core/constants/branding.dart';
 
 /// Dialog shown when user reaches a streak milestone
 class StreakMilestoneDialog extends ConsumerStatefulWidget {
@@ -352,7 +353,7 @@ class _StreakMilestoneDialogState extends ConsumerState<StreakMilestoneDialog>
                     const SizedBox(height: 8),
                     _buildRewardRow(
                       '🎁',
-                      'FREE FitWiz Merch!',
+                      'FREE ${Branding.appName} Merch!',
                       'Claim in the Rewards tab',
                       textPrimary,
                       textSecondary,

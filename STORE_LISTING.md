@@ -1,13 +1,13 @@
-# FitWiz Play Store Listing — copy-paste source of truth (Play only)
+# Zealova Play Store Listing — copy-paste source of truth (Play only)
 
 Last updated: 2026-04-25.
 iOS submission deferred — this file covers Google Play only. When iOS
 work resumes, restore the App Store Connect section from git history.
 
 These strings go into the **Play Console** dashboard, NOT into Android
-`strings.xml`. Launcher label (`app_name`) stays short — `FitWiz` —
+`strings.xml`. Launcher label (`app_name`) stays short — `Zealova` —
 because Android launchers truncate around 12–15 chars under the icon,
-and a long marketing title turns into `FitWiz: Wo...` on the home screen.
+and a long marketing title turns into `Zealova: Wo...` on the home screen.
 
 > Trademark note (2026-04-25): USPTO Reg #7111694 / Serial 97441093
 > "FITWIZ" is LIVE / REGISTERED in IC 009, owner LIN, JIANGJUAN
@@ -23,18 +23,18 @@ and a long marketing title turns into `FitWiz: Wo...` on the home screen.
 
 ## Google Play Console — Main store listing
 
-**Path:** Play Console → All apps → FitWiz → Grow → Store presence → Main store listing.
+**Path:** Play Console → All apps → Zealova → Grow → Store presence → Main store listing.
 
 | Field | Limit | Value |
 |---|---|---|
-| App name | 30 | `FitWiz: Workout & Meal Coach` (28) |
+| App name | 30 | `Zealova: Workout & Meal Coach` (28) |
 | Short description | 80 | `AI coach that builds your workouts & tracks meals — type, snap, or scan.` (72) |
 | Full description | 4 000 | See `PLAY_STORE_LISTING_COPY.md` (~3 970 chars) |
 | App category | — | Health & Fitness |
 | Tags | up to 5 | Strength training, Nutrition, Personal trainer, Workout planner, Calorie counter |
-| Contact email | — | `support@fitwiz.us` |
-| Website | — | `https://fitwiz.us` |
-| Privacy policy | — | `https://fitwiz.us/privacy` |
+| Contact email | — | `support@zealova.com` |
+| Website | — | `https://zealova.com` |
+| Privacy policy | — | `https://zealova.com/privacy` |
 
 ### Play Store screenshots checklist
 
@@ -48,7 +48,7 @@ and a long marketing title turns into `FitWiz: Wo...` on the home screen.
 
 | File | Field | Value | Why |
 |---|---|---|---|
-| `mobile/flutter/android/app/src/main/res/values/strings.xml` | `app_name` | `FitWiz` | Launcher icon label — keep short or it truncates |
+| `mobile/flutter/android/app/src/main/res/values/strings.xml` | `app_name` | `Zealova` | Launcher icon label — keep short or it truncates |
 | `mobile/flutter/pubspec.yaml` | `name` | `fitwiz` | Dart package — never user-visible |
 
 ---
@@ -62,7 +62,7 @@ and a long marketing title turns into `FitWiz: Wo...` on the home screen.
 - [x] Wear OS module disabled at `wearos/settings.gradle.kts`
 - [x] CI workflow added at `.github/workflows/android-release.yml`
 - [x] Takedown response draft at `TRADEMARK_TAKEDOWN_RESPONSE.md`
-- [x] Listing title set in Play Console: `FitWiz: Workout & Meal Coach`
+- [x] Listing title set in Play Console: `Zealova: Workout & Meal Coach`
 - [x] Short description set, em-dash compliant
 - [x] Full description set (~3 970 chars, em-dash compliant, pricing matches paywall)
 - [x] Data safety form completed
@@ -73,16 +73,16 @@ and a long marketing title turns into `FitWiz: Wo...` on the home screen.
 - [x] Ready for production promotion
 
 ### Outstanding before production rollout
-- [ ] **fitwiz.us canonical domain fix** — STILL redirecting to `ai-fitness-coach-orcin.vercel.app` as of 2026-04-25. Privacy/Terms/Refunds links in the live Play listing will land users on `vercel.app`. Fix in Vercel dashboard → Settings → Domains; full walkthrough in `PRE_REVIEW_SUBMISSION_GUIDE.md`.
+- [ ] **zealova.com canonical domain fix** — STILL redirecting to `ai-fitness-coach-orcin.vercel.app` as of 2026-04-25. Privacy/Terms/Refunds links in the live Play listing will land users on `vercel.app`. Fix in Vercel dashboard → Settings → Domains; full walkthrough in `PRE_REVIEW_SUBMISSION_GUIDE.md`.
 - [ ] Subscription product status = ACTIVE in Play Console → Monetize → Products → Subscriptions (verify, not Draft)
 - [ ] Tax + payments profile complete in Play Console → Setup → Payments
-- [ ] Reviewer test account `reviewer@fitwiz.us` verified end-to-end on the closed-testing build (login + paywall trial flow works)
+- [ ] Reviewer test account `reviewer@zealova.com` verified end-to-end on the closed-testing build (login + paywall trial flow works)
 - [ ] Final dated screenshot of competitor's FITWIZ App Store listing saved to evidence folder
 
 ### Production rollout strategy
 - Stage at 20% for first 48 hours → 50% if no crash spike → 100% by day 4
 - Watch Play Console → Quality → Android vitals every 4 h for first 48 h
-- Watch `support@fitwiz.us` daily for forwarded IP complaints
+- Watch `support@zealova.com` daily for forwarded IP complaints
 
 ### User-side, no software needed
 - [ ] LLC formed (Delaware/Wyoming) — liability shield given known FITWIZ trademark overlap

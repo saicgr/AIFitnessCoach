@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:fitwiz/core/constants/branding.dart';
 
-/// THE shareable watermark. Real `assets/images/app_icon.png` + "FitWiz"
+/// THE shareable watermark. Real `assets/images/app_icon.png` + "Zealova"
 /// capitalized. Use in every template's footer.
-class FitWizWatermark extends StatelessWidget {
+class AppWatermark extends StatelessWidget {
   final bool enabled;
   final Color textColor;
   final double iconSize;
   final double fontSize;
 
-  const FitWizWatermark({
+  const AppWatermark({
     super.key,
     this.enabled = true,
     this.textColor = Colors.white,
@@ -34,7 +35,7 @@ class FitWizWatermark extends StatelessWidget {
         ),
         SizedBox(width: iconSize * 0.32),
         Text(
-          'FitWiz',
+          '${Branding.appName}',
           style: TextStyle(
             color: textColor,
             fontSize: fontSize,

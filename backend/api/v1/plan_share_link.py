@@ -3,12 +3,12 @@ Public shareable plan / period links.
 
 POST   /api/v1/plans/share-link
     Owner-only. Snapshots the user's plan for a period and returns a public
-    share token + URL (https://fitwiz.us/p/{token}).
+    share token + URL (https://zealova.com/p/{token}).
 
 GET    /api/v1/plans/public/{token}
     Anonymous. Reads the security-definer view `public_plans_v` and returns
     the snapshot, displayName, and username — safe to render on
-    fitwiz.us/p/[token].
+    zealova.com/p/[token].
 
 DELETE /api/v1/plans/share-link/{token}
     Owner-only. Sets `revoked_at`, hiding the row from the public view.
@@ -24,6 +24,7 @@ from typing import Any, Dict, List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Path
 from pydantic import BaseModel, Field
 
+from core import branding
 from core.auth import get_current_user
 from core.db import get_supabase_db
 from core.logger import get_logger
@@ -33,7 +34,7 @@ router = APIRouter()
 logger = get_logger(__name__)
 
 PUBLIC_BASE_URL = os.environ.get(
-    "PUBLIC_PLAN_SHARE_BASE_URL", "https://fitwiz.us/p"
+    "PUBLIC_PLAN_SHARE_BASE_URL", branding.PLAN_SHARE_BASE
 )
 TOKEN_LEN = 8
 TOKEN_ALPHABET = "abcdefghijkmnpqrstuvwxyz23456789"

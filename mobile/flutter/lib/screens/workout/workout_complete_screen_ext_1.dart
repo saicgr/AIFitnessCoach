@@ -794,7 +794,7 @@ extension __WorkoutCompleteScreenStateExt1 on _WorkoutCompleteScreenState {
   Future<String?> _generateShareLink(String workoutId) async {
     try {
       final api = ref.read(apiClientProvider);
-      final res = await api.dio.post('/api/v1/workouts/$workoutId/share-link');
+      final res = await api.dio.post('/workouts/$workoutId/share-link');
       final data = res.data;
       if (data is Map && data['url'] is String) {
         return data['url'] as String;

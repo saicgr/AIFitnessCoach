@@ -1,9 +1,9 @@
-package com.fitwiz.wearos.data.local.dao
+package com.aifitnesscoach.wearos.data.local.dao
 
 import androidx.room.*
-import com.fitwiz.wearos.data.local.entity.DailyHealthDataEntity
-import com.fitwiz.wearos.data.local.entity.HeartRateSampleEntity
-import com.fitwiz.wearos.data.local.entity.PassiveHealthDataEntity
+import com.aifitnesscoach.wearos.data.local.entity.DailyHealthDataEntity
+import com.aifitnesscoach.wearos.data.local.entity.HeartRateSampleEntity
+import com.aifitnesscoach.wearos.data.local.entity.PassiveHealthDataEntity
 import kotlinx.coroutines.flow.Flow
 
 @Dao

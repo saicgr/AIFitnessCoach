@@ -173,7 +173,7 @@ extension NotificationServiceCore on NotificationService {
     // Show local notification with appropriate channel
     final notification = message.notification;
     if (notification != null) {
-      final title = notification.title ?? 'FitWiz';
+      final title = notification.title ?? '${Branding.appName}';
       final body = notification.body ?? '';
 
       _showLocalNotification(
@@ -268,7 +268,7 @@ extension NotificationServiceCore on NotificationService {
     // Store in inbox so it appears in the notification list
     if (notification != null) {
       onNotificationReceived?.call(
-        title: notification.title ?? 'FitWiz',
+        title: notification.title ?? '${Branding.appName}',
         body: notification.body ?? '',
         type: notificationType,
         data: message.data,

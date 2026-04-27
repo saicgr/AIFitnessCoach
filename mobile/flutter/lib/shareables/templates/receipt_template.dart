@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../shareable_canvas.dart';
 import '../shareable_data.dart';
-import '../widgets/fitwiz_watermark.dart';
+import '../widgets/app_watermark.dart';
 
 /// Receipt — thermal-receipt style listing of highlights as line items,
 /// hero shown as the "TOTAL" at the bottom. Reads as a transaction record.
@@ -129,7 +129,7 @@ class ReceiptTemplate extends StatelessWidget {
               const SizedBox(height: 14),
               Center(
                 child: showWatermark
-                    ? FitWizWatermark(
+                    ? AppWatermark(
                         textColor: const Color(0xFF1A1A1A),
                         iconSize: 18,
                         fontSize: 11,

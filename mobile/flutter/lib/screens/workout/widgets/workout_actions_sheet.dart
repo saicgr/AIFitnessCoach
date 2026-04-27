@@ -7,6 +7,7 @@ import '../../../data/models/workout.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/services/api_client.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:fitwiz/core/constants/branding.dart';
 
 /// Shows a bottom sheet with workout actions
 Future<void> showWorkoutActionsSheet(
@@ -166,7 +167,7 @@ class _WorkoutActionsSheetState extends ConsumerState<_WorkoutActionsSheet> {
                   _ActionTile(
                     icon: Icons.ios_share_rounded,
                     title: 'Share Workout',
-                    subtitle: 'Get a fitwiz.us link for friends',
+                    subtitle: 'Get a ${Branding.marketingDomain} link for friends',
                     isLoading: _loadingAction == 'share',
                     onTap: () => _handleShare(context),
                   ),
@@ -258,7 +259,7 @@ class _WorkoutActionsSheetState extends ConsumerState<_WorkoutActionsSheet> {
     setState(() => _loadingAction = 'share');
     try {
       final api = ref.read(apiClientProvider);
-      final res = await api.dio.post('/api/v1/workouts/$id/share-link');
+      final res = await api.dio.post('/workouts/$id/share-link');
       final data = res.data;
       String? url;
       if (data is Map && data['url'] is String) url = data['url'] as String;
@@ -271,8 +272,8 @@ class _WorkoutActionsSheetState extends ConsumerState<_WorkoutActionsSheet> {
       }
       Navigator.of(context).pop();
       await Share.share(
-        '${widget.workout.name ?? 'My workout'} — FitWiz\n$url',
-        subject: 'FitWiz workout',
+        '${widget.workout.name ?? 'My workout'} — ${Branding.appName}\n$url',
+        subject: '${Branding.appName} workout',
       );
     } catch (e) {
       if (!mounted) return;

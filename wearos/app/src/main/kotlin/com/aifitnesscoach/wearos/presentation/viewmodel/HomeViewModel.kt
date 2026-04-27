@@ -1,16 +1,16 @@
-package com.fitwiz.wearos.presentation.viewmodel
+package com.aifitnesscoach.wearos.presentation.viewmodel
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.fitwiz.wearos.data.local.dao.HealthDataDao
-import com.fitwiz.wearos.data.local.entity.DailyHealthDataEntity
-import com.fitwiz.wearos.data.repository.HealthRepository
-import com.fitwiz.wearos.data.repository.NutritionRepository
-import com.fitwiz.wearos.data.repository.WorkoutRepository
-import com.fitwiz.wearos.health.HeartRateMonitor
-import com.fitwiz.wearos.health.PassiveHealthClient
-import com.fitwiz.wearos.health.WearHealthConnectClient
+import com.aifitnesscoach.wearos.data.local.dao.HealthDataDao
+import com.aifitnesscoach.wearos.data.local.entity.DailyHealthDataEntity
+import com.aifitnesscoach.wearos.data.repository.HealthRepository
+import com.aifitnesscoach.wearos.data.repository.NutritionRepository
+import com.aifitnesscoach.wearos.data.repository.WorkoutRepository
+import com.aifitnesscoach.wearos.health.HeartRateMonitor
+import com.aifitnesscoach.wearos.health.PassiveHealthClient
+import com.aifitnesscoach.wearos.health.WearHealthConnectClient
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch

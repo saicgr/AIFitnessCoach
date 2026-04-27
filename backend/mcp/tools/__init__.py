@@ -29,6 +29,7 @@ from __future__ import annotations
 
 from typing import Any, Awaitable, Callable, Dict, Optional
 
+from core import branding
 from core.logger import get_logger
 from mcp.auth.scopes import require_scope
 from mcp.middleware.anomaly import AnomalyTripped, check_anomaly
@@ -110,7 +111,7 @@ async def run_tool(
         return _error_envelope(
             "anomaly_tripped",
             "Abnormal call pattern detected. Your MCP access has been revoked — "
-            "please reconnect from the FitWiz app.",
+            f"please reconnect from the {branding.APP_NAME} app.",
             tool=e.tool_name,
         )
 

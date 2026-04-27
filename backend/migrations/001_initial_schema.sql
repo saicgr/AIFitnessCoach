@@ -1,4 +1,4 @@
--- FitWiz - Postgres Schema Migration
+-- Zealova - Postgres Schema Migration
 -- This creates all tables in Supabase Postgres
 
 -- Enable UUID extension

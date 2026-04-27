@@ -1,4 +1,4 @@
-package com.fitwiz.wearos.data.api
+package com.aifitnesscoach.wearos.data.api
 
 import retrofit2.Response
 import retrofit2.http.*
@@ -7,7 +7,7 @@ import retrofit2.http.*
  * Retrofit API interface for direct backend communication from watch.
  * Used as fallback when phone is not connected.
  */
-interface FitWizApi {
+interface AppApi {
 
     // ==================== Workout ====================
 

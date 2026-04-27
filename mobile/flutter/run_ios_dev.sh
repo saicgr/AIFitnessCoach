@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# iOS Dev Build Script for FitWiz
+# iOS Dev Build Script for Zealova
 # Usage: ./run_ios_dev.sh [simulator_name]
 # If no simulator name given, defaults to "iPhone 17 Pro"
 #
@@ -16,7 +16,7 @@ YELLOW='\033[1;33m'
 CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
-echo -e "${GREEN}=== FitWiz iOS DEV Build Script (Local Backend) ===${NC}"
+echo -e "${GREEN}=== Zealova iOS DEV Build Script (Local Backend) ===${NC}"
 
 # Set paths
 FLUTTER_PATH="/opt/homebrew/bin/flutter"

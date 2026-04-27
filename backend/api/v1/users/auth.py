@@ -83,7 +83,7 @@ async def google_auth(request: Request, body: GoogleAuthRequest,
         unique_username = generate_username_sync(name=full_name, email=email)
         logger.info(f"Generated unique username: {unique_username}")
 
-        # Check if this email should be an admin (support@fitwiz.us)
+        # Check if this email should be an admin (support@zealova.com)
         admin_service = get_admin_service()
         is_admin = admin_service.should_be_admin(email)
         is_support = admin_service.should_be_support_user(email)

@@ -13,6 +13,7 @@ Motivational voice throughout — persona-driven, stats-heavy.
 import resend
 from typing import Dict, Any
 
+from core import branding
 from core.logger import get_logger
 from models.email import UserStats
 from services.email_helpers import (
@@ -156,7 +157,7 @@ class EmailEngagementMixin:
 
         Targets the annual-plan trap: paid upfront, forgot, never engaged. If
         we don't re-engage they'll chargeback or refund. Hybrid voice — persona
-        at top, FitWiz-value-reminder at bottom.
+        at top, Zealova-value-reminder at bottom.
         """
         if not self.is_configured():
             return {"error": "Email service not configured"}
@@ -170,9 +171,9 @@ class EmailEngagementMixin:
         coach = stats.coach_name
 
         subject = f"You're paying for this, {name}."
-        title = f"{name}, FitWiz is yours"
+        title = f"{name}, {branding.APP_NAME} is yours"
         subtitle = (
-            f"You've had FitWiz Premium for 14+ days without logging. "
+            f"You've had {branding.APP_NAME} Premium for 14+ days without logging. "
             f"{coach} isn't judging — but you're paying. Let's put that to use."
         )
 
@@ -245,7 +246,7 @@ class EmailEngagementMixin:
             title=title, subtitle=subtitle,
             cta_text="See my plan",
             features=features,
-            footer_text="You received this because you reactivated your FitWiz Premium subscription.",
+            footer_text=f"You received this because you reactivated your {branding.APP_NAME} Premium subscription.",
             persona_signature_html=build_persona_signature_html(stats),
             stats_row_html=build_stats_grid_html(stats),
             category_name="billing & account",

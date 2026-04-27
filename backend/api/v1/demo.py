@@ -21,6 +21,7 @@ from datetime import datetime, timedelta
 import uuid
 import logging
 
+from core import branding
 from core.db import get_supabase_db
 from core.rate_limiter import limiter
 from core.auth import get_admin_user
@@ -760,7 +761,7 @@ DEFAULT_TOUR_CONFIG = {
     "steps": [
         {
             "id": "welcome",
-            "title": "Welcome to Your FitWiz",
+            "title": f"Welcome to Your {branding.APP_NAME}",
             "description": "Let's take a quick tour of the app",
             "target": "home_screen",
         },

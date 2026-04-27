@@ -7,6 +7,8 @@ import '../../../core/providers/week_start_provider.dart';
 import '../../../data/models/workout.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/providers/today_workout_provider.dart';
+import '../../../data/providers/synced_workouts_provider.dart';
+import '../../../data/providers/gym_profile_provider.dart';
 import '../../../data/services/haptic_service.dart';
 import 'hero_workout_card.dart';
 
@@ -182,6 +184,22 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
     return dates;
   }
 
+  /// Parse the YYYY-MM-DD prefix of a workout's scheduledDate as a local date.
+  /// Returns null when the field is absent or unparseable. Used by the synced-
+  /// workout merge so we can compare against today without re-implementing
+  /// the substring/timezone dance everywhere.
+  DateTime? _scheduledDate(Workout w) {
+    final raw = w.scheduledDate;
+    if (raw == null || raw.length < 10) return null;
+    final parts = raw.substring(0, 10).split('-');
+    if (parts.length != 3) return null;
+    final y = int.tryParse(parts[0]);
+    final m = int.tryParse(parts[1]);
+    final d = int.tryParse(parts[2]);
+    if (y == null || m == null || d == null) return null;
+    return DateTime(y, m, d);
+  }
+
   /// Find ALL workouts for a specific date using string comparison
   /// to avoid timezone shift issues (DateTime.parse on date-only strings
   /// creates UTC midnight, and .toLocal() can shift the date backward).
@@ -241,7 +259,15 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
           return _buildNoWorkoutDaysState(isDark, accentColor);
         }
 
-        final workoutDays = user.workoutDays;
+        // Per-profile schedule precedence: active gym profile's workoutDays
+        // wins over the user's account-level workoutDays. Lets users have
+        // different schedules per gym (Tue/Thu at the gym, Mon/Sat at home)
+        // without mutating their global preferences. Mirrors the backend
+        // resolver in today.py (_resolve_workout_days).
+        final activeProfile = ref.watch(activeGymProfileProvider);
+        final workoutDays = (activeProfile?.workoutDays.isNotEmpty ?? false)
+            ? activeProfile!.workoutDays
+            : user.workoutDays;
 
         // If today workout hasn't resolved yet AND we have no cached value,
         // show skeleton. Otherwise paint the card with whatever we have.
@@ -292,7 +318,25 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
         _locallyGeneratedWorkouts.removeWhere(
           (local) => allWorkouts.any((w) => w.id == local.id),
         );
-        mergedWorkouts.removeWhere((w) => w.generationMethod == 'health_connect_import');
+        // Surface Health Connect / wearable-synced workouts on the day they
+        // were performed. Without this, a user who logs an Apple Watch or
+        // Pixel Watch session sees "No workout yet" on Home even though the
+        // workouts tab counted it toward the weekly target. Only merge today
+        // and yesterday — synced rows for older dates still belong to the
+        // workouts tab, not the home carousel.
+        final syncedWorkouts = ref.watch(syncedWorkoutsProvider);
+        final nowForSynced = DateTime.now();
+        final todayForSynced =
+            DateTime(nowForSynced.year, nowForSynced.month, nowForSynced.day);
+        final keepSyncedAfter =
+            todayForSynced.subtract(const Duration(days: 1));
+        for (final w in syncedWorkouts) {
+          final wDate = _scheduledDate(w);
+          if (wDate == null) continue;
+          if (wDate.isBefore(keepSyncedAfter)) continue;
+          if (mergedWorkouts.any((m) => m.id == w.id)) continue;
+          mergedWorkouts.add(w);
+        }
 
         // NOTE: No date-based dedup here. Two non-quick workouts can legitimately
         // share a scheduled_date — the user picks "Add Workout" in the regenerate /

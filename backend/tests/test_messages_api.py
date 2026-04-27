@@ -75,7 +75,7 @@ def sample_conversation_data(sample_conversation_id, sample_user_id, sample_reci
                 "last_read_at": None,
                 "is_muted": False,
                 "users": {
-                    "name": "FitWiz Support",
+                    "name": "Zealova Support",
                     "avatar_url": None,
                     "is_support_user": True,
                 }

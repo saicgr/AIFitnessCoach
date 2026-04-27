@@ -1,7 +1,7 @@
 """HMAC-signed consent session tokens.
 
 When a client hits /oauth/authorize we need to carry the authorization
-request across the hop to fitwiz.us (consent UI) and back. Rather than
+request across the hop to zealova.com (consent UI) and back. Rather than
 adding another DB table, we pack everything into a short-lived signed
 token. The consent UI treats it as opaque.
 

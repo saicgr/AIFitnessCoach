@@ -48,6 +48,7 @@ import '../../core/models/chat_quick_action.dart';
 import '../../core/providers/usage_tracking_provider.dart';
 import '../../core/services/posthog_service.dart';
 import '../../widgets/upgrade_prompt_sheet.dart';
+import 'package:fitwiz/core/constants/branding.dart';
 
 part 'chat_screen_part_media_send_status.dart';
 

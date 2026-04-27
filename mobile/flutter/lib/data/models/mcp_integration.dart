@@ -1,6 +1,6 @@
 /// MCP Integration model.
 ///
-/// Represents a way to access the user's FitWiz data from an external AI
+/// Represents a way to access the user's Zealova data from an external AI
 /// client (Claude Desktop, ChatGPT, Cursor, etc.). Two kinds, both live in
 /// the same list:
 ///

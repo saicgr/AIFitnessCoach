@@ -14,6 +14,7 @@ import '../../../widgets/social_video_player.dart';
 import '../hashtag_feed_screen.dart';
 import '../friend_profile_screen.dart';
 import 'package:timeago/timeago.dart' as timeago;
+import 'package:fitwiz/core/constants/branding.dart';
 
 
 part 'activity_card_part_reaction_type.dart';
@@ -429,7 +430,7 @@ class _ActivityCardState extends State<ActivityCard> with SingleTickerProviderSt
               onTap: () {
                 Navigator.pop(context);
                 HapticFeedback.lightImpact();
-                Clipboard.setData(const ClipboardData(text: 'https://fitwiz.us'));
+                Clipboard.setData(const ClipboardData(text: 'https://${Branding.marketingDomain}'));
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
                     content: Text('Link copied to clipboard'),

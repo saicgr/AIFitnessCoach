@@ -288,7 +288,7 @@ def row_to_user(row: dict, is_new_user: bool = False, support_friend_added: bool
     Args:
         row: Database row as dict
         is_new_user: True if this is the user's first login (show welcome message)
-        support_friend_added: True if FitWiz Support was auto-added as friend
+        support_friend_added: True if Zealova Support was auto-added as friend
     """
     from models.schemas import User
     # Deferred import: photo.py imports ProfilePhotoResponse from this module.

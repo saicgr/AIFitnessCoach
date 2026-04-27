@@ -24,7 +24,10 @@ class _CosmeticsGalleryScreenState extends ConsumerState<CosmeticsGalleryScreen>
   @override
   void initState() {
     super.initState();
-    Future.microtask(() => ref.read(cosmeticsProvider.notifier).load());
+    Future.microtask(() {
+      if (!mounted) return;
+      ref.read(cosmeticsProvider.notifier).load();
+    });
   }
 
   @override

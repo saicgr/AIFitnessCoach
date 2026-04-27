@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/providers/user_provider.dart';
 import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/models/gym_profile.dart';
 import '../../../data/providers/gym_profile_provider.dart';
@@ -52,6 +53,25 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
     _environmentPresets['commercial_gym']!['defaultEquipment'] as List,
   );
   List<Map<String, dynamic>> _equipmentDetails = []; // Equipment with weights
+
+  // Schedule (step 3): which weekdays this profile trains and which split.
+  // Mon=0..Sun=6 to match backend storage and existing day pickers.
+  List<int> _selectedWorkoutDays = [];
+  String? _selectedTrainingSplit; // null = let AI decide
+
+  // Day-of-week labels in Mon=0..Sun=6 order to match the backend index.
+  static const List<String> _dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+  // Training split options — must match backend `gym_profiles.training_split`
+  // enum and the EditGymProfileSheet picker so editing later doesn't churn.
+  static const List<Map<String, dynamic>> _trainingSplitOptions = [
+    {'id': 'nothing_structured', 'label': 'Let AI Decide', 'icon': Icons.auto_awesome_rounded, 'desc': 'Flexible'},
+    {'id': 'full_body', 'label': 'Full Body', 'icon': Icons.accessibility_new_rounded, 'desc': '3 days'},
+    {'id': 'upper_lower', 'label': 'Upper/Lower', 'icon': Icons.swap_vert_rounded, 'desc': '4 days'},
+    {'id': 'push_pull_legs', 'label': 'Push/Pull/Legs', 'icon': Icons.splitscreen_rounded, 'desc': '6 days'},
+    {'id': 'phul', 'label': 'PHUL', 'icon': Icons.flash_on_rounded, 'desc': '4 days'},
+    {'id': 'body_part', 'label': 'Body Part', 'icon': Icons.view_week_rounded, 'desc': '5-6 days'},
+  ];
 
   // Track follow-up dialogs already shown this session
   final _shownFollowUps = <String>{};
@@ -181,16 +201,29 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
     super.initState();
     // Pre-populate _shownFollowUps for follow-ups already satisfied by initial equipment
     _initShownFollowUps();
-    // Pre-select app theme color as default
+    // Pre-select app theme color as default + seed schedule from current profile
+    // (or user's account-level workout_days as fallback). This is just a sane
+    // default — the user can flip to "Custom" or another preset on step 3.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       final gymColor = ref.read(gymAccentColorProvider);
       final accentColor = gymColor ?? ref.read(accentColorProvider).getColor(true);
       final hex = '#${accentColor.toARGB32().toRadixString(16).substring(2).toUpperCase()}';
+
+      final activeProfile = ref.read(activeGymProfileProvider);
+      List<int> seedDays = activeProfile?.workoutDays ?? [];
+      String? seedSplit = activeProfile?.trainingSplit;
+      if (seedDays.isEmpty) {
+        // Fall back to account-level workout_days (User model)
+        final user = ref.read(currentUserProvider).valueOrNull;
+        seedDays = user?.workoutDays ?? [];
+      }
       setState(() {
         _selectedColor = hex;
         _usingAppTheme = true;
         _usingCustomColor = false;
+        _selectedWorkoutDays = List<int>.from(seedDays);
+        _selectedTrainingSplit = seedSplit;
       });
     });
   }
@@ -204,7 +237,21 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
   }
 
   void _nextStep() {
-    if (_currentStep < 2) {
+    // Validate the Schedule step (index 2): require at least one workout day
+    // before letting the user advance to the Style step. Without this guard,
+    // the new profile would be persisted with workout_days=[] which disables
+    // both day-dot indicators and the 14-day pre-generation.
+    if (_currentStep == 2 && _selectedWorkoutDays.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Pick at least one workout day for this gym.'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      HapticService.light();
+      return;
+    }
+    if (_currentStep < 3) {
       setState(() => _currentStep++);
       HapticService.light();
     } else {
@@ -421,6 +468,8 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
         workoutEnvironment: _selectedEnvironment,
         equipment: _selectedEquipment,
         equipmentDetails: _equipmentDetails,
+        workoutDays: List<int>.from(_selectedWorkoutDays),
+        trainingSplit: _selectedTrainingSplit,
       );
 
       await ref.read(gymProfilesProvider.notifier).createProfile(profile);
@@ -522,7 +571,7 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
                           ),
                         ),
                         Text(
-                          'Step ${_currentStep + 1} of 3',
+                          'Step ${_currentStep + 1} of 4',
                           style: TextStyle(
                             fontSize: 13,
                             color: textSecondary,
@@ -543,12 +592,12 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Row(
-                children: List.generate(3, (index) {
+                children: List.generate(4, (index) {
                   final isCompleted = index < _currentStep;
                   final isCurrent = index == _currentStep;
                   return Expanded(
                     child: Container(
-                      margin: EdgeInsets.only(right: index < 2 ? 4 : 0),
+                      margin: EdgeInsets.only(right: index < 3 ? 4 : 0),
                       height: 4,
                       decoration: BoxDecoration(
                         color: isCompleted || isCurrent
@@ -623,7 +672,7 @@ class _AddGymProfileSheetState extends ConsumerState<AddGymProfileSheet> {
                               ),
                             )
                           : Text(
-                              _currentStep == 2 ? 'Create Gym' : 'Next',
+                              _currentStep == 3 ? 'Create Gym' : 'Next',
                               style: const TextStyle(
                                 fontWeight: FontWeight.w600,
                               ),

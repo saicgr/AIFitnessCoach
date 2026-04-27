@@ -541,6 +541,93 @@ class NutritionNotifier extends StateNotifier<NutritionState> {
     }
   }
 
+  /// Optimistically remove a meal from the in-memory `todaySummary` so the
+  /// UI updates *instantly* on swipe-delete — no waiting for the network
+  /// round-trip + force-refresh chain that `deleteLog` does. Returns the
+  /// removed meal so callers can pass it back to [restoreLog] if the user
+  /// taps Undo. Returns null if the log isn't in `todaySummary` (e.g. it
+  /// was logged on another date and we're looking at a backfilled view).
+  FoodLog? optimisticRemoveLog(String logId) {
+    final summary = state.todaySummary;
+    if (summary == null) return null;
+    final idx = summary.meals.indexWhere((m) => m.id == logId);
+    if (idx < 0) return null;
+    final removed = summary.meals[idx];
+    final remaining = [...summary.meals]..removeAt(idx);
+    state = state.copyWith(
+      todaySummary: _recomputeTotals(summary, remaining),
+    );
+    return removed;
+  }
+
+  /// Re-insert a meal previously removed via [optimisticRemoveLog]. Used by
+  /// the Undo action on swipe-delete. Inserts at the position that keeps
+  /// the list sorted by `loggedAt` ascending.
+  void restoreLog(FoodLog meal) {
+    final summary = state.todaySummary;
+    if (summary == null) return;
+    final list = [...summary.meals];
+    int insertAt = list.length;
+    for (var i = 0; i < list.length; i++) {
+      if (list[i].loggedAt.isAfter(meal.loggedAt)) {
+        insertAt = i;
+        break;
+      }
+    }
+    list.insert(insertAt, meal);
+    state = state.copyWith(
+      todaySummary: _recomputeTotals(summary, list),
+    );
+  }
+
+  /// Fire-and-forget the network delete *after* the optimistic local
+  /// removal has already updated the UI. We still force-refresh on success
+  /// so any server-side derived fields (streak/adherence) line up with the
+  /// new totals; on failure we restore the local state and surface the
+  /// error.
+  Future<void> commitDeleteLog(String userId, String logId, FoodLog snapshot) async {
+    try {
+      await _repository.deleteFoodLog(logId);
+      // Refresh in the background — UI is already correct, this just keeps
+      // server-derived metadata (recent logs, weekly aggregates) in sync.
+      unawaited(loadRecentLogs(userId, forceRefresh: true));
+    } catch (e) {
+      // Roll back the optimistic removal if the network call fails so the
+      // user doesn't end up with a deleted-locally-but-still-on-server row.
+      restoreLog(snapshot);
+      state = state.copyWith(error: e.toString());
+    }
+  }
+
+  DailyNutritionSummary _recomputeTotals(
+    DailyNutritionSummary summary,
+    List<FoodLog> meals,
+  ) {
+    var cal = 0;
+    var protein = 0.0;
+    var carbs = 0.0;
+    var fat = 0.0;
+    var fiber = 0.0;
+    for (final m in meals) {
+      cal += m.totalCalories;
+      protein += m.proteinG;
+      carbs += m.carbsG;
+      fat += m.fatG;
+      fiber += m.fiberG ?? 0;
+    }
+    return DailyNutritionSummary(
+      date: summary.date,
+      totalCalories: cal,
+      totalProteinG: protein,
+      totalCarbsG: carbs,
+      totalFatG: fat,
+      totalFiberG: fiber,
+      mealCount: meals.length,
+      avgHealthScore: summary.avgHealthScore,
+      meals: meals,
+    );
+  }
+
   /// Update nutrition targets
   Future<void> updateTargets(
     String userId, {

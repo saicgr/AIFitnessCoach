@@ -785,7 +785,7 @@ async def get_day_detail(
         # Get workout log for completed workout
         log_response = safe_maybe_single(
             db.client.table("workout_logs").select(
-                "id, completed_at, total_time_seconds, sets_json, calories_burned"
+                "id, completed_at, total_time_seconds, sets_json"
             ).eq("workout_id", workout_id).maybe_single()
         )
         log_data = log_response.data or {}
@@ -909,7 +909,7 @@ async def get_day_detail(
             "difficulty": workout.get("difficulty"),
             "duration_minutes": duration_mins,
             "total_volume": round(total_volume, 1),
-            "calories_burned": log_data.get("calories_burned"),
+            "calories_burned": None,
             "muscles_worked": list(muscles_set),
             "exercises": exercises_data,
             "shared_images": shared_images if shared_images else None,

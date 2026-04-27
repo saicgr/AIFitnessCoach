@@ -655,7 +655,7 @@ class HealthService {
   // Write Workout / Meal / Hydration to Health
   // ============================================
 
-  /// Map FitWiz workout type string to HealthWorkoutActivityType (platform-aware).
+  /// Map Zealova workout type string to HealthWorkoutActivityType (platform-aware).
   static HealthWorkoutActivityType _mapWorkoutType(String fitWizType) {
     final type = fitWizType.toLowerCase().trim();
     switch (type) {
@@ -699,7 +699,7 @@ class HealthService {
     }
   }
 
-  /// Map FitWiz meal type string to health package MealType.
+  /// Map Zealova meal type string to health package MealType.
   static MealType _mapMealType(String fitWizMealType) {
     switch (fitWizMealType.toLowerCase().trim()) {
       case 'breakfast':

@@ -1,3 +1,3 @@
 """
-Core module tests for FitWiz backend.
+Core module tests for Zealova backend.
 """

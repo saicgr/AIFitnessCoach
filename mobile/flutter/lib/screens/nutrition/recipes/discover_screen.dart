@@ -1,4 +1,4 @@
-/// Discover screen — curated recipes the community (and FitWiz) has vetted.
+/// Discover screen — curated recipes the community (and Zealova) has vetted.
 ///
 /// Pushed from the "Discover" quick-action tile in [RecipesTab]. Shows a
 /// single-select category chip row + a cycling sort pill (Popular / Recent /

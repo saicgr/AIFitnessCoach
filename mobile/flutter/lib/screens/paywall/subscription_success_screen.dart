@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/theme/theme_colors.dart';
 import '../../core/services/posthog_service.dart';
+import 'package:fitwiz/core/constants/branding.dart';
 
 /// Full-screen celebration shown after subscription purchase is verified.
 /// Dark gym-aesthetic with animated confetti and bold typography.
@@ -180,7 +181,7 @@ class _SubscriptionSuccessScreenState
                           ),
                           const SizedBox(height: 24),
                           const Text(
-                            'Welcome to\nFitWiz Pro!',
+                            'Welcome to\n${Branding.appName} Pro!',
                             style: TextStyle(
                               fontSize: 38,
                               fontWeight: FontWeight.w800,

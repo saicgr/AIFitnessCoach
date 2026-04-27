@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Launch Android Emulator for FitWiz
+# Launch Android Emulator for Zealova
 # Usage: ./launch_android_emulator.sh [avd_name]
 # If no AVD name given, defaults to Medium_Phone_API_36.1
 # This script ONLY launches the emulator — it does not build or run the app.
@@ -12,7 +12,7 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m'
 
-echo -e "${GREEN}=== FitWiz Android Emulator Launcher ===${NC}"
+echo -e "${GREEN}=== Zealova Android Emulator Launcher ===${NC}"
 
 ADB_PATH="$HOME/Library/Android/sdk/platform-tools/adb"
 EMULATOR_PATH="$HOME/Library/Android/sdk/emulator/emulator"

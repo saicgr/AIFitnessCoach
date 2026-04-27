@@ -8,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/services/posthog_service.dart';
 import '../../data/services/notification_service.dart';
+import 'package:fitwiz/core/constants/branding.dart';
 
 /// Pre-permission screen explaining *why* we use notifications, shown once
 /// after paywall / onboarding and before landing on /home. The OS prompt only
@@ -124,7 +125,7 @@ class _NotificationPrimeScreenState
                         ).animate().fadeIn(delay: 150.ms, duration: 400.ms),
                         const SizedBox(height: 12),
                         Text(
-                          'Turn on notifications so FitWiz can coach you when it matters most.',
+                          'Turn on notifications so ${Branding.appName} can coach you when it matters most.',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: 15,

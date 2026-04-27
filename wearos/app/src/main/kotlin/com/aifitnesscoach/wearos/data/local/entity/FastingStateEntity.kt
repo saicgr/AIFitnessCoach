@@ -1,11 +1,11 @@
-package com.fitwiz.wearos.data.local.entity
+package com.aifitnesscoach.wearos.data.local.entity
 
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
-import com.fitwiz.wearos.data.models.FastingProtocol
-import com.fitwiz.wearos.data.models.FastingStatus
-import com.fitwiz.wearos.data.models.WearFastingSession
+import com.aifitnesscoach.wearos.data.models.FastingProtocol
+import com.aifitnesscoach.wearos.data.models.FastingStatus
+import com.aifitnesscoach.wearos.data.models.WearFastingSession
 
 /**
  * Room entity for fasting state - only one active at a time

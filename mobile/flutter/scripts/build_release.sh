@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Canonical release build for the FitWiz consumer flavor.
+# Canonical release build for the Zealova consumer flavor.
 #
 # Why this exists:
 #   - RevenueCat keys MUST be passed via --dart-define at build time.
@@ -105,7 +105,7 @@ fi
 export KEYSTORE_PATH="$RESOLVED_KEYSTORE"
 export KEYSTORE_PASSWORD KEY_ALIAS KEY_PASSWORD
 
-echo "== FitWiz release build =="
+echo "== Zealova release build =="
 echo "  flutter root : $FLUTTER_ROOT"
 echo "  keystore     : $KEYSTORE_PATH"
 echo "  alias        : $KEY_ALIAS"

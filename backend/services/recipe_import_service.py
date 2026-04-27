@@ -22,6 +22,7 @@ from typing import AsyncIterator, Dict, List, Optional
 
 import httpx
 
+from core import branding
 from core.parse_utils import safe_int
 from models.recipe import (
     CookingMethod,
@@ -213,7 +214,7 @@ class RecipeImportService:
                 resp = await client.get(
                     url,
                     follow_redirects=True,
-                    headers={"User-Agent": "FitWiz Recipe Importer"},
+                    headers={"User-Agent": f"{branding.APP_NAME} Recipe Importer"},
                 )
                 resp.raise_for_status()
                 html = resp.text

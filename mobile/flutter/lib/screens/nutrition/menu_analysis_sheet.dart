@@ -29,6 +29,9 @@ import 'widgets/menu_analysis/diet_heuristics.dart';
 import 'widgets/menu_analysis/menu_filter_sheet.dart';
 import 'widgets/menu_analysis/menu_filter_state.dart';
 import 'widgets/menu_analysis/sort_options_sheet.dart';
+import '../../widgets/tooltips/tooltips.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
 import 'widgets/menu_analysis/recommendation_explain_sheet.dart';
 
 /// Streaming controller retained from v1 so existing callers don't break.
@@ -150,6 +153,22 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
   bool _logged = false;
   bool _bookmarking = false;
 
+  // Spotlight targets for the first-run tip tour. The tour rings each
+  // anchored widget so the (otherwise unfamiliar) Menu Analysis controls
+  // — quick sort pills, filter button, recommended block, and the
+  // multi-select footer — are introduced one tap at a time.
+  // Spotlight target keys for `menu_analysis_v1` now live in
+  // `widgets/tooltips/tooltip_anchors.dart`. Local getters kept so the
+  // existing `key: _xKey` wiring inside the sheet body stays readable.
+  GlobalKey get _sortRowKey => TooltipAnchors.menuAnalysisSortRow;
+  GlobalKey get _filterButtonKey => TooltipAnchors.menuAnalysisFilter;
+  GlobalKey get _recommendedKey => TooltipAnchors.menuAnalysisRecommended;
+  GlobalKey get _selectFooterKey => TooltipAnchors.menuAnalysisSelectFooter;
+
+  // Persisted per-user sort preference. Reload on open so the user doesn't
+  // have to redo "Protein high → Carbs low" every time they scan a menu.
+  static const _sortPrefsKey = 'menu_analysis_sort_v1';
+
   @override
   void initState() {
     super.initState();
@@ -160,6 +179,61 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
     WidgetsBinding.instance.addPostFrameCallback((_) => _initAllergenDefault());
     widget.streamingController?.addListener(_onStreamingUpdate);
     _refreshRecommendation();
+    _loadPersistedSort();
+  }
+
+  Future<void> _loadPersistedSort() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString(_sortPrefsKey);
+      if (raw == null || raw.isEmpty) return;
+      final decoded = jsonDecode(raw);
+      if (decoded is! List) return;
+      final specs = <SortSpec>[];
+      for (final entry in decoded) {
+        if (entry is! Map) continue;
+        final fieldName = entry['field'];
+        final dirName = entry['direction'];
+        if (fieldName is! String || dirName is! String) continue;
+        final field = SortField.values
+            .where((f) => f.name == fieldName)
+            .firstOrNull;
+        final direction = SortDirection.values
+            .where((d) => d.name == dirName)
+            .firstOrNull;
+        if (field == null || direction == null) continue;
+        specs.add(SortSpec(field, direction));
+        if (specs.length >= kMaxSortDepth) break;
+      }
+      if (!mounted || specs.isEmpty) return;
+      setState(() => _sort = SortSpecList(specs));
+    } catch (_) {
+      // Persistence is best-effort — never block the menu render.
+    }
+  }
+
+  Future<void> _persistSort(SortSpecList sort) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (sort.isEmpty) {
+        await prefs.remove(_sortPrefsKey);
+        return;
+      }
+      final encoded = jsonEncode([
+        for (final s in sort.specs)
+          {'field': s.field.name, 'direction': s.direction.name}
+      ]);
+      await prefs.setString(_sortPrefsKey, encoded);
+    } catch (_) {
+      // ignore — see _loadPersistedSort
+    }
+  }
+
+  /// Single source of truth for sort mutations. Keeps state + persistence
+  /// in sync so the user's choice survives sheet close + restaurant scan.
+  void _setSort(SortSpecList next) {
+    setState(() => _sort = next);
+    _persistSort(next);
   }
 
   @override
@@ -255,6 +329,37 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
 
   // ───────────────────────── filtered + sorted ─────────────────────────
 
+  /// When the filter result is empty, look for the most likely cause and
+  /// return a one-line hint. Common culprit: the user picked a "What are
+  /// you in the mood for?" preset (Gut-friendly, Blood-sugar friendly,
+  /// Anti-inflammatory, Whole foods) but Gemini didn't tag the menu with
+  /// the relevant field, so every dish gets dropped. Returning the
+  /// missing-signal hint stops users from blaming the filter itself.
+  String? _diagnoseEmptyResult() {
+    if (_items.isEmpty) return null;
+    final presets = _filter.smartPresets;
+    if (presets.isEmpty) return null;
+    bool hasAny(bool Function(MenuItem) test) => _items.any(test);
+
+    if (presets.contains('gut_friendly') &&
+        !hasAny((i) => i.fodmapRating != null)) {
+      return 'Gemini didn’t tag this menu with FODMAP data, so the Gut-friendly filter has nothing to keep.';
+    }
+    if (presets.contains('blood_sugar') &&
+        !hasAny((i) => i.glycemicLoad != null)) {
+      return 'No glycemic-load data on this menu — the Blood-sugar filter can’t identify safe picks.';
+    }
+    if (presets.contains('anti_inflammatory') &&
+        !hasAny((i) => i.inflammationScore != null)) {
+      return 'No inflammation scoring on this menu yet — try removing the Anti-inflammatory filter.';
+    }
+    if (presets.contains('clean') &&
+        !hasAny((i) => i.isUltraProcessed != null)) {
+      return 'No ultra-processed labeling on this menu — the Whole foods filter can’t tell.';
+    }
+    return null;
+  }
+
   List<MenuItem> get _filteredItems {
     final prefs = ref.read(nutritionPreferencesProvider).preferences;
     final profile = UserAllergenProfile(
@@ -280,12 +385,13 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
     return sorted;
   }
 
-  /// Switch to a single flat "Results" list only when the user is narrowing
-  /// the menu via filters/search. Sort alone keeps the section layout —
-  /// sort is applied within each section, and the Recommended block stays
-  /// visible so the user doesn't lose their curated picks just because
-  /// they asked to re-rank by Protein.
-  bool get _showFlatList => _filter.hasAnyFilter;
+  /// Switch to a single flat "Results" list whenever the user is narrowing
+  /// OR re-ranking the menu — so sort applies across the whole menu instead
+  /// of within sections. Users expect "Sort by Protein" to surface the
+  /// highest-protein dish at the top regardless of whether it's a Main or
+  /// a Side; the prior section-bound behaviour buried it under the section
+  /// header. Recommended stays anchored above this list.
+  bool get _showFlatList => _filter.hasAnyFilter || !_sort.isEmpty;
 
   // ───────────────────────── totals ─────────────────────────
 
@@ -438,32 +544,40 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
       // Island / notch on top while keeping a tall working surface. The
       // drag handle and glass blur are preserved at this height.
       maxHeightFraction: 0.92,
-      child: Column(
+      child: Stack(
         children: [
-          _header(colors),
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 14),
-              children: [
-                _budgetRings(colors),
-                if (widget.menuPhotoUrls.isNotEmpty) _photoStrip(),
-                _countsLine(colors),
-                _searchAndControls(colors),
-                if (_filter.hasAnyFilter) _activeFilterChips(),
-                if (_recommendation != null &&
-                    _recommendation!.picks.isNotEmpty &&
-                    !_showFlatList)
-                  _recommendedSection(colors),
-                const SizedBox(height: 6),
-                if (_showFlatList)
-                  _flatList(colors)
-                else
-                  ..._itemsBySection.entries.map((e) => _sectionBlock(e.key, e.value, colors)),
-                const SizedBox(height: 80),
-              ],
-            ),
+          Column(
+            children: [
+              _header(colors),
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.symmetric(horizontal: 14),
+                  children: [
+                    _budgetRings(colors),
+                    if (widget.menuPhotoUrls.isNotEmpty) _photoStrip(),
+                    _countsLine(colors),
+                    _searchAndControls(colors),
+                    if (_filter.hasAnyFilter) _activeFilterChips(),
+                    if (_recommendation != null &&
+                        _recommendation!.picks.isNotEmpty &&
+                        !_showFlatList)
+                      _recommendedSection(colors),
+                    const SizedBox(height: 6),
+                    if (_showFlatList)
+                      _flatList(colors)
+                    else
+                      ..._itemsBySection.entries.map(
+                          (e) => _sectionBlock(e.key, e.value, colors)),
+                    const SizedBox(height: 80),
+                  ],
+                ),
+              ),
+              _bottomBar(colors),
+            ],
           ),
-          _bottomBar(colors),
+          // First-run spotlight tour. Anchors + copy live in
+          // `widgets/tooltips/tours/menu_analysis_tour.dart`.
+          MenuAnalysisTour.overlay(),
         ],
       ),
     );
@@ -660,32 +774,195 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
                       ),
               ),
               const SizedBox(width: 8),
-              Material(
-                color: AppColors.orange.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(12),
-                child: InkWell(
-                  onTap: _openFilterSheet,
+              KeyedSubtree(
+                key: _filterButtonKey,
+                child: Material(
+                  color: AppColors.orange.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(12),
-                  child: Container(
-                    padding: const EdgeInsets.all(10),
-                    child: Icon(Icons.tune, size: 20, color: AppColors.orange),
+                  child: InkWell(
+                    onTap: _openFilterSheet,
+                    borderRadius: BorderRadius.circular(12),
+                    child: Container(
+                      padding: const EdgeInsets.all(10),
+                      child: Icon(Icons.tune,
+                          size: 20, color: AppColors.orange),
+                    ),
                   ),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 6),
-          // Single Sort button — opens SortOptionsSheet. Replaces the old
-          // cramped inline strip of 8+ sort pills that didn't scale when
-          // new health-signal sort dimensions landed.
-          _sortButton(colors),
+          // Quick-sort pills + "More…" entry point. Pills cover the four
+          // dimensions that drive almost every sort the user actually
+          // wants on a menu (Protein high, Carbs low, Fat low, least
+          // Inflammation); everything else stays one tap away in the
+          // full sort sheet. Tapping the same pill cycles direction
+          // (default → reversed → off) via SortSpecList.tap.
+          KeyedSubtree(
+            key: _sortRowKey,
+            child: _quickSortRow(colors),
+          ),
         ],
+      ),
+    );
+  }
+
+  /// Horizontal-scrolling row of quick-sort pills. Each pill applies a
+  /// single-field sort via [SortSpecList.tap]; that helper cycles
+  /// off → default → reversed → off so the user can disable a sort with
+  /// repeat taps. The right-most "More…" pill opens the full sheet for
+  /// multi-sort + every other dimension (Calories, Health, Blood sugar,
+  /// Added sugar, Ultra-processed, Price, Weight).
+  Widget _quickSortRow(ThemeColors colors) {
+    const quickFields = [
+      SortField.protein,
+      SortField.carbs,
+      SortField.fat,
+      SortField.inflammation,
+    ];
+    final extraCount = _sort.specs
+        .where((s) => !quickFields.contains(s.field))
+        .length;
+    return SizedBox(
+      height: 36,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        padding: EdgeInsets.zero,
+        children: [
+          // Leading "Sort:" label so the pills read as a sort affordance
+          // rather than a generic chip filter row.
+          Padding(
+            padding: const EdgeInsets.only(right: 10),
+            child: Center(
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.swap_vert_rounded,
+                      size: 16, color: colors.textSecondary),
+                  const SizedBox(width: 4),
+                  Text(
+                    'Sort:',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: colors.textSecondary,
+                      letterSpacing: 0.2,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          for (final field in quickFields) ...[
+            _quickSortPill(field, colors),
+            const SizedBox(width: 8),
+          ],
+          _moreSortPill(colors, extraCount: extraCount),
+        ],
+      ),
+    );
+  }
+
+  Widget _quickSortPill(SortField field, ThemeColors colors) {
+    final direction = _sort.directionOf(field);
+    final isPrimary = _sort.specs.isNotEmpty && _sort.specs.first.field == field;
+    final active = direction != null;
+    final IconData? arrow = direction == null
+        ? null
+        : (direction == SortDirection.asc
+            ? Icons.arrow_upward_rounded
+            : Icons.arrow_downward_rounded);
+    return Material(
+      color: active
+          ? AppColors.orange.withValues(alpha: 0.15)
+          : Colors.white.withValues(alpha: 0.05),
+      borderRadius: BorderRadius.circular(10),
+      child: InkWell(
+        onTap: () {
+          HapticFeedback.selectionClick();
+          _setSort(_sort.tap(field));
+        },
+        borderRadius: BorderRadius.circular(10),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(10),
+            border: active
+                ? Border.all(
+                    color: AppColors.orange.withValues(
+                        alpha: isPrimary ? 0.55 : 0.3),
+                    width: isPrimary ? 1.2 : 1)
+                : null,
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                field.label,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: active ? FontWeight.w700 : FontWeight.w600,
+                  color: active ? AppColors.orange : colors.textSecondary,
+                ),
+              ),
+              if (arrow != null) ...[
+                const SizedBox(width: 4),
+                Icon(arrow, size: 12, color: AppColors.orange),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _moreSortPill(ThemeColors colors, {required int extraCount}) {
+    final highlighted = extraCount > 0;
+    return Material(
+      color: highlighted
+          ? AppColors.orange.withValues(alpha: 0.15)
+          : Colors.white.withValues(alpha: 0.05),
+      borderRadius: BorderRadius.circular(10),
+      child: InkWell(
+        onTap: _openSortSheet,
+        borderRadius: BorderRadius.circular(10),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(10),
+            border: highlighted
+                ? Border.all(color: AppColors.orange.withValues(alpha: 0.4))
+                : null,
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.tune_rounded,
+                  size: 14,
+                  color:
+                      highlighted ? AppColors.orange : colors.textSecondary),
+              const SizedBox(width: 6),
+              Text(
+                highlighted ? 'More (+$extraCount)' : 'More…',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color:
+                      highlighted ? AppColors.orange : colors.textSecondary,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
 
   /// Compact button that summarises the current sort (primary field +
   /// direction + tiebreaker count) and opens the full sort sheet on tap.
+  // ignore: unused_element
   Widget _sortButton(ThemeColors colors) {
     final hasSort = !_sort.isEmpty;
     final primary = hasSort ? _sort.specs.first : null;
@@ -755,7 +1032,7 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
   Future<void> _openSortSheet() async {
     HapticFeedback.lightImpact();
     final result = await SortOptionsSheet.show(context, initial: _sort);
-    if (result != null) setState(() => _sort = result);
+    if (result != null) _setSort(result);
   }
 
   Widget _activeFilterChips() {
@@ -852,17 +1129,20 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
 
   Widget _recommendedSection(ThemeColors colors) {
     final rec = _recommendation!;
-    return _collapsibleSection(
-      title: 'Recommended for you',
-      icon: Icons.auto_awesome,
-      titleColor: AppColors.orange,
-      subtitleCount: rec.picks.length,
-      expanded: _showRecommended,
-      onToggle: () => setState(() => _showRecommended = !_showRecommended),
-      children: [
-        for (int i = 0; i < rec.picks.length; i++) _recommendedCard(rec.picks[i], i + 1, rec.picks.length),
-      ],
-      colors: colors,
+    return KeyedSubtree(
+      key: _recommendedKey,
+      child: _collapsibleSection(
+        title: 'Recommended for you',
+        icon: Icons.auto_awesome,
+        titleColor: AppColors.orange,
+        subtitleCount: rec.picks.length,
+        expanded: _showRecommended,
+        onToggle: () => setState(() => _showRecommended = !_showRecommended),
+        children: [
+          for (int i = 0; i < rec.picks.length; i++) _recommendedCard(rec.picks[i], i + 1, rec.picks.length),
+        ],
+        colors: colors,
+      ),
     );
   }
 
@@ -956,12 +1236,53 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
   Widget _flatList(ThemeColors colors) {
     final items = _filteredItems;
     if (items.isEmpty) {
+      // Diagnose which preset(s) are likely the culprit so the user
+      // doesn't have to bisect their filter selection by hand. We surface
+      // a hint when the chosen preset depends on a Gemini-supplied field
+      // the menu doesn't carry (FODMAP, GL, inflammation, ultra-processed).
+      final missingDataHint = _diagnoseEmptyResult();
       return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 32),
-        child: Center(child: Text(
-          'No dishes match your filters',
-          style: TextStyle(color: colors.textMuted),
-        )),
+        padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Icon(Icons.filter_alt_off_rounded,
+                size: 32, color: colors.textMuted),
+            const SizedBox(height: 8),
+            Text(
+              'No dishes match your filters',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: colors.textPrimary,
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            if (missingDataHint != null) ...[
+              const SizedBox(height: 4),
+              Text(
+                missingDataHint,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: colors.textMuted,
+                  fontSize: 12,
+                  height: 1.35,
+                ),
+              ),
+            ],
+            const SizedBox(height: 12),
+            TextButton.icon(
+              onPressed: () =>
+                  setState(() => _filter = MenuFilterState.empty),
+              icon: const Icon(Icons.refresh_rounded, size: 16),
+              label: const Text('Clear filters'),
+              style: TextButton.styleFrom(
+                foregroundColor: AppColors.orange,
+              ),
+            ),
+          ],
+        ),
       );
     }
     return _collapsibleSection(
@@ -1092,19 +1413,22 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
             ),
             const SizedBox(height: 6),
           ],
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton.icon(
-              icon: Icon(_logged ? Icons.check : Icons.add_circle_outline),
-              label: Text(_logged
-                  ? 'Logged'
-                  : hasSelection
-                      ? 'Log ${_selected.length} item${_selected.length == 1 ? '' : 's'}'
-                      : 'Select dishes to log'),
-              onPressed: (_selected.isEmpty || _logged) ? null : _handleLog,
-              style: FilledButton.styleFrom(
-                backgroundColor: AppColors.orange,
-                padding: const EdgeInsets.symmetric(vertical: 12),
+          KeyedSubtree(
+            key: _selectFooterKey,
+            child: SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                icon: Icon(_logged ? Icons.check : Icons.add_circle_outline),
+                label: Text(_logged
+                    ? 'Logged'
+                    : hasSelection
+                        ? 'Log ${_selected.length} item${_selected.length == 1 ? '' : 's'}'
+                        : 'Select dishes to log'),
+                onPressed: (_selected.isEmpty || _logged) ? null : _handleLog,
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.orange,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
               ),
             ),
           ),

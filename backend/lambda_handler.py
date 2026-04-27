@@ -1,5 +1,5 @@
 """
-Lambda handler for FitWiz API.
+Lambda handler for Zealova API.
 Uses Mangum to wrap FastAPI for AWS Lambda compatibility.
 """
 from mangum import Mangum

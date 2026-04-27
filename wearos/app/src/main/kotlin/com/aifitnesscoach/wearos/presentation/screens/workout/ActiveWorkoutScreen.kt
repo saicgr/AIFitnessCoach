@@ -1,4 +1,4 @@
-package com.fitwiz.wearos.presentation.screens.workout
+package com.aifitnesscoach.wearos.presentation.screens.workout
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
@@ -16,10 +16,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.wear.compose.material.*
-import com.fitwiz.wearos.data.models.WearExercise
-import com.fitwiz.wearos.presentation.theme.FitWizColors
-import com.fitwiz.wearos.presentation.theme.FitWizTypography
-import com.fitwiz.wearos.presentation.viewmodel.WorkoutViewModel
+import com.aifitnesscoach.wearos.data.models.WearExercise
+import com.aifitnesscoach.wearos.presentation.theme.AppColors
+import com.aifitnesscoach.wearos.presentation.theme.AppTypography
+import com.aifitnesscoach.wearos.presentation.viewmodel.WorkoutViewModel
 
 /**
  * Active Workout Screen - Shows current exercise with swipe navigation
@@ -119,10 +119,10 @@ fun ActiveWorkoutScreen(
                             .fillMaxWidth(0.9f)
                             .height(48.dp),
                         colors = ButtonDefaults.buttonColors(
-                            backgroundColor = FitWizColors.Success
+                            backgroundColor = AppColors.Success
                         )
                     ) {
-                        Text("FINISH", style = FitWizTypography.labelLarge)
+                        Text("FINISH", style = AppTypography.labelLarge)
                     }
                 } else if (isExerciseComplete) {
                     // Next exercise button
@@ -132,10 +132,10 @@ fun ActiveWorkoutScreen(
                             .fillMaxWidth(0.9f)
                             .height(48.dp),
                         colors = ButtonDefaults.buttonColors(
-                            backgroundColor = FitWizColors.Secondary
+                            backgroundColor = AppColors.Secondary
                         )
                     ) {
-                        Text("NEXT", style = FitWizTypography.labelLarge)
+                        Text("NEXT", style = AppTypography.labelLarge)
                     }
                 } else {
                     // Complete set button
@@ -145,10 +145,10 @@ fun ActiveWorkoutScreen(
                             .fillMaxWidth(0.9f)
                             .height(48.dp),
                         colors = ButtonDefaults.buttonColors(
-                            backgroundColor = FitWizColors.Primary
+                            backgroundColor = AppColors.Primary
                         )
                     ) {
-                        Text("COMPLETE SET", style = FitWizTypography.labelLarge)
+                        Text("COMPLETE SET", style = AppTypography.labelLarge)
                     }
                 }
 
@@ -160,15 +160,15 @@ fun ActiveWorkoutScreen(
                     if (!viewModel.isFirstExercise()) {
                         Text(
                             text = "< Prev",
-                            style = FitWizTypography.labelSmall,
-                            color = FitWizColors.TextMuted
+                            style = AppTypography.labelSmall,
+                            color = AppColors.TextMuted
                         )
                     }
                     if (!viewModel.isLastExercise()) {
                         Text(
                             text = "Next >",
-                            style = FitWizTypography.labelSmall,
-                            color = FitWizColors.TextMuted
+                            style = AppTypography.labelSmall,
+                            color = AppColors.TextMuted
                         )
                     }
                 }
@@ -186,14 +186,14 @@ private fun HeartRateIndicator(bpm: Int?) {
     ) {
         Text(
             text = "HR",
-            style = FitWizTypography.bodySmall,
-            color = FitWizColors.HeartRate
+            style = AppTypography.bodySmall,
+            color = AppColors.HeartRate
         )
         Spacer(modifier = Modifier.width(4.dp))
         Text(
             text = if (bpm != null) "$bpm BPM" else "-- BPM",
-            style = FitWizTypography.bodySmall,
-            color = FitWizColors.HeartRate
+            style = AppTypography.bodySmall,
+            color = AppColors.HeartRate
         )
     }
 }
@@ -211,8 +211,8 @@ private fun ExerciseProgress(
         // Exercise progress text
         Text(
             text = "Exercise ${currentIndex + 1} of $totalExercises",
-            style = FitWizTypography.labelSmall,
-            color = FitWizColors.TextMuted
+            style = AppTypography.labelSmall,
+            color = AppColors.TextMuted
         )
 
         Spacer(modifier = Modifier.height(4.dp))
@@ -229,8 +229,8 @@ private fun ExerciseProgress(
                         .padding(2.dp)
                         .clip(CircleShape)
                         .background(
-                            if (index < completedSets) FitWizColors.Success
-                            else FitWizColors.ProgressBackground
+                            if (index < completedSets) AppColors.Success
+                            else AppColors.ProgressBackground
                         )
                 )
             }
@@ -238,8 +238,8 @@ private fun ExerciseProgress(
 
         Text(
             text = "Set ${completedSets + 1} of $totalSets",
-            style = FitWizTypography.labelSmall,
-            color = FitWizColors.TextSecondary
+            style = AppTypography.labelSmall,
+            color = AppColors.TextSecondary
         )
     }
 }
@@ -253,15 +253,15 @@ private fun ExerciseCard(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
-            .background(FitWizColors.Surface)
+            .background(AppColors.Surface)
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         // Exercise name
         Text(
             text = exercise.name,
-            style = FitWizTypography.titleMedium,
-            color = FitWizColors.TextPrimary,
+            style = AppTypography.titleMedium,
+            color = AppColors.TextPrimary,
             textAlign = TextAlign.Center,
             maxLines = 2,
             overflow = TextOverflow.Ellipsis
@@ -272,16 +272,16 @@ private fun ExerciseCard(
         // Target reps
         Text(
             text = "${exercise.targetReps} reps",
-            style = FitWizTypography.displaySmall,
-            color = FitWizColors.Primary
+            style = AppTypography.displaySmall,
+            color = AppColors.Primary
         )
 
         // Suggested weight
         exercise.suggestedWeight?.let { weight ->
             Text(
                 text = "@ ${weight.toInt()} kg",
-                style = FitWizTypography.bodyMedium,
-                color = FitWizColors.TextSecondary
+                style = AppTypography.bodyMedium,
+                color = AppColors.TextSecondary
             )
         }
 
@@ -291,13 +291,13 @@ private fun ExerciseCard(
         Box(
             modifier = Modifier
                 .clip(RoundedCornerShape(8.dp))
-                .background(FitWizColors.Primary.copy(alpha = 0.2f))
+                .background(AppColors.Primary.copy(alpha = 0.2f))
                 .padding(horizontal = 8.dp, vertical = 4.dp)
         ) {
             Text(
                 text = exercise.muscleGroup,
-                style = FitWizTypography.labelSmall,
-                color = FitWizColors.Primary
+                style = AppTypography.labelSmall,
+                color = AppColors.Primary
             )
         }
     }

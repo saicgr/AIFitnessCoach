@@ -419,6 +419,13 @@ class PerformanceComparisonService:
             rpes = [s.get('rpe') for s in completed_sets if s.get('rpe') is not None]
             rirs = [s.get('rir') for s in completed_sets if s.get('rir') is not None]
 
+            # Cast integer-typed columns explicitly. Reps/seconds can arrive
+            # as floats (e.g. 27.0) from the client when set rows roundtrip
+            # through JS — Postgres `integer` rejects those with code 22P02.
+            best_reps_raw = max(
+                (s.get('reps', 0) or s.get('reps_completed', 0) for s in completed_sets),
+                default=None,
+            )
             exercise_summaries.append({
                 'user_id': user_id,
                 'workout_log_id': workout_log_id,
@@ -426,15 +433,15 @@ class PerformanceComparisonService:
                 'exercise_name': ex.get('exercise_name', ex.get('name', '')),
                 'exercise_id': ex.get('exercise_id'),
                 'total_sets': len(completed_sets),
-                'total_reps': total_reps,
+                'total_reps': int(total_reps) if total_reps is not None else 0,
                 'total_volume_kg': round(total_volume, 2),
                 'max_weight_kg': round(max_weight, 2) if max_weight else None,
                 'avg_weight_kg': round(avg_weight, 2) if avg_weight else None,
-                'best_set_reps': max((s.get('reps', 0) or s.get('reps_completed', 0) for s in completed_sets), default=None),
+                'best_set_reps': int(best_reps_raw) if best_reps_raw is not None else None,
                 'best_set_weight_kg': max_weight,
                 'estimated_1rm_kg': round(estimated_1rm, 2) if estimated_1rm else None,
-                'total_time_seconds': total_time,
-                'best_time_seconds': best_time,
+                'total_time_seconds': int(total_time) if total_time is not None else None,
+                'best_time_seconds': int(best_time) if best_time is not None else None,
                 'avg_time_seconds': round(avg_time, 2) if avg_time else None,
                 'avg_rpe': round(sum(rpes) / len(rpes), 1) if rpes else None,
                 'avg_rir': round(sum(rirs) / len(rirs), 1) if rirs else None,

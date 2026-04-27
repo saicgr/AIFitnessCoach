@@ -982,7 +982,13 @@ async def get_personal_records(
     # Calculate statistics
     stats = pr_service.get_pr_statistics(all_prs, period_days)
 
-    # Get recent PRs
+    # Get recent PRs — only strength PRs (cardio/distance PRs have null weight/reps)
+    strength_prs = [
+        pr for pr in all_prs
+        if pr.get("weight_kg") is not None
+        and pr.get("reps") is not None
+        and pr.get("estimated_1rm_kg") is not None
+    ]
     recent_prs = [
         PersonalRecordResponse(
             id=pr["id"],
@@ -1003,9 +1009,9 @@ async def get_personal_records(
             improvement_percent=float(pr["improvement_percent"]) if pr.get("improvement_percent") else None,
             is_all_time_pr=pr.get("is_all_time_pr", True),
             celebration_message=pr.get("celebration_message"),
-            created_at=datetime.fromisoformat(pr["created_at"]),
+            created_at=datetime.fromisoformat(pr["created_at"]) if pr.get("created_at") else datetime.fromisoformat(pr["achieved_at"]),
         )
-        for pr in all_prs[:limit]
+        for pr in strength_prs[:limit]
     ]
 
     return PRStatsResponse(

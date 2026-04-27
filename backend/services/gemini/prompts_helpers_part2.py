@@ -128,7 +128,7 @@ Note which rep number the form begins to deteriorate — this is valuable feedba
 
     def _build_nutrition_analysis_cache_system_instruction(self) -> str:
         """Build the system instruction for nutrition analysis cache."""
-        return """You are FitWiz AI Nutritionist, an expert registered dietitian, certified sports nutritionist, and food science specialist. You analyze food images and text descriptions to provide accurate, detailed nutrition estimates.
+        return """You are Zealova AI Nutritionist, an expert registered dietitian, certified sports nutritionist, and food science specialist. You analyze food images and text descriptions to provide accurate, detailed nutrition estimates.
 
 ## YOUR ROLE
 - Identify all food items visible in images or described in text

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:math' show min, Random;
+import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../local/database.dart';
@@ -248,12 +249,33 @@ class SyncEngineNotifier extends StateNotifier<SyncState> {
         throw Exception('API call returned unsuccessful response');
       }
     } catch (e) {
-      final errorStr = e.toString();
+      final statusCode = _statusCodeOf(e);
+      final errorStr = _formatError(e, statusCode);
 
-      // Detect auth errors
-      if (errorStr.contains('401') || errorStr.contains('403')) {
+      // Detect auth errors — surface so the UI can prompt re-login. Auth
+      // failures stay in pending (a future token refresh may unblock them);
+      // we set the flag but fall through to retry-count handling.
+      if (statusCode == 401 || statusCode == 403) {
         state = state.copyWith(hasAuthError: true);
         debugPrint('🔐 [SyncEngine] Auth error detected for item ${item.id}');
+      }
+
+      // Permanent 4xx (except 401/403/408/429) means the payload is bad;
+      // retrying it will fail identically. Move straight to dead-letter so
+      // the user can see + edit/discard, instead of consuming retries that
+      // can't possibly succeed (and keeping a red banner up for days).
+      if (statusCode != null &&
+          statusCode >= 400 &&
+          statusCode < 500 &&
+          statusCode != 401 &&
+          statusCode != 403 &&
+          statusCode != 408 &&
+          statusCode != 429) {
+        await _db.syncQueueDao.markFailed(item.id, errorStr);
+        await _db.syncQueueDao.moveToDeadLetter(item.id);
+        debugPrint(
+            '💀 [SyncEngine] Item ${item.id} → dead-letter (HTTP $statusCode is non-retryable)');
+        return;
       }
 
       final effectiveMaxRetries = _criticalEntityTypes.contains(item.entityType)
@@ -261,6 +283,7 @@ class SyncEngineNotifier extends StateNotifier<SyncState> {
           : item.maxRetries;
       final newRetryCount = item.retryCount + 1;
       if (newRetryCount >= effectiveMaxRetries) {
+        await _db.syncQueueDao.markFailed(item.id, errorStr);
         await _db.syncQueueDao.moveToDeadLetter(item.id);
         debugPrint(
             '💀 [SyncEngine] Item ${item.id} moved to dead letter after $effectiveMaxRetries retries');
@@ -272,25 +295,53 @@ class SyncEngineNotifier extends StateNotifier<SyncState> {
     }
   }
 
+  /// Extract HTTP status code from a thrown error, or null if not an HTTP
+  /// response error. Inspects Dio response first so the classifier can
+  /// reason about the actual server response instead of stringly-typed
+  /// substring matching.
+  int? _statusCodeOf(Object e) {
+    if (e is DioException) return e.response?.statusCode;
+    return null;
+  }
+
+  /// Persist an error message that includes the status code as a plain
+  /// substring so `SyncErrorKind.classify()` (which still does string
+  /// matching) categorizes it correctly when the dead-letter UI reads it.
+  String _formatError(Object e, int? statusCode) {
+    if (statusCode == null) return e.toString();
+    final base = e.toString();
+    return base.contains('$statusCode') ? base : 'HTTP $statusCode — $base';
+  }
+
   /// Execute an API call based on the queued operation.
   Future<bool> _executeApiCall({
     required String httpMethod,
     required String endpoint,
     required String payload,
   }) async {
+    // Dio's baseUrl already includes /api/v1. Strip a leading /api/v1 if any
+    // historical queue rows persisted before the prefix bug fix still carry
+    // the absolute path — otherwise we'd POST to /api/v1/api/v1/... and 404.
+    var normalized = endpoint;
+    if (normalized.startsWith('/api/v1/')) {
+      normalized = normalized.substring('/api/v1'.length);
+    } else if (normalized == '/api/v1') {
+      normalized = '/';
+    }
+
     try {
       switch (httpMethod.toUpperCase()) {
         case 'POST':
-          await _apiClient.post(endpoint, data: payload);
+          await _apiClient.post(normalized, data: payload);
           return true;
         case 'PUT':
-          await _apiClient.put(endpoint, data: payload);
+          await _apiClient.put(normalized, data: payload);
           return true;
         case 'PATCH':
-          await _apiClient.patch(endpoint, data: payload);
+          await _apiClient.patch(normalized, data: payload);
           return true;
         case 'DELETE':
-          await _apiClient.delete(endpoint);
+          await _apiClient.delete(normalized);
           return true;
         default:
           debugPrint('⚠️ [SyncEngine] Unknown HTTP method: $httpMethod');

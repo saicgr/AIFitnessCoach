@@ -1,8 +1,8 @@
-# FitWiz — Play Store Listing Copy (Default — English US)
+# Zealova — Play Store Listing Copy (Default — English US)
 
 Last updated: 2026-04-25.
 Paste each block into the matching field in **Play Console → All apps →
-FitWiz → Grow → Store presence → Main store listing → Default store
+Zealova → Grow → Store presence → Main store listing → Default store
 listing**.
 
 > Em-dash policy: every long dash below is `—` (U+2014). Number ranges
@@ -14,7 +14,7 @@ listing**.
 ## App name (max 30, currently 28)
 
 ```
-FitWiz: Workout & Meal Coach
+Zealova: Workout & Meal Coach
 ```
 
 ---
@@ -32,10 +32,10 @@ AI coach that builds your workouts & tracks meals — type, snap, or scan.
 ```
 Your workouts and diet finally talk to each other.
 
-FitWiz connects your training and nutrition into one AI-powered plan. It knows what you ate, how you trained, and adjusts both to keep you on track. No more juggling a workout app and a separate food tracker. Start with a 7-day free trial — $49.99/year (about $4.17/month).
+Zealova connects your training and nutrition into one AI-powered plan. It knows what you ate, how you trained, and adjusts both to keep you on track. No more juggling a workout app and a separate food tracker. Start with a 7-day free trial — $49.99/year (about $4.17/month).
 
 HOW IT WORKS
-Tell FitWiz your goal — lose weight, build muscle, train for an event, or just feel better. It builds your workout program, sets daily nutrition targets, and updates both as you log sets and meals. As you train and eat, it learns your preferences and adapts. That's it.
+Tell Zealova your goal — lose weight, build muscle, train for an event, or just feel better. It builds your workout program, sets daily nutrition targets, and updates both as you log sets and meals. As you train and eat, it learns your preferences and adapts. That's it.
 
 WORKOUTS BUILT FOR YOU
 Every workout is generated around your equipment, fitness level, and weekly schedule. Not a template — a plan that's actually yours.
@@ -52,11 +52,11 @@ However is fastest for you in the moment:
 • Type it — "2 eggs, toast, coffee" and it's logged in seconds
 • Snap it — take a photo of your plate and AI identifies the food
 • Scan it — barcode scanner for packaged foods
-• Paste it — drop in a menu screenshot and FitWiz parses calories and macros
+• Paste it — drop in a menu screenshot and Zealova parses calories and macros
 Calories, protein, carbs, fats, fiber, and 20+ micronutrients tracked automatically. Every meal gets a health score with personalized tips from your coach.
 
 RECIPES AND BATCH COOKING
-A growing library of high-protein, easy-prep recipes. Cook once on Sunday, log portions through the week — FitWiz tracks how many servings are left and reminds you before they expire.
+A growing library of high-protein, easy-prep recipes. Cook once on Sunday, log portions through the week — Zealova tracks how many servings are left and reminds you before they expire.
 
 FORM CHECK
 Record a quick video of your set, send it in chat, and get scored cues you can fix on the next rep. Built-in coaching for the lifts that matter most.
@@ -73,7 +73,7 @@ TRACK YOUR PROGRESS
 • Health Connect sync (steps, heart rate, sleep, calories burned)
 
 EXERCISE PREFERENCES
-FitWiz learns what you love. Mark your favorite exercises, avoid the ones you hate, and queue up moves you want to try. Your workouts get smarter over time.
+Zealova learns what you love. Mark your favorite exercises, avoid the ones you hate, and queue up moves you want to try. Your workouts get smarter over time.
 
 PRIVACY AND YOUR DATA
 Your health data stays yours. Delete your account and export everything in two taps. We never sell your data, never share it with advertisers, and never use it to train third-party AI. Account-level encryption at rest, transit-level encryption everywhere else.
@@ -90,7 +90,7 @@ DETAILS
 • Personalized warm-up and cool-down routines
 
 NOT MEDICAL ADVICE
-FitWiz provides fitness and nutrition guidance, not medical advice. Talk to your doctor before starting any new program, especially if you have an existing condition or injury.
+Zealova provides fitness and nutrition guidance, not medical advice. Talk to your doctor before starting any new program, especially if you have an existing condition or injury.
 
 One app for training and nutrition. No guesswork. Start your 7-day free trial today.
 ```
@@ -108,9 +108,9 @@ One app for training and nutrition. No guesswork. Start your 7-day free trial to
 | 10-inch tablet screenshots | Optional |
 | App category | Health & Fitness |
 | Tags | Strength training, Nutrition, Personal trainer, Workout planner, Calorie counter |
-| Contact email | `support@fitwiz.us` |
-| Website | `https://fitwiz.us` |
-| Privacy policy | `https://fitwiz.us/privacy` |
+| Contact email | `support@zealova.com` |
+| Website | `https://zealova.com` |
+| Privacy policy | `https://zealova.com/privacy` |
 
 ---
 
@@ -133,5 +133,5 @@ The copy above is clean on all of these.
 - [ ] All `--` are `—` and all between-word `-` between full words is `—`
 - [ ] Pricing matches in-app paywall ($49.99/yr default per `paywall_pricing_screen.dart`)
 - [ ] Every feature claimed is actually shipping in the AAB you'll upload (Wrapped, Form Check, Health Connect sync, batch-cook portions, screenshot parsing)
-- [ ] Privacy policy URL `https://fitwiz.us/privacy` returns 200 directly, NOT a 307 redirect to vercel.app (see `PRE_REVIEW_SUBMISSION_GUIDE.md` § Vercel canonical domain fix)
+- [ ] Privacy policy URL `https://zealova.com/privacy` returns 200 directly, NOT a 307 redirect to vercel.app (see `PRE_REVIEW_SUBMISSION_GUIDE.md` § Vercel canonical domain fix)
 - [ ] No `fitwiz.app` strings anywhere in the listing or screenshots

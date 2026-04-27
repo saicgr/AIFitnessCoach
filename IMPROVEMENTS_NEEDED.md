@@ -1,4 +1,4 @@
-# FitWiz — Improvements Needed
+# Zealova — Improvements Needed
 
 ---
 
@@ -32,16 +32,16 @@
 - [x] **Privacy policy never says "Google does not train on your data"** or references Vertex AI ZDR guarantee — the single most important question for privacy-conscious users _(2026-04-21: §3 now has an explicit "Zero Data Retention" bullet citing Vertex AI.)_
 
 ### Privacy Policy Foundational Gaps
-- [x] **No legal entity name** in privacy policy contact section (section 15) — just email addresses _(2026-04-21: added "FitWiz, Inc. (Delaware corporation)" — verify against actual registration.)_
+- [x] **No legal entity name** in privacy policy contact section (section 15) — just email addresses _(2026-04-21: added "Zealova, Inc. (Delaware corporation)" — verify against actual registration.)_
 - [x] **No registered business address** _(2026-04-21: added Wilmington DE address placeholder — verify.)_
-- [x] **No DPO name/contact** — GDPR Art. 37 requires this for processors handling health data _(2026-04-21: §10 + §15 now list `dpo@fitwiz.us`.)_
-- [x] **No UK/EU representative** — GDPR Art. 27 requires this for non-EU controllers processing EU user data _(2026-04-21: §10 adds EU (`eu-rep@fitwiz.us`) + UK (`uk-rep@fitwiz.us`) representatives.)_
-- [x] **Two different support domains** in policy: `privacy@fitwiz.us` vs `support@fitwiz.us` — suspicious, inconsistent, needs reconciliation _(2026-04-21: consolidated to `support@fitwiz.us`. Note 2026-04-25: fitwiz.app belongs to a different company — never use it.)_
+- [x] **No DPO name/contact** — GDPR Art. 37 requires this for processors handling health data _(2026-04-21: §10 + §15 now list `dpo@zealova.com`.)_
+- [x] **No UK/EU representative** — GDPR Art. 27 requires this for non-EU controllers processing EU user data _(2026-04-21: §10 adds EU (`eu-rep@zealova.com`) + UK (`uk-rep@zealova.com`) representatives.)_
+- [x] **Two different support domains** in policy: `privacy@zealova.com` vs `support@zealova.com` — suspicious, inconsistent, needs reconciliation _(2026-04-21: consolidated to `support@zealova.com`. Note 2026-04-25: fitwiz.app belongs to a different company — never use it.)_
 - [x] **"12-month chat retention" promise in section 7 is not implemented** — zero grep matches in backend for retention/archive/cleanup/cron touching `chat_history`. Either build the retention cron or rewrite the promise. _(2026-04-21: new `api/v1/retention_cron.py` with `POST /api/v1/retention/cron`; prunes chat_history >365d, push_nudge_log >90d, media_jobs >30d. Same external-scheduler pattern as `push_nudge_cron`.)_
 
 ### Health Data Special Category (GDPR Art. 9 / HIPAA)
 - [x] **Weight, heart rate, sleep, menstrual/hormonal data are special category under GDPR Art. 9 and PHI under HIPAA** — privacy policy section 4 mentions Health Connect/HealthKit but never uses the words "special category," "Art. 9 explicit consent," or "HIPAA BAA with subprocessors" _(2026-04-21: added new §4.1 "Special Category (Art. 9) Health Data — Explicit Consent".)_
-- [x] **Standard Gemini API terms do NOT include a HIPAA BAA** (only specific Vertex AI configs do) — if US users log health data, this may be a material misrepresentation _(2026-04-21: §4.1 now states FitWiz is not a HIPAA-covered entity and instructs users not to submit PHI; paired with Vertex ZDR routing enforcement.)_
+- [x] **Standard Gemini API terms do NOT include a HIPAA BAA** (only specific Vertex AI configs do) — if US users log health data, this may be a material misrepresentation _(2026-04-21: §4.1 now states Zealova is not a HIPAA-covered entity and instructs users not to submit PHI; paired with Vertex ZDR routing enforcement.)_
 - [x] **Add explicit Art. 9 consent gate** for health data processing during onboarding, separate from general ToS acceptance _(2026-04-21: new `user_ai_settings.health_data_consent` column + timestamp; `HealthConnectScreen._handleConnect` stamps consent before OS permission prompt; `activity.py` sync endpoints return 403 without it.)_
 
 ### Consent Screen Bug (Blocks Data Sale Opt-Out)
@@ -158,7 +158,7 @@
 *The single thing that keeps a power user locked to each specialist. Fix this for each app = unlock that defection segment.*
 
 #### vs. Hevy — Blocker: **Data moat + logging muscle memory**
-- [ ] **Hevy CSV import tool** — 400+ workouts of PRs, notes, custom routines; without import, users won't seed FitWiz and churn before the AI gets smart
+- [ ] **Hevy CSV import tool** — 400+ workouts of PRs, notes, custom routines; without import, users won't seed Zealova and churn before the AI gets smart
 - [ ] **Routine templates that re-run untouched** — verify user can build a 5×5 template and run it for 12 weeks *without* AI overriding progression; this is Hevy's stickiest feature
 - [ ] **Per-exercise PR dashboard** — every lift, every rep-range PR, all-time history, chartable; Hevy's celebration engine is cult-level
 - [ ] **Apple Watch auto-set detection** — Hevy's Watch companion is why lifters don't put their phone down
@@ -173,42 +173,42 @@
 
 #### vs. Strava — Blocker: **GPS, segments, social network of 100M**
 - [ ] **Do NOT try to replace Strava** — losing fight; wrong scope
-- [ ] **Strava activity read-only import via Apple Health / OAuth** — AI coach sees runs/rides without FitWiz replacing the activity itself
-- [ ] **Basic GPS walk/run logging** — puts FitWiz in the conversation for hybrid athletes without competing head-on
+- [ ] **Strava activity read-only import via Apple Health / OAuth** — AI coach sees runs/rides without Zealova replacing the activity itself
+- [ ] **Basic GPS walk/run logging** — puts Zealova in the conversation for hybrid athletes without competing head-on
 - [ ] **Garmin Connect IQ read-only integration** — cardio athletes live on these devices; even passive reads matter
 
 #### vs. Gravl — Blocker: **300+ trainer videos + Strength Score + $440K/mo social proof**
 - [ ] **Gravl export/import** — lose strength history, lose the switch
-- [ ] **Single headline FitWiz Score (composite)** — one number to chase across strength + cardio + nutrition + recovery; harder for Gravl to copy than their Strength Score was for others
+- [ ] **Single headline Zealova Score (composite)** — one number to chase across strength + cardio + nutrition + recovery; harder for Gravl to copy than their Strength Score was for others
 - [ ] **Demonstrable AI quality advantage** — cross-domain insight Gravl can't produce (e.g., "squat regressed 5% because protein -20g + sleep -1hr") proven weekly
-- [ ] **Revenue / runway transparency page** — Gravl publishes $440K/mo; trust capital for FitWiz to match
+- [ ] **Revenue / runway transparency page** — Gravl publishes $440K/mo; trust capital for Zealova to match
 - [ ] **Budget-aware video parity** — user-generated clips + creator partnerships + curated YouTube embeds (see section below)
 
 #### vs. MacroFactor (Nutrition) — Blocker: **Stronger By Science brand + science-backed algorithm + curated DB**
 *MacroFactor nutrition: $11.99/mo / $71.99/yr. Built by Greg Nuckols / Eric Trexler PhD (Stronger By Science) + 5 co-owners. Adaptive TDEE with EMA smoothing, confidence intervals, metabolic adaptation detection. Curated food DB prioritizes accuracy over MFP's size.*
 - [ ] **MacroFactor nutrition export import** — diet history + custom foods + meal patterns; higher-accuracy data than MFP, so worth its own importer
-- [ ] **Surface the adaptive TDEE math in-UI** — FitWiz's `adaptive_tdee_service.py` already has EMA smoothing + confidence intervals + metabolic adaptation detection (MacroFactor-parity backend); need to show users WHY the target changed this week, with a confidence band visible on the check-in sheet. Trust is built by transparency, not hiding the algorithm.
-- [ ] **Food DB accuracy claim** — MacroFactor wins on curation, not size; FitWiz needs a verified-entry track (community-flagged vs. verified foods, visible in UI)
-- [ ] **Science-credibility moat response** — SBS has Nuckols/Trexler; FitWiz has no equivalent named expert. Consider a science advisory board + cite sources inline on recommendations (NSCA/NASM/ACSM research already in backend per `feedback_no_llm_for_safety_classification.md`)
-- [ ] **Nutrition ↔ Workout cross-sync story** — MacroFactor requires two separate apps to sync body weight / metrics / progress photos; FitWiz does this in one app — **lead with this advantage in marketing** (simpler UX, lower cognitive load, single subscription)
+- [ ] **Surface the adaptive TDEE math in-UI** — Zealova's `adaptive_tdee_service.py` already has EMA smoothing + confidence intervals + metabolic adaptation detection (MacroFactor-parity backend); need to show users WHY the target changed this week, with a confidence band visible on the check-in sheet. Trust is built by transparency, not hiding the algorithm.
+- [ ] **Food DB accuracy claim** — MacroFactor wins on curation, not size; Zealova needs a verified-entry track (community-flagged vs. verified foods, visible in UI)
+- [ ] **Science-credibility moat response** — SBS has Nuckols/Trexler; Zealova has no equivalent named expert. Consider a science advisory board + cite sources inline on recommendations (NSCA/NASM/ACSM research already in backend per `feedback_no_llm_for_safety_classification.md`)
+- [ ] **Nutrition ↔ Workout cross-sync story** — MacroFactor requires two separate apps to sync body weight / metrics / progress photos; Zealova does this in one app — **lead with this advantage in marketing** (simpler UX, lower cognitive load, single subscription)
 
 #### vs. MacroFactor Workouts — Blocker: **Jeff Nippard co-ownership + 638 3-angle video demos + 900+ exercise tracker + SBS algorithm quality**
 *MacroFactor Workouts: launched Jan 2026. Separate app from nutrition. Five co-owners including Jeff Nippard (equity stake, NOT just endorsement) + Greg Nuckols + Cory Davis + Rebecca Kekelishvili + Lyndsey Nuckols. 900+ exercises tracked, 638 with 3-angle Jeff Nippard video demos + detailed technique notes. Auto-progression via progressive overload. Smart algorithm adapts program week-to-week based on performance + fatigue. Imports Jeff Nippard's 6 most recent programs at launch.*
 - [ ] **MacroFactor Workouts import** — lifting history, templates, PRs; same data-moat pattern as Hevy but with SBS-tier users
-- [ ] **Exercise library count commitment** — publish FitWiz's count + trajectory; MacroFactor Workouts at 900, Fitbod at 1,600 — this is becoming a visible number in the category
-- [ ] **Jeff-Nippard-tier creator partnership** — Nippard has equity, not just sponsorship. FitWiz needs a flagship creator with either equity or long-term exclusive deal. Being Nippard-adjacent without Nippard himself (e.g., other SBS-affiliated names, or a PhD-credentialed coach) is enough at this stage.
-- [ ] **Program import marketplace** — MacroFactor Workouts imports Nippard's pre-built programs as a moat; FitWiz could import *any* PDF/URL workout program via Gemini parsing — **turn AI into a program universalizer**, not just generator
-- [ ] **Week-to-week program adaptation based on performance + fatigue** — verify FitWiz's progression adjusts based on logged RIR + completion rate + rest-day count (partially in `progressive_overload` per memory, but unclear if it adjusts *programs* or just *next session*)
+- [ ] **Exercise library count commitment** — publish Zealova's count + trajectory; MacroFactor Workouts at 900, Fitbod at 1,600 — this is becoming a visible number in the category
+- [ ] **Jeff-Nippard-tier creator partnership** — Nippard has equity, not just sponsorship. Zealova needs a flagship creator with either equity or long-term exclusive deal. Being Nippard-adjacent without Nippard himself (e.g., other SBS-affiliated names, or a PhD-credentialed coach) is enough at this stage.
+- [ ] **Program import marketplace** — MacroFactor Workouts imports Nippard's pre-built programs as a moat; Zealova could import *any* PDF/URL workout program via Gemini parsing — **turn AI into a program universalizer**, not just generator
+- [ ] **Week-to-week program adaptation based on performance + fatigue** — verify Zealova's progression adjusts based on logged RIR + completion rate + rest-day count (partially in `progressive_overload` per memory, but unclear if it adjusts *programs* or just *next session*)
 - [ ] **3-angle movement reference** — can't match 638 Nippard demos, but tap-to-see-reference-lifter (user records own best rep) + user-generated form library (vision-AI-scored) + curated YouTube embeds get most of the value at $0
 
 #### vs. Fitbod — Blocker: **400M data points + 1,600 exercise library + Strength Score per muscle group + 264K reviews at 4.82★**
 *Fitbod $15.99/mo / $95.99/yr. Recovery Intelligence (fatigue-aware muscle rotation), Capability Recommender (auto-picks weight/reps), equipment flexibility built-in, massive social proof (264K reviews).*
-- [ ] **Exercise library depth benchmark** — Fitbod has 1,600+ movements; publish FitWiz's count + commit to growth
-- [ ] **Strength Score per muscle group (0–100+)** — Fitbod's moat; FitWiz Score (composite) already suggested vs. Gravl, but should also decompose into per-muscle subscores
+- [ ] **Exercise library depth benchmark** — Fitbod has 1,600+ movements; publish Zealova's count + commit to growth
+- [ ] **Strength Score per muscle group (0–100+)** — Fitbod's moat; Zealova Score (composite) already suggested vs. Gravl, but should also decompose into per-muscle subscores
 - [ ] **Recovery Intelligence / muscle fatigue model** — track muscle-level fatigue, auto-rotate fresh muscles into workouts; this is Fitbod's retention mechanic
-- [ ] **Capability recommender** — auto-suggest weight/reps for an exercise based on past performance + current fatigue (Fitbod has this, FitWiz's progression_selector exists but may be simpler)
+- [ ] **Capability recommender** — auto-suggest weight/reps for an exercise based on past performance + current fatigue (Fitbod has this, Zealova's progression_selector exists but may be simpler)
 - [ ] **Travel mode / equipment-switch** — user travels, gym has no squat rack, one tap regenerates today's workout for available equipment; Fitbod makes this frictionless
-- [ ] **Review count as social proof** — Fitbod 264K reviews, MacroFactor ~50K; FitWiz needs active review acquisition strategy post-paywall conversion
+- [ ] **Review count as social proof** — Fitbod 264K reviews, MacroFactor ~50K; Zealova needs active review acquisition strategy post-paywall conversion
 - [ ] **Fitbod import (via CSV or manual workout history)** — data moat lock, same pattern as Hevy
 
 ---
@@ -231,9 +231,9 @@
 - **Gravl** ($440K/mo, 1M+ downloads) — mobile-only
 - Only Hevy + MFP + Strava have real web apps, and they use them primarily for CSV export + long-form data review
 - **Cheaper alternative**: email-based export ("email me my last 90 days as CSV") solves 80% of power-user web use cases at <5% of the engineering cost
-- Revisit web dashboard if FitWiz exceeds 500K paying users and power-user segment explicitly requests it
+- Revisit web dashboard if Zealova exceeds 500K paying users and power-user segment explicitly requests it
 
-### Features FitWiz Has Planned That Close Competitor Gaps
+### Features Zealova Has Planned That Close Competitor Gaps
 *User confirmed these are in the pipeline — do NOT add as new improvement items:*
 - **AI form check** — already working per memory (UC3), further investment continues; closes Fitbod + MacroFactor Workouts + Gravl video-demo gap
 - **Notes** — exercise notes feature planned
@@ -242,7 +242,7 @@
 ### Features Already Shipped That Close Competitor Gaps (Verified in Code)
 *These were previously listed as gaps but verified as shipped — noting only for competitive framing, not as TODOs:*
 - **MacroFactor-style adaptive TDEE** — `backend/services/adaptive_tdee_service.py` has EMA smoothing + confidence intervals + metabolic adaptation detection; `mobile/.../weekly_checkin_sheet.dart` surfaces it. **Parity with MacroFactor's core algorithm.** Open question is UX transparency (see MacroFactor section) not whether the math exists.
-- **Nutrition ↔ Workout cross-sync** — FitWiz unifies what MacroFactor splits across two apps
+- **Nutrition ↔ Workout cross-sync** — Zealova unifies what MacroFactor splits across two apps
 
 ### AI Quality Investments (Highest ROI Per $0 Spent)
 - [ ] **Injury memory across sessions** — if user flagged shoulder pain at onboarding, the AI should not recommend overhead press 2 workouts later
@@ -261,7 +261,7 @@
 - **Real wedges to defend:** AI coach with workout context awareness + photo-log food + vision form feedback + multi-agent routing + multi-domain breadth (mood/hydration/diabetes/fasting/hormonal) — no single competitor (Hevy, Gravl, Strava, MFP, MacroFactor, Fitbod) has all five
 - **Biggest conversion blocker is import tools**, not missing features — prioritize Hevy + MFP + MacroFactor + Fitbod CSV importers above any new feature work
 - **Price advantage** — $49.99/yr is 30% below MacroFactor, 48% below Fitbod, 37% below Strava Premium; lead with value-per-dollar in marketing
-- **Credibility gap to close** — MacroFactor has Greg Nuckols / Eric Trexler PhD, Fitbod has 264K reviews, Gravl has $440K/mo revenue transparency, Jeff Nippard endorses MacroFactor Workouts. FitWiz needs at least one of: named expert advisor, public revenue, or a single flagship creator partnership
+- **Credibility gap to close** — MacroFactor has Greg Nuckols / Eric Trexler PhD, Fitbod has 264K reviews, Gravl has $440K/mo revenue transparency, Jeff Nippard endorses MacroFactor Workouts. Zealova needs at least one of: named expert advisor, public revenue, or a single flagship creator partnership
 
 ---
 
@@ -427,7 +427,7 @@
 #### Regional Pricing & Payment
 - [ ] **Hardcoded USD fallback strings** throughout `paywall_pricing_screen.dart:82,89,94,106` + `paywall_pricing_screen_part_accent_border_card.dart:625,764,789,817,827,835,874` + `hard_paywall_screen.dart:250`. When RevenueCat offerings fail on flaky networks (common in India), Rohan sees `$49.99` → mentally converts to ₹4,200 → bounces. Remove USD fallbacks; show error state per `feedback_no_silent_fallbacks.md`
 - [ ] **"Less than a coffee" daily framing is US-centric** — Indian chai is ₹10; needs locale-aware anchor ("menos que um café", "比一杯咖啡便宜")
-- [ ] **No PPP tier** — HealthifyMe charges ₹1,500/yr in India vs. FitWiz ₹4,200/yr (3× cheaper). Configure at least 3 RevenueCat tiers (US/EU, LATAM, SEA+India)
+- [ ] **No PPP tier** — HealthifyMe charges ₹1,500/yr in India vs. Zealova ₹4,200/yr (3× cheaper). Configure at least 3 RevenueCat tiers (US/EU, LATAM, SEA+India)
 - [ ] Trial messaging not translated — "7-day free trial" means nothing to Sofia
 
 #### Local Fitness Culture Integration
@@ -470,7 +470,7 @@
 #### Churn Moments
 1. **Reads privacy policy + consent screen** — spots 3 contradictions in 5 min, screenshots, posts Twitter thread. Fix: align consent copy with policy before launch
 2. **Runs Charles Proxy on "AI Data Processing" toggle** — confirms placebo. Files GDPR Art. 7(4) complaint
-3. **Requests GDPR export → 8-table ZIP** — files DSAR, posts r/privacy thread, 2 years of top Google hits for "FitWiz privacy"
+3. **Requests GDPR export → 8-table ZIP** — files DSAR, posts r/privacy thread, 2 years of top Google hits for "Zealova privacy"
 
 ---
 
@@ -649,7 +649,7 @@
 Rationale (verified):
 1. **Schema debt is enormous** — every table under `backend/api/v1/` is keyed by single `user_id`. Zero `organization_id`, `trainer_id`, `coach_user_id`, `assigned_by` columns. 6-10 engineer-weeks before a single trainer feature ships
 2. **B2B support load is categorically different** — gym-owner billing disputes are 15× individual churn. No org admin tools, no audit log, no actor attribution on workout versioning
-3. **Moat is weak at $49.99 consumer** — Trainerize has 10+ years of feature depth; fighting a feature war FitWiz can't win until consumer has 100K+ paying users
+3. **Moat is weak at $49.99 consumer** — Trainerize has 10+ years of feature depth; fighting a feature war Zealova can't win until consumer has 100K+ paying users
 4. **$49.99 cannot support per-seat economics** — Trainerize $5-25/mo/client, TrueCoach ~$200/mo flat. Needs separate `trainer_seats` RevenueCat offering, not exists
 
 #### The ONLY Near-Term B2B Feature Worth Shipping

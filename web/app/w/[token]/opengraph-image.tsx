@@ -2,7 +2,7 @@ import { ImageResponse } from "next/og";
 import {
   API_BASE,
   ByLine,
-  FitWizMark,
+  BrandMark,
   StatPill,
   StoreFooter,
   fmtDuration,
@@ -14,7 +14,7 @@ import {
 export const runtime = "nodejs";
 export const size = OG_SIZE;
 export const contentType = OG_CONTENT_TYPE;
-export const alt = "FitWiz workout";
+export const alt = "Zealova workout";
 
 type Set = { weight_kg?: number | null; reps_completed?: number };
 type Exercise = { name: string; sets?: Set[]; image_url?: string | null };
@@ -60,7 +60,7 @@ export default async function WorkoutOg({
   const name = w?.name ?? "Shared workout";
   const exCount = w?.exercises?.length ?? 0;
   const volumeKg = w ? Math.round(totalVolumeKg(w.exercises ?? [])) : 0;
-  const author = w?.display_name ?? "FitWiz lifter";
+  const author = w?.display_name ?? "Zealova lifter";
   const previewExercises = (w?.exercises ?? []).slice(0, 4);
 
   return new ImageResponse(
@@ -84,7 +84,7 @@ export default async function WorkoutOg({
             alignItems: "center",
           }}
         >
-          <FitWizMark />
+          <BrandMark />
           <ByLine name={author} />
         </div>
 

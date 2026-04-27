@@ -1,5 +1,5 @@
 """
-Public profile pages — fitwiz.us/u/{username}.
+Public profile pages — zealova.com/u/{username}.
 
 Anonymous-readable. Reads `public_users_v` for header data, then aggregates
 the user's currently-public workout shares and plan shares as a feed.

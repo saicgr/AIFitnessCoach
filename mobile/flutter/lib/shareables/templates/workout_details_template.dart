@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../shareable_canvas.dart';
 import '../shareable_data.dart';
-import '../widgets/fitwiz_watermark.dart';
+import '../widgets/app_watermark.dart';
 
 /// Hevy-style "Share Workout" — the full vertical exercise list with logged
 /// set × reps × weight per exercise. The user explicitly asked for this from
@@ -57,7 +57,7 @@ class WorkoutDetailsTemplate extends StatelessWidget {
               Row(
                 children: [
                   if (showWatermark)
-                    FitWizWatermark(
+                    AppWatermark(
                       textColor: const Color(0xFF111111),
                       iconSize: 20,
                       fontSize: 13,
@@ -243,9 +243,14 @@ class _ExerciseRow extends StatelessWidget {
                 const SizedBox(height: 2),
                 ...List.generate(ex.sets.length, (i) {
                   final s = ex.sets[i];
-                  final weightStr = s.weight == null
-                      ? '—'
+                  // Render bodyweight sets as "BW" instead of "—" / "0 lbs"
+                  // so the shared image matches what the user actually did.
+                  final isBodyweight = s.weight == null || s.weight == 0;
+                  final weightStr = isBodyweight
+                      ? 'BW'
                       : '${s.weight!.toStringAsFixed(s.weight! == s.weight!.roundToDouble() ? 0 : 1)} ${s.unit}';
+                  // If reps is 0 (data not logged), show "—" instead of "0 reps"
+                  final repsStr = s.reps > 0 ? '${s.reps} reps' : '— reps';
                   return Padding(
                     padding: const EdgeInsets.symmetric(vertical: 1),
                     child: Row(
@@ -262,7 +267,7 @@ class _ExerciseRow extends StatelessWidget {
                           ),
                         ),
                         Text(
-                          '$weightStr  ×  ${s.reps} reps',
+                          '$weightStr  ×  $repsStr',
                           style: const TextStyle(
                             fontSize: 12,
                             color: Color(0xFF333333),

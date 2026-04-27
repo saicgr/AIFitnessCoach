@@ -57,7 +57,7 @@ class WearableService {
     }
   }
 
-  /// Check if any WearOS device is connected (even without FitWiz app).
+  /// Check if any WearOS device is connected (even without Zealova app).
   /// Use this to determine whether to show "Install on Watch" prompt.
   Future<bool> hasConnectedWearDevice() async {
     try {
@@ -69,8 +69,8 @@ class WearableService {
     }
   }
 
-  /// Check if FitWiz watch app is installed on the connected watch.
-  /// Returns false if no watch connected or FitWiz not installed.
+  /// Check if Zealova watch app is installed on the connected watch.
+  /// Returns false if no watch connected or Zealova not installed.
   Future<bool> isWatchAppInstalled() async {
     try {
       final result = await _methodChannel.invokeMethod<bool>('isWatchAppInstalled');
@@ -81,7 +81,7 @@ class WearableService {
     }
   }
 
-  /// Prompt the user to install FitWiz watch app from Play Store on their watch.
+  /// Prompt the user to install Zealova watch app from Play Store on their watch.
   /// Opens Play Store directly on the connected watch.
   /// Returns true if prompt was sent successfully, false otherwise.
   Future<bool> promptWatchAppInstall() async {
@@ -359,10 +359,10 @@ enum WatchConnectionState {
   /// No WearOS device paired/connected
   noDevice,
 
-  /// WearOS device connected but FitWiz app not installed
+  /// WearOS device connected but Zealova app not installed
   noApp,
 
-  /// FitWiz watch app installed and connected
+  /// Zealova watch app installed and connected
   connected,
 
   /// Error checking connection status
@@ -390,14 +390,14 @@ class WatchConnectionStatus {
         hasApp: false,
       );
 
-  /// WearOS device connected but FitWiz not installed
+  /// WearOS device connected but Zealova not installed
   factory WatchConnectionStatus.noApp() => WatchConnectionStatus._(
         state: WatchConnectionState.noApp,
         hasDevice: true,
         hasApp: false,
       );
 
-  /// Fully connected with FitWiz app
+  /// Fully connected with Zealova app
   factory WatchConnectionStatus.connected() => WatchConnectionStatus._(
         state: WatchConnectionState.connected,
         hasDevice: true,

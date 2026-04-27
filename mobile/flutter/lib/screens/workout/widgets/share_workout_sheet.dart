@@ -184,9 +184,16 @@ class _ShareWorkoutSheetState extends ConsumerState<ShareWorkoutSheet> {
   }
 
   Future<Uint8List?> _captureCurrentTemplate() async {
+    // Clamp the page cursor against the actual capture key list. PageView
+    // callbacks can briefly outrun the child count when templates are
+    // added/removed (e.g. cosmetic unlock changes _templateNames length
+    // mid-build), throwing `RangeError (length): Invalid value: Not in
+    // inclusive range 0..N: M` from `_captureKeys[_currentPage]`.
+    if (_captureKeys.isEmpty) return null;
+    final safeIndex = _currentPage.clamp(0, _captureKeys.length - 1);
     // Use Instagram Stories optimal size (1080x1920) for proper aspect ratio
     return await ImageCaptureUtils.captureWidgetWithSize(
-      _captureKeys[_currentPage],
+      _captureKeys[safeIndex],
       width: ImageCaptureUtils.instagramStoriesSize.width,
       height: ImageCaptureUtils.instagramStoriesSize.height,
       pixelRatio: 1.0,

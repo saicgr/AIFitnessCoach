@@ -1,14 +1,14 @@
 //
-//  FitWizLiveActivityBundle.swift
-//  FitWizLiveActivity
+//  ZealovaLiveActivityBundle.swift
+//  ZealovaLiveActivity
 //
 
 import WidgetKit
 import SwiftUI
 
 @main
-struct FitWizLiveActivityBundle: WidgetBundle {
+struct ZealovaLiveActivityBundle: WidgetBundle {
     var body: some Widget {
-        FitWizLiveActivityLiveActivity()
+        ZealovaLiveActivityLiveActivity()
     }
 }

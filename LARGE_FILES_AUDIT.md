@@ -1,4 +1,4 @@
-# Large Files Audit - FitWiz Codebase
+# Large Files Audit - Zealova Codebase
 
 **Date:** 2026-04-04
 

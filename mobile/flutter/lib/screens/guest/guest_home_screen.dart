@@ -10,6 +10,7 @@ import '../../widgets/glass_sheet.dart';
 import 'widgets/guest_sample_workout_card.dart';
 import 'widgets/guest_sign_up_banner.dart';
 import 'widgets/guest_session_timer.dart';
+import 'package:fitwiz/core/constants/branding.dart';
 
 part 'guest_home_screen_part_demo_chat_item.dart';
 
@@ -753,7 +754,7 @@ class _GuestHomeScreenState extends ConsumerState<GuestHomeScreen> {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  'Explore what FitWiz can do',
+                  'Explore what ${Branding.appName} can do',
                   style: TextStyle(
                     fontSize: 13,
                     color: textSecondary,

@@ -6,6 +6,7 @@ import '../../../utils/image_capture_utils.dart';
 import '../../../widgets/pill_app_bar.dart';
 import 'progress_share_data.dart';
 import 'progress_share_templates.dart';
+import 'package:fitwiz/core/constants/branding.dart';
 
 /// Gallery-style screen that shows every viral template at once so the
 /// user can pick visually. Per user feedback (feedback_share_gallery_viral_templates):
@@ -335,7 +336,7 @@ class _TemplatePreviewScreenState extends State<_TemplatePreviewScreen> {
     try {
       final bytes = await _capture();
       if (bytes == null) throw Exception('capture failed');
-      await ShareService.shareGeneric(bytes, caption: 'My transformation · FitWiz');
+      await ShareService.shareGeneric(bytes, caption: 'My transformation · ${Branding.appName}');
     } catch (e) {
       if (mounted) _snack('Share failed: $e', isError: true);
     } finally {

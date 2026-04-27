@@ -4,7 +4,7 @@ part of 'app_router.dart';
 List<RouteBase> _utilityRoutes() => [
   // === Utility Routes ===
 
-      // Public shared recipe deep link: fitwiz.us/r/{slug} → PublicRecipeScreen.
+      // Public shared recipe deep link: zealova.com/r/{slug} → PublicRecipeScreen.
       // Auth not required; user is prompted to sign in on "Save to my recipes" tap.
       GoRoute(
         path: '/r/:slug',

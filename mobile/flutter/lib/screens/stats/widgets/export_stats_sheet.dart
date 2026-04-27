@@ -15,6 +15,7 @@ import '../../../data/services/pdf_export_service.dart';
 import '../../../utils/tz.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../settings/dialogs/export_dialog.dart';
+import 'package:fitwiz/core/constants/branding.dart';
 
 /// Bottom sheet for exporting stats in various formats
 class ExportStatsSheet extends ConsumerStatefulWidget {
@@ -170,15 +171,15 @@ class _ExportStatsSheetState extends ConsumerState<ExportStatsSheet> {
       // Save to temp file
       final tempDir = await getTemporaryDirectory();
       final timestamp = Tz.localDate();
-      final filePath = '${tempDir.path}/FitWiz_Stats_$timestamp.pdf';
+      final filePath = '${tempDir.path}/${Branding.appName}_Stats_$timestamp.pdf';
       final file = File(filePath);
       await file.writeAsBytes(pdfBytes);
 
       // Share the file
       await Share.shareXFiles(
         [XFile(filePath)],
-        subject: 'FitWiz Stats Report',
-        text: 'My fitness stats from FitWiz',
+        subject: '${Branding.appName} Stats Report',
+        text: 'My fitness stats from ${Branding.appName}',
       );
 
       if (mounted) {
@@ -231,7 +232,7 @@ class _ExportStatsSheetState extends ConsumerState<ExportStatsSheet> {
       // Share the text
       await Share.share(
         textSummary,
-        subject: 'My FitWiz Stats',
+        subject: 'My ${Branding.appName} Stats',
       );
 
       if (mounted) {

@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og";
 import {
   API_BASE,
-  FitWizMark,
+  BrandMark,
   StatPill,
   StoreFooter,
   OG_SIZE,
@@ -12,7 +12,7 @@ import {
 export const runtime = "nodejs";
 export const size = OG_SIZE;
 export const contentType = OG_CONTENT_TYPE;
-export const alt = "FitWiz profile";
+export const alt = "Zealova profile";
 
 type PublicProfile = {
   username: string;
@@ -42,8 +42,8 @@ export default async function ProfileOg({
 }) {
   const profile = await fetchProfile(params.username);
   const p = ogPalette();
-  const display = profile?.display_name ?? profile?.username ?? "FitWiz lifter";
-  const handle = profile ? `@${profile.username}` : "@fitwiz";
+  const display = profile?.display_name ?? profile?.username ?? "Zealova lifter";
+  const handle = profile ? `@${profile.username}` : "@getzealova";
 
   return new ImageResponse(
     (
@@ -59,7 +59,7 @@ export default async function ProfileOg({
           fontFamily: "system-ui",
         }}
       >
-        <FitWizMark />
+        <BrandMark />
 
         <div
           style={{

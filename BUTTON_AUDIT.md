@@ -1,4 +1,4 @@
-# FitWiz Button & Interactive Elements Audit
+# Zealova Button & Interactive Elements Audit
 **Date:** 2026-03-24 | **Scope:** All screens across the Flutter mobile app
 
 ---

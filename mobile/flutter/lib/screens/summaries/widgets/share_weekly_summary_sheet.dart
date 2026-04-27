@@ -6,6 +6,7 @@ import '../../../widgets/share_template_sheet.dart';
 import 'share_templates/weekly_highlights_template.dart';
 import 'share_templates/weekly_prs_template.dart';
 import 'share_templates/weekly_recap_template.dart';
+import 'package:fitwiz/core/constants/branding.dart';
 
 /// Opens the share-template carousel for a single [WeeklySummary].
 ///
@@ -25,8 +26,8 @@ class ShareWeeklySummarySheet {
     await ShareTemplateSheet.show(
       context: context,
       title: 'Share Your Week',
-      caption: 'My FitWiz week — $dateRange',
-      subject: 'My FitWiz Weekly Report',
+      caption: 'My ${Branding.appName} week — $dateRange',
+      subject: 'My ${Branding.appName} Weekly Report',
       templatesBuilder: (showWatermark) => [
         ShareTemplateDef(
           name: 'Recap',

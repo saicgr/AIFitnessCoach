@@ -11,6 +11,7 @@ This module handles user connection operations:
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from core import branding
 from core.auth import get_current_user, verify_user_ownership
 from core.exceptions import safe_internal_error
 
@@ -101,7 +102,7 @@ async def delete_connection(
     if await admin_service.is_support_user(following_id):
         raise HTTPException(
             status_code=403,
-            detail="Cannot remove FitWiz Support from friends. They're here to help!"
+            detail=f"Cannot remove {branding.SUPPORT_USER_NAME} from friends. They're here to help!"
         )
 
     result = supabase.table("user_connections").delete().eq(

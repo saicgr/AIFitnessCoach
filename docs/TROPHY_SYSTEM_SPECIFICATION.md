@@ -1,4 +1,4 @@
-# FitWiz Trophy & Achievement System Specification
+# Zealova Trophy & Achievement System Specification
 
 ## Overview
 
@@ -157,8 +157,8 @@ hint_text TEXT                   -- Clue for secret achievements
 | Achievement Level | Reward | How to Claim |
 |-------------------|--------|--------------|
 | Gold Tier | Digital Badge + Exclusive Profile Frame | Automatic |
-| Platinum Tier | FREE FitWiz T-Shirt | Claim via app → enter shipping address |
-| Diamond Tier | FREE FitWiz Hoodie + Shaker Bottle | Claim via app |
+| Platinum Tier | FREE Zealova T-Shirt | Claim via app → enter shipping address |
+| Diamond Tier | FREE Zealova Hoodie + Shaker Bottle | Claim via app |
 | Level 75 (Elite) | FREE Shaker Bottle | Claim via app |
 | Level 100 (Legend) | Full Merch Kit + Lifetime Premium | Personal email from team |
 
@@ -1188,7 +1188,7 @@ CREATE TABLE world_record_history (
 | 🎁 Mini Gifts | $5-10 | Level milestones | Trust Level 2+ |
 | 🎁 Medium Gifts | $15-25 | Major achievements | Trust Level 3 |
 | 🎁 Premium Gifts | $50+ | Elite milestones | Verified users only |
-| 👕 FitWiz Merch | $20-50 | Platinum trophies | Trust Level 3 |
+| 👕 Zealova Merch | $20-50 | Platinum trophies | Trust Level 3 |
 
 ### Level-Based Gift Schedule
 
@@ -1196,7 +1196,7 @@ CREATE TABLE world_record_history (
 |-------|------|-------|------------------|
 | 10 | $5 Amazon Gift Card | $5 | 30+ days account age |
 | 25 | $10 Amazon Gift Card | $10 | Trust Level 2 |
-| 50 | $25 Amazon OR FitWiz T-Shirt | $25 | Trust Level 3 |
+| 50 | $25 Amazon OR Zealova T-Shirt | $25 | Trust Level 3 |
 | 75 | $50 Amazon OR Supplement Sample Box | $50 | Health App verified |
 | 100 | $100 Amazon + Hoodie + Lifetime Premium | $150+ | Manual review |
 

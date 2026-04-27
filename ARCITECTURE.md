@@ -1,4 +1,4 @@
-# FitWiz Workout Generation Architecture
+# Zealova Workout Generation Architecture
 
 Complete system documentation covering workout generation, pre-caching, invalidation, comeback mode, and injury handling.
 

@@ -64,7 +64,7 @@ def run_migration(conn, file_path):
 def main():
     """Main entry point."""
     print("\n" + "="*60)
-    print("FitWiz Database Migration Runner")
+    print("Zealova Database Migration Runner")
     print("Migration 139 - Fix workout_logs RLS policy")
     print("="*60)
 

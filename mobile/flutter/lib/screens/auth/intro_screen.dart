@@ -12,6 +12,7 @@ import 'package:package_info_plus/package_info_plus.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_links.dart';
 import '../../widgets/glass_sheet.dart';
+import 'package:fitwiz/core/constants/branding.dart';
 
 class IntroScreen extends StatefulWidget {
   const IntroScreen({super.key});
@@ -365,7 +366,7 @@ class _IntroScreenState extends State<IntroScreen>
                           // fixed 40pt height, 16pt horizontal padding,
                           // 24pt radius, identical fill (white@0.15) and
                           // border (white@0.25). Version sits inline after
-                          // "FitWiz" so the left pill stays single-line and
+                          // "Zealova" so the left pill stays single-line and
                           // the same height as Continue.
                           GestureDetector(
                             onTap: _showSupportSheet,
@@ -378,7 +379,7 @@ class _IntroScreenState extends State<IntroScreen>
                                 ClipOval(child: Image.asset('assets/images/app_icon.png', width: 22, height: 22, errorBuilder: (_, __, ___) => const Icon(Icons.fitness_center, color: Colors.white, size: 18))),
                                 const SizedBox(width: 8),
                                 const Text(
-                                  'FitWiz',
+                                  '${Branding.appName}',
                                   style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w700, height: 1.0),
                                 ),
                                 if (_appVersion.isNotEmpty) ...[
@@ -401,7 +402,7 @@ class _IntroScreenState extends State<IntroScreen>
                           // your fitness?"), which itself routes to quiz
                           // or sign-in. One tap lands on the decision
                           // screen instead of bouncing through an extra
-                          // generic "Continue" page. Matches the FitWiz
+                          // generic "Continue" page. Matches the Zealova
                           // pill's fill + border for visual balance.
                           GestureDetector(
                             onTap: _jumpToWelcome,

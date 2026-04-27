@@ -14,6 +14,7 @@ from __future__ import annotations
 
 from typing import Any, Optional
 
+from core import branding
 from core.logger import get_logger
 from mcp.auth.token_service import verify_access_token
 from mcp.personal_tokens import looks_like_pat, verify_personal_token
@@ -133,7 +134,7 @@ async def require_user(ctx: Any) -> dict:
     if not eligible:
         raise AuthError(
             "subscription_required",
-            "MCP access requires an active yearly FitWiz subscription.",
+            f"MCP access requires an active yearly {branding.APP_NAME} subscription.",
         )
 
     return user

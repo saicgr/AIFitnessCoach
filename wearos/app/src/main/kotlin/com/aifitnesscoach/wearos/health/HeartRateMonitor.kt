@@ -1,4 +1,4 @@
-package com.fitwiz.wearos.health
+package com.aifitnesscoach.wearos.health
 
 import android.content.Context
 import android.util.Log
@@ -6,9 +6,9 @@ import androidx.health.services.client.HealthServices
 import androidx.health.services.client.MeasureCallback
 import androidx.health.services.client.MeasureClient
 import androidx.health.services.client.data.*
-import com.fitwiz.wearos.data.repository.HealthRepository
-import com.fitwiz.wearos.data.sync.DataLayerClient
-import com.fitwiz.wearos.data.sync.HealthDataSync
+import com.aifitnesscoach.wearos.data.repository.HealthRepository
+import com.aifitnesscoach.wearos.data.sync.DataLayerClient
+import com.aifitnesscoach.wearos.data.sync.HealthDataSync
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

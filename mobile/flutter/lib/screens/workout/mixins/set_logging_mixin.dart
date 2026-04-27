@@ -89,11 +89,16 @@ mixin SetLoggingMixin<T extends StatefulWidget> on State<T> {
   /// Complete a set with current weight/reps values
   Future<void> completeSet() async {
     final weight = double.tryParse(weightController.text) ?? 0;
-    final reps = int.tryParse(repsController.text) ?? 0;
     final exercise = exercises[currentExerciseIndex];
     final currentSetNumber = (completedSets[currentExerciseIndex]?.length ?? 0) + 1;
     final setTarget = exercise.getTargetForSet(currentSetNumber);
     final targetReps = setTarget?.targetReps ?? exercise.reps ?? 10;
+    // Fall back to the target reps when the controller is empty/zero. The
+    // user pressed the checkmark — treating an empty rep field as "0 reps
+    // performed" is wrong and silently zeroes out bodyweight sets, which
+    // then show as blank "—" rows in the Advanced summary.
+    final parsedReps = int.tryParse(repsController.text) ?? 0;
+    final reps = parsedReps > 0 ? parsedReps : targetReps;
 
     // Calculate set duration from start time (capped at 10 min for backgrounding edge case)
     int? setDuration;

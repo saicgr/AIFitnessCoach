@@ -24,6 +24,7 @@ from typing import List
 import polyline as _polyline  # type: ignore[import-untyped]
 from lxml import etree
 
+from core import branding
 from services.workout_import.canonical import CanonicalCardioRow
 
 logger = logging.getLogger(__name__)
@@ -61,7 +62,7 @@ def export_gpx(cardio_rows: List[CanonicalCardioRow]) -> bytes:
             "xsi": XSI_NS,
         },
         version="1.1",
-        creator="FitWiz (https://fitwiz.us)",
+        creator=f"{branding.APP_NAME} ({branding.WEBSITE_URL})",
     )
     root.set(f"{{{XSI_NS}}}schemaLocation", SCHEMA_LOCATION)
 

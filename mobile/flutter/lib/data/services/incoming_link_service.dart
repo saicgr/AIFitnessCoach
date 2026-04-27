@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../providers/referral_provider.dart';
 import 'pending_referral_service.dart';
+import 'package:fitwiz/core/constants/branding.dart';
 
 /// OS-level incoming-link handler for Universal Links / App Links / custom
 /// schemes. Separate from `DeepLinkService` (which handles only widget-
@@ -17,8 +18,8 @@ import 'pending_referral_service.dart';
 /// OS-level delivery for those, extend the switch in [_handle].
 ///
 /// Accepted forms:
-///   https://fitwiz.us/invite/ABC123   (Universal Link — requires AASA)
-///   http://fitwiz.us/invite/ABC123
+///   https://zealova.com/invite/ABC123   (Universal Link — requires AASA)
+///   http://zealova.com/invite/ABC123
 ///   fitwiz://invite/ABC123            (custom scheme)
 ///   fitwiz://invite?code=ABC123       (share-sheet fallback)
 ///
@@ -29,7 +30,7 @@ import 'pending_referral_service.dart';
 ///     the result without waiting.
 class IncomingLinkService {
   static const String _inviteSegment = 'invite';
-  static const String _inviteHost = 'fitwiz.us';
+  static const String _inviteHost = '${Branding.marketingDomain}';
 
   static final AppLinks _appLinks = AppLinks();
   static StreamSubscription<Uri>? _sub;

@@ -1,7 +1,7 @@
 /**
  * Public workout share view.
  *
- * Consumed at https://fitwiz.us/w/[token]. Renders the Hevy-style workout
+ * Consumed at https://zealova.com/w/[token]. Renders the Hevy-style workout
  * card from the FastAPI public endpoint and offers App Store / Play Store
  * CTAs so anonymous viewers convert.
  */
@@ -11,7 +11,7 @@ import { notFound } from "next/navigation";
 export const revalidate = 60;
 
 const API_BASE =
-  process.env.NEXT_PUBLIC_API_BASE_URL ?? "https://api.fitwiz.us";
+  process.env.NEXT_PUBLIC_API_BASE_URL ?? "https://api.zealova.com";
 
 type Set = {
   set_number: number;
@@ -49,11 +49,11 @@ export async function generateMetadata({
   params: { token: string };
 }): Promise<Metadata> {
   const w = await fetchWorkout(params.token);
-  if (!w) return { title: "FitWiz — Workout" };
-  const title = `${w.name} — FitWiz`;
+  if (!w) return { title: "Zealova — Workout" };
+  const title = `${w.name} — Zealova`;
   const description = `${w.exercises?.length ?? 0} exercises · ${
     w.duration_minutes ?? 0
-  } min · shared from FitWiz`;
+  } min · shared from Zealova`;
   return {
     title,
     description,
@@ -94,10 +94,10 @@ export default async function PublicWorkoutPage({
       <header className="flex items-center justify-between px-6 py-4 border-b border-neutral-800">
         <div className="flex items-center gap-2">
           <div className="w-7 h-7 rounded-md bg-gradient-to-br from-cyan-400 to-fuchsia-500" />
-          <span className="font-bold tracking-tight">FitWiz</span>
+          <span className="font-bold tracking-tight">Zealova</span>
         </div>
         <span className="text-xs text-neutral-400">
-          Created by {w.display_name ?? "FitWiz lifter"}
+          Created by {w.display_name ?? "Zealova lifter"}
         </span>
       </header>
 
@@ -172,13 +172,13 @@ export default async function PublicWorkoutPage({
         </ul>
 
         <div className="mt-10 rounded-2xl bg-gradient-to-br from-cyan-500/10 via-fuchsia-500/10 to-amber-500/10 p-5 text-center">
-          <h2 className="text-lg font-bold">Get FitWiz</h2>
+          <h2 className="text-lg font-bold">Get Zealova</h2>
           <p className="mt-1 text-sm text-neutral-300">
             Build, log, and share workouts like this one.
           </p>
           <div className="mt-4 flex justify-center gap-3">
             <a
-              href="https://apps.apple.com/app/fitwiz/id6738049122"
+              href="https://apps.apple.com/app/zealova/id6738049122"
               className="px-4 py-2 rounded-lg bg-white text-black text-sm font-bold"
             >
               App Store

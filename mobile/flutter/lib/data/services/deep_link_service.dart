@@ -24,7 +24,15 @@ import '../repositories/hydration_repository.dart';
 /// - fitwiz://stats - Open stats dashboard
 /// - fitwiz://social/share?type={workout|achievement} - Share
 class DeepLinkService {
+  /// Primary scheme — keeps existing fitwiz:// links (widgets, old emails,
+  /// installed-app shares) working post-rebrand.
   static const String scheme = 'fitwiz';
+
+  /// Rebrand-aligned scheme. New invite emails, marketing CTAs, and the
+  /// website use zealova:// while widget infra stays on fitwiz://.
+  static const String aliasScheme = 'zealova';
+
+  static const Set<String> _acceptedSchemes = {scheme, aliasScheme};
 
   /// SharedPreferences key for queued URI when a deep link arrives before
   /// the user has signed in.
@@ -83,7 +91,7 @@ class DeepLinkService {
   /// Without this gate, deep links fired pre-auth get silently dropped
   /// when the router redirects to /intro.
   static void handleDeepLink(Uri uri, WidgetRef ref) {
-    if (uri.scheme != scheme) {
+    if (!_acceptedSchemes.contains(uri.scheme)) {
       debugPrint('DeepLinkService: Invalid scheme ${uri.scheme}');
       return;
     }

@@ -242,7 +242,7 @@ const quickActionRegistry = <String, QuickAction>{
     route: '/stats',
   ),
   // Lives only inside the "More" overflow sheet — never the primary 2×5
-  // grid. Tapping opens SharePlanPeriodSheet which mints a fitwiz.us link.
+  // grid. Tapping opens SharePlanPeriodSheet which mints a zealova.com link.
   'share_plan': QuickAction(
     id: 'share_plan',
     label: 'Share',

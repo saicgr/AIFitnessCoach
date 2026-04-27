@@ -15,17 +15,17 @@ App Store IP form or Play Console's Removal Request form.
 
 | Fact | Value |
 |---|---|
-| Our app store name | `FitWiz: Workout & Meal Coach` |
+| Our app store name | `Zealova: Workout & Meal Coach` |
 | Our iOS bundle ID | `com.aifitnesscoach.aiFitnessCoach` |
 | Our Android applicationId | `com.aifitnesscoach.app` |
-| Our registered domain | `fitwiz.us` (since 2024 — verify exact reg date in your registrar) |
+| Our registered domain | `zealova.com` (since 2024 — verify exact reg date in your registrar) |
 | Our category | Health & Fitness |
 | Our product | AI-built workout + nutrition planner with set-by-set adaptation |
 | Complainant's mark | FITWIZ, USPTO Reg #7111694, Serial 97441093, IC 009 |
 | Complainant's first use | 2022-05-10 (vs. ours, fill in your first-use date) |
 | Complainant's owner | LIN, JIANGJUAN (Ningbo, China; organized Canada) |
 | Complainant's domain | `fitwiz.app` |
-| Complainant's app | iOS only, last updated Oct 2025, App Store listing under "FitWiz" |
+| Complainant's app | iOS only, last updated Oct 2025, App Store listing under "Zealova" |
 | Goods description critical phrase | "Downloadable computer application software for tablets, computers, **vehicle intelligent terminals**, smartwatches and mobile phones, namely…" — verify the *namely* clause from TSDR before sending. If it does NOT name fitness/exercise/health, lead with that. |
 
 ---
@@ -33,20 +33,20 @@ App Store IP form or Play Console's Removal Request form.
 ## Apple App Store IP complaint response (Form: https://www.apple.com/legal/internet-services/itunes/appstorenotices/)
 
 ```
-Subject: Response to IP complaint — FitWiz: Workout & Meal Coach
+Subject: Response to IP complaint — Zealova: Workout & Meal Coach
        (Apple ID [your iOS App Store app ID])
 
 Dear App Store Legal,
 
 We received notice of an intellectual property complaint regarding our
-app FitWiz: Workout & Meal Coach. We respectfully dispute the claim of
+app Zealova: Workout & Meal Coach. We respectfully dispute the claim of
 likelihood of confusion, and provide the following facts for your
 review.
 
 1. Different developer, different applicationId, different domain
    - Our developer account: [your registered Apple Developer name]
    - Our iOS bundle ID: com.aifitnesscoach.aiFitnessCoach
-   - Our domain: fitwiz.us (registered [your registrar date])
+   - Our domain: zealova.com (registered [your registrar date])
    - Complainant's iOS bundle ID: [their bundle ID, look up on App Store]
    - Complainant's domain: fitwiz.app
 
@@ -72,7 +72,7 @@ additional information would help your review.
 
 Sincerely,
 ChetanG
-[your legal entity, e.g. FitWiz, Inc. (Delaware)]
+[your legal entity, e.g. Zealova, Inc. (Delaware)]
 [your address]
 [your contact email]
 ```
@@ -82,7 +82,7 @@ ChetanG
 ## Google Play removal-dispute response (Form: Play Console → Policy → Action against your app → Submit appeal)
 
 ```
-Subject: Appeal — IP complaint on FitWiz: Workout & Meal Coach
+Subject: Appeal — IP complaint on Zealova: Workout & Meal Coach
        (com.aifitnesscoach.app)
 
 We respectfully appeal the takedown notice and submit the following:
@@ -91,10 +91,10 @@ We respectfully appeal the takedown notice and submit the following:
    - Our applicationId: com.aifitnesscoach.app (verifiably distinct
      from any package owned by the complainant).
    - Our developer account: [your Google Play developer name]
-   - Our domain: fitwiz.us (separate from complainant's fitwiz.app)
+   - Our domain: zealova.com (separate from complainant's fitwiz.app)
 
 2. Distinct product positioning
-   The Play Store name "FitWiz: Workout & Meal Coach" includes a
+   The Play Store name "Zealova: Workout & Meal Coach" includes a
    descriptive disambiguator. Our app is a consumer fitness planner
    focused on workout programming and nutrition coaching. The
    complainant's USPTO Reg #7111694 IC 009 description includes
@@ -131,11 +131,11 @@ ChetanG
       https://tsdr.uspto.gov/#caseNumber=97441093 → Documents → Save.
       The "namely" clause matters; the registration certificate +
       specimen-of-use show what they actually sell.
-- [ ] Pull your fitwiz.us domain registration date from your registrar
+- [ ] Pull your zealova.com domain registration date from your registrar
       (Namecheap / Squarespace / etc) — establishes your good-faith
       use timeline.
-- [ ] Save your first-use-anywhere date for the FitWiz brand — your
-      first commit referencing "FitWiz", earliest TestFlight build,
+- [ ] Save your first-use-anywhere date for the Zealova brand — your
+      first commit referencing "Zealova", earliest TestFlight build,
       first marketing post, etc. This becomes your priority claim if
       you ever counter-file (which we are not recommending today).
 - [ ] Confirm legal entity: if you don't have an LLC yet, form one

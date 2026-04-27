@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../shareable_canvas.dart';
 import '../shareable_data.dart';
-import '../widgets/fitwiz_watermark.dart';
+import '../widgets/app_watermark.dart';
 import '../widgets/photo_backdrop.dart';
 
 /// PhotoQuote — user's photo full-bleed under a heavier scrim, with a
@@ -101,7 +101,7 @@ class PhotoQuoteTemplate extends StatelessWidget {
                   ),
                 const Spacer(),
                 if (showWatermark)
-                  FitWizWatermark(
+                  AppWatermark(
                     textColor: Colors.white,
                     fontSize: 12 * mul,
                   ),

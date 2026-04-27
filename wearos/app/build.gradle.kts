@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.fitwiz.wearos"
+    namespace = "com.aifitnesscoach.wearos"
     compileSdk = 34
 
     defaultConfig {

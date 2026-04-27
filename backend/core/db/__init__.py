@@ -1,5 +1,5 @@
 """
-Database modules for FitWiz.
+Database modules for Zealova.
 
 This package contains modular database operations organized by domain:
 - user_db: User CRUD operations

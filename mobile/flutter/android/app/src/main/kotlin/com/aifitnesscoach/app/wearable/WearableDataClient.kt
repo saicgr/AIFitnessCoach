@@ -61,7 +61,7 @@ class WearableDataClient(private val context: Context) {
         const val PATH_NUTRITION_SUMMARY = "/fitwiz/nutrition/summary"
         const val PATH_HEALTH_GOALS = "/fitwiz/health/goals"
         const val PATH_HEALTH_DATA = "/fitwiz/health/data"
-        const val PATH_USER_PROFILE = "/fitwiz/user/profile"
+        const val PATH_USER_PROFILE = "/zealova.comer/profile"
         const val PATH_AUTH_CREDENTIALS = "/fitwiz/auth/credentials"
 
         // Message paths
@@ -73,7 +73,7 @@ class WearableDataClient(private val context: Context) {
     // ==================== Connection Status ====================
 
     /**
-     * Check if watch is connected (any WearOS device, regardless of FitWiz app)
+     * Check if watch is connected (any WearOS device, regardless of Zealova app)
      */
     suspend fun isWatchConnected(): Boolean {
         if (!isWearableApiAvailable) {
@@ -95,7 +95,7 @@ class WearableDataClient(private val context: Context) {
 
     /**
      * Check if any WearOS device is connected (paired and reachable).
-     * This detects the presence of a watch even if FitWiz app is NOT installed on it.
+     * This detects the presence of a watch even if Zealova app is NOT installed on it.
      * Use this to determine whether to show "Install on Watch" prompt.
      */
     suspend fun hasConnectedWearDevice(): Boolean {
@@ -119,8 +119,8 @@ class WearableDataClient(private val context: Context) {
     }
 
     /**
-     * Check if FitWiz watch app is installed on the connected watch.
-     * Uses capability discovery to find watches with FitWiz installed.
+     * Check if Zealova watch app is installed on the connected watch.
+     * Uses capability discovery to find watches with Zealova installed.
      */
     suspend fun isWatchAppInstalled(): Boolean {
         if (!isWearableApiAvailable) {
@@ -145,7 +145,7 @@ class WearableDataClient(private val context: Context) {
     }
 
     /**
-     * Prompt the user to install FitWiz watch app from Play Store on their connected watch.
+     * Prompt the user to install Zealova watch app from Play Store on their connected watch.
      * Opens Play Store on the watch directly via RemoteActivityHelper.
      *
      * @param activity The activity context required for RemoteActivityHelper

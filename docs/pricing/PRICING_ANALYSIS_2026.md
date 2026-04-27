@@ -1,4 +1,4 @@
-# FitWiz Pricing Analysis — Is $4.99/mo Too Low?
+# Zealova Pricing Analysis — Is $4.99/mo Too Low?
 
 *Created: 2026-04-15*
 *Status: Decision memo — awaiting pricing call*
@@ -7,7 +7,7 @@
 
 ## TL;DR
 
-**Yes, $4.99/mo is almost certainly underpriced.** It positions FitWiz below every AI-forward fitness competitor ($7.99–$15.99/mo) while FitWiz ships **more** AI features than any of them (conversational coach, Gemini workout gen, food vision, form video analysis, injury-aware plans). A $4.99 price signals "cheap tracker," not "premium AI coach," and caps LTV well below what the feature surface can support.
+**Yes, $4.99/mo is almost certainly underpriced.** It positions Zealova below every AI-forward fitness competitor ($7.99–$15.99/mo) while Zealova ships **more** AI features than any of them (conversational coach, Gemini workout gen, food vision, form video analysis, injury-aware plans). A $4.99 price signals "cheap tracker," not "premium AI coach," and caps LTV well below what the feature surface can support.
 
 **Recommended action:** Raise monthly to **$9.99** and yearly to **$59.99–$69.99** (≈$5/mo effective). Keep a legacy-price grandfather for existing subscribers. Run a 2-week A/B at the new price before committing.
 
@@ -41,16 +41,16 @@ Pulled from `research/COMPETITIVE_ANALYSIS.md` and current app-store listings.
 | **Future** (human coach) | $199 | — | — | Human trainer |
 | **Strong** | ~$8.33 | ~$99.99 | $8.33 | ❌ tracker only |
 | **Hevy Pro** | $2.99 | $23.99 | $2.00 | ❌ tracker only |
-| **FitWiz (current)** | **$4.99** | **$49.99** | **$4.17** | ✅ Full Gemini LLM + 5-agent swarm |
+| **Zealova (current)** | **$4.99** | **$49.99** | **$4.17** | ✅ Full Gemini LLM + 5-agent swarm |
 
-**Observation:** FitWiz is priced in the **tracker tier** (Hevy/Strong range) while shipping a feature set that exceeds Fitbod and MacroFactor. The only app cheaper per month is Hevy, which has no AI and no nutrition.
+**Observation:** Zealova is priced in the **tracker tier** (Hevy/Strong range) while shipping a feature set that exceeds Fitbod and MacroFactor. The only app cheaper per month is Hevy, which has no AI and no nutrition.
 
 ---
 
 ## Why $4.99 Is Likely Too Low
 
 ### 1. Price signals quality
-A $4.99 monthly price anchors users to "basic tracker." When a prospect comparison-shops between Fitbod at $15.99 and FitWiz at $4.99, the cheaper option reads as **inferior**, not as a bargain — especially in a category where people associate cost with efficacy (trainers, supplements, gyms).
+A $4.99 monthly price anchors users to "basic tracker." When a prospect comparison-shops between Fitbod at $15.99 and Zealova at $4.99, the cheaper option reads as **inferior**, not as a bargain — especially in a category where people associate cost with efficacy (trainers, supplements, gyms).
 
 ### 2. Unit economics leave money on the table
 From the existing cost model (`/PRICING.md:129-138`):
@@ -75,7 +75,7 @@ Translation: you probably don't lose many conversions doubling the price, becaus
 Lifetime plans, Premium Plus tiers, and referral upgrades all get **more valuable** when anchored against a higher base price. Launching a $99 lifetime looks great next to $9.99/mo (10 months breakeven); next to $4.99/mo it takes 20 months to pencil out and reads as a weak deal.
 
 ### 5. You're training users that AI is cheap
-Gemini, OpenAI, and ChatGPT Plus all sit at $20/mo. If FitWiz's differentiator is "conversational AI coach," pricing below ChatGPT implies the coach is a lesser experience. Raise price → defend the AI narrative.
+Gemini, OpenAI, and ChatGPT Plus all sit at $20/mo. If Zealova's differentiator is "conversational AI coach," pricing below ChatGPT implies the coach is a lesser experience. Raise price → defend the AI narrative.
 
 ---
 
@@ -107,7 +107,7 @@ Pass/fail metric: **trial-start revenue per visitor** at 14 days (not conversion
 ### Phase 3 (if test wins) — roll out with grandfathering
 - New installs → new price.
 - Existing subscribers → keep legacy $4.99 (RevenueCat handles this automatically on plan changes; just don't migrate SKUs).
-- Announce via email with the FitWiz voice (not Coach persona — per notification feedback guidance).
+- Announce via email with the Zealova voice (not Coach persona — per notification feedback guidance).
 
 ### Phase 4 (later) — reintroduce tier structure
 Once a stable paid base exists at $9.99, reintroduce the Premium Plus tier at $14.99 gated on the highest-leverage unlimited features (video form checks, unlimited AI generations, unlimited food photo scans). The root `/PRICING.md` already has a full feature gating matrix for this — just update the dollar amounts.
@@ -396,7 +396,7 @@ Rationale: ship the simplest paywall possible, gather 2–3 months of cohort dat
 ### India pricing — special competitive note (post-Dec 2025)
 **Apple Fitness+ launched in India Dec 15, 2025 at ₹149/mo · ₹999/yr.**
 
-FitWiz at ₹249 is positioned as:
+Zealova at ₹249 is positioned as:
 - **2× Apple Fitness+** (~₹100 premium) — justified by AI-coach differentiator (Apple is class-library only, no AI chat, no food logging, no injury-aware planning, no Android)
 - **Under 50% of HealthifyMe Pro** (₹599) — closest AI-adjacent rival
 - **25% of Cult.fit Live** (₹999)
@@ -410,7 +410,7 @@ FitWiz at ₹249 is positioned as:
 **Alternative considered: matching Apple at ₹149.** Rejected because:
 - Net after store cut + Gemini = $0.82/user/mo — one abuse user wipes out 5 moderate users
 - User cannot win on price vs Apple brand trust in India; must win on differentiation (AI)
-- ₹149 signals "me-too cheap class app" when FitWiz is a different product category (AI coach vs. class library)
+- ₹149 signals "me-too cheap class app" when Zealova is a different product category (AI coach vs. class library)
 
 ### Per-country breakeven math (fixed infra = $70/mo)
 How many subs to cover **all fixed infrastructure**, assuming moderate Gemini use:
@@ -624,7 +624,7 @@ Ranked by ROI for the "earn money ASAP" goal:
 Don't build until:
 - [ ] 2,000+ paying individual subscribers (proves PMF, provides upsell base)
 - [ ] 3+ months of cohort retention data at current single-user pricing
-- [ ] User research shows ≥20% of users have a spouse/partner/family member who would use FitWiz
+- [ ] User research shows ≥20% of users have a spouse/partner/family member who would use Zealova
 - [ ] Premium price stable at $9.99+/mo (Family pricing ladder only reads as a deal when individual is higher)
 - [ ] Multi-user entitlement infrastructure built (invitation tokens, seat management, per-user data isolation)
 

@@ -1,4 +1,4 @@
-# FitWiz Integration Research: Fasting + Workout + Nutrition Science
+# Zealova Integration Research: Fasting + Workout + Nutrition Science
 
 ## Table of Contents
 1. [Circadian Biology & Optimal Timing](#circadian-biology--optimal-timing)
@@ -41,7 +41,7 @@ Your body follows a 24-hour clock that affects everything from hormone levels to
 
 > "Early time-restricted eating, where food intake is confined to the morning or early afternoon, offers significant benefits for weight control, glycemic regulation, lipid profiles, and mitochondrial efficiency, even in the absence of caloric restriction." - MDPI Nutrients 2025
 
-**Practical Implications for FitWiz:**
+**Practical Implications for Zealova:**
 
 | Scenario | Optimal Strategy |
 |----------|------------------|
@@ -52,7 +52,7 @@ Your body follows a 24-hour clock that affects everything from hormone levels to
 
 ### Circadian Workout Scheduling Feature
 
-FitWiz could suggest optimal workout times based on:
+Zealova could suggest optimal workout times based on:
 1. User's fasting schedule (eating window)
 2. Workout type (high-intensity vs. low-intensity)
 3. Wake/sleep times
@@ -111,7 +111,7 @@ or switch to lighter cardio in the morning."
 
 ### Fasted Training Considerations
 
-When a user trains in a fasted state, FitWiz should recognize:
+When a user trains in a fasted state, Zealova should recognize:
 
 1. **Glycogen Status:**
    - 12-16 hours fasted: ~50% glycogen remaining
@@ -200,7 +200,7 @@ When a user trains in a fasted state, FitWiz should recognize:
 
 ### Recovery Urgency Calculator
 
-FitWiz could calculate recovery urgency:
+Zealova could calculate recovery urgency:
 
 ```python
 def calculate_recovery_urgency(
@@ -373,7 +373,7 @@ Post-Workout (Breaking Fast):
 
 ### Electrolyte Tracking Feature
 
-FitWiz could track electrolyte-containing foods and drinks:
+Zealova could track electrolyte-containing foods and drinks:
 - Water logged → prompt for "plain or with electrolytes?"
 - Meal logged → extract electrolyte content from nutrition data
 - Show daily electrolyte summary for fasting users
@@ -1316,7 +1316,7 @@ Consumer(
 
 ## Viral Features Research: What Makes Fitness Apps Go Viral
 
-Based on comprehensive market research, here are **viral-worthy features** that would unite workout + nutrition + fasting in ways NO other app does, creating a unique competitive moat for FitWiz.
+Based on comprehensive market research, here are **viral-worthy features** that would unite workout + nutrition + fasting in ways NO other app does, creating a unique competitive moat for Zealova.
 
 ---
 
@@ -1326,7 +1326,7 @@ Based on comprehensive market research, here are **viral-worthy features** that 
 
 The Apple Watch Activity Rings are one of the most successful gamification implementations in fitness. Here's why they work:
 
-| Principle | How It Works | FitWiz Opportunity |
+| Principle | How It Works | Zealova Opportunity |
 |-----------|--------------|-------------------|
 | **Goal-Gradient Effect** | As rings fill up, motivation increases exponentially near completion | Perfect Day Ring with 4 pillars |
 | **Dopamine Hits** | Constant stream of micro-rewards flood brain with dopamine | Achievement pop-ups, sound effects |
@@ -1335,7 +1335,7 @@ The Apple Watch Activity Rings are one of the most successful gamification imple
 | **Social Reinforcement** | Share achievements for external validation | Friend challenges, leaderboards |
 | **Streaks** | "10 days in a row!" creates loss aversion | Perfect Day streak with fire emoji |
 
-**Key Insight:** Apple didn't invent fitness tracking, but they made it *obsession-worthy*. FitWiz can do the same for the fasting + workout + nutrition trinity.
+**Key Insight:** Apple didn't invent fitness tracking, but they made it *obsession-worthy*. Zealova can do the same for the fasting + workout + nutrition trinity.
 
 **Sources:**
 - [The Psychology Behind Apple Watch - Beyond Nudge](https://www.beyondnudge.org/post/casestudy-apple-watch)
@@ -1344,7 +1344,7 @@ The Apple Watch Activity Rings are one of the most successful gamification imple
 
 ---
 
-### Viral Feature Opportunities for FitWiz
+### Viral Feature Opportunities for Zealova
 
 Based on market research, these are **high-viral-potential features** that unite all three pillars:
 
@@ -1382,7 +1382,7 @@ FUSION SCORE (0-100) = Weighted combination of:
 │   ├─ 💧 Hydration: 75 (2.3L / 3L)                         │
 │   └─ 😴 Recovery: 78 (7h sleep, moderate soreness)        │
 │                                                            │
-│   "Outstanding day! You're in the top 15% of FitWiz       │
+│   "Outstanding day! You're in the top 15% of Zealova       │
 │    users. Share your score?"                              │
 │                                                            │
 │   [Share to Instagram] [Challenge a Friend]               │
@@ -1449,7 +1449,7 @@ FUSION SCORE (0-100) = Weighted combination of:
 - Side-by-side comparisons for progress posts
 - TikTok/Instagram format ready
 
-**Unique FitWiz Advantage:**
+**Unique Zealova Advantage:**
 No other app can project your future body based on fasting + workout + nutrition TOGETHER. Other apps only consider one factor.
 
 **Sources:**
@@ -1509,7 +1509,7 @@ No other app can project your future body based on fasting + workout + nutrition
 - Public battles attract spectators
 - "Who wants next?" after winning
 
-**Unique FitWiz Advantage:**
+**Unique Zealova Advantage:**
 No other app lets you compete on fasting + workout + nutrition simultaneously. StepBet is steps only. GymRats is workouts only.
 
 **Sources:**
@@ -1563,8 +1563,8 @@ No other app lets you compete on fasting + workout + nutrition simultaneously. S
 - Community pot creates social pressure
 - Success stories attract new users
 
-**Unique FitWiz Advantage:**
-No other betting app combines fasting + workout + nutrition. StepBet = steps, DietBet = weight. FitWiz = holistic health.
+**Unique Zealova Advantage:**
+No other betting app combines fasting + workout + nutrition. StepBet = steps, DietBet = weight. Zealova = holistic health.
 
 **Sources:**
 - [StepBet Fitness Accountability](https://hip2save.com/deals/workout-accountability-app/)
@@ -1618,10 +1618,10 @@ No other betting app combines fasting + workout + nutrition. StepBet = steps, Di
 **Viral Mechanics:**
 - Native export for TikTok/Instagram/YouTube Shorts
 - Stats overlay creates unique content
-- "FitWiz" watermark = free marketing
+- "Zealova" watermark = free marketing
 - Transformation stories inspire new users
 
-**Unique FitWiz Advantage:**
+**Unique Zealova Advantage:**
 Show fasting streak, workout consistency, AND body transformation in ONE video. No other app can do this.
 
 **Sources:**
@@ -1679,10 +1679,10 @@ Show fasting streak, workout consistency, AND body transformation in ONE video. 
 **Viral Mechanics:**
 - "The scale went UP but I look better" is mind-blowing content
 - Body comp success stories are aspirational
-- Shows value of FitWiz's integrated approach
+- Shows value of Zealova's integrated approach
 - Scientific credibility builds trust
 
-**Unique FitWiz Advantage:**
+**Unique Zealova Advantage:**
 Correlate body composition changes with fasting patterns, workout types, and protein timing. No other app connects all three.
 
 **Sources:**
@@ -1744,7 +1744,7 @@ Correlate body composition changes with fasting patterns, workout types, and pro
 - Rare achievements become status symbols
 - "What level are you?" becomes conversation starter
 
-**Unique FitWiz Advantage:**
+**Unique Zealova Advantage:**
 XP earned from fasting + workout + nutrition combined. No other app has this triple-source leveling system.
 
 **Sources:**
@@ -1810,11 +1810,11 @@ XP earned from fasting + workout + nutrition combined. No other app has this tri
 
 **Viral Mechanics:**
 - Screenshot-worthy morning dashboards
-- "My FitWiz morning routine" TikTok content
+- "My Zealova morning routine" TikTok content
 - Personalized = unique = shareable
 - Habit stacking creates dependency
 
-**Unique FitWiz Advantage:**
+**Unique Zealova Advantage:**
 Morning routine adapts based on fasting state, yesterday's workout, and today's nutrition needs. No other app has this cross-pillar awareness.
 
 **Sources:**
@@ -1826,7 +1826,7 @@ Morning routine adapts based on fasting state, yesterday's workout, and today's 
 
 ## Viral Features Priority Matrix
 
-| Feature | Virality Potential | Development Effort | Unique to FitWiz? | Priority |
+| Feature | Virality Potential | Development Effort | Unique to Zealova? | Priority |
 |---------|-------------------|-------------------|-------------------|----------|
 | **Fusion Score** | ⭐⭐⭐⭐⭐ | Medium | ✅ Yes - 3-pillar combo | 🥇 #1 |
 | **1v1 Fusion Battles** | ⭐⭐⭐⭐⭐ | Medium | ✅ Yes - cross-pillar | 🥈 #2 |
@@ -1839,7 +1839,7 @@ Morning routine adapts based on fasting state, yesterday's workout, and today's 
 
 ---
 
-## What Makes FitWiz Uniquely Viral
+## What Makes Zealova Uniquely Viral
 
 ### The Competitive Moat
 
@@ -1855,7 +1855,7 @@ Morning routine adapts based on fasting state, yesterday's workout, and today's 
 
 3. **Holistic Competition**
    - Battle friends across ALL health behaviors, not just steps
-   - StepBet = steps only. GymRats = workouts only. FitWiz = everything.
+   - StepBet = steps only. GymRats = workouts only. Zealova = everything.
 
 4. **Cross-Pillar Streaks**
    - "7-day Perfect Day streak across 4 pillars"
@@ -1874,7 +1874,7 @@ High Fusion Score (87)
         ↓
 Shares to Instagram Stories
         ↓
-Friend asks "What's FitWiz?"
+Friend asks "What's Zealova?"
         ↓
 Friend downloads app
         ↓
@@ -1954,7 +1954,7 @@ Research shows streaks tap into fundamental psychological mechanisms:
 3. **Identity Formation** - "I'm a person who works out every day"
 4. **Variable Reward** - Uncertainty of whether you'll maintain creates dopamine
 
-**The Hook Model Applied to FitWiz:**
+**The Hook Model Applied to Zealova:**
 ```
 TRIGGER → ACTION → VARIABLE REWARD → INVESTMENT
    ↓         ↓           ↓              ↓
@@ -1973,7 +1973,7 @@ Traditional streaks create anxiety. Modern apps use "streak shields" and "freeze
 - "Grace period" for illness or travel
 - "Partial credit" for 3/4 pillars completed
 
-**FitWiz Streak Innovation - "Flex Streaks":**
+**Zealova Streak Innovation - "Flex Streaks":**
 ```
 ┌────────────────────────────────────────────────────────────┐
 │                    FLEX STREAK: 🔥 23 DAYS                 │
@@ -2005,7 +2005,7 @@ Research shows:
 - Group challenges have **30% higher completion** than solo
 - "Accountability partners" in fitness are the #1 predictor of long-term success
 
-**FitWiz Implementation:**
+**Zealova Implementation:**
 ```
 ┌────────────────────────────────────────────────────────────┐
 │            💪 ACCOUNTABILITY POD: "Gainz Gang"             │
@@ -2029,7 +2029,7 @@ Research shows:
 - Weekly winner: Gets immunity next week
 - Group goal: All members hit Perfect Day 5x this week
 
-**Unique FitWiz Advantage:**
+**Unique Zealova Advantage:**
 Pods compete across ALL pillars, not just steps or workouts. The multi-pillar nature creates:
 - More touchpoints for interaction
 - More ways to contribute (strong faster, good at nutrition, etc.)
@@ -2050,7 +2050,7 @@ AI fitness coaches are projected to be a **$33.58 billion market by 2033**. Key 
 - **Proactive nudges** based on context (not time) work 3x better
 - Users share funny/helpful AI interactions on social media
 
-**FitWiz AI Personalities:**
+**Zealova AI Personalities:**
 ```
 ┌────────────────────────────────────────────────────────────┐
 │              CHOOSE YOUR COACH PERSONALITY                 │
@@ -2120,14 +2120,14 @@ Hands-free AI coaching during workouts. Ask questions, log progress, get motivat
 
 Voice AI is the next frontier:
 - AirPods + voice = no phone needed during workout
-- "Hey FitWiz, how many sets left?" during rest
+- "Hey Zealova, how many sets left?" during rest
 - Natural language logging: "Log 3 sets of 10 bench at 135"
 - Motivational audio at key moments
 
 **Use Cases:**
 ```
 During Workout:
-User: "Hey FitWiz, I'm struggling"
+User: "Hey Zealova, I'm struggling"
 AI: "You've got 2 sets left. Remember your PR is 185 and
      you're at 175. You're stronger than this weight."
 
@@ -2142,7 +2142,7 @@ AI: "You're 14 hours fasted. I'd recommend eating first.
      Your eating window opens in 30 minutes."
 ```
 
-**Unique FitWiz Advantage:**
+**Unique Zealova Advantage:**
 Voice commands work across ALL pillars:
 - "Start my fast" → Begins fasting timer
 - "I just ate chicken and rice" → Logs meal with estimates
@@ -2154,7 +2154,7 @@ Voice commands work across ALL pillars:
 ### Feature 12: Smart Watch Complications & Widgets
 
 **What It Is:**
-Glanceable FitWiz data on Apple Watch faces and home screen widgets showing real-time cross-pillar status.
+Glanceable Zealova data on Apple Watch faces and home screen widgets showing real-time cross-pillar status.
 
 **Why It's Viral:**
 
@@ -2163,7 +2163,7 @@ Watch face complications are:
 - The reason Apple Watch has 80% streak engagement
 - Instant status without opening app
 
-**FitWiz Watch Complications:**
+**Zealova Watch Complications:**
 ```
 ┌─────────────────────────────────────────┐
 │                                         │
@@ -2181,7 +2181,7 @@ Watch face complications are:
 **Home Screen Widget:**
 ```
 ┌─────────────────────────────────────────┐
-│  FitWiz Today                           │
+│  Zealova Today                           │
 │                                         │
 │  Fusion: 87 🔥     Fasting: 14h ⏱️      │
 │  ████████████░░   ████████████████      │
@@ -2208,7 +2208,7 @@ The fitness industry is moving from "no pain no gain" to **smart recovery**:
 - "Active recovery" content gets high engagement
 - Overtraining awareness is trending
 
-**FitWiz Recovery Intelligence:**
+**Zealova Recovery Intelligence:**
 ```
 ┌────────────────────────────────────────────────────────────┐
 │              🛌 RECOVERY RECOMMENDATION                     │
@@ -2239,8 +2239,8 @@ The fitness industry is moving from "no pain no gain" to **smart recovery**:
 - **Fasting adjustment:** Shorter window for recovery
 - **Hydration adjustment:** Electrolytes for muscle repair
 
-**Unique FitWiz Advantage:**
-Only FitWiz can say "You're overtrained AND your extended fasts are adding stress. Here's a complete recovery protocol across all pillars."
+**Unique Zealova Advantage:**
+Only Zealova can say "You're overtrained AND your extended fasts are adding stress. Here's a complete recovery protocol across all pillars."
 
 ---
 
@@ -2256,7 +2256,7 @@ Shareable achievements are responsible for:
 - Instagram Stories are perfect for achievement flexing
 - "Achievement unlocked" posts get 3x more engagement
 
-**FitWiz Milestone Moments:**
+**Zealova Milestone Moments:**
 ```
 ┌────────────────────────────────────────────────────────────┐
 │                                                            │
@@ -2316,7 +2316,7 @@ AI predicts when you're likely to break your streak and intervenes BEFORE it hap
 **Why It's Viral:**
 
 Preventing streak breaks creates:
-- Emotional relief ("FitWiz saved my streak!")
+- Emotional relief ("Zealova saved my streak!")
 - Shareable stories ("My AI knew I was about to skip")
 - Deeper trust in the app
 

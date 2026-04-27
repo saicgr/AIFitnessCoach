@@ -1,5 +1,5 @@
 """
-Configuration settings for the FitWiz backend.
+Configuration settings for the Zealova backend.
 Easy to modify - just update the Settings class or .env file.
 """
 from pydantic_settings import BaseSettings

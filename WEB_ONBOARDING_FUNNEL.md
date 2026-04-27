@@ -1,4 +1,4 @@
-# Web Onboarding Quiz Funnel — FitWiz
+# Web Onboarding Quiz Funnel — Zealova
 
 **Status**: DEFERRED — build after app is live in Play Store + App Store and paid UA is planned.
 **Priority**: Post-launch growth feature, not a launch blocker.
@@ -104,7 +104,7 @@ Step 5: /quiz/signup (account creation)
   → Backend kicks off Day-1 workout generation in background
 
 Step 6: /quiz/download (terminal screen)
-  "Your plan is ready! Download FitWiz to start."
+  "Your plan is ready! Download Zealova to start."
   [Get on Google Play]  [Download on App Store]
   "We also emailed you a magic link to sign in instantly."
 ```
@@ -122,7 +122,7 @@ User taps Play Store / App Store badge → installs app → opens it
 ```
 App opens for the first time:
 ┌─────────────────────────────┐
-│       Welcome to FitWiz     │
+│       Welcome to Zealova     │
 │                             │
 │  ┌───────────────────────┐  │
 │  │  Continue with Google  │  │  ← Same as current auth screen
@@ -191,7 +191,7 @@ User sees their personalized workout immediately — no "generating..." spinner
 - App sign-in screen: "Continue with Google" button + "Continue with Email" option
 - Users naturally pick the same method in both places → same Supabase auth ID → match
 
-**Fallback:** If accounts don't match (different auth method), after sign-in check if the email exists in another auth record with `acquisition_source='web_quiz'`. If found, prompt: "We found your plan from fitwiz.us. Link accounts?" → Supabase admin API merges.
+**Fallback:** If accounts don't match (different auth method), after sign-in check if the email exists in another auth record with `acquisition_source='web_quiz'`. If found, prompt: "We found your plan from zealova.com. Link accounts?" → Supabase admin API merges.
 
 ---
 
@@ -304,8 +304,8 @@ What moves from in-app onboarding to web, what stays, what gets defaults:
 
 | Platform | Setup |
 |---|---|
-| **iOS** | Add `applinks:fitwiz.us` to `ios/Runner/Runner.entitlements`. Host `apple-app-site-association` JSON on marketing domain. |
-| **Android** | Add intent-filter with `android:autoVerify="true"` in `AndroidManifest.xml`. Host `assetlinks.json` at `fitwiz.us/.well-known/assetlinks.json`. |
+| **iOS** | Add `applinks:zealova.com` to `ios/Runner/Runner.entitlements`. Host `apple-app-site-association` JSON on marketing domain. |
+| **Android** | Add intent-filter with `android:autoVerify="true"` in `AndroidManifest.xml`. Host `assetlinks.json` at `zealova.com/.well-known/assetlinks.json`. |
 | **Flutter** | `app_links` package captures inbound universal link → extracts magic-link token → `SupabaseClient.auth.getSessionFromUrl()` |
 
 ---

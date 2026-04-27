@@ -1,4 +1,4 @@
-# FitWiz Onboarding Redesign - Implementation Guide
+# Zealova Onboarding Redesign - Implementation Guide
 
 ## ✅ Completed Components
 

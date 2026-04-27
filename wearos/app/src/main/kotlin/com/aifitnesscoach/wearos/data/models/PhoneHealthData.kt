@@ -1,4 +1,4 @@
-package com.fitwiz.wearos.data.models
+package com.aifitnesscoach.wearos.data.models
 
 /**
  * Health data synced from phone's Health Connect to the watch.

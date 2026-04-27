@@ -1,4 +1,4 @@
-# FitWiz — AI Agent Architecture
+# Zealova — AI Agent Architecture
 
 Deep dive into the LangGraph multi-agent system. Covers **topology**, **message lifecycle**, **per-agent graphs**, **state**, **tool registry**, and the **on-device agent**. See [`SYSTEM_ARCHITECTURE.md`](./SYSTEM_ARCHITECTURE.md) for the broader system view.
 

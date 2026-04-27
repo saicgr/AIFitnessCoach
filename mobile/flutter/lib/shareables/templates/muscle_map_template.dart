@@ -1,9 +1,13 @@
 import 'dart:math' as math;
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:muscle_selector/muscle_selector.dart';
+import 'package:muscle_selector/src/parser.dart';
 
+import '../../widgets/body_muscle_selector.dart' show backendMuscleToPackageGroup;
 import '../shareable_canvas.dart';
 import '../shareable_data.dart';
-import '../widgets/fitwiz_watermark.dart';
+import '../widgets/app_watermark.dart';
 
 /// MuscleMap — anatomical front silhouette with muscle groups heat-coded
 /// from `data.musclesWorked`. Sparkle accent. Spark category — synthesizes
@@ -90,15 +94,10 @@ class MuscleMapTemplate extends StatelessWidget {
             const SizedBox(height: 20),
             Expanded(
               child: Center(
-                child: AspectRatio(
-                  aspectRatio: 0.42,
-                  child: CustomPaint(
-                    painter: _BodyPainter(
-                      muscles: muscles,
-                      maxCount: maxCount == 0 ? 1 : maxCount,
-                      accent: accent,
-                    ),
-                  ),
+                child: _AnatomicalBody(
+                  muscles: muscles,
+                  maxCount: maxCount == 0 ? 1 : maxCount,
+                  accent: accent,
                 ),
               ),
             ),
@@ -121,7 +120,7 @@ class MuscleMapTemplate extends StatelessWidget {
               ),
             const SizedBox(height: 18),
             if (showWatermark)
-              FitWizWatermark(
+              AppWatermark(
                 textColor: Colors.white,
                 fontSize: 13 * mul,
               ),
@@ -185,208 +184,247 @@ class MuscleMapTemplate extends StatelessWidget {
   }
 }
 
-class _BodyPainter extends CustomPainter {
+/// SVG path id → muscle_selector "package group" name. Mirrors the
+/// internal grouping in body_score_overlay.dart's _pathIdToGroup so a
+/// single chest path turns the whole pec region red, both biceps paths
+/// share one heat value, etc.
+const Map<String, String> _pathIdToGroup = {
+  'chest1': 'chest', 'chest2': 'chest',
+  'shoulder1': 'shoulders', 'shoulder2': 'shoulders',
+  'shoulder3': 'shoulders', 'shoulder4': 'shoulders',
+  'obliques1': 'obliques', 'obliques2': 'obliques',
+  'abs1': 'abs', 'abs2': 'abs', 'abs3': 'abs', 'abs4': 'abs',
+  'abs5': 'abs', 'abs6': 'abs', 'abs7': 'abs', 'abs8': 'abs',
+  'abductor1': 'abductor', 'abductor2': 'abductor',
+  'biceps1': 'biceps', 'biceps2': 'biceps',
+  'calves1': 'calves', 'calves2': 'calves',
+  'calves3': 'calves', 'calves4': 'calves',
+  'forearm1': 'forearm', 'forearm2': 'forearm',
+  'forearm3': 'forearm', 'forearm4': 'forearm',
+  'glutes1': 'glutes', 'glutes2': 'glutes',
+  'harmstrings1': 'harmstrings', 'harmstrings2': 'harmstrings',
+  'lats1': 'lats', 'lats2': 'lats',
+  'upper_back1': 'upper_back', 'upper_back2': 'upper_back',
+  'quads1': 'quads', 'quads2': 'quads',
+  'quads3': 'quads', 'quads4': 'quads',
+  'trapezius1': 'trapezius', 'trapezius2': 'trapezius',
+  'trapezius3': 'trapezius', 'trapezius4': 'trapezius',
+  'trapezius5': 'trapezius',
+  'triceps1': 'triceps', 'triceps2': 'triceps',
+  'adductors1': 'adductors', 'adductors2': 'adductors',
+  'lower_back': 'lower_back',
+  'neck': 'neck',
+};
+
+/// Anatomical front + back body silhouette with heat-coded muscle groups.
+/// Replaces the old hand-painted blocky stick figure that users were
+/// rightfully calling out as wrong-looking.
+class _AnatomicalBody extends StatefulWidget {
   final Map<String, int> muscles;
   final int maxCount;
   final Color accent;
 
-  _BodyPainter({
+  const _AnatomicalBody({
     required this.muscles,
     required this.maxCount,
     required this.accent,
   });
 
-  Color _heatColor(String key) {
-    final count = _matchedCount(key);
-    if (count == 0) return Colors.white.withValues(alpha: 0.06);
-    final t = count / maxCount;
-    return Color.lerp(
-      accent.withValues(alpha: 0.25),
-      accent,
-      t.clamp(0.0, 1.0),
-    )!;
+  @override
+  State<_AnatomicalBody> createState() => _AnatomicalBodyState();
+}
+
+class _AnatomicalBodyState extends State<_AnatomicalBody> {
+  Path? _bodyOutline;
+  Map<String, Path> _musclePaths = const {};
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
   }
 
-  int _matchedCount(String key) {
-    final lower = key.toLowerCase();
-    for (final entry in muscles.entries) {
-      if (entry.key.toLowerCase().contains(lower)) return entry.value;
+  Future<void> _load() async {
+    try {
+      final list = await Parser.instance.svgToMuscleList(Maps.BODY);
+      if (!mounted) return;
+      Path? outline;
+      final paths = <String, Path>{};
+      for (final m in list) {
+        if (m.id == 'human_body') {
+          outline = m.path;
+        } else {
+          paths[m.id] = m.path;
+        }
+      }
+      if (outline != null) {
+        setState(() {
+          _bodyOutline = outline;
+          _musclePaths = paths;
+        });
+      }
+    } catch (_) {
+      // Leave the silhouette empty — the legend chips below still convey
+      // the data; we just lose the visual.
     }
-    return 0;
+  }
+
+  /// Resolve a muscle group name (e.g. "biceps", "harmstrings") to the
+  /// number of sets logged. Looks the group up via the package mapping
+  /// AND the raw backend key so spellings like "hamstrings" still match.
+  int _countForGroup(String packageGroup) {
+    // Reverse lookup: package group → backend muscle name.
+    String? backendKey;
+    for (final entry in backendMuscleToPackageGroup.entries) {
+      if (entry.value == packageGroup) {
+        backendKey = entry.key;
+        break;
+      }
+    }
+    int? hit;
+    if (backendKey != null && widget.muscles.containsKey(backendKey)) {
+      hit = widget.muscles[backendKey];
+    }
+    // Fallback: substring match against the package group name itself.
+    if (hit == null) {
+      for (final e in widget.muscles.entries) {
+        if (e.key.toLowerCase().contains(packageGroup)) {
+          hit = e.value;
+          break;
+        }
+      }
+    }
+    return hit ?? 0;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_bodyOutline == null) {
+      // Loading: render a soft accent halo so the share card isn't blank
+      // mid-capture. Padding keeps the slot stable.
+      return SizedBox(
+        height: double.infinity,
+        child: Center(
+          child: SizedBox(
+            width: 28,
+            height: 28,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: widget.accent.withValues(alpha: 0.7),
+            ),
+          ),
+        ),
+      );
+    }
+    return AspectRatio(
+      // Front + back dual SVG is roughly 1:1 (two figures side-by-side).
+      aspectRatio: 0.85,
+      child: CustomPaint(
+        painter: _BodyPainter(
+          bodyOutline: _bodyOutline!,
+          musclePaths: _musclePaths,
+          countForGroup: _countForGroup,
+          maxCount: widget.maxCount,
+          accent: widget.accent,
+        ),
+      ),
+    );
+  }
+}
+
+class _BodyPainter extends CustomPainter {
+  final Path bodyOutline;
+  final Map<String, Path> musclePaths;
+  final int Function(String packageGroup) countForGroup;
+  final int maxCount;
+  final Color accent;
+
+  _BodyPainter({
+    required this.bodyOutline,
+    required this.musclePaths,
+    required this.countForGroup,
+    required this.maxCount,
+    required this.accent,
+  });
+
+  Color _heatColor(int count) {
+    if (count <= 0) return Colors.white.withValues(alpha: 0.07);
+    final t = (count / maxCount).clamp(0.0, 1.0);
+    // Cool low → warm high; bottom of the ramp is the accent at low alpha
+    // so a single set still reads as "lit", but a top-trained group looks
+    // dramatically hotter.
+    return Color.lerp(
+      accent.withValues(alpha: 0.30),
+      accent,
+      t,
+    )!;
   }
 
   @override
   void paint(Canvas canvas, Size size) {
-    final w = size.width;
-    final h = size.height;
-    final body = Paint()
-      ..color = Colors.white.withValues(alpha: 0.05)
+    final svgBounds = bodyOutline.getBounds();
+    const padding = 4.0;
+    final availableWidth = size.width - 2 * padding;
+    final availableHeight = size.height - 2 * padding;
+
+    final scaleX = availableWidth / svgBounds.width;
+    final scaleY = availableHeight / svgBounds.height;
+    final scale = math.min(scaleX, scaleY);
+
+    final scaledWidth = svgBounds.width * scale;
+    final scaledHeight = svgBounds.height * scale;
+    final tx = (size.width - scaledWidth) / 2 - svgBounds.left * scale;
+    final ty = (size.height - scaledHeight) / 2 - svgBounds.top * scale;
+
+    final matrix = Float64List(16)
+      ..[0] = scale
+      ..[5] = scale
+      ..[10] = 1.0
+      ..[12] = tx
+      ..[13] = ty
+      ..[15] = 1.0;
+
+    // 1) Base ghost fill — every muscle painted at low alpha so the
+    // silhouette reads as a soft figure regardless of which groups have
+    // data.
+    final ghostFill = Paint()
+      ..color = Colors.white.withValues(alpha: 0.06)
       ..style = PaintingStyle.fill;
-    final outline = Paint()
-      ..color = Colors.white.withValues(alpha: 0.20)
+    for (final path in musclePaths.values) {
+      canvas.drawPath(path.transform(matrix), ghostFill);
+    }
+
+    // 2) Heat fill — overlay each muscle group with an accent-tinted
+    // color whose intensity scales with set count.
+    final groupCounts = <String, int>{};
+    for (final entry in _pathIdToGroup.entries) {
+      groupCounts.putIfAbsent(entry.value, () => countForGroup(entry.value));
+    }
+    for (final entry in musclePaths.entries) {
+      final group = _pathIdToGroup[entry.key];
+      if (group == null) continue;
+      final count = groupCounts[group] ?? 0;
+      if (count <= 0) continue;
+      final paint = Paint()
+        ..color = _heatColor(count)
+        ..style = PaintingStyle.fill;
+      canvas.drawPath(entry.value.transform(matrix), paint);
+    }
+
+    // 3) Body outline on top so the silhouette edge stays crisp over the
+    // heat fills.
+    final outlinePaint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.55)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5;
-
-    // Head.
-    final headR = w * 0.13;
-    final headCenter = Offset(w / 2, h * 0.08);
-    canvas.drawCircle(headCenter, headR, body);
-    canvas.drawCircle(headCenter, headR, outline);
-
-    // Neck.
-    final neck = RRect.fromRectAndRadius(
-      Rect.fromCenter(center: Offset(w / 2, h * 0.16), width: w * 0.10, height: h * 0.04),
-      const Radius.circular(4),
-    );
-    canvas.drawRRect(neck, body);
-    canvas.drawRRect(neck, outline);
-
-    // Torso (shoulders → waist).
-    final torso = Path()
-      ..moveTo(w * 0.18, h * 0.20)
-      ..quadraticBezierTo(w * 0.10, h * 0.30, w * 0.18, h * 0.55)
-      ..lineTo(w * 0.32, h * 0.62)
-      ..lineTo(w * 0.68, h * 0.62)
-      ..lineTo(w * 0.82, h * 0.55)
-      ..quadraticBezierTo(w * 0.90, h * 0.30, w * 0.82, h * 0.20)
-      ..close();
-    canvas.drawPath(torso, body);
-    canvas.drawPath(torso, outline);
-
-    // Chest (heat-coded).
-    _drawHeatRegion(
-      canvas,
-      Path()
-        ..moveTo(w * 0.27, h * 0.23)
-        ..quadraticBezierTo(w * 0.50, h * 0.20, w * 0.73, h * 0.23)
-        ..lineTo(w * 0.70, h * 0.36)
-        ..lineTo(w * 0.30, h * 0.36)
-        ..close(),
-      _heatColor('chest'),
-    );
-
-    // Abs.
-    _drawHeatRegion(
-      canvas,
-      Path()
-        ..addRRect(
-          RRect.fromRectAndRadius(
-            Rect.fromLTWH(w * 0.36, h * 0.39, w * 0.28, h * 0.18),
-            const Radius.circular(8),
-          ),
-        ),
-      _heatColor('core'),
-    );
-
-    // Shoulders (left + right).
-    _drawHeatRegion(
-      canvas,
-      Path()..addOval(Rect.fromLTWH(w * 0.13, h * 0.20, w * 0.16, h * 0.10)),
-      _heatColor('shoulder'),
-    );
-    _drawHeatRegion(
-      canvas,
-      Path()..addOval(Rect.fromLTWH(w * 0.71, h * 0.20, w * 0.16, h * 0.10)),
-      _heatColor('shoulder'),
-    );
-
-    // Biceps (arms).
-    _drawHeatRegion(
-      canvas,
-      Path()..addRRect(
-        RRect.fromRectAndRadius(
-          Rect.fromLTWH(w * 0.06, h * 0.27, w * 0.12, h * 0.18),
-          const Radius.circular(20),
-        ),
-      ),
-      _heatColor('biceps'),
-    );
-    _drawHeatRegion(
-      canvas,
-      Path()..addRRect(
-        RRect.fromRectAndRadius(
-          Rect.fromLTWH(w * 0.82, h * 0.27, w * 0.12, h * 0.18),
-          const Radius.circular(20),
-        ),
-      ),
-      _heatColor('biceps'),
-    );
-
-    // Forearms.
-    final forearmL = RRect.fromRectAndRadius(
-      Rect.fromLTWH(w * 0.04, h * 0.45, w * 0.10, h * 0.16),
-      const Radius.circular(16),
-    );
-    final forearmR = RRect.fromRectAndRadius(
-      Rect.fromLTWH(w * 0.86, h * 0.45, w * 0.10, h * 0.16),
-      const Radius.circular(16),
-    );
-    canvas.drawRRect(forearmL, body);
-    canvas.drawRRect(forearmL, outline);
-    canvas.drawRRect(forearmR, body);
-    canvas.drawRRect(forearmR, outline);
-
-    // Quads.
-    _drawHeatRegion(
-      canvas,
-      Path()..addRRect(
-        RRect.fromRectAndRadius(
-          Rect.fromLTWH(w * 0.30, h * 0.63, w * 0.18, h * 0.22),
-          const Radius.circular(20),
-        ),
-      ),
-      _heatColor('quads'),
-    );
-    _drawHeatRegion(
-      canvas,
-      Path()..addRRect(
-        RRect.fromRectAndRadius(
-          Rect.fromLTWH(w * 0.52, h * 0.63, w * 0.18, h * 0.22),
-          const Radius.circular(20),
-        ),
-      ),
-      _heatColor('quads'),
-    );
-
-    // Calves.
-    _drawHeatRegion(
-      canvas,
-      Path()..addRRect(
-        RRect.fromRectAndRadius(
-          Rect.fromLTWH(w * 0.32, h * 0.85, w * 0.14, h * 0.14),
-          const Radius.circular(14),
-        ),
-      ),
-      _heatColor('calves'),
-    );
-    _drawHeatRegion(
-      canvas,
-      Path()..addRRect(
-        RRect.fromRectAndRadius(
-          Rect.fromLTWH(w * 0.54, h * 0.85, w * 0.14, h * 0.14),
-          const Radius.circular(14),
-        ),
-      ),
-      _heatColor('calves'),
-    );
-
-    // Outline pass on top of all heat regions.
-    canvas.drawPath(torso, outline);
-  }
-
-  void _drawHeatRegion(Canvas canvas, Path path, Color color) {
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.fill;
-    canvas.drawPath(path, paint);
-    final stroke = Paint()
-      ..color = Colors.white.withValues(alpha: 0.18)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1;
-    canvas.drawPath(path, stroke);
+      ..strokeWidth = 1.2
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+    canvas.drawPath(bodyOutline.transform(matrix), outlinePaint);
   }
 
   @override
   bool shouldRepaint(covariant _BodyPainter old) =>
-      old.muscles != muscles || old.accent != accent;
+      old.maxCount != maxCount ||
+      old.accent != accent ||
+      old.musclePaths != musclePaths;
 }

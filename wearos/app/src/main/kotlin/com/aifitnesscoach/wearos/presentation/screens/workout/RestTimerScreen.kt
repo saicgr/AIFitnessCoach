@@ -1,4 +1,4 @@
-package com.fitwiz.wearos.presentation.screens.workout
+package com.aifitnesscoach.wearos.presentation.screens.workout
 
 import android.content.Context
 import android.os.Build
@@ -20,9 +20,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.wear.compose.material.*
-import com.fitwiz.wearos.presentation.theme.FitWizColors
-import com.fitwiz.wearos.presentation.theme.FitWizTypography
-import com.fitwiz.wearos.presentation.viewmodel.WorkoutViewModel
+import com.aifitnesscoach.wearos.presentation.theme.AppColors
+import com.aifitnesscoach.wearos.presentation.theme.AppTypography
+import com.aifitnesscoach.wearos.presentation.viewmodel.WorkoutViewModel
 import kotlinx.coroutines.delay
 
 /**
@@ -90,8 +90,8 @@ fun RestTimerScreen(
             // Header
             Text(
                 text = "REST",
-                style = FitWizTypography.titleMedium,
-                color = FitWizColors.Warning
+                style = AppTypography.titleMedium,
+                color = AppColors.Warning
             )
 
             // Timer display
@@ -104,8 +104,8 @@ fun RestTimerScreen(
                 CircularProgressIndicator(
                     progress = progress,
                     modifier = Modifier.fillMaxSize(),
-                    indicatorColor = if (remainingSeconds <= 5) FitWizColors.HeartRate else FitWizColors.Warning,
-                    trackColor = FitWizColors.ProgressBackground,
+                    indicatorColor = if (remainingSeconds <= 5) AppColors.HeartRate else AppColors.Warning,
+                    trackColor = AppColors.ProgressBackground,
                     strokeWidth = 8.dp
                 )
 
@@ -117,8 +117,8 @@ fun RestTimerScreen(
                     val seconds = remainingSeconds % 60
                     Text(
                         text = "%d:%02d".format(minutes, seconds),
-                        style = FitWizTypography.displayLarge,
-                        color = if (remainingSeconds <= 5) FitWizColors.HeartRate else FitWizColors.TextPrimary
+                        style = AppTypography.displayLarge,
+                        color = if (remainingSeconds <= 5) AppColors.HeartRate else AppColors.TextPrimary
                     )
                 }
             }
@@ -130,8 +130,8 @@ fun RestTimerScreen(
                 ) {
                     Text(
                         text = "Next:",
-                        style = FitWizTypography.labelSmall,
-                        color = FitWizColors.TextMuted
+                        style = AppTypography.labelSmall,
+                        color = AppColors.TextMuted
                     )
                     Text(
                         text = if (viewModel.getCompletedSetsForCurrentExercise() < ex.sets) {
@@ -139,8 +139,8 @@ fun RestTimerScreen(
                         } else {
                             "Next exercise"
                         },
-                        style = FitWizTypography.bodySmall,
-                        color = FitWizColors.TextSecondary,
+                        style = AppTypography.bodySmall,
+                        color = AppColors.TextSecondary,
                         textAlign = TextAlign.Center,
                         maxLines = 1
                     )
@@ -155,20 +155,20 @@ fun RestTimerScreen(
                 Button(
                     onClick = onSkip,
                     colors = ButtonDefaults.buttonColors(
-                        backgroundColor = FitWizColors.Surface
+                        backgroundColor = AppColors.Surface
                     )
                 ) {
-                    Text("SKIP", style = FitWizTypography.labelMedium)
+                    Text("SKIP", style = AppTypography.labelMedium)
                 }
 
                 // Add time button
                 Button(
                     onClick = { remainingSeconds += 30 },
                     colors = ButtonDefaults.buttonColors(
-                        backgroundColor = FitWizColors.Warning.copy(alpha = 0.3f)
+                        backgroundColor = AppColors.Warning.copy(alpha = 0.3f)
                     )
                 ) {
-                    Text("+30s", style = FitWizTypography.labelMedium)
+                    Text("+30s", style = AppTypography.labelMedium)
                 }
             }
         }

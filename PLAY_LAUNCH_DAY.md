@@ -1,4 +1,4 @@
-# FitWiz Play Launch — Day-Of Punch List
+# Zealova Play Launch — Day-Of Punch List
 
 Last updated: 2026-04-25.
 iOS deferred. This file is the only thing you need open when promoting
@@ -18,7 +18,7 @@ Six items left, in order.
 **Verified 2026-04-25 still broken:**
 
 ```
-$ curl -sIL https://fitwiz.us/privacy
+$ curl -sIL https://zealova.com/privacy
 …
 location: https://ai-fitness-coach-orcin.vercel.app/privacy
 ```
@@ -31,13 +31,13 @@ future trademark dispute, and is a one-click reviewer ding.
 
 1. Open https://vercel.com → select project `ai-fitness-coach`.
 2. **Settings → Domains.**
-3. Find `fitwiz.us` in the list.
+3. Find `zealova.com` in the list.
    - If marked "Redirect to ai-fitness-coach-orcin.vercel.app" → click
-     ⋯ → **Edit** → set to **No redirect**, mark `fitwiz.us` as
+     ⋯ → **Edit** → set to **No redirect**, mark `zealova.com` as
      **Production**.
    - If `ai-fitness-coach-orcin.vercel.app` is currently the Production
      domain → click ⋯ next to it → **Move to Preview** (or remove
-     entirely). Then mark `fitwiz.us` as the Production domain.
+     entirely). Then mark `zealova.com` as the Production domain.
 4. **DNS check** (registrar):
    - `A` record `@` → `76.76.21.21`
    - `CNAME` record `www` → `cname.vercel-dns.com.`
@@ -45,15 +45,15 @@ future trademark dispute, and is a one-click reviewer ding.
 
 ```bash
 curl -sIL -o /dev/null -w "%{http_code} → %{url_effective}\n" \
-  https://fitwiz.us/privacy
-# Expected: 200 → https://fitwiz.us/privacy   (no vercel.app)
+  https://zealova.com/privacy
+# Expected: 200 → https://zealova.com/privacy   (no vercel.app)
 ```
 
-Also confirm the `assetlinks.json` resolves directly on `fitwiz.us`:
+Also confirm the `assetlinks.json` resolves directly on `zealova.com`:
 
 ```bash
 curl -sIL -o /dev/null -w "%{http_code} → %{url_effective}\n" \
-  https://fitwiz.us/.well-known/assetlinks.json
+  https://zealova.com/.well-known/assetlinks.json
 ```
 
 If this still hits `vercel.app`, Android App Links verification will
@@ -96,7 +96,7 @@ ships.
 On a clean Android device (or emulator):
 
 1. Install the closed-testing build via the opt-in URL.
-2. Sign in as `reviewer@fitwiz.us`.
+2. Sign in as `reviewer@zealova.com`.
 3. Verify:
    - [ ] Onboarding completes without errors
    - [ ] Home screen loads with at least one workout
@@ -111,7 +111,7 @@ If anything errors, fix in code before promoting.
 
 ## 5. Save dated competitor evidence (1 min)
 
-Open the existing FitWiz iOS App Store listing in a browser (Safari
+Open the existing Zealova iOS App Store listing in a browser (Safari
 private window so it doesn't pull your account context). Screenshot:
 
 - Title and developer name
@@ -146,7 +146,7 @@ Play review takes 24–72 h for a new app on first production submission.
 
 - [ ] Play Console → Quality → Android vitals — check every 4 h for
       first 48 h. Crash-free rate goal: > 99%. ANR rate goal: < 0.5%.
-- [ ] `support@fitwiz.us` inbox — Apple/Google forward IP complaints
+- [ ] `support@zealova.com` inbox — Apple/Google forward IP complaints
       here. Response template in `TRADEMARK_TAKEDOWN_RESPONSE.md`,
       respond within 48 h.
 - [ ] Day 2: if clean → bump rollout to 50%

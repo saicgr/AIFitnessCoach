@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../shareable_canvas.dart';
 import '../shareable_data.dart';
-import '../widgets/fitwiz_watermark.dart';
+import '../widgets/app_watermark.dart';
 
 /// QuoteTemplate — moody dark canvas with a large serif italic quote
 /// auto-generated from the share data, small attribution, accent rule.
@@ -103,7 +103,7 @@ class QuoteTemplate extends StatelessWidget {
             ),
             const Spacer(),
             if (showWatermark)
-              FitWizWatermark(
+              AppWatermark(
                 textColor: Colors.white,
                 fontSize: 12 * mul,
               ),

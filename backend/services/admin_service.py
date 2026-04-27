@@ -1,8 +1,8 @@
 """
-Admin Service for FitWiz.
+Admin Service for Zealova.
 
 Handles admin-related functionality including:
-- Support user management (support@fitwiz.us)
+- Support user management (support@zealova.com)
 - Role-based access control
 - Auto-friending support user to new users
 """
@@ -10,13 +10,16 @@ Handles admin-related functionality including:
 from typing import Optional
 from datetime import datetime, timezone
 
+from core import branding
 from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 
 logger = get_logger(__name__)
 
-# Support user email - this is the admin account
-SUPPORT_EMAIL = "support@fitwiz.us"
+# Support user email — single source of truth lives in core/branding.py.
+# Re-exported here so historical importers (`from services.admin_service
+# import SUPPORT_EMAIL`) keep working without touching every call site.
+SUPPORT_EMAIL = branding.SUPPORT_EMAIL
 
 
 class AdminService:
@@ -272,7 +275,7 @@ class AdminService:
 
             # Send welcome message
             welcome_message = (
-                "Welcome to FitWiz! 🎉\n\n"
+                f"Welcome to {branding.APP_NAME}! 🎉\n\n"
                 "I'm here to help you on your fitness journey. "
                 "If you have any questions about the app, need workout tips, "
                 "or just want to chat about your fitness goals, feel free to message me anytime!\n\n"

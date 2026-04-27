@@ -15,6 +15,7 @@ class DailyActivity {
   final bool isFromWatch;
   final int? avgHeartRate;
   final int? maxHeartRate;
+  final int? minHeartRate;
   final double? hrv;              // RMSSD (Android) or SDNN (iOS)
   final double? bloodOxygen;      // SpO2 %
   final double? bodyTemperature;  // Celsius
@@ -38,6 +39,7 @@ class DailyActivity {
     this.isFromWatch = false,
     this.avgHeartRate,
     this.maxHeartRate,
+    this.minHeartRate,
     this.hrv,
     this.bloodOxygen,
     this.bodyTemperature,
@@ -212,6 +214,7 @@ class DailyActivityNotifier extends StateNotifier<DailyActivityState> {
         isFromHealthConnect: true,
         avgHeartRate: vitalsData['avgHeartRate'] as int?,
         maxHeartRate: vitalsData['maxHeartRate'] as int?,
+        minHeartRate: vitalsData['minHeartRate'] as int?,
         hrv: vitalsData['hrv'] as double?,
         bloodOxygen: vitalsData['bloodOxygen'] as double?,
         bodyTemperature: vitalsData['bodyTemperature'] as double?,
@@ -320,6 +323,7 @@ class DailyActivityNotifier extends StateNotifier<DailyActivityState> {
       isFromWatch: true, // Mark that we have watch data
       avgHeartRate: current?.avgHeartRate,
       maxHeartRate: current?.maxHeartRate,
+      minHeartRate: current?.minHeartRate,
       hrv: current?.hrv,
       bloodOxygen: current?.bloodOxygen,
       bodyTemperature: current?.bodyTemperature,
@@ -399,7 +403,7 @@ class HealthSyncNotifier extends StateNotifier<HealthSyncState> {
 
   /// Verify actual Health Connect permissions and update state accordingly.
   /// This handles the case where user grants permissions in Health Connect app
-  /// outside of FitWiz, so our stored state becomes stale.
+  /// outside of Zealova, so our stored state becomes stale.
   ///
   /// IMPORTANT: We only *upgrade* isConnected (false -> true) based on
   /// hasPermissions(), never *downgrade* (true -> false). The hasPermissions

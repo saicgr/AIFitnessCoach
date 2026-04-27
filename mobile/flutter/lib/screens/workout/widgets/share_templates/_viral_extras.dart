@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fitwiz/core/constants/branding.dart';
 
 /// Curated celebrity / athlete volume benchmarks, rough historical
 /// training volumes per session. Data sourced from public training
@@ -62,7 +63,7 @@ String? formatCelebComparison(
 
 // ────────────────────────────────────────────────────────────────
 // QR code support — lightweight, dep-free. For the viral "scan this
-// to open FitWiz with my workout" loop. Uses a simple numeric-encoded
+// to open Zealova with my workout" loop. Uses a simple numeric-encoded
 // QR matrix painter; scannable by any QR reader.
 //
 // We avoid adding a qr_flutter dep by computing a simplified QR-code-
@@ -92,7 +93,7 @@ class ShareDeepLinkFooter extends StatelessWidget {
         Icon(Icons.qr_code_2, size: 14, color: color),
         const SizedBox(width: 4),
         Text(
-          'fitwiz.us/w/$shortId',
+          '${Branding.marketingDomain}/w/$shortId',
           style: TextStyle(
             fontSize: 9,
             color: color,

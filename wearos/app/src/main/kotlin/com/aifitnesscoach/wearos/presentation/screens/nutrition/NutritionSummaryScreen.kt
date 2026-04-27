@@ -1,4 +1,4 @@
-package com.fitwiz.wearos.presentation.screens.nutrition
+package com.aifitnesscoach.wearos.presentation.screens.nutrition
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -13,11 +13,11 @@ import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
 import androidx.wear.compose.foundation.lazy.items
 import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
 import androidx.wear.compose.material.*
-import com.fitwiz.wearos.data.models.MealType
-import com.fitwiz.wearos.data.models.WearFoodEntry
-import com.fitwiz.wearos.presentation.theme.FitWizColors
-import com.fitwiz.wearos.presentation.theme.FitWizTypography
-import com.fitwiz.wearos.presentation.viewmodel.NutritionViewModel
+import com.aifitnesscoach.wearos.data.models.MealType
+import com.aifitnesscoach.wearos.data.models.WearFoodEntry
+import com.aifitnesscoach.wearos.presentation.theme.AppColors
+import com.aifitnesscoach.wearos.presentation.theme.AppTypography
+import com.aifitnesscoach.wearos.presentation.viewmodel.NutritionViewModel
 
 /**
  * Nutrition Summary Screen - Daily calorie and macro totals
@@ -51,8 +51,8 @@ fun NutritionSummaryScreen(
             item {
                 Text(
                     text = "TODAY",
-                    style = FitWizTypography.titleMedium,
-                    color = FitWizColors.Nutrition
+                    style = AppTypography.titleMedium,
+                    color = AppColors.Nutrition
                 )
                 Spacer(modifier = Modifier.height(12.dp))
             }
@@ -88,10 +88,10 @@ fun NutritionSummaryScreen(
                         .fillMaxWidth(0.85f)
                         .height(44.dp),
                     colors = ButtonDefaults.buttonColors(
-                        backgroundColor = FitWizColors.Nutrition
+                        backgroundColor = AppColors.Nutrition
                     )
                 ) {
-                    Text("+ LOG FOOD", style = FitWizTypography.labelLarge)
+                    Text("+ LOG FOOD", style = AppTypography.labelLarge)
                 }
                 Spacer(modifier = Modifier.height(12.dp))
             }
@@ -101,8 +101,8 @@ fun NutritionSummaryScreen(
                 item {
                     Text(
                         text = "TODAY'S MEALS",
-                        style = FitWizTypography.labelSmall,
-                        color = FitWizColors.TextMuted
+                        style = AppTypography.labelSmall,
+                        color = AppColors.TextMuted
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                 }
@@ -136,8 +136,8 @@ private fun CalorieProgressRing(
         CircularProgressIndicator(
             progress = progress.coerceIn(0f, 1f),
             modifier = Modifier.fillMaxSize(),
-            indicatorColor = FitWizColors.Nutrition,
-            trackColor = FitWizColors.ProgressBackground,
+            indicatorColor = AppColors.Nutrition,
+            trackColor = AppColors.ProgressBackground,
             strokeWidth = 8.dp
         )
 
@@ -146,13 +146,13 @@ private fun CalorieProgressRing(
         ) {
             Text(
                 text = "$current",
-                style = FitWizTypography.displaySmall,
-                color = FitWizColors.TextPrimary
+                style = AppTypography.displaySmall,
+                color = AppColors.TextPrimary
             )
             Text(
                 text = "/ $goal cal",
-                style = FitWizTypography.labelSmall,
-                color = FitWizColors.TextMuted
+                style = AppTypography.labelSmall,
+                color = AppColors.TextMuted
             )
         }
     }
@@ -175,19 +175,19 @@ private fun MacrosSummary(
             label = "P",
             value = protein.toInt(),
             goal = proteinGoal.toInt(),
-            color = FitWizColors.HeartRate
+            color = AppColors.HeartRate
         )
         MacroItem(
             label = "C",
             value = carbs.toInt(),
             goal = carbsGoal.toInt(),
-            color = FitWizColors.Warning
+            color = AppColors.Warning
         )
         MacroItem(
             label = "F",
             value = fat.toInt(),
             goal = fatGoal.toInt(),
-            color = FitWizColors.Secondary
+            color = AppColors.Secondary
         )
     }
 }
@@ -204,18 +204,18 @@ private fun MacroItem(
     ) {
         Text(
             text = label,
-            style = FitWizTypography.labelSmall,
+            style = AppTypography.labelSmall,
             color = color
         )
         Text(
             text = "${value}g",
-            style = FitWizTypography.bodyMedium,
-            color = FitWizColors.TextPrimary
+            style = AppTypography.bodyMedium,
+            color = AppColors.TextPrimary
         )
         Text(
             text = "/${goal}g",
-            style = FitWizTypography.labelSmall,
-            color = FitWizColors.TextMuted
+            style = AppTypography.labelSmall,
+            color = AppColors.TextMuted
         )
     }
 }
@@ -238,7 +238,7 @@ private fun MealSection(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
-            .background(FitWizColors.Surface)
+            .background(AppColors.Surface)
             .padding(8.dp)
     ) {
         Row(
@@ -247,18 +247,18 @@ private fun MealSection(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(text = label, style = FitWizTypography.bodySmall, color = FitWizColors.Nutrition)
+                Text(text = label, style = AppTypography.bodySmall, color = AppColors.Nutrition)
                 Spacer(modifier = Modifier.width(4.dp))
                 Text(
                     text = mealType.name.lowercase().replaceFirstChar { it.uppercase() },
-                    style = FitWizTypography.labelSmall,
-                    color = FitWizColors.TextSecondary
+                    style = AppTypography.labelSmall,
+                    color = AppColors.TextSecondary
                 )
             }
             Text(
                 text = "$totalCals cal",
-                style = FitWizTypography.labelSmall,
-                color = FitWizColors.Nutrition
+                style = AppTypography.labelSmall,
+                color = AppColors.Nutrition
             )
         }
 
@@ -271,13 +271,13 @@ private fun MealSection(
             ) {
                 Text(
                     text = meal.foodName?.take(15) ?: "Food",
-                    style = FitWizTypography.bodySmall,
-                    color = FitWizColors.TextMuted
+                    style = AppTypography.bodySmall,
+                    color = AppColors.TextMuted
                 )
                 Text(
                     text = "${meal.calories}",
-                    style = FitWizTypography.bodySmall,
-                    color = FitWizColors.TextMuted
+                    style = AppTypography.bodySmall,
+                    color = AppColors.TextMuted
                 )
             }
         }

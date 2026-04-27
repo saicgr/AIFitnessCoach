@@ -1,5 +1,5 @@
 """
-Onboarding agent for FitWiz.
+Onboarding agent for Zealova.
 
 Uses LangGraph to conduct natural, AI-driven conversations instead of hardcoded questions.
 """

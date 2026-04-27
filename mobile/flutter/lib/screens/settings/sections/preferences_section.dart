@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/exercise_progression.dart';
 import '../../../data/providers/exercise_progression_provider.dart';
+import '../../../widgets/glass_sheet.dart';
+import '../../home/widgets/manage_gym_profiles_sheet.dart';
 import '../widgets/widgets.dart';
 
 class PreferencesSection extends ConsumerWidget {
@@ -37,6 +39,18 @@ class PreferencesSection extends ConsumerWidget {
               title: 'Accent Color',
               subtitle: 'Choose your app accent color',
               isAccentColorSelector: true,
+            ),
+            SettingItemData(
+              icon: Icons.fitness_center,
+              title: 'Gym Profiles',
+              subtitle: 'Manage gyms, equipment, and locations',
+              onTap: () {
+                HapticFeedback.lightImpact();
+                showGlassSheet(
+                  context: context,
+                  builder: (_) => const ManageGymProfilesSheet(),
+                );
+              },
             ),
             SettingItemData(
               icon: Icons.travel_explore_outlined,

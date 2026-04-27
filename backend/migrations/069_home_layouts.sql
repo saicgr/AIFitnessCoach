@@ -1,6 +1,6 @@
 -- Migration: Home Screen Layout Customization System
 -- Description: Adds tables for storing user home screen layouts and system templates
--- Author: FitWiz Team
+-- Author: Zealova Team
 -- Date: 2024-12-30
 
 -- ============================================================================

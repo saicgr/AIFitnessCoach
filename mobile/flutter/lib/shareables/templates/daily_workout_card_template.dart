@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 
 import '../shareable_canvas.dart';
 import '../shareable_data.dart';
-import '../widgets/fitwiz_watermark.dart';
+import '../widgets/app_watermark.dart';
 
 /// Single-day workout card for `weeklyPlan` / `monthlyPlan` shares with
 /// `planDays.length == 1`, plus the existing `workoutComplete` payload shape.
 ///
 /// Mirrors the white-card-on-tinted-canvas look of [WorkoutDetailsTemplate]
 /// but renders smaller exercise illustration thumbs, the user's @ handle,
-/// and a fitwiz.us share link footer so screenshots double as ads.
+/// and a zealova.com share link footer so screenshots double as ads.
 class DailyWorkoutCardTemplate extends StatelessWidget {
   final Shareable data;
   final bool showWatermark;
@@ -57,7 +57,7 @@ class DailyWorkoutCardTemplate extends StatelessWidget {
               Row(
                 children: [
                   if (showWatermark)
-                    const FitWizWatermark(
+                    const AppWatermark(
                       textColor: Color(0xFF111111),
                       iconSize: 20,
                       fontSize: 13,

@@ -8,6 +8,11 @@ import '../../chat/widgets/fullscreen_image_viewer.dart';
 ///   • `sourceType == 'barcode'`                        → QR icon
 ///   • `sourceType in chat/parse_*`                     → chat bubble icon
 ///   • `sourceType == 'restaurant'`                     → storefront icon
+///   • `sourceType == 'menu'`                           → menu-book icon
+///     (logged via Menu Analysis sheet; `/log-selected-items` writes
+///     `source_type='menu'` so the row reads as "from a menu scan",
+///     not as a typed entry)
+///   • `sourceType == 'buffet'`                         → tray/dining icon
 ///   • `sourceType == 'image'` with no imageUrl yet     → camera placeholder
 ///     (e.g. pending upload — user still knows the row came from a photo)
 ///   • default (text / null)                            → subtle text-fields icon
@@ -93,6 +98,12 @@ class FoodSourceIndicator extends StatelessWidget {
         break;
       case 'restaurant':
         icon = Icons.storefront_outlined;
+        break;
+      case 'menu':
+        icon = Icons.menu_book_rounded;
+        break;
+      case 'buffet':
+        icon = Icons.local_dining_outlined;
         break;
       case 'image':
         // Image source but URL absent (upload pending / failed) — show a camera

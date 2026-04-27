@@ -422,7 +422,7 @@ Return ONLY valid JSON (no markdown):
             "coach": {
                 "name": "AI Coach",
                 "emoji": "🏋️",
-                "greeting": "Hey there! I'm your FitWiz.",
+                "greeting": "Hey there! I'm your Zealova.",
                 "personality": "motivating, supportive, and knowledgeable about all aspects of fitness",
                 "expertise": "workout planning, exercise form, fitness motivation, and overall wellness",
                 "color": "cyan",

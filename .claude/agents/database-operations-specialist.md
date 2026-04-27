@@ -249,7 +249,7 @@ SELECT * FROM pg_roles WHERE rolname = 'service_role';
 
 ## Project-Specific Considerations
 
-For this FitWiz project:
+For this Zealova project:
 - Prioritize workout and user data integrity
 - Ensure proper indexing on frequently queried workout fields
 - Handle exercise embeddings in ChromaDB efficiently

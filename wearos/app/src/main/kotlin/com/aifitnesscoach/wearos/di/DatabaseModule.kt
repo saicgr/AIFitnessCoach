@@ -1,13 +1,13 @@
-package com.fitwiz.wearos.di
+package com.aifitnesscoach.wearos.di
 
 import android.content.Context
 import androidx.room.Room
-import com.fitwiz.wearos.data.local.WearDatabase
-import com.fitwiz.wearos.data.local.dao.FastingDao
-import com.fitwiz.wearos.data.local.dao.FoodLogDao
-import com.fitwiz.wearos.data.local.dao.HealthDataDao
-import com.fitwiz.wearos.data.local.dao.SyncQueueDao
-import com.fitwiz.wearos.data.local.dao.WorkoutDao
+import com.aifitnesscoach.wearos.data.local.WearDatabase
+import com.aifitnesscoach.wearos.data.local.dao.FastingDao
+import com.aifitnesscoach.wearos.data.local.dao.FoodLogDao
+import com.aifitnesscoach.wearos.data.local.dao.HealthDataDao
+import com.aifitnesscoach.wearos.data.local.dao.SyncQueueDao
+import com.aifitnesscoach.wearos.data.local.dao.WorkoutDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn

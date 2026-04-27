@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../shareable_canvas.dart';
 import '../shareable_data.dart';
-import '../widgets/fitwiz_watermark.dart';
+import '../widgets/app_watermark.dart';
 
 /// Calendar-style 4×7 grid for `monthlyPlan` shares.
 /// Each cell shows day number + workout type chip; rest days are dimmed.
@@ -63,7 +63,7 @@ class MonthlyPlanGridTemplate extends StatelessWidget {
               Row(
                 children: [
                   if (showWatermark)
-                    const FitWizWatermark(
+                    const AppWatermark(
                       textColor: Color(0xFF111111),
                       iconSize: 20,
                       fontSize: 13,

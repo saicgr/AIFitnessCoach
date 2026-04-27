@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../core/constants/app_colors.dart';
 import '../../widgets/pill_app_bar.dart';
+import 'package:fitwiz/core/constants/branding.dart';
 
 part 'exercise_science_research_screen_part_research_paper.dart';
 
@@ -372,7 +373,7 @@ const _papers = <_ResearchPaper>[
   ),
 ];
 
-/// Screen displaying the exercise science research papers backing FitWiz.
+/// Screen displaying the exercise science research papers backing Zealova.
 class ExerciseScienceResearchScreen extends StatefulWidget {
   const ExerciseScienceResearchScreen({super.key});
 
@@ -452,7 +453,7 @@ class _ExerciseScienceResearchScreenState
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Every workout parameter in FitWiz is derived from peer-reviewed exercise science. Tap a paper to see details.',
+                    'Every workout parameter in ${Branding.appName} is derived from peer-reviewed exercise science. Tap a paper to see details.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 14,
@@ -765,7 +766,7 @@ class _ExerciseScienceResearchScreenState
                             ),
                             const SizedBox(width: 6),
                             Text(
-                              'How FitWiz uses this',
+                              'How ${Branding.appName} uses this',
                               style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,

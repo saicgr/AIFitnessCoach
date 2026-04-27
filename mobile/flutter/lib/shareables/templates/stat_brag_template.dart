@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../shareable_canvas.dart';
 import '../shareable_data.dart';
-import '../widgets/fitwiz_watermark.dart';
+import '../widgets/app_watermark.dart';
 
 /// StatBrag — single OBSCENELY large stat with a PR/+%∆ pill below, period
 /// chip above, watermark. The "I just hit X" format. Maxes out the canvas
@@ -144,7 +144,7 @@ class StatBragTemplate extends StatelessWidget {
               ),
             const Spacer(),
             if (showWatermark)
-              FitWizWatermark(
+              AppWatermark(
                 textColor: Colors.white,
                 fontSize: 13 * mul,
               ),

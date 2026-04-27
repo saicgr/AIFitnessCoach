@@ -3,7 +3,7 @@ Emit an expanded "maximum-fidelity" CSV that mirrors the canonical schema
 column-for-column.
 
 This is the format power users ask for when they don't care about Hevy/Strong
-compatibility and just want every field FitWiz holds. Because the headers
+compatibility and just want every field Zealova holds. Because the headers
 match CanonicalSetRow / CanonicalCardioRow field names 1:1, the matching
 import adapter for this format is trivially "read the CSV, call
 CanonicalSetRow(**row)".

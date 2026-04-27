@@ -264,6 +264,7 @@ extension HealthServiceExt on HealthService {
       int heartRateSum = 0;
       int heartRateCount = 0;
       int maxHeartRate = 0;
+      int? minHeartRate;
       double? hrv;
       double? bloodOxygen;
       double? bodyTemperature;
@@ -276,9 +277,11 @@ extension HealthServiceExt on HealthService {
         final value = (point.value as NumericHealthValue).numericValue.toDouble();
         switch (point.type) {
           case HealthDataType.HEART_RATE:
-            heartRateSum += value.toInt();
+            final v = value.toInt();
+            heartRateSum += v;
             heartRateCount++;
-            if (value.toInt() > maxHeartRate) maxHeartRate = value.toInt();
+            if (v > maxHeartRate) maxHeartRate = v;
+            if (minHeartRate == null || v < minHeartRate) minHeartRate = v;
             break;
           case HealthDataType.HEART_RATE_VARIABILITY_SDNN:
           case HealthDataType.HEART_RATE_VARIABILITY_RMSSD:
@@ -310,6 +313,7 @@ extension HealthServiceExt on HealthService {
       return {
         'avgHeartRate': heartRateCount > 0 ? heartRateSum ~/ heartRateCount : null,
         'maxHeartRate': maxHeartRate > 0 ? maxHeartRate : null,
+        'minHeartRate': minHeartRate,
         'hrv': hrv,
         'bloodOxygen': bloodOxygen,
         'bodyTemperature': bodyTemperature,

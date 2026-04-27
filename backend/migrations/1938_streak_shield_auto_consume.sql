@@ -178,10 +178,10 @@ BEGIN
 
   IF v_first_login_bonus > 0 THEN
     BEGIN
-      PERFORM award_xp(p_user_id, v_first_login_bonus, 'first_login', NULL, 'Welcome to FitWiz!', false, v_is_early_adopter);
+      PERFORM award_xp(p_user_id, v_first_login_bonus, 'first_login', NULL, 'Welcome to Zealova!', false, v_is_early_adopter);
     EXCEPTION WHEN OTHERS THEN
       INSERT INTO xp_transactions (user_id, xp_amount, source, description, created_at)
-      VALUES (p_user_id, v_first_login_bonus, 'first_login', 'Welcome to FitWiz!', NOW());
+      VALUES (p_user_id, v_first_login_bonus, 'first_login', 'Welcome to Zealova!', NOW());
     END;
   END IF;
 
@@ -230,8 +230,8 @@ BEGIN
     'multiplier', v_total_multiplier,
     'message',
       CASE
-        WHEN v_is_first_login AND v_is_early_adopter THEN 'Welcome to FitWiz! As one of our first 100 users, you get a special 100 XP bonus!'
-        WHEN v_is_first_login THEN 'Welcome to FitWiz! Start earning XP by working out and logging meals.'
+        WHEN v_is_first_login AND v_is_early_adopter THEN 'Welcome to Zealova! As one of our first 100 users, you get a special 100 XP bonus!'
+        WHEN v_is_first_login THEN 'Welcome to Zealova! Start earning XP by working out and logging meals.'
         WHEN v_streak_saved_by_shield THEN
           'Streak Shield used! Your ' || v_saved_streak_count || '-day streak is safe.'
         WHEN v_streak_record.current_streak = 7 THEN 'Amazing! 7-day streak achieved!'

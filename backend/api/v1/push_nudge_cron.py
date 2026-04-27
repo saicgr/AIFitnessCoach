@@ -46,6 +46,7 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 from fastapi import APIRouter, Header, HTTPException, Request
 from fastapi.responses import JSONResponse
 
+from core import branding
 from core.supabase_client import get_supabase
 from core.config import get_settings
 from core.logger import get_logger
@@ -1438,9 +1439,9 @@ _MERCH_NEXT_FOR_PROXIMITY = {
 }
 
 _MERCH_DISPLAY_NAME = {
-    "sticker_pack": "FitWiz Sticker Pack",
-    "t_shirt": "FitWiz T-Shirt",
-    "hoodie": "FitWiz Hoodie",
+    "sticker_pack": f"{branding.MERCH_PRODUCT_PREFIX} Sticker Pack",
+    "t_shirt": f"{branding.MERCH_PRODUCT_PREFIX} T-Shirt",
+    "hoodie": f"{branding.MERCH_PRODUCT_PREFIX} Hoodie",
     "full_merch_kit": "Full Merch Kit",
     "signed_premium_kit": "Signed Premium Kit",
 }

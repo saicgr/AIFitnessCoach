@@ -22,6 +22,7 @@ backend/data/chroma/
 
 # Local data directory
 backend/data/
+gymbeat*
 
 # Pip install output (accidental)
 backend/=*

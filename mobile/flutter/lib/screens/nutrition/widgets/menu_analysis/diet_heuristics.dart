@@ -146,12 +146,19 @@ class DietHeuristics {
 class SmartPresets {
   SmartPresets._();
 
+  // STRICT null semantics. Earlier these presets passed dishes with
+  // unknown fields ("null OR low"), which made the filter look broken
+  // when Gemini didn't return that field — every dish slipped through
+  // and the result count never changed. Now: unknown ≠ matches; the
+  // user gets an honest "no dishes match" empty state instead.
   static final List<SmartPreset> all = [
     SmartPreset(
       id: 'high_protein',
       label: 'High protein',
       emoji: '💪',
       hint: '25 g+ per dish',
+      // Macros default to 0 in MenuItem, so a dish missing protein data
+      // (proteinG == 0) shouldn't claim to be high-protein.
       matches: (i) => i.proteinG >= 25,
     ),
     SmartPreset(
@@ -159,42 +166,50 @@ class SmartPresets {
       label: 'Light',
       emoji: '🌿',
       hint: 'Under 450 cal',
-      matches: (i) => i.calories <= 450 && i.fatG <= 18,
+      // Require BOTH a real calorie figure (>0 — defaults to 0 when
+      // missing) AND the cap. Without the >0 guard a dish with no
+      // calorie field auto-qualifies as "Light", which it isn't.
+      matches: (i) =>
+          i.calories > 0 && i.calories <= 450 && i.fatG <= 18,
     ),
     SmartPreset(
       id: 'low_carb',
       label: 'Low carb',
       emoji: '🥩',
       hint: 'Under 20 g carbs',
-      matches: (i) => i.carbsG <= 20,
+      matches: (i) => i.carbsG > 0 && i.carbsG <= 20,
     ),
     SmartPreset(
       id: 'anti_inflammatory',
       label: 'Anti-inflammatory',
       emoji: '🌱',
       hint: 'Score 3 or lower',
-      matches: (i) => i.inflammationScore != null && i.inflammationScore! <= 3,
+      matches: (i) =>
+          i.inflammationScore != null && i.inflammationScore! <= 3,
     ),
     SmartPreset(
       id: 'blood_sugar',
       label: 'Blood-sugar friendly',
       emoji: '🩺',
       hint: 'Low glycemic load',
-      matches: (i) => i.glycemicLoad == null || i.glycemicLoad! < 10,
+      // Drop unknowns. Previously null passed → every Gemini-analyzed
+      // menu without GL data slipped through.
+      matches: (i) => i.glycemicLoad != null && i.glycemicLoad! < 10,
     ),
     SmartPreset(
       id: 'gut_friendly',
       label: 'Gut-friendly',
       emoji: '🧡',
       hint: 'Low FODMAP',
-      matches: (i) => i.fodmapRating == null || i.fodmapRating == 'low',
+      // Strict — only dishes Gemini has labeled `fodmap_rating == 'low'`.
+      matches: (i) => i.fodmapRating == 'low',
     ),
     SmartPreset(
       id: 'clean',
       label: 'Whole foods',
       emoji: '✨',
       hint: 'Not ultra-processed',
-      matches: (i) => i.isUltraProcessed != true,
+      matches: (i) => i.isUltraProcessed == false,
     ),
   ];
 

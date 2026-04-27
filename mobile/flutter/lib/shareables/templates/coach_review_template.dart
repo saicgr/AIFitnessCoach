@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../shareable_canvas.dart';
 import '../shareable_data.dart';
-import '../widgets/fitwiz_watermark.dart';
+import '../widgets/app_watermark.dart';
 
 /// CoachReview — handwritten coach's report-card on lined paper.
 /// Letter grade top-right with a sparkle accent, three rubric categories
@@ -213,7 +213,7 @@ class CoachReviewTemplate extends StatelessWidget {
                       ),
                     ),
                     if (showWatermark)
-                      FitWizWatermark(
+                      AppWatermark(
                         textColor: _ink,
                         fontSize: 12 * mul,
                         iconSize: 18,

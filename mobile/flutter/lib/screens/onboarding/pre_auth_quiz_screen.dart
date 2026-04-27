@@ -40,6 +40,7 @@ import 'plan_preview_screen.dart';
 export 'pre_auth_quiz_data.dart';
 
 import 'pre_auth_quiz_data.dart';
+import 'package:fitwiz/core/constants/branding.dart';
 
 part 'pre_auth_quiz_screen_ui.dart';
 
@@ -520,11 +521,11 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
   String? _getDidYouKnowHint(int step) {
     switch (step) {
       case 0:
-        return 'FitWiz tracks 52 skill progressions — from wall pushups to one-arm pushups.';
+        return '${Branding.appName} tracks 52 skill progressions — from wall pushups to one-arm pushups.';
       case 2:
         return 'Missed a day? AI auto-adjusts your week — no guilt, no wasted workouts.';
       case 4:
-        return 'FitWiz supports 23+ equipment types and adapts every exercise to your setup.';
+        return '${Branding.appName} supports 23+ equipment types and adapts every exercise to your setup.';
       case 5:
         return 'AI automatically avoids 200+ exercises that could stress your injured areas.';
       case 6:

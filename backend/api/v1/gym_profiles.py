@@ -19,12 +19,14 @@ from .gym_profiles_endpoints import router as _endpoints_router
 
 import asyncio
 from datetime import datetime
-from fastapi import APIRouter, HTTPException, Query, Depends
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Query, Depends, Request
 from pydantic import BaseModel, Field
 from typing import Optional, List
 
 from core.supabase_client import get_supabase
+from core.db import get_supabase_db
 from core.logger import get_logger
+from core.timezone_utils import resolve_timezone
 from services.user_context_service import user_context_service, EventType
 from models.gym_profile import (
     GymProfileCreate,
@@ -410,6 +412,8 @@ async def get_active_profile(
 
 @router.post("/", response_model=GymProfile)
 async def create_gym_profile(
+    request: Request,
+    background_tasks: BackgroundTasks,
     user_id: str = Query(..., description="User ID"),
     profile: GymProfileCreate = ...,
     current_user: dict = Depends(get_current_user),
@@ -514,6 +518,27 @@ async def create_gym_profile(
         )
 
         logger.info(f"✅ [GymProfile] Created profile '{created_profile.name}' (id: {created_profile.id})")
+
+        # If this is the first profile (auto-activated above), pre-generate 14
+        # days of workouts in the background so the home carousel populates
+        # immediately with actual workouts on the profile's selected days.
+        # For non-first profiles, pre-gen runs when the user activates them.
+        if is_first_profile and (created_profile.workout_days or []):
+            try:
+                from api.v1.workouts.today import enqueue_schedule_top_up
+                db = get_supabase_db()
+                user_tz = resolve_timezone(request, db, user_id)
+                background_tasks.add_task(
+                    enqueue_schedule_top_up,
+                    user_id=user_id,
+                    gym_profile_id=created_profile.id,
+                    workout_days=created_profile.workout_days,
+                    user_tz=user_tz,
+                    horizon_days=14,
+                )
+                logger.info(f"📅 [GymProfile] Queued 14-day pre-gen for first profile '{created_profile.name}'")
+            except Exception as gen_err:
+                logger.warning(f"[GymProfile] Pre-gen scheduling failed (non-fatal): {gen_err}", exc_info=True)
 
         return created_profile
 

@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/theme/accent_color_provider.dart';
 import '../../data/repositories/sync_repository.dart';
+import 'package:fitwiz/core/constants/branding.dart';
 
 /// Catalog of supported providers. `requiresCredentials=true` means the
 /// provider doesn't expose a public OAuth flow and the user must type an
@@ -155,7 +156,7 @@ class _HeaderCard extends StatelessWidget {
             const Expanded(
               child: Text(
                 'Connect your favorite fitness apps to automatically import runs, '
-                'rides, and workouts. Data flows both ways — FitWiz workouts can '
+                'rides, and workouts. Data flows both ways — ${Branding.appName} workouts can '
                 'also show up in Strava.',
                 style: TextStyle(fontSize: 14, height: 1.4),
               ),
@@ -455,7 +456,7 @@ class _ProviderTileState extends ConsumerState<_ProviderTile> {
       builder: (ctx) => AlertDialog(
         title: Text('Disconnect ${widget.entry.displayName}?'),
         content: const Text(
-          'Previously imported activities will stay in your FitWiz history. '
+          'Previously imported activities will stay in your ${Branding.appName} history. '
           'New activities will stop syncing until you reconnect.',
         ),
         actions: [

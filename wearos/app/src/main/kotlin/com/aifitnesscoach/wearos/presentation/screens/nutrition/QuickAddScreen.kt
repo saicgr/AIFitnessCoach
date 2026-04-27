@@ -1,4 +1,4 @@
-package com.fitwiz.wearos.presentation.screens.nutrition
+package com.aifitnesscoach.wearos.presentation.screens.nutrition
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusable
@@ -14,9 +14,9 @@ import androidx.compose.ui.input.rotary.onRotaryScrollEvent
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.wear.compose.material.*
-import com.fitwiz.wearos.presentation.theme.FitWizColors
-import com.fitwiz.wearos.presentation.theme.FitWizTypography
-import com.fitwiz.wearos.presentation.viewmodel.NutritionViewModel
+import com.aifitnesscoach.wearos.presentation.theme.AppColors
+import com.aifitnesscoach.wearos.presentation.theme.AppTypography
+import com.aifitnesscoach.wearos.presentation.viewmodel.NutritionViewModel
 
 /**
  * Quick Add Screen - Just enter calories
@@ -56,15 +56,15 @@ fun QuickAddScreen(
             // Header
             Text(
                 text = "QUICK ADD",
-                style = FitWizTypography.titleMedium,
-                color = FitWizColors.Nutrition
+                style = AppTypography.titleMedium,
+                color = AppColors.Nutrition
             )
 
             // Calorie input
             Column(
                 modifier = Modifier
                     .clip(RoundedCornerShape(16.dp))
-                    .background(FitWizColors.Surface)
+                    .background(AppColors.Surface)
                     .padding(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
@@ -76,10 +76,10 @@ fun QuickAddScreen(
                         onClick = { calories = (calories - 50).coerceAtLeast(1) },
                         modifier = Modifier.size(40.dp),
                         colors = ButtonDefaults.buttonColors(
-                            backgroundColor = FitWizColors.Surface
+                            backgroundColor = AppColors.Surface
                         )
                     ) {
-                        Text("-", style = FitWizTypography.titleLarge)
+                        Text("-", style = AppTypography.titleLarge)
                     }
 
                     Column(
@@ -88,13 +88,13 @@ fun QuickAddScreen(
                     ) {
                         Text(
                             text = "$calories",
-                            style = FitWizTypography.displayMedium,
-                            color = FitWizColors.Nutrition
+                            style = AppTypography.displayMedium,
+                            color = AppColors.Nutrition
                         )
                         Text(
                             text = "calories",
-                            style = FitWizTypography.bodySmall,
-                            color = FitWizColors.TextMuted
+                            style = AppTypography.bodySmall,
+                            color = AppColors.TextMuted
                         )
                     }
 
@@ -102,10 +102,10 @@ fun QuickAddScreen(
                         onClick = { calories = (calories + 50).coerceAtMost(9999) },
                         modifier = Modifier.size(40.dp),
                         colors = ButtonDefaults.buttonColors(
-                            backgroundColor = FitWizColors.Surface
+                            backgroundColor = AppColors.Surface
                         )
                     ) {
-                        Text("+", style = FitWizTypography.titleLarge)
+                        Text("+", style = AppTypography.titleLarge)
                     }
                 }
 
@@ -124,8 +124,8 @@ fun QuickAddScreen(
 
             Text(
                 text = "Use crown to adjust",
-                style = FitWizTypography.labelSmall,
-                color = FitWizColors.TextMuted
+                style = AppTypography.labelSmall,
+                color = AppColors.TextMuted
             )
 
             // Log button
@@ -138,10 +138,10 @@ fun QuickAddScreen(
                     .fillMaxWidth(0.85f)
                     .height(44.dp),
                 colors = ButtonDefaults.buttonColors(
-                    backgroundColor = FitWizColors.Success
+                    backgroundColor = AppColors.Success
                 )
             ) {
-                Text("LOG $calories cal", style = FitWizTypography.labelLarge)
+                Text("LOG $calories cal", style = AppTypography.labelLarge)
             }
         }
     }
@@ -158,7 +158,7 @@ private fun QuickPresetButton(
     ) {
         Text(
             text = "$value",
-            style = FitWizTypography.labelSmall
+            style = AppTypography.labelSmall
         )
     }
 }

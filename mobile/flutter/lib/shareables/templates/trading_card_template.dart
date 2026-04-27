@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../shareable_canvas.dart';
 import '../shareable_data.dart';
-import '../widgets/fitwiz_watermark.dart';
+import '../widgets/app_watermark.dart';
 import '../widgets/shareable_hero_number.dart';
 
 /// Trading Card — Pokemon-card style. Shows the user's avatar/initials, the
@@ -160,7 +160,7 @@ class TradingCardTemplate extends StatelessWidget {
               if (showWatermark)
                 Align(
                   alignment: Alignment.centerRight,
-                  child: FitWizWatermark(
+                  child: AppWatermark(
                     textColor: Colors.white,
                     iconSize: 18,
                     fontSize: 11,

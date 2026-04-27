@@ -12,14 +12,15 @@ from datetime import datetime
 from typing import Optional, Tuple
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
+from core import branding
 from models.email import TimeBand, ScheduleState, CoachStyle, UserStats
 
 
-# ─── Social URLs (mirror mobile/flutter/lib/core/constants/app_links.dart) ──
-# Single source of truth on the backend. Keep in sync with the Flutter constants.
+# ─── Social URLs (re-exported from core.branding for callers that imported
+# them from here historically — single source of truth lives in core/branding.py).
 
-DISCORD_URL = "https://discord.gg/WAYNZpVgsK"
-INSTAGRAM_URL = "https://instagram.com/fitwiz.us"
+DISCORD_URL = branding.DISCORD_URL
+INSTAGRAM_URL = branding.INSTAGRAM_URL
 
 # Icon source — simpleicons.org CDN returns cached, branded SVG/PNG per slug.
 # White-on-brand variants by appending /ffffff. Why this vs self-hosted:
@@ -216,7 +217,7 @@ def build_social_footer_html(
 
     Rendered as table rows (`<tr>`) so callers drop it directly into their
     `_build_standard_email()` table. Dark-mode colors match the rest of the
-    FitWiz email template.
+    Zealova email template.
 
     Args:
         unsubscribe_url: if provided along with `category_name`, renders a
@@ -278,7 +279,7 @@ def build_persona_signature_html(stats: UserStats) -> str:
     """Render the named-coach signature card that sits above the headline.
 
     Only used for motivational/lifecycle emails. Transactional emails
-    (billing, purchase) skip this — FitWiz is the voice there, not the
+    (billing, purchase) skip this — Zealova is the voice there, not the
     persona.
     """
     emoji, mood = persona_mood(stats)

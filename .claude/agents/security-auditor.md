@@ -167,7 +167,7 @@ For each finding, provide:
 
 ## Fitness App Specific Considerations
 
-Given this is an FitWiz app:
+Given this is an Zealova app:
 - OpenAI API key exposure is CRITICAL priority
 - User health data (weight, fitness level, conditions) requires encryption
 - Workout history is moderately sensitive

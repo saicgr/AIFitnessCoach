@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Foldable Build Script for FitWiz
+# Foldable Build Script for Zealova
 # Usage: ./run_foldable.sh
 # Targets a foldable AVD (e.g. Pixel 9 Pro Fold)
 
@@ -12,7 +12,7 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
-echo -e "${GREEN}=== FitWiz Foldable Build Script ===${NC}"
+echo -e "${GREEN}=== Zealova Foldable Build Script ===${NC}"
 
 # Set paths
 FLUTTER_PATH="/opt/homebrew/bin/flutter"

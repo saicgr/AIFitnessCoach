@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../shareable_canvas.dart';
 import '../shareable_data.dart';
-import '../widgets/fitwiz_watermark.dart';
+import '../widgets/app_watermark.dart';
 
 /// ActivityRings — three concentric rings (Workouts / Volume / Streak) with
 /// Apple-Watch typography on a dark canvas. Sweep gradients per ring.
@@ -65,7 +65,7 @@ class ActivityRingsTemplate extends StatelessWidget {
             ),
             const SizedBox(height: 28),
             if (showWatermark)
-              FitWizWatermark(
+              AppWatermark(
                 textColor: Colors.white,
                 fontSize: 13 * mul,
               ),

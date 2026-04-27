@@ -7,6 +7,7 @@ import '../models/home_layout.dart';
 import '../../core/constants/app_colors.dart';
 import '../../widgets/glass_sheet.dart';
 import 'share_service.dart';
+import 'package:fitwiz/core/constants/branding.dart';
 
 /// Service for generating and sharing layout previews
 class LayoutShareService {
@@ -54,7 +55,7 @@ class LayoutShareService {
       caption: layoutName != null
           ? 'Check out my "$layoutName" home screen layout!'
           : 'Check out my custom home screen layout!',
-      subject: 'My FitWiz Layout',
+      subject: 'My ${Branding.appName} Layout',
     );
   }
 
@@ -152,7 +153,7 @@ class LayoutPreviewWidget extends StatelessWidget {
                 ),
                 const SizedBox(width: 6),
                 Text(
-                  'FitWiz',
+                  '${Branding.appName}',
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,

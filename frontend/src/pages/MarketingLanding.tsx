@@ -5,6 +5,7 @@ import MarketingNav from '../components/marketing/MarketingNav';
 import MarketingFooter from '../components/marketing/MarketingFooter';
 import { CinematicHero } from '../components/ui/cinematic-landing-hero';
 import GalleryHoverCarousel from '../components/ui/gallery-hover-carousel';
+import { BRANDING } from '../lib/branding';
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
@@ -45,11 +46,11 @@ export default function MarketingLanding() {
 
       {/* Cinematic Hero */}
       <CinematicHero
-        brandName="FitWiz"
+        brandName={BRANDING.appName}
         tagline1="Train smarter,"
         tagline2="not just harder."
         cardHeading="AI coaching, redefined."
-        cardDescription={<><span className="text-white font-semibold">FitWiz</span> gives you personalized workout plans, real-time AI coaching, intelligent progress tracking, and nutrition guidance — all powered by advanced AI.</>}
+        cardDescription={<><span className="text-white font-semibold">{BRANDING.appName}</span> gives you personalized workout plans, real-time AI coaching, intelligent progress tracking, and nutrition guidance — all powered by advanced AI.</>}
         metricValue={365}
         metricLabel="Workouts Done"
         ctaHeading="Start your journey."
@@ -65,7 +66,7 @@ export default function MarketingLanding() {
             screenshot: "/screenshots/intro_phone_1.png",
             sideScreenshots: ["/screenshots/intro_phone_4.png", "/screenshots/intro_phone_6.png"],
             heading: "AI coaching, redefined.",
-            description: "FitWiz gives you personalized workout plans, real-time AI coaching, intelligent progress tracking, and nutrition guidance — all powered by advanced AI.",
+            description: `${BRANDING.appName} gives you personalized workout plans, real-time AI coaching, intelligent progress tracking, and nutrition guidance — all powered by advanced AI.`,
             badges: [
               { emoji: "💪", title: "New PR Unlocked", subtitle: "Bench Press 185 lbs", color: "from-emerald-500/20 to-emerald-900/10", borderColor: "border-emerald-400/30" },
               { emoji: "🤖", title: "AI Coach", subtitle: "Form check complete", color: "from-green-500/20 to-green-900/10", borderColor: "border-green-400/30" },

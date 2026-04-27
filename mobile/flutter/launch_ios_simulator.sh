@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Launch iOS Simulator for FitWiz
+# Launch iOS Simulator for Zealova
 # Usage: ./launch_ios_simulator.sh [device_name]
 # If no device name given, defaults to iPhone 16 Pro
 # This script ONLY launches the simulator — it does not build or run the app.
@@ -12,7 +12,7 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m'
 
-echo -e "${GREEN}=== FitWiz iOS Simulator Launcher ===${NC}"
+echo -e "${GREEN}=== Zealova iOS Simulator Launcher ===${NC}"
 
 TARGET_DEVICE="${1:-iPhone 16 Pro}"
 

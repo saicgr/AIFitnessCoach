@@ -9,6 +9,7 @@ import '../../core/constants/app_colors.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../onboarding/widgets/onboarding_theme.dart';
 import 'widgets/pre_auth_referral_chip.dart';
+import 'package:fitwiz/core/constants/branding.dart';
 
 /// Glassmorphic email sign-in screen
 class EmailSignInScreen extends ConsumerStatefulWidget {
@@ -115,9 +116,9 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text('Welcome to FitWiz!', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 14)),
+                  Text('Welcome to ${Branding.appName}!', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 14)),
                   const SizedBox(height: 2),
-                  Text('FitWiz Support is now your friend. Reach out anytime for help!', style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 12)),
+                  Text('${Branding.appName} Support is now your friend. Reach out anytime for help!', style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 12)),
                 ],
               ),
             ),

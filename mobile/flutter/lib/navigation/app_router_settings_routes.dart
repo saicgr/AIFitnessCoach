@@ -101,7 +101,7 @@ List<RouteBase> _settingsRoutes() => [
         builder: (context, state) => const WorkoutHistoryImportScreen(),
       ),
 
-      // Workout Export (reverse-direction: FitWiz → Hevy/Strong/Fitbod/PDF/GPX).
+      // Workout Export (reverse-direction: Zealova → Hevy/Strong/Fitbod/PDF/GPX).
       // Accepts an optional {'format': '<key>'} via GoRouter `extra` so the
       // chat bot's `export_data` action_data can deep-link with a prefilled
       // format choice. Anything unrecognized falls back to the default (hevy).

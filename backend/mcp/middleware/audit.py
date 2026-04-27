@@ -1,6 +1,6 @@
 """Write every MCP tool call to the `mcp_audit_log` table.
 
-User-visible: audit rows are surfaced in the FitWiz app's "AI Integrations"
+User-visible: audit rows are surfaced in the Zealova app's "AI Integrations"
 settings screen so the user can see exactly what Claude/ChatGPT/Cursor
 did on their behalf.
 

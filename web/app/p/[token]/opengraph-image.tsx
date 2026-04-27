@@ -2,7 +2,7 @@ import { ImageResponse } from "next/og";
 import {
   API_BASE,
   ByLine,
-  FitWizMark,
+  BrandMark,
   StatPill,
   StoreFooter,
   fmtDuration,
@@ -14,7 +14,7 @@ import {
 export const runtime = "nodejs";
 export const size = OG_SIZE;
 export const contentType = OG_CONTENT_TYPE;
-export const alt = "FitWiz plan";
+export const alt = "Zealova plan";
 
 type SnapWorkout = {
   name: string;
@@ -87,7 +87,7 @@ export default async function PlanOg({
   const plan = await fetchPlan(params.token);
   const p = ogPalette();
   const title = plan ? periodLabel(plan) : "Shared plan";
-  const author = plan?.display_name ?? "FitWiz lifter";
+  const author = plan?.display_name ?? "Zealova lifter";
   const summary = plan?.snapshot?.summary;
   const previewWorkouts = (plan?.snapshot?.workouts ?? []).slice(0, 4);
 
@@ -112,7 +112,7 @@ export default async function PlanOg({
             alignItems: "center",
           }}
         >
-          <FitWizMark />
+          <BrandMark />
           <ByLine name={author} />
         </div>
 

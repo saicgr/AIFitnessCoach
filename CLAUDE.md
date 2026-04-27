@@ -1,4 +1,4 @@
-# Claude Development Guidelines for FitWiz
+# Claude Development Guidelines for Zealova
 
 ## Critical Development Principles
 
@@ -261,7 +261,7 @@ Before considering code complete:
 
 ## Project-Specific Guidelines
 
-### FitWiz App
+### Zealova App
 
 **Core Features:**
 1. Onboarding with user profile creation
@@ -305,4 +305,4 @@ Before considering code complete:
 
 **Version:** 1.1
 **Last Updated:** 2025-12-24
-**Maintained by:** Claude for FitWiz Project
+**Maintained by:** Claude for Zealova Project

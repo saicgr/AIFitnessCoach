@@ -177,7 +177,7 @@ void main() async {
       runApp(
         UncontrolledProviderScope(
           container: container,
-          child: const FitWizApp(),
+          child: const AppRoot(),
         ),
       );
     },

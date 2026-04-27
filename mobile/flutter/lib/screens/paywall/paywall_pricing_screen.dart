@@ -21,6 +21,7 @@ import '../../core/services/posthog_service.dart';
 import '../../screens/onboarding/pre_auth_quiz_data.dart';
 import '../../widgets/glass_back_button.dart';
 import '../onboarding/widgets/foldable_quiz_scaffold.dart';
+import 'package:fitwiz/core/constants/branding.dart';
 
 
 part 'paywall_pricing_screen_part_accent_border_card.dart';
@@ -493,7 +494,7 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
           final isReturning = ref.read(authStateProvider).user?.isPaywallComplete ?? false;
           if (isReturning) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Welcome to FitWiz Pro! Your subscription is active.'), behavior: SnackBarBehavior.floating),
+              const SnackBar(content: Text('Welcome to ${Branding.appName} Pro! Your subscription is active.'), behavior: SnackBarBehavior.floating),
             );
             context.go('/home');
           } else {
@@ -517,7 +518,7 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
     if (trialSuccess && context.mounted) {
       if (isReturningUser) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Welcome to FitWiz Pro! Your subscription is active.'), behavior: SnackBarBehavior.floating),
+          const SnackBar(content: Text('Welcome to ${Branding.appName} Pro! Your subscription is active.'), behavior: SnackBarBehavior.floating),
         );
         context.go('/home');
       } else {
@@ -594,6 +595,10 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
     );
 
     final success = await ref.read(subscriptionProvider.notifier).purchase(_selectedPlan);
+    // After awaiting purchase the user may have closed the paywall. Reading
+    // `ref` after the State is disposed throws "Cannot use ref after dispose".
+    // Guard with mounted before subsequent ref.read calls.
+    if (!mounted) return;
     final isReturningUser = ref.read(authStateProvider).user?.isPaywallComplete ?? false;
 
     if (success && context.mounted) {
@@ -601,7 +606,7 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
         // Existing user upgrading — snackbar + go home
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(isSubscribed ? 'Plan updated successfully!' : 'Welcome to FitWiz Pro! Your subscription is active.'),
+            content: Text(isSubscribed ? 'Plan updated successfully!' : 'Welcome to ${Branding.appName} Pro! Your subscription is active.'),
             behavior: SnackBarBehavior.floating,
           ),
         );

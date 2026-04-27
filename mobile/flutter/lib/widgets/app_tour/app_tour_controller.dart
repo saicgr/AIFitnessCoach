@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../tooltips/tooltip_anchors.dart';
+
 enum TooltipPosition { above, below, center }
 
 class AppTourStep {
@@ -166,66 +168,68 @@ final appTourControllerProvider =
   (ref) => AppTourController(),
 );
 
-/// Centralized GlobalKey registry for all tour target widgets.
-/// These keys are attached to real widgets by the screens/shell.
+/// Legacy registry — keys now live in `TooltipAnchors`. This class
+/// remains as a thin alias so existing call sites
+/// (`AppTourKeys.topBarKey`, etc.) keep compiling. New code should
+/// reference `TooltipAnchors` directly.
+///
+/// Each `*Key` getter forwards to the corresponding `TooltipAnchors`
+/// field (note the dropped `Key` suffix on the new names).
 class AppTourKeys {
   AppTourKeys._();
 
-  // Tour 1: Nav Tour (home screen + nav bar)
-  static final topBarKey = GlobalKey(debugLabel: 'tour_topBar');
-  static final heroCarouselKey = GlobalKey(debugLabel: 'tour_heroCarousel');
-  static final quickLogKey = GlobalKey(debugLabel: 'tour_quickLog');
-  static final workoutNavKey = GlobalKey(debugLabel: 'tour_workoutNav');
-  static final aiChatKey = GlobalKey(debugLabel: 'tour_aiChat');
-  static final nutritionNavKey = GlobalKey(debugLabel: 'tour_nutritionNav');
-  static final profileNavKey = GlobalKey(debugLabel: 'tour_profileNav');
+  // Nav tour
+  static GlobalKey get topBarKey => TooltipAnchors.topBar;
+  static GlobalKey get heroCarouselKey => TooltipAnchors.heroCarousel;
+  static GlobalKey get quickLogKey => TooltipAnchors.quickLog;
+  static GlobalKey get workoutNavKey => TooltipAnchors.workoutNav;
+  static GlobalKey get aiChatKey => TooltipAnchors.aiChat;
+  static GlobalKey get nutritionNavKey => TooltipAnchors.nutritionNav;
+  static GlobalKey get profileNavKey => TooltipAnchors.profileNav;
 
-  // Tour 2: Active Workout Tour
-  static final exerciseCardKey = GlobalKey(debugLabel: 'tour_exerciseCard');
-  static final setLoggingKey = GlobalKey(debugLabel: 'tour_setLogging');
-  static final rirBarKey = GlobalKey(debugLabel: 'tour_rirBar');
-  static final restTimerKey = GlobalKey(debugLabel: 'tour_restTimer');
-  static final swapExerciseKey = GlobalKey(debugLabel: 'tour_swapExercise');
-  static final workoutAiKey = GlobalKey(debugLabel: 'tour_workoutAi');
+  // Active Workout tour
+  static GlobalKey get exerciseCardKey => TooltipAnchors.exerciseCard;
+  static GlobalKey get setLoggingKey => TooltipAnchors.setLogging;
+  static GlobalKey get rirBarKey => TooltipAnchors.rirBar;
+  static GlobalKey get restTimerKey => TooltipAnchors.restTimer;
+  static GlobalKey get swapExerciseKey => TooltipAnchors.swapExercise;
+  static GlobalKey get workoutAiKey => TooltipAnchors.workoutAi;
 
-  // Tour 3: Nutrition Tour
-  static final macroGoalsKey = GlobalKey(debugLabel: 'tour_macroGoals');
-  static final addMealKey = GlobalKey(debugLabel: 'tour_addMeal');
-  static final nutritionTabsKey = GlobalKey(debugLabel: 'tour_nutritionTabs');
-  static final nutritionHistoryKey = GlobalKey(debugLabel: 'tour_nutritionHistory');
+  // Nutrition tour
+  static GlobalKey get macroGoalsKey => TooltipAnchors.macroGoals;
+  static GlobalKey get addMealKey => TooltipAnchors.addMeal;
+  static GlobalKey get nutritionTabsKey => TooltipAnchors.nutritionTabs;
+  static GlobalKey get nutritionHistoryKey => TooltipAnchors.nutritionHistory;
 
-  // Tour 7: Nutrition Log Tour (inside log meal sheet)
-  static final logMealButtonKey = GlobalKey(debugLabel: 'tour_logMealButton');
+  // Log Meal sheet
+  static GlobalKey get logMealButtonKey => TooltipAnchors.logMealButton;
 
-  // Tour 4: Schedule Tour
-  static final weeklyCalendarKey = GlobalKey(debugLabel: 'tour_weeklyCalendar');
-  static final scheduleWorkoutCardKey = GlobalKey(debugLabel: 'tour_scheduleWorkoutCard');
-  static final viewModeToggleKey = GlobalKey(debugLabel: 'tour_viewModeToggle');
+  // Schedule tour
+  static GlobalKey get weeklyCalendarKey => TooltipAnchors.weeklyCalendar;
+  static GlobalKey get scheduleWorkoutCardKey =>
+      TooltipAnchors.scheduleWorkoutCard;
+  static GlobalKey get viewModeToggleKey => TooltipAnchors.viewModeToggle;
 
-  // Tour 5: Profile Tour
-  static final viewStatsKey = GlobalKey(debugLabel: 'tour_viewStats');
-  static final syncedWorkoutsKey = GlobalKey(debugLabel: 'tour_syncedWorkouts');
-  static final wrappedKey = GlobalKey(debugLabel: 'tour_wrapped');
+  // Profile tour
+  static GlobalKey get viewStatsKey => TooltipAnchors.viewStats;
+  static GlobalKey get syncedWorkoutsKey => TooltipAnchors.syncedWorkouts;
+  static GlobalKey get wrappedKey => TooltipAnchors.wrapped;
 
-  // Tour 6: Workouts Tab Tour
-  static final workoutsQuickActionsKey = GlobalKey(debugLabel: 'tour_workoutsQuickActions');
-  static final workoutsTodayKey = GlobalKey(debugLabel: 'tour_workoutsToday');
-  static final workoutsWeeklyKey = GlobalKey(debugLabel: 'tour_workoutsWeekly');
-  static final workoutsLibraryKey = GlobalKey(debugLabel: 'tour_workoutsLibrary');
+  // Workouts tab tour
+  static GlobalKey get workoutsQuickActionsKey =>
+      TooltipAnchors.workoutsQuickActions;
+  static GlobalKey get workoutsTodayKey => TooltipAnchors.workoutsToday;
+  static GlobalKey get workoutsWeeklyKey => TooltipAnchors.workoutsWeekly;
+  static GlobalKey get workoutsLibraryKey => TooltipAnchors.workoutsLibrary;
 
-  // Tier-aware Active-Workout tour targets (Easy / Simple / Advanced)
-  // These are declared up-front so tour step lists can reference stable keys.
-  // TODO(tier-ui): Attach these to the real widgets once the Easy / Simple
-  // active-workout screens ship (owned by another agent in this plan). Until
-  // then, the tier-aware trigger in workout_flow_mixin.dart reuses the
-  // Advanced-screen keys above for the Easy/Simple tours so the tour still
-  // spotlights visible targets on the currently-rendered Advanced screen.
-  static final easyExerciseHeaderKey = GlobalKey(debugLabel: 'tour_easyExerciseHeader');
-  static final easyStepperKey = GlobalKey(debugLabel: 'tour_easyStepper');
-  static final easyLogSetButtonKey = GlobalKey(debugLabel: 'tour_easyLogSetButton');
-  static final simpleRailKey = GlobalKey(debugLabel: 'tour_simpleRail');
-  static final simplePrevLineKey = GlobalKey(debugLabel: 'tour_simplePrevLine');
-  static final simpleRestBarKey = GlobalKey(debugLabel: 'tour_simpleRestBar');
-  static final simpleChatBarKey = GlobalKey(debugLabel: 'tour_simpleChatBar');
-  static final tierToggleKey = GlobalKey(debugLabel: 'tour_tierToggle');
+  // Tier-aware Active-Workout extras
+  static GlobalKey get easyExerciseHeaderKey =>
+      TooltipAnchors.easyExerciseHeader;
+  static GlobalKey get easyStepperKey => TooltipAnchors.easyStepper;
+  static GlobalKey get easyLogSetButtonKey => TooltipAnchors.easyLogSetButton;
+  static GlobalKey get simpleRailKey => TooltipAnchors.simpleRail;
+  static GlobalKey get simplePrevLineKey => TooltipAnchors.simplePrevLine;
+  static GlobalKey get simpleRestBarKey => TooltipAnchors.simpleRestBar;
+  static GlobalKey get simpleChatBarKey => TooltipAnchors.simpleChatBar;
+  static GlobalKey get tierToggleKey => TooltipAnchors.tierToggle;
 }

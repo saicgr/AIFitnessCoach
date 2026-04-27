@@ -1,7 +1,7 @@
 """
 Data retention cron jobs.
 
-Enforces the retention windows we committed to in the FitWiz privacy policy
+Enforces the retention windows we committed to in the Zealova privacy policy
 (section 7 — Data Retention). Without this, promises like "chat history is
 retained for up to 12 months, then automatically deleted" are copy-only —
 and section 7 was flagged during our privacy audit as unimplemented.

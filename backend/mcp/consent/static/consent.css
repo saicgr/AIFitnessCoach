@@ -1,7 +1,7 @@
 /* ─────────────────────────────────────────────────────────────────────────
- * FitWiz MCP Consent UI — trust-first fintech-style skin.
+ * Zealova MCP Consent UI — trust-first fintech-style skin.
  * Light/dark aware via prefers-color-scheme.
- * Accent: FitWiz cyan (#06B6D4). Mirrors the brand color used in the
+ * Accent: Zealova cyan (#06B6D4). Mirrors the brand color used in the
  * mobile app (mobile/flutter/lib/core/animations/app_animations.dart).
  * ───────────────────────────────────────────────────────────────────── */
 
@@ -392,7 +392,7 @@ textarea:focus {
 /* ─────────────────────────────────────────────────────────────────────
  * EXTENDED LAYOUT — adds top nav, hero section, OAuth sign-in widgets,
  * signed-in banner, trust strip, and full footer. Designed to make the
- * consent page feel like a first-class part of fitwiz.us, not a bare
+ * consent page feel like a first-class part of zealova.com, not a bare
  * OAuth fallback.
  * ─────────────────────────────────────────────────────────────────── */
 

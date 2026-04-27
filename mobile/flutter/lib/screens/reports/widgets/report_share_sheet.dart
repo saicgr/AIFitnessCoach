@@ -14,6 +14,7 @@ import '../share_templates/report_receipt_template.dart';
 import '../share_templates/report_stat_grid_template.dart';
 import '../share_templates/report_trading_card_template.dart';
 import '../share_templates/report_wrapped_template.dart';
+import 'package:fitwiz/core/constants/branding.dart';
 
 // Re-export the data types so callers only have to import this file.
 export '../share_templates/_report_common.dart'
@@ -214,7 +215,7 @@ class _ReportShareSheetState extends ConsumerState<ReportShareSheet> {
       }
       await ShareService.shareGeneric(
         bytes,
-        caption: 'My FitWiz ${widget.data.title} — ${widget.data.periodLabel}',
+        caption: 'My ${Branding.appName} ${widget.data.title} — ${widget.data.periodLabel}',
         subject: '${widget.data.title} — ${widget.data.periodLabel}',
       );
     } catch (e) {

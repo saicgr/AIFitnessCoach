@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="robots" content="noindex, nofollow" />
-  <title>Connection Authorized · FitWiz</title>
+  <title>Connection Authorized · {{ APP_NAME }}</title>
   <link rel="stylesheet" href="/mcp/consent/static/consent.css" />
 </head>
 <body>
@@ -20,12 +20,12 @@
       </div>
       <h1 class="title">You're connected</h1>
       <p class="lede">
-        Your FitWiz account is now authorized. You can return to Claude Desktop
+        Your {{ APP_NAME }} account is now authorized. You can return to Claude Desktop
         (or whichever AI client you came from) to start using it.
       </p>
       <p class="muted">
         This tab can be closed. You can revoke access anytime in
-        <strong>FitWiz → Settings → AI Integrations</strong>.
+        <strong>{{ APP_NAME }} → Settings → AI Integrations</strong>.
       </p>
       <div class="actions actions-center">
         <button type="button" class="btn btn-secondary" id="closeBtn">Close this window</button>
@@ -33,7 +33,7 @@
     </section>
 
     <footer class="page-footer">
-      <span>© FitWiz</span>
+      <span>© {{ APP_NAME }}</span>
     </footer>
   </main>
 

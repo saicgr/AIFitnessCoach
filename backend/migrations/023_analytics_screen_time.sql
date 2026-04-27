@@ -1,4 +1,4 @@
--- FitWiz - Analytics & Screen Time Tracking
+-- Zealova - Analytics & Screen Time Tracking
 -- Migration 023: User analytics and screen time tracking
 
 -- Session tracking (app sessions)

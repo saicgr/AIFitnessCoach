@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../data/models/trophy.dart';
 import '../../../data/models/wrapped_data.dart';
 import '../../../data/providers/xp_provider.dart';
+import 'package:fitwiz/core/constants/branding.dart';
 
 /// Wrapped slide showing the trophies earned in the Wrapped period.
 /// Shares the same sunburst-on-black visual language as the app-open
@@ -113,7 +114,7 @@ class WrappedTrophiesCard extends ConsumerWidget {
                 child: Padding(
                   padding: EdgeInsets.only(top: 12),
                   child: Text(
-                    'FitWiz Wrapped',
+                    '${Branding.appName} Wrapped',
                     style: TextStyle(
                       color: Colors.white54,
                       fontSize: 12,

@@ -1,8 +1,11 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/providers/user_provider.dart';
+import '../../core/theme/accent_color_provider.dart';
 import '../../data/models/exercise.dart';
 import '../../data/models/workout.dart';
 import '../../data/services/image_url_cache.dart';
@@ -26,6 +29,11 @@ class WorkoutAdapter {
     required int durationSeconds,
     required List<WorkoutExercise> plannedExercises,
     List<SetLogInfo>? loggedSets,
+    /// Raw `metadata['sets_json']` from the workout summary response. Used as
+    /// the primary per-set source when present — it carries the actual reps
+    /// + weight the user logged on every set, including for bodyweight
+    /// sessions where `setLogs` may be empty server-side.
+    dynamic setsJsonRaw,
     int? calories,
     double? totalVolumeKgFromCaller,
     int? totalSets,
@@ -39,7 +47,11 @@ class WorkoutAdapter {
   }) {
     if (plannedExercises.isEmpty) return null;
 
-    final accent = AppColors.accent;
+    // Use the user's selected in-app accent so the share card actually
+    // reads as colored. AppColors.accent resolves to white in dark mode,
+    // which made every selected pill, the iMessage sent bubble, and the
+    // watermark switch render as a white-on-dark blob.
+    final accent = ref.read(accentColorProvider).getColor(true);
     // Picking the user's preferred unit at adapter time so the captured
     // image matches what they see in the rest of the app (lbs by default
     // per the workout-unit preference, not body-weight unit).
@@ -71,9 +83,15 @@ class WorkoutAdapter {
     // Build per-exercise ShareableExercise with per-set logged values
     // (when available). This is what the Hevy-style WorkoutDetails
     // template renders.
+    // Coerce sets_json (List<dynamic> or JSON string) into per-exercise
+    // bucketed maps so _buildExerciseList can prefer them over loggedSets.
+    final Map<String, List<Map<String, dynamic>>> setsJsonByExercise =
+        _parseSetsJson(setsJsonRaw);
+
     final exercises = _buildExerciseList(
       planned: plannedExercises,
       logs: loggedSets,
+      setsJsonByExercise: setsJsonByExercise,
       useKg: useKg,
       unitLabel: unit,
     );
@@ -178,6 +196,8 @@ class WorkoutAdapter {
   static List<ShareableExercise> _buildExerciseList({
     required List<WorkoutExercise> planned,
     required List<SetLogInfo>? logs,
+    Map<String, List<Map<String, dynamic>>> setsJsonByExercise =
+        const <String, List<Map<String, dynamic>>>{},
     required bool useKg,
     required String unitLabel,
   }) {
@@ -189,36 +209,88 @@ class WorkoutAdapter {
     }
 
     return planned.map((ex) {
+      // Priority: sets_json (richest, has per-set reps/weight even for
+      // bodyweight) > setLogs (server-side aggregate) > planned fallback.
+      final jsonSets = setsJsonByExercise[ex.name.toLowerCase()] ??
+          const <Map<String, dynamic>>[];
       final logsForEx = byExercise[ex.name] ?? const <SetLogInfo>[];
-      // Prefer logged sets when present — that's what the user actually did.
-      final sets = logsForEx.isNotEmpty
-          ? logsForEx
-              .map((s) => ShareableSet(
-                    weight: useKg ? s.weightKg : s.weightKg * 2.20462,
-                    unit: unitLabel,
-                    reps: s.repsCompleted,
-                    rpe: s.rpe,
-                  ))
-              .toList()
-          // Fall back to planned (replicated for the planned set count).
-          : List.generate(
-              ex.sets ?? 0,
-              (i) => ShareableSet(
-                weight: ex.weight == null
-                    ? null
-                    : useKg
-                        ? ex.weight!
-                        : ex.weight! * 2.20462,
-                unit: unitLabel,
-                reps: ex.reps ?? 0,
-              ),
-            );
+
+      List<ShareableSet> sets;
+      if (jsonSets.isNotEmpty) {
+        sets = jsonSets.where((s) => s['is_completed'] != false).map((s) {
+          final weightKg = (s['weight_kg'] as num?)?.toDouble() ??
+              (s['weight'] as num?)?.toDouble() ??
+              0;
+          final reps = (s['reps'] as num?)?.toInt() ?? 0;
+          final rpe = (s['rpe'] as num?)?.toDouble();
+          return ShareableSet(
+            // Pass 0 for bodyweight so the template can render "BW"
+            // explicitly; null only when truly unknown.
+            weight: useKg ? weightKg : weightKg * 2.20462,
+            unit: unitLabel,
+            reps: reps,
+            rpe: rpe,
+          );
+        }).toList();
+      } else if (logsForEx.isNotEmpty) {
+        sets = logsForEx
+            .map((s) => ShareableSet(
+                  weight: useKg ? s.weightKg : s.weightKg * 2.20462,
+                  unit: unitLabel,
+                  reps: s.repsCompleted,
+                  rpe: s.rpe,
+                ))
+            .toList();
+      } else {
+        // Fall back to planned (replicated for the planned set count).
+        sets = List.generate(
+          ex.sets ?? 0,
+          (i) => ShareableSet(
+            weight: ex.weight == null
+                ? null
+                : useKg
+                    ? ex.weight!
+                    : ex.weight! * 2.20462,
+            unit: unitLabel,
+            reps: ex.reps ?? 0,
+          ),
+        );
+      }
+
       return ShareableExercise(
         name: ex.name,
         imageUrl: _resolveExerciseImageUrl(ex),
         sets: sets,
       );
     }).toList();
+  }
+
+  /// Parse the raw `metadata['sets_json']` blob (List<dynamic> or JSON
+  /// string) into per-exercise buckets keyed by lowercased exercise name.
+  /// Returns an empty map on any parse failure or null input.
+  static Map<String, List<Map<String, dynamic>>> _parseSetsJson(dynamic raw) {
+    if (raw == null) return const {};
+    List? list;
+    if (raw is List) {
+      list = raw;
+    } else if (raw is String && raw.trim().isNotEmpty) {
+      try {
+        final decoded = jsonDecode(raw);
+        if (decoded is List) list = decoded;
+      } catch (_) {
+        return const {};
+      }
+    }
+    if (list == null) return const {};
+    final out = <String, List<Map<String, dynamic>>>{};
+    for (final s in list) {
+      if (s is! Map) continue;
+      final m = Map<String, dynamic>.from(s);
+      final name = (m['exercise_name'] as String?)?.trim().toLowerCase();
+      if (name == null || name.isEmpty) continue;
+      out.putIfAbsent(name, () => []).add(m);
+    }
+    return out;
   }
 
   /// Resolves an HTTP image URL for an exercise so templates can render

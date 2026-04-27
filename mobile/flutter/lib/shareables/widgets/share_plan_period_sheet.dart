@@ -2,7 +2,7 @@
 /// the Workout tab / Reports / Home More tile. Lets them pick what to share
 /// (Today / This Week / This Month / YTD / PRs).
 ///
-/// Calls `PlanShareService` to mint a fitwiz.us/p/{token} link, then opens
+/// Calls `PlanShareService` to mint a zealova.com/p/{token} link, then opens
 /// the system share sheet via share_plus. UI is kept ~150 LOC and dumb so
 /// any caller can reuse it.
 import 'package:flutter/material.dart';
@@ -14,6 +14,7 @@ import '../../data/services/api_client.dart';
 import '../../data/services/last_used_service.dart';
 import '../../data/services/plan_share_service.dart';
 import '../../widgets/common/last_used_badge.dart';
+import 'package:fitwiz/core/constants/branding.dart';
 
 enum _Period {
   today('day', 'plan', 'Today\'s workout', Icons.today_rounded, AppColors.cyan),
@@ -90,8 +91,8 @@ class _SharePlanPeriodSheetState extends ConsumerState<SharePlanPeriodSheet> {
       final messenger = ScaffoldMessenger.of(context);
       Navigator.of(context).pop();
       await Share.share(
-        '${option.label} — FitWiz\n${res.url}',
-        subject: 'My FitWiz ${option.label.toLowerCase()}',
+        '${option.label} — ${Branding.appName}\n${res.url}',
+        subject: 'My ${Branding.appName} ${option.label.toLowerCase()}',
       );
       messenger.showSnackBar(
         SnackBar(content: Text('Share link ready: ${res.url}')),

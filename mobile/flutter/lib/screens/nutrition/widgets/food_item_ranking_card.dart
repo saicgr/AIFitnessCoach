@@ -170,12 +170,18 @@ class _FoodItemRankingCardState extends State<_FoodItemRankingCard> {
     // Photo/camera items arrive as "5 pieces" / "2 tbsp" / "0.5 cup" with no
     // explicit gram weight or per-gram nutrition. Defaulting to weight mode
     // would show a misleading "100 g" placeholder. When count is known and
-    // weight isn't, open in count mode.
+    // weight isn't, open in count mode. When BOTH are known, open in 'both'
+    // mode so the count (e.g. "3 pcs") stays visible — users care about
+    // discrete pieces, not just grams.
     final hasCount = widget.item.count != null;
     final hasExplicitWeight = widget.item.weightG != null;
-    _displayMode = (hasCount && !hasExplicitWeight)
-        ? _PortionDisplayMode.count
-        : _PortionDisplayMode.weight;
+    if (hasCount && hasExplicitWeight) {
+      _displayMode = _PortionDisplayMode.both;
+    } else if (hasCount && !hasExplicitWeight) {
+      _displayMode = _PortionDisplayMode.count;
+    } else {
+      _displayMode = _PortionDisplayMode.weight;
+    }
   }
 
   @override

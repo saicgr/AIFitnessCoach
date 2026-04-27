@@ -190,7 +190,7 @@ Provide complete code snippets for fixes, ready to be applied.
 
 ## Project-Specific Context
 
-For this FitWiz Flutter project:
+For this Zealova Flutter project:
 - Follow the logging conventions: 🔍 debug, ✅ success, ❌ error, ⚠️ warning
 - Riverpod is used for state management - check `AsyncValue` patterns
 - Drift is used for database - loading states needed for DB operations

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../workout/widgets/share_templates/_share_common.dart';
 import '_report_common.dart';
+import 'package:fitwiz/core/constants/branding.dart';
 
 /// Newspaper — cream-paper "THE FITWIZ TIMES" masthead with a serif
 /// headline built from the user's name + hero value + period label. Short
@@ -153,14 +154,14 @@ class ReportNewspaperTemplate extends StatelessWidget {
   // grounded in real data rather than boilerplate.
   String _body(ReportShareData d) {
     if (d.highlights.isEmpty) {
-      return 'Numbers climb. Discipline compounds. FitWiz captured the receipts '
+      return 'Numbers climb. Discipline compounds. ${Branding.appName} captured the receipts '
           'so every rep, every minute, every win shows up exactly where it '
           'belongs — in the record.';
     }
     final parts = d.highlights.take(3).map((h) {
       return '${h.label.toLowerCase()}: ${h.value}';
     }).join('. ');
-    return 'Reporters confirm: $parts. The trend continues, and FitWiz keeps '
+    return 'Reporters confirm: $parts. The trend continues, and ${Branding.appName} keeps '
         'the receipts.';
   }
 }

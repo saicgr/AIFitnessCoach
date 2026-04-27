@@ -10,9 +10,10 @@ import '../../../data/providers/social_provider.dart';
 import '../widgets/empty_state.dart';
 import '../conversation_screen.dart';
 import '../group_create_sheet.dart';
+import 'package:fitwiz/core/constants/branding.dart';
 
 /// Messages Tab - Shows direct messages and group conversations
-/// First message for new users is from support@fitwiz.us
+/// First message for new users is from support@zealova.com
 class MessagesTab extends ConsumerStatefulWidget {
   const MessagesTab({super.key});
 
@@ -169,7 +170,7 @@ class _ConversationCard extends StatelessWidget {
 
     final displayName = isGroup
         ? (groupName ?? 'Group Chat')
-        : (isSupportUser ? 'FitWiz Support' : otherUserName);
+        : (isSupportUser ? '${Branding.appName} Support' : otherUserName);
     final displayAvatar = isGroup ? groupAvatar : otherUserAvatar;
 
     final cardBg = isDark ? AppColors.elevated : AppColorsLight.elevated;

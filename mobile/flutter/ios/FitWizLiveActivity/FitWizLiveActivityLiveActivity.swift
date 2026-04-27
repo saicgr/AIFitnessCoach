@@ -1,6 +1,6 @@
 //
-//  FitWizLiveActivityLiveActivity.swift
-//  FitWizLiveActivity
+//  ZealovaLiveActivityLiveActivity.swift
+//  ZealovaLiveActivity
 //
 //  The active-workout Live Activity.
 //  Renders Lock Screen / Banner (all iPhones) + Dynamic Island
@@ -11,7 +11,7 @@ import ActivityKit
 import SwiftUI
 import WidgetKit
 
-struct FitWizLiveActivityLiveActivity: Widget {
+struct ZealovaLiveActivityLiveActivity: Widget {
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: LiveActivitiesAppAttributes.self) { _ in
             // ── Lock Screen / Banner ──────────────────────────────────

@@ -15,6 +15,7 @@ import '../../data/services/api_client.dart';
 import '../onboarding/pre_auth_quiz_screen.dart';
 import '../onboarding/widgets/onboarding_theme.dart';
 import 'widgets/pre_auth_referral_chip.dart';
+import 'package:fitwiz/core/constants/branding.dart';
 
 /// Glassmorphic sign-in screen shown after quiz and preview
 class SignInScreen extends ConsumerStatefulWidget {
@@ -124,9 +125,9 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text('Welcome to FitWiz!', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 14)),
+                  Text('Welcome to ${Branding.appName}!', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 14)),
                   const SizedBox(height: 2),
-                  Text('FitWiz Support is now your friend. Reach out anytime for help!', style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 12)),
+                  Text('${Branding.appName} Support is now your friend. Reach out anytime for help!', style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 12)),
                 ],
               ),
             ),

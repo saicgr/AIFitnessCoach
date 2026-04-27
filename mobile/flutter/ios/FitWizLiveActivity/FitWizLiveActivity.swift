@@ -1,9 +1,9 @@
 //
-//  FitWizLiveActivity.swift
-//  FitWizLiveActivity
+//  ZealovaLiveActivity.swift
+//  ZealovaLiveActivity
 //
 //  Shared attributes + state helpers for the Live Activity. The actual
-//  widget body lives in FitWizLiveActivityLiveActivity.swift.
+//  widget body lives in ZealovaLiveActivityLiveActivity.swift.
 //
 
 import ActivityKit

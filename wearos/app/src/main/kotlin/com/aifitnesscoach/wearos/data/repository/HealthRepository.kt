@@ -1,4 +1,4 @@
-package com.fitwiz.wearos.data.repository
+package com.aifitnesscoach.wearos.data.repository
 
 import android.content.Context
 import android.util.Log
@@ -11,10 +11,10 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.guava.await
-import com.fitwiz.wearos.data.models.WearHealthData
-import com.fitwiz.wearos.data.models.WearWorkoutMetrics
-import com.fitwiz.wearos.data.models.WearDailyActivity
-import com.fitwiz.wearos.data.models.HeartRateZone
+import com.aifitnesscoach.wearos.data.models.WearHealthData
+import com.aifitnesscoach.wearos.data.models.WearWorkoutMetrics
+import com.aifitnesscoach.wearos.data.models.WearDailyActivity
+import com.aifitnesscoach.wearos.data.models.HeartRateZone
 import java.util.*
 import javax.inject.Inject
 import javax.inject.Singleton

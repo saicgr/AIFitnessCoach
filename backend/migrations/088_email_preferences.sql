@@ -181,7 +181,7 @@ GRANT EXECUTE ON FUNCTION upsert_email_preferences TO authenticated;
 GRANT EXECUTE ON FUNCTION unsubscribe_all_marketing TO authenticated;
 
 -- Add comment for documentation
-COMMENT ON TABLE email_preferences IS 'User email subscription preferences. Allows users to control what emails they receive from FitWiz.';
+COMMENT ON TABLE email_preferences IS 'User email subscription preferences. Allows users to control what emails they receive from Zealova.';
 COMMENT ON COLUMN email_preferences.workout_reminders IS 'Daily workout reminder emails';
 COMMENT ON COLUMN email_preferences.weekly_summary IS 'Weekly progress summary emails';
 COMMENT ON COLUMN email_preferences.coach_tips IS 'AI coach tips and motivational emails';

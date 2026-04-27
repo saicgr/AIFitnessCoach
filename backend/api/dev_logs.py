@@ -15,6 +15,8 @@ from typing import Optional
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse, StreamingResponse
 
+from core import branding
+
 router = APIRouter(prefix="/dev", tags=["dev"])
 
 # In-memory circular buffer of recent log entries (last 200)
@@ -97,7 +99,7 @@ _DASHBOARD_HTML = """<!DOCTYPE html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>FitWiz Dev Logs</title>
+<title>__BRAND__ Dev Logs</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
@@ -226,7 +228,7 @@ _DASHBOARD_HTML = """<!DOCTYPE html>
 </head>
 <body>
 <div class="header">
-  <h1>FitWiz Dev Logs</h1>
+  <h1>__BRAND__ Dev Logs</h1>
   <div style="display:flex;align-items:center;gap:16px;">
     <span class="count" id="count">0 requests</span>
     <div class="status">
@@ -343,4 +345,4 @@ connect();
 </script>
 </body>
 </html>
-"""
+""".replace("__BRAND__", branding.APP_NAME)

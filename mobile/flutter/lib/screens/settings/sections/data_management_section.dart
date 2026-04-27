@@ -9,6 +9,7 @@ import '../dialogs/import_dialog.dart';
 import '../export_data_screen.dart';
 import '../subscription/request_refund_screen.dart';
 import '../widgets/widgets.dart';
+import 'package:fitwiz/core/constants/branding.dart';
 
 /// The data management section for import/export functionality.
 class DataManagementSection extends ConsumerWidget {
@@ -60,7 +61,7 @@ class DataManagementSection extends ConsumerWidget {
             ),
             SettingItemData(
               icon: Icons.file_download_outlined,
-              title: 'Export FitWiz Data',
+              title: 'Export ${Branding.appName} Data',
               subtitle: 'Download your workout + nutrition data',
               onTap: () => showExportDialog(context, ref),
             ),
@@ -72,8 +73,8 @@ class DataManagementSection extends ConsumerWidget {
             ),
             SettingItemData(
               icon: Icons.file_upload_outlined,
-              title: 'Import FitWiz Data',
-              subtitle: 'Restore from a FitWiz backup ZIP',
+              title: 'Import ${Branding.appName} Data',
+              subtitle: 'Restore from a ${Branding.appName} backup ZIP',
               onTap: () => showImportDialog(context, ref),
             ),
           ],

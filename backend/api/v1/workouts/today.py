@@ -95,6 +95,25 @@ def _get_active_gym_profile_id(db, user_id: str) -> Optional[str]:
     return None
 
 
+def _get_active_gym_profile(db, user_id: str) -> Optional[dict]:
+    """Fetch the full active gym profile row (id + workout_days + training_split + ...).
+
+    Returns None if no active profile exists.
+    """
+    try:
+        result = db.client.table("gym_profiles") \
+            .select("id, name, workout_days, training_split, duration_minutes") \
+            .eq("user_id", user_id) \
+            .eq("is_active", True) \
+            .single() \
+            .execute()
+        if result.data:
+            return result.data
+    except Exception as e:
+        logger.debug(f"No active gym profile row found: {e}")
+    return None
+
+
 async def _get_cached_gym_profile_id(db, user_id: str) -> Optional[str]:
     """Get active gym profile ID with Redis caching."""
     cache_key = user_id
@@ -105,6 +124,23 @@ async def _get_cached_gym_profile_id(db, user_id: str) -> Optional[str]:
     profile_id = _get_active_gym_profile_id(db, user_id)
     await _gym_profile_cache.set(cache_key, profile_id if profile_id else "__none__")
     return profile_id
+
+
+def _resolve_workout_days(user: dict, active_profile: Optional[dict]) -> List[int]:
+    """Pick the authoritative workout-day schedule.
+
+    Active gym profile's `workout_days` wins when non-empty, else fall back to
+    the user's global `preferences.workout_days`. This lets users have
+    different schedules per gym (Tue/Thu at the gym, Mon/Sat at home) without
+    needing to mutate their account-level preferences.
+    """
+    if active_profile:
+        profile_days = active_profile.get("workout_days")
+        if isinstance(profile_days, list) and profile_days:
+            int_days = [d for d in profile_days if isinstance(d, int) and 0 <= d <= 6]
+            if int_days:
+                return sorted(set(int_days))
+    return _get_user_workout_days(user)
 
 
 def _compute_etag(response: "TodayWorkoutResponse") -> str:
@@ -244,7 +280,7 @@ def _get_user_workout_days(user: dict) -> List[int]:
     Flutter's user.workoutDays getter only subtracts 1 when a value > 6 is seen,
     so ambiguous values in [1..6] are treated as 0-indexed. Backend must match
     that convention — otherwise profile shows one set of days while the
-    generator schedules a different set (observed with reviewer@fitwiz.us
+    generator schedules a different set (observed with reviewer@zealova.com
     whose stored [1,3,5,6] displayed as Tue/Thu/Sat/Sun in the app but was
     being normalized to Mon/Wed/Fri/Sat on the server, so workouts were
     generated on the wrong days).
@@ -588,6 +624,58 @@ async def _sequential_generate_workouts(
             await invalidate_today_workout_cache(user_id, gym_profile_id, gen_date.isoformat())
 
 
+async def enqueue_schedule_top_up(
+    user_id: str,
+    gym_profile_id: Optional[str],
+    workout_days: List[int],
+    user_tz: str,
+    horizon_days: int = 14,
+    today_str: Optional[str] = None,
+) -> int:
+    """Generate any missing workouts in the next `horizon_days` for the given
+    profile + day schedule. Runs synchronously inside the calling task — wrap
+    in BackgroundTasks if you don't want to block the response.
+
+    Returns the number of dates queued. Skips dates that already have a
+    workout (any status) for `(user_id, gym_profile_id, scheduled_date)` and
+    dates already being generated in-flight (tracked via
+    `_active_background_generations`).
+    """
+    if not workout_days:
+        logger.info(f"[TOP-UP] No workout_days for user={user_id} profile={gym_profile_id}, skipping")
+        return 0
+
+    db = get_supabase_db()
+    if not today_str:
+        today_str = get_user_today(user_tz)
+
+    missing = _get_upcoming_dates_needing_generation(
+        db=db,
+        user_id=user_id,
+        selected_days=workout_days,
+        active_profile_id=gym_profile_id,
+        max_dates=horizon_days,
+        user_today_str=today_str,
+        user_tz=user_tz,
+    )
+    if not missing:
+        logger.info(f"[TOP-UP] User {user_id} profile {gym_profile_id} already covered for {horizon_days} days")
+        return 0
+
+    logger.info(
+        f"📅 [TOP-UP] Generating {len(missing)} workouts for next {horizon_days} days "
+        f"(user={user_id}, profile={gym_profile_id}, days={[d.isoformat() for d in missing]})"
+    )
+    await _sequential_generate_workouts(
+        user_id=user_id,
+        dates=missing,
+        gym_profile_id=gym_profile_id,
+        selected_days=workout_days,
+        user_tz=user_tz,
+    )
+    return len(missing)
+
+
 @router.get("/today", response_model=TodayWorkoutResponse)
 async def get_today_workout(
     request: Request,
@@ -633,6 +721,13 @@ async def get_today_workout(
         active_profile_id = await _get_cached_gym_profile_id(db, user_id)
         logger.debug(f"[GYM PROFILE] Active profile for user {user_id}: {active_profile_id}")
 
+        # Active profile row (used to resolve per-profile workout_days schedule).
+        # Cheap query — single row by (user_id, is_active=true). Could be cached
+        # alongside _gym_profile_cache later if it shows up in profiling.
+        active_profile_row: Optional[dict] = None
+        if active_profile_id:
+            active_profile_row = _get_active_gym_profile(db, user_id)
+
         # Check cache before running expensive DB queries
         cache_key = f"{user_id}:{active_profile_id or 'none'}:{today_str}"
         cached = await _today_workout_cache.get(cache_key)
@@ -645,7 +740,10 @@ async def get_today_workout(
                 return Response(status_code=304, headers={"ETag": etag})
             return JSONResponse(content=cached, headers={"ETag": etag})
 
-        selected_days = _get_user_workout_days(user)
+        # Per-profile schedule precedence: active profile's workout_days wins,
+        # falling back to the user's account-level preferences.workout_days.
+        # See _resolve_workout_days for the full rule.
+        selected_days = _resolve_workout_days(user, active_profile_row)
 
         day_names = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
         is_today_workout_day = _is_today_a_workout_day(selected_days, user_today_str=today_str)
@@ -806,12 +904,15 @@ async def get_today_workout(
         now_ts = datetime.now().timestamp()
         last_scheduled = _last_bg_gen_schedule.get(user_id, 0)
         if now_ts - last_scheduled >= _BG_GEN_SCHEDULE_COOLDOWN:
+            # Fill the full 14-day horizon to match the /upcoming read endpoint
+            # (batch_generation.py default), so the home carousel + offline
+            # pre-cache always have complete coverage after a profile switch.
             upcoming_missing = _get_upcoming_dates_needing_generation(
                 db=db,
                 user_id=user_id,
                 selected_days=selected_days,
                 active_profile_id=active_profile_id,
-                max_dates=7,
+                max_dates=14,
                 user_today_str=today_str,
                 user_tz=user_tz,
             )

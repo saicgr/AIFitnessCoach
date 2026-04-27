@@ -1,4 +1,4 @@
-package com.fitwiz.wearos
+package com.aifitnesscoach.wearos
 
 import android.content.Intent
 import android.os.Bundle
@@ -11,16 +11,16 @@ import androidx.navigation.NavHostController
 import androidx.wear.compose.navigation.SwipeDismissableNavHost
 import androidx.wear.compose.navigation.composable
 import androidx.wear.compose.navigation.rememberSwipeDismissableNavController
-import com.fitwiz.wearos.data.sync.SyncWorker
-import com.fitwiz.wearos.presentation.navigation.Screen
-import com.fitwiz.wearos.presentation.screens.home.HomeScreen
-import com.fitwiz.wearos.presentation.screens.workout.*
-import com.fitwiz.wearos.presentation.screens.nutrition.*
-import com.fitwiz.wearos.presentation.screens.fasting.FastingScreen
-import com.fitwiz.wearos.presentation.theme.FitWizWearTheme
-import com.fitwiz.wearos.presentation.viewmodel.WorkoutViewModel
-import com.fitwiz.wearos.presentation.viewmodel.NutritionViewModel
-import com.fitwiz.wearos.presentation.viewmodel.FastingViewModel
+import com.aifitnesscoach.wearos.data.sync.SyncWorker
+import com.aifitnesscoach.wearos.presentation.navigation.Screen
+import com.aifitnesscoach.wearos.presentation.screens.home.HomeScreen
+import com.aifitnesscoach.wearos.presentation.screens.workout.*
+import com.aifitnesscoach.wearos.presentation.screens.nutrition.*
+import com.aifitnesscoach.wearos.presentation.screens.fasting.FastingScreen
+import com.aifitnesscoach.wearos.presentation.theme.AppWearTheme
+import com.aifitnesscoach.wearos.presentation.viewmodel.WorkoutViewModel
+import com.aifitnesscoach.wearos.presentation.viewmodel.NutritionViewModel
+import com.aifitnesscoach.wearos.presentation.viewmodel.FastingViewModel
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -36,8 +36,8 @@ class MainActivity : ComponentActivity() {
         val destination = intent?.getStringExtra("destination")
 
         setContent {
-            FitWizWearTheme {
-                FitWizWearNavigation(
+            AppWearTheme {
+                AppWearNavigation(
                     initialDestination = destination
                 )
             }
@@ -51,7 +51,7 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun FitWizWearNavigation(
+fun AppWearNavigation(
     navController: NavHostController = rememberSwipeDismissableNavController(),
     initialDestination: String? = null
 ) {

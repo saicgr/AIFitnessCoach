@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../shareable_canvas.dart';
 import '../shareable_data.dart';
-import '../widgets/fitwiz_watermark.dart';
+import '../widgets/app_watermark.dart';
 import '../widgets/shareable_hero_number.dart';
 
 /// Elite — cosmetic-gated chrome version of Activity Overview with gold
@@ -107,7 +107,7 @@ class EliteTemplate extends StatelessWidget {
               Align(
                 alignment: Alignment.centerRight,
                 child:
-                    FitWizWatermark(textColor: Colors.amber.shade100),
+                    AppWatermark(textColor: Colors.amber.shade100),
               ),
           ],
         ),

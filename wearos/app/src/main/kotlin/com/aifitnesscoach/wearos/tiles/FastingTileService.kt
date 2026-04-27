@@ -1,4 +1,4 @@
-package com.fitwiz.wearos.tiles
+package com.aifitnesscoach.wearos.tiles
 
 import androidx.wear.protolayout.ActionBuilders
 import androidx.wear.protolayout.ColorBuilders.argb
@@ -10,9 +10,9 @@ import androidx.wear.protolayout.TimelineBuilders.*
 import androidx.wear.tiles.*
 import androidx.wear.tiles.RequestBuilders.ResourcesRequest
 import androidx.wear.tiles.RequestBuilders.TileRequest
-import com.fitwiz.wearos.MainActivity
-import com.fitwiz.wearos.data.models.FastingStatus
-import com.fitwiz.wearos.data.repository.FastingRepository
+import com.aifitnesscoach.wearos.MainActivity
+import com.aifitnesscoach.wearos.data.models.FastingStatus
+import com.aifitnesscoach.wearos.data.repository.FastingRepository
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import dagger.hilt.android.AndroidEntryPoint

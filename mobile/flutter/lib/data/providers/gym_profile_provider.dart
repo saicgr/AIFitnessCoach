@@ -261,7 +261,13 @@ class GymProfilesNotifier extends StateNotifier<AsyncValue<List<GymProfile>>> {
     await _fetchFromApi(showLoading: false);
   }
 
-  /// Create a new gym profile
+  /// Create a new gym profile and immediately make it the active one.
+  ///
+  /// Why auto-activate: the user just curated a name + icon + color +
+  /// equipment for this gym; making them tap a separate "switch to it"
+  /// step before the app reflects their work surprises them. Mirrors
+  /// every other product (Spotify "Add device", Slack "Create workspace")
+  /// which auto-selects the freshly-created entity.
   Future<GymProfile?> createProfile(GymProfileCreate profile) async {
     if (_userId == null) return null;
 
@@ -270,14 +276,26 @@ class GymProfilesNotifier extends StateNotifier<AsyncValue<List<GymProfile>>> {
 
       final created = await _repository.createProfile(_userId, profile);
 
-      // Add to local state and cache
+      // Optimistic local state: demote every other profile, mark the new
+      // one active. The server-side activate call below confirms it; if
+      // it fails we revert by refetching.
       state.whenData((profiles) {
-        final newProfiles = [...profiles, created];
+        final demoted = profiles.map((p) => p.copyWith(isActive: false)).toList();
+        final activated = created.copyWith(isActive: true);
+        final newProfiles = [...demoted, activated];
         state = AsyncValue.data(newProfiles);
         _saveToCache(newProfiles);
       });
 
-      debugPrint('✅ [GymProfileProvider] Profile created: ${created.name}');
+      // Confirm server-side. Failure here is recoverable (next refresh
+      // will pull the truth) — don't block the create on it.
+      try {
+        await _repository.activateProfile(created.id);
+      } catch (e) {
+        debugPrint('⚠️ [GymProfileProvider] activateProfile failed (non-fatal): $e');
+      }
+
+      debugPrint('✅ [GymProfileProvider] Profile created and activated: ${created.name}');
       return created;
     } catch (e) {
       debugPrint('❌ [GymProfileProvider] Error creating profile: $e');

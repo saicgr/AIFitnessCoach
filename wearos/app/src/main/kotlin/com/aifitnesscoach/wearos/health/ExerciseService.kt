@@ -1,4 +1,4 @@
-package com.fitwiz.wearos.health
+package com.aifitnesscoach.wearos.health
 
 import android.app.Notification
 import android.app.NotificationChannel
@@ -11,8 +11,8 @@ import android.os.Binder
 import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
-import com.fitwiz.wearos.MainActivity
-import com.fitwiz.wearos.R
+import com.aifitnesscoach.wearos.MainActivity
+import com.aifitnesscoach.wearos.R
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.*
 import javax.inject.Inject
@@ -92,7 +92,7 @@ class ExerciseService : Service() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 CHANNEL_ID,
-                "FitWiz Workout",
+                "App Workout",
                 NotificationManager.IMPORTANCE_LOW
             ).apply {
                 description = "Ongoing workout tracking"
@@ -115,7 +115,7 @@ class ExerciseService : Service() {
         )
 
         return NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("FitWiz")
+            .setContentTitle("App")
             .setContentText(text)
             .setSmallIcon(android.R.drawable.ic_media_play)
             .setContentIntent(pendingIntent)
@@ -137,13 +137,13 @@ class ExerciseService : Service() {
     }
 
     companion object {
-        private const val CHANNEL_ID = "fitwiz_workout_channel"
+        private const val CHANNEL_ID = "aifitnesscoach_workout_channel"
         private const val NOTIFICATION_ID = 1
 
-        const val ACTION_START_EXERCISE = "com.fitwiz.wearos.START_EXERCISE"
-        const val ACTION_PAUSE_EXERCISE = "com.fitwiz.wearos.PAUSE_EXERCISE"
-        const val ACTION_RESUME_EXERCISE = "com.fitwiz.wearos.RESUME_EXERCISE"
-        const val ACTION_END_EXERCISE = "com.fitwiz.wearos.END_EXERCISE"
+        const val ACTION_START_EXERCISE = "com.aifitnesscoach.wearos.START_EXERCISE"
+        const val ACTION_PAUSE_EXERCISE = "com.aifitnesscoach.wearos.PAUSE_EXERCISE"
+        const val ACTION_RESUME_EXERCISE = "com.aifitnesscoach.wearos.RESUME_EXERCISE"
+        const val ACTION_END_EXERCISE = "com.aifitnesscoach.wearos.END_EXERCISE"
 
         fun startExercise(context: Context) {
             val intent = Intent(context, ExerciseService::class.java).apply {

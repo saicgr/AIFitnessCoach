@@ -6,6 +6,7 @@ import 'package:gal/gal.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:fitwiz/core/constants/branding.dart';
 
 /// Share destination enum
 enum ShareDestination {
@@ -225,7 +226,7 @@ class ShareService {
   static Future<ShareResult> saveToGallery(Uint8List imageBytes) async {
     try {
       final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final fileName = 'FitWiz_Workout_$timestamp.png';
+      final fileName = '${Branding.appName}_Workout_$timestamp.png';
 
       // Save to temp file first
       final tempDir = await getTemporaryDirectory();
@@ -234,7 +235,7 @@ class ShareService {
 
       // Use Gal to save to device gallery
       // This works on both iOS (Camera Roll) and Android (Pictures/MediaStore)
-      await Gal.putImage(file.path, album: 'FitWiz');
+      await Gal.putImage(file.path, album: '${Branding.appName}');
 
       debugPrint('✅ [Share] Saved to gallery: ${file.path}');
       return const ShareResult(

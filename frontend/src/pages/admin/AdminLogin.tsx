@@ -13,6 +13,7 @@ import { useAdminStore } from '../../store/adminStore';
 import { adminLogin } from '../../api/client';
 import GlassInput from '../../components/ui/GlassInput';
 import GlassButton from '../../components/ui/GlassButton';
+import { BRANDING } from '../../lib/branding';
 
 export default function AdminLogin() {
   const navigate = useNavigate();
@@ -90,7 +91,7 @@ export default function AdminLogin() {
             <GlassInput
               type="email"
               label="Email Address"
-              placeholder="admin@fitwiz.us"
+              placeholder={`admin@${BRANDING.marketingDomain}`}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -131,7 +132,7 @@ export default function AdminLogin() {
           <div className="mt-8 text-center">
             <p className="text-xs text-text-muted">
               Having trouble logging in?{' '}
-              <a href="mailto:support@fitwiz.us" className="text-primary hover:underline">
+              <a href={`mailto:support@${BRANDING.marketingDomain}`} className="text-primary hover:underline">
                 Contact Support
               </a>
             </p>

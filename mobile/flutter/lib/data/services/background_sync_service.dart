@@ -8,6 +8,7 @@ import 'package:workmanager/workmanager.dart';
 
 import '../../core/constants/api_constants.dart';
 import '../local/database.dart';
+import 'package:fitwiz/core/constants/branding.dart';
 
 /// Task identifiers for background work.
 const String backgroundSyncTask = 'com.fitwiz.backgroundSync';
@@ -187,7 +188,7 @@ Future<void> _showSyncFailureNotification() async {
 
     await plugin.show(
       9001,
-      'FitWiz Sync Issue',
+      '${Branding.appName} Sync Issue',
       'Your workout data could not sync. Please open the app and sign in.',
       const NotificationDetails(
         android: AndroidNotificationDetails(

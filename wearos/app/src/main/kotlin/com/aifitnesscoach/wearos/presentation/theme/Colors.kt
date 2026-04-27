@@ -1,12 +1,12 @@
-package com.fitwiz.wearos.presentation.theme
+package com.aifitnesscoach.wearos.presentation.theme
 
 import androidx.compose.ui.graphics.Color
 
 /**
- * FitWiz Wear OS Color Palette
+ * App Wear OS Color Palette
  * Dark theme optimized for OLED watch displays
  */
-object FitWizColors {
+object AppColors {
     // Primary brand colors
     val Primary = Color(0xFF6C63FF)        // Purple accent
     val PrimaryVariant = Color(0xFF5A52D5)

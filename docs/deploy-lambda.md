@@ -1,4 +1,4 @@
-# Deploying FitWiz to AWS Lambda
+# Deploying Zealova to AWS Lambda
 
 Complete guide for deploying the FastAPI backend to AWS Lambda using Terraform.
 

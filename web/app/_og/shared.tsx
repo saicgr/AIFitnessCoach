@@ -6,7 +6,7 @@
  * colors, fonts). No grid, no advanced selectors.
  */
 export const API_BASE =
-  process.env.NEXT_PUBLIC_API_BASE_URL ?? "https://api.fitwiz.us";
+  process.env.NEXT_PUBLIC_API_BASE_URL ?? "https://api.zealova.com";
 
 export const OG_SIZE = { width: 1200, height: 630 } as const;
 export const OG_CONTENT_TYPE = "image/png" as const;
@@ -30,8 +30,8 @@ export function ogPalette() {
   };
 }
 
-/** FitWiz wordmark + logo block, rendered top-left. */
-export function FitWizMark() {
+/** Zealova wordmark + logo block, rendered top-left. */
+export function BrandMark() {
   const p = ogPalette();
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
@@ -51,7 +51,7 @@ export function FitWizMark() {
           letterSpacing: -1,
         }}
       >
-        FitWiz
+        Zealova
       </div>
     </div>
   );
@@ -100,7 +100,7 @@ export function StoreFooter() {
       >
         Google Play
       </div>
-      <span style={{ marginLeft: 12 }}>fitwiz.us</span>
+      <span style={{ marginLeft: 12 }}>zealova.com</span>
     </div>
   );
 }

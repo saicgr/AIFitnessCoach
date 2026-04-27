@@ -1,4 +1,4 @@
-# FitWiz Video Ad Prompts
+# Zealova Video Ad Prompts
 
 > **Goal:** Apple-quality product videos for Reels & TikTok  
 > **Tool:** Seedance 2.0 (Image to Video)  
@@ -58,7 +58,7 @@
 ## POST-PRODUCTION WORKFLOW
 
 ### Step 1: Screen Recording
-1. Screen-record the actual FitWiz app flows on a real iPhone
+1. Screen-record the actual Zealova app flows on a real iPhone
 2. Key flows to capture:
    - Workout plan scrolling (3-4s)
    - AI coach chat exchange (3-4s)  
@@ -82,7 +82,7 @@
 |--------|-------|--------|
 | 0-1.5s | "What if your phone coached every rep?" | "POV: you downloaded a personal trainer" |
 | 3-5s | "Workouts. Meals. AI Coach." | "It literally plans everything for you" |
-| 7-10s | "Try FitWiz free — link in bio" | "FitWiz. Link in bio." |
+| 7-10s | "Try Zealova free — link in bio" | "Zealova. Link in bio." |
 
 ### Step 5: Audio
 - **Reels:** Clean lo-fi beat or ambient gym sounds

@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="robots" content="noindex, nofollow" />
-  <title>Authorize Connection · FitWiz</title>
+  <title>Authorize Connection · {{ APP_NAME }}</title>
   <link rel="stylesheet" href="/mcp/consent/static/consent.css" />
   <!--
     Supabase JS client — used for browser-native sign-in (email/password +
@@ -16,10 +16,10 @@
 </head>
 <body>
   <!-- ───────── Top nav ───────── -->
-  <nav class="topnav" aria-label="FitWiz">
-    <a href="https://fitwiz.us" class="topnav-brand" rel="noopener">
+  <nav class="topnav" aria-label="{{ APP_NAME }}">
+    <a href="{{ WEBSITE_URL }}" class="topnav-brand" rel="noopener">
       <span class="topnav-mark" aria-hidden="true">
-        <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="FitWiz">
+        <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="{{ APP_NAME }}">
           <defs>
             <linearGradient id="navg" x1="0" y1="0" x2="1" y2="1">
               <stop offset="0%" stop-color="#06B6D4"/>
@@ -30,13 +30,13 @@
           <path d="M14 20v8M34 20v8M10 22v4M38 22v4M14 24h20" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
         </svg>
       </span>
-      <span class="topnav-name">FitWiz</span>
+      <span class="topnav-name">{{ APP_NAME }}</span>
     </a>
     <div class="topnav-links" role="navigation">
-      <a href="https://fitwiz.us/about" target="_blank" rel="noopener">About</a>
-      <a href="https://fitwiz.us/mcp/docs" target="_blank" rel="noopener">Docs</a>
-      <a href="https://fitwiz.us/help" target="_blank" rel="noopener">Help</a>
-      <a href="https://fitwiz.us/contact" target="_blank" rel="noopener">Contact</a>
+      <a href="{{ WEBSITE_URL }}/about" target="_blank" rel="noopener">About</a>
+      <a href="{{ WEBSITE_URL }}/mcp/docs" target="_blank" rel="noopener">Docs</a>
+      <a href="{{ WEBSITE_URL }}/help" target="_blank" rel="noopener">Help</a>
+      <a href="{{ WEBSITE_URL }}/contact" target="_blank" rel="noopener">Contact</a>
     </div>
   </nav>
 
@@ -54,7 +54,7 @@
         <h1 class="hero-title">Authorize an AI assistant</h1>
         <p class="hero-sub">
           Review the permissions below and sign in to grant access. You can
-          revoke this connection anytime in the FitWiz app.
+          revoke this connection anytime in the {{ APP_NAME }} app.
         </p>
       </div>
     </header>
@@ -70,13 +70,13 @@
       <p id="errorMsg">We couldn't load this authorization request.</p>
       <p class="muted small">
         This link may have expired. Return to your AI client and try connecting again.
-        If this keeps happening, <a href="https://fitwiz.us/contact" target="_blank" rel="noopener">contact support</a>.
+        If this keeps happening, <a href="{{ WEBSITE_URL }}/contact" target="_blank" rel="noopener">contact support</a>.
       </p>
     </section>
 
     <section id="stateForm" class="card" hidden>
       <p class="lede">
-        <strong id="clientName">A third-party app</strong> wants to connect to your FitWiz account.
+        <strong id="clientName">A third-party app</strong> wants to connect to your {{ APP_NAME }} account.
       </p>
 
       <!-- ── Scope list ── -->
@@ -90,7 +90,7 @@
 
       <!-- ── Sign-in (replaces old paste-token textarea) ── -->
       <div class="section">
-        <div class="section-title">Sign in to FitWiz</div>
+        <div class="section-title">Sign in to {{ APP_NAME }}</div>
 
         <!-- Tab strip — Sign in vs Sign up isn't needed; one form. We add
              OAuth providers above the email form for one-tap convenience. -->
@@ -122,13 +122,13 @@
               autocomplete="username email"
               spellcheck="false"
               required
-              placeholder="you@fitwiz.us"
+              placeholder="you@{{ MARKETING_DOMAIN }}"
             />
           </label>
           <label class="field">
             <span class="field-label">
               Password
-              <a href="https://fitwiz.us/reset-password" target="_blank" rel="noopener" class="field-link">Forgot?</a>
+              <a href="{{ WEBSITE_URL }}/reset-password" target="_blank" rel="noopener" class="field-link">Forgot?</a>
             </span>
             <input
               type="password"
@@ -147,7 +147,7 @@
 
         <p id="signedInBanner" class="signed-in" hidden>
           <span class="signed-in-dot" aria-hidden="true"></span>
-          Signed in as <strong id="signedInEmail">you@fitwiz.us</strong>
+          Signed in as <strong id="signedInEmail">you@{{ MARKETING_DOMAIN }}</strong>
           <button type="button" id="signOutBtn" class="link-btn">Sign out</button>
         </p>
 
@@ -156,17 +156,17 @@
              during initial rollout). -->
         <div id="manualTokenFallback" class="manual-fallback" hidden>
           <p class="muted small">
-            Or paste your FitWiz consent token from
+            Or paste your {{ APP_NAME }} consent token from
             <strong>Settings → AI Integrations → Consent token → Get</strong>.
           </p>
           <label class="field">
-            <span class="field-label">FitWiz consent token</span>
+            <span class="field-label">{{ APP_NAME }} consent token</span>
             <textarea id="manualToken" rows="3" placeholder="eyJhbGciOi…" autocomplete="off" spellcheck="false"></textarea>
           </label>
         </div>
 
         <p class="muted tiny signin-foot">
-          Your password is sent directly to FitWiz's authentication servers
+          Your password is sent directly to {{ APP_NAME }}'s authentication servers
           (Supabase) over HTTPS. The third-party app never sees your password.
         </p>
       </div>
@@ -176,7 +176,7 @@
         <input type="checkbox" id="ackCheckbox" />
         <span>
           I understand that <strong id="clientNameAck">this third-party application</strong>
-          will have access to my FitWiz data as listed above, and that I can
+          will have access to my {{ APP_NAME }} data as listed above, and that I can
           revoke this access anytime.
         </span>
       </label>
@@ -195,7 +195,7 @@
 
       <p class="footer-note">
         🔒 You can revoke this access anytime in
-        <strong>FitWiz → Settings → AI Integrations</strong>.
+        <strong>{{ APP_NAME }} → Settings → AI Integrations</strong>.
       </p>
     </section>
 
@@ -220,20 +220,20 @@
   <footer class="page-footer">
     <div class="page-footer-inner">
       <div class="page-footer-brand">
-        <strong>FitWiz</strong>
+        <strong>{{ APP_NAME }}</strong>
         <span class="muted">· Your AI Fitness Coach</span>
       </div>
       <div class="page-footer-links">
-        <a href="https://fitwiz.us" target="_blank" rel="noopener">Home</a>
-        <a href="https://fitwiz.us/about" target="_blank" rel="noopener">About</a>
-        <a href="https://fitwiz.us/mcp/docs" target="_blank" rel="noopener">MCP Docs</a>
-        <a href="https://fitwiz.us/help" target="_blank" rel="noopener">Help</a>
-        <a href="https://fitwiz.us/contact" target="_blank" rel="noopener">Contact</a>
-        <a href="https://fitwiz.us/privacy" target="_blank" rel="noopener">Privacy</a>
-        <a href="https://fitwiz.us/terms" target="_blank" rel="noopener">Terms</a>
+        <a href="{{ WEBSITE_URL }}" target="_blank" rel="noopener">Home</a>
+        <a href="{{ WEBSITE_URL }}/about" target="_blank" rel="noopener">About</a>
+        <a href="{{ WEBSITE_URL }}/mcp/docs" target="_blank" rel="noopener">MCP Docs</a>
+        <a href="{{ WEBSITE_URL }}/help" target="_blank" rel="noopener">Help</a>
+        <a href="{{ WEBSITE_URL }}/contact" target="_blank" rel="noopener">Contact</a>
+        <a href="{{ WEBSITE_URL }}/privacy" target="_blank" rel="noopener">Privacy</a>
+        <a href="{{ WEBSITE_URL }}/terms" target="_blank" rel="noopener">Terms</a>
       </div>
       <div class="page-footer-meta muted tiny">
-        © FitWiz · Securely powered by Supabase Auth
+        © {{ APP_NAME }} · Securely powered by Supabase Auth
       </div>
     </div>
   </footer>
@@ -255,7 +255,7 @@
       "read:scores":    "The AI will see your readiness and strength scores.",
       "write:logs":     "The AI can log meals, water, sets, and body weight on your behalf.",
       "write:workouts": "The AI can generate or modify your workout plans.",
-      "chat:coach":     "The AI can talk to your FitWiz coach and run agent tools.",
+      "chat:coach":     "The AI can talk to your {{ APP_NAME }} coach and run agent tools.",
       "export:data":    "The AI can export your data and generate reports (PDF / CSV).",
     };
     const WRITE_SCOPES = new Set([
@@ -365,7 +365,7 @@
         renderForm(data);
       } catch (e) {
         console.error(e);
-        showError("Could not reach FitWiz servers. Check your connection and try again.");
+        showError("Could not reach {{ APP_NAME }} servers. Check your connection and try again.");
       }
     }
 

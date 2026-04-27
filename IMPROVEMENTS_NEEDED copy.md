@@ -1,4 +1,4 @@
-# FitWiz — Improvements Needed
+# Zealova — Improvements Needed
 
 ## Programming & Training Logic
 

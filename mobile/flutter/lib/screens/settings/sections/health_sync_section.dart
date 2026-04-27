@@ -8,6 +8,7 @@ import '../../../data/services/health_service.dart';
 import '../../../widgets/app_dialog.dart';
 import '../widgets/section_header.dart';
 import '../../../widgets/glass_sheet.dart';
+import 'package:fitwiz/core/constants/branding.dart';
 
 /// Health sync preferences model.
 class HealthSyncPreferences {
@@ -260,7 +261,7 @@ class _SamsungHealthHelpRow extends ConsumerWidget {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'Samsung Health data syncs to FitWiz through Health Connect. Follow these steps:',
+                    'Samsung Health data syncs to ${Branding.appName} through Health Connect. Follow these steps:',
                     style: TextStyle(
                       fontSize: 14,
                       color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
@@ -294,7 +295,7 @@ class _SamsungHealthHelpRow extends ConsumerWidget {
                   _buildSetupStep(
                     isDark: isDark,
                     number: '5',
-                    title: 'Connect FitWiz',
+                    title: 'Connect ${Branding.appName}',
                     subtitle: 'Return here and toggle Health Connect on',
                     isLast: true,
                   ),
@@ -312,7 +313,7 @@ class _SamsungHealthHelpRow extends ConsumerWidget {
                         const SizedBox(width: 12),
                         Expanded(
                           child: Text(
-                            'Your Samsung Health data will automatically appear in FitWiz after setup.',
+                            'Your Samsung Health data will automatically appear in ${Branding.appName} after setup.',
                             style: TextStyle(
                               fontSize: 13,
                               color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
@@ -825,7 +826,7 @@ class _HealthConnectSettingsCardState extends ConsumerState<_HealthConnectSettin
       // Show helpful message about granting permissions manually
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('Open Health Connect and grant permissions for FitWiz'),
+          content: const Text('Open Health Connect and grant permissions for ${Branding.appName}'),
           backgroundColor: AppColors.orange,
           duration: const Duration(seconds: 6),
           action: SnackBarAction(
@@ -854,7 +855,7 @@ class _HealthConnectSettingsCardState extends ConsumerState<_HealthConnectSettin
           content: Text(
             '1. Open Health Connect app\n'
             '2. Go to "App permissions"\n'
-            '3. Find "FitWiz"\n'
+            '3. Find "${Branding.appName}"\n'
             '4. Enable all permissions\n'
             '5. Return here and try again',
             style: TextStyle(

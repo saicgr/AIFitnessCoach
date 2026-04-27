@@ -15,6 +15,7 @@ import '../../data/services/api_client.dart';
 import '../../data/providers/xp_provider.dart';
 import '../../widgets/glass_sheet.dart';
 import '../../widgets/segmented_tab_bar.dart';
+import '../../widgets/tooltips/tooltips.dart';
 import '../../widgets/main_shell.dart';
 import '../../widgets/pill_swipe_navigation.dart';
 import 'log_meal_sheet.dart';
@@ -488,7 +489,7 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
 
     return Scaffold(
       backgroundColor: backgroundColor,
-      body: SafeArea(
+      body: Stack(children: [SafeArea(
         child: wrapWithSwipeDetector(
         child: Column(
           children: [
@@ -534,8 +535,13 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
                     : TabBarView(
                         controller: _tabController,
                         children: [
-                          // Daily Tab
-                          DailyTab(
+                          // Daily Tab — anchor for step 1 of `nutrition_v1`
+                          // (Log a meal). The tab as a whole is haloed so
+                          // the spotlight follows whichever meal row is on
+                          // screen.
+                          KeyedSubtree(
+                            key: TooltipAnchors.nutritionLogMeal,
+                            child: DailyTab(
                             userId: _userId ?? '',
                             summary: state.todaySummary,
                             targets: state.targets,
@@ -561,6 +567,7 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
                             onSwitchToHydrationTab: () => _tabController.animateTo(3),
                             isDark: isDark,
                             calmMode: calmMode,
+                            ),
                           ),
 
                           // Recipes Tab — full feature (search, build, import, fridge,
@@ -594,6 +601,10 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
         ),
       ),
       ),
+      // First-run spotlight tour. Anchors + copy live in
+      // `widgets/tooltips/tours/nutrition_tour.dart`.
+      NutritionTour.overlay(),
+      ]),
       floatingActionButton: null,
     );
   }
@@ -603,7 +614,11 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         children: [
-          // Date Navigation (left-aligned)
+          // Date Navigation (left-aligned). Wrapped as the anchor for
+          // step 2 of `nutrition_v1` (Swipe through dates).
+          KeyedSubtree(
+            key: TooltipAnchors.nutritionDateNav,
+            child: Row(mainAxisSize: MainAxisSize.min, children: [
           GestureDetector(
             onTap: () => _changeDate(-1),
             child: Container(
@@ -672,6 +687,8 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
               ),
             ),
           ),
+            ]),
+          ),
           const Spacer(),
           // History
           GestureDetector(
@@ -699,8 +716,11 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
             ),
           ),
           const SizedBox(width: 6),
-          // My Foods (Saved Foods + Recipes)
-          GestureDetector(
+          // My Foods (Saved Foods + Recipes). Anchor for step 3 of
+          // `nutrition_v1`.
+          KeyedSubtree(
+            key: TooltipAnchors.nutritionMyFoods,
+            child: GestureDetector(
             onTap: () => _showMyFoodsSheet(isDark),
             child: Tooltip(
               message: 'My Foods',
@@ -713,6 +733,7 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
                 ),
                 child: Icon(Icons.bookmark_outline, size: 18, color: AppColors.yellow),
               ),
+            ),
             ),
           ),
           const SizedBox(width: 6),
@@ -924,12 +945,56 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
 
   Future<void> _deleteMeal(String mealId) async {
     if (_userId == null) return;
+    final notifier = ref.read(nutritionProvider.notifier);
+
+    // Optimistically remove from state so the UI updates instantly.
+    final removed = notifier.optimisticRemoveLog(mealId);
+    if (removed == null) {
+      // Not in today's summary — fall back to the legacy synchronous flow
+      // (food_history_screen, etc.). Network delay is acceptable there
+      // because those screens already show their own list-level spinner.
+      _cachedMicronutrientsTime = null;
+      await notifier.deleteLog(_userId!, mealId);
+      ref.read(posthogServiceProvider).capture(
+        eventName: 'food_log_deleted',
+        properties: <String, Object>{'food_log_id': mealId},
+      );
+      return;
+    }
+
     _cachedMicronutrientsTime = null; // Invalidate cache — nutrients changed
-    ref.read(posthogServiceProvider).capture(
-      eventName: 'food_log_deleted',
-      properties: <String, Object>{'food_log_id': mealId},
+
+    // Show undoable snackbar. We intentionally don't `await` the network
+    // delete inside this method — the row is already gone from the UI;
+    // the commit fires after the undo window if the user doesn't press it.
+    final messenger = ScaffoldMessenger.of(context);
+    bool undone = false;
+    messenger.clearSnackBars();
+    messenger.showSnackBar(
+      SnackBar(
+        content: const Text('Meal deleted'),
+        action: SnackBarAction(
+          label: 'Undo',
+          onPressed: () {
+            undone = true;
+            notifier.restoreLog(removed);
+          },
+        ),
+        duration: const Duration(seconds: 4),
+        behavior: SnackBarBehavior.floating,
+      ),
     );
-    await ref.read(nutritionProvider.notifier).deleteLog(_userId!, mealId);
+
+    // After the undo window, commit the network delete (or skip if undone).
+    Future<void>.delayed(const Duration(seconds: 4), () {
+      if (undone || !mounted) return;
+      ref.read(posthogServiceProvider).capture(
+        eventName: 'food_log_deleted',
+        properties: <String, Object>{'food_log_id': mealId},
+      );
+      // Errors restore the meal locally and surface via state.error.
+      unawaited(notifier.commitDeleteLog(_userId!, mealId, removed));
+    });
   }
 
   Future<void> _copyMeal(String mealId, String targetMealType) async {

@@ -1,4 +1,4 @@
-# FitWiz - Complete Feature List
+# Zealova - Complete Feature List
 <!-- you are in control of equipment mix and availability. -->
 > **Total Features: 1072+** across 27 user-facing categories and 7 technical categories (includes Break Detection/Comeback, Age-Based Safety Caps, Skill Progressions, Cardio/Endurance with HR Zones & Session Logging, Flexibility/Mobility Assessment, AI Consistency, Voice Guidance, Adaptive Difficulty, Dynamic Set Management, Pre-Auth Previews, Email Preferences, Leverage-Based Progressions, Rep Range Preferences, Rep Accuracy Tracking, User-Customizable Sets/Reps Limits, Compound Exercise Muscle Mapping, History-Based Workout Generation, Background Music/Audio Session Management, Warmup Exercise Ordering, Customizable Sound Effects, Exercise Swap Tracking, HIIT/Interval Workout Safety, **Full Plan Preview Before Paywall**, **Try One Workout Free**, **Pre-Signup Pricing Transparency**, **Subscription Journey AI Context**, **Quick Start Today Widget**, **Visual Progress Charts**, **Subjective Results Tracking**, **Consistency Insights Dashboard**, **Smart Rescheduling**, **Progress Milestones & ROI**, **Split Screen/Multi-Window Support**, **Branded Workout Programs**, **Responsive Window Mode Detection**, **Lifetime Member Tiers & Benefits**, **Subscription Pause/Resume**, **Retention Offers System**, **NEAT Improvement System with Progressive Step Goals, Hourly Movement Reminders, Gamification & 35+ Achievements**, **Strength Calibration/Test Workout System with AI Analysis**, **Gradual Cardio Progression (Couch-to-5K)**, **Strain/Overuse Injury Prevention with 10% Rule**, **Injury Tracking & Body Part Exclusion**, **User-Controlled Progression Pace Settings**, **Senior-Aware Recovery Scaling**, **Enhanced Nutrition with Cooked Food Converter, Frequent Foods, Barcode Fuzzy Fallback**, **Per-Exercise Workout History & Muscle Analytics with Body Heatmap, Balance Analysis, Training Frequency**, **Hormonal Health Tracking with Testosterone/Estrogen Optimization, Menstrual Cycle Phase Tracking, Cycle-Aware Workout Intensity**, **Kegel/Pelvic Floor Exercises with 16 Gender-Specific Exercises, Warmup/Cooldown Integration, Streak Tracking**, **Hormonal Diet Recommendations with 50+ Foods for Testosterone, Estrogen, PCOS, Menopause, Fertility, Postpartum**, **AI-Powered Food Inflammation Analysis with Color-Coded Ingredient Display, Inflammation Score, Scan History & Favorites**, **Simple Habit Tracking with Templates, Streaks, AI Suggestions, Positive/Negative Habits, Category Organization**, **MacroFactor-Style Adaptive TDEE with EMA Smoothing, Confidence Intervals, Metabolic Adaptation Detection, Adherence Tracking, Sustainability Scores, Multi-Option Recommendations**, and **WearOS Companion App with Workout Tracking, Voice Food Logging via Gemini, Fasting Timer, Heart Rate Monitoring, and Hybrid Phone/Direct Sync**)
 
@@ -51,7 +51,7 @@
 
 ### Competitor Feature Matrix (Quick Reference)
 
-| Feature Category | MF | Fb | Hv | Gr | FitWiz |
+| Feature Category | MF | Fb | Hv | Gr | Zealova |
 |-----------------|:--:|:--:|:--:|:--:|:------:|
 | AI Workout Generation | ❌ | ✅ | ❌ | ✅ | ✅ |
 | Conversational AI Coach | ❌ | ❌ | ❌ | ❌ | ✅ |
@@ -682,7 +682,7 @@ This directly addresses the competitor complaint: changing days is now a 2-tap o
 **Stats Sharing to Social Feed:**
 - **3 Shareable Templates**: Overview (activity heatmap + key stats), Achievements (badges + milestones), PRs (personal records summary)
 - **Template Carousel**: Swipe between templates with page indicator dots
-- **Watermark Toggle**: Optional FitWiz watermark can be enabled/disabled
+- **Watermark Toggle**: Optional Zealova watermark can be enabled/disabled
 - **4 Share Destinations**:
   1. **Instagram Stories** - Deep link to Instagram's story composer
   2. **System Share** - Share via any installed app (Messages, WhatsApp, etc.)
@@ -703,7 +703,7 @@ This directly addresses the competitor complaint: changing days is now a 2-tap o
 **Stats Export (Multi-Format):**
 - **3 Export Formats**: CSV/ZIP, PDF Report, and Text Summary
 - **CSV/ZIP Export**: Full data export with all workouts, PRs, body measurements, achievements - reuses existing export dialog
-- **PDF Report**: Styled PDF with FitWiz branding, summary stats (total workouts, streaks), weekly progress bar, PRs table, achievements list
+- **PDF Report**: Styled PDF with Zealova branding, summary stats (total workouts, streaks), weekly progress bar, PRs table, achievements list
 - **Text Summary**: Quick shareable text format with key stats, perfect for copy-paste or messaging
 - **Export Sheet UI**: Clean bottom sheet with 3 tappable option cards showing icon, title, and description
 - **User Flow**: Tap export icon in stats screen → Select format → Export/share file
@@ -2035,7 +2035,7 @@ POST /api/v1/meal-plans/regenerate-meal    - Regenerate single meal
 
 ## Comprehensive Competitor Analysis
 
-This section provides detailed competitive intelligence on major fitness apps in the market, highlighting how FitWiz differentiates and the strategic advantages we offer.
+This section provides detailed competitive intelligence on major fitness apps in the market, highlighting how Zealova differentiates and the strategic advantages we offer.
 
 ### Market Landscape Overview
 
@@ -2044,10 +2044,10 @@ The fitness app market is fragmented into three categories:
 2. **AI Generators** (Fitbod, Gravl) - ML-based workout creation, limited coaching
 3. **Video Platforms** (Nike Training Club, Peloton, Gymshark) - Pre-recorded content, no personalization
 
-**FitWiz bridges ALL three** with AI generation + conversational coaching + personalization - a unique combination in the market.
+**Zealova bridges ALL three** with AI generation + conversational coaching + personalization - a unique combination in the market.
 
 ---
-### FitWiz - Our App
+### Zealova - Our App
 
 | Aspect | Details |
 |--------|---------|
@@ -2197,7 +2197,7 @@ The fitness app market is fragmented into three categories:
 
 ### Fasting Apps Comparison
 
-FitWiz doesn't currently offer fasting features, but here's how the market looks for users who want both:
+Zealova doesn't currently offer fasting features, but here's how the market looks for users who want both:
 
 #### 9. Zero - Top Fasting App
 
@@ -2276,7 +2276,7 @@ FitWiz doesn't currently offer fasting features, but here's how the market looks
 | Simple | $29.99 | N/A | Very Limited |
 | DoFasting | $11-20 | ~$100 | None |
 
-**Opportunity:** Fasting apps lack proper workout integration. A future FitWiz + Fasting integration would be unique in the market.
+**Opportunity:** Fasting apps lack proper workout integration. A future Zealova + Fasting integration would be unique in the market.
 
 ---
 
@@ -2286,7 +2286,7 @@ FitWiz doesn't currently offer fasting features, but here's how the market looks
 
 | App | Monthly | Yearly | Lifetime | Free Tier | AI Coach Chat |
 |-----|---------|--------|----------|-----------|---------------|
-| **FitWiz** | **$5.99** | **$47.99** | **$99.99** | **Generous** | **Yes** |
+| **Zealova** | **$5.99** | **$47.99** | **$99.99** | **Generous** | **Yes** |
 | Hevy | $9.99 | $79.99 | $149.99 | Limited | No |
 | Gravl | $14.99 | $89.99 | $199.00 | Very Limited | No |
 | Strong | $9.99 | $79.99 | $149.99 | Limited | No |
@@ -2305,11 +2305,11 @@ FitWiz doesn't currently offer fasting features, but here's how the market looks
 | Simple | $29.99 | N/A | Very Limited | None |
 | DoFasting | $11-20 | ~$100 | None | Basic Templates |
 
-**FitWiz is 40-70% cheaper than most competitors while offering the ONLY conversational AI coach in the market.**
+**Zealova is 40-70% cheaper than most competitors while offering the ONLY conversational AI coach in the market.**
 
 
 |-----|---------|--------|----------|-----------|
-| **FitWiz** | **$5.99** | **$47.99** | **$99.99** | Generous |
+| **Zealova** | **$5.99** | **$47.99** | **$99.99** | Generous |
 | Hevy | $9.99 | $79.99 | $149.99 | Limited |
 | Gravl | $14.99 | $89.99 | $199.00 | Very Limited |
 | Strong | $9.99 | $79.99 | $149.99 | Limited |
@@ -2319,11 +2319,11 @@ FitWiz doesn't currently offer fasting features, but here's how the market looks
 | Gymshark | $9.99 | $59.99 | None | Limited |
 | Peloton | $12.99 | N/A | None | Trial only |
 
-**FitWiz is 40-70% cheaper than most competitors while offering more features.**
+**Zealova is 40-70% cheaper than most competitors while offering more features.**
 
 ---
 
-### Unique Features Only FitWiz Offers
+### Unique Features Only Zealova Offers
 
 | Feature | Description |
 |---------|-------------|
@@ -2343,7 +2343,7 @@ FitWiz doesn't currently offer fasting features, but here's how the market looks
 
 ## Competitor Complaint Response: Why We're Different
 
-The following section addresses specific user complaints from competitor app reviews and how FitWiz solves each one.
+The following section addresses specific user complaints from competitor app reviews and how Zealova solves each one.
 
 ### Complaint: "Definitely not for beginners - exercises way too difficult, can only skip 3, settings don't help"
 
@@ -2351,7 +2351,7 @@ A user reviewed a competitor app saying: *"The problem isn't the number of reps�
 
 **Our Comprehensive Beginner Support System:**
 
-| Issue | Competitor | FitWiz Solution |
+| Issue | Competitor | Zealova Solution |
 |-------|------------|--------------------------|
 | **Exercises too difficult** | Advanced exercises given to beginners | **Difficulty Ceiling System**: Beginners only see exercises rated 1-3 (out of 10). Pull-ups, muscle-ups, pistol squats are filtered out. |
 | **Limited skips (only 3)** | Can only skip 3 exercises | **Unlimited Skips + Swaps**: Skip any exercise, get AI-suggested alternatives, no limits. |
@@ -2468,7 +2468,7 @@ Duration: 45 minutes | Total Sets: 12 | Total Reps: 96 | Total Volume: 1440.0 kg
 
 ---
 
-A user review of a competitor fitness app highlighted these specific complaints. Here's how FitWiz addresses each one:
+A user review of a competitor fitness app highlighted these specific complaints. Here's how Zealova addresses each one:
 
 ### Complaint: "Coach randomly assigns same 15 exercises regardless of what equipment you select"
 **Our Solution**:
@@ -2539,7 +2539,7 @@ A user reviewed a competitor app saying: *"This app is abysmal for anybody that 
 
 **Our Comprehensive Response:**
 
-| Issue | Competitor | FitWiz Solution |
+| Issue | Competitor | Zealova Solution |
 |-------|------------|--------------------------|
 | **No custom workouts** | Can't create own workouts | **Full Custom Workout Builder**: Create from scratch with exercise search, drag-reorder, custom sets/reps/weight |
 | **Can't update workouts** | Can't modify created workouts | **Complete CRUD**: Create, Read, Update, Delete custom workouts via API |
@@ -3457,7 +3457,7 @@ Track daily habits beyond workouts - like "no DoorDash," "eat healthy," "walk 10
 | 15 | Photo Privacy Controls | Private/shared/public visibility | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | — |
 | 16 | Photo Editor | Edit photos with cropping | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | Fully Implemented | User | — |
 | 17 | Image Cropping | Crop photos to perfect frame | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | Fully Implemented | User | — |
-| 18 | FitWiz Logo Overlay | Add moveable FitWiz branding | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | Fully Implemented | User | — |
+| 18 | Zealova Logo Overlay | Add moveable Zealova branding | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | Fully Implemented | User | — |
 | 19 | Explicit Save Button | Clear save action confirmation | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | Fully Implemented | User | — |
 | 20 | Upload Error Feedback | Error dialogs with retry | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | Fully Implemented | User | — |
 | 21 | Measurement Change Calculation | Auto +/- change from previous | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | Dev | — |
@@ -3528,8 +3528,8 @@ Track daily habits beyond workouts - like "no DoorDash," "eat healthy," "walk 10
 | 37 | Direct Messages | Send private messages to friends | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | User | Social → Messages |
 | 38 | Conversations List | View all message conversations | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | User | Social → Messages Tab |
 | 39 | Unread Message Count | Badge showing unread messages | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | User | Social → Messages |
-| 40 | FitWiz Support Chat | Auto-friend support@fitwiz.us | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | Social → Messages |
-| 41 | Welcome Message | Auto welcome from FitWiz Support | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | Social → Messages |
+| 40 | Zealova Support Chat | Auto-friend support@fitwiz.us | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | Social → Messages |
+| 41 | Welcome Message | Auto welcome from Zealova Support | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | Social → Messages |
 | 42 | Message Read Receipts | Mark messages as read | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fully Implemented | User | Social → Messages |
 | 43 | Support User Badge | Verified badge for support | ✅ | ✅ | ❌ | ❌ | ✅ | ❌ | Fully Implemented | User | Social → Messages |
 | 44 | Notification Bell | Home screen notification icon | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | Fully Implemented | User | Home → Header |
@@ -3539,8 +3539,8 @@ Track daily habits beyond workouts - like "no DoorDash," "eat healthy," "walk 10
 **User Flow:**
 1. **New User Signup**:
    - User creates account (Google or Email)
-   - FitWiz Support (support@fitwiz.us) automatically added as friend
-   - Welcome message sent from FitWiz Support appears in Messages tab
+   - Zealova Support (support@fitwiz.us) automatically added as friend
+   - Welcome message sent from Zealova Support appears in Messages tab
 
 2. **Accessing Messages**:
    - Navigate to Social screen (bottom nav bar)
@@ -3713,7 +3713,7 @@ Track daily habits beyond workouts - like "no DoorDash," "eat healthy," "walk 10
 - Level 25: Apprentice Complete Badge + Premium Crate
 - Level 50: Athlete Complete Badge + 2x Premium Crates
 - Level 75: Elite Complete Badge + 3x Premium Crates
-- Level 100: Legend Badge + Mythic Crate + FitWiz T-Shirt
+- Level 100: Legend Badge + Mythic Crate + Zealova T-Shirt
 - Level 150: Mythic Champion I Badge + 5x Mythic Crates + Custom Medal
 - Level 200: Mythic Champion II Badge + Legendary Crate + Premium Hoodie
 - Level 250: Eternal Legend Badge + 10x Legendary Crates + Lifetime Premium + Ultimate Merch Kit
@@ -4287,7 +4287,7 @@ Comprehensive diabetes management for Type 1, Type 2, and other diabetes types. 
 #### User Flow
 
 1. **Setup**
-   - Install FitWiz WearOS from Play Store
+   - Install Zealova WearOS from Play Store
    - Login on phone app - credentials automatically sync to watch
    - Watch receives today's workout and nutrition summary
 
@@ -4513,7 +4513,7 @@ Comprehensive diabetes management for Type 1, Type 2, and other diabetes types. 
 
 | App | Category | Monthly | Yearly | Lifetime | Best For |
 |-----|----------|---------|--------|----------|----------|
-| **FitWiz** | AI Workout + Nutrition | **$5.99** | **$47.99** | **$99.99** | All-in-one AI fitness |
+| **Zealova** | AI Workout + Nutrition | **$5.99** | **$47.99** | **$99.99** | All-in-one AI fitness |
 | Hevy | Workout Logger | $9.99 | $79.99 | $149.99 | Manual gym tracking |
 | Gravl | AI Workouts | $14.99 | $89.99 | $199.00 | Basic AI generation |
 | Strong | Workout Logger | $9.99 | $79.99 | $149.99 | Simple logging |
@@ -4526,13 +4526,13 @@ Comprehensive diabetes management for Type 1, Type 2, and other diabetes types. 
 | Nike Training Club | Video Workouts | Free | Free | N/A | Free guided videos |
 | Peloton | Connected Fitness | $12.99 | N/A | None | Live classes |
 
-**FitWiz offers the lowest price point while being the ONLY app with conversational AI coaching.**
+**Zealova offers the lowest price point while being the ONLY app with conversational AI coaching.**
 
 ---
 
 #### Feature Comparison Matrix
 
-| Feature | FitWiz | Hevy | Gravl | Strong | Fitbod | MacroFactor | MyFitnessPal | Zero | Fastic |
+| Feature | Zealova | Hevy | Gravl | Strong | Fitbod | MacroFactor | MyFitnessPal | Zero | Fastic |
 |---------|--------|------|-------|--------|--------|-------------|--------------|------|--------|
 | **WORKOUT FEATURES** |||||||||
 | AI Workout Generation | ✅ | ❌ | ✅ | ❌ | ✅ | ❌ | ❌ | ❌ | ❌ |
@@ -4620,7 +4620,7 @@ Comprehensive diabetes management for Type 1, Type 2, and other diabetes types. 
 
 | App | Total ✅ Features |
 |-----|-------------------|
-| **FitWiz** | **77** |
+| **Zealova** | **77** |
 | Hevy | 26 |
 | Gravl | 14 |
 | Strong | 22 |
@@ -4650,7 +4650,7 @@ Comprehensive diabetes management for Type 1, Type 2, and other diabetes types. 
 
 ---
 
-#### Unique to FitWiz (No Competitor Has These)
+#### Unique to Zealova (No Competitor Has These)
 
 | Exclusive Feature | What It Does | Why It Matters |
 |-------------------|--------------|----------------|
@@ -4755,7 +4755,7 @@ Comprehensive diabetes management for Type 1, Type 2, and other diabetes types. 
 
 > **The AI coach that learns and adapts during your workout in real-time.**
 
-FitWiz includes a sophisticated AI system that provides intelligent suggestions throughout your workout. Unlike static workout plans, this system adapts to your actual performance, detecting fatigue, suggesting optimal weights, and recommending rest times based on how you're actually performing.
+Zealova includes a sophisticated AI system that provides intelligent suggestions throughout your workout. Unlike static workout plans, this system adapts to your actual performance, detecting fatigue, suggesting optimal weights, and recommending rest times based on how you're actually performing.
 
 ---
 
@@ -5867,7 +5867,7 @@ All tiles are optimized for small screens (iPhone SE, older Androids):
 
 ### Overview
 
-FitWiz now includes a sophisticated metabolic adaptation detection and algorithm-driven recommendation system, matching the industry-leading approach used by MacroFactor. This system provides:
+Zealova now includes a sophisticated metabolic adaptation detection and algorithm-driven recommendation system, matching the industry-leading approach used by MacroFactor. This system provides:
 
 - **EMA-smoothed weight trends** for noise reduction
 - **TDEE with confidence intervals** (e.g., "2,150 ±120 cal")

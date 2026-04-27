@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../shareable_canvas.dart';
 import '../shareable_data.dart';
-import '../widgets/fitwiz_watermark.dart';
+import '../widgets/app_watermark.dart';
 import '../widgets/shareable_hero_number.dart';
 
 /// Minimal — typographic hero stat at center. Replaces the old "two empty
@@ -87,7 +87,7 @@ class MinimalTemplate extends StatelessWidget {
                 ),
             const Spacer(),
             if (showWatermark)
-              FitWizWatermark(textColor: Colors.white.withValues(alpha: 0.85)),
+              AppWatermark(textColor: Colors.white.withValues(alpha: 0.85)),
           ],
         ),
       ),

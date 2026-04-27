@@ -1,12 +1,12 @@
-package com.fitwiz.wearos.data.repository
+package com.aifitnesscoach.wearos.data.repository
 
 import android.util.Log
-import com.fitwiz.wearos.data.api.BackendApiClient
-import com.fitwiz.wearos.data.local.dao.FoodLogDao
-import com.fitwiz.wearos.data.local.entity.FoodLogEntity
-import com.fitwiz.wearos.data.local.entity.toEntity
-import com.fitwiz.wearos.data.local.entity.toWearFoodEntry
-import com.fitwiz.wearos.data.models.*
+import com.aifitnesscoach.wearos.data.api.BackendApiClient
+import com.aifitnesscoach.wearos.data.local.dao.FoodLogDao
+import com.aifitnesscoach.wearos.data.local.entity.FoodLogEntity
+import com.aifitnesscoach.wearos.data.local.entity.toEntity
+import com.aifitnesscoach.wearos.data.local.entity.toWearFoodEntry
+import com.aifitnesscoach.wearos.data.models.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map

@@ -25,6 +25,7 @@ import '../services/data_cache_service.dart';
 import '../services/device_info_service.dart';
 import '../services/pending_referral_service.dart';
 import '../services/wearable_service.dart';
+import 'package:fitwiz/core/constants/branding.dart';
 
 /// Auth state
 enum AuthStatus { initial, loading, authenticated, unauthenticated, error }
@@ -134,7 +135,7 @@ class AuthRepository {
 
         // Log if new user with support friend
         if (user.isFirstLogin && user.hasSupportFriend) {
-          debugPrint('🎉 [Auth] New user signed up! FitWiz Support auto-added as friend');
+          debugPrint('🎉 [Auth] New user signed up! ${Branding.appName} Support auto-added as friend');
         }
 
         // Save user ID and token
@@ -648,11 +649,25 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
-  /// Fire-and-forget device info update after successful auth
-  void _updateDeviceInfo(String userId) {
+  /// Fire-and-forget device info update after successful auth.
+  ///
+  /// Two responsibilities:
+  ///   1. Refresh the user's device columns (model, OS, screen size) — the
+  ///      legacy 7-day-cached path.
+  ///   2. Register the device fingerprint for security alerting. The
+  ///      backend emails the user the first time it sees a new fingerprint
+  ///      under their account (new-phone, stolen-token, OkHttp client, etc).
+  ///
+  /// [isFreshSignin] is true when called from a successful login flow and
+  /// false on cache-restore / app warm-launch — the security endpoint uses
+  /// this hint when deciding alert behavior.
+  void _updateDeviceInfo(String userId, {bool isFreshSignin = false}) {
     final service = DeviceInfoService(_repository._apiClient);
     service.updateIfNeeded(userId: userId).catchError((e) {
       debugPrint('⚠️ [Auth] Device info update failed: $e');
+    });
+    service.trackSignInDevice(isFirstSignin: isFreshSignin).catchError((e) {
+      debugPrint('⚠️ [Auth] track-device failed: $e');
     });
   }
 
@@ -721,7 +736,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       final user = await _repository.signInWithEmail(email, password);
       await _syncQuizAfterSignIn(user);
       state = AuthState(status: AuthStatus.authenticated, user: user);
-      _updateDeviceInfo(user.id);
+      _updateDeviceInfo(user.id, isFreshSignin: true);
       unawaited(_flushPendingReferral());
     } catch (e) {
       state = AuthState(
@@ -738,7 +753,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       final user = await _repository.signUpWithEmail(email, password, name: name);
       await _syncQuizAfterSignIn(user);
       state = AuthState(status: AuthStatus.authenticated, user: user);
-      _updateDeviceInfo(user.id);
+      _updateDeviceInfo(user.id, isFreshSignin: true);
       unawaited(_flushPendingReferral());
     } catch (e) {
       state = AuthState(

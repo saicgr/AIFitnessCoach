@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import '../core/constants/app_colors.dart';
 import '../data/services/share_service.dart';
 import 'image_capture_utils.dart';
+import 'package:fitwiz/core/constants/branding.dart';
 
 /// Capture the widget bound to [repaintKey] and open the system share sheet.
 ///
@@ -17,8 +18,8 @@ import 'image_capture_utils.dart';
 Future<void> shareReportScreen({
   required BuildContext context,
   required GlobalKey repaintKey,
-  String caption = 'Check out my FitWiz report!',
-  String subject = 'My FitWiz Report',
+  String caption = 'Check out my ${Branding.appName} report!',
+  String subject = 'My ${Branding.appName} Report',
 }) async {
   HapticFeedback.mediumImpact();
 

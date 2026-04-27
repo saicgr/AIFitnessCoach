@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/theme_colors.dart';
 import '../../core/services/posthog_service.dart';
+import 'package:fitwiz/core/constants/branding.dart';
 
 /// Pre-Auth Pricing Preview Screen
 /// Allows users to see subscription pricing BEFORE creating an account
@@ -465,7 +466,7 @@ class _PricingPreviewScreenState extends ConsumerState<PricingPreviewScreen>
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  'Try FitWiz with limited features - no credit card required',
+                  'Try ${Branding.appName} with limited features - no credit card required',
                   style: TextStyle(
                     fontSize: 12,
                     color: colors.textSecondary,

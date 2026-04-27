@@ -1,4 +1,4 @@
-package com.fitwiz.wearos.data.local
+package com.aifitnesscoach.wearos.data.local
 
 import android.content.Context
 import android.content.SharedPreferences
@@ -41,7 +41,7 @@ class SecureStorage @Inject constructor(
 
     companion object {
         private const val TAG = "SecureStorage"
-        private const val PREFS_NAME = "fitwiz_secure_prefs"
+        private const val PREFS_NAME = "aifitnesscoach_secure_prefs"
 
         // Keys
         private const val KEY_USER_ID = "user_id"

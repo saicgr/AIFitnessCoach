@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:fitwiz/core/constants/branding.dart';
 
 /// Physical merchandise reward earned at a milestone level.
 /// Mirrors backend `merch_claims` table (migration 1929).
@@ -106,13 +107,13 @@ class MerchClaim {
   String get displayName {
     switch (merchType) {
       case 'sticker_pack':
-        return 'FitWiz Sticker Pack';
+        return '${Branding.appName} Sticker Pack';
       case 'shaker_bottle':
-        return 'FitWiz Shaker Bottle';
+        return '${Branding.appName} Shaker Bottle';
       case 't_shirt':
-        return 'FitWiz T-Shirt';
+        return '${Branding.appName} T-Shirt';
       case 'hoodie':
-        return 'FitWiz Hoodie';
+        return '${Branding.appName} Hoodie';
       case 'full_merch_kit':
         return 'Full Merch Kit';
       case 'signed_premium_kit':

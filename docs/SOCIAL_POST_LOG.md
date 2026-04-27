@@ -1,4 +1,4 @@
-# Social Media Post Log - FitWiz
+# Social Media Post Log - Zealova
 
 Track all social media posts to avoid repetition and maintain consistency.
 
@@ -43,7 +43,7 @@ Ideas to post (move to Post History after posting):
 
 ### Build in Public Update
 ```
-Week [X] of building FitWiz:
+Week [X] of building Zealova:
 
 What I shipped:
 - [Feature 1]
@@ -78,7 +78,7 @@ Anyone else dealt with this?
 ```
 [Milestone] achieved!
 
-After [X] weeks, FitWiz now:
+After [X] weeks, Zealova now:
 - [Feature 1]
 - [Feature 2]
 - [Feature 3]

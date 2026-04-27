@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:fitwiz/core/constants/branding.dart';
 
 /// One persisted level-up (migration 1935). Shown as a retroactive banner
 /// so users never miss a reward moment.
@@ -57,10 +58,10 @@ class LevelUpRewardItem {
   String get displayName {
     if (type == 'merch') {
       return switch (merchType) {
-        'sticker_pack' => 'FitWiz Sticker Pack',
-        'shaker_bottle' => 'FitWiz Shaker Bottle',
-        't_shirt' => 'FitWiz T-Shirt',
-        'hoodie' => 'FitWiz Hoodie',
+        'sticker_pack' => '${Branding.appName} Sticker Pack',
+        'shaker_bottle' => '${Branding.appName} Shaker Bottle',
+        't_shirt' => '${Branding.appName} T-Shirt',
+        'hoodie' => '${Branding.appName} Hoodie',
         'full_merch_kit' => 'Full Merch Kit',
         'signed_premium_kit' => 'Signed Premium Kit',
         _ => 'Merch',

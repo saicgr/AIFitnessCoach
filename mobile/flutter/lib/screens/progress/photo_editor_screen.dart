@@ -11,6 +11,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/constants/app_colors.dart';
 import '../../widgets/pill_app_bar.dart';
+import 'package:fitwiz/core/constants/branding.dart';
 
 // ============================================================================
 // Photo filters — applied via pixel-level operations in a background isolate.
@@ -130,7 +131,7 @@ Map<int, Uint8List> _runThumbnailTask(Uint8List bytes) {
   return result;
 }
 
-/// Photo editor screen with cropping and FitWiz logo overlay
+/// Photo editor screen with cropping and Zealova logo overlay
 class PhotoEditorScreen extends StatefulWidget {
   final File imageFile;
   final String viewTypeName;
@@ -655,7 +656,7 @@ class _PhotoEditorScreenState extends State<PhotoEditorScreen> {
                             fit: BoxFit.contain,
                           ),
 
-                        // Moveable/Resizable FitWiz logo
+                        // Moveable/Resizable Zealova logo
                         if (_showLogo)
                           Positioned(
                             left: _logoPosition.dx,
@@ -681,7 +682,7 @@ class _PhotoEditorScreenState extends State<PhotoEditorScreen> {
                               },
                               child: Transform.scale(
                                 scale: _logoScale,
-                                child: _buildFitWizLogo(),
+                                child: _buildAppLogo(),
                               ),
                             ),
                           ),
@@ -1213,7 +1214,7 @@ class _PhotoEditorScreenState extends State<PhotoEditorScreen> {
     );
   }
 
-  Widget _buildFitWizLogo() {
+  Widget _buildAppLogo() {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -1255,7 +1256,7 @@ class _PhotoEditorScreenState extends State<PhotoEditorScreen> {
         const SizedBox(width: 8),
         // Logo text with shadow
         Text(
-          'FitWiz',
+          '${Branding.appName}',
           style: TextStyle(
             color: Colors.white,
             fontSize: 16,

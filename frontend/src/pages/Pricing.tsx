@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion, useInView } from 'framer-motion';
 import MarketingNav from '../components/marketing/MarketingNav';
 import MarketingFooter from '../components/marketing/MarketingFooter';
+import { BRANDING } from '../lib/branding';
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
@@ -125,8 +126,8 @@ const premiumFeaturesList = [
   { feature: 'Ads', detail: 'None' },
 ];
 
-// What FitWiz includes in one app
-const fitwizIncludes = [
+// What {BRANDING.appName} includes in one app
+const zealovaIncludes = [
   { category: 'AI Workout Generation', icon: '🤖' },
   { category: 'Nutrition Tracking', icon: '🥗' },
   { category: 'Intermittent Fasting', icon: '⏱️' },
@@ -157,7 +158,7 @@ const faqs = [
     answer: 'Yes, you can switch anytime. When moving to yearly, the change takes effect at the end of your current billing period and you start saving immediately.',
   },
   {
-    question: 'How can FitWiz offer so much for $4.99/month?',
+    question: `How can ${BRANDING.appName} offer so much for $4.99/month?`,
     answer: "We believe premium fitness coaching shouldn't cost $20/month. By leveraging cutting-edge AI efficiently, we deliver workouts + nutrition + fasting + AI coaching all in one app at a price that's accessible to everyone.",
   },
 ];
@@ -352,7 +353,7 @@ export default function Pricing() {
         </div>
       </section>
 
-      {/* Why FitWiz - Before & After Section */}
+      {/* Why {BRANDING.appName} - Before & After Section */}
       <section className="px-6 py-20">
         <div className="max-w-[1100px] mx-auto">
           <motion.div
@@ -366,7 +367,7 @@ export default function Pricing() {
               style={{ fontFamily: 'var(--font-heading)' }}
             >
               <span className="bg-gradient-to-r from-emerald-400 via-green-400 to-lime-400 bg-clip-text text-transparent">
-                Before & After FitWiz
+                Before & After {BRANDING.appName}
               </span>
             </h2>
             <p className="text-[17px] sm:text-[21px] text-[var(--color-text-secondary)] max-w-[600px] mx-auto">
@@ -418,7 +419,7 @@ export default function Pricing() {
                     <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </div>
-                <h3 className="text-[21px] font-semibold text-[var(--color-text-secondary)]">Before FitWiz</h3>
+                <h3 className="text-[21px] font-semibold text-[var(--color-text-secondary)]">Before {BRANDING.appName}</h3>
               </div>
               <div className="space-y-3">
                 {[
@@ -444,7 +445,7 @@ export default function Pricing() {
                     <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                   </svg>
                 </div>
-                <h3 className="text-[21px] font-semibold text-emerald-400">After FitWiz</h3>
+                <h3 className="text-[21px] font-semibold text-emerald-400">After {BRANDING.appName}</h3>
               </div>
               <div className="space-y-3">
                 {[
@@ -470,10 +471,10 @@ export default function Pricing() {
             viewport={{ once: true }}
           >
             <h3 className="text-[24px] font-semibold text-center mb-8">
-              Everything included with FitWiz
+              Everything included with {BRANDING.appName}
             </h3>
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-              {fitwizIncludes.map((feature, index) => (
+              {zealovaIncludes.map((feature, index) => (
                 <div
                   key={index}
                   className="text-center p-4 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-border)] hover:border-emerald-500/30 transition-colors"
@@ -540,7 +541,7 @@ export default function Pricing() {
             transition={{ delay: 0.2 }}
             className="text-center text-[15px] text-[var(--color-text-secondary)] mt-8"
           >
-            Most fitness apps charge $10-20/month for a single feature. FitWiz delivers everything starting at $4.17/month.
+            Most fitness apps charge $10-20/month for a single feature. {BRANDING.appName} delivers everything starting at $4.17/month.
           </motion.p>
         </div>
       </section>

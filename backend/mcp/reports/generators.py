@@ -1,5 +1,5 @@
 """
-FitWiz MCP report generator.
+Zealova MCP report generator.
 
 Public entrypoints:
     render_report(user_id, report_type, start_date, end_date, format) -> bytes
@@ -31,6 +31,7 @@ from typing import Any, Dict, List, Optional
 
 from jinja2 import Environment, FileSystemLoader, StrictUndefined, select_autoescape
 
+from core import branding
 from .data import collect_report_data
 
 logger = logging.getLogger(__name__)
@@ -90,6 +91,22 @@ _html_env = Environment(
     lstrip_blocks=True,
 )
 
+# Inject brand identity into both Jinja envs so all templates can use
+# {{ APP_NAME }} / {{ MARKETING_DOMAIN }} / {{ WEBSITE_URL }} without each
+# template caller having to pass it manually. Single source of truth lives
+# in core/branding.py so a future rename only touches one constant.
+_brand_globals = {
+    "APP_NAME": branding.APP_NAME,
+    "APP_FULL_TITLE": branding.APP_FULL_TITLE,
+    "APP_TAGLINE": branding.APP_TAGLINE,
+    "WEBSITE_URL": branding.WEBSITE_URL,
+    "MARKETING_DOMAIN": branding.MARKETING_DOMAIN,
+    "SUPPORT_EMAIL": branding.SUPPORT_EMAIL,
+    "PRIVACY_EMAIL": branding.PRIVACY_EMAIL,
+}
+_md_env.globals.update(_brand_globals)
+_html_env.globals.update(_brand_globals)
+
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -136,7 +153,7 @@ def _markdown_to_html(md_text: str, context: Dict[str, Any], report_type: str) -
         output_format="html5",
     )
     base = _html_env.get_template("_base.html.j2")
-    title = f"FitWiz — {_REPORT_TITLES.get(report_type, 'Report')}"
+    title = f"{branding.APP_NAME} — {_REPORT_TITLES.get(report_type, 'Report')}"
     return base.render(title=title, body=body_html, context=context)
 
 
@@ -182,7 +199,7 @@ async def render_report(
     Render a report for `user_id` over [start_date, end_date] in the given format.
 
     Args:
-        user_id: FitWiz user UUID (string).
+        user_id: Zealova user UUID (string).
         report_type: One of SUPPORTED_REPORT_TYPES.
         start_date / end_date: ISO date strings (YYYY-MM-DD), inclusive.
         format: One of SUPPORTED_FORMATS ("pdf", "html", "markdown").

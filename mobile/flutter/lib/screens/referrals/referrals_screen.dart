@@ -10,6 +10,7 @@ import '../../data/providers/referral_provider.dart';
 import '../../data/services/haptic_service.dart';
 import '../../data/services/pending_referral_service.dart';
 import '../../widgets/glass_back_button.dart';
+import 'package:fitwiz/core/constants/branding.dart';
 
 class ReferralsScreen extends ConsumerWidget {
   const ReferralsScreen({super.key});
@@ -185,9 +186,9 @@ class _CodeCard extends StatelessWidget {
 
   void _share() {
     HapticService.light();
-    final msg = "Join me on FitWiz — use my code ${summary.referralCode} for a welcome bonus. "
-        "Download: https://fitwiz.us/invite/${summary.referralCode}";
-    Share.share(msg, subject: 'FitWiz invite');
+    final msg = "Join me on ${Branding.appName} — use my code ${summary.referralCode} for a welcome bonus. "
+        "Download: https://${Branding.marketingDomain}/invite/${summary.referralCode}";
+    Share.share(msg, subject: '${Branding.appName} invite');
   }
 
   @override

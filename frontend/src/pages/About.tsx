@@ -1,5 +1,6 @@
 import MarketingNav from '../components/marketing/MarketingNav';
 import MarketingFooter from '../components/marketing/MarketingFooter';
+import { BRANDING } from '../lib/branding';
 
 const stats = [
   { value: '500+', label: 'Exercises' },
@@ -16,7 +17,7 @@ const differentiators = [
   {
     title: 'Learns Your Preferences',
     description:
-      'Star your favorite exercises, avoid ones you dislike, and the AI remembers. Over time, FitWiz builds a deep understanding of what works for you.',
+      `Star your favorite exercises, avoid ones you dislike, and the AI remembers. Over time, ${BRANDING.appName} builds a deep understanding of what works for you.`,
   },
   {
     title: 'Adapts to How You Feel',
@@ -58,7 +59,7 @@ export default function About() {
                 Our Mission
               </h2>
               <p>
-                We believe everyone deserves a personal trainer. FitWiz uses AI to make expert fitness coaching accessible to all — regardless of budget, location, or experience level.
+                We believe everyone deserves a personal trainer. {BRANDING.appName} uses AI to make expert fitness coaching accessible to all — regardless of budget, location, or experience level.
               </p>
             </div>
 
@@ -77,13 +78,13 @@ export default function About() {
               ))}
             </div>
 
-            {/* What Makes FitWiz Different */}
+            {/* What Makes {BRANDING.appName} Different */}
             <div>
               <h2
                 className="text-[24px] font-semibold text-[var(--color-text)] mb-6"
                 style={{ fontFamily: 'var(--font-heading)' }}
               >
-                What Makes FitWiz Different
+                What Makes {BRANDING.appName} Different
               </h2>
               <div className="space-y-6">
                 {differentiators.map((item) => (

@@ -159,9 +159,9 @@ class _AiConsentScreenState extends ConsumerState<AiConsentScreen> {
                   }),
 
                   // --- Privacy section ---
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 12),
                   _buildSectionLabel('Your Data', Icons.lock_outline, isDark ? AppColors.cyan : AppColorsLight.cyan, isDark, textPrimary, 0),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 10),
                   _buildCompactPoint(
                     icon: Icons.cloud_sync_outlined,
                     text: 'Your chats, food photos, and form videos are sent securely to models that generate personalized guidance',
@@ -170,7 +170,7 @@ class _AiConsentScreenState extends ConsumerState<AiConsentScreen> {
                     textPrimary: textPrimary,
                     accentColor: isDark ? AppColors.cyan : AppColorsLight.cyan,
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 8),
                   _buildCompactPoint(
                     icon: Icons.lock_outline,
                     text: 'Encrypted in transit and at rest; access is restricted to the services needed to run the app',
@@ -179,7 +179,7 @@ class _AiConsentScreenState extends ConsumerState<AiConsentScreen> {
                     textPrimary: textPrimary,
                     accentColor: isDark ? AppColors.cyan : AppColorsLight.cyan,
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 8),
                   _buildCompactPoint(
                     icon: Icons.history_toggle_off_outlined,
                     text: 'Chat history kept up to 12 months, then automatically deleted. Export or delete anytime.',
@@ -188,7 +188,7 @@ class _AiConsentScreenState extends ConsumerState<AiConsentScreen> {
                     textPrimary: textPrimary,
                     accentColor: isDark ? AppColors.cyan : AppColorsLight.cyan,
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 8),
                   _buildCompactPoint(
                     icon: Icons.block_outlined,
                     text: 'Never sold to third parties, never used for advertising, never used to train outside models',
@@ -199,9 +199,9 @@ class _AiConsentScreenState extends ConsumerState<AiConsentScreen> {
                   ),
 
                   // --- Health & Safety section ---
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 18),
                   _buildSectionLabel('Health & Safety', Icons.health_and_safety_outlined, isDark ? AppColors.warning : AppColorsLight.warning, isDark, textPrimary, 200),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 10),
                   _buildCompactPoint(
                     icon: Icons.phone_android_outlined,
                     text: 'Not a medical device or substitute for professional advice',
@@ -210,7 +210,7 @@ class _AiConsentScreenState extends ConsumerState<AiConsentScreen> {
                     textPrimary: textPrimary,
                     accentColor: isDark ? AppColors.warning : AppColorsLight.warning,
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 8),
                   _buildCompactPoint(
                     icon: Icons.medical_services_outlined,
                     text: 'Consult your doctor before starting any exercise program',
@@ -219,7 +219,7 @@ class _AiConsentScreenState extends ConsumerState<AiConsentScreen> {
                     textPrimary: textPrimary,
                     accentColor: isDark ? AppColors.warning : AppColorsLight.warning,
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 8),
                   _buildCompactPoint(
                     icon: Icons.hearing_outlined,
                     text: 'Stop if you feel pain or dizziness — AI Chat is always available',
@@ -228,7 +228,7 @@ class _AiConsentScreenState extends ConsumerState<AiConsentScreen> {
                     textPrimary: textPrimary,
                     accentColor: isDark ? AppColors.warning : AppColorsLight.warning,
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 8),
                   _buildCompactPoint(
                     icon: Icons.accessibility_new_outlined,
                     text: 'Workouts adapt to your injuries and limitations automatically',
@@ -423,34 +423,35 @@ class _AiConsentScreenState extends ConsumerState<AiConsentScreen> {
     required Color accentColor,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
       decoration: BoxDecoration(
         color: isDark ? AppColors.elevated : AppColorsLight.elevated,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
         ),
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Container(
-            width: 28,
-            height: 28,
+            width: 32,
+            height: 32,
             decoration: BoxDecoration(
               color: accentColor.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(7),
+              borderRadius: BorderRadius.circular(8),
             ),
-            child: Icon(icon, color: accentColor, size: 15),
+            child: Icon(icon, color: accentColor, size: 17),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 12),
           Expanded(
             child: Text(
               text,
               style: TextStyle(
-                fontSize: 12.5,
+                fontSize: 13,
                 fontWeight: FontWeight.w500,
                 color: textPrimary,
-                height: 1.25,
+                height: 1.35,
               ),
             ),
           ),

@@ -1,7 +1,7 @@
 """
 Workout export endpoint — `GET /workout-history/export`.
 
-Streams a user's strength + cardio (and optionally templates) out of FitWiz
+Streams a user's strength + cardio (and optionally templates) out of Zealova
 in any of the formats the import pipeline accepts, proving round-trip
 reversibility for the "not locked in" GDPR promise.
 

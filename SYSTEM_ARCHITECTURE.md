@@ -1,4 +1,4 @@
-# FitWiz — System Architecture
+# Zealova — System Architecture
 
 Three views of the system: **Data Architecture**, **Backend Architecture**, **AI Architecture**. Each section starts with a Mermaid diagram (GitHub/Obsidian/VS Code render it inline) followed by a written walkthrough. Standalone `.mmd` sources live in `docs/diagrams/` and can be rendered to images with:
 

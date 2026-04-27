@@ -1,4 +1,4 @@
-package com.fitwiz.wearos.presentation.screens.home
+package com.aifitnesscoach.wearos.presentation.screens.home
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -17,10 +17,10 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
 import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
 import androidx.wear.compose.material.*
-import com.fitwiz.wearos.presentation.theme.FitWizColors
-import com.fitwiz.wearos.presentation.theme.FitWizTheme
-import com.fitwiz.wearos.presentation.theme.FitWizTypography
-import com.fitwiz.wearos.presentation.viewmodel.HomeViewModel
+import com.aifitnesscoach.wearos.presentation.theme.AppColors
+import com.aifitnesscoach.wearos.presentation.theme.AppTheme
+import com.aifitnesscoach.wearos.presentation.theme.AppTypography
+import com.aifitnesscoach.wearos.presentation.viewmodel.HomeViewModel
 import java.text.NumberFormat
 import java.util.Locale
 
@@ -99,7 +99,7 @@ fun HomeScreen(
                             icon = "\uD83C\uDFCB\uFE0F",  // Weight lifter emoji
                             label = "WORKOUT",
                             value = uiState.todaysWorkoutName ?: "Start",
-                            color = FitWizColors.Workout,
+                            color = AppColors.Workout,
                             size = cardSize,
                             onClick = onWorkoutClick
                         )
@@ -107,7 +107,7 @@ fun HomeScreen(
                             icon = "\uD83E\uDD57",  // Salad emoji
                             label = "FOOD",
                             value = "${numberFormat.format(uiState.caloriesConsumed)}cal",
-                            color = FitWizColors.Nutrition,
+                            color = AppColors.Nutrition,
                             size = cardSize,
                             onClick = onFoodClick
                         )
@@ -121,7 +121,7 @@ fun HomeScreen(
                             icon = "\u23F0",  // Alarm clock emoji
                             label = "FASTING",
                             value = "16:8",
-                            color = FitWizColors.Fasting,
+                            color = AppColors.Fasting,
                             size = cardSize,
                             onClick = onFastingClick
                         )
@@ -129,7 +129,7 @@ fun HomeScreen(
                             icon = "\uD83D\uDCA7",  // Water drop emoji
                             label = "WATER",
                             value = "${uiState.waterCups} cups",
-                            color = FitWizColors.Water,
+                            color = AppColors.Water,
                             size = cardSize,
                             onClick = { showWaterDialog = true }
                         )
@@ -195,13 +195,13 @@ private fun QuickStatsBar(
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
                 text = "\uD83D\uDC5F",  // Shoe emoji
-                style = FitWizTypography.bodySmall
+                style = AppTypography.bodySmall
             )
             Spacer(modifier = Modifier.width(2.dp))
             Text(
                 text = numberFormat.format(steps),
-                style = FitWizTypography.bodySmall,
-                color = FitWizColors.TextSecondary
+                style = AppTypography.bodySmall,
+                color = AppColors.TextSecondary
             )
         }
 
@@ -210,13 +210,13 @@ private fun QuickStatsBar(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     text = "\u2764\uFE0F",  // Heart emoji
-                    style = FitWizTypography.bodySmall
+                    style = AppTypography.bodySmall
                 )
                 Spacer(modifier = Modifier.width(2.dp))
                 Text(
                     text = "$hr",
-                    style = FitWizTypography.bodySmall,
-                    color = FitWizColors.HeartRate
+                    style = AppTypography.bodySmall,
+                    color = AppColors.HeartRate
                 )
             }
         }
@@ -225,13 +225,13 @@ private fun QuickStatsBar(
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
                 text = "\uD83D\uDD25",  // Fire emoji
-                style = FitWizTypography.bodySmall
+                style = AppTypography.bodySmall
             )
             Spacer(modifier = Modifier.width(2.dp))
             Text(
                 text = "$caloriesBurned",
-                style = FitWizTypography.bodySmall,
-                color = FitWizColors.TextSecondary
+                style = AppTypography.bodySmall,
+                color = AppColors.TextSecondary
             )
         }
     }
@@ -260,20 +260,20 @@ private fun QuickActionCard(
         ) {
             Text(
                 text = icon,
-                style = FitWizTypography.displaySmall
+                style = AppTypography.displaySmall
             )
             Spacer(modifier = Modifier.height(2.dp))
             Text(
                 text = label,
-                style = FitWizTypography.labelSmall,
+                style = AppTypography.labelSmall,
                 color = color,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
             Text(
                 text = value,
-                style = FitWizTypography.bodySmall,
-                color = FitWizColors.TextSecondary,
+                style = AppTypography.bodySmall,
+                color = AppColors.TextSecondary,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
@@ -293,9 +293,9 @@ private fun MacrosSummaryBar(
             .padding(horizontal = 8.dp),
         horizontalArrangement = Arrangement.SpaceEvenly
     ) {
-        MacroChip(label = "P", value = "${protein}g", color = FitWizColors.HeartRate)
-        MacroChip(label = "C", value = "${carbs}g", color = FitWizColors.Warning)
-        MacroChip(label = "F", value = "${fat}g", color = FitWizColors.Secondary)
+        MacroChip(label = "P", value = "${protein}g", color = AppColors.HeartRate)
+        MacroChip(label = "C", value = "${carbs}g", color = AppColors.Warning)
+        MacroChip(label = "F", value = "${fat}g", color = AppColors.Secondary)
     }
 }
 
@@ -308,24 +308,24 @@ private fun MacroChip(
     Row(
         modifier = Modifier
             .clip(RoundedCornerShape(8.dp))
-            .background(FitWizColors.Surface)
+            .background(AppColors.Surface)
             .padding(horizontal = 8.dp, vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
             text = label,
-            style = FitWizTypography.labelSmall,
+            style = AppTypography.labelSmall,
             color = color
         )
         Text(
             text = ":",
-            style = FitWizTypography.labelSmall,
-            color = FitWizColors.TextMuted
+            style = AppTypography.labelSmall,
+            color = AppColors.TextMuted
         )
         Text(
             text = value,
-            style = FitWizTypography.labelSmall,
-            color = FitWizColors.TextSecondary
+            style = AppTypography.labelSmall,
+            color = AppColors.TextSecondary
         )
     }
 }
@@ -345,13 +345,13 @@ private fun DetailedStatsCard(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
-            .background(FitWizColors.Surface)
+            .background(AppColors.Surface)
             .padding(16.dp)
     ) {
         Text(
             text = "TODAY'S STATS",
-            style = FitWizTypography.labelMedium,
-            color = FitWizColors.TextMuted
+            style = AppTypography.labelMedium,
+            color = AppColors.TextMuted
         )
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -359,8 +359,8 @@ private fun DetailedStatsCard(
         // Nutrition progress
         Text(
             text = "NUTRITION",
-            style = FitWizTypography.labelSmall,
-            color = FitWizColors.Nutrition
+            style = AppTypography.labelSmall,
+            color = AppColors.Nutrition
         )
 
         // Use a simple progress bar via Box since LinearProgressIndicator may differ
@@ -370,20 +370,20 @@ private fun DetailedStatsCard(
                 .height(6.dp)
                 .padding(vertical = 4.dp)
                 .clip(RoundedCornerShape(3.dp))
-                .background(FitWizColors.ProgressBackground)
+                .background(AppColors.ProgressBackground)
         ) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth(nutritionProgress)
                     .fillMaxHeight()
-                    .background(FitWizColors.Nutrition)
+                    .background(AppColors.Nutrition)
             )
         }
 
         Text(
             text = "${numberFormat.format(caloriesConsumed)} / ${numberFormat.format(caloriesGoal)} cal",
-            style = FitWizTypography.bodySmall,
-            color = FitWizColors.TextSecondary
+            style = AppTypography.bodySmall,
+            color = AppColors.TextSecondary
         )
 
         Spacer(modifier = Modifier.height(12.dp))
@@ -391,8 +391,8 @@ private fun DetailedStatsCard(
         // Activity stats
         Text(
             text = "ACTIVITY",
-            style = FitWizTypography.labelSmall,
-            color = FitWizColors.Workout
+            style = AppTypography.labelSmall,
+            color = AppColors.Workout
         )
 
         Spacer(modifier = Modifier.height(4.dp))
@@ -421,12 +421,12 @@ private fun DetailedStatsCard(
 @Composable
 private fun StatItem(icon: String, label: String) {
     Row(verticalAlignment = Alignment.CenterVertically) {
-        Text(text = icon, style = FitWizTypography.bodySmall)
+        Text(text = icon, style = AppTypography.bodySmall)
         Spacer(modifier = Modifier.width(4.dp))
         Text(
             text = label,
-            style = FitWizTypography.bodySmall,
-            color = FitWizColors.TextSecondary
+            style = AppTypography.bodySmall,
+            color = AppColors.TextSecondary
         )
     }
 }
@@ -444,7 +444,7 @@ private fun WaterLogDialog(
     Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(FitWizColors.Background)
+                .background(AppColors.Background)
                 .padding(16.dp),
             contentAlignment = Alignment.Center
         ) {
@@ -454,7 +454,7 @@ private fun WaterLogDialog(
             ) {
                 Text(
                     text = "\uD83D\uDCA7 WATER",
-                    style = FitWizTypography.titleMedium,
+                    style = AppTypography.titleMedium,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -463,13 +463,13 @@ private fun WaterLogDialog(
 
                 Text(
                     text = "$cups/$goalCups",
-                    style = FitWizTypography.displayMedium,
-                    color = FitWizColors.Water
+                    style = AppTypography.displayMedium,
+                    color = AppColors.Water
                 )
                 Text(
                     text = "cups",
-                    style = FitWizTypography.bodyMedium,
-                    color = FitWizColors.TextMuted
+                    style = AppTypography.bodyMedium,
+                    color = AppColors.TextMuted
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -481,7 +481,7 @@ private fun WaterLogDialog(
                     Button(
                         onClick = { if (cups > 0) cups-- },
                         colors = ButtonDefaults.buttonColors(
-                            backgroundColor = FitWizColors.Surface
+                            backgroundColor = AppColors.Surface
                         )
                     ) {
                         Text("-1")
@@ -489,7 +489,7 @@ private fun WaterLogDialog(
                     Button(
                         onClick = { cups++ },
                         colors = ButtonDefaults.buttonColors(
-                            backgroundColor = FitWizColors.Water
+                            backgroundColor = AppColors.Water
                         )
                     ) {
                         Text("+1")
@@ -497,7 +497,7 @@ private fun WaterLogDialog(
                     Button(
                         onClick = { cups += 2 },
                         colors = ButtonDefaults.buttonColors(
-                            backgroundColor = FitWizColors.Water.copy(alpha = 0.7f)
+                            backgroundColor = AppColors.Water.copy(alpha = 0.7f)
                         )
                     ) {
                         Text("+2")
@@ -509,7 +509,7 @@ private fun WaterLogDialog(
                 Button(
                     onClick = { onUpdate(cups) },
                     colors = ButtonDefaults.buttonColors(
-                        backgroundColor = FitWizColors.Success
+                        backgroundColor = AppColors.Success
                     )
                 ) {
                     Text("\u2713 Done")

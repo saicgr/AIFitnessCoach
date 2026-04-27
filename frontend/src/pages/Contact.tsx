@@ -3,6 +3,7 @@ import MarketingNav from '../components/marketing/MarketingNav';
 import MarketingFooter from '../components/marketing/MarketingFooter';
 import { useAppStore } from '../store';
 import api from '../api/client';
+import { BRANDING } from '../lib/branding';
 
 const CATEGORIES = [
   'Billing',
@@ -78,8 +79,8 @@ export default function Contact() {
               </h2>
               <p className="mb-2">
                 Reach us directly at{' '}
-                <a href="mailto:support@fitwiz.us" className="text-emerald-400 hover:underline">
-                  support@fitwiz.us
+                <a href={`mailto:support@${BRANDING.marketingDomain}`} className="text-emerald-400 hover:underline">
+                  support@{BRANDING.marketingDomain}
                 </a>
               </p>
               <p className="text-[var(--color-text-muted)]">
@@ -96,7 +97,7 @@ export default function Contact() {
                 Join the Community
               </h2>
               <p className="mb-4">
-                Get help, share your progress, request features, and chat with other FitWiz users.
+                Get help, share your progress, request features, and chat with other {BRANDING.appName} users.
               </p>
               <a
                 href="https://discord.gg/WAYNZpVgsK"
@@ -110,7 +111,7 @@ export default function Contact() {
                 Join our Discord
               </a>
               <a
-                href="https://instagram.com/fitwiz.us"
+                href={`https://instagram.com/${BRANDING.marketingDomain}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-3 px-5 py-3 rounded-xl bg-gradient-to-r from-[#F58529] via-[#DD2A7B] to-[#8134AF] hover:opacity-90 text-white font-medium transition-opacity ml-3"
@@ -135,8 +136,8 @@ export default function Contact() {
                 <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6">
                   <p>
                     Please log in to submit a support request, or email us at{' '}
-                    <a href="mailto:support@fitwiz.us" className="text-emerald-400 hover:underline">
-                      support@fitwiz.us
+                    <a href={`mailto:support@${BRANDING.marketingDomain}`} className="text-emerald-400 hover:underline">
+                      support@{BRANDING.marketingDomain}
                     </a>
                   </p>
                 </div>

@@ -1,6 +1,6 @@
 # Database Migration to Supabase
 
-This directory contains migration scripts and SQL files for migrating the FitWiz from DuckDB to Supabase Postgres.
+This directory contains migration scripts and SQL files for migrating the Zealova from DuckDB to Supabase Postgres.
 
 ## Overview
 

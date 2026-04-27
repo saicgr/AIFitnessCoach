@@ -6,7 +6,7 @@ POST /api/v1/workouts/{workout_id}/share-link
 
 GET  /api/v1/workouts/public/{token}
     Anonymous. Reads the security-definer view `public_workouts_v` and
-    returns workout data safe to render on fitwiz.us/w/[token].
+    returns workout data safe to render on zealova.com/w/[token].
 """
 import os
 import secrets
@@ -14,6 +14,7 @@ from typing import Any, Dict, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Path
 
+from core import branding
 from core.auth import get_current_user, verify_resource_ownership
 from core.db import get_supabase_db
 from core.logger import get_logger
@@ -23,7 +24,7 @@ router = APIRouter()
 logger = get_logger(__name__)
 
 PUBLIC_BASE_URL = os.environ.get(
-    "PUBLIC_SHARE_BASE_URL", "https://fitwiz.us/w"
+    "PUBLIC_SHARE_BASE_URL", branding.WORKOUT_SHARE_BASE
 )
 TOKEN_LEN = 8
 TOKEN_ALPHABET = "abcdefghijkmnpqrstuvwxyz23456789"  # nanoid-friendly, no 0/O/1/l

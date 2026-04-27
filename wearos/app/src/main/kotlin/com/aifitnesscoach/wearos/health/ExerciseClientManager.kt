@@ -1,8 +1,8 @@
-package com.fitwiz.wearos.health
+package com.aifitnesscoach.wearos.health
 
 import android.content.Context
 import android.util.Log
-import com.fitwiz.wearos.data.repository.HealthRepository
+import com.aifitnesscoach.wearos.data.repository.HealthRepository
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

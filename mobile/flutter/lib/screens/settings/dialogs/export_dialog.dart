@@ -9,6 +9,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../data/models/export_categories.dart';
 import '../../../data/services/api_client.dart';
 import '../widgets/widgets.dart';
+import 'package:fitwiz/core/constants/branding.dart';
 
 part 'export_dialog_part_export_data_dialog.dart';
 
@@ -181,7 +182,7 @@ Future<void> _exportData(
       // Share the file
       await Share.shareXFiles(
         [XFile(filePath)],
-        subject: 'FitWiz Data Export',
+        subject: '${Branding.appName} Data Export',
         text: 'My fitness data exported on $timestamp',
       );
 
@@ -341,7 +342,7 @@ Future<void> _exportDataAsText(
       // Share the file
       await Share.shareXFiles(
         [XFile(filePath)],
-        subject: 'FitWiz Data Export',
+        subject: '${Branding.appName} Data Export',
         text: 'My fitness data exported on $timestamp',
       );
 
@@ -523,7 +524,7 @@ Future<void> _exportDataWithFormat(
 
       await Share.shareXFiles(
         [XFile(filePath)],
-        subject: 'FitWiz Data Export',
+        subject: '${Branding.appName} Data Export',
         text: 'My fitness data exported on $timestamp',
       );
 

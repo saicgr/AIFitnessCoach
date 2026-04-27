@@ -19,6 +19,7 @@ import '../../data/models/gym_profile.dart';
 import '../../data/providers/gym_profile_provider.dart';
 import '../../data/services/haptic_service.dart';
 import '../../widgets/main_shell.dart';
+import '../../widgets/tooltips/tooltips.dart';
 import '../home/widgets/edit_gym_profile_sheet.dart';
 import '../../widgets/glass_sheet.dart';
 import '../../widgets/pill_swipe_navigation.dart';
@@ -29,6 +30,7 @@ import 'widgets/exercise_preferences_card.dart';
 import 'widgets/upcoming_workouts_sheet.dart';
 import 'widgets/previous_workouts_sheet.dart';
 import 'widgets/favorite_workouts_sheet.dart';
+import 'package:fitwiz/core/constants/branding.dart';
 
 /// Workouts screen - central hub for all workout-related content
 /// Accessible from the floating nav bar (replaces Profile)
@@ -47,6 +49,13 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
   // PillSwipeNavigationMixin: Workouts is index 1
   @override
   int get currentPillIndex => 1;
+
+  // Spotlight target keys for `workouts_v1` now live in
+  // `widgets/tooltips/tooltip_anchors.dart`. Local aliases kept so the
+  // KeyedSubtree wraps below stay readable.
+  GlobalKey get _quickActionsKey => TooltipAnchors.workoutsQuickActions;
+  GlobalKey get _exercisePreferencesKey => TooltipAnchors.workoutsExercisePrefs;
+  GlobalKey get _todayWorkoutKey => TooltipAnchors.workoutsToday;
 
   @override
   void initState() {
@@ -86,11 +95,11 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
             // Scrollable content
             CustomScrollView(
               slivers: [
-                // Top padding for floating header (title row + tier pill).
-                // 56 previously covered just the title row; the added
-                // 32 pt tier pill + 8 pt spacer brings us to ~96.
+                // Top padding for the floating header (title pill row).
+                // 56 = 40 pt pill + 8 pt top + 8 pt bottom from
+                // _buildFloatingHeader's container.
                 SliverToBoxAdapter(
-                  child: SizedBox(height: MediaQuery.of(context).padding.top + 96),
+                  child: SizedBox(height: MediaQuery.of(context).padding.top + 56),
                 ),
 
                 // Content - render unconditionally using valueOrNull to avoid blocking on load
@@ -115,6 +124,10 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
               textSecondary,
               accentColor,
             ),
+
+            // First-run spotlight tour. Anchors + copy live in
+            // `widgets/tooltips/tours/workouts_tour.dart`.
+            WorkoutsTour.overlay(),
           ],
         ),
       ),
@@ -180,6 +193,28 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
             // Right side buttons
             Row(
               children: [
+                // Import button — surfaces the workout-history import flow
+                // that competitors (Hevy, Strong, Liftin') expose front and
+                // center. Was previously buried two screens deep under
+                // Settings → Training Preferences. Tapping it opens the
+                // bottom sheet so the user can pick a source (file / paste /
+                // manual entry) without leaving the Workouts tab.
+                _GlassmorphicButton(
+                  onTap: () {
+                    HapticService.light();
+                    showGlassSheet(
+                      context: context,
+                      builder: (_) => const _ImportWorkoutsPickerSheet(),
+                    );
+                  },
+                  isDark: isDark,
+                  child: Icon(
+                    Icons.download_rounded,
+                    color: textSecondary,
+                    size: 22,
+                  ),
+                ),
+                const SizedBox(width: 8),
                 // Library button - pill shaped for text
                 GestureDetector(
                   onTap: () {
@@ -353,30 +388,39 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
         const SizedBox(height: 8),
 
         // Quick Actions Row
-        _buildQuickActions(context, isDark, textSecondary, accentColor),
+        KeyedSubtree(
+          key: _quickActionsKey,
+          child: _buildQuickActions(context, isDark, textSecondary, accentColor),
+        ),
 
         const SizedBox(height: 16),
 
         // Exercise Preferences (expandable)
-        const ExercisePreferencesCard(),
+        KeyedSubtree(
+          key: _exercisePreferencesKey,
+          child: const ExercisePreferencesCard(),
+        ),
 
         const SizedBox(height: 16),
 
         // Today's/Next Workout Section (using todayWorkoutProvider - same as Home)
         // Priority: 1. Loading, 2. Error, 3. Generating, 4. Has workout, 5. Completed, 6. Preparing
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: _buildWorkoutSection(
-            context,
-            textSecondary,
-            todayWorkoutState,
-            todayOrNextWorkout,
-            isToday,
-            isNextWeek,
-            daysUntilNext,
-            isGenerating,
-            generationMessage,
-            completedToday,
+        KeyedSubtree(
+          key: _todayWorkoutKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: _buildWorkoutSection(
+              context,
+              textSecondary,
+              todayWorkoutState,
+              todayOrNextWorkout,
+              isToday,
+              isNextWeek,
+              daysUntilNext,
+              isGenerating,
+              generationMessage,
+              completedToday,
+            ),
           ),
         ),
 
@@ -1341,6 +1385,181 @@ class _GlassmorphicButton extends StatelessWidget {
             ),
             child: Center(child: child),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Bottom sheet that lists every supported workout-import path. Surfaces
+/// the existing `WorkoutHistoryImportScreen` and Health Connect / Apple
+/// Health hooks from one entry point so users don't have to dig through
+/// Settings → Training → Import Workout History.
+class _ImportWorkoutsPickerSheet extends StatelessWidget {
+  const _ImportWorkoutsPickerSheet();
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textPrimary =
+        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted =
+        isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
+    return GlassSheet(
+      opaque: true,
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Import workouts',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  color: textPrimary,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Bring your past workouts and PRs into ${Branding.appName} so the AI can pick the right weights from day one.',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: textMuted,
+                  height: 1.4,
+                ),
+              ),
+              const SizedBox(height: 18),
+              _ImportSourceTile(
+                icon: Icons.upload_file_rounded,
+                title: 'CSV or JSON file',
+                subtitle: 'Hevy, Strong, Liftin\', Fitbod, Stronger by the Day, custom CSV',
+                accent: AppColors.purple,
+                onTap: () {
+                  Navigator.of(context).pop();
+                  context.push('/settings/workout-history-import');
+                },
+              ),
+              const SizedBox(height: 10),
+              _ImportSourceTile(
+                icon: Icons.edit_note_rounded,
+                title: 'Type a few PRs manually',
+                subtitle: 'Bench, squat, deadlift — best when you only know your top sets',
+                accent: AppColors.cyan,
+                onTap: () {
+                  Navigator.of(context).pop();
+                  context.push('/settings/workout-history-import');
+                },
+              ),
+              const SizedBox(height: 10),
+              _ImportSourceTile(
+                icon: Icons.sync_rounded,
+                title: 'Health Connect / Apple Health',
+                subtitle: 'Sync sessions from your watch (already syncing in the background)',
+                accent: AppColors.success,
+                onTap: () {
+                  Navigator.of(context).pop();
+                  context.push('/settings');
+                },
+              ),
+              const SizedBox(height: 14),
+              Text(
+                'You can edit, undo, or remap any import afterward — nothing is destructive.',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: textMuted,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ImportSourceTile extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final Color accent;
+  final VoidCallback onTap;
+
+  const _ImportSourceTile({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.accent,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textPrimary =
+        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted =
+        isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final cardBg = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    return InkWell(
+      onTap: () {
+        HapticService.light();
+        onTap();
+      },
+      borderRadius: BorderRadius.circular(14),
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: cardBg,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: accent.withValues(alpha: 0.18),
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: accent.withValues(alpha: 0.14),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, color: accent, size: 22),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: textMuted,
+                      height: 1.35,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(Icons.chevron_right_rounded, color: textMuted, size: 20),
+          ],
         ),
       ),
     );

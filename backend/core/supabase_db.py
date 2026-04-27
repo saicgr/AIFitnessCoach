@@ -1,5 +1,5 @@
 """
-Supabase Database Service for FitWiz.
+Supabase Database Service for Zealova.
 
 This module provides backward compatibility by re-exporting from the
 modular database package. New code should import directly from core.db.

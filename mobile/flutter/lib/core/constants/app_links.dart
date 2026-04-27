@@ -1,3 +1,4 @@
+import 'package:fitwiz/core/constants/branding.dart';
 /// Centralized external links, social media URLs, and app metadata.
 ///
 /// All external URLs live here so they can be updated in one place.
@@ -7,14 +8,14 @@ class AppLinks {
 
   // ── Website ───────────────────────────────────────────────────────────────
 
-  static const String website = 'https://fitwiz.us';
+  static const String website = 'https://${Branding.marketingDomain}';
 
   // ── Social Media ──────────────────────────────────────────────────────────
 
   static const String discord = 'https://discord.gg/WAYNZpVgsK';
   static const String reddit = ''; // TODO: create and add subreddit URL
   static const String twitter = ''; // TODO: add X/Twitter profile URL
-  static const String instagram = 'https://instagram.com/fitwiz.us';
+  static const String instagram = 'https://instagram.com/getzealova';
   static const String tiktok = ''; // TODO: add TikTok profile URL
   static const String youtube = ''; // TODO: add YouTube channel URL
 
@@ -43,7 +44,7 @@ class AppLinks {
   static const String privacyPolicy = '$website/privacy';
   static const String termsOfService = '$website/terms';
   static const String faq = '$website/faq';
-  static const String supportEmail = 'support@fitwiz.us';
+  static const String supportEmail = 'support@${Branding.marketingDomain}';
 
   // ── Other Pages ───────────────────────────────────────────────────────────
 

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../shareable_canvas.dart';
 import '../shareable_data.dart';
-import '../widgets/fitwiz_watermark.dart';
+import '../widgets/app_watermark.dart';
 
 /// MagazineCover — full-canvas accent gradient with a single huge bold word
 /// or number. Tiny rotated subscript on the right edge, watermark
@@ -191,7 +191,7 @@ class MagazineCoverTemplate extends StatelessWidget {
                   ),
                 ),
                 if (showWatermark)
-                  FitWizWatermark(
+                  AppWatermark(
                     textColor: Colors.white,
                     fontSize: 12 * mul,
                   ),

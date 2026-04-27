@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Set up the support@fitwiz.us admin user in Supabase and the backend database.
+Set up the support@zealova.com admin user in Supabase and the backend database.
 This script should be run once to create the admin user.
 """
 import os
@@ -18,11 +18,13 @@ import psycopg2
 from datetime import datetime
 import uuid
 
-SUPPORT_EMAIL = "support@fitwiz.us"
+from core import branding
+
+SUPPORT_EMAIL = branding.SUPPORT_EMAIL
 SUPPORT_PASSWORD = os.environ.get("SUPPORT_PASSWORD")
 if not SUPPORT_PASSWORD:
     raise SystemExit("SUPPORT_PASSWORD environment variable is required")
-SUPPORT_NAME = "FitWiz Support"
+SUPPORT_NAME = branding.SUPPORT_USER_NAME
 
 
 def setup_support_user():

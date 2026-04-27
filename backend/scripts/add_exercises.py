@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Reusable CLI tool for adding exercises to the FitWiz exercise_library.
+Reusable CLI tool for adding exercises to the Zealova exercise_library.
 
 Usage:
     python add_exercises.py --interactive
@@ -419,7 +419,7 @@ def single_mode(args: argparse.Namespace, dry_run: bool, verbose: bool) -> None:
 # ---------------------------------------------------------------------------
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        description="Add exercises to the FitWiz exercise_library.",
+        description="Add exercises to the Zealova exercise_library.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:

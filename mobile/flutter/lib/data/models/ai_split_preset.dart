@@ -292,7 +292,7 @@ const List<AISplitPreset> aiSplitPresets = [
   ),
 
   // ═══════════════════════════════════════════════════════════════
-  // AI-POWERED SPECIAL PRESETS (Unique to FitWiz)
+  // AI-POWERED SPECIAL PRESETS (Unique to Zealova)
   // ═══════════════════════════════════════════════════════════════
 
   AISplitPreset(

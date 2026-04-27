@@ -1,4 +1,4 @@
-package com.fitwiz.wearos.data.local.entity
+package com.aifitnesscoach.wearos.data.local.entity
 
 import androidx.room.Entity
 import androidx.room.Index

@@ -8,11 +8,12 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../core/theme/accent_color_provider.dart';
 import '../../data/models/mcp_integration.dart';
 import '../../data/providers/mcp_integrations_provider.dart';
+import 'package:fitwiz/core/constants/branding.dart';
 
 /// "AI Integrations" settings screen.
 ///
 /// Lets yearly subscribers generate Personal Access Tokens that connect
-/// external AI clients (Claude Desktop, ChatGPT, Cursor) to their FitWiz
+/// external AI clients (Claude Desktop, ChatGPT, Cursor) to their Zealova
 /// account. Each connection is shown with the scopes granted and a
 /// per-row revoke action.
 ///
@@ -23,7 +24,7 @@ class AiIntegrationsScreen extends ConsumerWidget {
   const AiIntegrationsScreen({super.key});
 
   // Public docs URL — how to paste the generated config into each client.
-  static const _docsUrl = 'https://fitwiz.us/mcp/docs';
+  static const _docsUrl = 'https://${Branding.marketingDomain}/mcp/docs';
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -221,7 +222,7 @@ class AiIntegrationsScreen extends ConsumerWidget {
           title: const Text('Disconnect this assistant?'),
           content: Text(
             '${integration.name} will immediately lose access to your '
-            'FitWiz data. You can create a new connection anytime.',
+            '${Branding.appName} data. You can create a new connection anytime.',
           ),
           actions: [
             TextButton(
@@ -685,7 +686,7 @@ class _ConnectionReadySheetState extends State<_ConnectionReadySheet> {
                   Expanded(
                     child: Text(
                       'Treat this token like a password. Anyone with it can '
-                      "read and modify your FitWiz data within the scopes "
+                      "read and modify your ${Branding.appName} data within the scopes "
                       "you granted. You can revoke it anytime from this screen.",
                       style: TextStyle(
                         fontSize: 12,
@@ -898,7 +899,7 @@ class _HeaderCard extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  'Connect FitWiz anywhere',
+                  'Connect ${Branding.appName} anywhere',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
@@ -910,7 +911,7 @@ class _HeaderCard extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            'Create a connection to plug FitWiz into Claude, ChatGPT, Cursor, '
+            'Create a connection to plug ${Branding.appName} into Claude, ChatGPT, Cursor, '
             'or any MCP-compatible AI tool. Tap Create Connection, paste the '
             'config into your tool, done. Yearly subscription required.',
             style: TextStyle(fontSize: 14, height: 1.45, color: textMuted),
@@ -1240,7 +1241,7 @@ class _EmptyState extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            'Create one to start using FitWiz in Claude, ChatGPT, or Cursor.',
+            'Create one to start using ${Branding.appName} in Claude, ChatGPT, or Cursor.',
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 13, color: textMuted),
           ),

@@ -162,14 +162,24 @@ class InflammationTagsSection extends StatelessWidget {
 
   void _showInflammationInfo(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final score = inflammationScore ?? 5;
+    final color = _inflammationColor(score);
+    final drivers = _driversFor(score);
+    final mechanism = _mechanismFor(score);
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       backgroundColor: isDark ? const Color(0xFF1A1A1A) : Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) => Padding(
-        padding: const EdgeInsets.all(24),
+      builder: (context) => SingleChildScrollView(
+        padding: EdgeInsets.only(
+          left: 24,
+          right: 24,
+          top: 24,
+          bottom: 24 + MediaQuery.of(context).viewInsets.bottom,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -189,24 +199,126 @@ class InflammationTagsSection extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 16),
+
+            // Why THIS score — opens with the user-facing rating, then the
+            // chemistry/biology drivers behind it. This is the part the
+            // user explicitly asked for ("what chemical or what?").
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.10),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: color.withValues(alpha: 0.35)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        width: 36,
+                        height: 36,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: color.withValues(alpha: 0.2),
+                        ),
+                        child: Text(
+                          '$score',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                            color: color,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          'Why this scored ${_inflammationLabel(score).toLowerCase()}',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: isDark ? Colors.white : Colors.black87,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  ...drivers.map((d) => Padding(
+                        padding: const EdgeInsets.only(bottom: 6),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.only(top: 6),
+                              child: Container(
+                                width: 5,
+                                height: 5,
+                                decoration: BoxDecoration(
+                                  color: color,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                d,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: isDark ? Colors.white70 : Colors.black87,
+                                  height: 1.35,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      )),
+                  const SizedBox(height: 6),
+                  Text(
+                    mechanism,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontStyle: FontStyle.italic,
+                      color: isDark ? Colors.white54 : Colors.black54,
+                      height: 1.45,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 18),
             Text(
-              'Rates how inflammatory a food is based on processing level, fat profile, sugar content, fiber, and antioxidant properties.',
+              'How the score is built',
               style: TextStyle(
-                fontSize: 14,
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.4,
+                color: isDark ? Colors.white70 : Colors.black87,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'NOVA processing level, omega-6:omega-3 fat ratio, refined-sugar load, fiber & polyphenol density, glycemic load, and seed-oil content. Calibrated to peer-reviewed Dietary Inflammatory Index (DII) buckets.',
+              style: TextStyle(
+                fontSize: 13,
                 color: isDark ? Colors.white70 : Colors.black87,
                 height: 1.5,
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 14),
             _buildInfoRow('1-3', 'Anti-inflammatory', Colors.green),
             _buildInfoRow('4-5', 'Neutral', Colors.teal),
             _buildInfoRow('6-7', 'Mildly inflammatory', Colors.orange),
             _buildInfoRow('8-10', 'Inflammatory', Colors.red),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             Text(
-              'Lower is better for reducing body inflammation and gut health.',
+              'Lower scores reduce systemic inflammation, gut irritation, and post-meal energy crashes.',
               style: TextStyle(
-                fontSize: 13,
+                fontSize: 12,
                 color: isDark ? Colors.white54 : Colors.black54,
                 fontStyle: FontStyle.italic,
               ),
@@ -216,6 +328,45 @@ class InflammationTagsSection extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  /// Plain-English drivers for the score bucket. These are the chemistry/
+  /// biology levers the score is sensitive to — surfaced so users can see
+  /// WHY a meal landed where it did, not just where it landed.
+  List<String> _driversFor(int score) {
+    if (score <= 3) {
+      return const [
+        'Rich in omega-3 fats (EPA/DHA) and polyphenols — both directly downregulate NF-κB and COX-2 pathways.',
+        'High fiber load feeds short-chain-fatty-acid production in the gut, which lowers systemic inflammation.',
+        'No ultra-processed additives, refined sugar, or industrial seed oils.',
+      ];
+    }
+    if (score <= 5) {
+      return const [
+        'Macronutrients are balanced; little refined sugar and modest seed-oil content.',
+        'Some processed components or saturated fat present, but offset by fiber/protein.',
+        'Glycemic load is moderate — minor blood-sugar swing, no large insulin spike.',
+      ];
+    }
+    if (score <= 7) {
+      return const [
+        'Notable refined-carb or added-sugar content — drives a glucose/insulin spike that promotes inflammatory cytokines.',
+        'Seed-oil or fried-prep contribution skews omega-6 high (linoleic acid → arachidonic acid pathway).',
+        'Low fiber-to-carb ratio reduces the gut\'s short-chain-fatty-acid buffer.',
+      ];
+    }
+    return const [
+      'Ultra-processed (NOVA-4) markers: emulsifiers, hydrogenated oils, artificial sweeteners, or HFCS.',
+      'High in advanced glycation end-products (AGEs) from deep-frying / browning — drives oxidative stress.',
+      'High glycemic load + omega-6 dominance → strong post-meal inflammatory cascade (TNF-α, IL-6).',
+    ];
+  }
+
+  String _mechanismFor(int score) {
+    if (score <= 3) return 'Net effect: anti-inflammatory — supports recovery, gut barrier, and insulin sensitivity.';
+    if (score <= 5) return 'Net effect: neutral — won\'t drive inflammation up or down on its own.';
+    if (score <= 7) return 'Net effect: mildly pro-inflammatory — fine occasionally, problematic if eaten daily.';
+    return 'Net effect: strongly pro-inflammatory — repeated intake is linked to fatigue, joint stiffness, and metabolic stress.';
   }
 
   Widget _buildInfoRow(String range, String label, Color color) {

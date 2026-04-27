@@ -1,5 +1,5 @@
 """
-Data collection helpers for FitWiz MCP report generation.
+Data collection helpers for Zealova MCP report generation.
 
 Each `collect_*` function returns a plain dict that the corresponding Jinja2
 template consumes. Every query is guarded: missing tables / empty data produce

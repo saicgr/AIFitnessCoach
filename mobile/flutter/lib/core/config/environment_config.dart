@@ -1,4 +1,4 @@
-/// Environment configuration for the FitWiz app.
+/// Environment configuration for the Zealova app.
 ///
 /// Switch environments at build time:
 ///   flutter run --dart-define=ENV=dev          (local backend)

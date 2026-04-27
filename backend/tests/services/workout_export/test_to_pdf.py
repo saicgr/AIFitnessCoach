@@ -35,7 +35,7 @@ def test_pdf_cover_includes_athlete_name_and_dates(sample_strength_rows, sample_
     )
     text = _extract_text(blob)
     assert "Alex Test" in text
-    assert "FitWiz Training Report" in text
+    assert "Zealova Training Report" in text
 
 
 def test_pdf_has_exercise_names(sample_strength_rows, sample_cardio_rows):

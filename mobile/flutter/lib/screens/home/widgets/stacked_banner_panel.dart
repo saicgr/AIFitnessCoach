@@ -30,6 +30,7 @@ import 'open_all_crates_sheet.dart';
 import 'banner_card_data.dart';
 import 'compact_banner_card.dart';
 import 'stacked_banner_controller.dart';
+import 'package:fitwiz/core/constants/branding.dart';
 
 /// A phone notification-panel style stacked banner system.
 ///
@@ -535,7 +536,7 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
           id: 'contextual_instagram_follow',
           icon: Icons.camera_alt_outlined,
           title: 'Follow us on Instagram',
-          subtitle: 'Workout tips, meal ideas, and community highlights @fitwiz.us',
+          subtitle: 'Workout tips, meal ideas, and community highlights @${Branding.marketingDomain}',
           accentColor: const Color(0xFFE4405F),
           actionLabel: 'Follow',
           onTap: () async {

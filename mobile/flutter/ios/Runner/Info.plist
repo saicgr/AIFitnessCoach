@@ -5,7 +5,7 @@
 		<key>CFBundleDevelopmentRegion</key>
 		<string>$(DEVELOPMENT_LANGUAGE)</string>
 		<key>CFBundleDisplayName</key>
-		<string>FitWiz</string>
+		<string>Zealova</string>
 		<key>CFBundleExecutable</key>
 		<string>$(EXECUTABLE_NAME)</string>
 		<key>CFBundleIdentifier</key>
@@ -13,7 +13,7 @@
 		<key>CFBundleInfoDictionaryVersion</key>
 		<string>6.0</string>
 		<key>CFBundleName</key>
-		<string>FitWiz</string>
+		<string>Zealova</string>
 		<key>CFBundlePackageType</key>
 		<string>APPL</string>
 		<key>CFBundleShortVersionString</key>
@@ -50,9 +50,9 @@
 		<key>UIApplicationSupportsIndirectInputEvents</key>
 		<true/>
 		<key>NSHealthShareUsageDescription</key>
-		<string>FitWiz needs access to your health data to sync measurements like weight, body fat, and heart rate from Apple Health.</string>
+		<string>Zealova needs access to your health data to sync measurements like weight, body fat, and heart rate from Apple Health.</string>
 		<key>NSHealthUpdateUsageDescription</key>
-		<string>FitWiz needs access to save your workout data and body measurements to Apple Health.</string>
+		<string>Zealova needs access to save your workout data and body measurements to Apple Health.</string>
 		<key>LSApplicationQueriesSchemes</key>
 		<array>
 			<string>instagram-stories</string>
@@ -62,19 +62,19 @@
 			<string>mailto</string>
 		</array>
 		<key>NSPhotoLibraryAddUsageDescription</key>
-		<string>FitWiz needs access to save workout recap images to your photo library.</string>
+		<string>Zealova needs access to save workout recap images to your photo library.</string>
 		<key>NSMicrophoneUsageDescription</key>
-		<string>FitWiz needs access to the microphone for voice-to-text food logging.</string>
+		<string>Zealova needs access to the microphone for voice-to-text food logging.</string>
 		<key>NSSpeechRecognitionUsageDescription</key>
-		<string>FitWiz uses speech recognition to transcribe your voice into text for food logging and exercise-swap requests.</string>
+		<string>Zealova uses speech recognition to transcribe your voice into text for food logging and exercise-swap requests.</string>
 		<key>NSCameraUsageDescription</key>
-		<string>FitWiz needs camera access to take food photos for AI nutrition analysis and barcode scanning.</string>
+		<string>Zealova needs camera access to take food photos for AI nutrition analysis and barcode scanning.</string>
 		<key>NSLocationWhenInUseUsageDescription</key>
-		<string>FitWiz needs your location to find nearby gyms and set up automatic gym profile switching.</string>
+		<string>Zealova needs your location to find nearby gyms and set up automatic gym profile switching.</string>
 		<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-		<string>FitWiz uses background location to automatically switch to your gym profile when you arrive at a saved gym location.</string>
+		<string>Zealova uses background location to automatically switch to your gym profile when you arrive at a saved gym location.</string>
 		<key>NSLocationAlwaysUsageDescription</key>
-		<string>FitWiz uses background location to automatically switch to your gym profile when you arrive at a saved gym location.</string>
+		<string>Zealova uses background location to automatically switch to your gym profile when you arrive at a saved gym location.</string>
 		<!-- BLE heart-rate feature disabled. NSBluetoothAlwaysUsageDescription
 		     is omitted so iOS never shows the Bluetooth prompt. If the feature
 		     is re-enabled, restore the key below and the bluetooth-central
@@ -86,7 +86,7 @@
 			<string>remote-notification</string>
 		</array>
 		<!-- Live Activities (Dynamic Island + Lock Screen) for active workouts.
-		     Paired with the FitWizLiveActivity Widget Extension target. -->
+		     Paired with the ZealovaLiveActivity Widget Extension target. -->
 		<key>NSSupportsLiveActivities</key>
 		<true/>
 		<key>com.posthog.posthog.API_KEY</key>
@@ -105,6 +105,7 @@
 				<key>CFBundleURLSchemes</key>
 				<array>
 					<string>fitwiz</string>
+					<string>zealova</string>
 				</array>
 			</dict>
 		</array>

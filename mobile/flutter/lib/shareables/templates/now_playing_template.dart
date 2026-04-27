@@ -4,12 +4,13 @@ import 'package:flutter/material.dart';
 
 import '../shareable_canvas.dart';
 import '../shareable_data.dart';
-import '../widgets/fitwiz_watermark.dart';
+import '../widgets/app_watermark.dart';
+import 'package:fitwiz/core/constants/branding.dart';
 
 /// NowPlaying — Spotify-style "Now Working Out" status card. Blurred album-
 /// art-style background (uses heroImageUrl or customPhotoPath), play bar
 /// with progress = workout %, track name = workout title, artist =
-/// "FitWiz".
+/// "Zealova".
 class NowPlayingTemplate extends StatelessWidget {
   final Shareable data;
   final bool showWatermark;
@@ -114,7 +115,7 @@ class NowPlayingTemplate extends StatelessWidget {
                 Row(
                   children: [
                     Text(
-                      'FitWiz',
+                      '${Branding.appName}',
                       style: TextStyle(
                         color: Colors.white.withValues(alpha: 0.78),
                         fontSize: 14 * mul,
@@ -218,7 +219,7 @@ class NowPlayingTemplate extends StatelessWidget {
                 const Spacer(),
                 if (showWatermark)
                   Center(
-                    child: FitWizWatermark(
+                    child: AppWatermark(
                       textColor: Colors.white,
                       fontSize: 12 * mul,
                     ),

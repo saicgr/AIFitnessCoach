@@ -233,7 +233,7 @@ BEGIN
 
   -- Award XP
   IF v_first_login_bonus > 0 THEN
-    PERFORM award_xp(p_user_id, v_first_login_bonus, 'first_login', NULL, 'Welcome to FitWiz!');
+    PERFORM award_xp(p_user_id, v_first_login_bonus, 'first_login', NULL, 'Welcome to Zealova!');
   END IF;
 
   IF v_daily_bonus > 0 THEN

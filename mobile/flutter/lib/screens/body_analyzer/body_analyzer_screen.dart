@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../data/models/body_analyzer.dart';
@@ -139,6 +140,17 @@ class _BodyAnalyzerScreenState extends ConsumerState<BodyAnalyzerScreen> {
     return Scaffold(
       backgroundColor: bg,
       appBar: AppBar(
+        leading: IconButton(
+          tooltip: 'Back',
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            if (Navigator.of(context).canPop()) {
+              Navigator.of(context).pop();
+            } else {
+              context.go('/profile');
+            }
+          },
+        ),
         title: const Text('Body Analyzer'),
         actions: [
           if (_latest != null)
@@ -157,7 +169,8 @@ class _BodyAnalyzerScreenState extends ConsumerState<BodyAnalyzerScreen> {
                 : RefreshIndicator(
                     onRefresh: _load,
                     child: ListView(
-                      padding: const EdgeInsets.all(16),
+                      padding: EdgeInsets.fromLTRB(
+                          16, 16, 16, _latest != null ? 24 : 16),
                       children: [
                         if (_latest == null)
                           _buildEmptyState(textPrimary, textMuted)
@@ -183,13 +196,8 @@ class _BodyAnalyzerScreenState extends ConsumerState<BodyAnalyzerScreen> {
                     ),
                   ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _runNewAnalysis,
-        backgroundColor: const Color(0xFFB24BF3),
-        foregroundColor: Colors.white,
-        icon: const Icon(Icons.camera_alt_outlined),
-        label: const Text('New analysis'),
-      ),
+      bottomNavigationBar:
+          (_latest != null && !_loading) ? _buildActionBar(isDark) : null,
     );
   }
 
@@ -408,34 +416,74 @@ class _BodyAnalyzerScreenState extends ConsumerState<BodyAnalyzerScreen> {
               : () => _applyCorrectives(snap),
           isApplying: _applyingCorrectives,
         ),
-        const SizedBox(height: 16),
-        SizedBox(
-          width: double.infinity,
-          child: ElevatedButton.icon(
-            onPressed: _creatingProposal ? null : () => _retuneProgram(snap),
-            icon: _creatingProposal
-                ? const SizedBox(
-                    height: 16,
-                    width: 16,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                    ),
-                  )
-                : const Icon(Icons.auto_awesome, size: 18),
-            label: Text(
-                _creatingProposal ? 'Creating proposal…' : 'Retune my program'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFB24BF3),
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+      ],
+    );
+  }
+
+  Widget _buildActionBar(bool isDark) {
+    final snap = _latest!;
+    final barBg = isDark ? AppColors.nearBlack : AppColorsLight.nearWhite;
+    final divider = isDark
+        ? Colors.white.withValues(alpha: 0.06)
+        : Colors.black.withValues(alpha: 0.06);
+    return Container(
+      decoration: BoxDecoration(
+        color: barBg,
+        border: Border(top: BorderSide(color: divider, width: 1)),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+          child: Row(
+            children: [
+              OutlinedButton.icon(
+                onPressed: _runNewAnalysis,
+                icon: const Icon(Icons.camera_alt_outlined, size: 18),
+                label: const Text('New analysis'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFFB24BF3),
+                  side: const BorderSide(color: Color(0xFFB24BF3), width: 1.4),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 14, vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
               ),
-            ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed:
+                      _creatingProposal ? null : () => _retuneProgram(snap),
+                  icon: _creatingProposal
+                      ? const SizedBox(
+                          height: 16,
+                          width: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor:
+                                AlwaysStoppedAnimation<Color>(Colors.white),
+                          ),
+                        )
+                      : const Icon(Icons.auto_awesome, size: 18),
+                  label: Text(_creatingProposal
+                      ? 'Creating proposal…'
+                      : 'Retune my program'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFB24BF3),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
-      ],
+      ),
     );
   }
 

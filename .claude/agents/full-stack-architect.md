@@ -148,7 +148,7 @@ try {
 }
 ```
 
-### 6. Project-Specific Context (FitWiz)
+### 6. Project-Specific Context (Zealova)
 
 Adhere to these project-specific requirements:
 - Test ALL API integrations before deployment

@@ -239,11 +239,11 @@ BEGIN
   -- Award XP via the award_xp function (if it exists)
   IF v_first_login_bonus > 0 THEN
     BEGIN
-      PERFORM award_xp(p_user_id, v_first_login_bonus, 'first_login', NULL, 'Welcome to FitWiz!');
+      PERFORM award_xp(p_user_id, v_first_login_bonus, 'first_login', NULL, 'Welcome to Zealova!');
     EXCEPTION WHEN undefined_function THEN
       -- award_xp doesn't exist, insert directly to xp_transactions
       INSERT INTO xp_transactions (user_id, xp_amount, source, description, created_at)
-      VALUES (p_user_id, v_first_login_bonus, 'first_login', 'Welcome to FitWiz!', NOW());
+      VALUES (p_user_id, v_first_login_bonus, 'first_login', 'Welcome to Zealova!', NOW());
     END;
   END IF;
 
@@ -309,7 +309,7 @@ BEGIN
     'active_events', v_active_events,
     'multiplier', v_total_multiplier,
     'message', CASE
-      WHEN v_is_first_login THEN 'Welcome to FitWiz! Here''s your welcome bonus!'
+      WHEN v_is_first_login THEN 'Welcome to Zealova! Here''s your welcome bonus!'
       WHEN v_streak_bonus > 0 THEN v_streak_record.current_streak || '-day streak milestone reached!'
       WHEN v_streak_broken THEN 'Streak reset. Start a new one today!'
       ELSE 'Day ' || v_streak_record.current_streak || ' streak!'

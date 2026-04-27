@@ -2,7 +2,7 @@
 -- Created: 2026-04-12
 -- Applied to prod via Supabase MCP on 2026-04-12.
 --
--- User-generated, never-expire access tokens for connecting FitWiz to
+-- User-generated, never-expire access tokens for connecting Zealova to
 -- AI clients (Claude Desktop, ChatGPT, Cursor) without going through the
 -- full OAuth consent flow. Simpler UX: generate in Settings → AI Integrations,
 -- paste the JSON config into the client, done.

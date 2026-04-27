@@ -30,8 +30,8 @@ SELECT
   w.completed_at,
   w.exercises_json     AS exercises,
   -- Anonymize the user — public viewers see a username only when the
-  -- account has one (we default to a generic "FitWiz lifter").
-  COALESCE(u.username, 'FitWiz lifter') AS display_name
+  -- account has one (we default to a generic "Zealova lifter").
+  COALESCE(u.username, 'Zealova lifter') AS display_name
 FROM workouts w
 LEFT JOIN users u ON u.id = w.user_id
 WHERE w.share_token IS NOT NULL

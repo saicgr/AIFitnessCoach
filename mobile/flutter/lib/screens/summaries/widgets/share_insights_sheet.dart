@@ -11,6 +11,7 @@ import 'share_templates/insights_prs_template.dart';
 import 'share_templates/insights_report_card_template.dart';
 import 'share_templates/insights_streak_template.dart';
 import 'share_templates/insights_summary_template.dart';
+import 'package:fitwiz/core/constants/branding.dart';
 
 /// Opens the share-template carousel for the current insights period.
 ///
@@ -54,8 +55,8 @@ class ShareInsightsSheet {
     await ShareTemplateSheet.show(
       context: context,
       title: 'Share Report',
-      caption: 'My FitWiz ${periodName.toLowerCase()} report',
-      subject: 'My FitWiz Report',
+      caption: 'My ${Branding.appName} ${periodName.toLowerCase()} report',
+      subject: 'My ${Branding.appName} Report',
       templatesBuilder: (showWatermark) => [
         ShareTemplateDef(
           name: 'Report',

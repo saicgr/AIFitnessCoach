@@ -16,6 +16,7 @@ import 'shareable_catalog.dart';
 import 'shareable_data.dart';
 import 'widgets/nested_pill_selector.dart';
 import 'widgets/share_link_pill.dart';
+import 'package:fitwiz/core/constants/branding.dart';
 
 /// THE unified share sheet. Every entry point in the app delegates to this
 /// (Reports & Insights, Stats & Scores, Workout completion, Insights, Weekly
@@ -243,6 +244,18 @@ class _ShareableSheetState extends ConsumerState<ShareableSheet> {
     );
   }
 
+  /// If the share's accent is near-white (white workout shareable) we'd
+  /// render an invisible Switch track. Detect low-chroma colors and swap
+  /// in a guaranteed-vivid fallback (cyan).
+  Color _switchTrackColor(Color a) {
+    final r = a.r, g = a.g, b = a.b;
+    final maxC = [r, g, b].reduce((x, y) => x > y ? x : y);
+    final minC = [r, g, b].reduce((x, y) => x < y ? x : y);
+    final chroma = maxC - minC;
+    if (chroma < 0.08) return const Color(0xFF06B6D4); // cyan fallback
+    return a;
+  }
+
   Widget _watermarkRow(Color accent) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -269,8 +282,16 @@ class _ShareableSheetState extends ConsumerState<ShareableSheet> {
               HapticFeedback.lightImpact();
               setState(() => _showWatermark = v);
             },
-            activeTrackColor: accent,
+            // When the share's accent is near-white (default workout share)
+            // we'd render an invisible track. Force a vivid track and use a
+            // high-contrast thumb regardless of accent.
+            activeTrackColor: _switchTrackColor(accent),
             activeThumbColor: Colors.white,
+            inactiveTrackColor: Colors.white.withValues(alpha: 0.10),
+            inactiveThumbColor: Colors.white.withValues(alpha: 0.55),
+            trackOutlineColor: WidgetStateProperty.resolveWith(
+              (states) => Colors.white.withValues(alpha: 0.20),
+            ),
           ),
         ],
       ),
@@ -700,7 +721,7 @@ class _ShareableSheetState extends ConsumerState<ShareableSheet> {
       }
       await ShareService.shareGeneric(
         bytes,
-        caption: 'My FitWiz ${widget.data.title}',
+        caption: 'My ${Branding.appName} ${widget.data.title}',
       );
     } finally {
       if (mounted) setState(() => _isCapturing = false);

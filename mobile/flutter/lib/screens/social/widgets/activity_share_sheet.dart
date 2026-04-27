@@ -7,6 +7,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../data/services/share_service.dart';
 import '../../../utils/image_capture_utils.dart';
 import 'activity_share_card.dart';
+import 'package:fitwiz/core/constants/branding.dart';
 
 /// Activity Share Sheet - Bottom sheet for sharing social feed posts as branded card images
 ///
@@ -198,39 +199,39 @@ class _ActivityShareSheetState extends State<ActivityShareSheet> {
       case 'workout_completed':
         final duration = widget.activityData['duration_minutes'] ?? 0;
         final exercises = widget.activityData['exercises_count'] ?? 0;
-        return '${widget.userName} completed $workoutName on FitWiz! '
+        return '${widget.userName} completed $workoutName on ${Branding.appName}! '
             '$duration min | $exercises exercises '
-            '#FitWiz #Fitness #Workout';
+            '#${Branding.appName} #Fitness #Workout';
       case 'personal_record':
         final exercise = widget.activityData['exercise_name'] ?? '';
         final value = widget.activityData['record_value'] ?? 0;
         final unit = widget.activityData['record_unit'] ?? '';
-        return '${widget.userName} set a new PR on FitWiz! '
+        return '${widget.userName} set a new PR on ${Branding.appName}! '
             '$exercise: $value $unit '
-            '#FitWiz #PersonalRecord #Fitness';
+            '#${Branding.appName} #PersonalRecord #Fitness';
       case 'achievement_earned':
         final name = widget.activityData['achievement_name'] ?? '';
-        return '${widget.userName} unlocked "$name" on FitWiz! '
-            '#FitWiz #Achievement #Fitness';
+        return '${widget.userName} unlocked "$name" on ${Branding.appName}! '
+            '#${Branding.appName} #Achievement #Fitness';
       case 'streak_milestone':
         final days = widget.activityData['streak_days'] ?? 0;
-        return '${widget.userName} hit a $days-day streak on FitWiz! '
-            '#FitWiz #Streak #Consistency';
+        return '${widget.userName} hit a $days-day streak on ${Branding.appName}! '
+            '#${Branding.appName} #Streak #Consistency';
       case 'challenge_victory':
         final challengerName =
             widget.activityData['challenger_name'] ?? '';
-        return '${widget.userName} beat $challengerName\'s $workoutName on FitWiz! '
-            '#FitWiz #Challenge #Victory';
+        return '${widget.userName} beat $challengerName\'s $workoutName on ${Branding.appName}! '
+            '#${Branding.appName} #Challenge #Victory';
       case 'manual_post':
         if (caption.isNotEmpty) {
-          return '${widget.userName} on FitWiz: $caption #FitWiz';
+          return '${widget.userName} on ${Branding.appName}: $caption #${Branding.appName}';
         }
-        return '${widget.userName} shared an update on FitWiz! #FitWiz';
+        return '${widget.userName} shared an update on ${Branding.appName}! #${Branding.appName}';
       default:
         if (caption.isNotEmpty) {
-          return '${widget.userName} on FitWiz: $caption';
+          return '${widget.userName} on ${Branding.appName}: $caption';
         }
-        return '${widget.userName} shared an update on FitWiz!';
+        return '${widget.userName} shared an update on ${Branding.appName}!';
     }
   }
 

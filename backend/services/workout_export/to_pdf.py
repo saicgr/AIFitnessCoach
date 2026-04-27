@@ -24,6 +24,7 @@ from collections import defaultdict
 from datetime import date, datetime
 from typing import Dict, List, Optional, Tuple
 
+from core import branding
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import LETTER
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
@@ -137,7 +138,7 @@ def _cover_page(
         alignment=1, spaceAfter=6,
     )
     story.append(Spacer(1, 2 * inch))
-    story.append(Paragraph("FitWiz Training Report", title_style))
+    story.append(Paragraph(f"{branding.APP_NAME} Training Report", title_style))
     story.append(Paragraph(f"Athlete: {athlete_name}", subtitle_style))
     if from_date or to_date:
         dr = f"{from_date or 'beginning'} → {to_date or 'today'}"
@@ -150,7 +151,7 @@ def _cover_page(
     story.append(Paragraph(f"<b>{cardio_sessions}</b> cardio sessions", body_style))
     story.append(Spacer(1, 1 * inch))
     story.append(Paragraph(
-        "Your data is yours — FitWiz will never lock you in.",
+        "Your data is yours — Zealova will never lock you in.",
         ParagraphStyle("Footer", parent=body_style, fontSize=9, textColor=colors.gray),
     ))
     story.append(PageBreak())
@@ -351,8 +352,8 @@ def export_pdf(
         pagesize=LETTER,
         leftMargin=0.5 * inch, rightMargin=0.5 * inch,
         topMargin=0.6 * inch, bottomMargin=0.6 * inch,
-        title=f"FitWiz Training Report — {athlete_name}",
-        author="FitWiz",
+        title=f"{branding.APP_NAME} Training Report — {athlete_name}",
+        author=branding.APP_NAME,
     )
     styles = getSampleStyleSheet()
 

@@ -1,11 +1,11 @@
-package com.fitwiz.wearos.data.local.entity
+package com.aifitnesscoach.wearos.data.local.entity
 
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
-import com.fitwiz.wearos.data.models.FoodInputType
-import com.fitwiz.wearos.data.models.MealType
-import com.fitwiz.wearos.data.models.WearFoodEntry
+import com.aifitnesscoach.wearos.data.models.FoodInputType
+import com.aifitnesscoach.wearos.data.models.MealType
+import com.aifitnesscoach.wearos.data.models.WearFoodEntry
 
 /**
  * Room entity for food logs

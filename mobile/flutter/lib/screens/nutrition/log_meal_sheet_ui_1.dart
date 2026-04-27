@@ -417,9 +417,16 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
       vitaminDIu: base.vitaminDIu,
       calciumMg: base.calciumMg,
       ironMg: base.ironMg,
+      personalHistoryNote: base.personalHistoryNote,
+      sourceLabel: base.sourceLabel,
       imageUrl: base.imageUrl,
       imageStorageKey: base.imageStorageKey,
       plateDescription: base.plateDescription,
+      // Preserve the meal-level inflammation summary across portion edits.
+      // Without these the bottom inflammation bar disappears the moment the
+      // user nudges any food's portion size.
+      inflammationScore: base.inflammationScore,
+      isUltraProcessed: base.isUltraProcessed,
     );
   }
 
@@ -1285,17 +1292,49 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
           final storageKeysRaw = (payload['storage_keys'] as List?) ?? const [];
           final firstStorageKey = storageKeysRaw.isNotEmpty ? storageKeysRaw.first as String? : null;
 
+          // Backend's plate path occasionally returns top-level macros as 0
+          // even though every food_item has its own protein/carbs/fat — that
+          // leaves the hero card showing "0g Protein / 0g Carbs / 0g Fat"
+          // while the items below clearly have macros. Fall back to summing
+          // from food_items whenever the top-level value is missing or zero.
+          final foodItemsRaw = (payload['food_items'] as List?) ?? const [];
+          num _sumField(String key) {
+            num total = 0;
+            for (final item in foodItemsRaw) {
+              if (item is Map) {
+                final v = item[key];
+                if (v is num) total += v;
+              }
+            }
+            return total;
+          }
+          num _resolveMacro(String key) {
+            final raw = payload[key];
+            if (raw is num && raw > 0) return raw;
+            return _sumField(key);
+          }
+          final num _calories = _resolveMacro('total_calories');
+          final num _protein = _resolveMacro('protein_g');
+          final num _carbs = _resolveMacro('carbs_g');
+          final num _fat = _resolveMacro('fat_g');
+          final num _fiber = _resolveMacro('fiber_g');
+
           final previewJson = <String, dynamic>{
             'success': true,
-            'food_items': payload['food_items'] ?? const [],
-            'total_calories': payload['total_calories'] ?? 0,
-            'protein_g': payload['protein_g'] ?? 0,
-            'carbs_g': payload['carbs_g'] ?? 0,
-            'fat_g': payload['fat_g'] ?? 0,
-            'fiber_g': payload['fiber_g'],
+            'food_items': foodItemsRaw,
+            'total_calories': _calories,
+            'protein_g': _protein,
+            'carbs_g': _carbs,
+            'fat_g': _fat,
+            'fiber_g': _fiber == 0 ? payload['fiber_g'] : _fiber,
             'ai_suggestion': payload['ai_suggestion'] ?? payload['feedback'],
+            'encouragements': payload['encouragements'],
+            'warnings': payload['warnings'],
+            'recommended_swap': payload['recommended_swap'],
+            'personal_history_note': payload['personal_history_note'],
             'health_score': payload['health_score'],
             'inflammation_score': payload['inflammation_score'],
+            'is_ultra_processed': payload['is_ultra_processed'],
             'image_url': firstImageUrl,
             'image_storage_key': firstStorageKey,
             'source_type': 'image',

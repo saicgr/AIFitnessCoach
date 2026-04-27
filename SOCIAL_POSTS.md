@@ -1,4 +1,4 @@
-# FitWiz Social Media Launch Posts
+# Zealova Social Media Launch Posts
 
 ---
 
@@ -10,7 +10,7 @@ That's not a calorie counter. That's a coach.
 
 I used to pay hundreds for a trainer. Not for workouts -- for someone who actually looked at what I ate and said "this isn't enough." Who rebuilt my week when my shoulder hurt. Who called me out when I skipped legs.
 
-So I built FitWiz -- an AI that does the same thing:
+So I built Zealova -- an AI that does the same thing:
 
 - Snap your plate -- it scores your meal and tells you what to fix
 - "My knee hurts" -- workout rebuilds in seconds
@@ -34,9 +34,9 @@ Error Monitoring & Observability -- GCP billing alerts, Firebase Analytics for u
 
 Every layer built from scratch. No templates. No shortcuts.
 
-Website: https://fitwiz.us
+Website: https://zealova.com
 Discord: https://discord.gg/WAYNZpVgsK
-Instagram: https://instagram.com/fitwiz.us
+Instagram: https://instagram.com/getzealova
 
 Questions? DM me here or on Discord/Instagram -- happy to help!
 
@@ -52,7 +52,7 @@ The app said: "4/10. You're 40g short on protein, missing fiber, double the sodi
 
 No fitness app does that. They show you a number and leave.
 
-FitWiz coaches you:
+Zealova coaches you:
 - Knee hurts? Workout rebuilds around it in seconds
 - Not sure what weight to use? It checks your last 4 sessions
 - Been skipping legs? It notices. It says something
@@ -62,9 +62,9 @@ You don't need to understand fitness. Just show up. The AI handles the rest.
 
 Free. No credit card. Android live, iOS soon.
 
-Website: https://fitwiz.us
+Website: https://zealova.com
 Discord: https://discord.gg/WAYNZpVgsK
-Instagram: https://instagram.com/fitwiz.us
+Instagram: https://instagram.com/getzealova
 
 Questions? DM me here or on Discord/Instagram -- happy to help!
 
@@ -78,7 +78,7 @@ Not a calorie counter. An actual coach.
 
 I got tired of fitness apps that show you a number and leave. You log your food, see 1,800 calories, and think "cool I guess?" No one tells you the meal is trash because you're missing protein and fiber. No one rebuilds your workout when your knee is acting up. No one notices you haven't done legs in a month.
 
-So I built FitWiz:
+So I built Zealova:
 
 - Snap your plate -- it scores your meal out of 10, flags what's missing, tells you what to add
 - Tell it "my shoulder hurts" -- your entire week rebuilds around the injury. Not next session. Right now
@@ -95,9 +95,9 @@ Need testers before public launch:
 2. I send the testing link
 3. Accept + install (2 min)
 
-Website: https://fitwiz.us
+Website: https://zealova.com
 Discord: https://discord.gg/WAYNZpVgsK
-Instagram: https://instagram.com/fitwiz.us
+Instagram: https://instagram.com/getzealova
 
 Questions? DM me here or on Discord/Instagram -- happy to help!
 
@@ -113,7 +113,7 @@ The app said: "4/10. You're 40g short on protein, missing fiber entirely. Add gr
 
 No fitness app does that. They give you a number and disappear.
 
-FitWiz actually coaches you:
+Zealova actually coaches you:
 
 Knee hurts? Workout rebuilds in seconds.
 Not sure what weight to use? It checks your history.
@@ -124,9 +124,9 @@ You don't need to understand fitness. Just show up. The AI handles the rest.
 
 Free. No credit card. Android live, iOS soon.
 
-Website: https://fitwiz.us
+Website: https://zealova.com
 Discord: https://discord.gg/WAYNZpVgsK
-Instagram: https://instagram.com/fitwiz.us
+Instagram: https://instagram.com/getzealova
 
 Questions? DM me here or on Discord/Instagram -- happy to help!
 
@@ -147,9 +147,9 @@ Need your help getting it on the Play Store:
 
 Takes 2 min. Full free access.
 
-Website: https://fitwiz.us
+Website: https://zealova.com
 Discord: https://discord.gg/WAYNZpVgsK
-Instagram: https://instagram.com/fitwiz.us
+Instagram: https://instagram.com/getzealova
 
 Questions? DM me here or on Discord/Instagram -- happy to help!
 
@@ -169,9 +169,9 @@ Need 12 testers for Google Play before I can go public. I've added your email:
 
 2 minutes. Free. No credit card.
 
-Website: https://fitwiz.us
+Website: https://zealova.com
 Discord: https://discord.gg/WAYNZpVgsK
-Instagram: https://instagram.com/fitwiz.us
+Instagram: https://instagram.com/getzealova
 
 Questions? DM me here or on Discord/Instagram -- happy to help!
 
@@ -201,9 +201,9 @@ I've added your work emails to the tester list. If you have 2 min:
 1. Open: https://play.google.com/apps/testing/com.aifitnesscoach.app
 2. Accept + install
 
-Website: https://fitwiz.us
+Website: https://zealova.com
 Discord: https://discord.gg/WAYNZpVgsK
-Instagram: https://instagram.com/fitwiz.us
+Instagram: https://instagram.com/getzealova
 
 Questions? DM me here or on Discord/Instagram -- happy to help!
 

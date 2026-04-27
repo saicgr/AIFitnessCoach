@@ -73,7 +73,7 @@ class _SplashScreenState extends State<SplashScreen>
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final backgroundColor =
         isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
-    // Use the FitWiz brand blue from the icon
+    // Use the Zealova brand blue from the icon
     const brandBlue = Color(0xFF3B9BD6);
 
     return Scaffold(

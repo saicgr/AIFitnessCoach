@@ -117,7 +117,7 @@ VALUES
   -- Legend milestone (100)
   (100, 'badge', 'legend_badge', 'Legend Badge'),
   (100, 'crate', 'mythic_crate_1', 'Mythic Crate'),
-  (100, 'physical', 'fitwiz_tshirt', 'FitWiz Legend T-Shirt'),
+  (100, 'physical', 'fitwiz_tshirt', 'Zealova Legend T-Shirt'),
 
   -- Mythic I milestones (101-150)
   (110, 'badge', 'mythic_badge_1', 'Mythic Badge I'),
@@ -127,7 +127,7 @@ VALUES
   (140, 'crate', 'mythic_crate_3', '3x Mythic Crates'),
   (150, 'badge', 'mythic_champion_1', 'Mythic Champion I Badge'),
   (150, 'crate', 'mythic_crate_5', '5x Mythic Crates'),
-  (150, 'physical', 'custom_medal', 'Custom FitWiz Medal'),
+  (150, 'physical', 'custom_medal', 'Custom Zealova Medal'),
 
   -- Mythic II milestones (151-200)
   (160, 'crate', 'mythic_crate_3', '3x Mythic Crates'),
@@ -136,7 +136,7 @@ VALUES
   (190, 'xp_bonus', '20', '+20% XP Bonus'),
   (200, 'badge', 'mythic_champion_2', 'Mythic Champion II Badge'),
   (200, 'crate', 'legendary_crate_1', 'Legendary Crate'),
-  (200, 'physical', 'premium_hoodie', 'Premium FitWiz Hoodie'),
+  (200, 'physical', 'premium_hoodie', 'Premium Zealova Hoodie'),
 
   -- Mythic III milestones (201-250)
   (210, 'crate', 'legendary_crate_2', '2x Legendary Crates'),
@@ -145,7 +145,7 @@ VALUES
   (240, 'xp_bonus', '25', '+25% XP Bonus'),
   (250, 'badge', 'eternal_legend', 'Eternal Legend Badge'),
   (250, 'crate', 'legendary_crate_10', '10x Legendary Crates'),
-  (250, 'physical', 'lifetime_membership', 'Lifetime FitWiz Premium'),
+  (250, 'physical', 'lifetime_membership', 'Lifetime Zealova Premium'),
   (250, 'physical', 'ultimate_merch_kit', 'Ultimate Merch Kit')
 ON CONFLICT DO NOTHING;
 

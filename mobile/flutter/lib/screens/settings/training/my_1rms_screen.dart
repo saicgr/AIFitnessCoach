@@ -8,6 +8,7 @@ import '../../../widgets/glass_sheet.dart';
 import '../../../core/services/posthog_service.dart';
 import '../../../utils/share_report_helper.dart';
 import '../../../widgets/pill_app_bar.dart';
+import 'package:fitwiz/core/constants/branding.dart';
 
 // Import linked exercises types
 export '../../../data/models/training_intensity.dart' show LinkedExercise, ExerciseLinkSuggestion;
@@ -56,7 +57,7 @@ class _My1RMsScreenState extends ConsumerState<My1RMsScreen> {
               onTap: () => shareReportScreen(
                 context: context,
                 repaintKey: _reportKey,
-                caption: 'My FitWiz 1-rep max report',
+                caption: 'My ${Branding.appName} 1-rep max report',
                 subject: 'My 1RMs',
               ),
             ),

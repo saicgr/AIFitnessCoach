@@ -529,7 +529,7 @@ _New rows added as research identifies additional vendor types per country._
 Use this template when launching research agents for street food per country:
 
 ```
-You are a nutrition research agent for the FitWiz fitness app.
+You are a nutrition research agent for the Zealova fitness app.
 
 ## Task
 Research street food vendor/stall items for {COUNTRY_NAME} ({CC}).
@@ -577,4 +577,4 @@ Organized by vendor type, covering all common street food in {COUNTRY_NAME}.
 ---
 
 _Last updated: 2026-03-21_
-_Maintained by: Claude for FitWiz Project_
+_Maintained by: Claude for Zealova Project_

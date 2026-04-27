@@ -1,5 +1,6 @@
 import MarketingNav from '../components/marketing/MarketingNav';
 import MarketingFooter from '../components/marketing/MarketingFooter';
+import { BRANDING } from '../lib/branding';
 
 export default function TermsOfService() {
   return (
@@ -20,7 +21,7 @@ export default function TermsOfService() {
           <div className="space-y-8 text-[15px] text-[var(--color-text-secondary)] leading-relaxed">
             <div>
               <p>
-                Welcome to FitWiz. By accessing or using the FitWiz mobile application and website (the "Service"), you agree to be bound by these Terms of Service ("Terms"). If you do not agree to these Terms, do not use the Service.
+                Welcome to {BRANDING.appName}. By accessing or using the {BRANDING.appName} mobile application and website (the "Service"), you agree to be bound by these Terms of Service ("Terms"). If you do not agree to these Terms, do not use the Service.
               </p>
             </div>
 
@@ -32,7 +33,7 @@ export default function TermsOfService() {
                 1. Eligibility
               </h2>
               <p>
-                You must be at least 16 years old to use FitWiz. If you are between 16 and 18, you should review these Terms with a parent or guardian before using the Service. By creating an account, you represent that you are at least 16 years of age, that the information you provide is accurate, and that you meet these eligibility requirements. FitWiz collects sensitive health and fitness data and uses AI-powered services, which require the legal capacity to consent to data processing under applicable laws.
+                You must be at least 16 years old to use {BRANDING.appName}. If you are between 16 and 18, you should review these Terms with a parent or guardian before using the Service. By creating an account, you represent that you are at least 16 years of age, that the information you provide is accurate, and that you meet these eligibility requirements. {BRANDING.appName} collects sensitive health and fitness data and uses AI-powered services, which require the legal capacity to consent to data processing under applicable laws.
               </p>
             </div>
 
@@ -56,7 +57,7 @@ export default function TermsOfService() {
                 3. Subscriptions & Payments
               </h2>
               <p className="mb-4">
-                FitWiz offers a free tier and a paid Premium subscription. Premium subscriptions are processed through RevenueCat via the Apple App Store or Google Play Store.
+                {BRANDING.appName} offers a free tier and a paid Premium subscription. Premium subscriptions are processed through RevenueCat via the Apple App Store or Google Play Store.
               </p>
               <ul className="list-disc pl-6 space-y-1">
                 <li>Subscriptions automatically renew unless cancelled at least 24 hours before the end of the current billing period.</li>
@@ -74,12 +75,12 @@ export default function TermsOfService() {
                 4. Health Disclaimer
               </h2>
               <p className="mb-4 font-semibold text-[var(--color-text)]">
-                FitWiz is not a substitute for professional medical advice, diagnosis, or treatment.
+                {BRANDING.appName} is not a substitute for professional medical advice, diagnosis, or treatment.
               </p>
               <ul className="list-disc pl-6 space-y-1">
                 <li>The AI-generated workout plans and nutrition recommendations are for informational purposes only.</li>
                 <li>Always consult a qualified healthcare provider before starting any exercise program, especially if you have pre-existing medical conditions.</li>
-                <li>FitWiz is not responsible for any injuries sustained while following AI-generated workout plans.</li>
+                <li>{BRANDING.appName} is not responsible for any injuries sustained while following AI-generated workout plans.</li>
                 <li>If you experience pain, dizziness, or discomfort during exercise, stop immediately and seek medical attention.</li>
               </ul>
             </div>
@@ -110,7 +111,7 @@ export default function TermsOfService() {
                 6. Intellectual Property
               </h2>
               <p>
-                All content, features, and functionality of FitWiz — including the exercise library, AI coaching algorithms, UI design, and branding — are owned by FitWiz and protected by copyright, trademark, and other intellectual property laws. You may not reproduce, distribute, or create derivative works without our express written permission.
+                All content, features, and functionality of {BRANDING.appName} — including the exercise library, AI coaching algorithms, UI design, and branding — are owned by {BRANDING.appName} and protected by copyright, trademark, and other intellectual property laws. You may not reproduce, distribute, or create derivative works without our express written permission.
               </p>
             </div>
 
@@ -122,7 +123,7 @@ export default function TermsOfService() {
                 7. User-Generated Content
               </h2>
               <p>
-                By posting content through FitWiz's social features (workout shares, progress photos, comments), you grant FitWiz a non-exclusive, worldwide, royalty-free license to display that content within the Service. You retain ownership of your content and can delete it at any time.
+                By posting content through {BRANDING.appName}'s social features (workout shares, progress photos, comments), you grant {BRANDING.appName} a non-exclusive, worldwide, royalty-free license to display that content within the Service. You retain ownership of your content and can delete it at any time.
               </p>
             </div>
 
@@ -146,7 +147,7 @@ export default function TermsOfService() {
                 9. Limitation of Liability
               </h2>
               <p>
-                To the maximum extent permitted by law, FitWiz and its affiliates shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising from your use of the Service. Our total liability shall not exceed the amount you paid for the Service in the 12 months preceding the claim.
+                To the maximum extent permitted by law, {BRANDING.appName} and its affiliates shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising from your use of the Service. Our total liability shall not exceed the amount you paid for the Service in the 12 months preceding the claim.
               </p>
             </div>
 
@@ -195,8 +196,8 @@ export default function TermsOfService() {
               </h2>
               <p>
                 If you have questions about these Terms, please contact us at{' '}
-                <a href="mailto:legal@fitwiz.us" className="text-emerald-400 hover:underline">
-                  legal@fitwiz.us
+                <a href={`mailto:legal@${BRANDING.marketingDomain}`} className="text-emerald-400 hover:underline">
+                  legal@{BRANDING.marketingDomain}
                 </a>.
               </p>
             </div>

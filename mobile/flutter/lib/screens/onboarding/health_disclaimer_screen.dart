@@ -9,6 +9,7 @@ import '../../core/providers/window_mode_provider.dart';
 import '../../core/services/posthog_service.dart';
 import '../../widgets/press_and_hold_button.dart';
 import 'widgets/foldable_quiz_scaffold.dart';
+import 'package:fitwiz/core/constants/branding.dart';
 
 /// Key used to store health disclaimer acceptance in SharedPreferences
 const String kHealthDisclaimerAcceptedKey = 'health_disclaimer_accepted';
@@ -128,7 +129,7 @@ class _HealthDisclaimerScreenState
                     icon: Icons.phone_android_outlined,
                     title: 'Not a Medical Device',
                     description:
-                        'FitWiz does not diagnose, treat, cure, or prevent any medical condition. This app is not a medical device.',
+                        '${Branding.appName} does not diagnose, treat, cure, or prevent any medical condition. This app is not a medical device.',
                     delay: 0,
                     isDark: isDark,
                     textPrimary: textPrimary,

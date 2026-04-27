@@ -1,7 +1,7 @@
 /**
  * Public plan / period share view.
  *
- * Consumed at https://fitwiz.us/p/[token]. Renders one of three layouts
+ * Consumed at https://zealova.com/p/[token]. Renders one of three layouts
  * depending on the share's `period`:
  *   - day           → single-workout card (mirrors /w/[token])
  *   - week          → Mon–Sun grid (3-col desktop, stacked on mobile)
@@ -17,7 +17,7 @@ import { notFound } from "next/navigation";
 export const revalidate = 60;
 
 const API_BASE =
-  process.env.NEXT_PUBLIC_API_BASE_URL ?? "https://api.fitwiz.us";
+  process.env.NEXT_PUBLIC_API_BASE_URL ?? "https://api.zealova.com";
 
 type ExerciseSet = {
   set_number?: number;
@@ -83,11 +83,11 @@ export async function generateMetadata({
   params: { token: string };
 }): Promise<Metadata> {
   const p = await fetchPlan(params.token);
-  if (!p) return { title: "FitWiz — Plan" };
+  if (!p) return { title: "Zealova — Plan" };
   const periodLabel = labelForPeriod(p.period, p.start_date, p.end_date);
-  const title = `${periodLabel} — FitWiz`;
+  const title = `${periodLabel} — Zealova`;
   const n = p.snapshot?.workouts?.length ?? 0;
-  const description = `${n} ${n === 1 ? "workout" : "workouts"} · shared by ${p.display_name ?? "FitWiz lifter"}`;
+  const description = `${n} ${n === 1 ? "workout" : "workouts"} · shared by ${p.display_name ?? "Zealova lifter"}`;
   return {
     title,
     description,
@@ -147,13 +147,13 @@ function setLabel(s: ExerciseSet) {
 function StoreCTAs() {
   return (
     <div className="mt-10 rounded-2xl bg-gradient-to-br from-cyan-500/10 via-fuchsia-500/10 to-amber-500/10 p-5 text-center">
-      <h2 className="text-lg font-bold">Get FitWiz</h2>
+      <h2 className="text-lg font-bold">Get Zealova</h2>
       <p className="mt-1 text-sm text-neutral-300">
         Build, log, and share workouts like this one.
       </p>
       <div className="mt-4 flex justify-center gap-3">
         <a
-          href="https://apps.apple.com/app/fitwiz/id6738049122"
+          href="https://apps.apple.com/app/zealova/id6738049122"
           className="px-4 py-2 rounded-lg bg-white text-black text-sm font-bold"
         >
           App Store
@@ -190,7 +190,7 @@ function ProfileLink({
       ) : (
         <div className="w-6 h-6 rounded-full bg-gradient-to-br from-cyan-400 to-fuchsia-500" />
       )}
-      <span>{displayName ?? "FitWiz lifter"}</span>
+      <span>{displayName ?? "Zealova lifter"}</span>
     </>
   );
   if (!username) {
@@ -432,7 +432,7 @@ export default async function PublicPlanPage({
       <header className="flex items-center justify-between px-6 py-4 border-b border-neutral-800">
         <div className="flex items-center gap-2">
           <div className="w-7 h-7 rounded-md bg-gradient-to-br from-cyan-400 to-fuchsia-500" />
-          <span className="font-bold tracking-tight">FitWiz</span>
+          <span className="font-bold tracking-tight">Zealova</span>
         </div>
         <ProfileLink
           displayName={plan.display_name}

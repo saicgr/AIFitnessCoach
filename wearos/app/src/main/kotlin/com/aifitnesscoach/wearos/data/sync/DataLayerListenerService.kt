@@ -1,8 +1,8 @@
-package com.fitwiz.wearos.data.sync
+package com.aifitnesscoach.wearos.data.sync
 
 import android.util.Log
-import com.fitwiz.wearos.data.api.BackendApiClient
-import com.fitwiz.wearos.data.local.SecureStorage
+import com.aifitnesscoach.wearos.data.api.BackendApiClient
+import com.aifitnesscoach.wearos.data.local.SecureStorage
 import com.google.android.gms.wearable.*
 import com.google.gson.Gson
 import dagger.hilt.android.AndroidEntryPoint

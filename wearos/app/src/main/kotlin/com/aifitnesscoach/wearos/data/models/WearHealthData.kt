@@ -1,4 +1,4 @@
-package com.fitwiz.wearos.data.models
+package com.aifitnesscoach.wearos.data.models
 
 /**
  * Health data collected from watch sensors

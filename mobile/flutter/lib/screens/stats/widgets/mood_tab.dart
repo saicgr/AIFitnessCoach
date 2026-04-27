@@ -85,6 +85,7 @@ class _MoodTabState extends ConsumerState<MoodTab> {
           right: 16,
           bottom: 16,
           child: FloatingActionButton(
+            heroTag: 'mood_tab_quick_log_fab',
             onPressed: () => showMoodPickerSheet(context, ref),
             backgroundColor: accentColor,
             child: const Icon(Icons.sentiment_satisfied_alt, color: Colors.white),

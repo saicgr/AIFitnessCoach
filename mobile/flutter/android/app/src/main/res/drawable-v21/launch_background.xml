@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  FitWiz launch background — Android 5+ (v21+) variant.
+  Zealova launch background — Android 5+ (v21+) variant.
   Mirrors drawable/launch_background.xml. Solid brand-dark color so the
   splash never flashes white if the bitmap tile fails to decode.
 -->

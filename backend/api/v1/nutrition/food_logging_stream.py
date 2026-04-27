@@ -1233,7 +1233,30 @@ async def log_food_from_multi_image_streaming(
                 protein_g = analysis_result.get("protein_g") or analysis_result.get("total_protein_g", 0.0)
                 carbs_g = analysis_result.get("carbs_g") or analysis_result.get("total_carbs_g", 0.0)
                 fat_g = analysis_result.get("fat_g") or analysis_result.get("total_fat_g", 0.0)
-                fiber_g = analysis_result.get("fiber_g", 0.0)
+                fiber_g = analysis_result.get("fiber_g", 0.0) or analysis_result.get("total_fiber_g", 0.0)
+
+                # Gemini occasionally leaves the meal-level macros at 0 even when
+                # every food_item has populated protein/carbs/fat. The hero card
+                # in the review sheet then reads "0g Protein / 0g Carbs / 0g Fat"
+                # while the items below clearly have macros. Fall back to summing
+                # the items so the user sees consistent numbers everywhere.
+                def _sum_item_field(key: str) -> float:
+                    s = 0.0
+                    for it in food_items or []:
+                        v = it.get(key) if isinstance(it, dict) else None
+                        if isinstance(v, (int, float)):
+                            s += v
+                    return s
+                if not total_calories:
+                    total_calories = int(round(_sum_item_field("calories")))
+                if not protein_g:
+                    protein_g = round(_sum_item_field("protein_g"), 1)
+                if not carbs_g:
+                    carbs_g = round(_sum_item_field("carbs_g"), 1)
+                if not fat_g:
+                    fat_g = round(_sum_item_field("fat_g"), 1)
+                if not fiber_g:
+                    fiber_g = round(_sum_item_field("fiber_g"), 1)
                 health_score = analysis_result.get("health_score")
                 ai_feedback = analysis_result.get("feedback")
                 inflammation_score = analysis_result.get("inflammation_score")

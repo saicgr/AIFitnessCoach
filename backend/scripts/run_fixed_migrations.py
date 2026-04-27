@@ -93,7 +93,7 @@ def run_migration(conn, file_path):
 def main():
     """Main entry point."""
     print("\n" + "="*60)
-    print("FitWiz Fixed Migration Runner")
+    print("Zealova Fixed Migration Runner")
     print("Running 9 fixed migrations")
     print("="*60)
 

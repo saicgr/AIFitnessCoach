@@ -304,7 +304,7 @@ class ActivityShareCard extends StatelessWidget {
             if (showWatermark) ...[
               SizedBox(height: isCompact ? 4 : 8),
               const AppWatermark(
-                backgroundColor: Color(0xFFE8E8E8),
+                textColor: Color(0xFF1A1A2E),
               ),
             ],
             SizedBox(height: isCompact ? 4 : 8),

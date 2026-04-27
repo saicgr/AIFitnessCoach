@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../shareable_canvas.dart';
 import '../shareable_data.dart';
-import '../widgets/fitwiz_watermark.dart';
+import '../widgets/app_watermark.dart';
 
 /// ExerciseShowcase — hero exercise illustration full-bleed (uses real
 /// imageUrl from the wired adapter), exercise name in massive type, sets/
@@ -163,7 +163,7 @@ class ExerciseShowcaseTemplate extends StatelessWidget {
                   ),
                 const SizedBox(height: 18),
                 if (showWatermark)
-                  FitWizWatermark(
+                  AppWatermark(
                     textColor: Colors.white,
                     fontSize: 13 * mul,
                   ),

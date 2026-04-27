@@ -423,7 +423,7 @@ extension _ComparisonViewStateUI on _ComparisonViewState {
     return ClipRRect(borderRadius: BorderRadius.circular(size * 0.25), child: icon);
   }
 
-  /// Draggable branding pill — FitWiz logo + optional @username.
+  /// Draggable branding pill — Zealova logo + optional @username.
   /// Replaces the old duplicate (top-left overlay + bottom footer).
   Widget _buildBrandingPill(Color bgColor) {
     final tint = _resolveLogoTint(bgColor) ?? Colors.white;
@@ -441,7 +441,7 @@ extension _ComparisonViewStateUI on _ComparisonViewState {
       child: Row(mainAxisSize: MainAxisSize.min, children: [
         _buildLogoIcon(bgColor, size: 16),
         const SizedBox(width: 5),
-        Text('FitWiz', style: TextStyle(color: tint.withOpacity(0.95), fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 0.3)),
+        Text('${Branding.appName}', style: TextStyle(color: tint.withOpacity(0.95), fontSize: 11, fontWeight: FontWeight.w700, letterSpacing: 0.3)),
         if (showUsername) ...[
           const SizedBox(width: 6),
           Container(width: 0.5, height: 10, color: tint.withOpacity(0.4)),

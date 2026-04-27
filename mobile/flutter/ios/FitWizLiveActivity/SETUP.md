@@ -1,4 +1,4 @@
-# FitWizLiveActivity — Xcode Setup (one-time manual step)
+# ZealovaLiveActivity — Xcode Setup (one-time manual step)
 
 This folder contains the Swift sources for the Live Activity / Dynamic Island
 Widget Extension. Creating a Widget Extension target cannot be reliably
@@ -27,12 +27,12 @@ Note: always `.xcworkspace`, **never** `.xcodeproj`.
 1. In Xcode: **File → New → Target…**
 2. Pick **Widget Extension** (under iOS). Click **Next**.
 3. Fill in:
-   - **Product Name:** `FitWizLiveActivity` (exact — referenced in the
+   - **Product Name:** `ZealovaLiveActivity` (exact — referenced in the
      Dart `App Group` name and this folder's files).
    - **Team:** same team as Runner.
    - **Organization Identifier:** inherit from project.
-   - **Bundle Identifier:** auto → `com.aifitnesscoach.app.FitWizLiveActivity`
-     (or whatever Runner's bundle id dotted with `.FitWizLiveActivity`).
+   - **Bundle Identifier:** auto → `com.aifitnesscoach.app.ZealovaLiveActivity`
+     (or whatever Runner's bundle id dotted with `.ZealovaLiveActivity`).
    - **Language:** Swift.
    - **Include Configuration Intent:** OFF.
    - ✅ **Include Live Activity:** ON.
@@ -41,28 +41,28 @@ Note: always `.xcworkspace`, **never** `.xcodeproj`.
 
 ## 3. Replace the auto-generated files with ours
 
-Xcode will have generated a few files inside a new `FitWizLiveActivity/`
+Xcode will have generated a few files inside a new `ZealovaLiveActivity/`
 group in the project navigator. The files in this folder on disk
-(`ios/FitWizLiveActivity/*.swift`) are what should ship. Either:
+(`ios/ZealovaLiveActivity/*.swift`) are what should ship. Either:
 
 - **Option A (easier):** delete the Xcode-generated files (choose
   "Remove Reference" — leave ours on disk), then drag our files from
-  Finder into the Xcode `FitWizLiveActivity` group, and in the dialog:
+  Finder into the Xcode `ZealovaLiveActivity` group, and in the dialog:
   - ✅ Copy items if needed → **OFF** (files already in the right folder).
-  - ✅ Add to targets → **FitWizLiveActivity** only.
+  - ✅ Add to targets → **ZealovaLiveActivity** only.
 
 - **Option B:** Let Xcode keep its files, but replace their contents by
   copy-pasting from ours. Make sure the widget bundle struct is annotated
   with `@main` in exactly one place.
 
-Required files (all should be members of the `FitWizLiveActivity` target,
+Required files (all should be members of the `ZealovaLiveActivity` target,
 NOT the Runner target):
 - `LiveActivitiesAppAttributes.swift`
 - `WorkoutLiveActivityState.swift`
 - `WorkoutLiveActivity.swift`
-- `FitWizLiveActivityBundle.swift`
+- `ZealovaLiveActivityBundle.swift`
 - `Info.plist` (auto-generated; ensure `NSSupportsLiveActivities = YES`).
-- `FitWizLiveActivity.entitlements` (create fresh from capabilities dialog).
+- `ZealovaLiveActivity.entitlements` (create fresh from capabilities dialog).
 
 ## 4. Configure capabilities on BOTH targets
 
@@ -73,7 +73,7 @@ NOT the Runner target):
 2. `+ Capability` → **Push Notifications**. (Required by the
    `live_activities` Flutter package even though we only do local updates.)
 
-**FitWizLiveActivity target** → Signing & Capabilities:
+**ZealovaLiveActivity target** → Signing & Capabilities:
 1. `+ Capability` → **App Groups** → enable and add the **same**
    `group.fitwiz.liveactivity`.
 
@@ -85,7 +85,7 @@ NOT the Runner target):
 ## 6. Minimum iOS version
 
 `ios/Podfile` is pinned to `platform :ios, '16.1'` (committed via this
-change). In Xcode, also set **FitWizLiveActivity → General → Minimum
+change). In Xcode, also set **ZealovaLiveActivity → General → Minimum
 Deployments → iOS 16.1** (should default, but verify).
 
 ## 7. Validate
@@ -97,14 +97,14 @@ flutter build ios --debug --no-codesign
 Expected: "Build succeeded." No Swift errors.
 
 If you see:
-- **"No such module 'ActivityKit'"** → FitWizLiveActivity target's
+- **"No such module 'ActivityKit'"** → ZealovaLiveActivity target's
   deployment target is below 16.1. Bump it.
 - **"'ActivityAttributes' is unavailable in macOS"** (in editor, not
   build) → ignore; ActivityKit is iOS-only and the editor was analyzing
   against macOS SDK before you added the target.
 - **"Cannot find LiveActivitiesAppAttributes in scope"** → the file is
-  not a member of the FitWizLiveActivity target. Select the file, open
-  the File Inspector (right side), and tick FitWizLiveActivity under
+  not a member of the ZealovaLiveActivity target. Select the file, open
+  the File Inspector (right side), and tick ZealovaLiveActivity under
   Target Membership.
 
 ## 8. First run

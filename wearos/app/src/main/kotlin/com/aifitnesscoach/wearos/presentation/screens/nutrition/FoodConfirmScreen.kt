@@ -1,4 +1,4 @@
-package com.fitwiz.wearos.presentation.screens.nutrition
+package com.aifitnesscoach.wearos.presentation.screens.nutrition
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -17,10 +17,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.wear.compose.material.*
-import com.fitwiz.wearos.data.models.MealType
-import com.fitwiz.wearos.presentation.theme.FitWizColors
-import com.fitwiz.wearos.presentation.theme.FitWizTypography
-import com.fitwiz.wearos.presentation.viewmodel.NutritionViewModel
+import com.aifitnesscoach.wearos.data.models.MealType
+import com.aifitnesscoach.wearos.presentation.theme.AppColors
+import com.aifitnesscoach.wearos.presentation.theme.AppTypography
+import com.aifitnesscoach.wearos.presentation.viewmodel.NutritionViewModel
 
 /**
  * Food Confirmation Screen - Confirm/edit parsed food entry
@@ -41,7 +41,7 @@ fun FoodConfirmScreen(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
-            Text("No food to confirm", color = FitWizColors.TextMuted)
+            Text("No food to confirm", color = AppColors.TextMuted)
         }
         return
     }
@@ -77,8 +77,8 @@ fun FoodConfirmScreen(
             // Header
             Text(
                 text = "CONFIRM",
-                style = FitWizTypography.titleSmall,
-                color = FitWizColors.Nutrition
+                style = AppTypography.titleSmall,
+                color = AppColors.Nutrition
             )
 
             // Food info card
@@ -86,15 +86,15 @@ fun FoodConfirmScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(16.dp))
-                    .background(FitWizColors.Surface)
+                    .background(AppColors.Surface)
                     .padding(12.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 // Food name
                 Text(
                     text = entry.foodName ?: "Food",
-                    style = FitWizTypography.titleMedium,
-                    color = FitWizColors.TextPrimary,
+                    style = AppTypography.titleMedium,
+                    color = AppColors.TextPrimary,
                     textAlign = TextAlign.Center,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
@@ -114,10 +114,10 @@ fun FoodConfirmScreen(
                         },
                         modifier = Modifier.size(32.dp),
                         colors = ButtonDefaults.buttonColors(
-                            backgroundColor = FitWizColors.Surface
+                            backgroundColor = AppColors.Surface
                         )
                     ) {
-                        Text("-", style = FitWizTypography.titleMedium)
+                        Text("-", style = AppTypography.titleMedium)
                     }
 
                     Column(
@@ -126,13 +126,13 @@ fun FoodConfirmScreen(
                     ) {
                         Text(
                             text = "$calories",
-                            style = FitWizTypography.displaySmall,
-                            color = FitWizColors.Nutrition
+                            style = AppTypography.displaySmall,
+                            color = AppColors.Nutrition
                         )
                         Text(
                             text = "cal",
-                            style = FitWizTypography.labelSmall,
-                            color = FitWizColors.TextMuted
+                            style = AppTypography.labelSmall,
+                            color = AppColors.TextMuted
                         )
                     }
 
@@ -143,10 +143,10 @@ fun FoodConfirmScreen(
                         },
                         modifier = Modifier.size(32.dp),
                         colors = ButtonDefaults.buttonColors(
-                            backgroundColor = FitWizColors.Surface
+                            backgroundColor = AppColors.Surface
                         )
                     ) {
-                        Text("+", style = FitWizTypography.titleMedium)
+                        Text("+", style = AppTypography.titleMedium)
                     }
                 }
 
@@ -175,8 +175,8 @@ fun FoodConfirmScreen(
                 if (confidence < 0.8f) {
                     Text(
                         text = "Please verify",
-                        style = FitWizTypography.labelSmall,
-                        color = FitWizColors.Warning
+                        style = AppTypography.labelSmall,
+                        color = AppColors.Warning
                     )
                 }
             }
@@ -191,10 +191,10 @@ fun FoodConfirmScreen(
                         onRedo()
                     },
                     colors = ButtonDefaults.buttonColors(
-                        backgroundColor = FitWizColors.Surface
+                        backgroundColor = AppColors.Surface
                     )
                 ) {
-                    Text("REDO", style = FitWizTypography.labelMedium)
+                    Text("REDO", style = AppTypography.labelMedium)
                 }
 
                 Button(
@@ -203,10 +203,10 @@ fun FoodConfirmScreen(
                         onConfirm()
                     },
                     colors = ButtonDefaults.buttonColors(
-                        backgroundColor = FitWizColors.Success
+                        backgroundColor = AppColors.Success
                     )
                 ) {
-                    Text("LOG", style = FitWizTypography.labelMedium)
+                    Text("LOG", style = AppTypography.labelMedium)
                 }
             }
         }
@@ -230,16 +230,16 @@ private fun MealTypeChip(
         modifier = Modifier
             .clip(RoundedCornerShape(8.dp))
             .background(
-                if (isSelected) FitWizColors.Nutrition.copy(alpha = 0.3f)
-                else FitWizColors.Surface
+                if (isSelected) AppColors.Nutrition.copy(alpha = 0.3f)
+                else AppColors.Surface
             )
             .clickable(onClick = onClick)
             .padding(horizontal = 6.dp, vertical = 4.dp)
     ) {
         Text(
             text = label,
-            style = FitWizTypography.bodySmall,
-            color = if (isSelected) FitWizColors.Nutrition else FitWizColors.TextMuted
+            style = AppTypography.bodySmall,
+            color = if (isSelected) AppColors.Nutrition else AppColors.TextMuted
         )
     }
 }

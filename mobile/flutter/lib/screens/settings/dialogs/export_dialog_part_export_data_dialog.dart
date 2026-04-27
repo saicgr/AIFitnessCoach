@@ -247,7 +247,7 @@ class _ExportDataDialogState extends State<_ExportDataDialog> {
           Icon(Icons.file_download_outlined, color: AppColors.cyan, size: 24),
           const SizedBox(width: 12),
           Text(
-            'Export FitWiz Data',
+            'Export ${Branding.appName} Data',
             style: TextStyle(
               color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
             ),

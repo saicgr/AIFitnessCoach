@@ -484,8 +484,10 @@ async def check_specific_exercise_achievements(
         else:
             return awarded  # Not a tracked exercise
 
-        # Count sets for this exercise type
-        count_result = db.client.table("workout_sets").select(
+        # Count sets for this exercise type. Source of truth is
+        # performance_logs (one row per completed set) — `workout_sets`
+        # was renamed/never created in production schema.
+        count_result = db.client.table("performance_logs").select(
             "id", count="exact"
         ).eq("user_id", user_id).ilike("exercise_name", f"%{prefix}%").execute()
 
@@ -646,12 +648,18 @@ async def check_social_achievements(user_id: str) -> List[Dict]:
                 if result:
                     awarded.append(result)
 
-        # Get challenge wins
-        wins_result = db.client.table("challenges").select(
-            "id", count="exact"
-        ).eq("winner_id", user_id).execute()
-
-        challenge_wins = wins_result.count or 0
+        # Get challenge wins — counted as completed participations in
+        # challenge_participants (the schema has no challenges.winner_id).
+        try:
+            wins_result = db.client.table("challenge_participants").select(
+                "id", count="exact"
+            ).eq("user_id", user_id).eq("status", "completed").execute()
+            challenge_wins = wins_result.count or 0
+        except Exception as wins_err:
+            logger.warning(
+                f"Could not count challenge wins for {user_id}: {wins_err}"
+            )
+            challenge_wins = 0
 
         # Challenge trophies
         challenge_trophies = [

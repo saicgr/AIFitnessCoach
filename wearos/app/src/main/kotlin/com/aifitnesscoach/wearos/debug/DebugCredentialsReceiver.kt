@@ -1,11 +1,11 @@
-package com.fitwiz.wearos.debug
+package com.aifitnesscoach.wearos.debug
 
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.util.Log
-import com.fitwiz.wearos.BuildConfig
-import com.fitwiz.wearos.data.local.SecureStorage
+import com.aifitnesscoach.wearos.BuildConfig
+import com.aifitnesscoach.wearos.data.local.SecureStorage
 
 /**
  * Debug-only BroadcastReceiver to inject credentials via ADB for testing.

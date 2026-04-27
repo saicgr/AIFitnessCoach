@@ -1,7 +1,7 @@
 /**
  * Public profile page.
  *
- * Consumed at https://fitwiz.us/u/[username]. Renders profile header
+ * Consumed at https://zealova.com/u/[username]. Renders profile header
  * (avatar, displayName, @username, Workouts/Followers/Following counts) and
  * a feed of the user's currently-public single workouts (`/w/<token>`) and
  * plan/period shares (`/p/<token>`).
@@ -15,7 +15,7 @@ import { notFound } from "next/navigation";
 export const revalidate = 60;
 
 const API_BASE =
-  process.env.NEXT_PUBLIC_API_BASE_URL ?? "https://api.fitwiz.us";
+  process.env.NEXT_PUBLIC_API_BASE_URL ?? "https://api.zealova.com";
 
 type FeedItem =
   | {
@@ -67,9 +67,9 @@ export async function generateMetadata({
   params: { username: string };
 }): Promise<Metadata> {
   const p = await fetchProfile(params.username);
-  if (!p) return { title: "FitWiz — Profile" };
-  const title = `${p.display_name ?? p.username} (@${p.username}) — FitWiz`;
-  const description = `${p.public_workout_count} workouts · ${p.public_plan_count} plans shared on FitWiz`;
+  if (!p) return { title: "Zealova — Profile" };
+  const title = `${p.display_name ?? p.username} (@${p.username}) — Zealova`;
+  const description = `${p.public_workout_count} workouts · ${p.public_plan_count} plans shared on Zealova`;
   return {
     title,
     description,
@@ -186,7 +186,7 @@ export default async function PublicProfilePage({
       <header className="flex items-center justify-between px-6 py-4 border-b border-neutral-800">
         <a href="/" className="flex items-center gap-2">
           <div className="w-7 h-7 rounded-md bg-gradient-to-br from-cyan-400 to-fuchsia-500" />
-          <span className="font-bold tracking-tight">FitWiz</span>
+          <span className="font-bold tracking-tight">Zealova</span>
         </a>
       </header>
 
@@ -269,7 +269,7 @@ export default async function PublicProfilePage({
           </p>
           <div className="mt-4 flex justify-center gap-3">
             <a
-              href="https://apps.apple.com/app/fitwiz/id6738049122"
+              href="https://apps.apple.com/app/zealova/id6738049122"
               className="px-4 py-2 rounded-lg bg-white text-black text-sm font-bold"
             >
               App Store

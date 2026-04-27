@@ -13,9 +13,10 @@ extension __HomeScreenStateExt on _HomeScreenState {
     // Fire-and-forget daily fitness-profile snapshot. Debounced 1x/day via
     // SharedPreferences so repeat opens on the same day are a no-op.
     // Replaces the external cron for active users.
-    Future.microtask(
-      () => ref.read(fitnessSnapshotServiceProvider).ensureToday(),
-    );
+    Future.microtask(() {
+      if (!mounted) return;
+      ref.read(fitnessSnapshotServiceProvider).ensureToday();
+    });
     // Gate: route to the notification pre-permission screen once per install
     // before the user interacts with home. Runs async so it can read prefs.
     _maybeShowNotificationPrime();
@@ -490,7 +491,7 @@ extension __HomeScreenStateExt on _HomeScreenState {
                               ),
                               const SizedBox(height: 2),
                               Text(
-                                'Restore the original FitWiz layout',
+                                'Restore the original ${Branding.appName} layout',
                                 style: TextStyle(
                                   fontSize: 13,
                                   color: textSecondary,
@@ -543,7 +544,7 @@ extension __HomeScreenStateExt on _HomeScreenState {
     String message = '+${result.totalXpAwarded} XP';
 
     if (result.isFirstLogin) {
-      title = '🎉 Welcome to FitWiz!';
+      title = '🎉 Welcome to ${Branding.appName}!';
       message = 'You earned +${result.firstLoginXp} XP bonus!';
     } else if (result.streakMilestoneXp > 0) {
       title = '🔥 Streak Milestone!';

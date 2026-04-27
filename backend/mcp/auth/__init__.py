@@ -1,1 +1,1 @@
-"""OAuth 2.1 authorization server for the FitWiz MCP."""
+"""OAuth 2.1 authorization server for the Zealova MCP."""

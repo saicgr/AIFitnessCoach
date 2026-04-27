@@ -1,4 +1,4 @@
--- FitWiz - Billing Notifications System
+-- Zealova - Billing Notifications System
 -- Migration 079: Billing notifications for subscription transparency
 
 -- Billing notifications tracking table

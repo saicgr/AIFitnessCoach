@@ -1,3 +1,4 @@
+import 'package:fitwiz/core/constants/branding.dart';
 /// Types of rewards that can be earned per level
 enum LevelRewardType {
   xpBonus,       // Permanent +X% XP multiplier
@@ -407,7 +408,7 @@ class LevelRewards {
       case 50:
         return LevelReward.merch(
           name: 'FREE Sticker Pack + Veteran Milestone',
-          description: 'Your first real merch — FitWiz sticker pack shipped to you. '
+          description: 'Your first real merch — ${Branding.appName} sticker pack shipped to you. '
               'Plus 6x 2x XP Token + 5x Premium Crate + 5x Fitness Crate + 5x Streak Shield. '
               'Silver frame + "Veteran" chat title + alt coach voice unlocked.',
           icon: '✨',
@@ -428,8 +429,8 @@ class LevelRewards {
         );
       case 100:
         return LevelReward.merch(
-          name: 'Elite Badge + FREE FitWiz T-Shirt',
-          description: 'Real FitWiz t-shirt shipped to you, plus Elite status + premium crate bundle.',
+          name: 'Elite Badge + FREE ${Branding.appName} T-Shirt',
+          description: 'Real ${Branding.appName} t-shirt shipped to you, plus Elite status + premium crate bundle.',
           icon: '👕',
         );
       case 125:
@@ -440,8 +441,8 @@ class LevelRewards {
         );
       case 150:
         return LevelReward.merch(
-          name: 'Champion Badge + FREE FitWiz Hoodie',
-          description: 'Real FitWiz hoodie shipped to you, plus Champion status.',
+          name: 'Champion Badge + FREE ${Branding.appName} Hoodie',
+          description: 'Real ${Branding.appName} hoodie shipped to you, plus Champion status.',
           icon: '🧥',
         );
       case 175:

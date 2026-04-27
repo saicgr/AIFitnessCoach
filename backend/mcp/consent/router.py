@@ -1,7 +1,7 @@
-"""FastAPI router that serves the OAuth consent UI for the FitWiz MCP server.
+"""FastAPI router that serves the OAuth consent UI for the Zealova MCP server.
 
 We embed the consent UI directly in the backend (instead of a separate Vercel
-front-end at fitwiz.us) to simplify v1: one deploy target, no cross-origin
+front-end at zealova.com) to simplify v1: one deploy target, no cross-origin
 concerns, and the page can talk directly to ``/mcp/oauth/authorize/complete``.
 The URL shape (``/mcp/consent/authorize?consent=<signed_token>``) is the only
 external contract, so migrating to a standalone Vercel app later is a drop-in.
@@ -25,6 +25,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
+from core import branding
 from core.config import get_settings
 from core.logger import get_logger
 from mcp.config import get_mcp_config
@@ -43,6 +44,17 @@ _TEMPLATES_DIR = os.path.join(_HERE, "templates")
 _STATIC_DIR = os.path.join(_HERE, "static")
 
 templates = Jinja2Templates(directory=_TEMPLATES_DIR)
+
+# Inject brand identity into Jinja env globals so consent templates can use
+# {{ APP_NAME }} / {{ MARKETING_DOMAIN }} / {{ WEBSITE_URL }} without each
+# render call passing them. Single source of truth in core/branding.py.
+templates.env.globals.update({
+    "APP_NAME": branding.APP_NAME,
+    "APP_FULL_TITLE": branding.APP_FULL_TITLE,
+    "WEBSITE_URL": branding.WEBSITE_URL,
+    "MARKETING_DOMAIN": branding.MARKETING_DOMAIN,
+    "SUPPORT_EMAIL": branding.SUPPORT_EMAIL,
+})
 
 # Serve consent-specific CSS/JS assets at /mcp/consent/static/*.
 # Mount lazily so tests that never import the router don't trip on the dir.
@@ -124,7 +136,7 @@ async def consent_upgrade(
 ) -> HTMLResponse:
     """Shown when a user tries to authorize but is not on a yearly plan.
 
-    Links to ``MCPConfig.UPGRADE_URL`` (the fitwiz.us checkout page).
+    Links to ``MCPConfig.UPGRADE_URL`` (the zealova.com checkout page).
     """
     return templates.TemplateResponse(
         "upgrade.html",

@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../shareable_canvas.dart';
 import '../shareable_data.dart';
-import '../widgets/fitwiz_watermark.dart';
+import '../widgets/app_watermark.dart';
 
 /// CalendarHeatmap — GitHub-style 52-week × 7-day grid filled from
 /// `data.subMetrics` (treated as activity counts), accent-tinted cells,
@@ -140,7 +140,7 @@ class CalendarHeatmapTemplate extends StatelessWidget {
             ),
             const SizedBox(height: 22),
             if (showWatermark)
-              FitWizWatermark(
+              AppWatermark(
                 textColor: Colors.white,
                 fontSize: 13 * mul,
               ),

@@ -1,7 +1,7 @@
 # Drag and Drop Workout Swapping Implementation
 
 ## Overview
-Successfully implemented drag and drop functionality for swapping workout dates in the FitWiz app using @dnd-kit library.
+Successfully implemented drag and drop functionality for swapping workout dates in the Zealova app using @dnd-kit library.
 
 ## Changes Made
 

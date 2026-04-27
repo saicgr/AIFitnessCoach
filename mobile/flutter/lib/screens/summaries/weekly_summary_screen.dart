@@ -9,6 +9,7 @@ import '../../utils/share_report_helper.dart';
 import '../../widgets/glass_sheet.dart';
 import '../../core/services/posthog_service.dart';
 import '../../widgets/pill_app_bar.dart';
+import 'package:fitwiz/core/constants/branding.dart';
 
 class WeeklySummaryScreen extends ConsumerStatefulWidget {
   const WeeklySummaryScreen({super.key});
@@ -552,8 +553,8 @@ class _SummaryDetailSheetState extends State<_SummaryDetailSheet> {
                             context: context,
                             repaintKey: _reportKey,
                             caption:
-                                'My FitWiz report — week of ${_formatDate(summary.weekStart)}',
-                            subject: 'My FitWiz Weekly Report',
+                                'My ${Branding.appName} report — week of ${_formatDate(summary.weekStart)}',
+                            subject: 'My ${Branding.appName} Weekly Report',
                           ),
                         ),
                       ],

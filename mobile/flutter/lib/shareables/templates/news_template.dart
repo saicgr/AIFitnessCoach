@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../shareable_canvas.dart';
 import '../shareable_data.dart';
-import '../widgets/fitwiz_watermark.dart';
+import '../widgets/app_watermark.dart';
+import 'package:fitwiz/core/constants/branding.dart';
 
 /// News — newspaper-style editorial that **fills the entire canvas** with
 /// cream paper. Previous version centered a small ~400pt card on a
@@ -306,7 +307,7 @@ class NewsTemplate extends StatelessWidget {
           ),
         ),
         if (showWatermark)
-          FitWizWatermark(
+          AppWatermark(
             textColor: _ink,
             iconSize: 18,
             fontSize: 12 * _bodyMul,
@@ -317,14 +318,47 @@ class NewsTemplate extends StatelessWidget {
 
   String _headline(Shareable d) {
     final name = (d.userDisplayName ?? '').trim();
+    final period = d.periodLabel.trim().isEmpty ? 'this month' : d.periodLabel;
+    final subject = name.isEmpty ? 'Local lifter' : name;
+    final workoutTitle = d.title.trim();
+
+    // Prefer a workout-specific headline using real numbers from the
+    // session ("Awesome crushes Steady Ground Strength: 5 exercises, 12
+    // reps, 46s"). Falls back to the old volume-led headline for non-
+    // workout shares.
+    final exerciseCount = d.exercises?.length ?? 0;
+    String? duration;
+    String? totalSets;
+    String? totalReps;
+    String? volume;
+    for (final h in d.highlights) {
+      final upper = h.label.toUpperCase();
+      if (duration == null && (upper.contains('DURATION') || upper.contains('TIME'))) {
+        duration = h.value;
+      } else if (totalSets == null && upper.contains('SETS')) {
+        totalSets = h.value;
+      } else if (totalReps == null && upper.contains('REPS')) {
+        totalReps = h.value;
+      } else if (volume == null && upper.contains('VOLUME')) {
+        volume = h.value;
+      }
+    }
+
+    if (workoutTitle.isNotEmpty && exerciseCount > 0) {
+      final stats = <String>[];
+      if (totalSets != null) stats.add('$totalSets sets');
+      if (totalReps != null) stats.add('$totalReps reps');
+      if (duration != null) stats.add('in $duration');
+      if (volume != null) stats.add('· $volume');
+      final tail = stats.isEmpty ? '' : ' — ${stats.join(', ')}';
+      return '$subject crushes $workoutTitle$tail';
+    }
+
     final hero = shareableHeroString(d);
     final unit = shareableHeroUnit(d);
-    final period = d.periodLabel.trim().isEmpty ? 'this month' : d.periodLabel;
-
     if (hero == '—' && name.isEmpty) {
       return '${d.title} report — $period';
     }
-    final subject = name.isEmpty ? 'A local lifter' : name;
     if (unit.isEmpty) {
       return '$subject hits $hero in $period';
     }
@@ -332,20 +366,50 @@ class NewsTemplate extends StatelessWidget {
   }
 
   String _body(Shareable d) {
-    if (d.highlights.isEmpty) {
-      return 'Numbers climb. Discipline compounds. FitWiz captured the receipts '
+    final highlights = d.highlights.where((h) => h.isPopulated).toList();
+    final exercises = d.exercises ?? const [];
+
+    // Build a real per-exercise breakdown sentence from logged sets.
+    String? exerciseBreakdown;
+    if (exercises.isNotEmpty) {
+      final namedSets = exercises.where((e) => e.sets.isNotEmpty).take(4).map((e) {
+        final completedSets = e.sets.where((s) => s.reps > 0).toList();
+        if (completedSets.isEmpty) return '${e.name} (logged)';
+        final sample = completedSets.first;
+        final isBw = sample.weight == null || sample.weight == 0;
+        final weightStr = isBw
+            ? 'BW'
+            : '${sample.weight!.toStringAsFixed(sample.weight! == sample.weight!.roundToDouble() ? 0 : 1)} ${sample.unit}';
+        return '${e.name} — ${completedSets.length}×${sample.reps} @ $weightStr';
+      }).toList();
+      if (namedSets.isNotEmpty) {
+        final extra = exercises.length - namedSets.length;
+        final tail = extra > 0 ? ', and $extra more' : '';
+        exerciseBreakdown = 'On the docket: ${namedSets.join('; ')}$tail.';
+      }
+    }
+
+    if (highlights.isEmpty && exerciseBreakdown == null) {
+      return 'Numbers climb. Discipline compounds. ${Branding.appName} captured the receipts '
           'so every rep, every minute, every win shows up exactly where it '
           'belongs — in the record. Witnesses report a steady cadence of '
           'effort, no shortcuts taken, no reps skipped. The story is on the '
           'page; the proof is in the log.';
     }
-    final parts = d.highlights.take(3).map((h) {
-      return '${h.label.toLowerCase()}: ${h.value}';
-    }).join('. ');
-    return 'Reporters confirm: $parts. The trend continues, and FitWiz keeps '
-        'the receipts. Sources close to the lifter say consistency is the '
-        'real headline — work shows up in the log even when motivation '
-        'doesn\'t. The next chapter writes itself one rep at a time.';
+
+    final stats = highlights.take(4).map((h) {
+      return '${h.label.toLowerCase()} ${h.value}';
+    }).join(' · ');
+
+    final lead = stats.isNotEmpty
+        ? 'The session is in the books — $stats. '
+        : 'The session is in the books. ';
+    final detail = exerciseBreakdown ?? '';
+    final closer = exerciseBreakdown != null
+        ? ' Sources close to the lifter say consistency is the real headline.'
+        : ' Sources close to the lifter say consistency is the real headline — work shows up in the log even when motivation doesn\'t.';
+
+    return '$lead$detail$closer';
   }
 }
 

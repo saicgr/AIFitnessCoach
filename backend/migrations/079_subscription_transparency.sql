@@ -1,4 +1,4 @@
--- FitWiz - Subscription Transparency Features
+-- Zealova - Subscription Transparency Features
 -- Migration 079: Refund requests and enhanced subscription history
 -- Addresses complaint: "Tried to automatically put me in a more expensive tier"
 

@@ -29,6 +29,9 @@ import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/providers/xp_provider.dart';
 import '../../../data/services/api_client.dart';
 import '../../../widgets/xp_hero_tile.dart';
+import '../../home/widgets/cards/last_night_sleep_card.dart';
+import '../../home/widgets/cards/todays_health_card.dart';
+import '../widgets/weight_tracking_card.dart';
 
 class YouOverviewTab extends ConsumerStatefulWidget {
   const YouOverviewTab({super.key});
@@ -146,6 +149,18 @@ class _YouOverviewTabState extends ConsumerState<YouOverviewTab> {
       child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          // HEALTH SNAPSHOT — first thing the user sees on the You tab.
+          // Each card auto-hides via SizedBox.shrink when it has nothing
+          // to show (no Health Connect connection, no sleep last night,
+          // no weight log), so first-day users still see a clean Overview
+          // headed by XpHeroTile.
+          const TodaysHealthCard(),
+          const SizedBox(height: 12),
+          const LastNightSleepCard(),
+          const SizedBox(height: 12),
+          const WeightTrackingCard(),
+          const SizedBox(height: 14),
+
           // Hero XP tile — three rows (weekly XP + sparkline, level +
           // progress + reward preview, streak + nudge). Reads directly
           // from `userXpProvider` + `weeklyXpSummaryProvider` +

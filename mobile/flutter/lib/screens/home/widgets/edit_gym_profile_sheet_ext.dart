@@ -621,7 +621,7 @@ extension __EditGymProfileSheetStateExt on _EditGymProfileSheetState {
                   '$_selectedDuration minutes',
                   style: TextStyle(
                     fontSize: 12,
-                    color: selectedColorObj,
+                    color: textSecondary,
                     fontWeight: FontWeight.w600,
                   ),
                 ),

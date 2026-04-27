@@ -36,7 +36,7 @@ def _require_health_consent(user_id: str) -> None:
             detail=(
                 "Health data sync is disabled for this account. Enable "
                 "'Health data processing' in Settings → Privacy & Data to "
-                "allow FitWiz to store measurements from Health Connect "
+                "allow Zealova to store measurements from Health Connect "
                 "or HealthKit."
             ),
         )

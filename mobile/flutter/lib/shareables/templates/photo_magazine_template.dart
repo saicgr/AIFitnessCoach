@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../shareable_canvas.dart';
 import '../shareable_data.dart';
-import '../widgets/fitwiz_watermark.dart';
+import '../widgets/app_watermark.dart';
 import '../widgets/photo_backdrop.dart';
 
 /// PhotoMagazine — user photo full-bleed with a magazine-cover headline
@@ -153,7 +153,7 @@ class PhotoMagazineTemplate extends StatelessWidget {
                       ),
                     const Spacer(),
                     if (showWatermark)
-                      FitWizWatermark(
+                      AppWatermark(
                         textColor: Colors.white,
                         fontSize: 12 * mul,
                       ),

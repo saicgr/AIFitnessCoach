@@ -1,4 +1,4 @@
-# FitWiz Subscription Tier Guide
+# Zealova Subscription Tier Guide
 
 **2 tiers only**: Free ($0) and Premium ($5.99/mo | $47.99/yr)
 
@@ -6,7 +6,7 @@
 
 ## Table 1: Competitor Comparison
 
-| Feature | Hevy Free | Gravl Free | FitWiz | FitWiz Tier |
+| Feature | Hevy Free | Gravl Free | Zealova | Zealova Tier |
 |---------|-----------|------------|--------|-------------|
 | **Workout logging** | Unlimited | 3 workouts only | Unlimited | FREE |
 | **Exercise library** | 400+ with videos | 300+ (trial only) | 1,722 with videos | FREE |
@@ -46,11 +46,11 @@
 
 **Hevy Pro**: ~$3.99/mo | $23.99/yr
 **Gravl Premium**: $10.99/mo | $59.99/yr
-**FitWiz Premium**: $5.99/mo | $47.99/yr
+**Zealova Premium**: $5.99/mo | $47.99/yr
 
 ---
 
-## Table 2: FitWiz Free vs Premium
+## Table 2: Zealova Free vs Premium
 
 | Feature | Tier | Why |
 |---------|------|-----|
@@ -209,11 +209,11 @@
 | **Cronometer** | $10.99 (Gold) | $54.99 | Yes (best free tier) |
 | **MacroFactor** | $11.99 | $71.99 | No (7-day trial only) |
 | **Yazio** | ~$4-10 (dynamic) | ~$30-60 | Yes (basic) |
-| **FitWiz** | **$5.99** | **$47.99** | **Yes (manual logging free)** |
+| **Zealova** | **$5.99** | **$47.99** | **Yes (manual logging free)** |
 
 ### Feature Comparison: Free vs Paid
 
-| Feature | MFP | Cal AI | Lose It! | Cronometer | MacroFactor | Yazio | FitWiz |
+| Feature | MFP | Cal AI | Lose It! | Cronometer | MacroFactor | Yazio | Zealova |
 |---------|-----|--------|----------|------------|-------------|-------|--------|
 | **Manual food logging** | Free | Limited | Free | Free | Paid | Free | **Free** |
 | **Barcode scanner** | Paid | Limited | Paid | Free | Paid | Free | **Free** |
@@ -239,6 +239,6 @@
 - **MyFitnessPal** moved barcode scanning to paid (was free pre-2022) and charges $19.99/mo - most expensive
 - **Cal AI** focuses on AI photo scanning but has dynamic/confusing pricing
 - **MacroFactor** has the best adaptive algorithm but zero free tier
-- **FitWiz is the only app** that combines nutrition + workout + fasting + AI coaching in one app
-- **FitWiz free tier** already beats MFP/Lose It!/Yazio free by including custom macro goals, barcode scanner, and no ads
-- **FitWiz Premium at $5.99/mo** undercuts every nutrition app except Cal AI while offering 10x more features
+- **Zealova is the only app** that combines nutrition + workout + fasting + AI coaching in one app
+- **Zealova free tier** already beats MFP/Lose It!/Yazio free by including custom macro goals, barcode scanner, and no ads
+- **Zealova Premium at $5.99/mo** undercuts every nutrition app except Cal AI while offering 10x more features

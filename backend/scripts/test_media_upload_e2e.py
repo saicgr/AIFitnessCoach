@@ -305,7 +305,7 @@ def get_user_id() -> str:
 
 if __name__ == "__main__":
     print(f"\n{'='*60}")
-    print(f"  FitWiz Media Upload E2E Integration Test")
+    print(f"  Zealova Media Upload E2E Integration Test")
     print(f"  Backend: {BACKEND_URL}")
     print(f"{'='*60}")
 

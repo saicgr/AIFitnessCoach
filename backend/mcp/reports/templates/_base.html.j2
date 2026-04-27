@@ -2,13 +2,13 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>{{ title or "FitWiz Report" }}</title>
+  <title>{{ title or "{{ APP_NAME }} Report" }}</title>
   <style>
     @page {
       size: Letter;
       margin: 0.75in;
       @bottom-center {
-        content: "FitWiz  •  Page " counter(page) " / " counter(pages);
+        content: "{{ APP_NAME }}  •  Page " counter(page) " / " counter(pages);
         font-family: "Helvetica", "Arial", sans-serif;
         font-size: 9pt;
         color: #888;

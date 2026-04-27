@@ -11,6 +11,7 @@ import 'package:share_plus/share_plus.dart';
 import '../../core/constants/api_constants.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/services/api_client.dart';
+import 'package:fitwiz/core/constants/branding.dart';
 
 /// Reverse-direction export screen.
 ///
@@ -64,7 +65,7 @@ class _ExportDataScreenState extends ConsumerState<ExportDataScreen> {
     _FormatOption(
       key: 'csv',
       displayName: 'Generic CSV (all columns)',
-      description: 'FitWiz-native schema. Maximum fidelity.',
+      description: '${Branding.appName}-native schema. Maximum fidelity.',
       icon: Icons.table_chart,
       cardioOnly: false,
     ),
@@ -220,8 +221,8 @@ class _ExportDataScreenState extends ConsumerState<ExportDataScreen> {
 
       await Share.shareXFiles(
         [XFile(tempPath)],
-        subject: 'FitWiz Export — ${fmt.displayName}',
-        text: 'Your FitWiz training data (${fmt.displayName}).',
+        subject: '${Branding.appName} Export — ${fmt.displayName}',
+        text: 'Your ${Branding.appName} training data (${fmt.displayName}).',
       );
 
       if (!mounted) return;
@@ -442,7 +443,7 @@ class _ExportDataScreenState extends ConsumerState<ExportDataScreen> {
   Widget _dateRangeCard(Color bg, Color border, Color primary, Color secondary) {
     final range = _resolvedDateRange();
     final subtitle = _selectedRange == _DatePreset.allTime
-        ? 'Every session FitWiz has on record for you.'
+        ? 'Every session ${Branding.appName} has on record for you.'
         : range == null
             ? 'Pick a custom range.'
             : '${DateFormat('MMM d, y').format(range.start)} → ${DateFormat('MMM d, y').format(range.end)}';
@@ -596,7 +597,7 @@ class _ExportDataScreenState extends ConsumerState<ExportDataScreen> {
                 Text(
                   'We never lock you in. Every export is a full fidelity copy '
                   'you can re-import into Hevy, Strong, Fitbod, or back into '
-                  'FitWiz. GDPR Art. 20 compliant.',
+                  '${Branding.appName}. GDPR Art. 20 compliant.',
                   style: TextStyle(color: secondary, fontSize: 12, height: 1.4),
                 ),
               ],

@@ -1,6 +1,7 @@
 """
 XP Events API - Daily Login, Streaks, Double XP Events
 """
+from core import branding
 from core.db import get_supabase_db
 
 from .xp_models import *  # noqa: F401, F403
@@ -962,8 +963,8 @@ _LEVEL_REWARDS: dict[int, dict] = {
     15: {"kind": "functional", "label": "Auto rest-day rescheduling",    "icon": "event_repeat_rounded",     "tier": "gold"},
     20: {"kind": "merch",      "label": "Physical sticker pack",         "icon": "local_shipping_outlined",  "tier": "platinum"},
     25: {"kind": "pricing",    "label": "Retention pricing unlock",      "icon": "sell_outlined",            "tier": "platinum"},
-    50: {"kind": "merch",      "label": "FitWiz t-shirt",                "icon": "checkroom_outlined",       "tier": "platinum"},
-    100:{"kind": "merch",      "label": "FitWiz hoodie",                 "icon": "checkroom_outlined",       "tier": "platinum"},
+    50: {"kind": "merch",      "label": f"{branding.MERCH_PRODUCT_PREFIX} t-shirt", "icon": "checkroom_outlined", "tier": "platinum"},
+    100:{"kind": "merch",      "label": f"{branding.MERCH_PRODUCT_PREFIX} hoodie",  "icon": "checkroom_outlined", "tier": "platinum"},
 }
 
 _FALLBACK_REWARD = {

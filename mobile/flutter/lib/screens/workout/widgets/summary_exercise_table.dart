@@ -4,6 +4,8 @@
 /// Shows completed exercise data with set details, timing, and RIR badges.
 library;
 
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_colors.dart';
@@ -33,6 +35,8 @@ class SummarySetData {
   final String? progressionModel;
   // Multiple notes per set are preserved in order. Empty list = no notes.
   final List<String> notes;
+  // Photo URLs (S3) or local paths captured alongside notes for this set.
+  final List<String> notesPhotoUrls;
   final String? completedAt;
 
   const SummarySetData({
@@ -53,6 +57,7 @@ class SummarySetData {
     this.previousReps,
     this.progressionModel,
     this.notes = const [],
+    this.notesPhotoUrls = const [],
     this.completedAt,
   });
 
@@ -77,8 +82,21 @@ class SummarySetData {
       // Backwards-compatible coercion — accepts a list (current shape), a
       // raw string (legacy rows pre-array migration), or null.
       notes: coerceNotes(json['notes']),
+      notesPhotoUrls: coerceStringList(json['notes_photo_urls']),
       completedAt: json['completed_at'] as String?,
     );
+  }
+
+  static List<String> coerceStringList(dynamic raw) {
+    if (raw == null) return const [];
+    if (raw is List) {
+      return raw
+          .map((e) => e?.toString().trim() ?? '')
+          .where((s) => s.isNotEmpty)
+          .toList();
+    }
+    if (raw is String && raw.trim().isNotEmpty) return [raw.trim()];
+    return const [];
   }
 
   /// Public so other parsers reading the same `sets_json` shape can reuse
@@ -481,6 +499,7 @@ void _showSetNotesSheet({
   required bool isDark,
   required int setNumber,
   required List<String> notes,
+  List<String> photoUrls = const [],
   String? completedAt,
 }) {
   final bg = isDark ? const Color(0xFF111111) : Colors.white;
@@ -526,7 +545,14 @@ void _showSetNotesSheet({
                   ),
                   const Spacer(),
                   Text(
-                    notes.length == 1 ? '1 note' : '${notes.length} notes',
+                    () {
+                      final n = notes.length;
+                      final p = photoUrls.length;
+                      final parts = <String>[];
+                      if (n > 0) parts.add(n == 1 ? '1 note' : '$n notes');
+                      if (p > 0) parts.add(p == 1 ? '1 photo' : '$p photos');
+                      return parts.isEmpty ? '0 notes' : parts.join(' · ');
+                    }(),
                     style: TextStyle(
                       color: muted,
                       fontSize: 12,
@@ -536,7 +562,59 @@ void _showSetNotesSheet({
                 ],
               ),
               const SizedBox(height: 14),
-              if (notes.isEmpty)
+              if (photoUrls.isNotEmpty) ...[
+                SizedBox(
+                  height: 96,
+                  child: ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: photoUrls.length,
+                    separatorBuilder: (_, __) => const SizedBox(width: 8),
+                    itemBuilder: (_, i) {
+                      final src = photoUrls[i];
+                      final isRemote = src.startsWith('http');
+                      return GestureDetector(
+                        onTap: () => _showPhotoFullscreen(context, photoUrls, i),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(10),
+                          child: SizedBox(
+                            width: 96,
+                            height: 96,
+                            child: isRemote
+                                ? Image.network(
+                                    src,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (_, __, ___) => Container(
+                                      color: muted.withValues(alpha: 0.15),
+                                      alignment: Alignment.center,
+                                      child: Icon(Icons.broken_image, color: muted, size: 28),
+                                    ),
+                                  )
+                                : Image.file(
+                                    File(src),
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (_, __, ___) => Container(
+                                      color: muted.withValues(alpha: 0.15),
+                                      alignment: Alignment.center,
+                                      child: Icon(Icons.broken_image, color: muted, size: 28),
+                                    ),
+                                  ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(height: 12),
+              ],
+              if (notes.isEmpty && photoUrls.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  child: Text(
+                    'No notes or photos saved on this set.',
+                    style: TextStyle(color: muted, fontSize: 14),
+                  ),
+                )
+              else if (notes.isEmpty)
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   child: Text(
@@ -610,6 +688,52 @@ void _showSetNotesSheet({
   );
 }
 
+void _showPhotoFullscreen(BuildContext context, List<String> photos, int initialIndex) {
+  Navigator.of(context).push(
+    PageRouteBuilder(
+      opaque: false,
+      barrierColor: Colors.black.withValues(alpha: 0.92),
+      pageBuilder: (ctx, __, ___) {
+        final controller = PageController(initialPage: initialIndex);
+        return Scaffold(
+          backgroundColor: Colors.transparent,
+          body: SafeArea(
+            child: Stack(
+              children: [
+                PageView.builder(
+                  controller: controller,
+                  itemCount: photos.length,
+                  itemBuilder: (_, i) {
+                    final src = photos[i];
+                    final isRemote = src.startsWith('http');
+                    return InteractiveViewer(
+                      minScale: 1,
+                      maxScale: 4,
+                      child: Center(
+                        child: isRemote
+                            ? Image.network(src, fit: BoxFit.contain)
+                            : Image.file(File(src), fit: BoxFit.contain),
+                      ),
+                    );
+                  },
+                ),
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: IconButton(
+                    icon: const Icon(Icons.close, color: Colors.white, size: 28),
+                    onPressed: () => Navigator.of(ctx).pop(),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    ),
+  );
+}
+
 String _formatCompletedAt(String iso) {
   try {
     final dt = DateTime.parse(iso).toLocal();
@@ -676,7 +800,7 @@ class _SummarySetRow extends StatelessWidget {
     );
 
     final weightText = _formatWeight(set.actualWeightKg, set.actualWeightLbs);
-    final hasNotes = set.notes.isNotEmpty;
+    final hasNotes = set.notes.isNotEmpty || set.notesPhotoUrls.isNotEmpty;
 
     return Container(
       height: WorkoutDesign.setRowHeight,
@@ -759,12 +883,15 @@ class _SummarySetRow extends StatelessWidget {
                       isDark: isDark,
                       setNumber: set.setNumber,
                       notes: set.notes,
+                      photoUrls: set.notesPhotoUrls,
                       completedAt: set.completedAt,
                     ),
                     child: Padding(
                       padding: const EdgeInsets.all(6),
                       child: Icon(
-                        Icons.sticky_note_2_outlined,
+                        set.notesPhotoUrls.isNotEmpty && set.notes.isEmpty
+                            ? Icons.image_outlined
+                            : Icons.sticky_note_2_outlined,
                         size: 14,
                         color: isDark
                             ? WorkoutDesign.textPrimary

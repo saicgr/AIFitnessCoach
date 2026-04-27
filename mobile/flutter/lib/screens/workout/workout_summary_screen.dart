@@ -327,7 +327,7 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen> {
         ],
 
         // Share button
-        _buildShareButton(workout, isDark, accentColor),
+        _buildShareButton(workout, summary, isDark, accentColor),
       ],
     );
   }
@@ -355,7 +355,7 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen> {
           ...exercises.map((e) => _buildPlannedExerciseCard(e, isDark)),
           const SizedBox(height: 16),
         ],
-        _buildShareButton(workout, isDark, accentColor),
+        _buildShareButton(workout, summary, isDark, accentColor),
         const SizedBox(height: 12),
         _buildRevertButton(isDark),
       ],
@@ -670,7 +670,7 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen> {
   // ═══════════════════════════════════════════════════════════════════
 
   Widget _buildShareButton(
-      Workout? workout, bool isDark, Color accentColor) {
+      Workout? workout, WorkoutSummaryResponse summary, bool isDark, Color accentColor) {
     return SizedBox(
       width: double.infinity,
       child: OutlinedButton.icon(
@@ -681,6 +681,10 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen> {
                   workoutName: workout.name ?? 'Workout',
                   durationSeconds: (workout.durationMinutes ?? 0) * 60,
                   plannedExercises: workout.exercises,
+                  loggedSets: summary.setLogs,
+                  setsJsonRaw: summary.workout['metadata'] is Map
+                      ? (summary.workout['metadata'] as Map)['sets_json']
+                      : null,
                   calories: workout.estimatedCalories,
                 );
                 if (!context.mounted) return;

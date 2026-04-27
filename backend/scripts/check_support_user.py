@@ -15,11 +15,13 @@ from supabase import create_client
 from dotenv import load_dotenv
 load_dotenv()
 
+from core import branding
+
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY") or os.getenv("SUPABASE_KEY")
 
-SUPPORT_EMAIL = "support@fitwiz.us"
-SUPPORT_NAME = "FitWiz Support"
+SUPPORT_EMAIL = branding.SUPPORT_EMAIL
+SUPPORT_NAME = branding.SUPPORT_USER_NAME
 
 def main():
     print(f"Connecting to Supabase: {SUPABASE_URL}")
@@ -52,7 +54,7 @@ def main():
             print("   ✅ Updated")
     else:
         print("   ❌ Support user does NOT exist")
-        print("   You need to sign up with support@fitwiz.us first")
+        print(f"   You need to sign up with {SUPPORT_EMAIL} first")
         return
 
     # Check existing connections
@@ -150,7 +152,7 @@ def main():
 
                 # Send welcome message
                 welcome_message = (
-                    "Welcome to FitWiz! 🎉\n\n"
+                    f"Welcome to {branding.APP_NAME}! 🎉\n\n"
                     "I'm here to help you on your fitness journey. "
                     "If you have any questions about the app, need workout tips, "
                     "or just want to chat about your fitness goals, feel free to message me anytime!\n\n"

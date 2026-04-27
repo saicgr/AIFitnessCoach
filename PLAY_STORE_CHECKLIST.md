@@ -1,4 +1,4 @@
-# Google Play Store Publishing Checklist - FitWiz
+# Google Play Store Publishing Checklist - Zealova
 
 ## 1. Developer Account & Payment
 
@@ -34,11 +34,11 @@
 - [x] Round icons generated
 - [x] Monochrome notification icon (`ic_launcher_monochrome.png`)
 - [x] Splash screen configured (LaunchTheme with white background)
-- [ ] Splash screen enhanced with FitWiz branding (optional)
+- [ ] Splash screen enhanced with Zealova branding (optional)
 
 ## 4. Store Listing Assets
 
-- [ ] App name (max 30 chars) - "FitWiz - AI Fitness Coach"
+- [ ] App name (max 30 chars) - "Zealova - AI Fitness Coach"
 - [ ] Short description (max 80 chars)
 - [ ] Full description (max 4000 chars)
 - [ ] Hi-res icon uploaded (512x512 PNG, 32-bit)
@@ -49,15 +49,15 @@
 - [ ] App category selected (Health & Fitness)
 - [ ] Tags added
 - [ ] Contact email set
-- [ ] Website URL (https://fitwiz.us)
+- [ ] Website URL (https://zealova.com)
 - [ ] Promotional video (optional, YouTube link)
 
 ## 5. Privacy & Compliance
 
-- [x] Privacy policy URL configured (`https://fitwiz.us/privacy`) - referenced in paywall, settings, help screens
-- [x] Terms of service URL configured (`https://fitwiz.us/terms`)
-- [ ] Privacy policy page is LIVE and accessible at https://fitwiz.us/privacy
-- [ ] Terms of service page is LIVE and accessible at https://fitwiz.us/terms
+- [x] Privacy policy URL configured (`https://zealova.com/privacy`) - referenced in paywall, settings, help screens
+- [x] Terms of service URL configured (`https://zealova.com/terms`)
+- [ ] Privacy policy page is LIVE and accessible at https://zealova.com/privacy
+- [ ] Terms of service page is LIVE and accessible at https://zealova.com/terms
 - [ ] Data safety form completed in Google Play Console
   - [ ] Data collected: health/fitness data, personal info, app activity
   - [ ] Data shared: Supabase (backend), RevenueCat (payments), Firebase (analytics)
@@ -128,7 +128,7 @@ All permissions are declared in AndroidManifest.xml. Google Play Console require
 
 | Priority | Issue | File |
 |----------|-------|------|
-| Critical | Privacy policy & terms pages must be live at fitwiz.us | Web hosting |
+| Critical | Privacy policy & terms pages must be live at zealova.com | Web hosting |
 | High | Version should be bumped for release | `pubspec.yaml` |
 | Medium | Splash screen is plain white - consider adding branding | `android/app/src/main/res/drawable/launch_background.xml` |
 

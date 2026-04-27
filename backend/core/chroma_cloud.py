@@ -1,5 +1,5 @@
 """
-Chroma Cloud client for FitWiz.
+Chroma Cloud client for Zealova.
 Uses a thin HTTP client against Chroma Cloud REST API v2.
 """
 from typing import List, Dict, Optional

@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../shareable_canvas.dart';
 import '../shareable_data.dart';
-import '../widgets/fitwiz_watermark.dart';
+import '../widgets/app_watermark.dart';
 
 /// VolumeBars — vertical bar chart of daily / weekly volume across the
 /// share period. Reads from `data.subMetrics` when present, otherwise
@@ -134,7 +134,7 @@ class VolumeBarsTemplate extends StatelessWidget {
             ),
             const Spacer(),
             if (showWatermark)
-              FitWizWatermark(
+              AppWatermark(
                 textColor: Colors.white,
                 fontSize: 13 * mul,
               ),

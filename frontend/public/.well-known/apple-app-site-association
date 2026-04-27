@@ -10,15 +10,15 @@
           },
           {
             "/": "/w/*",
-            "comment": "Public single-workout share links (fitwiz.us/w/{token})."
+            "comment": "Public single-workout share links (zealova.com/w/{token})."
           },
           {
             "/": "/p/*",
-            "comment": "Public plan/period share links (fitwiz.us/p/{token})."
+            "comment": "Public plan/period share links (zealova.com/p/{token})."
           },
           {
             "/": "/u/*",
-            "comment": "Public profile pages (fitwiz.us/u/{username})."
+            "comment": "Public profile pages (zealova.com/u/{username})."
           }
         ]
       }

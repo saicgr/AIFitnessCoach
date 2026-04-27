@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../shareable_canvas.dart';
 import '../shareable_data.dart';
-import '../widgets/fitwiz_watermark.dart';
+import '../widgets/app_watermark.dart';
 import '../widgets/shareable_hero_number.dart';
 
 /// Level Up — RPG-style XP ring + tier badge. Used for milestones &
@@ -115,7 +115,7 @@ class LevelUpTemplate extends StatelessWidget {
                   ),
                 ),
             const SizedBox(height: 16),
-            if (showWatermark) FitWizWatermark(textColor: Colors.white),
+            if (showWatermark) AppWatermark(textColor: Colors.white),
           ],
         ),
       ),

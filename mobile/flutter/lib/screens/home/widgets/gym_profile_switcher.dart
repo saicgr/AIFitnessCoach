@@ -12,6 +12,7 @@ import '../../../widgets/glass_sheet.dart';
 import 'add_gym_profile_sheet.dart';
 import 'components/sheet_theme_colors.dart';
 import 'edit_gym_profile_sheet.dart';
+import 'manage_gym_profiles_sheet.dart';
 
 /// Robinhood-style horizontal gym profile switcher strip
 ///
@@ -343,7 +344,21 @@ class _GymProfileSwitcherState extends ConsumerState<GymProfileSwitcher> {
           }
         },
         existingNames: profiles.map((p) => p.name.toLowerCase()).toList(),
+        onManageProfiles: () {
+          Navigator.of(sheetContext).pop();
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) _showManageProfilesSheet();
+          });
+        },
       ),
+    );
+  }
+
+  void _showManageProfilesSheet() {
+    HapticService.light();
+    showGlassSheet(
+      context: context,
+      builder: (_) => const ManageGymProfilesSheet(),
     );
   }
 
@@ -370,6 +385,7 @@ class _ProfilePickerSheet extends ConsumerStatefulWidget {
   final void Function(List<GymProfile>) onReorder;
   final Future<bool> Function(GymProfile, String) onDuplicateProfile;
   final List<String> existingNames;
+  final VoidCallback onManageProfiles;
 
   const _ProfilePickerSheet({
     required this.profiles,
@@ -381,6 +397,7 @@ class _ProfilePickerSheet extends ConsumerStatefulWidget {
     required this.onReorder,
     required this.onDuplicateProfile,
     required this.existingNames,
+    required this.onManageProfiles,
   });
 
   @override
@@ -495,6 +512,22 @@ class _ProfilePickerSheetState extends ConsumerState<_ProfilePickerSheet> {
                                   ),
                                 ),
                               ],
+                            ),
+                          ),
+                          // Open the full Manage Gym Profiles sheet — same
+                          // entry point used by Settings → Preferences. Surfaced
+                          // here so the user can jump from the quick switcher
+                          // to advanced options (reorder, days, split, location)
+                          // without leaving Home.
+                          IconButton(
+                            tooltip: 'Manage profiles',
+                            onPressed: () {
+                              HapticService.light();
+                              widget.onManageProfiles();
+                            },
+                            icon: Icon(
+                              Icons.settings_rounded,
+                              color: colors.textSecondary,
                             ),
                           ),
                           IconButton(

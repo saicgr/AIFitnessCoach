@@ -1,4 +1,4 @@
-package com.fitwiz.wearos.health
+package com.aifitnesscoach.wearos.health
 
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -6,10 +6,10 @@ import android.content.Intent
 import android.util.Log
 import androidx.health.services.client.PassiveListenerService
 import androidx.health.services.client.data.*
-import com.fitwiz.wearos.data.repository.HealthRepository
-import com.fitwiz.wearos.data.sync.DataLayerClient
-import com.fitwiz.wearos.data.sync.HealthDataSync
-import com.fitwiz.wearos.data.sync.SyncManager
+import com.aifitnesscoach.wearos.data.repository.HealthRepository
+import com.aifitnesscoach.wearos.data.sync.DataLayerClient
+import com.aifitnesscoach.wearos.data.sync.HealthDataSync
+import com.aifitnesscoach.wearos.data.sync.SyncManager
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

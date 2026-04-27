@@ -1,10 +1,10 @@
-package com.fitwiz.wearos.data.local.entity
+package com.aifitnesscoach.wearos.data.local.entity
 
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
-import com.fitwiz.wearos.data.models.WearSetLog
+import com.aifitnesscoach.wearos.data.models.WearSetLog
 
 /**
  * Room entity for set logs

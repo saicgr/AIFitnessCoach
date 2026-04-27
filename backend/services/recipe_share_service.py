@@ -16,6 +16,7 @@ import uuid
 from datetime import datetime
 from typing import Optional
 
+from core import branding
 from core.config import get_settings
 from core.db import get_supabase_db
 from models.recipe_share import CloneRecipeResponse, PublicRecipeView, ShareLink
@@ -31,7 +32,7 @@ def _generate_slug(length: int = 8) -> str:
 
 
 def _link_url(slug: str) -> str:
-    base = getattr(_settings, "share_link_base_url", None) or "https://fitwiz.us/r"
+    base = getattr(_settings, "share_link_base_url", None) or branding.RECIPE_SHARE_BASE
     return f"{base.rstrip('/')}/{slug}"
 
 

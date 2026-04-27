@@ -96,7 +96,7 @@ async def generate_share_artifact(
             return {
                 "success": True,
                 "type": "share_artifact_generated",
-                "url": f"https://fitwiz.us/w/{token}",
+                "url": f"https://zealova.com/w/{token}",
                 "scope": "workout",
                 "period": "today",
                 "deep_link": f"fitwiz://share?scope=workout&token={token}",
@@ -195,7 +195,7 @@ async def generate_share_artifact(
         return {
             "success": True,
             "type": "share_artifact_generated",
-            "url": f"https://fitwiz.us/p/{token}",
+            "url": f"https://zealova.com/p/{token}",
             "scope": scope,
             "period": period,
             "deep_link": (

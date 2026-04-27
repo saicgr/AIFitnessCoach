@@ -603,9 +603,10 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
                 // AI Coach Tip (also surfaces the personal_history pill when
                 // the server flagged this food as one the user has had bad
                 // reactions to before).
-                if (response.aiSuggestion != null ||
-                    (response.encouragements != null && response.encouragements!.isNotEmpty) ||
-                    (response.warnings != null && response.warnings!.isNotEmpty) ||
+                if ((response.aiSuggestion != null && response.aiSuggestion!.trim().isNotEmpty) ||
+                    (response.encouragements != null && response.encouragements!.any((e) => e.trim().isNotEmpty)) ||
+                    (response.warnings != null && response.warnings!.any((w) => w.trim().isNotEmpty)) ||
+                    (response.recommendedSwap != null && response.recommendedSwap!.trim().isNotEmpty) ||
                     (response.personalHistoryNote != null &&
                         response.personalHistoryNote!.trim().isNotEmpty))
                   Builder(builder: (_) {

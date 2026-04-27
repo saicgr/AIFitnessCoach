@@ -68,6 +68,7 @@ import '../../widgets/usage_counter_strip.dart';
 import '../../widgets/app_tour/app_tour_controller.dart';
 import '../../core/services/posthog_service.dart';
 import '../../core/services/fitness_snapshot_service.dart';
+import 'package:fitwiz/core/constants/branding.dart';
 
 part 'home_screen_part_dummy_animation_controller.dart';
 
@@ -194,24 +195,27 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     super.didChangeAppLifecycleState(state);
     // The lifecycle observer can fire AFTER the State is disposed (the OS
     // delivers a final `paused`/`resumed` event during teardown, while
-    // `removeObserver` is processed in dispose). Guard against using `ref`
-    // post-dispose — Riverpod throws `Bad state: No ProviderScope found`
-    // otherwise, which Crashlytics flagged on this exact path.
+    // `removeObserver` is processed in dispose). `mounted` alone isn't
+    // sufficient — Riverpod's ProviderScope can be torn down independently
+    // of the State lifecycle, throwing "Bad state: No ProviderScope found".
+    // Wrap the entire body in try/catch so the lifecycle event is silently
+    // dropped if scope is gone.
     if (!mounted) return;
-    if (state == AppLifecycleState.resumed) {
-      // Auto-refresh when returning to app (with rate limiting)
+    if (state != AppLifecycleState.resumed) return;
+    try {
+      // Auto-refresh when returning to app (with rate limiting). It has its
+      // own internal guards but a defensive try here means any escape from
+      // those guards still doesn't crash the app.
       _autoRefreshIfNeeded();
       // Pull latest CustomerInfo from RevenueCat so subscription state
       // reflects any out-of-app changes the user made (e.g. cancelling
       // from Google Play's Subscriptions page while the app was
       // backgrounded). Internally 30s-debounced — safe to fire often.
-      try {
-        unawaited(
-          ref.read(subscriptionProvider.notifier).refreshFromRevenueCat(),
-        );
-      } catch (e) {
-        debugPrint('⚠️ [Home] subscription refresh skipped post-dispose: $e');
-      }
+      unawaited(
+        ref.read(subscriptionProvider.notifier).refreshFromRevenueCat(),
+      );
+    } catch (e) {
+      debugPrint('⚠️ [Home] lifecycle resume skipped post-dispose: $e');
     }
   }
 
@@ -967,35 +971,69 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   void _onWeekDaySelected(int dayIndex) {
     setState(() => _selectedWeekDay = dayIndex);
 
-    if (_carouselItems.isEmpty) return;
-    if (!_carouselPageController.hasClients) return;
-
-    // Find the carousel item whose date matches or is closest to the tapped day
     final weekConfig = ref.read(weekDisplayConfigProvider);
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final weekStart = weekConfig.weekStart(today);
     final tappedDate = weekConfig.dateForDataIndex(weekStart, dayIndex);
+    final tappedKey =
+        '${tappedDate.year}-${tappedDate.month.toString().padLeft(2, '0')}-${tappedDate.day.toString().padLeft(2, '0')}';
 
+    // 1) Exact carousel match wins — animate the carousel to that card.
+    int? exactIndex;
     int bestIndex = 0;
     int bestDiff = 999;
-
     for (int i = 0; i < _carouselItems.length; i++) {
       final itemDate = _carouselItems[i].date;
       if (itemDate == null) continue;
-
-      final diff = (itemDate.difference(tappedDate).inDays).abs();
+      if (itemDate.year == tappedDate.year &&
+          itemDate.month == tappedDate.month &&
+          itemDate.day == tappedDate.day) {
+        exactIndex = i;
+        break;
+      }
+      final diff = itemDate.difference(tappedDate).inDays.abs();
       if (diff < bestDiff) {
         bestDiff = diff;
         bestIndex = i;
       }
     }
 
-    _carouselPageController.animateToPage(
-      bestIndex,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
-    );
+    if (exactIndex != null && _carouselPageController.hasClients) {
+      _carouselPageController.animateToPage(
+        exactIndex,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+      return;
+    }
+
+    // 2) No card for that day — but a workout may still exist (e.g. a missed
+    // session that was filtered out of the carousel). Open it directly so the
+    // user can see what they missed.
+    final allWorkouts = ref.read(workoutsProvider).valueOrNull ?? [];
+    Workout? matchedWorkout;
+    for (final w in allWorkouts) {
+      final raw = w.scheduledDate;
+      if (raw == null || raw.length < 10) continue;
+      if (raw.substring(0, 10) == tappedKey) {
+        matchedWorkout = w;
+        break;
+      }
+    }
+    if (matchedWorkout != null && matchedWorkout.id != null) {
+      context.push('/workout/${matchedWorkout.id}', extra: matchedWorkout);
+      return;
+    }
+
+    // 3) Fallback — animate to nearest card so the user gets *something*.
+    if (_carouselItems.isNotEmpty && _carouselPageController.hasClients) {
+      _carouselPageController.animateToPage(
+        bestIndex,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+    }
   }
 
   /// Handle carousel page change (sync strip highlight)

@@ -59,7 +59,7 @@ class PlanShareService {
         if (startDate != null) 'start_date': _ymd(startDate),
         if (endDate != null) 'end_date': _ymd(endDate),
       };
-      final res = await _api.dio.post('/api/v1/plans/share-link', data: body);
+      final res = await _api.dio.post('/plans/share-link', data: body);
       final data = res.data;
       if (data is Map<String, dynamic>) {
         return PlanShareLinkResponse.fromJson(data);
@@ -77,7 +77,7 @@ class PlanShareService {
   /// Revoke an existing token. Returns true on success.
   Future<bool> revoke(String token) async {
     try {
-      final res = await _api.dio.delete('/api/v1/plans/share-link/$token');
+      final res = await _api.dio.delete('/plans/share-link/$token');
       return res.statusCode != null && res.statusCode! < 400;
     } catch (e) {
       debugPrint('plan share revoke failed: $e');

@@ -111,10 +111,37 @@ class _ComprehensiveStatsScreenState extends ConsumerState<ComprehensiveStatsScr
 
     switch (tabIndex) {
       case 0: // Overview — scores + milestones + calendar stats
-        ref.read(scoresProvider.notifier).loadScoresOverview(userId: _userId!);
-        ref.read(milestonesProvider.notifier).loadMilestoneProgress(userId: _userId!);
-        // Load calendar data for stats (Total/Week/Time)
-        ref.read(consistencyProvider.notifier).loadCalendar(userId: _userId!, weeks: 52);
+        // All four loaders fire in parallel (notifiers are non-blocking).
+        // We also pre-warm the activity heatmap for the default 3M range so
+        // the chart isn't a second wave of fetches when its widget mounts —
+        // before this, the chart spinner stayed up ~500ms after the rest of
+        // the page rendered, making the screen feel half-loaded.
+        Future.wait<void>([
+          Future.sync(() => ref
+              .read(scoresProvider.notifier)
+              .loadScoresOverview(userId: _userId!)),
+          Future.sync(() => ref
+              .read(milestonesProvider.notifier)
+              .loadMilestoneProgress(userId: _userId!)),
+          Future.sync(() => ref
+              .read(consistencyProvider.notifier)
+              .loadCalendar(userId: _userId!, weeks: 52)),
+        ]);
+        // Pre-warm the heatmap. Default range matches overview_tab.dart's
+        // initial `heatmapTimeRangeProvider` (3M = 13 weeks). FutureProvider
+        // dedupes the fetch when the chart widget watches it later.
+        // Wrapped in Future.microtask so the read runs after the current
+        // setState pass — avoids "ref used after dispose" if the user back-
+        // swipes immediately.
+        Future.microtask(() {
+          if (!mounted) return;
+          ref.read(activityHeatmapProvider((
+            userId: _userId!,
+            weeks: 13,
+            startDate: null,
+            endDate: null,
+          )));
+        });
         break;
       case 1: // Photos
         ref.read(progressPhotosNotifierProvider(_userId!).notifier).loadAll();

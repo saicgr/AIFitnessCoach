@@ -6,6 +6,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../data/models/home_layout.dart';
 import '../../../data/providers/home_layout_provider.dart';
 import '../../../data/services/haptic_service.dart';
+import 'package:fitwiz/core/constants/branding.dart';
 
 /// Bottom sheet for picking layout templates
 class TemplatePickerSheet extends ConsumerWidget {
@@ -121,7 +122,7 @@ class TemplatePickerSheet extends ConsumerWidget {
                     final defaultTemplate = HomeLayoutTemplate(
                       id: 'default',
                       name: 'Default Layout',
-                      description: 'The original FitWiz home screen experience',
+                      description: 'The original ${Branding.appName} home screen experience',
                       tiles: createDefaultTiles(),
                       icon: 'dashboard',
                       category: 'default',

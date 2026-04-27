@@ -1,5 +1,5 @@
 """
-Data Export Service for FitWiz.
+Data Export Service for Zealova.
 
 Exports user data to CSV, JSON, Excel, and Parquet formats.
 Supports export for data portability and re-import after account deletion.
@@ -21,6 +21,7 @@ from typing import Dict, List, Any, Optional
 
 import pandas as pd
 
+from core import branding
 from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 
@@ -329,7 +330,7 @@ def export_user_data(
             zip_file.writestr("workout_logs.csv", logs_csv)
             export_counts["workout_logs"] = len(results["workout_logs"])
 
-        # 5. Performance logs (exercise sets) — FitWiz-native schema
+        # 5. Performance logs (exercise sets) — Zealova-native schema
         if _include("exercise_sets"):
             sets_csv = _export_exercise_sets(results["performance_logs"])
             zip_file.writestr("exercise_sets.csv", sets_csv)
@@ -337,7 +338,7 @@ def export_user_data(
 
         # 5b. Strong-compatible CSV — same data, Hevy-importable schema.
         # Shipped alongside (not instead of) the native format so users can
-        # pick the tool chain that fits: FitWiz import for round-trip,
+        # pick the tool chain that fits: Zealova import for round-trip,
         # workouts_strong.csv for migrating to Hevy / community parsers.
         if _include("workouts_strong"):
             strong_csv = _export_workouts_strong_format(
@@ -894,9 +895,9 @@ def _export_workouts_strong_format(
     Why separate from `_export_exercise_sets` + `_export_workouts`: Strong's
     CSV is the de-facto industry standard that tooling and competitor
     importers (Hevy, community parsers on GitHub) already understand. Users
-    migrating between apps want *this exact layout*, not a FitWiz-native
+    migrating between apps want *this exact layout*, not a Zealova-native
     one — even if ours captures more fields. The plain `exercise_sets.csv`
-    still ships for users who want FitWiz's richer schema.
+    still ships for users who want Zealova's richer schema.
 
     Columns (ORDER MATTERS — Hevy's importer validates positionally on some
     paths): Date, Workout Name, Duration, Exercise Name, Set Order, Weight,
@@ -1058,14 +1059,14 @@ def _build_export_readme(
     it without running code. This README is that bridge.
     """
     lines: List[str] = []
-    lines.append("FitWiz — Data Export")
+    lines.append(f"{branding.APP_NAME} — Data Export")
     lines.append("=" * 68)
     lines.append(f"Generated:   {datetime.utcnow().isoformat()}Z")
     lines.append(f"Version:     {EXPORT_VERSION}")
     if start_date or end_date:
         lines.append(f"Date range:  {start_date or 'beginning'} → {end_date or 'today'}")
     lines.append("")
-    lines.append("This archive contains every personal record FitWiz holds")
+    lines.append(f"This archive contains every personal record {branding.APP_NAME} holds")
     lines.append("about your account, as required by GDPR Art. 20 (the right")
     lines.append("to data portability) and CCPA/CPRA equivalents.")
     lines.append("")
@@ -1102,7 +1103,7 @@ def _build_export_readme(
         n = counts.get(key, 0)
         lines.append(f"  - {fname:<28} {desc}  ({n} rows)")
     lines.append("")
-    lines.append("Questions? Email privacy@fitwiz.us.")
+    lines.append(f"Questions? Email {branding.PRIVACY_EMAIL}.")
     return "\n".join(lines)
 
 

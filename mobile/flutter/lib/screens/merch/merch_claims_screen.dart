@@ -8,6 +8,7 @@ import '../../data/providers/merch_claim_provider.dart';
 import '../../data/providers/merch_notification_prefs_provider.dart';
 import '../../data/services/haptic_service.dart';
 import '../../widgets/glass_back_button.dart';
+import 'package:fitwiz/core/constants/branding.dart';
 
 /// Screen showing physical merch rewards earned at milestone levels.
 /// Users tap "Accept" on unclaimed rewards and the ops team reaches out
@@ -23,7 +24,10 @@ class _MerchClaimsScreenState extends ConsumerState<MerchClaimsScreen> {
   @override
   void initState() {
     super.initState();
-    Future.microtask(() => ref.read(merchClaimsProvider.notifier).load());
+    Future.microtask(() {
+      if (!mounted) return;
+      ref.read(merchClaimsProvider.notifier).load();
+    });
   }
 
   @override
@@ -173,7 +177,7 @@ class _MerchClaimsScreenState extends ConsumerState<MerchClaimsScreen> {
           ),
           const SizedBox(height: 10),
           Text(
-            'Reach milestone levels and we ship you real FitWiz gear. '
+            'Reach milestone levels and we ship you real ${Branding.appName} gear. '
             'Sticker Pack at 50, T-Shirt at 100, Hoodie at 150, Full Kit at 200, '
             'Signed Premium Kit at 250.',
             style: TextStyle(fontSize: 13, color: textMuted, height: 1.4),
@@ -225,7 +229,7 @@ class _MerchClaimsScreenState extends ConsumerState<MerchClaimsScreen> {
           ),
           const SizedBox(height: 6),
           Text(
-            'Your first physical reward unlocks at Level 50 — a free FitWiz sticker pack.',
+            'Your first physical reward unlocks at Level 50 — a free ${Branding.appName} sticker pack.',
             style: TextStyle(fontSize: 13, color: textMuted),
             textAlign: TextAlign.center,
           ),
@@ -278,7 +282,7 @@ class _MerchClaimsScreenState extends ConsumerState<MerchClaimsScreen> {
             ),
             const SizedBox(height: 12),
             const Text(
-              'Keep an eye on the email tied to your FitWiz account.',
+              'Keep an eye on the email tied to your ${Branding.appName} account.',
               style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
             ),
           ],

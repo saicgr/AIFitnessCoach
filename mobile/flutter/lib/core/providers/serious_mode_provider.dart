@@ -9,7 +9,7 @@
 ///     dialed down — future hook).
 ///
 /// Stored in SharedPreferences under `serious_mode_v1`. Persists across
-/// launches. Default: off — the gamified experience is FitWiz's retention
+/// launches. Default: off — the gamified experience is Zealova's retention
 /// engine and should be the default per project_gamification_role.md.
 library;
 

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Android App Bundle Build Script for FitWiz
+# Android App Bundle Build Script for Zealova
 # Usage: ./build_appbundle.sh [--debug]
 # Builds a release AAB by default, pass --debug for debug AAB
 
@@ -13,7 +13,7 @@ YELLOW='\033[1;33m'
 CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
-echo -e "${GREEN}=== FitWiz App Bundle Build Script ===${NC}"
+echo -e "${GREEN}=== Zealova App Bundle Build Script ===${NC}"
 
 # Set paths
 FLUTTER_PATH="/opt/homebrew/bin/flutter"

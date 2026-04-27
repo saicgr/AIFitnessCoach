@@ -1,4 +1,4 @@
-package com.fitwiz.wearos.presentation.screens.nutrition
+package com.aifitnesscoach.wearos.presentation.screens.nutrition
 
 import android.app.Activity
 import android.content.Intent
@@ -20,11 +20,11 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
 import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
 import androidx.wear.compose.material.*
-import com.fitwiz.wearos.data.models.FoodInputType
-import com.fitwiz.wearos.presentation.theme.FitWizColors
-import com.fitwiz.wearos.presentation.theme.FitWizTypography
-import com.fitwiz.wearos.presentation.viewmodel.NutritionViewModel
-import com.fitwiz.wearos.voice.VoiceInputManager
+import com.aifitnesscoach.wearos.data.models.FoodInputType
+import com.aifitnesscoach.wearos.presentation.theme.AppColors
+import com.aifitnesscoach.wearos.presentation.theme.AppTypography
+import com.aifitnesscoach.wearos.presentation.viewmodel.NutritionViewModel
+import com.aifitnesscoach.wearos.voice.VoiceInputManager
 import java.util.*
 
 /**
@@ -94,8 +94,8 @@ fun FoodLogScreen(
             item {
                 Text(
                     text = "LOG FOOD",
-                    style = FitWizTypography.titleMedium,
-                    color = FitWizColors.Nutrition
+                    style = AppTypography.titleMedium,
+                    color = AppColors.Nutrition
                 )
                 Spacer(modifier = Modifier.height(16.dp))
             }
@@ -152,8 +152,8 @@ fun FoodLogScreen(
                 item {
                     Text(
                         text = "RECENT",
-                        style = FitWizTypography.labelSmall,
-                        color = FitWizColors.TextMuted
+                        style = AppTypography.labelSmall,
+                        color = AppColors.TextMuted
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                 }
@@ -190,15 +190,15 @@ private fun InputOptionCard(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
-            .background(FitWizColors.Surface)
+            .background(AppColors.Surface)
             .clickable(onClick = onClick)
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
             text = icon,
-            style = FitWizTypography.displaySmall,
-            color = FitWizColors.Nutrition
+            style = AppTypography.displaySmall,
+            color = AppColors.Nutrition
         )
 
         Spacer(modifier = Modifier.width(12.dp))
@@ -206,13 +206,13 @@ private fun InputOptionCard(
         Column {
             Text(
                 text = title,
-                style = FitWizTypography.titleSmall,
-                color = FitWizColors.Nutrition
+                style = AppTypography.titleSmall,
+                color = AppColors.Nutrition
             )
             Text(
                 text = subtitle,
-                style = FitWizTypography.bodySmall,
-                color = FitWizColors.TextMuted
+                style = AppTypography.bodySmall,
+                color = AppColors.TextMuted
             )
         }
     }
@@ -226,14 +226,14 @@ private fun RecentFoodChip(
     Box(
         modifier = Modifier
             .clip(RoundedCornerShape(8.dp))
-            .background(FitWizColors.Nutrition.copy(alpha = 0.2f))
+            .background(AppColors.Nutrition.copy(alpha = 0.2f))
             .clickable(onClick = onClick)
             .padding(horizontal = 8.dp, vertical = 4.dp)
     ) {
         Text(
             text = name.take(10),
-            style = FitWizTypography.labelSmall,
-            color = FitWizColors.Nutrition,
+            style = AppTypography.labelSmall,
+            color = AppColors.Nutrition,
             maxLines = 1
         )
     }

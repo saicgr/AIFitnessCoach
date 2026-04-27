@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fitwiz/core/constants/branding.dart';
 
 /// Catalog of data-export categories surfaced in the Export dialog.
 ///
@@ -58,7 +59,7 @@ const List<ExportCategory> kExportCategories = [
   ExportCategory(
     key: 'chat',
     label: 'Coach Chat History',
-    description: 'Your conversations with FitWiz coaches',
+    description: 'Your conversations with ${Branding.appName} coaches',
     icon: Icons.chat_bubble_outline,
   ),
   ExportCategory(

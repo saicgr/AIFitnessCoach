@@ -42,11 +42,11 @@ class User extends Equatable {
   final String? timezone; // IANA timezone identifier (e.g., America/New_York)
   final String? role; // 'user', 'admin', or 'super_admin'
   @JsonKey(name: 'is_support_user')
-  final bool? isSupportUser; // True for support@fitwiz.us (cannot be unfriended)
+  final bool? isSupportUser; // True for support@zealova.com (cannot be unfriended)
   @JsonKey(name: 'is_new_user')
   final bool? isNewUser; // True on first login - signals to show welcome message
   @JsonKey(name: 'support_friend_added')
-  final bool? supportFriendAdded; // True when FitWiz Support was auto-added as friend
+  final bool? supportFriendAdded; // True when Zealova Support was auto-added as friend
   @JsonKey(name: 'weight_unit')
   final String? weightUnit; // 'kg' or 'lbs' - user's preferred body weight unit
   @JsonKey(name: 'workout_weight_unit')
@@ -186,7 +186,7 @@ class User extends Equatable {
   /// Check if this is the user's first login (for showing welcome message)
   bool get isFirstLogin => isNewUser == true;
 
-  /// Check if FitWiz Support was auto-added as friend on signup
+  /// Check if Zealova Support was auto-added as friend on signup
   bool get hasSupportFriend => supportFriendAdded == true;
 
   /// Check if personal info (name, DOB, gender, height, weight) is complete

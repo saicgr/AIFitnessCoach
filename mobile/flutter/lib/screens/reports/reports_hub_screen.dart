@@ -13,10 +13,12 @@ import '../../core/services/posthog_service.dart';
 import '../../core/theme/accent_color_provider.dart';
 import '../../data/services/haptic_service.dart';
 import '../../shareables/adapters/reports_adapter.dart';
+import '../../shareables/shareable_data.dart';
 import '../../shareables/shareable_sheet.dart';
 import '../../widgets/pill_app_bar.dart';
 import 'report_thumbnail_provider.dart';
 import 'widgets/report_share_sheet.dart';
+import 'package:fitwiz/core/constants/branding.dart';
 
 /// Reports Hub — one catalog of every shareable report in the app.
 ///
@@ -40,7 +42,7 @@ enum _HubView { carousel, list }
 class _ReportsHubScreenState extends ConsumerState<ReportsHubScreen> {
   static const _favsPrefsKey = 'reports_hub_favorites';
 
-  _HubView _view = _HubView.carousel; // default per user request
+  _HubView _view = _HubView.list; // default per user request — list shows all categories at once; toggle in app bar swaps to swipeable carousel
   Set<String> _favorites = <String>{};
 
   @override
@@ -224,7 +226,7 @@ class _ReportsHubScreenState extends ConsumerState<ReportsHubScreen> {
         icon: Icons.auto_awesome_rounded,
         accent: AppColors.purple,
         title: 'Achievements',
-        subtitle: 'Everything you\'ve earned in FitWiz',
+        subtitle: 'Everything you\'ve earned in ${Branding.appName}',
         route: '/achievements',
         gradient: [Color(0xFF3B0764), Color(0xFF7E22CE), Color(0xFF1E1B4B)],
       ),
@@ -390,18 +392,33 @@ class _CarouselViewState extends ConsumerState<_CarouselView> {
     // Use the same canonical adapter the source screen uses — this is what
     // fixes the "white placeholder bars" bug on PRs/etc when sharing from
     // the hub: the hub no longer ships a thin {primary, secondary} payload.
-    final shareable = await ReportsAdapter.forRoute(
-      ref: ref,
-      context: context,
-      route: report.route,
-      month: month,
-    );
+    Shareable? shareable;
+    try {
+      shareable = await ReportsAdapter.forRoute(
+        ref: ref,
+        context: context,
+        route: report.route,
+        month: month,
+      );
+    } catch (e, st) {
+      // Surface failures explicitly so the share button doesn't appear to
+      // silently no-op when an underlying query throws (RLS, network, etc.).
+      debugPrint('❌ [ReportsHub] Share build failed: $e\n$st');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Couldn't build share — ${e.toString()}"),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
     if (!mounted) return;
     if (shareable == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text(
-              'Not enough data yet — try again after your next workout'),
+              'No ${report.title.toLowerCase()} data for ${DateFormat('MMM yyyy').format(month)} yet — try a different month'),
           behavior: SnackBarBehavior.floating,
         ),
       );

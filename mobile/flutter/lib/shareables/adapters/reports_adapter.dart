@@ -120,28 +120,74 @@ class ReportsAdapter {
     final db = Supabase.instance.client;
     final monthStart = DateTime(month.year, month.month, 1);
     final monthEnd = DateTime(month.year, month.month + 1, 1);
-    final res = await db
-        .from('workouts')
-        .select('duration_minutes, metadata, completed_at')
-        .eq('user_id', userId)
-        .gte('completed_at', monthStart.toIso8601String())
-        .lt('completed_at', monthEnd.toIso8601String())
-        .eq('is_completed', true);
-    final list = (res as List).cast<Map<String, dynamic>>();
+
+    // Pull two slices and merge:
+    //   (a) workouts COMPLETED in this month (completed_at within bounds), AND
+    //   (b) workouts SCHEDULED this month with is_completed=true but
+    //       completed_at unset — Health Connect / Apple Health synced rows
+    //       and some legacy "mark done" paths land here. Without (b) the
+    //       hub card would say "3 workouts" while the share sheet returned
+    //       null because none of the synced rows have completed_at set.
+    final monthStartIso = monthStart.toIso8601String();
+    final monthEndIso = monthEnd.toIso8601String();
+    final scheduledStart =
+        DateFormat('yyyy-MM-dd').format(monthStart);
+    final scheduledEnd =
+        DateFormat('yyyy-MM-dd').format(monthEnd);
+
+    final results = await Future.wait([
+      db
+          .from('workouts')
+          .select(
+              'id, duration_minutes, estimated_calories, generation_metadata, completed_at, scheduled_date')
+          .eq('user_id', userId)
+          .gte('completed_at', monthStartIso)
+          .lt('completed_at', monthEndIso)
+          .eq('is_completed', true),
+      db
+          .from('workouts')
+          .select(
+              'id, duration_minutes, estimated_calories, generation_metadata, completed_at, scheduled_date')
+          .eq('user_id', userId)
+          .gte('scheduled_date', scheduledStart)
+          .lt('scheduled_date', scheduledEnd)
+          .eq('is_completed', true)
+          .filter('completed_at', 'is', null),
+    ]);
+
+    final byId = <String, Map<String, dynamic>>{};
+    for (final res in results) {
+      for (final row in (res as List).cast<Map<String, dynamic>>()) {
+        final id = row['id']?.toString();
+        if (id != null) byId[id] = row;
+      }
+    }
+    final list = byId.values.toList();
     if (list.isEmpty) return null;
 
     final totalMin = list.fold<int>(
         0, (s, w) => s + ((w['duration_minutes'] as num?)?.toInt() ?? 0));
     final totalCal = list.fold<int>(0, (s, w) {
-      final meta = (w['metadata'] as Map?)?.cast<String, dynamic>();
+      // Prefer the dedicated estimated_calories column; fall back to the
+      // calories_burned/calories_active fields stashed in generation_metadata.
+      final est = (w['estimated_calories'] as num?)?.toInt();
+      if (est != null && est > 0) return s + est;
+      final meta = (w['generation_metadata'] as Map?)?.cast<String, dynamic>();
       final c = (meta?['calories_active'] ?? meta?['calories_burned']) as num?;
       return s + (c?.toInt() ?? 0);
     });
 
     // Compute streak inline from completed_at days (consecutive day count
-    // ending today or yesterday).
+    // ending today or yesterday). Falls back to scheduled_date for synced
+    // rows so streak doesn't silently drop them.
     final dayKeys = list
-        .map((w) => DateTime.tryParse(w['completed_at'] as String))
+        .map((w) {
+          final c = w['completed_at'] as String?;
+          if (c != null && c.isNotEmpty) return DateTime.tryParse(c);
+          final s = w['scheduled_date'] as String?;
+          if (s != null && s.isNotEmpty) return DateTime.tryParse(s);
+          return null;
+        })
         .whereType<DateTime>()
         .map((d) => DateTime(d.year, d.month, d.day))
         .toSet()

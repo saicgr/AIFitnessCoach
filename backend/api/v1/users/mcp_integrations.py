@@ -2,7 +2,7 @@
 MCP Integrations endpoints.
 
 Lets a user create, inspect, and revoke the external AI assistants (Claude
-Desktop, ChatGPT, Cursor, etc.) that have been granted access to their FitWiz
+Desktop, ChatGPT, Cursor, etc.) that have been granted access to their Zealova
 account via the MCP server.
 
 There are two connection paths:
@@ -32,6 +32,7 @@ from typing import Any, Dict, List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, Field
 
+from core import branding
 from core.auth import get_current_user
 from core.logger import get_logger
 from core.supabase_client import get_supabase
@@ -217,7 +218,7 @@ async def create_pat(
             status_code=402,
             detail={
                 "error": "subscription_required",
-                "error_description": "MCP access requires a yearly FitWiz subscription.",
+                "error_description": f"MCP access requires a yearly {branding.APP_NAME} subscription.",
                 "upgrade_url": cfg.UPGRADE_URL,
             },
         )

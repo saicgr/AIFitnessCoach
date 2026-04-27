@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:fitwiz/core/constants/branding.dart';
 
 /// Summary of the current user's referral program status.
 /// Mirrors backend `get_referral_summary` RPC (migration 1932).
@@ -49,10 +50,10 @@ class ReferralSummary {
       nextMilestone == null ? 0 : (nextMilestone! - qualifiedCount).clamp(0, nextMilestone!);
 
   String get nextMerchDisplayName => switch (nextMerchType) {
-        'sticker_pack' => 'FitWiz Sticker Pack',
-        'shaker_bottle' => 'FitWiz Shaker Bottle',
-        't_shirt' => 'FitWiz T-Shirt',
-        'hoodie' => 'FitWiz Hoodie',
+        'sticker_pack' => '${Branding.appName} Sticker Pack',
+        'shaker_bottle' => '${Branding.appName} Shaker Bottle',
+        't_shirt' => '${Branding.appName} T-Shirt',
+        'hoodie' => '${Branding.appName} Hoodie',
         'full_merch_kit' => 'Full Merch Kit',
         'signed_premium_kit' => 'Signed Premium Kit',
         _ => '',
@@ -93,10 +94,10 @@ class ReferralTier {
   });
 
   static const List<ReferralTier> all = [
-    ReferralTier(threshold: 3, merchType: 'sticker_pack', displayName: 'FitWiz Sticker Pack', emoji: '✨'),
-    ReferralTier(threshold: 10, merchType: 'shaker_bottle', displayName: 'FitWiz Shaker Bottle', emoji: '🥤'),
-    ReferralTier(threshold: 25, merchType: 't_shirt', displayName: 'FitWiz T-Shirt', emoji: '👕'),
-    ReferralTier(threshold: 50, merchType: 'hoodie', displayName: 'FitWiz Hoodie', emoji: '🧥'),
+    ReferralTier(threshold: 3, merchType: 'sticker_pack', displayName: '${Branding.appName} Sticker Pack', emoji: '✨'),
+    ReferralTier(threshold: 10, merchType: 'shaker_bottle', displayName: '${Branding.appName} Shaker Bottle', emoji: '🥤'),
+    ReferralTier(threshold: 25, merchType: 't_shirt', displayName: '${Branding.appName} T-Shirt', emoji: '👕'),
+    ReferralTier(threshold: 50, merchType: 'hoodie', displayName: '${Branding.appName} Hoodie', emoji: '🧥'),
     ReferralTier(threshold: 100, merchType: 'full_merch_kit', displayName: 'Full Merch Kit', emoji: '🎁'),
     ReferralTier(threshold: 250, merchType: 'signed_premium_kit', displayName: 'Signed Premium Kit', emoji: '🏆'),
   ];

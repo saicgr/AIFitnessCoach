@@ -69,7 +69,7 @@ class LiveActivityService {
   LiveActivityService._();
   static final LiveActivityService instance = LiveActivityService._();
 
-  // App Group shared with the FitWizLiveActivity Widget Extension.
+  // App Group shared with the ZealovaLiveActivity Widget Extension.
   static const String _appGroupId = 'group.fitwiz.liveactivity';
 
   // Apple limits Live Activities to 8 hours. End one slightly before.

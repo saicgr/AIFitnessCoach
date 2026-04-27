@@ -147,11 +147,11 @@ BEGIN
   -- Award XP
   IF v_first_login_bonus > 0 THEN
     BEGIN
-      PERFORM award_xp(p_user_id, v_first_login_bonus, 'first_login', NULL, 'Welcome to FitWiz!');
+      PERFORM award_xp(p_user_id, v_first_login_bonus, 'first_login', NULL, 'Welcome to Zealova!');
     EXCEPTION WHEN OTHERS THEN
       -- Fallback: direct insert
       INSERT INTO xp_transactions (user_id, xp_amount, source, description, created_at)
-      VALUES (p_user_id, v_first_login_bonus, 'first_login', 'Welcome to FitWiz!', NOW());
+      VALUES (p_user_id, v_first_login_bonus, 'first_login', 'Welcome to Zealova!', NOW());
     END;
   END IF;
 
@@ -199,8 +199,8 @@ BEGIN
     'multiplier', v_total_multiplier,
     'message',
       CASE
-        WHEN v_is_first_login AND v_user_count <= 100 THEN 'Welcome to FitWiz! As one of our first 100 users, you get a special 525 XP bonus!'
-        WHEN v_is_first_login THEN 'Welcome to FitWiz! Here''s your welcome bonus!'
+        WHEN v_is_first_login AND v_user_count <= 100 THEN 'Welcome to Zealova! As one of our first 100 users, you get a special 525 XP bonus!'
+        WHEN v_is_first_login THEN 'Welcome to Zealova! Here''s your welcome bonus!'
         WHEN v_streak_record.current_streak = 7 THEN 'Amazing! 7-day streak achieved!'
         WHEN v_streak_record.current_streak = 30 THEN 'Incredible! 30-day streak achieved!'
         WHEN v_streak_record.current_streak = 100 THEN 'Legendary! 100-day streak achieved!'

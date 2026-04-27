@@ -435,6 +435,22 @@ extension __SettingsScreenStateExt on _SettingsScreenState {
   }
 
 
+  /// Reset Tips — clears every dismissed onboarding tour across BOTH
+  /// tooltip systems (`EmptyStateTipTour` first-run hints AND
+  /// `AppTour` multi-screen flows) so the next time the user lands on
+  /// any tour-bearing screen the spotlights reappear. Single entry
+  /// point so future tour systems hook in here once and the user
+  /// keeps a single button.
+  Future<void> _resetEmptyStateTips(BuildContext context) async {
+    final scaffold = ScaffoldMessenger.of(context);
+    final cleared = await Tooltips.resetAll();
+    if (!context.mounted) return;
+    final msg = cleared == 0
+        ? 'No tips to reset.'
+        : 'Reset $cleared tip${cleared == 1 ? '' : 's'} — they\'ll show again on your next visit.';
+    scaffold.showSnackBar(SnackBar(content: Text(msg)));
+  }
+
   void _showReplayTutorialsSheet(BuildContext context, WidgetRef ref, bool isDark) {
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
@@ -567,7 +583,7 @@ extension __SettingsScreenStateExt on _SettingsScreenState {
               ),
             ),
             const SizedBox(width: 12),
-            const Text('FitWiz'),
+            const Text('${Branding.appName}'),
           ],
         ),
         content: FutureBuilder<PackageInfo>(

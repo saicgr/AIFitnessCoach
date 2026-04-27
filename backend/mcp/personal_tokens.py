@@ -1,6 +1,6 @@
 """Personal Access Tokens for MCP — simpler alternative to OAuth.
 
-Users generate a PAT from the FitWiz app (Settings → AI Integrations →
+Users generate a PAT from the Zealova app (Settings → AI Integrations →
 Create Connection). They paste the generated JSON config directly into their
 MCP client. No consent screen, no cross-device token copying, no OAuth
 authorization code dance.

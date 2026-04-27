@@ -29,7 +29,7 @@ from typing import Any, Dict, List, Optional
 
 from core.db import get_supabase_db
 from core.logger import get_logger
-from services.gemini.nutrition import GeminiNutritionService
+from services.gemini.service import GeminiService
 
 logger = get_logger(__name__)
 
@@ -175,7 +175,7 @@ async def enrich_food_log_scores(food_log_id: str, user_id: str) -> bool:
         return False
 
     try:
-        service = GeminiNutritionService()
+        service = GeminiService()
         gemini_result = await service.parse_food_description(
             description=seed,
             user_id=user_id,

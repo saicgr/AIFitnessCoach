@@ -4,11 +4,12 @@ import 'package:flutter/material.dart';
 
 import '../shareable_canvas.dart';
 import '../shareable_data.dart';
-import '../widgets/fitwiz_watermark.dart';
+import '../widgets/app_watermark.dart';
 import '../widgets/photo_backdrop.dart';
+import 'package:fitwiz/core/constants/branding.dart';
 
 /// PhotoLockscreen — iOS-lockscreen mockup. User photo as wallpaper, status
-/// bar at top, big stylized clock, then a "FitWiz" widget pinned below
+/// bar at top, big stylized clock, then a "Zealova" widget pinned below
 /// showing the workout summary as a frosted-glass card. Distinct from
 /// Widget template (which renders a single iOS-widget card on a solid
 /// canvas) because this puts your photo as the wallpaper.
@@ -134,7 +135,7 @@ class PhotoLockscreenTemplate extends StatelessWidget {
                   ),
                 ),
                 const Spacer(),
-                // FitWiz widget card.
+                // Zealova widget card.
                 ClipRRect(
                   borderRadius: BorderRadius.circular(22),
                   child: BackdropFilter(
@@ -168,7 +169,7 @@ class PhotoLockscreenTemplate extends StatelessWidget {
                               ),
                               const SizedBox(width: 8),
                               Text(
-                                'FitWiz',
+                                '${Branding.appName}',
                                 style: TextStyle(
                                   color: Colors.white,
                                   fontSize: 13 * mul,
@@ -222,7 +223,7 @@ class PhotoLockscreenTemplate extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
                 if (showWatermark)
-                  FitWizWatermark(
+                  AppWatermark(
                     textColor: Colors.white,
                     fontSize: 11 * mul,
                     iconSize: 16,

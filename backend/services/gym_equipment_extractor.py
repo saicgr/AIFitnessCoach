@@ -30,6 +30,7 @@ from typing import Optional
 
 from google.genai import types
 
+from core import branding
 from core.logger import get_logger
 from services.equipment_resolver import EquipmentResolver
 from services.gemini.constants import gemini_generate_with_retry
@@ -262,7 +263,7 @@ class GymEquipmentExtractor:
         logger.info(f"🏋️ [GymEquipmentExtractor] Fetching URL: {url}")
         try:
             async with httpx.AsyncClient(timeout=_URL_TIMEOUT_SECONDS, follow_redirects=True) as client:
-                resp = await client.get(url, headers={"User-Agent": "FitWizBot/1.0 (+gym-equipment-importer)"})
+                resp = await client.get(url, headers={"User-Agent": f"{branding.APP_NAME}Bot/1.0 (+gym-equipment-importer)"})
                 resp.raise_for_status()
         except Exception as e:
             logger.error(f"❌ [GymEquipmentExtractor] URL fetch failed: {e}", exc_info=True)

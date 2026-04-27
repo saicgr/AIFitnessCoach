@@ -1,8 +1,8 @@
-# FitWiz - Multi-Agent Architecture
+# Zealova - Multi-Agent Architecture
 
 ## Overview
 
-The FitWiz uses a **multi-agent architecture** where specialized domain agents handle different aspects of fitness coaching. Each agent can both **use tools** (database operations) and **reason autonomously** (answer questions without tools).
+The Zealova uses a **multi-agent architecture** where specialized domain agents handle different aspects of fitness coaching. Each agent can both **use tools** (database operations) and **reason autonomously** (answer questions without tools).
 
 ## High-Level Architecture
 

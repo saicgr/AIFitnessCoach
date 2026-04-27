@@ -1,8 +1,8 @@
-# FitWiz - Viral Growth Strategy
+# Zealova - Viral Growth Strategy
 
 ## Executive Summary
 
-This document outlines viral growth mechanisms to make FitWiz the most addictive and shareable fitness app in the market. The goal: **turn every workout into a social moment**.
+This document outlines viral growth mechanisms to make Zealova the most addictive and shareable fitness app in the market. The goal: **turn every workout into a social moment**.
 
 ---
 
@@ -256,7 +256,7 @@ Reward: Exclusive "Night Owl" Badge
 │                                    │
 │  [Share to Instagram] [Challenge]  │
 │                                    │
-│  FitWiz                  │
+│  Zealova                  │
 │  fitwiz.com/join/xyz       │
 └────────────────────────────────────┘
 ```
@@ -717,7 +717,7 @@ WHEN YOU COMPLETE A HARD WORKOUT:
 │                                    │
 │          — Your AI Coach           │
 │                                    │
-│  🏋️ FitWiz              │
+│  🏋️ Zealova              │
 │  fitwiz.com               │
 └────────────────────────────────────┘
 ```

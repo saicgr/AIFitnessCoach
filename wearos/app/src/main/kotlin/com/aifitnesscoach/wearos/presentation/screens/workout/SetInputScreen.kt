@@ -1,4 +1,4 @@
-package com.fitwiz.wearos.presentation.screens.workout
+package com.aifitnesscoach.wearos.presentation.screens.workout
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -17,10 +17,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.wear.compose.material.*
-import com.fitwiz.wearos.data.models.WearExercise
-import com.fitwiz.wearos.presentation.theme.FitWizColors
-import com.fitwiz.wearos.presentation.theme.FitWizTypography
-import com.fitwiz.wearos.presentation.viewmodel.WorkoutViewModel
+import com.aifitnesscoach.wearos.data.models.WearExercise
+import com.aifitnesscoach.wearos.presentation.theme.AppColors
+import com.aifitnesscoach.wearos.presentation.theme.AppTypography
+import com.aifitnesscoach.wearos.presentation.viewmodel.WorkoutViewModel
 
 /**
  * Set Input Screen - Adjust reps and weight before logging
@@ -40,7 +40,7 @@ fun SetInputScreen(
             modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
-            Text("No exercise", color = FitWizColors.TextMuted)
+            Text("No exercise", color = AppColors.TextMuted)
         }
         return
     }
@@ -83,15 +83,15 @@ fun SetInputScreen(
             ) {
                 Text(
                     text = exercise.name,
-                    style = FitWizTypography.titleSmall,
-                    color = FitWizColors.TextPrimary,
+                    style = AppTypography.titleSmall,
+                    color = AppColors.TextPrimary,
                     textAlign = TextAlign.Center,
                     maxLines = 1
                 )
                 Text(
                     text = "Set ${completedSets + 1} of ${exercise.sets}",
-                    style = FitWizTypography.labelSmall,
-                    color = FitWizColors.TextMuted
+                    style = AppTypography.labelSmall,
+                    color = AppColors.TextMuted
                 )
             }
 
@@ -133,10 +133,10 @@ fun SetInputScreen(
                     .fillMaxWidth(0.9f)
                     .height(44.dp),
                 colors = ButtonDefaults.buttonColors(
-                    backgroundColor = FitWizColors.Success
+                    backgroundColor = AppColors.Success
                 )
             ) {
-                Text("LOG SET", style = FitWizTypography.labelLarge)
+                Text("LOG SET", style = AppTypography.labelLarge)
             }
         }
     }
@@ -156,8 +156,8 @@ private fun InputCard(
             .fillMaxWidth(0.95f)
             .clip(RoundedCornerShape(12.dp))
             .background(
-                if (isSelected) FitWizColors.Primary.copy(alpha = 0.2f)
-                else FitWizColors.Surface
+                if (isSelected) AppColors.Primary.copy(alpha = 0.2f)
+                else AppColors.Surface
             )
             .clickable(onClick = onTap)
             .padding(horizontal = 8.dp, vertical = 8.dp),
@@ -169,10 +169,10 @@ private fun InputCard(
             onClick = onDecrement,
             modifier = Modifier.size(36.dp),
             colors = ButtonDefaults.buttonColors(
-                backgroundColor = FitWizColors.Surface
+                backgroundColor = AppColors.Surface
             )
         ) {
-            Text("-", style = FitWizTypography.titleMedium, color = FitWizColors.TextPrimary)
+            Text("-", style = AppTypography.titleMedium, color = AppColors.TextPrimary)
         }
 
         // Value display
@@ -184,13 +184,13 @@ private fun InputCard(
         ) {
             Text(
                 text = value,
-                style = FitWizTypography.displaySmall,
-                color = if (isSelected) FitWizColors.Primary else FitWizColors.TextPrimary
+                style = AppTypography.displaySmall,
+                color = if (isSelected) AppColors.Primary else AppColors.TextPrimary
             )
             Text(
                 text = label,
-                style = FitWizTypography.labelSmall,
-                color = FitWizColors.TextMuted
+                style = AppTypography.labelSmall,
+                color = AppColors.TextMuted
             )
         }
 
@@ -199,10 +199,10 @@ private fun InputCard(
             onClick = onIncrement,
             modifier = Modifier.size(36.dp),
             colors = ButtonDefaults.buttonColors(
-                backgroundColor = FitWizColors.Surface
+                backgroundColor = AppColors.Surface
             )
         ) {
-            Text("+", style = FitWizTypography.titleMedium, color = FitWizColors.TextPrimary)
+            Text("+", style = AppTypography.titleMedium, color = AppColors.TextPrimary)
         }
     }
 }

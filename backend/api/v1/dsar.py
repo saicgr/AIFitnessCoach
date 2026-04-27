@@ -38,6 +38,7 @@ from fastapi import APIRouter, BackgroundTasks, Form, HTTPException, Query, Requ
 from fastapi.responses import HTMLResponse, JSONResponse
 from pydantic import BaseModel, EmailStr, Field
 
+from core import branding
 from core.config import get_settings
 from core.logger import get_logger
 from core.rate_limiter import limiter
@@ -108,7 +109,7 @@ _PUBLIC_FORM_HTML = """<!DOCTYPE html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FitWiz — Request Your Data</title>
+<title>__BRAND__ — Request Your Data</title>
 <style>
   body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
          margin: 0; background: #0a0a0f; color: #e5e7eb; line-height: 1.6; }}
@@ -134,7 +135,7 @@ _PUBLIC_FORM_HTML = """<!DOCTYPE html>
 <body>
   <div class="wrap">
     <h1>Request Your Data</h1>
-    <p>Use this form to export, access, or delete the personal data FitWiz holds about you — even if you can no longer sign in. We'll email a verification link to prove you own the address.</p>
+    <p>Use this form to export, access, or delete the personal data __BRAND__ holds about you — even if you can no longer sign in. We'll email a verification link to prove you own the address.</p>
     {banner}
     <form method="POST" action="/api/v1/dsar/request">
       <label for="email">Email address</label>
@@ -148,10 +149,10 @@ _PUBLIC_FORM_HTML = """<!DOCTYPE html>
       </select>
       <button type="submit">Send verification email</button>
     </form>
-    <p class="muted">We respond within 30 days as required by GDPR. Questions? <a style="color:#06b6d4" href="mailto:privacy@fitwiz.us">privacy@fitwiz.us</a>.</p>
+    <p class="muted">We respond within 30 days as required by GDPR. Questions? <a style="color:#06b6d4" href="mailto:__PRIVACY_EMAIL__">__PRIVACY_EMAIL__</a>.</p>
   </div>
 </body>
-</html>"""
+</html>""".replace("__BRAND__", branding.APP_NAME).replace("__PRIVACY_EMAIL__", branding.PRIVACY_EMAIL)
 
 
 @router.get("/", response_class=HTMLResponse)
@@ -271,7 +272,7 @@ async def create_dsar_request(
         _PUBLIC_FORM_HTML.format(
             banner=(
                 '<div class="ok">Thanks. If this email is associated with a '
-                'FitWiz account, we have sent a verification link. It expires '
+                f'{branding.APP_NAME} account, we have sent a verification link. It expires '
                 'in 24 hours.</div>'
             )
         )
@@ -361,12 +362,12 @@ async def verify_dsar_request(
 
 def _result_page(message: str) -> str:
     return f"""<!DOCTYPE html><html><head><meta charset="UTF-8">
-<title>FitWiz — Data Request</title>
+<title>{branding.APP_NAME} — Data Request</title>
 <style>body{{font-family:-apple-system,sans-serif;background:#0a0a0f;color:#e5e7eb;
 margin:0}}.wrap{{max-width:560px;margin:0 auto;padding:64px 24px}}
 h1{{color:#06b6d4;font-size:24px}}.card{{background:#111827;padding:24px;
 border-radius:16px;border:1px solid #1f2937;margin-top:24px}}</style></head>
-<body><div class="wrap"><h1>FitWiz — Data Request</h1>
+<body><div class="wrap"><h1>{branding.APP_NAME} — Data Request</h1>
 <div class="card">{message}</div></div></body></html>"""
 
 
@@ -476,7 +477,7 @@ def _upload_and_sign(zip_bytes: bytes, key: str) -> tuple[str, datetime]:
         Key=key,
         Body=zip_bytes,
         ContentType="application/zip",
-        ContentDisposition=f'attachment; filename="fitwiz-data-{datetime.utcnow():%Y%m%d}.zip"',
+        ContentDisposition=f'attachment; filename="{branding.APP_NAME.lower()}-data-{datetime.utcnow():%Y%m%d}.zip"',
         # Server-side encryption with AWS-managed keys. Bucket policy
         # should already enforce this but we set it explicitly.
         ServerSideEncryption="AES256",
@@ -500,7 +501,7 @@ def _send_verification_email(
         logger.warning("dsar: RESEND_API_KEY not set, skipping email")
         return
     resend.api_key = os.getenv("RESEND_API_KEY")
-    from_email = os.getenv("RESEND_FROM_EMAIL", "FitWiz <privacy@fitwiz.us>")
+    from_email = os.getenv("RESEND_FROM_EMAIL", f"{branding.APP_NAME} <{branding.PRIVACY_EMAIL}>")
 
     label = {
         "export": "export your data",
@@ -523,14 +524,14 @@ can safely ignore this email — no action will be taken.</p>
 <p style="font-size:13px;color:#6b7280">Link not working? Copy and paste this URL:<br>
 <span style="word-break:break-all">{verify_link}</span></p>
 <hr style="border:0;border-top:1px solid #1f2937;margin:32px 0">
-<p style="font-size:12px;color:#6b7280">FitWiz — GDPR/CCPA Data Rights Desk</p>
+<p style="font-size:12px;color:#6b7280">{branding.APP_NAME} — GDPR/CCPA Data Rights Desk</p>
 </div></body></html>"""
     try:
         resend.Emails.send(
             {
                 "from": from_email,
                 "to": [email],
-                "subject": "Verify your FitWiz data request",
+                "subject": f"Verify your {branding.APP_NAME} data request",
                 "html": html,
             }
         )
@@ -544,7 +545,7 @@ def _send_export_ready_email(
     if not os.getenv("RESEND_API_KEY"):
         return
     resend.api_key = os.getenv("RESEND_API_KEY")
-    from_email = os.getenv("RESEND_FROM_EMAIL", "FitWiz <privacy@fitwiz.us>")
+    from_email = os.getenv("RESEND_FROM_EMAIL", f"{branding.APP_NAME} <{branding.PRIVACY_EMAIL}>")
 
     verb = "export" if request_type == "export" else "access report"
     html = f"""<!DOCTYPE html><html><body style="font-family:-apple-system,sans-serif;
@@ -552,7 +553,7 @@ background:#0a0a0f;color:#e5e7eb;margin:0;padding:32px">
 <div style="max-width:560px;margin:0 auto;background:#111827;padding:32px;
 border-radius:16px;border:1px solid #1f2937">
 <h1 style="color:#06b6d4;font-size:24px;margin:0 0 16px">Your data {verb} is ready</h1>
-<p>Your FitWiz data archive is ready to download. The link expires on
+<p>Your {branding.APP_NAME} data archive is ready to download. The link expires on
 <strong>{expires_at.strftime('%B %d, %Y at %H:%M UTC')}</strong>.</p>
 <p style="margin:32px 0"><a href="{download_url}"
 style="display:inline-block;padding:14px 28px;background:#06b6d4;color:#0a0a0f;
@@ -562,14 +563,14 @@ holds personal data about you: profile, workouts, food logs, chat history,
 progress photos, measurements, and more. See the included README.txt for a
 file-by-file breakdown.</p>
 <p style="font-size:13px;color:#6b7280">Questions? Reply to this email or
-write to <a style="color:#06b6d4" href="mailto:privacy@fitwiz.us">privacy@fitwiz.us</a>.</p>
+write to <a style="color:#06b6d4" href="mailto:{branding.PRIVACY_EMAIL}">{branding.PRIVACY_EMAIL}</a>.</p>
 </div></body></html>"""
     try:
         resend.Emails.send(
             {
                 "from": from_email,
                 "to": [email],
-                "subject": f"Your FitWiz data {verb} is ready",
+                "subject": f"Your {branding.APP_NAME} data {verb} is ready",
                 "html": html,
             }
         )
@@ -581,7 +582,7 @@ def _send_no_account_email(email: str, request_type: str) -> None:
     if not os.getenv("RESEND_API_KEY"):
         return
     resend.api_key = os.getenv("RESEND_API_KEY")
-    from_email = os.getenv("RESEND_FROM_EMAIL", "FitWiz <privacy@fitwiz.us>")
+    from_email = os.getenv("RESEND_FROM_EMAIL", f"{branding.APP_NAME} <{branding.PRIVACY_EMAIL}>")
 
     html = f"""<!DOCTYPE html><html><body style="font-family:-apple-system,sans-serif;
 background:#0a0a0f;color:#e5e7eb;margin:0;padding:32px">
@@ -590,18 +591,18 @@ border-radius:16px;border:1px solid #1f2937">
 <h1 style="color:#06b6d4;font-size:24px;margin:0 0 16px">No account found</h1>
 <p>We verified your email, but we do not hold any personal data under
 <strong>{email}</strong>. No further action is needed.</p>
-<p>If you used a different email with FitWiz in the past, submit another
+<p>If you used a different email with {branding.APP_NAME} in the past, submit another
 request from <a style="color:#06b6d4" href="{_base_url()}/api/v1/dsar/">this
 page</a> with that address.</p>
 <p style="font-size:13px;color:#6b7280">Questions? Write to
-<a style="color:#06b6d4" href="mailto:privacy@fitwiz.us">privacy@fitwiz.us</a>.</p>
+<a style="color:#06b6d4" href="mailto:{branding.PRIVACY_EMAIL}">{branding.PRIVACY_EMAIL}</a>.</p>
 </div></body></html>"""
     try:
         resend.Emails.send(
             {
                 "from": from_email,
                 "to": [email],
-                "subject": "FitWiz data request — no account found",
+                "subject": f"{branding.APP_NAME} data request — no account found",
                 "html": html,
             }
         )
@@ -613,7 +614,7 @@ def _send_deletion_queued_email(email: str) -> None:
     if not os.getenv("RESEND_API_KEY"):
         return
     resend.api_key = os.getenv("RESEND_API_KEY")
-    from_email = os.getenv("RESEND_FROM_EMAIL", "FitWiz <privacy@fitwiz.us>")
+    from_email = os.getenv("RESEND_FROM_EMAIL", f"{branding.APP_NAME} <{branding.PRIVACY_EMAIL}>")
 
     html = f"""<!DOCTYPE html><html><body style="font-family:-apple-system,sans-serif;
 background:#0a0a0f;color:#e5e7eb;margin:0;padding:32px">
@@ -631,7 +632,7 @@ email within 72 hours and we can cancel the request.</p>
             {
                 "from": from_email,
                 "to": [email],
-                "subject": "FitWiz deletion request received",
+                "subject": f"{branding.APP_NAME} deletion request received",
                 "html": html,
             }
         )

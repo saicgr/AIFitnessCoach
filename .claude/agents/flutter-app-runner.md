@@ -310,7 +310,7 @@ Status: [Building/Running/Failed]
 
 ## Project-Specific Notes
 
-For this FitWiz project:
+For this Zealova project:
 - Default to running on Android emulator if available
 - Ensure environment variables are set before running
 - Watch for Gemini API key issues on first run

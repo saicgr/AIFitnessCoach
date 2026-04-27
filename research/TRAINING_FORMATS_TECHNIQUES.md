@@ -1,7 +1,7 @@
 # Training Formats & Advanced Techniques Research
 
 **Date:** 2026-02-20
-**Purpose:** Evidence-based algorithms for EMOM, AMRAP, drop sets, rest-pause, myo-reps, cluster sets, movement patterns, and minimum effective dose — for FitWiz quick workout engine.
+**Purpose:** Evidence-based algorithms for EMOM, AMRAP, drop sets, rest-pause, myo-reps, cluster sets, movement patterns, and minimum effective dose — for Zealova quick workout engine.
 
 ---
 

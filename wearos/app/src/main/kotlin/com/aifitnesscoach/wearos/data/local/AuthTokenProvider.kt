@@ -1,4 +1,4 @@
-package com.fitwiz.wearos.data.local
+package com.aifitnesscoach.wearos.data.local
 
 import javax.inject.Inject
 import javax.inject.Singleton

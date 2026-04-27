@@ -40,6 +40,8 @@ class _MeasurementDetailScreenState
   String? _userGender;
 
   final _periods = [
+    {'label': '1D', 'value': '1d', 'days': 1},
+    {'label': '3D', 'value': '3d', 'days': 3},
     {'label': '7D', 'value': '7d', 'days': 7},
     {'label': '30D', 'value': '30d', 'days': 30},
     {'label': '90D', 'value': '90d', 'days': 90},
@@ -700,6 +702,10 @@ class _MeasurementDetailScreenState
   DateTime _periodStartDate() {
     final now = DateTime.now();
     switch (_selectedPeriod) {
+      case '1d':
+        return now.subtract(const Duration(days: 1));
+      case '3d':
+        return now.subtract(const Duration(days: 3));
       case '7d':
         return now.subtract(const Duration(days: 7));
       case '30d':

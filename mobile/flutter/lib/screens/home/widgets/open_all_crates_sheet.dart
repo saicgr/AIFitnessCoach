@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../data/models/user_xp.dart';
 import '../../../data/providers/xp_provider.dart';
 import '../../../data/repositories/xp_repository.dart'
     show UnclaimedCrate, CrateRewardResult;
@@ -25,24 +26,18 @@ class _CrateOption {
   String get typeLabel {
     switch (crateType) {
       case 'activity':
-        return 'Activity';
+        return 'Activity Crate';
       case 'streak':
-        return 'Streak';
+        return 'Streak Crate';
       default:
-        return 'Daily';
+        return 'Daily Crate';
     }
   }
 
-  String get typeIcon {
-    switch (crateType) {
-      case 'activity':
-        return '\u2B50'; // star
-      case 'streak':
-        return '\uD83D\uDD25'; // fire
-      default:
-        return '\uD83D\uDCE6'; // package
-    }
-  }
+  // All tiles render a crate icon so the streak-reward tile isn't
+  // confused with the streak counter (flame) in the app bar. Reward
+  // type is conveyed via the colored border + accent + label.
+  String get typeIcon => '\uD83D\uDCE6'; // package/crate
 
   Color get typeColor {
     switch (crateType) {
@@ -93,24 +88,37 @@ class _OpenAllCratesSheetState extends ConsumerState<OpenAllCratesSheet>
   bool _isCollecting = false;
   bool _showRewards = false;
   List<CrateRewardResult> _results = [];
-  late ConfettiController _confettiController;
-  late AnimationController _rewardRevealController;
+  // Nullable so dispose() never throws LateInitializationError if an
+  // exception is raised between super.initState() and assignment, and so
+  // re-entrant dispose (rare on iOS modal pop) is safe.
+  ConfettiController? _confettiController;
+  AnimationController? _rewardRevealController;
 
   @override
   void initState() {
     super.initState();
-    _confettiController = ConfettiController(duration: const Duration(seconds: 3));
-    _rewardRevealController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 600),
-    );
-    _buildOptions();
+    try {
+      _confettiController = ConfettiController(duration: const Duration(seconds: 3));
+      _rewardRevealController = AnimationController(
+        vsync: this,
+        duration: const Duration(milliseconds: 600),
+      );
+      _buildOptions();
+    } catch (e, st) {
+      // Surface to Sentry but don't crash the modal lifecycle — dispose()
+      // would otherwise throw on the un-set late fields and mask the real
+      // error.
+      debugPrint('OpenAllCratesSheet initState error: $e\n$st');
+      _allOptions = const <_CrateOption>[];
+    }
   }
 
   @override
   void dispose() {
-    _confettiController.dispose();
-    _rewardRevealController.dispose();
+    _confettiController?.dispose();
+    _confettiController = null;
+    _rewardRevealController?.dispose();
+    _rewardRevealController = null;
     super.dispose();
   }
 
@@ -255,8 +263,8 @@ class _OpenAllCratesSheetState extends ConsumerState<OpenAllCratesSheet>
       _isCollecting = false;
     });
 
-    _confettiController.play();
-    _rewardRevealController.forward();
+    _confettiController?.play();
+    _rewardRevealController?.forward();
     HapticService.success();
   }
 
@@ -297,8 +305,9 @@ class _OpenAllCratesSheetState extends ConsumerState<OpenAllCratesSheet>
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            'Select $_requiredSelections crate${_requiredSelections > 1 ? 's' : ''}'
-                            ' \u2022 ${_selectedByDate.length}/$_requiredSelections selected',
+                            _requiredSelections > 1
+                                ? 'Pick 1 reward per day \u2022 ${_selectedByDate.length}/$_requiredSelections picked'
+                                : 'Pick your reward \u2022 ${_selectedByDate.length}/$_requiredSelections picked',
                             style: TextStyle(fontSize: 14, color: textSecondary),
                           ),
                           if (_selectedByDate.length < _requiredSelections && !_isCollecting) ...[
@@ -385,13 +394,13 @@ class _OpenAllCratesSheetState extends ConsumerState<OpenAllCratesSheet>
           ),
 
           // Confetti
-          if (_showRewards)
+          if (_showRewards && _confettiController != null)
             Positioned.fill(
               child: IgnorePointer(
                 child: Align(
                   alignment: Alignment.topCenter,
                   child: ConfettiWidget(
-                    confettiController: _confettiController,
+                    confettiController: _confettiController!,
                     blastDirectionality: BlastDirectionality.explosive,
                     shouldLoop: false,
                     colors: const [
@@ -559,9 +568,18 @@ class _OpenAllCratesSheetState extends ConsumerState<OpenAllCratesSheet>
       }
     }
 
+    // If the reveal controller failed to initialize, fall through to a
+    // static layout — never let a missing animation crash the rewards UI.
+    final revealCtrl = _rewardRevealController;
+    if (revealCtrl == null) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        child: _rewardsBody(successCount, totalXp, itemCounts, textPrimary, textSecondary),
+      );
+    }
     return FadeTransition(
       opacity: CurvedAnimation(
-        parent: _rewardRevealController,
+        parent: revealCtrl,
         curve: Curves.easeOut,
       ),
       child: SlideTransition(
@@ -569,33 +587,123 @@ class _OpenAllCratesSheetState extends ConsumerState<OpenAllCratesSheet>
           begin: const Offset(0, 0.15),
           end: Offset.zero,
         ).animate(CurvedAnimation(
-          parent: _rewardRevealController,
+          parent: revealCtrl,
           curve: Curves.easeOutBack,
         )),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-          child: Column(
+          child: _rewardsBody(successCount, totalXp, itemCounts, textPrimary, textSecondary),
+        ),
+      ),
+    );
+  }
+
+  Widget _rewardsBody(
+    int successCount,
+    int totalXp,
+    Map<String, int> itemCounts,
+    Color textPrimary,
+    Color textSecondary,
+  ) {
+    return Column(
+      children: [
+        Text(
+          '$successCount crate${successCount > 1 ? 's' : ''} opened!',
+          style: TextStyle(fontSize: 14, color: textSecondary),
+        ),
+        const SizedBox(height: 16),
+        if (totalXp > 0)
+          _xpProgressCard(totalXp, textPrimary, textSecondary),
+        for (final entry in itemCounts.entries)
+          _rewardRow(
+            _itemIcon(entry.key),
+            '${entry.value}x ${_itemLabel(entry.key)}',
+            _itemDesc(entry.key),
+            textPrimary,
+            textSecondary,
+          ),
+      ],
+    );
+  }
+
+  /// XP card with level progress — total XP, current level, XP into level
+  /// and XP remaining to next level with a progress bar.
+  Widget _xpProgressCard(int gainedXp, Color textPrimary, Color textSecondary) {
+    final userXp = ref.watch(xpProvider).userXp ?? const UserXP();
+    final level = userXp.currentLevel;
+    final xpInLevel = userXp.xpInCurrentLevel < 0 ? 0 : userXp.xpInCurrentLevel;
+    final xpToNext = userXp.xpToNextLevel;
+    final remaining = (xpToNext - xpInLevel).clamp(0, xpToNext);
+    final progress = userXp.progressFraction;
+    final isMax = userXp.isMaxLevel;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.amber.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.amber.withOpacity(0.25)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
-              Text(
-                '$successCount crate${successCount > 1 ? 's' : ''} opened!',
-                style: TextStyle(fontSize: 14, color: textSecondary),
-              ),
-              const SizedBox(height: 16),
-              // XP reward
-              if (totalXp > 0)
-                _rewardRow('\u26A1', '+$totalXp XP', 'Added to your total', textPrimary, textSecondary),
-              // Item rewards
-              for (final entry in itemCounts.entries)
-                _rewardRow(
-                  _itemIcon(entry.key),
-                  '${entry.value}x ${_itemLabel(entry.key)}',
-                  _itemDesc(entry.key),
-                  textPrimary,
-                  textSecondary,
+              const Text('⚡', style: TextStyle(fontSize: 24)),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '+$gainedXp XP',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: textPrimary,
+                      ),
+                    ),
+                    Text(
+                      'Total: ${userXp.formattedTotalXp} XP • Level $level',
+                      style: TextStyle(fontSize: 12, color: textSecondary),
+                    ),
+                  ],
                 ),
+              ),
             ],
           ),
-        ),
+          const SizedBox(height: 12),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(6),
+            child: LinearProgressIndicator(
+              value: isMax ? 1.0 : progress,
+              minHeight: 8,
+              backgroundColor: Colors.white.withOpacity(0.08),
+              valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFFFFB300)),
+            ),
+          ),
+          const SizedBox(height: 6),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                isMax ? 'Max level' : '$xpInLevel / $xpToNext XP',
+                style: TextStyle(fontSize: 11, color: textSecondary),
+              ),
+              Text(
+                isMax
+                    ? '${userXp.formattedTotalXp} total'
+                    : '$remaining XP to Lvl ${level + 1}',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: textSecondary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

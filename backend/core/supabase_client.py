@@ -1,5 +1,5 @@
 """
-Supabase client wrapper for FitWiz.
+Supabase client wrapper for Zealova.
 Provides database and auth functionality via Supabase.
 """
 from fastapi import Depends

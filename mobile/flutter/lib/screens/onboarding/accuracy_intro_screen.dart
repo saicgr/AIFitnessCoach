@@ -7,6 +7,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/services/posthog_service.dart';
 import '../../widgets/glass_back_button.dart';
 import 'widgets/did_you_know_chip.dart';
+import 'package:fitwiz/core/constants/branding.dart';
 
 /// Accuracy Trust Screen - Shows users why specific food logging matters.
 ///
@@ -101,7 +102,7 @@ class _AccuracyIntroScreenState extends ConsumerState<AccuracyIntroScreen>
                       const SizedBox(height: 12),
                       DidYouKnowChip(
                         text:
-                            'FitWiz uses AI + 200,000+ verified foods from 100+ country cuisines, plus barcode databases',
+                            '${Branding.appName} uses AI + 200,000+ verified foods from 100+ country cuisines, plus barcode databases',
                       ),
                     ],
                   ),
@@ -255,7 +256,7 @@ class _AccuracyIntroScreenState extends ConsumerState<AccuracyIntroScreen>
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              'The more specific you are, the more accurate FitWiz gets. Include brand names, portions, and restaurant names.',
+              'The more specific you are, the more accurate ${Branding.appName} gets. Include brand names, portions, and restaurant names.',
               style: TextStyle(
                 fontSize: 13.5,
                 fontWeight: FontWeight.w500,

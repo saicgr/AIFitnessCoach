@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../shareable_canvas.dart';
 import '../shareable_data.dart';
-import '../widgets/fitwiz_watermark.dart';
+import '../widgets/app_watermark.dart';
 import '../widgets/shareable_hero_number.dart';
 
 /// Activity Overview — the dark card with the heatmap pattern, hero count,
@@ -139,7 +139,7 @@ class ActivityOverviewTemplate extends StatelessWidget {
         const Spacer(flex: 1),
         if (showWatermark)
           Center(
-            child: FitWizWatermark(textColor: Colors.white.withValues(alpha: 0.85)),
+            child: AppWatermark(textColor: Colors.white.withValues(alpha: 0.85)),
           ),
       ],
     );
@@ -158,35 +158,35 @@ class _StatTile extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          padding: const EdgeInsets.all(10),
+          padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: accent.withValues(alpha: 0.16),
-            borderRadius: BorderRadius.circular(12),
+            color: accent.withValues(alpha: 0.18),
+            borderRadius: BorderRadius.circular(14),
           ),
           child: Icon(metric.icon ?? Icons.show_chart_rounded,
-              color: accent, size: 22),
+              color: accent, size: 26),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 10),
         Text(
           metric.value,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: const TextStyle(
             color: Colors.white,
-            fontSize: 18,
-            fontWeight: FontWeight.w800,
+            fontSize: 26,
+            fontWeight: FontWeight.w900,
           ),
         ),
-        const SizedBox(height: 2),
+        const SizedBox(height: 4),
         Text(
           metric.label,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: TextStyle(
-            color: Colors.white.withValues(alpha: 0.55),
-            fontSize: 11,
-            fontWeight: FontWeight.w600,
-            letterSpacing: 1.0,
+            color: Colors.white.withValues(alpha: 0.78),
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 1.2,
           ),
         ),
       ],

@@ -12,6 +12,7 @@ import time
 from typing import Optional, Dict, Any, List
 from dataclasses import dataclass, field
 from enum import Enum
+from core import branding
 from core.config import get_settings
 from core.logger import get_logger
 
@@ -19,7 +20,7 @@ logger = get_logger(__name__)
 
 # USDA API Configuration
 USDA_API_BASE_URL = "https://api.nal.usda.gov/fdc/v1"
-USDA_USER_AGENT = "FitWiz/1.0 (fitness app)"
+USDA_USER_AGENT = f"{branding.APP_NAME}/1.0 (fitness app)"
 
 # USDA Nutrient IDs for key nutrients
 NUTRIENT_IDS = {

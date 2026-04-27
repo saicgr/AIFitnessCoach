@@ -6,6 +6,7 @@ import 'package:gal/gal.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'comparison_layouts.dart';
+import 'package:fitwiz/core/constants/branding.dart';
 
 /// Service for capturing, saving, and sharing comparison images
 class ComparisonExportService {
@@ -34,13 +35,13 @@ class ComparisonExportService {
   static Future<void> shareImage(File imageFile) async {
     await Share.shareXFiles(
       [XFile(imageFile.path)],
-      text: 'My fitness progress - FitWiz',
+      text: 'My fitness progress - ${Branding.appName}',
     );
   }
 
   /// Save an image file to the device gallery
   static Future<void> saveToGallery(File imageFile) async {
-    await Gal.putImage(imageFile.path, album: 'FitWiz');
+    await Gal.putImage(imageFile.path, album: '${Branding.appName}');
   }
 
   /// Capture and share in one step

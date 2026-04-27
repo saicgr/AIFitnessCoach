@@ -1,19 +1,21 @@
 import 'dart:convert';
 import 'dart:io' show Platform;
 
+import 'package:dio/dio.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/constants/api_constants.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/services/posthog_service.dart';
 import '../../core/theme/theme_colors.dart';
 import '../../data/repositories/auth_repository.dart';
-import '../../data/repositories/onboarding_repository.dart';
+import '../../data/services/account_deletion_service.dart';
 import '../../data/services/api_client.dart';
 import '../../data/services/haptic_service.dart';
+import '../../widgets/delete_account_progress_dialog.dart';
 import '../../widgets/app_snackbar.dart';
 import '../../widgets/dismissed_banners_section.dart';
 import '../../widgets/glass_sheet.dart';
@@ -713,63 +715,59 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   Future<void> _deleteAccount() async {
-    final navigator = Navigator.of(context);
+    final navigator = Navigator.of(context, rootNavigator: true);
     final scaffoldMessenger = ScaffoldMessenger.of(context);
     final router = GoRouter.of(context);
 
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (dialogContext) => const Center(
-        child: CircularProgressIndicator(color: AppColors.cyan),
-      ),
-    );
-
-    try {
-      final apiClient = ref.read(apiClientProvider);
-      final authState = ref.read(authStateProvider);
-      final userId = authState.user?.id;
-
-      if (userId == null || userId.isEmpty) {
-        throw Exception('User not found');
-      }
-
-      final response = await apiClient.delete(
-        '${ApiConstants.users}/$userId/reset',
-      );
-
-      navigator.pop();
-
-      if (response.statusCode == 200) {
-        final prefs = await SharedPreferences.getInstance();
-        // Preserve tour flags so tutorials don't replay after reset
-        final tourFlags = <String, bool>{};
-        for (final key in prefs.getKeys()) {
-          if (key.startsWith('has_seen_')) {
-            tourFlags[key] = prefs.getBool(key) ?? false;
-          }
-        }
-        await prefs.clear();
-        for (final entry in tourFlags.entries) {
-          await prefs.setBool(entry.key, entry.value);
-        }
-        ref.read(onboardingStateProvider.notifier).reset();
-        await ref.read(authStateProvider.notifier).signOut();
-        router.go('/intro');
-      } else {
-        throw Exception('Failed to delete account: ${response.statusCode}');
-      }
-    } catch (e) {
-      try {
-        navigator.pop();
-      } catch (_) {}
-
+    final authState = ref.read(authStateProvider);
+    final userId = authState.user?.id;
+    if (userId == null || userId.isEmpty) {
       scaffoldMessenger.showSnackBar(
-        SnackBar(
-          content: Text('Error: ${e.toString()}'),
+        const SnackBar(
+          content: Text('Error: User not found'),
           backgroundColor: AppColors.error,
         ),
       );
+      return;
+    }
+
+    final status = ValueNotifier<String>('Deleting account from server…');
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      useRootNavigator: true,
+      builder: (_) => DeleteAccountProgressDialog(status: status),
+    );
+
+    try {
+      await ref.read(accountDeletionServiceProvider).deleteAccount(
+            userId: userId,
+            status: status,
+          );
+
+      // Let GoRouter's refreshListenable observe the unauthenticated state
+      // before we trigger navigation, then route via the root navigator so
+      // MainShell tears down cleanly (avoids the post-signOut black frame).
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+      router.go('/intro');
+      // Pop the loading dialog AFTER navigation so the scrim covers the
+      // unmount race for the previous route.
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+      if (navigator.canPop()) navigator.pop();
+    } catch (e) {
+      if (navigator.canPop()) navigator.pop();
+      String msg = e.toString();
+      if (e is DioException && e.response?.data is Map) {
+        msg = (e.response?.data as Map)['detail']?.toString() ?? msg;
+      }
+      scaffoldMessenger.showSnackBar(
+        SnackBar(
+          content: Text('Error: $msg'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    } finally {
+      status.dispose();
     }
   }
 

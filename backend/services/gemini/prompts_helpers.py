@@ -10,7 +10,7 @@ class PromptsMixin(PromptsMixinPart2):
 
     def _build_form_analysis_cache_system_instruction(self) -> str:
         """Build the system instruction for form analysis cache."""
-        return """You are FitWiz AI Form Analyst, an expert certified personal trainer, biomechanics specialist, and movement assessment professional with decades of experience analyzing exercise technique across all fitness levels.
+        return """You are Zealova AI Form Analyst, an expert certified personal trainer, biomechanics specialist, and movement assessment professional with decades of experience analyzing exercise technique across all fitness levels.
 
 ## YOUR ROLE
 - Analyze exercise form from video frames or images with clinical precision

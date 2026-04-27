@@ -30,15 +30,31 @@ extension _MeasurementsTabStateUI on _MeasurementsTabState {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Title row: type name (left), latest value + change (right)
+          // Title row: type picker (left), latest value + change (right)
           Row(
             children: [
-              Text(
-                _selectedType.displayName,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: textPrimary,
+              InkWell(
+                onTap: () => _showMetricPicker(context, cyan, textPrimary, isDark),
+                borderRadius: BorderRadius.circular(8),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 6, vertical: 4),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        _selectedType.displayName,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: textPrimary,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Icon(Icons.arrow_drop_down,
+                          size: 22, color: textMuted),
+                    ],
+                  ),
                 ),
               ),
               const Spacer(),
@@ -97,6 +113,91 @@ extension _MeasurementsTabStateUI on _MeasurementsTabState {
     );
   }
 
+
+  void _showMetricPicker(
+      BuildContext context, Color accent, Color textPrimary, bool isDark) {
+    final state = ref.read(measurementsProvider);
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor:
+          isDark ? AppColors.elevated : AppColorsLight.elevated,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetCtx) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(8, 12, 8, 8),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
+                  child: Text(
+                    'Choose metric',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: textPrimary,
+                    ),
+                  ),
+                ),
+                Flexible(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      children: MeasurementType.values.map((type) {
+                        final isSelected = type == _selectedType;
+                        final hasData =
+                            (state.historyByType[type]?.isNotEmpty) ?? false;
+                        return ListTile(
+                          dense: true,
+                          leading: Icon(
+                            isSelected
+                                ? Icons.radio_button_checked
+                                : Icons.radio_button_off,
+                            color: isSelected
+                                ? accent
+                                : textPrimary.withValues(alpha: 0.4),
+                            size: 20,
+                          ),
+                          title: Text(
+                            type.displayName,
+                            style: TextStyle(
+                              color: textPrimary,
+                              fontWeight: isSelected
+                                  ? FontWeight.w600
+                                  : FontWeight.normal,
+                            ),
+                          ),
+                          trailing: hasData
+                              ? null
+                              : Text(
+                                  'no data',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color:
+                                        textPrimary.withValues(alpha: 0.4),
+                                  ),
+                                ),
+                          onTap: () {
+                            HapticService.light();
+                            setState(() => _selectedType = type);
+                            Navigator.pop(sheetCtx);
+                          },
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
 
   Widget _buildWeightLineChart(
     List<MeasurementEntry> data, {

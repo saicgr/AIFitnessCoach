@@ -5,7 +5,7 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS apps TEXT[] DEFAULT '{}';
 -- Index for filtering users by app
 CREATE INDEX IF NOT EXISTS idx_users_apps ON users USING GIN (apps);
 
--- Backfill: existing users with workout_logs are FitWiz users
+-- Backfill: existing users with workout_logs are Zealova users
 UPDATE users SET apps = array_append(apps, 'fitwiz')
 WHERE id IN (SELECT DISTINCT user_id FROM workout_logs)
 AND NOT ('fitwiz' = ANY(apps));

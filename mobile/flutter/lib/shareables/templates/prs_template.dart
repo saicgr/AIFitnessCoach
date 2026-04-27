@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../shareable_canvas.dart';
 import '../shareable_data.dart';
-import '../widgets/fitwiz_watermark.dart';
+import '../widgets/app_watermark.dart';
 import '../widgets/shareable_hero_number.dart';
 
 /// PRs — medal grid showcasing the user's recent PRs. Each highlight becomes
@@ -74,7 +74,7 @@ class PRsTemplate extends StatelessWidget {
             if (showWatermark)
               Align(
                 alignment: Alignment.centerRight,
-                child: FitWizWatermark(textColor: Colors.white),
+                child: AppWatermark(textColor: Colors.white),
               ),
           ],
         ),

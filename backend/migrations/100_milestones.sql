@@ -102,7 +102,7 @@ CREATE INDEX IF NOT EXISTS idx_user_roi_metrics_user_id ON user_roi_metrics(user
 -- Workouts Category
 INSERT INTO milestone_definitions (name, description, category, threshold, icon, tier, points, badge_color, share_message, sort_order) VALUES
 -- First Steps
-('First Workout', 'Completed your first workout! The journey begins.', 'workouts', 1, 'trophy', 'bronze', 10, 'cyan', 'I just completed my first workout with FitWiz!', 1),
+('First Workout', 'Completed your first workout! The journey begins.', 'workouts', 1, 'trophy', 'bronze', 10, 'cyan', 'I just completed my first workout with Zealova!', 1),
 ('Getting Started', 'Completed 5 workouts. Building momentum!', 'workouts', 5, 'fire', 'bronze', 25, 'orange', 'I''ve completed 5 workouts and building great habits!', 2),
 ('Building Habits', 'Completed 10 workouts. Consistency is key!', 'workouts', 10, 'muscle', 'bronze', 50, 'purple', 'Just hit 10 workouts! Habits are forming.', 3),
 ('Dedicated', 'Completed 25 workouts. True dedication!', 'workouts', 25, 'star', 'silver', 100, 'yellow', '25 workouts complete! Dedicated to the grind.', 4),

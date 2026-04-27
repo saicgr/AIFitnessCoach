@@ -1,4 +1,4 @@
-# FitWiz Programs Checklist
+# Zealova Programs Checklist
 
 **Total: 1,085 Programs | 80 Categories | ~16,500 Workout Variants**
 
@@ -1316,7 +1316,7 @@ Last Updated: January 2026
 ---
 
 ## 53. Viral TikTok Programs (18 programs) - STANDOUT DIFFERENTIATOR
-*Programs based on viral fitness trends with millions of views - makes FitWiz unique*
+*Programs based on viral fitness trends with millions of views - makes Zealova unique*
 
 ### Viral Walking Programs
 

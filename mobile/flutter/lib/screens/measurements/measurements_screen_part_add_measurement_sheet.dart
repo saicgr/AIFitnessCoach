@@ -861,7 +861,7 @@ class _MeasurementsExportSheetState extends State<_MeasurementsExportSheet> {
 
       await Share.shareXFiles(
         [XFile(file.path)],
-        subject: 'FitWiz Measurements Export',
+        subject: '${Branding.appName} Measurements Export',
       );
     } catch (e) {
       // Dismiss loading

@@ -10,6 +10,7 @@ import logging
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+from core import branding
 from core.auth import get_current_user, verify_user_ownership
 from core.exceptions import safe_internal_error
 
@@ -346,7 +347,7 @@ async def get_friend_suggestions(
                 has_pending_request=u["id"] in pending_sent_map,
                 pending_request_id=pending_sent_map.get(u["id"]),
                 requires_approval=requires_approval.get(u["id"], False),
-                suggestion_reason="Active on FitWiz",
+                suggestion_reason=f"Active on {branding.APP_NAME}",
                 mutual_friends_count=0,
             )
             for u in paginated_users

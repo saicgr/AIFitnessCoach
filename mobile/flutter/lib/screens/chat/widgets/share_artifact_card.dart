@@ -11,6 +11,7 @@ import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../../core/constants/app_colors.dart';
+import 'package:fitwiz/core/constants/branding.dart';
 
 class ShareArtifactCard extends StatelessWidget {
   final Map<String, dynamic> data;
@@ -42,7 +43,7 @@ class ShareArtifactCard extends StatelessWidget {
     if (url == null) return;
     await Clipboard.setData(ClipboardData(text: url));
     if (!context.mounted) return;
-    await Share.share('$_label — FitWiz\n$url', subject: 'FitWiz');
+    await Share.share('$_label — ${Branding.appName}\n$url', subject: '${Branding.appName}');
   }
 
   void _onOpenInApp(BuildContext context) {

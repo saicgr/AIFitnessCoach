@@ -3,7 +3,7 @@
 Single source of truth for rendering persona-voiced copy across every surface
 (push, email, in-app banners, weekly summary narration, post-workout recap,
 quick-adjust confirmation). Ensures the coach the user selected in onboarding
-*sounds the same* everywhere — no "Coach" mascot leakage, no "FitWiz team"
+*sounds the same* everywhere — no "Coach" mascot leakage, no "Zealova team"
 voice drift on motivational copy, no hard-coded hype strings.
 
 Design contract:
@@ -32,7 +32,7 @@ Integrations required by sequencing plan item 3:
   `build_system_prompt(voice, agent_role="weekly_recap")`.
 - `push_nudge_cron.py` — already persona-aware via notif_svc; new template
   keys should go through `render()`.
-- `email_lifecycle.py` — keep transactional in FitWiz voice; route every
+- `email_lifecycle.py` — keep transactional in Zealova voice; route every
   motivational send through `render(..., channel="email")`.
 - Mobile pre-set banner + post-workout — fetch voice via existing
   user_ai_settings fetch, pass into a new `/render-copy` endpoint (or inline
@@ -567,7 +567,7 @@ def build_system_prompt(voice: CoachVoice, agent_role: str = "fitness coach") ->
 def signature(voice: CoachVoice, channel: str = "email") -> str:
     """Return the appropriate sign-off for a channel.
 
-    - Transactional emails should NOT call this (they sign as FitWiz).
+    - Transactional emails should NOT call this (they sign as Zealova).
     - Motivational emails: "— {coach_name}"
     - Push: signature is usually omitted (too long); callers shouldn't append.
     - In-app: subtle attribution line.

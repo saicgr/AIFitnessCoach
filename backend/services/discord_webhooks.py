@@ -1,5 +1,5 @@
 """
-Discord webhook notifications for FitWiz.
+Discord webhook notifications for Zealova.
 
 Channels:
   #growth  — new user signups + subscription events

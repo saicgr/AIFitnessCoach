@@ -64,7 +64,7 @@ def run_migration(conn, file_path):
 def main():
     """Main entry point."""
     print("\n" + "="*60)
-    print("FitWiz Database Migration Runner")
+    print("Zealova Database Migration Runner")
     print("Migrations 138-139")
     print("="*60)
 

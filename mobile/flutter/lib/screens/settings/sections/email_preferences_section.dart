@@ -6,10 +6,11 @@ import '../../../data/providers/email_preferences_provider.dart';
 import '../../../data/repositories/email_preferences_repository.dart';
 import '../../../data/services/api_client.dart';
 import '../widgets/widgets.dart';
+import 'package:fitwiz/core/constants/branding.dart';
 
 /// The email preferences section for managing email subscription settings.
 ///
-/// Allows users to control what emails they receive from FitWiz.
+/// Allows users to control what emails they receive from Zealova.
 /// Addresses user review: "Had to give out email and can't find anywhere to unsubscribe."
 class EmailPreferencesSection extends StatelessWidget {
   const EmailPreferencesSection({super.key});
@@ -175,7 +176,7 @@ class _EmailPreferencesCardState extends ConsumerState<_EmailPreferencesCard> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'Control what emails you receive from FitWiz',
+                    'Control what emails you receive from ${Branding.appName}',
                     style: TextStyle(
                       fontSize: 13,
                       color: textSecondary,

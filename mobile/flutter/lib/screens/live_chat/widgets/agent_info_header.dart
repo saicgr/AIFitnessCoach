@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../../core/constants/app_colors.dart';
+import 'package:fitwiz/core/constants/branding.dart';
 
 /// Agent info header widget for the app bar
 /// Shows agent name, avatar, and online status
@@ -299,7 +300,7 @@ class AgentInfoCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'FitWiz Support Agent',
+                  '${Branding.appName} Support Agent',
                   style: TextStyle(
                     fontSize: 13,
                     color: AppColors.textSecondary,

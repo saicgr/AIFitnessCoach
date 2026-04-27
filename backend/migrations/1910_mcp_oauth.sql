@@ -1,6 +1,6 @@
 -- Migration: MCP OAuth 2.1 Server Tables
 -- Created: 2026-04-12
--- Purpose: Support publishing FitWiz as an MCP server with OAuth 2.1 + PKCE + DCR.
+-- Purpose: Support publishing Zealova as an MCP server with OAuth 2.1 + PKCE + DCR.
 --          Tables back the authorization code flow, token storage, audit trail,
 --          and confirmation tokens for risky tool actions.
 --

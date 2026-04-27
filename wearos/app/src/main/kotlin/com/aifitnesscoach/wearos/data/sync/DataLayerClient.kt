@@ -1,4 +1,4 @@
-package com.fitwiz.wearos.data.sync
+package com.aifitnesscoach.wearos.data.sync
 
 import android.content.Context
 import android.net.Uri
@@ -26,26 +26,26 @@ class DataLayerClient @Inject constructor(
         private const val TAG = "DataLayerClient"
 
         // Data paths for syncing
-        const val PATH_WORKOUT_TODAY = "/fitwiz/workout/today"
-        const val PATH_WORKOUT_SET = "/fitwiz/workout/set"
-        const val PATH_WORKOUT_COMPLETE = "/fitwiz/workout/complete"
-        const val PATH_NUTRITION_LOG = "/fitwiz/nutrition/log"
-        const val PATH_NUTRITION_SUMMARY = "/fitwiz/nutrition/summary"
-        const val PATH_FASTING_STATE = "/fitwiz/fasting/state"
-        const val PATH_FASTING_EVENT = "/fitwiz/fasting/event"
-        const val PATH_SYNC_REQUEST = "/fitwiz/sync/request"
-        const val PATH_SYNC_PENDING = "/fitwiz/sync/pending"
-        const val PATH_HEALTH_DATA = "/fitwiz/health/data"
+        const val PATH_WORKOUT_TODAY = "/aifitnesscoach/workout/today"
+        const val PATH_WORKOUT_SET = "/aifitnesscoach/workout/set"
+        const val PATH_WORKOUT_COMPLETE = "/aifitnesscoach/workout/complete"
+        const val PATH_NUTRITION_LOG = "/aifitnesscoach/nutrition/log"
+        const val PATH_NUTRITION_SUMMARY = "/aifitnesscoach/nutrition/summary"
+        const val PATH_FASTING_STATE = "/aifitnesscoach/fasting/state"
+        const val PATH_FASTING_EVENT = "/aifitnesscoach/fasting/event"
+        const val PATH_SYNC_REQUEST = "/aifitnesscoach/sync/request"
+        const val PATH_SYNC_PENDING = "/aifitnesscoach/sync/pending"
+        const val PATH_HEALTH_DATA = "/aifitnesscoach/health/data"
 
         // Auth paths for credential sync
-        const val PATH_AUTH_CREDENTIALS = "/fitwiz/auth/credentials"
-        const val MSG_AUTH_SYNC = "/fitwiz/msg/auth/sync"
+        const val PATH_AUTH_CREDENTIALS = "/aifitnesscoach/auth/credentials"
+        const val MSG_AUTH_SYNC = "/aifitnesscoach/msg/auth/sync"
 
         // Message paths for immediate actions
-        const val MSG_WORKOUT_START = "/fitwiz/msg/workout/start"
-        const val MSG_WORKOUT_END = "/fitwiz/msg/workout/end"
-        const val MSG_FASTING_START = "/fitwiz/msg/fasting/start"
-        const val MSG_FASTING_END = "/fitwiz/msg/fasting/end"
+        const val MSG_WORKOUT_START = "/aifitnesscoach/msg/workout/start"
+        const val MSG_WORKOUT_END = "/aifitnesscoach/msg/workout/end"
+        const val MSG_FASTING_START = "/aifitnesscoach/msg/fasting/start"
+        const val MSG_FASTING_END = "/aifitnesscoach/msg/fasting/end"
     }
 
     // ==================== Node Discovery ====================

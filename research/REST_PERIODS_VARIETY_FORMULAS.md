@@ -1,7 +1,7 @@
 # Deep Research Findings for Quick Workout Engine Improvements
 
 **Date:** 2026-02-20
-**Purpose:** Evidence-based algorithms, formulas, and citations for improving FitWiz's quick workout generation engine.
+**Purpose:** Evidence-based algorithms, formulas, and citations for improving Zealova's quick workout generation engine.
 
 ---
 
@@ -260,7 +260,7 @@ YES. Proximity-to-failure meta-analysis (Robinson et al., 2023, PMID: PMC9935748
 - Over 10 quadrillion possible program permutations
 - Source: https://www.juggernautai.app/
 
-### 2.3 The Problem with the Current FitWiz Implementation
+### 2.3 The Problem with the Current Zealova Implementation
 
 **Current in `quick_workout_constants.dart`:**
 ```dart
@@ -477,7 +477,7 @@ Their algorithm tracks:
 - Session history used to weight future recommendations
 - Source: https://fitbod.zendesk.com/hc/en-us/articles/16254175592215-Fitbod-s-Algorithm-Q-A
 
-**3.4.3 Slot-Based Rotation Algorithm (Recommended for FitWiz)**
+**3.4.3 Slot-Based Rotation Algorithm (Recommended for Zealova)**
 
 ```
 For each muscle slot in the workout template:

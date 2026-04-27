@@ -1,0 +1,8 @@
+# Flutter launcher icons config for Zealova dark icon
+# Usage: dart run flutter_launcher_icons -f flutter_launcher_icons_dark.yaml
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: assets/icons/zealova_dark_1024.png
+  min_sdk_android: 21
+  remove_alpha_ios: true

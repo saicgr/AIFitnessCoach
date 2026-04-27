@@ -1,5 +1,5 @@
 """
-FitWiz Backend - Main Entry Point
+Zealova Backend - Main Entry Point
 
 Local development:
     uvicorn main:app --reload --host 0.0.0.0 --port 8000
@@ -20,6 +20,7 @@ from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 import asyncio
+import logging
 import re
 import uvicorn
 import time
@@ -27,6 +28,7 @@ import traceback
 import uuid
 import json
 
+from core import branding
 from core.config import get_settings
 from core.logger import get_logger, set_log_context, clear_log_context
 from core.rate_limiter import limiter
@@ -41,6 +43,25 @@ from services.job_queue_service import get_job_queue_service
 
 settings = get_settings()
 logger = get_logger(__name__)
+
+
+# Suppress Render LB health-check noise from uvicorn's access log.
+# Render hits `GET /` from three internal IPs every few seconds; those lines
+# (`INFO:  34.x.x.x:0 - "GET / HTTP/1.1" 200 OK`) flood prod logs and bury
+# real signal. The structured request logger already silences `/` via
+# `_SILENT_GET_PATHS`; this mirrors the same suppression at the uvicorn layer.
+class _HealthCheckAccessLogFilter(logging.Filter):
+    _PATTERNS = ('"GET / HTTP', '"HEAD / HTTP')
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        try:
+            msg = record.getMessage()
+        except Exception:
+            return True
+        return not any(p in msg for p in self._PATTERNS)
+
+
+logging.getLogger("uvicorn.access").addFilter(_HealthCheckAccessLogFilter())
 
 # Dev log dashboard — only available when debug=True
 _dev_log_push = None
@@ -477,9 +498,22 @@ async def lifespan(app: FastAPI):
       Phase 3 (Background): Index checks, job resume - run after server starts serving
     """
     startup_start = time.time()
-    logger.info("Starting FitWiz Backend...")
+    logger.info(f"Starting {branding.APP_NAME} Backend...")
     logger.info(f"Gemini Model: {settings.gemini_model}")
     logger.info(f"Embedding Model: {settings.gemini_embedding_model}")
+
+    # Re-attach the health-check access filter inside lifespan so it survives
+    # gunicorn's UvicornWorker fork — the worker re-initializes uvicorn's
+    # access logger after our module-import-time setup_logging() runs, which
+    # was wiping the filter and letting Render keep-alive `GET /` lines spam
+    # the log stream.
+    from core.logger import _HealthCheckAccessFilter
+    import logging as _logging
+    _hc_filter = _HealthCheckAccessFilter()
+    for _name in ("uvicorn.access", "gunicorn.access"):
+        _logger = _logging.getLogger(_name)
+        if not any(isinstance(f, _HealthCheckAccessFilter) for f in _logger.filters):
+            _logger.addFilter(_hc_filter)
 
     # ── Phase 1: Critical initialization (must complete before serving) ──
     phase1_start = time.time()
@@ -551,9 +585,9 @@ init_sentry(settings)
 # Create FastAPI app
 # Disable Swagger/OpenAPI docs in production to reduce attack surface
 app = FastAPI(
-    title="FitWiz API",
-    description="""
-    Backend API for the FitWiz mobile app.
+    title=branding.OPENAPI_TITLE,
+    description=f"""
+    Backend API for the {branding.APP_NAME} mobile app.
 
     ## Features
     - AI-powered fitness coaching with GPT-4
@@ -600,12 +634,16 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 # Send server errors to Discord #alerts (500, 502, 503, 504 + unhandled exceptions)
 from services.discord_webhooks import notify_error as _discord_notify_error
 
-# Alert-worthy status codes: 5xx (server errors), 401 (auth issues), 429 (abuse).
+# Alert-worthy status codes: 5xx (server errors) + 429 (abuse).
+# 401 is excluded: stale Supabase sessions are routine user-side state
+# (logged out elsewhere, JWT expired) — every reopen of the app fires 20+
+# parallel requests so a single stale session storm = 20+ Discord pings,
+# which then trip Discord's 429 rate limit and spam our logs.
 # 404s are excluded — they're "client asked for something that doesn't exist"
 # (deleted resource, missing exercise image, typo in URL), not a backend
 # problem worth paging oncall. Sentry's _before_send already filters 4xx out
 # of the error tracker, Discord must match.
-_ALERT_STATUS_CODES = {401, 429, 500, 502, 503, 504}
+_ALERT_STATUS_CODES = {429, 500, 502, 503, 504}
 
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request: Request, exc: HTTPException):
@@ -675,7 +713,7 @@ app.add_middleware(SlowAPIMiddleware)
 # Include API routes
 app.include_router(v1_router, prefix="/api")
 
-# Public (no-auth) shareable resources — short links like fitwiz.us/r/{slug}
+# Public (no-auth) shareable resources — short links like zealova.com/r/{slug}
 from api.public import router as public_router  # noqa: E402
 app.include_router(public_router)
 
@@ -712,7 +750,7 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 async def root():
     """Root endpoint - basic info."""
     result = {
-        "service": "FitWiz Backend",
+        "service": f"{branding.APP_NAME} Backend",
         "version": "1.0.0",
         "health": "/health",
     }
@@ -746,35 +784,35 @@ async def health_keep_alive():
 async def open_app():
     """
     Deep-link bounce page linked from emails.
-    On mobile: immediately redirects to the FitWiz app via the fitwiz:// custom scheme.
+    On mobile: immediately redirects to the Zealova app via the fitwiz:// custom scheme.
     On desktop: shows a friendly page with App Store / Play Store links.
     """
-    html = """<!DOCTYPE html>
+    html = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="refresh" content="0;url=fitwiz://">
-<title>Opening FitWiz…</title>
+<meta http-equiv="refresh" content="0;url={branding.DEEP_LINK_SCHEME}://">
+<title>Opening {branding.APP_NAME}…</title>
 <style>
-  *{margin:0;padding:0;box-sizing:border-box}
-  body{background:#000;color:#fafafa;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
-       display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;text-align:center;padding:24px}
-  img{width:96px;height:96px;border-radius:22px;margin-bottom:24px}
-  h1{font-size:28px;font-weight:800;margin-bottom:8px}
-  p{color:#a1a1aa;margin-bottom:32px;font-size:15px}
-  .btn{display:inline-block;background:#06b6d4;color:#000;font-weight:700;font-size:15px;
-       padding:14px 32px;border-radius:50px;text-decoration:none;margin:6px}
-  .btn-outline{background:transparent;color:#06b6d4;border:2px solid #06b6d4}
+  *{{margin:0;padding:0;box-sizing:border-box}}
+  body{{background:#000;color:#fafafa;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+       display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;text-align:center;padding:24px}}
+  img{{width:96px;height:96px;border-radius:22px;margin-bottom:24px}}
+  h1{{font-size:28px;font-weight:800;margin-bottom:8px}}
+  p{{color:#a1a1aa;margin-bottom:32px;font-size:15px}}
+  .btn{{display:inline-block;background:#06b6d4;color:#000;font-weight:700;font-size:15px;
+       padding:14px 32px;border-radius:50px;text-decoration:none;margin:6px}}
+  .btn-outline{{background:transparent;color:#06b6d4;border:2px solid #06b6d4}}
 </style>
 </head>
 <body>
-<img src="/static/logo.png" alt="FitWiz">
-<h1>Opening FitWiz…</h1>
+<img src="/static/logo.png" alt="{branding.APP_NAME}">
+<h1>Opening {branding.APP_NAME}…</h1>
 <p>If the app doesn't open automatically, tap below.</p>
-<a href="fitwiz://" class="btn">Open App</a><br>
-<a href="https://apps.apple.com/app/fitwiz/id0000000000" class="btn btn-outline">App Store</a>
-<a href="https://play.google.com/store/apps/details?id=com.aifitnesscoach.app" class="btn btn-outline">Google Play</a>
+<a href="{branding.DEEP_LINK_SCHEME}://" class="btn">Open App</a><br>
+<a href="https://apps.apple.com/app/{branding.APP_NAME.lower()}/id0000000000" class="btn btn-outline">App Store</a>
+<a href="https://play.google.com/store/apps/details?id={branding.PACKAGE_ID_ANDROID}" class="btn btn-outline">Google Play</a>
 </body>
 </html>"""
     return HTMLResponse(content=html)

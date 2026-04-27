@@ -149,6 +149,7 @@ class WorkoutUpdate(BaseModel):
     is_completed: Optional[bool] = None
     exercises_json: Optional[str] = Field(default=None, max_length=100000)
     last_modified_method: Optional[str] = Field(default=None, max_length=50)
+    generation_metadata: Optional[str] = Field(default=None, max_length=50000)
 
 
 class Workout(BaseModel):

@@ -1,8 +1,8 @@
-# FitWiz MCP Server — Deployment & Setup Guide
+# Zealova MCP Server — Deployment & Setup Guide
 
-This guide walks through deploying the FitWiz [Model Context Protocol](https://modelcontextprotocol.io) (MCP) server. Once deployed, yearly subscribers connect FitWiz to Claude Desktop, ChatGPT, Cursor, or any MCP-compatible AI client — the client then reads and writes their FitWiz data through scoped tools.
+This guide walks through deploying the Zealova [Model Context Protocol](https://modelcontextprotocol.io) (MCP) server. Once deployed, yearly subscribers connect Zealova to Claude Desktop, ChatGPT, Cursor, or any MCP-compatible AI client — the client then reads and writes their Zealova data through scoped tools.
 
-> **New to MCP?** It's an open protocol (from Anthropic) that standardizes how AI assistants access external data and take actions. Think of it as "OpenAPI, but for AI agents." Instead of the user copy-pasting data between apps, their AI assistant speaks MCP directly to the FitWiz backend — authenticated as that user, limited to scopes they granted.
+> **New to MCP?** It's an open protocol (from Anthropic) that standardizes how AI assistants access external data and take actions. Think of it as "OpenAPI, but for AI agents." Instead of the user copy-pasting data between apps, their AI assistant speaks MCP directly to the Zealova backend — authenticated as that user, limited to scopes they granted.
 
 ## Two connection paths
 
@@ -15,7 +15,7 @@ The rest of this doc is the same regardless of path — both go through the same
 
 ## 1. Prerequisites
 
-- FitWiz backend deployed (this repo), typically on Render.
+- Zealova backend deployed (this repo), typically on Render.
 - Supabase project already provisioned.
 - RevenueCat yearly subscription products configured. MCP is yearly-only.
 - Ability to set env vars on the backend host.

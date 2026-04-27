@@ -6,6 +6,7 @@ import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/models/workout.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../utils/forecast_math.dart';
+import 'package:fitwiz/core/constants/branding.dart';
 
 /// Workstream 1 (Day 0-7 retention magic moment).
 ///
@@ -147,7 +148,7 @@ class _FirstWorkoutForecastSheet extends ConsumerWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Your first FitWiz workout',
+                            'Your first ${Branding.appName} workout',
                             style: TextStyle(fontSize: 13, color: textMuted, letterSpacing: 0.5),
                           ),
                           Text(

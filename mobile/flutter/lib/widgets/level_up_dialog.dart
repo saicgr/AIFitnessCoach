@@ -7,6 +7,7 @@ import '../data/models/level_reward.dart';
 import '../data/models/user_xp.dart';
 import '../data/services/haptic_service.dart';
 import 'fitness_crate_dialog.dart';
+import 'package:fitwiz/core/constants/branding.dart';
 
 part 'level_up_dialog_part_accomplishment.dart';
 part 'level_up_dialog_part_progress_bar.dart';
@@ -612,10 +613,10 @@ class _LevelUpDialogState extends ConsumerState<LevelUpDialog>
       case 5: return '"Rising Star" animated badge + Premium Crate';
       case 10: return '"Iron Will" animated badge + Iron theme';
       case 25: return 'Bronze animated frame + "Dedicated" chat title';
-      case 50: return 'Silver frame + FREE FitWiz Sticker Pack!';
+      case 50: return 'Silver frame + FREE ${Branding.appName} Sticker Pack!';
       case 75: return 'Gold holographic frame + "Elite" animated nameplate';
-      case 100: return 'Elite badge + FREE FitWiz T-Shirt!';
-      case 150: return 'Champion badge + FREE FitWiz Hoodie!';
+      case 100: return 'Elite badge + FREE ${Branding.appName} T-Shirt!';
+      case 150: return 'Champion badge + FREE ${Branding.appName} Hoodie!';
       case 200: return 'Mythic badge + FREE Full Merch Kit!';
       case 250: return 'Transcendent badge + FREE Signed Premium Kit!';
       default: return null;

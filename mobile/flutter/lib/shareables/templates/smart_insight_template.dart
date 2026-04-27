@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../shareable_canvas.dart';
 import '../shareable_data.dart';
-import '../widgets/fitwiz_watermark.dart';
+import '../widgets/app_watermark.dart';
 
 /// SmartInsight — single sparkle-prefixed insight callout on dark canvas
 /// with a supporting mini bar chart and one-line rationale. Spark
@@ -118,7 +118,7 @@ class SmartInsightTemplate extends StatelessWidget {
             if (showWatermark)
               Row(
                 children: [
-                  FitWizWatermark(
+                  AppWatermark(
                     textColor: Colors.white,
                     fontSize: 13 * mul,
                   ),

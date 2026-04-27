@@ -1,4 +1,4 @@
--- FitWiz - Subscription & Payment Tables
+-- Zealova - Subscription & Payment Tables
 -- Migration 022: Subscriptions and payment tracking
 
 -- Subscription tiers enum

@@ -1,10 +1,10 @@
-package com.fitwiz.wearos.data.local.entity
+package com.aifitnesscoach.wearos.data.local.entity
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import com.fitwiz.wearos.data.models.WearExercise
-import com.fitwiz.wearos.data.models.WearWorkout
-import com.fitwiz.wearos.data.models.WorkoutType
+import com.aifitnesscoach.wearos.data.models.WearExercise
+import com.aifitnesscoach.wearos.data.models.WearWorkout
+import com.aifitnesscoach.wearos.data.models.WorkoutType
 
 /**
  * Room entity for cached workouts

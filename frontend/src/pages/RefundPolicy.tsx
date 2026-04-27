@@ -1,5 +1,6 @@
 import MarketingNav from '../components/marketing/MarketingNav';
 import MarketingFooter from '../components/marketing/MarketingFooter';
+import { BRANDING } from '../lib/branding';
 
 /**
  * Refund Policy — aligned with actual billing paths (Apple, Google, RevenueCat
@@ -26,9 +27,9 @@ export default function RefundPolicy() {
           <div className="space-y-8 text-[15px] text-[var(--color-text-secondary)] leading-relaxed">
             <div>
               <p>
-                We want you to be satisfied with FitWiz. This Refund Policy explains how refunds
+                We want you to be satisfied with {BRANDING.appName}. This Refund Policy explains how refunds
                 work, how to cancel, and what statutory rights you have if you live in the EU,
-                UK, or Switzerland. FitWiz subscriptions are sold exclusively through the Apple
+                UK, or Switzerland. {BRANDING.appName} subscriptions are sold exclusively through the Apple
                 App Store and Google Play; those stores are the merchant of record and their
                 refund rules apply.
               </p>
@@ -42,7 +43,7 @@ export default function RefundPolicy() {
                 1. Free Trial
               </h2>
               <p>
-                FitWiz Premium starts with a 7-day free trial. You will not be charged during
+                {BRANDING.appName} Premium starts with a 7-day free trial. You will not be charged during
                 the trial. If you cancel before the trial ends (Apple: at least 24 hours before
                 the trial's last day; Google: any time before it ends), you will not be billed.
                 If you do not cancel, the trial converts to a paid subscription at the price
@@ -100,7 +101,7 @@ export default function RefundPolicy() {
                 3. In-App Store Items
               </h2>
               <p className="mb-4">
-                One-time purchases inside the FitWiz app (workout programs, meal plans,
+                One-time purchases inside the {BRANDING.appName} app (workout programs, meal plans,
                 cosmetics, and similar digital content) are billed by Apple or Google at the
                 moment of purchase and deliver immediately. They are generally non-refundable,
                 but we will help arrange a refund through Apple or Google in the following
@@ -113,7 +114,7 @@ export default function RefundPolicy() {
               </ul>
               <p className="mt-4">
                 Email{' '}
-                <a href="mailto:support@fitwiz.us" className="text-emerald-400 hover:underline">support@fitwiz.us</a>{' '}
+                <a href={`mailto:support@${BRANDING.marketingDomain}`} className="text-emerald-400 hover:underline">support@{BRANDING.marketingDomain}</a>{' '}
                 with your order ID and a brief description and we will open a refund case with
                 the relevant store on your behalf.
               </p>
@@ -129,7 +130,7 @@ export default function RefundPolicy() {
               <p className="mb-4">
                 If you live in the EEA, United Kingdom, or Switzerland you have a statutory
                 right of withdrawal for 14 days after purchase of a digital service. Because
-                FitWiz subscriptions are sold through the Apple App Store and Google Play, the
+                {BRANDING.appName} subscriptions are sold through the Apple App Store and Google Play, the
                 store you bought from is the merchant of record and handles withdrawal requests
                 through the refund flows in Section 2.
               </p>
@@ -138,7 +139,7 @@ export default function RefundPolicy() {
                 remedy for defective digital content, are not affected by this policy. If a
                 store declines a refund you believe you are statutorily entitled to, contact us
                 at{' '}
-                <a href="mailto:support@fitwiz.us" className="text-emerald-400 hover:underline">support@fitwiz.us</a>{' '}
+                <a href={`mailto:support@${BRANDING.marketingDomain}`} className="text-emerald-400 hover:underline">support@{BRANDING.marketingDomain}</a>{' '}
                 and we will advocate on your behalf.
               </p>
             </div>
@@ -152,7 +153,7 @@ export default function RefundPolicy() {
               </h2>
               <p>
                 If you believe you have been billed twice for the same period, email{' '}
-                <a href="mailto:support@fitwiz.us" className="text-emerald-400 hover:underline">support@fitwiz.us</a>{' '}
+                <a href={`mailto:support@${BRANDING.marketingDomain}`} className="text-emerald-400 hover:underline">support@{BRANDING.marketingDomain}</a>{' '}
                 with both receipts. We reconcile against RevenueCat, Apple, and Google billing
                 records and will help you recover the overlap through the original store. We
                 do not charge administrative fees for our own mistakes.
@@ -167,12 +168,12 @@ export default function RefundPolicy() {
                 6. How to Cancel Your Subscription
               </h2>
               <p className="mb-4">
-                You can cancel your FitWiz Premium subscription at any time. Premium access
+                You can cancel your {BRANDING.appName} Premium subscription at any time. Premium access
                 continues through the end of the current billing period.
               </p>
               <ul className="list-disc pl-6 space-y-1">
-                <li><strong className="text-[var(--color-text)]">Android:</strong> Google Play Store &gt; Menu &gt; Subscriptions &gt; FitWiz &gt; Cancel.</li>
-                <li><strong className="text-[var(--color-text)]">iOS:</strong> Settings &gt; Apple ID &gt; Subscriptions &gt; FitWiz &gt; Cancel.</li>
+                <li><strong className="text-[var(--color-text)]">Android:</strong> Google Play Store &gt; Menu &gt; Subscriptions &gt; {BRANDING.appName} &gt; Cancel.</li>
+                <li><strong className="text-[var(--color-text)]">iOS:</strong> Settings &gt; Apple ID &gt; Subscriptions &gt; {BRANDING.appName} &gt; Cancel.</li>
                 <li><strong className="text-[var(--color-text)]">In-app shortcut:</strong> Settings &gt; Subscription &gt; Manage (deep-links into the relevant store).</li>
               </ul>
             </div>
@@ -200,11 +201,11 @@ export default function RefundPolicy() {
               </h2>
               <p className="mb-2">
                 <strong>Refund or billing questions:</strong>{' '}
-                <a href="mailto:support@fitwiz.us" className="text-emerald-400 hover:underline">support@fitwiz.us</a>
+                <a href={`mailto:support@${BRANDING.marketingDomain}`} className="text-emerald-400 hover:underline">support@{BRANDING.marketingDomain}</a>
               </p>
               <p className="mb-2">
                 <strong>Privacy or data questions:</strong>{' '}
-                <a href="mailto:privacy@fitwiz.us" className="text-emerald-400 hover:underline">privacy@fitwiz.us</a>
+                <a href={`mailto:privacy@${BRANDING.marketingDomain}`} className="text-emerald-400 hover:underline">privacy@{BRANDING.marketingDomain}</a>
               </p>
               <p>We aim to respond within 2 business days.</p>
             </div>

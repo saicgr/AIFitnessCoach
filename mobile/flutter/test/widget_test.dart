@@ -1,4 +1,4 @@
-// FitWiz Widget Tests
+// App widget tests.
 //
 // These tests verify the core widget functionality of the app.
 // Run with: flutter test
@@ -6,6 +6,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fitwiz/core/constants/branding.dart';
 
 import 'helpers/test_helpers.dart';
 
@@ -17,14 +18,14 @@ void main() {
           child: MaterialApp(
             home: Scaffold(
               body: Center(
-                child: Text('FitWiz'),
+                child: Text(Branding.appName),
               ),
             ),
           ),
         ),
       );
 
-      expect(find.text('FitWiz'), findsOneWidget);
+      expect(find.text(Branding.appName), findsOneWidget);
     });
 
     testWidgets('ProviderScope wraps app correctly', (tester) async {

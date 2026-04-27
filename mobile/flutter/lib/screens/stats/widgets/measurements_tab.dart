@@ -41,10 +41,12 @@ class _MeasurementsTabState extends ConsumerState<MeasurementsTab> {
   ];
 
   final _periods = [
+    {'label': '1D', 'value': '1d', 'days': 1},
+    {'label': '3D', 'value': '3d', 'days': 3},
     {'label': '7D', 'value': '7d', 'days': 7},
     {'label': '30D', 'value': '30d', 'days': 30},
     {'label': '90D', 'value': '90d', 'days': 90},
-    {'label': 'All', 'value': 'all', 'days': 365},
+    {'label': 'All', 'value': 'all', 'days': 3650},
   ];
 
   static const _measurementGroups = [
@@ -247,6 +249,7 @@ class _MeasurementsTabState extends ConsumerState<MeasurementsTab> {
           right: 16,
           bottom: 16,
           child: FloatingActionButton(
+            heroTag: 'measurements_quick_add_fab',
             onPressed: () => _showQuickAddSheet(context, ref, cyan, _selectedType),
             backgroundColor: cyan,
             child: Icon(Icons.add, color: isDark ? AppColors.pureBlack : Colors.white),
@@ -374,34 +377,37 @@ class _MeasurementsTabState extends ConsumerState<MeasurementsTab> {
     required Color textMuted,
     required Color cardBorder,
   }) {
-    return Row(
-      children: _periods.map((period) {
-        final isSelected = _selectedPeriod == period['value'];
-        return Expanded(
-          child: GestureDetector(
-            onTap: () => setState(() => _selectedPeriod = period['value'] as String),
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      physics: const BouncingScrollPhysics(),
+      child: Row(
+        children: _periods.map((period) {
+          final isSelected = _selectedPeriod == period['value'];
+          return GestureDetector(
+            onTap: () =>
+                setState(() => _selectedPeriod = period['value'] as String),
             child: Container(
               margin: const EdgeInsets.symmetric(horizontal: 3),
-              padding: const EdgeInsets.symmetric(vertical: 8),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
               decoration: BoxDecoration(
                 color: isSelected ? cyan.withOpacity(0.2) : elevated,
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(color: isSelected ? cyan : cardBorder),
               ),
-              child: Center(
-                child: Text(
-                  period['label'] as String,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                    color: isSelected ? cyan : textMuted,
-                  ),
+              child: Text(
+                period['label'] as String,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight:
+                      isSelected ? FontWeight.bold : FontWeight.normal,
+                  color: isSelected ? cyan : textMuted,
                 ),
               ),
             ),
-          ),
-        );
-      }).toList(),
+          );
+        }).toList(),
+      ),
     );
   }
 
@@ -414,6 +420,10 @@ class _MeasurementsTabState extends ConsumerState<MeasurementsTab> {
     required String unit,
   }) {
     if (filtered.isEmpty) {
+      final fullHistory = ref.read(measurementsProvider).historyByType[_selectedType] ?? [];
+      final hasOlderData = fullHistory.isNotEmpty;
+      final periodLabel = _periods
+          .firstWhere((p) => p['value'] == _selectedPeriod)['label'] as String;
       return Center(
         key: key,
         child: Column(
@@ -422,9 +432,19 @@ class _MeasurementsTabState extends ConsumerState<MeasurementsTab> {
             Icon(Icons.show_chart, size: 40, color: textMuted),
             const SizedBox(height: 8),
             Text(
-              'Log ${_selectedType.displayName.toLowerCase()} to see trends',
+              hasOlderData
+                  ? 'No ${_selectedType.displayName.toLowerCase()} logs in last $periodLabel'
+                  : 'Log ${_selectedType.displayName.toLowerCase()} to see trends',
+              textAlign: TextAlign.center,
               style: TextStyle(color: textMuted),
             ),
+            if (hasOlderData) ...[
+              const SizedBox(height: 8),
+              TextButton(
+                onPressed: () => setState(() => _selectedPeriod = 'all'),
+                child: Text('View all', style: TextStyle(color: cyan)),
+              ),
+            ],
           ],
         ),
       );

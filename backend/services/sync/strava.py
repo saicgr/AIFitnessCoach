@@ -2,7 +2,7 @@
 Strava provider — OAuth 2.0 (auth-code, **not** PKCE; Strava doesn't support it)
 + push webhooks via Strava's Push Subscriptions API.
 
-Activity-type → FitWiz cardio enum mapping:
+Activity-type → Zealova cardio enum mapping:
 
     Run                → run
     TrailRun           → run

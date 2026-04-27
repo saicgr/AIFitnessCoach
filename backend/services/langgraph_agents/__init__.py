@@ -1,4 +1,4 @@
-"""LangGraph agents for FitWiz.
+"""LangGraph agents for Zealova.
 
 This package contains dedicated domain agents:
 - Nutrition Agent: Food analysis, dietary advice

@@ -150,7 +150,7 @@ class ApiClient with WidgetsBindingObserver {
               response.headers['location'] != null) {
             final redirectUrl = response.headers['location']!.first;
             final options = response.requestOptions;
-            options.path = redirectUrl;
+            options.path = _resolveRedirectPath(redirectUrl);
             _dio.fetch(options).then(
               (r) => handler.resolve(r),
               onError: (e) => handler.reject(e as DioException),
@@ -167,7 +167,7 @@ class ApiClient with WidgetsBindingObserver {
             final redirectUrl =
                 error.response!.headers['location']!.first;
             final options = error.requestOptions;
-            options.path = redirectUrl;
+            options.path = _resolveRedirectPath(redirectUrl);
             _dio.fetch(options).then(
               (r) => handler.resolve(r),
               onError: (e) => handler.reject(e as DioException),
@@ -459,6 +459,25 @@ class ApiClient with WidgetsBindingObserver {
 
   /// Get the base URL
   String get baseUrl => ApiConstants.apiBaseUrl;
+
+  /// Resolve a redirect Location header against `apiBaseUrl` so a 307/308
+  /// retry doesn't end up double-prefixed (`/api/v1/api/v1/...`).
+  ///
+  /// Dio concatenates `baseUrl` + `options.path` literally, so when a
+  /// FastAPI redirect Location like `/api/v1/workouts/.../share-link/`
+  /// is fed back as `options.path`, the next request hits
+  /// `/api/v1/api/v1/...` and 404s. Strip the shared `apiVersion` prefix
+  /// when present; absolute URLs (http*) are passed through unchanged.
+  static String _resolveRedirectPath(String redirectUrl) {
+    if (redirectUrl.startsWith('http://') || redirectUrl.startsWith('https://')) {
+      return redirectUrl;
+    }
+    final prefix = ApiConstants.apiVersion;
+    if (redirectUrl.startsWith('$prefix/')) {
+      return redirectUrl.substring(prefix.length);
+    }
+    return redirectUrl;
+  }
 
   /// Get auth headers for manual requests (e.g., streaming).
   /// Always uses the CURRENT Supabase session token to avoid stale tokens.

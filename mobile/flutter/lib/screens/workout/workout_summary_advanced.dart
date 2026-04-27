@@ -1331,14 +1331,50 @@ class _PerExerciseDeepDiveSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Group sets by exercise name (case insensitive)
+    // Group sets by exercise name (case insensitive). Drop "Complete workout
+    // now" zero-stamped placeholder rows so the deep-dive bars don't render
+    // as empty "—" lines when the actual workout had logged sets elsewhere
+    // — keeps a row only if the set was real (is_completed != false), or if
+    // ANY meaningful field (reps / weight / rir / rpe / duration) is set.
     final grouped = <String, List<Map<String, dynamic>>>{};
     final originalNames = <String, String>{}; // lowercase -> original
+    bool isRealSet(Map<String, dynamic> s) {
+      if (s['is_completed'] == false) return false;
+      final reps = (s['reps'] as num?)?.toInt() ?? 0;
+      final weight = (s['weight_kg'] as num?)?.toDouble() ??
+          (s['weight'] as num?)?.toDouble() ??
+          0;
+      if (reps > 0 || weight > 0) return true;
+      // Allow non-zero RIR/RPE/duration to count too (logged effort even if
+      // reps/weight ended up zero for some reason).
+      if (s['rir'] != null || s['rpe'] != null) return true;
+      final dur = (s['duration_seconds'] as num?)?.toInt() ?? 0;
+      return dur > 0;
+    }
     for (final s in setsJson) {
+      if (!isRealSet(s)) continue;
       final name = s['exercise_name'] as String? ?? 'Unknown';
       final key = name.toLowerCase();
       originalNames.putIfAbsent(key, () => name);
       grouped.putIfAbsent(key, () => []).add(s);
+    }
+
+    if (grouped.isEmpty) {
+      final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+      return _SectionCard(
+        isDark: isDark,
+        icon: Icons.fitness_center,
+        title: 'Per-Exercise Deep Dive',
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 18),
+          child: Center(
+            child: Text(
+              'No completed sets logged for this workout.',
+              style: TextStyle(fontSize: 12, color: textMuted),
+            ),
+          ),
+        ),
+      );
     }
 
     return _SectionCard(
@@ -4385,14 +4421,21 @@ class _MuscleHeatmap extends StatelessWidget {
         : const [];
     for (final s in setsJson) {
       if (s is! Map<String, dynamic>) continue;
+      if (s['is_completed'] == false) continue;
       final name = (s['exercise_name'] as String?)?.trim().toLowerCase();
       if (name == null || name.isEmpty) continue;
       final weightKg = (s['weight_kg'] as num?)?.toDouble() ??
           (s['weight'] as num?)?.toDouble() ??
           0;
       final reps = (s['reps'] as num?)?.toInt() ?? 0;
-      if (weightKg <= 0 || reps <= 0) continue;
-      volumeByExercise[name] = (volumeByExercise[name] ?? 0) + weightKg * reps;
+      // Bodyweight sets have weightKg == 0 but still represent real volume
+      // (reps × bodyweight). Keep them in the volume calc using a 1.0 unit
+      // so the muscle map at least lights up when the user does a fully
+      // bodyweight session — otherwise "Muscles Hit" reads "No volume yet"
+      // even though the user trained their quads/glutes/hamstrings.
+      if (reps <= 0) continue;
+      final effectiveLoad = weightKg > 0 ? weightKg : 1.0;
+      volumeByExercise[name] = (volumeByExercise[name] ?? 0) + effectiveLoad * reps;
     }
     // Fallback for pre-fix logs with `weight_lbs` only (not currently written
     // by buildSetsJson but safer to tolerate).

@@ -18,8 +18,12 @@ import '../../data/providers/fitness_shape_history_provider.dart';
 import '../../data/providers/xp_provider.dart';
 import '../../data/services/haptic_service.dart';
 import '../../widgets/glass_sheet.dart';
+import '../../widgets/tooltips/tooltips.dart';
 import '../../widgets/main_shell.dart' show floatingNavBarVisibleProvider;
 import 'widgets/leaderboard_row_adornments.dart';
+// Gym-finder map (GymBeat-style). Disabled until Maps API key is provisioned.
+// See `widgets/gym_map_section.dart` for the full impl + re-enable steps.
+// import 'widgets/gym_map_section.dart';
 
 /// Workstream 2 — Discover tab.
 ///
@@ -107,7 +111,9 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
 
     return Scaffold(
       backgroundColor: bg,
-      body: RefreshIndicator(
+      body: Stack(
+        children: [
+          RefreshIndicator(
         color: accent,
         onRefresh: () async => ref.invalidate(discoverSnapshotProvider),
         child: CustomScrollView(
@@ -167,6 +173,16 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
           ],
         ),
       ),
+          // Inline gym-finder map placeholder. Renders nothing until the
+          // Google Maps API key is wired in pubspec + native plists.
+          // const Positioned.fill(child: IgnorePointer(child: GymMapSection())),
+          // First-run spotlight tour. Anchors and tip copy live in
+          // `widgets/tooltips/tours/discover_tour.dart`. The overlay
+          // uses `Positioned.fill` so the painter can dim the whole
+          // screen and ring the highlighted target.
+          DiscoverTour.overlay(),
+        ],
+      ),
     );
   }
 
@@ -215,10 +231,19 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
           ),
         ),
         const SizedBox(height: 14),
-        _filterPills(context, ref, textColor: textColor, textMuted: textMuted, border: border, accent: accent),
+        // Tour anchor — the segmented XP/Volume/Streaks tabs are step
+        // 3 of `discover_v1`.
+        KeyedSubtree(
+          key: TooltipAnchors.discoverBoardTabs,
+          child: _filterPills(context, ref, textColor: textColor, textMuted: textMuted, border: border, accent: accent),
+        ),
         const SizedBox(height: 18),
         if (s.risingStars.isNotEmpty) ...[
-          _sectionHeader('🚀 Rising Stars', 'This week\'s biggest movers', textColor: textColor, textMuted: textMuted),
+          // Tour anchor — Rising Stars header is step 1 of `discover_v1`.
+          KeyedSubtree(
+            key: TooltipAnchors.discoverRisingStars,
+            child: _sectionHeader('🚀 Rising Stars', 'This week\'s biggest movers', textColor: textColor, textMuted: textMuted),
+          ),
           const SizedBox(height: 10),
           _RisingStarsStrip(stars: s.risingStars, elevated: elevated, textColor: textColor, textMuted: textMuted, border: border, accent: accent),
           const SizedBox(height: 18),
@@ -231,7 +256,11 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
             border: border,
           )
         else
-          _NearYouList(entries: s.nearYou, elevated: elevated, border: border, textColor: textColor, textMuted: textMuted, accent: accent, metricLabel: s.metricLabel),
+          // Tour anchor — Near You list is step 2 of `discover_v1`.
+          KeyedSubtree(
+            key: TooltipAnchors.discoverNearYou,
+            child: _NearYouList(entries: s.nearYou, elevated: elevated, border: border, textColor: textColor, textMuted: textMuted, accent: accent, metricLabel: s.metricLabel),
+          ),
         const SizedBox(height: 18),
         _Top10Collapsible(entries: s.top10, elevated: elevated, border: border, textColor: textColor, textMuted: textMuted, metricLabel: s.metricLabel),
         const SizedBox(height: 14),
@@ -1580,15 +1609,21 @@ class _FitnessRadarState extends ConsumerState<_FitnessRadar> {
     final showViewerOverlay =
         !isSelfPeek && viewer.any((v) => v > 0.01);
 
-    // Target = the person the user tapped, rendered as primary subject in
-    // accent color. Viewer = "you", rendered as a contrasting cyan overlay
-    // so "me vs them" reads at a glance.
-    //   accent color (purple by default) = target
-    //   AppColors.cyan                    = viewer
-    // Both fully saturated with semi-transparent fills so overlap blends
-    // naturally.
-    final targetColor = widget.accent;
-    final viewerColor = AppColors.cyan;
+    // Target = "Them" (the tapped user). Viewer = "You". We pin two
+    // perceptually-distant hues regardless of the user's accent setting —
+    // earlier the target reused `widget.accent`, which collapsed to the
+    // same blue/cyan as the viewer when the user kept the default accent
+    // and made the two shapes indistinguishable.
+    //   AppColors.magenta = Them
+    //   AppColors.cyan    = You
+    const targetColor = AppColors.magenta;
+    const viewerColor = AppColors.cyan;
+
+    // Detect "no shape yet" case — every axis below 5% of full. Without
+    // this guard fl_chart still draws a tiny regular hexagon at the
+    // origin which users keep mistaking for a real shape (perfect hex
+    // even though their stats clearly differ across axes).
+    final targetIsFlat = target.every((v) => v < 0.05);
 
     // Clamp axis tap within bounds
     final tappedAxis = _selectedAxis.clamp(-1, labels.length - 1);
@@ -1620,50 +1655,92 @@ class _FitnessRadarState extends ConsumerState<_FitnessRadar> {
                   HapticService.light();
                   setState(() => _selectedAxis = idx);
                 },
-                child: RadarChart(
-                  RadarChartData(
-                    radarShape: RadarShape.polygon,
-                    tickCount: 4,
-                    ticksTextStyle: const TextStyle(
-                      color: Colors.transparent, fontSize: 1,
-                    ),
-                    gridBorderData:
-                        BorderSide(color: widget.border, width: 0.8),
-                    radarBorderData:
-                        BorderSide(color: widget.border, width: 0.8),
-                    tickBorderData:
-                        BorderSide(color: widget.border, width: 0.5),
-                    titleTextStyle: TextStyle(
-                      color: widget.textMuted,
-                      fontSize: compactLabels ? 10 : 11,
-                      fontWeight: FontWeight.w700,
-                    ),
-                    titlePositionPercentageOffset: 0.12,
-                    getTitle: (index, angle) =>
-                        RadarChartTitle(text: labels[index], angle: 0),
-                    dataSets: [
-                      // Target (the tapped user) — primary subject in accent.
-                      RadarDataSet(
-                        fillColor: targetColor.withValues(alpha: 0.35),
-                        borderColor: targetColor,
-                        borderWidth: 2,
-                        entryRadius: 0,
-                        dataEntries:
-                            target.map((v) => RadarEntry(value: v)).toList(),
-                      ),
-                      // Viewer ("you") — contrasting cyan overlay.
-                      if (showViewerOverlay)
-                        RadarDataSet(
-                          fillColor: viewerColor.withValues(alpha: 0.30),
-                          borderColor: viewerColor,
-                          borderWidth: 2,
-                          entryRadius: 0,
-                          dataEntries: viewer
-                              .map((v) => RadarEntry(value: v))
-                              .toList(),
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    RadarChart(
+                      RadarChartData(
+                        radarShape: RadarShape.polygon,
+                        tickCount: 4,
+                        ticksTextStyle: const TextStyle(
+                          color: Colors.transparent, fontSize: 1,
                         ),
-                    ],
-                  ),
+                        // De-emphasise the grid so the data shapes pop —
+                        // the bright background hex was being mistaken for
+                        // a real "all axes equal" shape.
+                        gridBorderData: BorderSide(
+                          color: widget.border.withValues(alpha: 0.35),
+                          width: 0.6,
+                        ),
+                        radarBorderData: BorderSide(
+                          color: widget.border.withValues(alpha: 0.55),
+                          width: 0.7,
+                        ),
+                        tickBorderData: BorderSide(
+                          color: widget.border.withValues(alpha: 0.25),
+                          width: 0.4,
+                        ),
+                        titleTextStyle: TextStyle(
+                          color: widget.textMuted,
+                          fontSize: compactLabels ? 10 : 11,
+                          fontWeight: FontWeight.w700,
+                        ),
+                        titlePositionPercentageOffset: 0.12,
+                        getTitle: (index, angle) =>
+                            RadarChartTitle(text: labels[index], angle: 0),
+                        dataSets: [
+                          // Target ("Them") — magenta, drawn first so the
+                          // viewer overlay sits on top.
+                          if (!targetIsFlat)
+                            RadarDataSet(
+                              fillColor: targetColor.withValues(alpha: 0.45),
+                              borderColor: targetColor,
+                              borderWidth: 2.5,
+                              entryRadius: 3,
+                              dataEntries: target
+                                  .map((v) => RadarEntry(value: v))
+                                  .toList(),
+                            )
+                          else
+                            // Need at least one dataset for fl_chart to render
+                            // the grid; use an invisible zero-radius polygon.
+                            RadarDataSet(
+                              fillColor: Colors.transparent,
+                              borderColor: Colors.transparent,
+                              borderWidth: 0,
+                              entryRadius: 0,
+                              dataEntries: target
+                                  .map((_) => const RadarEntry(value: 0))
+                                  .toList(),
+                            ),
+                          // Viewer ("You") — cyan overlay, slightly thicker
+                          // border so the foreground reads on top of the
+                          // magenta fill.
+                          if (showViewerOverlay)
+                            RadarDataSet(
+                              fillColor: viewerColor.withValues(alpha: 0.35),
+                              borderColor: viewerColor,
+                              borderWidth: 2.5,
+                              entryRadius: 3,
+                              dataEntries: viewer
+                                  .map((v) => RadarEntry(value: v))
+                                  .toList(),
+                            ),
+                        ],
+                      ),
+                    ),
+                    if (targetIsFlat)
+                      IgnorePointer(
+                        child: Text(
+                          'Not enough data yet',
+                          style: TextStyle(
+                            color: widget.textMuted,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
               );
             },

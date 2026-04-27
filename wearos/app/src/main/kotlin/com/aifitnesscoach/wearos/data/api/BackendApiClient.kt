@@ -1,8 +1,8 @@
-package com.fitwiz.wearos.data.api
+package com.aifitnesscoach.wearos.data.api
 
 import android.util.Log
-import com.fitwiz.wearos.data.local.SecureStorage
-import com.fitwiz.wearos.data.models.*
+import com.aifitnesscoach.wearos.data.local.SecureStorage
+import com.aifitnesscoach.wearos.data.models.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
@@ -14,7 +14,7 @@ import javax.inject.Singleton
  */
 @Singleton
 class BackendApiClient @Inject constructor(
-    private val api: FitWizApi,
+    private val api: AppApi,
     private val secureStorage: SecureStorage
 ) {
     companion object {

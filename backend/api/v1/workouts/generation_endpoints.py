@@ -46,6 +46,12 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
     """Generate a new workout for a user based on their preferences."""
     logger.info(f"Generating workout for user {body.user_id}")
 
+    # Initialize before the try so the except blocks can reference them even
+    # if get_supabase_db() itself raises (otherwise the cleanup handlers below
+    # raise UnboundLocalError, masking the real failure).
+    placeholder_id = None
+    db = None
+
     try:
         db = get_supabase_db()
 
@@ -98,7 +104,6 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
                         )
 
         # Duplicate check: return existing workout if one already exists for this date+profile
-        placeholder_id = None
         if body.scheduled_date:
             try:
                 sched = body.scheduled_date
@@ -1161,7 +1166,7 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
 
     except HTTPException:
         # Clean up placeholder on error
-        if placeholder_id:
+        if placeholder_id and db is not None:
             try:
                 db.client.table("workouts").delete().eq("id", placeholder_id).execute()
             except Exception as e:
@@ -1169,7 +1174,7 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
         raise
     except Exception as e:
         # Clean up placeholder on error
-        if placeholder_id:
+        if placeholder_id and db is not None:
             try:
                 db.client.table("workouts").delete().eq("id", placeholder_id).execute()
             except Exception as cleanup_err:

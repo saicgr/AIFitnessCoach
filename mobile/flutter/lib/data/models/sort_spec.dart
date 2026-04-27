@@ -14,7 +14,9 @@ enum SortField {
   health,
   inflammation,
   glycemicLoad,
-  fodmap,
+  // FODMAP intentionally removed as a sort dimension — it's a tolerance
+  // category (low / moderate / high) for IBS, not a quality ranking. Use
+  // the FODMAP filter instead. Kept here as a comment for archeology.
   addedSugar,
   ultraProcessed,
   price,
@@ -29,7 +31,6 @@ enum SortField {
       case SortField.health: return 'Health';
       case SortField.inflammation: return 'Inflammation';
       case SortField.glycemicLoad: return 'Blood sugar';
-      case SortField.fodmap: return 'FODMAP';
       case SortField.addedSugar: return 'Added sugar';
       case SortField.ultraProcessed: return 'Ultra-processed';
       case SortField.price: return 'Price';
@@ -45,7 +46,6 @@ enum SortField {
     switch (this) {
       case SortField.inflammation:
       case SortField.glycemicLoad:
-      case SortField.fodmap:
       case SortField.addedSugar:
       case SortField.ultraProcessed:
       case SortField.price:

@@ -17,6 +17,7 @@ import '../../../core/utils/default_weights.dart';
 import '../../../data/models/exercise.dart';
 import '../../../widgets/pill_app_bar.dart';
 import '../../../widgets/segmented_tab_bar.dart';
+import 'package:fitwiz/core/constants/branding.dart';
 
 /// Exercise Analytics Page - full page with My Analytics and Friends tabs
 class ExerciseAnalyticsPage extends StatefulWidget {
@@ -183,7 +184,7 @@ class _ExerciseAnalyticsPageState extends State<ExerciseAnalyticsPage>
             OutlinedButton.icon(
               onPressed: () {
                 HapticFeedback.mediumImpact();
-                Share.share('Join me on FitWiz and let\'s compare our lifts! 💪 https://fitwiz.us');
+                Share.share('Join me on ${Branding.appName} and let\'s compare our lifts! 💪 https://${Branding.marketingDomain}');
               },
               icon: const Icon(Icons.person_add_outlined),
               label: const Text('Invite Friends'),

@@ -203,11 +203,22 @@ class AISuggestionContent extends StatelessWidget {
     final swapColor = isDark ? AppColors.purple : AppColorsLight.purple;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
+    final encouragementsClean = encouragements?.where((e) => e.trim().isNotEmpty).toList() ?? const [];
+    final warningsClean = warnings?.where((w) => w.trim().isNotEmpty).toList() ?? const [];
+    final hasSuggestion = suggestion != null && suggestion!.trim().isNotEmpty;
+    final hasSwap = recommendedSwap != null && recommendedSwap!.trim().isNotEmpty;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (encouragements != null && encouragements!.isNotEmpty) ...[
-          ...encouragements!.map((e) => Padding(
+        if (hasSuggestion) ...[
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Text(suggestion!, style: TextStyle(fontSize: 13, color: textMuted, height: 1.4)),
+          ),
+        ],
+        if (encouragementsClean.isNotEmpty) ...[
+          ...encouragementsClean.map((e) => Padding(
             padding: const EdgeInsets.only(bottom: 6),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -219,9 +230,9 @@ class AISuggestionContent extends StatelessWidget {
             ),
           )),
         ],
-        if (warnings != null && warnings!.isNotEmpty) ...[
-          if (encouragements != null && encouragements!.isNotEmpty) const SizedBox(height: 4),
-          ...warnings!.map((w) => Padding(
+        if (warningsClean.isNotEmpty) ...[
+          if (encouragementsClean.isNotEmpty) const SizedBox(height: 4),
+          ...warningsClean.map((w) => Padding(
             padding: const EdgeInsets.only(bottom: 6),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -233,7 +244,7 @@ class AISuggestionContent extends StatelessWidget {
             ),
           )),
         ],
-        if (recommendedSwap != null) ...[
+        if (hasSwap) ...[
           const SizedBox(height: 4),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -243,9 +254,6 @@ class AISuggestionContent extends StatelessWidget {
               Expanded(child: Text('Try: $recommendedSwap', style: TextStyle(fontSize: 13, color: swapColor))),
             ],
           ),
-        ],
-        if (suggestion != null && (encouragements == null || encouragements!.isEmpty) && (warnings == null || warnings!.isEmpty)) ...[
-          Text(suggestion!, style: TextStyle(fontSize: 13, color: textMuted)),
         ],
       ],
     );

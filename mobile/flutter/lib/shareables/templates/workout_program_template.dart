@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../shareable_canvas.dart';
 import '../shareable_data.dart';
-import '../widgets/fitwiz_watermark.dart';
+import '../widgets/app_watermark.dart';
 
 /// Workout Program — Hevy-style multi-day program summary. Renders the
 /// exercise list (no per-set breakdown) with thumbnail icons + sets·reps
@@ -41,7 +41,7 @@ class WorkoutProgramTemplate extends StatelessWidget {
               Row(
                 children: [
                   if (showWatermark)
-                    FitWizWatermark(
+                    AppWatermark(
                       textColor: const Color(0xFF111111),
                       iconSize: 20,
                       fontSize: 13,

@@ -1,6 +1,6 @@
-# FitWiz Release Keystore
+# Zealova Release Keystore
 
-This directory contains the release signing keystore for the FitWiz Android app.
+This directory contains the release signing keystore for the Zealova Android app.
 
 ## Files
 

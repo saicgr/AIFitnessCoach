@@ -282,6 +282,341 @@ extension __AddGymProfileSheetStateExt on _AddGymProfileSheetState {
   }
 
 
+  /// Step 3 — Schedule. User picks the weekdays they'll train at this gym
+  /// and (optionally) the training split. The values are persisted to
+  /// `gym_profiles.workout_days` + `gym_profiles.training_split` and drive
+  /// the home carousel dot indicators + 14-day pre-generation on activate.
+  ///
+  /// Quick-fill buttons let the user copy from the active profile or their
+  /// account-level workout_days, then tweak. Conflict markers warn when a
+  /// day is also claimed by another profile (whichever is active that day
+  /// wins at runtime — the warning is informational, not blocking).
+  Widget _buildScheduleStep(bool isDark, Color textPrimary, Color textSecondary, Color accentColor) {
+    final activeProfile = ref.read(activeGymProfileProvider);
+    final user = ref.read(currentUserProvider).valueOrNull;
+    final allProfiles = ref.read(gymProfilesProvider).valueOrNull ?? const <GymProfile>[];
+
+    // Pre-compute per-day conflict map: which OTHER profiles already claim
+    // each weekday. Empty unless the user has 2+ profiles. Skip the active
+    // profile in conflict lookups since editing it isn't a "conflict."
+    final Map<int, List<String>> conflictsByDay = {};
+    for (final p in allProfiles) {
+      if (p.id == activeProfile?.id) continue;
+      for (final d in p.workoutDays) {
+        conflictsByDay.putIfAbsent(d, () => []).add(p.name);
+      }
+    }
+
+    void applyPreset(List<int> days) {
+      setState(() => _selectedWorkoutDays = List<int>.from(days)..sort());
+      HapticService.light();
+    }
+
+    final activeDays = activeProfile?.workoutDays ?? const <int>[];
+    final accountDays = user?.workoutDays ?? const <int>[];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Workout Schedule',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textPrimary),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Pick the days you\'ll train at this gym. We\'ll pre-generate 14 days '
+          'of workouts for these days the moment you switch to this profile.',
+          style: TextStyle(fontSize: 13, color: textSecondary),
+        ),
+        const SizedBox(height: 16),
+
+        // Quick-fill row: copy from current profile / account default / clear
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            if (activeDays.isNotEmpty)
+              _scheduleQuickFillChip(
+                label: 'Same as ${activeProfile?.name ?? 'current'}',
+                icon: Icons.copy_rounded,
+                accent: accentColor,
+                isDark: isDark,
+                textPrimary: textPrimary,
+                onTap: () => applyPreset(activeDays),
+              ),
+            if (accountDays.isNotEmpty && !_listEquals(accountDays, activeDays))
+              _scheduleQuickFillChip(
+                label: 'Account default',
+                icon: Icons.person_rounded,
+                accent: accentColor,
+                isDark: isDark,
+                textPrimary: textPrimary,
+                onTap: () => applyPreset(accountDays),
+              ),
+            _scheduleQuickFillChip(
+              label: 'Clear',
+              icon: Icons.refresh_rounded,
+              accent: accentColor,
+              isDark: isDark,
+              textPrimary: textPrimary,
+              onTap: () => applyPreset(const []),
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 20),
+
+        // Day-of-week picker. Mon=0..Sun=6 to match the backend index and
+        // existing edit-sheet picker. Using LayoutBuilder so it scales on
+        // narrow phones (iPhone SE, ~320px) without overflowing.
+        LayoutBuilder(builder: (context, constraints) {
+          final spacing = 6.0;
+          final rawWidth = (constraints.maxWidth - spacing * 6) / 7;
+          // Clamp tile width so very small screens still fit and very large
+          // screens don't blow up the tiles.
+          final tileWidth = rawWidth.clamp(36.0, 56.0);
+          return Wrap(
+            spacing: spacing,
+            runSpacing: spacing,
+            children: List.generate(7, (i) {
+              final isSelected = _selectedWorkoutDays.contains(i);
+              final hasConflict = (conflictsByDay[i] ?? const []).isNotEmpty;
+              return GestureDetector(
+                onTap: () {
+                  setState(() {
+                    if (isSelected) {
+                      _selectedWorkoutDays.remove(i);
+                    } else {
+                      _selectedWorkoutDays
+                        ..add(i)
+                        ..sort();
+                    }
+                  });
+                  HapticService.light();
+                },
+                child: SizedBox(
+                  width: tileWidth,
+                  height: 56,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? accentColor.withValues(alpha: 0.15)
+                          : (isDark
+                              ? Colors.white.withValues(alpha: 0.05)
+                              : Colors.black.withValues(alpha: 0.04)),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: isSelected ? accentColor : Colors.transparent,
+                        width: 1.5,
+                      ),
+                    ),
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              _AddGymProfileSheetState._dayNames[i],
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                                color: isSelected ? accentColor : textPrimary,
+                              ),
+                            ),
+                            if (isSelected) ...[
+                              const SizedBox(height: 4),
+                              Container(
+                                width: 5,
+                                height: 5,
+                                decoration: BoxDecoration(color: accentColor, shape: BoxShape.circle),
+                              ),
+                            ],
+                          ],
+                        ),
+                        // Tiny conflict marker — the user can hover/tap for details.
+                        if (hasConflict)
+                          Positioned(
+                            top: 4,
+                            right: 4,
+                            child: Tooltip(
+                              message: 'Also at: ${(conflictsByDay[i] ?? const []).join(", ")}',
+                              child: Icon(
+                                Icons.warning_amber_rounded,
+                                size: 12,
+                                color: Colors.orange.shade400,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }),
+          );
+        }),
+
+        // Render any conflict warnings as readable text below the picker —
+        // a tooltip on a 12px icon isn't reliable on touch devices.
+        if (_selectedWorkoutDays.any((d) => (conflictsByDay[d] ?? const []).isNotEmpty)) ...[
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Colors.orange.withValues(alpha: 0.10),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: Colors.orange.withValues(alpha: 0.4)),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Icons.warning_amber_rounded, color: Colors.orange.shade400, size: 18),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    _buildConflictMessage(conflictsByDay),
+                    style: TextStyle(fontSize: 12, color: textPrimary, height: 1.35),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+
+        const SizedBox(height: 24),
+
+        // Training split picker (optional). Mirrors the EditGymProfileSheet
+        // selector so toggling between create + edit is familiar.
+        Text('Training Split', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: textPrimary)),
+        const SizedBox(height: 4),
+        Text(
+          'Optional — leave on "Let AI Decide" if unsure.',
+          style: TextStyle(fontSize: 12, color: textSecondary),
+        ),
+        const SizedBox(height: 10),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: _AddGymProfileSheetState._trainingSplitOptions.map((split) {
+            // null + 'nothing_structured' both mean "AI decide"; treat them
+            // as one selection so the visual state matches what's stored.
+            final isAi = split['id'] == 'nothing_structured';
+            final isSelected = isAi
+                ? (_selectedTrainingSplit == null || _selectedTrainingSplit == 'nothing_structured')
+                : _selectedTrainingSplit == split['id'];
+            return GestureDetector(
+              onTap: () {
+                setState(() {
+                  _selectedTrainingSplit = isAi ? null : split['id'] as String;
+                });
+                HapticService.light();
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? accentColor.withValues(alpha: 0.15)
+                      : (isDark
+                          ? Colors.white.withValues(alpha: 0.05)
+                          : Colors.black.withValues(alpha: 0.04)),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: isSelected ? accentColor : Colors.transparent,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      split['icon'] as IconData,
+                      size: 18,
+                      color: isSelected ? accentColor : textSecondary,
+                    ),
+                    const SizedBox(width: 6),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          split['label'] as String,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                            color: isSelected ? accentColor : textPrimary,
+                          ),
+                        ),
+                        Text(
+                          split['desc'] as String,
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: isSelected
+                                ? accentColor.withValues(alpha: 0.8)
+                                : textSecondary.withValues(alpha: 0.7),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+      ],
+    );
+  }
+
+  Widget _scheduleQuickFillChip({
+    required String label,
+    required IconData icon,
+    required Color accent,
+    required bool isDark,
+    required Color textPrimary,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.04),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: accent.withValues(alpha: 0.3)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 14, color: accent),
+            const SizedBox(width: 6),
+            Text(label, style: TextStyle(fontSize: 12, color: textPrimary, fontWeight: FontWeight.w500)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  bool _listEquals(List<int> a, List<int> b) {
+    if (a.length != b.length) return false;
+    final sa = List<int>.from(a)..sort();
+    final sb = List<int>.from(b)..sort();
+    for (int i = 0; i < sa.length; i++) {
+      if (sa[i] != sb[i]) return false;
+    }
+    return true;
+  }
+
+  String _buildConflictMessage(Map<int, List<String>> conflictsByDay) {
+    final parts = <String>[];
+    for (final d in _selectedWorkoutDays) {
+      final names = conflictsByDay[d];
+      if (names != null && names.isNotEmpty) {
+        parts.add('${_AddGymProfileSheetState._dayNames[d]} also at "${names.join('", "')}"');
+      }
+    }
+    return 'Schedule overlap: ${parts.join(' · ')}. Whichever profile is active that day will own the workout.';
+  }
+
   Widget _buildStyleStep(bool isDark, Color textPrimary, Color textSecondary) {
     final selectedColorObj = GymProfileColors.fromHex(_selectedColor);
 
@@ -323,10 +658,15 @@ extension __AddGymProfileSheetStateExt on _AddGymProfileSheetState {
               Expanded(
                 child: Text(
                   _name.isEmpty ? 'Gym Name' : _name,
+                  // Accent flows through the icon tile + border below, not
+                  // the headline text. Painting the name in
+                  // `selectedColorObj` made it invisible whenever the
+                  // chosen accent matched the surface beneath the sheet
+                  // (e.g. purple-on-purple when "Match app theme" was on).
                   style: TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
-                    color: selectedColorObj,
+                    color: _name.isEmpty ? textSecondary : textPrimary,
                   ),
                 ),
               ),

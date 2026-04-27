@@ -251,6 +251,7 @@ class _PhotosTabState extends ConsumerState<PhotosTab>
           right: 16,
           bottom: 16,
           child: FloatingActionButton(
+            heroTag: 'photos_tab_add_photo_fab',
             onPressed: _showAddPhotoSheet,
             backgroundColor: accentColor,
             foregroundColor: isDark ? Colors.black : Colors.white,

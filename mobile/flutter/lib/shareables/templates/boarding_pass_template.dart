@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../shareable_canvas.dart';
 import '../shareable_data.dart';
-import '../widgets/fitwiz_watermark.dart';
+import '../widgets/app_watermark.dart';
 
 /// BoardingPass — airline boarding-pass aesthetic. Cream paper background,
 /// dashed perforation splitting main body + stub, "FROM: Last Workout /
@@ -164,7 +164,7 @@ class BoardingPassTemplate extends StatelessWidget {
                               ),
                               const Spacer(),
                               if (showWatermark)
-                                FitWizWatermark(
+                                AppWatermark(
                                   textColor: _ink,
                                   fontSize: 10 * mul,
                                   iconSize: 14,

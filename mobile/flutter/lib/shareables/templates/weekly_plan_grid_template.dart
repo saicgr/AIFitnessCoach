@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../shareable_canvas.dart';
 import '../shareable_data.dart';
-import '../widgets/fitwiz_watermark.dart';
+import '../widgets/app_watermark.dart';
 
 /// Mon–Sun multi-day grid (matches reference Image #6 — 3-col layout, every
 /// day's workout listed with its exercise rows). Used by `weeklyPlan` shares.
@@ -43,7 +43,7 @@ class WeeklyPlanGridTemplate extends StatelessWidget {
               Row(
                 children: [
                   if (showWatermark)
-                    const FitWizWatermark(
+                    const AppWatermark(
                       textColor: Color(0xFF111111),
                       iconSize: 18,
                       fontSize: 12,

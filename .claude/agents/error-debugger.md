@@ -273,7 +273,7 @@ When encountering unfamiliar errors:
 
 ## Project-Specific Considerations
 
-For this FitWiz project:
+For this Zealova project:
 - Check Gemini API response parsing for JSON errors
 - Verify Supabase connection and auth token issues
 - Check Riverpod provider initialization

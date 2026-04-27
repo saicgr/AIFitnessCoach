@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# iOS Build Script for FitWiz
+# iOS Build Script for Zealova
 # Usage: ./run_ios.sh
 
 set -e
@@ -11,7 +11,7 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
-echo -e "${GREEN}=== FitWiz iOS Build Script ===${NC}"
+echo -e "${GREEN}=== Zealova iOS Build Script ===${NC}"
 
 # Set paths
 FLUTTER_PATH="/opt/homebrew/bin/flutter"

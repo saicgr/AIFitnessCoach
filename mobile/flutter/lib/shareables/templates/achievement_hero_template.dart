@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../shareable_canvas.dart';
 import '../shareable_data.dart';
-import '../widgets/fitwiz_watermark.dart';
+import '../widgets/app_watermark.dart';
 
 /// AchievementHero — purple-violet gradient with radial dot pattern, halo'd
 /// trophy at center (orange glow circle), giant count, latest achievement
@@ -171,7 +171,7 @@ class AchievementHeroTemplate extends StatelessWidget {
                   ),
                 const SizedBox(height: 20),
                 if (showWatermark)
-                  FitWizWatermark(
+                  AppWatermark(
                     textColor: Colors.white,
                     fontSize: 13 * mul,
                   ),

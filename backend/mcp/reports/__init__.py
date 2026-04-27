@@ -1,5 +1,5 @@
 """
-FitWiz MCP report generation module.
+Zealova MCP report generation module.
 
 Public API:
     render_report(user_id, report_type, start_date, end_date, format) -> bytes

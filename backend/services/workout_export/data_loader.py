@@ -13,10 +13,10 @@ Data sources:
       • `workout_history_imports` — rows previously imported from other apps
         (Hevy/Strong/etc). Each row is already one set.
       • `performance_logs` joined with `workout_logs` — sets completed inside
-        FitWiz. We join so we can attach the workout_name + start/end times
+        Zealova. We join so we can attach the workout_name + start/end times
         a format like Hevy requires.
   - Cardio:
-      • `cardio_logs` — the one and only home of cardio sessions in FitWiz.
+      • `cardio_logs` — the one and only home of cardio sessions in Zealova.
   - Templates:
       • `workout_program_templates` — creator programs imported as plans.
 
@@ -279,7 +279,7 @@ def load_strength(
 
     Combines:
       1. Rows from `workout_history_imports` (previously-imported sessions).
-      2. Rows from `performance_logs` joined with `workout_logs` (native FitWiz).
+      2. Rows from `performance_logs` joined with `workout_logs` (native Zealova).
 
     Deduplication is *not* applied here — that's the emitter's responsibility
     if it wants dedup. We deliberately return duplicates because a user who
@@ -556,7 +556,7 @@ def load_templates(user_id: UUID, *, db=None) -> List[CanonicalProgramTemplate]:
 
 
 def load_user_weight_unit(user_id: UUID, *, db=None) -> str:
-    """Returns 'kg' or 'lbs'. Defaults to 'lbs' (FitWiz user base is US-centric).
+    """Returns 'kg' or 'lbs'. Defaults to 'lbs' (Zealova user base is US-centric).
 
     Used by emitters that must pick one unit column (Strong, Fitbod). Never
     raises — a missing unit_hint shouldn't break an export.

@@ -146,7 +146,8 @@ class OfflineWorkoutRepository {
       entityId: Value(workoutId),
       payload: Value(jsonEncode({'is_completed': true})),
       httpMethod: const Value('POST'),
-      endpoint: Value('/api/v1/workouts/$workoutId/complete'),
+      // Dio's baseUrl already includes /api/v1, so paths must be relative.
+      endpoint: Value('/workouts/$workoutId/complete'),
       createdAt: Value(DateTime.now()),
       priority: const Value(1), // Highest priority
     ));
@@ -220,7 +221,8 @@ class OfflineWorkoutRepository {
         'completed_at': Tz.timestamp(now),
       })),
       httpMethod: const Value('POST'),
-      endpoint: const Value('/api/v1/workouts/performance'),
+      // Dio's baseUrl already includes /api/v1, so paths must be relative.
+      endpoint: const Value('/workouts/performance'),
       createdAt: Value(now),
       priority: const Value(2),
     ));
@@ -238,7 +240,8 @@ class OfflineWorkoutRepository {
       entityId: Value(workout.id ?? ''),
       payload: Value(jsonEncode(workout.toJson())),
       httpMethod: const Value('POST'),
-      endpoint: const Value('/api/v1/workouts'),
+      // Dio's baseUrl already includes /api/v1, so paths must be relative.
+      endpoint: const Value('/workouts'),
       createdAt: Value(DateTime.now()),
       priority: const Value(3),
     ));

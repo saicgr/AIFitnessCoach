@@ -1,6 +1,6 @@
 # UX Audit Changelog
 
-**Project:** FitWiz
+**Project:** Zealova
 **Date:** 2026-02-22
 **Total Issues Identified:** 22
 **Total Issues Resolved:** 22 (17 in Batches 1-2, 5 in Phase 2)

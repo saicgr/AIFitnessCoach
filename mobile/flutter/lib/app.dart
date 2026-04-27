@@ -26,15 +26,16 @@ import 'screens/ai_settings/ai_settings_screen.dart';
 import 'screens/notifications/notifications_screen.dart';
 import 'screens/workout/widgets/workout_mini_player.dart';
 import 'widgets/floating_chat/floating_chat_overlay.dart';
+import 'package:fitwiz/core/constants/branding.dart';
 
-class FitWizApp extends ConsumerStatefulWidget {
-  const FitWizApp({super.key});
+class AppRoot extends ConsumerStatefulWidget {
+  const AppRoot({super.key});
 
   @override
-  ConsumerState<FitWizApp> createState() => _FitWizAppState();
+  ConsumerState<AppRoot> createState() => _AppRootState();
 }
 
-class _FitWizAppState extends ConsumerState<FitWizApp> {
+class _AppRootState extends ConsumerState<AppRoot> {
   // Note: WidgetsBindingObserver + didChangeAppLifecycleState were added
   // to support the meal-suggestion widget's "refresh on resume" hook.
   // The hook is staged (see Settings → Coming Soon); re-add the mixin,
@@ -162,7 +163,7 @@ class _FitWizAppState extends ConsumerState<FitWizApp> {
       // Use a key that changes with theme/accent/gym-profile to force a clean rebuild
       // This prevents GlobalKey conflicts when theme changes
       key: ValueKey('app_${themeMode.name}_${accent.name}_${gymOverride?.value ?? "none"}'),
-      title: 'FitWiz',
+      title: '${Branding.appName}',
       debugShowCheckedModeBanner: false,
       theme: AppThemeLight.buildTheme(effectivePrimary),
       darkTheme: AppTheme.buildDarkTheme(effectivePrimary),

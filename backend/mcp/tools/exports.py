@@ -20,6 +20,7 @@ import asyncio
 import uuid
 from typing import Any, Dict, Optional
 
+from core import branding
 from core.logger import get_logger
 from core.supabase_client import get_supabase
 from mcp.tools import run_tool
@@ -238,7 +239,7 @@ def register(mcp_app: Any) -> None:
     @mcp_app.tool(
         name="export_user_data",
         description=(
-            "Export the user's full FitWiz dataset. Supported formats: "
+            f"Export the user's full {branding.APP_NAME} dataset. Supported formats: "
             "'csv' (zip of CSVs), 'json', 'xlsx', 'parquet' (zip of Parquets). "
             "Returns a signed download URL valid for 1 hour."
         ),

@@ -12,7 +12,7 @@ import '../../../data/services/wearable_service.dart';
 /// Shows when:
 /// - Platform is Android
 /// - WearOS device is connected (hasDevice = true)
-/// - FitWiz watch app is NOT installed (hasApp = false)
+/// - Zealova watch app is NOT installed (hasApp = false)
 /// - User has not dismissed the prompt
 ///
 /// Dismisses permanently until app reinstall.

@@ -42,6 +42,7 @@ from api.v1.users.onboarding import router as onboarding_router
 from api.v1.users.exercises import router as exercises_router
 from api.v1.users.data_export import router as data_export_router
 from api.v1.users.photo import router as photo_router
+from api.v1.users.security import router as security_router
 
 # Re-export key symbols that tests and other code import from api.v1.users
 from api.v1.users.auth import google_auth
@@ -65,3 +66,4 @@ router.include_router(onboarding_router)
 router.include_router(exercises_router)
 router.include_router(data_export_router)
 router.include_router(photo_router)
+router.include_router(security_router)

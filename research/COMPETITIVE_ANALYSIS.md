@@ -1,13 +1,13 @@
-# COMPETITIVE ANALYSIS: FitWiz vs MacroFactor vs Market
+# COMPETITIVE ANALYSIS: Zealova vs MacroFactor vs Market
 *Updated: January 14, 2026*
 
 ---
 
 ## Executive Summary
 
-**FitWiz has 1,070+ features** across 27 user-facing categories. After reviewing FEATURES.md, the competitive picture is dramatically better than initially assessed. Many features marked as "missing" are actually built.
+**Zealova has 1,070+ features** across 27 user-facing categories. After reviewing FEATURES.md, the competitive picture is dramatically better than initially assessed. Many features marked as "missing" are actually built.
 
-### Key Revelation: FitWiz is Feature-Complete in Most Areas
+### Key Revelation: Zealova is Feature-Complete in Most Areas
 
 | Category | Previously Thought | Actual Status |
 |----------|-------------------|---------------|
@@ -27,7 +27,7 @@
 
 ## UPDATED Comprehensive Feature Comparison
 
-| Feature Category | FitWiz (Actual) | MacroFactor | Fitbod | Hevy | Strong | Gravl |
+| Feature Category | Zealova (Actual) | MacroFactor | Fitbod | Hevy | Strong | Gravl |
 |-----------------|-----------------|-------------|--------|------|--------|-------|
 | **CORE AI** |
 | AI-Powered Workout Generation | ✅ Gemini LLM | ❌ Rule-based | ⚠️ Algorithm | ❌ | ❌ | ⚠️ Algorithm |
@@ -96,7 +96,7 @@
 
 ---
 
-## FitWiz Unique Advantages (What No One Else Has)
+## Zealova Unique Advantages (What No One Else Has)
 
 ### Tier 1: Completely Unique (Zero Competitors Have This)
 
@@ -120,7 +120,7 @@
 
 ### Tier 2: Better Than Competitors
 
-| Feature | FitWiz | Best Competitor |
+| Feature | Zealova | Best Competitor |
 |---------|--------|-----------------|
 | **Exercise Library** | 1,700+ | Fitbod: 1,000+ |
 | **Branded Programs** | 12+ programs | MacroFactor: 6 |
@@ -158,7 +158,7 @@
 | **Critical Weakness** | No wearable integration (intentional) |
 | **Critical Weakness** | No social features |
 | **Critical Weakness** | No free tier |
-| **Opportunity** | Position FitWiz as "actually intelligent" alternative |
+| **Opportunity** | Position Zealova as "actually intelligent" alternative |
 
 ### Fitbod
 
@@ -201,9 +201,9 @@
 
 ## Competitor Weaknesses to Exploit
 
-| Competitor | Key Weakness | FitWiz Attack Strategy |
+| Competitor | Key Weakness | Zealova Attack Strategy |
 |------------|--------------|------------------------|
-| **MacroFactor** | No AI, no cardio, no wearables, no social | "MacroFactor uses rigid rules. FitWiz actually thinks." |
+| **MacroFactor** | No AI, no cardio, no wearables, no social | "MacroFactor uses rigid rules. Zealova actually thinks." |
 | **Fitbod** | Expensive, black-box AI, no chat | "Same AI power, half the price, plus a coach that talks back." |
 | **Hevy** | No AI generation, manual-heavy | "Stop planning workouts. Let AI do it." |
 | **Strong** | Dated UX, no intelligence, expensive | "Modern + smart vs legacy + manual." |
@@ -317,13 +317,13 @@ Since most features are built, focus on:
 > **"The only fitness app that actually listens."**
 
 ### Against MacroFactor
-> "MacroFactor uses rigid rules. FitWiz actually thinks."
+> "MacroFactor uses rigid rules. Zealova actually thinks."
 > "Why follow a script when you can have a coach?"
 > "They chose NOT to use AI. We chose to make it the best."
 
 ### Against Fitbod
 > "Same AI power, half the price, plus a coach that talks back."
-> "Fitbod tells you what to do. FitWiz explains why."
+> "Fitbod tells you what to do. Zealova explains why."
 
 ### Against Hevy
 > "Stop planning workouts. Let AI do it."
@@ -357,16 +357,16 @@ Since most features are built, focus on:
 
 ### You're Actually Winning
 
-After reviewing FEATURES.md, **FitWiz is significantly more feature-complete than initially assessed**:
+After reviewing FEATURES.md, **Zealova is significantly more feature-complete than initially assessed**:
 
-| Metric | FitWiz | MacroFactor | Gap |
+| Metric | Zealova | MacroFactor | Gap |
 |--------|--------|-------------|-----|
-| Total Features | **1,070+** | ~50 | FitWiz wins by 20x |
-| Exercise Videos | **1,000 HD** | 638 | FitWiz wins by 57% |
-| Unique Features | **15+** | 0 | All unique to FitWiz |
-| AI Capabilities | **Full LLM** | None | FitWiz only |
-| Free Tier | **Yes** | No | FitWiz only |
-| Cardio Support | **Full** | None | FitWiz only |
+| Total Features | **1,070+** | ~50 | Zealova wins by 20x |
+| Exercise Videos | **1,000 HD** | 638 | Zealova wins by 57% |
+| Unique Features | **15+** | 0 | All unique to Zealova |
+| AI Capabilities | **Full LLM** | None | Zealova only |
+| Free Tier | **Yes** | No | Zealova only |
+| Cardio Support | **Full** | None | Zealova only |
 
 ### What You Need to Do
 

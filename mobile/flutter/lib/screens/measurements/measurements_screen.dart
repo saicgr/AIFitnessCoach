@@ -24,6 +24,7 @@ import 'widgets/measurement_tile_grid.dart';
 import '../../core/services/posthog_service.dart';
 import '../../widgets/glass_sheet.dart';
 import '../settings/dialogs/export_dialog.dart';
+import 'package:fitwiz/core/constants/branding.dart';
 
 part 'measurements_screen_part_add_measurement_sheet.dart';
 

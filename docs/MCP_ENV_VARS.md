@@ -1,4 +1,4 @@
-# FitWiz MCP Server — Environment Variable Checklist
+# Zealova MCP Server — Environment Variable Checklist
 
 Quick-reference for the env vars the MCP server reads. All live under the `MCP_` prefix and are parsed by `backend/mcp/config.py::MCPConfig` (Pydantic BaseSettings).
 
@@ -82,7 +82,7 @@ For consent UI verification:
 open https://<backend>/mcp/consent/authorize?consent=invalid
 ```
 
-You should see the branded FitWiz consent page with an "invalid / expired" error — that confirms the page renders, static CSS loads, and the `peek` endpoint is reachable.
+You should see the branded Zealova consent page with an "invalid / expired" error — that confirms the page renders, static CSS loads, and the `peek` endpoint is reachable.
 
 ## Related Docs
 

@@ -1,6 +1,6 @@
 <!-- We are transparent about being a premium-only app, and include this in our app images, app description, and website. We also surface this information in-app before the user ever gives us their email. Google Play displays all subscription apps that are not also pay-to-download as free in search, and this is not controlled by us. -->
 
-# FitWiz — Pricing Reference
+# Zealova — Pricing Reference
 
 > **Source of truth:** `docs/pricing/PRICING_ANALYSIS_2026.md` — this file is a quick-reference summary.
 > **Last Updated:** 2026-04-21
@@ -70,7 +70,7 @@ Countries: **India**, Indonesia, Philippines, Vietnam, Thailand, Malaysia, Egypt
 | 🇵🇰 Pakistan | Rs 799 | — |
 
 ### India pricing note
-Apple Fitness+ launched in India Dec 15, 2025 at ₹149/mo · ₹999/yr. FitWiz at **₹249** undercuts HealthifyMe Pro (₹599) and Cult.fit (₹999) while differentiating from Apple Fitness+ on AI-coach vs class-library.
+Apple Fitness+ launched in India Dec 15, 2025 at ₹149/mo · ₹999/yr. Zealova at **₹249** undercuts HealthifyMe Pro (₹599) and Cult.fit (₹999) while differentiating from Apple Fitness+ on AI-coach vs class-library.
 
 ---
 
@@ -132,7 +132,7 @@ All documented in detail in `docs/pricing/PRICING_ANALYSIS_2026.md`. Summary:
 | Competitor | Monthly | Annual | AI coach? |
 |---|---|---|---|
 | **Hevy Pro** | $2.99 | $23.99 | ❌ tracker only |
-| **FitWiz (current)** | **$4.99** | **$49.99** | ✅ Gemini + 5-agent swarm |
+| **Zealova (current)** | **$4.99** | **$49.99** | ✅ Gemini + 5-agent swarm |
 | **Apple Fitness+** | $9.99 (India: ₹149) | $79.99 (India: ₹999) | ❌ pre-recorded classes |
 | **Strong** | $8.33 | $99.99 | ❌ |
 | **MacroFactor** | $11.99 | $71.99 | Rule-based nutrition |

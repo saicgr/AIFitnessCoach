@@ -196,7 +196,21 @@ class _Pill extends StatelessWidget {
     // Selected pill uses the share asset's accent color so each pill
     // row visually echoes the template's identity (orange workout vs
     // purple PR vs green streak, etc.) instead of being uniform white.
-    final activeBg = accent ?? Colors.white;
+    // If accent is null OR effectively white/black (low chroma), fall
+    // back to a vivid brand color so the selection is never invisible
+    // on the matching surface.
+    Color resolveActive(Color? a) {
+      if (a == null) return const Color(0xFF06B6D4); // AppColors.cyan
+      // HSL chroma proxy: avg distance from grayscale axis. White (1,1,1)
+      // and black (0,0,0) score 0; saturated colors score higher.
+      final r = a.r, g = a.g, b = a.b;
+      final maxC = [r, g, b].reduce((x, y) => x > y ? x : y);
+      final minC = [r, g, b].reduce((x, y) => x < y ? x : y);
+      final chroma = maxC - minC;
+      if (chroma < 0.08) return const Color(0xFF06B6D4);
+      return a;
+    }
+    final activeBg = resolveActive(accent);
     final activeFg = ThemeData.estimateBrightnessForColor(activeBg) ==
             Brightness.dark
         ? Colors.white
@@ -224,6 +238,15 @@ class _Pill extends StatelessWidget {
             color: selected ? activeBg : restBg,
             borderRadius: BorderRadius.circular(iconOnly ? 999 : 20),
             shape: BoxShape.rectangle,
+            boxShadow: selected
+                ? [
+                    BoxShadow(
+                      color: activeBg.withValues(alpha: 0.45),
+                      blurRadius: 12,
+                      spreadRadius: 0,
+                    ),
+                  ]
+                : null,
           ),
           child: iconOnly
               ? Icon(

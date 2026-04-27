@@ -1,10 +1,10 @@
-package com.fitwiz.wearos.data.repository
+package com.aifitnesscoach.wearos.data.repository
 
-import com.fitwiz.wearos.data.local.dao.FastingDao
-import com.fitwiz.wearos.data.local.entity.FastingHistoryEntity
-import com.fitwiz.wearos.data.local.entity.toEntity
-import com.fitwiz.wearos.data.local.entity.toWearFastingSession
-import com.fitwiz.wearos.data.models.*
+import com.aifitnesscoach.wearos.data.local.dao.FastingDao
+import com.aifitnesscoach.wearos.data.local.entity.FastingHistoryEntity
+import com.aifitnesscoach.wearos.data.local.entity.toEntity
+import com.aifitnesscoach.wearos.data.local.entity.toWearFastingSession
+import com.aifitnesscoach.wearos.data.models.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import java.text.SimpleDateFormat

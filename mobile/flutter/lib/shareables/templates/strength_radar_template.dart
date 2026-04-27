@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../shareable_canvas.dart';
 import '../shareable_data.dart';
-import '../widgets/fitwiz_watermark.dart';
+import '../widgets/app_watermark.dart';
 
 /// StrengthRadar — six-axis radar / spider chart showing strength balance
 /// across body regions (Push, Pull, Legs, Core, Conditioning, Mobility).
@@ -155,7 +155,7 @@ class StrengthRadarTemplate extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             if (showWatermark)
-              FitWizWatermark(
+              AppWatermark(
                 textColor: Colors.white,
                 fontSize: 13 * mul,
               ),

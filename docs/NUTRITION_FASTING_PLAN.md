@@ -1,4 +1,4 @@
-# MacroFactor vs FitWiz: Nutrition Feature Comparison & Analysis
+# MacroFactor vs Zealova: Nutrition Feature Comparison & Analysis
 
 ## Table of Contents
 1. [Executive Summary](#executive-summary)
@@ -11,7 +11,7 @@
 
 ## Executive Summary
 
-This document compares MacroFactor (a premium nutrition tracking app with 75,000+ subscribers) against the current FitWiz app's nutrition features and Supabase database schema.
+This document compares MacroFactor (a premium nutrition tracking app with 75,000+ subscribers) against the current Zealova app's nutrition features and Supabase database schema.
 
 ---
 
@@ -30,7 +30,7 @@ MacroFactor's key differentiator is its **adaptive expenditure algorithm** that 
 
 ## Feature Comparison Matrix
 
-| Feature | MacroFactor | FitWiz | Gap Analysis |
+| Feature | MacroFactor | Zealova | Gap Analysis |
 |---------|-------------|------------------|--------------|
 | **Food Logging - Text** | AI Describe (voice/text) | ✅ Gemini text parsing | Parity |
 | **Food Logging - Image** | AI Photo recognition (beta) | ✅ Gemini Vision | Parity |
@@ -55,7 +55,7 @@ MacroFactor's key differentiator is its **adaptive expenditure algorithm** that 
 
 ---
 
-## Current FitWiz Nutrition Architecture
+## Current Zealova Nutrition Architecture
 
 ### Flutter Models (`lib/data/models/`)
 
@@ -119,13 +119,13 @@ MacroFactor's key differentiator is its **adaptive expenditure algorithm** that 
 
 ---
 
-## What FitWiz Does Better
+## What Zealova Does Better
 
 ### 1. Integrated Workouts (Major Advantage)
-MacroFactor is nutrition-only; separate workout app coming 2026. FitWiz has **workout generation + tracking built-in**.
+MacroFactor is nutrition-only; separate workout app coming 2026. Zealova has **workout generation + tracking built-in**.
 
 ### 2. Real-Time AI Coaching
-MacroFactor uses weekly automated check-ins. FitWiz has **real-time conversational AI** via Gemini chat.
+MacroFactor uses weekly automated check-ins. Zealova has **real-time conversational AI** via Gemini chat.
 
 ### 3. Goal-Aligned Scoring
 - `goal_alignment_percentage` on every meal
@@ -134,7 +134,7 @@ MacroFactor uses weekly automated check-ins. FitWiz has **real-time conversation
 - **MacroFactor doesn't score individual meals**
 
 ### 4. Flexible Pricing Model
-MacroFactor has no free tier. FitWiz could offer freemium.
+MacroFactor has no free tier. Zealova could offer freemium.
 
 ---
 

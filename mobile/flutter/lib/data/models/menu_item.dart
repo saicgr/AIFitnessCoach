@@ -236,20 +236,10 @@ class MenuItem {
       case SortField.health: return _ratingRank(rating);
       case SortField.inflammation: return inflammationScore ?? 5;
       case SortField.glycemicLoad: return glycemicLoad ?? 10;
-      case SortField.fodmap: return _fodmapRank(fodmapRating);
       case SortField.addedSugar: return addedSugarG ?? 0.0;
       case SortField.ultraProcessed: return (isUltraProcessed == true) ? 1 : 0;
       case SortField.price: return price;
       case SortField.weight: return scaledWeightG;
-    }
-  }
-
-  static int _fodmapRank(String? r) {
-    switch (r) {
-      case 'low': return 0;
-      case 'medium': return 1;
-      case 'high': return 2;
-      default: return 1; // unknown → neutral middle so it doesn't dominate
     }
   }
 

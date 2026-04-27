@@ -1,4 +1,5 @@
-// FitWiz Features Data - Extracted from FEATURES.md
+import { BRANDING } from '../lib/branding';
+// Zealova Features Data - Extracted from FEATURES.md
 // Categories and features for the searchable/filterable Features page
 
 export type FeatureCategory =
@@ -981,7 +982,7 @@ export const features: Feature[] = [
   {
     id: 'photo-editor',
     title: 'Photo Editor',
-    description: 'Crop photos and add FitWiz logo overlay.',
+    description: `Crop photos and add ${BRANDING.appName} logo overlay.`,
     category: 'photos-body',
     tier: 'free',
     tags: ['editor', 'crop', 'customize'],

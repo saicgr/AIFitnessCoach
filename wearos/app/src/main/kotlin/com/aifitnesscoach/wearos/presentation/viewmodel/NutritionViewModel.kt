@@ -1,11 +1,11 @@
-package com.fitwiz.wearos.presentation.viewmodel
+package com.aifitnesscoach.wearos.presentation.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.fitwiz.wearos.data.models.*
-import com.fitwiz.wearos.data.repository.NutritionRepository
-import com.fitwiz.wearos.voice.FoodParser
-import com.fitwiz.wearos.voice.ParseResult
+import com.aifitnesscoach.wearos.data.models.*
+import com.aifitnesscoach.wearos.data.repository.NutritionRepository
+import com.aifitnesscoach.wearos.voice.FoodParser
+import com.aifitnesscoach.wearos.voice.ParseResult
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch

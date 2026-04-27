@@ -1,4 +1,4 @@
-package com.fitwiz.wearos.di
+package com.aifitnesscoach.wearos.di
 
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder

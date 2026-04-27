@@ -11,6 +11,7 @@ Allows users to:
 
 This provides a real-time human support option when AI chat is insufficient.
 """
+from core import branding
 from core.db import get_supabase_db
 from .live_chat_endpoints import router as _endpoints_router
 
@@ -218,7 +219,7 @@ async def _send_admin_webhook(
                 category = metadata.get("category", "General")
                 queue_position = metadata.get("queue_position", "N/A")
 
-                subject = f"[FitWiz] {event_type.replace('_', ' ').title()} — #{ticket_id[:8]}"
+                subject = f"[{branding.APP_NAME}] {event_type.replace('_', ' ').title()} — #{ticket_id[:8]}"
                 html_body = f"""
                 <h2>{event_type.replace('_', ' ').title()}</h2>
                 <p><strong>Ticket:</strong> #{ticket_id[:8]}</p>

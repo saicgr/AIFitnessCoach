@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import MarketingNav from '../components/marketing/MarketingNav';
 import MarketingFooter from '../components/marketing/MarketingFooter';
+import { BRANDING } from '../lib/branding';
 
 // Keep the store URLs co-located with MarketingLanding's usage. iOS App
 // Store link will become live once the App Store listing ships; until
@@ -10,7 +11,7 @@ import MarketingFooter from '../components/marketing/MarketingFooter';
 const PLAY_STORE =
   'https://play.google.com/store/apps/details?id=com.aifitnesscoach.app';
 const APP_STORE =
-  'https://apps.apple.com/app/fitwiz/id0000000000'; // TODO: replace when live
+  'https://apps.apple.com/app/zealova/id0000000000'; // TODO: replace when live
 
 // Reject obviously bogus codes up-front — server enforces the same shape,
 // but a cheap client-side check avoids asking the user to copy-paste
@@ -39,8 +40,8 @@ function detectPlatform(): 'ios' | 'android' | 'desktop' {
  * `/invite/:code` landing page.
  *
  * Two goals:
- *   1. If the user has the FitWiz app installed AND we're on iOS/Android,
- *      try to open it via the custom `fitwiz://` scheme. The OS silently
+ *   1. If the user has the Zealova app installed AND we're on iOS/Android,
+ *      try to open it via the custom `zealova://` scheme. The OS silently
  *      swallows the navigation if no app handles it — so we also show
  *      store CTAs as a fallback.
  *   2. If the app isn't installed, show the code prominently so the user
@@ -69,7 +70,7 @@ export default function Invite() {
     // that appears with window.location when no handler is registered.
     const iframe = document.createElement('iframe');
     iframe.style.display = 'none';
-    iframe.src = `fitwiz://invite/${normalized}`;
+    iframe.src = `zealova://invite/${normalized}`;
     document.body.appendChild(iframe);
     const cleanup = window.setTimeout(() => {
       document.body.removeChild(iframe);
@@ -106,7 +107,7 @@ export default function Invite() {
             to="/"
             className="inline-block px-6 py-3 bg-white text-black rounded-full font-semibold hover:bg-white/90 transition-colors"
           >
-            Back to FitWiz
+            Back to {BRANDING.appName}
           </Link>
         </div>
         <MarketingFooter />
@@ -131,7 +132,7 @@ export default function Invite() {
             You've been invited
           </div>
           <h1 className="text-4xl md:text-5xl font-bold mb-3 leading-tight">
-            Your friend wants you<br />on FitWiz.
+            Your friend wants you<br />on {BRANDING.appName}.
           </h1>
           <p className="text-white/70 text-lg">
             Use their code at sign-up and you both earn a bonus once you
@@ -231,14 +232,14 @@ export default function Invite() {
             </li>
             <li className="flex items-start gap-3">
               <span className="text-green-400 font-bold">✓</span>
-              <span>Hit 3 / 10 / 25 / 50 / 100 / 250 referrals for free FitWiz merch</span>
+              <span>Hit 3 / 10 / 25 / 50 / 100 / 250 referrals for free {BRANDING.appName} merch</span>
             </li>
           </ul>
         </div>
 
         <div className="text-center mt-12 text-sm text-white/40">
           <Link to="/" className="hover:text-white/80 transition-colors">
-            Learn more about FitWiz →
+            Learn more about {BRANDING.appName} →
           </Link>
         </div>
       </div>

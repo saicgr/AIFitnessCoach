@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 
 import '../shareable_canvas.dart';
 import '../shareable_data.dart';
-import '../widgets/fitwiz_watermark.dart';
+import '../widgets/app_watermark.dart';
 import '../widgets/shareable_hero_number.dart';
 
 /// Widget — iOS-widget aesthetic. Charcoal canvas background with a
 /// centered rounded-rect card (28pt corners, soft shadow), period header,
-/// title, hero number, subtitle, FitWiz icon row at the bottom of the
+/// title, hero number, subtitle, Zealova icon row at the bottom of the
 /// card. Gives the share asset that "screenshot of my home screen widget"
 /// energy users actually post.
 class WidgetTemplate extends StatelessWidget {
@@ -112,7 +112,7 @@ class WidgetTemplate extends StatelessWidget {
                   if (showWatermark)
                     Row(
                       children: [
-                        FitWizWatermark(
+                        AppWatermark(
                           textColor: Colors.white,
                           fontSize: 11 * mul,
                           iconSize: 16,

@@ -365,7 +365,7 @@ def _mark_event_processed(db, event_id: str, attempts: int, *, error: Optional[s
 # ───────────────────────────── CLI ─────────────────────────────
 
 def _parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
-    p = argparse.ArgumentParser(description="FitWiz OAuth sync orchestrator")
+    p = argparse.ArgumentParser(description="Zealova OAuth sync orchestrator")
     p.add_argument("--once", action="store_true", help="Run a single tick and exit")
     p.add_argument("--loop", action="store_true", help="Loop forever (local dev only)")
     return p.parse_args(argv)

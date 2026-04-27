@@ -488,7 +488,7 @@ extension __ChatScreenStateExt on _ChatScreenState {
                 onTap: () {
                   Navigator.pop(context);
                   HapticService.selection();
-                  launchUrl(Uri.parse('mailto:${AppLinks.supportEmail}?subject=FitWiz Bug Report'), mode: LaunchMode.externalApplication);
+                  launchUrl(Uri.parse('mailto:${AppLinks.supportEmail}?subject=${Branding.appName} Bug Report'), mode: LaunchMode.externalApplication);
                 },
               ),
               ListTile(
@@ -690,7 +690,7 @@ extension __ChatScreenStateExt on _ChatScreenState {
               onTap: () {
                 Navigator.pop(context);
                 HapticService.selection();
-                launchUrl(Uri.parse('mailto:${AppLinks.supportEmail}?subject=FitWiz Bug Report'), mode: LaunchMode.externalApplication);
+                launchUrl(Uri.parse('mailto:${AppLinks.supportEmail}?subject=${Branding.appName} Bug Report'), mode: LaunchMode.externalApplication);
               },
             ),
             const Divider(height: 1, indent: 16, endIndent: 16),

@@ -4,7 +4,7 @@ This Flutter codebase ships THREE App Store apps via build flavors:
 
 | Flavor | App Store name | Bundle ID | Purpose |
 |---|---|---|---|
-| `consumer` (existing) | FitWiz | `com.aifitnesscoach.app` | B2C self-directed AI fitness |
+| `consumer` (existing) | Zealova | `com.aifitnesscoach.app` | B2C self-directed AI fitness |
 | `client` (Reppora — new) | Reppora | `com.reppora.app` | Coach-led clients, white-labeled at runtime to coach's brand |
 | `coach` (Reppora — new) | Reppora for Coach | `com.reppora.coach` | Trainer dashboard companion (reply/monitor only; building stays on web) |
 
@@ -30,8 +30,8 @@ Reppora-specific guidance lives in **`/Users/saichetangrandhe/Reppora/`** repo. 
 
 ## Reppora client app — purpose-built (NOT a re-theme)
 
-The `client` flavor is NOT a re-skin of FitWiz consumer. FitWiz lacks coach-program / trainer↔client message / coach-assigned check-in primitives. ~90% of FitWiz infra reuses (workout execution, food logging, recipes, wearables, offline DB); ~10% is new screens (coach-program home, trainer-message thread, coach-assigned forms/tasks/check-ins). See Reppora `docs/architecture/reuse-audit.md`.
+The `client` flavor is NOT a re-skin of Zealova consumer. Zealova lacks coach-program / trainer↔client message / coach-assigned check-in primitives. ~90% of Zealova infra reuses (workout execution, food logging, recipes, wearables, offline DB); ~10% is new screens (coach-program home, trainer-message thread, coach-assigned forms/tasks/check-ins). See Reppora `docs/architecture/reuse-audit.md`.
 
 ## "Powered by Reppora" footer
 
-In Reppora client app — non-removable on Reppora Free tier, removable on Pro. NOT "Powered by FitWiz" (Reppora is the B2B brand; clients clicking footer should land on `reppora.com`).
+In Reppora client app — non-removable on Reppora Free tier, removable on Pro. NOT "Powered by Zealova" (Reppora is the B2B brand; clients clicking footer should land on `reppora.com`).

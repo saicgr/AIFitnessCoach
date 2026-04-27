@@ -1,4 +1,4 @@
-package com.fitwiz.wearos.data.models
+package com.aifitnesscoach.wearos.data.models
 
 import java.util.UUID
 

@@ -14,6 +14,7 @@ from typing import Any, Dict, List, Optional
 
 import httpx
 
+from core import branding
 from core.db import get_supabase_db
 from core.logger import get_logger
 from mcp.tools import run_tool
@@ -274,7 +275,7 @@ def register(mcp_app: Any) -> None:
 
     @mcp_app.tool(
         name="search_food",
-        description="Search the FitWiz food database (USDA + custom foods).",
+        description=f"Search the {branding.APP_NAME} food database (USDA + custom foods).",
     )
     async def search_food(ctx, query: str, limit: int = 10) -> Dict[str, Any]:
         return await run_tool(

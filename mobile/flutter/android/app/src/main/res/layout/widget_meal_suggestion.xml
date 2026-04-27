@@ -59,7 +59,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="6dp"
-        android:text="Sign in to FitWiz"
+        android:text="Sign in to Zealova"
         android:textColor="#FFFFFF"
         android:textSize="15sp"
         android:textStyle="bold"

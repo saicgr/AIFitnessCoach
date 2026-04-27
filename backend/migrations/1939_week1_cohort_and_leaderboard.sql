@@ -58,7 +58,7 @@ GRANT EXECUTE ON FUNCTION is_week_1_user(UUID) TO authenticated, service_role;
 -- Week starts Monday 00:00 per ISO 8601 (PostgreSQL: DATE_TRUNC('week', ts)).
 -- Used by percentile + leaderboard + rising stars.
 --
--- NOTE: this computes on demand — acceptable at FitWiz's current scale.
+-- NOTE: this computes on demand — acceptable at Zealova's current scale.
 -- For >100k active users/week consider materializing.
 
 CREATE OR REPLACE VIEW weekly_user_stats AS

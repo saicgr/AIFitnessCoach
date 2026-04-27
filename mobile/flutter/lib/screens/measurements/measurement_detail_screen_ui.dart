@@ -144,13 +144,27 @@ extension _MeasurementDetailScreenStateUI on _MeasurementDetailScreenState {
     // Calculate appropriate date label interval
     final totalMs = maxX - minX;
     final totalDays = totalMs / (1000 * 60 * 60 * 24);
-    // Aim for ~4-5 labels on the X axis
-    final intervalDays = (totalDays / 4).ceil().clamp(1, 365);
-    final intervalMs = intervalDays * 24 * 60 * 60 * 1000.0;
+    // Aim for ~4-5 labels on the X axis. Use ms-level granularity so sub-day
+    // ranges (1D, 3D) get hourly ticks instead of being clamped to whole days.
+    final double intervalMs;
+    if (totalDays <= 1) {
+      // ~6 hour spacing for 1D
+      intervalMs = 6 * 60 * 60 * 1000.0;
+    } else if (totalDays <= 3) {
+      // ~18 hour spacing for 3D
+      intervalMs = 18 * 60 * 60 * 1000.0;
+    } else {
+      final intervalDays = (totalDays / 4).ceil().clamp(1, 365);
+      intervalMs = intervalDays * 24 * 60 * 60 * 1000.0;
+    }
 
     // Pick date format based on range
     final String datePattern;
-    if (totalDays <= 14) {
+    if (totalDays <= 1) {
+      datePattern = 'h a';
+    } else if (totalDays <= 3) {
+      datePattern = 'M/d h a';
+    } else if (totalDays <= 14) {
       datePattern = 'M/d';
     } else if (totalDays <= 180) {
       datePattern = 'MMM d';

@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../shareable_canvas.dart';
 import '../shareable_data.dart';
-import '../widgets/fitwiz_watermark.dart';
+import '../widgets/app_watermark.dart';
 
 /// WeightGraph — line chart of body weight (or volume / 1RM) over the
 /// share period with PR markers along the curve. Uses `data.subMetrics`
@@ -182,7 +182,7 @@ class WeightGraphTemplate extends StatelessWidget {
             ),
             const Spacer(),
             if (showWatermark)
-              FitWizWatermark(
+              AppWatermark(
                 textColor: Colors.white,
                 fontSize: 13 * mul,
               ),

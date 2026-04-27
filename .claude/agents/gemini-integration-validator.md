@@ -151,7 +151,7 @@ Your validation report must follow this structure:
 
 ## Project-Specific Requirements
 
-For this FitWiz project, pay special attention to:
+For this Zealova project, pay special attention to:
 - Workout plan generation parsing (complex JSON structures)
 - Chat conversation handling (streaming preferred with generateContentStream)
 - 120-second minimum timeout for Gemini Pro workout generation

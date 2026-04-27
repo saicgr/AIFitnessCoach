@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:dio/dio.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../../core/constants/api_constants.dart';
 import '../../../core/constants/app_colors.dart';
-import '../../../data/local/database_provider.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/repositories/onboarding_repository.dart';
+import '../../../data/services/account_deletion_service.dart';
 import '../../../data/services/api_client.dart';
+import '../../../widgets/delete_account_progress_dialog.dart';
 import '../widgets/widgets.dart';
 
 /// The danger zone section containing destructive actions.
@@ -318,90 +317,51 @@ class DangerZoneSection extends ConsumerWidget {
   }
 
   Future<void> _deleteAccount(BuildContext context, WidgetRef ref, {String? password}) async {
-    // Store navigator and scaffold messenger before async operations
-    final navigator = Navigator.of(context);
+    final navigator = Navigator.of(context, rootNavigator: true);
     final scaffoldMessenger = ScaffoldMessenger.of(context);
     final router = GoRouter.of(context);
 
-    // Show loading indicator
+    final authState = ref.read(authStateProvider);
+    final userId = authState.user?.id;
+    if (userId == null || userId.isEmpty) {
+      scaffoldMessenger.showSnackBar(
+        const SnackBar(
+          content: Text('Error: User not found'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
+
+    final status = ValueNotifier<String>('Deleting account from server…');
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (dialogContext) => const Center(
-        child: CircularProgressIndicator(color: AppColors.cyan),
-      ),
+      useRootNavigator: true,
+      builder: (_) => DeleteAccountProgressDialog(status: status),
     );
 
     try {
-      final apiClient = ref.read(apiClientProvider);
-      // Use authStateProvider for consistent auth state (not apiClientProvider.getUserId())
-      final authState = ref.read(authStateProvider);
-      final userId = authState.user?.id;
+      await ref.read(accountDeletionServiceProvider).deleteAccount(
+            userId: userId,
+            password: password,
+            status: status,
+          );
 
-      if (userId == null || userId.isEmpty) {
-        throw Exception('User not found');
-      }
-
-      debugPrint('[Settings] Deleting account for user: $userId');
-
-      // Call backend to fully delete user account (with password for email users)
-      final body = <String, dynamic>{};
-      if (password != null) {
-        body['password'] = password;
-      }
-      final response = await apiClient.dio.delete(
-        '${ApiConstants.users}/$userId/reset',
-        data: body,
-      );
-
-      debugPrint('[Settings] Delete response: ${response.statusCode}');
-
-      // Close loading dialog
-      navigator.pop();
-
-      if (response.statusCode == 200) {
-        debugPrint('[Settings] Account deleted successfully, clearing local data...');
-
-        // Clear all local storage (SharedPreferences)
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.clear();
-        debugPrint('[Settings] SharedPreferences cleared');
-
-        // Clear local Drift database
-        try {
-          final db = ref.read(appDatabaseProvider);
-          await db.clearAllUserData();
-          debugPrint('[Settings] Drift database cleared');
-        } catch (e) {
-          debugPrint('[Settings] Drift clear failed (non-critical): $e');
-        }
-
-        // Reset onboarding state (clear in-memory conversation)
-        ref.read(onboardingStateProvider.notifier).reset();
-        debugPrint('[Settings] Onboarding state reset');
-
-        // Sign out
-        await ref.read(authStateProvider.notifier).signOut();
-        debugPrint('[Settings] Signed out, navigating to stats welcome...');
-
-        // Navigate to intro (primary entry point for new users)
-        router.go('/intro');
-      } else {
-        throw Exception('Failed to delete account: ${response.statusCode}');
-      }
+      // Settle one frame so GoRouter's refreshListenable observes the
+      // unauthenticated state, then route via the root navigator. The
+      // loading dialog stays up across the navigation to mask the
+      // unmount race that previously produced a black frame.
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+      router.go('/intro');
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+      if (navigator.canPop()) navigator.pop();
     } catch (e) {
-      debugPrint('[Settings] Delete account error: $e');
-      // Close loading dialog if still showing
-      try {
-        navigator.pop();
-      } catch (_) {
-        // Dialog may already be closed
-      }
-
-      // Show error — extract message from DioException if available
+      debugPrint('[DeleteAccount] error: $e');
+      if (navigator.canPop()) navigator.pop();
       String errorMsg = e.toString();
       if (e is DioException && e.response?.data is Map) {
-        errorMsg = (e.response?.data as Map)['detail'] ?? errorMsg;
+        errorMsg = (e.response?.data as Map)['detail']?.toString() ?? errorMsg;
       }
       scaffoldMessenger.showSnackBar(
         SnackBar(
@@ -409,6 +369,8 @@ class DangerZoneSection extends ConsumerWidget {
           backgroundColor: AppColors.error,
         ),
       );
+    } finally {
+      status.dispose();
     }
   }
 }

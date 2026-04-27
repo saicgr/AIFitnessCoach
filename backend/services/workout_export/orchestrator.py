@@ -59,7 +59,7 @@ SUPPORTED_FORMATS = {
     },
     "csv": {
         "display": "Generic CSV (all columns)",
-        "description": "Expanded FitWiz-native CSV with every field preserved.",
+        "description": "Expanded Zealova-native CSV with every field preserved.",
         "extension": "csv",
         "content_type": "text/csv",
         "cardio_only": False,

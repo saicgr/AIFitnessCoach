@@ -17,24 +17,30 @@ import 'accent_color_provider.dart';
 /// Wrap your app with AccentColorScopeWrapper to enable dynamic accent colors.
 class ThemeColors {
   final bool isDark;
-  final AccentColor? _selectedAccent;
+  /// Resolved accent (enum + optional gym override). Stored as
+  /// [ResolvedAccent] so the active gym profile's override flows through
+  /// every getter that reads `_selectedAccent.getColor(...)`.
+  final ResolvedAccent? _selectedAccent;
 
-  const ThemeColors._({required this.isDark, AccentColor? selectedAccent})
+  const ThemeColors._({required this.isDark, ResolvedAccent? selectedAccent})
       : _selectedAccent = selectedAccent;
 
   /// Get ThemeColors instance for the current context
   /// Automatically reads accent color from AccentColorScope if available
   static ThemeColors of(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    // Try to get accent from AccentColorScope
-    final accent = AccentColorScope.maybeOf(context);
-    return ThemeColors._(isDark: isDark, selectedAccent: accent);
+    final resolved = AccentColorScope.maybeOf(context);
+    return ThemeColors._(isDark: isDark, selectedAccent: resolved);
   }
 
-  /// Get ThemeColors with a specific accent color (explicit override)
+  /// Get ThemeColors with a specific accent color (explicit override —
+  /// no gym override applied; use only for previews / settings UIs).
   static ThemeColors withAccent(BuildContext context, AccentColor accent) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return ThemeColors._(isDark: isDark, selectedAccent: accent);
+    return ThemeColors._(
+      isDark: isDark,
+      selectedAccent: ResolvedAccent(accent: accent),
+    );
   }
 
   // ─────────────────────────────────────────────────────────────────
@@ -75,19 +81,22 @@ class ThemeColors {
   /// Text color on accent backgrounds
   Color get accentContrast {
     if (_selectedAccent != null) {
-      // For colored accents, use white or black based on color brightness
-      if (_selectedAccent == AccentColor.black) {
+      // No override + black-mono accent → flip with theme. Otherwise pick
+      // dark text on light accents and white text on dark/colorful ones.
+      if (_selectedAccent.accentOverride == null &&
+          _selectedAccent.accent == AccentColor.black) {
         return isDark ? Colors.black : Colors.white;
       }
-      // For colorful accents, use white text (better contrast)
-      return Colors.white;
+      return _selectedAccent.isLightFor(isDark) ? Colors.black : Colors.white;
     }
     return isDark ? AppColors.accentContrast : AppColorsLight.accentContrast;
   }
 
   /// Accent gradient for buttons
   LinearGradient get accentGradient {
-    if (_selectedAccent != null && _selectedAccent != AccentColor.black) {
+    if (_selectedAccent != null &&
+        !(_selectedAccent.accentOverride == null &&
+            _selectedAccent.accent == AccentColor.black)) {
       final baseColor = _selectedAccent.getColor(isDark);
       // Create a gradient from the accent color to a slightly darker version
       return LinearGradient(

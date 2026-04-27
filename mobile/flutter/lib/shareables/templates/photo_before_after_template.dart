@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../shareable_canvas.dart';
 import '../shareable_data.dart';
-import '../widgets/fitwiz_watermark.dart';
+import '../widgets/app_watermark.dart';
 import '../widgets/photo_backdrop.dart';
 
 /// PhotoBeforeAfter — two photos split side-by-side (square/portrait) or
@@ -76,7 +76,7 @@ class PhotoBeforeAfterTemplate extends StatelessWidget {
               right: 0,
               bottom: 24,
               child: Center(
-                child: FitWizWatermark(
+                child: AppWatermark(
                   textColor: Colors.white,
                   fontSize: 12 * mul,
                 ),

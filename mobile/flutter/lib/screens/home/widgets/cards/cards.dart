@@ -39,3 +39,5 @@ export 'muscle_heatmap_tile.dart';
 export 'compliance_ring_card.dart';
 export 'wellness_checkin_card.dart';
 export 'weekly_report_card.dart';
+export 'todays_health_card.dart';
+export 'last_night_sleep_card.dart';

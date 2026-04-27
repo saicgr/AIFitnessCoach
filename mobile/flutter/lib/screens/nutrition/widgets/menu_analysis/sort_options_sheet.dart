@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../data/models/sort_spec.dart';
-import '../../../../widgets/glass_sheet.dart';
+import '../../../../widgets/glass_sheet.dart' show GlassSheet, showGlassSheet;
 
 /// Bottom sheet for configuring the Menu Analysis multi-sort.
 ///
@@ -30,9 +30,18 @@ class SortOptionsSheet extends StatefulWidget {
     BuildContext context, {
     required SortSpecList initial,
   }) {
+    // Opaque sheet + stronger scrim. The Menu Analysis sheet that opens this
+    // sheet is itself a translucent glass sheet — without an opaque surface
+    // here, the menu cards underneath bled through the sort UI and the user
+    // saw both stacked on top of each other.
     return showGlassSheet<SortSpecList>(
       context: context,
-      builder: (_) => SortOptionsSheet(initial: initial),
+      opaque: true,
+      builder: (_) => GlassSheet(
+        opaque: true,
+        showHandle: true,
+        child: SortOptionsSheet(initial: initial),
+      ),
     );
   }
 
@@ -69,8 +78,10 @@ class _SortOptionsSheetState extends State<SortOptionsSheet> {
     final active = _sort.directionOf(field) != null;
     setState(() {
       if (active) {
-        // Promote existing entry to primary.
-        _sort = _sort.promote(field);
+        // Tap on an active row deselects. Reorder priority is handled by
+        // the drag handle, not by re-tapping (the prior "promote on tap"
+        // behaviour confused users — the checkmark looked like a toggle).
+        _sort = _sort.remove(field);
       } else {
         // Append as tiebreaker (no-op if list is already at max depth).
         _sort = _sort.addTiebreaker(field);
@@ -101,6 +112,17 @@ class _SortOptionsSheetState extends State<SortOptionsSheet> {
     final textMuted =
         isDark ? Colors.white.withValues(alpha: 0.55) : Colors.black54;
 
+    // Build a single ordered list: active fields in rank order first, then
+    // inactive fields in their declaration order. One list ⇒ no duplicate
+    // top section, ⇒ tapping any row toggles in place.
+    final activeFields =
+        _sort.specs.map((s) => s.field).toList(growable: false);
+    final inactiveFields = SortField.values
+        .where((f) => !activeFields.contains(f))
+        .toList(growable: false);
+    final orderedFields = <SortField>[...activeFields, ...inactiveFields];
+    final activeCount = activeFields.length;
+
     return SafeArea(
       top: false,
       child: Column(
@@ -119,6 +141,15 @@ class _SortOptionsSheetState extends State<SortOptionsSheet> {
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
                     color: textPrimary,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  '$activeCount/$kMaxSortDepth',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: textMuted,
                   ),
                 ),
                 const Spacer(),
@@ -143,99 +174,74 @@ class _SortOptionsSheetState extends State<SortOptionsSheet> {
             ),
           ),
 
-          // ── Active sort stack ──
-          if (!_sort.isEmpty) ...[
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  'Sort order (up to $kMaxSortDepth)',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: textMuted,
-                    letterSpacing: 0.4,
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 6),
-            // Keep the reorder list small so it doesn't steal space from the
-            // field-picker below on short screens.
-            SizedBox(
-              // Max height = 3 rows × 56pt + slack. Constrains ReorderableListView
-              // (which wants unbounded height by default) without needing
-              // Expanded; the inactive field picker below stays scrollable.
-              height: (_sort.specs.length * 56.0) + 8,
-              child: ReorderableListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                buildDefaultDragHandles: false,
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                itemCount: _sort.specs.length,
-                onReorder: _reorder,
-                itemBuilder: (context, index) {
-                  final spec = _sort.specs[index];
-                  return _ActiveSortTile(
-                    key: ValueKey('active_${spec.field.name}'),
-                    rank: index + 1,
-                    spec: spec,
-                    textPrimary: textPrimary,
-                    textMuted: textMuted,
-                    onFlip: () => _flipDirection(spec.field),
-                    onRemove: () => _remove(spec.field),
-                    dragHandle: ReorderableDragStartListener(
-                      index: index,
-                      child: Icon(Icons.drag_handle,
-                          size: 20, color: textMuted),
-                    ),
-                  );
-                },
-              ),
-            ),
-            const SizedBox(height: 12),
-            Divider(
-              height: 1,
-              color: isDark
-                  ? Colors.white.withValues(alpha: 0.08)
-                  : Colors.black.withValues(alpha: 0.06),
-            ),
-          ],
-
-          // ── Available fields ──
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 12, 20, 4),
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 6),
             child: Align(
               alignment: Alignment.centerLeft,
               child: Text(
-                _sort.isEmpty ? 'Sort by' : 'Add tiebreaker',
+                _sort.isEmpty
+                    ? 'Tap a field to sort by it.'
+                    : 'Tap to add or remove. Drag the handle to reorder priority.',
                 style: TextStyle(
                   fontSize: 11,
-                  fontWeight: FontWeight.w600,
+                  fontWeight: FontWeight.w500,
                   color: textMuted,
-                  letterSpacing: 0.4,
+                  letterSpacing: 0.2,
                 ),
               ),
             ),
           ),
+
+          // ── Unified field list ──
+          // Active items render first with rank/direction/drag-handle; the
+          // rest follow as plain rows. ReorderableListView lets the user
+          // reprioritise active rows by dragging the handle; reorders that
+          // would cross into the inactive partition are clamped.
           Flexible(
-            child: ListView(
+            child: ReorderableListView.builder(
               shrinkWrap: true,
-              padding: const EdgeInsets.symmetric(vertical: 4),
-              children: SortField.values.map((field) {
-                final active = _sort.directionOf(field) != null;
+              buildDefaultDragHandles: false,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              itemCount: orderedFields.length,
+              onReorder: (oldIndex, newIndex) {
+                // Clamp into the active range: drag handles are only shown
+                // on active rows, but the listview itself doesn't know that.
+                if (oldIndex >= activeCount) return;
+                final clampedNew = newIndex > activeCount
+                    ? activeCount
+                    : newIndex;
+                if (clampedNew == oldIndex || clampedNew == oldIndex + 1) {
+                  return;
+                }
+                _reorder(oldIndex, clampedNew);
+              },
+              itemBuilder: (context, index) {
+                final field = orderedFields[index];
+                final isActive = index < activeCount;
+                final spec = isActive ? _sort.specs[index] : null;
                 final atCapacity =
-                    !active && _sort.specs.length >= kMaxSortDepth;
-                return _FieldTile(
+                    !isActive && activeCount >= kMaxSortDepth;
+                return _UnifiedFieldTile(
+                  key: ValueKey('field_${field.name}'),
                   field: field,
-                  active: active,
+                  isActive: isActive,
+                  rank: isActive ? index + 1 : null,
+                  direction: spec?.direction,
                   disabled: atCapacity,
                   textPrimary: textPrimary,
                   textMuted: textMuted,
                   onTap: atCapacity ? null : () => _toggleField(field),
+                  onFlip: isActive ? () => _flipDirection(field) : null,
+                  onRemove: isActive ? () => _remove(field) : null,
+                  dragHandle: isActive
+                      ? ReorderableDragStartListener(
+                          index: index,
+                          child: Icon(Icons.drag_handle,
+                              size: 20, color: textMuted),
+                        )
+                      : null,
                 );
-              }).toList(),
+              },
             ),
           ),
 
@@ -269,21 +275,34 @@ class _SortOptionsSheetState extends State<SortOptionsSheet> {
   }
 }
 
-class _ActiveSortTile extends StatelessWidget {
-  final int rank;
-  final SortSpec spec;
+/// One row that handles every state — selected (with rank, direction
+/// toggle, drag handle, deselect tap target) and unselected (plain field
+/// tappable to add). Replaces the prior split _ActiveSortTile/_FieldTile
+/// where the same field could appear twice and the checkmark wasn't a
+/// deselect affordance.
+class _UnifiedFieldTile extends StatelessWidget {
+  final SortField field;
+  final bool isActive;
+  final int? rank;
+  final SortDirection? direction;
+  final bool disabled;
   final Color textPrimary;
   final Color textMuted;
-  final VoidCallback onFlip;
-  final VoidCallback onRemove;
-  final Widget dragHandle;
+  final VoidCallback? onTap;
+  final VoidCallback? onFlip;
+  final VoidCallback? onRemove;
+  final Widget? dragHandle;
 
-  const _ActiveSortTile({
+  const _UnifiedFieldTile({
     super.key,
+    required this.field,
+    required this.isActive,
     required this.rank,
-    required this.spec,
+    required this.direction,
+    required this.disabled,
     required this.textPrimary,
     required this.textMuted,
+    required this.onTap,
     required this.onFlip,
     required this.onRemove,
     required this.dragHandle,
@@ -291,118 +310,116 @@ class _ActiveSortTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isAsc = spec.direction == SortDirection.asc;
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-      decoration: BoxDecoration(
-        color: AppColors.orange.withValues(alpha: 0.10),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: AppColors.orange.withValues(alpha: 0.35),
-          width: 1,
-        ),
-      ),
-      child: Row(
-        children: [
-          // Rank badge (1, 2, 3).
-          Container(
-            width: 24,
-            height: 24,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: AppColors.orange,
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: Text(
-              '$rank',
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              spec.field.label,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: textPrimary,
-              ),
-            ),
-          ),
-          // Direction toggle.
-          InkWell(
-            onTap: onFlip,
-            borderRadius: BorderRadius.circular(8),
-            child: Padding(
+    if (isActive) {
+      final isAsc = direction == SortDirection.asc;
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onTap, // Tap row body → deselect.
+            borderRadius: BorderRadius.circular(12),
+            child: Container(
               padding:
-                  const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              decoration: BoxDecoration(
+                color: AppColors.orange.withValues(alpha: 0.10),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: AppColors.orange.withValues(alpha: 0.35),
+                  width: 1,
+                ),
+              ),
               child: Row(
-                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(
-                    isAsc
-                        ? Icons.arrow_upward_rounded
-                        : Icons.arrow_downward_rounded,
-                    size: 16,
-                    color: AppColors.orange,
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    isAsc ? 'Low → High' : 'High → Low',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
+                  // Rank badge (1, 2, 3).
+                  Container(
+                    width: 24,
+                    height: 24,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
                       color: AppColors.orange,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      '${rank ?? 1}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      field.label,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: textPrimary,
+                      ),
+                    ),
+                  ),
+                  // Direction toggle (independent tap target).
+                  InkWell(
+                    onTap: onFlip,
+                    borderRadius: BorderRadius.circular(8),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 4),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            isAsc
+                                ? Icons.arrow_upward_rounded
+                                : Icons.arrow_downward_rounded,
+                            size: 16,
+                            color: AppColors.orange,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            isAsc ? 'Low → High' : 'High → Low',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.orange,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  // Explicit deselect (in addition to tapping the row).
+                  IconButton(
+                    onPressed: onRemove,
+                    icon: Icon(Icons.check_circle,
+                        color: AppColors.orange, size: 22),
+                    padding: EdgeInsets.zero,
+                    tooltip: 'Remove from sort',
+                    constraints:
+                        const BoxConstraints(minWidth: 32, minHeight: 32),
+                    visualDensity: VisualDensity.compact,
+                    splashRadius: 18,
+                  ),
+                  if (dragHandle != null) ...[
+                    const SizedBox(width: 2),
+                    dragHandle!,
+                  ],
                 ],
               ),
             ),
           ),
-          const SizedBox(width: 4),
-          IconButton(
-            onPressed: onRemove,
-            icon: Icon(Icons.close_rounded, size: 18, color: textMuted),
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
-            visualDensity: VisualDensity.compact,
-            splashRadius: 16,
-          ),
-          const SizedBox(width: 2),
-          dragHandle,
-        ],
-      ),
-    );
-  }
-}
+        ),
+      );
+    }
 
-class _FieldTile extends StatelessWidget {
-  final SortField field;
-  final bool active;
-  final bool disabled;
-  final Color textPrimary;
-  final Color textMuted;
-  final VoidCallback? onTap;
-
-  const _FieldTile({
-    required this.field,
-    required this.active,
-    required this.disabled,
-    required this.textPrimary,
-    required this.textMuted,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
+    // Inactive row: plain, tap to add.
     final labelColor = disabled
         ? textMuted.withValues(alpha: 0.5)
-        : (active ? AppColors.orange : textPrimary);
+        : textPrimary;
     return ListTile(
       dense: true,
       onTap: onTap,
@@ -412,16 +429,14 @@ class _FieldTile extends StatelessWidget {
         field.label,
         style: TextStyle(
           fontSize: 14,
-          fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+          fontWeight: FontWeight.w500,
           color: labelColor,
         ),
       ),
-      trailing: active
-          ? Icon(Icons.check_circle, color: AppColors.orange, size: 20)
-          : (disabled
-              ? null
-              : Icon(Icons.add_circle_outline,
-                  color: textMuted.withValues(alpha: 0.7), size: 20)),
+      trailing: disabled
+          ? null
+          : Icon(Icons.add_circle_outline,
+              color: textMuted.withValues(alpha: 0.7), size: 20),
     );
   }
 }

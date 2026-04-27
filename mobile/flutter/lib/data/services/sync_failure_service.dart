@@ -11,6 +11,7 @@ import 'package:share_plus/share_plus.dart';
 
 import '../local/database.dart';
 import '../local/database_provider.dart';
+import 'package:fitwiz/core/constants/branding.dart';
 
 /// Service for monitoring sync health, exporting dead letter items,
 /// and triggering recovery actions.
@@ -65,7 +66,7 @@ class SyncFailureService {
 
       await plugin.show(
         9002,
-        'FitWiz Sync Issue',
+        '${Branding.appName} Sync Issue',
         '$count change${count == 1 ? '' : 's'} have not synced for over 24 hours. '
             'Open the app to resolve.',
         const NotificationDetails(
@@ -119,7 +120,7 @@ class SyncFailureService {
   Future<void> shareExport(File file) async {
     await Share.shareXFiles(
       [XFile(file.path)],
-      subject: 'FitWiz Sync Export',
+      subject: '${Branding.appName} Sync Export',
     );
   }
 

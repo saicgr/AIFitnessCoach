@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/services/posthog_service.dart';
 import '../../widgets/pill_app_bar.dart';
+import 'package:fitwiz/core/constants/branding.dart';
 
 /// Screen explaining how AI uses user data, what it sees and doesn't see,
 /// and how data is protected.
@@ -65,7 +66,7 @@ class AIDataUsageScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'FitWiz sends your fitness profile, chats, food photos, and form videos to models that generate personalized guidance. Here is exactly what happens.',
+                    '${Branding.appName} sends your fitness profile, chats, food photos, and form videos to models that generate personalized guidance. Here is exactly what happens.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 14,

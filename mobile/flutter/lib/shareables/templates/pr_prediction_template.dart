@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../shareable_canvas.dart';
 import '../shareable_data.dart';
-import '../widgets/fitwiz_watermark.dart';
+import '../widgets/app_watermark.dart';
 
 /// PRPrediction — trajectory line chart with current PR + projected next PR
 /// (dashed extension), sparkle on the projection point, "Next PR by [date]"
@@ -144,7 +144,7 @@ class PRPredictionTemplate extends StatelessWidget {
             ),
             const Spacer(),
             if (showWatermark)
-              FitWizWatermark(
+              AppWatermark(
                 textColor: Colors.white,
                 fontSize: 13 * mul,
               ),

@@ -4,7 +4,7 @@ User profile CRUD endpoints: get, update, delete, reset, photo upload/delete.
 from core.db import get_supabase_db
 import json
 from datetime import datetime
-from fastapi import APIRouter, Body, Depends, HTTPException, Request
+from fastapi import APIRouter, BackgroundTasks, Body, Depends, HTTPException, Request
 from core.auth import get_current_user, get_verified_auth_token, verify_user_ownership, get_admin_user
 from core.exceptions import safe_internal_error
 from typing import Optional, List
@@ -927,12 +927,15 @@ async def reset_onboarding(user_id: str,
 
 @router.delete("/{user_id}/reset")
 async def full_reset(user_id: str,
-    body: DestructiveActionRequest,
+    background_tasks: BackgroundTasks,
+    body: Optional[DestructiveActionRequest] = Body(default=None),
     current_user: dict = Depends(get_current_user),
 ):
     """
     Full reset - delete ALL user data and return to fresh state.
-    SECURITY: Requires password re-authentication.
+    SECURITY: Requires password re-authentication for email-auth accounts.
+    OAuth accounts (google/apple) authenticate via JWT alone, so the body is
+    optional for them.
 
     This deletes (in order to respect FK constraints):
     1. performance_logs (via workout_logs)
@@ -955,7 +958,7 @@ async def full_reset(user_id: str,
         # For OAuth users (Google), password is not available — JWT auth is sufficient
         auth_provider = current_user.get("app_metadata", {}).get("provider", "email")
         if auth_provider == "email":
-            if not body.password:
+            if body is None or not body.password:
                 raise HTTPException(status_code=400, detail="Password required for email accounts")
             supabase = get_supabase()
             try:
@@ -975,9 +978,14 @@ async def full_reset(user_id: str,
             logger.warning(f"User not found for reset: id={user_id}")
             raise HTTPException(status_code=404, detail="User not found")
 
-        # Use the full reset method from supabase_db
-        db.full_user_reset(user_id)
-        logger.info(f"Full reset complete for user {user_id}")
+        # Run the security-critical path inline (DB cascade + auth delete)
+        # so the user's JWT is invalidated before we return. Defer the
+        # storage purge to a BackgroundTask — orphaned blobs are recoverable
+        # and shaving the storage round-trips off the hot path makes the
+        # app-side flow ~1-3s faster, which is what users perceive.
+        db.full_user_reset(user_id, skip_storage=True)
+        background_tasks.add_task(db.purge_user_storage_async, user_id)
+        logger.info(f"Full reset complete for user {user_id} (storage purge queued)")
 
         return {
             "message": "Full reset successful. All user data has been deleted.",

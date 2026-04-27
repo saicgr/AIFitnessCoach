@@ -1,10 +1,10 @@
-package com.fitwiz.wearos.di
+package com.aifitnesscoach.wearos.di
 
-import com.fitwiz.wearos.BuildConfig
-import com.fitwiz.wearos.data.api.BackendApiClient
-import com.fitwiz.wearos.data.api.FitWizApi
-import com.fitwiz.wearos.data.local.AuthTokenProvider
-import com.fitwiz.wearos.data.local.SecureStorage
+import com.aifitnesscoach.wearos.BuildConfig
+import com.aifitnesscoach.wearos.data.api.BackendApiClient
+import com.aifitnesscoach.wearos.data.api.AppApi
+import com.aifitnesscoach.wearos.data.local.AuthTokenProvider
+import com.aifitnesscoach.wearos.data.local.SecureStorage
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -80,14 +80,14 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun provideFitWizApi(retrofit: Retrofit): FitWizApi {
-        return retrofit.create(FitWizApi::class.java)
+    fun provideAppApi(retrofit: Retrofit): AppApi {
+        return retrofit.create(AppApi::class.java)
     }
 
     @Provides
     @Singleton
     fun provideBackendApiClient(
-        api: FitWizApi,
+        api: AppApi,
         secureStorage: SecureStorage
     ): BackendApiClient {
         return BackendApiClient(api, secureStorage)

@@ -1,5 +1,5 @@
 -- Migration: 133_nutrition_calculated_metrics.sql
--- Description: Add calculated nutrition metrics for differentiating FitWiz from other apps
+-- Description: Add calculated nutrition metrics for differentiating Zealova from other apps
 -- These metrics are calculated from user quiz data and used in AI/RAG context
 -- Created: 2026-01-04
 

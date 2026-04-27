@@ -19,6 +19,7 @@ import 'share_templates/progress_share_templates.dart';
 import 'widgets/ghost_overlay_widget.dart';
 import 'widgets/comparison_enums.dart';
 import 'widgets/comparison_supporting_widgets.dart';
+import 'package:fitwiz/core/constants/branding.dart';
 
 // Re-export enums so existing importers still work
 export 'widgets/comparison_enums.dart';

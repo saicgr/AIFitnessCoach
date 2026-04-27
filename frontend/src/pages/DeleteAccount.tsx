@@ -4,6 +4,7 @@ import MarketingNav from '../components/marketing/MarketingNav';
 import MarketingFooter from '../components/marketing/MarketingFooter';
 import { useAppStore } from '../store';
 import api from '../api/client';
+import { BRANDING } from '../lib/branding';
 
 export default function DeleteAccount() {
   const { user, session } = useAppStore();
@@ -103,7 +104,7 @@ export default function DeleteAccount() {
                 How to Delete Your Account
               </h2>
               <ol className="list-decimal pl-6 space-y-2">
-                <li>Open the FitWiz app</li>
+                <li>Open the {BRANDING.appName} app</li>
                 <li>Go to Settings &gt; Privacy &amp; Data</li>
                 <li>Tap "Delete Account"</li>
                 <li>Confirm deletion</li>
@@ -120,8 +121,8 @@ export default function DeleteAccount() {
               </h2>
               <p>
                 You can also email{' '}
-                <a href="mailto:support@fitwiz.us" className="text-emerald-400 hover:underline">
-                  support@fitwiz.us
+                <a href={`mailto:support@${BRANDING.marketingDomain}`} className="text-emerald-400 hover:underline">
+                  support@{BRANDING.marketingDomain}
                 </a>{' '}
                 to request account deletion.
               </p>

@@ -28,6 +28,7 @@ import sys
 from pathlib import Path
 from typing import Any, Callable, Optional
 
+from core import branding
 from core.logger import get_logger
 
 logger = get_logger(__name__)
@@ -165,7 +166,7 @@ class _StubApp:
 # ─── Build the app ───────────────────────────────────────────────────────────
 
 _INSTRUCTIONS = (
-    "FitWiz — your personal AI fitness and nutrition coach. "
+    f"{branding.APP_NAME} — your personal AI fitness and nutrition coach. "
     "You can read and write the user's workouts, meals, body metrics, "
     "and generate reports. All tool calls are audit-logged and scoped. "
     "\n\n"

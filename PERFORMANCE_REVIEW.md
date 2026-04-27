@@ -1,4 +1,4 @@
-# FitWiz Performance Review - Comprehensive Audit Report
+# Zealova Performance Review - Comprehensive Audit Report
 
 **Generated:** 2026-02-06
 **Files Analyzed:** 939 Dart files across `mobile/flutter/lib/`
@@ -70,7 +70,7 @@ void main() async {
 
   runApp(ProviderScope(
     overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
-    child: const FitWizApp(),
+    child: const ZealovaApp(),
   ));
 
   // Initialize everything else in parallel AFTER UI is showing

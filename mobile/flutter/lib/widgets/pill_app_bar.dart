@@ -41,7 +41,8 @@ class PillAppBarAction {
 class PillAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
 
-  /// If null, defaults to `context.pop()`.
+  /// If null, defaults to `context.pop()` — and if the back stack is empty
+  /// (e.g. screen reached via `context.go(...)`), falls back to [fallbackRoute].
   final VoidCallback? onBack;
 
   final List<PillAppBarAction> actions;
@@ -49,12 +50,18 @@ class PillAppBar extends StatelessWidget implements PreferredSizeWidget {
   /// Set to false for top-level tabs that have no back navigation.
   final bool showBack;
 
+  /// Route to navigate to if there is nothing to pop. Defaults to `/profile`
+  /// (most pill-app-bar screens — Stats & Scores, Body Analyzer — are reached
+  /// from the profile tab). Override per screen if needed.
+  final String fallbackRoute;
+
   const PillAppBar({
     super.key,
     required this.title,
     this.onBack,
     this.actions = const [],
     this.showBack = true,
+    this.fallbackRoute = '/profile',
   });
 
   @override
@@ -108,6 +115,8 @@ class PillAppBar extends StatelessWidget implements PreferredSizeWidget {
                     onBack!();
                   } else if (context.canPop()) {
                     context.pop();
+                  } else {
+                    context.go(fallbackRoute);
                   }
                 },
                 child: Container(

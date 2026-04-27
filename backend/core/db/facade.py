@@ -1,5 +1,5 @@
 """
-Unified database facade for FitWiz.
+Unified database facade for Zealova.
 
 Provides a single interface to all database operations while
 delegating to specialized modules for maintainability.
@@ -768,7 +768,7 @@ class SupabaseDB:
 
     # ==================== FULL USER RESET ====================
 
-    def full_user_reset(self, user_id: str) -> bool:
+    def full_user_reset(self, user_id: str, skip_storage: bool = False) -> bool:
         """
         Delete all data for a user — including the Supabase Auth identity.
 
@@ -782,6 +782,11 @@ class SupabaseDB:
 
         Args:
             user_id: User's UUID
+            skip_storage: When True, don't run the storage purge inline. The
+                caller is responsible for invoking `purge_user_storage_async`
+                via BackgroundTasks so the request can return faster. Storage
+                purge is non-critical for compliance — orphaned blobs are
+                recoverable, but the auth-user delete is not.
 
         Returns:
             True on success
@@ -824,7 +829,8 @@ class SupabaseDB:
         # here log + continue — orphaned blobs are recoverable (background
         # janitor can sweep), but a failure to delete the auth user is
         # NOT recoverable from the user's perspective so we proceed.
-        self._purge_user_storage(user_id)
+        if not skip_storage:
+            self._purge_user_storage(user_id)
 
         # 13. Delete the Supabase Auth identity. THIS is the policy-critical
         # step — without it the user can sign back in with the same email
@@ -834,6 +840,12 @@ class SupabaseDB:
         self._delete_auth_user(user_id)
 
         return True
+
+    def purge_user_storage_async(self, user_id: str) -> None:
+        """Public wrapper around storage purge, intended for FastAPI
+        BackgroundTasks. Same best-effort semantics as `_purge_user_storage`
+        — logs and continues on per-bucket errors."""
+        self._purge_user_storage(user_id)
 
     def _purge_user_storage(self, user_id: str) -> None:
         """Best-effort delete of every object under "<user_id>/" in each

@@ -425,22 +425,10 @@ class LoggedMealsSection extends StatelessWidget {
           // async update finishes, which throws the "still part of tree" error.
           return false;
         }
-        final messenger = ScaffoldMessenger.of(context);
-        bool undone = false;
-        messenger.clearSnackBars();
-        messenger.showSnackBar(
-          SnackBar(
-            content: const Text('Meal deleted'),
-            action: SnackBarAction(label: 'Undo', onPressed: () { undone = true; }),
-            duration: const Duration(seconds: 4),
-          ),
-        );
-        await Future.delayed(const Duration(seconds: 4));
-        if (!undone) {
-          onDeleteMeal(meal.id);
-        }
-        // Always return false so the Dismissible resets; the async state
-        // mutation in onDeleteMeal triggers a rebuild that removes this row.
+        // Optimistic delete + undo snackbar are handled inside onDeleteMeal
+        // (NutritionScreen._deleteMeal). The state mutation removes the row
+        // immediately; we just return false so the Dismissible resets.
+        onDeleteMeal(meal.id);
         return false;
       },
       child: InkWell(
@@ -4206,22 +4194,10 @@ class _FoodGroup extends StatelessWidget {
               owner._showEditPortionSheet(context, meal);
               return false;
             }
-            // Whole-group delete with undo
-            final messenger = ScaffoldMessenger.of(context);
-            bool undone = false;
-            messenger.clearSnackBars();
-            messenger.showSnackBar(
-              SnackBar(
-                content: const Text('Meal deleted'),
-                action: SnackBarAction(label: 'Undo', onPressed: () { undone = true; }),
-                duration: const Duration(seconds: 4),
-              ),
-            );
-            await Future.delayed(const Duration(seconds: 4));
-            if (!undone) owner.onDeleteMeal(meal.id);
-            // Always return false so the Dismissible resets; the async state
-            // mutation in onDeleteMeal triggers a rebuild that removes the
-            // whole group (parent row + all child rows) in one pass.
+            // Whole-group delete — optimistic state mutation + undo snackbar
+            // both live in NutritionScreen._deleteMeal so this just fires
+            // the callback and lets the Dismissible reset.
+            owner.onDeleteMeal(meal.id);
             return false;
           },
           child: InkWell(

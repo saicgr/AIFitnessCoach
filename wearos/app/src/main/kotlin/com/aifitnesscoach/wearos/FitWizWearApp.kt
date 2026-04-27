@@ -1,4 +1,4 @@
-package com.fitwiz.wearos
+package com.aifitnesscoach.wearos
 
 import android.app.Application
 import androidx.hilt.work.HiltWorkerFactory
@@ -7,11 +7,11 @@ import dagger.hilt.android.HiltAndroidApp
 import javax.inject.Inject
 
 /**
- * FitWiz Wear OS Application class
+ * App Wear OS Application class
  * Implements Configuration.Provider to enable Hilt integration with WorkManager
  */
 @HiltAndroidApp
-class FitWizWearApp : Application(), Configuration.Provider {
+class WearApp : Application(), Configuration.Provider {
 
     @Inject
     lateinit var workerFactory: HiltWorkerFactory

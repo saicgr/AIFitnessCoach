@@ -544,7 +544,7 @@ class _EditGymProfileSheetState extends ConsumerState<EditGymProfileSheet> {
                                     'Tap to add, remove, or edit weights',
                                     style: TextStyle(
                                       fontSize: 13,
-                                      color: selectedColorObj,
+                                      color: textSecondary,
                                     ),
                                   ),
                                 ],

@@ -46,6 +46,7 @@ import '../../data/services/health_service.dart';
 import '../../core/theme/accent_color_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'widgets/complete_screen_helper_widgets.dart';
+import 'package:fitwiz/core/constants/branding.dart';
 export 'widgets/complete_screen_helper_widgets.dart' show HeartRateReadingData;
 
 part 'workout_complete_screen_ui_1.dart';
@@ -270,7 +271,7 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
         startTime: startTime,
         endTime: endTime,
         totalCaloriesBurned: widget.calories,
-        title: widget.workout.name ?? 'FitWiz Workout',
+        title: widget.workout.name ?? '${Branding.appName} Workout',
       );
     } catch (e) {
       debugPrint('⚠️ [Health] Non-critical: workout health sync failed: $e');

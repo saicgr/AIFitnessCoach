@@ -374,6 +374,7 @@ class WorkoutSummaryGeneral extends StatelessWidget {
           progressionModel: s['progression_model'] as String?,
           // Coerce list (new) or string (legacy) into the list shape.
           notes: SummarySetData.coerceNotes(s['notes']),
+          notesPhotoUrls: SummarySetData.coerceStringList(s['notes_photo_urls']),
           completedAt: s['completed_at'] as String?,
         );
       }).toList();

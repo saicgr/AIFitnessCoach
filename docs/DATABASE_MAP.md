@@ -1,4 +1,4 @@
-# FitWiz Database Map
+# Zealova Database Map
 
 Development reference mapping all Supabase tables/views to their purpose and consuming API endpoints.
 

@@ -238,7 +238,7 @@ def test_social_footer_has_both_logos_and_links():
     from services.email_helpers import build_social_footer_html
     html = build_social_footer_html()
     assert "discord.gg/WAYNZpVgsK" in html
-    assert "instagram.com/fitwiz.us" in html
+    assert "instagram.com/zealova.com" in html
     # Icon <img> tags must reference the simpleicons CDN (or our static fallback)
     assert "discord" in html.lower()
     assert "instagram" in html.lower()
@@ -422,4 +422,4 @@ def test_every_email_html_contains_social_footer(render_email):
         )
     )
     assert "discord.gg/WAYNZpVgsK" in captured["html"]
-    assert "instagram.com/fitwiz.us" in captured["html"]
+    assert "instagram.com/zealova.com" in captured["html"]

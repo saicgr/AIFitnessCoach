@@ -1,9 +1,9 @@
-package com.fitwiz.wearos.data.local.entity
+package com.aifitnesscoach.wearos.data.local.entity
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import com.fitwiz.wearos.data.models.SessionStatus
-import com.fitwiz.wearos.data.models.WearWorkoutSession
+import com.aifitnesscoach.wearos.data.models.SessionStatus
+import com.aifitnesscoach.wearos.data.models.WearWorkoutSession
 
 /**
  * Room entity for workout sessions

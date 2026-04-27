@@ -1,4 +1,4 @@
-package com.fitwiz.wearos.presentation.screens.workout
+package com.aifitnesscoach.wearos.presentation.screens.workout
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -13,9 +13,9 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
 import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
 import androidx.wear.compose.material.*
-import com.fitwiz.wearos.presentation.theme.FitWizColors
-import com.fitwiz.wearos.presentation.theme.FitWizTypography
-import com.fitwiz.wearos.presentation.viewmodel.WorkoutViewModel
+import com.aifitnesscoach.wearos.presentation.theme.AppColors
+import com.aifitnesscoach.wearos.presentation.theme.AppTypography
+import com.aifitnesscoach.wearos.presentation.viewmodel.WorkoutViewModel
 
 /**
  * Workout Summary Screen - Shows completed workout stats
@@ -64,13 +64,13 @@ fun WorkoutSummaryScreen(
                 ) {
                     Text(
                         text = "WORKOUT",
-                        style = FitWizTypography.titleMedium,
-                        color = FitWizColors.TextPrimary
+                        style = AppTypography.titleMedium,
+                        color = AppColors.TextPrimary
                     )
                     Text(
                         text = "COMPLETE!",
-                        style = FitWizTypography.titleLarge,
-                        color = FitWizColors.Success
+                        style = AppTypography.titleLarge,
+                        color = AppColors.Success
                     )
                 }
                 Spacer(modifier = Modifier.height(16.dp))
@@ -82,7 +82,7 @@ fun WorkoutSummaryScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(16.dp))
-                        .background(FitWizColors.Surface)
+                        .background(AppColors.Surface)
                         .padding(16.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
@@ -151,14 +151,14 @@ fun WorkoutSummaryScreen(
                 ) {
                     Text(
                         text = "o",
-                        style = FitWizTypography.bodySmall,
-                        color = FitWizColors.Success
+                        style = AppTypography.bodySmall,
+                        color = AppColors.Success
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
                         text = "Syncing to phone...",
-                        style = FitWizTypography.bodySmall,
-                        color = FitWizColors.TextMuted
+                        style = AppTypography.bodySmall,
+                        color = AppColors.TextMuted
                     )
                 }
                 Spacer(modifier = Modifier.height(16.dp))
@@ -175,10 +175,10 @@ fun WorkoutSummaryScreen(
                         .fillMaxWidth(0.85f)
                         .height(48.dp),
                     colors = ButtonDefaults.buttonColors(
-                        backgroundColor = FitWizColors.Success
+                        backgroundColor = AppColors.Success
                     )
                 ) {
-                    Text("DONE", style = FitWizTypography.labelLarge)
+                    Text("DONE", style = AppTypography.labelLarge)
                 }
             }
         }
@@ -199,20 +199,20 @@ private fun StatRow(
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
                 text = icon,
-                style = FitWizTypography.bodyMedium,
-                color = FitWizColors.Primary
+                style = AppTypography.bodyMedium,
+                color = AppColors.Primary
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
                 text = label,
-                style = FitWizTypography.bodyMedium,
-                color = FitWizColors.TextMuted
+                style = AppTypography.bodyMedium,
+                color = AppColors.TextMuted
             )
         }
         Text(
             text = value,
-            style = FitWizTypography.bodyMedium,
-            color = FitWizColors.TextPrimary
+            style = AppTypography.bodyMedium,
+            color = AppColors.TextPrimary
         )
     }
 }

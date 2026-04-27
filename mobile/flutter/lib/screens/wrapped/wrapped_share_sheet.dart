@@ -16,6 +16,7 @@ import 'cards/records_card.dart';
 import 'cards/time_card.dart';
 import 'cards/personality_card.dart';
 import 'cards/summary_card.dart';
+import 'package:fitwiz/core/constants/branding.dart';
 
 /// Bottom sheet for sharing a Wrapped card image.
 /// Follows the same pattern as ActivityShareSheet.
@@ -161,10 +162,10 @@ class _WrappedShareSheetState extends State<WrappedShareSheet> {
 
   String _buildShareText() {
     final d = widget.data;
-    return 'My ${d.monthDisplayName} ${d.yearDisplay} Wrapped on FitWiz! '
+    return 'My ${d.monthDisplayName} ${d.yearDisplay} Wrapped on ${Branding.appName}! '
         '${d.totalWorkouts} workouts | ${d.personalRecordsCount} PRs | '
         '${d.workoutConsistencyPct.round()}% consistency '
-        '#FitWiz #FitnessWrapped #${d.monthDisplayName}Wrapped';
+        '#${Branding.appName} #FitnessWrapped #${d.monthDisplayName}Wrapped';
   }
 
   void _showError(String message) {

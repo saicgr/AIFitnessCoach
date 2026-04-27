@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/constants/app_colors.dart';
@@ -5,6 +6,7 @@ import '../core/theme/accent_color_provider.dart';
 import '../data/models/level_up_event.dart';
 import '../data/providers/level_up_events_provider.dart';
 import '../data/services/haptic_service.dart';
+import 'glass_sheet.dart';
 
 /// Persistent "You leveled up while away!" banner. Shown anywhere you want
 /// users to never miss a level-up reward — home screen, inventory, XP goals.
@@ -136,10 +138,8 @@ class _LevelUpCatchUpBannerState extends ConsumerState<LevelUpCatchUpBanner> {
   }
 
   void _openCatchUpSheet(BuildContext context) {
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
       builder: (ctx) => _LevelUpCatchUpSheet(events: ref.read(levelUpEventsProvider).events),
     );
   }
@@ -152,104 +152,84 @@ class _LevelUpCatchUpSheet extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bg = isDark ? AppColors.background : AppColorsLight.background;
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final border = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
     final accent = ref.watch(accentColorProvider).getColor(isDark);
 
-    return DraggableScrollableSheet(
-      initialChildSize: 0.85,
-      minChildSize: 0.5,
-      maxChildSize: 0.95,
-      expand: false,
-      builder: (_, scroll) => Container(
-        decoration: BoxDecoration(
-          color: bg,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        child: Column(
-          children: [
-            const SizedBox(height: 8),
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: textMuted.withValues(alpha: 0.3),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-              child: Row(
-                children: [
-                  const Text('🎉', style: TextStyle(fontSize: 32)),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          events.length == 1
-                              ? 'Level ${events.first.levelReached} unlocked!'
-                              : 'You leveled up ${events.length} times',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: textColor,
-                          ),
+    return GlassSheet(
+      maxHeightFraction: 0.95,
+      showHandle: true,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
+            child: Row(
+              children: [
+                const Text('🎉', style: TextStyle(fontSize: 32)),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        events.length == 1
+                            ? 'Level ${events.first.levelReached} unlocked!'
+                            : 'You leveled up ${events.length} times',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: textColor,
                         ),
-                        Text(
-                          'Your rewards are already in your Inventory',
-                          style: TextStyle(fontSize: 12, color: textMuted),
-                        ),
-                      ],
-                    ),
+                      ),
+                      Text(
+                        'Your rewards are already in your Inventory',
+                        style: TextStyle(fontSize: 12, color: textMuted),
+                      ),
+                    ],
                   ),
-                ],
+                ),
+              ],
+            ),
+          ),
+          Flexible(
+            child: ListView.builder(
+              shrinkWrap: true,
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+              itemCount: events.length,
+              itemBuilder: (_, i) => _EventCard(
+                event: events[i],
+                isDark: isDark,
+                border: border,
+                textColor: textColor,
+                textMuted: textMuted,
+                accent: accent,
               ),
             ),
-            Expanded(
-              child: ListView.builder(
-                controller: scroll,
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                itemCount: events.length,
-                itemBuilder: (_, i) => _EventCard(
-                  event: events[i],
-                  elevated: elevated,
-                  border: border,
-                  textColor: textColor,
-                  textMuted: textMuted,
-                  accent: accent,
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+            child: SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () async {
+                  await ref.read(levelUpEventsProvider.notifier).acknowledge();
+                  if (context.mounted) Navigator.pop(context);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: accent,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                ),
+                child: const Text(
+                  'Awesome — got it',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
                 ),
               ),
             ),
-            Padding(
-              padding: EdgeInsets.fromLTRB(
-                16, 8, 16, MediaQuery.of(context).padding.bottom + 12,
-              ),
-              child: SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () async {
-                    await ref.read(levelUpEventsProvider.notifier).acknowledge();
-                    if (context.mounted) Navigator.pop(context);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: accent,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                  ),
-                  child: const Text(
-                    'Awesome — got it',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -257,10 +237,11 @@ class _LevelUpCatchUpSheet extends ConsumerWidget {
 
 class _EventCard extends StatelessWidget {
   final LevelUpEvent event;
-  final Color elevated, border, textColor, textMuted, accent;
+  final bool isDark;
+  final Color border, textColor, textMuted, accent;
   const _EventCard({
     required this.event,
-    required this.elevated,
+    required this.isDark,
     required this.border,
     required this.textColor,
     required this.textMuted,
@@ -270,18 +251,32 @@ class _EventCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hasMerch = event.merchType != null;
+    final glassFill = isDark
+        ? Colors.white.withValues(alpha: 0.06)
+        : Colors.white.withValues(alpha: 0.55);
+    final glassBorder = event.isMilestone
+        ? accent.withValues(alpha: 0.5)
+        : (isDark
+            ? Colors.white.withValues(alpha: 0.12)
+            : Colors.black.withValues(alpha: 0.06));
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: elevated,
+      child: ClipRRect(
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: event.isMilestone ? accent.withValues(alpha: 0.5) : border,
-          width: event.isMilestone ? 1.5 : 1,
-        ),
-      ),
-      child: Column(
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
+          child: Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: glassFill,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: glassBorder,
+                width: event.isMilestone ? 1.5 : 1,
+              ),
+            ),
+            child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
@@ -362,8 +357,11 @@ class _EventCard extends StatelessWidget {
                 );
               }).toList(),
             ),
-          ],
-        ],
+              ],
+            ],
+          ),
+          ),
+        ),
       ),
     );
   }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../core/constants/app_colors.dart';
 import '../../widgets/pill_app_bar.dart';
+import 'package:fitwiz/core/constants/branding.dart';
 
 /// Screen displaying the medical disclaimer for AI-generated fitness content.
 class MedicalDisclaimerScreen extends StatelessWidget {
@@ -63,7 +64,7 @@ class MedicalDisclaimerScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Please read this disclaimer carefully before using FitWiz.',
+                    'Please read this disclaimer carefully before using ${Branding.appName}.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 14,
@@ -82,7 +83,7 @@ class MedicalDisclaimerScreen extends StatelessWidget {
               icon: Icons.info_outlined,
               iconColor: AppColors.info,
               title: 'Not Medical Advice',
-              content: 'FitWiz provides AI-generated fitness recommendations for informational and educational purposes only. The content provided by this app is not intended to be a substitute for professional medical advice, diagnosis, or treatment.',
+              content: '${Branding.appName} provides AI-generated fitness recommendations for informational and educational purposes only. The content provided by this app is not intended to be a substitute for professional medical advice, diagnosis, or treatment.',
               elevated: elevated,
               cardBorder: cardBorder,
               textPrimary: textPrimary,
@@ -138,7 +139,7 @@ class MedicalDisclaimerScreen extends StatelessWidget {
               icon: Icons.warning_amber_outlined,
               iconColor: AppColors.warning,
               title: 'Assumption of Risk',
-              content: 'Physical exercise involves inherent risks. By using FitWiz, you acknowledge that you are voluntarily participating in physical activities and assume all risks associated with such activities, including but not limited to injury, illness, or death.',
+              content: 'Physical exercise involves inherent risks. By using ${Branding.appName}, you acknowledge that you are voluntarily participating in physical activities and assume all risks associated with such activities, including but not limited to injury, illness, or death.',
               elevated: elevated,
               cardBorder: cardBorder,
               textPrimary: textPrimary,
@@ -150,7 +151,7 @@ class MedicalDisclaimerScreen extends StatelessWidget {
             // Footer
             Center(
               child: Text(
-                'By continuing to use FitWiz, you acknowledge that you have read and understood this disclaimer.',
+                'By continuing to use ${Branding.appName}, you acknowledge that you have read and understood this disclaimer.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 12,

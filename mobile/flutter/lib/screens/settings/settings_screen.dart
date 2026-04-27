@@ -12,6 +12,7 @@ import '../../core/constants/api_constants.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_links.dart';
 import '../../core/theme/theme_colors.dart';
+import '../../widgets/tooltips/tooltips.dart';
 import '../../core/theme/theme_provider.dart';
 import '../../core/providers/training_preferences_provider.dart';
 import '../../data/providers/billing_reminder_provider.dart';
@@ -38,6 +39,7 @@ import 'sections/sections.dart';
 import 'widgets/widgets.dart';
 import '../../core/providers/workout_ui_mode_provider.dart';
 import '../../core/theme/accent_color_provider.dart';
+import 'package:fitwiz/core/constants/branding.dart';
 
 part 'settings_screen_part_social_icon.dart';
 
@@ -730,7 +732,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             title: 'Contact Support',
             value: AppLinks.supportEmail,
             sectionKeys: const ['help_center', 'report_issue', 'support'],
-            onTap: () => _launchExternalUrl('mailto:${AppLinks.supportEmail}?subject=FitWiz Support Request'),
+            onTap: () => _launchExternalUrl('mailto:${AppLinks.supportEmail}?subject=${Branding.appName} Support Request'),
           ),
           _SettingsRow(
             icon: Icons.play_circle_outline_rounded,
@@ -740,6 +742,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             sectionKeys: const ['tutorial', 'help_center'],
             onTap: () => _showReplayTutorialsSheet(context, ref, isDark),
           ),
+          _SettingsRow(
+            icon: Icons.tips_and_updates_outlined,
+            iconColor: isDark ? AppColors.yellow : AppColorsLight.warning,
+            title: 'Reset Tips',
+            value: 'Show empty-state hints again',
+            sectionKeys: const ['tutorial', 'tips', 'help_center'],
+            onTap: () => _resetEmptyStateTips(context),
+          ),
         ],
       ),
       _SettingsSection(
@@ -748,7 +758,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           _SettingsRow(
             icon: Icons.info_outline,
             iconColor: textMuted,
-            title: 'About FitWiz',
+            title: 'About ${Branding.appName}',
             sectionKeys: const ['about_app'],
             onTap: () => _showAboutDialog(context),
           ),
@@ -963,9 +973,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   Center(
                     child: GestureDetector(
                       onTap: _onVersionTap,
-                      child: Text(
-                        'FitWiz v1.2.0',
-                        style: TextStyle(fontSize: 12, color: textMuted),
+                      child: FutureBuilder<PackageInfo>(
+                        future: PackageInfo.fromPlatform(),
+                        builder: (context, snapshot) {
+                          final version = snapshot.data?.version ?? '';
+                          return Text(
+                            version.isEmpty
+                                ? Branding.appName
+                                : '${Branding.appName} v$version',
+                            style: TextStyle(fontSize: 12, color: textMuted),
+                          );
+                        },
                       ),
                     ),
                   ),
@@ -1055,7 +1073,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 const SizedBox(width: 12),
                 // Help button circle — opens email support directly
                 GestureDetector(
-                  onTap: () => _launchExternalUrl('mailto:${AppLinks.supportEmail}?subject=FitWiz Help'),
+                  onTap: () => _launchExternalUrl('mailto:${AppLinks.supportEmail}?subject=${Branding.appName} Help'),
                   child: Container(
                     height: 44,
                     width: 44,

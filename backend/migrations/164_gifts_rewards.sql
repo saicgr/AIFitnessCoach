@@ -239,9 +239,9 @@ INSERT INTO reward_templates (id, reward_type, name, description, value, brand, 
 ('ten_platinum', 'gift_card', '$50 Amazon Gift Card', 'Earn 10 Platinum trophies', 50, 'Amazon', 'achievement', 10, 3, 180, true),
 
 -- Merch rewards
-('million_pound_tshirt', 'merch', 'Million Pound Club T-Shirt', 'Lift 1 million pounds total', 20, 'FitWiz', 'achievement', 1, 3, 180, false),
-('2000_workouts_tshirt', 'merch', 'FitWiz Legend T-Shirt', 'Complete 2,000 workouts', 25, 'FitWiz', 'achievement', 1, 3, 365, false),
-('730_streak_tshirt', 'merch', '2-Year Streak T-Shirt', '730-day workout streak', 25, 'FitWiz', 'achievement', 1, 3, 730, true)
+('million_pound_tshirt', 'merch', 'Million Pound Club T-Shirt', 'Lift 1 million pounds total', 20, 'Zealova', 'achievement', 1, 3, 180, false),
+('2000_workouts_tshirt', 'merch', 'Zealova Legend T-Shirt', 'Complete 2,000 workouts', 25, 'Zealova', 'achievement', 1, 3, 365, false),
+('730_streak_tshirt', 'merch', '2-Year Streak T-Shirt', '730-day workout streak', 25, 'Zealova', 'achievement', 1, 3, 730, true)
 ON CONFLICT (id) DO NOTHING;
 
 -- ============================================

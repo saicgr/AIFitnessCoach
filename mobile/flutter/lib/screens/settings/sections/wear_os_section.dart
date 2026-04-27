@@ -377,7 +377,7 @@ class _WearOSCardState extends ConsumerState<_WearOSCard> {
                         ),
                       )
                     : const Icon(Icons.download_rounded, size: 18),
-                label: Text(_isInstalling ? 'Opening Play Store...' : 'Install FitWiz on Watch'),
+                label: Text(_isInstalling ? 'Opening Play Store...' : 'Install Zealova on Watch'),
                 style: FilledButton.styleFrom(
                   backgroundColor: AppColors.cyan,
                   foregroundColor: Colors.white,

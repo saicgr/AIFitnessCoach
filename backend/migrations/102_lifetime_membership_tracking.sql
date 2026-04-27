@@ -1,4 +1,4 @@
--- FitWiz - Lifetime Membership Tracking System
+-- Zealova - Lifetime Membership Tracking System
 -- Migration 102: Enhanced lifetime membership handling
 --
 -- Purpose:

@@ -1,4 +1,4 @@
-package com.fitwiz.wearos.voice
+package com.aifitnesscoach.wearos.voice
 
 import android.content.Context
 import android.content.Intent

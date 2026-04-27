@@ -16,6 +16,7 @@ import 'dart:io';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../data/services/pr_detection_service.dart';
+import 'package:fitwiz/core/constants/branding.dart';
 
 /// PR Share card widget
 class PRShareCard extends StatelessWidget {
@@ -321,7 +322,7 @@ class PRShareCard extends StatelessWidget {
         ),
         const SizedBox(width: 16),
         Text(
-          'FitWiz',
+          '${Branding.appName}',
           style: TextStyle(
             fontSize: 32,
             fontWeight: FontWeight.bold,
@@ -638,7 +639,7 @@ ${widget.pr.previousValue != null ? widget.pr.formattedImprovement : 'First time
 Workout: ${widget.workoutName}
 ${DateFormat('MMMM d, yyyy').format(widget.pr.achievedAt)}
 
-#FitWiz #PersonalRecord #Fitness #Gym
+#Zealova #PersonalRecord #Fitness #Gym
 ''';
 
     // Copy to clipboard

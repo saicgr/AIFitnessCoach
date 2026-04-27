@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../shareable_canvas.dart';
 import '../shareable_data.dart';
-import '../widgets/fitwiz_watermark.dart';
+import '../widgets/app_watermark.dart';
 import '../widgets/shareable_hero_number.dart';
 
 /// Wrapped — accent gradient canvas, large WRAPPED title, numbered highlight
@@ -187,7 +187,7 @@ class WrappedTemplate extends StatelessWidget {
                 if (showWatermark)
                   Align(
                     alignment: Alignment.centerRight,
-                    child: FitWizWatermark(textColor: Colors.white),
+                    child: AppWatermark(textColor: Colors.white),
                   ),
               ],
             ),

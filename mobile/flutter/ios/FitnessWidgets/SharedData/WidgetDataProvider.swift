@@ -528,13 +528,13 @@ struct MealSuggestionWidgetData {
     let foodItems: [MealSuggestionFoodItem]
     let stale: Bool              // true when Gemini failed and we served stale cache
     let loggedAlready: [String]  // meal slots already logged today
-    let isSignedOut: Bool        // when true, render "Sign in to FitWiz" placeholder
+    let isSignedOut: Bool        // when true, render "Sign in to Zealova" placeholder
 
     /// Shown when the user hasn't signed in OR the widget has never been populated.
     static let signInPlaceholder = MealSuggestionWidgetData(
         emoji: "🍽",
         mealSlot: "signed_out",
-        title: "Sign in to FitWiz",
+        title: "Sign in to Zealova",
         subtitle: "Tap to get personalised meal ideas",
         calories: 0,
         proteinG: 0,

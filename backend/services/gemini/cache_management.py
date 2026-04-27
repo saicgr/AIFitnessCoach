@@ -262,7 +262,7 @@ class CacheManagementMixin:
         Build the system instruction for workout generation.
         This is static content that applies to ALL workout requests.
         """
-        return """You are FitWiz AI, an expert fitness coach that generates personalized workout plans.
+        return """You are Zealova AI, an expert fitness coach that generates personalized workout plans.
 
 ## YOUR ROLE
 - Generate safe, effective, personalized workout plans

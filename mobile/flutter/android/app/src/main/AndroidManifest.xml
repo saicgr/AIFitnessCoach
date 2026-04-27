@@ -66,9 +66,28 @@
     <uses-permission android:name="android.permission.health.WRITE_EXERCISE"/>
     <uses-permission android:name="android.permission.health.WRITE_ACTIVE_CALORIES_BURNED"/>
     <uses-permission android:name="android.permission.health.READ_FLOORS_CLIMBED"/>
+    <!--
+        Missing permissions added 2026-04-25 — without these, Health Connect
+        silently denies the matching READ types in our requestAuthorization()
+        call, which is why workouts arrived as "summary only" with no in-window
+        HR samples / SpO2 / BMR / etc, and why the Today's Health card stayed
+        empty while competitors like GymBeat showed steps + cal + avg HR.
+        The Dart side already requests BASAL_ENERGY_BURNED, BLOOD_OXYGEN,
+        BODY_TEMPERATURE, RESPIRATORY_RATE, WATER, and elevation_gain on
+        SLEEP_STAGES — manifest now matches.
+    -->
+    <uses-permission android:name="android.permission.health.READ_BASAL_METABOLIC_RATE"/>
+    <uses-permission android:name="android.permission.health.READ_OXYGEN_SATURATION"/>
+    <uses-permission android:name="android.permission.health.READ_BODY_TEMPERATURE"/>
+    <uses-permission android:name="android.permission.health.READ_RESPIRATORY_RATE"/>
+    <uses-permission android:name="android.permission.health.READ_HYDRATION"/>
+    <uses-permission android:name="android.permission.health.WRITE_HYDRATION"/>
+    <uses-permission android:name="android.permission.health.READ_ELEVATION_GAINED"/>
+    <uses-permission android:name="android.permission.health.READ_SPEED"/>
+    <uses-permission android:name="android.permission.health.READ_POWER"/>
 
     <application
-        android:label="FitWiz"
+        android:label="Zealova"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher_round"
@@ -113,28 +132,32 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
 
-            <!-- Deep link handling for widget actions -->
+            <!-- Deep link handling for widget actions.
+                 fitwiz:// is the LOCKED widget URL scheme (must match widget
+                 infra). zealova:// is the rebrand-aligned scheme for new
+                 share/email links. Both routes hit the same handler. -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW"/>
                 <category android:name="android.intent.category.DEFAULT"/>
                 <category android:name="android.intent.category.BROWSABLE"/>
                 <data android:scheme="fitwiz"/>
+                <data android:scheme="zealova"/>
             </intent-filter>
 
-            <!-- HTTPS invite deep links (https://fitwiz.us/invite/{code}).
+            <!-- HTTPS invite deep links (https://zealova.com/invite/{code}).
                  autoVerify is INTENTIONALLY OFF — enabling it requires a
                  Digital Asset Links JSON hosted at
-                 https://fitwiz.us/.well-known/assetlinks.json containing
+                 https://zealova.com/.well-known/assetlinks.json containing
                  the release keystore + Play App Signing SHA-256 fingerprints.
                  Without that file Android silently fails verification on
                  every install. With autoVerify off, Android still routes
                  these links via the disambiguation chooser (user gets the
-                 "Open with FitWiz" option). To upgrade to autoVerify later:
+                 "Open with Zealova" option). To upgrade to autoVerify later:
                    1. keytool -list -v -keystore android/keystores/release.keystore -alias fitwiz
                    2. Grab the upload SHA-256 + the Play App Signing SHA-256
                       from Play Console → Setup → App Signing.
                    3. Host {package: com.aifitnesscoach.app, sha256s: [...]}
-                      at https://fitwiz.us/.well-known/assetlinks.json with
+                      at https://zealova.com/.well-known/assetlinks.json with
                       content-type application/json (NO redirects).
                    4. Re-add android:autoVerify="true" below.
                  The custom fitwiz:// scheme above keeps working regardless. -->
@@ -143,14 +166,14 @@
                 <category android:name="android.intent.category.DEFAULT"/>
                 <category android:name="android.intent.category.BROWSABLE"/>
                 <data android:scheme="https"
-                      android:host="fitwiz.us"
+                      android:host="zealova.com"
                       android:pathPrefix="/invite"/>
                 <data android:scheme="http"
-                      android:host="fitwiz.us"
+                      android:host="zealova.com"
                       android:pathPrefix="/invite"/>
             </intent-filter>
 
-            <!-- Public single-workout share links (https://fitwiz.us/w/{token}).
+            <!-- Public single-workout share links (https://zealova.com/w/{token}).
                  Mirrors the iOS associated-domains entitlement. autoVerify is
                  OFF for the same reason as /invite — flip it on once
                  assetlinks.json is published with the production SHA256 cert. -->
@@ -159,13 +182,13 @@
                 <category android:name="android.intent.category.DEFAULT"/>
                 <category android:name="android.intent.category.BROWSABLE"/>
                 <data android:scheme="https"
-                      android:host="fitwiz.us"
+                      android:host="zealova.com"
                       android:pathPrefix="/w"/>
                 <data android:scheme="https"
-                      android:host="fitwiz.us"
+                      android:host="zealova.com"
                       android:pathPrefix="/p"/>
                 <data android:scheme="https"
-                      android:host="fitwiz.us"
+                      android:host="zealova.com"
                       android:pathPrefix="/u"/>
             </intent-filter>
 

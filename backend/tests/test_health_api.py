@@ -18,7 +18,7 @@ class TestHealthEndpoints:
         data = response.json()
         assert "service" in data
         assert "version" in data
-        assert "FitWiz" in data["service"]
+        assert "Zealova" in data["service"]
 
     def test_root_includes_docs_link(self, client):
         """Test root endpoint includes docs link."""

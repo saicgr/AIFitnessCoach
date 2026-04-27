@@ -11,6 +11,7 @@ import '../../data/services/api_client.dart';
 import '../constants/api_constants.dart';
 import '../services/posthog_service.dart';
 import '../services/sentry_service.dart';
+import 'package:fitwiz/core/constants/branding.dart';
 
 /// Subscription tier enum
 enum SubscriptionTier {
@@ -894,7 +895,7 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
           ));
           state = state.copyWith(
             isLoading: false,
-            error: "In-app purchases aren't available on this device. Install FitWiz from the Play Store with a Google account that has a valid payment method.",
+            error: "In-app purchases aren't available on this device. Install ${Branding.appName} from the Play Store with a Google account that has a valid payment method.",
           );
           return false;
         }

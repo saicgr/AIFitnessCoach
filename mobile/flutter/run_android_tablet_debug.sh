@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Android Tablet Debug Build Script for FitWiz
+# Android Tablet Debug Build Script for Zealova
 # Usage: ./run_android_tablet_debug.sh [avd_name]
 # If no AVD name given, defaults to Medium_Tablet
 # Same as run_android_tablet.sh but runs in DEBUG mode (hot reload, dev tools, etc.)
@@ -13,7 +13,7 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
-echo -e "${GREEN}=== FitWiz Android Tablet DEBUG Build Script ===${NC}"
+echo -e "${GREEN}=== Zealova Android Tablet DEBUG Build Script ===${NC}"
 
 # Set paths
 FLUTTER_PATH="/opt/homebrew/bin/flutter"

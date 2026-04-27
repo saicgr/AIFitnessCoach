@@ -180,7 +180,7 @@ class MealSuggestionWidgetReceiver : HomeWidgetProvider() {
             fun signInPlaceholder(): Payload = Payload(
                 emoji = "🍽",
                 mealSlot = "signed_out",
-                title = "Sign in to FitWiz",
+                title = "Sign in to Zealova",
                 subtitle = "Tap to get personalised meal ideas",
                 calories = 0,
                 proteinG = 0.0,

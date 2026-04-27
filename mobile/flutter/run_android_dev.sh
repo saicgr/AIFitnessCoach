@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Android Dev Build Script for FitWiz
+# Android Dev Build Script for Zealova
 # Usage: ./run_android_dev.sh [avd_name]
 # If no AVD name given, defaults to Medium_Phone_API_36.1
 #
@@ -16,7 +16,7 @@ YELLOW='\033[1;33m'
 CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
-echo -e "${GREEN}=== FitWiz Android DEV Build Script (Local Backend) ===${NC}"
+echo -e "${GREEN}=== Zealova Android DEV Build Script (Local Backend) ===${NC}"
 
 # Set paths
 FLUTTER_PATH="/opt/homebrew/bin/flutter"

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">FitWiz</string>
+    <string name="app_name">Zealova</string>
 
     <!-- Widget Names -->
     <string name="workout_widget_name">Today\'s Workout</string>
@@ -45,7 +45,7 @@
     <!-- Long-press app-icon shortcuts -->
     <string name="shortcut_suggest_food_short_label">Eat?</string>
     <string name="shortcut_suggest_food_long_label">What should I eat?</string>
-    <string name="shortcut_suggest_food_disabled_message">Sign in to FitWiz first.</string>
+    <string name="shortcut_suggest_food_disabled_message">Sign in to Zealova first.</string>
 
     <!-- Widget Content Labels -->
     <string name="start_workout">Start</string>

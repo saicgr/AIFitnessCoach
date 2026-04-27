@@ -6,6 +6,7 @@ import '../../../core/constants/api_constants.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/services/api_client.dart';
 import '../widgets/widgets.dart';
+import 'package:fitwiz/core/constants/branding.dart';
 
 /// Shows the import data dialog.
 void showImportDialog(BuildContext context, WidgetRef ref) {
@@ -20,7 +21,7 @@ void showImportDialog(BuildContext context, WidgetRef ref) {
           Icon(Icons.file_upload_outlined, color: AppColors.purple, size: 24),
           const SizedBox(width: 12),
           Text(
-            'Import FitWiz Data',
+            'Import ${Branding.appName} Data',
             style: TextStyle(
               color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
             ),
@@ -44,7 +45,7 @@ void showImportDialog(BuildContext context, WidgetRef ref) {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'This will replace your current FitWiz data',
+                    'This will replace your current ${Branding.appName} data',
                     style: TextStyle(
                       fontWeight: FontWeight.w600,
                       color: AppColors.orange,
@@ -57,7 +58,7 @@ void showImportDialog(BuildContext context, WidgetRef ref) {
           ),
           const SizedBox(height: 16),
           Text(
-            'Select a previously exported FitWiz ZIP file to restore your data. The import will use whatever data is available in the file.',
+            'Select a previously exported ${Branding.appName} ZIP file to restore your data. The import will use whatever data is available in the file.',
             style: TextStyle(
               color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary,
             ),
@@ -120,7 +121,7 @@ Future<void> _importData(BuildContext context, WidgetRef ref) async {
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  'Import FitWiz Data',
+                  'Import ${Branding.appName} Data',
                   style: TextStyle(
                     color: isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
                   ),

@@ -7,6 +7,7 @@ import '../../data/services/api_client.dart';
 import '../../widgets/pill_app_bar.dart';
 import '../../core/services/posthog_service.dart';
 import '../../widgets/segmented_tab_bar.dart';
+import 'package:fitwiz/core/constants/branding.dart';
 
 /// Screen displaying available and claimed rewards
 class RewardsScreen extends ConsumerStatefulWidget {
@@ -479,7 +480,7 @@ class _RewardCard extends StatelessWidget {
         icon = Icons.checkroom;
         iconColor = const Color(0xFF9C27B0);
         final details = reward['reward_details'] as Map<String, dynamic>?;
-        title = details?['item'] as String? ?? 'FitWiz Merch';
+        title = details?['item'] as String? ?? '${Branding.appName} Merch';
         subtitle = _getTriggerDescription(triggerType);
         break;
       case 'premium':

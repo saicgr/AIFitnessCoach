@@ -1,14 +1,14 @@
-package com.fitwiz.wearos.data.local
+package com.aifitnesscoach.wearos.data.local
 
 import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
-import com.fitwiz.wearos.data.local.dao.FastingDao
-import com.fitwiz.wearos.data.local.dao.FoodLogDao
-import com.fitwiz.wearos.data.local.dao.HealthDataDao
-import com.fitwiz.wearos.data.local.dao.SyncQueueDao
-import com.fitwiz.wearos.data.local.dao.WorkoutDao
-import com.fitwiz.wearos.data.local.entity.*
+import com.aifitnesscoach.wearos.data.local.dao.FastingDao
+import com.aifitnesscoach.wearos.data.local.dao.FoodLogDao
+import com.aifitnesscoach.wearos.data.local.dao.HealthDataDao
+import com.aifitnesscoach.wearos.data.local.dao.SyncQueueDao
+import com.aifitnesscoach.wearos.data.local.dao.WorkoutDao
+import com.aifitnesscoach.wearos.data.local.entity.*
 
 @Database(
     entities = [
@@ -36,6 +36,6 @@ abstract class WearDatabase : RoomDatabase() {
     abstract fun healthDataDao(): HealthDataDao
 
     companion object {
-        const val DATABASE_NAME = "fitwiz_wear_db"
+        const val DATABASE_NAME = "aifitnesscoach_wear_db"
     }
 }

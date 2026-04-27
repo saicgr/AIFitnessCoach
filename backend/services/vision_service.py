@@ -236,6 +236,8 @@ Current time suggests this is likely {suggested_meal}, but override based on the
 
 {f'User says: "{user_context}"' if user_context else ''}
 
+For COUNTABLE items (breadsticks, samosas, eggs, nuggets, cookies, sushi rolls, dumplings, pizza slices, tacos, wings, meatballs, falafel, etc.) ALWAYS set count = number of pieces visible AND weight_per_unit_g = grams per piece, with weight_g = count × weight_per_unit_g. For non-countable items (rice, soup, pasta heap, salad) leave count=null and weight_per_unit_g=null.
+
 Estimate all micronutrients (vitamins A/C/D/E/K/B1-B12, minerals like calcium/iron/magnesium/zinc/potassium/sodium, omega-3/6) based on the identified foods. Use the plate analysis JSON schema from your cached reference. Return valid JSON."""
         else:
             # Full prompt (no cache available — include everything inline)
@@ -706,6 +708,11 @@ Return ONLY this JSON, no other keys:
             elif analysis_mode == "menu":
                 prompt = f"""Analyze this restaurant menu. OCR extract EVERY dish across ALL sections — do not skip any, do not truncate.
 
+COMPLETENESS CONTRACT (read first):
+0. Before producing JSON, COUNT the dishes visible across ALL sections (including descriptions in small print). The final response MUST contain that exact count of dish entries. If you can't fit them all, drop the LONGEST descriptive prose first — never drop a dish.
+0a. Coverage > prose. coach_tip / rating_reason / fodmap_reason can be terse (≤ 6 words) so token budget goes to MORE DISHES rather than longer reasons.
+0b. If a section header is visible (e.g. "Burgers", "Bowls", "Drinks"), that section MUST appear in the output, even if you only have room for the most common 1-2 dishes from it.
+
 CRITICAL RULES:
 1. NUTRITION MUST NOT BE ROUND — derive calories from realistic portion weight (weight_g × kcal/g). Acceptable values: 387, 462, 518. NOT acceptable: 400, 450, 500 every time. Same rule for protein_g / carbs_g / fat_g — decimal precision expected (e.g. 42.6, not 40.0).
 2. ALWAYS include weight_g — your best estimate of the dish's serving weight in grams (typical restaurant portions: naan 80-100g, curry bowl 200-300g, rice 150-250g, entrée protein 150-250g, salad 150-250g, soup 240-300g).
@@ -767,7 +774,7 @@ Return ONLY this JSON, no other keys:
                     # nutrition_analysis_v1 build. Dynamic prompt just has to name
                     # the fields so the model doesn't silently drop them.
                     prompt = f"""Analyze these food images and provide detailed nutrition estimates.
-Identify all food items across all images.
+Identify EVERY distinct food/drink item across all images. Each visually distinct dish, side, sauce, garnish, or beverage is its own food_item — do NOT collapse multiple foods into one entry. If two images show different dishes, return separate items for each.
 
 Current time suggests this is likely {suggested_meal}.
 {nutrition_ctx_str}{user_ctx_str}
@@ -776,6 +783,7 @@ Use the plate analysis JSON schema from your cached reference.
 
 REQUIRED per food_item (NEVER omit):
 - name, amount, calories, protein_g, carbs_g, fat_g, fiber_g, weight_g
+- For COUNTABLE items (discrete pieces: breadsticks, samosas, eggs, nuggets, cookies, sushi rolls, dumplings, slices of pizza, tacos, wings, meatballs, falafel, etc.) ALWAYS set count = number of pieces visible AND weight_per_unit_g = grams per piece. weight_g must equal count × weight_per_unit_g. Example: 3 breadsticks → count=3, weight_per_unit_g=40, weight_g=120. For NON-COUNTABLE items (rice, soup, pasta heap, salad, fries pile) leave count=null and weight_per_unit_g=null.
 - inflammation_score (1-10, 10 = most inflammatory) — NEVER null.
 - inflammation_triggers: array of 1-3 short tags naming the drivers. NEVER empty. Pick from: deep_fried, seed_oil, refined_flour, added_sugar, processed_meat, saturated_fat, omega6_high, artificial_additives, omega3_rich, leafy_greens, olive_oil, turmeric, whole_grains, fermented, berries, fatty_fish (free-form accepted).
 - is_ultra_processed (bool; NOVA Group 4 → true). NEVER null.
@@ -789,7 +797,7 @@ REQUIRED meal-level fields: total_calories, total_protein_g, total_carbs_g, tota
 Return valid JSON."""
                 else:
                     prompt = f"""Analyze these food images and provide detailed nutrition estimates.
-Identify all food items across all images.
+Identify EVERY distinct food/drink item across all images. Each visually distinct dish, side, sauce, garnish, or beverage gets its own food_item entry — do NOT merge multiple foods into one. If two images show different dishes, return separate items for each.
 
 Current time suggests this is likely {suggested_meal}.
 {nutrition_ctx_str}{user_ctx_str}
@@ -808,6 +816,8 @@ Return ONLY valid JSON with this exact structure:
             "fat_g": 0.0,
             "fiber_g": 0.0,
             "weight_g": 0,
+            "count": null,
+            "weight_per_unit_g": null,
             "inflammation_score": 5,
             "inflammation_triggers": ["whole_grains"],
             "is_ultra_processed": false,
@@ -858,8 +868,12 @@ Guidelines:
 
             # Step 5: Call Gemini with all images.
             # Menu + buffet need larger output headroom because responses can
-            # contain 30-60 dishes. Plate stays at 4k.
-            max_tokens = 16000 if analysis_mode in ("menu", "buffet") else 4000
+            # contain 30-60+ dishes (chain restaurants, multi-page menus).
+            # Bumped from 16k → 48k after a real menu only returned 5 of ~25
+            # dishes — the cap was clipping the response mid-section. Gemini
+            # 3 Flash supports 64k output; 48k leaves slack for retries and
+            # keeps cost bounded. Plate stays at 4k.
+            max_tokens = 48000 if analysis_mode in ("menu", "buffet") else 4000
 
             # Bind a Pydantic response_schema per mode so Gemini MUST emit
             # every required health field (inflammation_score +

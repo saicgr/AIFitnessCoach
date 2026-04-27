@@ -15,6 +15,7 @@ import 'crate_notification_router.dart';
 import '../../core/constants/api_constants.dart';
 import '../models/coach_notification_templates.dart';
 import '../../utils/tz.dart';
+import 'package:fitwiz/core/constants/branding.dart';
 
 
 part 'notification_service_ext.dart';
@@ -197,7 +198,7 @@ class NotificationService {
     'ai_coach': _ChannelConfig(
       id: 'ai_coach',
       name: 'AI Coach',
-      description: 'General messages from your FitWiz coach',
+      description: 'General messages from your ${Branding.appName} coach',
       color: Color(0xFF00D9FF), // Cyan
     ),
     'test': _ChannelConfig(
@@ -247,8 +248,8 @@ class NotificationService {
   /// Default channel for unknown types
   static const _defaultChannel = _ChannelConfig(
     id: 'fitwiz_notifications',
-    name: 'FitWiz',
-    description: 'Notifications from your FitWiz coach',
+    name: '${Branding.appName}',
+    description: 'Notifications from your ${Branding.appName} coach',
     color: Color(0xFF00D9FF),
   );
 

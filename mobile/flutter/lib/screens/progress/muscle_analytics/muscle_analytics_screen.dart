@@ -12,6 +12,7 @@ import '../../../widgets/segmented_tab_bar.dart';
 import 'widgets/muscle_heatmap_widget.dart';
 import 'widgets/muscle_balance_chart.dart';
 import 'widgets/muscle_frequency_chart.dart';
+import 'package:fitwiz/core/constants/branding.dart';
 
 /// Main muscle analytics dashboard with tabs for heatmap, frequency, and balance
 class MuscleAnalyticsScreen extends ConsumerStatefulWidget {
@@ -80,7 +81,7 @@ class _MuscleAnalyticsScreenState extends ConsumerState<MuscleAnalyticsScreen>
             onTap: () => shareReportScreen(
               context: context,
               repaintKey: _reportKey,
-              caption: 'My FitWiz muscle strength report',
+              caption: 'My ${Branding.appName} muscle strength report',
               subject: 'My Muscle Report',
             ),
           ),

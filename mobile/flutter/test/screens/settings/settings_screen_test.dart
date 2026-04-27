@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:fitwiz/core/constants/branding.dart';
 import 'package:fitwiz/screens/settings/settings_screen.dart';
 
 void main() {
@@ -151,7 +152,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('FitWiz v1.0.0'), findsOneWidget);
+      expect(find.text('${Branding.appName} v${Branding.version}'), findsOneWidget);
     });
 
     testWidgets('has scrollable content', (tester) async {

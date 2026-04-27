@@ -2,7 +2,7 @@
 
 ## 🎉 Summary
 
-Successfully implemented a complete WhatsApp-style conversational onboarding system for the FitWiz app. The system uses GPT-4 to extract structured data from natural language and provides an intuitive, personal trainer-like experience.
+Successfully implemented a complete WhatsApp-style conversational onboarding system for the Zealova app. The system uses GPT-4 to extract structured data from natural language and provides an intuitive, personal trainer-like experience.
 
 ## ✅ What Was Built
 

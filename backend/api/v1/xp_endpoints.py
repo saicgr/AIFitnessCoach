@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel
 import logging
 logger = logging.getLogger(__name__)
+from core import branding
 from core.auth import get_current_user
 from core.db import get_supabase_db
 from core.timezone_utils import resolve_timezone, get_user_today
@@ -1207,12 +1208,12 @@ MILESTONE_REWARDS_DISPLAY = {
     25:  '4x 2x XP Token + 3x Premium Crate + 3x Fitness Crate · Bronze Animated Frame + "Dedicated" Chat Title',
     30:  "5x 2x XP Token + 3x Premium Crate + 3x Fitness Crate + 3x Streak Shield",
     40:  "5x Streak Shield + 4x Premium Crate + 4x 2x XP Token + 3x Fitness Crate",
-    50:  'FREE FitWiz Sticker Pack + 6x 2x XP Token + 5x Premium Crate + 5x Fitness Crate + 5x Streak Shield · Silver Frame + "Veteran" Chat Title + Alt Coach Voice',
+    50:  f'FREE {branding.MERCH_PRODUCT_PREFIX} Sticker Pack + 6x 2x XP Token + 5x Premium Crate + 5x Fitness Crate + 5x Streak Shield · Silver Frame + "Veteran" Chat Title + Alt Coach Voice',
     60:  "7x Fitness Crate + 5x Premium Crate + 5x 2x XP Token + 5x Streak Shield",
     75:  '7x Premium Crate + 5x 2x XP Token + 5x Fitness Crate · Gold Holographic Frame + "Elite" Chat Title + Gold Accent Theme + Elite Stats Card',
-    100: "Elite Badge + FREE FitWiz T-Shirt + 10x Premium Crate + 7x 2x XP Token + 7x Fitness Crate + 7x Streak Shield",
+    100: f"Elite Badge + FREE {branding.MERCH_PRODUCT_PREFIX} T-Shirt + 10x Premium Crate + 7x 2x XP Token + 7x Fitness Crate + 7x Streak Shield",
     125: "Master Badge + 12x Premium Crate + 8x 2x XP Token + 8x Fitness Crate",
-    150: "Champion Badge + FREE FitWiz Hoodie + 15x Premium Crate + 10x 2x XP Token + 10x Fitness Crate + 10x Streak Shield",
+    150: f"Champion Badge + FREE {branding.MERCH_PRODUCT_PREFIX} Hoodie + 15x Premium Crate + 10x 2x XP Token + 10x Fitness Crate + 10x Streak Shield",
     175: "Legend Badge + 17x Premium Crate + 12x 2x XP Token + 12x Fitness Crate",
     200: "Mythic Badge + FREE Full Merch Kit + 20x Premium Crate + 15x 2x XP Token + 15x Fitness Crate + 15x Streak Shield",
     225: "Immortal Badge + 25x Premium Crate + 20x 2x XP Token + 20x Fitness Crate",
@@ -1269,10 +1270,10 @@ PER_LEVEL_ICONS = {
 
 def _merch_type_display_name(merch_type: str) -> str:
     return {
-        "sticker_pack": "FitWiz Sticker Pack",
-        "shaker_bottle": "FitWiz Shaker Bottle",
-        "t_shirt": "FitWiz T-Shirt",
-        "hoodie": "FitWiz Hoodie",
+        "sticker_pack": f"{branding.MERCH_PRODUCT_PREFIX} Sticker Pack",
+        "shaker_bottle": f"{branding.MERCH_PRODUCT_PREFIX} Shaker Bottle",
+        "t_shirt": f"{branding.MERCH_PRODUCT_PREFIX} T-Shirt",
+        "hoodie": f"{branding.MERCH_PRODUCT_PREFIX} Hoodie",
         "full_merch_kit": "Full Merch Kit (Tee + Hoodie + Shaker)",
         "signed_premium_kit": "Signed Premium Kit",
     }.get(merch_type, merch_type.replace("_", " ").title())

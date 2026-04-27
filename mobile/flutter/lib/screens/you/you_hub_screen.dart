@@ -29,7 +29,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/constants/app_colors.dart';
-import '../../core/providers/serious_mode_provider.dart';
 import '../../core/theme/accent_color_provider.dart';
 import '../profile/profile_screen.dart';
 import 'tabs/overview_tab.dart';
@@ -58,15 +57,17 @@ class _YouHubScreenState extends ConsumerState<YouHubScreen>
   @override
   void initState() {
     super.initState();
-    // Serious Mode: Profile is the landing tab instead of Overview. We only
-    // apply this when the caller didn't explicitly request a tab — respect
-    // deep links like `/profile?tab=overview` even when Serious Mode is on.
-    final serious = ref.read(seriousModeProvider);
-    final defaultIdx = serious ? 1 : widget.initialTabIndex;
+    // Always land on Overview by default — that's where the daily-glance
+    // health snapshot (Today's Health / Last Night's Sleep / Weight Tracking)
+    // lives. Previously Serious Mode redirected to Profile (the settings
+    // surface), which forced users to swipe past gamification just to see
+    // whether they hit their step goal. Serious Mode still dims the
+    // gamification visuals on Overview (XpHeroTile reads `muted: serious`)
+    // but no longer changes the landing tab.
     _tabController = TabController(
       length: 3,
       vsync: this,
-      initialIndex: defaultIdx.clamp(0, 2),
+      initialIndex: widget.initialTabIndex.clamp(0, 2),
     );
   }
 

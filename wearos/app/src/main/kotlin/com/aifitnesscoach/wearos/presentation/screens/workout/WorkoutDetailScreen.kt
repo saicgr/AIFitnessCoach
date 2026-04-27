@@ -1,4 +1,4 @@
-package com.fitwiz.wearos.presentation.screens.workout
+package com.aifitnesscoach.wearos.presentation.screens.workout
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -15,11 +15,11 @@ import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
 import androidx.wear.compose.foundation.lazy.items
 import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
 import androidx.wear.compose.material.*
-import com.fitwiz.wearos.data.models.WearExercise
-import com.fitwiz.wearos.data.models.WearWorkout
-import com.fitwiz.wearos.presentation.theme.FitWizColors
-import com.fitwiz.wearos.presentation.theme.FitWizTypography
-import com.fitwiz.wearos.presentation.viewmodel.WorkoutViewModel
+import com.aifitnesscoach.wearos.data.models.WearExercise
+import com.aifitnesscoach.wearos.data.models.WearWorkout
+import com.aifitnesscoach.wearos.presentation.theme.AppColors
+import com.aifitnesscoach.wearos.presentation.theme.AppTypography
+import com.aifitnesscoach.wearos.presentation.viewmodel.WorkoutViewModel
 
 /**
  * Workout Detail Screen - Shows workout info and exercises
@@ -76,28 +76,28 @@ private fun NoWorkoutContent(
         ) {
             Text(
                 text = "Workout",
-                style = FitWizTypography.displayLarge
+                style = AppTypography.displayLarge
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = "No Workout",
-                style = FitWizTypography.titleMedium,
-                color = FitWizColors.TextPrimary
+                style = AppTypography.titleMedium,
+                color = AppColors.TextPrimary
             )
             Text(
                 text = "Sync from phone",
-                style = FitWizTypography.bodySmall,
-                color = FitWizColors.TextMuted,
+                style = AppTypography.bodySmall,
+                color = AppColors.TextMuted,
                 textAlign = TextAlign.Center
             )
             Spacer(modifier = Modifier.height(12.dp))
             Button(
                 onClick = onCreateSample,
                 colors = ButtonDefaults.buttonColors(
-                    backgroundColor = FitWizColors.Primary
+                    backgroundColor = AppColors.Primary
                 )
             ) {
-                Text("Demo", style = FitWizTypography.labelMedium)
+                Text("Demo", style = AppTypography.labelMedium)
             }
         }
     }
@@ -134,12 +134,12 @@ private fun WorkoutContent(
                     .fillMaxWidth(0.85f)
                     .height(48.dp),
                 colors = ButtonDefaults.buttonColors(
-                    backgroundColor = FitWizColors.Success
+                    backgroundColor = AppColors.Success
                 )
             ) {
                 Text(
                     text = "START WORKOUT",
-                    style = FitWizTypography.labelLarge
+                    style = AppTypography.labelLarge
                 )
             }
             Spacer(modifier = Modifier.height(12.dp))
@@ -149,8 +149,8 @@ private fun WorkoutContent(
         item {
             Text(
                 text = "EXERCISES",
-                style = FitWizTypography.labelSmall,
-                color = FitWizColors.TextMuted,
+                style = AppTypography.labelSmall,
+                color = AppColors.TextMuted,
                 modifier = Modifier.padding(start = 8.dp)
             )
             Spacer(modifier = Modifier.height(4.dp))
@@ -171,13 +171,13 @@ private fun WorkoutHeader(workout: WearWorkout) {
     ) {
         Text(
             text = "Workout",
-            style = FitWizTypography.displayMedium
+            style = AppTypography.displayMedium
         )
         Spacer(modifier = Modifier.height(4.dp))
         Text(
             text = workout.name,
-            style = FitWizTypography.titleLarge,
-            color = FitWizColors.TextPrimary,
+            style = AppTypography.titleLarge,
+            color = AppColors.TextPrimary,
             textAlign = TextAlign.Center,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
@@ -191,22 +191,22 @@ private fun WorkoutHeader(workout: WearWorkout) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     text = "Time",
-                    style = FitWizTypography.bodySmall,
-                    color = FitWizColors.TextMuted
+                    style = AppTypography.bodySmall,
+                    color = AppColors.TextMuted
                 )
                 Spacer(modifier = Modifier.width(2.dp))
                 Text(
                     text = "${workout.estimatedDuration} min",
-                    style = FitWizTypography.bodySmall,
-                    color = FitWizColors.TextSecondary
+                    style = AppTypography.bodySmall,
+                    color = AppColors.TextSecondary
                 )
             }
             // Exercises count
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     text = "${workout.exercises.size} exercises",
-                    style = FitWizTypography.bodySmall,
-                    color = FitWizColors.TextSecondary
+                    style = AppTypography.bodySmall,
+                    color = AppColors.TextSecondary
                 )
             }
         }
@@ -219,7 +219,7 @@ private fun ExercisePreviewCard(exercise: WearExercise) {
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
-            .background(FitWizColors.Surface)
+            .background(AppColors.Surface)
             .padding(horizontal = 12.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -228,13 +228,13 @@ private fun ExercisePreviewCard(exercise: WearExercise) {
             modifier = Modifier
                 .size(24.dp)
                 .clip(RoundedCornerShape(6.dp))
-                .background(FitWizColors.Primary.copy(alpha = 0.2f)),
+                .background(AppColors.Primary.copy(alpha = 0.2f)),
             contentAlignment = Alignment.Center
         ) {
             Text(
                 text = "${exercise.orderIndex + 1}",
-                style = FitWizTypography.labelSmall,
-                color = FitWizColors.Primary
+                style = AppTypography.labelSmall,
+                color = AppColors.Primary
             )
         }
 
@@ -244,16 +244,16 @@ private fun ExercisePreviewCard(exercise: WearExercise) {
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = exercise.name,
-                style = FitWizTypography.bodyMedium,
-                color = FitWizColors.TextPrimary,
+                style = AppTypography.bodyMedium,
+                color = AppColors.TextPrimary,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
             Text(
                 text = "${exercise.sets}x${exercise.targetReps}" +
                         (exercise.suggestedWeight?.let { " @ ${it.toInt()}kg" } ?: ""),
-                style = FitWizTypography.bodySmall,
-                color = FitWizColors.TextMuted
+                style = AppTypography.bodySmall,
+                color = AppColors.TextMuted
             )
         }
     }

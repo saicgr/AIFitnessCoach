@@ -7,7 +7,7 @@ import 'package:flutter/material.dart';
 // intro_animations.dart
 //
 // Reusable micro-interaction widgets for onboarding, splash screens, and
-// intro flows. Designed for the FitWiz dark OLED theme but works on any
+// intro flows. Designed for the Zealova dark OLED theme but works on any
 // background.
 //
 // Widgets:

@@ -82,7 +82,7 @@ class _WorkoutImportContentState extends ConsumerState<_WorkoutImportContent> {
     }
   }
 
-  /// Find a matching FitWiz workout for the same date that is not completed.
+  /// Find a matching Zealova workout for the same date that is not completed.
   Workout? _findMatchingWorkout(
       List<Workout> workouts, PendingWorkoutImport pending) {
     final pendingDate = DateTime(
@@ -206,7 +206,7 @@ class _WorkoutImportContentState extends ConsumerState<_WorkoutImportContent> {
       _hrEnriched = true;
     }
 
-    // Look for matching FitWiz workout.
+    // Look for matching Zealova workout.
     final workoutsAsync = ref.watch(workoutsProvider);
     final matchingWorkout = workoutsAsync.whenOrNull(
       data: (workouts) =>
@@ -339,7 +339,7 @@ class _WorkoutImportContentState extends ConsumerState<_WorkoutImportContent> {
                           ),
                         )
                       else ...[
-                        // If there's a matching FitWiz workout, show two-option layout
+                        // If there's a matching Zealova workout, show two-option layout
                         if (matchingWorkout != null) ...[
                           _buildPrimaryButton(
                             label:

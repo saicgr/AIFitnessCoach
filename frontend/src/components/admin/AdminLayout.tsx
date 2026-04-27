@@ -9,6 +9,7 @@
 import { type ReactNode } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAdminStore } from '../../store/adminStore';
+import { BRANDING } from '../../lib/branding';
 
 interface AdminLayoutProps {
   children: ReactNode;
@@ -65,7 +66,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
           <div className="p-4 border-b border-white/10 flex items-center justify-between">
             {!sidebarCollapsed && (
               <span className="text-xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                FitWiz Admin
+                {BRANDING.appName} Admin
               </span>
             )}
             <button

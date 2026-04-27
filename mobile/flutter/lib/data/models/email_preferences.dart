@@ -1,7 +1,7 @@
 /// Email preferences model.
 ///
 /// Represents user email subscription preferences for managing
-/// what types of emails they receive from FitWiz.
+/// what types of emails they receive from Zealova.
 library;
 
 class EmailPreferences {

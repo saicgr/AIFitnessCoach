@@ -1,4 +1,4 @@
-package com.fitwiz.wearos.health
+package com.aifitnesscoach.wearos.health
 
 import android.content.Context
 import android.util.Log

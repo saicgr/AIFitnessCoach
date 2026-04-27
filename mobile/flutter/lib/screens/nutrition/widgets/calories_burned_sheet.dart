@@ -8,6 +8,7 @@ import '../../../data/repositories/auth_repository.dart';
 import '../../../data/repositories/sauna_repository.dart';
 import '../../../data/services/health_service.dart';
 import '../../../widgets/glass_sheet.dart';
+import 'package:fitwiz/core/constants/branding.dart';
 
 /// Bottom sheet showing today's completed workouts and their calorie contributions
 class CaloriesBurnedSheet extends ConsumerStatefulWidget {
@@ -123,7 +124,7 @@ class _CaloriesBurnedSheetState extends ConsumerState<CaloriesBurnedSheet> {
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
 
-    // Get FitWiz completed workouts
+    // Get Zealova completed workouts
     final todayState = ref.watch(todayWorkoutProvider);
     final todayData = todayState.valueOrNull;
     final completedWorkout = todayData?.completedWorkout;
@@ -138,8 +139,8 @@ class _CaloriesBurnedSheetState extends ConsumerState<CaloriesBurnedSheet> {
       fitWizWorkouts.add(_WorkoutEntry(
         name: completedWorkout.name,
         durationMinutes: completedWorkout.durationMinutes,
-        caloriesBurned: null, // FitWiz doesn't track per-workout calories
-        source: 'FitWiz',
+        caloriesBurned: null, // Zealova doesn't track per-workout calories
+        source: '${Branding.appName}',
         isFromHealth: false,
       ));
     }
@@ -148,7 +149,7 @@ class _CaloriesBurnedSheetState extends ConsumerState<CaloriesBurnedSheet> {
         name: w.name,
         durationMinutes: w.durationMinutes,
         caloriesBurned: null,
-        source: 'FitWiz',
+        source: '${Branding.appName}',
         isFromHealth: false,
       ));
     }
@@ -202,9 +203,9 @@ class _CaloriesBurnedSheetState extends ConsumerState<CaloriesBurnedSheet> {
           ),
           const SizedBox(height: 16),
 
-          // FitWiz workouts section
+          // Zealova workouts section
           if (fitWizWorkouts.isNotEmpty) ...[
-            _SectionLabel(label: 'FitWiz Workouts', color: AppColors.cyan),
+            _SectionLabel(label: '${Branding.appName} Workouts', color: AppColors.cyan),
             const SizedBox(height: 8),
             for (final w in fitWizWorkouts)
               _WorkoutTile(
@@ -264,7 +265,7 @@ class _CaloriesBurnedSheetState extends ConsumerState<CaloriesBurnedSheet> {
                   name: 'Sauna Session',
                   durationMinutes: entry.durationMinutes,
                   caloriesBurned: entry.estimatedCalories?.toDouble(),
-                  source: 'FitWiz',
+                  source: '${Branding.appName}',
                   isFromHealth: false,
                 ),
                 isDark: isDark,

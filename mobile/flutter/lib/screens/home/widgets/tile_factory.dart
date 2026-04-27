@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../data/models/home_layout.dart';
+import '../../../data/services/health_service.dart';
 import '../../../widgets/app_tour/app_tour_controller.dart';
 import '../../../data/repositories/workout_repository.dart';
 // import '../../../widgets/xp_progress_card.dart'; // Coming soon
@@ -94,8 +95,12 @@ class TileFactory {
         // Coming soon
         return const SizedBox.shrink();
       case TileType.sleepScore:
-        // Deprecated - return empty widget
-        return const SizedBox.shrink();
+        // Re-activated 2026-04-25 — surfaces the existing Health Connect /
+        // HealthKit SLEEP_DEEP / SLEEP_LIGHT / SLEEP_REM samples that the
+        // dailyActivityProvider already collects but had no UI for. Renders
+        // nothing when no sleep was tracked last night, so layouts that
+        // include this tile stay clean for users without a wearable.
+        return const LastNightSleepCard();
       case TileType.restDayTip:
         // Coming soon
         return const SizedBox.shrink();
@@ -139,7 +144,18 @@ class TileFactory {
       case TileType.todayStats:
         return const TodayStatsRow();
       case TileType.stepsCounter:
-        return const DailyStepsTile();
+        // The single-metric DailyStepsTile (just steps + ring) was the only
+        // surfacing of Health Connect data and didn't show calories or HR
+        // even when both were available — competitors (GymBeat, FitOn) ship
+        // a richer composite. We now render the composite when the user is
+        // connected and fall back to the original tile (which owns the
+        // "Connect" CTA) when they aren't.
+        return Consumer(builder: (context, ref, _) {
+          final connected = ref.watch(healthSyncProvider).isConnected;
+          return connected
+              ? const TodaysHealthCard()
+              : const DailyStepsTile();
+        });
       case TileType.nutritionPatterns:
         return const _NutritionPatternsTile();
     }

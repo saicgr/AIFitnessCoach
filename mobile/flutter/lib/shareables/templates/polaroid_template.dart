@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../shareable_canvas.dart';
 import '../shareable_data.dart';
-import '../widgets/fitwiz_watermark.dart';
+import '../widgets/app_watermark.dart';
 
 /// Polaroid — off-white frame on slight rotation, centered photo (uses
 /// `data.heroImageUrl` first, then `customPhotoPath`, fallback gradient).
@@ -63,7 +63,7 @@ class PolaroidTemplate extends StatelessWidget {
                       child: _photoOrGradient(accent),
                     ),
                   ),
-                  const SizedBox(height: 18),
+                  const SizedBox(height: 16),
                   Text(
                     caption,
                     maxLines: 1,
@@ -76,17 +76,40 @@ class PolaroidTemplate extends StatelessWidget {
                       fontWeight: FontWeight.w700,
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    subline,
-                    style: TextStyle(
-                      color: const Color(0xFF1A1A1A).withValues(alpha: 0.55),
-                      fontSize: 13 * mul,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 1.4,
+                  // Workout title (e.g. "Steady Ground Strength") — separate
+                  // from caption when caption is the user's name.
+                  if (data.userDisplayName != null &&
+                      data.userDisplayName!.trim().isNotEmpty &&
+                      data.title.trim().isNotEmpty &&
+                      data.title.trim() != data.userDisplayName!.trim()) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      data.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: const Color(0xFF1A1A1A).withValues(alpha: 0.75),
+                        fontSize: 13 * mul,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 8),
+                  ],
+                  if (subline.trim().isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      subline,
+                      style: TextStyle(
+                        color: const Color(0xFF1A1A1A).withValues(alpha: 0.55),
+                        fontSize: 13 * mul,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 1.4,
+                      ),
+                    ),
+                  ],
+                  // Real workout stats from the completed session — duration,
+                  // sets, reps, exercises, volume — pulled from highlights.
+                  ..._buildStatsBlock(data, mul),
+                  const SizedBox(height: 10),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -100,7 +123,7 @@ class PolaroidTemplate extends StatelessWidget {
                         ),
                       ),
                       if (showWatermark)
-                        FitWizWatermark(
+                        AppWatermark(
                           textColor: const Color(0xFF1A1A1A),
                           fontSize: 10 * mul,
                           iconSize: 14,
@@ -133,6 +156,93 @@ class PolaroidTemplate extends StatelessWidget {
       fit: BoxFit.cover,
       errorBuilder: (_, __, ___) => _gradient(accent),
     );
+  }
+
+  /// Build a row of mini stat tiles (DURATION · SETS · REPS · EXERCISES)
+  /// pulled from the highlights array. Picks up to 4 most-relevant metrics
+  /// so the polaroid reads like a real photo caption + receipt.
+  List<Widget> _buildStatsBlock(Shareable data, double mul) {
+    bool matches(String label, List<String> needles) {
+      final upper = label.toUpperCase();
+      return needles.any(upper.contains);
+    }
+    final preferred = <String, ShareableMetric>{};
+    for (final h in data.highlights) {
+      if (h.value.trim().isEmpty) continue;
+      if (preferred.containsKey('duration') == false &&
+          matches(h.label, ['DURATION', 'TIME'])) {
+        preferred['duration'] = h;
+        continue;
+      }
+      if (preferred.containsKey('sets') == false &&
+          matches(h.label, ['SETS'])) {
+        preferred['sets'] = h;
+        continue;
+      }
+      if (preferred.containsKey('reps') == false &&
+          matches(h.label, ['REPS'])) {
+        preferred['reps'] = h;
+        continue;
+      }
+      if (preferred.containsKey('exercises') == false &&
+          matches(h.label, ['EXERCISE'])) {
+        preferred['exercises'] = h;
+        continue;
+      }
+      if (preferred.containsKey('volume') == false &&
+          matches(h.label, ['VOLUME'])) {
+        preferred['volume'] = h;
+        continue;
+      }
+    }
+    final order = const ['duration', 'sets', 'reps', 'exercises', 'volume'];
+    final picks = order
+        .map((k) => preferred[k])
+        .whereType<ShareableMetric>()
+        .take(4)
+        .toList();
+    if (picks.isEmpty) return const [];
+
+    return [
+      const SizedBox(height: 14),
+      Container(
+        height: 1,
+        color: const Color(0xFF1A1A1A).withValues(alpha: 0.12),
+      ),
+      const SizedBox(height: 10),
+      Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: picks.map((m) {
+          return Expanded(
+            child: Column(
+              children: [
+                Text(
+                  m.value,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontFamily: 'Times New Roman',
+                    color: const Color(0xFF1A1A1A),
+                    fontSize: 18 * mul,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  m.label.toUpperCase(),
+                  style: TextStyle(
+                    color: const Color(0xFF1A1A1A).withValues(alpha: 0.55),
+                    fontSize: 8.5 * mul,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 1.4,
+                  ),
+                ),
+              ],
+            ),
+          );
+        }).toList(),
+      ),
+    ];
   }
 
   Widget _gradient(Color accent) {

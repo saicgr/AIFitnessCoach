@@ -17,12 +17,13 @@ ENDPOINTS:
 """
 from typing import Optional
 from datetime import datetime
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request
 import logging
 logger = logging.getLogger(__name__)
 from core.auth import get_current_user
 from core.db import get_supabase_db
 from core.exceptions import safe_internal_error
+from core.timezone_utils import resolve_timezone
 from models.gym_profile import (
     GymProfile, GymProfileCreate, GymProfileUpdate,
     GymProfileWithStats, GymProfileListResponse,
@@ -36,6 +37,8 @@ router = APIRouter()
 @router.put("/{profile_id}", response_model=GymProfile)
 async def update_gym_profile(
     profile_id: str, update: GymProfileUpdate,
+    request: Request,
+    background_tasks: BackgroundTasks,
     current_user: dict = Depends(get_current_user),
 ):
     """
@@ -133,6 +136,58 @@ async def update_gym_profile(
         if changes:
             logger.info(f"🔄 [GymProfile] Updated {profile_id}: {', '.join(changes)}")
 
+        # If schedule-impacting fields changed AND this is the active profile,
+        # invalidate stale future workouts (not started, not completed) and
+        # refill the 14-day horizon. Today's already-started workout is left
+        # alone via the is_completed=False + status checks in the helper.
+        schedule_changed = (
+            update.workout_days is not None
+            and list(update.workout_days or []) != list(old_profile.get("workout_days") or [])
+        )
+        equipment_changed = (
+            (update.equipment is not None and update.equipment != old_profile.get("equipment"))
+            or (update.equipment_details is not None and update.equipment_details != old_profile.get("equipment_details"))
+        )
+        if (schedule_changed or equipment_changed) and updated_profile.is_active:
+            try:
+                from api.v1.workouts.today import (
+                    invalidate_today_workout_cache,
+                    _gym_profile_cache,
+                    _user_record_cache,
+                    enqueue_schedule_top_up,
+                )
+                from api.v1.workouts.utils import invalidate_upcoming_workouts
+
+                user_id_val = old_profile["user_id"]
+                # Drop pre-generated future workouts under the old config so
+                # the next /today + top-up regenerate them with new days/equipment.
+                deleted = invalidate_upcoming_workouts(
+                    user_id=user_id_val,
+                    gym_profile_id=profile_id,
+                    reason="profile_updated",
+                )
+                logger.info(f"[GymProfile] Invalidated {deleted} upcoming workouts after profile edit")
+
+                await _gym_profile_cache.delete(user_id_val)
+                await _user_record_cache.delete(user_id_val)
+                await invalidate_today_workout_cache(user_id_val, profile_id)
+
+                workout_days = updated_profile.workout_days or []
+                if workout_days:
+                    db = get_supabase_db()
+                    user_tz = resolve_timezone(request, db, user_id_val)
+                    background_tasks.add_task(
+                        enqueue_schedule_top_up,
+                        user_id=user_id_val,
+                        gym_profile_id=profile_id,
+                        workout_days=workout_days,
+                        user_tz=user_tz,
+                        horizon_days=14,
+                    )
+                    logger.info(f"📅 [GymProfile] Queued post-edit pre-gen for '{updated_profile.name}'")
+            except Exception as gen_err:
+                logger.warning(f"[GymProfile] Post-edit invalidation/regen failed (non-fatal): {gen_err}", exc_info=True)
+
         # Log to user context
         await user_context_service.log_event(
             user_id=old_profile["user_id"],
@@ -166,6 +221,8 @@ async def update_gym_profile(
 @router.delete("/{profile_id}")
 async def delete_gym_profile(
     profile_id: str,
+    request: Request,
+    background_tasks: BackgroundTasks,
     current_user: dict = Depends(get_current_user),
 ):
     """
@@ -234,6 +291,40 @@ async def delete_gym_profile(
                     .execute()
                 logger.info(f"🔄 [GymProfile] Activated next profile {next_profile_id}")
 
+                # Refill 14 days for the newly active profile so the home
+                # carousel doesn't go empty after a delete-active.
+                try:
+                    from api.v1.workouts.today import (
+                        invalidate_today_workout_cache,
+                        _gym_profile_cache,
+                        _user_record_cache,
+                        enqueue_schedule_top_up,
+                    )
+                    await _gym_profile_cache.delete(user_id)
+                    await _user_record_cache.delete(user_id)
+                    await invalidate_today_workout_cache(user_id, next_profile_id)
+
+                    next_full = supabase.client.table("gym_profiles") \
+                        .select("workout_days") \
+                        .eq("id", next_profile_id) \
+                        .single() \
+                        .execute()
+                    next_workout_days = (next_full.data or {}).get("workout_days") or []
+                    if next_workout_days:
+                        db = get_supabase_db()
+                        user_tz = resolve_timezone(request, db, user_id)
+                        background_tasks.add_task(
+                            enqueue_schedule_top_up,
+                            user_id=user_id,
+                            gym_profile_id=next_profile_id,
+                            workout_days=next_workout_days,
+                            user_tz=user_tz,
+                            horizon_days=14,
+                        )
+                        logger.info(f"📅 [GymProfile] Queued pre-gen after delete-active fallback")
+                except Exception as gen_err:
+                    logger.warning(f"[GymProfile] Pre-gen on delete-fallback failed (non-fatal): {gen_err}", exc_info=True)
+
         # Log to user context
         await user_context_service.log_event(
             user_id=user_id,
@@ -266,6 +357,8 @@ async def delete_gym_profile(
 @router.post("/{profile_id}/activate", response_model=ActivateProfileResponse)
 async def activate_gym_profile(
     profile_id: str,
+    request: Request,
+    background_tasks: BackgroundTasks,
     current_user: dict = Depends(get_current_user),
 ):
     """
@@ -329,6 +422,45 @@ async def activate_gym_profile(
         logger.info(f"🔄 [GymProfile] Switching from '{old_profile_name}' to '{active_profile.name}'")
         logger.info(f"🏋️ [GymProfile] Active equipment: {len(active_profile.equipment)} items")
         logger.info(f"🎯 [GymProfile] Environment: {active_profile.workout_environment}")
+
+        # Bust the today/profile caches so the next /today read sees the new
+        # active profile immediately instead of serving the previous one's
+        # cached response.
+        try:
+            from api.v1.workouts.today import (
+                invalidate_today_workout_cache,
+                _gym_profile_cache,
+                _user_record_cache,
+                enqueue_schedule_top_up,
+            )
+            await _gym_profile_cache.delete(user_id)
+            await _user_record_cache.delete(user_id)
+            await invalidate_today_workout_cache(user_id, profile_id)
+        except Exception as cache_err:
+            logger.warning(f"[GymProfile] Cache invalidation failed (non-fatal): {cache_err}")
+
+        # Background: pre-generate the next 14 days of workouts for the new
+        # profile. Uses the profile's workout_days schedule and equipment.
+        # Does not block the activate response — Sequential generation can
+        # take ~10-30s depending on Gemini latency.
+        try:
+            db = get_supabase_db()
+            user_tz = resolve_timezone(request, db, user_id)
+            workout_days = active_profile.workout_days or []
+            if workout_days:
+                background_tasks.add_task(
+                    enqueue_schedule_top_up,
+                    user_id=user_id,
+                    gym_profile_id=profile_id,
+                    workout_days=workout_days,
+                    user_tz=user_tz,
+                    horizon_days=14,
+                )
+                logger.info(f"📅 [GymProfile] Queued 14-day pre-generation for '{active_profile.name}'")
+            else:
+                logger.info(f"⚠️  [GymProfile] '{active_profile.name}' has no workout_days set; skipping pre-gen")
+        except Exception as gen_err:
+            logger.warning(f"[GymProfile] Pre-gen scheduling failed (non-fatal): {gen_err}", exc_info=True)
 
         # Log to user context
         await user_context_service.log_event(

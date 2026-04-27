@@ -1,7 +1,7 @@
-package com.fitwiz.wearos.presentation.navigation
+package com.aifitnesscoach.wearos.presentation.navigation
 
 /**
- * Navigation destinations for FitWiz Wear OS
+ * Navigation destinations for App Wear OS
  */
 sealed class Screen(val route: String) {
     // Home

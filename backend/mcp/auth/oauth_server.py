@@ -1,4 +1,4 @@
-"""OAuth 2.1 authorization server for the FitWiz MCP.
+"""OAuth 2.1 authorization server for the Zealova MCP.
 
 Endpoints (mounted under /mcp/oauth in backend/main.py):
   POST   /register                      — Dynamic Client Registration (RFC 7591)
@@ -28,6 +28,7 @@ from fastapi import APIRouter, Form, HTTPException, Query, Request
 from fastapi.responses import JSONResponse, RedirectResponse
 from pydantic import BaseModel
 
+from core import branding
 from core.logger import get_logger
 from core.supabase_client import get_supabase
 from mcp.auth import consent_session
@@ -96,7 +97,7 @@ async def authorize(
 ):
     """Validate the authorization request and redirect to the consent UI.
 
-    MCP clients land here first; we bounce to https://fitwiz.us/oauth/authorize
+    MCP clients land here first; we bounce to https://zealova.com/oauth/authorize
     with a signed consent-session token that carries the request params.
     """
     if response_type != "code":
@@ -140,7 +141,7 @@ async def authorize(
     return RedirectResponse(url=consent_url, status_code=302)
 
 
-# ─── POST /authorize/complete (called by consent UI on fitwiz.us) ────────────
+# ─── POST /authorize/complete (called by consent UI on zealova.com) ────────────
 
 class AuthorizeCompleteRequest(BaseModel):
     consent: str                  # Opaque token from GET /authorize
@@ -150,7 +151,7 @@ class AuthorizeCompleteRequest(BaseModel):
 
 @router.post("/authorize/complete")
 async def authorize_complete(body: AuthorizeCompleteRequest):
-    """Complete the authorization step: user has consented on fitwiz.us.
+    """Complete the authorization step: user has consented on zealova.com.
 
     Verifies the Supabase session, checks MCP eligibility (yearly sub),
     issues an authorization code, and returns the redirect URL the consent
@@ -185,7 +186,7 @@ async def authorize_complete(body: AuthorizeCompleteRequest):
         .limit(1) \
         .execute()
     if not user_row_resp.data:
-        raise _oauth_error("access_denied", "User has no FitWiz profile.", status_code=401)
+        raise _oauth_error("access_denied", f"User has no {branding.APP_NAME} profile.", status_code=401)
 
     user_id = user_row_resp.data[0]["id"]
 

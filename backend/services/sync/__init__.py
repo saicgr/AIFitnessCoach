@@ -1,9 +1,9 @@
 """
-OAuth-based two-way sync package for FitWiz.
+OAuth-based two-way sync package for Zealova.
 
 Integrates with Strava, Garmin, Fitbit, Apple Health, and Peloton so users can
-pull their cardio / strength history into FitWiz without manual re-entry and,
-conversely, so FitWiz-completed workouts can round-trip out to their preferred
+pull their cardio / strength history into Zealova without manual re-entry and,
+conversely, so Zealova-completed workouts can round-trip out to their preferred
 platform.
 
 Each provider is implemented as a subclass of :class:`SyncProvider` (defined in

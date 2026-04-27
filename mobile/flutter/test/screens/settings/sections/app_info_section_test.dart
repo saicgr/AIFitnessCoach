@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:fitwiz/core/constants/branding.dart';
 import 'package:fitwiz/screens/settings/sections/app_info_section.dart';
 
 void main() {
@@ -89,7 +90,7 @@ void main() {
       await tester.tap(find.text('About'));
       await tester.pumpAndSettle();
 
-      expect(find.text('FitWiz'), findsOneWidget);
+      expect(find.text(Branding.appName), findsOneWidget);
       expect(find.text('Version 1.0.0'), findsOneWidget);
     });
 

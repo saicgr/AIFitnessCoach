@@ -1,4 +1,4 @@
-# FitWiz Production Launch TODO
+# Zealova Production Launch TODO
 
 **Deadline**: 14 days from closed testing start (before applying for production)
 
@@ -94,8 +94,8 @@ Google will reject or the app will break in production without these. Everything
 - [ ] Remove subtitle text from screenshots (too small to read)
 - [ ] Feature graphic uploaded (1024x500)
 - [ ] App icon uploaded (512x512)
-- [ ] Privacy policy URL live (https://fitwiz.us/privacy)
-- [ ] Delete account URL live (https://fitwiz.us/delete-account)
+- [ ] Privacy policy URL live (https://zealova.com/privacy)
+- [ ] Delete account URL live (https://zealova.com/delete-account)
 - [ ] All data safety declarations completed
 - [ ] Health Connect permissions descriptions filled
 

@@ -1,5 +1,6 @@
 import MarketingNav from '../components/marketing/MarketingNav';
 import MarketingFooter from '../components/marketing/MarketingFooter';
+import { BRANDING } from '../lib/branding';
 
 interface ChangelogEntry {
   version: string;
@@ -54,7 +55,7 @@ export default function Changelog() {
             Changelog
           </h1>
           <p className="text-[15px] text-[var(--color-text-secondary)] leading-relaxed mb-12">
-            What's new in FitWiz. We ship updates regularly to make your fitness journey better.
+            What's new in {BRANDING.appName}. We ship updates regularly to make your fitness journey better.
           </p>
 
           <div className="space-y-8 text-[15px] text-[var(--color-text-secondary)] leading-relaxed">

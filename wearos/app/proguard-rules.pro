@@ -1,4 +1,4 @@
-# FitWiz Wear OS ProGuard Rules
+# Zealova Wear OS ProGuard Rules
 
 # Keep Retrofit
 -keepattributes Signature

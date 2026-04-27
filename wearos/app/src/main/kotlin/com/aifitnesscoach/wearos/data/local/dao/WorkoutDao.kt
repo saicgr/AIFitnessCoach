@@ -1,9 +1,9 @@
-package com.fitwiz.wearos.data.local.dao
+package com.aifitnesscoach.wearos.data.local.dao
 
 import androidx.room.*
-import com.fitwiz.wearos.data.local.entity.CachedWorkoutEntity
-import com.fitwiz.wearos.data.local.entity.SetLogEntity
-import com.fitwiz.wearos.data.local.entity.WorkoutSessionEntity
+import com.aifitnesscoach.wearos.data.local.entity.CachedWorkoutEntity
+import com.aifitnesscoach.wearos.data.local.entity.SetLogEntity
+import com.aifitnesscoach.wearos.data.local.entity.WorkoutSessionEntity
 import kotlinx.coroutines.flow.Flow
 
 @Dao

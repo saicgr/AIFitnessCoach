@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../shareable_canvas.dart';
 import '../shareable_data.dart';
-import '../widgets/fitwiz_watermark.dart';
+import '../widgets/app_watermark.dart';
 
 /// Streak Fire — radial orange/red, big streak number, "DAY STREAK" tag.
 class StreakFireTemplate extends StatelessWidget {
@@ -125,7 +125,7 @@ class StreakFireTemplate extends StatelessWidget {
                       .toList(),
                 ),
                 const SizedBox(height: 12),
-                if (showWatermark) FitWizWatermark(textColor: Colors.white),
+                if (showWatermark) AppWatermark(textColor: Colors.white),
               ],
             ),
           ),

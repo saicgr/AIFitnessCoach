@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Wear OS Build & Run Script for FitWiz
+# Wear OS Build & Run Script for Zealova
 # Usage: ./run_wearos.sh [--list | --create | --device <name> | --clean]
 #
 # MODULE DISABLED 2026-04-25 — see wearos/settings.gradle.kts. The Gradle
@@ -23,7 +23,7 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 echo -e "${CYAN}╔═══════════════════════════════════════════════════╗${NC}"
-echo -e "${CYAN}║       ⌚ FitWiz Wear OS Build Script              ║${NC}"
+echo -e "${CYAN}║       ⌚ Zealova Wear OS Build Script              ║${NC}"
 echo -e "${CYAN}╚═══════════════════════════════════════════════════╝${NC}"
 echo ""
 
@@ -287,16 +287,16 @@ echo -e "${YELLOW}📲 Installing app on emulator...${NC}"
 "$ADB" -s "$DEVICE_ID" install -r app/build/outputs/apk/debug/app-debug.apk
 
 # 6. Launch the app
-echo -e "${GREEN}🚀 Launching FitWiz Wear OS...${NC}"
+echo -e "${GREEN}🚀 Launching Zealova Wear OS...${NC}"
 "$ADB" -s "$DEVICE_ID" shell am start -n "com.fitwiz.wearos.debug/com.fitwiz.wearos.MainActivity"
 
 echo ""
 echo -e "${CYAN}╔═══════════════════════════════════════════════════╗${NC}"
-echo -e "${CYAN}║              ✅ FitWiz is running!                ║${NC}"
+echo -e "${CYAN}║              ✅ Zealova is running!                ║${NC}"
 echo -e "${CYAN}╚═══════════════════════════════════════════════════╝${NC}"
 echo ""
 echo -e "${YELLOW}📝 Useful commands:${NC}"
-echo -e "   View logs:    ${BLUE}adb -s $DEVICE_ID logcat | grep -iE 'FitWiz|fitwiz'${NC}"
+echo -e "   View logs:    ${BLUE}adb -s $DEVICE_ID logcat | grep -iE 'Zealova|fitwiz'${NC}"
 echo -e "   Reinstall:    ${BLUE}adb -s $DEVICE_ID install -r app/build/outputs/apk/debug/app-debug.apk${NC}"
 echo -e "   Kill app:     ${BLUE}adb -s $DEVICE_ID shell am force-stop com.fitwiz.wearos.debug${NC}"
 echo -e "   Uninstall:    ${BLUE}adb -s $DEVICE_ID uninstall com.fitwiz.wearos.debug${NC}"

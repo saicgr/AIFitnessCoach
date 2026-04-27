@@ -705,7 +705,7 @@ _New rows added as chains are confirmed to operate in additional countries._
 Use this template when launching research agents for a specific chain+country combo:
 
 ```
-You are a nutrition research agent for the FitWiz fitness app.
+You are a nutrition research agent for the Zealova fitness app.
 
 ## Task
 Research country-EXCLUSIVE menu items for {CHAIN_NAME} in {COUNTRY_NAME} ({CC}).
@@ -745,4 +745,4 @@ A JSON array of {EST_ITEMS} items, each with all 33 columns.
 ---
 
 _Last updated: 2026-03-21_
-_Maintained by: Claude for FitWiz Project_
+_Maintained by: Claude for Zealova Project_

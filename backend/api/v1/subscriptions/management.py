@@ -521,13 +521,19 @@ async def get_progress_summary(user_id: str):
         workouts_result = supabase.client.table("workout_logs").select("id", count="exact").eq("user_id", user_id).execute()
         workouts_completed = workouts_result.count or 0
 
-        # Get total volume (sum of weight * reps across all sets)
-        sets_result = supabase.client.table("workout_sets").select("weight_lbs, reps").eq("user_id", user_id).execute()
+        # Get total volume (sum of weight * reps across all sets). Source of
+        # truth is performance_logs (one row per completed set) — there is no
+        # `workout_sets` table in prod. Convert kg → lb to match the prior
+        # contract returned to the paywall screen.
+        _KG_TO_LB = 2.20462
+        sets_result = supabase.client.table("performance_logs").select(
+            "weight_kg, reps_completed"
+        ).eq("user_id", user_id).execute()
         total_volume = 0.0
         if sets_result.data:
             for s in sets_result.data:
-                w = s.get("weight_lbs") or 0
-                r = s.get("reps") or 0
+                w = (s.get("weight_kg") or 0) * _KG_TO_LB
+                r = s.get("reps_completed") or 0
                 total_volume += float(w) * float(r)
 
         # Get best streak from user_streaks table

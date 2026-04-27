@@ -1,8 +1,8 @@
-package com.fitwiz.wearos.voice
+package com.aifitnesscoach.wearos.voice
 
-import com.fitwiz.wearos.data.models.MealType
-import com.fitwiz.wearos.data.models.WearFoodEntry
-import com.fitwiz.wearos.data.models.FoodInputType
+import com.aifitnesscoach.wearos.data.models.MealType
+import com.aifitnesscoach.wearos.data.models.WearFoodEntry
+import com.aifitnesscoach.wearos.data.models.FoodInputType
 import java.util.*
 import javax.inject.Inject
 import javax.inject.Singleton

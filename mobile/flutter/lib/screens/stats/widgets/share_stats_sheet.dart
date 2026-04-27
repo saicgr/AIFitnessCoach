@@ -469,9 +469,33 @@ class _ShareStatsSheetState extends ConsumerState<ShareStatsSheet> {
               ),
             ),
 
-            // Template carousel
+            // Template carousel — defensive try/catch because a stats-share
+            // template can hit "Bad state: No element" when underlying lists
+            // are empty (no workouts logged, no PRs yet) and a template's
+            // internal list ops bypass the guards in _buildTemplateCarousel.
+            // Fall back to an empty-state placeholder rather than crashing.
             Expanded(
-              child: _buildTemplateCarousel(),
+              child: Builder(
+                builder: (context) {
+                  try {
+                    return _buildTemplateCarousel();
+                  } catch (e, st) {
+                    debugPrint('⚠️ [ShareStatsSheet] template build failed: $e\n$st');
+                    return Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Text(
+                          'Log a workout to unlock share templates.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: isDark ? Colors.grey.shade400 : Colors.grey.shade700,
+                          ),
+                        ),
+                      ),
+                    );
+                  }
+                },
+              ),
             ),
 
             // Page indicators

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../shareable_canvas.dart';
 import '../shareable_data.dart';
-import '../widgets/fitwiz_watermark.dart';
+import '../widgets/app_watermark.dart';
 import '../widgets/shareable_hero_number.dart';
 
 /// Stat Grid — title + hero on top half, 2×2 grid of highlights on the
@@ -72,7 +72,7 @@ class StatGridTemplate extends StatelessWidget {
             if (showWatermark)
               Align(
                 alignment: Alignment.centerRight,
-                child: FitWizWatermark(textColor: Colors.white),
+                child: AppWatermark(textColor: Colors.white),
               ),
           ],
         ),

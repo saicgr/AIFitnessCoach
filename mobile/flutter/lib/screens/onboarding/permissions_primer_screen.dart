@@ -12,7 +12,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/services/posthog_service.dart';
 
 /// Pre-permission rationale screen for camera, photos, and microphone —
-/// the three media permissions FitWiz needs for food logging, progress
+/// the three media permissions Zealova needs for food logging, progress
 /// photos, and voice input. Shown ONCE post-onboarding (after the
 /// notification primer) so reviewers and real users see *why* before the
 /// OS prompts them.

@@ -115,7 +115,7 @@ class HealthImportNotifier extends StateNotifier<HealthImportState> {
     }
   }
 
-  /// Import a pending workout as a new workout in FitWiz and mark it complete.
+  /// Import a pending workout as a new workout in Zealova and mark it complete.
   /// [customName] overrides the auto-generated name if provided.
   Future<void> importAsNewWorkout(
     PendingWorkoutImport pending,
@@ -209,7 +209,7 @@ class HealthImportNotifier extends StateNotifier<HealthImportState> {
     }
   }
 
-  /// Mark an existing FitWiz workout as complete using Health Connect data.
+  /// Mark an existing Zealova workout as complete using Health Connect data.
   /// This avoids creating a duplicate - it completes the matched workout instead.
   Future<void> markExistingWorkoutComplete(
     PendingWorkoutImport pending,

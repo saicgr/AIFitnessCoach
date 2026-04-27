@@ -1,5 +1,6 @@
 import MarketingNav from '../components/marketing/MarketingNav';
 import MarketingFooter from '../components/marketing/MarketingFooter';
+import { BRANDING } from '../lib/branding';
 
 /**
  * Privacy Policy — must stay aligned with mobile/flutter/privacy_policy.html
@@ -27,8 +28,8 @@ export default function PrivacyPolicy() {
           <div className="space-y-8 text-[15px] text-[var(--color-text-secondary)] leading-relaxed">
             <div>
               <p>
-                FitWiz ("we", "our", or "us") operates the FitWiz mobile application and the
-                website at fitwiz.us (together, the "Service"). This Privacy Policy explains what
+                {BRANDING.appName} ("we", "our", or "us") operates the {BRANDING.appName} mobile application and the
+                website at {BRANDING.marketingDomain} (together, the "Service"). This Privacy Policy explains what
                 personal data we collect, how we use it, who we share it with, and the rights you
                 have over it. It applies to residents of every country but includes specific
                 provisions for users in the European Economic Area (EEA), United Kingdom,
@@ -153,11 +154,11 @@ export default function PrivacyPolicy() {
                 Privacy &amp; Data, which immediately stops health-data ingestion.
               </p>
               <p>
-                <strong>HIPAA note for U.S. users:</strong> FitWiz is a consumer wellness
+                <strong>HIPAA note for U.S. users:</strong> {BRANDING.appName} is a consumer wellness
                 application, not a HIPAA-covered entity or business associate. Health information
                 you submit is protected by this policy and the CMIA but is not subject to HIPAA.
                 Do not submit information obtained from a HIPAA-covered relationship (for
-                example, a medical record from your provider) into FitWiz.
+                example, a medical record from your provider) into {BRANDING.appName}.
               </p>
             </div>
 
@@ -179,7 +180,7 @@ export default function PrivacyPolicy() {
                 <li><strong className="text-[var(--color-text)]">Supabase Inc.</strong> &mdash; database, authentication, and user data storage.</li>
                 <li><strong className="text-[var(--color-text)]">Google Cloud (Vertex AI)</strong> &mdash; model hosting for coach chat, workout generation, food photo analysis, and form video analysis. Zero-retention configuration; no model training on your data.</li>
                 <li><strong className="text-[var(--color-text)]">Render Services Inc.</strong> &mdash; backend API hosting (all request traffic passes through Render infrastructure).</li>
-                <li><strong className="text-[var(--color-text)]">Vercel Inc.</strong> &mdash; hosts this website (fitwiz.us).</li>
+                <li><strong className="text-[var(--color-text)]">Vercel Inc.</strong> &mdash; hosts this website ({BRANDING.marketingDomain}).</li>
                 <li><strong className="text-[var(--color-text)]">Amazon Web Services (S3)</strong> &mdash; storage for food photos and form videos you upload.</li>
                 <li><strong className="text-[var(--color-text)]">RevenueCat Inc.</strong> &mdash; subscription and in-app purchase management.</li>
                 <li><strong className="text-[var(--color-text)]">Resend, Inc.</strong> &mdash; transactional and lifecycle email delivery.</li>
@@ -191,7 +192,7 @@ export default function PrivacyPolicy() {
               </ul>
               <p className="mt-4 text-[13px] text-[var(--color-text-muted)]">
                 You can request a copy of the Standard Contractual Clauses in force with any of
-                these sub-processors by emailing <a className="text-emerald-400 hover:underline" href="mailto:privacy@fitwiz.us">privacy@fitwiz.us</a>.
+                these sub-processors by emailing <a className="text-emerald-400 hover:underline" href={`mailto:privacy@${BRANDING.marketingDomain}`}>privacy@{BRANDING.marketingDomain}</a>.
               </p>
             </div>
 
@@ -259,13 +260,13 @@ export default function PrivacyPolicy() {
                 </li>
                 <li>
                   <strong className="text-[var(--color-text)]">Out-of-app (no login required):</strong>{' '}
-                  <a href="/data-request" className="text-emerald-400 hover:underline">fitwiz.us/data-request</a> — use
+                  <a href="/data-request" className="text-emerald-400 hover:underline">{BRANDING.marketingDomain}/data-request</a> — use
                   this if you cannot sign in. We verify email ownership with a one-time link, then
                   deliver the export or confirm deletion.
                 </li>
                 <li>
                   <strong className="text-[var(--color-text)]">By email:</strong>{' '}
-                  <a href="mailto:privacy@fitwiz.us" className="text-emerald-400 hover:underline">privacy@fitwiz.us</a>.
+                  <a href={`mailto:privacy@${BRANDING.marketingDomain}`} className="text-emerald-400 hover:underline">privacy@{BRANDING.marketingDomain}</a>.
                 </li>
               </ul>
               <p className="mt-4">We respond within 30 days as required by GDPR Art. 12(3) and CCPA &sect; 1798.130.</p>
@@ -281,11 +282,11 @@ export default function PrivacyPolicy() {
               <p className="mb-4">
                 If you are in the EEA, UK, or Switzerland, our designated Data Protection Officer
                 can be reached at{' '}
-                <a href="mailto:dpo@fitwiz.us" className="text-emerald-400 hover:underline">dpo@fitwiz.us</a>.
+                <a href={`mailto:dpo@${BRANDING.marketingDomain}`} className="text-emerald-400 hover:underline">dpo@{BRANDING.marketingDomain}</a>.
                 Our Art. 27 representatives are reachable at{' '}
-                <a href="mailto:eu-rep@fitwiz.us" className="text-emerald-400 hover:underline">eu-rep@fitwiz.us</a>{' '}
+                <a href={`mailto:eu-rep@${BRANDING.marketingDomain}`} className="text-emerald-400 hover:underline">eu-rep@{BRANDING.marketingDomain}</a>{' '}
                 (EU) and{' '}
-                <a href="mailto:uk-rep@fitwiz.us" className="text-emerald-400 hover:underline">uk-rep@fitwiz.us</a>{' '}
+                <a href={`mailto:uk-rep@${BRANDING.marketingDomain}`} className="text-emerald-400 hover:underline">uk-rep@{BRANDING.marketingDomain}</a>{' '}
                 (UK).
               </p>
               <p>
@@ -324,7 +325,7 @@ export default function PrivacyPolicy() {
                 11. Children &amp; Age Requirements
               </h2>
               <p className="mb-4">
-                FitWiz is designed for users aged 16 and older. It is not directed at children
+                {BRANDING.appName} is designed for users aged 16 and older. It is not directed at children
                 under 16 and we do not knowingly collect personal information from anyone under
                 16. This age requirement reflects our processing of sensitive health data,
                 automated personalization, and in-app purchases, all of which require a level of
@@ -333,7 +334,7 @@ export default function PrivacyPolicy() {
               </p>
               <p>
                 If you believe a child under 16 has provided us with personal data, contact{' '}
-                <a href="mailto:privacy@fitwiz.us" className="text-emerald-400 hover:underline">privacy@fitwiz.us</a>{' '}
+                <a href={`mailto:privacy@${BRANDING.marketingDomain}`} className="text-emerald-400 hover:underline">privacy@{BRANDING.marketingDomain}</a>{' '}
                 and we will delete it and the associated account.
               </p>
             </div>
@@ -374,20 +375,20 @@ export default function PrivacyPolicy() {
               >
                 14. Contact
               </h2>
-              <p className="mb-2"><strong>Data controller:</strong> FitWiz, Inc. (Delaware, USA)</p>
+              <p className="mb-2"><strong>Data controller:</strong> {BRANDING.appName}, Inc. (Delaware, USA)</p>
               <p className="mb-2"><strong>Privacy inquiries:</strong>{' '}
-                <a href="mailto:privacy@fitwiz.us" className="text-emerald-400 hover:underline">privacy@fitwiz.us</a>
+                <a href={`mailto:privacy@${BRANDING.marketingDomain}`} className="text-emerald-400 hover:underline">privacy@{BRANDING.marketingDomain}</a>
               </p>
               <p className="mb-2"><strong>Data Protection Officer:</strong>{' '}
-                <a href="mailto:dpo@fitwiz.us" className="text-emerald-400 hover:underline">dpo@fitwiz.us</a>
+                <a href={`mailto:dpo@${BRANDING.marketingDomain}`} className="text-emerald-400 hover:underline">dpo@{BRANDING.marketingDomain}</a>
               </p>
               <p className="mb-2"><strong>EU / UK Art. 27 Representatives:</strong>{' '}
-                <a href="mailto:eu-rep@fitwiz.us" className="text-emerald-400 hover:underline">eu-rep@fitwiz.us</a>{' '}
+                <a href={`mailto:eu-rep@${BRANDING.marketingDomain}`} className="text-emerald-400 hover:underline">eu-rep@{BRANDING.marketingDomain}</a>{' '}
                 &middot;{' '}
-                <a href="mailto:uk-rep@fitwiz.us" className="text-emerald-400 hover:underline">uk-rep@fitwiz.us</a>
+                <a href={`mailto:uk-rep@${BRANDING.marketingDomain}`} className="text-emerald-400 hover:underline">uk-rep@{BRANDING.marketingDomain}</a>
               </p>
               <p><strong>General support:</strong>{' '}
-                <a href="mailto:support@fitwiz.us" className="text-emerald-400 hover:underline">support@fitwiz.us</a>
+                <a href={`mailto:support@${BRANDING.marketingDomain}`} className="text-emerald-400 hover:underline">support@{BRANDING.marketingDomain}</a>
               </p>
             </div>
           </div>

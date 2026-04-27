@@ -1,7 +1,7 @@
 // =============================================================================
 // WEAR OS MODULE — DISABLED 2026-04-25
 // =============================================================================
-// Disabled prior to FitWiz consumer-flavor launch on Google Play to avoid
+// Disabled prior to Zealova consumer-flavor launch on Google Play to avoid
 // shipping/maintaining a wearable companion alongside an active trademark
 // dispute risk and the smaller surface area we want to test in v1.
 //
@@ -12,10 +12,10 @@
 //
 // To re-enable later:
 //   1. Uncomment `include(":app")` below.
-//   2. Rename Kotlin packages from `com.fitwiz.wearos.*` to
+//   2. Rename Kotlin packages from `com.aifitnesscoach.wearos.*` to
 //      `com.aifitnesscoach.wearos.*` (use IntelliJ refactor) AND update
 //      `namespace` / `applicationId` in `app/build.gradle.kts` — current
-//      `com.fitwiz.wearos` namespace shares the `com.fitwiz` root with the
+//      `com.aifitnesscoach.wearos` namespace shares the `com.aifitnesscoach` root with the
 //      registered FITWIZ trademark holder's iOS app.
 // =============================================================================
 
@@ -35,5 +35,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "FitWizWearOS"
+rootProject.name = "ZealovaWearOS"
 // include(":app")  // DISABLED 2026-04-25 — see banner above before re-enabling.

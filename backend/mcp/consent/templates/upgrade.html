@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="robots" content="noindex, nofollow" />
-  <title>Upgrade Required · FitWiz</title>
+  <title>Upgrade Required · {{ APP_NAME }}</title>
   <link rel="stylesheet" href="/mcp/consent/static/consent.css" />
 </head>
 <body>
@@ -26,7 +26,7 @@
       </div>
       <h1 class="title">Yearly plan required</h1>
       <p class="lede">
-        Connecting FitWiz to AI assistants is part of our <strong>yearly subscription</strong>.
+        Connecting {{ APP_NAME }} to AI assistants is part of our <strong>yearly subscription</strong>.
         Upgrade to unlock MCP access across Claude, ChatGPT, Cursor, and more.
       </p>
 
@@ -50,9 +50,9 @@
     </section>
 
     <footer class="page-footer">
-      <span>© FitWiz</span>
+      <span>© {{ APP_NAME }}</span>
       <span class="dot" aria-hidden="true">·</span>
-      <a href="https://fitwiz.us/pricing" target="_blank" rel="noopener">Pricing</a>
+      <a href="{{ WEBSITE_URL }}/pricing" target="_blank" rel="noopener">Pricing</a>
     </footer>
   </main>
 

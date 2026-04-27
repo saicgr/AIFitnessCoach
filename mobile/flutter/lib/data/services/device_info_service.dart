@@ -1,8 +1,11 @@
+import 'dart:convert';
 import 'dart:io' show Platform;
 import 'dart:ui' as ui;
 import 'package:device_info_plus/device_info_plus.dart';
 import 'package:flutter/foundation.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:cryptography/cryptography.dart';
 import '../../core/constants/api_constants.dart';
 import 'api_client.dart';
 
@@ -88,5 +91,77 @@ class DeviceInfoService {
       '${ApiConstants.users}/$userId',
       data: data,
     );
+  }
+
+  /// Tell the backend about the device that just signed in. The backend
+  /// records the fingerprint and emails the user if it's never been seen
+  /// before — mirrors the GymBeat / Google "new sign-in to your account"
+  /// alert. Safe to call repeatedly: known fingerprints just bump the
+  /// last-seen timestamp, no email is sent.
+  ///
+  /// [isFirstSignin] should be true when this call follows a fresh sign-in,
+  /// false on app warm-launches.
+  Future<void> trackSignInDevice({bool isFirstSignin = true}) async {
+    try {
+      final deviceInfo = DeviceInfoPlugin();
+      final pkg = await PackageInfo.fromPlatform();
+      String? deviceModel;
+      String? devicePlatform;
+      String? osVersion;
+      String installId;
+
+      if (Platform.isAndroid) {
+        final info = await deviceInfo.androidInfo;
+        deviceModel = info.model;
+        devicePlatform = 'android';
+        osVersion = info.version.release;
+        // androidId rotates on factory reset — stable enough for "is this
+        // the same physical device" purposes.
+        installId = info.id;
+      } else if (Platform.isIOS) {
+        final info = await deviceInfo.iosInfo;
+        deviceModel = info.utsname.machine.isNotEmpty
+            ? info.utsname.machine
+            : info.model;
+        devicePlatform = 'ios';
+        osVersion = info.systemVersion;
+        // identifierForVendor can be null on rare iOS edge cases (jailbreak,
+        // restoring from backup mid-fingerprint). Fall back to name then a
+        // synthetic constant so we never throw.
+        final iosVendor = info.identifierForVendor;
+        installId = (iosVendor != null && iosVendor.isNotEmpty)
+            ? iosVendor
+            : (info.name.isNotEmpty ? info.name : 'ios-unknown');
+      } else {
+        devicePlatform = 'web';
+        installId = 'web-${pkg.buildNumber}';
+      }
+
+      // sha256(platform | model | os | install_id). Keeps PII off the
+      // wire — the backend only stores the hash.
+      final raw = '$devicePlatform|${deviceModel ?? ''}|'
+          '${osVersion ?? ''}|$installId';
+      final digest = await Sha256().hash(utf8.encode(raw));
+      final fingerprint = digest.bytes
+          .map((b) => b.toRadixString(16).padLeft(2, '0'))
+          .join();
+
+      await _apiClient.post(
+        '${ApiConstants.users}/me/security/track-device',
+        data: <String, dynamic>{
+          'fingerprint_hash': fingerprint,
+          'platform': devicePlatform,
+          'model': deviceModel,
+          'os_version': osVersion,
+          'app_version': '${pkg.version}+${pkg.buildNumber}',
+          'is_first_signin': isFirstSignin,
+        },
+      );
+      debugPrint('🔐 [DeviceInfo] track-device sent (fp=${fingerprint.substring(0, 8)}…)');
+    } catch (e) {
+      // Non-fatal — failing to register the device for security alerting
+      // shouldn't block a user from using the app.
+      debugPrint('⚠️ [DeviceInfo] trackSignInDevice failed: $e');
+    }
   }
 }

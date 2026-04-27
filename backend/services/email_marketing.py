@@ -8,6 +8,7 @@ the user's actual lifetime stats as re-engagement hooks.
 import resend
 from typing import Dict, Any, Optional
 
+from core import branding
 from core.logger import get_logger
 from models.email import UserStats
 from services.email_helpers import (
@@ -71,7 +72,7 @@ class EmailMarketingMixin:
             title=title, subtitle=subtitle,
             cta_text=f"Come back — {discount_percent}% off",
             features=features,
-            footer_text="You received this because you were a FitWiz Premium member.",
+            footer_text=f"You received this because you were a {branding.APP_NAME} Premium member.",
             persona_signature_html=build_persona_signature_html(stats),
             stats_row_html=build_stats_grid_html(stats) if stats.has_any_activity else "",
             category_name="offers",
@@ -135,7 +136,7 @@ class EmailMarketingMixin:
             title=title, subtitle=subtitle,
             cta_text="Go Premium",
             features=features,
-            footer_text="You received this because you've been active on the FitWiz free plan.",
+            footer_text=f"You received this because you've been active on the {branding.APP_NAME} free plan.",
             persona_signature_html=build_persona_signature_html(stats),
             stats_row_html=build_stats_grid_html(stats),
             category_name="offers",

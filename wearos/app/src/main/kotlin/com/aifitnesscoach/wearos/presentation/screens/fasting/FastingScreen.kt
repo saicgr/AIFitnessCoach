@@ -1,4 +1,4 @@
-package com.fitwiz.wearos.presentation.screens.fasting
+package com.aifitnesscoach.wearos.presentation.screens.fasting
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -14,11 +14,11 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
 import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
 import androidx.wear.compose.material.*
-import com.fitwiz.wearos.data.models.FastingProtocol
-import com.fitwiz.wearos.data.models.FastingStatus
-import com.fitwiz.wearos.presentation.theme.FitWizColors
-import com.fitwiz.wearos.presentation.theme.FitWizTypography
-import com.fitwiz.wearos.presentation.viewmodel.FastingViewModel
+import com.aifitnesscoach.wearos.data.models.FastingProtocol
+import com.aifitnesscoach.wearos.data.models.FastingStatus
+import com.aifitnesscoach.wearos.presentation.theme.AppColors
+import com.aifitnesscoach.wearos.presentation.theme.AppTypography
+import com.aifitnesscoach.wearos.presentation.viewmodel.FastingViewModel
 
 /**
  * Fasting Screen - Shows current fast status or start options
@@ -73,7 +73,7 @@ fun FastingScreen(
 
 @Composable
 private fun ActiveFastContent(
-    session: com.fitwiz.wearos.data.models.WearFastingSession,
+    session: com.aifitnesscoach.wearos.data.models.WearFastingSession,
     isPaused: Boolean,
     onPause: () -> Unit,
     onResume: () -> Unit,
@@ -89,8 +89,8 @@ private fun ActiveFastContent(
         // Header
         Text(
             text = "FASTING",
-            style = FitWizTypography.titleMedium,
-            color = FitWizColors.Fasting
+            style = AppTypography.titleMedium,
+            color = AppColors.Fasting
         )
 
         // Timer display
@@ -102,8 +102,8 @@ private fun ActiveFastContent(
             CircularProgressIndicator(
                 progress = session.progress,
                 modifier = Modifier.fillMaxSize(),
-                indicatorColor = if (isPaused) FitWizColors.Warning else FitWizColors.Fasting,
-                trackColor = FitWizColors.ProgressBackground,
+                indicatorColor = if (isPaused) AppColors.Warning else AppColors.Fasting,
+                trackColor = AppColors.ProgressBackground,
                 strokeWidth = 10.dp
             )
 
@@ -113,26 +113,26 @@ private fun ActiveFastContent(
             ) {
                 Text(
                     text = session.elapsedFormatted,
-                    style = FitWizTypography.displayMedium,
-                    color = FitWizColors.TextPrimary
+                    style = AppTypography.displayMedium,
+                    color = AppColors.TextPrimary
                 )
                 Text(
                     text = if (isPaused) "PAUSED" else "ELAPSED",
-                    style = FitWizTypography.labelSmall,
-                    color = if (isPaused) FitWizColors.Warning else FitWizColors.TextMuted
+                    style = AppTypography.labelSmall,
+                    color = if (isPaused) AppColors.Warning else AppColors.TextMuted
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
                     text = "${session.remainingFormatted} left",
-                    style = FitWizTypography.bodySmall,
-                    color = FitWizColors.TextSecondary
+                    style = AppTypography.bodySmall,
+                    color = AppColors.TextSecondary
                 )
                 Text(
                     text = "${session.protocol.displayName} goal",
-                    style = FitWizTypography.labelSmall,
-                    color = FitWizColors.TextMuted
+                    style = AppTypography.labelSmall,
+                    color = AppColors.TextMuted
                 )
             }
         }
@@ -145,29 +145,29 @@ private fun ActiveFastContent(
                 Button(
                     onClick = onResume,
                     colors = ButtonDefaults.buttonColors(
-                        backgroundColor = FitWizColors.Success
+                        backgroundColor = AppColors.Success
                     )
                 ) {
-                    Text("RESUME", style = FitWizTypography.labelMedium)
+                    Text("RESUME", style = AppTypography.labelMedium)
                 }
             } else {
                 Button(
                     onClick = onPause,
                     colors = ButtonDefaults.buttonColors(
-                        backgroundColor = FitWizColors.Warning
+                        backgroundColor = AppColors.Warning
                     )
                 ) {
-                    Text("PAUSE", style = FitWizTypography.labelMedium)
+                    Text("PAUSE", style = AppTypography.labelMedium)
                 }
             }
 
             Button(
                 onClick = onEnd,
                 colors = ButtonDefaults.buttonColors(
-                    backgroundColor = FitWizColors.HeartRate
+                    backgroundColor = AppColors.HeartRate
                 )
             ) {
-                Text("END", style = FitWizTypography.labelMedium)
+                Text("END", style = AppTypography.labelMedium)
             }
         }
     }
@@ -176,8 +176,8 @@ private fun ActiveFastContent(
 @Composable
 private fun StartFastContent(
     listState: androidx.wear.compose.foundation.lazy.ScalingLazyListState,
-    streak: com.fitwiz.wearos.data.models.WearFastingStreak,
-    history: List<com.fitwiz.wearos.data.repository.FastingHistoryEntry>,
+    streak: com.aifitnesscoach.wearos.data.models.WearFastingStreak,
+    history: List<com.aifitnesscoach.wearos.data.repository.FastingHistoryEntry>,
     selectedProtocol: FastingProtocol,
     onSelectProtocol: (FastingProtocol) -> Unit,
     onStartFast: () -> Unit
@@ -197,8 +197,8 @@ private fun StartFastContent(
         item {
             Text(
                 text = "FASTING",
-                style = FitWizTypography.titleMedium,
-                color = FitWizColors.Fasting
+                style = AppTypography.titleMedium,
+                color = AppColors.Fasting
             )
             Spacer(modifier = Modifier.height(8.dp))
         }
@@ -209,19 +209,19 @@ private fun StartFastContent(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(16.dp))
-                    .background(FitWizColors.Surface)
+                    .background(AppColors.Surface)
                     .padding(12.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
                     text = selectedProtocol.displayName,
-                    style = FitWizTypography.displaySmall,
-                    color = FitWizColors.Fasting
+                    style = AppTypography.displaySmall,
+                    color = AppColors.Fasting
                 )
                 Text(
                     text = "PROTOCOL",
-                    style = FitWizTypography.labelSmall,
-                    color = FitWizColors.TextMuted
+                    style = AppTypography.labelSmall,
+                    color = AppColors.TextMuted
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
@@ -254,10 +254,10 @@ private fun StartFastContent(
                     .fillMaxWidth(0.85f)
                     .height(48.dp),
                 colors = ButtonDefaults.buttonColors(
-                    backgroundColor = FitWizColors.Success
+                    backgroundColor = AppColors.Success
                 )
             ) {
-                Text("START FAST", style = FitWizTypography.labelLarge)
+                Text("START FAST", style = AppTypography.labelLarge)
             }
             Spacer(modifier = Modifier.height(16.dp))
         }
@@ -289,8 +289,8 @@ private fun StartFastContent(
             item {
                 Text(
                     text = "RECENT",
-                    style = FitWizTypography.labelSmall,
-                    color = FitWizColors.TextMuted
+                    style = AppTypography.labelSmall,
+                    color = AppColors.TextMuted
                 )
                 Spacer(modifier = Modifier.height(4.dp))
             }
@@ -315,16 +315,16 @@ private fun ProtocolChip(
         modifier = Modifier
             .clip(RoundedCornerShape(8.dp))
             .background(
-                if (isSelected) FitWizColors.Fasting.copy(alpha = 0.3f)
-                else FitWizColors.Surface
+                if (isSelected) AppColors.Fasting.copy(alpha = 0.3f)
+                else AppColors.Surface
             )
             .clickable(onClick = onClick)
             .padding(horizontal = 8.dp, vertical = 4.dp)
     ) {
         Text(
             text = protocol.displayName,
-            style = FitWizTypography.labelSmall,
-            color = if (isSelected) FitWizColors.Fasting else FitWizColors.TextMuted
+            style = AppTypography.labelSmall,
+            color = if (isSelected) AppColors.Fasting else AppColors.TextMuted
         )
     }
 }
@@ -338,45 +338,45 @@ private fun StreakItem(
     Column(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(text = icon, style = FitWizTypography.bodyMedium, color = FitWizColors.Fasting)
+        Text(text = icon, style = AppTypography.bodyMedium, color = AppColors.Fasting)
         Text(
             text = value,
-            style = FitWizTypography.titleMedium,
-            color = FitWizColors.TextPrimary
+            style = AppTypography.titleMedium,
+            color = AppColors.TextPrimary
         )
         Text(
             text = label,
-            style = FitWizTypography.labelSmall,
-            color = FitWizColors.TextMuted
+            style = AppTypography.labelSmall,
+            color = AppColors.TextMuted
         )
     }
 }
 
 @Composable
-private fun HistoryItem(entry: com.fitwiz.wearos.data.repository.FastingHistoryEntry) {
+private fun HistoryItem(entry: com.aifitnesscoach.wearos.data.repository.FastingHistoryEntry) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(8.dp))
-            .background(FitWizColors.Surface)
+            .background(AppColors.Surface)
             .padding(8.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
             text = entry.formattedDate,
-            style = FitWizTypography.bodySmall,
-            color = FitWizColors.TextMuted
+            style = AppTypography.bodySmall,
+            color = AppColors.TextMuted
         )
         Text(
             text = entry.formattedDuration,
-            style = FitWizTypography.bodySmall,
-            color = FitWizColors.TextSecondary
+            style = AppTypography.bodySmall,
+            color = AppColors.TextSecondary
         )
         Text(
             text = if (entry.wasCompleted) "OK" else "X",
-            style = FitWizTypography.bodySmall,
-            color = if (entry.wasCompleted) FitWizColors.Success else FitWizColors.HeartRate
+            style = AppTypography.bodySmall,
+            color = if (entry.wasCompleted) AppColors.Success else AppColors.HeartRate
         )
     }
 }
@@ -389,7 +389,7 @@ private fun FastingCompletionDialog(
     Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(FitWizColors.Background)
+                .background(AppColors.Background)
                 .padding(16.dp),
             contentAlignment = Alignment.Center
         ) {
@@ -399,8 +399,8 @@ private fun FastingCompletionDialog(
             ) {
                 Text(
                     text = "FAST COMPLETE!",
-                    style = FitWizTypography.titleMedium,
-                    color = FitWizColors.Success,
+                    style = AppTypography.titleMedium,
+                    color = AppColors.Success,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -409,8 +409,8 @@ private fun FastingCompletionDialog(
 
                 Text(
                     text = "Great job! You've completed your fasting goal.",
-                    style = FitWizTypography.bodySmall,
-                    color = FitWizColors.TextSecondary,
+                    style = AppTypography.bodySmall,
+                    color = AppColors.TextSecondary,
                     textAlign = TextAlign.Center
                 )
 
@@ -419,7 +419,7 @@ private fun FastingCompletionDialog(
                 Button(
                     onClick = onDismiss,
                     colors = ButtonDefaults.buttonColors(
-                        backgroundColor = FitWizColors.Success
+                        backgroundColor = AppColors.Success
                     )
                 ) {
                     Text("Done")

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
+import 'package:fitwiz/core/constants/branding.dart';
 
 /// Friend Card - Displays a user profile card
 class FriendCard extends StatelessWidget {
@@ -176,7 +177,7 @@ class FriendCard extends StatelessWidget {
                       ),
                       const SizedBox(width: 6),
                       Text(
-                        'FitWiz Support',
+                        '${Branding.appName} Support',
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,

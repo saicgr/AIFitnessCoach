@@ -19,6 +19,7 @@ import '../../social/widgets/create_post_sheet.dart';
 import '../../workout/widgets/exercise_add_sheet.dart';
 import '../../../core/services/posthog_service.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:fitwiz/core/constants/branding.dart';
 
 
 part 'hero_workout_card_part_completed_workout_hero_card.dart';
@@ -295,7 +296,7 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
     if (id == null || id.isEmpty) return;
     try {
       final api = ref.read(apiClientProvider);
-      final res = await api.dio.post('/api/v1/workouts/$id/share-link');
+      final res = await api.dio.post('/workouts/$id/share-link');
       final data = res.data;
       String? url;
       if (data is Map && data['url'] is String) url = data['url'] as String;
@@ -308,8 +309,8 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
         return;
       }
       await Share.share(
-        '${widget.workout.name ?? 'My workout'} — FitWiz\n$url',
-        subject: 'FitWiz workout',
+        '${widget.workout.name ?? 'My workout'} — ${Branding.appName}\n$url',
+        subject: '${Branding.appName} workout',
       );
     } catch (e) {
       if (mounted) {

@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../shareable_canvas.dart';
 import '../shareable_data.dart';
-import '../widgets/fitwiz_watermark.dart';
+import '../widgets/app_watermark.dart';
 
 /// WorkoutScore — composite scorecard with a large center number (out of
 /// 100), four radial mini-rings around it for sub-scores (Effort / Form /
@@ -140,7 +140,7 @@ class WorkoutScoreTemplate extends StatelessWidget {
             ),
             const Spacer(),
             if (showWatermark)
-              FitWizWatermark(
+              AppWatermark(
                 textColor: Colors.white,
                 fontSize: 13 * mul,
               ),

@@ -175,14 +175,23 @@ class _DashedDivider extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth;
-        // Guard against unbounded parents (e.g. a Row inside an unconstrained
-        // SingleChildScrollView): `width.floor()` on infinity throws
-        // `Unsupported operation: Infinity or NaN toInt`. Bail out with a
-        // single zero-height filler instead so the receipt still renders.
-        if (!width.isFinite || width <= 0) {
+        // Defensive: ANY non-positive or non-finite width fails — covers
+        // Infinity (unbounded parent), NaN (invalid layout), 0 (collapsed),
+        // and negative (some edge cases produce these). Wrapped in try/catch
+        // because Crashlytics keeps flagging "Infinity or NaN toInt" here
+        // even with the explicit isFinite guard, suggesting the LayoutBuilder
+        // can deliver constraints that compute to NaN mid-arithmetic.
+        if (!width.isFinite || width <= 0 || width.isNaN) {
           return const SizedBox(height: 1);
         }
-        final dashes = (width / 6).floor().clamp(1, 200);
+        int dashes;
+        try {
+          dashes = (width / 6).floor().clamp(1, 200);
+        } catch (_) {
+          // Last-resort fallback if the division/floor still produces an
+          // unsafe value (e.g. a degenerate layout). Render a single line.
+          return const SizedBox(height: 1);
+        }
         return Row(
           children: List.generate(dashes, (_) {
             return Expanded(

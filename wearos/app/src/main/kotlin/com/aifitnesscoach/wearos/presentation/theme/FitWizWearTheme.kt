@@ -1,4 +1,4 @@
-package com.fitwiz.wearos.presentation.theme
+package com.aifitnesscoach.wearos.presentation.theme
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -8,67 +8,67 @@ import androidx.wear.compose.material.MaterialTheme
 import androidx.wear.compose.material.Typography
 
 /**
- * FitWiz Wear OS Theme
+ * App Wear OS Theme
  */
 
 // Custom color scheme for Wear OS
-private val FitWizColorScheme = Colors(
-    primary = FitWizColors.Primary,
-    primaryVariant = FitWizColors.PrimaryVariant,
-    secondary = FitWizColors.Secondary,
-    secondaryVariant = FitWizColors.Secondary,
-    background = FitWizColors.Background,
-    surface = FitWizColors.Surface,
-    error = FitWizColors.Error,
-    onPrimary = FitWizColors.TextOnPrimary,
-    onSecondary = FitWizColors.TextPrimary,
-    onBackground = FitWizColors.TextPrimary,
-    onSurface = FitWizColors.TextPrimary,
-    onSurfaceVariant = FitWizColors.TextSecondary,
-    onError = FitWizColors.TextPrimary
+private val AppColorScheme = Colors(
+    primary = AppColors.Primary,
+    primaryVariant = AppColors.PrimaryVariant,
+    secondary = AppColors.Secondary,
+    secondaryVariant = AppColors.Secondary,
+    background = AppColors.Background,
+    surface = AppColors.Surface,
+    error = AppColors.Error,
+    onPrimary = AppColors.TextOnPrimary,
+    onSecondary = AppColors.TextPrimary,
+    onBackground = AppColors.TextPrimary,
+    onSurface = AppColors.TextPrimary,
+    onSurfaceVariant = AppColors.TextSecondary,
+    onError = AppColors.TextPrimary
 )
 
 // Custom typography using Wear Material
-private val FitWizWearTypography = Typography(
-    display1 = FitWizTypography.displayLarge,
-    display2 = FitWizTypography.displayMedium,
-    display3 = FitWizTypography.displaySmall,
-    title1 = FitWizTypography.titleLarge,
-    title2 = FitWizTypography.titleMedium,
-    title3 = FitWizTypography.titleSmall,
-    body1 = FitWizTypography.bodyLarge,
-    body2 = FitWizTypography.bodyMedium,
-    button = FitWizTypography.labelLarge,
-    caption1 = FitWizTypography.labelMedium,
-    caption2 = FitWizTypography.labelSmall,
-    caption3 = FitWizTypography.bodySmall
+private val AppWearTypography = Typography(
+    display1 = AppTypography.displayLarge,
+    display2 = AppTypography.displayMedium,
+    display3 = AppTypography.displaySmall,
+    title1 = AppTypography.titleLarge,
+    title2 = AppTypography.titleMedium,
+    title3 = AppTypography.titleSmall,
+    body1 = AppTypography.bodyLarge,
+    body2 = AppTypography.bodyMedium,
+    button = AppTypography.labelLarge,
+    caption1 = AppTypography.labelMedium,
+    caption2 = AppTypography.labelSmall,
+    caption3 = AppTypography.bodySmall
 )
 
 /**
- * Local composition for custom FitWiz colors
+ * Local composition for custom App colors
  */
 data class ExtendedColors(
-    val workout: androidx.compose.ui.graphics.Color = FitWizColors.Workout,
-    val nutrition: androidx.compose.ui.graphics.Color = FitWizColors.Nutrition,
-    val fasting: androidx.compose.ui.graphics.Color = FitWizColors.Fasting,
-    val water: androidx.compose.ui.graphics.Color = FitWizColors.Water,
-    val heartRate: androidx.compose.ui.graphics.Color = FitWizColors.HeartRate,
-    val success: androidx.compose.ui.graphics.Color = FitWizColors.Success,
-    val warning: androidx.compose.ui.graphics.Color = FitWizColors.Warning
+    val workout: androidx.compose.ui.graphics.Color = AppColors.Workout,
+    val nutrition: androidx.compose.ui.graphics.Color = AppColors.Nutrition,
+    val fasting: androidx.compose.ui.graphics.Color = AppColors.Fasting,
+    val water: androidx.compose.ui.graphics.Color = AppColors.Water,
+    val heartRate: androidx.compose.ui.graphics.Color = AppColors.HeartRate,
+    val success: androidx.compose.ui.graphics.Color = AppColors.Success,
+    val warning: androidx.compose.ui.graphics.Color = AppColors.Warning
 )
 
 val LocalExtendedColors = staticCompositionLocalOf { ExtendedColors() }
 
 @Composable
-fun FitWizWearTheme(
+fun AppWearTheme(
     content: @Composable () -> Unit
 ) {
     CompositionLocalProvider(
         LocalExtendedColors provides ExtendedColors()
     ) {
         MaterialTheme(
-            colors = FitWizColorScheme,
-            typography = FitWizWearTypography,
+            colors = AppColorScheme,
+            typography = AppWearTypography,
             content = content
         )
     }
@@ -77,7 +77,7 @@ fun FitWizWearTheme(
 /**
  * Access extended colors from theme
  */
-object FitWizTheme {
+object AppTheme {
     val extendedColors: ExtendedColors
         @Composable
         get() = LocalExtendedColors.current

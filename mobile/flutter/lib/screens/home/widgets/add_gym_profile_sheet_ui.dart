@@ -10,6 +10,8 @@ extension _AddGymProfileSheetStateUI on _AddGymProfileSheetState {
       case 1:
         return _buildEquipmentStep(isDark, textPrimary, textSecondary, accentColor);
       case 2:
+        return _buildScheduleStep(isDark, textPrimary, textSecondary, accentColor);
+      case 3:
         return _buildStyleStep(isDark, textPrimary, textSecondary);
       default:
         return const SizedBox.shrink();

@@ -10,6 +10,7 @@ import '../../data/repositories/nutrition_repository.dart';
 import '../../data/services/api_client.dart';
 import '../../widgets/glass_sheet.dart';
 import '../../widgets/main_shell.dart';
+import 'package:fitwiz/core/constants/branding.dart';
 
 part 'weekly_checkin_sheet_part_weekly_summary_card.dart';
 part 'weekly_checkin_sheet_part_recommendation_option_card.dart';
@@ -446,7 +447,7 @@ class _WeeklyCheckinSheetState extends ConsumerState<WeeklyCheckinSheet> {
                       border: Border.all(color: teal.withValues(alpha: 0.2)),
                     ),
                     child: Text(
-                      'Every week, FitWiz analyses your food logs to calculate how many calories your body is actually burning — then suggests smarter calorie & macro targets based on your real progress.',
+                      'Every week, ${Branding.appName} analyses your food logs to calculate how many calories your body is actually burning — then suggests smarter calorie & macro targets based on your real progress.',
                       style: TextStyle(
                         fontSize: 15,
                         color: textPrimary,

@@ -10,6 +10,8 @@ from functools import lru_cache
 
 from pydantic_settings import BaseSettings
 
+from core import branding
+
 
 class MCPConfig(BaseSettings):
     # ─── Rate limits (per user per integration) ──────────────────────────────
@@ -47,7 +49,7 @@ class MCPConfig(BaseSettings):
     OAUTH_ISSUER: str = "https://aifitnesscoach-zqi3.onrender.com"
     # Consent screen URL users are redirected to on /oauth/authorize.
     CONSENT_URL: str = "https://aifitnesscoach-zqi3.onrender.com/mcp/consent/authorize"
-    UPGRADE_URL: str = "https://fitwiz.us/upgrade?reason=mcp"
+    UPGRADE_URL: str = f"{branding.UPGRADE_URL}?reason=mcp"
 
     # Token hashing pepper. MUST be set in production via MCP_TOKEN_PEPPER env.
     # Used in addition to the random token bytes; rotating the pepper invalidates

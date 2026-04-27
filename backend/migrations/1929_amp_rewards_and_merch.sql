@@ -8,9 +8,9 @@
 --   4. Merch requires user to submit a shipping address via new claim flow
 --
 -- Merch tiers:
---   L75  → FitWiz Shaker Bottle
---   L100 → FitWiz T-Shirt       (requires size)
---   L150 → FitWiz Hoodie        (requires size)
+--   L75  → Zealova Shaker Bottle
+--   L100 → Zealova T-Shirt       (requires size)
+--   L150 → Zealova Hoodie        (requires size)
 --   L200 → Full Merch Kit       (tee + hoodie + shaker — requires sizes)
 --   L250 → Signed Premium Kit   (everything signed by the team)
 --

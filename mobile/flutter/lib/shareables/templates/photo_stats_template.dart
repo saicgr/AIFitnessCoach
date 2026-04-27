@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../shareable_canvas.dart';
 import '../shareable_data.dart';
-import '../widgets/fitwiz_watermark.dart';
+import '../widgets/app_watermark.dart';
 import '../widgets/photo_backdrop.dart';
 
 /// PhotoStats — user's photo full-bleed, title top-left, frosted-glass
@@ -107,7 +107,7 @@ class PhotoStatsTemplate extends StatelessWidget {
                 if (showWatermark)
                   Align(
                     alignment: Alignment.centerRight,
-                    child: FitWizWatermark(
+                    child: AppWatermark(
                       textColor: Colors.white,
                       fontSize: 13 * mul,
                     ),

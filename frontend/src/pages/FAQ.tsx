@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import MarketingNav from '../components/marketing/MarketingNav';
 import MarketingFooter from '../components/marketing/MarketingFooter';
+import { BRANDING } from '../lib/branding';
 
 interface FAQItem {
   question: string;
@@ -17,24 +18,24 @@ const faqData: FAQCategory[] = [
     title: 'Getting Started',
     items: [
       {
-        question: 'What exactly is FitWiz?',
+        question: `What exactly is ${BRANDING.appName}?`,
         answer:
-          'Think of it as a personal trainer, nutritionist, and workout tracker rolled into one app. FitWiz uses AI to build workouts around your goals, track what you eat, and coach you in real time — whether you train at home or in a gym.',
+          `Think of it as a personal trainer, nutritionist, and workout tracker rolled into one app. ${BRANDING.appName} uses AI to build workouts around your goals, track what you eat, and coach you in real time — whether you train at home or in a gym.`,
       },
       {
         question: 'How much does it cost?',
         answer:
-          'FitWiz is $4.99/month or $4.17/month billed yearly ($49.99/year). Every new user gets a 7-day free trial with full access to all features — no credit card required to start.',
+          `${BRANDING.appName} is $4.99/month or $4.17/month billed yearly ($49.99/year). Every new user gets a 7-day free trial with full access to all features — no credit card required to start.`,
       },
       {
         question: 'Which devices does it work on?',
         answer:
-          'FitWiz is available on Android right now, with iOS on the way. You can also access some features through the web app at fitwiz.us.',
+          `${BRANDING.appName} is available on Android right now, with iOS on the way. You can also access some features through the web app at ${BRANDING.marketingDomain}.`,
       },
       {
         question: 'What if I don\'t have gym equipment?',
         answer:
-          'No problem. During onboarding you tell FitWiz what you have access to — even if that\'s nothing — and every workout is built around that. Bodyweight-only plans work great.',
+          `No problem. During onboarding you tell ${BRANDING.appName} what you have access to — even if that's nothing — and every workout is built around that. Bodyweight-only plans work great.`,
       },
     ],
   },
@@ -44,7 +45,7 @@ const faqData: FAQCategory[] = [
       {
         question: 'How are my workouts created?',
         answer:
-          'FitWiz uses advanced AI to design each workout based on your goals, fitness level, available equipment, schedule, and even how you\'re feeling that day. No two workouts are the same.',
+          `${BRANDING.appName} uses advanced AI to design each workout based on your goals, fitness level, available equipment, schedule, and even how you're feeling that day. No two workouts are the same.`,
       },
       {
         question: 'Can I change exercises I don\'t like?',
@@ -52,9 +53,9 @@ const faqData: FAQCategory[] = [
           'Absolutely. Star your favorites, flag exercises you want to avoid, swap mid-workout, or queue specific moves for next time. The AI picks up on your preferences and gets smarter over time.',
       },
       {
-        question: 'What are supersets and does FitWiz support them?',
+        question: `What are supersets and does ${BRANDING.appName} support them?`,
         answer:
-          'Supersets pair two exercises back-to-back with minimal rest to save time and boost intensity. FitWiz automatically groups compatible exercises into supersets when it makes sense for your workout.',
+          `Supersets pair two exercises back-to-back with minimal rest to save time and boost intensity. ${BRANDING.appName} automatically groups compatible exercises into supersets when it makes sense for your workout.`,
       },
       {
         question: 'Can I adjust things during a workout?',
@@ -74,10 +75,10 @@ const faqData: FAQCategory[] = [
       {
         question: 'Does it support barcode scanning?',
         answer:
-          'Yes. Scan any packaged food barcode and FitWiz pulls the nutrition info instantly from a comprehensive food database.',
+          `Yes. Scan any packaged food barcode and ${BRANDING.appName} pulls the nutrition info instantly from a comprehensive food database.`,
       },
       {
-        question: 'Can FitWiz help me drink more water?',
+        question: `Can ${BRANDING.appName} help me drink more water?`,
         answer:
           'It can. Set a daily hydration goal and the AI will nudge you throughout the day. It also adjusts targets based on how active you\'ve been.',
       },
@@ -94,7 +95,7 @@ const faqData: FAQCategory[] = [
       {
         question: 'Does the AI actually know my history?',
         answer:
-          'Yes. It has context on your past workouts, goals, preferences, injuries, and dietary needs. The longer you use FitWiz, the more personalized the coaching gets.',
+          `Yes. It has context on your past workouts, goals, preferences, injuries, and dietary needs. The longer you use ${BRANDING.appName}, the more personalized the coaching gets.`,
       },
       {
         question: 'Is my data safe?',
@@ -129,7 +130,7 @@ const faqData: FAQCategory[] = [
       {
         question: 'How do I delete my account?',
         answer:
-          'Head to Settings > Privacy & Data > Delete Account in the app, or visit fitwiz.us/delete-account. All your data is permanently removed within 30 days.',
+          'Head to Settings > Privacy & Data > Delete Account in the app, or visit {BRANDING.marketingDomain}/delete-account. All your data is permanently removed within 30 days.',
       },
       {
         question: 'Can I download a copy of my data?',
@@ -188,9 +189,9 @@ export default function FAQ() {
             Frequently Asked Questions
           </h1>
           <p className="text-[15px] text-[var(--color-text-secondary)] leading-relaxed mb-12">
-            Everything you need to know about FitWiz. Can't find an answer? Reach out to us at{' '}
-            <a href="mailto:support@fitwiz.us" className="text-emerald-400 hover:underline">
-              support@fitwiz.us
+            Everything you need to know about {BRANDING.appName}. Can't find an answer? Reach out to us at{' '}
+            <a href={`mailto:support@${BRANDING.marketingDomain}`} className="text-emerald-400 hover:underline">
+              support@{BRANDING.marketingDomain}
             </a>.
           </p>
 

@@ -1,4 +1,4 @@
-# FitWiz Play Store Screenshots Guide
+# Zealova Play Store Screenshots Guide
 
 ## Setup
 - **Tool**: [theapplaunchpad.com](https://theapplaunchpad.com)

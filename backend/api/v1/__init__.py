@@ -101,8 +101,8 @@ from api.v1 import export  # Authenticated in-app data export (csv/json/excel/pa
 from api.v1 import dashboard  # Weekly dashboard summary endpoint
 from api.v1 import home  # Home screen bootstrap (single-request aggregated data)
 from api.v1 import chat_proposals  # Apply / dismiss AI-proposed workout changes
-from api.v1 import plan_share_link  # Public plan/period share tokens (fitwiz.us/p/{token})
-from api.v1 import public_profile  # Public profile pages (fitwiz.us/u/{username})
+from api.v1 import plan_share_link  # Public plan/period share tokens (zealova.com/p/{token})
+from api.v1 import public_profile  # Public profile pages (zealova.com/u/{username})
 from api.v1.users.mcp_integrations import router as mcp_integrations_router  # MCP connected-client management
 
 # Create v1 router
@@ -473,5 +473,5 @@ router.include_router(audio_coach.router, prefix="/audio-coach", tags=["Audio Co
 # Public plan / period share tokens (Hevy-style multi-day grid links)
 router.include_router(plan_share_link.router, prefix="/plans", tags=["Plan Sharing"])
 
-# Public profile pages — fitwiz.us/u/{username} backed view
+# Public profile pages — zealova.com/u/{username} backed view
 router.include_router(public_profile.router, prefix="/users/public", tags=["Public Profile"])
