@@ -246,7 +246,7 @@ export default function Roadmap() {
               Have a request?
             </h3>
             <p className="text-[14px] text-[var(--color-text-secondary)] leading-relaxed">
-              Email <a href="mailto:hello@fitwiz.us" className="underline">hello@fitwiz.us</a> or open the in-app chat with the AI coach and tag it as feedback. Every request is read.
+              Email <a href={`mailto:${BRANDING.supportEmail}`} className="underline">{BRANDING.supportEmail}</a> or open the in-app chat with the AI coach and tag it as feedback. Every request is read.
             </p>
           </div>
         </div>

@@ -10,13 +10,22 @@ extension _InventoryScreenStateUI on _InventoryScreenState {
     Color textMuted,
     Color cardBorder,
     Color accentColor,
+    bool has2xXPActive,
   ) {
-    final (name, color, icon, multiplier) = switch (trustLevel) {
+    // Resolve base trust-level display first.
+    final (name, baseColor, icon, baseMultiplier) = switch (trustLevel) {
       0 => ('New User', Colors.grey, Icons.person_outline, '0.5x'),
       1 => ('Verified', const Color(0xFF3B82F6), Icons.verified, '1.0x'),
       2 => ('Trusted', const Color(0xFF22C55E), Icons.star, '1.2x'),
       _ => ('Verified', const Color(0xFF3B82F6), Icons.verified, '1.0x'),
     };
+    // When the 2x XP boost is active, override the displayed multiplier with
+    // a golden, attention-grabbing "2.0x" so users see the active boost
+    // reflected here too. Trust-level name/icon stays the same since trust
+    // level itself didn't change — only the effective XP multiplier did.
+    const goldColor = Color(0xFFFFC107);
+    final color = has2xXPActive ? goldColor : baseColor;
+    final multiplier = has2xXPActive ? '2.0x' : baseMultiplier;
 
     return GestureDetector(
       onTap: _showTrustLevelInfo,

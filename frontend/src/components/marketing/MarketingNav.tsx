@@ -130,6 +130,7 @@ export default function MarketingNav() {
   // Top-level links (minimal)
   const navLinks = [
     { label: 'Features', to: '/features' },
+    { label: 'Roadmap', to: '/roadmap' },
     { label: 'FAQ', to: '/faq' },
   ];
 

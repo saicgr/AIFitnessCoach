@@ -275,13 +275,27 @@ def build_social_footer_html(
 
 # ─── Persona signature card (motivational emails only) ──────────────────────
 
-def build_persona_signature_html(stats: UserStats) -> str:
+def build_persona_signature_html(stats: UserStats, context: str = "lifecycle") -> str:
     """Render the named-coach signature card that sits above the headline.
 
     Only used for motivational/lifecycle emails. Transactional emails
     (billing, purchase) skip this — Zealova is the voice there, not the
     persona.
+
+    Args:
+        stats: UserStats payload (drives mood word + emoji).
+        context: "lifecycle" (default) renders the persona mood card.
+            "cancel" suppresses the judgmental mood emoji entirely and
+            instead renders the achievement recap card — never guilt a
+            user who already cancelled. Any unknown value falls back to
+            lifecycle so this stays backward-compatible with older callers.
     """
+    # Cancel emails: never use a mood emoji. The user is gone — guilt would
+    # be hostile retention copy. Defer to the achievement recap so the card
+    # reads as "here's what you built" instead of "Coach Mike Unimpressed".
+    if context == "cancel":
+        return build_achievement_recap_html(stats)
+
     emoji, mood = persona_mood(stats)
     return f"""<tr>
       <td align="center" style="padding:24px 40px 0;">
@@ -291,6 +305,78 @@ def build_persona_signature_html(stats: UserStats) -> str:
             <td style="padding:12px 18px 12px 10px;vertical-align:middle;">
               <p style="margin:0;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#06b6d4;">{stats.coach_name}</p>
               <p style="margin:0;font-size:13px;color:#a1a1aa;">{mood}</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>"""
+
+
+# ─── Achievement recap card (cancel-flow emails) ────────────────────────────
+
+def build_achievement_recap_html(stats: UserStats) -> str:
+    """Render a "Here's what you built" recap card for cancel-flow emails.
+
+    Replaces the persona mood card on cancellation/grace-period emails so the
+    user sees factual reinforcement of what they accomplished — not a
+    judgmental "Coach Mike — Unimpressed" header. The card uses Zealova
+    brand voice (no coach persona name, no mood emoji).
+
+    Renders up to three stats (workouts, total XP, best streak) as inline
+    pill cells. Each cell is suppressed when the underlying stat is zero so
+    we never publish "0 workouts" as a brag — for a true cold-start user
+    the function returns an empty string and the email simply omits the
+    card. Email-client safe: pure table layout + inline styles.
+    """
+    workouts = stats.workouts_total or 0
+    xp = stats.xp_total or 0
+    # Best streak: prefer longest_streak_days if exposed by UserStats,
+    # otherwise fall back to the live current_streak_days. We never render
+    # 0 (handled below) so the fallback is safe.
+    best_streak = (
+        getattr(stats, "longest_streak_days", None)
+        or stats.current_streak_days
+        or 0
+    )
+
+    cells: list[tuple[str, str]] = []
+    if workouts > 0:
+        cells.append((f"{workouts:,}", "Workouts" if workouts != 1 else "Workout"))
+    if xp > 0:
+        cells.append((f"{xp:,}", "XP earned"))
+    if best_streak > 0:
+        cells.append((f"{best_streak}", "Day best streak"))
+
+    # Cold-start cancel — no real achievements to display. Returning empty
+    # keeps the email layout valid without claiming progress that doesn't
+    # exist. Caller's `_build_standard_email` tolerates an empty signature.
+    if not cells:
+        return ""
+
+    # Build the cells as <td> elements. Width is split equally so 1, 2, or
+    # 3 cells all render evenly. Inline styles only — Outlook/Gmail safe.
+    cell_width_pct = 100 // len(cells)
+    cells_html = "".join(
+        f'<td width="{cell_width_pct}%" align="center" style="padding:10px 6px;">'
+        f'<p style="margin:0 0 4px;font-size:22px;font-weight:800;color:#ffffff;line-height:1.1;">{value}</p>'
+        f'<p style="margin:0;font-size:10px;color:#a1a1aa;letter-spacing:1.4px;text-transform:uppercase;">{label}</p>'
+        f"</td>"
+        for value, label in cells
+    )
+
+    return f"""<tr>
+      <td align="center" style="padding:24px 32px 0;">
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#0f2733;border-radius:14px;border:1px solid #1e3a47;">
+          <tr>
+            <td style="padding:16px 18px 4px;">
+              <p style="margin:0;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#06b6d4;text-align:center;">Here's what you built</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:0 8px 14px;">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                <tr>{cells_html}</tr>
+              </table>
             </td>
           </tr>
         </table>

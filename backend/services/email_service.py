@@ -4,7 +4,7 @@ Email service using Resend for sending workout reminders and notifications.
 Split into mixins for manageability:
 - EmailLifecycleMixin: cancellation_retention, trial_expired, trial_ending,
   streak_at_risk, day3_activation, onboarding_incomplete
-- EmailMarketingMixin: win_back, 14day_upsell, weekly_summary
+- EmailMarketingMixin: win_back, 7day_upsell, weekly_summary
 
 Core methods stay here: welcome, workout_reminder, purchase_confirmation, billing_issue
 """
@@ -403,7 +403,7 @@ class EmailService(
     # streak_at_risk, day3_activation, onboarding_incomplete) are inherited from
     # EmailLifecycleMixin in services/email_lifecycle.py.
     #
-    # Marketing email methods (win_back, 14day_upsell, weekly_summary) are inherited
+    # Marketing email methods (win_back, 7day_upsell, weekly_summary) are inherited
     # from EmailMarketingMixin in services/email_marketing.py.
 
 

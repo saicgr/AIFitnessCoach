@@ -18,10 +18,6 @@ from pydantic import BaseModel, Field
 
 from core.auth import get_current_user
 from core.db import get_supabase_db
-from core.db.nutrition_db_helpers import (
-    get_daily_nutrition_summary,
-    get_weekly_nutrition_summary,
-)
 from core.exceptions import safe_internal_error
 from core.logger import get_logger
 from services.gemini_service import GeminiService
@@ -94,7 +90,7 @@ async def daily_nutrition_report(
         user_id = current_user["id"]
         target_date = report_date or datetime.utcnow().date().isoformat()
 
-        summary = get_daily_nutrition_summary(db, user_id, target_date) or {}
+        summary = db.get_daily_nutrition_summary(user_id, target_date) or {}
 
         # Inflammation aggregate from food_logs (column added in
         # migrations/add_food_logs_inflammation.sql).
@@ -176,7 +172,7 @@ async def weekly_nutrition_report(
             ws = today - timedelta(days=today.weekday())
         we = ws + timedelta(days=6)
 
-        weekly = get_weekly_nutrition_summary(db, user_id, ws.isoformat()) or {}
+        weekly = db.get_weekly_nutrition_summary(user_id, ws.isoformat()) or {}
 
         daily_cals = weekly.get("daily_calories", []) or []
         daily_macros = weekly.get("daily_macros", []) or []
@@ -209,7 +205,7 @@ async def weekly_nutrition_report(
 
         # Week-over-week delta
         prev_start = ws - timedelta(days=7)
-        prev_weekly = get_weekly_nutrition_summary(db, user_id, prev_start.isoformat()) or {}
+        prev_weekly = db.get_weekly_nutrition_summary(user_id, prev_start.isoformat()) or {}
         prev_cals = prev_weekly.get("daily_calories", []) or []
         prev_avg = int(sum(prev_cals) / len(prev_cals)) if prev_cals else 0
         delta = {

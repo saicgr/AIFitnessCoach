@@ -39,6 +39,7 @@ export default function MarketingFooter() {
               <li><Link to="/faq" className="text-sm text-slate-400 hover:text-white transition-colors">FAQ</Link></li>
               <li><Link to="/contact" className="text-sm text-slate-400 hover:text-white transition-colors">Contact</Link></li>
               <li><Link to="/changelog" className="text-sm text-slate-400 hover:text-white transition-colors">Changelog</Link></li>
+              <li><Link to="/roadmap" className="text-sm text-slate-400 hover:text-white transition-colors">Roadmap</Link></li>
               <li><a href="https://discord.gg/WAYNZpVgsK" target="_blank" rel="noopener noreferrer" className="text-sm text-slate-400 hover:text-white transition-colors">Discord</a></li>
               <li><a href={BRANDING.instagram} target="_blank" rel="noopener noreferrer" className="text-sm text-slate-400 hover:text-white transition-colors">Instagram</a></li>
             </ul>

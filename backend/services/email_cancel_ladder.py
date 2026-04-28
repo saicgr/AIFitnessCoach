@@ -24,6 +24,7 @@ from core import branding
 from core.logger import get_logger
 from models.email import UserStats
 from services.email_helpers import (
+    build_achievement_recap_html,
     build_persona_signature_html,
     build_stats_grid_html,
 )
@@ -58,9 +59,13 @@ class EmailCancelLadderMixin:
 
         subject = f"{days_until_expiry} days of {branding.APP_NAME} left, {name}. What happened?"
         title = f"{days_until_expiry} days left, {name}"
+        # Zealova voice (not coach persona) on cancel flows — see
+        # feedback_coach_voice_naming.md. Transactional/retention emails
+        # speak as the product, not as the mascot, so we don't guilt the
+        # user with "Coach Mike is wondering what went wrong" copy.
         subtitle = (
             f"You cancelled {branding.APP_NAME} yesterday. You've got {days_until_expiry} days of access "
-            f"before it winds down. {coach} is wondering what stopped working."
+            f"before it winds down. We'd love to know what didn't click — it helps us build a better product."
         )
 
         features = [
@@ -78,7 +83,13 @@ class EmailCancelLadderMixin:
             cta_text="Reactivate",
             features=features,
             footer_text=f"You received this because you cancelled your {branding.APP_NAME} subscription.",
-            persona_signature_html=build_persona_signature_html(stats),
+            # Cancel context: render the achievement recap card instead of
+            # the coach persona mood signature. A user who just cancelled
+            # should not see "Coach Mike — Unimpressed 🙄" at the top of
+            # the email. `build_achievement_recap_html` shows what they
+            # actually built (workouts / XP / best streak) in Zealova
+            # brand voice with no mood emoji.
+            persona_signature_html=build_achievement_recap_html(stats),
             stats_row_html=build_stats_grid_html(stats) if stats.has_any_activity else "",
             category_name="offers",
         )

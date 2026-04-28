@@ -77,12 +77,14 @@ BEGIN
           PERFORM add_consumable(p_user_id, 'streak_shield', 3);
           PERFORM add_consumable(p_user_id, 'fitness_crate', 2);
           PERFORM add_consumable(p_user_id, 'premium_crate', 1);
-          PERFORM add_consumable(p_user_id, 'xp_token_2x', 1);
+          -- Level 5 (Steadfast) grants 2x xp_token_2x to match the All Levels
+          -- display ("2x 2x XP Token"). See migration 1940 for retroactive fix.
+          PERFORM add_consumable(p_user_id, 'xp_token_2x', 2);
           v_items := jsonb_build_array(
             jsonb_build_object('type','streak_shield','quantity',3),
             jsonb_build_object('type','fitness_crate','quantity',2),
             jsonb_build_object('type','premium_crate','quantity',1),
-            jsonb_build_object('type','xp_token_2x','quantity',1)
+            jsonb_build_object('type','xp_token_2x','quantity',2)
           );
         WHEN 10 THEN
           PERFORM add_consumable(p_user_id, 'xp_token_2x', 5);

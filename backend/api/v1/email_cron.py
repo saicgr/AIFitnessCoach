@@ -200,7 +200,7 @@ async def run_email_cron(
         ("day3_activation", _job_day3_activation(supabase, email_svc)),
         ("trial_ending", _job_trial_ending(supabase, email_svc)),
         ("win_back_30", _job_win_back_30(supabase, email_svc)),
-        ("14day_upsell", _job_14day_upsell(supabase, email_svc)),
+        ("7day_upsell", _job_7day_upsell(supabase, email_svc)),
         ("onboarding_incomplete", _job_onboarding_incomplete(supabase, email_svc)),
         ("weekly_summary", _job_weekly_summary(supabase, email_svc)),
         ("comeback", _job_comeback(supabase, email_svc)),
@@ -594,18 +594,18 @@ async def _job_win_back_30(supabase, email_svc) -> int:
 
 # ─── Job: 14-day Free Upsell ────────────────────────────────────────────────
 
-async def _job_14day_upsell(supabase, email_svc) -> int:
+async def _job_7day_upsell(supabase, email_svc) -> int:
     """
-    Send upsell email to free-tier users who signed up 14 days ago
-    and have completed 3+ workouts.
+    Send upsell email to free-tier users at trial end (day 7 post-signup)
+    who have completed 3+ workouts.
     Gate: product_updates preference.
     Cooldown: 7 days.
     """
-    email_type = "14day_upsell"
+    email_type = "7day_upsell"
     sent = 0
 
     try:
-        target_date = (date.fromisoformat(get_user_today("UTC")) - timedelta(days=14)).isoformat()
+        target_date = (date.fromisoformat(get_user_today("UTC")) - timedelta(days=7)).isoformat()
         users_result = supabase.client.table("users") \
             .select("id, email, name, timezone") \
             .gte("created_at", f"{target_date}T00:00:00") \
@@ -659,21 +659,21 @@ async def _job_14day_upsell(supabase, email_svc) -> int:
             if stats.time_band != TimeBand.MORNING:
                 continue
 
-            result = await email_svc.send_14day_upsell(
+            result = await email_svc.send_7day_upsell(
                 to_email=user["email"],
                 first_name_value=first_name(user),
                 stats=stats,
-                free_workouts_remaining=0,  # caller may refine once subscription helpers expose this
+                free_workouts_remaining=0,
             )
             if result.get("success"):
                 _log_email_sent(supabase, uid, email_type)
                 sent += 1
 
     except Exception as e:
-        logger.error(f"❌ 14day_upsell job failed: {e}", exc_info=True)
+        logger.error(f"❌ 7day_upsell job failed: {e}", exc_info=True)
         raise
 
-    logger.info(f"🎯 14day_upsell: {sent} emails sent")
+    logger.info(f"🎯 7day_upsell: {sent} emails sent")
     return sent
 
 

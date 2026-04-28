@@ -517,16 +517,49 @@ async def get_weekly_checkpoints(
             {"p_user_id": user_id}
         ).execute()
 
-        if result.data:
-            return result.data
+        if not result.data:
+            raise ValueError("get_full_weekly_progress returned no data")
 
-        # Fallback if RPC doesn't exist yet
-        user_tz = resolve_timezone(request, db, user_id)
-        today_str = get_user_today(user_tz)
+        # Supabase RPC wraps JSONB return in [{fn_name: {...}}]; unwrap it.
+        row = result.data[0]
+        raw = row.get("get_full_weekly_progress") if isinstance(row, dict) and "get_full_weekly_progress" in row else row
+
+        # Map DB field names → Flutter model field names and enrich checkpoints
+        # with display metadata (id, description, icon) the DB doesn't store.
+        _CHECKPOINT_META = {
+            "workouts":       ("workouts",        "Complete Workouts",    "Complete your scheduled workouts this week",     "🏋️"),
+            "perfect_week":   ("perfect_week",     "Perfect Week",         "Complete ALL scheduled workouts",               "⭐"),
+            "protein":        ("protein",          "Protein Goals",        "Hit your protein target 5+ days",               "🥩"),
+            "calories":       ("calories",         "Calorie Goals",        "Stay within your calorie target 5+ days",       "🍽️"),
+            "hydration":      ("hydration",        "Hydration",            "Hit your water goal 5+ days",                   "💧"),
+            "weight":         ("weight",           "Weight Logging",       "Log your weight 3+ times this week",            "⚖️"),
+            "habits":         ("habits",           "Habit Completion",     "Complete 70%+ of your daily habits",            "✅"),
+            "workout_streak": ("workout_streak",   "Workout Streak",       "Maintain a 7+ day workout streak",              "🔥"),
+            "social":         ("social",           "Social Engagement",    "Engage with 5+ community posts",                "👥"),
+            "measurements":   ("measurements",     "Body Measurements",    "Log your body measurements 2+ times",           "📏"),
+        }
+
+        checkpoints = []
+        for cp in raw.get("checkpoints", []):
+            key = cp.get("name", "")
+            meta = _CHECKPOINT_META.get(key, (key, key.replace("_", " ").title(), "", "📋"))
+            checkpoints.append({
+                "id":          meta[0],
+                "name":        meta[1],
+                "description": meta[2],
+                "icon":        meta[3],
+                "current":     int(cp.get("current") or 0),
+                "target":      int(cp.get("target") or 1),
+                "xp_reward":   int(cp.get("xp") or 0),
+                "completed":   bool(cp.get("complete") or cp.get("completed") or False),
+                "xp_awarded":  bool(cp.get("xp_awarded") or cp.get("complete") or False),
+            })
+
         return {
-            "week_start": today_str,
-            "total_xp_possible": 1575,
-            "checkpoints": []
+            "week_start":       raw.get("period_start", ""),
+            "total_xp_possible": int(raw.get("total_xp_available") or raw.get("total_xp_possible") or 1575),
+            "total_xp_earned":  int(raw.get("total_xp_earned") or 0),
+            "checkpoints":      checkpoints,
         }
 
     except Exception as e:

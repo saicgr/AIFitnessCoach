@@ -444,7 +444,7 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
                       const LevelUpCatchUpBanner(margin: EdgeInsets.only(bottom: 16)),
 
                       // Trust Level Card
-                      _buildTrustLevelCard(trustLevel, isDark, textColor, textMuted, cardBorder, accentColor),
+                      _buildTrustLevelCard(trustLevel, isDark, textColor, textMuted, cardBorder, accentColor, consumables?.is2xActive == true),
                       const SizedBox(height: 24),
 
                       // Active Boosts Section
@@ -659,6 +659,12 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
     final remaining = consumables.remaining2xTime;
     final hours = remaining?.inHours ?? 0;
     final minutes = (remaining?.inMinutes ?? 0) % 60;
+    // 2x XP tokens grant a 24-hour boost; compute fraction remaining for the
+    // progress bar. Clamp to handle edge cases (clock skew, just-activated).
+    const totalDuration = Duration(hours: 24);
+    final remainingSecs = remaining?.inSeconds ?? 0;
+    final fractionRemaining =
+        (remainingSecs / totalDuration.inSeconds).clamp(0.0, 1.0);
     const boostColor = Color(0xFF9C27B0);
     const boostHighlight = Color(0xFFE040FB);
 
@@ -667,60 +673,130 @@ class _InventoryScreenState extends ConsumerState<InventoryScreen> {
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            boostColor.withValues(alpha: 0.3),
-            boostColor.withValues(alpha: 0.1),
+            boostColor.withValues(alpha: 0.35),
+            boostColor.withValues(alpha: 0.12),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: boostColor.withValues(alpha: 0.5)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: boostColor.withValues(alpha: 0.3),
-            ),
-            child: const Icon(
-              Icons.flash_on,
-              color: boostHighlight,
-              size: 28,
-            ),
+        border: Border.all(color: boostColor.withValues(alpha: 0.6), width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: boostColor.withValues(alpha: isDark ? 0.4 : 0.25),
+            blurRadius: 16,
+            spreadRadius: 1,
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Row(
-                  children: [
-                    Text(
-                      '2x XP ACTIVE',
-                      style: TextStyle(
-                        color: boostHighlight,
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1,
-                      ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: boostColor.withValues(alpha: 0.3),
+                  boxShadow: [
+                    BoxShadow(
+                      color: boostHighlight.withValues(alpha: 0.6),
+                      blurRadius: 12,
+                      spreadRadius: 1,
                     ),
-                    SizedBox(width: 6),
-                    Icon(Icons.auto_awesome, color: boostHighlight, size: 16),
                   ],
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  '${hours}h ${minutes}m remaining',
-                  style: TextStyle(
-                    color: textColor.withValues(alpha: 0.7),
-                    fontSize: 13,
+                child: const Icon(
+                  Icons.flash_on,
+                  color: boostHighlight,
+                  size: 28,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Row(
+                      children: [
+                        Text(
+                          '⚡ 2x XP ACTIVE',
+                          style: TextStyle(
+                            color: boostHighlight,
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1,
+                          ),
+                        ),
+                        SizedBox(width: 6),
+                        Icon(Icons.auto_awesome, color: boostHighlight, size: 16),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Every XP earned right now is doubled.',
+                      style: TextStyle(
+                        color: textColor.withValues(alpha: 0.85),
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // Inline pill showing time remaining
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: boostHighlight.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: boostHighlight.withValues(alpha: 0.5),
                   ),
                 ),
-              ],
+                child: Text(
+                  '${hours}h ${minutes}m',
+                  style: const TextStyle(
+                    color: boostHighlight,
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          // Progress bar: fraction of the original 24h window left
+          ClipRRect(
+            borderRadius: BorderRadius.circular(6),
+            child: LinearProgressIndicator(
+              value: fractionRemaining,
+              minHeight: 8,
+              backgroundColor: boostColor.withValues(alpha: 0.18),
+              valueColor: const AlwaysStoppedAnimation(boostHighlight),
             ),
+          ),
+          const SizedBox(height: 6),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                '${hours}h ${minutes}m remaining',
+                style: TextStyle(
+                  color: textColor.withValues(alpha: 0.75),
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              Text(
+                'of 24h boost',
+                style: TextStyle(
+                  color: textMuted,
+                  fontSize: 11,
+                ),
+              ),
+            ],
           ),
         ],
       ),

@@ -360,7 +360,9 @@ class LevelRewards {
       case 5:
         return LevelReward.cosmetic(
           name: 'Rising Star Milestone',
-          description: '3x Streak Shield + 2x Fitness Crate + Premium Crate + 2x XP Token. '
+          // Quantities mirror migration 1935 (post-1940 fix): 3 shields,
+          // 2 fitness crates, 1 premium crate, 2 "2x XP Token" consumables.
+          description: '3x Streak Shield + 2x Fitness Crate + Premium Crate + 2x 2x XP Token. '
               '"Rising Star" animated badge unlocked — equip in Cosmetics.',
           icon: '⭐',
           cosmeticId: 'badge_rising_star',

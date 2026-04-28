@@ -43,6 +43,7 @@ import 'templates/widget_template.dart';
 import 'templates/workout_details_template.dart';
 import 'templates/workout_program_template.dart';
 import 'templates/workout_score_template.dart';
+import 'templates/workout_summary_template.dart';
 import 'templates/wrapped_template.dart';
 
 /// Every template the unified sheet can render. Order here is also the
@@ -62,6 +63,7 @@ enum ShareableTemplate {
   elite,
   workoutDetails,
   workoutProgram,
+  workoutSummary,
   dailyWorkoutCard,
   weeklyPlanGrid,
   monthlyPlanGrid,
@@ -401,6 +403,18 @@ class ShareableCatalog {
         aspects: const {ShareableAspect.story},
         requiresExercises: true,
         builder: (d, w) => WorkoutProgramTemplate(data: d, showWatermark: w),
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.workoutSummary,
+        name: 'Watch Summary',
+        category: ShareableCategory.rich,
+        kinds: const {
+          ShareableKind.workoutComplete,
+          ShareableKind.statsOverview,
+        },
+        minHighlights: 2,
+        builder: (d, w) =>
+            WorkoutSummaryTemplate(data: d, showWatermark: w),
       ),
       ShareableTemplateSpec(
         template: ShareableTemplate.dailyWorkoutCard,

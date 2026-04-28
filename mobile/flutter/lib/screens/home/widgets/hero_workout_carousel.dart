@@ -335,6 +335,11 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
           if (wDate == null) continue;
           if (wDate.isBefore(keepSyncedAfter)) continue;
           if (mergedWorkouts.any((m) => m.id == w.id)) continue;
+          // Only surface HC imports that are already marked complete — they are
+          // past activities and should never appear as actionable "Ready to start"
+          // cards. Skipping incomplete ones guards against the brief stale-cache
+          // window between workout creation and the /complete API call.
+          if (w.isCompleted != true) continue;
           mergedWorkouts.add(w);
         }
 

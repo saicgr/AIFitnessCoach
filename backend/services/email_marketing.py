@@ -87,11 +87,11 @@ class EmailMarketingMixin:
             logger.error(f"Failed to send win-back email to {to_email}: {e}", exc_info=True)
             return {"error": str(e)}
 
-    async def send_14day_upsell(
+    async def send_7day_upsell(
         self, to_email: str, first_name_value: str, stats: UserStats,
         free_workouts_remaining: int = 0,
     ) -> Dict[str, Any]:
-        """14-day upsell for free-tier users who are actively using the app.
+        """7-day upsell for free-tier users at trial end (trial is 7 days).
 
         `free_workouts_remaining` is optional (default 0). Template only mentions
         it if the caller passes a non-zero value — avoids the old signature bug
@@ -109,15 +109,15 @@ class EmailMarketingMixin:
         coach = stats.coach_name
         workouts = stats.workouts_total
 
-        subject = f"You're a regular now, {name}."
-        title = f"You're a regular now, {name}"
+        subject = f"Your free trial just ended, {name}."
+        title = f"Your 7-day trial is up, {name}"
         limit_line = (
             f"You have {free_workouts_remaining} free workouts left this month — "
             if free_workouts_remaining > 0
             else ""
         )
         subtitle = (
-            f"14 days. {workouts} workouts with {coach}. "
+            f"7 days. {workouts} workouts with {coach}. "
             + limit_line
             + "Premium removes every cap, unlocks unlimited coaching, and adapts the plan to you every week."
         )
@@ -145,10 +145,10 @@ class EmailMarketingMixin:
         try:
             params = {"from": self.from_email, "to": [to_email], "subject": subject, "html": html_content}
             response = resend.Emails.send(params)
-            logger.info(f"14-day upsell email sent to {to_email}: {response}")
+            logger.info(f"7-day upsell email sent to {to_email}: {response}")
             return {"success": True, "id": response.get("id")}
         except Exception as e:
-            logger.error(f"Failed to send 14-day upsell email to {to_email}: {e}", exc_info=True)
+            logger.error(f"Failed to send 7-day upsell email to {to_email}: {e}", exc_info=True)
             return {"error": str(e)}
 
     async def send_weekly_summary(
