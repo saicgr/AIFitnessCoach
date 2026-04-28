@@ -134,13 +134,22 @@ class Settings(BaseSettings):
     # Public-facing backend URL used in emails (must match deployment URL)
     backend_base_url: str = "https://aifitnesscoach-zqi3.onrender.com"
 
+    # ── Public contact channels (rendered as chips in chat "need help") ───
+    # Override via env (DISCORD_URL, SUPPORT_EMAIL, INSTAGRAM_URL).
+    # The Discord invite is intentionally a generic landing page until the
+    # real invite is provisioned; the email + IG handle are the canonical
+    # ones used elsewhere in the app.
+    discord_url: str = "https://discord.gg/zealova"
+    support_email: str = "support@fitwiz.us"
+    instagram_url: str = "https://instagram.com/zealova.app"
+
     # Redis (shared cache across workers)
     redis_url: Optional[str] = None
 
     # CORS (for Flutter app)
     # Specific allowed origins - do not use ["*"] with allow_credentials=True
     cors_origins: list[str] = [
-        "https://fitwiz-zqi3.onrender.com",
+        "https://aifitnesscoach-zqi3.onrender.com",
         "http://localhost:8000",
         "http://10.0.2.2:8000",
     ]

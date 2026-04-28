@@ -11,12 +11,19 @@ class ExercisesState {
   final int offset;
   final String? error;
 
+  /// Snapshot of the filter inputs used to populate `exercises`. Lets the
+  /// notifier no-op when a tab rebuild calls loadExercises with identical
+  /// filters and a non-empty list — kills redundant cold-load fetches when
+  /// users navigate back into the Library tab.
+  final String? filterSignature;
+
   const ExercisesState({
     this.exercises = const [],
     this.isLoading = false,
     this.hasMore = true,
     this.offset = 0,
     this.error,
+    this.filterSignature,
   });
 
   ExercisesState copyWith({
@@ -25,6 +32,7 @@ class ExercisesState {
     bool? hasMore,
     int? offset,
     String? error,
+    String? filterSignature,
   }) {
     return ExercisesState(
       exercises: exercises ?? this.exercises,
@@ -32,6 +40,7 @@ class ExercisesState {
       hasMore: hasMore ?? this.hasMore,
       offset: offset ?? this.offset,
       error: error,
+      filterSignature: filterSignature ?? this.filterSignature,
     );
   }
 

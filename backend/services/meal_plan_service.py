@@ -140,7 +140,13 @@ class MealPlanService:
     async def list_for_user(
         self, user_id: str, plan_date: Optional[date] = None, templates_only: bool = False
     ) -> List[MealPlan]:
-        q = self.db.client.table("meal_plans").select("*").eq("user_id", user_id)
+        # Single round trip via PostgREST embed; previously this was an N+1
+        # (one query per plan to fetch items). See plan A1.
+        q = (
+            self.db.client.table("meal_plans")
+            .select("*, meal_plan_items(*)")
+            .eq("user_id", user_id)
+        )
         if plan_date:
             q = q.eq("plan_date", plan_date.isoformat())
         if templates_only:
@@ -148,14 +154,15 @@ class MealPlanService:
         res = q.order("plan_date", desc=True).limit(100).execute()
         plans: List[MealPlan] = []
         for r in res.data or []:
-            items_res = (
-                self.db.client.table("meal_plan_items")
-                .select("*")
-                .eq("plan_id", r["id"])
-                .execute()
+            embedded_items = r.pop("meal_plan_items", None) or []
+            # Sort intra-plan items by meal_type then slot_order to match
+            # the previous ordering ("meal_type" then "slot_order").
+            embedded_items.sort(
+                key=lambda i: (i.get("meal_type") or "", i.get("slot_order") or 0)
             )
-            items = [self._row_to_item(i) for i in (items_res.data or [])]
+            items = [self._row_to_item(i) for i in embedded_items]
             plans.append(self._row_to_plan(r, items))
+        logger.info("✅ [MealPlan] list_for_user user=%s plans=%d", user_id, len(plans))
         return plans
 
     # ------------------------------------------------------------------
@@ -163,6 +170,10 @@ class MealPlanService:
     # ------------------------------------------------------------------
 
     async def simulate(self, plan_id: str, with_swaps: bool = True) -> SimulateResponse:
+        """Rule-based projection only — fast path. Gemini swaps are computed
+        out-of-band via :meth:`compute_and_persist_swaps` and surfaced to the
+        client either through a follow-up GET or Realtime on the
+        ``meal_plan_swap_suggestions`` table. See plan A5."""
         plan = await self.get(plan_id)
         if not plan:
             raise ValueError("plan not found")
@@ -180,13 +191,15 @@ class MealPlanService:
         )
         adherence = self._adherence(totals, targets)
 
+        # If a previous background run persisted swaps, hydrate them so the
+        # response isn't empty on a follow-up simulate call.
         swaps: List[AiSwapSuggestion] = []
         coach_summary: Optional[str] = None
-        if with_swaps and plan.items:
+        if with_swaps:
             try:
-                swaps, coach_summary = await self._gemini_swaps(plan, totals, remainder)
-            except Exception as exc:
-                logger.warning("[MealPlan] swap generation failed: %s", exc)
+                swaps, coach_summary = self._load_persisted_swaps(plan_id)
+            except Exception as exc:  # surface but don't fail the projection
+                logger.warning("⚠️ [MealPlan] failed to load persisted swaps: %s", exc)
 
         return SimulateResponse(
             plan_id=plan_id,
@@ -198,6 +211,88 @@ class MealPlanService:
             swap_suggestions=swaps,
             coach_summary=coach_summary,
         )
+
+    async def compute_and_persist_swaps(self, plan_id: str) -> None:
+        """Background-task entry point. Generates Gemini swap suggestions and
+        upserts them into ``meal_plan_swap_suggestions`` so the client can
+        poll / Realtime-subscribe. Errors are logged but never raised — this
+        runs after the response has been sent."""
+        try:
+            plan = await self.get(plan_id)
+            if not plan or not plan.items:
+                logger.info(
+                    "🔍 [MealPlan] swap bg task skipped (plan missing or empty): %s",
+                    plan_id,
+                )
+                return
+            if not plan.target_snapshot:
+                plan.target_snapshot = await self._fetch_user_targets(plan.user_id)
+            totals = await self._sum_items(plan.items)
+            targets = plan.target_snapshot or {}
+            remainder = MacroRemainder(
+                calories=float(targets.get("calories", 0) or 0) - totals.calories,
+                protein_g=float(targets.get("protein_g", 0) or 0) - totals.protein_g,
+                carbs_g=float(targets.get("carbs_g", 0) or 0) - totals.carbs_g,
+                fat_g=float(targets.get("fat_g", 0) or 0) - totals.fat_g,
+            )
+            swaps, coach_summary = await self._gemini_swaps(plan, totals, remainder)
+            self._persist_swaps(plan_id, swaps, coach_summary)
+            logger.info(
+                "✅ [MealPlan] persisted %d swap suggestions for plan %s",
+                len(swaps),
+                plan_id,
+            )
+        except Exception as exc:
+            logger.exception("❌ [MealPlan] swap background task failed: %s", exc)
+
+    def _persist_swaps(
+        self,
+        plan_id: str,
+        swaps: List[AiSwapSuggestion],
+        coach_summary: Optional[str],
+    ) -> None:
+        payload = {
+            "plan_id": plan_id,
+            "suggestions": [s.model_dump() for s in swaps],
+            "coach_summary": coach_summary,
+            "generated_at": datetime.utcnow().isoformat(),
+        }
+        # Upsert by plan_id (one row per plan). Migration 2036 defines the
+        # table with plan_id as primary key.
+        self.db.client.table("meal_plan_swap_suggestions").upsert(
+            payload, on_conflict="plan_id"
+        ).execute()
+
+    def _load_persisted_swaps(
+        self, plan_id: str
+    ) -> Tuple[List[AiSwapSuggestion], Optional[str]]:
+        try:
+            res = (
+                self.db.client.table("meal_plan_swap_suggestions")
+                .select("suggestions,coach_summary")
+                .eq("plan_id", plan_id)
+                .limit(1)
+                .execute()
+            )
+        except Exception as exc:
+            # Table may not exist yet on stale environments — degrade by
+            # returning empty. Don't silently swallow the bug; log loudly.
+            logger.warning(
+                "⚠️ [MealPlan] swap suggestions table read failed (likely migration 2036 not applied): %s",
+                exc,
+            )
+            return [], None
+        if not res.data:
+            return [], None
+        row = res.data[0]
+        raw = row.get("suggestions") or []
+        out: List[AiSwapSuggestion] = []
+        for s in raw:
+            try:
+                out.append(AiSwapSuggestion(**s))
+            except Exception as exc:
+                logger.warning("⚠️ [MealPlan] dropped malformed swap row: %s", exc)
+        return out, row.get("coach_summary")
 
     # ------------------------------------------------------------------
     # Apply — write meal_plan_items as food_logs for a given date

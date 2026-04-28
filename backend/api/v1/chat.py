@@ -93,8 +93,15 @@ def get_rag_service() -> RAGService:
     return rag_service
 
 
-def _save_chat_to_db(user_id: str, message: str, response_message: str, response_intent, response_agent_type, response_rag_context_used: bool, response_action_data, coach_persona_id: Optional[str] = None, media_url: Optional[str] = None, media_type: Optional[str] = None):
-    """Background task: Save chat message to database for persistence."""
+def _save_chat_to_db(user_id: str, message: str, response_message: str, response_intent, response_agent_type, response_rag_context_used: bool, response_action_data, coach_persona_id: Optional[str] = None, media_url: Optional[str] = None, media_type: Optional[str] = None, assistant_message_id: Optional[str] = None):
+    """Background task: Save chat message to database for persistence.
+
+    `assistant_message_id` (when provided) is used as the row PK so the
+    streamed in-memory message and the persisted row share an identity —
+    that's the dedup key on the client. Without it the DB autogenerates
+    an ID and the client sees the same message twice (once via SSE,
+    once via Realtime). See B1 in the plan.
+    """
     try:
         db = get_supabase_db()
         context_dict = {
@@ -113,6 +120,9 @@ def _save_chat_to_db(user_id: str, message: str, response_message: str, response
             "ai_response": response_message,
             "context_json": json.dumps(context_dict) if response_intent else None,
         }
+        if assistant_message_id:
+            # Stable PK shared with the SSE stream so client-side dedup works.
+            chat_data["id"] = assistant_message_id
         if media_url:
             chat_data["media_url"] = media_url
         if media_type:
@@ -167,6 +177,253 @@ async def _log_chat_activity(user_id: str, response_intent, response_agent_type,
         logger.warning(f"[Background] Failed to log chat activity: {activity_error}", exc_info=True)
 
 
+async def send_coach_reply_push(
+    user_id: str,
+    ai_text: str,
+    conversation_id: Optional[str],
+    agent_name: Optional[str],
+) -> None:
+    """Background task: notify the user via FCM when the AI coach has replied.
+
+    Mirrors `_send_push_notification_to_user` in `api/v1/admin/live_chat.py`
+    but for AI chat replies (not human-agent live chat). Looks up FCM tokens
+    across all of the user's devices, resolves the persona name from
+    `user_ai_settings.coach_name` (per `feedback_coach_voice_naming.md`),
+    personalizes the body with the user's first name, and sends one
+    notification per token.
+
+    Edge cases this handles:
+      - Multi-device users: walk every row in `user_devices` (newest first)
+        and send to each FCM token; falls back to `users.fcm_token` if no
+        device row exists (legacy single-device setup).
+      - Dead tokens: `notification_service.send_notification` already clears
+        unregistered/invalid tokens from `users.fcm_token` on FCM
+        `UnregisteredError`, so we don't re-clear here.
+      - Missing persona row: defaults to "Coach" so the title still reads
+        sensibly ("Coach replied").
+      - Body length: trimmed to 120 chars per push UX guidelines (anything
+        longer gets truncated by the OS anyway).
+
+    Gating implemented:
+      - `notification_preferences.push_notifications_enabled` (global push opt-out)
+      - `notification_preferences.push_coach_messages` (per-category coach opt-out)
+      - `notification_preferences.quiet_hours_start/end` in user's local timezone
+        (handles wrap-around windows like 22:00–07:00)
+      - `live_chat_presence.active_conversation_id` (skip if user is foregrounded
+        on this exact thread within the 30s heartbeat window)
+    """
+    try:
+        if not user_id or not ai_text:
+            return
+
+        db = get_supabase_db()
+
+        # ── Resolve FCM tokens ────────────────────────────────────────────
+        fcm_tokens: List[str] = []
+        try:
+            token_result = (
+                db.client.table("user_devices")
+                .select("fcm_token")
+                .eq("user_id", user_id)
+                .eq("notifications_enabled", True)
+                .order("updated_at", desc=True)
+                .execute()
+            )
+            for row in token_result.data or []:
+                tok = (row or {}).get("fcm_token")
+                if tok and tok not in fcm_tokens:
+                    fcm_tokens.append(tok)
+        except Exception as device_err:
+            # `user_devices` may not exist in some environments — fall back
+            # to legacy single-token column on `users`.
+            logger.debug(f"[CoachReplyPush] user_devices lookup failed: {device_err}")
+
+        if not fcm_tokens:
+            try:
+                legacy = (
+                    db.client.table("users")
+                    .select("fcm_token")
+                    .eq("id", user_id)
+                    .limit(1)
+                    .execute()
+                )
+                if legacy.data and legacy.data[0].get("fcm_token"):
+                    fcm_tokens.append(legacy.data[0]["fcm_token"])
+            except Exception as users_err:
+                logger.debug(f"[CoachReplyPush] users.fcm_token fallback failed: {users_err}")
+
+        if not fcm_tokens:
+            logger.info(f"[CoachReplyPush] no FCM tokens for user {user_id} — skipping")
+            return
+
+        # ── notification_preferences gating ──────────────────────────────
+        # Skip when:
+        #   (a) push_notifications_enabled is False (global opt-out), OR
+        #   (b) push_coach_messages is False (per-category opt-out), OR
+        #   (c) current user-local time falls inside the quiet-hours window.
+        try:
+            prefs_result = (
+                db.client.table("notification_preferences")
+                .select(
+                    "push_notifications_enabled,push_coach_messages,"
+                    "quiet_hours_start,quiet_hours_end,timezone"
+                )
+                .eq("user_id", user_id)
+                .limit(1)
+                .execute()
+            )
+            if prefs_result.data:
+                p = prefs_result.data[0]
+                if p.get("push_notifications_enabled") is False:
+                    logger.info(f"[CoachReplyPush] user {user_id} has push disabled — skipping")
+                    return
+                if p.get("push_coach_messages") is False:
+                    logger.info(f"[CoachReplyPush] user {user_id} opted out of coach pushes — skipping")
+                    return
+                # Quiet-hours check in user-local time. start/end are stored
+                # as `time without time zone` (no date). Window may straddle
+                # midnight (e.g. 22:00–07:00) — handle both branches.
+                qstart = p.get("quiet_hours_start")
+                qend = p.get("quiet_hours_end")
+                tz_name = p.get("timezone") or "America/New_York"
+                if qstart and qend:
+                    try:
+                        from datetime import datetime as _dt, time as _time
+                        from zoneinfo import ZoneInfo
+                        # qstart/qend may arrive as "HH:MM:SS" strings or
+                        # datetime.time objects depending on driver. Normalize.
+                        def _to_time(v):
+                            if isinstance(v, _time):
+                                return v
+                            if isinstance(v, str):
+                                parts = v.split(":")
+                                return _time(int(parts[0]), int(parts[1]) if len(parts) > 1 else 0)
+                            return None
+                        start_t = _to_time(qstart)
+                        end_t = _to_time(qend)
+                        if start_t and end_t:
+                            now_local = _dt.now(ZoneInfo(tz_name)).time()
+                            in_quiet = (
+                                start_t <= now_local < end_t
+                                if start_t < end_t
+                                else now_local >= start_t or now_local < end_t
+                            )
+                            if in_quiet:
+                                logger.info(
+                                    f"[CoachReplyPush] user {user_id} in quiet hours "
+                                    f"({start_t}-{end_t} {tz_name}) — skipping"
+                                )
+                                return
+                    except Exception as qerr:
+                        logger.debug(f"[CoachReplyPush] quiet-hours check failed (non-fatal): {qerr}")
+        except Exception as prefs_err:
+            logger.debug(f"[CoachReplyPush] prefs lookup failed (non-fatal): {prefs_err}")
+
+        # ── presence skip ────────────────────────────────────────────────
+        # Skip when the user is currently foregrounded on this exact chat
+        # thread (they're already reading the reply in real time). 30s
+        # heartbeat threshold — anything older means the app is backgrounded.
+        if conversation_id:
+            try:
+                from datetime import datetime as _dt, timedelta, timezone as _tz
+                threshold = _dt.now(_tz.utc) - timedelta(seconds=30)
+                presence_result = (
+                    db.client.table("live_chat_presence")
+                    .select("active_conversation_id,last_active_at,is_online")
+                    .eq("user_id", user_id)
+                    .eq("active_conversation_id", conversation_id)
+                    .gte("last_active_at", threshold.isoformat())
+                    .limit(1)
+                    .execute()
+                )
+                if presence_result.data:
+                    logger.info(
+                        f"[CoachReplyPush] user {user_id} foregrounded on conv "
+                        f"{conversation_id} — skipping push"
+                    )
+                    return
+            except Exception as pres_err:
+                logger.debug(f"[CoachReplyPush] presence check failed (non-fatal): {pres_err}")
+
+        # ── Resolve persona name ─────────────────────────────────────────
+        persona_name = "Coach"
+        try:
+            persona_result = (
+                db.client.table("user_ai_settings")
+                .select("coach_name")
+                .eq("user_id", user_id)
+                .limit(1)
+                .execute()
+            )
+            if persona_result.data:
+                name_val = (persona_result.data[0].get("coach_name") or "").strip()
+                if name_val:
+                    persona_name = name_val
+        except Exception as persona_err:
+            logger.debug(f"[CoachReplyPush] persona lookup failed: {persona_err}")
+
+        # ── Resolve user first name for body personalization ─────────────
+        first_name_value = "there"
+        try:
+            user_row_result = (
+                db.client.table("users")
+                .select("name, display_name, email")
+                .eq("id", user_id)
+                .limit(1)
+                .execute()
+            )
+            if user_row_result.data:
+                from services.email_helpers import first_name as _first_name
+                first_name_value = _first_name(user_row_result.data[0])
+        except Exception as name_err:
+            logger.debug(f"[CoachReplyPush] first_name lookup failed: {name_err}")
+
+        # ── Build title + body ───────────────────────────────────────────
+        title = f"{persona_name} replied"
+        # Strip newlines so notification body renders as a single line, then
+        # cap at 120 chars (Apple/Android both truncate longer bodies anyway).
+        cleaned = " ".join(ai_text.split()).strip()
+        preview = cleaned[:120]
+        body = f"{first_name_value}, {preview}" if first_name_value and first_name_value != "there" else preview
+
+        # ── Send to every device ─────────────────────────────────────────
+        from services.notification_service import get_notification_service
+        notif_service = get_notification_service()
+        if not notif_service:
+            logger.warning("[CoachReplyPush] notification service unavailable — skipping")
+            return
+
+        data_payload = {
+            "type": "coach_reply",
+            "conversation_id": conversation_id or "",
+            "agent_name": agent_name or "",
+            "preview": preview,
+        }
+
+        for tok in fcm_tokens:
+            try:
+                await notif_service.send_notification(
+                    fcm_token=tok,
+                    title=title,
+                    body=body,
+                    notification_type="ai_coach",
+                    data=data_payload,
+                )
+            except Exception as send_err:
+                logger.warning(
+                    f"[CoachReplyPush] send failed for token {tok[:12]}…: {send_err}",
+                    exc_info=True,
+                )
+
+        logger.info(
+            f"[CoachReplyPush] sent to user={user_id} devices={len(fcm_tokens)} persona={persona_name}"
+        )
+    except Exception as outer_err:
+        # Background-task: never let a push-notification failure surface to
+        # the user — log and move on.
+        logger.warning(f"[CoachReplyPush] unexpected error: {outer_err}", exc_info=True)
+
+
 async def _retry_task(fn, *args, max_retries=3, task_name=""):
     """Retry a background task with exponential backoff. Handles both sync and async callables."""
     for attempt in range(max_retries):
@@ -183,7 +440,7 @@ async def _retry_task(fn, *args, max_retries=3, task_name=""):
     logger.error(f"[Background] {task_name} failed after {max_retries} attempts")
 
 
-@router.post("/send", response_model=ChatResponse)
+@router.post("/send")
 @limiter.limit("10/minute", key_func=_chat_send_key)
 async def send_message(
     request: Request,  # Must be named 'request' for slowapi rate limiter
@@ -250,7 +507,12 @@ async def send_message(
     try:
         response = await coach.process_message(chat_request)
         response_time_ms = int((time.time() - start_time) * 1000)
-        logger.info(f"Chat response sent: intent={response.intent}, rag_used={response.rag_context_used}, time={response_time_ms}ms")
+        # 🎯 Stable assistant_message_id generated up-front so the persisted
+        # row PK matches what we hand back to the client. Mirrors the SSE
+        # path's dedup contract — without it the client sees the same reply
+        # twice (once via the /send return + once via Realtime/loadHistory).
+        assistant_message_id = str(uuid.uuid4())
+        logger.info(f"✅ Chat response sent: intent={response.intent}, rag_used={response.rag_context_used}, time={response_time_ms}ms, message_id={assistant_message_id}")
 
         # Track premium gate usage after successful processing
         background_tasks.add_task(track_premium_usage, chat_request.user_id, "ai_chat", _chat_tz)
@@ -286,6 +548,7 @@ async def send_message(
                 _coach_persona_id,
                 _media_url,
                 _media_type,
+                assistant_message_id,
                 task_name="save_chat_to_db",
             )
         else:
@@ -316,7 +579,30 @@ async def send_message(
             task_name="log_chat_activity",
         )
 
-        return response
+        # Push notification for the coach reply (Issue 5). Scheduled here —
+        # AFTER the response object exists — so the user gets a push when the
+        # app is backgrounded. Helper handles preference / persona resolution
+        # and never raises; safe to schedule unconditionally.
+        _agent_name = (
+            response.agent_type.value
+            if hasattr(response.agent_type, "value")
+            else (str(response.agent_type) if response.agent_type else None)
+        )
+        background_tasks.add_task(
+            send_coach_reply_push,
+            str(chat_request.user_id),
+            response.message,
+            chat_request.conversation_id,
+            _agent_name,
+        )
+
+        # Return ChatResponse fields PLUS message_id so the client can use it
+        # as the local in-memory id for the assistant bubble. Any subsequent
+        # loadHistory/Realtime fetch will return a row with this same id and
+        # the client dedups by id (UPSERT) instead of appending again.
+        payload = response.model_dump(mode="json") if hasattr(response, "model_dump") else response.dict()
+        payload["message_id"] = assistant_message_id
+        return payload
     except Exception as e:
         logger.error(f"Failed to process message: {e}", exc_info=True)
         # Log error to database with webhook alert
@@ -390,7 +676,8 @@ async def get_chat_history(
             coach_persona_id = None
             if row.get("context_json"):
                 try:
-                    context = json.loads(row.get("context_json"))
+                    raw_ctx = row.get("context_json")
+                    context = raw_ctx if isinstance(raw_ctx, dict) else json.loads(raw_ctx)
                     # Extract nested action_data if present (for "Go to Workout" button)
                     action_data = context.get("action_data")
                     agent_type = context.get("agent_type")
@@ -534,7 +821,8 @@ async def search_chat(
             agent_type = None
             if row.get("context_json"):
                 try:
-                    context = json.loads(row.get("context_json"))
+                    raw_ctx = row.get("context_json")
+                    context = raw_ctx if isinstance(raw_ctx, dict) else json.loads(raw_ctx)
                     action_data = context.get("action_data")
                     agent_type = context.get("agent_type")
                 except Exception:
@@ -600,22 +888,56 @@ async def send_message_stream(
 
     async def _stream_response():
         start_time = time.time()
-        yield f"data: {json.dumps({'event': 'start', 'agent': 'coach'})}\n\n"
+        # Stable assistant message ID shared with the persisted DB row so
+        # the client can dedupe (SSE token append vs. Realtime row insert).
+        assistant_message_id = str(uuid.uuid4())
+        yield f"data: {json.dumps({'event': 'start', 'agent': 'coach', 'id': assistant_message_id})}\n\n"
 
         try:
             response = await coach.process_message(chat_request)
             response_time_ms = int((time.time() - start_time) * 1000)
 
-            # Chunk the response text into ~20-word segments
+            # Chunk the response text into ~20-word segments. Emit the
+            # assistant_message_id on EVERY token event — the client only
+            # needs to capture it once but emitting on each chunk keeps the
+            # stream self-describing in case the start frame was dropped.
             words = response.message.split()
+            first = True
             for i in range(0, len(words), 20):
                 chunk = ' '.join(words[i:i + 20])
-                yield f"data: {json.dumps({'event': 'token', 'text': chunk})}\n\n"
+                token_evt = {'event': 'token', 'id': assistant_message_id, 'text': chunk}
+                if first:
+                    first = False
+                yield f"data: {json.dumps(token_evt)}\n\n"
 
-            yield f"data: {json.dumps({'event': 'done', 'action_data': response.action_data})}\n\n"
+            yield f"data: {json.dumps({'event': 'done', 'id': assistant_message_id, 'action_data': response.action_data})}\n\n"
 
             # Track AI chat usage for daily budget
             background_tasks.add_task(track_premium_usage, chat_request.user_id, "ai_chat", _stream_tz)
+
+            # ── Push notification FIRST ─────────────────────────────────
+            # Push notification for the coach reply. Scheduled BEFORE the
+            # DB-save task so a mid-stream client cancel still fires the
+            # push (FastAPI runs background tasks in the order they were
+            # added). Wrapped at the call-site in `send_coach_reply_push`
+            # itself with try/except — additional defensive logging here
+            # so a push failure NEVER breaks the response path.
+            _stream_agent_name = (
+                response.agent_type.value
+                if hasattr(response.agent_type, "value")
+                else (str(response.agent_type) if response.agent_type else None)
+            )
+            try:
+                background_tasks.add_task(
+                    send_coach_reply_push,
+                    str(chat_request.user_id),
+                    response.message,
+                    chat_request.conversation_id,
+                    _stream_agent_name,
+                )
+            except Exception as push_sched_err:
+                # ⚠️ Scheduling itself failed (very unlikely). Log and continue.
+                logger.warning(f"⚠️ Failed to schedule coach push: {push_sched_err}")
 
             # Schedule background tasks for DB persistence — honor the
             # user's save_chat_history preference.
@@ -632,6 +954,9 @@ async def send_message_stream(
                     response.rag_context_used,
                     response.action_data,
                     _stream_coach_persona_id,
+                    None,  # media_url
+                    None,  # media_type
+                    assistant_message_id,
                     task_name="save_chat_to_db",
                 )
             else:
@@ -659,6 +984,8 @@ async def send_message_stream(
                 response_time_ms,
                 task_name="log_chat_activity",
             )
+
+            # (Push scheduled earlier — see "Push notification FIRST" above.)
         except Exception as e:
             logger.error(f"Streaming error: {e}", exc_info=True)
             yield f"data: {json.dumps({'event': 'error', 'message': str(e)})}\n\n"

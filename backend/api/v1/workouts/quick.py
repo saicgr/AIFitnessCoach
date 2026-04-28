@@ -11,7 +11,7 @@ from core.db import get_supabase_db
 import asyncio
 import json
 from datetime import datetime
-from typing import Optional, List, Literal
+from typing import Any, Optional, List, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, BackgroundTasks
 from core.auth import get_current_user
@@ -727,3 +727,123 @@ async def get_quick_workout_source_analytics(
             },
             "error": str(e),
         }
+
+
+# ============================================
+# Quick Day Change — update user's workout schedule (Mon=0..Sun=6) and
+# reschedule any future-dated, not-yet-completed workouts to land on the
+# new days. Frontend caller: workout_repository_generation.dart line ~862.
+# ============================================
+
+class QuickDayChangeRequest(BaseModel):
+    user_id: str
+    # Accept ints (0=Mon..6=Sun) OR day-name strings ('Mon','Tuesday',etc.).
+    # The Flutter client currently sends strings via _days[].short — keep
+    # both forms working so neither side has to change in lockstep.
+    workout_days: List[Any] = Field(..., description="0=Monday..6=Sunday OR 'Mon'..'Sun'")
+
+
+_DAY_NAME_TO_IDX = {
+    'mon': 0, 'monday': 0,
+    'tue': 1, 'tues': 1, 'tuesday': 1,
+    'wed': 2, 'weds': 2, 'wednesday': 2,
+    'thu': 3, 'thur': 3, 'thurs': 3, 'thursday': 3,
+    'fri': 4, 'friday': 4,
+    'sat': 5, 'saturday': 5,
+    'sun': 6, 'sunday': 6,
+}
+
+
+def _coerce_day(d: Any) -> Optional[int]:
+    if isinstance(d, bool):
+        return None
+    if isinstance(d, (int, float)):
+        idx = int(d)
+        return idx if 0 <= idx <= 6 else None
+    if isinstance(d, str):
+        key = d.strip().lower()
+        if key.isdigit():
+            idx = int(key)
+            return idx if 0 <= idx <= 6 else None
+        return _DAY_NAME_TO_IDX.get(key)
+    return None
+
+
+@router.patch("/quick-day-change")
+async def quick_day_change(
+    request: QuickDayChangeRequest,
+    current_user: dict = Depends(get_current_user),
+):
+    """Update workout days in user preferences and reschedule upcoming workouts."""
+    if str(current_user["id"]) != str(request.user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
+
+    coerced = [_coerce_day(d) for d in request.workout_days]
+    new_days = sorted({idx for idx in coerced if idx is not None})
+    if not new_days:
+        raise HTTPException(
+            status_code=400,
+            detail="workout_days must contain at least one day (0=Mon..6=Sun or day name)",
+        )
+
+    db = get_supabase_db()
+
+    # Read current preferences + active gym profile.
+    user_row = db.client.table("users").select("preferences").eq("id", request.user_id).maybe_single().execute()
+    prefs = {}
+    if user_row and user_row.data:
+        raw_prefs = user_row.data.get("preferences") or {}
+        prefs = raw_prefs if isinstance(raw_prefs, dict) else (json.loads(raw_prefs) if raw_prefs else {})
+    old_days = sorted({int(d) for d in (prefs.get("workout_days") or prefs.get("selected_days") or []) if isinstance(d, (int, float))})
+
+    # Persist new workout_days into preferences.
+    prefs["workout_days"] = new_days
+    db.client.table("users").update({"preferences": prefs}).eq("id", request.user_id).execute()
+
+    # Reschedule future scheduled-but-not-completed workouts onto the nearest
+    # new day. Past workouts and completed workouts are untouched.
+    from datetime import date, timedelta
+    today = date.today()
+    future = (
+        db.client.table("workouts")
+        .select("id, scheduled_date, is_completed")
+        .eq("user_id", request.user_id)
+        .gte("scheduled_date", today.isoformat())
+        .eq("is_completed", False)
+        .execute()
+    )
+    rescheduled = 0
+    unchanged = 0
+    for w in (future.data or []):
+        sched = w.get("scheduled_date")
+        if not sched:
+            continue
+        try:
+            d = date.fromisoformat(sched)
+        except Exception:
+            continue
+        if d.weekday() in new_days:
+            unchanged += 1
+            continue
+        # Find nearest forward day (within 7 days) that is in the new schedule.
+        target = None
+        for delta in range(1, 8):
+            candidate = d + timedelta(days=delta)
+            if candidate.weekday() in new_days:
+                target = candidate
+                break
+        if target is None:
+            continue
+        try:
+            db.client.table("workouts").update({"scheduled_date": target.isoformat()}).eq("id", w["id"]).execute()
+            rescheduled += 1
+        except Exception as upd_err:
+            logger.warning(f"[quick-day-change] failed to reschedule workout {w.get('id')}: {upd_err}")
+
+    return {
+        "message": "Workout days updated.",
+        "rescheduled_count": rescheduled,
+        "unchanged_count": unchanged,
+        "old_days": old_days,
+        "new_days": new_days,
+    }

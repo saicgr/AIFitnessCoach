@@ -367,6 +367,33 @@ def get_target_intensity(
     return DEFAULT_INTENSITY
 
 
+@router.get("/smart-weight/by-name/{user_id}", response_model=SmartWeightResponse)
+async def get_smart_weight_by_name(
+    user_id: str,
+    exercise_name: str = Query(..., description="Name of the exercise"),
+    target_reps: int = Query(default=10, ge=1, le=50),
+    goal: TrainingGoal = Query(default=TrainingGoal.HYPERTROPHY),
+    equipment: str = Query(default="dumbbell"),
+    current_user: dict = Depends(get_current_user),
+):
+    """
+    Get smart weight suggestion by exercise name (no exercise_id required).
+
+    This is a convenience endpoint for cases where exercise_id is not available.
+    Uses fuzzy matching on exercise name. NOTE: must be declared BEFORE the
+    parameterized /smart-weight/{user_id}/{exercise_id} route or FastAPI will
+    match "by-name" as the user_id path param.
+    """
+    return await get_smart_weight(
+        user_id=user_id,
+        exercise_id=None,
+        exercise_name=exercise_name,
+        target_reps=target_reps,
+        goal=goal,
+        equipment=equipment,
+    )
+
+
 @router.get("/smart-weight/{user_id}/{exercise_id}", response_model=SmartWeightResponse)
 async def get_smart_weight(
     user_id: str,
@@ -508,27 +535,3 @@ async def get_smart_weight(
         raise safe_internal_error(e, "smart_weights")
 
 
-@router.get("/smart-weight/by-name/{user_id}", response_model=SmartWeightResponse)
-async def get_smart_weight_by_name(
-    user_id: str,
-    exercise_name: str = Query(..., description="Name of the exercise"),
-    target_reps: int = Query(default=10, ge=1, le=50),
-    goal: TrainingGoal = Query(default=TrainingGoal.HYPERTROPHY),
-    equipment: str = Query(default="dumbbell"),
-    current_user: dict = Depends(get_current_user),
-):
-    """
-    Get smart weight suggestion by exercise name (no exercise_id required).
-
-    This is a convenience endpoint for cases where exercise_id is not available.
-    Uses fuzzy matching on exercise name.
-    """
-    # Delegate to the main endpoint with exercise_name
-    return await get_smart_weight(
-        user_id=user_id,
-        exercise_id=None,  # No ID, will use name
-        exercise_name=exercise_name,
-        target_reps=target_reps,
-        goal=goal,
-        equipment=equipment,
-    )

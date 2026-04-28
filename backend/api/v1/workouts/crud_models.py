@@ -177,6 +177,16 @@ class WorkoutSummaryResponse(BaseModel):
     completion_method: Optional[str] = None
     completed_at: Optional[str] = None
     set_logs: List[SetLogInfo] = []
+    # Cardio-specific aggregates surfaced to the advanced summary's cardio
+    # panel (Issue 14 follow-up). Populated from `workouts.generation_metadata`
+    # for imported sessions and from `workout_logs` for manually logged
+    # cardio. Null for strength/bodyweight sessions — the cardio panel is
+    # hidden in that case.
+    distance_meters: Optional[float] = None
+    avg_hr_bpm: Optional[int] = None
+    max_hr_bpm: Optional[int] = None
+    pace_seconds_per_km: Optional[float] = None
+    elevation_gain_meters: Optional[float] = None
 
 
 class UpdateExerciseSetsRequest(BaseModel):

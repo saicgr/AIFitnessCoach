@@ -8,7 +8,11 @@ final referralRepositoryProvider = Provider<ReferralRepository>((ref) {
   return ReferralRepository(ref.watch(apiClientProvider));
 });
 
-final referralSummaryProvider = FutureProvider<ReferralSummary>((ref) async {
+// `.autoDispose` — only the referrals screen reads this; tearing it down
+// on screen exit cancels the in-flight request and forces a fresh fetch
+// next time the user opens referrals (summary may have changed).
+final referralSummaryProvider =
+    FutureProvider.autoDispose<ReferralSummary>((ref) async {
   return ref.watch(referralRepositoryProvider).getSummary();
 });
 

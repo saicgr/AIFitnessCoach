@@ -1,8 +1,9 @@
 """Food search/lookup endpoints (USDA, branded, whole foods)."""
+import asyncio
 import time
 from core.db import get_supabase_db
 from datetime import datetime
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel
@@ -67,7 +68,9 @@ class CombinedFoodSearchResponse(BaseModel):
 @router.get("/food-search", response_model=USDASearchResponse)
 async def search_foods(
     query: str = Query(..., min_length=1, max_length=200, description="Food search query"),
-    page_size: int = Query(default=25, ge=1, le=50, description="Number of results per page"),
+    # NOTE: list-view payload is intentionally capped at 10 (plan A2). Full
+    # nutrient detail is fetched on the per-item endpoint.
+    page_size: int = Query(default=10, ge=1, le=10, description="Number of results per page"),
     page: int = Query(default=1, ge=1, description="Page number"),
     source: Optional[str] = Query(
         default=None,
@@ -119,25 +122,40 @@ async def search_foods(
         food_db_service = get_food_db_lookup_service()
 
         _search_start = time.time()
-        if user_id:
-            results = await food_db_service.search_foods_unified(
-                query=query,
-                user_id=user_id,
-                page_size=page_size,
-                page=page,
-                restaurant=restaurant,
-                food_category=category,
-                region=country,
-            )
-        else:
-            results = await food_db_service.search_foods(
-                query=query,
-                page_size=page_size,
-                page=page,
-                source=source,
-                restaurant=restaurant,
-                food_category=category,
-                region=country,
+        # Hard 5s ceiling on the underlying search. On timeout return 504 with
+        # an empty list so the UI's existing error path triggers (plan A2).
+        try:
+            if user_id:
+                results = await asyncio.wait_for(
+                    food_db_service.search_foods_unified(
+                        query=query,
+                        user_id=user_id,
+                        page_size=page_size,
+                        page=page,
+                        restaurant=restaurant,
+                        food_category=category,
+                        region=country,
+                    ),
+                    timeout=5.0,
+                )
+            else:
+                results = await asyncio.wait_for(
+                    food_db_service.search_foods(
+                        query=query,
+                        page_size=page_size,
+                        page=page,
+                        source=source,
+                        restaurant=restaurant,
+                        food_category=category,
+                        region=country,
+                    ),
+                    timeout=5.0,
+                )
+        except asyncio.TimeoutError:
+            logger.warning(f"⚠️ [FoodSearch] search timeout (>5s) for query='{query}'")
+            raise HTTPException(
+                status_code=504,
+                detail={"results": [], "error": "search_timeout"},
             )
         _search_time_ms = int((time.time() - _search_start) * 1000)
 
@@ -154,22 +172,24 @@ async def search_foods(
                 logger.warning(f"[FoodSearch] Skipping bad data: '{item.get('name')}' has {_cal} cal/100g with macros P={_prot} F={_fat} C={_carbs}")
                 continue
 
-            nutrients = {
-                "calories_per_100g": item.get("calories_per_100g", 0),
-                "protein_per_100g": item.get("protein_per_100g", 0),
-                "carbs_per_100g": item.get("carbs_per_100g", 0),
-                "fat_per_100g": item.get("fat_per_100g", 0),
-                "fiber_per_100g": item.get("fiber_per_100g", 0),
-                "sugar_per_100g": item.get("sugar_per_100g", 0),
+            # List-view payload is intentionally trimmed to a flat shape
+            # (kcal / protein / carbs / fat / serving). Full nutrient detail
+            # is exposed on GET /food/{fdc_id} (plan A2).
+            serving_weight = item.get("serving_weight_g") or item.get("weight_per_unit_g")
+            nutrients: Dict[str, Any] = {
+                "kcal": item.get("calories_per_100g", 0) or 0,
+                "protein_g": item.get("protein_per_100g", 0) or 0,
+                "carbs_g": item.get("carbs_per_100g", 0) or 0,
+                "fat_g": item.get("fat_per_100g", 0) or 0,
+                "serving_weight_g": serving_weight,
             }
 
-            # Calculate per-serving if serving info available
+            # Per-serving calculation (kept flat — same trimmed shape as above)
             nutrients_per_serving = None
-            serving_weight = item.get("serving_weight_g") or item.get("weight_per_unit_g")
             if serving_weight and serving_weight > 0:
                 mult = serving_weight / 100.0
                 nutrients_per_serving = {
-                    "calories": round((item.get("calories_per_100g", 0) or 0) * mult, 1),
+                    "kcal": round((item.get("calories_per_100g", 0) or 0) * mult, 1),
                     "protein_g": round((item.get("protein_per_100g", 0) or 0) * mult, 1),
                     "carbs_g": round((item.get("carbs_per_100g", 0) or 0) * mult, 1),
                     "fat_g": round((item.get("fat_per_100g", 0) or 0) * mult, 1),

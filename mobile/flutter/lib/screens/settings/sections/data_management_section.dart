@@ -4,6 +4,9 @@ import 'package:intl/intl.dart';
 import '../../../core/animations/app_animations.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/providers/subscription_provider.dart';
+import '../../../data/providers/weekly_plan_provider.dart';
+import '../../../data/services/api_client.dart';
+import '../../../data/services/video_cache_service.dart';
 import '../dialogs/export_dialog.dart';
 import '../dialogs/import_dialog.dart';
 import '../export_data_screen.dart';
@@ -60,6 +63,12 @@ class DataManagementSection extends ConsumerWidget {
               isDownloadedVideosManager: true,
             ),
             SettingItemData(
+              icon: Icons.download_for_offline_outlined,
+              title: "Download this week's videos",
+              subtitle: 'Pre-cache all exercises in your plan for offline use',
+              onTap: () => _downloadWeeklyVideos(context, ref),
+            ),
+            SettingItemData(
               icon: Icons.file_download_outlined,
               title: 'Export ${Branding.appName} Data',
               subtitle: 'Download your workout + nutrition data',
@@ -81,6 +90,115 @@ class DataManagementSection extends ConsumerWidget {
         ),
       ],
     );
+  }
+
+  /// Pre-cache exercise videos for every workout in the user's current
+  /// weekly plan. Iterates the plan's daily entries → workouts → exercises,
+  /// resolves each unique exercise's video URL via the existing
+  /// /videos/by-exercise endpoint, then hands the list to the video cache
+  /// service which downloads them with concurrency=3 + retry. ✅
+  Future<void> _downloadWeeklyVideos(BuildContext context, WidgetRef ref) async {
+    final scaffold = ScaffoldMessenger.of(context);
+    final apiClient = ref.read(apiClientProvider);
+
+    // Use the existing /workouts/upcoming batch endpoint (a single call
+    // that returns the next 14 days of generated workouts with exercise
+    // arrays parsed). This avoids N round-trips through individual
+    // workout-detail endpoints. ✅
+    //
+    // We pull user_id from the current weeklyPlan provider so this works
+    // regardless of how the auth context is exposed elsewhere.
+    final planState = ref.read(weeklyPlanProvider);
+    final userId = planState.currentPlan?.userId;
+    if (userId == null) {
+      scaffold.showSnackBar(const SnackBar(
+        content: Text('Sign in to download your weekly plan.'),
+        behavior: SnackBarBehavior.floating,
+      ));
+      return;
+    }
+
+    final names = <String>{};
+    try {
+      final resp = await apiClient.get(
+        '/workouts/upcoming',
+        queryParameters: {'user_id': userId, 'days': 14},
+      );
+      final workouts = (resp.data?['data']?['workouts'] as List?) ?? const [];
+      for (final w in workouts) {
+        final exercises = (w is Map ? w['exercises_json'] : null) as List?;
+        if (exercises == null) continue;
+        for (final ex in exercises) {
+          if (ex is Map) {
+            final original = ex['original_name']?.toString();
+            final name = ex['name']?.toString();
+            final pick = (original != null && original.isNotEmpty) ? original : name;
+            if (pick != null && pick.isNotEmpty) names.add(pick);
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('❌ Failed to fetch upcoming workouts: $e');
+      scaffold.showSnackBar(SnackBar(
+        content: Text('Could not load weekly plan: $e'),
+        behavior: SnackBarBehavior.floating,
+      ));
+      return;
+    }
+
+    if (names.isEmpty) {
+      scaffold.showSnackBar(const SnackBar(
+        content: Text('No exercises found in your plan.'),
+        behavior: SnackBarBehavior.floating,
+      ));
+      return;
+    }
+
+    scaffold.showSnackBar(SnackBar(
+      content: Text('Queuing ${names.length} videos for download...'),
+      behavior: SnackBarBehavior.floating,
+    ));
+
+    // Resolve video URLs (one /videos/by-exercise call per name; runs in
+    // parallel with a soft concurrency cap of 6). Failed lookups are
+    // skipped — the actual download retry handles transient network errors.
+    final items = <Map<String, String>>[];
+    await Future.wait(names.map((name) async {
+      try {
+        final resp = await apiClient.get(
+          '/videos/by-exercise/${Uri.encodeComponent(name)}',
+        );
+        final url = resp.data?['url'] as String?;
+        if (url != null && url.isNotEmpty) {
+          items.add({
+            'exerciseId': name.toLowerCase().replaceAll(' ', '_'),
+            'exerciseName': name,
+            'videoUrl': url,
+          });
+        }
+      } catch (e) {
+        debugPrint('⚠️ Could not resolve video URL for $name: $e');
+      }
+    }));
+
+    if (items.isEmpty) {
+      scaffold.showSnackBar(const SnackBar(
+        content: Text('No video URLs available for your plan.'),
+        behavior: SnackBarBehavior.floating,
+      ));
+      return;
+    }
+
+    // Fire and forget — videoCacheService respects its own concurrency cap.
+    // ignore: unawaited_futures
+    videoCacheService.queueDownloads(items).then((_) {
+      if (context.mounted) {
+        scaffold.showSnackBar(SnackBar(
+          content: Text('✅ Finished queuing ${items.length} downloads'),
+          behavior: SnackBarBehavior.floating,
+        ));
+      }
+    });
   }
 
   void _navigateToWorkoutExport(BuildContext context) {

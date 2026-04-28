@@ -47,16 +47,22 @@ class _QuickActionsSheet extends ConsumerStatefulWidget {
   ConsumerState<_QuickActionsSheet> createState() => _QuickActionsSheetState();
 }
 
+// Three high-level groups (was 5). The previous 5-category breakdown made
+// the More sheet feel overwhelming — Issue 6. Each group now consolidates
+// related actions so the user scans 3 headers, not 5.
 const _categories = <String, List<String>>{
-  // Every food-log entry-point is surfaced here so the user can pick the
-  // logging flow that matches what's in front of them: text+AI, single
-  // photo, multi-photo (whole meal across plates), menu OCR, or barcode.
-  // These are the same flows the LogMealSheet supports via `autoOpen*`.
-  'Food Log': ['food', 'photo_food', 'scan_food', 'scan_menu', 'barcode_food'],
-  'Track': ['weight', 'water', 'photo', 'mood', 'measure'],
-  'Workout': ['quick_workout', 'workout', 'steps', 'library'],
-  // COMING SOON: 'fasting' removed — re-add when fasting feature launches
-  'Plan & Review': ['schedule', 'habits', 'history', 'progress', 'stats', 'summaries', 'achievements'],
+  // LOG: every "I just did X" entry-point — food logging variants, weight,
+  // water, mood, photo, measurements.
+  'Log': [
+    'food', 'photo_food', 'scan_food', 'scan_menu', 'barcode_food',
+    'weight', 'water', 'photo', 'mood', 'measure',
+  ],
+  // PLAN: workout flows + review/progress surfaces.
+  'Plan': [
+    'quick_workout', 'workout', 'steps', 'library',
+    'schedule', 'habits', 'history', 'progress', 'stats', 'summaries', 'achievements',
+  ],
+  // TOOLS: chat, hydration, settings.
   'Tools': ['chat', 'hydration', 'settings'],
 };
 
@@ -257,6 +263,9 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
         : <String>[];
 
     return GlassSheet(
+      // Cap the More sheet at 75% so it reads as a focused picker rather than
+      // a near-fullscreen wall of options (Issue 6 — felt overwhelming).
+      maxHeightFraction: 0.75,
       child: SafeArea(
         top: false,
         child: SingleChildScrollView(
@@ -548,6 +557,9 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
     final order = ref.watch(quickActionOrderProvider);
 
     return GlassSheet(
+      // Cap the More sheet at 75% so it reads as a focused picker rather than
+      // a near-fullscreen wall of options (Issue 6 — felt overwhelming).
+      maxHeightFraction: 0.75,
       child: SafeArea(
         top: false,
         child: Column(

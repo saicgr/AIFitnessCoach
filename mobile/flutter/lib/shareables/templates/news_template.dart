@@ -135,7 +135,7 @@ class NewsTemplate extends StatelessWidget {
           Expanded(
             child: Center(
               child: Text(
-                'THE FITWIZ TIMES',
+                'THE ZEALOVA TIMES',
                 style: TextStyle(
                   fontFamily: 'Times New Roman',
                   fontSize: data.aspect == ShareableAspect.story ? 34 : 28,

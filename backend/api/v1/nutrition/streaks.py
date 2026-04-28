@@ -1,6 +1,6 @@
 """Nutrition streak tracking endpoints."""
 from core.db import get_supabase_db
-from datetime import datetime
+from datetime import datetime, timedelta, date as date_type
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -43,6 +43,63 @@ async def get_nutrition_streak(user_id: str, current_user: dict = Depends(get_cu
                 data = {"user_id": user_id}
         else:
             data = result.data
+
+        # Self-heal: if last_logged_date is null but food_logs exist, backfill
+        # streak from actual logs. Covers users who logged before streak-update
+        # background task was wired into logging endpoints.
+        if not data.get("last_logged_date"):
+            try:
+                import pytz
+                user_tz_result = db.client.table("user_profiles") \
+                    .select("timezone") \
+                    .eq("user_id", user_id) \
+                    .maybe_single() \
+                    .execute()
+                tz_str = (user_tz_result.data or {}).get("timezone") or "UTC"
+                tz = pytz.timezone(tz_str)
+                today_local: date_type = datetime.now(tz).date()
+                cutoff_utc = (datetime.now(pytz.utc) - timedelta(days=90)).isoformat()
+                logs_result = db.client.table("food_logs") \
+                    .select("logged_at") \
+                    .eq("user_id", user_id) \
+                    .gte("logged_at", cutoff_utc) \
+                    .order("logged_at", desc=True) \
+                    .execute()
+                if logs_result.data:
+                    # Collect distinct local dates from food_logs
+                    logged_dates = sorted(
+                        {date_type.fromisoformat(
+                            datetime.fromisoformat(
+                                str(r["logged_at"]).replace("Z", "+00:00")
+                            ).astimezone(tz).strftime("%Y-%m-%d")
+                        ) for r in logs_result.data},
+                        reverse=True,
+                    )
+                    # Compute consecutive streak ending at most-recent log
+                    streak = 1
+                    for i in range(1, len(logged_dates)):
+                        if (logged_dates[i - 1] - logged_dates[i]).days == 1:
+                            streak += 1
+                        else:
+                            break
+                    most_recent = logged_dates[0]
+                    # Streak is live only if logged today or yesterday
+                    days_since = (today_local - most_recent).days
+                    active_streak = streak if days_since <= 1 else 0
+                    update = {
+                        "current_streak_days": active_streak,
+                        "total_days_logged": len(logged_dates),
+                        "longest_streak_ever": max(data.get("longest_streak_ever", 0), streak),
+                        "last_logged_date": most_recent.isoformat(),
+                    }
+                    if active_streak > 0:
+                        update["streak_start_date"] = logged_dates[streak - 1].isoformat()
+                    db.client.table("nutrition_streaks") \
+                        .upsert({"user_id": user_id, **update}, on_conflict="user_id") \
+                        .execute()
+                    data.update(update)
+            except Exception as heal_err:
+                logger.warning(f"Streak self-heal failed for {user_id}: {heal_err}")
 
         return NutritionStreakResponse(
             id=data.get("id"),

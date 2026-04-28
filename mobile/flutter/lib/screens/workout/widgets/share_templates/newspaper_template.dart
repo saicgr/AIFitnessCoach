@@ -59,7 +59,7 @@ class NewspaperTemplate extends StatelessWidget {
             // Masthead
             Center(
               child: Text(
-                'THE FITWIZ TIMES',
+                'THE ZEALOVA TIMES',
                 style: TextStyle(
                   fontFamily: 'serif',
                   fontSize: 22,
@@ -174,7 +174,7 @@ class NewspaperTemplate extends StatelessWidget {
                 ),
                 if (showWatermark)
                   const Text(
-                    'fitwiz',
+                    'zealova',
                     style: TextStyle(
                       fontFamily: 'serif',
                       fontSize: 11,

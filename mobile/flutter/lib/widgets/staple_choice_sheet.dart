@@ -281,6 +281,34 @@ class _StapleChoiceSheetState extends ConsumerState<StapleChoiceSheet> {
       if (rpe != null) params['rpe'] = rpe;
     }
 
+    // Non-cardio "More (optional)" fields — only emitted when the user
+    // actually typed a value AND it differs from the controller's pre-filled
+    // default. Lets custom exercises like "Cat Nap" capture distance / incline
+    // / duration / speed without forcing all strength rows to inherit cardio
+    // defaults they never asked for.
+    if (!_isCardio && _showStrengthParams) {
+      const _defaults = {
+        'duration': '10',
+        'incline': '5',
+        'speed': '3.5',
+      };
+      double? _readIfEdited(TextEditingController c, String defaultKey) {
+        final text = c.text.trim();
+        if (text.isEmpty) return null;
+        if (text == _defaults[defaultKey]) return null;
+        return double.tryParse(text);
+      }
+
+      final duration = _readIfEdited(_durationController, 'duration');
+      if (duration != null) params['duration_seconds'] = duration * 60;
+      final distance = double.tryParse(_distanceController.text.trim());
+      if (distance != null) params['distance_miles'] = distance;
+      final incline = _readIfEdited(_inclineController, 'incline');
+      if (incline != null) params['incline_percent'] = incline;
+      final speed = _readIfEdited(_speedController, 'speed');
+      if (speed != null) params['speed_mph'] = speed;
+    }
+
     return params.isEmpty ? null : params;
   }
 
@@ -680,6 +708,52 @@ class _StapleChoiceSheetState extends ConsumerState<StapleChoiceSheet> {
                   label: 'Rest',
                   controller: _restController,
                   suffix: 'sec',
+                  textPrimary: textPrimary,
+                  textMuted: textMuted,
+                ),
+                // Optional extra fields — exposed for any non-cardio exercise
+                // so custom exercises (e.g. "Cat Nap") and walks/incline work
+                // can capture distance/duration/incline alongside sets/reps.
+                // All optional; empty values are dropped in _buildCardioParams.
+                const SizedBox(height: 12),
+                Text(
+                  'More (optional)',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: textMuted,
+                    letterSpacing: 0.4,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                _buildCardioField(
+                  label: 'Duration',
+                  controller: _durationController,
+                  suffix: 'min',
+                  textPrimary: textPrimary,
+                  textMuted: textMuted,
+                ),
+                const SizedBox(height: 8),
+                _buildCardioField(
+                  label: 'Distance',
+                  controller: _distanceController,
+                  suffix: 'mi',
+                  textPrimary: textPrimary,
+                  textMuted: textMuted,
+                ),
+                const SizedBox(height: 8),
+                _buildCardioField(
+                  label: 'Incline',
+                  controller: _inclineController,
+                  suffix: '%',
+                  textPrimary: textPrimary,
+                  textMuted: textMuted,
+                ),
+                const SizedBox(height: 8),
+                _buildCardioField(
+                  label: 'Speed',
+                  controller: _speedController,
+                  suffix: 'mph',
                   textPrimary: textPrimary,
                   textMuted: textMuted,
                 ),

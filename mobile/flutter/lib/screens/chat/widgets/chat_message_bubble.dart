@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/chat_message.dart';
 import '../../../data/models/coach_persona.dart';
@@ -256,13 +257,23 @@ class ChatMessageBubble extends ConsumerWidget {
             )
           else
             Text(
-              message.content,
+              // Defensive: strip any stray legacy action tokens (e.g.
+              // "action navigate destination support") that occasionally
+              // leak through from older agent prompts. The /support route
+              // does not exist; show_options chips render below instead.
+              _scrubLegacyActionTokens(message.content),
               style: TextStyle(
                 color: isUser ? AppColors.pureBlack : AppColors.textPrimary,
                 fontSize: 15,
                 height: 1.4,
               ),
             ),
+          // ── Contact / option chips (action: "show_options") ─────────────
+          // Used by the "need help" flow — the coach offers Discord / Email
+          // / Instagram. Each chip launches the URL externally via
+          // url_launcher; we never navigate to a /support route.
+          if (!isUser && message.actionData?['action'] == 'show_options')
+            _buildShowOptions(context, message.actionData!),
           if (!isUser && message.hasFormCheckResult)
             FormCheckResultCard(result: message.formCheckResult!),
           if (!isUser && message.hasFoodAnalysis &&
@@ -669,6 +680,104 @@ class ChatMessageBubble extends ConsumerWidget {
     final minutes = ms ~/ 60000;
     final remSeconds = (ms % 60000) ~/ 1000;
     return remSeconds == 0 ? '${minutes}m' : '${minutes}m ${remSeconds}s';
+  }
+
+  /// Strip stray legacy action tokens from a message body.
+  ///
+  /// Older coach agent prompts sometimes leaked the literal string
+  /// "action navigate destination support" into the message text. With the
+  /// /support route gone (B2) any such fragment must never reach the user.
+  /// We replace the pattern with empty string and trim trailing whitespace.
+  String _scrubLegacyActionTokens(String content) {
+    final pattern = RegExp(
+      r'\baction\s+navigate\s+destination\s+\w+\b',
+      caseSensitive: false,
+    );
+    final scrubbed = content.replaceAll(pattern, '').trim();
+    return scrubbed.isEmpty ? content : scrubbed;
+  }
+
+  /// Build the show_options chip row.
+  ///
+  /// `actionData["options"]` is a list of `{label, icon, url}` maps. Each
+  /// chip launches the URL externally; failures are surfaced as a
+  /// SnackBar (per feedback_no_silent_fallbacks.md — never silently swallow).
+  Widget _buildShowOptions(BuildContext context, Map<String, dynamic> data) {
+    final rawOptions = data['options'];
+    if (rawOptions is! List || rawOptions.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    final prompt = data['prompt'] as String?;
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (prompt != null && prompt.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Text(
+                prompt,
+                style: TextStyle(
+                  color: AppColors.textMuted,
+                  fontSize: 13,
+                ),
+              ),
+            ),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: rawOptions.whereType<Map>().map<Widget>((opt) {
+              final label = (opt['label'] as String?) ?? 'Open';
+              final iconKey = (opt['icon'] as String?)?.toLowerCase();
+              final url = (opt['url'] as String?) ?? '';
+              return ActionChip(
+                avatar: Icon(_iconForKey(iconKey), size: 18),
+                label: Text(label),
+                onPressed: url.isEmpty
+                    ? null
+                    : () => _launchExternalUrl(context, url),
+              );
+            }).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  IconData _iconForKey(String? key) {
+    switch (key) {
+      case 'discord':
+        return Icons.forum_outlined;
+      case 'email':
+      case 'mail':
+        return Icons.email_outlined;
+      case 'instagram':
+        return Icons.camera_alt_outlined;
+      default:
+        return Icons.open_in_new;
+    }
+  }
+
+  Future<void> _launchExternalUrl(BuildContext context, String url) async {
+    try {
+      final uri = Uri.parse(url);
+      final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!ok && context.mounted) {
+        debugPrint('❌ [Chat] launchUrl returned false for $url');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Couldn't open $url")),
+        );
+      }
+    } catch (e) {
+      debugPrint('❌ [Chat] launchUrl error for $url: $e');
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Couldn't open $url")),
+        );
+      }
+    }
   }
 }
 

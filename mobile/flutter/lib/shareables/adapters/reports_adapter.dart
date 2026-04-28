@@ -568,7 +568,7 @@ class ReportsAdapter {
     final db = Supabase.instance.client;
     final res = await db
         .from('body_measurements')
-        .select('weight_kg, body_fat_percentage, measured_at')
+        .select('weight_kg, body_fat_percent, measured_at')
         .eq('user_id', userId)
         .order('measured_at', ascending: false)
         .limit(30);
@@ -590,11 +590,11 @@ class ReportsAdapter {
         value:
             '${delta >= 0 ? '+' : ''}${delta.toStringAsFixed(1)} kg',
       ),
-      if (list.first['body_fat_percentage'] != null)
+      if (list.first['body_fat_percent'] != null)
         ShareableMetric(
           label: 'BODY FAT',
           value:
-              '${(list.first['body_fat_percentage'] as num).toStringAsFixed(1)}%',
+              '${(list.first['body_fat_percent'] as num).toStringAsFixed(1)}%',
         ),
     ];
 
@@ -624,7 +624,7 @@ class ReportsAdapter {
     final monthEnd = DateTime(month.year, month.month + 1, 1);
     final res = await db
         .from('food_logs')
-        .select('total_calories, total_protein_g, total_carbs_g, total_fat_g, logged_at')
+        .select('total_calories, protein_g, carbs_g, fat_g, logged_at')
         .eq('user_id', userId)
         .gte('logged_at', monthStart.toIso8601String())
         .lt('logged_at', monthEnd.toIso8601String());
@@ -634,9 +634,9 @@ class ReportsAdapter {
     num total(String key) =>
         list.fold<num>(0, (s, r) => s + ((r[key] as num?) ?? 0));
     final cal = total('total_calories');
-    final p = total('total_protein_g');
-    final c = total('total_carbs_g');
-    final f = total('total_fat_g');
+    final p = total('protein_g');
+    final c = total('carbs_g');
+    final f = total('fat_g');
     final daySet = list
         .map((r) => DateTime.tryParse(r['logged_at'] as String))
         .whereType<DateTime>()

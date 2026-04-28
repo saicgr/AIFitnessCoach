@@ -175,7 +175,7 @@ def _map_import_row_to_canonical(row: Dict[str, Any], user_id: UUID) -> Optional
     except ValueError:
         original_unit = None
 
-    source_app = row.get("source_app") or row.get("source") or "fitwiz"
+    source_app = row.get("source_app") or row.get("source") or "zealova"
     set_number = _safe_int(row.get("set_number"))
     weight_kg = _safe_float(row.get("weight_kg"))
     reps = _safe_int(row.get("reps"))
@@ -242,7 +242,7 @@ def _map_perf_log_to_canonical(
 
     source_hash = _row_hash(
         user_id=user_id,
-        source_app="fitwiz",
+        source_app="zealova",
         performed_at=performed_at,
         exercise_name=ex_name,
         set_number=set_number,
@@ -263,7 +263,7 @@ def _map_perf_log_to_canonical(
         duration_seconds=_safe_int(perf.get("duration_seconds")),
         rpe=_safe_float(perf.get("rpe")),
         notes=perf.get("notes"),
-        source_app="fitwiz",
+        source_app="zealova",
         source_row_hash=source_hash,
     )
 
@@ -356,7 +356,7 @@ def _map_cardio_row(row: Dict[str, Any], user_id: UUID) -> Optional[CanonicalCar
         # Cardio rows require positive duration; dropping malformed keeps
         # the file importable by downstream formats (TCX/GPX require it).
         return None
-    source_app = row.get("source_app") or "fitwiz"
+    source_app = row.get("source_app") or "zealova"
     source_hash = row.get("source_row_hash") or CanonicalCardioRow.compute_row_hash(
         user_id=user_id,
         source_app=source_app,
@@ -509,7 +509,7 @@ def _rebuild_template(row: Dict[str, Any], user_id: UUID) -> Optional[CanonicalP
     try:
         return CanonicalProgramTemplate(
             user_id=user_id,
-            source_app=row.get("source_app") or "fitwiz",
+            source_app=row.get("source_app") or "zealova",
             program_name=row.get("program_name") or "Untitled Program",
             program_creator=row.get("program_creator"),
             program_version=row.get("program_version"),

@@ -188,7 +188,21 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
           return;
         }
 
-        state = AsyncValue.data(messages);
+        // Defense-in-depth: if a freshly-sent assistant bubble landed in
+        // local state with a server-issued id BEFORE the history fetch
+        // returned, the fetched list will contain the same row by id.
+        // Replacing state outright is fine — the row is single-sourced
+        // by id. But if the fetched list is missing the most-recent
+        // message (replication lag), keep any local-only messages whose
+        // id is not in the fetched set so the user doesn't see their
+        // bubble vanish and reappear. The send path's dedup-by-id has
+        // already prevented double-appending.
+        final fetchedIds = messages.map((m) => m.id).whereType<String>().toSet();
+        final localOnly = (state.valueOrNull ?? [])
+            .where((m) => m.id != null && !fetchedIds.contains(m.id))
+            .toList();
+        final mergedMessages = localOnly.isEmpty ? messages : [...messages, ...localOnly];
+        state = AsyncValue.data(mergedMessages);
         _currentOffset = messages.length;
         // If initial load returned fewer than page size, no older messages exist
         if (messages.length < 50) {
@@ -369,7 +383,7 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
       final currentAISettings = _getAISettings();
       final unifiedContext = _getUnifiedContext();
 
-      final response = await _repository.sendMessage(
+      final sendResult = await _repository.sendMessage(
         message: actualMessage,
         userId: userId,
         userProfile: userProfile,
@@ -378,6 +392,8 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
         unifiedContext: unifiedContext,
         mediaRefs: mediaRefs,
       );
+      final response = sendResult.response;
+      final assistantMessageId = sendResult.messageId;
       if (!mounted) return;
 
       await _processActionData(response.actionData);
@@ -388,6 +404,7 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
           !(m.role == 'system' && (m.content.contains('Uploading') || m.content.contains('Analyzing')))).toList();
 
       final assistantMessage = ChatMessage(
+        id: assistantMessageId,
         role: 'assistant',
         content: _stripActionDataFromMessage(response.message),
         intent: response.intent,
@@ -397,7 +414,10 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
         coachPersonaId: currentAISettings.coachPersonaId,
       );
 
-      final newMessages = [...finalMsgs, assistantMessage];
+      // Dedup by server-issued message_id (Realtime/loadHistory race guard).
+      final alreadyPresent = assistantMessageId != null &&
+          finalMsgs.any((m) => m.id == assistantMessageId);
+      final newMessages = alreadyPresent ? finalMsgs : [...finalMsgs, assistantMessage];
       state = AsyncValue.data(newMessages);
       await _saveToCache(userId, newMessages);
     } catch (e, stackTrace) {
@@ -710,7 +730,7 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
       final currentAISettings = _getAISettings();
       final unifiedContext = _getUnifiedContext();
 
-      final response = await _repository.sendMessage(
+      final sendResult = await _repository.sendMessage(
         message: 'Voice message (${(durationMs / 1000).toStringAsFixed(1)}s)',
         userId: userId,
         userProfile: userProfile,
@@ -719,6 +739,8 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
         unifiedContext: unifiedContext,
         mediaRef: mediaRef,
       );
+      final response = sendResult.response;
+      final assistantMessageId = sendResult.messageId;
       if (!mounted) return;
 
       // Mark user message as delivered
@@ -728,6 +750,7 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
       if (!mounted) return;
 
       final assistantMessage = ChatMessage(
+        id: assistantMessageId,
         role: 'assistant',
         content: _stripActionDataFromMessage(response.message),
         intent: response.intent,
@@ -738,7 +761,9 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
       );
 
       final updatedMessages = state.valueOrNull ?? [];
-      final newMessages = [...updatedMessages, assistantMessage];
+      final alreadyPresent = assistantMessageId != null &&
+          updatedMessages.any((m) => m.id == assistantMessageId);
+      final newMessages = alreadyPresent ? updatedMessages : [...updatedMessages, assistantMessage];
       state = AsyncValue.data(newMessages);
       await _saveToCache(userId, newMessages);
     } catch (e, stackTrace) {
@@ -1009,9 +1034,20 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
   /// Handle navigation from AI
   void _handleNavigation(Map<String, dynamic> actionData) {
     final destination = actionData['destination'] as String?;
-    debugPrint('🧭 [Chat] Navigating to: $destination');
+    // B3 — coach can attach query params; e.g. hydration deeplink uses
+    // {fuelSection: water} so the Fuel tab opens on the water section.
+    final paramsRaw = actionData['params'];
+    final params = paramsRaw is Map
+        ? paramsRaw.map((k, v) => MapEntry(k.toString(), v?.toString() ?? ''))
+        : <String, String>{};
+    debugPrint('🧭 [Chat] Navigating to: $destination params=$params');
 
-    // Map destination names to routes
+    // Map destination names to routes.
+    // NOTE: `/support` and `/patterns` are intentionally NOT in this map —
+    // the support flow is handled via show_options chips in the chat
+    // bubble (B2), and `/patterns` was a dead route from a deprecated
+    // hydration deeplink. Hydration now routes to /nutrition with
+    // ?fuelSection=water.
     final routes = {
       // Main tabs
       'home': '/home',
@@ -1023,8 +1059,7 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
       'library': '/library',
       'schedule': '/schedule',
       'workout_builder': '/workout/build',
-      // Nutrition features
-      'hydration': '/nutrition?tab=2',
+      // Nutrition features — hydration handled below with params.
       'fasting': '/fasting',
       'food_history': '/nutrition',
       'food_library': '/nutrition',
@@ -1039,9 +1074,8 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
       'progress_charts': '/progress-charts',
       'consistency': '/consistency',
       'measurements': '/measurements',
-      // Chat & support
+      // Chat (NB: no /support route — show_options renders contact chips)
       'chat': '/chat',
-      'support': '/help',
       'live_chat': '/live-chat',
       'help': '/help',
       'glossary': '/glossary',
@@ -1073,17 +1107,45 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
       'subscription': '/settings/subscription',
     };
 
+    // ── Hydration deeplink (B3) ───────────────────────────────────────
+    // Coach hydration intent is normalized server-side to
+    // destination=nutrition with params={fuelSection: water}. We also
+    // accept the legacy destination="hydration" here so older clients /
+    // cached responses still land on the right screen.
+    if (destination == 'hydration' ||
+        (destination == 'nutrition' && params['fuelSection'] == 'water')) {
+      // Include tab=3 (Fuel) so the user lands on the Fuel→Water section
+      // directly. Without it, NutritionScreen defaults to tab=0 (Daily) and
+      // the fuelSection hint never gets applied because the Fuel tab isn't
+      // mounted — earlier reports of the deep-link "opening Patterns" were
+      // really opening Daily; either way, Fuel/Water is the intended target.
+      _router.go('/nutrition?tab=3&fuelSection=water');
+      debugPrint('🧭 [Chat] Navigated to /nutrition?tab=3&fuelSection=water');
+      return;
+    }
+
     final route = routes[destination];
     if (route != null) {
+      // Append any extra params as a query string. Today only hydration
+      // uses params (handled above) but this keeps the contract open.
+      final qs = params.entries
+          .map((e) => '${Uri.encodeQueryComponent(e.key)}=${Uri.encodeQueryComponent(e.value)}')
+          .join('&');
+      final fullRoute = qs.isEmpty
+          ? route
+          : (route.contains('?') ? '$route&$qs' : '$route?$qs');
       // Use go for main tabs, push for nested screens
       if ({'home', 'nutrition', 'profile', 'social'}.contains(destination)) {
-        _router.go(route);
+        _router.go(fullRoute);
       } else {
-        _router.push(route);
+        _router.push(fullRoute);
       }
-      debugPrint('🧭 [Chat] Navigated to $route');
+      debugPrint('🧭 [Chat] Navigated to $fullRoute');
     } else {
-      debugPrint('🧭 [Chat] Unknown destination: $destination');
+      // ⚠️ Unknown destination — log and surface nothing to the user.
+      // Common offenders we explicitly removed: "support" (use show_options
+      // chips), "patterns" (dead route from deprecated hydration flow).
+      debugPrint('⚠️ [Chat] Unknown destination ignored: $destination');
     }
   }
 

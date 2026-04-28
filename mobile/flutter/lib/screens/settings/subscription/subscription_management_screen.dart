@@ -50,6 +50,10 @@ class _SubscriptionManagementScreenState
       ref.read(posthogServiceProvider).capture(
         eventName: 'subscription_management_viewed',
       );
+      // Force-refresh tier from RevenueCat — otherwise users who upgraded via
+      // webhook/store and then opened this screen would see the stale cached
+      // "Free" tier from SharedPreferences (the bug from screenshot #13).
+      ref.read(subscriptionProvider.notifier).forceRefreshFromStore();
     });
     // Fire the backend fetch in the background. No loading gate — the UI
     // already renders tier from the Riverpod provider. When this completes
@@ -898,9 +902,14 @@ class _SubscriptionManagementScreenState
   }
 
   String _getTierDisplayName(SubscriptionTier tier) {
+    // There is no "Free" tier in this app — onboarding mandates a 7-day trial,
+    // after which the user is either on a paid plan or trial-expired (which
+    // gates the app and shouldn't ever show on this screen). When tier resolves
+    // to `free` here, treat it as the trial state so the UI doesn't lie.
     switch (tier) {
       case SubscriptionTier.free:
-        return 'Free';
+        final state = ref.read(subscriptionProvider);
+        return state.isTrialActive ? 'Trial' : 'Inactive';
       case SubscriptionTier.premium:
         return 'Premium';
       case SubscriptionTier.premiumPlus:

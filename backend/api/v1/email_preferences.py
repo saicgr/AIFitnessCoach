@@ -10,6 +10,7 @@ ENDPOINTS:
 - POST /api/v1/email-preferences/{user_id}/unsubscribe-marketing - Unsubscribe from all marketing emails
 """
 
+import asyncio
 from datetime import datetime
 from typing import Optional
 from fastapi import APIRouter, HTTPException, Depends
@@ -127,10 +128,28 @@ async def get_email_preferences(user_id: str, current_user: dict = Depends(get_c
             logger.warning(f"User not found: {user_id}")
             raise HTTPException(status_code=404, detail="User not found")
 
-        # Try to get existing preferences
-        prefs_result = supabase.client.table("email_preferences").select(
-            "*"
-        ).eq("user_id", user_id).maybe_single().execute()
+        # Try to get existing preferences. Hard 4s ceiling so a stalled
+        # Supabase connection can't hang the email-prefs page indefinitely
+        # (plan A4). On timeout return 504 — don't silently degrade.
+        try:
+            prefs_result = await asyncio.wait_for(
+                asyncio.to_thread(
+                    lambda: supabase.client.table("email_preferences")
+                    .select("*")
+                    .eq("user_id", user_id)
+                    .maybe_single()
+                    .execute()
+                ),
+                timeout=4.0,
+            )
+        except asyncio.TimeoutError:
+            logger.warning(
+                f"⚠️ [EmailPrefs] supabase fetch timed out (>4s) for user {user_id}"
+            )
+            raise HTTPException(
+                status_code=504,
+                detail="Email preferences fetch timed out. Please try again.",
+            )
 
         if prefs_result and prefs_result.data:
             logger.info(f"Found existing email preferences for user {user_id}")

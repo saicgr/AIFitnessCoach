@@ -498,26 +498,12 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
   }
 
 
-  /// Build the `logged_at` ISO string for the current log. When the sheet was
-  /// opened from Nutrition → (past date), we pin the date portion to that
-  /// day while preserving the current wall-clock time (so ordering within
-  /// the day still makes sense). Returns null for "log on today" (backend
-  /// default), which avoids pointless round-trip values for the common case.
-  String? _buildLoggedAtForSelectedDate() {
-    final sel = widget.selectedDate;
-    if (sel == null) return null;
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final selDay = DateTime(sel.year, sel.month, sel.day);
-    if (selDay == today) return null; // common case: today — let backend default
-    // Compose: selected date + current time-of-day (so logs stay in submit
-    // order for the user's "day of eating" view).
-    final combined = DateTime(
-      sel.year, sel.month, sel.day,
-      now.hour, now.minute, now.second,
-    );
-    return combined.toIso8601String();
-  }
+  /// Always returns null so the backend stamps `logged_at` at server-now.
+  /// The Nutrition tab auto-snaps to today after a successful log (see
+  /// `_refreshAfterLog` in `nutrition_screen.dart`), so the meal lands where
+  /// it actually exists in the DB rather than where the user happened to be
+  /// browsing when they tapped Log Meal.
+  String? _buildLoggedAtForSelectedDate() => null;
 
   Future<void> _handleLog() async {
     if (_analyzedResponse == null || _hasLoggedThisSession) return;
@@ -539,11 +525,9 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
     // pruned by _handleFoodItemRemoved.
     final pendingEdits = _pendingItemEdits.values.expand((e) => e).toList();
 
-    // If this sheet was opened while the user was viewing a past date in the
-    // Nutrition tab, stamp the log with that date (current wall-clock time
-    // of day, but the date portion pinned to the user's selected day).
-    // Without this pin, the meal lands on TODAY and never appears where the
-    // user expects it.
+    // Logs always stamp at the current moment via backend default. The
+    // Nutrition tab auto-snaps to today after a successful log so the user
+    // sees the meal where it actually lives.
     final loggedAtIso = _buildLoggedAtForSelectedDate();
 
     // Start the save — capture the food_log_id for post-meal review
@@ -1600,6 +1584,10 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
 
     // Get the navigator's overlay context which survives the pop
     final overlay = Navigator.of(context).overlay;
+
+    // Optimistic update: splice the new log into local state immediately so
+    // the Nutrition tab shows the meal before the background refresh returns.
+    nutritionNotifier.spliceLog(response, _selectedMealType.value, userId);
 
     // Close sheet immediately for snappy UX
     Navigator.pop(context);

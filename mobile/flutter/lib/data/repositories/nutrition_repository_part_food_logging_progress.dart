@@ -470,7 +470,16 @@ class NutritionNotifier extends StateNotifier<NutritionState> {
       state = state.copyWith(recentLogs: const [], loadedLogsDate: dateStr);
     }
     try {
-      final logs = await _repository.getFoodLogs(userId, fromDate: dateStr, toDate: dateStr);
+      // Request [date, date+1] so logs that land on the next UTC day due to
+      // timezone offset (e.g. 7 PM CT = 00:49 UTC next day) are included.
+      // Filter client-side to keep only logs whose local date matches `date`.
+      final nextDay = date.add(const Duration(days: 1));
+      final nextDayStr = '${nextDay.year}-${nextDay.month.toString().padLeft(2, '0')}-${nextDay.day.toString().padLeft(2, '0')}';
+      final rawLogs = await _repository.getFoodLogs(userId, fromDate: dateStr, toDate: nextDayStr);
+      final logs = rawLogs.where((log) {
+        final local = log.loggedAt.isUtc ? log.loggedAt.toLocal() : log.loggedAt;
+        return local.year == date.year && local.month == date.month && local.day == date.day;
+      }).toList();
       state = state.copyWith(recentLogs: logs, loadedLogsDate: dateStr);
     } catch (e) {
       debugPrint('Error loading food logs for date: $e');
@@ -578,6 +587,122 @@ class NutritionNotifier extends StateNotifier<NutritionState> {
     state = state.copyWith(
       todaySummary: _recomputeTotals(summary, list),
     );
+  }
+
+  /// Instantly add an already-constructed [FoodLog] to local state.
+  /// Use this when callers have already converted the API response to a
+  /// [FoodLog] (e.g. recipe logging, browser-panel relog).
+  void spliceRawLog(FoodLog newLog, String userId) {
+    final updatedLogs = [newLog, ...state.recentLogs];
+    final currentSummary = state.todaySummary;
+    final todayStr = Tz.localDate();
+    final updatedMeals = <FoodLog>[...(currentSummary?.meals ?? []), newLog];
+    final newSummary = _recomputeTotals(
+      currentSummary ??
+          DailyNutritionSummary(
+            date: todayStr,
+            totalCalories: 0,
+            totalProteinG: 0,
+            totalCarbsG: 0,
+            totalFatG: 0,
+            totalFiberG: 0,
+            mealCount: 0,
+          ),
+      updatedMeals,
+    );
+    state = state.copyWith(
+      recentLogs: updatedLogs,
+      todaySummary: newSummary,
+      loadedSummaryDate: todayStr,
+      loadedLogsDate: todayStr,
+    );
+    unawaited(_NutritionDiskCache.write(userId, todayStr, newSummary));
+  }
+
+  /// Instantly add a newly logged meal to local state so the UI updates
+  /// before the network round-trip that `loadTodaySummary(forceRefresh)`
+  /// would otherwise require. The background refresh that follows (still
+  /// fired by the log sheet) reconciles server-derived fields.
+  void spliceLog(LogFoodResponse response, String mealType, String userId) {
+    final now = DateTime.now();
+    final foodItems = response.foodItems
+        .map((r) => FoodItem(
+              name: r.name,
+              amount: r.amount,
+              calories: r.calories,
+              proteinG: r.proteinG,
+              carbsG: r.carbsG,
+              fatG: r.fatG,
+              fiberG: r.fiberG,
+              weightG: r.weightG,
+              unit: r.unit,
+              count: r.count,
+              weightPerUnitG: r.weightPerUnitG,
+            ))
+        .toList();
+
+    final newLog = FoodLog(
+      id: response.foodLogId ?? 'optimistic_${now.millisecondsSinceEpoch}',
+      userId: userId,
+      mealType: mealType,
+      loggedAt: now,
+      foodItems: foodItems,
+      totalCalories: response.totalCalories,
+      proteinG: response.proteinG,
+      carbsG: response.carbsG,
+      fatG: response.fatG,
+      fiberG: response.fiberG,
+      healthScore: response.healthScore,
+      aiFeedback: response.aiSuggestion,
+      imageUrl: response.imageUrl,
+      sourceType: response.sourceType,
+      sodiumMg: response.sodiumMg,
+      sugarG: response.sugarG,
+      saturatedFatG: response.saturatedFatG,
+      cholesterolMg: response.cholesterolMg,
+      potassiumMg: response.potassiumMg,
+      calciumMg: response.calciumMg,
+      ironMg: response.ironMg,
+      vitaminCMg: response.vitaminCMg,
+      vitaminDIu: response.vitaminDIu,
+      inflammationScore: response.inflammationScore,
+      isUltraProcessed: response.isUltraProcessed,
+      createdAt: now,
+    );
+
+    // Update recentLogs
+    final updatedLogs = [newLog, ...state.recentLogs];
+
+    // Update todaySummary by appending to meals and recomputing totals
+    final currentSummary = state.todaySummary;
+    final todayStr = Tz.localDate();
+    final updatedMeals = <FoodLog>[
+      ...(currentSummary?.meals ?? []),
+      newLog,
+    ];
+    final newSummary = _recomputeTotals(
+      currentSummary ??
+          DailyNutritionSummary(
+            date: todayStr,
+            totalCalories: 0,
+            totalProteinG: 0,
+            totalCarbsG: 0,
+            totalFatG: 0,
+            totalFiberG: 0,
+            mealCount: 0,
+          ),
+      updatedMeals,
+    );
+
+    state = state.copyWith(
+      recentLogs: updatedLogs,
+      todaySummary: newSummary,
+      loadedSummaryDate: todayStr,
+      loadedLogsDate: todayStr,
+    );
+
+    // Persist the updated totals so the next cold-start shows the new log
+    unawaited(_NutritionDiskCache.write(userId, todayStr, newSummary));
   }
 
   /// Fire-and-forget the network delete *after* the optimistic local

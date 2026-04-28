@@ -155,7 +155,11 @@ def _get_exercise_simplified_name(name_lower: str) -> Optional[str]:
 # S3 prefixes that are publicly readable (no presigning needed).
 # Keep in sync with backend/scripts/setup_s3_public_assets.py — the bucket
 # policy there is what actually grants anonymous s3:GetObject on these.
-_STATIC_PREFIXES = ("ILLUSTRATIONS ALL/", "Ultimate-Muscle-Visuals/")
+_STATIC_PREFIXES = (
+    "ILLUSTRATIONS ALL/",
+    "Ultimate-Muscle-Visuals/",
+    "VERTICAL VIDEOS/",
+)
 
 
 def presign_s3_path(s3_path: Optional[str]) -> Optional[str]:
@@ -469,7 +473,7 @@ def row_to_library_exercise(row: dict, from_cleaned_view: bool = True) -> Librar
             difficulty_level=row.get("difficulty_level"),
             category=row.get("category"),
             gif_url=row.get("gif_url"),
-            video_url=presign_s3_path(row.get("video_url")),
+            video_url=resolve_image_url(row.get("video_url")),
             image_url=resolve_image_url(row.get("image_url")),
             goals=row.get("goals", []),
             suitable_for=row.get("suitable_for", []),

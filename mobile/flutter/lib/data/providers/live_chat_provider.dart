@@ -404,6 +404,12 @@ class LiveChatNotifier extends StateNotifier<AsyncValue<LiveChatSession?>> {
   }
 
   /// Handle new message from real-time
+  ///
+  /// B1 — when a Realtime row arrives whose ID matches an in-session
+  /// message (because the SSE stream already appended it via the stable
+  /// `assistant_message_id`), UPSERT instead of dropping. The DB row may
+  /// carry richer fields (final action_data, server-canonical text)
+  /// than the streamed in-memory copy, so we replace rather than skip.
   void _handleNewMessage(Map<String, dynamic> data) {
     final currentSession = state.valueOrNull;
     if (currentSession == null) return;
@@ -411,13 +417,21 @@ class LiveChatNotifier extends StateNotifier<AsyncValue<LiveChatSession?>> {
     try {
       final message = LiveChatMessage.fromJson(data);
 
-      // Avoid duplicates
-      if (currentSession.messages.any((m) => m.id == message.id)) {
-        return;
+      final existingIdx =
+          currentSession.messages.indexWhere((m) => m.id == message.id);
+
+      List<LiveChatMessage> updatedMessages;
+      if (existingIdx >= 0) {
+        // Upsert — replace the streamed copy with the persisted row.
+        debugPrint(
+            '🔄 [LiveChatNotifier] Upserting existing message ${message.id} from realtime');
+        updatedMessages = [...currentSession.messages];
+        updatedMessages[existingIdx] = message;
+      } else {
+        // Genuinely new message — append.
+        updatedMessages = [...currentSession.messages, message];
       }
 
-      // Add message to list
-      final updatedMessages = [...currentSession.messages, message];
       state = AsyncValue.data(
         currentSession.copyWith(
           messages: updatedMessages,

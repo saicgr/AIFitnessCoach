@@ -64,19 +64,19 @@ S3_DOWNLOAD_TTL = timedelta(days=7)
 # and we normalize to bytes at call sites.
 _FORMAT_MAP = {
     "csv":     ("application/zip",
-                "fitwiz-export-{ts}.zip",
+                "zealova-export-{ts}.zip",
                 export_user_data,
                 "zip"),
     "json":    ("application/json",
-                "fitwiz-export-{ts}.json",
+                "zealova-export-{ts}.json",
                 export_user_data_json,
                 "json"),
     "excel":   ("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                "fitwiz-export-{ts}.xlsx",
+                "zealova-export-{ts}.xlsx",
                 export_user_data_excel,
                 "xlsx"),
     "parquet": ("application/zip",
-                "fitwiz-export-{ts}-parquet.zip",
+                "zealova-export-{ts}-parquet.zip",
                 export_user_data_parquet,
                 "zip"),
 }

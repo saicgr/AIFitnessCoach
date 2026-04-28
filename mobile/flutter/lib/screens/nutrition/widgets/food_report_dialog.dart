@@ -49,6 +49,106 @@ Future<void> showFoodReportDialog(
   );
 }
 
+/// Shows a polished confirmation bottom sheet after a food report is
+/// submitted. Surfaces the report_id (so the user has a receipt) and the
+/// 48h review SLA. Per feedback_design_preferences.md — rich visuals,
+/// not a minimal snackbar. ✅
+void _showReportConfirmation(BuildContext context, String? reportId) {
+  if (!context.mounted) return;
+  final isDark = Theme.of(context).brightness == Brightness.dark;
+  final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+  final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+  final surface = isDark ? AppColors.elevated : AppColorsLight.elevated;
+
+  showModalBottomSheet<void>(
+    context: context,
+    backgroundColor: surface,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+    ),
+    builder: (sheetContext) => SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // Drag handle
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: textMuted.withOpacity(0.3),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 20),
+            // Success icon with green halo
+            Container(
+              width: 72,
+              height: 72,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: AppColors.green.withValues(alpha: 0.15),
+              ),
+              child: const Icon(
+                Icons.check_circle_rounded,
+                color: AppColors.green,
+                size: 44,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Report submitted',
+              style: TextStyle(
+                color: textPrimary,
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            if (reportId != null && reportId.isNotEmpty && reportId != 'unknown') ...[
+              const SizedBox(height: 6),
+              Text(
+                '#$reportId',
+                style: TextStyle(
+                  color: textMuted,
+                  fontSize: 13,
+                  fontFamily: 'monospace',
+                ),
+              ),
+            ],
+            const SizedBox(height: 12),
+            Text(
+              "We'll review and update within 48h.\nThanks for helping improve our data!",
+              textAlign: TextAlign.center,
+              style: TextStyle(color: textMuted, fontSize: 14, height: 1.4),
+            ),
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: ElevatedButton(
+                onPressed: () => Navigator.of(sheetContext).pop(),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.green,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Text(
+                  'Close',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
 class _FoodReportSheet extends StatefulWidget {
   final FoodSearchResult? food;
   final String foodName;
@@ -164,16 +264,32 @@ class _FoodReportSheetState extends State<_FoodReportSheet> {
         data['all_food_items'] = widget.allFoodItems;
       }
 
-      await widget.apiClient.post('/nutrition/food-report', data: data);
+      final response = await widget.apiClient.post('/nutrition/food-report', data: data);
+
+      // Pull report_id from the API response so we can display it in the
+      // confirmation sheet — gives the user a tangible receipt that the
+      // report was saved. ✅
+      String? reportId;
+      try {
+        final raw = response.data;
+        if (raw is Map) {
+          final id = raw['report_id'];
+          if (id != null) reportId = id.toString();
+        }
+      } catch (e) {
+        debugPrint('⚠️ Could not parse report_id from response: $e');
+      }
 
       if (!mounted) return;
+      // Capture the root navigator BEFORE popping so we can show the
+      // confirmation sheet on top of the underlying screen, not the
+      // dialog that's about to close.
+      final navigator = Navigator.of(context, rootNavigator: true);
+      final rootContext = navigator.context;
       Navigator.of(context).pop(true); // Return true to indicate success
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Report submitted. Thank you!'),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      // Replace the previous snackbar with a richer confirmation sheet
+      // showing the report ID + SLA so the user trusts the submission. ✅
+      _showReportConfirmation(rootContext, reportId);
     } catch (e) {
       if (!mounted) return;
       setState(() => _isSubmitting = false);

@@ -33,14 +33,20 @@ class StrengthRadarTemplate extends StatelessWidget {
     // Map muscle counts to axes when present.
     final mw = d.musclesWorked ?? const <String, int>{};
     if (mw.isNotEmpty) {
-      final maxV = mw.values.fold<int>(1, math.max).toDouble();
+      // Use max(maxV, 1) to avoid div-by-zero; do NOT clamp to a fake floor —
+      // axes that weren't trained should render as 0, not as 15% of full
+      // (the old `.clamp(0.15, 1.0)` faked a polygon for empty users).
+      final maxV = math.max(
+        mw.values.fold<int>(0, math.max),
+        1,
+      ).toDouble();
       double scoreFor(List<String> keywords) {
         var total = 0;
         for (final entry in mw.entries) {
           final lower = entry.key.toLowerCase();
           if (keywords.any((k) => lower.contains(k))) total += entry.value;
         }
-        return (total / maxV).clamp(0.15, 1.0);
+        return (total / maxV).clamp(0.0, 1.0);
       }
 
       return [
@@ -52,8 +58,9 @@ class StrengthRadarTemplate extends StatelessWidget {
         scoreFor(const ['mobility', 'stretch', 'yoga']),
       ];
     }
-    final r = math.Random(d.title.hashCode);
-    return List.generate(6, (_) => 0.3 + r.nextDouble() * 0.65);
+    // No muscle data — render an empty (centered) shape so the user sees a
+    // truthful "no activity yet" radar instead of a randomized fake polygon.
+    return List.filled(6, 0.0);
   }
 
   @override

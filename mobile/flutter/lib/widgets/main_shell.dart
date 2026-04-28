@@ -406,31 +406,40 @@ class MainShell extends ConsumerWidget {
               ],
             ),
           ),
-          // Nav bar at bottom
+          // Floating AI Chat bubble (toggled in Settings > AI Coach) —
+          // rendered BELOW the floating nav so the nav always sits on top.
+          if (ref.watch(edgeHandleEnabledProvider))
+            const FloatingChatBubble(),
+          // Nav bar at bottom — wrapped in Material so it participates in
+          // Flutter's elevation/z-index system. This ensures OS-level
+          // Tooltips (which use the root overlay) render UNDER the nav,
+          // and that any Stack child rendered above content can't visually
+          // cover the nav by accident. ✅
           Positioned(
             left: 0,
             right: 0,
             bottom: 0,
-            child: AnimatedSlide(
-              duration: const Duration(milliseconds: 250),
-              curve: Curves.easeInOut,
-              offset: isNavBarVisible ? Offset.zero : const Offset(0, 1.5),
-              child: AnimatedOpacity(
-                duration: const Duration(milliseconds: 200),
-                opacity: isNavBarVisible ? 1.0 : 0.0,
-                child: _FloatingNavBarWithAI(
-                  selectedIndex: selectedIndex,
-                  isSecondaryPage: _isSecondaryPage(context),
-                  onItemTapped: (index) => _onItemTapped(context, index),
+            child: Material(
+              elevation: 8,
+              type: MaterialType.transparency,
+              child: AnimatedSlide(
+                duration: const Duration(milliseconds: 250),
+                curve: Curves.easeInOut,
+                offset: isNavBarVisible ? Offset.zero : const Offset(0, 1.5),
+                child: AnimatedOpacity(
+                  duration: const Duration(milliseconds: 200),
+                  opacity: isNavBarVisible ? 1.0 : 0.0,
+                  child: _FloatingNavBarWithAI(
+                    selectedIndex: selectedIndex,
+                    isSecondaryPage: _isSecondaryPage(context),
+                    onItemTapped: (index) => _onItemTapped(context, index),
+                  ),
                 ),
               ),
             ),
           ),
           // Note: Workout mini player is now handled globally in app.dart
-          // Floating AI Chat bubble (toggled in Settings > AI Coach)
-          if (ref.watch(edgeHandleEnabledProvider))
-            const FloatingChatBubble(),
-          // App tour overlay (topmost)
+          // App tour overlay (topmost — coach marks must render above nav)
           const AppTourOverlay(),
         ],
       ),

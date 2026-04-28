@@ -70,7 +70,7 @@ class _GenerateWorkoutPlaceholderState
       duration: const Duration(milliseconds: 1000),
     )..repeat(reverse: true);
     if (widget.isGenerating) {
-      _pulseController.repeat(reverse: true);
+      _pulseController.repeat();
     }
   }
 
@@ -78,7 +78,7 @@ class _GenerateWorkoutPlaceholderState
   void didUpdateWidget(GenerateWorkoutPlaceholder oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.isGenerating && !oldWidget.isGenerating) {
-      _pulseController.repeat(reverse: true);
+      _pulseController.repeat();
     } else if (!widget.isGenerating && oldWidget.isGenerating) {
       _pulseController.stop();
       _pulseController.reset();
@@ -184,19 +184,56 @@ class _GenerateWorkoutPlaceholderState
     );
   }
 
-  /// Content shown when generation is in progress with numbered steps
+  /// Content shown during generation. Renders a hero-card-shaped skeleton
+  /// (title bar, metric pills, body block, button silhouette) with a
+  /// running shimmer so the layout doesn't pop when the real card replaces
+  /// it. The 4-step pipeline is reduced to a single live caption + thin
+  /// progress bar at the bottom — no more dense bullet list.
   Widget _buildGeneratingContent(bool isDark, Color accentColor, bool isToday) {
     final step = widget.generationStep.clamp(1, widget.generationTotalSteps);
     final progress = step / widget.generationTotalSteps;
+    final label = (step - 1) < _stepLabels.length
+        ? _stepLabels[step - 1]
+        : (widget.generationMessage ?? 'Generating');
+    final shimmerBase = isDark
+        ? Colors.white.withValues(alpha: 0.06)
+        : Colors.black.withValues(alpha: 0.05);
+    final shimmerHi = isDark
+        ? Colors.white.withValues(alpha: 0.16)
+        : Colors.black.withValues(alpha: 0.10);
+
+    Widget shimmerBlock({required double height, double radius = 10, double widthFactor = 1.0}) {
+      return AnimatedBuilder(
+        animation: _pulseController,
+        builder: (_, __) {
+          final t = _pulseController.value;
+          return FractionallySizedBox(
+            alignment: Alignment.centerLeft,
+            widthFactor: widthFactor,
+            child: Container(
+              height: height,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(radius),
+                gradient: LinearGradient(
+                  begin: Alignment(-1.0 + 2.0 * t, 0),
+                  end: Alignment(0.0 + 2.0 * t, 0),
+                  colors: [shimmerBase, shimmerHi, shimmerBase],
+                ),
+              ),
+            ),
+          );
+        },
+      );
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Top row: Day badge + Step counter
+        // Top row: real day badge (so the user still knows which day) +
+        // a sparkle indicator that this is being generated.
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            // Day badge
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
@@ -204,11 +241,6 @@ class _GenerateWorkoutPlaceholderState
                     ? Colors.white.withValues(alpha: 0.15)
                     : Colors.black.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: isDark
-                      ? Colors.white.withValues(alpha: 0.2)
-                      : Colors.black.withValues(alpha: 0.1),
-                ),
               ),
               child: Text(
                 isToday ? 'TODAY' : _getDayLabel(),
@@ -220,124 +252,88 @@ class _GenerateWorkoutPlaceholderState
                 ),
               ),
             ),
-            // Step counter badge
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: accentColor.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: accentColor.withValues(alpha: 0.3)),
-              ),
-              child: Text(
-                'Step $step of ${widget.generationTotalSteps}',
-                style: TextStyle(
-                  color: accentColor,
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 0.5,
-                ),
-              ),
-            ),
-          ],
-        ),
-
-        const Spacer(),
-
-        // Current step message (large)
-        Text(
-          widget.generationMessage ?? 'Generating...',
-          style: TextStyle(
-            color: isDark ? Colors.white : Colors.black87,
-            fontSize: 22,
-            fontWeight: FontWeight.bold,
-            height: 1.2,
-          ),
-        ),
-        const SizedBox(height: 16),
-
-        // Progress bar
-        ClipRRect(
-          borderRadius: BorderRadius.circular(6),
-          child: TweenAnimationBuilder<double>(
-            tween: Tween(begin: 0, end: progress),
-            duration: const Duration(milliseconds: 500),
-            curve: Curves.easeInOut,
-            builder: (context, value, _) {
-              return LinearProgressIndicator(
-                value: value,
-                minHeight: 8,
-                backgroundColor: isDark
-                    ? Colors.white.withValues(alpha: 0.1)
-                    : Colors.black.withValues(alpha: 0.08),
-                valueColor: AlwaysStoppedAnimation<Color>(accentColor),
-              );
-            },
-          ),
-        ),
-        const SizedBox(height: 4),
-        // Percentage text
-        Align(
-          alignment: Alignment.centerRight,
-          child: Text(
-            '${(progress * 100).toInt()}%',
-            style: TextStyle(
-              color: accentColor,
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ),
-        const SizedBox(height: 16),
-
-        // Step list
-        ...List.generate(widget.generationTotalSteps, (index) {
-          final stepNum = index + 1;
-          final isCompleted = stepNum < step;
-          final isActive = stepNum == step;
-          final label = index < _stepLabels.length ? _stepLabels[index] : 'Step $stepNum';
-
-          return Padding(
-            padding: const EdgeInsets.symmetric(vertical: 4),
-            child: Row(
+            Row(
               children: [
-                // Step indicator
-                if (isCompleted)
-                  Icon(Icons.check_circle, size: 20, color: accentColor)
-                else if (isActive)
-                  SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: accentColor,
-                    ),
-                  )
-                else
-                  Icon(
-                    Icons.circle_outlined,
-                    size: 20,
-                    color: isDark
-                        ? Colors.white.withValues(alpha: 0.25)
-                        : Colors.black.withValues(alpha: 0.2),
+                SizedBox(
+                  width: 14,
+                  height: 14,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: accentColor,
                   ),
-                const SizedBox(width: 12),
-                // Step label
+                ),
+                const SizedBox(width: 6),
                 Text(
-                  '$stepNum. $label',
+                  '${(progress * 100).toInt()}%',
                   style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
-                    color: isCompleted || isActive
-                        ? (isDark ? Colors.white : Colors.black87)
-                        : (isDark
-                            ? Colors.white.withValues(alpha: 0.35)
-                            : Colors.black.withValues(alpha: 0.3)),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: accentColor,
                   ),
                 ),
               ],
             ),
-          );
-        }),
+          ],
+        ),
+        const SizedBox(height: 14),
+        // Title silhouette (two lines)
+        shimmerBlock(height: 22, widthFactor: 0.75),
+        const SizedBox(height: 8),
+        shimmerBlock(height: 16, widthFactor: 0.45),
+        const SizedBox(height: 16),
+        // Metric pill row (duration · exercises · difficulty)
+        Row(
+          children: [
+            Expanded(child: shimmerBlock(height: 28, radius: 14)),
+            const SizedBox(width: 8),
+            Expanded(child: shimmerBlock(height: 28, radius: 14)),
+            const SizedBox(width: 8),
+            Expanded(child: shimmerBlock(height: 28, radius: 14)),
+          ],
+        ),
+        const Spacer(),
+        // Live step caption
+        Row(
+          children: [
+            Icon(Icons.auto_awesome, size: 14, color: accentColor),
+            const SizedBox(width: 6),
+            Expanded(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: isDark ? Colors.white70 : Colors.black87,
+                ),
+              ),
+            ),
+            Text(
+              '$step/${widget.generationTotalSteps}',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: isDark ? Colors.white54 : Colors.black54,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(4),
+          child: TweenAnimationBuilder<double>(
+            tween: Tween(begin: 0, end: progress),
+            duration: const Duration(milliseconds: 500),
+            curve: Curves.easeInOut,
+            builder: (context, value, _) => LinearProgressIndicator(
+              value: value,
+              minHeight: 4,
+              backgroundColor: shimmerBase,
+              valueColor: AlwaysStoppedAnimation<Color>(accentColor),
+            ),
+          ),
+        ),
       ],
     );
   }

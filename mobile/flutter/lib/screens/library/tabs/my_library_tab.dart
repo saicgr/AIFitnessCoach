@@ -40,6 +40,12 @@ class MyLibraryTab extends ConsumerWidget {
       onRefresh: () async {
         ref.invalidate(exerciseHistoryProvider);
         ref.invalidate(categoryExercisesProvider);
+        // Drop the cached filter-options + exercises list snapshots so a
+        // pull-to-refresh actually re-hits the backend (otherwise the 24h
+        // module-level caches in library_providers would short-circuit).
+        invalidateFilterOptionsCache();
+        ref.invalidate(filterOptionsProvider);
+        ref.invalidate(exercisesNotifierProvider);
         await ref.read(customExercisesProvider.notifier).refresh();
         await ref.read(favoritesProvider.notifier).refresh();
         await ref.read(staplesProvider.notifier).refresh();

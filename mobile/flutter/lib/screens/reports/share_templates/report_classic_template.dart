@@ -106,7 +106,7 @@ class ReportClassicTemplate extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 ShareTrackedCaps(
-                  'FITWIZ REPORT',
+                  'ZEALOVA REPORT',
                   size: 9,
                   color: Colors.white.withValues(alpha: 0.5),
                 ),

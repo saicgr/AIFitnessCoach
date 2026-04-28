@@ -11,6 +11,7 @@ This module handles exercise library operations:
 - GET /exercises/filter-options - Get all filter options
 """
 from __future__ import annotations
+import time
 from typing import List, Dict, Any, Optional
 from core.db import get_supabase_db
 
@@ -20,6 +21,13 @@ from fastapi import APIRouter, HTTPException, Query, Response
 
 from core.logger import get_logger
 from core.exceptions import safe_internal_error
+from core.redis_cache import RedisCache
+
+# Filter options + body-parts/equipment/types are reference data that only
+# changes when the underlying exercise tables change (rare, gated by the MV
+# refresh hook in migration 2038). 1h TTL is a safe ceiling.
+_LIBRARY_REF_CACHE = RedisCache(prefix="library_ref", ttl_seconds=3600, max_size=32)
+_FILTER_OPTIONS_KEY = "filter_options:v1"
 
 from .models import LibraryExercise, ExercisesByBodyPart
 from .utils import (
@@ -36,12 +44,24 @@ logger = get_logger(__name__)
 
 
 @router.get("/exercises/filter-options", response_model=Dict[str, Any])
-async def get_filter_options():
+async def get_filter_options(response: Response):
     """
     Get all available filter options for exercises.
     Returns body parts, equipment types, exercise types, goals, suitable_for, and avoids with counts.
     Now reads from database columns instead of deriving at runtime.
+
+    Cached in Redis for 1h. Cache is busted by the MV refresh hook in migration 2038
+    (`refresh_exercise_library_cleaned()` is the only path that mutates the source).
     """
+    started = time.perf_counter()
+    response.headers["Cache-Control"] = "public, max-age=3600, stale-while-revalidate=86400"
+
+    cached = await _LIBRARY_REF_CACHE.get(_FILTER_OPTIONS_KEY)
+    if cached is not None:
+        elapsed_ms = (time.perf_counter() - started) * 1000
+        logger.info(f"Filter options served from cache in {elapsed_ms:.1f}ms")
+        return cached
+
     try:
         db = get_supabase_db()
 
@@ -112,12 +132,22 @@ async def get_filter_options():
             "total_exercises": len(all_rows)
         }
 
-        logger.info(f"Filter options: {len(result['body_parts'])} body parts, {len(result['goals'])} goals, {len(result['suitable_for'])} suitable_for")
+        await _LIBRARY_REF_CACHE.set(_FILTER_OPTIONS_KEY, result)
+        elapsed_ms = (time.perf_counter() - started) * 1000
+        logger.info(
+            f"Filter options computed in {elapsed_ms:.1f}ms: {len(result['body_parts'])} body parts, "
+            f"{len(result['goals'])} goals, {len(result['suitable_for'])} suitable_for"
+        )
         return result
 
     except Exception as e:
         logger.error(f"Error getting filter options: {e}", exc_info=True)
         raise safe_internal_error(e, "exercises")
+
+
+async def invalidate_library_filter_options_cache() -> None:
+    """Drop the cached filter-options payload. Call after any MV refresh."""
+    await _LIBRARY_REF_CACHE.delete(_FILTER_OPTIONS_KEY)
 
 
 @router.get("/exercises/equipment", response_model=List[Dict[str, Any]])
@@ -288,6 +318,7 @@ async def list_exercises(
     - suitable_for: Filter by suitability, comma-separated (e.g., "Beginner Friendly,Pregnancy Safe")
     - avoid_if: EXCLUDE exercises that stress certain areas, comma-separated (e.g., "Stresses Knees,High Impact")
     """
+    started = time.perf_counter()
     try:
         db = get_supabase_db()
 
@@ -416,7 +447,12 @@ async def list_exercises(
         if needs_post_filter:
             exercises = exercises[offset:offset + limit]
 
-        logger.info(f"Listed {len(exercises)} exercises (body_parts={body_parts_list}, equipment={equipment_list}, types={exercise_types_list}, categories={categories_list}, goals={goals_list}, suitable_for={suitable_for_list}, avoid_if={avoid_if_list})")
+        elapsed_ms = (time.perf_counter() - started) * 1000
+        logger.info(
+            f"Listed {len(exercises)} exercises in {elapsed_ms:.1f}ms "
+            f"(body_parts={body_parts_list}, equipment={equipment_list}, types={exercise_types_list}, "
+            f"categories={categories_list}, goals={goals_list}, suitable_for={suitable_for_list}, avoid_if={avoid_if_list})"
+        )
         return exercises
 
     except Exception as e:

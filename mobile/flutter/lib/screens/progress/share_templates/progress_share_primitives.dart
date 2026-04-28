@@ -104,7 +104,7 @@ class ProgressShareWatermark extends StatelessWidget {
         ),
         SizedBox(width: compact ? 4 : 6),
         Text(
-          'fitwiz',
+          'zealova',
           style: TextStyle(
             fontSize: compact ? 10 : 12,
             fontWeight: FontWeight.w800,

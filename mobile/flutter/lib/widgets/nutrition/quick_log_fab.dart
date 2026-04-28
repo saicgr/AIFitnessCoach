@@ -156,6 +156,7 @@ class _QuickLogFABState extends ConsumerState<QuickLogFAB>
 
             // Main FAB
             FloatingActionButton(
+              heroTag: 'quick_log_fab_main',
               onPressed: _toggleExpanded,
               backgroundColor: green,
               child: AnimatedRotation(
@@ -349,6 +350,7 @@ class QuickLogFABCompact extends StatelessWidget {
     final green = isDark ? AppColors.green : AppColorsLight.success;
 
     return FloatingActionButton(
+      heroTag: 'quick_log_fab_compact',
       onPressed: () => _showQuickActions(context),
       backgroundColor: green,
       child: const Icon(Icons.add, color: Colors.white),

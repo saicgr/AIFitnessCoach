@@ -139,34 +139,55 @@ class _StreakCardBodyState extends ConsumerState<_StreakCardBody> {
     final weeklyGoalDays = s?.weeklyGoalDays ?? 5;
     final daysThisWeek = s?.daysLoggedThisWeek ?? 0;
 
+    // Zero-streak: compact single-line nudge, no big card.
+    if (streakDays == 0) {
+      return GestureDetector(
+        onTap: _openDetailsSheet,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 2),
+          child: Row(
+            children: [
+              Icon(Icons.local_fire_department_rounded, size: 16, color: fire),
+              const SizedBox(width: 6),
+              Text(
+                'Log a meal to start your streak',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: textMuted,
+                ),
+              ),
+              if (freezes > 0) ...[
+                const Spacer(),
+                _FreezesPill(count: freezes, ice: ice, textMuted: textMuted),
+              ],
+            ],
+          ),
+        ),
+      );
+    }
+
+    // Active streak: compact single-row card (no tall circle badge).
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
         onTap: () => _openDetailsSheet(),
         child: Container(
-          padding: const EdgeInsets.all(14),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(12),
             border: Border.all(color: cardBorder),
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                fire.withValues(alpha: widget.isDark ? 0.18 : 0.12),
-                fireDeep.withValues(alpha: widget.isDark ? 0.10 : 0.06),
-              ],
-            ),
+            color: fire.withValues(alpha: widget.isDark ? 0.08 : 0.06),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
-                  // Fire badge with current streak number.
                   Container(
-                    width: 56,
-                    height: 56,
+                    width: 34,
+                    height: 34,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       gradient: LinearGradient(
@@ -174,13 +195,6 @@ class _StreakCardBodyState extends ConsumerState<_StreakCardBody> {
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: fire.withValues(alpha: 0.4),
-                          blurRadius: 16,
-                          spreadRadius: -4,
-                        ),
-                      ],
                     ),
                     alignment: Alignment.center,
                     child: Column(
@@ -188,13 +202,13 @@ class _StreakCardBodyState extends ConsumerState<_StreakCardBody> {
                       children: [
                         const Icon(
                           Icons.local_fire_department_rounded,
-                          size: 18,
+                          size: 13,
                           color: Colors.white,
                         ),
                         Text(
                           '$streakDays',
                           style: const TextStyle(
-                            fontSize: 16,
+                            fontSize: 11,
                             fontWeight: FontWeight.w800,
                             color: Colors.white,
                             height: 1.0,
@@ -203,31 +217,25 @@ class _StreakCardBodyState extends ConsumerState<_StreakCardBody> {
                       ],
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  // Title + stat subtitle.
+                  const SizedBox(width: 10),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          streakDays == 0
-                              ? 'Start your streak'
-                              : '$streakDays-day streak',
+                          '$streakDays-day streak',
                           style: TextStyle(
-                            fontSize: 15,
+                            fontSize: 13,
                             fontWeight: FontWeight.w800,
                             color: textPrimary,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        const SizedBox(height: 2),
                         Text(
-                          streakDays == 0
-                              ? 'Log a meal today to get started'
-                              : 'Best $best · Total $total days',
+                          'Best $best · Total $total days',
                           style: TextStyle(
-                            fontSize: 12,
+                            fontSize: 11,
                             color: textMuted,
                             fontWeight: FontWeight.w600,
                           ),
@@ -237,10 +245,7 @@ class _StreakCardBodyState extends ConsumerState<_StreakCardBody> {
                       ],
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  // Use Freeze action — only surfaced when the streak is at
-                  // risk. Outside of that, the action is tucked inside the
-                  // details sheet so the card stays calm.
+                  const SizedBox(width: 6),
                   if (_streakAtRisk && freezes > 0)
                     _UseFreezeButton(
                       onTap: _submitting ? null : _useFreeze,
@@ -252,7 +257,7 @@ class _StreakCardBodyState extends ConsumerState<_StreakCardBody> {
                 ],
               ),
               if (weeklyGoalOn) ...[
-                const SizedBox(height: 12),
+                const SizedBox(height: 8),
                 _WeeklyProgress(
                   logged: daysThisWeek,
                   target: weeklyGoalDays,

@@ -47,19 +47,26 @@ async def create_share_link(
 ) -> ShareLinkResponse:
     """Generate or return a public share token for the user's workout."""
     db = get_supabase_db()
-    user_id = current_user["id"]
 
-    row = (
-        db.client.table("workouts")
-        .select("id,user_id,share_token,is_completed")
-        .eq("id", workout_id)
-        .maybe_single()
-        .execute()
-    )
+    try:
+        row = (
+            db.client.table("workouts")
+            .select("id,user_id,share_token,is_completed")
+            .eq("id", workout_id)
+            .maybe_single()
+            .execute()
+        )
+    except Exception as exc:
+        logger.error(
+            "share-link select failed for workout=%s user=%s: %s",
+            workout_id, current_user.get("id"), exc,
+        )
+        raise HTTPException(
+            status_code=500,
+            detail="Could not load workout. Please try again.",
+        )
     workout = row.data if row else None
-    if not workout:
-        raise HTTPException(status_code=404, detail="Workout not found")
-    verify_resource_ownership(user_id, workout["user_id"], "workout")
+    verify_resource_ownership(current_user, workout, "Workout")
     if not workout.get("is_completed"):
         raise HTTPException(
             status_code=400,
@@ -69,8 +76,10 @@ async def create_share_link(
     token = workout.get("share_token")
     if not token:
         # Retry on the rare collision — 32^8 is ~10^12 so it's vanishingly
-        # unlikely but cheap to handle correctly.
-        for _ in range(3):
+        # unlikely but cheap to handle correctly. Log every failure so the
+        # underlying cause (missing column, RLS denial, etc.) surfaces.
+        last_error: Optional[Exception] = None
+        for attempt in range(3):
             candidate = _make_token()
             try:
                 update = (
@@ -83,10 +92,19 @@ async def create_share_link(
                     token = candidate
                     break
             except Exception as exc:
-                logger.warning("share token collision retry: %s", exc)
+                last_error = exc
+                logger.warning(
+                    "share token attempt %d failed for workout=%s: %s",
+                    attempt + 1, workout_id, exc,
+                )
         if not token:
+            logger.error(
+                "share token generation exhausted for workout=%s last_error=%s",
+                workout_id, last_error,
+            )
             raise HTTPException(
-                status_code=500, detail="Could not generate share token"
+                status_code=500,
+                detail="Could not generate share link. Please try again.",
             )
 
     return ShareLinkResponse(url=f"{PUBLIC_BASE_URL}/{token}", token=token)
@@ -99,7 +117,6 @@ async def revoke_share_link(
 ) -> Dict[str, Any]:
     """Owner-only revocation — clears the share token, invalidates the URL."""
     db = get_supabase_db()
-    user_id = current_user["id"]
 
     row = (
         db.client.table("workouts")
@@ -108,9 +125,7 @@ async def revoke_share_link(
         .maybe_single()
         .execute()
     )
-    if not row or not row.data:
-        raise HTTPException(status_code=404, detail="Workout not found")
-    verify_resource_ownership(user_id, row.data["user_id"], "workout")
+    verify_resource_ownership(current_user, row.data if row else None, "Workout")
 
     db.client.table("workouts").update({"share_token": None}).eq(
         "id", workout_id

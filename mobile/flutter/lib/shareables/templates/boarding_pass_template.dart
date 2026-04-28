@@ -82,7 +82,7 @@ class BoardingPassTemplate extends StatelessWidget {
                               ),
                               const SizedBox(width: 8),
                               Text(
-                                'FITWIZ AIRLINES',
+                                'ZEALOVA AIRLINES',
                                 style: TextStyle(
                                   color: _ink,
                                   fontFamily: 'Times New Roman',

@@ -50,6 +50,15 @@ class _ExerciseDetailSheetState extends ConsumerState<ExerciseDetailSheet>
   String? _videoError;
   String? _videoUrl;
 
+  /// Live download progress for offline caching of THIS exercise's video.
+  /// Populated when the user (or "Download this week's videos" Settings action)
+  /// has queued a download via [VideoCacheService]. We surface a small chip
+  /// over the player so the user knows a background save is in flight, and a
+  /// Retry button if it failed. Decoupled from [_videoError] (which covers
+  /// the streaming-playback path).
+  VideoDownloadProgress? _downloadProgress;
+  StreamSubscription<VideoDownloadProgress>? _downloadProgressSub;
+
   /// Animation controller for fade-in effect
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
@@ -108,6 +117,7 @@ class _ExerciseDetailSheetState extends ConsumerState<ExerciseDetailSheet>
   void dispose() {
     _fadeController.dispose();
     _videoController?.dispose();
+    _downloadProgressSub?.cancel();
     super.dispose();
   }
 
@@ -126,6 +136,21 @@ class _ExerciseDetailSheetState extends ConsumerState<ExerciseDetailSheet>
     // Get exercise ID for cache lookup
     final exerciseId = widget.exercise.id ??
         widget.exercise.name.toLowerCase().replaceAll(' ', '_');
+
+    // Subscribe to download progress so any background save (queued from
+    // Settings → "Download this week's videos" or a prior failed attempt)
+    // surfaces a chip on this sheet. Idempotent — re-entry on Retry just
+    // replaces the previous subscription. ✅
+    _downloadProgressSub?.cancel();
+    final initial = videoCacheService.getProgress(exerciseId);
+    if (initial != null && mounted) {
+      setState(() => _downloadProgress = initial);
+    }
+    _downloadProgressSub =
+        videoCacheService.getProgressStream(exerciseId).listen((p) {
+      if (!mounted) return;
+      setState(() => _downloadProgress = p);
+    });
 
     try {
       // First check if video is cached locally
@@ -218,6 +243,31 @@ class _ExerciseDetailSheetState extends ConsumerState<ExerciseDetailSheet>
     }
   }
 
+  /// Re-attempt a failed background download for this exercise's video.
+  /// Triggered by the Retry button on the [_DownloadProgressChip] overlay.
+  Future<void> _retryDownload() async {
+    final exerciseId = widget.exercise.id ??
+        widget.exercise.name.toLowerCase().replaceAll(' ', '_');
+    final exerciseName =
+        widget.exercise.originalName ?? widget.exercise.name;
+    if (_videoUrl == null || exerciseName.isEmpty) {
+      // No URL yet — kick off the load path; it will eventually populate
+      // _videoUrl and the user can retry then. ⚠️
+      _loadVideo();
+      return;
+    }
+    HapticService.light();
+    try {
+      await videoCacheService.downloadVideo(
+        exerciseId: exerciseId,
+        exerciseName: exerciseName,
+        videoUrl: _videoUrl!,
+      );
+    } catch (e) {
+      debugPrint('❌ Retry download failed: $e');
+    }
+  }
+
   void _toggleVideo() {
     if (_videoController == null) return;
     if (_videoController!.value.isPlaying) {
@@ -268,6 +318,22 @@ class _ExerciseDetailSheetState extends ConsumerState<ExerciseDetailSheet>
                 ),
               ),
             ),
+            // Active download chip — surfaces background save progress
+            // (queued from "Download this week's videos" Settings action or
+            // a manual retry). Shows percentage while in flight, a Retry
+            // button on failure. Auto-hides on success.
+            if (_downloadProgress != null &&
+                _downloadProgress!.status != VideoDownloadStatus.downloaded &&
+                _downloadProgress!.status != VideoDownloadStatus.notDownloaded)
+              Positioned(
+                top: 8,
+                right: 8,
+                child: _DownloadProgressChip(
+                  progress: _downloadProgress!,
+                  cyan: cyan,
+                  onRetry: _retryDownload,
+                ),
+              ),
             // Muted indicator
             Positioned(
               bottom: 8,
@@ -848,6 +914,99 @@ class _ExerciseDetailSheetState extends ConsumerState<ExerciseDetailSheet>
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Compact overlay chip that surfaces an in-flight or failed background
+/// download for the current exercise's video. Renders three states:
+/// - downloading: cyan progress bar + "NN%"
+/// - error: red icon + "Retry" button (calls [onRetry])
+/// - notDownloaded / downloaded: caller hides the chip; this widget assumes
+///   it's only mounted in the two states above.
+class _DownloadProgressChip extends StatelessWidget {
+  final VideoDownloadProgress progress;
+  final Color cyan;
+  final VoidCallback onRetry;
+
+  const _DownloadProgressChip({
+    required this.progress,
+    required this.cyan,
+    required this.onRetry,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isError = progress.status == VideoDownloadStatus.error;
+    final pct = (progress.progress * 100).clamp(0, 100).toStringAsFixed(0);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.black.withOpacity(0.65),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isError ? Colors.redAccent : cyan.withOpacity(0.4),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (isError) ...[
+            const Icon(Icons.error_outline,
+                size: 14, color: Colors.redAccent),
+            const SizedBox(width: 6),
+            const Text('Download failed',
+                style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500)),
+            const SizedBox(width: 8),
+            InkWell(
+              onTap: onRetry,
+              borderRadius: BorderRadius.circular(10),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 8, vertical: 2),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.refresh, size: 12, color: cyan),
+                    const SizedBox(width: 3),
+                    Text('Retry',
+                        style: TextStyle(
+                            color: cyan,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600)),
+                  ],
+                ),
+              ),
+            ),
+          ] else ...[
+            SizedBox(
+              width: 12,
+              height: 12,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                value: progress.progress > 0 ? progress.progress : null,
+                valueColor: AlwaysStoppedAnimation<Color>(cyan),
+                backgroundColor: cyan.withOpacity(0.2),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              progress.progress > 0
+                  ? 'Downloading $pct%'
+                  : 'Downloading…',
+              style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500),
+            ),
+          ],
+        ],
       ),
     );
   }

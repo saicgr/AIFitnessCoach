@@ -34,7 +34,7 @@ def _mk_strength(
     set_type: SetType = SetType.WORKING,
     notes: str = "",
 ) -> CanonicalSetRow:
-    source_app = "fitwiz"
+    source_app = "zealova"
     return CanonicalSetRow(
         user_id=user_id,
         performed_at=performed_at,
@@ -94,10 +94,10 @@ def sample_cardio_rows(test_user_id) -> List[CanonicalCardioRow]:
             avg_heart_rate=155,
             max_heart_rate=172,
             calories=420,
-            source_app="fitwiz",
+            source_app="zealova",
             source_row_hash=CanonicalCardioRow.compute_row_hash(
                 user_id=test_user_id,
-                source_app="fitwiz",
+                source_app="zealova",
                 performed_at=d1,
                 activity_type="run",
                 duration_seconds=1800,

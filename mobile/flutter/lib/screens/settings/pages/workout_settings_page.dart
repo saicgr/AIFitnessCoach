@@ -7,6 +7,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/providers/user_provider.dart';
 import '../../../core/providers/weight_increments_provider.dart';
+import '../../../core/theme/accent_color_provider.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/pill_app_bar.dart';
 import '../../../widgets/weight_increments_sheet.dart';
@@ -47,6 +48,7 @@ class _WorkoutSettingsPageState extends ConsumerState<WorkoutSettingsPage> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final accent = AccentColorScope.of(context).getColor(isDark);
     final backgroundColor =
         isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
     final textPrimary =
@@ -159,9 +161,10 @@ class _WorkoutSettingsPageState extends ConsumerState<WorkoutSettingsPage> {
                       onChanged: (val) {
                         ref.read(fatigueAlertsEnabledProvider.notifier).setEnabled(val);
                       },
-                      activeTrackColor: isDark ? AppColors.coral : AppColorsLight.coral,
+                      activeThumbColor: accent,
+                      activeTrackColor: accent.withValues(alpha: 0.45),
                     ),
-                    iconColor: isDark ? AppColors.coral : AppColorsLight.coral,
+                    iconColor: accent,
                   ),
                   SettingItemData(
                     icon: Icons.auto_awesome_outlined,
@@ -179,10 +182,10 @@ class _WorkoutSettingsPageState extends ConsumerState<WorkoutSettingsPage> {
                             .read(preSetInsightEnabledProvider.notifier)
                             .setEnabled(val);
                       },
-                      activeTrackColor:
-                          isDark ? AppColors.coral : AppColorsLight.coral,
+                      activeThumbColor: accent,
+                      activeTrackColor: accent.withValues(alpha: 0.45),
                     ),
-                    iconColor: isDark ? AppColors.coral : AppColorsLight.coral,
+                    iconColor: accent,
                   ),
                   SettingItemData(
                     icon: Icons.checklist_rounded,
@@ -194,8 +197,10 @@ class _WorkoutSettingsPageState extends ConsumerState<WorkoutSettingsPage> {
                     trailing: Switch.adaptive(
                       value: !_skipWarningDismissed,
                       onChanged: _toggleSkipWarning,
+                      activeThumbColor: accent,
+                      activeTrackColor: accent.withValues(alpha: 0.45),
                     ),
-                    iconColor: isDark ? AppColors.orange : AppColorsLight.orange,
+                    iconColor: accent,
                   ),
                 ],
               ),

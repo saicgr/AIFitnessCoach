@@ -4,7 +4,7 @@ import '../../workout/widgets/share_templates/_share_common.dart';
 import '_report_common.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
-/// Newspaper — cream-paper "THE FITWIZ TIMES" masthead with a serif
+/// Newspaper — cream-paper "THE ZEALOVA TIMES" masthead with a serif
 /// headline built from the user's name + hero value + period label. Short
 /// body copy is stitched together from top highlights so the sheet reads
 /// like a news column even on data-sparse reports.
@@ -56,7 +56,7 @@ class ReportNewspaperTemplate extends StatelessWidget {
                     ),
                   ),
                   const Text(
-                    'THE FITWIZ TIMES',
+                    'THE ZEALOVA TIMES',
                     style: TextStyle(
                       fontFamily: 'Times New Roman',
                       fontSize: 24,

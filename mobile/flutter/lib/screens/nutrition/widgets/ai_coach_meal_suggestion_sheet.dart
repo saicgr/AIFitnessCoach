@@ -141,8 +141,8 @@ class _AiCoachMealSuggestionSheetState
       );
       if (!mounted || _cancelRequested) return;
       setState(() {
-        _lastReplyText = resp.message;
-        _lastActionData = resp.actionData;
+        _lastReplyText = resp.response.message;
+        _lastActionData = resp.response.actionData;
         _state = _CoachPopupState.replied;
       });
     } catch (e) {

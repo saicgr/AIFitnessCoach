@@ -81,9 +81,14 @@ class _WorkoutDaysSelectorSheetState
         );
       }
     } catch (e) {
+      // Surface the real backend message — silent generic copy hides bugs
+      // like the int-vs-string contract drift we hit on 2026-04-27.
+      debugPrint('❌ [WorkoutDays] save failed: $e');
       if (mounted) {
+        final raw = e.toString();
+        final msg = raw.length > 160 ? '${raw.substring(0, 160)}…' : raw;
         setState(() {
-          _errorMessage = 'Failed to update workout days. Please try again.';
+          _errorMessage = 'Failed to update workout days: $msg';
           _isLoading = false;
         });
       }
@@ -104,16 +109,10 @@ class _WorkoutDaysSelectorSheetState
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            // Note: drag handle is rendered by the GlassSheet wrapper. Don't
+            // duplicate it here — that's why users were seeing two stacked
+            // bars at the top of this sheet.
             const SizedBox(height: 8),
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: textMuted,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(height: 24),
             Text(
               'Workout Days',
               style: TextStyle(

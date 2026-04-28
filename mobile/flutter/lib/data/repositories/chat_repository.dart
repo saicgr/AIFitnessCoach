@@ -282,7 +282,19 @@ class ChatRepository {
   /// nutrition meal-log AI Coach card passes `'nutrition'` so every prompt is
   /// guaranteed to reach the Nutrition agent regardless of intent classifier
   /// output). Must be a valid `AgentType` value server-side.
-  Future<ChatResponse> sendMessage({
+  /// Send a chat message to the backend.
+  ///
+  /// Returns a record carrying:
+  ///   - [response]: parsed [ChatResponse] (existing public contract).
+  ///   - [messageId]: stable assistant-message UUID generated server-side.
+  ///     Callers MUST use this as the local id of the assistant bubble so
+  ///     a subsequent loadHistory/Realtime fetch can dedup by id (UPSERT)
+  ///     instead of appending the same reply twice.
+  ///
+  /// `messageId` may be null if the backend is older than 2026-04-27 — in
+  /// that case dedup falls back to content+timestamp matching at the call
+  /// site (existing behavior).
+  Future<({ChatResponse response, String? messageId})> sendMessage({
     required String message,
     required String userId,
     Map<String, dynamic>? userProfile,
@@ -342,8 +354,13 @@ class ChatRepository {
         debugPrint('🔍 [Chat] agent_type in JSON: ${jsonData['agent_type']}');
         debugPrint('🔍 [Chat] action_data in JSON: ${jsonData['action_data']}');
         final chatResponse = ChatResponse.fromJson(jsonData);
-        debugPrint('✅ [Chat] Got response with intent: ${chatResponse.intent}, agentType: ${chatResponse.agentType}, actionData: ${chatResponse.actionData}');
-        return chatResponse;
+        // Read message_id directly from the raw envelope — it isn't part of
+        // the @JsonSerializable ChatResponse model (kept off the model so we
+        // don't have to regenerate the .g.dart files; build_runner is
+        // forbidden in this repo per project_codegen_gotcha.md).
+        final messageId = jsonData['message_id'] as String?;
+        debugPrint('✅ [Chat] Got response with intent: ${chatResponse.intent}, agentType: ${chatResponse.agentType}, actionData: ${chatResponse.actionData}, messageId=$messageId');
+        return (response: chatResponse, messageId: messageId);
       }
       throw Exception('Failed to send message');
     } on DioException catch (e) {

@@ -62,6 +62,10 @@ class SentryService {
           // owns the overflowing Column/Row is visible, not just
           // `RenderFlex.performLayout`.
           options.considerInAppFramesByDefault = true;
+          // Attach all Dart isolate stack traces so async-zone crashes show
+          // the Dart frames that scheduled the work, not just the frame that
+          // ran when it threw.
+          options.attachThreads = true;
 
           // Privacy: redact text inputs and images so screenshots/hierarchies
           // don't leak PII (food names the user is typing, coach chat, etc.).
@@ -93,6 +97,22 @@ class SentryService {
             final msg = event.message?.formatted ?? '';
             if (msg.contains('Failed to interpolate TextStyles')) {
               return null;
+            }
+            // Tag null-check operator crashes so we can filter and triage them
+            // as a family in Sentry. The default exception type for `foo!` on
+            // null is `_TypeError` / `TypeError` with the message starting
+            // "Null check operator used on a null value". Attaching a tag here
+            // makes it groupable + searchable without polluting other typing
+            // errors.
+            final exceptionMsg = event.throwable?.toString() ?? '';
+            if (exceptionMsg.contains('Null check operator used on a null value') ||
+                msg.contains('Null check operator used on a null value')) {
+              event = event.copyWith(
+                tags: {
+                  ...?event.tags,
+                  'crash_family': 'null_check_operator',
+                },
+              );
             }
             return event;
           };
@@ -161,13 +181,20 @@ class SentryService {
   }
 
   /// Capture a plain message (non-exception) with optional level + tags.
+  ///
+  /// `captureMessage` doesn't get a stack trace by default because there's no
+  /// exception object — but for warn/error-level messages we almost always
+  /// want one to know *where* the message originated. Snapshot
+  /// `StackTrace.current` at the call site and attach it.
   static Future<void> captureMessage(
     String message, {
     SentryLevel level = SentryLevel.info,
     Map<String, dynamic>? extra,
     Map<String, String>? tags,
+    StackTrace? stackTrace,
   }) async {
     if (!_enabled) return;
+    final trace = stackTrace ?? StackTrace.current;
     await Sentry.captureMessage(
       message,
       level: level,
@@ -176,6 +203,7 @@ class SentryService {
         if (tags != null) {
           tags.forEach(scope.setTag);
         }
+        scope.setContexts('stack_at_call_site', {'stack': trace.toString()});
       },
     );
   }
@@ -214,10 +242,18 @@ class SentryService {
   }
 
   /// Attach to Dio so HTTP calls appear as breadcrumbs + performance spans.
+  ///
+  /// `captureFailedRequests: true` makes Dio errors arrive in Sentry with a
+  /// full stack trace + request/response context, instead of as a bare
+  /// exception fired from the call site. This is what lets us see the actual
+  /// HTTP path and status code on backend-induced crashes.
   static void attachToDio(Dio dio) {
     if (!_enabled) return;
     dio.addSentry(
-      captureFailedRequests: false, // 4xx/5xx already handled elsewhere
+      captureFailedRequests: true,
+      failedRequestStatusCodes: [
+        SentryStatusCode.range(400, 599),
+      ],
     );
   }
 

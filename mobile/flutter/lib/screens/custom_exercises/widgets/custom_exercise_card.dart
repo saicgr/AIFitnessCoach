@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/custom_exercise.dart';
@@ -42,26 +43,48 @@ class CustomExerciseCard extends StatelessWidget {
               // Header row
               Row(
                 children: [
-                  // Type indicator
-                  Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: exercise.isComposite
-                          ? cyan.withOpacity(0.2)
-                          : (isDark ? AppColors.surface : AppColorsLight.surface),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Center(
-                      child: Icon(
-                        exercise.isComposite
-                            ? Icons.layers
-                            : Icons.fitness_center,
-                        color: exercise.isComposite
-                            ? cyan
-                            : textSecondary,
-                        size: 24,
-                      ),
+                  // Thumbnail — user-uploaded photo if available, else type-icon fallback.
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: SizedBox(
+                      width: 48,
+                      height: 48,
+                      child: (exercise.imageUrl != null &&
+                              exercise.imageUrl!.isNotEmpty)
+                          ? CachedNetworkImage(
+                              imageUrl: exercise.imageUrl!,
+                              fit: BoxFit.cover,
+                              placeholder: (_, __) => Container(
+                                color: isDark
+                                    ? AppColors.surface
+                                    : AppColorsLight.surface,
+                              ),
+                              errorWidget: (_, __, ___) => Container(
+                                color: isDark
+                                    ? AppColors.surface
+                                    : AppColorsLight.surface,
+                                child: Icon(Icons.fitness_center,
+                                    color: textSecondary, size: 24),
+                              ),
+                            )
+                          : Container(
+                              color: exercise.isComposite
+                                  ? cyan.withOpacity(0.2)
+                                  : (isDark
+                                      ? AppColors.surface
+                                      : AppColorsLight.surface),
+                              child: Center(
+                                child: Icon(
+                                  exercise.isComposite
+                                      ? Icons.layers
+                                      : Icons.fitness_center,
+                                  color: exercise.isComposite
+                                      ? cyan
+                                      : textSecondary,
+                                  size: 24,
+                                ),
+                              ),
+                            ),
                     ),
                   ),
                   const SizedBox(width: 12),

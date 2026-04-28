@@ -24,6 +24,16 @@ part 'nutrition_repository_part_food_logging_progress.dart';
 
 part 'nutrition_repository_ui.dart';
 
+/// Reads the cached IANA timezone string from SharedPreferences.
+/// Returns empty string on any error — callers skip the `tz` param if empty.
+Future<String> _cachedTz() async {
+  try {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('user_timezone') ?? '';
+  } catch (_) {
+    return '';
+  }
+}
 
 /// Nutrition repository provider
 final nutritionRepositoryProvider = Provider<NutritionRepository>((ref) {

@@ -15,8 +15,12 @@ final featuresProvider =
   },
 );
 
-/// Provider for remaining submissions count
-final remainingSubmissionsProvider = FutureProvider<Map<String, dynamic>>(
+/// Provider for remaining submissions count.
+/// `.autoDispose` — only consumed by the suggest-feature sheet; closing
+/// the sheet should release the request (and refetch when reopened so
+/// the user sees their newly-decremented quota).
+final remainingSubmissionsProvider =
+    FutureProvider.autoDispose<Map<String, dynamic>>(
   (ref) async {
     final repository = ref.watch(featureRepositoryProvider);
     final authState = ref.watch(authStateProvider);

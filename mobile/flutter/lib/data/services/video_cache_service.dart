@@ -113,6 +113,57 @@ class VideoCacheService {
   // Download progress streams
   final Map<String, StreamController<VideoDownloadProgress>> _progressControllers = {};
 
+  // ── Concurrency limiter (semaphore pattern) ──────────────────────────────
+  // Cap concurrent downloads to keep the network usable for foreground
+  // requests (chat, food search, etc.). Three is a sensible balance for
+  // mobile bandwidth without serializing a 30-exercise weekly batch. ✅
+  static const int _maxConcurrentDownloads = 3;
+  int _inFlightDownloads = 0;
+  final List<Completer<void>> _downloadQueue = [];
+
+  // Throttle progress emissions per-download — 60fps progress updates
+  // on a 50MB video would repaint the UI thousands of times per download.
+  // 250ms cadence is smooth visually and ~25x cheaper. ⚠️
+  static const Duration _progressEmitInterval = Duration(milliseconds: 250);
+  final Map<String, DateTime> _lastEmitAt = {};
+
+  Future<void> _acquireDownloadSlot() async {
+    if (_inFlightDownloads < _maxConcurrentDownloads) {
+      _inFlightDownloads++;
+      return;
+    }
+    final completer = Completer<void>();
+    _downloadQueue.add(completer);
+    await completer.future;
+    _inFlightDownloads++;
+  }
+
+  void _releaseDownloadSlot() {
+    _inFlightDownloads--;
+    if (_inFlightDownloads < 0) _inFlightDownloads = 0;
+    if (_downloadQueue.isNotEmpty) {
+      final next = _downloadQueue.removeAt(0);
+      if (!next.isCompleted) next.complete();
+    }
+  }
+
+  /// Emit a progress update — throttled to one emission per
+  /// [_progressEmitInterval] per [exerciseId]. Terminal states
+  /// ([VideoDownloadStatus.downloaded] / [VideoDownloadStatus.error])
+  /// always emit immediately so consumers never miss completion.
+  void _emitProgress(String exerciseId, VideoDownloadProgress progress) {
+    final isTerminal = progress.status == VideoDownloadStatus.downloaded ||
+        progress.status == VideoDownloadStatus.error;
+    final now = DateTime.now();
+    final last = _lastEmitAt[exerciseId];
+    if (!isTerminal && last != null && now.difference(last) < _progressEmitInterval) {
+      return;
+    }
+    _lastEmitAt[exerciseId] = now;
+    _lastProgressByExercise[exerciseId] = progress;
+    _progressControllers[exerciseId]?.add(progress);
+  }
+
   // Singleton
   static final VideoCacheService _instance = VideoCacheService._internal();
   factory VideoCacheService() => _instance;
@@ -230,7 +281,24 @@ class VideoCacheService {
     return _progressControllers[exerciseId]!.stream;
   }
 
-  /// Download a video for offline use
+  /// Last-known progress snapshot for an exercise. Used by UIs that mount
+  /// AFTER a download has already started (e.g. opening the exercise sheet
+  /// while a "Download this week's videos" batch is mid-flight) — the
+  /// broadcast stream above doesn't replay, so we mirror the latest emit
+  /// here. Returns null if no download has been observed for this exercise.
+  VideoDownloadProgress? _lastProgress(String exerciseId) =>
+      _lastProgressByExercise[exerciseId];
+  VideoDownloadProgress? getProgress(String exerciseId) => _lastProgress(exerciseId);
+
+  final Map<String, VideoDownloadProgress> _lastProgressByExercise = {};
+
+  /// Download a video for offline use.
+  ///
+  /// Reliability:
+  /// - Concurrency capped via [_acquireDownloadSlot] semaphore.
+  /// - Up to 3 attempts with exponential backoff (1s / 3s / 9s) on transient
+  ///   network failures; user-cancellation is NOT retried.
+  /// - Progress emissions throttled to 250ms cadence.
   Future<String?> downloadVideo({
     required String exerciseId,
     required String exerciseName,
@@ -244,19 +312,27 @@ class VideoCacheService {
 
     // Already cached?
     if (isVideoCached(exerciseId)) {
-      debugPrint('📹 $exerciseName already cached');
+      debugPrint('✅ $exerciseName already cached');
       return getLocalVideoPath(exerciseId);
     }
 
-    // Check cache size and clean up if needed
+    // Wait for a slot in the concurrency limiter before starting any work.
+    await _acquireDownloadSlot();
+
+    // Re-check cache after acquiring the slot — earlier-queued duplicate
+    // downloads may have completed while we were waiting. ⚠️
+    if (isVideoCached(exerciseId)) {
+      _releaseDownloadSlot();
+      return getLocalVideoPath(exerciseId);
+    }
+
     await _ensureCacheSpace();
 
     final cancelToken = CancelToken();
     _activeDownloads[exerciseId] = cancelToken;
 
-    // Initialize progress stream
     _progressControllers[exerciseId] ??= StreamController<VideoDownloadProgress>.broadcast();
-    _progressControllers[exerciseId]!.add(VideoDownloadProgress(
+    _emitProgress(exerciseId, VideoDownloadProgress(
       exerciseId: exerciseId,
       progress: 0,
       downloadedBytes: 0,
@@ -264,72 +340,132 @@ class VideoCacheService {
       status: VideoDownloadStatus.downloading,
     ));
 
-    try {
-      final cacheDir = await _getCacheDirectory();
-      final sanitizedName = exerciseName.replaceAll(RegExp(r'[^\w\s-]'), '').replaceAll(' ', '_');
-      final localPath = '${cacheDir.path}/${exerciseId}_$sanitizedName.mp4';
+    final cacheDir = await _getCacheDirectory();
+    final sanitizedName = exerciseName.replaceAll(RegExp(r'[^\w\s-]'), '').replaceAll(' ', '_');
+    final localPath = '${cacheDir.path}/${exerciseId}_$sanitizedName.mp4';
 
-      debugPrint('📹 Downloading $exerciseName to $localPath');
+    // Exponential backoff: 1s, 3s, 9s
+    const backoffs = [
+      Duration(seconds: 1),
+      Duration(seconds: 3),
+      Duration(seconds: 9),
+    ];
+    const maxAttempts = 3;
 
-      await _dio.download(
-        videoUrl,
-        localPath,
-        cancelToken: cancelToken,
-        onReceiveProgress: (received, total) {
-          if (total != -1) {
-            final progress = received / total;
-            _progressControllers[exerciseId]?.add(VideoDownloadProgress(
-              exerciseId: exerciseId,
-              progress: progress,
-              downloadedBytes: received,
-              totalBytes: total,
-              status: VideoDownloadStatus.downloading,
-            ));
-          }
-        },
-      );
+    Object? lastError;
+    for (int attempt = 0; attempt < maxAttempts; attempt++) {
+      // User-cancelled? Bail out without retry.
+      if (cancelToken.isCancelled) break;
+      try {
+        debugPrint('📹 Downloading $exerciseName (attempt ${attempt + 1}/$maxAttempts)');
+        await _dio.download(
+          videoUrl,
+          localPath,
+          cancelToken: cancelToken,
+          onReceiveProgress: (received, total) {
+            if (total != -1) {
+              final progress = received / total;
+              _emitProgress(exerciseId, VideoDownloadProgress(
+                exerciseId: exerciseId,
+                progress: progress,
+                downloadedBytes: received,
+                totalBytes: total,
+                status: VideoDownloadStatus.downloading,
+              ));
+            }
+          },
+        );
 
-      // Get file size
-      final file = File(localPath);
-      final fileSize = await file.length();
+        // Success — record metadata and exit retry loop.
+        final file = File(localPath);
+        final fileSize = await file.length();
 
-      // Save to cache
-      final cachedInfo = CachedVideoInfo(
-        exerciseName: exerciseName,
-        exerciseId: exerciseId,
-        localPath: localPath,
-        fileSizeBytes: fileSize,
-        downloadedAt: DateTime.now(),
-        sourceUrl: videoUrl,
-      );
+        final cachedInfo = CachedVideoInfo(
+          exerciseName: exerciseName,
+          exerciseId: exerciseId,
+          localPath: localPath,
+          fileSizeBytes: fileSize,
+          downloadedAt: DateTime.now(),
+          sourceUrl: videoUrl,
+        );
 
-      _cachedVideos[exerciseId] = cachedInfo;
-      await _saveMetadata();
+        _cachedVideos[exerciseId] = cachedInfo;
+        await _saveMetadata();
 
-      _activeDownloads.remove(exerciseId);
-      _progressControllers[exerciseId]?.add(VideoDownloadProgress(
-        exerciseId: exerciseId,
-        progress: 1.0,
-        downloadedBytes: fileSize,
-        totalBytes: fileSize,
-        status: VideoDownloadStatus.downloaded,
-      ));
-
-      debugPrint('📹 Downloaded $exerciseName (${(fileSize / 1024 / 1024).toStringAsFixed(1)} MB)');
-      return localPath;
-    } catch (e) {
-      _activeDownloads.remove(exerciseId);
-      _progressControllers[exerciseId]?.add(VideoDownloadProgress(
-        exerciseId: exerciseId,
-        progress: 0,
-        downloadedBytes: 0,
-        totalBytes: 0,
-        status: VideoDownloadStatus.error,
-        error: e.toString(),
-      ));
-      debugPrint('📹 Error downloading $exerciseName: $e');
-      return null;
+        _activeDownloads.remove(exerciseId);
+        _emitProgress(exerciseId, VideoDownloadProgress(
+          exerciseId: exerciseId,
+          progress: 1.0,
+          downloadedBytes: fileSize,
+          totalBytes: fileSize,
+          status: VideoDownloadStatus.downloaded,
+        ));
+        _releaseDownloadSlot();
+        debugPrint('✅ Downloaded $exerciseName (${(fileSize / 1024 / 1024).toStringAsFixed(1)} MB)');
+        return localPath;
+      } catch (e) {
+        lastError = e;
+        // Don't retry user-cancellations
+        if (e is DioException && CancelToken.isCancel(e)) {
+          break;
+        }
+        debugPrint('⚠️ Download attempt ${attempt + 1} failed for $exerciseName: $e');
+        // Wait before next attempt unless this was the last one
+        if (attempt < maxAttempts - 1) {
+          try {
+            await Future.delayed(backoffs[attempt]);
+          } catch (_) {}
+        }
+      }
     }
+
+    // All retries exhausted (or user cancelled). Report error.
+    _activeDownloads.remove(exerciseId);
+    // Best-effort cleanup of partial file so it doesn't masquerade as cached
+    try {
+      final partial = File(localPath);
+      if (await partial.exists()) await partial.delete();
+    } catch (_) {}
+
+    _emitProgress(exerciseId, VideoDownloadProgress(
+      exerciseId: exerciseId,
+      progress: 0,
+      downloadedBytes: 0,
+      totalBytes: 0,
+      status: VideoDownloadStatus.error,
+      error: lastError?.toString() ?? 'Download failed',
+    ));
+    _releaseDownloadSlot();
+    debugPrint('❌ Failed to download $exerciseName after $maxAttempts attempts: $lastError');
+    return null;
+  }
+
+  /// Queue a batch of videos for download (e.g. "Download all videos for
+  /// this week's plan"). Each entry is `{exerciseId, exerciseName, videoUrl}`.
+  /// Honours the same concurrency cap as single downloads — entries are
+  /// awaited sequentially from the caller's perspective but execute in
+  /// parallel up to [_maxConcurrentDownloads].
+  Future<void> queueDownloads(List<Map<String, String>> items) async {
+    if (items.isEmpty) return;
+    debugPrint('📹 Queuing ${items.length} videos for download');
+    // Fire-and-forget each download — the semaphore inside [downloadVideo]
+    // serializes execution. Wait for all to complete (success or error)
+    // so callers can show a "completed" toast. ✅
+    await Future.wait(items.map((item) async {
+      final id = item['exerciseId'];
+      final name = item['exerciseName'];
+      final url = item['videoUrl'];
+      if (id == null || name == null || url == null) return;
+      try {
+        await downloadVideo(
+          exerciseId: id,
+          exerciseName: name,
+          videoUrl: url,
+        );
+      } catch (e) {
+        debugPrint('⚠️ Batch download item failed: $e');
+      }
+    }));
   }
 
   /// Cancel an active download
@@ -348,6 +484,7 @@ class VideoCacheService {
       // Perf fix 2.6: close StreamController immediately on cancel to prevent leak
       _progressControllers[exerciseId]?.close();
       _progressControllers.remove(exerciseId);
+      _lastEmitAt.remove(exerciseId);
     }
   }
 

@@ -59,7 +59,7 @@ class MagazineCoverTemplate extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'FITWIZ',
+                  'ZEALOVA',
                   style: TextStyle(
                     fontFamily: 'Times New Roman',
                     color: Colors.white,

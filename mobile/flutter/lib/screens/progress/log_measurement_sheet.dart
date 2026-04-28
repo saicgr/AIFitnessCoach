@@ -66,7 +66,7 @@ class BodyMeasurement {
       if (leftCalfCm != null) 'left_calf_cm': leftCalfCm,
       if (rightCalfCm != null) 'right_calf_cm': rightCalfCm,
       if (shouldersCm != null) 'shoulders_cm': shouldersCm,
-      if (bodyFatPercentage != null) 'body_fat_percentage': bodyFatPercentage,
+      if (bodyFatPercentage != null) 'body_fat_percent': bodyFatPercentage,
       if (notes != null) 'notes': notes,
     };
   }
@@ -89,7 +89,7 @@ class BodyMeasurement {
       leftCalfCm: (json['left_calf_cm'] as num?)?.toDouble(),
       rightCalfCm: (json['right_calf_cm'] as num?)?.toDouble(),
       shouldersCm: (json['shoulders_cm'] as num?)?.toDouble(),
-      bodyFatPercentage: (json['body_fat_percentage'] as num?)?.toDouble(),
+      bodyFatPercentage: (json['body_fat_percent'] as num?)?.toDouble(),
       notes: json['notes'] as String?,
     );
   }

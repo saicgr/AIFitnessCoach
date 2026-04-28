@@ -201,6 +201,8 @@ class _RoadmapTabState extends State<_RoadmapTab> {
             _Feature(Icons.person_search_outlined, AppColors.purple, 'Friend Profiles', 'View detailed friend profiles and stats', eta: 'Q3 2026'),
             _Feature(Icons.leaderboard_outlined, AppColors.yellow, 'Exercise Leaderboard', 'Compare lifts with friends', eta: 'Q3 2026'),
             _Feature(Icons.emoji_events_outlined, AppColors.orange, 'Community Challenges', 'Create and host public fitness challenges', eta: 'Q3 2026'),
+            _Feature(Icons.photo_library_outlined, AppColors.cyan, 'Photo Timeline', 'Track your transformation visually over weeks and months', eta: 'Q3 2026'),
+            _Feature(Icons.share_outlined, AppColors.teal, 'Custom Exercise Sharing', 'Publish your custom exercises so the community can discover them', eta: 'Q3 2026'),
           ],
         ),
 

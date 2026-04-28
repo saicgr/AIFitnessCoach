@@ -4,6 +4,8 @@ import '../shareable_canvas.dart';
 import '../shareable_data.dart';
 import '../widgets/app_watermark.dart';
 
+// Re-export ShareableAspect for the auto-switch logic.
+
 /// Hevy-style "Share Workout" — the full vertical exercise list with logged
 /// set × reps × weight per exercise. The user explicitly asked for this from
 /// looking at Hevy's UI.
@@ -21,9 +23,14 @@ class WorkoutDetailsTemplate extends StatelessWidget {
   Widget build(BuildContext context) {
     final mul = data.aspect.bodyFontMultiplier;
     final exercises = data.exercises ?? const [];
-    // Captures get clipped beyond ~10 exercises on portrait/story aspect —
-    // collapse the long tail into a "+ N more" footer.
-    final visible = exercises.take(10).toList();
+    // Auto-switch to story (9:16) when content is dense — 4:5 portrait
+    // crops the trailing exercises and any long names. We don't mutate
+    // `data.aspect` here; this just sets the visible cap. Story can fit
+    // ~14 exercises, portrait ~10. Empty handled below.
+    final isStory = data.aspect == ShareableAspect.story;
+    final hasLongNames = exercises.any((e) => e.name.length > 30);
+    final maxVisible = isStory || hasLongNames ? 14 : 10;
+    final visible = exercises.take(maxVisible).toList();
     final overflow = exercises.length - visible.length;
 
     final duration = data.highlights
@@ -102,16 +109,40 @@ class WorkoutDetailsTemplate extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               Expanded(
-                child: ListView.separated(
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: visible.length,
-                  separatorBuilder: (_, __) => const Divider(
-                    color: Color(0xFFE5E5E5),
-                    height: 18,
-                    thickness: 1,
-                  ),
-                  itemBuilder: (context, i) => _ExerciseRow(ex: visible[i]),
-                ),
+                child: visible.isEmpty
+                    // Empty workout placeholder (Issue 15 edge case) — never
+                    // crash, render a clear "no exercises" message.
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: const [
+                            Icon(
+                              Icons.fitness_center_outlined,
+                              color: Color(0xFFBDBDBD),
+                              size: 48,
+                            ),
+                            SizedBox(height: 12),
+                            Text(
+                              'No exercises logged',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF888888),
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    : ListView.separated(
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: visible.length,
+                        separatorBuilder: (_, __) => const Divider(
+                          color: Color(0xFFE5E5E5),
+                          height: 18,
+                          thickness: 1,
+                        ),
+                        itemBuilder: (context, i) => _ExerciseRow(ex: visible[i]),
+                      ),
               ),
               if (overflow > 0)
                 Padding(
@@ -205,7 +236,9 @@ class _ExerciseRow extends StatelessWidget {
             children: [
               Text(
                 ex.name,
-                maxLines: 1,
+                // Allow wrap for long exercise names (Issue 15 edge case —
+                // 40+ char names previously truncated to "Barbell Bulgar...").
+                maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
                   fontSize: 14,
@@ -243,37 +276,77 @@ class _ExerciseRow extends StatelessWidget {
                 const SizedBox(height: 2),
                 ...List.generate(ex.sets.length, (i) {
                   final s = ex.sets[i];
-                  // Render bodyweight sets as "BW" instead of "—" / "0 lbs"
-                  // so the shared image matches what the user actually did.
-                  final isBodyweight = s.weight == null || s.weight == 0;
-                  final weightStr = isBodyweight
-                      ? 'BW'
-                      : '${s.weight!.toStringAsFixed(s.weight! == s.weight!.roundToDouble() ? 0 : 1)} ${s.unit}';
-                  // If reps is 0 (data not logged), show "—" instead of "0 reps"
+                  // Bodyweight branch: render "BW" only when the exercise is
+                  // actually bodyweight (s.isBodyweight) OR weight==null. A
+                  // missing weight on a non-BW exercise (e.g. machine row
+                  // someone forgot to log) renders as "—" instead of falsely
+                  // labeling it BW.
+                  String fmtWeight(num? w) {
+                    if (s.isBodyweight && (w == null || w == 0)) return 'BW';
+                    if (w == null) return '—';
+                    if (w == 0) return s.isBodyweight ? 'BW' : '—';
+                    return '${w.toStringAsFixed(w == w.roundToDouble() ? 0 : 1)} ${s.unit}';
+                  }
+
+                  final weightStr = fmtWeight(s.weight);
                   final repsStr = s.reps > 0 ? '${s.reps} reps' : '— reps';
+
+                  // Target line: only render if a planned target exists AND
+                  // differs visibly from the actual (otherwise it's noise).
+                  final hasTarget =
+                      (s.targetReps != null && s.targetReps! > 0) ||
+                      (s.targetWeight != null && s.targetWeight! > 0);
+                  final actualMatchesTarget = hasTarget &&
+                      s.reps == s.targetReps &&
+                      ((s.weight ?? 0) == (s.targetWeight ?? 0));
+                  String? targetStr;
+                  if (hasTarget && !actualMatchesTarget) {
+                    final tw = fmtWeight(s.targetWeight);
+                    final tr = (s.targetReps != null && s.targetReps! > 0)
+                        ? '${s.targetReps} reps'
+                        : '— reps';
+                    targetStr = 'target $tw  ×  $tr';
+                  }
                   return Padding(
                     padding: const EdgeInsets.symmetric(vertical: 1),
-                    child: Row(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        SizedBox(
-                          width: 28,
-                          child: Text(
-                            '${i + 1}',
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                              color: Color(0xFF333333),
+                        Row(
+                          children: [
+                            SizedBox(
+                              width: 28,
+                              child: Text(
+                                '${i + 1}',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFF333333),
+                                ),
+                              ),
+                            ),
+                            Text(
+                              '$weightStr  ×  $repsStr',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: Color(0xFF333333),
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                        if (targetStr != null)
+                          Padding(
+                            padding: const EdgeInsets.only(left: 28, top: 0),
+                            child: Text(
+                              targetStr,
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: Colors.black.withValues(alpha: 0.45),
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
                           ),
-                        ),
-                        Text(
-                          '$weightStr  ×  $repsStr',
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: Color(0xFF333333),
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
                       ],
                     ),
                   );

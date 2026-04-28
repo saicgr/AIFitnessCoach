@@ -28,10 +28,60 @@ import '../../../core/providers/serious_mode_provider.dart';
 import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/providers/xp_provider.dart';
 import '../../../data/services/api_client.dart';
+import '../../../data/services/health_service.dart';
 import '../../../widgets/xp_hero_tile.dart';
 import '../../home/widgets/cards/last_night_sleep_card.dart';
 import '../../home/widgets/cards/todays_health_card.dart';
 import '../widgets/weight_tracking_card.dart';
+
+/// Module-level in-memory cache for the Overview tab.
+///
+/// Mirrors the `_xpInMemoryCache` pattern used by `xp_provider.dart` —
+/// keeps the last successful payload alive across tab switches so reopening
+/// the You hub renders instantly from cache while a silent refresh runs in
+/// the background. Without this, every tab switch refetched 6+ endpoints
+/// and showed a spinner for ~1.5s on a warm device.
+///
+/// Cleared in two places:
+///   • `AppLifecycleState.resumed` if the cache is older than 5 minutes
+///   • Manual refresh button (refresh icon in AppBar / pull-to-refresh)
+class _OverviewCache {
+  List<dynamic>? streaks;
+  Map<String, dynamic>? latestSummary;
+  Map<String, dynamic>? trophySummary;
+  List<dynamic>? recentTrophies;
+  Map<String, dynamic>? skillsSummary;
+  bool? leaderboardUnlocked;
+  int workoutsNeeded = 10;
+  double? percentile;
+  DateTime? cachedAt;
+
+  bool get hasData => cachedAt != null;
+
+  Duration get age =>
+      cachedAt == null ? Duration.zero : DateTime.now().difference(cachedAt!);
+
+  void clear() {
+    streaks = null;
+    latestSummary = null;
+    trophySummary = null;
+    recentTrophies = null;
+    skillsSummary = null;
+    leaderboardUnlocked = null;
+    workoutsNeeded = 10;
+    percentile = null;
+    cachedAt = null;
+  }
+}
+
+/// Single shared cache instance — survives tab swaps inside the You hub
+/// because it lives at module scope, not in widget state.
+final _overviewCache = _OverviewCache();
+
+/// Stale threshold for the lifecycle-resumed invalidation. Anything older
+/// than 5 minutes gets a forced background refresh. Within the window we
+/// trust the cache and skip the network entirely.
+const Duration _overviewStaleAfter = Duration(minutes: 5);
 
 class YouOverviewTab extends ConsumerStatefulWidget {
   const YouOverviewTab({super.key});
@@ -40,95 +90,253 @@ class YouOverviewTab extends ConsumerStatefulWidget {
   ConsumerState<YouOverviewTab> createState() => _YouOverviewTabState();
 }
 
-class _YouOverviewTabState extends ConsumerState<YouOverviewTab> {
+class _YouOverviewTabState extends ConsumerState<YouOverviewTab>
+    with WidgetsBindingObserver {
+  // Local mirrors of the module-level cache — populated synchronously in
+  // `initState` so the first frame after a tab switch already has data.
   List<dynamic>? _streaks;
   Map<String, dynamic>? _latestSummary;
   Map<String, dynamic>? _trophySummary;
   List<dynamic>? _recentTrophies;
   Map<String, dynamic>? _skillsSummary;
-  // Leaderboard state: null = still loading, unlocked=false → show unlock
-  // progress, unlocked=true → show percentile / rank.
   bool? _leaderboardUnlocked;
   int _workoutsNeeded = 10;
   double? _percentile;
-  bool _loading = true;
+
+  /// True only on the first-ever render with no cached data. Drives the
+  /// skeleton placeholder; subsequent silent refreshes never flip this back
+  /// to true so users don't see the skeleton flash on every refresh.
+  bool _firstLoad = true;
+
+  /// True while a silent background refresh is in flight. Used to suppress
+  /// duplicate refresh kicks but does NOT block rendering.
+  bool _refreshing = false;
 
   @override
   void initState() {
     super.initState();
-    _load();
+    WidgetsBinding.instance.addObserver(this);
+
+    // Hydrate from module-level cache synchronously so the first frame
+    // already has data — no spinner, no skeleton flash for repeat opens.
+    if (_overviewCache.hasData) {
+      _hydrateFromCache();
+      _firstLoad = false;
+      // Spawn a silent background refresh so the user gets fresh data
+      // without ever seeing a loading indicator.
+      unawaited(_load(silent: true));
+    } else {
+      // First-ever open — let the skeleton render and kick off the fetch.
+      unawaited(_load(silent: false));
+    }
   }
 
-  Future<void> _load() async {
-    setState(() => _loading = true);
-    try {
-      final api = ref.read(apiClientProvider);
-      final userId = await api.getUserId();
-      if (userId == null) return;
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
 
-      // Kick off the XP refresh via the canonical provider. It hits
-      // `/progress/xp/{userId}` and updates `userXpProvider` which the
-      // `_LevelCard` widget watches directly — no map plumbing needed.
-      // `unclaimedCratesCountProvider` wraps the repository's crates call,
-      // so the old broken `/xp/unclaimed-crates` fetch is gone too.
-      unawaited(ref.read(xpProvider.notifier).loadUserXP(userId: userId));
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      // On resume: invalidate health caches unconditionally (steps tick
+      // every minute when the user is walking), but only re-fetch the
+      // dashboard payload if the in-memory cache is older than 5 min.
+      // This mirrors the stale-while-revalidate pattern documented in
+      // `feedback_instant_data.md` — never make the user pull to refresh.
+      ref.read(dailyActivityProvider.notifier).invalidateCache();
+      final sync = ref.read(healthSyncProvider);
+      if (sync.isConnected) {
+        unawaited(
+          ref.read(dailyActivityProvider.notifier).loadTodayActivity(force: true),
+        );
+        // Issue 12: also backfill the past 30 days so days the user walked
+        // but didn't open the app (e.g. April 23) appear in the synced
+        // workouts grid. Cheap — gated server-side by date matching.
+        unawaited(
+          ref.read(dailyActivityProvider.notifier).backfillRecentActivity(),
+        );
+      }
 
-      // 15s receive-timeout: the leaderboard snapshot + achievements summary
-      // queries are heavier than the rest; 8s starved them into `—` states.
-      final opts = Options(
-        sendTimeout: const Duration(seconds: 5),
-        receiveTimeout: const Duration(seconds: 15),
-        validateStatus: (s) => s != null && s < 500,
-      );
+      if (!_overviewCache.hasData ||
+          _overviewCache.age > _overviewStaleAfter) {
+        unawaited(_load(silent: true));
+      }
+    }
+  }
 
-      final futures = await Future.wait([
-        api.dio.get('/achievements/user/$userId/streaks', options: opts),
-        api.dio.get('/summaries/user/$userId/latest', options: opts),
-        api.dio.get('/progress/trophies/$userId/summary', options: opts),
-        api.dio.get('/progress/trophies/$userId/recent',
-            queryParameters: {'limit': 1}, options: opts),
-        api.dio.get('/skill-progressions/user/$userId/summary', options: opts),
-        api.dio.get('/leaderboard/unlock-status',
-            queryParameters: {'user_id': userId}, options: opts),
-      ]);
+  /// Copy the module-level cache into widget state. Cheap — these are
+  /// reference assignments, not deep copies.
+  void _hydrateFromCache() {
+    _streaks = _overviewCache.streaks;
+    _latestSummary = _overviewCache.latestSummary;
+    _trophySummary = _overviewCache.trophySummary;
+    _recentTrophies = _overviewCache.recentTrophies;
+    _skillsSummary = _overviewCache.skillsSummary;
+    _leaderboardUnlocked = _overviewCache.leaderboardUnlocked;
+    _workoutsNeeded = _overviewCache.workoutsNeeded;
+    _percentile = _overviewCache.percentile;
+  }
 
-      if (futures[0].statusCode == 200) {
-        final data = futures[0].data;
-        if (data is List) _streaks = data;
-        if (data is Map && data['streaks'] is List) _streaks = data['streaks'] as List;
+  /// Pull the latest payload. When [silent] is true the UI keeps showing
+  /// whatever it has (cache or last-good values) — used for tab-reopen and
+  /// lifecycle-resumed paths so users never stare at a spinner. When false
+  /// (first-ever open, manual refresh) we flip `_firstLoad` so the skeleton
+  /// shows.
+  ///
+  /// Each of the 6 dashboard endpoints fetches independently — a single
+  /// failure cannot blank-out the rest. Network errors during a silent
+  /// refresh surface as a non-blocking SnackBar but DO NOT clear the cache.
+  Future<void> _load({bool silent = false}) async {
+    if (_refreshing) return;
+    _refreshing = true;
+    if (!silent && mounted) {
+      setState(() => _firstLoad = !_overviewCache.hasData);
+    }
+
+    final api = ref.read(apiClientProvider);
+    final userId = await api.getUserId();
+    if (userId == null) {
+      _refreshing = false;
+      if (mounted) setState(() => _firstLoad = false);
+      return;
+    }
+
+    // XP refresh fires off independently — its provider has its own cache.
+    unawaited(ref.read(xpProvider.notifier).loadUserXP(userId: userId));
+
+    // 15s receive-timeout: the leaderboard snapshot + achievements summary
+    // queries are heavier than the rest; 8s starved them into `—` states.
+    final opts = Options(
+      sendTimeout: const Duration(seconds: 5),
+      receiveTimeout: const Duration(seconds: 15),
+      validateStatus: (s) => s != null && s < 500,
+    );
+
+    // Per-call try/catch so a single failure (e.g. the leaderboard endpoint
+    // 500s) doesn't kill the other 5 calls. This replaces the old
+    // `Future.wait([...])` fail-fast pattern.
+    Future<Response<dynamic>?> safeGet(
+      String path, {
+      Map<String, dynamic>? query,
+    }) async {
+      try {
+        return await api.dio
+            .get(path, queryParameters: query, options: opts);
+      } catch (_) {
+        return null;
       }
-      if (futures[1].statusCode == 200 && futures[1].data is Map) {
-        _latestSummary = (futures[1].data as Map).cast<String, dynamic>();
+    }
+
+    final results = await Future.wait<Response<dynamic>?>([
+      safeGet('/achievements/user/$userId/streaks'),
+      safeGet('/summaries/user/$userId/latest'),
+      safeGet('/progress/trophies/$userId/summary'),
+      safeGet('/progress/trophies/$userId/recent', query: {'limit': 1}),
+      safeGet('/skill-progressions/user/$userId/summary'),
+      safeGet('/leaderboard/unlock-status', query: {'user_id': userId}),
+    ], eagerError: false);
+
+    int errorCount = 0;
+    void countErr(Response<dynamic>? r) {
+      if (r == null || r.statusCode != 200) errorCount++;
+    }
+
+    final streaksRes = results[0];
+    countErr(streaksRes);
+    if (streaksRes?.statusCode == 200) {
+      final data = streaksRes!.data;
+      if (data is List) _streaks = data;
+      if (data is Map && data['streaks'] is List) {
+        _streaks = data['streaks'] as List;
       }
-      if (futures[2].statusCode == 200 && futures[2].data is Map) {
-        _trophySummary = (futures[2].data as Map).cast<String, dynamic>();
-      }
-      if (futures[3].statusCode == 200 && futures[3].data is List) {
-        _recentTrophies = futures[3].data as List;
-      }
-      if (futures[4].statusCode == 200 && futures[4].data is Map) {
-        _skillsSummary = (futures[4].data as Map).cast<String, dynamic>();
-      }
-      if (futures[5].statusCode == 200 && futures[5].data is Map) {
-        final m = (futures[5].data as Map).cast<String, dynamic>();
-        _leaderboardUnlocked = m['is_unlocked'] as bool? ?? false;
-        _workoutsNeeded = (m['workouts_needed'] as num?)?.toInt() ?? 10;
-        // Only fetch the rank if the user has actually unlocked it —
-        // otherwise /leaderboard/rank 404s and writes nothing.
-        if (_leaderboardUnlocked == true) {
+    }
+    final latestRes = results[1];
+    countErr(latestRes);
+    if (latestRes?.statusCode == 200 && latestRes!.data is Map) {
+      _latestSummary = (latestRes.data as Map).cast<String, dynamic>();
+    }
+    final trophySumRes = results[2];
+    countErr(trophySumRes);
+    if (trophySumRes?.statusCode == 200 && trophySumRes!.data is Map) {
+      _trophySummary = (trophySumRes.data as Map).cast<String, dynamic>();
+    }
+    final trophyRecentRes = results[3];
+    countErr(trophyRecentRes);
+    if (trophyRecentRes?.statusCode == 200 && trophyRecentRes!.data is List) {
+      _recentTrophies = trophyRecentRes.data as List;
+    }
+    final skillsRes = results[4];
+    countErr(skillsRes);
+    if (skillsRes?.statusCode == 200 && skillsRes!.data is Map) {
+      _skillsSummary = (skillsRes.data as Map).cast<String, dynamic>();
+    }
+    final unlockRes = results[5];
+    countErr(unlockRes);
+    if (unlockRes?.statusCode == 200 && unlockRes!.data is Map) {
+      final m = (unlockRes.data as Map).cast<String, dynamic>();
+      _leaderboardUnlocked = m['is_unlocked'] as bool? ?? false;
+      _workoutsNeeded = (m['workouts_needed'] as num?)?.toInt() ?? 10;
+      if (_leaderboardUnlocked == true) {
+        try {
           final rankRes = await api.dio.get('/leaderboard/rank',
               queryParameters: {'user_id': userId}, options: opts);
           if (rankRes.statusCode == 200 && rankRes.data is Map) {
             final rm = (rankRes.data as Map).cast<String, dynamic>();
             _percentile = (rm['percentile'] as num?)?.toDouble();
           }
+        } catch (_) {
+          // Rank fetch is best-effort — keep last-known percentile.
         }
       }
-    } catch (_) {
-      // Per-block error handling — overview renders whatever data it got.
-    } finally {
-      if (mounted) setState(() => _loading = false);
     }
+
+    // Only stamp the cache if at least one call succeeded. A full-blackout
+    // refresh (no internet) keeps the previous cache intact.
+    if (errorCount < 6) {
+      _overviewCache
+        ..streaks = _streaks
+        ..latestSummary = _latestSummary
+        ..trophySummary = _trophySummary
+        ..recentTrophies = _recentTrophies
+        ..skillsSummary = _skillsSummary
+        ..leaderboardUnlocked = _leaderboardUnlocked
+        ..workoutsNeeded = _workoutsNeeded
+        ..percentile = _percentile
+        ..cachedAt = DateTime.now();
+    }
+
+    _refreshing = false;
+    if (!mounted) return;
+    setState(() => _firstLoad = false);
+
+    // Surface a non-blocking banner if EVERYTHING failed during a silent
+    // refresh — but only if we have a cache to fall back on, otherwise the
+    // empty-state copy already tells the user there's nothing to show.
+    if (silent && errorCount == 6 && _overviewCache.hasData) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Couldn't refresh. Showing cached data."),
+          duration: Duration(seconds: 2),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  /// Manual refresh — invalidates BOTH the dashboard cache and the health
+  /// activity cache so users get truly-fresh numbers when they tap refresh.
+  Future<void> _manualRefresh() async {
+    _overviewCache.clear();
+    ref.read(dailyActivityProvider.notifier).invalidateCache();
+    final sync = ref.read(healthSyncProvider);
+    if (sync.isConnected) {
+      unawaited(
+        ref.read(dailyActivityProvider.notifier).loadTodayActivity(force: true),
+      );
+    }
+    await _load(silent: false);
   }
 
   @override
@@ -137,18 +345,36 @@ class _YouOverviewTabState extends ConsumerState<YouOverviewTab> {
     final fg = isDark ? Colors.white : const Color(0xFF0A0A0A);
     final accent = AccentColorScope.of(context).getColor(isDark);
 
-    if (_loading) {
-      return Center(child: CircularProgressIndicator(color: accent));
+    // First-ever open with no cache → render a skeleton, NOT a spinner.
+    // Skeleton communicates layout earlier and avoids the "white screen
+    // with a wheel" feel that competitors abandoned years ago.
+    if (_firstLoad && !_overviewCache.hasData) {
+      return _OverviewSkeleton(fg: fg);
     }
 
     final serious = ref.watch(seriousModeProvider);
 
     return RefreshIndicator(
       color: accent,
-      onRefresh: _load,
+      onRefresh: _manualRefresh,
       child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          // ─── Inline header with refresh button. The You hub host doesn't
+          // give us an AppBar, so we render the refresh affordance inline
+          // at the top of the scroll view. Tapping it invalidates BOTH the
+          // dashboard cache and the health caches.
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              IconButton(
+                icon: const Icon(Icons.refresh),
+                color: fg.withValues(alpha: 0.7),
+                tooltip: 'Refresh',
+                onPressed: _refreshing ? null : _manualRefresh,
+              ),
+            ],
+          ),
           // HEALTH SNAPSHOT — first thing the user sees on the You tab.
           // Each card auto-hides via SizedBox.shrink when it has nothing
           // to show (no Health Connect connection, no sleep last night,
@@ -253,6 +479,47 @@ class _YouOverviewTabState extends ConsumerState<YouOverviewTab> {
   }
 }
 
+
+/// First-load skeleton placeholder. Mirrors the shape of the real Overview
+/// (health card, sleep card, hero XP tile, two side-by-side cards, recap)
+/// so the layout doesn't reflow when the data lands. Uses the same neutral
+/// surface treatment as the real cards (low-alpha fg) — no shimmer, since
+/// the warm-cache path renders in <16ms anyway and shimmer would only show
+/// on truly first-ever opens.
+class _OverviewSkeleton extends StatelessWidget {
+  final Color fg;
+  const _OverviewSkeleton({required this.fg});
+
+  @override
+  Widget build(BuildContext context) {
+    Widget block(double height) => Container(
+          height: height,
+          margin: const EdgeInsets.only(bottom: 12),
+          decoration: BoxDecoration(
+            color: fg.withValues(alpha: 0.05),
+            borderRadius: BorderRadius.circular(14),
+          ),
+        );
+
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        block(160), // Today's Health
+        block(140), // Last night sleep
+        block(80), // Weight tracking
+        block(180), // Hero XP tile
+        Row(
+          children: [
+            Expanded(child: block(120)),
+            const SizedBox(width: 10),
+            Expanded(child: block(120)),
+          ],
+        ),
+        block(60), // Weekly recap teaser
+      ],
+    );
+  }
+}
 
 class _WeeklyRecapTeaser extends StatelessWidget {
   final Map<String, dynamic> summary;

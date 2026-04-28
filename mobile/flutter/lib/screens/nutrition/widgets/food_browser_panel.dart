@@ -178,12 +178,13 @@ class _FoodBrowserPanelState extends ConsumerState<FoodBrowserPanel> {
     setState(() => _logStates[itemKey] = _LogState.loading);
     try {
       final repo = ref.read(nutritionRepositoryProvider);
-      await repo.logFoodFromText(
+      final response = await repo.logFoodFromText(
         userId: widget.userId,
         description: description,
         mealType: widget.mealType.value,
       );
       ref.read(xpProvider.notifier).markMealLogged();
+      ref.read(nutritionProvider.notifier).spliceLog(response, widget.mealType.value, widget.userId);
       if (!mounted) return;
       setState(() => _logStates[itemKey] = _LogState.done);
       widget.onFoodLogged();
@@ -205,13 +206,14 @@ class _FoodBrowserPanelState extends ConsumerState<FoodBrowserPanel> {
     setState(() => _logStates[key] = _LogState.loading);
     try {
       final repo = ref.read(nutritionRepositoryProvider);
-      await repo.relogSavedFood(
+      final response = await repo.relogSavedFood(
         userId: widget.userId,
         savedFoodId: food.id,
         mealType: widget.mealType.value,
         date: _targetDateString,
       );
       ref.read(xpProvider.notifier).markMealLogged();
+      ref.read(nutritionProvider.notifier).spliceLog(response, widget.mealType.value, widget.userId);
       if (!mounted) return;
       setState(() => _logStates[key] = _LogState.done);
       widget.onFoodLogged();
@@ -343,6 +345,27 @@ class _FoodBrowserPanelState extends ConsumerState<FoodBrowserPanel> {
         date: _targetDateString,
       );
       ref.read(xpProvider.notifier).markMealLogged();
+      // Source log has all nutrition data already — splice a copy immediately
+      final now = DateTime.now();
+      ref.read(nutritionProvider.notifier).spliceRawLog(
+        FoodLog(
+          id: 'optimistic_${now.millisecondsSinceEpoch}',
+          userId: widget.userId,
+          mealType: widget.mealType.value,
+          loggedAt: now,
+          foodItems: log.foodItems,
+          totalCalories: log.totalCalories,
+          proteinG: log.proteinG,
+          carbsG: log.carbsG,
+          fatG: log.fatG,
+          fiberG: log.fiberG,
+          imageUrl: log.imageUrl,
+          sourceType: log.sourceType,
+          userQuery: log.userQuery,
+          createdAt: now,
+        ),
+        widget.userId,
+      );
       if (!mounted) return;
       setState(() => _logStates[stateKey] = _LogState.done);
       widget.onFoodLogged();
@@ -404,7 +427,7 @@ class _FoodBrowserPanelState extends ConsumerState<FoodBrowserPanel> {
         (s, it) => s + ((it['fat_g'] as num?)?.toDouble() ?? 0),
       );
 
-      await repo.logAdjustedFood(
+      final response = await repo.logAdjustedFood(
         userId: widget.userId,
         mealType: widget.mealType.value,
         foodItems: items,
@@ -417,6 +440,7 @@ class _FoodBrowserPanelState extends ConsumerState<FoodBrowserPanel> {
       );
 
       ref.read(xpProvider.notifier).markMealLogged();
+      ref.read(nutritionProvider.notifier).spliceLog(response, widget.mealType.value, widget.userId);
       if (!mounted) return;
       setState(() => _logStates[stateKey] = _LogState.done);
       widget.onFoodLogged();
@@ -1052,12 +1076,13 @@ class _FoodBrowserPanelState extends ConsumerState<FoodBrowserPanel> {
     setState(() => _logStates[key] = _LogState.loading);
     try {
       final repo = ref.read(nutritionRepositoryProvider);
-      await repo.logFoodFromText(
+      final response = await repo.logFoodFromText(
         userId: widget.userId,
         description: description,
         mealType: widget.mealType.value,
       );
       ref.read(xpProvider.notifier).markMealLogged();
+      ref.read(nutritionProvider.notifier).spliceLog(response, widget.mealType.value, widget.userId);
       if (!mounted) return;
       setState(() => _logStates[key] = _LogState.done);
       widget.onFoodLogged();
@@ -1092,12 +1117,13 @@ class _FoodBrowserPanelState extends ConsumerState<FoodBrowserPanel> {
         }
       }
       if (descriptions.isEmpty) return;
-      await repo.logFoodFromText(
+      final response = await repo.logFoodFromText(
         userId: widget.userId,
         description: descriptions.join(', '),
         mealType: widget.mealType.value,
       );
       ref.read(xpProvider.notifier).markMealLogged();
+      ref.read(nutritionProvider.notifier).spliceLog(response, widget.mealType.value, widget.userId);
       if (!mounted) return;
       setState(() => _logStates[key] = _LogState.done);
       widget.onFoodLogged();

@@ -203,38 +203,235 @@ class _AvoidedExercisesScreenState extends ConsumerState<AvoidedExercisesScreen>
             .toSet() ??
         {};
 
-    // Loop allows user to go back from options sheet to re-pick exercise
-    while (true) {
-      // Step 1: Pick an exercise using the smart search picker
-      final pickerResult = await showExercisePickerSheet(
-        context,
-        ref,
-        type: ExercisePickerType.avoided,
-        excludeExercises: excludeNames,
-      );
+    // Multi-select picker — users frequently want to avoid a batch of
+    // exercises in one go (e.g. "all overhead pressing variants"), so we let
+    // them pick several and then collect the optional reason once.
+    final picked = await showExercisePickerSheetMulti(
+      context,
+      ref,
+      type: ExercisePickerType.avoided,
+      excludeExercises: excludeNames,
+    );
 
-      if (pickerResult == null || !mounted) return;
+    if (picked == null || picked.isEmpty || !mounted) return;
 
-      // Step 2: Show reason / temporary options sheet
-      final avoidOptions = await _showAvoidOptionsSheet(
-        context,
-        pickerResult.exerciseName,
-      );
-
-      if (avoidOptions == null || !mounted) return;
-      if (avoidOptions.goBack) continue; // Go back to picker
-
-      // Step 3: Add the exercise
+    // Single-pick path keeps the original reason/temporary sheet for one
+    // exercise (more friction for one-off avoids would feel wrong).
+    if (picked.length == 1) {
+      final avoidOptions = await _showAvoidOptionsSheet(context, picked.first.exerciseName);
+      if (avoidOptions == null || avoidOptions.goBack || !mounted) return;
       await _addExercise(
         context,
         userId,
-        pickerResult.exerciseName,
+        picked.first.exerciseName,
         avoidOptions.reason,
         avoidOptions.isTemporary,
         avoidOptions.endDate,
       );
-      break; // Done
+      return;
     }
+
+    // Batch path — collect a single shared reason (optional) and apply it
+    // to every selected exercise. Avoids forcing the user through N option
+    // sheets in a row.
+    final batchOptions = await _showBatchAvoidOptionsSheet(context, picked.length);
+    if (batchOptions == null || !mounted) return;
+
+    for (final entry in picked) {
+      if (!mounted) return;
+      await _addExercise(
+        context,
+        userId,
+        entry.exerciseName,
+        batchOptions.reason,
+        batchOptions.isTemporary,
+        batchOptions.endDate,
+      );
+    }
+  }
+
+  /// Lightweight options sheet used after a multi-select. The reason+temporary
+  /// settings apply to every picked exercise; users can edit individual entries
+  /// later from the avoided-list cards.
+  Future<_AvoidOptions?> _showBatchAvoidOptionsSheet(
+    BuildContext context,
+    int count,
+  ) async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+
+    String reason = '';
+    bool isTemporary = false;
+    DateTime? endDate;
+
+    return await showGlassSheet<_AvoidOptions>(
+      context: context,
+      builder: (sheetContext) => GlassSheet(
+        child: StatefulBuilder(
+          builder: (context, setSheetState) => Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom,
+            ),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Avoid $count exercises',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: textColor,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Reason and temporary settings will apply to every exercise. You can edit individual entries afterwards.',
+                    style: TextStyle(fontSize: 13, color: textMuted, height: 1.4),
+                  ),
+                  const SizedBox(height: 20),
+                  TextField(
+                    autofocus: true,
+                    style: TextStyle(color: textColor),
+                    decoration: InputDecoration(
+                      labelText: 'Reason (optional)',
+                      labelStyle: TextStyle(color: textMuted),
+                      hintText: 'e.g., Knee injury',
+                      hintStyle: TextStyle(color: textMuted.withValues(alpha: 0.5)),
+                      filled: true,
+                      fillColor: elevatedColor,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
+                    onChanged: (value) => reason = value,
+                  ),
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: elevatedColor,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Temporary',
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                  color: textColor,
+                                ),
+                              ),
+                              Text(
+                                'Set an end date for these restrictions',
+                                style: TextStyle(fontSize: 12, color: textMuted),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Switch(
+                          value: isTemporary,
+                          onChanged: (value) {
+                            setSheetState(() {
+                              isTemporary = value;
+                              if (!value) endDate = null;
+                            });
+                          },
+                          activeThumbColor: AppColors.cyan,
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (isTemporary) ...[
+                    const SizedBox(height: 16),
+                    InkWell(
+                      onTap: () async {
+                        final picked = await showDatePicker(
+                          context: context,
+                          initialDate: DateTime.now().add(const Duration(days: 30)),
+                          firstDate: DateTime.now(),
+                          lastDate: DateTime.now().add(const Duration(days: 365)),
+                        );
+                        if (picked != null) {
+                          setSheetState(() => endDate = picked);
+                        }
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: elevatedColor,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.calendar_today, color: AppColors.cyan, size: 20),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                endDate != null
+                                    ? 'Until ${endDate!.day}/${endDate!.month}/${endDate!.year}'
+                                    : 'Select end date',
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  color: endDate != null ? textColor : textMuted,
+                                ),
+                              ),
+                            ),
+                            Icon(Icons.chevron_right, color: textMuted),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(
+                          sheetContext,
+                          _AvoidOptions(
+                            reason: reason.trim().isEmpty ? null : reason.trim(),
+                            isTemporary: isTemporary,
+                            endDate: endDate,
+                          ),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.cyan,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: Text(
+                        'Add $count to Avoid List',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: MediaQuery.of(context).padding.bottom + 8),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   /// Shows a sheet for reason / temporary toggle after exercise is picked

@@ -210,7 +210,15 @@ async def get_user_rank(
     )
 
     if not result:
-        raise HTTPException(status_code=404, detail="User rank not found")
+        # New users with no ranking data — return null rank instead of 404 so
+        # the frontend doesn't treat "unranked" as an error state.
+        return UserRank(
+            user_id=user_id,
+            rank=None,
+            total_users=0,
+            percentile=None,
+            user_stats=None,
+        )
 
     rank_info = result["rank_info"]
     stats = result["stats"]

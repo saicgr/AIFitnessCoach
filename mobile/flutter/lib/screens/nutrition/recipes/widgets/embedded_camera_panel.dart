@@ -400,6 +400,9 @@ class _ShutterButton extends StatelessWidget {
   const _ShutterButton({required this.onTap, required this.busy, required this.accent});
   @override
   Widget build(BuildContext context) {
+    // Polished shutter: dark translucent core with a clear camera icon so
+    // users immediately recognize this as the capture button — matches the
+    // app's other camera entry points. ✅
     return GestureDetector(
       onTap: busy ? null : onTap,
       child: Container(
@@ -419,7 +422,13 @@ class _ShutterButton extends StatelessWidget {
                   width: 58, height: 58,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
+                    color: Colors.black54,
+                    border: Border.all(color: Colors.white, width: 2),
+                  ),
+                  child: const Icon(
+                    Icons.camera_alt,
                     color: Colors.white,
+                    size: 28,
                   ),
                 ),
         ),

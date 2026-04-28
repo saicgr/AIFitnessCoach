@@ -39,17 +39,23 @@ List<RouteBase> _mainShellRoutes() => [
               pageBuilder: (context, state) {
                 final initialMeal = state.uri.queryParameters['meal'];
                 final tabParam = state.uri.queryParameters['tab'];
-                final initialTab = tabParam != null ? int.tryParse(tabParam) ?? 0 : 0;
+                final fuelSectionParam = state.uri.queryParameters['fuelSection'];
+                // When a hydration deep-link arrives without an explicit tab
+                // param, default to tab=3 (Fuel) so fuelSection has somewhere
+                // to apply. Otherwise the user lands on Daily and the
+                // hydration hint never reaches the Fuel→Water section.
+                final initialTab = tabParam != null
+                    ? int.tryParse(tabParam) ?? 0
+                    : (fuelSectionParam != null ? 3 : 0);
                 final autoOpenCamera = state.uri.queryParameters['camera'] == 'true';
                 final autoOpenBarcode = state.uri.queryParameters['barcode'] == 'true';
                 final openCheckinLogId = state.uri.queryParameters['openCheckin'];
                 // Hydration-reminder deep-link carries ?fuelSection=water so we
                 // land on the Water pill inside the Fuel tab, not the default
                 // Nutrients view. Only 'water' | 'nutrients' are meaningful.
-                final rawFuelSection = state.uri.queryParameters['fuelSection'];
                 final initialFuelSection =
-                    (rawFuelSection == 'water' || rawFuelSection == 'nutrients')
-                        ? rawFuelSection
+                    (fuelSectionParam == 'water' || fuelSectionParam == 'nutrients')
+                        ? fuelSectionParam
                         : null;
                 return NoTransitionPage(
                   key: state.pageKey,
@@ -98,9 +104,10 @@ List<RouteBase> _mainShellRoutes() => [
                 final scrollTo = state.uri.queryParameters['scrollTo'];
                 final tabParam = state.uri.queryParameters['tab'];
                 // Route query ?tab=overview|profile|rewards to the right tab.
-                int initialTab = 1; // default to Profile when arriving via /profile
-                if (tabParam == 'overview') {
-                  initialTab = 0;
+                // Default to Overview (0). Deep links with ?tab=profile still land on Profile.
+                int initialTab = 0;
+                if (tabParam == 'profile') {
+                  initialTab = 1;
                 } else if (tabParam == 'rewards') {
                   initialTab = 2;
                 }

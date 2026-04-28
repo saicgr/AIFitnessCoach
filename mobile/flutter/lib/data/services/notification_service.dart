@@ -4,6 +4,7 @@ import 'dart:ui';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -310,6 +311,28 @@ class NotificationService {
     if (_firebaseAvailable) {
       // Set up background message handler
       FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
+      // Attach FCM listeners on EVERY cold launch so notification taps always
+      // route to the right screen — not just on first-run when the
+      // NotificationPrimeScreen calls requestPermissionWhenReady(). Without
+      // this, returning users tap a "nutrition reminder" push and just land
+      // on home because no onMessageOpenedApp handler is registered.
+      try {
+        FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
+        FirebaseMessaging.onMessageOpenedApp.listen(_handleMessageOpenedApp);
+
+        // Cold-start FCM tap: app was launched (terminated → opened) by
+        // tapping a push. Defer to next frame so router/auth are ready.
+        final initialMessage = await messaging?.getInitialMessage();
+        if (initialMessage != null) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _handleMessageOpenedApp(initialMessage);
+          });
+        }
+        debugPrint('🔔 [FCM] Listeners attached in initialize()');
+      } catch (e) {
+        debugPrint('⚠️ [FCM] Failed to attach listeners in initialize(): $e');
+      }
     }
 
     // Initialize local notifications
@@ -372,27 +395,16 @@ class NotificationService {
       await _getToken();
       debugPrint('🔔 [FCM] Token result: ${_fcmToken != null ? "obtained" : "NULL"}');
 
-      // Set up Firebase Messaging listeners now that Activity is available
+      // FCM message listeners (onMessage, onMessageOpenedApp, getInitialMessage)
+      // are attached in initialize() so they run on every cold launch, not
+      // just when the prime screen runs. Here we only attach the token-refresh
+      // listener since it depends on _fcmToken being populated above.
       if (messaging != null) {
-        // Listen for token refresh
         messaging!.onTokenRefresh.listen((newToken) {
           debugPrint('🔔 [FCM] Token refreshed: ${newToken.substring(0, 20)}...');
           _fcmToken = newToken;
-          // Notify listeners so they can sync to backend
           onTokenRefresh?.call(newToken);
         });
-
-        // Handle foreground messages
-        FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
-
-        // Handle when app is opened from notification
-        FirebaseMessaging.onMessageOpenedApp.listen(_handleMessageOpenedApp);
-
-        // Check if app was opened from a notification
-        final initialMessage = await messaging!.getInitialMessage();
-        if (initialMessage != null) {
-          _handleMessageOpenedApp(initialMessage);
-        }
       }
 
       debugPrint('✅ [FCM] Permission requested, token retrieved, and listeners configured');

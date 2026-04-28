@@ -158,18 +158,19 @@ async def _award_achievement(
                     user_avatar = user_result.data[0].get("avatar_url")
                     ach_name = achievement.get("name", "an achievement")
 
-                    # Social notification for the user
+                    # Social notification for the user. NOTE: social_notifications.reference_id
+                    # is uuid; achievement_id is a varchar slug, so stash it in `data` instead.
                     db.client.table("social_notifications").insert({
                         "user_id": user_id,
                         "type": "achievement_earned",
                         "from_user_id": user_id,
                         "from_user_name": user_name,
                         "from_user_avatar": user_avatar,
-                        "reference_id": achievement_id,
+                        "reference_id": None,
                         "reference_type": "achievement",
                         "title": "Achievement Unlocked!",
                         "body": f"You earned: {ach_name}",
-                        "data": {},
+                        "data": {"achievement_id": achievement_id},
                         "is_read": False,
                     }).execute()
 
@@ -662,11 +663,14 @@ async def check_social_achievements(user_id: str) -> List[Dict]:
             challenge_wins = 0
 
         # Challenge trophies
+        # NOTE: achievement_types in DB uses `social_challenges_won_<tier>` for
+        # win-count milestones and `social_challenges_joined_<tier>` for join
+        # counts. Don't rename these without seeding new rows first.
         challenge_trophies = [
-            ("social_challenges_bronze", 5),
-            ("social_challenges_silver", 25),
-            ("social_challenges_gold", 100),
-            ("social_challenges_platinum", 500),
+            ("social_challenges_won_bronze", 5),
+            ("social_challenges_won_silver", 25),
+            ("social_challenges_won_gold", 100),
+            ("social_challenges_won_platinum", 500),
         ]
 
         for trophy_id, threshold in challenge_trophies:

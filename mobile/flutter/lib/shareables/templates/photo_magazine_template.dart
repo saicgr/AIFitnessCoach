@@ -55,12 +55,12 @@ class PhotoMagazineTemplate extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Top row — masthead "FITWIZ" + issue.
+                // Top row — masthead "ZEALOVA" + issue.
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(
-                      'FITWIZ',
+                      'ZEALOVA',
                       style: TextStyle(
                         fontFamily: 'Times New Roman',
                         color: Colors.white,

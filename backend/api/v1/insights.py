@@ -12,7 +12,7 @@ from core.db import get_supabase_db
 import logging
 import json
 import hashlib
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from typing import List, Optional, Dict, Any
 from fastapi import APIRouter, HTTPException, Query, Depends, Request
 from pydantic import BaseModel
@@ -66,13 +66,25 @@ async def get_user_insights(
     user_id: str,
     limit: int = Query(default=5, ge=1, le=20),
     include_expired: bool = False,
+    start_date: Optional[date] = Query(
+        default=None, description="Inclusive lower bound on generated_at (YYYY-MM-DD)"
+    ),
+    end_date: Optional[date] = Query(
+        default=None, description="Inclusive upper bound on generated_at (YYYY-MM-DD)"
+    ),
     current_user: dict = Depends(get_current_user),
 ):
     """
     Get AI-generated micro-insights for a user.
     Returns active insights and current weekly progress.
+
+    Optional ``start_date`` / ``end_date`` clamp the ``generated_at`` window —
+    either bound may be supplied independently (plan A3).
     """
-    logger.info(f"Fetching insights for user {user_id}")
+    logger.info(
+        f"Fetching insights for user {user_id} "
+        f"(start={start_date}, end={end_date}, limit={limit})"
+    )
 
     try:
         db = get_supabase_db()
@@ -84,6 +96,15 @@ async def get_user_insights(
             # Filter out expired insights
             now = datetime.utcnow().isoformat()
             query = query.or_(f"expires_at.is.null,expires_at.gt.{now}")
+
+        # Apply generated_at bounds BEFORE order/limit so they actually clamp
+        # the row set rather than being silently dropped (plan A3).
+        if start_date is not None:
+            query = query.gte("generated_at", start_date.isoformat())
+        if end_date is not None:
+            # End-of-day: include the whole end_date
+            end_dt = datetime.combine(end_date, datetime.max.time()).isoformat()
+            query = query.lte("generated_at", end_dt)
 
         result = query.order("priority", desc=True).order("generated_at", desc=True).limit(limit).execute()
         insights = result.data if result.data else []

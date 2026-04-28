@@ -86,12 +86,12 @@ class LeaderboardEntry(BaseModel):
 class UserRank(BaseModel):
     """User's rank information."""
     user_id: str
-    rank: int
-    total_users: int
-    percentile: float  # Top X% (e.g., 5.2 = top 5.2%)
+    rank: Optional[int] = None  # null = user not yet ranked
+    total_users: int = 0
+    percentile: Optional[float] = None  # Top X% (e.g., 5.2 = top 5.2%)
 
-    # User's stats for this leaderboard
-    user_stats: LeaderboardEntry
+    # User's stats for this leaderboard (null when unranked)
+    user_stats: Optional[LeaderboardEntry] = None
 
     # Rank movement (if available)
     rank_change: Optional[int] = None  # +12 = moved up 12 ranks, -5 = moved down

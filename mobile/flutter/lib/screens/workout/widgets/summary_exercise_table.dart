@@ -39,6 +39,11 @@ class SummarySetData {
   final List<String> notesPhotoUrls;
   final String? completedAt;
 
+  /// True when the parent exercise is bodyweight (e.g. pushup, pullup).
+  /// Drives the "BW" render branch — without this flag, machine exercises
+  /// with weight=0 (logged carelessly) would falsely render as "BW" too.
+  final bool isBodyweight;
+
   const SummarySetData({
     required this.setNumber,
     this.targetReps,
@@ -59,6 +64,7 @@ class SummarySetData {
     this.notes = const [],
     this.notesPhotoUrls = const [],
     this.completedAt,
+    this.isBodyweight = false,
   });
 
   factory SummarySetData.fromJson(Map<String, dynamic> json) {
@@ -84,6 +90,11 @@ class SummarySetData {
       notes: coerceNotes(json['notes']),
       notesPhotoUrls: coerceStringList(json['notes_photo_urls']),
       completedAt: json['completed_at'] as String?,
+      // is_bodyweight on the set OR is_bodyweight_exercise on the parent —
+      // both are accepted for forward-compat with backend payload shape.
+      isBodyweight: (json['is_bodyweight'] as bool?) ??
+          (json['is_bodyweight_exercise'] as bool?) ??
+          false,
     );
   }
 
@@ -761,14 +772,20 @@ class _SummarySetRow extends StatelessWidget {
     required this.isDark,
   });
 
-  /// Format weight for display. Returns "BW" for bodyweight (0 or null).
+  /// Format weight for display. Returns "BW" only when the exercise is
+  /// genuinely bodyweight (set.isBodyweight=true); otherwise renders "—"
+  /// for missing data so machine exercises don't get falsely BW-labeled.
   String _formatWeight(double? weightKg, double? weightLbs) {
     final weight = useKg ? weightKg : weightLbs;
-    if (weight == null || weight == 0) return 'BW';
+    if (weight == null || weight == 0) {
+      return set.isBodyweight ? 'BW' : '—';
+    }
     return weight.toStringAsFixed(0);
   }
 
-  /// Format "weight x reps" for previous/target columns.
+  /// Format "weight x reps" for previous/target columns. Same BW gating
+  /// as `_formatWeight` — only render bare "BW" for genuine bodyweight
+  /// exercises; render "BW x 12" when bodyweight + reps are known.
   String _formatWeightReps(double? weightKg, double? weightLbs, int? reps) {
     if (weightKg == null && weightLbs == null && reps == null) return '—';
 
@@ -780,7 +797,8 @@ class _SummarySetRow extends StatelessWidget {
     } else if (weight != null && weight > 0) {
       return '${weight.toStringAsFixed(0)} $unit';
     } else if (reps != null) {
-      return 'BW x $reps';
+      // No weight logged. Bodyweight → "BW x N"; missing data → "— x N".
+      return set.isBodyweight ? 'BW x $reps' : '— x $reps';
     }
     return '—';
   }

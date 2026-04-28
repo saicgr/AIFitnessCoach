@@ -63,7 +63,7 @@ def test_duration_string_with_hours():
         activity_type="cycle",
         duration_seconds=4320,     # 1h 12m
         distance_m=40000.0,
-        source_app="fitwiz",
+        source_app="zealova",
         source_row_hash="abc" * 10,
     )
     blob = export_strong_csv([], [long_cardio])

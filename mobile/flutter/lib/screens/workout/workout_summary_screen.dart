@@ -213,6 +213,27 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen> {
     final exercises = workout?.exercises ?? [];
     final comparison = summary.performanceComparison;
     final setLogsByExercise = summary.setLogsByExercise;
+    final isCardio = _isCardioWorkout(workout);
+    final hasNoSetLogs = summary.setLogs.isEmpty;
+
+    // Empty state: tracked workout with zero set_logs and not cardio.
+    // Without this guard the volume banner / 1-bar comparison stretches
+    // across the screen on its own, looking like a long blank bar.
+    if (hasNoSetLogs && !isCardio && exercises.isEmpty) {
+      return ListView(
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 80),
+        children: [
+          _buildHeader(workout, summary, isDark, accentColor, isTracked: true),
+          const SizedBox(height: 24),
+          _buildEmptySetLogsState(isDark),
+          const SizedBox(height: 16),
+          if (summary.coachSummary != null && summary.coachSummary!.isNotEmpty)
+            _buildCoachReviewSection(summary, isDark, accentColor),
+          const SizedBox(height: 16),
+          _buildShareButton(workout, summary, isDark, accentColor),
+        ],
+      );
+    }
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 80),
@@ -221,16 +242,33 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen> {
         _buildHeader(workout, summary, isDark, accentColor, isTracked: true),
         const SizedBox(height: 16),
 
-        // Stats grid (2x2)
-        _buildStatsGrid(workout, comparison, isDark, accentColor),
-        const SizedBox(height: 16),
+        // Cardio: dedicated stats (duration / distance / HR) — no volume bar.
+        if (isCardio) ...[
+          _buildCardioStats(workout, comparison, summary, isDark, accentColor),
+          const SizedBox(height: 16),
+        ] else ...[
+          // Stats grid (2x2) — strength/hybrid sessions
+          _buildStatsGrid(workout, comparison, isDark, accentColor),
+          const SizedBox(height: 16),
 
-        // Total weight lifted banner
-        if (comparison?.workoutComparison != null &&
-            comparison!.workoutComparison.currentTotalVolumeKg > 0)
-          _buildVolumeBanner(comparison.workoutComparison, isDark, accentColor),
+          // Total weight lifted banner — only when real volume exists.
+          // Bodyweight-only sessions report 0kg current_total_volume_kg from
+          // the backend, so we instead surface a "Bodyweight session" pill
+          // below in _buildBodyweightBanner.
+          if (comparison?.workoutComparison != null &&
+              comparison!.workoutComparison.currentTotalVolumeKg > 0)
+            _buildVolumeBanner(comparison.workoutComparison, isDark, accentColor)
+          else if (!hasNoSetLogs && _isBodyweightOnly(summary))
+            _buildBodyweightBanner(summary, isDark, accentColor),
+        ],
 
         const SizedBox(height: 20),
+
+        // Empty per-set state: workout has exercises planned but no sets logged
+        if (hasNoSetLogs && !isCardio) ...[
+          _buildEmptySetLogsState(isDark),
+          const SizedBox(height: 20),
+        ],
 
         // Exercises list with expandable cards
         if (exercises.isNotEmpty) ...[
@@ -896,6 +934,235 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen> {
       default:
         return status;
     }
+  }
+
+  // ── Empty / cardio / bodyweight helpers ──────────────────────────
+
+  /// Detect a cardio session from the workout type metadata. Hides the
+  /// strength volume bar in favor of duration/distance/HR readouts.
+  bool _isCardioWorkout(Workout? workout) {
+    if (workout == null) return false;
+    final t = (workout.type ?? '').toLowerCase();
+    return t == 'cardio' ||
+        t == 'running' ||
+        t == 'cycling' ||
+        t == 'walk' ||
+        t == 'walking' ||
+        t == 'hiit' ||
+        t == 'endurance';
+  }
+
+  /// True when the user logged sets but every working set has weight=0
+  /// (pure bodyweight session). Ignores warmup/non-working sets to avoid
+  /// misclassifying a barbell session that started with empty-bar warmups.
+  bool _isBodyweightOnly(WorkoutSummaryResponse summary) {
+    final working = summary.setLogs.where((s) => s.setType == 'working').toList();
+    if (working.isEmpty) return false;
+    return working.every((s) => s.weightKg == 0 && s.repsCompleted > 0);
+  }
+
+  Widget _buildEmptySetLogsState(bool isDark) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color:
+            isDark ? Colors.white.withValues(alpha: 0.04) : Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.06)
+              : Colors.grey.shade200,
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.inbox_outlined,
+            size: 28,
+            color: isDark ? AppColors.textMuted : Colors.grey.shade400,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'No sets logged for this workout',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? AppColors.textPrimary : Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Add a set or edit an exercise to populate this summary.',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color:
+                        isDark ? AppColors.textSecondary : Colors.grey.shade600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Stat banner for bodyweight-only sessions where total weight volume = 0
+  /// but real work was done (push-ups, pull-ups, planks, etc).
+  Widget _buildBodyweightBanner(
+      WorkoutSummaryResponse summary, bool isDark, Color accentColor) {
+    final working = summary.setLogs.where((s) => s.setType == 'working');
+    final totalReps = working.fold<int>(0, (a, s) => a + s.repsCompleted);
+    final totalSets = working.length;
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            accentColor.withValues(alpha: 0.15),
+            accentColor.withValues(alpha: 0.05),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: accentColor.withValues(alpha: 0.2)),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.accessibility_new, size: 24, color: accentColor),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Bodyweight session',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: isDark ? AppColors.textPrimary : Colors.black87,
+                  ),
+                ),
+                Text(
+                  '$totalReps reps across $totalSets sets',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: isDark
+                        ? AppColors.textSecondary
+                        : Colors.grey.shade600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Cardio-specific stat tiles. Volume bar is meaningless for cardio so
+  /// we surface duration / distance / pace / HR — populated from the
+  /// new WorkoutSummaryResponse cardio fields with calories + activity
+  /// count as fallbacks when the backend hasn't filled them.
+  Widget _buildCardioStats(
+    Workout? workout,
+    PerformanceComparisonInfo? comparison,
+    WorkoutSummaryResponse summary,
+    bool isDark,
+    Color accentColor,
+  ) {
+    final wc = comparison?.workoutComparison;
+    final duration = wc != null
+        ? _formatDuration(wc.currentDurationSeconds)
+        : workout?.formattedDurationShort ?? '--';
+
+    String distanceLabel = '--';
+    if (summary.distanceMeters != null && summary.distanceMeters! > 0) {
+      final km = summary.distanceMeters! / 1000.0;
+      distanceLabel = km >= 1
+          ? '${km.toStringAsFixed(km >= 10 ? 1 : 2)} km'
+          : '${summary.distanceMeters!.toStringAsFixed(0)} m';
+    }
+
+    String paceLabel = '--';
+    if (summary.paceSecondsPerKm != null && summary.paceSecondsPerKm! > 0) {
+      final p = summary.paceSecondsPerKm!;
+      final m = (p / 60).floor();
+      final s = (p % 60).round().toString().padLeft(2, '0');
+      paceLabel = '$m:$s /km';
+    }
+
+    String hrLabel = '--';
+    if (summary.avgHrBpm != null && summary.avgHrBpm! > 0) {
+      hrLabel = summary.maxHrBpm != null && summary.maxHrBpm! > summary.avgHrBpm!
+          ? '${summary.avgHrBpm} avg · ${summary.maxHrBpm} max'
+          : '${summary.avgHrBpm} bpm';
+    }
+
+    final calories = wc != null && wc.currentCalories > 0
+        ? '${wc.currentCalories} kcal'
+        : (workout?.estimatedCalories != null
+            ? '${workout!.estimatedCalories} kcal'
+            : '--');
+
+    return Column(
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: _buildStatTile('Duration', duration, isDark,
+                  icon: Icons.timer_outlined),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _buildStatTile('Distance', distanceLabel, isDark,
+                  icon: Icons.straighten),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _buildStatTile('Avg HR', hrLabel, isDark,
+                  icon: Icons.favorite_outline),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              child: _buildStatTile('Pace', paceLabel, isDark,
+                  icon: Icons.speed_outlined),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _buildStatTile('Calories', calories, isDark,
+                  icon: Icons.local_fire_department_outlined),
+            ),
+            const SizedBox(width: 8),
+            if (summary.elevationGainMeters != null &&
+                summary.elevationGainMeters! > 0)
+              Expanded(
+                child: _buildStatTile(
+                    'Elevation',
+                    '${summary.elevationGainMeters!.toStringAsFixed(0)} m',
+                    isDark,
+                    icon: Icons.terrain),
+              )
+            else
+              Expanded(
+                child: _buildStatTile(
+                    'Activities',
+                    '${wc?.currentExercises ?? workout?.exerciseCount ?? 0}',
+                    isDark,
+                    icon: Icons.directions_run),
+              ),
+          ],
+        ),
+      ],
+    );
   }
 
   Color _statusColor(String status, bool isDark) {

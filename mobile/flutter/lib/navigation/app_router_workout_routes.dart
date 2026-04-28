@@ -36,6 +36,14 @@ List<RouteBase> _workoutRoutes() => [
         },
       ),
 
+      // Custom Workout Builder — declared BEFORE `/workout/:id` so GoRouter
+      // treats `build` as a static path segment instead of matching it as a
+      // workoutId param (which sent "build" to the workout-detail API and 422'd).
+      GoRoute(
+        path: '/workout/build',
+        builder: (context, state) => const CustomWorkoutBuilderScreen(),
+      ),
+
       GoRoute(
         path: '/workout/:id',
         builder: (context, state) {
@@ -65,16 +73,24 @@ List<RouteBase> _workoutRoutes() => [
       // `extra` accepts either a raw `WorkoutExercise`, a plain JSON map for
       // the exercise, OR `{exercise: <WorkoutExercise|Map>, initialTab: int}`
       // for deep-linking into a specific tab (0=Info, 1=Stats, 2=History).
+      // Also accepts `{name: 'Exercise Name', pending_muscle_tag: true}` —
+      // the muscle-heatmap CTA in workout_summary_advanced uses this when
+      // the user taps "Tag muscles" on an untagged exercise.
       GoRoute(
         path: '/exercise-detail',
         builder: (context, state) {
           WorkoutExercise? exercise;
           int initialTab = 0;
+          bool pendingMuscleTag = false;
 
           final extra = state.extra;
           if (extra is WorkoutExercise) {
             exercise = extra;
           } else if (extra is Map<String, dynamic>) {
+            // Read the muscle-tag flag from any of the supported shapes.
+            final flag = extra['pending_muscle_tag'];
+            if (flag is bool) pendingMuscleTag = flag;
+
             final inner = extra['exercise'];
             if (inner is WorkoutExercise) {
               exercise = inner;
@@ -84,6 +100,19 @@ List<RouteBase> _workoutRoutes() => [
               exercise = WorkoutExercise.fromJson(inner);
               final t = extra['initialTab'];
               if (t is int) initialTab = t;
+            } else if (extra['name'] is String &&
+                (extra['name'] as String).trim().isNotEmpty) {
+              // Name-only shape (used by the muscle-tag CTA). Synthesize a
+              // minimal WorkoutExercise so the detail screen renders the
+              // header + tabs while the user picks muscles. The user-tagged
+              // muscles are persisted server-side via the exercise edit flow.
+              final name = (extra['name'] as String).trim();
+              exercise = WorkoutExercise.fromJson({
+                'id': null,
+                'name': name,
+                'sets': 0,
+                'reps': 0,
+              });
             } else {
               // Legacy shape: the whole map IS the exercise JSON.
               exercise = WorkoutExercise.fromJson(extra);
@@ -108,7 +137,11 @@ List<RouteBase> _workoutRoutes() => [
               ),
             );
           }
-          return ExerciseDetailScreen(exercise: exercise, initialTab: initialTab);
+          return ExerciseDetailScreen(
+            exercise: exercise,
+            initialTab: initialTab,
+            pendingMuscleTag: pendingMuscleTag,
+          );
         },
       ),
 
@@ -278,12 +311,6 @@ List<RouteBase> _workoutRoutes() => [
             isFirstWorkout: data['isFirstWorkout'] as bool? ?? false,
           );
         },
-      ),
-
-      // Custom Workout Builder - Create your own workout from scratch
-      GoRoute(
-        path: '/workout/build',
-        builder: (context, state) => const CustomWorkoutBuilderScreen(),
       ),
 
       // Achievements

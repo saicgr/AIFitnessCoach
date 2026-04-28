@@ -909,6 +909,20 @@ class AuthNotifier extends StateNotifier<AuthState> {
       next = next.copyWith(
           measurementUnit: updates['measurement_unit'] as String?);
     }
+    if (updates.containsKey('in_vacation_mode')) {
+      next = next.copyWith(
+          inVacationMode: updates['in_vacation_mode'] as bool?);
+    }
+    if (updates.containsKey('vacation_start_date')) {
+      final raw = updates['vacation_start_date'] as String?;
+      next = next.copyWith(
+          vacationStartDate: (raw == null || raw.isEmpty) ? null : raw);
+    }
+    if (updates.containsKey('vacation_end_date')) {
+      final raw = updates['vacation_end_date'] as String?;
+      next = next.copyWith(
+          vacationEndDate: (raw == null || raw.isEmpty) ? null : raw);
+    }
     return next;
   }
 

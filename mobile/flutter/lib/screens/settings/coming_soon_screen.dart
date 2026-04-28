@@ -121,6 +121,15 @@ class _ComingSoonFeature {
 
 const _comingSoonFeatures = [
   _ComingSoonFeature(
+    icon: Icons.receipt_long_rounded,
+    color: AppColors.orange,
+    title: 'Recipe Import',
+    description:
+        'Paste any recipe link or screenshot — Zealova will extract the '
+        'ingredients, scale portions, and auto-log it to your meals with '
+        'calories and macros.',
+  ),
+  _ComingSoonFeature(
     icon: Icons.restaurant_menu_rounded,
     color: AppColors.orange,
     title: 'Food Preferences',

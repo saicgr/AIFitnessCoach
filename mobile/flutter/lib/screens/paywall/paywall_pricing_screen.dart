@@ -617,6 +617,17 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
         await _navigateAfterPaywall(context, ref);
       }
     } else if (!success && context.mounted) {
+      // Surface any error the subscription notifier set so users see *why* the
+      // purchase didn't go through, instead of silently navigating away.
+      final purchaseError = ref.read(subscriptionProvider).error;
+      if (purchaseError != null && purchaseError.isNotEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(purchaseError),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
       if (isReturningUser) {
         // Returning user cancelled — just go back
         if (context.canPop()) context.pop();

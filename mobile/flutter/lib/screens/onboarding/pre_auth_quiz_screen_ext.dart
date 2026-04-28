@@ -1,5 +1,125 @@
 part of 'pre_auth_quiz_screen.dart';
 
+/// Comprehensive commercial-gym equipment preset.
+///
+/// A real commercial gym has access to **every** piece of equipment the app
+/// recognises — free weights, the full machine circuit (selectorized +
+/// plate-loaded), every rack/bench variant, the cardio floor, and the
+/// unconventional / cross-training tools (sandbags, sleds, tires, ropes,
+/// etc.). Earlier presets only covered ~14–34 items, so users who selected
+/// "Commercial Gym" in onboarding ended up with workouts that avoided large
+/// swathes of the gym they actually had access to. This list is the union
+/// of:
+///   1. Every onboarding snake_case equipment id used by the app
+///      (`pre_auth_quiz_screen.dart` toggle + `quiz_equipment.dart` chips +
+///      `WorkoutEnvironment.commercialGym.defaultEquipment`).
+///   2. Every label in `EquipmentSearchSheet.databaseEquipment` (the master
+///      "Other equipment" catalog).
+///   3. The onboarding-only `full_gym` marker so the preset chip lights up.
+///
+/// `WorkoutEnvironment.commercialGym.defaultEquipment` mirrors the
+/// snake_case slice of this list — keep them in sync if you add machines.
+const List<String> kCommercialGymEquipmentPreset = [
+  // ── Onboarding preset marker ────────────────────────────────────────
+  'full_gym',
+
+  // ── Free weights ────────────────────────────────────────────────────
+  'bodyweight',
+  'barbell',
+  'ez_curl_bar',
+  'EZ Bar',
+  'Trap Bar',
+  'dumbbells',
+  'kettlebell',
+  'kettlebells',
+  'weight_plates',
+  'Weight Plate',
+
+  // ── Bodyweight / accessories ────────────────────────────────────────
+  'pull_up_bar',
+  'dip_station',
+  'Dip Station',
+  'Assisted Pull Up Machine',
+  'Ab Roller',
+  'Balance Board',
+  'Box',
+  'Chair',
+  'Exercise Ball',
+  'Hyperextension Bench',
+  'Jump rope',
+  'Loop Resistance Band',
+  'resistance_bands',
+  'Yoga Mat',
+
+  // ── Benches & racks ─────────────────────────────────────────────────
+  'bench',
+  'Bench',
+  'adjustable_bench',
+  'squat_rack',
+  'power_rack',
+  'smith_machine',
+  'Smith Machine',
+
+  // ── Selectorized + plate-loaded machines ────────────────────────────
+  'cable_machine',
+  'Cable Pulley Machine',
+  'Cable Row Machine',
+  'Chest Press Machine',
+  'chest_fly_machine',
+  'shoulder_press_machine',
+  'Hammer Strength Machines',
+  'Hack Squat Machine',
+  'hack_squat',
+  'lat_pulldown',
+  'Lat Pull Down Machine',
+  'seated_row_machine',
+  'leg_press',
+  'Leg Press Machine',
+  'leg_curl_machine',
+  'leg_extension_machine',
+  'Leg Extension Machine',
+  'calf_raise_machine',
+  'Seated Hip Abductor Machine',
+  'Triceps Extension Machine',
+
+  // ── Cardio floor ────────────────────────────────────────────────────
+  'treadmill',
+  'Treadmill',
+  'stationary_bike',
+  'Stationary Exercise Bike',
+  'Airbike',
+  'Ski Ergometer',
+  'elliptical',
+  'Elliptical Machine',
+  'rowing_machine',
+  'Rowing Machine',
+
+  // ── Throwables / functional / cross-training ───────────────────────
+  'medicine_ball',
+  'Medicine Ball',
+  'Slam Ball',
+  'battle_ropes',
+  'battle ropes',
+  'rope',
+  'sandbag',
+  'tire',
+  'tire, sledgehammer',
+  'hay bale',
+  'trx',
+  'suspension_trainer',
+  'Suspension Trainer',
+
+  // ── Indian / traditional ────────────────────────────────────────────
+  'gada (mace)',
+  'gar nal (stone neck ring)',
+  'jori (indian clubs)',
+  'lathi (bamboo staff)',
+  'mallakhamb pole',
+  'matka (water pot)',
+  'nal (stone lock)',
+  'samtola (indian barbell)',
+];
+
 /// Map a selected fitness level to a reasonable default training-experience
 /// bucket. IDs must match `_experienceOptions` in `quiz_fitness_level.dart`.
 /// Used to pre-fill the second question on the combined Level+Experience
@@ -689,24 +809,7 @@ extension __PreAuthQuizScreenStateExt on _PreAuthQuizScreenState {
           ]);
           break;
         case 'commercial_gym':
-          _selectedEquipment.addAll([
-            'bodyweight',
-            'dumbbells',
-            'barbell',
-            'resistance_bands',
-            'pull_up_bar',
-            'kettlebell',
-            'cable_machine',
-            'bench',
-            'squat_rack',
-            'dip_station',
-            'smith_machine',
-            'leg_press',
-            'lat_pulldown',
-            'medicine_ball',
-            'trx',
-            'full_gym',
-          ]);
+          _selectedEquipment.addAll(kCommercialGymEquipmentPreset);
           break;
         case 'hotel':
           _selectedEquipment.addAll([

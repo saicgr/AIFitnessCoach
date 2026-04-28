@@ -104,11 +104,9 @@ class _QuickLogWeightCardState extends ConsumerState<QuickLogWeightCard> {
         unit: 'kg',
       );
 
-      // Refresh weight history by re-initializing the provider
+      // recordMeasurement already updated local state; just invalidate
+      // nutrition prefs so calorie targets refresh on the next open.
       ref.invalidate(nutritionPreferencesProvider);
-
-      // Force refresh measurements so new weight appears immediately in charts
-      ref.read(measurementsProvider.notifier).forceRefresh(userId);
 
       // Mark weight logged for daily XP goals
       ref.read(xpProvider.notifier).markWeightLogged();

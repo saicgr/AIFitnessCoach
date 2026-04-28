@@ -135,11 +135,28 @@ class ShareableSet {
   final int reps;
   final num? rpe;
 
+  /// Planned target weight for this set (from the workout plan). Used to
+  /// render `135 × 10 (target 135 × 10)` in shares so viewers see what was
+  /// supposed-to-do vs what was-done.
+  final num? targetWeight;
+  final int? targetReps;
+  final int? targetRir;
+
+  /// True when the exercise itself is bodyweight (so a null/0 weight should
+  /// render as "BW" rather than "—"). Drives the share template's render
+  /// branch and prevents mistakenly stamping "BW" on machine exercises that
+  /// were just under-logged.
+  final bool isBodyweight;
+
   const ShareableSet({
     this.weight,
     required this.unit,
     required this.reps,
     this.rpe,
+    this.targetWeight,
+    this.targetReps,
+    this.targetRir,
+    this.isBodyweight = false,
   });
 }
 

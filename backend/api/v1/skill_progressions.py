@@ -133,7 +133,7 @@ def _parse_progress(data: dict) -> UserSkillProgress:
         is_completed=data.get("is_completed", False),
         is_active=data.get("is_active", True),
         started_at=data.get("started_at"),
-        last_attempt_at=data.get("last_attempt_at"),
+        last_attempt_at=data.get("last_practiced_at"),
         completed_at=data.get("completed_at"),
         created_at=data.get("created_at"),
         updated_at=data.get("updated_at"),
@@ -297,7 +297,7 @@ async def get_user_skill_progress(
         if active_only:
             query = query.eq("is_active", True)
 
-        result = query.order("last_attempt_at", desc=True).execute()
+        result = query.order("last_practiced_at", desc=True).execute()
 
         progress_list = []
         for p in result.data:
@@ -457,7 +457,7 @@ async def get_user_skills_summary(user_id: str,
                 total_steps=total_steps,
                 completed_steps=completed_steps,
                 is_completed=p.get("is_completed", False),
-                last_attempt_at=p.get("last_attempt_at"),
+                last_attempt_at=p.get("last_practiced_at"),
             )
 
             if p.get("is_completed", False):
@@ -682,7 +682,7 @@ async def log_skill_attempt(
             "attempts_at_current": progress_data.get("attempts_at_current", 0) + 1,
             "best_reps_at_current": best_reps,
             "best_hold_at_current": best_hold,
-            "last_attempt_at": now,
+            "last_practiced_at": now,
             "updated_at": now,
         }
 

@@ -189,7 +189,7 @@ class ReceiptTemplate extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
         child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          const Center(child: Text('FITWIZ MARKET', style: TextStyle(
+          const Center(child: Text('ZEALOVA MARKET', style: TextStyle(
             fontFamily: 'Courier', fontWeight: FontWeight.w900, fontSize: 18, letterSpacing: 3,
           ))),
           const SizedBox(height: 2),
@@ -526,7 +526,7 @@ class MagazineCoverTemplate extends StatelessWidget {
         Positioned(
           top: 16, left: 16, right: 16,
           child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-            const Text('FITWIZ', style: TextStyle(
+            const Text('ZEALOVA', style: TextStyle(
               color: Colors.white, fontFamily: 'serif', fontWeight: FontWeight.w900,
               fontSize: 38, letterSpacing: -1.5, height: 1,
             )),

@@ -349,11 +349,19 @@ extension __SettingsScreenStateExt on _SettingsScreenState {
         // dependency order: RC first (so we don't leak the customer ID into
         // the next sign-in on this device), then analytics identities, then
         // SharedPreferences, then auth.
-        try {
-          await Purchases.logOut();
-        } catch (e) {
-          // RC logOut throws if no user was identified; harmless here.
-          debugPrint('RevenueCat logOut after delete: $e');
+        // Guard against the Swift `EXC_BREAKPOINT` fatal that fires when
+        // Purchases.* is called before `Purchases.configure(...)` has
+        // completed (rare on a delete-account path, but possible if
+        // configure failed silently at startup — e.g., missing API key).
+        if (SubscriptionNotifier.isRevenueCatReady) {
+          try {
+            await Purchases.logOut();
+          } catch (e) {
+            // RC logOut throws if no user was identified; harmless here.
+            debugPrint('RevenueCat logOut after delete: $e');
+          }
+        } else {
+          debugPrint('⚠️ Skipping Purchases.logOut — RC not configured');
         }
 
         try {
@@ -565,21 +573,13 @@ extension __SettingsScreenStateExt on _SettingsScreenState {
         backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
         title: Row(
           children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [AppColors.cyan, AppColors.purple],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Icon(
-                Icons.fitness_center,
-                color: Colors.white,
-                size: 24,
+            ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: Image.asset(
+                'assets/icon/app_icon.png',
+                width: 40,
+                height: 40,
+                fit: BoxFit.cover,
               ),
             ),
             const SizedBox(width: 12),

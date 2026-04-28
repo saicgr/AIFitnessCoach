@@ -288,10 +288,9 @@ class _DailyCrateSelectionSheetState
   bool _isLoading = false;
   String? _selectedCrate;
 
-  void _showRewardToast(BuildContext context, CrateReward? reward) {
+  void _showRewardToast(OverlayState overlay, CrateReward? reward) {
     if (reward == null) return;
 
-    final overlay = Overlay.of(context);
     late OverlayEntry overlayEntry;
 
     overlayEntry = OverlayEntry(
@@ -314,6 +313,12 @@ class _DailyCrateSelectionSheetState
 
     HapticService.medium();
 
+    // Capture overlay BEFORE popping the sheet — once the sheet pops, the
+    // bottom-sheet's BuildContext is unmounted and Overlay.of(context) on
+    // a stale context silently fails to render the reward toast (the
+    // user-reported "crate didn't open" symptom).
+    final rootOverlay = Overlay.of(context, rootOverlay: true);
+
     try {
       final result = await ref.read(xpProvider.notifier).claimDailyCrate(crateType);
 
@@ -330,8 +335,9 @@ class _DailyCrateSelectionSheetState
           Navigator.of(context).pop();
           widget.onCrateClaimed?.call();
 
-          // Show animated reward toast
-          _showRewardToast(context, result.reward);
+          // Show animated reward toast on the captured root overlay so it
+          // survives the bottom-sheet unmount.
+          _showRewardToast(rootOverlay, result.reward);
         }
       } else {
         HapticService.error();

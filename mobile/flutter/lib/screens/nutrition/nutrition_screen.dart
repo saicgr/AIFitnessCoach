@@ -27,7 +27,10 @@ import 'widgets/daily_tab.dart';
 import 'widgets/edit_targets_sheet.dart';
 import 'widgets/nutrition_error_state.dart';
 import 'widgets/my_foods_sheet.dart';
+import 'widgets/nutrition_date_strip.dart';
 import 'widgets/share_nutrition_sheet.dart';
+import '../../shareables/shareable_sheet.dart';
+import '../../shareables/adapters/nutrition_adapter.dart';
 import 'widgets/fuel_tab.dart';
 // `my_foods_sheet.dart` happens to export an internal helper called RecipesTab
 // for the saved-foods grid; alias our real Recipes tab to disambiguate.
@@ -97,6 +100,11 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
   List<RecipeSummary> _recipes = [];
   bool _isLoadingMicronutrients = false;
   bool _hasCheckedWeeklyCheckin = false;  // Guard flag for weekly check-in prompt
+
+  /// Sparse set of `yyyy-MM-dd` (local) keys for days with at least one
+  /// food log. Drives the dot indicator under each day cell in the date
+  /// strip. Refreshed on init + after every successful log.
+  Set<String> _loggedDateKeys = const <String>{};
 
   @override
   void initState() {
@@ -295,11 +303,51 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
       }
 
       _loadRecipes(userId, forceRefresh: forceRefresh);
-      ref.read(nutritionProvider.notifier).loadTodaySummary(userId, forceRefresh: forceRefresh);
+      // Honor the currently-viewed date. Without this branch, retry / pull-
+      // to-refresh while on a past date would clobber `state.recentLogs`
+      // with today's data and the past-date view would briefly show today's
+      // meals under a past-date header.
+      if (_isToday) {
+        ref.read(nutritionProvider.notifier).loadTodaySummary(userId, forceRefresh: forceRefresh);
+        ref.read(nutritionProvider.notifier).loadRecentLogs(userId, forceRefresh: forceRefresh);
+      } else {
+        ref.read(nutritionProvider.notifier).loadSummaryForDate(userId, _selectedDate);
+        ref.read(nutritionProvider.notifier).loadLogsForDate(userId, _selectedDate);
+      }
       _loadMicronutrients(userId, dateStr);
       ref.read(nutritionPreferencesProvider.notifier).initialize(userId);
-      ref.read(nutritionProvider.notifier).loadRecentLogs(userId, forceRefresh: forceRefresh);
       ref.read(hydrationProvider.notifier).loadTodaySummary(userId);
+      _refreshLoggedDateKeys(userId);
+    }
+  }
+
+  /// Refresh the strip's dot indicators by reducing recent food logs into a
+  /// set of local-date keys. Fire-and-forget — failures are logged and the
+  /// strip simply renders without dots.
+  Future<void> _refreshLoggedDateKeys(String userId) async {
+    try {
+      final repo = ref.read(nutritionRepositoryProvider);
+      final keys = await repo.getLoggedDateKeys(userId, days: 90);
+      if (mounted) {
+        setState(() => _loggedDateKeys = keys);
+      }
+    } catch (e) {
+      debugPrint('Failed to refresh logged-date keys: $e');
+    }
+  }
+
+  /// Snap to today + reload after a successful log. The meal always lands
+  /// on today (server-now timestamp), so showing the user any other date
+  /// would mislead them about where their entry actually lives.
+  void _refreshAfterLog() {
+    _cachedMicronutrientsTime = null;
+    if (!_isToday) {
+      _jumpToDate(DateTime.now()); // jumps + loads selected date
+    } else {
+      _loadData();
+    }
+    if (_userId != null) {
+      _refreshLoggedDateKeys(_userId!);
     }
   }
 
@@ -405,23 +453,7 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
     }
   }
 
-  void _changeDate(int days) {
-    final newDate = _selectedDate.add(Duration(days: days));
-    final newDateStr = DateFormat('yyyy-MM-dd').format(newDate);
-    final prevDateStr = DateFormat('yyyy-MM-dd').format(_selectedDate);
-    setState(() {
-      _selectedDate = newDate;
-      // Clear the micronutrient UI so we don't flash yesterday's vitamins
-      // while the new date's data is fetching. The cache (keyed by
-      // userId:date) will serve instantly if we've seen this date before.
-      if (prevDateStr != newDateStr) {
-        _micronutrientSummary = null;
-      }
-    });
-    _loadDataForSelectedDate();
-  }
-
-  /// Jump to a specific calendar date (invoked by the date picker).
+  /// Jump to a specific calendar date (invoked by the date picker / strip).
   void _jumpToDate(DateTime target) {
     final normalized = DateTime(target.year, target.month, target.day);
     final prevDateStr = DateFormat('yyyy-MM-dd').format(_selectedDate);
@@ -493,8 +525,20 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
         child: wrapWithSwipeDetector(
         child: Column(
           children: [
-            // Floating Header Row
+            // Floating Header Row — actions only (date controls now live in
+            // the date strip below).
             _buildHeaderRow(context, isDark, glassSurface, textPrimary, textMuted, textSecondary, elevated),
+            // Horizontally-scrolling date strip. Replaces the chevron+pill
+            // navigator and adds a meal-logged dot under each day for at-
+            // a-glance density.
+            KeyedSubtree(
+              key: TooltipAnchors.nutritionDateNav,
+              child: NutritionDateStrip(
+                selectedDate: _selectedDate,
+                loggedDateKeys: _loggedDateKeys,
+                onDaySelected: _jumpToDate,
+              ),
+            ),
             // Tab Bar with colored tabs
             SegmentedTabBar(
               controller: _tabController,
@@ -614,82 +658,20 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         children: [
-          // Date Navigation (left-aligned). Wrapped as the anchor for
-          // step 2 of `nutrition_v1` (Swipe through dates).
-          KeyedSubtree(
-            key: TooltipAnchors.nutritionDateNav,
-            child: Row(mainAxisSize: MainAxisSize.min, children: [
-          GestureDetector(
-            onTap: () => _changeDate(-1),
-            child: Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                color: glassSurface,
-                borderRadius: BorderRadius.circular(16),
+          // Title — date controls moved to the NutritionDateStrip below this
+          // row. Showing the current date label here keeps the header
+          // grounded with vertical-rhythm context.
+          Expanded(
+            child: Text(
+              _dateLabel,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: textPrimary,
               ),
-              child: Icon(Icons.chevron_left, size: 20, color: textPrimary),
+              overflow: TextOverflow.ellipsis,
             ),
           ),
-          const SizedBox(width: 4),
-          GestureDetector(
-            onTap: () async {
-              final picked = await showDatePicker(
-                context: context,
-                initialDate: _selectedDate,
-                firstDate: DateTime.now().subtract(const Duration(days: 365)),
-                lastDate: DateTime.now(),
-                // Users often know the date by number rather than wanting to
-                // tap through a calendar grid — allow keyboard entry.
-                initialEntryMode: DatePickerEntryMode.calendar,
-              );
-              if (picked != null) {
-                _jumpToDate(picked);
-              }
-            },
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              decoration: BoxDecoration(
-                color: elevated,
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.calendar_today_outlined, size: 14, color: textSecondary),
-                  const SizedBox(width: 6),
-                  Text(
-                    _dateLabel,
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: textPrimary,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(width: 4),
-          GestureDetector(
-            onTap: _isToday ? null : () => _changeDate(1),
-            child: Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                color: glassSurface,
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Icon(
-                Icons.chevron_right,
-                size: 20,
-                color: _isToday ? textMuted : textPrimary,
-              ),
-            ),
-          ),
-            ]),
-          ),
-          const Spacer(),
           // History
           GestureDetector(
             onTap: () {
@@ -739,14 +721,32 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
           const SizedBox(width: 6),
           // Share
           GestureDetector(
-            onTap: () {
-              final state = ref.read(nutritionProvider);
-              ShareNutritionSheet.show(
-                context,
-                ref,
-                summary: state.todaySummary,
-                targets: state.targets,
-              );
+            onTap: () async {
+              // Route through the unified ShareableSheet (item 13). Pulls a
+              // fresh daily report from the backend so the share gallery
+              // renders with calorie / macro / inflammation / AI summary.
+              try {
+                final api = ref.read(apiClientProvider);
+                final res = await api.dio.post('/nutrition/reports/daily');
+                if (!context.mounted) return;
+                final shareable = NutritionAdapter.fromDailyReport(
+                  ref: ref,
+                  json: res.data as Map<String, dynamic>,
+                );
+                if (shareable == null) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Log some meals first to share')),
+                  );
+                  return;
+                }
+                await ShareableSheet.show(context, data: shareable);
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Share failed: $e')),
+                  );
+                }
+              }
             },
             child: Tooltip(
               message: 'Share',
@@ -805,8 +805,7 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
 
   Future<void> _showLogMealSheet(bool isDark, {String? mealType, bool autoOpenCamera = false, bool autoOpenBarcode = false}) async {
     await showLogMealSheet(context, ref, initialMealType: mealType, autoOpenCamera: autoOpenCamera, autoOpenBarcode: autoOpenBarcode, selectedDate: _selectedDate);
-    _cachedMicronutrientsTime = null; // Invalidate — food was logged
-    _loadData();
+    _refreshAfterLog();
   }
 
   void _showRecipeBuilder(BuildContext context, bool isDark) {
@@ -843,7 +842,7 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
           recipes: _recipes,
           isDark: isDark,
           onFoodLogged: () {
-            _loadData();
+            _refreshAfterLog();
           },
           getSuggestedMealType: _getSuggestedMealType,
           onCreateRecipe: () {
@@ -878,14 +877,34 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
 
     try {
       final repository = ref.read(nutritionRepositoryProvider);
-      await repository.logRecipe(
+      final result = await repository.logRecipe(
         userId: _userId!,
         recipeId: recipe.id,
         mealType: mealType.value,
       );
       if (mounted) {
         ref.read(xpProvider.notifier).markMealLogged();
-        _loadData();
+        // Splice optimistic FoodLog so the recipe appears instantly
+        final now = DateTime.now();
+        ref.read(nutritionProvider.notifier).spliceRawLog(
+          FoodLog(
+            id: result.foodLogId,
+            userId: _userId!,
+            mealType: mealType.value,
+            loggedAt: now,
+            foodItems: [FoodItem(name: result.recipeName, calories: result.totalCalories)],
+            totalCalories: result.totalCalories,
+            proteinG: result.proteinG,
+            carbsG: result.carbsG,
+            fatG: result.fatG,
+            fiberG: result.fiberG,
+            sourceType: 'recipe',
+            userQuery: result.recipeName,
+            createdAt: now,
+          ),
+          _userId!,
+        );
+        _refreshAfterLog();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Logged ${recipe.name}'),

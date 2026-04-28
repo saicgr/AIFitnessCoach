@@ -72,7 +72,7 @@ class TradingCardTemplate extends StatelessWidget {
               Row(
                 children: [
                   ShareTrackedCaps(
-                    'FITWIZ TRAINER',
+                    'ZEALOVA TRAINER',
                     size: 9,
                     color: Colors.white.withValues(alpha: 0.7),
                     letterSpacing: 2.5,

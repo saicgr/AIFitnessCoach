@@ -1192,12 +1192,56 @@ async def get_workout_completion_summary(workout_id: str,
             logger.warning(f"Failed to generate AI coach summary: {e}", exc_info=True)
             coach_summary = "Great work completing your workout!"
 
+        # ── Cardio aggregates ────────────────────────────────────────────
+        # Pull distance / HR / pace / elevation from generation_metadata
+        # (populated by health_import_provider for synced workouts) AND
+        # from workout_logs.summary_metrics for manually logged cardio.
+        # Fields stay None for strength sessions — frontend hides the
+        # cardio panel when distance_meters is null.
+        gen_meta_raw = existing.get("generation_metadata")
+        gen_meta: dict = {}
+        if isinstance(gen_meta_raw, dict):
+            gen_meta = gen_meta_raw
+        elif isinstance(gen_meta_raw, str) and gen_meta_raw.strip():
+            try:
+                import json as _json
+                gen_meta = _json.loads(gen_meta_raw)
+            except Exception:
+                gen_meta = {}
+
+        def _num(v):
+            if isinstance(v, (int, float)):
+                return float(v)
+            if isinstance(v, str):
+                try:
+                    return float(v)
+                except ValueError:
+                    return None
+            return None
+
+        distance_m = _num(gen_meta.get("distance_meters")) or _num(gen_meta.get("total_distance_m"))
+        avg_hr = gen_meta.get("avg_heart_rate") or gen_meta.get("avg_hr_bpm")
+        max_hr = gen_meta.get("max_heart_rate") or gen_meta.get("max_hr_bpm")
+        pace_s_per_km = _num(gen_meta.get("pace_seconds_per_km")) or _num(gen_meta.get("avg_pace_s_per_km"))
+        elevation = _num(gen_meta.get("elevation_gain_meters")) or _num(gen_meta.get("total_elevation_gain_m"))
+
+        # Compute pace from distance + duration when not pre-calculated.
+        if pace_s_per_km is None and distance_m and duration_seconds:
+            km = distance_m / 1000.0
+            if km > 0:
+                pace_s_per_km = duration_seconds / km
+
         return WorkoutSummaryResponse(
             workout=workout_data, performance_comparison=performance_comparison,
             personal_records=personal_records, coach_summary=coach_summary,
             hero_narrative=hero_narrative,
             completion_method=completion_method, completed_at=str(completed_at) if completed_at else None,
             set_logs=set_logs,
+            distance_meters=distance_m,
+            avg_hr_bpm=int(avg_hr) if isinstance(avg_hr, (int, float)) else None,
+            max_hr_bpm=int(max_hr) if isinstance(max_hr, (int, float)) else None,
+            pace_seconds_per_km=pace_s_per_km,
+            elevation_gain_meters=elevation,
         )
 
     except HTTPException:

@@ -8,6 +8,7 @@ class _ExerciseCard extends StatelessWidget {
   final Color textPrimary;
   final Color textMuted;
   final bool isAiMatch;
+  final bool isSelected;
   final VoidCallback onDetailTap;
   final VoidCallback onAddTap;
 
@@ -18,6 +19,7 @@ class _ExerciseCard extends StatelessWidget {
     required this.textPrimary,
     required this.textMuted,
     this.isAiMatch = false,
+    this.isSelected = false,
     required this.onDetailTap,
     required this.onAddTap,
   });
@@ -148,9 +150,12 @@ class _ExerciseCard extends StatelessWidget {
                   ),
                 ),
 
-                // Add/lock action button
+                // Add/lock/check action button — when isSelected (multi-select
+                // mode picked this exercise) we render a filled accent circle
+                // with a check, so the user can see what's already in the
+                // batch at a glance.
                 Material(
-                  color: accentColor.withValues(alpha: 0.2),
+                  color: isSelected ? accentColor : accentColor.withValues(alpha: 0.2),
                   shape: const CircleBorder(),
                   child: InkWell(
                     onTap: onAddTap,
@@ -158,8 +163,8 @@ class _ExerciseCard extends StatelessWidget {
                     child: Padding(
                       padding: const EdgeInsets.all(10),
                       child: Icon(
-                        actionIcon,
-                        color: accentColor,
+                        isSelected ? Icons.check : actionIcon,
+                        color: isSelected ? Colors.white : accentColor,
                         size: 22,
                       ),
                     ),

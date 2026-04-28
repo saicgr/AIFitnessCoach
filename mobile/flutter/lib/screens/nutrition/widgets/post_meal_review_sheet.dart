@@ -78,6 +78,7 @@ class _PostMealReviewSheetState extends ConsumerState<_PostMealReviewSheet> {
   int _energyLevel = 3;
   bool _showWhyItMatters = false;
   bool _isSaving = false;
+  bool _isDismissing = false;
 
   @override
   Widget build(BuildContext context) {
@@ -306,37 +307,53 @@ class _PostMealReviewSheetState extends ConsumerState<_PostMealReviewSheet> {
               // Nutrition > Patterns tab.
               Center(
                 child: GestureDetector(
-                  onTap: () async {
-                    final prefs = await SharedPreferences.getInstance();
-                    await prefs.setBool(_kHidePostMealReviewKey, true);
-                    try {
-                      await ref.read(nutritionRepositoryProvider)
-                          .updatePatternsSettings(
-                        widget.userId,
-                        postMealCheckinDisabled: true,
-                      );
-                      // Bust the cached patterns-settings + mood-patterns so
-                      // the Patterns tab reflects the new disabled state.
-                      ref.invalidate(patternsSettingsProvider(widget.userId));
-                      ref.invalidate(foodPatternsMoodProvider(widget.userId));
-                    } catch (e) {
-                      debugPrint('⚠️ [PostMealReview] Backend toggle failed: $e');
-                    }
-                    if (context.mounted) {
-                      Navigator.pop(context);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: const Text(
-                            'Check-in disabled. Re-enable from Nutrition → Patterns.',
-                          ),
-                          behavior: SnackBarBehavior.floating,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          duration: const Duration(seconds: 4),
+                  onTap: () {
+                    if (_isDismissing) return;
+                    _isDismissing = true;
+
+                    // Capture references BEFORE pop — once the sheet is
+                    // disposed, `ref` and `context` are unsafe to use.
+                    final repo = ref.read(nutritionRepositoryProvider);
+                    final container = ProviderScope.containerOf(
+                      context,
+                      listen: false,
+                    );
+                    final messenger = ScaffoldMessenger.of(context);
+                    final userId = widget.userId;
+
+                    // Dismiss immediately so the UI feels snappy.
+                    Navigator.pop(context);
+                    messenger.showSnackBar(
+                      SnackBar(
+                        content: const Text(
+                          'Check-in disabled. Re-enable from Nutrition → Patterns.',
                         ),
-                      );
-                    }
+                        behavior: SnackBarBehavior.floating,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        duration: const Duration(seconds: 4),
+                      ),
+                    );
+
+                    // Persist in the background — the sheet is gone, so do
+                    // NOT touch `ref` or `context` here.
+                    () async {
+                      try {
+                        final prefs = await SharedPreferences.getInstance();
+                        await prefs.setBool(_kHidePostMealReviewKey, true);
+                        await repo.updatePatternsSettings(
+                          userId,
+                          postMealCheckinDisabled: true,
+                        );
+                        container
+                            .invalidate(patternsSettingsProvider(userId));
+                        container
+                            .invalidate(foodPatternsMoodProvider(userId));
+                      } catch (e) {
+                        debugPrint('⚠️ [PostMealReview] Backend toggle failed: $e');
+                      }
+                    }();
                   },
                   child: Text(
                     "Don't show again",

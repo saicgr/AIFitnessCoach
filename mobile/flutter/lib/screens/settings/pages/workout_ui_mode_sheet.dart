@@ -135,10 +135,6 @@ class _WorkoutUiModeSheet extends ConsumerWidget {
                     isDark: isDark,
                     onTap: () => _pick(context, ref, WorkoutUiMode.advanced),
                   ),
-                  const SizedBox(height: 18),
-                  WorkoutUiModeSegmentedControl(
-                    onChanged: (mode) => _pick(context, ref, mode),
-                  ),
                   const SizedBox(height: 4),
                 ],
               ),

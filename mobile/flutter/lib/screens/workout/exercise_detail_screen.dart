@@ -34,10 +34,17 @@ class ExerciseDetailScreen extends ConsumerStatefulWidget {
   /// (e.g. "View History" from the 3-dot exercise-options sheet).
   final int initialTab;
 
+  /// True when the caller (e.g. the muscle-heatmap "Tag muscles" CTA in
+  /// `workout_summary_advanced.dart`) wants the muscle-tag editor opened
+  /// automatically after the screen settles. Drives a post-frame scroll
+  /// + open of the editor on the Info tab.
+  final bool pendingMuscleTag;
+
   const ExerciseDetailScreen({
     super.key,
     required this.exercise,
     this.initialTab = 0,
+    this.pendingMuscleTag = false,
   });
 
   @override
@@ -66,6 +73,16 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen>
   late TabController _tabController;
   int _selectedTab = 0;
 
+  // Set true when the route was opened with `pendingMuscleTag: true`. The
+  // Info-tab UI watches this in `exercise_detail_screen_ui.dart` and renders
+  // a primed "Tag your muscles" editor + scrolls it into view. Cleared once
+  // the user saves (or dismisses) so re-renders don't loop.
+  bool pendingMuscleTagFlag = false;
+
+  /// Auto-scroll target — assigned in the UI part file when the muscle-tag
+  /// editor renders. Triggers `Scrollable.ensureVisible` on the next frame.
+  GlobalKey? muscleTagAnchorKey;
+
   @override
   void initState() {
     super.initState();
@@ -76,6 +93,30 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen>
       if (_tabController.indexIsChanging) return;
       setState(() => _selectedTab = _tabController.index);
     });
+
+    // Honor the `pending_muscle_tag` deep-link flag. Force the Info tab
+    // (where the muscle editor lives) and let the UI mount the editor in
+    // the open state. Auto-scroll happens after first frame so the anchor
+    // key has been wired.
+    if (widget.pendingMuscleTag) {
+      pendingMuscleTagFlag = true;
+      _tabController.index = 0;
+      _selectedTab = 0;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        final key = muscleTagAnchorKey;
+        final ctx = key?.currentContext;
+        if (ctx != null) {
+          Scrollable.ensureVisible(
+            ctx,
+            duration: const Duration(milliseconds: 320),
+            alignment: 0.1,
+            curve: Curves.easeOutCubic,
+          );
+        }
+      });
+    }
+
     _loadMediaAndAutoplay();
     _loadPreviousPerformance();
     // Avoided provider is lazy — ensure it's loaded so isAvoided() works

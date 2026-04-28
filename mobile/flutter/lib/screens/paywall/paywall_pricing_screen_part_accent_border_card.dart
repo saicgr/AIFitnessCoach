@@ -416,7 +416,10 @@ class _CurrentPlanCard extends StatelessWidget {
       case SubscriptionTier.lifetime:
         return 'Lifetime';
       default:
-        return 'Free';
+        // No "Free" tier in this app — only Trial → Premium. If we land here
+        // with `free`, the user is mid-trial; the paywall caller already gates
+        // this card behind isSubscribed so this branch is mostly defensive.
+        return 'Trial';
     }
   }
 

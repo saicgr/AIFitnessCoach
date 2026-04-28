@@ -162,6 +162,22 @@ class DailyActivityNotifier extends StateNotifier<DailyActivityState> {
   final ApiClient _apiClient;
   final PosthogService _posthog;
 
+  /// Timestamp of the last successful `loadTodayActivity()`. Used to enforce
+  /// a 60-second TTL on today's bucket so rapid tab switches don't hammer
+  /// Health Connect, but stale caches (>60s, e.g. after a walk) re-query.
+  DateTime? _lastFetchAt;
+
+  /// TTL window for today's activity bucket. Step counts in Health Connect
+  /// can change minute-to-minute (905 vs 32 mismatch the user reported was
+  /// a pure cache-staleness issue), so we keep this short.
+  static const Duration _todayCacheTtl = Duration(seconds: 60);
+
+  /// Local-midnight of the day the last fetch happened on. Used to detect
+  /// a midnight rollover during refresh — the cache must be discarded the
+  /// instant the calendar day flips, otherwise yesterday's totals leak into
+  /// today's UI.
+  DateTime? _lastFetchDay;
+
   DailyActivityNotifier(
     this._healthService,
     this._syncState,
@@ -175,12 +191,48 @@ class DailyActivityNotifier extends StateNotifier<DailyActivityState> {
     }
   }
 
-  /// Load today's activity from Health Connect
-  Future<void> loadTodayActivity() async {
+  /// Force the next `loadTodayActivity()` call to bypass the 60s TTL guard.
+  /// Used by the You-tab refresh button and by `AppLifecycleState.resumed`
+  /// to make sure resuming the app after a walk shows fresh step counts.
+  void invalidateCache() {
+    _lastFetchAt = null;
+    _lastFetchDay = null;
+  }
+
+  /// True iff the cached `today` bucket is still within the 60s TTL AND
+  /// the calendar day hasn't flipped since we cached it. Edge cases:
+  ///   • `_lastFetchAt == null`           → never fetched, NOT fresh
+  ///   • `state.today == null`            → no cached row, NOT fresh
+  ///   • now - lastFetch > 60s            → stale, NOT fresh
+  ///   • local-midnight changed           → midnight rollover, NOT fresh
+  bool _isCacheFresh() {
+    if (_lastFetchAt == null || state.today == null) return false;
+    final now = DateTime.now();
+    if (now.difference(_lastFetchAt!) > _todayCacheTtl) return false;
+    final today = DateTime(now.year, now.month, now.day);
+    if (_lastFetchDay == null || _lastFetchDay != today) return false;
+    return true;
+  }
+
+  /// Load today's activity from Health Connect.
+  ///
+  /// Honors a 60-second TTL on the `state.today` bucket unless [force] is
+  /// true. The You-tab Overview refresh button and the app-lifecycle
+  /// `resumed` hook both pass `force: true` so the user always gets fresh
+  /// data when they explicitly ask for it.
+  Future<void> loadTodayActivity({bool force = false}) async {
     if (!_syncState.isConnected) {
       state = state.copyWith(
         today: DailyActivity(date: DateTime.now(), isFromHealthConnect: false),
       );
+      return;
+    }
+
+    // 60s TTL guard — skips the entire fetch if the cached row is fresh.
+    // This avoids re-hitting Health Connect on every tab switch, which is
+    // what caused the 905 vs 32 step mismatch (a stale bucket from earlier
+    // in the session was being shown instead of re-querying).
+    if (!force && _isCacheFresh()) {
       return;
     }
 
@@ -225,6 +277,14 @@ class DailyActivityNotifier extends StateNotifier<DailyActivityState> {
         awakeSleepMinutes: sleepData.hasData && sleepData.awakeMinutes > 0 ? sleepData.awakeMinutes : null,
         waterMl: vitalsData['waterMl'] as int?,
       );
+
+      // Stamp the cache AFTER a successful fetch — failed fetches must not
+      // refresh the TTL (otherwise transient errors would suppress retries
+      // for a full minute). Use local-midnight at refresh time for the day
+      // marker so a midnight rollover during refresh invalidates correctly.
+      final stampNow = DateTime.now();
+      _lastFetchAt = stampNow;
+      _lastFetchDay = DateTime(stampNow.year, stampNow.month, stampNow.day);
 
       state = state.copyWith(isLoading: false, today: today);
 
@@ -293,9 +353,76 @@ class DailyActivityNotifier extends StateNotifier<DailyActivityState> {
     }
   }
 
-  /// Refresh activity data
+  /// Refresh activity data. Always bypasses the 60s TTL — pull-to-refresh
+  /// and the explicit Overview refresh button must always re-query.
   Future<void> refresh() async {
-    await loadTodayActivity();
+    invalidateCache();
+    await loadTodayActivity(force: true);
+  }
+
+  /// Backfill the past N days of activity (steps, calories, distance) from
+  /// Health Connect / Apple Health to Supabase. Called on app resume +
+  /// after the user grants Health permission so days like "April 23"
+  /// don't disappear from the synced workouts grid (Issue 12).
+  ///
+  /// Days where local total > 0 AND > server total are pushed; days that
+  /// already match are skipped to avoid redundant writes.
+  Future<int> backfillRecentActivity({int days = 30}) async {
+    if (!_syncState.isConnected) {
+      debugPrint('⏭️ [Activity] Backfill skipped — health not connected');
+      return 0;
+    }
+    final userId = await _apiClient.getUserId();
+    if (userId == null) {
+      debugPrint('⏭️ [Activity] Backfill skipped — no userId');
+      return 0;
+    }
+
+    try {
+      // Pull each day's totals via the health_service (already enforces
+      // local-midnight bounds). We do this serially to avoid hammering
+      // the platform channel; small N (≤30) keeps total time well under 1s.
+      final now = DateTime.now();
+      final perDay = <DailyActivity>[];
+      for (int i = 1; i <= days; i++) {
+        final dayStart =
+            DateTime(now.year, now.month, now.day).subtract(Duration(days: i));
+        final dayEnd = dayStart.add(const Duration(days: 1));
+        try {
+          final steps =
+              await _healthService.getStepsForRange(dayStart, dayEnd) ?? 0;
+          if (steps <= 0) continue; // skip empty days — nothing to backfill
+          perDay.add(DailyActivity(
+            date: dayStart,
+            steps: steps,
+            caloriesBurned: 0,
+            distanceMeters: 0,
+            isFromHealthConnect: true,
+          ));
+        } catch (e) {
+          // Non-fatal — Health may reject some days; keep going.
+          debugPrint('⚠️ [Activity] Backfill day $dayStart failed: $e');
+        }
+      }
+
+      if (perDay.isEmpty) {
+        debugPrint('🏃 [Activity] Backfill found no past days with data');
+        return 0;
+      }
+
+      final response = await _activityService.batchSyncActivities(
+        userId: userId,
+        activities: perDay,
+      );
+      if (response != null) {
+        debugPrint('✅ [Activity] Backfilled ${perDay.length} days');
+        return perDay.length;
+      }
+      return 0;
+    } catch (e) {
+      debugPrint('❌ [Activity] Backfill error: $e');
+      return 0;
+    }
   }
 
   /// Update activity data from watch.

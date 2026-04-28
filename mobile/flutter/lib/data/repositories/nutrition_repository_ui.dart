@@ -29,10 +29,12 @@ extension NutritionRepositoryExt on NutritionRepository {
     String? mealType,
   }) async {
     try {
+      final tz = await _cachedTz();
       final queryParams = <String, dynamic>{'limit': limit};
       if (fromDate != null) queryParams['from_date'] = fromDate;
       if (toDate != null) queryParams['to_date'] = toDate;
       if (mealType != null) queryParams['meal_type'] = mealType;
+      if (tz.isNotEmpty) queryParams['tz'] = tz;
 
       final response = await _client.get(
         '/nutrition/food-logs/$userId',
@@ -47,11 +49,55 @@ extension NutritionRepositoryExt on NutritionRepository {
   }
 
 
+  /// Returns the set of `yyyy-MM-dd` (local) keys for days within the last
+  /// [days] days where the user has at least one food_log row. Used by the
+  /// Nutrition tab's date strip to render a dot under each day with a log.
+  ///
+  /// Implementation note: there's no dedicated backend endpoint yet — we
+  /// reduce the existing `getFoodLogs` response client-side. Bumping `limit`
+  /// to cover ~5 logs per day for the requested window keeps a single
+  /// round-trip sufficient for typical users.
+  Future<Set<String>> getLoggedDateKeys(
+    String userId, {
+    int days = 90,
+  }) async {
+    try {
+      final now = DateTime.now();
+      final from = now.subtract(Duration(days: days));
+      // toDate extends 1 day past today so logs that land on the next UTC day
+      // (e.g. 7 PM CT = 00:xx UTC next day) are included.
+      final tomorrow = now.add(const Duration(days: 1));
+      final fromStr =
+          '${from.year.toString().padLeft(4, '0')}-${from.month.toString().padLeft(2, '0')}-${from.day.toString().padLeft(2, '0')}';
+      final toStr =
+          '${tomorrow.year.toString().padLeft(4, '0')}-${tomorrow.month.toString().padLeft(2, '0')}-${tomorrow.day.toString().padLeft(2, '0')}';
+      final logs = await getFoodLogs(
+        userId,
+        limit: days * 6,
+        fromDate: fromStr,
+        toDate: toStr,
+      );
+      final keys = <String>{};
+      for (final log in logs) {
+        final local = log.loggedAt.isUtc ? log.loggedAt.toLocal() : log.loggedAt;
+        keys.add(
+          '${local.year.toString().padLeft(4, '0')}-${local.month.toString().padLeft(2, '0')}-${local.day.toString().padLeft(2, '0')}',
+        );
+      }
+      return keys;
+    } catch (e) {
+      debugPrint('Error building logged-date keys: $e');
+      return <String>{};
+    }
+  }
+
   /// Get daily nutrition summary
   Future<DailyNutritionSummary> getDailySummary(String userId, {String? date}) async {
     try {
+      final tz = await _cachedTz();
       final queryParams = <String, dynamic>{};
       if (date != null) queryParams['date'] = date;
+      if (tz.isNotEmpty) queryParams['tz'] = tz;
 
       final response = await _client.get(
         '/nutrition/summary/daily/$userId',

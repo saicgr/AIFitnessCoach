@@ -14,6 +14,12 @@ final activityServiceProvider = Provider<ActivityService>((ref) {
 class ActivityService {
   final ApiClient _apiClient;
 
+  // Cached "consent denied" flag — once the backend rejects sync with 403
+  // (no health-data consent), stop hammering the endpoint until the user
+  // restarts the app or toggles consent. Prevents the 403-spam we saw in
+  // production logs.
+  bool _consentDenied = false;
+
   ActivityService(this._apiClient);
 
   /// Sync daily activity to backend
@@ -21,6 +27,10 @@ class ActivityService {
     required String userId,
     required DailyActivity activity,
   }) async {
+    if (_consentDenied) {
+      debugPrint('⏭️ [Activity] Sync skipped — health consent denied for this session');
+      return null;
+    }
     try {
       debugPrint('🏃 [Activity] Syncing activity for ${activity.date}...');
 
@@ -60,7 +70,14 @@ class ActivityService {
         return null;
       }
     } catch (e) {
-      debugPrint('❌ [Activity] Error syncing activity: $e');
+      // Surface 403 (consent missing) once and disable retries for this session.
+      final msg = e.toString();
+      if (msg.contains('403') || msg.contains('Forbidden')) {
+        _consentDenied = true;
+        debugPrint('🚫 [Activity] Health consent missing — disabling sync for this session');
+      } else {
+        debugPrint('❌ [Activity] Error syncing activity: $e');
+      }
       return null;
     }
   }

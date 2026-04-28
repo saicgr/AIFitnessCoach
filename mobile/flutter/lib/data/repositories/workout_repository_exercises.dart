@@ -650,7 +650,7 @@ extension WorkoutRepositoryExercises on WorkoutRepository {
           'type': workoutType,
           'difficulty': difficulty,
           'scheduled_date': (scheduledDate ?? DateTime.now()).toIso8601String(),
-          'exercises_json': exercises,
+          'exercises_json': jsonEncode(exercises),
           'duration_minutes': durationMinutes,
           'generation_method': 'manual',
           'generation_source': 'custom_builder',

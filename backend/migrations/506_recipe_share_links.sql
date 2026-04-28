@@ -1,6 +1,6 @@
 -- Migration: 506_recipe_share_links.sql
 -- Description: Public shareable links for recipes.
---   slug is a short URL-safe id; clients build links like fitwiz.us/r/{slug}.
+--   slug is a short URL-safe id; clients build links like zealova.com/r/{slug}.
 --   Resolution requires both is_public=TRUE on the recipe AND an active share row.
 -- Created: 2026-04-14
 

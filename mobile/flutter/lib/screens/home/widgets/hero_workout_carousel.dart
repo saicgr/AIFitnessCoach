@@ -418,6 +418,26 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
           }
         }
 
+        // Defensive (date-keyed) dedup. Returning users hit a race where the
+        // placeholder for a future date and the actual workout for the same
+        // date both end up in the list — produces a "two Tomorrow tiles" UI
+        // a minute after login. Drop any placeholder whose date already has
+        // a real workout. (Multiple real workouts on the same date are
+        // legitimate — Add Workout / mood-picker — so we never dedup those.)
+        {
+          final realDateKeys = <String>{};
+          for (final item in carouselItems) {
+            if (item.isWorkout) {
+              final d = item.date;
+              if (d != null) realDateKeys.add(_dateKey(d));
+            }
+          }
+          carouselItems.removeWhere((item) =>
+              item.isPlaceholder &&
+              item.placeholderDate != null &&
+              realDateKeys.contains(_dateKey(item.placeholderDate!)));
+        }
+
         // Pick the actionable target on first data load + auto-scroll to it.
         // Carousel starts at index 0 (earliest, usually the missed card if
         // present) so users see what they missed, then the animation reveals

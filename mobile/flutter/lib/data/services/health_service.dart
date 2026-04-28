@@ -273,6 +273,18 @@ class HealthService {
     }
   }
 
+  /// Get total steps for an arbitrary [start, end] range. Used by the
+  /// 30-day backfill (Issue 12) so days like "April 23" populate the
+  /// synced-workouts grid even if the user wasn't running the app then.
+  Future<int?> getStepsForRange(DateTime start, DateTime end) async {
+    try {
+      return await _health.getTotalStepsInInterval(start, end);
+    } catch (e) {
+      debugPrint('❌ Error getting steps for range $start..$end: $e');
+      return null;
+    }
+  }
+
   /// Get activity summary for a date range
   Future<Map<String, dynamic>> getActivitySummary({int days = 7}) async {
     try {
@@ -503,6 +515,49 @@ class HealthService {
     } catch (e) {
       debugPrint('❌ Error getting heart rate for time range: $e');
       return [];
+    }
+  }
+
+  /// Polls HealthKit / Health Connect for live heart-rate samples during
+  /// an active workout. The Flutter `health` plugin doesn't expose a true
+  /// HKAnchoredObjectQuery stream, but a 5-second polling cadence over the
+  /// last 15s window catches every Amazfit Helios / Apple Watch / Pixel
+  /// Watch beat write within ~5s of it landing in HealthKit.
+  ///
+  /// Cancel by closing the returned subscription. Persisted samples for
+  /// the post-workout graph should be appended in the consumer (we keep
+  /// this method side-effect-free).
+  Stream<int> streamLiveHeartRate({
+    Duration pollInterval = const Duration(seconds: 5),
+  }) async* {
+    int? lastEmitted;
+    while (true) {
+      try {
+        await _ensureConfigured();
+        final now = DateTime.now();
+        final from = now.subtract(const Duration(seconds: 15));
+        final pts = await _health.getHealthDataFromTypes(
+          startTime: from,
+          endTime: now,
+          types: const [HealthDataType.HEART_RATE],
+        );
+        if (pts.isNotEmpty) {
+          // Latest sample wins.
+          pts.sort((a, b) => b.dateFrom.compareTo(a.dateFrom));
+          final raw = pts.first.value;
+          int? bpm;
+          if (raw is NumericHealthValue) {
+            bpm = raw.numericValue.toInt();
+          }
+          if (bpm != null && bpm > 0 && bpm != lastEmitted) {
+            lastEmitted = bpm;
+            yield bpm;
+          }
+        }
+      } catch (e) {
+        debugPrint('⚠️ Live HR poll error: $e');
+      }
+      await Future<void>.delayed(pollInterval);
     }
   }
 

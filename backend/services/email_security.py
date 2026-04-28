@@ -107,7 +107,7 @@ class EmailSecurityMixin:
               <img src="{logo_url}" alt="{branding.APP_NAME}" width="64" height="64"
                    style="display:block;border-radius:14px;border:0;width:64px;height:64px;object-fit:cover;">
               <p style="margin:14px 0 0;font-size:11px;font-weight:700;letter-spacing:3px;
-                        text-transform:uppercase;color:#a1a1aa;">FITWIZ &middot; SECURITY</p>
+                        text-transform:uppercase;color:#a1a1aa;">ZEALOVA &middot; SECURITY</p>
             </td>
           </tr>
           <tr>

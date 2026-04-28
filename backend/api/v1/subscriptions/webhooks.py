@@ -189,7 +189,7 @@ async def _handle_initial_purchase(supabase, event: dict, background_tasks=None)
             user_result = supabase.client.table("users") \
                 .select("email, name") \
                 .eq("id", user_id) \
-                .single() \
+                .maybe_single() \
                 .execute()
             if user_result.data:
                 user_email = user_result.data["email"]
@@ -286,17 +286,17 @@ async def _handle_cancellation(supabase, event: dict, background_tasks=None):
             user_result = supabase.client.table("users") \
                 .select("email, name") \
                 .eq("id", user_id) \
-                .single() \
+                .maybe_single() \
                 .execute()
             sub_result = supabase.client.table("user_subscriptions") \
                 .select("tier") \
                 .eq("user_id", user_id) \
-                .single() \
+                .maybe_single() \
                 .execute()
             pref_result = supabase.client.table("email_preferences") \
                 .select("promotional") \
                 .eq("user_id", user_id) \
-                .single() \
+                .maybe_single() \
                 .execute()
             promotional_ok = True
             if pref_result.data and pref_result.data.get("promotional") is False:
@@ -330,7 +330,7 @@ async def _handle_expiration(supabase, event: dict, background_tasks=None):
     prev_result = supabase.client.table("user_subscriptions")\
         .select("tier")\
         .eq("user_id", user_id)\
-        .single()\
+        .maybe_single()\
         .execute()
 
     prev_tier = prev_result.data["tier"] if prev_result.data else None
@@ -366,7 +366,7 @@ async def _handle_expiration(supabase, event: dict, background_tasks=None):
             user_result = supabase.client.table("users") \
                 .select("email, name") \
                 .eq("id", user_id) \
-                .single() \
+                .maybe_single() \
                 .execute()
             if user_result.data:
                 workout_count_result = supabase.client.table("workout_logs") \
@@ -454,12 +454,12 @@ async def _handle_billing_issue(supabase, event: dict, background_tasks=None):
             user_result = supabase.client.table("users") \
                 .select("email, name") \
                 .eq("id", user_id) \
-                .single() \
+                .maybe_single() \
                 .execute()
             sub_result = supabase.client.table("user_subscriptions") \
                 .select("tier") \
                 .eq("user_id", user_id) \
-                .single() \
+                .maybe_single() \
                 .execute()
             if user_result.data:
                 tier_name = sub_result.data.get("tier", "premium") if sub_result.data else "premium"

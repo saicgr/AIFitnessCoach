@@ -20,6 +20,9 @@ import '../../workout/widgets/exercise_add_sheet.dart';
 import '../../../core/services/posthog_service.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:fitwiz/core/constants/branding.dart';
+import '../../../shareables/shareable_sheet.dart';
+import '../../../shareables/adapters/workout_adapter.dart';
+import '../../../data/providers/consistency_provider.dart';
 
 
 part 'hero_workout_card_part_completed_workout_hero_card.dart';
@@ -313,9 +316,12 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
         subject: '${Branding.appName} workout',
       );
     } catch (e) {
+      debugPrint('❌ [HeroCard] share-link failed: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Share failed: $e')),
+          const SnackBar(
+            content: Text("Couldn't generate share link — please try again"),
+          ),
         );
       }
     }
@@ -325,49 +331,47 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
     HapticService.light();
     final workout = widget.workout;
 
-    // Compute aggregations from exercises
-    final exercises = workout.exercises;
-    double totalVolumeLbs = 0;
-    int totalSets = 0;
-    int totalReps = 0;
-
-    final exercisesList = <Map<String, dynamic>>[];
-    for (final e in exercises) {
-      final sets = e.sets ?? 0;
-      final reps = e.reps ?? 0;
-      final weightKg = e.weight ?? 0.0;
-      totalSets += sets;
-      totalReps += sets * reps;
-      totalVolumeLbs += sets * reps * weightKg * 2.20462;
-
-      exercisesList.add({
-        'name': e.name,
-        'sets': e.sets,
-        'reps': e.reps,
-        'weight_kg': e.weight,
-        'equipment': e.equipment,
-        'primary_muscle': e.primaryMuscle,
-      });
+    // Route through the unified ShareableSheet so users land in the same
+    // gallery (Wrapped, Trading Card, Receipt, Workout Details, etc.) used
+    // everywhere else in the app — instead of the legacy CreatePostSheet
+    // which bypassed the shareable templates.
+    // Pull live streak so the Streaks shareable template unlocks for users
+    // with an active streak (item 9 fix). PRs are passed in too so the PR
+    // template unlocks when applicable. Both are best-effort — null is
+    // tolerated by the adapter.
+    final streak = ref.read(currentStreakProvider);
+    final shareable = WorkoutAdapter.fromCompletion(
+      ref: ref,
+      workoutName: workout.name ?? 'Workout',
+      durationSeconds: (workout.estimatedDurationMinutes ?? workout.durationMinutes ?? 45) * 60,
+      plannedExercises: workout.exercises,
+      totalSets: workout.exercises.fold<int>(0, (a, e) => a + (e.sets ?? 0)),
+      totalReps: workout.exercises.fold<int>(0, (a, e) => a + ((e.sets ?? 0) * (e.reps ?? 0))),
+      currentStreak: streak > 0 ? streak : null,
+    );
+    if (shareable == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Nothing to share yet — log a workout first')),
+      );
+      return;
     }
-
     ref.read(floatingNavBarVisibleProvider.notifier).state = false;
-    showGlassSheet(
-      context: context,
-      useRootNavigator: true,
-      builder: (context) => CreatePostSheet(
-        workoutPreFill: {
-          'name': workout.name ?? 'Workout',
-          'type': workout.type ?? '',
-          'difficulty': workout.difficulty ?? '',
-          'duration_minutes': workout.estimatedDurationMinutes ?? workout.durationMinutes,
-          'exercises_count': workout.exercises.length,
-          'workout_id': workout.id,
-          'exercises': exercisesList,
-          'total_volume_lbs': totalVolumeLbs.round(),
-          'total_sets': totalSets,
-          'total_reps': totalReps,
-        },
-      ),
+    ShareableSheet.show(
+      context,
+      data: shareable,
+      onGenerateShareLink: () async {
+        try {
+          final api = ref.read(apiClientProvider);
+          final id = workout.id;
+          if (id == null || id.isEmpty) return null;
+          final res = await api.dio.post('/workouts/$id/share-link');
+          final data = res.data;
+          if (data is Map && data['url'] is String) return data['url'] as String;
+          return null;
+        } catch (_) {
+          return null;
+        }
+      },
     ).then((_) {
       ref.read(floatingNavBarVisibleProvider.notifier).state = true;
     });

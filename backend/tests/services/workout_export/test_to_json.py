@@ -16,7 +16,7 @@ def test_envelope_has_version_and_counts(sample_strength_rows, sample_cardio_row
     assert envelope["version"] == EXPORT_SCHEMA_VERSION
     assert envelope["counts"]["strength"] == len(sample_strength_rows)
     assert envelope["counts"]["cardio"] == len(sample_cardio_rows)
-    assert envelope["source"] == "fitwiz"
+    assert envelope["source"] == "zealova"
     assert envelope["user_id"] == str(test_user_id)
 
 

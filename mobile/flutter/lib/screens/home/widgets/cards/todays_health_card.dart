@@ -47,7 +47,70 @@ class _TodaysHealthCardState extends ConsumerState<TodaysHealthCard> {
         isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
 
     final sync = ref.watch(healthSyncProvider);
-    if (!sync.isConnected) return const SizedBox.shrink();
+    // Permission denied / not connected: show a "Connect Health" CTA card
+    // instead of zeros. Empty zero-state was misleading — users thought
+    // their watch wasn't syncing when really they'd never granted
+    // permissions. Edge case: if permissions were revoked mid-session, the
+    // sync state notifier flips `isConnected` to false and we re-render
+    // the same CTA, which is the correct recovery path.
+    if (!sync.isConnected) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        child: Container(
+          decoration: BoxDecoration(
+            color: elevated,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: cardBorder, width: 1),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
+            child: Row(
+              children: [
+                Container(
+                  width: 36,
+                  height: 36,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: AppColors.success.withValues(alpha: 0.18),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(Icons.favorite_rounded,
+                      color: AppColors.success, size: 18),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Connect Health',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Sync steps, heart rate, and sleep',
+                        style: TextStyle(fontSize: 12, color: textMuted),
+                      ),
+                    ],
+                  ),
+                ),
+                TextButton(
+                  onPressed: () {
+                    HapticService.light();
+                    ref.read(healthSyncProvider.notifier).connect();
+                  },
+                  child: const Text('Connect'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
 
     final activity = ref.watch(dailyActivityProvider).today;
     final stepGoal = ref.watch(stepGoalProvider);
@@ -162,31 +225,48 @@ class _TodaysHealthCardState extends ConsumerState<TodaysHealthCard> {
 
               const SizedBox(height: 14),
 
-              // ─── Metric tiles row
-              Row(
-                children: [
-                  Expanded(
-                    child: _MetricTile(
-                      icon: Icons.local_fire_department_rounded,
-                      iconColor: AppColors.orange,
-                      value: activeCal != null ? '$activeCal' : '—',
-                      unit: 'cal',
-                      label: 'Active Energy',
-                      isDark: isDark,
+              // ─── Metric tiles. Use LayoutBuilder + Wrap so on narrow
+              // screens (iPhone SE, split-screen Android) tiles flow to a
+              // second row instead of overflowing. Each tile gets an
+              // identical horizontal slot so widths stay consistent —
+              // previously the tile widths drifted because Active Energy's
+              // value ("1,234") forced its column wider than Avg HR's
+              // ("78 bpm"), making the row look uneven.
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  // 8px gap between tiles → halve when computing per-tile
+                  // width so two tiles fit exactly without overflowing.
+                  final tileWidth = (constraints.maxWidth - 8) / 2;
+                  final tiles = <Widget>[
+                    SizedBox(
+                      width: tileWidth,
+                      child: _MetricTile(
+                        icon: Icons.local_fire_department_rounded,
+                        iconColor: AppColors.orange,
+                        value: activeCal != null ? '$activeCal' : '—',
+                        unit: 'cal',
+                        label: 'Active Energy',
+                        isDark: isDark,
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: _MetricTile(
-                      icon: Icons.favorite_rounded,
-                      iconColor: AppColors.error,
-                      value: avgHr != null ? '$avgHr' : '—',
-                      unit: 'bpm',
-                      label: 'Avg HR',
-                      isDark: isDark,
+                    SizedBox(
+                      width: tileWidth,
+                      child: _MetricTile(
+                        icon: Icons.favorite_rounded,
+                        iconColor: AppColors.error,
+                        value: avgHr != null ? '$avgHr' : '—',
+                        unit: 'bpm',
+                        label: 'Avg HR',
+                        isDark: isDark,
+                      ),
                     ),
-                  ),
-                ],
+                  ];
+                  return Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: tiles,
+                  );
+                },
               ),
               if (minHr != null && maxHr != null && maxHr > minHr) ...[
                 const SizedBox(height: 8),

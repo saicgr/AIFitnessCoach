@@ -55,7 +55,7 @@ class ReceiptTemplate extends StatelessWidget {
           children: [
             const Center(
               child: Text(
-                '**  FITWIZ GYM  **',
+                '**  ZEALOVA GYM  **',
                 style: TextStyle(
                   fontFamily: fontFamily,
                   fontSize: 16,
@@ -199,7 +199,7 @@ class ReceiptTemplate extends StatelessWidget {
             if (showWatermark)
               const Center(
                 child: Text(
-                  'fitwiz',
+                  'zealova',
                   style: TextStyle(
                     fontFamily: fontFamily,
                     fontSize: 9,

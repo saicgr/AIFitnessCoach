@@ -33,6 +33,7 @@ class _CustomWorkoutBuilderScreenState
   final _nameController = TextEditingController(text: 'My Custom Workout');
   String _workoutType = 'strength';
   String _difficulty = 'medium';
+  DateTime _scheduledDate = DateTime.now();
   final List<Map<String, dynamic>> _selectedExercises = [];
   bool _isCreating = false;
   bool _showExerciseSearch = false;
@@ -112,7 +113,13 @@ class _CustomWorkoutBuilderScreenState
         'equipment': exercise.equipment ?? 'bodyweight',
         'muscle_group': exercise.targetMuscle ?? exercise.bodyPart ?? '',
         'notes': '',
-        'thumbnail_url': exercise.gifUrl ?? exercise.imageUrl,
+        // Persist the image URL under the same field name the
+        // WorkoutExercise model deserializes (`gif_url`) so the active-
+        // workout thumbnail strip + exercise detail screen render the
+        // illustration without an extra `/exercise-images/<name>` lookup
+        // round-trip on first load.
+        'gif_url': exercise.gifUrl ?? exercise.imageUrl,
+        'image_s3_path': exercise.imageUrl,
       });
       _showExerciseSearch = false;
     });
@@ -175,13 +182,13 @@ class _CustomWorkoutBuilderScreenState
         name: _nameController.text.trim(),
         workoutType: _workoutType,
         difficulty: _difficulty,
-        exercises: _selectedExercises.map((e) {
-          // Remove thumbnail_url before sending to API
-          final exercise = Map<String, dynamic>.from(e);
-          exercise.remove('thumbnail_url');
-          return exercise;
-        }).toList(),
+        // Send exercises as-is (incl. gif_url / image_s3_path so the active
+        // workout screen can render the illustration immediately on load).
+        exercises: _selectedExercises
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList(),
         durationMinutes: _estimateDuration(),
+        scheduledDate: _scheduledDate,
       );
 
       setState(() => _isCreating = false);
@@ -233,6 +240,39 @@ class _CustomWorkoutBuilderScreenState
     }
   }
 
+  String _formatScheduledDate(DateTime date) {
+    final today = DateTime.now();
+    final t = DateTime(today.year, today.month, today.day);
+    final d = DateTime(date.year, date.month, date.day);
+    final diff = d.difference(t).inDays;
+    if (diff == 0) return 'Today';
+    if (diff == 1) return 'Tomorrow';
+    const weekdays = [
+      'Monday',
+      'Tuesday',
+      'Wednesday',
+      'Thursday',
+      'Friday',
+      'Saturday',
+      'Sunday',
+    ];
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    return '${weekdays[d.weekday - 1]}, ${months[d.month - 1]} ${d.day}';
+  }
+
   int _estimateDuration() {
     // Estimate duration based on exercises
     // Average ~5 min per exercise
@@ -262,23 +302,48 @@ class _CustomWorkoutBuilderScreenState
       body: _showExerciseSearch
           ? _buildExerciseSearch(surface, textPrimary, textSecondary)
           : _buildWorkoutBuilder(surface, textPrimary, textSecondary),
-      floatingActionButton: !_showExerciseSearch
-          ? FloatingActionButton.extended(
-              onPressed: () {
-                setState(() {
-                  _showExerciseSearch = true;
-                  _searchQuery = '';
-                  _selectedCategory = null;
-                  _searchResults = [];
-                });
-                // Load initial results
-                _searchExercises('');
-              },
-              icon: const Icon(Icons.add),
-              label: const Text('Add Exercise'),
-              backgroundColor: AppColors.cyan,
-            )
-          : null,
+      // Persistent bottom bar for the primary "Add Exercise" action.
+      // Replaces the previous FloatingActionButton.extended which was
+      // rendering its label clipped against the FAB pill on iOS.
+      bottomNavigationBar: _showExerciseSearch
+          ? null
+          : SafeArea(
+              top: false,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+                child: SizedBox(
+                  width: double.infinity,
+                  height: 52,
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.cyan,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(28),
+                      ),
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _showExerciseSearch = true;
+                        _searchQuery = '';
+                        _selectedCategory = null;
+                        _searchResults = [];
+                      });
+                      _searchExercises('');
+                    },
+                    icon: const Icon(Icons.add, size: 22),
+                    label: const Text(
+                      'Add Exercise',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
     );
   }
 
@@ -342,6 +407,55 @@ class _CustomWorkoutBuilderScreenState
               const SizedBox(width: 8),
               _buildDifficultyChip('hard', 'Hard'),
             ],
+          ),
+          const SizedBox(height: 16),
+
+          // Scheduled date — lets user pick when this custom workout should
+          // appear on their schedule (defaults to today).
+          Text('Schedule For',
+              style: TextStyle(
+                  color: textSecondary,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500)),
+          const SizedBox(height: 8),
+          GestureDetector(
+            onTap: () async {
+              final picked = await showDatePicker(
+                context: context,
+                initialDate: _scheduledDate,
+                firstDate: DateTime.now().subtract(const Duration(days: 1)),
+                lastDate: DateTime.now().add(const Duration(days: 365)),
+              );
+              if (picked != null) {
+                setState(() => _scheduledDate = picked);
+              }
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              decoration: BoxDecoration(
+                color: surface,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.calendar_month_rounded,
+                      size: 20, color: AppColors.cyan),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      _formatScheduledDate(_scheduledDate),
+                      style: TextStyle(
+                        color: textPrimary,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                  Icon(Icons.chevron_right_rounded,
+                      size: 20, color: textSecondary),
+                ],
+              ),
+            ),
           ),
           const SizedBox(height: 24),
 
@@ -423,8 +537,7 @@ class _CustomWorkoutBuilderScreenState
               },
             ),
 
-          // Spacer for FAB
-          const SizedBox(height: 80),
+          const SizedBox(height: 24),
         ],
       ),
     );
@@ -520,29 +633,58 @@ class _CustomWorkoutBuilderScreenState
       ),
       child: Column(
         children: [
-          // Header with drag handle and exercise name
-          ListTile(
-            leading: ReorderableDragStartListener(
-              index: index,
-              child: Container(
-                padding: const EdgeInsets.all(8),
-                child: Icon(Icons.drag_handle, color: textSecondary),
-              ),
-            ),
-            title: Text(
-              exercise['name'] ?? 'Exercise',
-              style: TextStyle(
-                color: textPrimary,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            subtitle: Text(
-              exercise['muscle_group'] ?? '',
-              style: TextStyle(color: textSecondary, fontSize: 12),
-            ),
-            trailing: IconButton(
-              icon: const Icon(Icons.delete_outline, color: AppColors.error),
-              onPressed: () => _removeExercise(index),
+          // Header with drag handle, thumbnail, and exercise name
+          Padding(
+            padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                ReorderableDragStartListener(
+                  index: index,
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    child: Icon(Icons.drag_handle, color: textSecondary),
+                  ),
+                ),
+                // Thumbnail — shows the picked illustration so the user
+                // confirms the exercise visually + persists through to the
+                // active workout via gif_url / image_s3_path.
+                _CustomBuilderThumb(
+                  url: (exercise['gif_url'] as String?) ??
+                      (exercise['image_s3_path'] as String?),
+                  surface: surface,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        exercise['name'] ?? 'Exercise',
+                        style: TextStyle(
+                          color: textPrimary,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 15,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        exercise['muscle_group'] ?? '',
+                        style: TextStyle(color: textSecondary, fontSize: 12),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.delete_outline,
+                      color: AppColors.error),
+                  onPressed: () => _removeExercise(index),
+                ),
+              ],
             ),
           ),
 
@@ -814,6 +956,41 @@ class _CustomWorkoutBuilderScreenState
                     ),
         ),
       ],
+    );
+  }
+}
+
+/// Compact thumbnail used inside the custom workout builder's exercise card.
+/// Falls back to a fitness-center glyph when no image URL is available.
+class _CustomBuilderThumb extends StatelessWidget {
+  final String? url;
+  final Color surface;
+
+  const _CustomBuilderThumb({required this.url, required this.surface});
+
+  @override
+  Widget build(BuildContext context) {
+    final placeholder = Container(
+      width: 44,
+      height: 44,
+      decoration: BoxDecoration(
+        color: surface,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Icon(Icons.fitness_center,
+          size: 20, color: AppColors.textSecondary),
+    );
+    if (url == null || url!.isEmpty) return placeholder;
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(8),
+      child: CachedNetworkImage(
+        imageUrl: url!,
+        width: 44,
+        height: 44,
+        fit: BoxFit.cover,
+        placeholder: (_, __) => placeholder,
+        errorWidget: (_, __, ___) => placeholder,
+      ),
     );
   }
 }

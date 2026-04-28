@@ -3,7 +3,7 @@ import logging
 from datetime import date
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
 
 from core.auth import get_current_user
 from core.exceptions import safe_internal_error
@@ -93,11 +93,20 @@ async def remove_plan_item(
 @router.post("/meal-plans/{plan_id}/simulate", response_model=SimulateResponse)
 async def simulate_plan(
     plan_id: str,
+    background_tasks: BackgroundTasks,
     with_swaps: bool = Query(True),
     current_user: dict = Depends(get_current_user),
 ):
     try:
-        return await get_meal_plan_service().simulate(plan_id, with_swaps=with_swaps)
+        svc = get_meal_plan_service()
+        # Return rule-based projection immediately. Gemini swap generation
+        # runs out-of-band and writes to meal_plan_swap_suggestions; the
+        # client either re-calls simulate (which hydrates persisted swaps)
+        # or subscribes via Realtime. See plan A5.
+        response = await svc.simulate(plan_id, with_swaps=with_swaps)
+        if with_swaps and not response.swap_suggestions:
+            background_tasks.add_task(svc.compute_and_persist_swaps, plan_id)
+        return response
     except ValueError as exc:
         raise HTTPException(status_code=404, detail=str(exc))
     except Exception as exc:

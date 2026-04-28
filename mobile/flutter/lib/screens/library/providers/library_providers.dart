@@ -17,6 +17,20 @@ CategoryExercisesData? _categoryExercisesCache;
 DateTime? _categoryCacheTime;
 const _categoryCacheDuration = Duration(hours: 24);
 
+// In-memory cache for filter options. Filter options are reference data that
+// only changes when the underlying exercise tables change (rare). Re-fetching
+// on every cold tab open scans 2200+ rows server-side — cache for 24h.
+ExerciseFilterOptions? _filterOptionsCache;
+DateTime? _filterOptionsCacheTime;
+const _filterOptionsCacheDuration = Duration(hours: 24);
+
+/// Drop the cached filter-options snapshot. Call after creating or editing
+/// a custom exercise so the next watch picks up fresh counts.
+void invalidateFilterOptionsCache() {
+  _filterOptionsCache = null;
+  _filterOptionsCacheTime = null;
+}
+
 // ============================================================================
 // EXERCISE FILTER PROVIDERS (Multi-select)
 // ============================================================================
@@ -61,9 +75,41 @@ class ExercisesNotifier extends StateNotifier<ExercisesState> {
 
   ExercisesNotifier(this._ref) : super(const ExercisesState());
 
+  /// Build a deterministic signature from the current filter providers.
+  /// Used by the skip-refetch guard so re-entering the Library tab with the
+  /// same filters doesn't trigger a redundant network call.
+  String _currentFilterSignature() {
+    String join(Set<String> s) => (s.toList()..sort()).join(',');
+    return [
+      join(_ref.read(selectedMuscleGroupsProvider)),
+      join(_ref.read(selectedEquipmentsProvider)),
+      join(_ref.read(selectedCategoriesProvider)),
+      join(_ref.read(selectedExerciseTypesProvider)),
+      join(_ref.read(selectedGoalsProvider)),
+      join(_ref.read(selectedSuitableForSetProvider)),
+      join(_ref.read(selectedAvoidSetProvider)),
+      _ref.read(exerciseSearchProvider).trim(),
+    ].join('|');
+  }
+
   Future<void> loadExercises({bool refresh = false}) async {
     if (state.isLoading) return;
     if (!refresh && !state.hasMore) return;
+
+    // Skip-refetch guard: identical filters + populated list → no network call.
+    // This protects against a fresh `_ExercisesTabState` (created on every tab
+    // re-entry) firing the post-frame "filters changed" callback when in fact
+    // they haven't.
+    final currentSignature = _currentFilterSignature();
+    if (!refresh &&
+        state.exercises.isNotEmpty &&
+        state.filterSignature == currentSignature) {
+      return;
+    }
+    if (refresh && state.exercises.isNotEmpty &&
+        state.filterSignature == currentSignature && state.error == null) {
+      return;
+    }
 
     final newOffset = refresh ? 0 : state.offset;
 
@@ -141,6 +187,7 @@ class ExercisesNotifier extends StateNotifier<ExercisesState> {
             isLoading: false,
             hasMore: newExercises.length >= exercisesPageSize,
             offset: newOffset + newExercises.length,
+            filterSignature: currentSignature,
           );
         } catch (e) {
           // JSON parsing error
@@ -197,9 +244,18 @@ final exercisesProvider = Provider<AsyncValue<List<LibraryExercise>>>((ref) {
 });
 
 /// Filter options provider - fetches available filter options from API
-/// M1: Removed autoDispose — this is static reference data that rarely changes
+/// M1: Removed autoDispose — this is static reference data that rarely changes.
+/// Backed by a 24h in-memory cache so re-entering the Library tab is instant.
 final filterOptionsProvider =
     FutureProvider<ExerciseFilterOptions>((ref) async {
+  // Serve from cache when fresh.
+  if (_filterOptionsCache != null && _filterOptionsCacheTime != null) {
+    final age = DateTime.now().difference(_filterOptionsCacheTime!);
+    if (age < _filterOptionsCacheDuration) {
+      return _filterOptionsCache!;
+    }
+  }
+
   final apiClient = ref.read(apiClientProvider);
 
   try {
@@ -208,8 +264,11 @@ final filterOptionsProvider =
 
     if (response.statusCode == 200) {
       try {
-        return ExerciseFilterOptions.fromJson(
+        final options = ExerciseFilterOptions.fromJson(
             response.data as Map<String, dynamic>);
+        _filterOptionsCache = options;
+        _filterOptionsCacheTime = DateTime.now();
+        return options;
       } catch (e) {
         debugPrint('❌ [FilterOptions] Parse error: $e');
         throw const ParseException();

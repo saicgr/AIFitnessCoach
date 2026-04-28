@@ -14,7 +14,9 @@ import 'cards/time_card.dart';
 import 'cards/personality_card.dart';
 import 'cards/summary_card.dart';
 import 'cards/trophies_card.dart';
-import 'wrapped_share_sheet.dart';
+import '../../shareables/shareable_sheet.dart';
+import '../../shareables/shareable_catalog.dart';
+import '../../shareables/adapters/wrapped_adapter.dart';
 
 /// Full-screen story viewer for Fitness Wrapped.
 /// Swipe through 8 cards with auto-advance, progress bar, and share.
@@ -101,14 +103,14 @@ class _WrappedViewerScreenState extends ConsumerState<WrappedViewerScreen> {
 
   void _showShareSheet(WrappedData data) {
     HapticService.selection();
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => WrappedShareSheet(
-        data: data,
-        currentCardIndex: _currentPage,
-      ),
+    // Route Wrapped through the unified ShareableSheet so the gallery
+    // (Wrapped / News / Receipt / Trading Card / etc.) renders with the
+    // same alignment + watermark logic as every other share surface.
+    final shareable = WrappedAdapter.fromWrapped(ref: ref, data: data);
+    ShareableSheet.show(
+      context,
+      data: shareable,
+      initialTemplate: ShareableTemplate.wrapped,
     );
   }
 

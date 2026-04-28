@@ -158,6 +158,14 @@ class NotificationServicePart2:
 
         except messaging.UnregisteredError:
             logger.warning(f"⚠️ FCM token is no longer valid: {fcm_token[:20]}...", exc_info=True)
+            # Clear the dead token from users.fcm_token so we stop retrying it.
+            try:
+                from core.database import get_supabase_db
+                db = get_supabase_db()
+                db.client.table("users").update({"fcm_token": None}).eq("fcm_token", fcm_token).execute()
+                logger.info(f"🧹 Cleared dead FCM token from users table")
+            except Exception as cleanup_err:
+                logger.warning(f"Failed to clear dead FCM token: {cleanup_err}")
             return False
         except messaging.SenderIdMismatchError:
             logger.error(f"❌ Sender ID mismatch - FCM token belongs to different Firebase project", exc_info=True)

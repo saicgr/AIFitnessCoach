@@ -215,6 +215,14 @@ class ChatRequest(BaseModel):
                     "Used by contextual widgets (e.g. the nutrition meal-log AI Coach card) that "
                     "already know which agent should handle the request."
     )
+    conversation_id: Optional[str] = Field(
+        default=None,
+        max_length=64,
+        description="Optional conversation/thread ID. When present, the coach-reply push "
+                    "uses this for both deep-link routing (tap → opens this thread) and "
+                    "presence-based suppression (skip push if user is currently foregrounded "
+                    "on this same conversation)."
+    )
 
     @field_validator("agent_override")
     @classmethod

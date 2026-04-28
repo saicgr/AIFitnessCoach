@@ -64,6 +64,8 @@ from api.v1.nutrition import (
     recipe_favorites,
     recipe_discover,
     recipe_improvize,
+    # Daily / weekly AI nutrition reports (item 14)
+    reports,
 )
 
 router = APIRouter()
@@ -113,6 +115,7 @@ router.include_router(tdee_adherence.router)
 router.include_router(food_reports.router)
 router.include_router(quick_suggestion.router)
 router.include_router(companions.router)
+router.include_router(reports.router)
 
 # Re-export commonly used models for backward compatibility with test imports
 from api.v1.nutrition.models import (  # noqa: E402, F401

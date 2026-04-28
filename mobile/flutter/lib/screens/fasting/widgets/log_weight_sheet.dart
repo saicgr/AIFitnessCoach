@@ -528,9 +528,6 @@ class _LogWeightSheetState extends ConsumerState<_LogWeightSheet>
         ref.read(xpProvider.notifier).markWeightLogged();
       }
 
-      // Refresh measurements history so new weight appears when user views history
-      ref.invalidate(measurementsProvider);
-
       if (mounted) {
         if (_isNewLow) {
           HapticService.success();

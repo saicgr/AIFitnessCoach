@@ -58,9 +58,18 @@ class _NLItemSectionState extends State<_NLItemSection> {
         }
         _modifierStates[mod.phrase] = _ModifierState(weightG: weight, count: count, enabled: true);
         break;
+      case search.FoodModifierType.sizePortion:
+        // Pre-select the size whose label/phrase actually matches the
+        // user's typed query. Without this the dropdown defaulted to
+        // whatever `mod.phrase` happened to be (often "M"), so a search
+        // for "large coffee" rendered Medium highlighted. Scan group
+        // options for the strongest keyword hit; fall back to mod.phrase
+        // only when nothing matches.
+        final initial = _matchSizeFromQuery(widget.item.name, mod) ?? mod.phrase;
+        _modifierStates[mod.phrase] = _ModifierState(selectedPhrase: initial, enabled: true);
+        break;
       case search.FoodModifierType.doneness:
       case search.FoodModifierType.cookingMethod:
-      case search.FoodModifierType.sizePortion:
         _modifierStates[mod.phrase] = _ModifierState(selectedPhrase: mod.phrase, enabled: true);
         break;
       case search.FoodModifierType.removal:
@@ -89,6 +98,56 @@ class _NLItemSectionState extends State<_NLItemSection> {
     _modSearchCtrl.dispose();
     _modSearchDebounce?.cancel();
     super.dispose();
+  }
+
+  /// Return the phrase of the group option that best matches a size
+  /// keyword in the user's free-text food query, or null if no signal.
+  /// Order matters — check long forms before single-letter aliases so
+  /// "extra large" wins over "large", "large" wins over "l", etc.
+  static String? _matchSizeFromQuery(String query, search.FoodModifier mod) {
+    if (mod.groupOptions.isEmpty) return null;
+    final q = query.toLowerCase();
+    // Ordered (keyword, ranked size aliases). Longer/more specific first.
+    const sizeAliases = <String, List<String>>{
+      'extra large': ['extra large', 'xl', 'xtra large', 'jumbo', 'large'],
+      'jumbo':       ['jumbo', 'extra large', 'xl', 'large'],
+      'xl':          ['xl', 'extra large', 'jumbo', 'large'],
+      'large':       ['large', 'big', 'l', 'lg'],
+      'big':         ['big', 'large', 'l', 'lg'],
+      'medium':      ['medium', 'm', 'med', 'regular', 'standard'],
+      'regular':     ['regular', 'medium', 'm'],
+      'small':       ['small', 's', 'sm', 'mini', 'kids'],
+      'mini':        ['mini', 'small', 's'],
+      'kids':        ['kids', 'kid', 'child', 'small', 's'],
+    };
+    String? matchedAlias;
+    for (final keyword in sizeAliases.keys) {
+      // word-boundary match so "ml" doesn't trip the "l" alias
+      final re = RegExp(r'\b' + RegExp.escape(keyword) + r'\b');
+      if (re.hasMatch(q)) {
+        matchedAlias = keyword;
+        break;
+      }
+    }
+    if (matchedAlias == null) return null;
+    final candidates = sizeAliases[matchedAlias]!;
+    // Find the group option whose label or phrase matches any candidate.
+    for (final cand in candidates) {
+      final candLower = cand.toLowerCase();
+      for (final opt in mod.groupOptions) {
+        if (opt.label.toLowerCase() == candLower ||
+            opt.phrase.toLowerCase() == candLower) {
+          return opt.phrase;
+        }
+      }
+      for (final opt in mod.groupOptions) {
+        if (opt.label.toLowerCase().contains(candLower) ||
+            opt.phrase.toLowerCase().contains(candLower)) {
+          return opt.phrase;
+        }
+      }
+    }
+    return null;
   }
 
   int _parseQtyFromAmount(String? amount) {

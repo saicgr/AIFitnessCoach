@@ -456,34 +456,43 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
       }
     }
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        // Rail sits above the header only when windowing is active. It gives
-        // the user a compact at-a-glance view of every set (done / current /
-        // upcoming) and a tap-to-focus affordance for anything that's out of
-        // the currently-rendered window.
-        if (useWindow) ...[
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
-            child: SetRail(
-              sets: _buildRailSummaries(),
-              currentIndex: _focusIndex,
-              onEditSet: _handleRailTap,
-              onOverflowTap: () => _handleRailOverflow(context),
+    // Wrap in a SingleChildScrollView so the table can scroll internally when
+    // the parent's Expanded budget is smaller than the table's natural height
+    // (e.g., 4-set strength block + header + add-set button on phones with
+    // tall hydration / thumbnail strips eating bottom real estate). Without
+    // this, the table renders past its constraint and Flutter logs a 60px
+    // "RenderFlex overflowed by …" error from the parent column.
+    return SingleChildScrollView(
+      physics: const ClampingScrollPhysics(),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Rail sits above the header only when windowing is active. It gives
+          // the user a compact at-a-glance view of every set (done / current /
+          // upcoming) and a tap-to-focus affordance for anything that's out of
+          // the currently-rendered window.
+          if (useWindow) ...[
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
+              child: SetRail(
+                sets: _buildRailSummaries(),
+                currentIndex: _focusIndex,
+                onEditSet: _handleRailTap,
+                onOverflowTap: () => _handleRailOverflow(context),
+              ),
             ),
-          ),
+          ],
+
+          // Table header
+          _buildTableHeader(context, theme),
+
+          // Windowed set rows (header + inline rest + RIR bar + banner interleaved)
+          ...setRows,
+
+          // Add set button
+          _buildAddSetButton(context, theme),
         ],
-
-        // Table header
-        _buildTableHeader(context, theme),
-
-        // Windowed set rows (header + inline rest + RIR bar + banner interleaved)
-        ...setRows,
-
-        // Add set button
-        _buildAddSetButton(context, theme),
-      ],
+      ),
     );
   }
 

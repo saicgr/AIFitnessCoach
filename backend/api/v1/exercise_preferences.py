@@ -297,6 +297,19 @@ async def add_staple_exercise(http_request: Request, request: StapleExerciseCrea
         raise HTTPException(status_code=403, detail="Access denied")
     logger.info(f"Adding staple exercise '{request.exercise_name}' for user {request.user_id}")
 
+    # Frontend may pass `custom_<uuid>` as library_id for not-yet-resolved custom
+    # exercises. The DB column is uuid; strip the sentinel prefix and let the
+    # backend resolve to the real custom_exercises row by name if needed.
+    if request.library_id and isinstance(request.library_id, str) and request.library_id.startswith("custom_"):
+        stripped = request.library_id[len("custom_"):]
+        # If the stripped value is a valid uuid, use it; otherwise null out so we
+        # store as a name-only staple (DB will accept null library_id).
+        import re as _re
+        if _re.fullmatch(r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}", stripped):
+            request.library_id = stripped
+        else:
+            request.library_id = None
+
     try:
         db = get_supabase_db()
 

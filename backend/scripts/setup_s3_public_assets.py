@@ -22,8 +22,14 @@ load_dotenv()
 BUCKET = os.getenv("S3_BUCKET_NAME", "ai-fitness-coach")
 REGION = os.getenv("AWS_DEFAULT_REGION", "us-east-1")
 
-# Prefixes that should be publicly readable
-STATIC_PREFIXES = ["ILLUSTRATIONS ALL/*", "Ultimate-Muscle-Visuals/*"]
+# Prefixes that should be publicly readable.
+# `VERTICAL VIDEOS/` was added so the library list endpoint can serve permanent
+# CloudFront/S3 URLs instead of paying ~2000 HMAC presigns per cold tab open.
+STATIC_PREFIXES = [
+    "ILLUSTRATIONS ALL/*",
+    "Ultimate-Muscle-Visuals/*",
+    "VERTICAL VIDEOS/*",
+]
 
 # Cache-Control header for immutable static assets (1 year)
 CACHE_CONTROL = "public, max-age=31536000, immutable"
@@ -138,6 +144,12 @@ def _guess_content_type(key: str) -> str:
         return "image/gif"
     elif lower.endswith(".svg"):
         return "image/svg+xml"
+    elif lower.endswith(".mp4"):
+        return "video/mp4"
+    elif lower.endswith(".mov"):
+        return "video/quicktime"
+    elif lower.endswith(".webm"):
+        return "video/webm"
     return "application/octet-stream"
 
 

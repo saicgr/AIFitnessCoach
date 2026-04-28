@@ -24,30 +24,8 @@ extension NotificationServiceCore on NotificationService {
       onDidReceiveNotificationResponse: (response) {
         debugPrint('🔔 [Local] Notification tapped: ${response.payload}');
         final payload = response.payload;
-        // Try to parse rich JSON payload (contains title, body, type)
-        if (payload != null && payload.startsWith('{')) {
-          try {
-            final data = jsonDecode(payload) as Map<String, dynamic>;
-            final type = data['type'] as String?;
-            final title = data['title'] as String?;
-            final body = data['body'] as String?;
-            // Store in notification inbox
-            if (title != null && body != null) {
-              onNotificationReceived?.call(
-                title: title,
-                body: body,
-                type: type,
-                data: {'type': type},
-              );
-            }
-            // Navigate based on type
-            onNotificationTapped?.call(type);
-          } catch (_) {
-            onNotificationTapped?.call(payload);
-          }
-        } else {
-          onNotificationTapped?.call(payload);
-        }
+        if (payload == null) return;
+        _dispatchLocalNotificationPayload(payload);
       },
     );
 
@@ -83,6 +61,53 @@ extension NotificationServiceCore on NotificationService {
     }
 
     debugPrint('🔔 [Local] Local notifications initialized with ${NotificationService._channelConfigs.length + 1} channels');
+
+    // COLD-START: when the app is launched from a tap on a local notification
+    // (terminated state), `onDidReceiveNotificationResponse` does NOT fire.
+    // The launch payload must be retrieved explicitly via getNotificationAppLaunchDetails().
+    // Without this, deep-linking to nutrition/hydration/workout/etc. only works
+    // when the app is in the background — kill-and-tap silently lands on home.
+    try {
+      final launchDetails = await _localNotifications.getNotificationAppLaunchDetails();
+      if (launchDetails?.didNotificationLaunchApp == true) {
+        final payload = launchDetails!.notificationResponse?.payload;
+        debugPrint('🔔 [Local] Cold-start launch from notification, payload: $payload');
+        if (payload != null) {
+          // Defer to next frame so router/auth are ready before we navigate.
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _dispatchLocalNotificationPayload(payload);
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint('⚠️ [Local] getNotificationAppLaunchDetails failed: $e');
+    }
+  }
+
+  /// Shared payload dispatch for both warm taps (onDidReceiveNotificationResponse)
+  /// and cold-start launches (getNotificationAppLaunchDetails).
+  void _dispatchLocalNotificationPayload(String payload) {
+    if (payload.startsWith('{')) {
+      try {
+        final data = jsonDecode(payload) as Map<String, dynamic>;
+        final type = data['type'] as String?;
+        final title = data['title'] as String?;
+        final body = data['body'] as String?;
+        if (title != null && body != null) {
+          onNotificationReceived?.call(
+            title: title,
+            body: body,
+            type: type,
+            data: {'type': type},
+          );
+        }
+        onNotificationTapped?.call(type);
+        return;
+      } catch (_) {
+        // Fall through to plain-string dispatch
+      }
+    }
+    onNotificationTapped?.call(payload);
   }
 
   /// Request notification permission

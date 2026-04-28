@@ -836,23 +836,10 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
           _selectedEquipment.clear();
         } else {
           _selectedEquipment.clear();
-          _selectedEquipment.addAll([
-            'bodyweight',
-            'dumbbells',
-            'barbell',
-            'resistance_bands',
-            'pull_up_bar',
-            'kettlebell',
-            'cable_machine',
-            'bench',
-            'squat_rack',
-            'dip_station',
-            'smith_machine',
-            'leg_press',
-            'lat_pulldown',
-            'medicine_ball',
-            'full_gym',
-          ]);
+          // Use the shared comprehensive preset so the "Full Gym Access" /
+          // commercial-gym selection unlocks every machine + cardio piece a
+          // real commercial gym has, not the abridged 14-item subset.
+          _selectedEquipment.addAll(kCommercialGymEquipmentPreset);
         }
       } else {
         if (_selectedEquipment.contains(id)) {

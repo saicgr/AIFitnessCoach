@@ -417,6 +417,28 @@ async def _prewarm_inflammation_cache():
         logger.error(f"Failed to pre-warm inflammation cache: {e}", exc_info=True)
 
 
+async def _refresh_exercise_library_mv_if_dirty():
+    """Reconcile the exercise_library_cleaned MV at startup.
+
+    Calls public.refresh_exercise_library_cleaned() — a no-op when the dirty
+    queue is empty, otherwise CONCURRENTLY refreshes both MVs (cleaned + safety).
+    Also drops the cached filter-options payload so the next request rebuilds
+    against fresh data.
+    """
+    try:
+        from core.db import get_supabase_db
+        from api.v1.library.exercises import invalidate_library_filter_options_cache
+        db = get_supabase_db()
+        result = db.client.rpc("refresh_exercise_library_cleaned", {"force": False}).execute()
+        if result.data:
+            await invalidate_library_filter_options_cache()
+            logger.info(f"Refreshed exercise_library_cleaned MV at startup (queued_at={result.data})")
+        else:
+            logger.info("exercise_library_cleaned MV is up to date (no refresh needed)")
+    except Exception as e:
+        logger.error(f"Failed to refresh exercise_library_cleaned MV: {e}", exc_info=True)
+
+
 async def get_langgraph_service() -> LangGraphCoachService:
     """
     Lazy getter for LangGraph service.
@@ -551,6 +573,7 @@ async def lifespan(app: FastAPI):
     _create_safe_task(_resume_pending_jobs(), name="resume-pending-jobs")
     _create_safe_task(_resume_pending_media_jobs(), name="resume-pending-media-jobs")
     _create_safe_task(_prewarm_inflammation_cache(), name="prewarm-inflammation-cache")
+    _create_safe_task(_refresh_exercise_library_mv_if_dirty(), name="refresh-exercise-library-mv")
 
     total_startup = time.time() - startup_start
     logger.info(f"Startup complete in {total_startup:.2f}s (server ready, background tasks running)")

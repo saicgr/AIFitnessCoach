@@ -102,7 +102,7 @@ def init_sentry(settings: Settings) -> bool:
         if settings.app_version and settings.app_version != "0.0.0"
         else os.environ.get("RENDER_GIT_COMMIT", "0.0.0")[:12]
     )
-    release = f"fitwiz-backend@{version}"
+    release = f"zealova-backend@{version}"
 
     try:
         sentry_sdk.init(

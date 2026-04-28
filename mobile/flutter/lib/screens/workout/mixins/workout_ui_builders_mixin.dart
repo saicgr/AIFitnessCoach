@@ -626,9 +626,11 @@ mixin WorkoutUIBuildersMixin<T extends StatefulWidget> on State<T> {
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
     final chipBackground = isDark ? AppColors.surface : Colors.grey.shade100;
 
-    // Filter out Video chip - it's always visible in left panel
+    // Filter out Video chip - it's always visible in left panel.
+    // Also filter out Info — it duplicates Instructions per user feedback
+    // (the two open the same sheet); we keep only Instructions.
     final landscapeChips = buildActionChipsForCurrentExercise()
-        .where((chip) => chip.label != 'Video')
+        .where((chip) => chip.label != 'Video' && chip.label != 'Info')
         .toList();
 
     return Container(

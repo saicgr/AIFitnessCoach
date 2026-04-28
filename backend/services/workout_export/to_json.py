@@ -55,7 +55,7 @@ def export_json(
 ) -> bytes:
     envelope = {
         "version": EXPORT_SCHEMA_VERSION,
-        "source": "fitwiz",
+        "source": "zealova",
         "generated_at": datetime.utcnow().isoformat() + "Z",
         "user_id": str(user_id) if user_id else None,
         "filter": {"from": from_date, "to": to_date},

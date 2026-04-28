@@ -66,8 +66,11 @@ class _ExerciseDetailsSheetContentState
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
         child: Container(
+          // Use 0.92 (was 0.85) so the trailing "Tap Video" hint and Pro Tip
+          // section don't get clipped on smaller phones (Issue 4 — content
+          // cut off after Tips).
           constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(context).size.height * 0.85,
+            maxHeight: MediaQuery.of(context).size.height * 0.92,
           ),
           decoration: BoxDecoration(
             color: isDark
@@ -448,108 +451,71 @@ class _ExerciseDetailsSheetContentState
       return const SizedBox.shrink();
     }
 
+    // Each insight is rendered as its own section (header + card) so the
+    // sheet reads as discrete blocks instead of one stacked container.
+    // Issue 4: Tips was previously crammed into a single card with sibling
+    // items, which made longer content visually merge with the next.
+    Widget insightSection({
+      required IconData icon,
+      required String title,
+      required String content,
+      required Color color,
+    }) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildSectionHeader(title, icon, color, textPrimary),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: cardBackground,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
+                  width: 0.5,
+                ),
+              ),
+              child: Text(
+                content,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: textPrimary,
+                  height: 1.5,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Section header
-        _buildSectionHeader('AI Coach Tips', Icons.auto_awesome, accentColor, textPrimary),
-        const SizedBox(height: 12),
-
-        // Tips card
-        Container(
-          margin: const EdgeInsets.only(bottom: 20),
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: cardBackground,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
-              width: 0.5,
-            ),
+        if (_aiInsights!.formCues != null)
+          insightSection(
+            icon: Icons.check_circle_outline,
+            title: 'Form Cues',
+            content: _aiInsights!.formCues!,
+            color: const Color(0xFF22C55E),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Form Cues
-              if (_aiInsights!.formCues != null) ...[
-                _buildInsightItem(
-                  icon: Icons.check_circle_outline,
-                  title: 'Form Cues',
-                  content: _aiInsights!.formCues!,
-                  color: const Color(0xFF22C55E), // Green for success
-                  isDark: isDark,
-                  textPrimary: textPrimary,
-                ),
-                const SizedBox(height: 16),
-              ],
-
-              // Common Mistakes
-              if (_aiInsights!.commonMistakes != null) ...[
-                _buildInsightItem(
-                  icon: Icons.warning_amber_outlined,
-                  title: 'Watch Out For',
-                  content: _aiInsights!.commonMistakes!,
-                  color: const Color(0xFFF59E0B), // Amber for warnings
-                  isDark: isDark,
-                  textPrimary: textPrimary,
-                ),
-                const SizedBox(height: 16),
-              ],
-
-              // Pro Tip
-              if (_aiInsights!.proTip != null)
-                _buildInsightItem(
-                  icon: Icons.lightbulb_outline,
-                  title: 'Pro Tip',
-                  content: _aiInsights!.proTip!,
-                  color: accentColor,
-                  isDark: isDark,
-                  textPrimary: textPrimary,
-                ),
-            ],
+        if (_aiInsights!.commonMistakes != null)
+          insightSection(
+            icon: Icons.warning_amber_outlined,
+            title: 'Watch Out For',
+            content: _aiInsights!.commonMistakes!,
+            color: const Color(0xFFF59E0B),
           ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildInsightItem({
-    required IconData icon,
-    required String title,
-    required String content,
-    required Color color,
-    required bool isDark,
-    required Color textPrimary,
-  }) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(icon, size: 18, color: color),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: color,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                content,
-                style: TextStyle(
-                  fontSize: 13,
-                  color: textPrimary,
-                  height: 1.4,
-                ),
-              ),
-            ],
+        if (_aiInsights!.proTip != null)
+          insightSection(
+            icon: Icons.lightbulb_outline,
+            title: 'Pro Tip',
+            content: _aiInsights!.proTip!,
+            color: accentColor,
           ),
-        ),
       ],
     );
   }

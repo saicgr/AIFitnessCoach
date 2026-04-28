@@ -162,36 +162,66 @@ class ExerciseWorkoutSession {
     return DateFormat('MMM d').format(date);
   }
 
-  /// Format weight for display (e.g., "60 kg" or "60.5 kg")
-  String get formattedWeight {
-    if (weightKg == 0) return '-';
-    if (weightKg == weightKg.toInt()) {
-      return '${weightKg.toInt()} kg';
+  /// Whether this session was a bodyweight exercise (logged with weight=0
+  /// but actual reps were performed).
+  bool get isBodyweight => weightKg == 0 && reps > 0;
+
+  /// Format weight for display (e.g., "60 kg", "60.5 kg", or "BW" when
+  /// the exercise was bodyweight, or "—" when there's no data at all).
+  String formattedWeightFor({bool useLbs = false}) {
+    if (weightKg == 0) {
+      return reps > 0 ? 'BW' : '—';
     }
-    return '${weightKg.toStringAsFixed(1)} kg';
+    final value = useLbs ? weightKg * 2.20462 : weightKg;
+    final unit = useLbs ? 'lb' : 'kg';
+    if (value == value.roundToDouble()) {
+      return '${value.toInt()} $unit';
+    }
+    return '${value.toStringAsFixed(1)} $unit';
   }
 
-  /// Format volume for display (e.g., "1,200 kg")
-  String get formattedVolume {
-    if (totalVolumeKg == 0) return '-';
+  /// Backwards-compatible default (kg). Prefer [formattedWeightFor].
+  String get formattedWeight => formattedWeightFor();
+
+  /// Format volume for display. Bodyweight sessions render as a rep total
+  /// (e.g. "30 reps") instead of a 0 kg volume which read as "—".
+  String formattedVolumeFor({bool useLbs = false}) {
+    if (totalVolumeKg == 0) {
+      // Bodyweight session — surface total reps so users see effort.
+      if (isBodyweight) return '${sets * reps} reps';
+      return '—';
+    }
+    final value = useLbs ? totalVolumeKg * 2.20462 : totalVolumeKg;
+    final unit = useLbs ? 'lb' : 'kg';
     final formatter = NumberFormat('#,###');
-    if (totalVolumeKg >= 1000) {
-      return '${formatter.format(totalVolumeKg.round())} kg';
+    if (value >= 1000) {
+      return '${formatter.format(value.round())} $unit';
     }
-    return '${totalVolumeKg.toStringAsFixed(0)} kg';
+    return '${value.toStringAsFixed(0)} $unit';
   }
 
-  /// Format sets x reps display (e.g., "3 x 10")
-  String get setsRepsDisplay => '$sets x $reps';
+  String get formattedVolume => formattedVolumeFor();
+
+  /// Format sets × reps display. Handles failed (reps=0), bodyweight, and
+  /// uniform sets. We can only show aggregate (sets × reps) since the API
+  /// returns aggregates — the per-set breakdown lives in workout_summary.
+  String get setsRepsDisplay {
+    if (sets == 0 || reps == 0) return '— × —';
+    return '$sets × $reps';
+  }
 
   /// Format estimated 1RM for display
-  String get formatted1rm {
-    if (estimated1rmKg == null || estimated1rmKg == 0) return '-';
-    if (estimated1rmKg == estimated1rmKg!.toInt()) {
-      return '${estimated1rmKg!.toInt()} kg';
+  String formatted1rmFor({bool useLbs = false}) {
+    if (estimated1rmKg == null || estimated1rmKg == 0) return '—';
+    final value = useLbs ? estimated1rmKg! * 2.20462 : estimated1rmKg!;
+    final unit = useLbs ? 'lb' : 'kg';
+    if (value == value.roundToDouble()) {
+      return '${value.toInt()} $unit';
     }
-    return '${estimated1rmKg!.toStringAsFixed(1)} kg';
+    return '${value.toStringAsFixed(1)} $unit';
   }
+
+  String get formatted1rm => formatted1rmFor();
 
   /// Whether this session had a personal record
   bool get hadPr => isPr == true;

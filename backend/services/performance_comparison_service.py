@@ -443,8 +443,8 @@ class PerformanceComparisonService:
                 'total_time_seconds': int(total_time) if total_time is not None else None,
                 'best_time_seconds': int(best_time) if best_time is not None else None,
                 'avg_time_seconds': round(avg_time, 2) if avg_time else None,
-                'avg_rpe': round(sum(rpes) / len(rpes), 1) if rpes else None,
-                'avg_rir': round(sum(rirs) / len(rirs), 1) if rirs else None,
+                'avg_rpe': int(round(sum(rpes) / len(rpes))) if rpes else None,
+                'avg_rir': int(round(sum(rirs) / len(rirs))) if rirs else None,
                 'performed_at': workout_stats.get('completed_at', datetime.now().isoformat()),
             })
 

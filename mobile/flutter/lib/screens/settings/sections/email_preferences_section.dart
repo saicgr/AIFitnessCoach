@@ -37,22 +37,19 @@ class _EmailPreferencesCard extends ConsumerStatefulWidget {
 }
 
 class _EmailPreferencesCardState extends ConsumerState<_EmailPreferencesCard> {
-  bool _isInitialized = false;
+  // Note: removed manual `_initializePreferences()` from initState —
+  // the autoDispose `emailPreferencesProvider` notifier auto-loads in its
+  // constructor, so `ref.watch(emailPreferencesProvider)` drives the
+  // first load. Removes the dual-init race that hung this page.
 
-  @override
-  void initState() {
-    super.initState();
-    _initializePreferences();
-  }
-
-  Future<void> _initializePreferences() async {
+  /// Manual retry handler for the error state. Re-runs initialize() against
+  /// the current user. Kept here (rather than in the notifier alone) so the
+  /// retry button has a clear, screen-local affordance.
+  Future<void> _retryLoad() async {
     final apiClient = ref.read(apiClientProvider);
     final userId = await apiClient.getUserId();
     if (userId != null && mounted) {
       await ref.read(emailPreferencesProvider.notifier).initialize(userId);
-      if (mounted) {
-        setState(() => _isInitialized = true);
-      }
     }
   }
 
@@ -113,8 +110,12 @@ class _EmailPreferencesCardState extends ConsumerState<_EmailPreferencesCard> {
     final emailPrefsState = ref.watch(emailPreferencesProvider);
     final prefs = emailPrefsState.preferences;
 
-    // Show loading state
-    if (!_isInitialized || emailPrefsState.isLoading && prefs == null) {
+    // Show loading state — first paint before notifier auto-init has
+    // completed will have prefs == null AND isLoading == false (the
+    // microtask hasn't kicked the loading flag yet); treat that as
+    // "still initializing" too so we don't flash the empty state.
+    final stillInitializing = prefs == null && emailPrefsState.error == null;
+    if (stillInitializing || (emailPrefsState.isLoading && prefs == null)) {
       return Container(
         decoration: BoxDecoration(
           color: elevatedColor,
@@ -148,7 +149,7 @@ class _EmailPreferencesCardState extends ConsumerState<_EmailPreferencesCard> {
             ),
             const SizedBox(height: 12),
             TextButton(
-              onPressed: _initializePreferences,
+              onPressed: _retryLoad,
               child: const Text('Retry'),
             ),
           ],

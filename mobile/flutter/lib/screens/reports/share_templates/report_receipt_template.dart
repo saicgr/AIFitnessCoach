@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../workout/widgets/share_templates/_share_common.dart';
 import '_report_common.dart';
 
-/// Receipt — cream-paper "FITWIZ GYM RECEIPT" with each highlight rendered
+/// Receipt — cream-paper "ZEALOVA GYM RECEIPT" with each highlight rendered
 /// as a monospaced line item and the hero value stamped at the bottom.
 /// Locks out with a ShareLockOverlay when there are no highlights to print.
 class ReportReceiptTemplate extends StatelessWidget {
@@ -53,7 +53,7 @@ class ReportReceiptTemplate extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     const Text(
-                      'FITWIZ GYM',
+                      'ZEALOVA GYM',
                       style: TextStyle(
                         fontFamily: 'Courier',
                         fontWeight: FontWeight.w900,

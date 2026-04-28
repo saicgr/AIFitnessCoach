@@ -75,7 +75,7 @@ class RedisCache:
     """
 
     def __init__(self, prefix: str, ttl_seconds: int = 300, max_size: int = 200):
-        self._prefix = f"fitwiz:{prefix}:"
+        self._prefix = f"zealova:{prefix}:"
         self._ttl = ttl_seconds
         self._max_size = max_size
         # In-memory fallback (used when Redis unavailable)

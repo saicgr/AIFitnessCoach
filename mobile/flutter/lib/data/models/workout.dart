@@ -1061,6 +1061,14 @@ class WorkoutSummaryResponse {
   final String? completedAt;
   final List<SetLogInfo> setLogs;
 
+  /// Cardio aggregates (Issue 14 follow-up). Populated for cardio sessions
+  /// (synced or manually logged); null for strength/bodyweight sessions.
+  final double? distanceMeters;
+  final int? avgHrBpm;
+  final int? maxHrBpm;
+  final double? paceSecondsPerKm;
+  final double? elevationGainMeters;
+
   const WorkoutSummaryResponse({
     required this.workout,
     this.performanceComparison,
@@ -1070,6 +1078,11 @@ class WorkoutSummaryResponse {
     this.completionMethod,
     this.completedAt,
     this.setLogs = const [],
+    this.distanceMeters,
+    this.avgHrBpm,
+    this.maxHrBpm,
+    this.paceSecondsPerKm,
+    this.elevationGainMeters,
   });
 
   factory WorkoutSummaryResponse.fromJson(Map<String, dynamic> json) {
@@ -1093,6 +1106,11 @@ class WorkoutSummaryResponse {
       setLogs: setLogsData
           .map((sl) => SetLogInfo.fromJson(sl as Map<String, dynamic>))
           .toList(),
+      distanceMeters: (json['distance_meters'] as num?)?.toDouble(),
+      avgHrBpm: (json['avg_hr_bpm'] as num?)?.toInt(),
+      maxHrBpm: (json['max_hr_bpm'] as num?)?.toInt(),
+      paceSecondsPerKm: (json['pace_seconds_per_km'] as num?)?.toDouble(),
+      elevationGainMeters: (json['elevation_gain_meters'] as num?)?.toDouble(),
     );
   }
 

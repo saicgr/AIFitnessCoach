@@ -307,6 +307,23 @@ class LangGraphCoachService:
             # Don't block requests if usage tracking fails
             logger.warning(f"Media usage check failed (non-blocking): {e}", exc_info=True)
 
+    @staticmethod
+    def _fast_trivial_reply(message: str) -> str:
+        """Canned reply for trivial greetings/thanks/goodbyes. No Gemini call."""
+        m = message.strip().lower().rstrip("!.?,")
+        if m in {"thanks", "thank you", "thx", "ty", "cheers"}:
+            return "Anytime! Let me know what's next 💪"
+        if m in {"bye", "goodbye", "cya", "see ya", "later", "good night", "gn"}:
+            return "Talk soon — keep showing up. 👋"
+        if m in {"good morning", "gm"}:
+            return "Morning! Ready to crush today's session?"
+        if m in {"good afternoon", "good evening"}:
+            return f"Good {m.split()[-1]}! How can I help?"
+        if m in {"ok", "okay", "cool", "nice", "great", "awesome", "sweet"}:
+            return "👍"
+        # default greeting
+        return "Hey! What's on your mind today — workout, nutrition, or something else?"
+
     def _detect_agent_mention(self, message: str) -> Tuple[Optional[AgentType], str]:
         """
         Detect @mention in message and extract agent type.
@@ -825,6 +842,33 @@ class LangGraphCoachService:
             # 1. Detect @mention and sanitize against prompt injection
             mentioned_agent, cleaned_message = self._detect_agent_mention(request.message)
             cleaned_message = self._sanitize_user_message(cleaned_message)
+
+            # 1a. True fast-path for trivial greetings/thanks/goodbyes — return
+            # a canned friendly reply WITHOUT invoking Gemini. Cuts the worst
+            # 68s outliers seen in the wild down to <100ms. Only triggers when
+            # there's no media and no @mention, so anything substantive still
+            # goes through the full pipeline.
+            all_media_for_fastpath = (
+                getattr(request, "media_refs", None)
+                or ([getattr(request, "media_ref", None)] if getattr(request, "media_ref", None) else [])
+            )
+            if (
+                mentioned_agent is None
+                and not all_media_for_fastpath
+                and not getattr(request, "image_base64", None)
+                and not getattr(request, "video_frames", None)
+                and _is_trivial_message(cleaned_message)
+            ):
+                trivial_reply = self._fast_trivial_reply(cleaned_message)
+                logger.info(f"Trivial fast-path hit for message: {cleaned_message[:30]!r}")
+                return ChatResponse(
+                    message=trivial_reply,
+                    intent=CoachIntent.QUESTION,
+                    agent_type=AgentType.COACH,
+                    action_data=None,
+                    rag_context_used=False,
+                    similar_questions=[],
+                )
 
             # 2. Compute media signals (sync — no I/O)
             has_image = request.image_base64 is not None

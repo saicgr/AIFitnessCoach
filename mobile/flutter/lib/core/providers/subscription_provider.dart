@@ -251,6 +251,12 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
   final ApiClient? _apiClient;
   String? _userId;
   static bool _revenueCatInitialized = false;
+
+  /// Public read-only accessor used by call sites outside this class
+  /// (e.g., settings_screen_ext.dart) to gate Purchases.* invocations and
+  /// avoid the Swift `EXC_BREAKPOINT` fatal crash when calling SDK methods
+  /// before `Purchases.configure(...)` has completed.
+  static bool get isRevenueCatReady => _revenueCatInitialized;
   PosthogService? _posthog;
 
   SubscriptionNotifier([this._apiClient]) : super(const SubscriptionState());
@@ -767,6 +773,33 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
     }
   }
 
+  /// Force a fresh pull from RevenueCat — used when entering the Manage
+  /// Subscription screen so the cached SharedPreferences tier doesn't lie
+  /// to the user after a webhook-side renewal/upgrade. Safe to call freely;
+  /// errors are swallowed (UI keeps last-known tier).
+  Future<void> forceRefreshFromStore() async {
+    // Guard: Purchases.* hits a Swift `precondition()` fatal (EXC_BREAKPOINT)
+    // when invoked before `Purchases.configure(...)` finishes. Bail early
+    // when RevenueCat hasn't been initialized yet so the user sees the
+    // cached tier instead of the app crashing.
+    if (!_revenueCatInitialized) {
+      debugPrint('⚠️ forceRefreshFromStore: RevenueCat not configured yet');
+      return;
+    }
+    try {
+      final customerInfo = await Purchases.getCustomerInfo();
+      _updateStateFromCustomerInfo(customerInfo);
+    } catch (e, stack) {
+      debugPrint('⚠️ forceRefreshFromStore failed: $e');
+      unawaited(SentryService.captureError(
+        e,
+        stack,
+        hint: 'RevenueCat getCustomerInfo failed on manage screen open',
+        tags: {'subsystem': 'billing', 'stage': 'manage_refresh'},
+      ));
+    }
+  }
+
   /// Check current subscription status (local storage fallback)
   Future<void> checkSubscriptionStatus() async {
     try {
@@ -1008,6 +1041,20 @@ class SubscriptionNotifier extends StateNotifier<SubscriptionState> {
         debugPrint('ℹ️ Purchase cancelled by user');
         state = state.copyWith(isLoading: false);
         return false;
+      }
+      // ProductAlreadyPurchasedError: user re-tapped Subscribe on a SKU they
+      // already own (common after reinstall or store-account swap). Auto-restore
+      // so the app's tier reconciles, and don't ship to Sentry — this is
+      // expected platform behavior, not a bug.
+      if (errorCode == PurchasesErrorCode.productAlreadyPurchasedError) {
+        _posthog?.capture(
+          eventName: 'subscription_purchase_already_owned',
+          properties: {'product_id': productId},
+        );
+        debugPrint('ℹ️ Product already owned — auto-restoring');
+        final restored = await restorePurchases();
+        state = state.copyWith(error: null);
+        return restored;
       }
       _posthog?.capture(eventName: 'subscription_purchase_failed', properties: {'product_id': productId, 'error_message': e.toString()});
       debugPrint('❌ Purchase failed: $e');

@@ -533,7 +533,7 @@ async def get_volume_alerts(
                 alert_type=row["alert_type"],
                 current_volume=row["current_volume"],
                 previous_volume=row["previous_volume"],
-                increase_percent=float(row["increase_percent"]),
+                increase_percent=float(row["increase_percent"]) if row.get("increase_percent") is not None else 0.0,
                 created_at=row["created_at"],
                 acknowledged=row["acknowledged"],
                 acknowledged_at=row.get("acknowledged_at"),

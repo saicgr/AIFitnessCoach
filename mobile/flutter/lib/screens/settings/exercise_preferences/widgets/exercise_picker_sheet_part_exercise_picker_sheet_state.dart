@@ -24,6 +24,12 @@ class _ExercisePickerSheetState extends ConsumerState<_ExercisePickerSheet> {
   String? _searchCorrection;
   double? _searchTimeMs;
 
+  // Multi-select state — only used when widget.multiSelect is true.
+  // Keyed by exercise.id so the same item across smart-search + literal
+  // result sets dedupes naturally.
+  final List<ExercisePickerResult> _multiPicked = [];
+  final Set<String> _multiPickedIds = {};
+
   int get _activeFilterCount =>
       _selectedBodyParts.length +
       _selectedEquipment.length +
@@ -407,16 +413,30 @@ class _ExercisePickerSheetState extends ConsumerState<_ExercisePickerSheet> {
 
   void _selectExercise(LibraryExerciseItem exercise) {
     HapticFeedback.lightImpact();
-    Navigator.pop(
-      context,
-      ExercisePickerResult(
-        exerciseName: exercise.name,
-        exerciseId: exercise.id,
-        muscleGroup: exercise.targetMuscle ?? exercise.bodyPart,
-        targetMuscleGroup: exercise.targetMuscle ?? exercise.bodyPart,
-        reason: widget.type == ExercisePickerType.staple ? 'staple' : null,
-      ),
+    final result = ExercisePickerResult(
+      exerciseName: exercise.name,
+      exerciseId: exercise.id,
+      muscleGroup: exercise.targetMuscle ?? exercise.bodyPart,
+      targetMuscleGroup: exercise.targetMuscle ?? exercise.bodyPart,
+      reason: widget.type == ExercisePickerType.staple ? 'staple' : null,
     );
+
+    // Multi-select: toggle membership instead of popping. Sticky bottom bar
+    // shows the running count + Save action.
+    if (widget.multiSelect) {
+      setState(() {
+        if (_multiPickedIds.contains(exercise.id)) {
+          _multiPickedIds.remove(exercise.id);
+          _multiPicked.removeWhere((r) => r.exerciseId == exercise.id);
+        } else {
+          _multiPickedIds.add(exercise.id);
+          _multiPicked.add(result);
+        }
+      });
+      return;
+    }
+
+    Navigator.pop(context, result);
   }
 
   void _addCustomExercise(String name) {
@@ -641,9 +661,13 @@ class _ExercisePickerSheetState extends ConsumerState<_ExercisePickerSheet> {
                                     textPrimary: textPrimary,
                                     textMuted: textMuted,
                                     isAiMatch: isAiMatch,
-                                    onDetailTap: isCustom
+                                    isSelected: widget.multiSelect &&
+                                        _multiPickedIds.contains(exercise.id),
+                                    onDetailTap: widget.multiSelect
                                         ? () => _selectExercise(exercise)
-                                        : () => _openDetailSheet(exercise),
+                                        : (isCustom
+                                            ? () => _selectExercise(exercise)
+                                            : () => _openDetailSheet(exercise)),
                                     onAddTap: () => _selectExercise(exercise),
                                   );
                                 },
@@ -679,6 +703,64 @@ class _ExercisePickerSheetState extends ConsumerState<_ExercisePickerSheet> {
         if (_showFilters)
           _buildFilterPanel(isDark, cardBackground, textPrimary, textMuted),
 
+        // Multi-select save bar — only visible in multi-select mode. Shows
+        // running count + Save action so users can batch-add exercises (e.g.
+        // to the Avoid list) without re-entering the picker for each one.
+        if (widget.multiSelect)
+          Container(
+            padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+            decoration: BoxDecoration(
+              color: isDark ? AppColors.nearBlack : AppColorsLight.pureWhite,
+              border: Border(
+                top: BorderSide(
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.08)
+                      : Colors.black.withValues(alpha: 0.06),
+                ),
+              ),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    _multiPicked.isEmpty
+                        ? 'Tap exercises to select multiple'
+                        : '${_multiPicked.length} selected',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: _multiPicked.isEmpty ? textMuted : textPrimary,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+                ElevatedButton(
+                  onPressed: _multiPicked.isEmpty
+                      ? null
+                      : () {
+                          HapticFeedback.lightImpact();
+                          Navigator.pop(
+                              context, List<ExercisePickerResult>.from(_multiPicked));
+                        },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _accentColor,
+                    foregroundColor: Colors.white,
+                    disabledBackgroundColor: _accentColor.withValues(alpha: 0.3),
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  child: Text(
+                    _multiPicked.isEmpty
+                        ? 'Save'
+                        : 'Save (${_multiPicked.length})',
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
         // Bottom search bar + filter button
         Container(
           padding: EdgeInsets.fromLTRB(
@@ -704,7 +786,7 @@ class _ExercisePickerSheetState extends ConsumerState<_ExercisePickerSheet> {
                   autofocus: true,
                   style: TextStyle(color: textPrimary),
                   decoration: InputDecoration(
-                    hintText: 'Search exercises...',
+                    hintText: 'Search — try "push", "row", "squat"',
                     hintStyle: TextStyle(color: textMuted),
                     prefixIcon: Icon(Icons.search, color: textMuted),
                     suffixIcon: _searchQuery.isNotEmpty
@@ -732,35 +814,43 @@ class _ExercisePickerSheetState extends ConsumerState<_ExercisePickerSheet> {
                 ),
               ),
               const SizedBox(width: 8),
-              // AI toggle button
-              Material(
-                color: _useSmartSearch
-                    ? AppColors.cyan.withValues(alpha: 0.2)
-                    : cardBackground,
-                borderRadius: BorderRadius.circular(12),
-                child: InkWell(
-                  onTap: () {
-                    HapticFeedback.lightImpact();
-                    setState(() {
-                      _useSmartSearch = !_useSmartSearch;
-                      _searchCorrection = null;
-                      _searchTimeMs = null;
-                    });
-                    if (_searchQuery.length >= 2 || _hasActiveFilters) {
-                      _debounceTimer?.cancel();
-                      setState(() => _isSearching = true);
-                      _debounceTimer = Timer(const Duration(milliseconds: 100), () {
-                        _performSearch();
-                      });
-                    }
-                  },
+              // AI semantic-search toggle — finds exercises by meaning
+              // ("ab burner" → planks, hollow holds) on top of the literal
+              // substring match. Tooltip surfaces the purpose so users don't
+              // think it's a generic AI action button.
+              Tooltip(
+                message: _useSmartSearch
+                    ? 'AI search ON — matching by meaning'
+                    : 'Turn on AI search — find exercises by meaning, not just spelling',
+                child: Material(
+                  color: _useSmartSearch
+                      ? AppColors.cyan.withValues(alpha: 0.2)
+                      : cardBackground,
                   borderRadius: BorderRadius.circular(12),
-                  child: Padding(
-                    padding: const EdgeInsets.all(12),
-                    child: Icon(
-                      Icons.auto_awesome,
-                      color: _useSmartSearch ? AppColors.cyan : textMuted,
-                      size: 24,
+                  child: InkWell(
+                    onTap: () {
+                      HapticFeedback.lightImpact();
+                      setState(() {
+                        _useSmartSearch = !_useSmartSearch;
+                        _searchCorrection = null;
+                        _searchTimeMs = null;
+                      });
+                      if (_searchQuery.length >= 2 || _hasActiveFilters) {
+                        _debounceTimer?.cancel();
+                        setState(() => _isSearching = true);
+                        _debounceTimer = Timer(const Duration(milliseconds: 100), () {
+                          _performSearch();
+                        });
+                      }
+                    },
+                    borderRadius: BorderRadius.circular(12),
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Icon(
+                        Icons.auto_awesome,
+                        color: _useSmartSearch ? AppColors.cyan : textMuted,
+                        size: 24,
+                      ),
                     ),
                   ),
                 ),

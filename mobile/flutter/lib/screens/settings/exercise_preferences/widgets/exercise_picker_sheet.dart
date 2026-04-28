@@ -66,3 +66,25 @@ Future<ExercisePickerResult?> showExercisePickerSheet(
     )),
   );
 }
+
+/// Multi-select variant — for flows like "Avoided Exercises" where users
+/// frequently want to add several exercises in one pass instead of looping
+/// through the picker over and over. Returns the picked items in selection
+/// order; null if the sheet was dismissed without saving.
+Future<List<ExercisePickerResult>?> showExercisePickerSheetMulti(
+  BuildContext context,
+  WidgetRef ref, {
+  required ExercisePickerType type,
+  Set<String>? excludeExercises,
+}) async {
+  return await showGlassSheet<List<ExercisePickerResult>>(
+    context: context,
+    builder: (context) => GlassSheet(
+      child: _ExercisePickerSheet(
+        type: type,
+        excludeExercises: excludeExercises ?? {},
+        multiSelect: true,
+      ),
+    ),
+  );
+}

@@ -34,6 +34,7 @@ import '../../../core/providers/user_provider.dart';
 import '../../../core/providers/workout_mini_player_provider.dart';
 import '../../../core/utils/default_weights.dart';
 import '../../../core/services/haptic_service.dart';
+import '../../../core/services/weight_suggestion_service.dart';
 import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/models/exercise.dart';
 import '../../../data/repositories/workout_repository.dart';
@@ -122,6 +123,7 @@ class EasyActiveWorkoutScreenState
     unawaited(
         _prService.preloadExerciseHistory(ref: ref, exercises: _exercises));
     unawaited(_preloadLastSetPerExercise());
+    unawaited(_preloadSmartWeightPerExercise());
 
     _currentSetStartTime = DateTime.now();
 
@@ -257,6 +259,54 @@ class EasyActiveWorkoutScreenState
       if (mounted) setState(() {});
     } catch (e) {
       debugPrint('⚠️ [EasyWorkout] last-set preload failed: $e');
+    }
+  }
+
+  /// Pre-fill each exercise's focal weight using the same smart-weight
+  /// pipeline that Advanced mode uses (`/workouts/smart-weight/...`). Easy
+  /// previously seeded straight from the plan's `targetWeightKg`, which
+  /// diverged from Advanced's intelligent suggestion and produced confusing
+  /// numbers when the plan had no per-set target. This brings the two modes
+  /// to parity — same backend formula, same equipment-aware rounding.
+  /// Failures are swallowed; the seeded value remains.
+  Future<void> _preloadSmartWeightPerExercise() async {
+    try {
+      final apiClient = ref.read(apiClientProvider);
+      final userId = await apiClient.getUserId();
+      if (userId == null || _exercises.isEmpty) return;
+      final useKg = ref.read(useKgForWorkoutProvider);
+
+      await Future.wait(List.generate(_exercises.length, (i) async {
+        final ex = _exercises[i];
+        final state = _perExercise[i];
+        if (state == null) return;
+        // Skip bodyweight exercises — they have no external weight.
+        final equipment = (ex.equipment ?? 'dumbbell').toLowerCase();
+        if (equipment.contains('bodyweight') || equipment == 'none') return;
+        final firstTarget = ex.getTargetForSet(1);
+        final targetReps = firstTarget?.targetReps ?? ex.reps ?? 10;
+        try {
+          final suggestion = await WeightSuggestionService.getSmartWeight(
+            dio: apiClient.dio,
+            userId: userId,
+            exerciseId: ex.exerciseId ?? ex.libraryId ?? '',
+            exerciseName: ex.name,
+            targetReps: targetReps,
+            equipment: equipment,
+          );
+          if (suggestion == null || suggestion.suggestedWeight <= 0) return;
+          if (!mounted) return;
+          // Don't clobber a value the user has already touched.
+          if (state.completed.isNotEmpty) return;
+          final kg = suggestion.suggestedWeight;
+          setState(() {
+            state.targetWeightKg = kg;
+            state.displayWeight = useKg ? kg : kg * 2.20462;
+          });
+        } catch (_) {/* swallow per-exercise failure */}
+      }));
+    } catch (e) {
+      debugPrint('⚠️ [EasyWorkout] smart-weight preload failed: $e');
     }
   }
 

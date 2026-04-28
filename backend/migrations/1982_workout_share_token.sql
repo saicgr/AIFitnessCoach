@@ -13,7 +13,7 @@ CREATE INDEX IF NOT EXISTS idx_workouts_share_token
   WHERE share_token IS NOT NULL;
 
 -- A view that strips internal fields and only exposes what the public
--- web view at fitwiz.us/w/[token] needs to render.
+-- web view at zealova.com/w/[token] needs to render.
 --
 -- NB: the live schema names: exercise list lives on `workouts.exercises_json`
 -- (not `exercises`), calories on `workouts.estimated_calories` (not

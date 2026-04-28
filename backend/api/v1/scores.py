@@ -145,7 +145,7 @@ def _flatten_logs_for_strength(log_rows: List[Dict[str, Any]]) -> List[Dict[str,
         else:
             # Same exercise logged again — accumulate the set count so the
             # downstream weekly_sets aggregation reflects real volume.
-            prev["sets"] = int(prev["sets"]) + int(set_count)
+            prev["sets"] = int(prev.get("sets") or 0) + int(set_count)
             if primary_muscle and not prev.get("primary_muscle"):
                 prev["primary_muscle"] = primary_muscle
 
@@ -996,17 +996,17 @@ async def get_personal_records(
             exercise_name=pr["exercise_name"],
             exercise_id=pr.get("exercise_id"),
             muscle_group=pr.get("muscle_group"),
-            weight_kg=float(pr["weight_kg"]),
-            reps=int(pr["reps"]),
-            estimated_1rm_kg=float(pr["estimated_1rm_kg"]),
+            weight_kg=float(pr["weight_kg"]) if pr.get("weight_kg") is not None else 0.0,
+            reps=int(pr["reps"]) if pr.get("reps") is not None else 0,
+            estimated_1rm_kg=float(pr["estimated_1rm_kg"]) if pr.get("estimated_1rm_kg") is not None else 0.0,
             set_type=pr.get("set_type", "working"),
-            rpe=float(pr["rpe"]) if pr.get("rpe") else None,
+            rpe=float(pr["rpe"]) if pr.get("rpe") is not None else None,
             achieved_at=datetime.fromisoformat(pr["achieved_at"]),
             workout_id=pr.get("workout_id"),
-            previous_weight_kg=float(pr["previous_weight_kg"]) if pr.get("previous_weight_kg") else None,
-            previous_1rm_kg=float(pr["previous_1rm_kg"]) if pr.get("previous_1rm_kg") else None,
-            improvement_kg=float(pr["improvement_kg"]) if pr.get("improvement_kg") else None,
-            improvement_percent=float(pr["improvement_percent"]) if pr.get("improvement_percent") else None,
+            previous_weight_kg=float(pr["previous_weight_kg"]) if pr.get("previous_weight_kg") is not None else None,
+            previous_1rm_kg=float(pr["previous_1rm_kg"]) if pr.get("previous_1rm_kg") is not None else None,
+            improvement_kg=float(pr["improvement_kg"]) if pr.get("improvement_kg") is not None else None,
+            improvement_percent=float(pr["improvement_percent"]) if pr.get("improvement_percent") is not None else None,
             is_all_time_pr=pr.get("is_all_time_pr", True),
             celebration_message=pr.get("celebration_message"),
             created_at=datetime.fromisoformat(pr["created_at"]) if pr.get("created_at") else datetime.fromisoformat(pr["achieved_at"]),

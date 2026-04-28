@@ -1625,6 +1625,19 @@ class _FitnessRadarState extends ConsumerState<_FitnessRadar> {
     // even though their stats clearly differ across axes).
     final targetIsFlat = target.every((v) => v < 0.05);
 
+    // Pin the radar scale to a fixed maximum so the "You" shape stays the
+    // same size regardless of which datasets are visible. fl_chart auto-
+    // scales to the largest value across all rendered datasets — when the
+    // target dataset is dropped (targetIsFlat) or the viewer overlay is
+    // hidden (isSelfPeek), the remaining shape rescales and visibly
+    // changes size between expanded/condensed views. Adding a transparent
+    // anchor dataset at the global maximum keeps the scale stable.
+    final double radarAnchorMax = [
+      ...target,
+      ...viewer,
+      100.0, // floor so partial-data users still render at sensible scale
+    ].reduce((a, b) => a > b ? a : b);
+
     // Clamp axis tap within bounds
     final tappedAxis = _selectedAxis.clamp(-1, labels.length - 1);
 
@@ -1689,6 +1702,19 @@ class _FitnessRadarState extends ConsumerState<_FitnessRadar> {
                         getTitle: (index, angle) =>
                             RadarChartTitle(text: labels[index], angle: 0),
                         dataSets: [
+                          // Hidden anchor — pins the radar's max-scale so the
+                          // "You" / "Them" shapes don't rescale between
+                          // expanded and condensed views (Issue 9).
+                          RadarDataSet(
+                            fillColor: Colors.transparent,
+                            borderColor: Colors.transparent,
+                            borderWidth: 0,
+                            entryRadius: 0,
+                            dataEntries: List.generate(
+                              labels.length,
+                              (_) => RadarEntry(value: radarAnchorMax),
+                            ),
+                          ),
                           // Target ("Them") — magenta, drawn first so the
                           // viewer overlay sits on top.
                           if (!targetIsFlat)

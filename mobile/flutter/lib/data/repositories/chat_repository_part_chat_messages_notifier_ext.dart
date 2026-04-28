@@ -198,7 +198,7 @@ extension ChatMessagesNotifierExt on ChatMessagesNotifier {
       // Measure user-perceived latency (tap-to-reply). Includes network +
       // backend processing — the number the user actually waits for.
       final responseStopwatch = Stopwatch()..start();
-      final response = await _repository.sendMessage(
+      final sendResult = await _repository.sendMessage(
         message: message,
         userId: userId,
         userProfile: userProfile,
@@ -208,6 +208,8 @@ extension ChatMessagesNotifierExt on ChatMessagesNotifier {
         aiSettings: currentAISettings.toJson(),
         unifiedContext: unifiedContext,
       );
+      final response = sendResult.response;
+      final assistantMessageId = sendResult.messageId;
       responseStopwatch.stop();
       if (!mounted) return;
 
@@ -220,6 +222,10 @@ extension ChatMessagesNotifierExt on ChatMessagesNotifier {
       // visible response bulletproof against downstream processing.
       final cleanedMessage = _stripActionDataFromMessage(response.message);
       final assistantMessage = ChatMessage(
+        // Stable id from server — same UUID is used as the row PK in
+        // chat_messages, so a later loadHistory/Realtime fetch will dedup
+        // by id (UPSERT) instead of appending the same reply twice.
+        id: assistantMessageId,
         role: 'assistant',
         content: cleanedMessage,
         intent: response.intent,
@@ -248,17 +254,29 @@ extension ChatMessagesNotifierExt on ChatMessagesNotifier {
       //   2. If the new response carries fresh action_data (e.g., a new
       //      workout_id button) while text coincidentally matches an older
       //      turn, we still render the new bubble with its action_data.
-      final lastAssistantIdx = beforeAppend.lastIndexWhere((m) => m.role == 'assistant');
+      // Primary dedup key: server-issued message_id. If a Realtime/loadHistory
+      // race already injected the row with this id, skip the local append.
       bool isDuplicate = false;
-      if (lastAssistantIdx >= 0 &&
-          beforeAppend[lastAssistantIdx].content == cleanedMessage) {
-        final lastAsst = beforeAppend[lastAssistantIdx];
-        final lastAsstCreated = DateTime.tryParse(lastAsst.createdAt ?? '');
-        final userCreated = DateTime.tryParse(userMessage.createdAt ?? '');
-        if (lastAsstCreated != null &&
-            userCreated != null &&
-            lastAsstCreated.isAfter(userCreated)) {
-          isDuplicate = true;
+      if (assistantMessageId != null &&
+          beforeAppend.any((m) => m.id == assistantMessageId)) {
+        isDuplicate = true;
+        debugPrint('⚠️ [Chat] Dedup by message_id=$assistantMessageId — already in state');
+      }
+      // Fallback dedup (older backends that don't return message_id):
+      // last assistant bubble with matching content created after the user
+      // message of this turn. Same heuristic as before.
+      if (!isDuplicate) {
+        final lastAssistantIdx = beforeAppend.lastIndexWhere((m) => m.role == 'assistant');
+        if (lastAssistantIdx >= 0 &&
+            beforeAppend[lastAssistantIdx].content == cleanedMessage) {
+          final lastAsst = beforeAppend[lastAssistantIdx];
+          final lastAsstCreated = DateTime.tryParse(lastAsst.createdAt ?? '');
+          final userCreated = DateTime.tryParse(userMessage.createdAt ?? '');
+          if (lastAsstCreated != null &&
+              userCreated != null &&
+              lastAsstCreated.isAfter(userCreated)) {
+            isDuplicate = true;
+          }
         }
       }
 
@@ -393,6 +411,7 @@ extension ChatMessagesNotifierExt on ChatMessagesNotifier {
           : (media.type == ChatMediaType.video ? 'Check my form' : 'What do you see?');
 
       ChatResponse response;
+      String? assistantMessageId;
 
       if (media.type == ChatMediaType.image) {
         // Image: get presigned URL, update message with public URL, then upload to S3
@@ -439,7 +458,9 @@ extension ChatMessagesNotifierExt on ChatMessagesNotifier {
             mediaRef: imageMediaRef, mediaUrl: publicUrl,
           ),
         ]);
-        response = results[1] as ChatResponse;
+        final sendResult = results[1] as ({ChatResponse response, String? messageId});
+        response = sendResult.response;
+        assistantMessageId = sendResult.messageId;
 
       } else {
         // Video: upload to backend which handles S3 + Gemini in parallel
@@ -479,12 +500,14 @@ extension ChatMessagesNotifierExt on ChatMessagesNotifier {
           'gemini_file_name': geminiFileName,  // backend uses this directly, skips S3 download
           if (media.duration != null) 'duration_seconds': media.duration!.inSeconds.toDouble(),
         };
-        response = await _repository.sendMessage(
+        final sendResult = await _repository.sendMessage(
           message: effectiveMessage, userId: userId, userProfile: userProfile,
           conversationHistory: history, aiSettings: currentAISettings.toJson(),
           unifiedContext: unifiedContext, mediaRef: mediaRef,
           mediaUrl: publicUrl,
         );
+        response = sendResult.response;
+        assistantMessageId = sendResult.messageId;
       }
 
       if (!mounted) return;
@@ -499,6 +522,7 @@ extension ChatMessagesNotifierExt on ChatMessagesNotifier {
       final finalMsgs = state.valueOrNull ?? [];
 
       final assistantMessage = ChatMessage(
+        id: assistantMessageId,
         role: 'assistant',
         content: _stripActionDataFromMessage(response.message),
         intent: response.intent,
@@ -508,7 +532,13 @@ extension ChatMessagesNotifierExt on ChatMessagesNotifier {
         coachPersonaId: currentAISettings.coachPersonaId,
       );
 
-      final newMessages = [...finalMsgs, assistantMessage];
+      // Dedup by server-issued message_id (Realtime/loadHistory race guard).
+      final alreadyPresent = assistantMessageId != null &&
+          finalMsgs.any((m) => m.id == assistantMessageId);
+      final newMessages = alreadyPresent ? finalMsgs : [...finalMsgs, assistantMessage];
+      if (alreadyPresent) {
+        debugPrint('⚠️ [Chat] Media reply id=$assistantMessageId already present — skip append');
+      }
       state = AsyncValue.data(newMessages);
 
       await _saveToCache(userId, newMessages);

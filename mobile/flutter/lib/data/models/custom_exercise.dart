@@ -173,6 +173,8 @@ class CustomExercise extends Equatable {
   final String? customNotes;
   @JsonKey(name: 'custom_video_url')
   final String? customVideoUrl;
+  @JsonKey(name: 'image_url')
+  final String? imageUrl;
   final List<String> tags;
   @JsonKey(name: 'usage_count')
   final int usageCount;
@@ -197,6 +199,7 @@ class CustomExercise extends Equatable {
     this.componentExercises,
     this.customNotes,
     this.customVideoUrl,
+    this.imageUrl,
     required this.tags,
     required this.usageCount,
     this.lastUsed,
@@ -272,6 +275,7 @@ class CustomExercise extends Equatable {
     List<ComponentExercise>? componentExercises,
     String? customNotes,
     String? customVideoUrl,
+    String? imageUrl,
     List<String>? tags,
     int? usageCount,
     String? lastUsed,
@@ -293,6 +297,7 @@ class CustomExercise extends Equatable {
       componentExercises: componentExercises ?? this.componentExercises,
       customNotes: customNotes ?? this.customNotes,
       customVideoUrl: customVideoUrl ?? this.customVideoUrl,
+      imageUrl: imageUrl ?? this.imageUrl,
       tags: tags ?? this.tags,
       usageCount: usageCount ?? this.usageCount,
       lastUsed: lastUsed ?? this.lastUsed,

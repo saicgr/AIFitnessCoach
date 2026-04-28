@@ -36,6 +36,7 @@ async def list_food_logs(
     from_date: Optional[str] = Query(default=None, description="Start date (YYYY-MM-DD)"),
     to_date: Optional[str] = Query(default=None, description="End date (YYYY-MM-DD)"),
     meal_type: Optional[str] = Query(default=None, description="Filter by meal type"),
+    tz: Optional[str] = Query(default=None, description="IANA timezone fallback"),
     current_user: dict = Depends(get_current_user),
 ):
     """
@@ -53,6 +54,10 @@ async def list_food_logs(
     try:
         db = get_supabase_db()
         user_tz = resolve_timezone(request, db, user_id)
+        if user_tz == "UTC" and tz:
+            from core.timezone_utils import _is_valid_tz  # type: ignore[attr-defined]
+            if _is_valid_tz(tz):
+                user_tz = tz
 
         # Convert date-only params to timezone-aware UTC ranges
         tz_from = None

@@ -133,7 +133,7 @@ VALID DESTINATIONS (for action_data with action: "navigate"):
 home, nutrition, social, profile, workouts, library, schedule, workout_builder,
 hydration, fasting, food_history, food_library, recipe_suggestions, nutrition_settings,
 stats, progress, milestones, exercise_history, muscle_analytics, progress_charts,
-consistency, measurements, chat, support, live_chat, help, glossary,
+consistency, measurements, chat, live_chat, help, glossary,
 injuries, habits, neat, metrics, diabetes, plateau, strain_prevention,
 hormonal_health, mood_history, achievements, trophy_room, leaderboard,
 rewards, summaries, settings, workout_settings, ai_coach, appearance,
@@ -293,12 +293,58 @@ async def coach_action_node(state: CoachAgentState) -> Dict[str, Any]:
     elif intent == CoachIntent.NAVIGATE:
         destination = state.get("destination")
         if destination:
-            action_data = {
-                "action": "navigate",
-                "destination": destination,
-                "success": True,
-            }
-            action_context = f"Navigating to {destination}"
+            # ── "Need help" → contact chips (no /support route exists) ──
+            # When the classifier maps the user's request to `support` (or any
+            # legacy synonym), surface our three contact channels as tappable
+            # options instead of trying to navigate to a missing route.
+            # See feedback_no_silent_fallbacks.md — we don't fall back to a
+            # broken navigate; we replace the intent with a structured action.
+            if destination in ("support", "help", "contact", "live_chat"):
+                from core.config import get_settings as _get_settings
+                _s = _get_settings()
+                action_data = {
+                    "action": "show_options",
+                    "prompt": "I can connect you with our team — pick one:",
+                    "options": [
+                        {
+                            "label": "Discord",
+                            "icon": "discord",
+                            "url": _s.discord_url,
+                        },
+                        {
+                            "label": "Email",
+                            "icon": "email",
+                            "url": f"mailto:{_s.support_email}",
+                        },
+                        {
+                            "label": "Instagram",
+                            "icon": "instagram",
+                            "url": _s.instagram_url,
+                        },
+                    ],
+                    "success": True,
+                }
+                action_context = "Offered contact options (Discord, Email, Instagram)"
+            else:
+                # ── Per-destination params (B3) ─────────────────────────
+                # Hydration deep-links into the Fuel tab with the water
+                # section preselected. Other destinations carry no params
+                # by default — the frontend route map is the source of
+                # truth for query strings.
+                _nav_params: Dict[str, Any] = {}
+                if destination == "hydration":
+                    _nav_params = {"fuelSection": "water"}
+                    # Normalize to `nutrition` so the frontend route map
+                    # uses /nutrition?fuelSection=water (the canonical
+                    # water section), not the legacy /nutrition?tab=2.
+                    destination = "nutrition"
+                action_data = {
+                    "action": "navigate",
+                    "destination": destination,
+                    "params": _nav_params,
+                    "success": True,
+                }
+                action_context = f"Navigating to {destination}"
 
     elif intent == CoachIntent.START_WORKOUT:
         workout = state.get("current_workout")

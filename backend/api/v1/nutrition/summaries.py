@@ -45,6 +45,7 @@ async def get_daily_summary(
     user_id: str,
     request: Request,
     date: Optional[str] = Query(default=None, description="Date (YYYY-MM-DD), defaults to today"),
+    tz: Optional[str] = Query(default=None, description="IANA timezone fallback (e.g. America/Chicago)"),
     current_user: dict = Depends(get_current_user),
 ):
     """
@@ -54,7 +55,16 @@ async def get_daily_summary(
     """
     try:
         db = get_supabase_db()
+        # `tz` query param is a client-supplied fallback so day-boundary
+        # queries work even when the X-User-Timezone header is absent (e.g.
+        # cold start before prefs are loaded). Header still takes priority via
+        # resolve_timezone; we only use `tz` if resolution would otherwise fall
+        # back to UTC.
         user_tz = resolve_timezone(request, db, user_id)
+        if user_tz == "UTC" and tz:
+            from core.timezone_utils import _is_valid_tz  # type: ignore[attr-defined]
+            if _is_valid_tz(tz):
+                user_tz = tz
 
         if date is None:
             date = get_user_today(user_tz)

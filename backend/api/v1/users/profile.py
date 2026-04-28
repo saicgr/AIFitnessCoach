@@ -774,23 +774,33 @@ async def update_user(user_id: str, user: UserUpdate,
 
 @router.delete("/{user_id}")
 async def delete_user(user_id: str,
-    body: DestructiveActionRequest,
+    body: Optional[DestructiveActionRequest] = Body(default=None),
     current_user: dict = Depends(get_current_user),
 ):
-    """Delete a user. SECURITY: Requires password re-authentication."""
+    """
+    Delete a user. SECURITY: Requires password re-authentication for email-auth
+    accounts. OAuth accounts (google/apple) authenticate via JWT alone, so the
+    body is optional for them.
+    """
     logger.info(f"Deleting user: id={user_id}")
     try:
         verify_user_ownership(current_user, user_id)
 
-        # SECURITY: Re-authenticate before destructive action
-        supabase = get_supabase()
-        try:
-            supabase.auth_client.auth.sign_in_with_password({
-                "email": current_user["email"],
-                "password": body.password,
-            })
-        except Exception:
-            raise HTTPException(status_code=401, detail="Invalid password — re-authentication required")
+        # SECURITY: Re-authenticate before destructive action.
+        # For OAuth users (Google/Apple), no password exists — JWT auth is sufficient.
+        auth_provider = current_user.get("app_metadata", {}).get("provider", "email")
+        if auth_provider == "email":
+            if body is None or not body.password:
+                raise HTTPException(status_code=400, detail="Password required for email accounts")
+            supabase = get_supabase()
+            try:
+                supabase.auth_client.auth.sign_in_with_password({
+                    "email": current_user["email"],
+                    "password": body.password,
+                })
+            except Exception:
+                raise HTTPException(status_code=401, detail="Invalid password — re-authentication required")
+        # For OAuth providers (google, apple, etc.), JWT auth via get_current_user() is sufficient
 
         db = get_supabase_db()
 

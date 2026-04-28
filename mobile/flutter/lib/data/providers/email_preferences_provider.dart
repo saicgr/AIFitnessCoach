@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/email_preferences.dart';
 import '../repositories/email_preferences_repository.dart';
+import '../services/api_client.dart';
 
 // ============================================
 // EMAIL PREFERENCES STATE
@@ -48,16 +49,50 @@ class EmailPreferencesState {
 /// Email preferences state notifier
 class EmailPreferencesNotifier extends StateNotifier<EmailPreferencesState> {
   final EmailPreferencesRepository _repository;
+  final ApiClient? _apiClient;
 
-  EmailPreferencesNotifier(this._repository)
-      : super(const EmailPreferencesState());
+  /// One-shot guard so the auto-init in the constructor only fires once
+  /// even if `initialize()` is also called manually. Belt-and-suspenders
+  /// for the dual-init race that hung the email-prefs page.
+  bool _autoInitStarted = false;
+
+  EmailPreferencesNotifier(this._repository, {ApiClient? apiClient})
+      : _apiClient = apiClient,
+        super(const EmailPreferencesState()) {
+    // Auto-load preferences on construction. Lets `ref.watch(...)` drive
+    // the first load — UI no longer needs to call `initialize()` from
+    // initState (which caused a dual-init race + lingering loading state).
+    if (_apiClient != null) {
+      _autoInit();
+    }
+  }
+
+  Future<void> _autoInit() async {
+    if (_autoInitStarted) return;
+    _autoInitStarted = true;
+    try {
+      final userId = await _apiClient!.getUserId();
+      if (userId == null) {
+        debugPrint('⚠️ [EmailPrefsProvider] No user ID — skipping auto-init');
+        return;
+      }
+      await initialize(userId);
+    } catch (e) {
+      debugPrint('❌ [EmailPrefsProvider] Auto-init error: $e');
+      if (mounted) {
+        state = state.copyWith(isLoading: false, error: e.toString());
+      }
+    }
+  }
 
   /// Initialize email preferences for a user
   Future<void> initialize(String userId) async {
+    _autoInitStarted = true; // suppress further auto-init attempts
     state = state.copyWith(isLoading: true, clearError: true);
     try {
       debugPrint('📧 [EmailPrefsProvider] Initializing for $userId');
       final preferences = await _repository.getPreferences(userId);
+      if (!mounted) return;
       state = state.copyWith(
         preferences: preferences,
         isLoading: false,
@@ -66,6 +101,7 @@ class EmailPreferencesNotifier extends StateNotifier<EmailPreferencesState> {
           '✅ [EmailPrefsProvider] Initialized: ${preferences.enabledCount}/5 enabled');
     } catch (e) {
       debugPrint('❌ [EmailPrefsProvider] Init error: $e');
+      if (!mounted) return;
       state = state.copyWith(isLoading: false, error: e.toString());
     }
   }
@@ -213,30 +249,39 @@ class EmailPreferencesNotifier extends StateNotifier<EmailPreferencesState> {
 // ============================================
 
 /// Email preferences state provider
-final emailPreferencesProvider =
-    StateNotifierProvider<EmailPreferencesNotifier, EmailPreferencesState>(
-        (ref) {
+///
+/// `.autoDispose` so leaving the settings screen tears down the notifier
+/// + cancels any in-flight init request. Re-entering the screen creates
+/// a fresh notifier whose constructor auto-loads preferences — the screen
+/// no longer needs an `initState` kicker.
+final emailPreferencesProvider = StateNotifierProvider.autoDispose<
+    EmailPreferencesNotifier, EmailPreferencesState>((ref) {
   return EmailPreferencesNotifier(
     ref.watch(emailPreferencesRepositoryProvider),
+    apiClient: ref.watch(apiClientProvider),
   );
 });
 
-/// Convenience provider for just the preferences object
-final currentEmailPreferencesProvider = Provider<EmailPreferences?>((ref) {
+/// Convenience provider for just the preferences object.
+/// Must be `.autoDispose` because it depends on the autoDispose
+/// emailPreferencesProvider (Riverpod forbids non-autoDispose watching
+/// autoDispose).
+final currentEmailPreferencesProvider =
+    Provider.autoDispose<EmailPreferences?>((ref) {
   return ref.watch(emailPreferencesProvider).preferences;
 });
 
 /// Convenience provider to check if loading
-final emailPreferencesLoadingProvider = Provider<bool>((ref) {
+final emailPreferencesLoadingProvider = Provider.autoDispose<bool>((ref) {
   return ref.watch(emailPreferencesProvider).isLoading;
 });
 
 /// Convenience provider for error state
-final emailPreferencesErrorProvider = Provider<String?>((ref) {
+final emailPreferencesErrorProvider = Provider.autoDispose<String?>((ref) {
   return ref.watch(emailPreferencesProvider).error;
 });
 
 /// Provider to check if all marketing is disabled
-final isAllMarketingDisabledProvider = Provider<bool>((ref) {
+final isAllMarketingDisabledProvider = Provider.autoDispose<bool>((ref) {
   return ref.watch(emailPreferencesProvider).isAllMarketingDisabled;
 });

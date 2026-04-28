@@ -156,9 +156,12 @@ class _MealPlannerScreenState extends ConsumerState<MealPlannerScreen> {
       bottomNavigationBar: _plan == null ? null : SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16),
-          child: Row(children: [
-            Expanded(
-              child: OutlinedButton.icon(
+          // LayoutBuilder lets us swap Row→Wrap on narrow devices (iPhone SE
+          // is 320dp). Per feedback_no_overflow_adaptive_screens.md — never
+          // overflow on small screens. ✅
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final coachBtn = OutlinedButton.icon(
                 onPressed: () {
                   showModalBottomSheet(
                     context: context, isScrollControlled: true,
@@ -169,13 +172,15 @@ class _MealPlannerScreenState extends ConsumerState<MealPlannerScreen> {
                     ),
                   );
                 },
-                icon: const Icon(Icons.psychology_outlined),
-                label: const Text('Coach review'),
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: OutlinedButton.icon(
+                icon: const Icon(Icons.psychology_outlined, size: 18),
+                label: const Text(
+                  'Coach review',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  softWrap: false,
+                ),
+              );
+              final groceryBtn = OutlinedButton.icon(
                 onPressed: () async {
                   try {
                     final list = await ref.read(recipeRepositoryProvider).buildGroceryList(
@@ -189,13 +194,15 @@ class _MealPlannerScreenState extends ConsumerState<MealPlannerScreen> {
                     if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed: $e')));
                   }
                 },
-                icon: const Icon(Icons.shopping_cart_outlined),
-                label: const Text('Grocery'),
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: ElevatedButton.icon(
+                icon: const Icon(Icons.shopping_cart_outlined, size: 18),
+                label: const Text(
+                  'Grocery',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  softWrap: false,
+                ),
+              );
+              final applyBtn = ElevatedButton.icon(
                 onPressed: () async {
                   try {
                     final res = await ref.read(recipeRepositoryProvider).applyPlan(_plan!.id, widget.date);
@@ -209,12 +216,44 @@ class _MealPlannerScreenState extends ConsumerState<MealPlannerScreen> {
                     if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed: $e')));
                   }
                 },
-                icon: const Icon(Icons.check),
-                label: const Text('Apply'),
+                icon: const Icon(Icons.check, size: 18),
+                label: const Text(
+                  'Apply',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  softWrap: false,
+                ),
                 style: ElevatedButton.styleFrom(backgroundColor: accent, foregroundColor: Colors.white),
-              ),
-            ),
-          ]),
+              );
+
+              // Below ~420dp width, three buttons in a Row clip "Coach review"
+              // and "Grocery" to "Co...", "Gro..." even with ellipsis (icon +
+              // padding eats most of the per-button width on iPhone 17 Pro
+              // class devices). Switch to a 2-column Wrap so labels stay
+              // readable. ⚠️
+              if (constraints.maxWidth < 420) {
+                final btnWidth = (constraints.maxWidth - 8) / 2;
+                return Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    SizedBox(width: btnWidth, child: coachBtn),
+                    SizedBox(width: btnWidth, child: groceryBtn),
+                    // Apply spans full width on a third row for emphasis
+                    SizedBox(width: constraints.maxWidth, child: applyBtn),
+                  ],
+                );
+              }
+
+              return Row(children: [
+                Expanded(child: coachBtn),
+                const SizedBox(width: 8),
+                Expanded(child: groceryBtn),
+                const SizedBox(width: 8),
+                Expanded(child: applyBtn),
+              ]);
+            },
+          ),
         ),
       ),
     );

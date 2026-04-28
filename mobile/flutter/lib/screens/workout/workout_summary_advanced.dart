@@ -5,8 +5,12 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_body_atlas/flutter_body_atlas.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
+import '../../data/models/exercise.dart';
 import '../../data/models/workout.dart';
+import '../library/providers/library_providers.dart';
 
 class WorkoutSummaryAdvanced extends StatelessWidget {
   final WorkoutSummaryResponse? data;
@@ -4401,7 +4405,7 @@ class _SessionTimeline extends StatelessWidget {
 /// its share of the session's total training volume, with muscles that
 /// received no work faded to a low-alpha grey so the whole silhouette still
 /// reads as a body rather than a scatter of colored dots.
-class _MuscleHeatmap extends StatelessWidget {
+class _MuscleHeatmap extends ConsumerWidget {
   final WorkoutSummaryResponse? data;
   final Map<String, dynamic>? metadata;
   final bool isDark;
@@ -4412,9 +4416,34 @@ class _MuscleHeatmap extends StatelessWidget {
     required this.isDark,
   });
 
+  /// True when the workout type is cardio-style (no muscle volume to render).
+  bool get _isCardio {
+    final t = (data?.workout['type'] as String? ?? '').toLowerCase();
+    return t == 'cardio' ||
+        t == 'running' ||
+        t == 'cycling' ||
+        t == 'walk' ||
+        t == 'walking' ||
+        t == 'hiit' ||
+        t == 'endurance' ||
+        t == 'isometric';
+  }
+
   /// Per-muscle volume in kg·reps, keyed by lowercased muscle token (e.g.
   /// 'latissimus dorsi', 'chest', 'triceps brachii').
-  Map<String, double> _computeVolumePerMuscleToken() {
+  ///
+  /// [libraryByName] — optional name→LibraryExercise map used as a fallback
+  /// when a planned exercise has no `body_part` / `primary_muscle` /
+  /// `muscle_group` field in `exercises_json`. Without this fallback every
+  /// custom or AI-generated exercise without taxonomy gets dropped and the
+  /// atlas degrades to "No volume data yet".
+  ///
+  /// Returns a tuple-shaped record: (volumeByToken, untaggedExerciseNames)
+  /// so the build method can show a "Tag muscles" CTA for orphan exercises.
+  ({Map<String, double> byToken, List<String> untagged})
+      _computeVolumePerMuscleToken({
+    Map<String, LibraryExercise> libraryByName = const {},
+  }) {
     final Map<String, double> volumeByExercise = {};
     final setsJson = (metadata?['sets_json'] is List)
         ? metadata!['sets_json'] as List
@@ -4467,10 +4496,12 @@ class _MuscleHeatmap extends StatelessWidget {
       }
     }
     final Map<String, double> byToken = {};
+    final List<String> untagged = [];
     for (final entry in volumeByExercise.entries) {
       final exerciseName = entry.key;
       final vol = entry.value;
       String? muscleLabel;
+      List<String> secondary = const [];
       for (final ex in plan) {
         if (ex is Map<String, dynamic>) {
           final planName = (ex['name'] as String?)?.trim().toLowerCase();
@@ -4488,16 +4519,52 @@ class _MuscleHeatmap extends StatelessWidget {
           }
         }
       }
-      if (muscleLabel == null || muscleLabel.trim().isEmpty) continue;
+
+      // FALLBACK: if the planned exercise carried none of the three muscle
+      // fields, look the exercise up by name in the LibraryExercise catalog
+      // and use its primary/secondary muscle metadata. This is the common
+      // case for AI-generated workouts where exercises_json only carries
+      // `name` + `sets` + `reps`.
+      if ((muscleLabel == null || muscleLabel.trim().isEmpty) &&
+          libraryByName.isNotEmpty) {
+        final libMatch = libraryByName[exerciseName];
+        if (libMatch != null) {
+          muscleLabel = libMatch.targetMuscle ??
+              libMatch.bodyPart ??
+              libMatch.muscleGroup;
+          secondary = libMatch.secondaryMuscles ?? const [];
+        }
+      }
+
+      if (muscleLabel == null || muscleLabel.trim().isEmpty) {
+        // Truly untagged (custom user exercise, no taxonomy anywhere).
+        untagged.add(exerciseName);
+        continue;
+      }
       final tokens = _extractMuscleTokens(muscleLabel);
-      if (tokens.isEmpty) continue;
+      // Secondary muscles get partial credit (50% each) — they receive
+      // load but aren't the prime mover.
+      final secondaryTokens = <String>{};
+      for (final s in secondary) {
+        secondaryTokens.addAll(_extractMuscleTokens(s));
+      }
+      if (tokens.isEmpty && secondaryTokens.isEmpty) {
+        untagged.add(exerciseName);
+        continue;
+      }
       // Split volume evenly across the primary muscle's listed anatomy.
-      final share = vol / tokens.length;
-      for (final t in tokens) {
-        byToken[t] = (byToken[t] ?? 0) + share;
+      if (tokens.isNotEmpty) {
+        final share = vol / tokens.length;
+        for (final t in tokens) {
+          byToken[t] = (byToken[t] ?? 0) + share;
+        }
+      }
+      // Secondary muscles get half-share each.
+      for (final t in secondaryTokens) {
+        byToken[t] = (byToken[t] ?? 0) + (vol * 0.5) / secondaryTokens.length;
       }
     }
-    return byToken;
+    return (byToken: byToken, untagged: untagged);
   }
 
   /// Parse muscle descriptor label into anatomical tokens. Mirrors the
@@ -4565,38 +4632,120 @@ class _MuscleHeatmap extends StatelessWidget {
     return mapping;
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final volumes = _computeVolumePerMuscleToken();
-    final mapping = _buildColorMapping(volumes, isDark);
+  Widget _buildHeader(BuildContext context, Color textMuted) {
+    return Row(
+      children: [
+        Icon(Icons.accessibility_new_rounded, size: 14, color: textMuted),
+        const SizedBox(width: 6),
+        Text(
+          'MUSCLES HIT',
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+            color: textMuted,
+            letterSpacing: 0.8,
+          ),
+        ),
+      ],
+    );
+  }
 
-    if (mapping.isEmpty) {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
+    // Cardio session: hide the atlas entirely. The runner / cyclist isn't
+    // training a discrete muscle group in the same way a barbell session is,
+    // so a heatmap would be misleading.
+    if (_isCardio) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
-            children: [
-              Icon(Icons.accessibility_new_rounded, size: 14, color: textMuted),
-              const SizedBox(width: 6),
-              Text(
-                'MUSCLES HIT',
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  color: textMuted,
-                  letterSpacing: 0.8,
-                ),
+          _buildHeader(context, textMuted),
+          const SizedBox(height: 10),
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+            decoration: BoxDecoration(
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.04)
+                  : Colors.grey.shade50,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.06)
+                    : Colors.grey.shade200,
               ),
-            ],
+            ),
+            child: Column(
+              children: [
+                Icon(Icons.directions_run, size: 28, color: textMuted),
+                const SizedBox(height: 6),
+                Text(
+                  'Cardio session',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: textMuted,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Muscle map not applicable',
+                  style: TextStyle(fontSize: 11, color: textMuted),
+                ),
+              ],
+            ),
           ),
+        ],
+      );
+    }
+
+    // Build name→LibraryExercise lookup map for the fallback path. Watching
+    // the provider triggers a rebuild once exercises hydrate.
+    final libraryAsync = ref.watch(exercisesProvider);
+    final libraryByName = <String, LibraryExercise>{};
+    libraryAsync.whenData((list) {
+      for (final ex in list) {
+        if (ex.nameValue == null) continue;
+        libraryByName[ex.nameValue!.trim().toLowerCase()] = ex;
+        // Also key by original_name so AI-generated workouts that use the
+        // canonical exercise name still match library entries that have
+        // been renamed for display.
+        if (ex.originalName != null && ex.originalName!.isNotEmpty) {
+          libraryByName[ex.originalName!.trim().toLowerCase()] = ex;
+        }
+      }
+    });
+
+    final result =
+        _computeVolumePerMuscleToken(libraryByName: libraryByName);
+    final volumes = result.byToken;
+    final untagged = result.untagged;
+    final mapping = _buildColorMapping(volumes, isDark);
+
+    if (mapping.isEmpty) {
+      // Truly no muscle data resolvable. If we know which exercises were
+      // logged but couldn't map them, surface a "Tag muscles" CTA so the
+      // user can edit the exercise to add taxonomy.
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _buildHeader(context, textMuted),
           const SizedBox(height: 10),
           Center(
             child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 28),
-              child: Text(
-                'No volume data yet',
-                style: TextStyle(fontSize: 12, color: textMuted),
+              padding: const EdgeInsets.symmetric(vertical: 18),
+              child: Column(
+                children: [
+                  Text(
+                    'No volume data yet',
+                    style: TextStyle(fontSize: 12, color: textMuted),
+                  ),
+                  if (untagged.isNotEmpty) ...[
+                    const SizedBox(height: 12),
+                    _buildTagMusclesCta(context, untagged, textMuted),
+                  ],
+                ],
               ),
             ),
           ),
@@ -4604,11 +4753,16 @@ class _MuscleHeatmap extends StatelessWidget {
       );
     }
 
-    // Top 3 muscles by volume (for the caption under the body).
+    // Top 3 muscles by volume (for the caption under the body). Anything
+    // beyond the top 3 spills into a legend list below to keep the body
+    // map reading uncluttered. Mirrors industry references (Strong, Hevy)
+    // that cap visible callouts at 3 prime movers.
     final sortedTokens = volumes.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
     final total = sortedTokens.fold<double>(0, (a, e) => a + e.value);
-    final topLabels = sortedTokens.take(3).map((e) {
+    final top3 = sortedTokens.take(3).toList();
+    final overflow = sortedTokens.skip(3).toList();
+    final topLabels = top3.map((e) {
       final pct = total > 0 ? (100 * e.value / total).round() : 0;
       return '${_capitalise(e.key)} $pct%';
     }).join(' · ');
@@ -4616,21 +4770,7 @@ class _MuscleHeatmap extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Row(
-          children: [
-            Icon(Icons.accessibility_new_rounded, size: 14, color: textMuted),
-            const SizedBox(width: 6),
-            Text(
-              'MUSCLES HIT',
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                color: textMuted,
-                letterSpacing: 0.8,
-              ),
-            ),
-          ],
-        ),
+        _buildHeader(context, textMuted),
         const SizedBox(height: 10),
         AspectRatio(
           aspectRatio: 0.516, // SVG native aspect
@@ -4658,7 +4798,87 @@ class _MuscleHeatmap extends StatelessWidget {
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
         ),
+        if (overflow.isNotEmpty) ...[
+          const SizedBox(height: 6),
+          Wrap(
+            alignment: WrapAlignment.center,
+            spacing: 6,
+            runSpacing: 4,
+            children: overflow.map((e) {
+              final pct = total > 0 ? (100 * e.value / total).round() : 0;
+              return Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.05)
+                      : Colors.grey.shade100,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  '${_capitalise(e.key)} $pct%',
+                  style: TextStyle(fontSize: 10, color: textMuted),
+                ),
+              );
+            }).toList(),
+          ),
+        ],
+        if (untagged.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          _buildTagMusclesCta(context, untagged, textMuted),
+        ],
       ],
+    );
+  }
+
+  /// Tappable CTA that takes the user to the exercise edit screen so they
+  /// can add muscle taxonomy to a custom exercise that the library doesn't
+  /// know about. Shown both when the heatmap is fully empty and when only
+  /// some logged exercises were untagged.
+  Widget _buildTagMusclesCta(
+      BuildContext context, List<String> untagged, Color textMuted) {
+    final preview = untagged.take(2).join(', ') +
+        (untagged.length > 2 ? ' +${untagged.length - 2}' : '');
+    return InkWell(
+      onTap: () {
+        // Push to exercise-detail with the first untagged exercise. The
+        // detail screen exposes the edit affordance for muscle tags. We
+        // pass just the name — the detail screen handles lookup.
+        context.push('/exercise-detail', extra: {
+          'name': untagged.first,
+          'pending_muscle_tag': true,
+        });
+      },
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: AppColors.info.withValues(alpha: 0.10),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: AppColors.info.withValues(alpha: 0.25),
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.label_important_outline,
+                size: 14, color: AppColors.info),
+            const SizedBox(width: 6),
+            Flexible(
+              child: Text(
+                'Tag muscles · $preview',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.info,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 

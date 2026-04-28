@@ -106,9 +106,12 @@ class PersonalRecordsService:
                 time_since_last_pr=None,
             )
 
-        # Get best existing 1RM
-        best_existing = max(existing_prs, key=lambda x: float(x.get("estimated_1rm_kg", 0)))
-        best_existing_1rm = float(best_existing.get("estimated_1rm_kg", 0))
+        # Get best existing 1RM. `.get(k, 0)` returns the default only when
+        # the key is missing — NOT when the value is explicitly NULL — so a
+        # row with `estimated_1rm_kg = NULL` would still hit `float(None)`.
+        # Coalesce with `or 0` to handle both cases.
+        best_existing = max(existing_prs, key=lambda x: float(x.get("estimated_1rm_kg") or 0))
+        best_existing_1rm = float(best_existing.get("estimated_1rm_kg") or 0)
         last_pr_date = best_existing.get("achieved_at")
 
         # Compare
@@ -371,8 +374,8 @@ class PersonalRecordsService:
         current_pr = sorted_prs[-1]
 
         # Calculate total improvement
-        first_1rm = float(first_pr.get("estimated_1rm_kg", 0))
-        current_1rm = float(current_pr.get("estimated_1rm_kg", 0))
+        first_1rm = float(first_pr.get("estimated_1rm_kg") or 0)
+        current_1rm = float(current_pr.get("estimated_1rm_kg") or 0)
 
         total_improvement_kg = round(current_1rm - first_1rm, 2) if first_1rm > 0 else None
         total_improvement_percent = round(
@@ -383,9 +386,9 @@ class PersonalRecordsService:
         pr_timeline = [
             {
                 "date": self._parse_date(pr.get("achieved_at")).isoformat(),
-                "estimated_1rm_kg": float(pr.get("estimated_1rm_kg", 0)),
-                "weight_kg": float(pr.get("weight_kg", 0)),
-                "reps": int(pr.get("reps", 0)),
+                "estimated_1rm_kg": float(pr.get("estimated_1rm_kg") or 0),
+                "weight_kg": float(pr.get("weight_kg") or 0),
+                "reps": int(pr.get("reps") or 0),
             }
             for pr in sorted_prs
         ]
@@ -394,14 +397,14 @@ class PersonalRecordsService:
             "exercise_name": exercise_name,
             "total_prs": len(exercise_prs),
             "current_pr": {
-                "weight_kg": float(current_pr.get("weight_kg", 0)),
-                "reps": int(current_pr.get("reps", 0)),
+                "weight_kg": float(current_pr.get("weight_kg") or 0),
+                "reps": int(current_pr.get("reps") or 0),
                 "estimated_1rm_kg": current_1rm,
                 "achieved_at": self._parse_date(current_pr.get("achieved_at")).isoformat(),
             },
             "first_pr": {
-                "weight_kg": float(first_pr.get("weight_kg", 0)),
-                "reps": int(first_pr.get("reps", 0)),
+                "weight_kg": float(first_pr.get("weight_kg") or 0),
+                "reps": int(first_pr.get("reps") or 0),
                 "estimated_1rm_kg": first_1rm,
                 "achieved_at": self._parse_date(first_pr.get("achieved_at")).isoformat(),
             },

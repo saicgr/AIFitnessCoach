@@ -209,7 +209,10 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
                   },
                   isDark: isDark,
                   child: Icon(
-                    Icons.download_rounded,
+                    // file_upload_outlined reads as "import" much more clearly
+                    // than the old download_rounded glyph (which looked like
+                    // "save to device" / dimmed and confusing in the header).
+                    Icons.file_upload_outlined,
                     color: textSecondary,
                     size: 22,
                   ),

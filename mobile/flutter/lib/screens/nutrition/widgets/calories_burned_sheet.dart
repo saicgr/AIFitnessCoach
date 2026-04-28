@@ -96,6 +96,14 @@ class _CaloriesBurnedSheetState extends ConsumerState<CaloriesBurnedSheet> {
     }
   }
 
+  /// Rough kcal estimate when Zealova hasn't stored per-workout calories.
+  /// Uses ~5 kcal/min (moderate strength training MET ≈ 5 for a 75 kg user).
+  /// Returns null when duration is 0 so the tile collapses the kcal pill.
+  static double? _estimateCaloriesFromDuration(int durationMinutes) {
+    if (durationMinutes <= 0) return null;
+    return (durationMinutes * 5).toDouble();
+  }
+
   String _formatActivityType(HealthWorkoutActivityType type) {
     final name = type.name;
     // Convert ENUM_NAME to Title Case
@@ -139,7 +147,10 @@ class _CaloriesBurnedSheetState extends ConsumerState<CaloriesBurnedSheet> {
       fitWizWorkouts.add(_WorkoutEntry(
         name: completedWorkout.name,
         durationMinutes: completedWorkout.durationMinutes,
-        caloriesBurned: null, // Zealova doesn't track per-workout calories
+        // Zealova doesn't store per-workout calories — estimate from duration
+        // using a moderate-intensity MET (~5 kcal/min) so the per-source
+        // breakdown shows a non-zero in-app contribution.
+        caloriesBurned: _estimateCaloriesFromDuration(completedWorkout.durationMinutes),
         source: '${Branding.appName}',
         isFromHealth: false,
       ));
@@ -148,7 +159,7 @@ class _CaloriesBurnedSheetState extends ConsumerState<CaloriesBurnedSheet> {
       fitWizWorkouts.add(_WorkoutEntry(
         name: w.name,
         durationMinutes: w.durationMinutes,
-        caloriesBurned: null,
+        caloriesBurned: _estimateCaloriesFromDuration(w.durationMinutes),
         source: '${Branding.appName}',
         isFromHealth: false,
       ));
@@ -201,6 +212,49 @@ class _CaloriesBurnedSheetState extends ConsumerState<CaloriesBurnedSheet> {
             'Calories burned from workouts today',
             style: TextStyle(fontSize: 13, color: textMuted),
           ),
+          const SizedBox(height: 12),
+
+          // Per-source breakdown so users can see how much came from in-app
+          // workouts vs HealthKit/wearable sync vs sauna. Without this users
+          // can't reconcile (e.g.) "I only did 1 set in the app but it says
+          // 526 kcal" — the 526 is from a synced wearable session.
+          Builder(builder: (_) {
+            final inApp = fitWizWorkouts.fold<double>(
+              0.0,
+              (acc, w) => acc + (w.caloriesBurned ?? 0),
+            );
+            final synced = _healthWorkouts.fold<double>(
+              0.0,
+              (acc, w) => acc + (w.caloriesBurned ?? 0),
+            );
+            final saunaTotal = _saunaSummary?.entries.fold<double>(
+                  0.0,
+                  (acc, e) => acc + (e.estimatedCalories ?? 0).toDouble(),
+                ) ??
+                0.0;
+            return Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _BreakdownChip(
+                  label: 'In-app',
+                  value: inApp.round(),
+                  color: AppColors.cyan,
+                ),
+                _BreakdownChip(
+                  label: 'Synced',
+                  value: synced.round(),
+                  color: AppColors.green,
+                ),
+                if (saunaTotal > 0)
+                  _BreakdownChip(
+                    label: 'Sauna',
+                    value: saunaTotal.round(),
+                    color: const Color(0xFFE65100),
+                  ),
+              ],
+            );
+          }),
           const SizedBox(height: 16),
 
           // Zealova workouts section
@@ -458,6 +512,53 @@ class _WorkoutTile extends StatelessWidget {
               ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Per-source breakdown chip rendered above the sectioned list.
+class _BreakdownChip extends StatelessWidget {
+  final String label;
+  final int value;
+  final Color color;
+  const _BreakdownChip({
+    required this.label,
+    required this.value,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: color.withValues(alpha: 0.30)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: color,
+              letterSpacing: 0.3,
+            ),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            '$value kcal',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: color,
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -1,6 +1,6 @@
 """Food logging endpoints (image, text, direct)."""
 from core.db import get_supabase_db
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date as date_type
 from typing import List, Optional, Tuple
 import uuid
 import base64
@@ -71,6 +71,68 @@ from api.v1.nutrition.helpers import (
 
 router = APIRouter()
 logger = get_logger(__name__)
+
+
+def _update_nutrition_streak(user_id: str, user_tz: str) -> None:
+    """Recalculate and persist the nutrition streak after any food log.
+
+    Idempotent for the same calendar day — calling twice on the same day is
+    safe. Runs as a BackgroundTask so it never blocks the log response.
+    """
+    try:
+        import pytz
+        db = get_supabase_db()
+
+        tz = pytz.timezone(user_tz)
+        today_local: date_type = datetime.now(tz).date()
+
+        result = db.client.table("nutrition_streaks") \
+            .select("*") \
+            .eq("user_id", user_id) \
+            .maybe_single() \
+            .execute()
+        data: dict = result.data or {}
+
+        current_streak: int = data.get("current_streak_days", 0)
+        total_logged: int = data.get("total_days_logged", 0)
+        longest: int = data.get("longest_streak_ever", 0)
+
+        raw = data.get("last_logged_date")
+        if raw:
+            last_logged = date_type.fromisoformat(str(raw)[:10])
+        else:
+            last_logged = None
+
+        # Already counted today — nothing to do.
+        if last_logged == today_local:
+            return
+
+        yesterday = today_local - timedelta(days=1)
+        new_total = total_logged + 1
+
+        if last_logged == yesterday:
+            new_streak = current_streak + 1
+            update = {
+                "current_streak_days": new_streak,
+                "total_days_logged": new_total,
+                "longest_streak_ever": max(longest, new_streak),
+                "last_logged_date": today_local.isoformat(),
+            }
+        else:
+            update = {
+                "current_streak_days": 1,
+                "streak_start_date": today_local.isoformat(),
+                "total_days_logged": new_total,
+                "longest_streak_ever": max(longest, 1),
+                "last_logged_date": today_local.isoformat(),
+            }
+
+        db.client.table("nutrition_streaks") \
+            .upsert({"user_id": user_id, **update}, on_conflict="user_id") \
+            .execute()
+    except Exception as exc:
+        logger.error(f"Failed to update nutrition streak for {user_id}: {exc}")
+
 
 # ============================================
 
@@ -209,6 +271,14 @@ async def log_food_from_image(
         # Invalidate daily summary cache so the next fetch returns fresh data
         from api.v1.nutrition.summaries import invalidate_daily_summary_cache
         await invalidate_daily_summary_cache(user_id)
+
+        # Background: update nutrition streak
+        db = get_supabase_db()
+        background_tasks.add_task(
+            _update_nutrition_streak,
+            user_id=user_id,
+            user_tz=resolve_timezone(request, db, user_id),
+        )
 
         # Background: Log activity analytics (non-critical, don't block response)
         background_tasks.add_task(
@@ -484,6 +554,14 @@ async def log_food_from_text(body: LogTextRequest, background_tasks: BackgroundT
         from api.v1.nutrition.summaries import invalidate_daily_summary_cache
         await invalidate_daily_summary_cache(body.user_id)
 
+        # Background: update nutrition streak
+        db = get_supabase_db()
+        background_tasks.add_task(
+            _update_nutrition_streak,
+            user_id=body.user_id,
+            user_tz=resolve_timezone(request, db, body.user_id),
+        )
+
         # Background: Log activity analytics (non-critical, don't block response)
         background_tasks.add_task(
             log_user_activity,
@@ -729,6 +807,13 @@ async def log_food_direct(
         # Invalidate daily summary cache so the next fetch returns fresh data
         from api.v1.nutrition.summaries import invalidate_daily_summary_cache
         await invalidate_daily_summary_cache(body.user_id)
+
+        # Background: update nutrition streak
+        background_tasks.add_task(
+            _update_nutrition_streak,
+            user_id=body.user_id,
+            user_tz=resolve_timezone(request, get_supabase_db(), body.user_id),
+        )
 
         # Backfill rich scoring (inflammation, NOVA, FODMAP, micronutrients)
         # for log modes that don't supply them. Runs after the response is

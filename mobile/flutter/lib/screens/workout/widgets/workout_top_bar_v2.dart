@@ -95,7 +95,11 @@ class WorkoutTopBarV2 extends ConsumerWidget {
     // Easy/Simple/Advanced labels crowds the rest of the bar. We collapse to
     // single-char [E|S|A] in that case.
     final screenWidth = MediaQuery.of(context).size.width;
-    final useCompactTierToggle = screenWidth < 380;
+    // iPhone 17 Pro / 16 Pro are 393pt; the cluster (favorite + minimize +
+    // timer + overflow) plus the full "Advanced" pill overflows by ~45pt at
+    // that width. Bump threshold to 420 so common Pro widths get the compact
+    // [E|S|A] tier toggle.
+    final useCompactTierToggle = screenWidth < 420;
 
     return Container(
       color: isDark ? WorkoutDesign.background : Colors.white,
@@ -283,7 +287,11 @@ class _TierToggle extends ConsumerWidget {
               // knows what mode they're in; inactive stays a single
               // letter so the cluster still fits. The UnitChip was dropped
               // from this top bar which frees ~68pt for the full label.
-              label: mode == tier ? tier.label : tier.shortLabel,
+              // In compact mode (< 420pt), use the single-letter shortLabel
+              // even for the selected tier so the cluster fits within the
+              // top-bar row budget. On wider screens we keep the full word
+              // for the selected tier so the user always knows the mode.
+              label: (mode == tier && !compact) ? tier.label : tier.shortLabel,
               selected: mode == tier,
               isDark: isDark,
               compact: compact,

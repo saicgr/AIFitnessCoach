@@ -573,8 +573,14 @@ class _IngredientChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = InflammationColors.getColor(ingredient.type);
 
+    // Use tap-trigger Tooltip on mobile so the user can explicitly reveal
+      // the reason. Flutter's built-in Tooltip already uses the root overlay,
+      // so it renders ABOVE the floating bottom nav. ✅
     return Tooltip(
       message: ingredient.reason,
+      triggerMode: TooltipTriggerMode.tap,
+      preferBelow: false,
+      showDuration: const Duration(seconds: 3),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(

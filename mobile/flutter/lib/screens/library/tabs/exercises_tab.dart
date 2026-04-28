@@ -100,6 +100,26 @@ class _ExercisesTabState extends ConsumerState<ExercisesTab> {
       });
     }
 
+    // Display label for the count widget. Avoids the "0 exercises found"
+    // mirage during cold load — show "Loading…" until results arrive, and
+    // prefer the authoritative total from filter-options when no filters are
+    // active so the user sees real progress instead of a zero placeholder.
+    final bool isInitialLoading =
+        exercisesState.isLoading && exercisesState.exercises.isEmpty;
+    final int activeFilterCount = activeFilters;
+    final String countLabel;
+    if (isInitialLoading) {
+      countLabel = totalExercises != null
+          ? 'Loading $totalExercises exercises…'
+          : 'Loading exercises…';
+    } else if (activeFilterCount == 0 &&
+        searchQuery.isEmpty &&
+        totalExercises != null) {
+      countLabel = '$totalExercises exercises';
+    } else {
+      countLabel = '${exercisesState.exercises.length} exercises found';
+    }
+
     return Column(
       children: [
         // Filter button row (search is handled by the top-level Library search bar)
@@ -108,7 +128,7 @@ class _ExercisesTabState extends ConsumerState<ExercisesTab> {
           child: Row(
             children: [
               Text(
-                '${exercisesState.exercises.length} exercises found',
+                countLabel,
                 style: TextStyle(
                   fontSize: 13,
                   color: textMuted,

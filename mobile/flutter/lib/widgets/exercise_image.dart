@@ -1,8 +1,33 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import '../data/services/api_client.dart';
 import '../data/services/image_url_cache.dart';
+
+/// Dedicated CacheManager for exercise illustrations.
+///
+/// Why a custom manager?
+/// - The default `DefaultCacheManager` shares its HTTP queue with every other
+///   `CachedNetworkImage` in the app. When a 50-row exercise grid mounts, the
+///   shared client serializes requests and later rows render blank for seconds.
+/// - This manager keeps a larger object cache (500) and a longer stale period
+///   (30 days) since exercise illustrations rarely change. Concurrency is
+///   handled by giving exercise images their own queue, isolated from food
+///   thumbnails / progress photos. ✅
+class _ExerciseImageCacheManager {
+  static const String _key = 'exerciseImagesV1';
+
+  static final CacheManager instance = CacheManager(
+    Config(
+      _key,
+      stalePeriod: const Duration(days: 30),
+      maxNrOfCacheObjects: 500,
+      repo: JsonCacheInfoRepository(databaseName: _key),
+      fileService: HttpFileService(),
+    ),
+  );
+}
 
 /// A reusable widget for displaying exercise images
 /// Fetches presigned URLs from the API and caches them
@@ -190,6 +215,10 @@ class _ExerciseImageState extends ConsumerState<ExerciseImage> {
 
     return CachedNetworkImage(
       imageUrl: _imageUrl!,
+      // Dedicated cache manager isolates exercise-illustration HTTP traffic
+      // from the rest of the app so a 50-row grid doesn't starve other
+      // image loads (and vice versa). ✅
+      cacheManager: _ExerciseImageCacheManager.instance,
       // Use exercise name as stable cache key so presigned URL rotation
       // doesn't duplicate images in disk cache.
       cacheKey: widget.exerciseName.isNotEmpty ? widget.exerciseName : null,

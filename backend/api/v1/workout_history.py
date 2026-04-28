@@ -100,7 +100,7 @@ class WorkoutHistoryResponse(BaseModel):
     """Response for a single workout history entry."""
     id: str
     exercise_name: str
-    weight_kg: float
+    weight_kg: Optional[float] = None
     reps: int
     sets: int
     performed_at: datetime
@@ -305,7 +305,7 @@ async def get_user_workout_history(
             entries.append(WorkoutHistoryResponse(
                 id=row["id"],
                 exercise_name=row["exercise_name"],
-                weight_kg=float(row["weight_kg"]),
+                weight_kg=float(row["weight_kg"]) if row.get("weight_kg") is not None else None,
                 reps=row["reps"],
                 sets=row["sets"],
                 performed_at=datetime.fromisoformat(row["performed_at"].replace("Z", "+00:00")),
@@ -370,6 +370,11 @@ async def get_strength_summary(user_id: str,
             # Aggregate by exercise
             exercise_data = {}
             for row in history_result.data or []:
+                if row.get("weight_kg") is None:
+                    # Skip historical rows missing weight — they can't contribute
+                    # to a strength summary, and silently zeroing them would skew
+                    # max/last calculations downstream.
+                    continue
                 name = row["exercise_name"].lower()
                 weight = float(row["weight_kg"])
                 performed = datetime.fromisoformat(row["performed_at"].replace("Z", "+00:00"))

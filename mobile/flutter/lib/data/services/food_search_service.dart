@@ -200,6 +200,11 @@ class FoodSearchService {
   void search(String query, String userId, {List<FoodLog>? cachedLogs}) {
     // Cancel previous debounce timer
     _debounceTimer?.cancel();
+    // Cancel any in-flight request from a previous keystroke immediately —
+    // don't wait for the next debounce tick to fire. Keeps the network
+    // pipeline clean and prevents stale results from racing the new query.
+    _activeCancelToken?.cancel('New keystroke');
+    _activeCancelToken = null;
 
     final normalizedQuery = _normalizeQuery(query);
     _currentQuery = normalizedQuery;
@@ -343,8 +348,15 @@ class FoodSearchService {
   ) async {
     try {
       return await search();
+    } on DioException catch (e) {
+      // Don't swallow cancel — it signals "user kept typing", and the
+      // outer _performSearch needs to short-circuit, not continue with
+      // an empty result list.
+      if (e.type == DioExceptionType.cancel) rethrow;
+      if (kDebugMode) debugPrint('❌ FoodSearch: $label error: $e');
+      return [];
     } catch (e) {
-      debugPrint('FoodSearch: $label error: $e');
+      if (kDebugMode) debugPrint('❌ FoodSearch: $label error: $e');
       return [];
     }
   }
@@ -498,10 +510,19 @@ class FoodSearchService {
       if (_currentCountry != null) {
         queryParams['country'] = _currentCountry!;
       }
+      // 6s per-request cap — backend RPC normally returns in 100-500ms; if
+      // a phase hangs (cold lock, RPC timeout) we'd rather show the user
+      // an empty result than spin forever. The CancelToken handles
+      // keystroke-driven cancellation; this timeout handles server-side
+      // pathological cases.
       final response = await _apiClient.get(
         '/nutrition/food-search',
         queryParameters: queryParams,
         cancelToken: cancelToken,
+        options: Options(
+          sendTimeout: const Duration(seconds: 6),
+          receiveTimeout: const Duration(seconds: 6),
+        ),
       );
 
       // Backend returns USDASearchResponse format: {foods: [...], total_hits, search_time_ms, ...}
@@ -512,12 +533,32 @@ class FoodSearchService {
         // Backend serializes source as 'data_type' (Pydantic field name)
         final sourceStr = item['data_type'] as String? ?? item['source'] as String? ?? '';
         final isPersonal = sourceStr == 'saved' || sourceStr == 'saved_item';
-        final calsPer100 = (nutrients['calories_per_100g'] as num?)?.toDouble() ?? 0;
-        final protPer100 = (nutrients['protein_per_100g'] as num?)?.toDouble();
-        final carbsPer100 = (nutrients['carbs_per_100g'] as num?)?.toDouble();
-        final fatPer100 = (nutrients['fat_per_100g'] as num?)?.toDouble();
+        // The /food-search list endpoint was trimmed (plan A2) to a flat
+        // shape: nutrients = {kcal, protein_g, carbs_g, fat_g, serving_weight_g}.
+        // The /food-search/branded and /food-search/whole-foods endpoints
+        // still emit the legacy {calories_per_100g, protein_per_100g, ...}
+        // dict. Read both so all three callers work without a BE alias.
+        // ⚠️  Both shapes encode per-100g values — the trimmed names are
+        // shorter, not rescaled.
+        final calsPer100 =
+            (nutrients['calories_per_100g'] as num?)?.toDouble() ??
+                (nutrients['kcal'] as num?)?.toDouble() ??
+                0;
+        final protPer100 =
+            (nutrients['protein_per_100g'] as num?)?.toDouble() ??
+                (nutrients['protein_g'] as num?)?.toDouble();
+        final carbsPer100 =
+            (nutrients['carbs_per_100g'] as num?)?.toDouble() ??
+                (nutrients['carbs_g'] as num?)?.toDouble();
+        final fatPer100 =
+            (nutrients['fat_per_100g'] as num?)?.toDouble() ??
+                (nutrients['fat_g'] as num?)?.toDouble();
         final weightPerUnit = (item['weight_per_unit_g'] as num?)?.toDouble();
-        final servingWeight = (item['serving_weight_g'] as num?)?.toDouble();
+        // serving_weight_g lives on the row in the legacy shape, but the
+        // trimmed list endpoint also surfaces it inside nutrients. Prefer
+        // row-level when present; fall back to nutrients dict.
+        final servingWeight = (item['serving_weight_g'] as num?)?.toDouble() ??
+            (nutrients['serving_weight_g'] as num?)?.toDouble();
         final defaultCount = (item['default_count'] as num?)?.toInt();
 
         // Scale to per-serving using serving_weight_g (already includes count,
@@ -546,8 +587,19 @@ class FoodSearchService {
           matchedQuery: item['matched_query'] as String?,
         );
       }).toList();
+    } on DioException catch (e) {
+      // Cancellations must propagate so `_performSearch` can short-circuit
+      // before emitting empty results that would clobber the UI for the
+      // (still pending) newer query. Per feedback_no_silent_fallbacks —
+      // don't degrade silently into [].
+      if (e.type == DioExceptionType.cancel) rethrow;
+      if (kDebugMode) {
+        debugPrint('❌ FoodSearch: Dio error searching food database '
+            '(${e.type.name}): ${e.message}');
+      }
+      return [];
     } catch (e) {
-      debugPrint('FoodSearch: Error searching food database: $e');
+      if (kDebugMode) debugPrint('❌ FoodSearch: Error searching food database: $e');
       return [];
     }
   }

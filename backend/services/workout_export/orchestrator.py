@@ -113,7 +113,7 @@ def _filename(format_key: str, user_id: UUID) -> str:
     ext = SUPPORTED_FORMATS[format_key]["extension"]
     ts = datetime.utcnow().strftime("%Y%m%d-%H%M%S")
     short = str(user_id)[:8]
-    return f"fitwiz-{format_key}-{short}-{ts}.{ext}"
+    return f"zealova-{format_key}-{short}-{ts}.{ext}"
 
 
 async def export_user_data(
