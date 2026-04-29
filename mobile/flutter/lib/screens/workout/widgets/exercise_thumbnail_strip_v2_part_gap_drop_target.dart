@@ -274,7 +274,7 @@ class _DraggableThumbnailState extends ConsumerState<_DraggableThumbnail>
 
     return LongPressDraggable<int>(
       data: widget.index,
-      delay: const Duration(milliseconds: 200),
+      delay: const Duration(milliseconds: 500),
       feedback: _buildDragFeedback(isDark),
       onDragStarted: () {
         HapticFeedback.mediumImpact();

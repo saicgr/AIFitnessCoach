@@ -106,10 +106,25 @@ extension XPNotifierExt on XPNotifier {
   }
 
 
+  // Deduplication guard: if a claim is already in-flight, concurrent callers
+  // (stacked_banner_panel, daily_crate_banner, open_all_crates_sheet) all get
+  // the same Future instead of firing separate POST requests.
+  Future<CrateRewardResult>? _pendingCrateClaim;
+
   /// Claim a daily crate (pick 1 of 3).
   /// [crateDate] is optional — pass an ISO date string to claim a past crate.
   /// [skipReload] — skip the post-claim server refresh (caller will batch-reload).
   Future<CrateRewardResult> claimDailyCrate(String crateType, {String? crateDate, bool skipReload = false}) async {
+    if (_pendingCrateClaim != null) return _pendingCrateClaim!;
+    _pendingCrateClaim = _doClaimDailyCrate(crateType, crateDate: crateDate, skipReload: skipReload);
+    try {
+      return await _pendingCrateClaim!;
+    } finally {
+      _pendingCrateClaim = null;
+    }
+  }
+
+  Future<CrateRewardResult> _doClaimDailyCrate(String crateType, {String? crateDate, bool skipReload = false}) async {
     try {
       final result = await _repository.claimDailyCrate(crateType, crateDate: crateDate);
 

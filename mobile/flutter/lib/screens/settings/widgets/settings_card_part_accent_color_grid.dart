@@ -752,10 +752,12 @@ class _ConsistencyModeOptionTile extends StatelessWidget {
 class _WorkoutDaysSelectorSheet extends ConsumerStatefulWidget {
   final List<int> initialDays;
   final String userId;
+  final String? activeProfileId;
 
   const _WorkoutDaysSelectorSheet({
     required this.initialDays,
     required this.userId,
+    this.activeProfileId,
   });
 
   @override

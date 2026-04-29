@@ -269,16 +269,30 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
             ? activeProfile!.workoutDays
             : user.workoutDays;
 
-        // If today workout hasn't resolved yet AND we have no cached value,
-        // show skeleton. Otherwise paint the card with whatever we have.
-        if (todayWorkoutAsync.isLoading && cachedToday == null) {
+        // If today workout hasn't resolved yet AND we have no cached value AND
+        // we don't even know the workout schedule yet — show skeleton.
+        // If workoutDays is already known (profile switch case), skip the
+        // global skeleton: render day-slot placeholders immediately so the
+        // carousel reflects the new profile's schedule without a blank flash.
+        if (todayWorkoutAsync.isLoading && cachedToday == null && workoutDays.isEmpty) {
           return _buildLoadingState(isDark, accentColor);
         }
+        final isRefreshing = todayWorkoutAsync.isLoading && cachedToday == null;
 
         // Check todayWorkoutProvider first for today's/next workout
         final todayWorkoutResponse = todayWorkoutAsync.valueOrNull;
-        final todayWorkout = todayWorkoutResponse?.todayWorkout?.toWorkout();
         final nextWorkout = todayWorkoutResponse?.nextWorkout?.toWorkout();
+
+        // Guard: only surface todayWorkout when today is actually a workout day
+        // for the active gym profile. Stale Redis-cached responses after a profile
+        // switch can return a workout from the previous profile for a day that isn't
+        // in the new profile's schedule — this prevents it showing as "TODAY".
+        final nowForGuard = DateTime.now();
+        final todayDayIndex = nowForGuard.weekday - 1; // 1=Mon→0 … 7=Sun→6
+        final isTodayWorkoutDay = workoutDays.contains(todayDayIndex);
+        final todayWorkout = (isTodayWorkoutDay)
+            ? todayWorkoutResponse?.todayWorkout?.toWorkout()
+            : null;
 
         // Use valueOrNull so we don't block on the slow all-workouts fetch
         final allWorkouts = workoutsAsync.valueOrNull ?? [];
@@ -372,7 +386,9 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
               }
             } else if (!date.isBefore(today)) {
               // Only show placeholders for today/future dates — can't generate for past dates
-              final isGeneratingForDate = todayWorkoutResponse?.isGenerating == true;
+              // While providers are refreshing (profile switch), treat all slots as
+              // auto-generating so the card shows a loading state instead of "No workout yet"
+              final isGeneratingForDate = isRefreshing || todayWorkoutResponse?.isGenerating == true;
               carouselItems.add(CarouselItem.placeholder(date, isAutoGenerating: isGeneratingForDate));
             }
             // Past dates with no workout are simply skipped (no card to show)

@@ -77,6 +77,12 @@ List<Workout>? _workoutsInMemoryCache;
 /// In-memory cache for workout screen summary
 WorkoutScreenSummary? _screenSummaryInMemoryCache;
 
+/// Call this when switching gym profiles so stale summary data from the old
+/// profile doesn't show in the workouts tab for the new profile.
+void clearScreenSummaryCache() {
+  _screenSummaryInMemoryCache = null;
+}
+
 /// Lightweight workout screen summary provider
 /// Uses cache-first pattern: returns cached data instantly, refreshes in background
 final workoutScreenSummaryProvider =

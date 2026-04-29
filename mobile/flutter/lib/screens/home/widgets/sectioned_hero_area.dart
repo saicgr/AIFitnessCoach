@@ -4,6 +4,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/accent_color_provider.dart';
 import '../../../core/providers/user_provider.dart';
 import '../../../core/providers/week_start_provider.dart';
+import '../../../data/providers/gym_profile_provider.dart';
 import '../../../data/models/workout.dart';
 import '../../../data/providers/today_workout_provider.dart';
 import '../../../data/repositories/workout_repository.dart';
@@ -146,11 +147,16 @@ class _SectionedHeroAreaState extends ConsumerState<SectionedHeroArea> {
   Widget _buildWeekCalendarStrip(bool isDark) {
     final userAsync = ref.watch(currentUserProvider);
     final workoutsAsync = ref.watch(workoutsProvider);
+    final activeGymProfile = ref.watch(activeGymProfileProvider);
 
     final user = userAsync.valueOrNull;
     if (user == null) return const SizedBox.shrink();
 
-    final workoutDays = user.workoutDays;
+    // Use the active gym profile's workout days (per-profile schedule).
+    // Fall back to the global user field only when no gym profile is loaded yet.
+    final workoutDays = (activeGymProfile?.workoutDays.isNotEmpty == true)
+        ? activeGymProfile!.workoutDays
+        : user.workoutDays;
     if (workoutDays.isEmpty) return const SizedBox.shrink();
 
     final weekConfig = ref.watch(weekDisplayConfigProvider);

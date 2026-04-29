@@ -180,6 +180,14 @@ class _GymEquipmentSheetState extends State<GymEquipmentSheet> {
       widget.selectedEquipment.map((e) => e.toLowerCase().replaceAll(' ', '_')),
     );
 
+    // Expand the abstract 'full_gym' token to every known equipment item
+    // so commercial-gym profiles show all 43 items pre-selected.
+    if (_selectedEquipment.remove('full_gym')) {
+      for (final items in gymEquipmentCategories.values) {
+        _selectedEquipment.addAll(items);
+      }
+    }
+
     // Ensure all selected equipment has an entry in the map
     for (final name in _selectedEquipment) {
       _equipmentMap.putIfAbsent(name, () => EquipmentItem.fromName(name));

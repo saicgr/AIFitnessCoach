@@ -24,6 +24,8 @@ import '../../../data/providers/cosmetics_provider.dart';
 import '../../../data/providers/xp_provider.dart';
 import '../../../widgets/weight_increments_sheet.dart';
 import '../../../data/models/ai_split_preset.dart';
+import '../../../data/models/gym_profile.dart';
+import '../../../data/providers/gym_profile_provider.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../library/components/ai_split_preset_detail_sheet.dart';
@@ -260,16 +262,19 @@ class SettingsCard extends ConsumerWidget {
   void _showWorkoutDaysSelector(BuildContext context, WidgetRef ref) {
     final authState = ref.read(authStateProvider);
     final user = authState.user;
-    final currentDays = user?.workoutDays ?? [];
+    final activeProfile = ref.read(activeGymProfileProvider);
+    // Prefer the active gym profile's days; fall back to global user days
+    final currentDays = activeProfile?.workoutDays ?? user?.workoutDays ?? [];
 
     showGlassSheet(
       context: context,
       useRootNavigator: true,
       builder: (context) => GlassSheet(
         child: _WorkoutDaysSelectorSheet(
-        initialDays: currentDays,
-        userId: user?.id ?? '',
-      ),
+          initialDays: currentDays,
+          userId: user?.id ?? '',
+          activeProfileId: activeProfile?.id,
+        ),
       ),
     );
   }
@@ -291,6 +296,7 @@ class SettingsCard extends ConsumerWidget {
     final videoCacheState = ref.watch(videoCacheProvider);
     final authState = ref.watch(authStateProvider);
     final currentUser = authState.user;
+    final activeGymProfile = ref.watch(activeGymProfileProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final isDarkModeActive = themeMode == ThemeMode.dark ||
         (themeMode == ThemeMode.system &&
@@ -700,11 +706,16 @@ class SettingsCard extends ConsumerWidget {
             );
             onTap = () => _navigateToDownloadedVideos(context);
           } else if (item.isWorkoutDaysSelector) {
+            const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+            final gymDays = activeGymProfile?.workoutDays;
+            final daysLabel = gymDays != null && gymDays.isNotEmpty
+                ? (gymDays.toList()..sort()).map((d) => dayNames[d]).join(', ')
+                : currentUser?.workoutDaysFormatted ?? 'Not set';
             trailing = Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  currentUser?.workoutDaysFormatted ?? 'Not set',
+                  daysLabel,
                   style: TextStyle(
                     fontSize: 14,
                     color: textMuted,

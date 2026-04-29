@@ -39,6 +39,8 @@ import 'sections/sections.dart';
 import 'widgets/widgets.dart';
 import '../../core/providers/workout_ui_mode_provider.dart';
 import '../../core/theme/accent_color_provider.dart';
+import '../home/widgets/manage_gym_profiles_sheet.dart';
+import '../../widgets/glass_sheet.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
 part 'settings_screen_part_social_icon.dart';
@@ -583,6 +585,20 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             value: '$splitName \u00B7 $daysPerWeek days',
             route: '/settings/workout-settings',
             sectionKeys: const ['training'],
+          ),
+          _SettingsRow(
+            icon: Icons.storefront_outlined,
+            iconColor: isDark ? AppColors.green : AppColorsLight.green,
+            title: 'My Gyms',
+            value: gymProfileName,
+            sectionKeys: const ['training', 'gym', 'equipment', 'location'],
+            onTap: () {
+              HapticFeedback.lightImpact();
+              showGlassSheet(
+                context: context,
+                builder: (_) => const ManageGymProfilesSheet(),
+              );
+            },
           ),
           _SettingsRow(
             icon: Icons.fitness_center,

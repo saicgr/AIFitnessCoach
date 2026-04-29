@@ -30,6 +30,7 @@ import 'widgets/exercise_preferences_card.dart';
 import 'widgets/upcoming_workouts_sheet.dart';
 import 'widgets/previous_workouts_sheet.dart';
 import 'widgets/favorite_workouts_sheet.dart';
+import '../home/widgets/manage_gym_profiles_sheet.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
 /// Workouts screen - central hub for all workout-related content
@@ -258,19 +259,28 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
                   ),
                 ),
                 const SizedBox(width: 8),
-                // Training setup button - glassmorphic
+                // Gym manager button — opens ManageGymProfilesSheet
                 _GlassmorphicButton(
                   onTap: () {
                     HapticService.light();
-                    final activeProfile = ref.read(activeGymProfileProvider);
-                    if (activeProfile != null) {
-                      showGlassSheet(
-                        context: context,
-                        builder: (ctx) => EditGymProfileSheet(profile: activeProfile),
-                      );
-                    } else {
-                      context.push('/settings');
-                    }
+                    showGlassSheet(
+                      context: context,
+                      builder: (ctx) => const ManageGymProfilesSheet(),
+                    );
+                  },
+                  isDark: isDark,
+                  child: Icon(
+                    Icons.storefront_outlined,
+                    color: textSecondary,
+                    size: 22,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                // Workout settings button — opens WorkoutSettingsPage
+                _GlassmorphicButton(
+                  onTap: () {
+                    HapticService.light();
+                    context.push('/settings/workout-settings');
                   },
                   isDark: isDark,
                   child: Icon(

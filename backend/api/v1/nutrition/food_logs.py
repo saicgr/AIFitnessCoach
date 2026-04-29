@@ -32,7 +32,7 @@ logger = get_logger(__name__)
 async def list_food_logs(
     user_id: str,
     request: Request,
-    limit: int = Query(default=50, le=500),
+    limit: int = Query(default=50, le=1000),
     from_date: Optional[str] = Query(default=None, description="Start date (YYYY-MM-DD)"),
     to_date: Optional[str] = Query(default=None, description="End date (YYYY-MM-DD)"),
     meal_type: Optional[str] = Query(default=None, description="Filter by meal type"),

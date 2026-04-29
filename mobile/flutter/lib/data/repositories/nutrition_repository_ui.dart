@@ -73,7 +73,7 @@ extension NutritionRepositoryExt on NutritionRepository {
           '${tomorrow.year.toString().padLeft(4, '0')}-${tomorrow.month.toString().padLeft(2, '0')}-${tomorrow.day.toString().padLeft(2, '0')}';
       final logs = await getFoodLogs(
         userId,
-        limit: days * 6,
+        limit: min(days * 6, 500),
         fromDate: fromStr,
         toDate: toStr,
       );

@@ -123,6 +123,14 @@ class _EditGymProfileSheetState extends ConsumerState<EditGymProfileSheet> {
     _selectedColor = widget.profile.color;
     _selectedEnvironment = widget.profile.workoutEnvironment;
     _selectedEquipment = List.from(widget.profile.equipment);
+    // Expand abstract 'full_gym' token to all known equipment items
+    if (_selectedEquipment.remove('full_gym')) {
+      for (final items in gymEquipmentCategories.values) {
+        for (final item in items) {
+          if (!_selectedEquipment.contains(item)) _selectedEquipment.add(item);
+        }
+      }
+    }
     _equipmentDetails = List.from(widget.profile.equipmentDetails ?? []);
     // Initialize location from existing profile
     if (widget.profile.hasLocation) {

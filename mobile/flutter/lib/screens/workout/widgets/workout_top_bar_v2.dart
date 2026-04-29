@@ -70,6 +70,9 @@ class WorkoutTopBarV2 extends ConsumerWidget {
   /// session counts toward streaks / PRs / history.
   final VoidCallback? onCompleteWorkoutNow;
 
+  /// Optional "Skip exercise" overflow action. Skips to the next exercise.
+  final VoidCallback? onSkipExercise;
+
   const WorkoutTopBarV2({
     super.key,
     required this.workoutSeconds,
@@ -86,6 +89,7 @@ class WorkoutTopBarV2 extends ConsumerWidget {
     this.onFavoriteTap,
     this.isFavorite = false,
     this.onCompleteWorkoutNow,
+    this.onSkipExercise,
   });
 
   @override
@@ -206,10 +210,8 @@ class WorkoutTopBarV2 extends ConsumerWidget {
                     ),
                   ),
 
-                  // Overflow menu — currently just "Complete workout now"
-                  // so the user can finalize a partially-logged session
-                  // without having to log every remaining set first.
-                  if (onCompleteWorkoutNow != null) ...[
+                  // Overflow menu — Skip exercise + Complete workout now
+                  if (onCompleteWorkoutNow != null || onSkipExercise != null) ...[
                     const SizedBox(width: 4),
                     SizedBox(
                       width: 36,
@@ -225,21 +227,32 @@ class WorkoutTopBarV2 extends ConsumerWidget {
                         ),
                         tooltip: 'More',
                         onSelected: (v) {
-                          if (v == 'complete_now' &&
-                              onCompleteWorkoutNow != null) {
-                            HapticFeedback.selectionClick();
-                            onCompleteWorkoutNow!();
+                          HapticFeedback.selectionClick();
+                          if (v == 'skip_exercise') {
+                            onSkipExercise?.call();
+                          } else if (v == 'complete_now') {
+                            onCompleteWorkoutNow?.call();
                           }
                         },
-                        itemBuilder: (ctx) => const [
-                          PopupMenuItem<String>(
-                            value: 'complete_now',
-                            child: Row(children: [
-                              Icon(Icons.check_circle_rounded, size: 18),
-                              SizedBox(width: 10),
-                              Text('Complete workout'),
-                            ]),
-                          ),
+                        itemBuilder: (ctx) => [
+                          if (onSkipExercise != null)
+                            const PopupMenuItem<String>(
+                              value: 'skip_exercise',
+                              child: Row(children: [
+                                Icon(Icons.skip_next_rounded, size: 18),
+                                SizedBox(width: 10),
+                                Text('Skip exercise'),
+                              ]),
+                            ),
+                          if (onCompleteWorkoutNow != null)
+                            const PopupMenuItem<String>(
+                              value: 'complete_now',
+                              child: Row(children: [
+                                Icon(Icons.check_circle_rounded, size: 18),
+                                SizedBox(width: 10),
+                                Text('Complete workout'),
+                              ]),
+                            ),
                         ],
                       ),
                     ),

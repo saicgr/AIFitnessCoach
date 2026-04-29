@@ -297,12 +297,21 @@ class _ExerciseThumbnailStripV2State extends State<ExerciseThumbnailStripV2> {
     }
 
     return SizedBox(
-      height: _thumbnailHeight + 20, // Extra height for superset border
-      child: ListView(
+      height: _thumbnailHeight + 20,
+      child: Scrollbar(
         controller: _scrollController,
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        children: items,
+        thumbVisibility: true,
+        thickness: 3,
+        radius: const Radius.circular(2),
+        child: Padding(
+          padding: const EdgeInsets.only(bottom: 6),
+          child: ListView(
+            controller: _scrollController,
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            children: items,
+          ),
+        ),
       ),
     );
   }

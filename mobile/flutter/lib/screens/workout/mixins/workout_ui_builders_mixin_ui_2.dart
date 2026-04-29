@@ -77,6 +77,7 @@ extension WorkoutUIBuildersMixinUI2 on WorkoutUIBuildersMixin {
                         onFavoriteTap: currentExercise != null ? () => toggleFavoriteExercise() : null,
                         isFavorite: isFavorite,
                         onCompleteWorkoutNow: completeWorkoutNow,
+                        onSkipExercise: skipExercise,
                       );
                     },
                   ),
@@ -193,44 +194,6 @@ extension WorkoutUIBuildersMixinUI2 on WorkoutUIBuildersMixin {
                                   }),
                                 ],
                               ),
-                              const SizedBox(width: 12),
-                              // Info magic pill (styled like Video chip)
-                              GestureDetector(
-                                onTap: () {
-                                  HapticFeedback.lightImpact();
-                                  exerciseInfoOpened++;
-                                  showExerciseDetailsSheet(exercises[viewingExerciseIndex]);
-                                },
-                                child: Container(
-                                  height: WorkoutDesign.chipHeight,
-                                  padding: const EdgeInsets.symmetric(horizontal: 14),
-                                  decoration: BoxDecoration(
-                                    color: isDark ? WorkoutDesign.surface : Colors.white,
-                                    borderRadius: BorderRadius.circular(WorkoutDesign.radiusRound),
-                                    border: Border.all(
-                                      color: isDark ? WorkoutDesign.border : WorkoutDesign.borderLight,
-                                      width: 1,
-                                    ),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(
-                                        Icons.info_outline_rounded,
-                                        size: 16,
-                                        color: isDark ? WorkoutDesign.textPrimary : Colors.grey.shade800,
-                                      ),
-                                      const SizedBox(width: 6),
-                                      Text(
-                                        'Info',
-                                        style: WorkoutDesign.chipStyle.copyWith(
-                                          color: isDark ? WorkoutDesign.textPrimary : Colors.grey.shade800,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
                             ],
                           ),
                         ),
@@ -283,44 +246,6 @@ extension WorkoutUIBuildersMixinUI2 on WorkoutUIBuildersMixin {
                                           fontSize: 13,
                                           fontWeight: FontWeight.w600,
                                           color: isDark ? WorkoutDesign.textPrimary : Colors.grey.shade700,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              // Skip button
-                              GestureDetector(
-                                onTap: () {
-                                  HapticFeedback.lightImpact();
-                                  skipExercise();
-                                },
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.orange.withValues(alpha: 0.12),
-                                    borderRadius: BorderRadius.circular(8),
-                                    border: Border.all(
-                                      color: AppColors.orange.withValues(alpha: 0.4),
-                                      width: 1,
-                                    ),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Icon(
-                                        Icons.skip_next_rounded,
-                                        size: 16,
-                                        color: AppColors.orange,
-                                      ),
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        'Skip',
-                                        style: TextStyle(
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.w700,
-                                          color: AppColors.orange,
                                         ),
                                       ),
                                     ],

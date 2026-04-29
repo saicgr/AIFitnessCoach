@@ -137,9 +137,18 @@ def _resolve_workout_days(user: dict, active_profile: Optional[dict]) -> List[in
     if active_profile:
         profile_days = active_profile.get("workout_days")
         if isinstance(profile_days, list) and profile_days:
-            int_days = [d for d in profile_days if isinstance(d, int) and 0 <= d <= 6]
+            int_days = [d for d in profile_days if isinstance(d, int)]
             if int_days:
-                return sorted(set(int_days))
+                # Apply same 1-indexed normalization as _get_user_workout_days:
+                # if 7 is present the list is 1-indexed (Mon=1…Sun=7), subtract 1.
+                # Without a 7 marker treat as already 0-indexed (Mon=0…Sun=6).
+                has_seven = any(d == 7 for d in int_days)
+                if has_seven:
+                    normalized = sorted(set(d - 1 for d in int_days if 1 <= d <= 7))
+                else:
+                    normalized = sorted(set(d for d in int_days if 0 <= d <= 6))
+                if normalized:
+                    return normalized
     return _get_user_workout_days(user)
 
 
@@ -420,13 +429,26 @@ def _get_upcoming_dates_needing_generation(
 
 
 def _backfill_gym_profile_id(db, user_id: str, gym_profile_id: str) -> None:
-    """Background task: tag workouts with NULL gym_profile_id.
+    """Background task: tag truly orphaned workouts with NULL gym_profile_id.
 
-    Workouts created before gym profiles existed or through flows that
-    didn't set gym_profile_id will be invisible to profile-filtered queries.
-    This one-shot backfill assigns the active profile to those workouts.
+    Only runs when the user has NEVER used gym profiles before (all workouts
+    are NULL). Skipped once any workout has a gym_profile_id set, preventing
+    cross-profile contamination when switching between profiles.
     """
     try:
+        # Skip backfill if user already has workouts tagged to any profile —
+        # they've been using profiles and the NULLs are from the other profile's
+        # workouts, not from pre-profile-era data.
+        existing_tagged = db.client.table("workouts") \
+            .select("id") \
+            .eq("user_id", user_id) \
+            .not_.is_("gym_profile_id", "null") \
+            .limit(1) \
+            .execute()
+        if existing_tagged.data:
+            logger.debug(f"[BACKFILL] Skipping — user already has profile-tagged workouts")
+            return
+
         result = db.client.table("workouts") \
             .update({"gym_profile_id": gym_profile_id}) \
             .eq("user_id", user_id) \

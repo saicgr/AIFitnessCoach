@@ -56,16 +56,23 @@ class _WorkoutDaysSelectorSheetState
     });
 
     try {
-      final repo = ref.read(workoutRepositoryProvider);
-
-      // Convert day indices to day names
       final sortedDays = _selectedDays.toList()..sort();
       final dayNamesList = sortedDays
           .map((idx) => _days.firstWhere((d) => d.value == idx).short)
           .toList();
 
-      // Call the quick day change API
-      await repo.quickDayChange(widget.userId, dayNamesList);
+      final activeProfileId = widget.activeProfileId;
+      if (activeProfileId != null) {
+        // Save workout days to the active gym profile
+        await ref.read(gymProfilesProvider.notifier).updateProfile(
+          activeProfileId,
+          GymProfileUpdate(workoutDays: sortedDays),
+        );
+      } else {
+        // Fallback: no active gym profile — update global user days
+        final repo = ref.read(workoutRepositoryProvider);
+        await repo.quickDayChange(widget.userId, dayNamesList);
+      }
 
       // Refresh user data
       await ref.read(authStateProvider.notifier).refreshUser();

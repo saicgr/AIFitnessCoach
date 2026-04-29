@@ -67,9 +67,13 @@ class _GymProfileSwitcherState extends ConsumerState<GymProfileSwitcher> {
       // can trigger generation for the new profile (static flags survive invalidation)
       TodayWorkoutNotifier.resetGenerationState();
 
-      // Invalidate workout providers to refetch for new profile
+      // Clear the screen summary static cache — old gym's data must not bleed through.
+      clearScreenSummaryCache();
+
+      // Invalidate all workout providers to refetch for new profile
       ref.invalidate(todayWorkoutProvider);
       ref.invalidate(workoutsProvider);
+      ref.invalidate(workoutScreenSummaryProvider);
       debugPrint('🔄 [GymProfileSwitcher] Invalidated workout providers');
 
       widget.onProfileSwitched?.call();
