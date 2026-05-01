@@ -2,7 +2,7 @@
   "applinks": {
     "details": [
       {
-        "appIDs": ["G9RL26P89Q.com.aifitnesscoach.app"],
+        "appIDs": ["G9RL26P89Q.com.zealova.app"],
         "components": [
           {
             "/": "/invite/*",
