@@ -1023,6 +1023,7 @@ class _CreateExerciseSheetState extends ConsumerState<CreateExerciseSheet>
           defaultInclinePercent: double.tryParse(_inclineController.text.trim()),
           defaultDurationSeconds: durationSeconds,
           defaultDistanceMiles: double.tryParse(_distanceController.text.trim()),
+          imageFilePath: _selectedImage?.path,
         );
 
     setState(() => _isSubmitting = false);

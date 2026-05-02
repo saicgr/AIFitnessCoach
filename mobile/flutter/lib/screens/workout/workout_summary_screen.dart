@@ -14,6 +14,7 @@ import 'widgets/expandable_summary_exercise_card.dart';
 import 'widgets/exercise_mini_chart.dart';
 import 'widgets/edit_set_sheet.dart';
 import 'widgets/exercise_add_sheet.dart';
+import 'widgets/synced_summary_view.dart';
 import '../../shareables/adapters/workout_adapter.dart';
 import '../../shareables/shareable_sheet.dart';
 
@@ -69,7 +70,11 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen> {
       floatingActionButton: FutureBuilder<WorkoutSummaryResponse?>(
         future: _summaryFuture,
         builder: (context, snapshot) {
-          if (snapshot.data == null || snapshot.data!.isMarkedDone) {
+          // Hide Add-Exercise FAB on marked-done OR synced rows — there's
+          // nothing Zealova-shaped to append to a Health Connect import.
+          if (snapshot.data == null ||
+              snapshot.data!.isMarkedDone ||
+              snapshot.data!.isSyncedFromHealthApp) {
             return const SizedBox.shrink();
           }
           return FloatingActionButton.extended(
@@ -93,6 +98,17 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen> {
           }
 
           final summary = snapshot.data!;
+          // Synced (Apple Health / Health Connect / Garmin / Fitbit) rows
+          // get their own read-only view — the regular Zealova layout would
+          // render "Marked Done" + "Manually marked as done at <ts>" because
+          // synced imports are stamped completion_method='marked_done', and
+          // would show 0/0/0 for sets/reps/volume that don't apply to
+          // synced sessions. Branch BEFORE the marked-done check so user-
+          // initiated "Mark as done" on real Zealova plans still hits the
+          // existing path unchanged.
+          if (summary.isSyncedFromHealthApp) {
+            return SyncedSummaryView(summary: summary);
+          }
           if (summary.isMarkedDone) {
             return _buildMarkedDoneBody(summary, isDark, accentColor);
           }

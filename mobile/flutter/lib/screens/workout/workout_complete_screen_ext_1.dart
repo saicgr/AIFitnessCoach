@@ -778,10 +778,15 @@ extension __WorkoutCompleteScreenStateExt1 on _WorkoutCompleteScreenState {
       return;
     }
     final workoutLogId = widget.workoutLogId;
+    final allowPublicLinks = ref.read(publicShareLinksProvider);
     await ShareableSheet.show(
       context,
       data: shareable,
-      onGenerateShareLink: workoutLogId == null || workoutLogId.isEmpty
+      // Privacy gate: when the user has disabled public share links the
+      // pill is hidden entirely so no URL ever gets generated.
+      onGenerateShareLink: !allowPublicLinks ||
+              workoutLogId == null ||
+              workoutLogId.isEmpty
           ? null
           : () => _generateShareLink(workoutLogId),
     );

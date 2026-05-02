@@ -68,7 +68,7 @@ Set in Render → Dashboard → your service → Environment. See [`MCP_ENV_VARS
 
 | Variable | Default |
 |---|---|
-| `MCP_UPGRADE_URL` | `https://fitwiz.us/upgrade?reason=mcp` |
+| `MCP_UPGRADE_URL` | `https://zealova.com/upgrade?reason=mcp` |
 | `MCP_RATE_LIMIT_PER_MIN` | `30` |
 | `MCP_RATE_LIMIT_PER_HOUR` | `500` |
 | `MCP_WRITE_LIMIT_PER_HOUR` | `25` |

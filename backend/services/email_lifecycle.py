@@ -56,7 +56,7 @@ class EmailLifecycleMixin:
 
         from core.config import get_settings
         backend_url = get_settings().backend_base_url
-        logo_url = f"{backend_url}/static/logo.png"
+        logo_url = get_settings().email_logo_url
         open_url = f"{backend_url}/open"
 
         name = first_name_value or "there"
@@ -110,7 +110,7 @@ class EmailLifecycleMixin:
 
         from core.config import get_settings
         backend_url = get_settings().backend_base_url
-        logo_url = f"{backend_url}/static/logo.png"
+        logo_url = get_settings().email_logo_url
         open_url = f"{backend_url}/open"
 
         name = first_name_value or "there"
@@ -167,7 +167,7 @@ class EmailLifecycleMixin:
 
         from core.config import get_settings
         backend_url = get_settings().backend_base_url
-        logo_url = f"{backend_url}/static/logo.png"
+        logo_url = get_settings().email_logo_url
         open_url = f"{backend_url}/open"
 
         name = first_name_value or "there"
@@ -230,7 +230,7 @@ class EmailLifecycleMixin:
 
         from core.config import get_settings
         backend_url = get_settings().backend_base_url
-        logo_url = f"{backend_url}/static/logo.png"
+        logo_url = get_settings().email_logo_url
         open_url = f"{backend_url}/open"
 
         name = first_name_value or "there"
@@ -298,7 +298,7 @@ class EmailLifecycleMixin:
 
         from core.config import get_settings
         backend_url = get_settings().backend_base_url
-        logo_url = f"{backend_url}/static/logo.png"
+        logo_url = get_settings().email_logo_url
         open_url = f"{backend_url}/open"
 
         name = first_name_value or "there"
@@ -450,7 +450,7 @@ class EmailLifecycleMixin:
 
         from core.config import get_settings
         backend_url = get_settings().backend_base_url
-        logo_url = f"{backend_url}/static/logo.png"
+        logo_url = get_settings().email_logo_url
         open_url = f"{backend_url}/open"
 
         name = first_name_value or "there"
@@ -510,7 +510,7 @@ class EmailLifecycleMixin:
 
         from core.config import get_settings
         backend_url = get_settings().backend_base_url
-        logo_url = f"{backend_url}/static/logo.png"
+        logo_url = get_settings().email_logo_url
         open_url = f"{backend_url}/open"
 
         name = first_name_value or "there"
@@ -566,7 +566,7 @@ class EmailLifecycleMixin:
 
         from core.config import get_settings
         backend_url = get_settings().backend_base_url
-        logo_url = f"{backend_url}/static/logo.png"
+        logo_url = get_settings().email_logo_url
         open_url = f"{backend_url}/open"
 
         name = first_name_value or "there"
@@ -620,7 +620,7 @@ class EmailLifecycleMixin:
 
         from core.config import get_settings
         backend_url = get_settings().backend_base_url
-        logo_url = f"{backend_url}/static/logo.png"
+        logo_url = get_settings().email_logo_url
         open_url = f"{backend_url}/open"
 
         name = first_name_value or "there"
@@ -673,7 +673,7 @@ class EmailLifecycleMixin:
             return {"error": "Email service not configured"}
         from core.config import get_settings
         backend_url = get_settings().backend_base_url
-        logo_url = f"{backend_url}/static/logo.png"
+        logo_url = get_settings().email_logo_url
         open_url = f"{backend_url}/open"
         name = first_name_value or "there"
         coach = stats.coach_name or "Your Coach"
@@ -714,7 +714,7 @@ class EmailLifecycleMixin:
             return {"error": "Email service not configured"}
         from core.config import get_settings
         backend_url = get_settings().backend_base_url
-        logo_url = f"{backend_url}/static/logo.png"
+        logo_url = get_settings().email_logo_url
         open_url = f"{backend_url}/open"
         name = first_name_value or "there"
         coach = stats.coach_name or "Your Coach"
@@ -755,7 +755,7 @@ class EmailLifecycleMixin:
             return {"error": "Email service not configured"}
         from core.config import get_settings
         backend_url = get_settings().backend_base_url
-        logo_url = f"{backend_url}/static/logo.png"
+        logo_url = get_settings().email_logo_url
         open_url = f"{backend_url}/open"
         name = first_name_value or "there"
         coach = stats.coach_name or "Your Coach"
@@ -796,7 +796,7 @@ class EmailLifecycleMixin:
             return {"error": "Email service not configured"}
         from core.config import get_settings
         backend_url = get_settings().backend_base_url
-        logo_url = f"{backend_url}/static/logo.png"
+        logo_url = get_settings().email_logo_url
         open_url = f"{backend_url}/open"
         name = first_name_value or "there"
         coach = stats.coach_name or "Your Coach"
@@ -837,7 +837,7 @@ class EmailLifecycleMixin:
             return {"error": "Email service not configured"}
         from core.config import get_settings
         backend_url = get_settings().backend_base_url
-        logo_url = f"{backend_url}/static/logo.png"
+        logo_url = get_settings().email_logo_url
         open_url = f"{backend_url}/open"
         name = first_name_value or "there"
         coach = stats.coach_name or "Your Coach"
@@ -890,7 +890,7 @@ class EmailLifecycleMixin:
 
         from core.config import get_settings
         backend_url = get_settings().backend_base_url
-        logo_url = f"{backend_url}/static/logo.png"
+        logo_url = get_settings().email_logo_url
         open_url = f"{backend_url}/open"
 
         name = first_name_value or "there"
@@ -936,7 +936,7 @@ class EmailLifecycleMixin:
 
         from core.config import get_settings
         backend_url = get_settings().backend_base_url
-        logo_url = f"{backend_url}/static/logo.png"
+        logo_url = get_settings().email_logo_url
         open_url = f"{backend_url}/open"
 
         name = first_name_value or "there"
@@ -982,7 +982,7 @@ class EmailLifecycleMixin:
 
         from core.config import get_settings
         backend_url = get_settings().backend_base_url
-        logo_url = f"{backend_url}/static/logo.png"
+        logo_url = get_settings().email_logo_url
         open_url = f"{backend_url}/open"
 
         name = first_name_value or "there"
@@ -1035,7 +1035,7 @@ class EmailLifecycleMixin:
 
         from core.config import get_settings
         backend_url = get_settings().backend_base_url
-        logo_url = f"{backend_url}/static/logo.png"
+        logo_url = get_settings().email_logo_url
         open_url = f"{backend_url}/open"
 
         name = first_name_value or "there"

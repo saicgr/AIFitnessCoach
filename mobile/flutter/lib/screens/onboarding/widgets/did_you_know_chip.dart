@@ -18,55 +18,64 @@ class DidYouKnowChip extends StatelessWidget {
     final t = OnboardingTheme.of(context);
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+      padding: const EdgeInsets.fromLTRB(24, 4, 24, 6),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(10),
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+            // Single-line, low-height chip: keeps the educational moment
+            // without consuming the vertical space that option lists need.
+            // Long facts gracefully ellipsize — full text is still spoken
+            // by accessibility readers via the Tooltip below.
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
             decoration: BoxDecoration(
               color: t.cardFill,
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(10),
               border: Border.all(color: t.borderDefault),
             ),
-            child: Row(
-              children: [
-                Icon(Icons.lightbulb_outline, size: 18, color: t.textPrimary)
-                    .animate(onPlay: (c) => c.repeat(reverse: true))
-                    .scale(
-                      begin: const Offset(1.0, 1.0),
-                      end: const Offset(1.15, 1.15),
-                      duration: 1200.ms,
-                      curve: Curves.easeInOut,
-                    ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text.rich(
-                    TextSpan(
-                      children: [
-                        TextSpan(
-                          text: 'Did you know?  ',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            color: t.textPrimary,
+            child: Tooltip(
+              message: text,
+              child: Row(
+                children: [
+                  Icon(Icons.lightbulb_outline, size: 14, color: t.textPrimary)
+                      .animate(onPlay: (c) => c.repeat(reverse: true))
+                      .scale(
+                        begin: const Offset(1.0, 1.0),
+                        end: const Offset(1.15, 1.15),
+                        duration: 1200.ms,
+                        curve: Curves.easeInOut,
+                      ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text.rich(
+                      TextSpan(
+                        children: [
+                          TextSpan(
+                            text: 'Did you know?  ',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: t.textPrimary,
+                            ),
                           ),
-                        ),
-                        TextSpan(
-                          text: text,
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                            color: t.textSecondary,
-                            height: 1.3,
+                          TextSpan(
+                            text: text,
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w500,
+                              color: t.textSecondary,
+                              height: 1.2,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),

@@ -17,8 +17,8 @@ Set these in **Render → your service → Environment**. Mark secrets as "Secre
 
 | Variable | Default | Description |
 |---|---|---|
-| `MCP_UPGRADE_URL` | `https://fitwiz.us/upgrade?reason=mcp` | Where the consent page sends non-yearly users who hit the paywall. |
-| `MCP_CONSENT_URL` | `https://aifitnesscoach-zqi3.onrender.com/mcp/consent/authorize` | The consent screen URL. Defaults to the embedded backend UI. Change this if you later move consent to `fitwiz.us` on Vercel. |
+| `MCP_UPGRADE_URL` | `https://zealova.com/upgrade?reason=mcp` | Where the consent page sends non-yearly users who hit the paywall. |
+| `MCP_CONSENT_URL` | `https://aifitnesscoach-zqi3.onrender.com/mcp/consent/authorize` | The consent screen URL. Defaults to the embedded backend UI. Change this if you later move consent to `zealova.com` on Vercel. |
 | `MCP_RATE_LIMIT_PER_MIN` | `30` | Per-user-per-client MCP request cap per minute. |
 | `MCP_RATE_LIMIT_PER_HOUR` | `500` | Per-user-per-client MCP request cap per hour. |
 | `MCP_WRITE_LIMIT_PER_HOUR` | `25` | Tighter cap for write-capable tools. |
@@ -48,7 +48,7 @@ MCP_TOKEN_PEPPER=replace_with_openssl_rand_hex_32
 MCP_YEARLY_PRODUCT_IDS=["premium_yearly","premium_yearly:yearly-base"]
 MCP_OAUTH_ISSUER=http://localhost:8000
 MCP_CONSENT_URL=http://localhost:8000/mcp/consent/authorize
-MCP_UPGRADE_URL=https://fitwiz.us/upgrade?reason=mcp
+MCP_UPGRADE_URL=https://zealova.com/upgrade?reason=mcp
 
 # Public anon key (for browser-side Supabase Auth on the consent page).
 # Same value your Flutter app already uses for client-side Supabase calls.

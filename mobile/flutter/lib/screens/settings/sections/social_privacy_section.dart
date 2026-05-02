@@ -1,10 +1,40 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/providers/social_provider.dart';
 import '../../../data/services/api_client.dart';
 import '../widgets/widgets.dart';
+
+/// Local toggle for the public workout-share-link feature.
+/// When false, the "Share" button on a completed workout never calls
+/// `POST /workouts/{id}/share-link` — no URL is generated. Stored
+/// device-locally because revoking past links happens server-side via
+/// the existing DELETE endpoint when the user explicitly revokes a
+/// shared workout.
+const _kPublicShareLinksKey = 'allow_public_share_links';
+
+class PublicShareLinksNotifier extends StateNotifier<bool> {
+  PublicShareLinksNotifier() : super(true) {
+    _load();
+  }
+  Future<void> _load() async {
+    final prefs = await SharedPreferences.getInstance();
+    final v = prefs.getBool(_kPublicShareLinksKey);
+    if (v != null) state = v;
+  }
+  Future<void> set(bool value) async {
+    state = value;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_kPublicShareLinksKey, value);
+  }
+}
+
+final publicShareLinksProvider =
+    StateNotifierProvider<PublicShareLinksNotifier, bool>((ref) {
+  return PublicShareLinksNotifier();
+});
 
 /// Provider for social privacy settings state
 final socialPrivacySettingsProvider = StateNotifierProvider<SocialPrivacySettingsNotifier, SocialPrivacyState>((ref) {
@@ -323,6 +353,25 @@ class _SocialPrivacyCard extends ConsumerWidget {
             onChanged: (value) {
               HapticFeedback.selectionClick();
               ref.read(socialPrivacySettingsProvider.notifier).setShowOnLeaderboards(value);
+            },
+            textMuted: textMuted,
+          ),
+          Divider(height: 1, color: cardBorder.withValues(alpha: 0.3), indent: 50),
+
+          // Public Workout Share Links — when off, "Share" on a completed
+          // workout no longer generates a public URL anyone could open.
+          _buildPrivacyToggle(
+            context: context,
+            ref: ref,
+            icon: Icons.public_rounded,
+            iconColor: AppColors.cyan,
+            title: 'Public Share Links',
+            subtitle:
+                'Allow generating shareable workout URLs anyone can open',
+            value: ref.watch(publicShareLinksProvider),
+            onChanged: (value) {
+              HapticFeedback.selectionClick();
+              ref.read(publicShareLinksProvider.notifier).set(value);
             },
             textMuted: textMuted,
           ),

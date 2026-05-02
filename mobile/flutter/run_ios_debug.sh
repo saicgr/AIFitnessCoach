@@ -102,14 +102,36 @@ fi
 
 echo -e "${YELLOW}Fully removing existing app from simulator...${NC}"
 # 1) Terminate the app if running
-xcrun simctl terminate "$DEVICE_ID" com.aifitnesscoach.app 2>/dev/null || true
+xcrun simctl terminate "$DEVICE_ID" com.zealova.app 2>/dev/null || true
 # 2) Uninstall bundle + data container
-xcrun simctl uninstall "$DEVICE_ID" com.aifitnesscoach.app 2>/dev/null || echo -e "${YELLOW}App was not installed.${NC}"
+xcrun simctl uninstall "$DEVICE_ID" com.zealova.app 2>/dev/null || echo -e "${YELLOW}App was not installed.${NC}"
 # 3) Kill SpringBoard so iOS flushes the cached launcher icon
 echo -e "${YELLOW}Flushing SpringBoard icon cache...${NC}"
 xcrun simctl spawn "$DEVICE_ID" launchctl stop com.apple.SpringBoard 2>/dev/null || true
 
-echo -e "${GREEN}Building and running app in DEBUG mode on $TARGET_SIM...${NC}"
-$FLUTTER_PATH run --debug -d "$DEVICE_ID"
+echo -e "${GREEN}Building app in DEBUG mode for $TARGET_SIM...${NC}"
+# Build only — we install manually below to work around the iOS 26+
+# WidgetKit-extension install daemon bug ("Invalid placeholder attributes" /
+# "Failed to create app extension placeholder for FitWizLiveActivityExtension.appex").
+# The extension installs fine on physical devices; only the iOS 26 simulator's
+# install daemon rejects it. Stripping the .appex before install lets the rest
+# of the app run for normal sim testing.
+$FLUTTER_PATH build ios --simulator --debug --no-codesign
+
+APP_PATH="$PROJECT_DIR/build/ios/iphonesimulator/Runner.app"
+EXT_PATH="$APP_PATH/PlugIns/FitWizLiveActivityExtension.appex"
+if [ -d "$EXT_PATH" ]; then
+    echo -e "${YELLOW}Stripping FitWizLiveActivityExtension.appex (iOS 26 sim workaround)${NC}"
+    rm -rf "$EXT_PATH"
+fi
+
+echo -e "${YELLOW}Installing app on simulator...${NC}"
+xcrun simctl install "$DEVICE_ID" "$APP_PATH"
+
+echo -e "${GREEN}Launching app and attaching Flutter for hot-reload...${NC}"
+# `flutter attach` connects to the running app via Observatory and provides
+# the same hot-reload / hot-restart workflow as `flutter run`.
+xcrun simctl launch "$DEVICE_ID" com.zealova.app
+$FLUTTER_PATH attach -d "$DEVICE_ID"
 
 echo -e "${GREEN}=== Done! ===${NC}"

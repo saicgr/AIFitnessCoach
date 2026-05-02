@@ -280,3 +280,119 @@ async def save_conversation(request: Request, body: SaveConversationRequest,
     except Exception as e:
         logger.error(f"❌ Failed to save conversation: {e}", exc_info=True)
         raise safe_internal_error(e, "onboarding")
+
+
+# ─────────────────────────────────────────────────────────────────────
+# Onboarding v5 endpoints — pre-signup goal projection + referral validation
+# Both endpoints accept anonymous payloads (no auth required) since they fire
+# during the pre-auth quiz flow. They are rate-limited to prevent abuse.
+# ─────────────────────────────────────────────────────────────────────
+
+
+class ComputedGoalDateRequest(BaseModel):
+    """Pre-signup goal date calculation. No auth — payload is self-contained."""
+    weight_kg: float
+    target_weight_kg: float
+    weight_change_rate: Optional[str] = "moderate"  # slow|moderate|fast|aggressive
+    activity_level: Optional[str] = "moderately_active"
+    days_per_week: Optional[int] = 4
+
+
+class ComputedGoalDateResponse(BaseModel):
+    goal_date: str  # ISO YYYY-MM-DD
+    weeks_to_goal: int
+    weekly_rate_kg: float
+    total_change_kg: float
+    direction: str  # 'lose' | 'gain' | 'maintain'
+
+
+# Weekly rate map (kg/week). Mirrors the client-side projection math so
+# the date the user sees pre-signup matches what the backend records.
+_WEEKLY_RATE_KG = {
+    "slow": 0.25,
+    "moderate": 0.5,
+    "fast": 0.75,
+    "aggressive": 1.0,
+}
+
+
+@router.post("/computed-goal-date", response_model=ComputedGoalDateResponse)
+@limiter.limit("30/minute")
+async def computed_goal_date(request: Request, body: ComputedGoalDateRequest):
+    """
+    Compute the projected date user will hit their goal weight.
+    Used by the pre-signup weight-projection screen to anchor the goal date
+    that appears throughout the trial experience.
+
+    No auth — pre-signup users don't have accounts yet. Rate-limited by IP.
+    """
+    from datetime import date, timedelta
+
+    delta = body.target_weight_kg - body.weight_kg
+    if abs(delta) < 0.5:
+        return ComputedGoalDateResponse(
+            goal_date=date.today().isoformat(),
+            weeks_to_goal=0,
+            weekly_rate_kg=0.0,
+            total_change_kg=0.0,
+            direction="maintain",
+        )
+
+    direction = "lose" if delta < 0 else "gain"
+    weekly_rate = _WEEKLY_RATE_KG.get(body.weight_change_rate or "moderate", 0.5)
+    # Gain pace tops out lower than loss pace per ACSM guidance.
+    if direction == "gain":
+        weekly_rate = min(weekly_rate, 0.5)
+
+    weeks = max(1, int(round(abs(delta) / weekly_rate)))
+    goal_date = date.today() + timedelta(weeks=weeks)
+
+    return ComputedGoalDateResponse(
+        goal_date=goal_date.isoformat(),
+        weeks_to_goal=weeks,
+        weekly_rate_kg=weekly_rate,
+        total_change_kg=abs(delta),
+        direction=direction,
+    )
+
+
+class ValidateReferralRequest(BaseModel):
+    code: str
+
+
+class ValidateReferralResponse(BaseModel):
+    valid: bool
+    discount_amount_usd: Optional[float] = None
+    discount_label: Optional[str] = None
+    message: Optional[str] = None
+
+
+@router.post("/validate-referral", response_model=ValidateReferralResponse)
+@limiter.limit("10/minute")
+async def validate_referral(request: Request, body: ValidateReferralRequest):
+    """
+    Validate a referral code entered during onboarding setup.
+    Returns discount amount if code is valid.
+
+    Rate-limited aggressively to prevent code-guessing.
+    """
+    code = (body.code or "").strip().upper()
+    if not code or len(code) > 50:
+        return ValidateReferralResponse(valid=False, message="Invalid code format")
+
+    db = get_supabase_db()
+    try:
+        result = db.client.table("referral_codes").select("*").eq("code", code).eq("active", True).execute()
+        if not result.data:
+            return ValidateReferralResponse(valid=False, message="Code not found")
+
+        row = result.data[0]
+        return ValidateReferralResponse(
+            valid=True,
+            discount_amount_usd=row.get("discount_amount_usd"),
+            discount_label=row.get("label", f"${row.get('discount_amount_usd', 0)} off"),
+        )
+    except Exception as e:
+        # Table may not exist yet — graceful degradation
+        logger.warning(f"Referral lookup failed (table may not exist): {e}")
+        return ValidateReferralResponse(valid=False, message="Validation service unavailable")

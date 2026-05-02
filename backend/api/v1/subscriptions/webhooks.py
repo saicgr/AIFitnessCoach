@@ -159,6 +159,21 @@ async def _handle_initial_purchase(supabase, event: dict, background_tasks=None)
         .upsert(sub_data, on_conflict="user_id")\
         .execute()
 
+    # Onboarding v5: anchor trial_start_date on the user record so the
+    # home-screen "Day X / 7" widget, goal-date math, Day 6 coach message,
+    # and Day 7 trial summary cron all have a single authoritative date.
+    # Only set when this is genuinely a trial start (not a direct purchase).
+    if is_trial:
+        try:
+            from datetime import date
+            supabase.client.table("users").update({
+                "trial_start_date": date.today().isoformat(),
+            }).eq("id", user_id).execute()
+            logger.info(f"trial_start_date set for user={user_id}")
+        except Exception as e:
+            # Non-fatal — column may not exist on older deploys
+            logger.warning(f"Could not set trial_start_date for user={user_id}: {e}")
+
     supabase.client.table("subscription_history").insert({
         "user_id": user_id,
         "event_type": "purchased",

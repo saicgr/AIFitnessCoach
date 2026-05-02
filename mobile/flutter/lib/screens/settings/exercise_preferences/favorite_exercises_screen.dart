@@ -77,7 +77,28 @@ class FavoriteExercisesScreen extends ConsumerWidget {
                 elevated,
               );
 
-    if (embedded) return body;
+    if (embedded) {
+      // The embedded mode (inside MyExercisesScreen tabs) had no add affordance.
+      // Mirror the queue/avoided pattern with a small FAB so users can browse
+      // the exercise library here too. Position above the floating tab bar
+      // (Issue 2) — give it ~80pt clearance.
+      return Stack(
+        children: [
+          body,
+          Positioned(
+            right: 16,
+            bottom: 96,
+            child: FloatingActionButton(
+              mini: true,
+              backgroundColor: AppColors.error,
+              foregroundColor: Colors.white,
+              onPressed: () => _showAddExercisePicker(context, ref),
+              child: const Icon(Icons.add),
+            ),
+          ),
+        ],
+      );
+    }
 
     return Scaffold(
       backgroundColor: backgroundColor,

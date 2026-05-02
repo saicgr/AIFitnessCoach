@@ -36,6 +36,9 @@ logger = get_logger(__name__)
 
 class TimeRange(str, Enum):
     """Time range options for progress charts."""
+    ONE_DAY = "1_day"
+    THREE_DAYS = "3_days"
+    SEVEN_DAYS = "7_days"
     FOUR_WEEKS = "4_weeks"
     EIGHT_WEEKS = "8_weeks"
     TWELVE_WEEKS = "12_weeks"
@@ -491,10 +494,16 @@ async def get_progress_summary(
             else:
                 prior_vol_kg += vol
 
-        if prior_vol_kg > 0:
-            volume_increase_percent = ((recent_vol_kg - prior_vol_kg) / prior_vol_kg) * 100
+        # Guard against misleading deltas:
+        #   - If prior window had zero volume, we can't compute a percentage
+        #     (division by zero / unbounded growth) — show 0 instead of an
+        #     arbitrary +100%.
+        #   - If recent window has zero volume, avoid showing -99%+ when the
+        #     user simply hasn't trained in the last 28 days.
+        if prior_vol_kg == 0 or recent_vol_kg == 0:
+            volume_increase_percent = 0.0
         else:
-            volume_increase_percent = 100.0 if recent_vol_kg > 0 else 0.0
+            volume_increase_percent = ((recent_vol_kg - prior_vol_kg) / prior_vol_kg) * 100
 
         # total_volume_kg: sum across the 8-week sample we pulled.
         total_volume_kg = total_vol_kg_8w
@@ -742,14 +751,17 @@ def _get_cutoff_date(time_range: TimeRange) -> Optional[date]:
     if time_range == TimeRange.ALL_TIME:
         return None
 
-    weeks_map = {
-        TimeRange.FOUR_WEEKS: 4,
-        TimeRange.EIGHT_WEEKS: 8,
-        TimeRange.TWELVE_WEEKS: 12,
+    days_map = {
+        TimeRange.ONE_DAY: 1,
+        TimeRange.THREE_DAYS: 3,
+        TimeRange.SEVEN_DAYS: 7,
+        TimeRange.FOUR_WEEKS: 28,
+        TimeRange.EIGHT_WEEKS: 56,
+        TimeRange.TWELVE_WEEKS: 84,
     }
 
-    weeks = weeks_map.get(time_range, 12)
-    return (datetime.now() - timedelta(weeks=weeks)).date()
+    days = days_map.get(time_range, 84)
+    return (datetime.now() - timedelta(days=days)).date()
 
 
 def _get_week_number(date_str: str) -> int:

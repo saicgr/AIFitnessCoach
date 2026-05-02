@@ -130,7 +130,7 @@ $FLUTTER_PATH pub get
 # flutter_gemma exclusion is handled by the Podfile (strips it from iOS plugins)
 
 echo -e "${YELLOW}Uninstalling existing app...${NC}"
-xcrun simctl uninstall "$DEVICE_ID" com.aifitnesscoach.app 2>/dev/null || echo -e "${YELLOW}App was not installed.${NC}"
+xcrun simctl uninstall "$DEVICE_ID" com.zealova.app 2>/dev/null || echo -e "${YELLOW}App was not installed.${NC}"
 
 echo -e "${GREEN}Building and running app in DEBUG mode (ENV=dev -> local backend) on $TARGET_SIM...${NC}"
 $FLUTTER_PATH run --debug -d "$DEVICE_ID" --dart-define=ENV=dev

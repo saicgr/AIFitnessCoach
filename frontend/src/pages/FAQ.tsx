@@ -25,7 +25,7 @@ const faqData: FAQCategory[] = [
       {
         question: 'How much does it cost?',
         answer:
-          `${BRANDING.appName} is $4.99/month or $4.17/month billed yearly ($49.99/year). Every new user gets a 7-day free trial with full access to all features — no credit card required to start.`,
+          `${BRANDING.appName} is $7.99/month or $5/month billed yearly ($59.99/year — that's 38% off). Every new user gets a 7-day free trial with full access to all features — no credit card required to start.`,
       },
       {
         question: 'Which devices does it work on?',

@@ -51,10 +51,10 @@ const plans: PricingPlan[] = [
   {
     name: 'Premium Yearly',
     description: 'Full AI-powered fitness & nutrition',
-    monthlyPrice: '$4.99',
-    yearlyPrice: '$4.17',
-    yearlyTotal: '$49.99',
-    savings: 'Save 17%',
+    monthlyPrice: '$7.99',
+    yearlyPrice: '$5.00',
+    yearlyTotal: '$59.99',
+    savings: 'Save 38%',
     features: [
       '1,722 exercises with video demos',
       'Unlimited AI coach chat',
@@ -80,9 +80,9 @@ const plans: PricingPlan[] = [
   {
     name: 'Premium Monthly',
     description: 'Pay as you go, cancel anytime',
-    monthlyPrice: '$4.99',
-    yearlyPrice: '$4.99',
-    yearlyTotal: '$59.88',
+    monthlyPrice: '$7.99',
+    yearlyPrice: '$7.99',
+    yearlyTotal: '$95.88',
     features: [
       '1,722 exercises with video demos',
       'Unlimited AI coach chat',
@@ -143,7 +143,7 @@ const zealovaIncludes = [
 const faqs = [
   {
     question: 'How does the 7-day free trial work?',
-    answer: 'You get 7 days of full access to every feature — no payment upfront. After the trial, choose monthly ($4.99/mo) or yearly ($49.99/yr) to keep going.',
+    answer: 'You get 7 days of full access to every feature — no payment upfront. After the trial, choose monthly ($7.99/mo) or yearly ($59.99/yr — that\'s $5/mo, 38% off) to keep going.',
   },
   {
     question: 'Can I cancel whenever I want?',
@@ -158,8 +158,8 @@ const faqs = [
     answer: 'Yes, you can switch anytime. When moving to yearly, the change takes effect at the end of your current billing period and you start saving immediately.',
   },
   {
-    question: `How can ${BRANDING.appName} offer so much for $4.99/month?`,
-    answer: "We believe premium fitness coaching shouldn't cost $20/month. By leveraging cutting-edge AI efficiently, we deliver workouts + nutrition + fasting + AI coaching all in one app at a price that's accessible to everyone.",
+    question: `How can ${BRANDING.appName} offer so much for $5/month?`,
+    answer: "We believe premium fitness coaching shouldn't cost $20/month. By leveraging cutting-edge AI efficiently, we deliver workouts + nutrition + fasting + AI coaching all in one app at a price that's accessible to everyone — that's $59.99/yr ($5/mo) on the annual plan, or $7.99/mo if you'd rather pay monthly.",
   },
 ];
 
@@ -449,7 +449,7 @@ export default function Pricing() {
               </div>
               <div className="space-y-3">
                 {[
-                  'Workouts + nutrition + fasting + coaching in one $4.99/mo app',
+                  'Workouts + nutrition + fasting + coaching in one $5/mo app',
                   'AI generates plans around your goals, equipment, and injuries',
                   '5 specialist AI agents for coaching, nutrition, and recovery',
                   'Track every rep and see clear progress analytics',
@@ -541,7 +541,7 @@ export default function Pricing() {
             transition={{ delay: 0.2 }}
             className="text-center text-[15px] text-[var(--color-text-secondary)] mt-8"
           >
-            Most fitness apps charge $10-20/month for a single feature. {BRANDING.appName} delivers everything starting at $4.17/month.
+            Most fitness apps charge $10-20/month for a single feature. {BRANDING.appName} delivers everything starting at $5/month.
           </motion.p>
         </div>
       </section>

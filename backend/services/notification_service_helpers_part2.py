@@ -160,7 +160,7 @@ class NotificationServicePart2:
             logger.warning(f"⚠️ FCM token is no longer valid: {fcm_token[:20]}...", exc_info=True)
             # Clear the dead token from users.fcm_token so we stop retrying it.
             try:
-                from core.database import get_supabase_db
+                from core.supabase_db import get_supabase_db
                 db = get_supabase_db()
                 db.client.table("users").update({"fcm_token": None}).eq("fcm_token", fcm_token).execute()
                 logger.info(f"🧹 Cleared dead FCM token from users table")

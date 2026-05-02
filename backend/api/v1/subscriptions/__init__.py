@@ -32,7 +32,9 @@ from api.v1.subscriptions.webhooks import router as webhooks_router
 from api.v1.subscriptions.transparency import router as transparency_router
 from api.v1.subscriptions.trials import router as trials_router
 from api.v1.subscriptions.lifetime import router as lifetime_router
+from api.v1.subscriptions.lifetime_web import router as lifetime_web_router
 from api.v1.subscriptions.retention import router as retention_router
+from api.v1.subscriptions.trial_v5 import router as trial_v5_router
 
 # Re-export key symbols that tests import from api.v1.subscriptions
 from api.v1.subscriptions.models import (
@@ -69,4 +71,6 @@ router.include_router(webhooks_router)
 router.include_router(transparency_router)
 router.include_router(trials_router)
 router.include_router(lifetime_router)
+router.include_router(lifetime_web_router)  # Web-only Founding 500 lifetime (Stripe, NEVER referenced in app)
 router.include_router(retention_router)
+router.include_router(trial_v5_router)  # Onboarding v5 trial mechanics

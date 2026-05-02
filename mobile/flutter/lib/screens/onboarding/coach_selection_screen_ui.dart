@@ -79,14 +79,111 @@ extension _CoachSelectionScreenStateUI on _CoachSelectionScreenState {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    coach.name,
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: coach.primaryColor,
+                  if (_editingPresetName)
+                    // Inline rename — preserves persona, only changes display name.
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: _renameController,
+                            autofocus: true,
+                            maxLength: 24,
+                            textCapitalization: TextCapitalization.words,
+                            textInputAction: TextInputAction.done,
+                            onSubmitted: (_) {
+                              final v = _renameController.text.trim();
+                              setState(() {
+                                _renamedSelectedName = v.isEmpty ? null : v;
+                                _editingPresetName = false;
+                              });
+                            },
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                              color: coach.primaryColor,
+                            ),
+                            decoration: InputDecoration(
+                              isDense: true,
+                              counterText: '',
+                              hintText: coach.name,
+                              contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 6),
+                              filled: true,
+                              fillColor:
+                                  coach.primaryColor.withValues(alpha: 0.08),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide: BorderSide(
+                                    color: coach.primaryColor
+                                        .withValues(alpha: 0.4)),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide: BorderSide(
+                                    color: coach.primaryColor, width: 1.5),
+                              ),
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          icon: Icon(Icons.check,
+                              color: coach.primaryColor, size: 22),
+                          padding: const EdgeInsets.all(4),
+                          constraints: const BoxConstraints(),
+                          onPressed: () {
+                            HapticFeedback.lightImpact();
+                            final v = _renameController.text.trim();
+                            setState(() {
+                              _renamedSelectedName = v.isEmpty ? null : v;
+                              _editingPresetName = false;
+                            });
+                          },
+                        ),
+                        IconButton(
+                          icon: Icon(Icons.close,
+                              color: textSecondary, size: 22),
+                          padding: const EdgeInsets.all(4),
+                          constraints: const BoxConstraints(),
+                          onPressed: () {
+                            setState(() {
+                              _editingPresetName = false;
+                              _renameController.text =
+                                  _renamedSelectedName ?? coach.name;
+                            });
+                          },
+                        ),
+                      ],
+                    )
+                  else
+                    GestureDetector(
+                      onTap: () {
+                        HapticFeedback.selectionClick();
+                        setState(() {
+                          _renameController.text =
+                              _renamedSelectedName ?? coach.name;
+                          _editingPresetName = true;
+                        });
+                      },
+                      child: Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              _renamedSelectedName ?? coach.name,
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w700,
+                                color: coach.primaryColor,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Icon(Icons.edit_outlined,
+                              size: 14,
+                              color: coach.primaryColor.withValues(alpha: 0.7)),
+                        ],
+                      ),
                     ),
-                  ),
                   Text(
                     coach.tagline,
                     style: TextStyle(
@@ -266,7 +363,7 @@ extension _CoachSelectionScreenStateUI on _CoachSelectionScreenState {
                   if (widget.fromSettings) {
                     context.pop();
                   } else {
-                    context.go('/ai-consent');
+                    context.pop();
                   }
                 },
               ),

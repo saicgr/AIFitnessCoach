@@ -82,6 +82,20 @@ class EmptyStateTipTour extends StatefulWidget {
     await prefs.remove(_storageKey(tourId));
   }
 
+  /// Mark a tour as seen without showing it. Screens call this when the
+  /// user has *demonstrably* figured out the action the tour covers — e.g.
+  /// they logged their first meal — so we never nag them with an
+  /// onboarding hint they no longer need.
+  static Future<void> markSeen(String tourId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_storageKey(tourId), true);
+      debugPrint('🎯 [Tour] markSeen($tourId)');
+    } catch (e) {
+      debugPrint('❌ [Tour] markSeen($tourId) failed: $e');
+    }
+  }
+
   /// Clear ALL empty-state tip-tour dismissals. Used by the Reset Tips setting.
   /// Returns the number of keys cleared.
   static Future<int> resetAll() async {
@@ -174,18 +188,57 @@ class _EmptyStateTipTourState extends State<EmptyStateTipTour> {
       _visible = !seen;
       _ready = true;
     });
+    // If the tour just became visible to the user, schedule an auto-mark
+    // so any exit path (tab switch, back gesture, tap-to-log via the
+    // spotlit target, force-kill) counts as "seen". Without this, only
+    // the X button and final-step Next ever persisted dismissal — every
+    // other dismissal route re-showed the tour next visit.
+    if (!seen && widget.tips.isNotEmpty) {
+      _scheduleAutoMarkSeen();
+    }
+  }
+
+  /// Once the tour has been visible for a beat, write the seen flag so
+  /// the user never sees it again — regardless of how they leave the
+  /// screen. 1s is long enough to count as a real impression but short
+  /// enough that a misnavigation pop within milliseconds doesn't burn
+  /// the dismissal flag.
+  void _scheduleAutoMarkSeen() {
+    Future<void>.delayed(const Duration(seconds: 1), () async {
+      if (!mounted || _disposed) return;
+      // Don't auto-mark in forceShow mode — Reset Tips path expects the
+      // user to see the tour again on the next entry too.
+      if (widget.forceShow) return;
+      // If the tour was already dismissed via X / final-Next during the
+      // 1s window, _visible is false — _markSeenIfShown is a no-op write
+      // (already persisted by _dismiss).
+      await _markSeenIfShown();
+    });
+  }
+
+  Future<void> _markSeenIfShown() async {
+    final key = EmptyStateTipTour._storageKey(widget.tourId);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(key, true);
+    } catch (e, stack) {
+      debugPrint('🎯 [Tour] auto-mark $key FAILED: $e\n$stack');
+    }
   }
 
   Future<void> _dismiss() async {
     // Persist FIRST, hide second — if the user backgrounds the app
     // between these two steps we'd rather have the flag saved and the
     // UI still showing (next launch will hide it) than the inverse.
+    final key = EmptyStateTipTour._storageKey(widget.tourId);
     try {
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool(
-          EmptyStateTipTour._storageKey(widget.tourId), true);
-    } catch (_) {
-      // Storage failure shouldn't trap the user inside the tour.
+      final ok = await prefs.setBool(key, true);
+      debugPrint('🎯 [Tour] Dismissed $key (persisted=$ok)');
+    } catch (e, stack) {
+      // Don't swallow — if persistence fails we'll keep nagging the user
+      // every visit. Log loud so the failure surfaces in dev/QA.
+      debugPrint('❌ [Tour] Failed to persist dismiss for $key: $e\n$stack');
     }
     if (!mounted) return;
     setState(() => _visible = false);
@@ -195,6 +248,10 @@ class _EmptyStateTipTourState extends State<EmptyStateTipTour> {
     if (_step < widget.tips.length - 1) {
       setState(() => _step++);
     } else {
+      // Fire-and-forget but propagate any errors via the debugPrint inside.
+      // We can't await in this synchronous handler without delaying the
+      // tap response, and the dismiss path already updates state on its own.
+      // ignore: discarded_futures
       _dismiss();
     }
   }

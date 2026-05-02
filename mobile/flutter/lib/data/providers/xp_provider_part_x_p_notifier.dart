@@ -6,6 +6,12 @@ class XPNotifier extends StateNotifier<XPState> {
   final PosthogService _posthog;
   String? _currentUserId;
 
+  /// Deduplication guard: if a claim is already in-flight, concurrent callers
+  /// (stacked_banner_panel, daily_crate_banner, open_all_crates_sheet) all get
+  /// the same Future instead of firing separate POST requests.
+  /// Lives on the host class because Dart extensions can't declare instance fields.
+  Future<CrateRewardResult>? pendingCrateClaim;
+
   XPNotifier(this._repository, this._posthog)
       : super(_xpInMemoryCache ?? const XPState());
 

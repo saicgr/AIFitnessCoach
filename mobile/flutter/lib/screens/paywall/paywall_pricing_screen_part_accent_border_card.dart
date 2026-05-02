@@ -649,7 +649,7 @@ class _DiscountPopupState extends State<_DiscountPopup> with TickerProviderState
         ),
         const SizedBox(height: 4),
         Text(
-          '\$49.99/year',
+          '\$59.99/year',
           style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.bold,
@@ -788,7 +788,7 @@ class _DiscountPopupState extends State<_DiscountPopup> with TickerProviderState
                 children: [
                   // Regular yearly price crossed out
                   Text(
-                    '\$49.99',
+                    '\$59.99',
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w500,

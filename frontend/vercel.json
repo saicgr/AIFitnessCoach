@@ -12,6 +12,10 @@
       "source": "/api/v1/dsar/:path*",
       "destination": "https://aifitnesscoach-zqi3.onrender.com/api/v1/dsar/:path*"
     },
+    {
+      "source": "/api/v1/workouts/public/:token",
+      "destination": "https://aifitnesscoach-zqi3.onrender.com/api/v1/workouts/public/:token"
+    },
     { "source": "/(.*)", "destination": "/" }
   ],
   "headers": [

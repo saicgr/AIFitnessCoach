@@ -890,6 +890,53 @@ async def get_user_progression_pace(user_id: str) -> str:
         return "medium"
 
 
+async def get_user_weekly_variety(user_id: str) -> int:
+    """
+    Get user's weekly exercise variety preference as a percentage 25/50/75.
+
+    25 = Low  (keep ≥75% of exercises identical week-over-week)
+    50 = Medium (rotate ~50% of exercises) — default
+    75 = High (rotate ~75% of exercises, only keep core staples)
+
+    Reads from `users.variation_percentage` (the column the existing
+    `/exercise-preferences/variation` endpoint already writes to). Snaps
+    arbitrary values to the closest 25/50/75 bucket so the prompt
+    instructions branch cleanly. Falls back to 50 on any error so a
+    misconfigured user never blocks generation.
+    """
+    try:
+        db = get_supabase_db()
+        result = (
+            db.client.table("users")
+            .select("variation_percentage")
+            .eq("id", user_id)
+            .execute()
+        )
+        if not result.data:
+            return 50
+
+        raw = result.data[0].get("variation_percentage", 50)
+        try:
+            variety = int(raw)
+        except (TypeError, ValueError):
+            variety = 50
+
+        if variety not in (25, 50, 75):
+            if variety < 38:
+                variety = 25
+            elif variety < 63:
+                variety = 50
+            else:
+                variety = 75
+
+        logger.debug(f"User {user_id} weekly_variety: {variety}")
+        return variety
+
+    except Exception as e:
+        logger.debug(f"Could not get weekly variety: {e}")
+        return 50
+
+
 async def get_user_workout_type_preference(user_id: str) -> str:
     """Get user's workout type preference: 'strength', 'cardio', 'mixed', 'mobility', or 'recovery'."""
     try:

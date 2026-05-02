@@ -153,16 +153,16 @@ class QuizPrimaryGoal extends StatelessWidget {
         children: [
           if (showHeader) ...[
             Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Expanded(
                   child: Text(
                     question,
                     style: TextStyle(
-                      fontSize: 26,
-                      fontWeight: FontWeight.w700,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
                       color: t.textPrimary,
-                      height: 1.3,
+                      height: 1.2,
                       letterSpacing: -0.5,
                     ),
                   ),
@@ -171,16 +171,16 @@ class QuizPrimaryGoal extends StatelessWidget {
                 buildInfoButton(context),
               ],
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 4),
             Text(
               subtitle,
               style: TextStyle(
-                fontSize: 15,
+                fontSize: 12,
                 color: t.textSecondary,
                 fontWeight: FontWeight.w500,
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 12),
           ],
           ...options.asMap().entries.map((entry) {
             final index = entry.key;
@@ -224,16 +224,16 @@ class _GlassPrimaryGoalCard extends StatelessWidget {
     final color = option['color'] as Color? ?? AppColors.onboardingAccent;
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(bottom: 8),
       child: GestureDetector(
         onTap: onTap,
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(14),
           child: BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
-              padding: const EdgeInsets.all(18),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               decoration: BoxDecoration(
                 gradient: isSelected
                     ? LinearGradient(
@@ -263,8 +263,8 @@ class _GlassPrimaryGoalCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Container(
-                    width: 52,
-                    height: 52,
+                    width: 40,
+                    height: 40,
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: isSelected
@@ -273,7 +273,7 @@ class _GlassPrimaryGoalCard extends StatelessWidget {
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(11),
                       border: Border.all(
                         color: isSelected
                             ? t.iconContainerSelectedBorder(color)
@@ -284,31 +284,34 @@ class _GlassPrimaryGoalCard extends StatelessWidget {
                     child: Icon(
                       option['icon'] as IconData,
                       color: color,
-                      size: 28,
+                      size: 20,
                     ),
                   ),
-                  const SizedBox(width: 14),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
                           option['label'] as String,
                           style: TextStyle(
-                            fontSize: 17,
-                            fontWeight: FontWeight.w600,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
                             color: t.textPrimary,
+                            letterSpacing: -0.2,
                           ),
                         ),
-                        const SizedBox(height: 6),
+                        const SizedBox(height: 2),
+                        // Tip kept — rep range + benefit (e.g. "8-12 reps · muscle size").
+                        // Critical context the user explicitly wants preserved.
                         Text(
                           option['description'] as String,
                           style: TextStyle(
-                            fontSize: 13,
+                            fontSize: 12,
                             fontWeight: FontWeight.w500,
                             color: t.textSecondary,
-                            height: 1.4,
-                            letterSpacing: 0.2,
+                            height: 1.3,
                           ),
                         ),
                       ],

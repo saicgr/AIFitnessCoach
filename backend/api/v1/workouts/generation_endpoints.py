@@ -246,6 +246,27 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
             if primary_goal:
                 logger.info(f"🎯 [Workout Generation] User has primary goal: {primary_goal}")
 
+            # Progression Pace + Weekly Variety — fetched here and threaded
+            # into `generate_workout_plan` so the user's Settings choices
+            # actually steer Gemini. Both helpers default to safe values
+            # when the user hasn't set them, so no None-handling needed
+            # downstream.
+            try:
+                from .user_preference_utils import (
+                    get_user_progression_pace,
+                    get_user_weekly_variety,
+                )
+                user_progression_pace = await get_user_progression_pace(body.user_id)
+                user_weekly_variety = await get_user_weekly_variety(body.user_id)
+                logger.info(
+                    f"⚙️ [Workout Generation] progression_pace={user_progression_pace}, "
+                    f"weekly_variety={user_weekly_variety}%"
+                )
+            except Exception as _ppe:
+                logger.warning(f"⚠️ [Workout Generation] Could not load progression/variety prefs: {_ppe}")
+                user_progression_pace = "medium"
+                user_weekly_variety = 50
+
             # Body Analyzer context — pulls the latest snapshot (composition +
             # posture findings) and renders a compact prompt block so the
             # generator can tune rep ranges / accessory work to the user's
@@ -623,6 +644,8 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
                     user_dob=user.get("date_of_birth") if user else None,
                     user_id=body.user_id,
                     workout_weight_unit=user.get("workout_weight_unit") or user.get("weight_unit") or "lbs",
+                    progression_pace=user_progression_pace,
+                    weekly_variety=user_weekly_variety,
                 )
 
             # Ensure workout_data is a dict (guard against Gemini returning a string)

@@ -18,10 +18,11 @@ class MetricsDashboardScreen extends ConsumerStatefulWidget {
 
 class _MetricsDashboardScreenState
     extends ConsumerState<MetricsDashboardScreen> {
-  String _selectedPeriod = '7d';
+  String _selectedPeriod = '1d';
   String _selectedMetric = 'weight';
 
   final _periods = [
+    {'label': '1D', 'value': '1d'},
     {'label': '7D', 'value': '7d'},
     {'label': '30D', 'value': '30d'},
     {'label': '90D', 'value': '90d'},
@@ -408,7 +409,20 @@ class _MetricsDashboardScreenState
       );
     }
 
-    final spots = history.asMap().entries.map((entry) {
+    // Filter history to the selected period window
+    final cutoff = switch (_selectedPeriod) {
+      '1d'  => DateTime.now().subtract(const Duration(days: 1)),
+      '7d'  => DateTime.now().subtract(const Duration(days: 7)),
+      '30d' => DateTime.now().subtract(const Duration(days: 30)),
+      '90d' => DateTime.now().subtract(const Duration(days: 90)),
+      _     => null, // 'all'
+    };
+    final filtered = cutoff == null
+        ? history
+        : history.where((e) => e.recordedAt.isAfter(cutoff)).toList();
+    final display = filtered.isEmpty ? history : filtered;
+
+    final spots = display.asMap().entries.map((entry) {
       return FlSpot(entry.key.toDouble(), entry.value.value);
     }).toList();
 
@@ -444,11 +458,11 @@ class _MetricsDashboardScreenState
             sideTitles: SideTitles(
               showTitles: true,
               reservedSize: 30,
-              interval: (history.length / 5).ceil().toDouble(),
+              interval: (display.length / 5).ceil().toDouble(),
               getTitlesWidget: (value, meta) {
                 final index = value.toInt();
-                if (index >= 0 && index < history.length) {
-                  final date = history[index].recordedAt;
+                if (index >= 0 && index < display.length) {
+                  final date = display[index].recordedAt;
                   return Padding(
                     padding: const EdgeInsets.only(top: 8),
                     child: Text(
@@ -508,8 +522,8 @@ class _MetricsDashboardScreenState
             getTooltipItems: (touchedSpots) {
               return touchedSpots.map((spot) {
                 final index = spot.x.toInt();
-                final date = index < history.length
-                    ? history[index].recordedAt
+                final date = index < display.length
+                    ? display[index].recordedAt
                     : DateTime.now();
                 return LineTooltipItem(
                   '${spot.y.toStringAsFixed(1)}\n${date.month}/${date.day}',

@@ -40,6 +40,13 @@ import 'templates/volume_bars_template.dart';
 import 'templates/weekly_report_template.dart';
 import 'templates/weight_graph_template.dart';
 import 'templates/widget_template.dart';
+// New viral formats ported from the onboarding demo's share gallery.
+import 'templates/discord_template.dart';
+import 'templates/instagram_story_template.dart';
+import 'templates/vinyl_template.dart';
+import 'templates/passport_template.dart';
+import 'templates/one_rm_template.dart';
+import 'templates/trading_card_gold_template.dart';
 import 'templates/workout_details_template.dart';
 import 'templates/workout_program_template.dart';
 import 'templates/workout_score_template.dart';
@@ -97,6 +104,13 @@ enum ShareableTemplate {
   photoSplit,
   photoMagazine,
   photoLockscreen,
+  // --- Onboarding-demo ports (viral formats) ---
+  discord,
+  instagramStory,
+  vinyl,
+  passport,
+  oneRm,
+  tradingCardGold,
 }
 
 /// User-facing grouping (Tier 3 in the nested pill selector).
@@ -715,6 +729,66 @@ class ShareableCatalog {
         kinds: _allKinds,
         builder: (d, w) =>
             PhotoLockscreenTemplate(data: d, showWatermark: w),
+      ),
+      // ── Onboarding-demo ports — six viral formats sourced from the
+      // pre-signup share gallery in `workout_showcase_screen.dart`.
+      ShareableTemplateSpec(
+        template: ShareableTemplate.discord,
+        name: 'Discord',
+        category: ShareableCategory.editorial,
+        kinds: _allKinds,
+        minHighlights: 2,
+        builder: (d, w) => DiscordTemplate(data: d, showWatermark: w),
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.instagramStory,
+        name: 'IG Story',
+        category: ShareableCategory.playful,
+        kinds: _allKinds,
+        builder: (d, w) =>
+            InstagramStoryTemplate(data: d, showWatermark: w),
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.vinyl,
+        name: 'Vinyl',
+        category: ShareableCategory.playful,
+        kinds: _allKinds,
+        builder: (d, w) => VinylTemplate(data: d, showWatermark: w),
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.passport,
+        name: 'Passport',
+        category: ShareableCategory.editorial,
+        kinds: _allKinds,
+        minHighlights: 1,
+        builder: (d, w) => PassportTemplate(data: d, showWatermark: w),
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.oneRm,
+        name: '1RM',
+        category: ShareableCategory.graph,
+        kinds: const {
+          ShareableKind.personalRecords,
+          ShareableKind.statsOverview,
+          ShareableKind.workoutComplete,
+        },
+        minHighlights: 1,
+        builder: (d, w) => OneRmTemplate(data: d, showWatermark: w),
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.tradingCardGold,
+        name: 'Gold Card',
+        category: ShareableCategory.playful,
+        kinds: const {
+          ShareableKind.personalRecords,
+          ShareableKind.milestones,
+          ShareableKind.achievements,
+          ShareableKind.statsOverview,
+          ShareableKind.workoutComplete,
+        },
+        minHighlights: 2,
+        builder: (d, w) =>
+            TradingCardGoldTemplate(data: d, showWatermark: w),
       ),
     ];
   }

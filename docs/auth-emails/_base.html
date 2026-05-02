@@ -1,0 +1,55 @@
+<!--
+  Shared design tokens for all 6 Zealova auth emails.
+  Paste-and-replace the {{ HEADLINE }}, {{ BODY }}, {{ CTA_LABEL }} markers
+  for each template. Inline styles only (no <style>) — Gmail strips them.
+  Width capped at 560px to match existing transactional emails.
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="dark light">
+  <meta name="supported-color-schemes" content="dark light">
+  <title>{{ TITLE }}</title>
+</head>
+<body style="margin:0;padding:0;background-color:#000000;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#000000;padding:32px 16px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:560px;background-color:#0f0f0f;border-radius:20px;overflow:hidden;border:1px solid #1a1a1a;">
+          <!-- Top accent bar: cyan → orange Zealova gradient -->
+          <tr>
+            <td style="background:linear-gradient(135deg,#06b6d4 0%,#FB923C 50%,#F97316 100%);height:4px;font-size:0;line-height:0;">&nbsp;</td>
+          </tr>
+          <!-- Logo + brand mark -->
+          <tr>
+            <td align="center" style="padding:48px 40px 16px;">
+              <img src="https://zealova.com/email/zealova-logo-88.png" alt="Zealova" width="88" height="88" style="display:block;border-radius:20px;border:0;width:88px;height:88px;object-fit:cover;">
+              <p style="margin:18px 0 0;font-size:13px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:#F97316;">ZEALOVA</p>
+            </td>
+          </tr>
+          <!-- Headline + body content -->
+          <tr>
+            <td style="padding:24px 40px 8px;">{{ CONTENT_BLOCK }}</td>
+          </tr>
+          <!-- Footer fine print -->
+          <tr>
+            <td style="padding:32px 40px 40px;">
+              <p style="margin:0 0 8px;font-size:12px;color:#52525b;line-height:1.6;text-align:center;">
+                Sent to {{ .Email }} because someone signed in or signed up at Zealova.
+                If that wasn't you, ignore this email and no changes will be made.
+              </p>
+              <p style="margin:0;font-size:12px;color:#52525b;line-height:1.6;text-align:center;">
+                <a href="https://zealova.com" style="color:#71717a;text-decoration:underline;">zealova.com</a>
+                &nbsp;·&nbsp;
+                <a href="mailto:support@zealova.com" style="color:#71717a;text-decoration:underline;">support@zealova.com</a>
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

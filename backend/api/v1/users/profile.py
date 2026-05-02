@@ -27,6 +27,207 @@ router = APIRouter()
 logger = get_logger(__name__)
 
 
+async def _schedule_welcome_email(
+    *,
+    background_tasks: "BackgroundTasks",
+    user_id: str,
+    existing: dict,
+    updated: dict,
+    preferences: dict,
+) -> None:
+    """Build the welcome-email payload and queue it as a BackgroundTask.
+
+    Pulled out of update_user() to keep the endpoint readable. Pulls macros
+    from the users row (daily_calorie_target etc.), reads tomorrow's
+    workout from the `workouts` table, and infers training days from
+    preferences. Every data point is optional — missing values cause the
+    matching block in the email template to be hidden, never an error.
+    """
+    from services.email_service import get_email_service
+
+    # Prefer the freshly-updated row, fall back to existing snapshot.
+    src: dict = updated or existing or {}
+    email_addr = src.get("email") or existing.get("email")
+    if not email_addr:
+        logger.warning(f"[Welcome-Email] No email on user {user_id}; skipping")
+        return
+
+    # ── First name: prefer `name` first token, fall back to email prefix ──
+    raw_name = (src.get("name") or existing.get("name") or "").strip()
+    first_name = raw_name.split(" ")[0] if raw_name else ""
+    if not first_name and email_addr:
+        # Last-ditch fallback so emails are never "Hi there".
+        first_name = email_addr.split("@")[0].split("+")[0].split(".")[0].title()
+
+    # ── Goal (single string for copy logic) ────────────────────────────────
+    goals_raw = src.get("goals") or existing.get("goals")
+    goal: Optional[str] = None
+    if isinstance(goals_raw, str):
+        try:
+            parsed = json.loads(goals_raw)
+            if isinstance(parsed, list) and parsed:
+                goal = str(parsed[0])
+            elif isinstance(parsed, str):
+                goal = parsed
+        except json.JSONDecodeError:
+            goal = goals_raw
+    elif isinstance(goals_raw, list) and goals_raw:
+        goal = str(goals_raw[0])
+    elif isinstance(goals_raw, dict):
+        goal = goals_raw.get("primary") or goals_raw.get("goal")
+
+    # ── Weights ────────────────────────────────────────────────────────────
+    weight_kg = src.get("weight_kg") or existing.get("weight_kg")
+    goal_weight_kg = src.get("target_weight_kg") or existing.get("target_weight_kg")
+    weight_direction: Optional[str] = None
+    try:
+        if weight_kg and goal_weight_kg:
+            weight_direction = "lose" if float(weight_kg) > float(goal_weight_kg) else "gain"
+    except (TypeError, ValueError):
+        weight_direction = None
+
+    # ── Macros: read user-row targets first, else compute Mifflin-St Jeor ──
+    daily_calories = src.get("daily_calorie_target") or existing.get("daily_calorie_target")
+    protein_g = src.get("daily_protein_target_g") or existing.get("daily_protein_target_g")
+    carbs_g = src.get("daily_carbs_target_g") or existing.get("daily_carbs_target_g")
+    fat_g = src.get("daily_fat_target_g") or existing.get("daily_fat_target_g")
+
+    if not all([daily_calories, protein_g, carbs_g, fat_g]):
+        try:
+            from services.metrics_calculator import MetricsCalculator
+            mc = MetricsCalculator()
+            wkg = float(weight_kg) if weight_kg else 0.0
+            hcm = float(src.get("height_cm") or existing.get("height_cm") or 0)
+            age = int(src.get("age") or existing.get("age") or 0)
+            gender = (src.get("gender") or existing.get("gender") or "male").lower()
+            activity = (src.get("activity_level") or existing.get("activity_level") or "lightly_active")
+            if wkg > 0 and hcm > 0 and age > 0:
+                bmr = mc.calculate_bmr_mifflin(wkg, hcm, age, gender)
+                tdee = mc.calculate_tdee(bmr, activity)
+                # Goal-adjusted target (textbook 7700 kcal per kg rule, ±300 cal).
+                goal_l = (goal or "").lower()
+                if goal_l in ("lose_weight", "lose", "fat_loss") or weight_direction == "lose":
+                    target_cal = tdee - 500
+                elif goal_l in ("gain_weight", "gain", "muscle", "bulk") or weight_direction == "gain":
+                    target_cal = tdee + 300
+                else:
+                    target_cal = tdee
+                daily_calories = daily_calories or int(round(target_cal))
+                # Protein: 1.6 g/kg bodyweight (ACSM lifter range).
+                protein_g = protein_g or int(round(wkg * 1.6))
+                # Fat: 25% of calories at 9 kcal/g.
+                fat_g = fat_g or int(round(target_cal * 0.25 / 9))
+                # Carbs: remainder at 4 kcal/g.
+                remaining = target_cal - (protein_g * 4) - (fat_g * 9)
+                carbs_g = carbs_g or max(0, int(round(remaining / 4)))
+        except Exception as macro_err:
+            logger.warning(
+                f"[Welcome-Email] Macro fallback compute failed for "
+                f"{user_id}: {macro_err}"
+            )
+
+    # ── Tomorrow's workout (skip silently on any error) ───────────────────
+    first_workout_name: Optional[str] = None
+    first_workout_duration: Optional[int] = None
+    first_workout_exercises: Optional[List[dict]] = None
+    try:
+        from datetime import date, timedelta
+        db = get_supabase_db()
+        tomorrow_iso = (date.today() + timedelta(days=1)).isoformat()
+        # Look 1-7 days out so we still have something to show even if
+        # the user generated their first plan starting later in the week.
+        future_iso = (date.today() + timedelta(days=8)).isoformat()
+        result = (
+            db.client.table("workouts")
+            .select("name,duration_minutes,exercises,scheduled_date,type")
+            .eq("user_id", user_id)
+            .gte("scheduled_date", tomorrow_iso)
+            .lt("scheduled_date", future_iso)
+            .order("scheduled_date")
+            .limit(1)
+            .execute()
+        )
+        rows = (result.data or []) if result else []
+        if rows:
+            w = rows[0]
+            first_workout_name = w.get("name") or (w.get("type") or "").replace("_", " ").title() or None
+            try:
+                first_workout_duration = int(w.get("duration_minutes")) if w.get("duration_minutes") else None
+            except (TypeError, ValueError):
+                first_workout_duration = None
+            ex_raw = w.get("exercises")
+            if isinstance(ex_raw, str):
+                try:
+                    ex_raw = json.loads(ex_raw)
+                except json.JSONDecodeError:
+                    ex_raw = None
+            if isinstance(ex_raw, list):
+                first_workout_exercises = [
+                    {
+                        "name": e.get("name") or e.get("exercise_name"),
+                        "sets": e.get("sets"),
+                        "reps": e.get("reps"),
+                    }
+                    for e in ex_raw[:3]
+                    if isinstance(e, dict)
+                ]
+    except Exception as workout_err:
+        logger.warning(
+            f"[Welcome-Email] Could not fetch tomorrow's workout for "
+            f"{user_id}: {workout_err}"
+        )
+
+    # ── Training days: prefs.workout_days or infer from days_per_week ──────
+    training_days: Optional[List[str]] = None
+    prefs_src = preferences if isinstance(preferences, dict) else {}
+    pd = prefs_src.get("workout_days") or prefs_src.get("preferred_training_days")
+    if isinstance(pd, list) and pd:
+        training_days = [str(d) for d in pd]
+    else:
+        try:
+            dpw = int(prefs_src.get("days_per_week") or src.get("days_per_week") or 0)
+        except (TypeError, ValueError):
+            dpw = 0
+        # Standard Mon/Wed/Fri-style fallback patterns. These are inferred,
+        # not authoritative — but they let us render the schedule strip for
+        # users whose onboarding didn't capture explicit weekday choices.
+        infer_map = {
+            1: ["mon"],
+            2: ["mon", "thu"],
+            3: ["mon", "wed", "fri"],
+            4: ["mon", "tue", "thu", "fri"],
+            5: ["mon", "tue", "wed", "thu", "fri"],
+            6: ["mon", "tue", "wed", "thu", "fri", "sat"],
+            7: ["mon", "tue", "wed", "thu", "fri", "sat", "sun"],
+        }
+        if dpw in infer_map:
+            training_days = infer_map[dpw]
+
+    background_tasks.add_task(
+        get_email_service().send_welcome_email,
+        email_addr,
+        first_name,
+        goal,
+        prefs_src.get("days_per_week") if isinstance(prefs_src, dict) else None,
+        weight_kg,
+        goal_weight_kg,
+        weight_direction,
+        daily_calories,
+        protein_g,
+        carbs_g,
+        fat_g,
+        first_workout_name,
+        first_workout_duration,
+        first_workout_exercises,
+        training_days,
+    )
+    logger.info(
+        f"[Welcome-Email] Queued for user {user_id} "
+        f"(name={bool(first_name)}, macros={bool(daily_calories)}, "
+        f"workout={bool(first_workout_name)}, days={bool(training_days)})"
+    )
+
+
 @router.post("/", response_model=User)
 @limiter.limit("5/minute")
 async def create_user(request, user: UserCreate,
@@ -183,6 +384,57 @@ async def get_user(user_id: str,
         raise safe_internal_error(e, "users")
 
 
+@router.get("/{user_id}/stats")
+async def get_user_stats(
+    user_id: str,
+    current_user: dict = Depends(get_current_user),
+):
+    """Aggregate user-level stats for the workout-complete celebration screen.
+
+    Returns at minimum `total_workouts` (count of completed workouts). Extra
+    fields can be added without breaking clients — Flutter parses defensively.
+    """
+    try:
+        verify_user_ownership(current_user, user_id)
+        db = get_supabase_db()
+
+        total_workouts = 0
+        try:
+            res = (
+                db.client.table("workouts")
+                .select("id", count="exact")
+                .eq("user_id", user_id)
+                .eq("is_completed", True)
+                .execute()
+            )
+            total_workouts = int(res.count or 0)
+        except Exception as inner:
+            # Fall back to a non-counting query so the endpoint never 500s for a
+            # missing `count` privilege; total_workouts stays 0 in that case.
+            logger.warning(f"[users/stats] count query failed for {user_id}: {inner}")
+            try:
+                res = (
+                    db.client.table("workouts")
+                    .select("id")
+                    .eq("user_id", user_id)
+                    .eq("is_completed", True)
+                    .execute()
+                )
+                total_workouts = len(res.data or [])
+            except Exception as inner2:
+                logger.error(f"[users/stats] fallback query failed for {user_id}: {inner2}", exc_info=True)
+
+        return {
+            "user_id": user_id,
+            "total_workouts": total_workouts,
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get user stats: {e}", exc_info=True)
+        raise safe_internal_error(e, "users")
+
+
 @router.get("/{user_id}/program-preferences", response_model=ProgramPreferences)
 async def get_program_preferences(user_id: str,
     current_user: dict = Depends(get_current_user),
@@ -332,6 +584,7 @@ def _get_workout_days(base_prefs: dict, latest_regen: Optional[dict]) -> List[st
 
 @router.put("/{user_id}", response_model=User)
 async def update_user(user_id: str, user: UserUpdate,
+    background_tasks: BackgroundTasks,
     current_user: dict = Depends(get_current_user),
 ):
     """Update a user."""
@@ -690,6 +943,43 @@ async def update_user(user_id: str, user: UserUpdate,
                     logger.info(f"📊 Indexed onboarding preferences to ChromaDB for user {user_id}")
                 except Exception as rag_error:
                     logger.warning(f"⚠️ Could not index preferences to ChromaDB: {rag_error}", exc_info=True)
+
+                # ── Welcome email (founder voice) ───────────────────────────
+                # Plan A2b + C1: send the welcome email here, AFTER onboarding
+                # is marked complete, instead of immediately after auth signup.
+                # By this point we have name, goal, weight, macros, training
+                # days, and a generated first workout — so the email can show
+                # real numbers instead of "Welcome, there.".
+                #
+                # Edge cases handled:
+                #   - First name missing → falls back to "Hey," in template.
+                #   - Macros not yet computed → macro grid is hidden.
+                #   - Tomorrow's workout not yet generated → block is hidden.
+                #   - Training days missing → schedule strip is hidden.
+                #   - Existing user re-saving profile (onboarding already done):
+                #     guarded by `was_already_onboarded` so we don't re-send.
+                try:
+                    was_already_onboarded = bool(existing.get("onboarding_completed"))
+                except Exception:
+                    was_already_onboarded = False
+
+                if not was_already_onboarded:
+                    try:
+                        from services.email_service import get_email_service
+                        await _schedule_welcome_email(
+                            background_tasks=background_tasks,
+                            user_id=user_id,
+                            existing=existing,
+                            updated=updated,
+                            preferences=prefs if prefs else db_prefs,
+                        )
+                    except Exception as welcome_err:
+                        # Never let welcome-email scheduling break onboarding.
+                        logger.error(
+                            f"[Welcome-Email] Failed to schedule for user "
+                            f"{user_id}: {welcome_err}",
+                            exc_info=True,
+                        )
 
             # Index training settings changes to ChromaDB for AI context
             has_training_settings = any([

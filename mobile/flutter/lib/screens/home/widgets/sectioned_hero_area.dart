@@ -205,7 +205,14 @@ class _SectionedHeroAreaState extends ConsumerState<SectionedHeroArea> {
         return dateOnly == dateKey;
       }).toList();
 
-      if (workout.isNotEmpty && workout.any((w) => w.isCompleted == true)) {
+      // Only Zealova-authored workouts paint the green completion dot.
+      // Synced Health-Connect / Apple-Health imports surface in their own
+      // synced UI (cyan card on the carousel, Synced Workouts History tab)
+      // — they shouldn't override the planned-day status.
+      final zealovaCompleted = workout.any(
+        (w) => w.isCompleted == true && !w.isSyncedFromHealthApp,
+      );
+      if (workout.isNotEmpty && zealovaCompleted) {
         statusMap[i] = true;
       } else {
         statusMap[i] = false;

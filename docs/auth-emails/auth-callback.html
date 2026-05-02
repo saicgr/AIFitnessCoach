@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Opening Zealova…</title>
+  <link rel="icon" href="/favicon.ico">
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%}
+    body{
+      background:#000;
+      color:#fff;
+      font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:24px;
+    }
+    .card{
+      max-width:460px;
+      width:100%;
+      background:#0f0f0f;
+      border:1px solid #1a1a1a;
+      border-radius:20px;
+      overflow:hidden;
+      text-align:center;
+    }
+    .accent{
+      height:4px;
+      background:linear-gradient(135deg,#06b6d4 0%,#FB923C 50%,#F97316 100%);
+    }
+    .logo{
+      width:88px;
+      height:88px;
+      border-radius:20px;
+      margin:48px auto 16px;
+      display:block;
+      object-fit:cover;
+    }
+    .brand{
+      font-size:13px;
+      font-weight:700;
+      letter-spacing:3px;
+      text-transform:uppercase;
+      color:#F97316;
+      margin-bottom:24px;
+    }
+    h1{font-size:24px;font-weight:800;margin:0 16px 12px;line-height:1.2}
+    p{font-size:15px;color:#a1a1aa;margin:0 32px 24px;line-height:1.6}
+    .cta{
+      display:inline-block;
+      background:#F97316;
+      color:#000;
+      font-size:16px;
+      font-weight:800;
+      text-decoration:none;
+      padding:14px 36px;
+      border-radius:50px;
+      margin-bottom:8px;
+    }
+    .secondary{
+      display:inline-block;
+      color:#71717a;
+      font-size:13px;
+      text-decoration:underline;
+      margin:16px 0 32px;
+    }
+    .hidden{display:none}
+    .spinner{
+      width:24px;height:24px;
+      border:3px solid #27272a;
+      border-top-color:#F97316;
+      border-radius:50%;
+      margin:0 auto 16px;
+      animation:spin 0.8s linear infinite;
+    }
+    @keyframes spin{to{transform:rotate(360deg)}}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="accent"></div>
+    <img class="logo" src="/email/zealova-logo-88.png" alt="Zealova">
+    <div class="brand">ZEALOVA</div>
+
+    <!-- Mobile: trying to open the app -->
+    <div id="mobile-state">
+      <div class="spinner"></div>
+      <h1>Opening Zealova…</h1>
+      <p>You'll be redirected back to the app in a moment.</p>
+      <a id="open-app" class="cta" href="#">Open Zealova</a>
+      <br>
+      <a id="store-link" class="secondary" href="#">Don't have the app? Install it</a>
+    </div>
+
+    <!-- Desktop: gentle hand-off -->
+    <div id="desktop-state" class="hidden">
+      <h1>This link is meant for mobile.</h1>
+      <p>Open this email on your phone, or scan the QR code in the app to sign in.</p>
+      <a class="cta" href="https://zealova.com">Back to zealova.com</a>
+      <div style="height:32px"></div>
+    </div>
+  </div>
+
+  <script>
+    (function(){
+      var ua = navigator.userAgent || '';
+      var isIOS = /iPad|iPhone|iPod/.test(ua);
+      var isAndroid = /Android/i.test(ua);
+      var isMobile = isIOS || isAndroid;
+      var qs = window.location.search || '';
+
+      // Universal Link: https URL with the same host the AASA file is on.
+      // iOS Safari already tried to open the app before serving this page.
+      // If the app isn't installed, we hit this fallback and need to offer
+      // a custom-scheme retry + App Store link.
+      var appUrl = 'zealova://auth/callback' + qs;
+      var legacyAppUrl = 'fitwiz://auth/callback' + qs;
+      var iosStore = 'https://apps.apple.com/app/zealova/id0000000000';
+      var playStore = 'https://play.google.com/store/apps/details?id=com.aifitnesscoach.app';
+
+      var mobileEl = document.getElementById('mobile-state');
+      var desktopEl = document.getElementById('desktop-state');
+      var openBtn = document.getElementById('open-app');
+      var storeLink = document.getElementById('store-link');
+
+      if (!isMobile) {
+        mobileEl.classList.add('hidden');
+        desktopEl.classList.remove('hidden');
+        return;
+      }
+
+      openBtn.href = appUrl;
+      storeLink.href = isIOS ? iosStore : playStore;
+
+      // Try to open the app immediately. Fall back to the legacy
+      // `fitwiz://` scheme after 800ms in case the user is on an older
+      // build that hasn't registered `zealova://` yet.
+      setTimeout(function(){ window.location.href = appUrl; }, 100);
+      setTimeout(function(){ window.location.href = legacyAppUrl; }, 900);
+    })();
+  </script>
+</body>
+</html>

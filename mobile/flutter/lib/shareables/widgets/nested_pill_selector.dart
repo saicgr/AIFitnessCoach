@@ -4,20 +4,30 @@ import 'package:flutter/services.dart';
 import '../shareable_catalog.dart';
 import '../shareable_data.dart';
 
-/// 3-tier pill selector that drives the unified share sheet:
+/// 3-tier selector that drives the unified share sheet:
 ///
 ///   [1:1]  [4:5]  [9:16]              ← Tier 1: Aspect
-///   [Overview] [Grid] [Card]          ← Tier 2: Subcategory (inside selected category)
+///   [thumb][thumb][thumb] …            ← Tier 2: TAPPABLE THUMBNAIL STRIP
+///                                          (replaces old subcategory pills —
+///                                          ports the demo's gallery UX so
+///                                          users see every template's real
+///                                          preview at thumb scale)
 ///   [Classic] [Rich] [Edit] [Play]    ← Tier 3: Category
 ///
-/// Disabled subcategory pills (template not available for current data)
-/// render greyed with a small lock and a snackbar on tap.
+/// Recently-used templates carry an orange `RECENT` badge in the top-right
+/// of their thumbnail. The list of recent IDs flows in via [recentTemplateIds]
+/// from the parent sheet state.
+///
+/// Disabled templates (not available for current data) render greyed
+/// with a lock overlay and a snackbar on tap.
 class NestedPillSelector extends StatelessWidget {
   final Shareable data;
   final ShareableAspect aspect;
   final ShareableCategory category;
   final ShareableTemplate template;
   final bool ownsCosmetic;
+  final List<String> recentTemplateIds;
+  final bool showWatermark;
   final ValueChanged<ShareableAspect> onAspectChanged;
   final ValueChanged<ShareableCategory> onCategoryChanged;
   final ValueChanged<ShareableTemplate> onTemplateChanged;
@@ -32,6 +42,8 @@ class NestedPillSelector extends StatelessWidget {
     required this.onCategoryChanged,
     required this.onTemplateChanged,
     this.ownsCosmetic = false,
+    this.recentTemplateIds = const [],
+    this.showWatermark = true,
   });
 
   @override
@@ -88,29 +100,33 @@ class NestedPillSelector extends StatelessWidget {
     );
   }
 
+  /// Tier 2 — horizontal thumbnail strip. Each tile renders the real
+  /// template at design size, scaled down via `FittedBox(BoxFit.cover)`.
+  /// Selected tile carries an orange border, recently-used tiles carry
+  /// a small `RECENT` badge, and unavailable templates are greyed with
+  /// a lock overlay (preserving the prior availability-gate semantics).
   Widget _subcategoryRow(
     BuildContext context,
     List<ShareableTemplateSpec> inCategory,
     List<ShareableTemplateSpec> available,
   ) {
+    final accent = data.accentColor;
     return SizedBox(
-      height: 36,
+      height: 88,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 12),
         itemCount: inCategory.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 6),
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
         itemBuilder: (context, i) {
           final spec = inCategory[i];
-          final isAvailable = available.any((s) => s.template == spec.template);
+          final isAvailable =
+              available.any((s) => s.template == spec.template);
           final isSelected = spec.template == template;
-          return _Pill(
-            label: spec.name,
-            selected: isSelected,
-            disabled: !isAvailable,
-            accent: data.accentColor,
-            trailing:
-                isAvailable ? null : const Icon(Icons.lock_rounded, size: 12),
+          final isRecent = recentTemplateIds.contains(spec.template.name) &&
+              !isSelected;
+          final tileSize = aspect.size;
+          return GestureDetector(
             onTap: () {
               HapticFeedback.selectionClick();
               if (!isAvailable) {
@@ -126,6 +142,90 @@ class NestedPillSelector extends StatelessWidget {
               }
               onTemplateChanged(spec.template);
             },
+            child: SizedBox(
+              width: 64,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 60,
+                    height: 60,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: isSelected
+                            ? accent
+                            : Colors.white.withValues(alpha: 0.15),
+                        width: isSelected ? 2 : 1,
+                      ),
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: Stack(
+                      children: [
+                        Positioned.fill(
+                          child: FittedBox(
+                            fit: BoxFit.cover,
+                            clipBehavior: Clip.hardEdge,
+                            child: SizedBox(
+                              width: tileSize.width,
+                              height: tileSize.height,
+                              child: spec.builder(data, false),
+                            ),
+                          ),
+                        ),
+                        if (!isAvailable)
+                          Positioned.fill(
+                            child: Container(
+                              color: Colors.black.withValues(alpha: 0.55),
+                              alignment: Alignment.center,
+                              child: const Icon(
+                                Icons.lock_rounded,
+                                size: 18,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        if (isRecent)
+                          Positioned(
+                            top: 3,
+                            right: 3,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 4, vertical: 1),
+                              decoration: BoxDecoration(
+                                color: accent,
+                                borderRadius: BorderRadius.circular(3),
+                              ),
+                              child: const Text(
+                                'RECENT',
+                                style: TextStyle(
+                                  fontSize: 7,
+                                  fontWeight: FontWeight.w900,
+                                  color: Colors.white,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    spec.name,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight:
+                          isSelected ? FontWeight.w800 : FontWeight.w600,
+                      color: isSelected
+                          ? accent
+                          : Colors.white.withValues(alpha: 0.7),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           );
         },
       ),

@@ -2,6 +2,19 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>com.apple.developer.applesignin</key>
+	<array>
+		<string>Default</string>
+	</array>
+	<!-- Sentry -34018 fix: Sign in with Apple stores its session credential
+	     in Keychain. Without an explicit access group declaration, certain
+	     production provisioning configurations reject Keychain reads with
+	     errSecMissingEntitlement (-34018). Pinning the group to the team-
+	     prefixed bundle id makes the entitlement match what iOS expects. -->
+	<key>keychain-access-groups</key>
+	<array>
+		<string>$(AppIdentifierPrefix)com.zealova.app</string>
+	</array>
 	<key>com.apple.developer.healthkit</key>
 	<true/>
 	<key>com.apple.developer.healthkit.access</key>
@@ -14,21 +27,18 @@
 	     extension's entitlements. -->
 	<key>com.apple.security.application-groups</key>
 	<array>
-		<string>group.fitwiz.liveactivity</string>
+		<string>group.zealova.liveactivity</string>
 	</array>
-	<!-- Push Notifications (aps-environment) intentionally omitted —
-	     Personal Teams can't use this capability, and we don't need it
-	     for local-only Live Activity updates. If you upgrade to a paid
-	     Apple Developer account, re-add: aps-environment = development. -->
-	<!-- Universal Links for referral invites + future web → app handoffs.
-	     Server side: /.well-known/apple-app-site-association is hosted at
-	     https://fitwiz.us via frontend/public/.well-known/ (served by
-	     Vercel). Without that file this entitlement is inert — the app
-	     won't intercept the link and Safari will open the web page
-	     instead. Bundle ID `com.aifitnesscoach.app` is intentional and unrelated
-	     to the web host. -->
+	<key>aps-environment</key>
+	<string>production</string>
+	<!-- Universal Links for referral invites + web → app handoffs.
+	     Primary: zealova.com (post-rebrand). Legacy: fitwiz.us (kept for
+	     back-compat with previously shared invite/workout/plan/profile
+	     links). AASA hosted at /.well-known/apple-app-site-association
+	     on both domains, served by Vercel from frontend/public/. -->
 	<key>com.apple.developer.associated-domains</key>
 	<array>
+		<string>applinks:zealova.com</string>
 		<string>applinks:fitwiz.us</string>
 	</array>
 </dict>

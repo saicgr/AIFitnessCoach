@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:fitwiz/core/constants/branding.dart';
 
 /// Pill-style row showing a public share URL with [Copy] / [Open] actions.
 /// Displayed in the unified share sheet for `ShareableKind.workoutComplete`.
@@ -92,6 +94,7 @@ class ShareLinkPill extends StatelessWidget {
           const SizedBox(width: 6),
           _IconAction(
             icon: Icons.copy_rounded,
+            tooltip: 'Copy link',
             onTap: () async {
               HapticFeedback.lightImpact();
               await Clipboard.setData(ClipboardData(text: url!));
@@ -105,8 +108,23 @@ class ShareLinkPill extends StatelessWidget {
               }
             },
           ),
+          // Share URL — hands ONLY the link to the OS share sheet so the
+          // recipient gets a tappable URL (iMessage / WhatsApp / etc.)
+          // they can open in their browser, instead of an image.
+          _IconAction(
+            icon: Icons.ios_share_rounded,
+            tooltip: 'Share link',
+            onTap: () async {
+              HapticFeedback.mediumImpact();
+              await Share.share(
+                url!,
+                subject: '${Branding.appName} workout',
+              );
+            },
+          ),
           _IconAction(
             icon: Icons.open_in_new_rounded,
+            tooltip: 'Open link',
             onTap: () async {
               HapticFeedback.selectionClick();
               final uri = Uri.parse(url!);
@@ -124,14 +142,15 @@ class ShareLinkPill extends StatelessWidget {
 class _IconAction extends StatelessWidget {
   final IconData icon;
   final VoidCallback onTap;
-  const _IconAction({required this.icon, required this.onTap});
+  final String? tooltip;
+  const _IconAction({required this.icon, required this.onTap, this.tooltip});
 
   @override
   Widget build(BuildContext context) {
     final fg = Theme.of(context).brightness == Brightness.dark
         ? Colors.white
         : Colors.black;
-    return GestureDetector(
+    final widget = GestureDetector(
       onTap: onTap,
       child: Container(
         width: 32,
@@ -140,5 +159,6 @@ class _IconAction extends StatelessWidget {
         child: Icon(icon, size: 16, color: fg.withValues(alpha: 0.85)),
       ),
     );
+    return tooltip == null ? widget : Tooltip(message: tooltip!, child: widget);
   }
 }

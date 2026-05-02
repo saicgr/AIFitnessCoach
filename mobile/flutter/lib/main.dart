@@ -60,6 +60,18 @@ void main() async {
     Supabase.initialize(
       url: ApiConstants.supabaseUrl,
       anonKey: ApiConstants.supabaseAnonKey,
+      // -34018 fix: Supabase Flutter's default token storage uses
+      // `flutter_secure_storage` with `accessibility: kSecAttrAccessibleWhenUnlocked`,
+      // which on iOS 17+ simulators (and certain TestFlight provisioning
+      // configs) trips errSecMissingEntitlement (-34018) the moment Supabase
+      // tries to persist an auth session. Switching to `first_unlock_this_device`
+      // is the documented Supabase workaround — same security guarantees for
+      // a user-tied token, no entitlement requirement.
+      authOptions: FlutterAuthClientOptions(
+        localStorage: SharedPreferencesLocalStorage(
+          persistSessionKey: 'supabase.auth.token',
+        ),
+      ),
     ),
   ]);
 

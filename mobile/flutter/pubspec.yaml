@@ -1,7 +1,7 @@
 name: fitwiz
 description: "AI-powered fitness coaching app with personalized workouts"
 publish_to: 'none'
-version: 1.2.60+1133
+version: 1.2.61+1134
 
 environment:
   sdk: ^3.10.1
@@ -35,6 +35,8 @@ dependencies:
 
   # Auth
   google_sign_in: ^6.2.1
+  sign_in_with_apple: ^6.1.4
+  crypto: ^3.0.3
   flutter_secure_storage: ^10.0.0
   supabase_flutter: ^2.8.4
 
@@ -217,6 +219,7 @@ flutter:
     - assets/lottie/
     - assets/data/
     - assets/images/muscles/
+    - assets/images/exercises/
     - assets/audio/countdown/
     - assets/audio/exercise_complete/
     - assets/audio/workout_complete/

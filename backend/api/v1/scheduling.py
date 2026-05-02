@@ -207,6 +207,14 @@ async def get_missed_workouts(
             "original_scheduled_date, reschedule_count, status, exercises_json"
         ).eq("user_id", user_id).eq("is_completed", False)
 
+        # Never advertise health-connect imports as missed Zealova plans —
+        # synced rows are past activities (Apple Health / Garmin / etc.) that
+        # the user can't "Do Today". NULL passes the filter so backfilled
+        # legacy Zealova rows (pre-instrumentation) keep showing up.
+        query = query.or_(
+            "generation_method.is.null,generation_method.neq.health_connect_import"
+        )
+
         # Filter by status and date
         if include_scheduled:
             # Include both 'missed' status and past 'scheduled' workouts
@@ -239,6 +247,12 @@ async def get_missed_workouts(
                     logger.debug(f"Failed to parse exercises JSON: {e}")
                     exercises_json = []
             exercises_count = len(exercises_json) if isinstance(exercises_json, list) else 0
+
+            # Skip empty-shell rows — a "missed" workout with 0 exercises
+            # has no actionable "Do Today" content. These are typically
+            # orphan stubs from interrupted generations or partial syncs.
+            if exercises_count == 0:
+                continue
 
             missed_workouts.append(MissedWorkout(
                 id=str(row["id"]),

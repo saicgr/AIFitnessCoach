@@ -142,12 +142,12 @@ class _DailyActivityCardState extends ConsumerState<DailyActivityCard> {
                   color: cardBorder,
                 ),
 
-                // Calories
+                // Active Energy (from HealthKit / Health Connect)
                 Expanded(
                   child: _ActivityStatItem(
                     icon: Icons.local_fire_department,
                     value: _formatNumber(activity?.caloriesBurned.toInt() ?? 0),
-                    label: 'Calories',
+                    label: 'Active Cal',
                     color: AppColors.orange,
                     textPrimary: textPrimary,
                     textMuted: textMuted,

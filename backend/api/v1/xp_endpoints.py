@@ -520,9 +520,18 @@ async def get_weekly_checkpoints(
         if not result.data:
             raise ValueError("get_full_weekly_progress returned no data")
 
-        # Supabase RPC wraps JSONB return in [{fn_name: {...}}]; unwrap it.
-        row = result.data[0]
-        raw = row.get("get_full_weekly_progress") if isinstance(row, dict) and "get_full_weekly_progress" in row else row
+        # RPC may return a list ([{...}]) or a bare dict depending on Supabase version.
+        data = result.data
+        if isinstance(data, list):
+            row = data[0] if data else {}
+        else:
+            row = data or {}
+        if isinstance(row, dict) and "get_full_weekly_progress" in row:
+            raw = row.get("get_full_weekly_progress") or {}
+        else:
+            raw = row if isinstance(row, dict) else {}
+        if not isinstance(raw, dict):
+            raw = {}
 
         # Map DB field names → Flutter model field names and enrich checkpoints
         # with display metadata (id, description, icon) the DB doesn't store.

@@ -732,6 +732,7 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
       builder: (ctx) => GlassSheet(
         child: OpenAllCratesSheet(
           unclaimedCrates: unclaimed,
+          autoSelectAll: true,
           onAllCollected: () {
             ref.read(stackedBannerControllerProvider.notifier).dismiss('daily_crate');
             ref.invalidate(unclaimedCratesProvider);

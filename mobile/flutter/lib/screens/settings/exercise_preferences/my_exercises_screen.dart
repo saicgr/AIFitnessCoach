@@ -64,33 +64,13 @@ class _MyExercisesScreenState extends ConsumerState<MyExercisesScreen>
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: const PillAppBar(title: 'Exercise Preferences'),
-      body: Column(
+      body: Stack(
         children: [
-          TabBar(
-            controller: _tabController,
-            labelColor: textPrimary,
-            unselectedLabelColor: textMuted,
-            indicatorColor: AppColors.cyan,
-            indicatorWeight: 3,
-            labelStyle: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-            ),
-            unselectedLabelStyle: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w400,
-            ),
-            isScrollable: true,
-            tabAlignment: TabAlignment.start,
-            tabs: const [
-              Tab(text: 'Favorites'),
-              Tab(text: 'Staples'),
-              Tab(text: 'Avoided'),
-              Tab(text: 'Queue'),
-              Tab(text: 'Custom'),
-            ],
-          ),
-          Expanded(
+          // The full-screen tab body fills behind the floating pill bar so
+          // content can scroll under it (matches the main shell pattern).
+          // Add bottom padding so list ends remain reachable above the bar.
+          Padding(
+            padding: const EdgeInsets.only(bottom: 76),
             child: TabBarView(
               controller: _tabController,
               children: const [
@@ -102,10 +82,155 @@ class _MyExercisesScreenState extends ConsumerState<MyExercisesScreen>
               ],
             ),
           ),
+          // Floating pill bar — icon + label below, mirrors the app's main
+          // bottom nav style. All five tabs are always visible (no expand-
+          // on-select trick) per the user's request.
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: SafeArea(
+              top: false,
+              child: AnimatedBuilder(
+                animation: _tabController,
+                builder: (context, _) {
+                  return _FloatingPillTabs(
+                    selectedIndex: _tabController.index,
+                    onTap: (i) {
+                      HapticFeedback.selectionClick();
+                      _tabController.animateTo(i);
+                    },
+                    isDark: isDark,
+                    textMuted: textMuted,
+                    textPrimary: textPrimary,
+                  );
+                },
+              ),
+            ),
+          ),
         ],
       ),
     );
   }
+}
+
+/// Floating pill-shaped tab bar with icon-over-label tiles. Visually
+/// identical in feel to the main shell's bottom nav so users get a
+/// consistent navigation language across the app.
+class _FloatingPillTabs extends StatelessWidget {
+  final int selectedIndex;
+  final ValueChanged<int> onTap;
+  final bool isDark;
+  final Color textMuted;
+  final Color textPrimary;
+
+  const _FloatingPillTabs({
+    required this.selectedIndex,
+    required this.onTap,
+    required this.isDark,
+    required this.textMuted,
+    required this.textPrimary,
+  });
+
+  static const _items = <_PillItem>[
+    _PillItem(icon: Icons.favorite_border, selectedIcon: Icons.favorite, label: 'Favorites', accent: AppColors.error),
+    _PillItem(icon: Icons.push_pin_outlined, selectedIcon: Icons.push_pin, label: 'Staples', accent: AppColors.cyan),
+    _PillItem(icon: Icons.block_outlined, selectedIcon: Icons.block, label: 'Avoided', accent: AppColors.orange),
+    _PillItem(icon: Icons.bookmark_border, selectedIcon: Icons.bookmark, label: 'Queue', accent: AppColors.cyan),
+    _PillItem(icon: Icons.tune, selectedIcon: Icons.tune, label: 'Custom', accent: AppColors.cyan),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final pillBarColor = isDark
+        ? Colors.grey.shade900.withValues(alpha: 0.92)
+        : Colors.grey.shade100.withValues(alpha: 0.95);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 6, 16, 10),
+      child: Material(
+        elevation: 8,
+        color: Colors.transparent,
+        child: Container(
+          decoration: BoxDecoration(
+            color: pillBarColor,
+            borderRadius: BorderRadius.circular(22),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.06),
+                blurRadius: 10,
+                offset: const Offset(0, 3),
+              ),
+            ],
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+          child: Row(
+            children: List.generate(_items.length, (i) {
+              final item = _items[i];
+              final isSelected = i == selectedIndex;
+              return Expanded(
+                child: Semantics(
+                  label: '${item.label} tab, ${i + 1} of ${_items.length}',
+                  selected: isSelected,
+                  button: true,
+                  child: InkWell(
+                    onTap: () => onTap(i),
+                    borderRadius: BorderRadius.circular(18),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 220),
+                      curve: Curves.easeOutCubic,
+                      padding: const EdgeInsets.symmetric(vertical: 6),
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? item.accent.withValues(alpha: isDark ? 0.18 : 0.12)
+                            : Colors.transparent,
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            isSelected ? item.selectedIcon : item.icon,
+                            size: 20,
+                            color: isSelected ? item.accent : textMuted,
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            item.label,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: isSelected
+                                  ? FontWeight.w700
+                                  : FontWeight.w500,
+                              color: isSelected ? item.accent : textMuted,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            }),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PillItem {
+  final IconData icon;
+  final IconData selectedIcon;
+  final String label;
+  final Color accent;
+  const _PillItem({
+    required this.icon,
+    required this.selectedIcon,
+    required this.label,
+    required this.accent,
+  });
 }
 
 /// Tab 1: Favorite Exercises — AI prioritizes these when generating workouts.
@@ -442,9 +567,10 @@ class _CustomTabState extends ConsumerState<_CustomTab>
             },
           ),
         ),
+        // Sit above the floating tab bar (~76pt) so it stays visible.
         Positioned(
           right: 16,
-          bottom: 16,
+          bottom: 96,
           child: FloatingActionButton.extended(
             onPressed: _showCreateSheet,
             backgroundColor: cyan,

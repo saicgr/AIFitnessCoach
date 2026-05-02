@@ -70,11 +70,93 @@ class _AIHeaderCard extends StatelessWidget {
 
 
 /// Coach Persona Section - Shows current coach with option to change
-class _CoachPersonaSection extends StatelessWidget {
+class _CoachPersonaSection extends StatefulWidget {
   final AISettings settings;
   final WidgetRef ref;
 
   const _CoachPersonaSection({required this.settings, required this.ref});
+
+  @override
+  State<_CoachPersonaSection> createState() => _CoachPersonaSectionState();
+}
+
+class _CoachPersonaSectionState extends State<_CoachPersonaSection> {
+  bool _editingName = false;
+  late TextEditingController _nameController;
+  final FocusNode _nameFocus = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController(text: _displayName());
+  }
+
+  @override
+  void didUpdateWidget(covariant _CoachPersonaSection oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Keep the controller in sync when persona changes (e.g., user picked a
+    // new preset on the Coach Selection screen and came back).
+    if (!_editingName) {
+      final fresh = _displayName();
+      if (_nameController.text != fresh) {
+        _nameController.text = fresh;
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _nameFocus.dispose();
+    super.dispose();
+  }
+
+  String _displayName() {
+    // Source of truth = settings.coachName (which the user may have renamed),
+    // falling back to the preset's canonical name.
+    final stored = widget.settings.coachName?.trim();
+    if (stored != null && stored.isNotEmpty) return stored;
+    final coach = widget.ref.read(aiSettingsProvider.notifier).getCurrentCoach();
+    return coach?.name ?? 'No Coach Selected';
+  }
+
+  void _startEditing() {
+    HapticFeedback.selectionClick();
+    setState(() {
+      _editingName = true;
+      _nameController.text = _displayName();
+      _nameController.selection = TextSelection(
+        baseOffset: 0,
+        extentOffset: _nameController.text.length,
+      );
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _nameFocus.requestFocus();
+    });
+  }
+
+  Future<void> _saveName() async {
+    final newName = _nameController.text.trim();
+    setState(() => _editingName = false);
+    await widget.ref
+        .read(aiSettingsProvider.notifier)
+        .setCoachDisplayName(newName);
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Coach renamed to ${_displayName()}'),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
+  void _cancelEditing() {
+    setState(() {
+      _editingName = false;
+      _nameController.text = _displayName();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -85,8 +167,8 @@ class _CoachPersonaSection extends StatelessWidget {
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
 
     // Get current coach
-    final coach = ref.read(aiSettingsProvider.notifier).getCurrentCoach();
-    final coachName = coach?.name ?? settings.coachName ?? 'No Coach Selected';
+    final coach = widget.ref.read(aiSettingsProvider.notifier).getCurrentCoach();
+    final coachName = _displayName();
     final coachIcon = coach?.icon ?? Icons.smart_toy;
     final coachColor = coach?.primaryColor ?? AppColors.cyan;
     final coachAccentColor = coach?.accentColor ?? AppColors.purple;
@@ -98,43 +180,98 @@ class _CoachPersonaSection extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: cardBorder),
       ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(16),
-          onTap: () {
-            // Navigate to coach selection screen with fromSettings flag
-            // This allows changing coach without going through paywall again
-            context.push('/coach-selection?fromSettings=true');
-          },
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                // Coach avatar
-                Container(
-                  width: 52,
-                  height: 52,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [coachColor, coachAccentColor],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(14),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            // Coach avatar — tap navigates to full coach selection
+            GestureDetector(
+              onTap: _editingName
+                  ? null
+                  : () => context.push('/coach-selection?fromSettings=true'),
+              child: Container(
+                width: 52,
+                height: 52,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [coachColor, coachAccentColor],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                   ),
-                  child: Icon(coachIcon, color: Colors.white, size: 26),
+                  borderRadius: BorderRadius.circular(14),
                 ),
-                const SizedBox(width: 14),
+                child: Icon(coachIcon, color: Colors.white, size: 26),
+              ),
+            ),
+            const SizedBox(width: 14),
 
-                // Coach info
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Flexible(
+            // Coach info — name area is editable in place; rest navigates
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (_editingName)
+                    // Inline editor: TextField + ✓ + ✗
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: _nameController,
+                            focusNode: _nameFocus,
+                            autofocus: true,
+                            maxLength: 24,
+                            textInputAction: TextInputAction.done,
+                            onSubmitted: (_) => _saveName(),
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: textPrimary,
+                            ),
+                            decoration: InputDecoration(
+                              isDense: true,
+                              counterText: '',
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 8,
+                              ),
+                              filled: true,
+                              fillColor: coachColor.withOpacity(0.08),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide: BorderSide(color: coachColor),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide:
+                                    BorderSide(color: coachColor, width: 1.5),
+                              ),
+                              hintText: coach?.name ?? 'Coach name',
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          icon: Icon(Icons.check, color: coachColor, size: 22),
+                          onPressed: _saveName,
+                          tooltip: 'Save',
+                          padding: const EdgeInsets.all(4),
+                          constraints: const BoxConstraints(),
+                        ),
+                        IconButton(
+                          icon: Icon(Icons.close,
+                              color: textSecondary, size: 22),
+                          onPressed: _cancelEditing,
+                          tooltip: 'Cancel',
+                          padding: const EdgeInsets.all(4),
+                          constraints: const BoxConstraints(),
+                        ),
+                      ],
+                    )
+                  else
+                    Row(
+                      children: [
+                        Flexible(
+                          child: GestureDetector(
+                            onTap: _startEditing,
                             child: Text(
                               coachName,
                               style: TextStyle(
@@ -145,44 +282,65 @@ class _CoachPersonaSection extends StatelessWidget {
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                            decoration: BoxDecoration(
-                              color: coachColor.withOpacity(0.15),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Text(
-                              personalityBadge,
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w500,
-                                color: coachColor,
-                              ),
+                        ),
+                        const SizedBox(width: 6),
+                        GestureDetector(
+                          onTap: _startEditing,
+                          child: Icon(
+                            Icons.edit_outlined,
+                            size: 16,
+                            color: textSecondary,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: coachColor.withOpacity(0.15),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            personalityBadge,
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w500,
+                              color: coachColor,
                             ),
                           ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Tap to change your coach',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: textSecondary,
                         ),
+                      ],
+                    ),
+                  const SizedBox(height: 4),
+                  GestureDetector(
+                    onTap: _editingName
+                        ? null
+                        : () =>
+                            context.push('/coach-selection?fromSettings=true'),
+                    child: Text(
+                      _editingName
+                          ? 'Rename your coach — preset stays the same'
+                          : 'Tap name to rename · tap row to change coach',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: textSecondary,
                       ),
-                    ],
+                    ),
                   ),
-                ),
+                ],
+              ),
+            ),
 
-                // Arrow
-                Icon(
+            if (!_editingName)
+              GestureDetector(
+                onTap: () =>
+                    context.push('/coach-selection?fromSettings=true'),
+                child: Icon(
                   Icons.chevron_right,
                   color: textSecondary,
                 ),
-              ],
-            ),
-          ),
+              ),
+          ],
         ),
       ),
     );

@@ -77,7 +77,7 @@ class QuizDaysSelector extends StatelessWidget {
             // Workout Duration Section (only show if callback is provided)
             if (onDurationChanged != null) ...[
               const SizedBox(height: 20),
-              _buildDurationSection(t),
+              _buildDurationSection(context, t),
             ],
           ],
         ),
@@ -85,7 +85,7 @@ class QuizDaysSelector extends StatelessWidget {
     );
   }
 
-  Widget _buildDurationSection(OnboardingTheme t) {
+  Widget _buildDurationSection(BuildContext context, OnboardingTheme t) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -93,151 +93,173 @@ class QuizDaysSelector extends StatelessWidget {
           'How long are your workouts?',
           style: TextStyle(
             fontSize: 18,
-            fontWeight: FontWeight.w600,
+            fontWeight: FontWeight.w800,
             color: t.textPrimary,
+            letterSpacing: -0.3,
           ),
         ).animate().fadeIn(delay: 100.ms),
-        const SizedBox(height: 6),
+        const SizedBox(height: 4),
         Text(
-          'Your workout duration target (AI will generate within this range)',
+          'AI generates workouts within your chosen range',
           style: TextStyle(
-            fontSize: 13,
+            fontSize: 12,
             color: t.textSecondary,
           ),
         ).animate().fadeIn(delay: 150.ms),
-        const SizedBox(height: 12),
+        const SizedBox(height: 10),
+        // Premium single-row pill layout. All 5 ranges fit in one row;
+        // recommended pill carries an inline "BEST" corner badge.
         Row(
           children: _durationOptions.asMap().entries.map((entry) {
             final index = entry.key;
             final option = entry.value;
             final minDuration = (option['min'] as num).toInt();
             final maxDuration = (option['max'] as num).toInt();
-            // Match selection by max value (the upper bound of the range)
             final isSelected = workoutDurationMax == maxDuration;
-            // 45-60min is the recommended range
             final isRecommended = maxDuration == 60;
 
+            // Outer Stack with clipBehavior:none allows the BEST badge to
+            // float ABOVE the chip's rounded boundary — the chip's ClipRRect
+            // would otherwise crop anything outside its rounded rect.
             return Expanded(
               child: Padding(
-                padding: EdgeInsets.only(right: index < _durationOptions.length - 1 ? 8 : 0),
-                child: GestureDetector(
-                  onTap: () {
-                    HapticFeedback.selectionClick();
-                    onDurationChanged!(minDuration, maxDuration);
-                  },
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: BackdropFilter(
-                          filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 200),
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            decoration: BoxDecoration(
-                              gradient: isSelected
-                                  ? LinearGradient(
-                                      colors: t.cardSelectedGradient,
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                    )
-                                  : null,
-                              color: isSelected ? null : t.cardFill,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: isSelected
-                                    ? t.borderSelected
-                                    : isRecommended
-                                        ? t.checkBorderUnselected
-                                        : t.borderDefault,
-                                width: isSelected ? 2 : 1,
+                padding: EdgeInsets.only(
+                  right: index < _durationOptions.length - 1 ? 6 : 0,
+                ),
+                child: Stack(
+                  clipBehavior: Clip.none,
+                  alignment: Alignment.topCenter,
+                  children: [
+                    // The chip itself
+                    Padding(
+                      padding: const EdgeInsets.only(top: 10),
+                      child: GestureDetector(
+                        onTap: () {
+                          HapticFeedback.selectionClick();
+                          onDurationChanged!(minDuration, maxDuration);
+                        },
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(14),
+                          child: BackdropFilter(
+                            filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 14, horizontal: 4),
+                              decoration: BoxDecoration(
+                                gradient: isSelected
+                                    ? LinearGradient(
+                                        colors: t.cardSelectedGradient,
+                                        begin: Alignment.topLeft,
+                                        end: Alignment.bottomRight,
+                                      )
+                                    : null,
+                                color: isSelected ? null : t.cardFill,
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(
+                                  color: isSelected
+                                      ? t.borderSelected
+                                      : t.borderDefault,
+                                  width: isSelected ? 2 : 1,
+                                ),
+                                boxShadow: isSelected
+                                    ? [
+                                        BoxShadow(
+                                          color: Colors.black
+                                              .withValues(alpha: 0.08),
+                                          blurRadius: 14,
+                                          offset: const Offset(0, 4),
+                                        ),
+                                      ]
+                                    : null,
                               ),
-                              boxShadow: isSelected
-                                  ? [
-                                      BoxShadow(
-                                        color: Colors.white.withValues(alpha: 0.15),
-                                        blurRadius: 6,
-                                        spreadRadius: 0,
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    child: Text(
+                                      option['label'] as String,
+                                      maxLines: 1,
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w800,
+                                        color: t.textPrimary,
+                                        letterSpacing: -0.3,
                                       ),
-                                    ]
-                                  : null,
-                            ),
-                            child: Column(
-                              children: [
-                                FittedBox(
-                                  fit: BoxFit.scaleDown,
-                                  child: Text(
-                                    option['label'] as String,
-                                    maxLines: 1,
-                                    style: TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                      color: t.textPrimary,
                                     ),
                                   ),
-                                ),
-                                Text(
-                                  'min',
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    color: t.textSecondary,
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    'min',
+                                    style: TextStyle(
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.w500,
+                                      color: t.textSecondary,
+                                      letterSpacing: 0.5,
+                                    ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
                           ),
                         ),
                       ),
-                      if (isRecommended) ...[
-                        const SizedBox(height: 4),
-                        Icon(
-                          Icons.star_rounded,
-                          size: 14,
-                          color: t.textSecondary,
+                    ),
+                    // BEST badge — floats outside the ClipRRect's clip rect,
+                    // anchored to the top of the parent Stack.
+                    if (isRecommended)
+                      Positioned(
+                        top: 0,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [
+                                Color(0xFFFFB366),
+                                Color(0xFFF97316),
+                              ],
+                            ),
+                            borderRadius: BorderRadius.circular(6),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFFF97316)
+                                    .withValues(alpha: 0.4),
+                                blurRadius: 6,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.star_rounded,
+                                  size: 9, color: Colors.white),
+                              SizedBox(width: 3),
+                              Text(
+                                'BEST',
+                                style: TextStyle(
+                                  fontSize: 8,
+                                  fontWeight: FontWeight.w800,
+                                  color: Colors.white,
+                                  letterSpacing: 0.6,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      ],
-                    ],
-                  ),
+                      ),
+                  ],
                 ).animate(delay: (200 + index * 40).ms).fadeIn().scale(begin: const Offset(0.9, 0.9)),
               ),
             );
           }).toList(),
         ),
-        const SizedBox(height: 12),
-        // Duration hint
-        if (workoutDurationMax != null)
-          Center(
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(16),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: t.cardFill,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: t.borderDefault),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.timer_outlined, size: 16, color: t.textPrimary),
-                      const SizedBox(width: 6),
-                      Text(
-                        _getDurationHint(workoutDurationMax!),
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: t.textPrimary,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ).animate().fadeIn(delay: 400.ms),
+        // Duration hint pill removed (Onboarding v5) — the chip's "BEST"
+        // badge + selection highlight already convey the recommended choice
+        // without consuming extra vertical space that pushes Continue out
+        // of view on smaller phones.
       ],
     );
   }

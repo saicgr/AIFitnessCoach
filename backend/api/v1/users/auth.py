@@ -142,11 +142,10 @@ async def google_auth(request: Request, body: GoogleAuthRequest,
 
         logger.info(f"New user created via Google OAuth: id={created['id']}, email={email}, role={created.get('role', 'user')}")
 
-        # Send welcome email in background (non-blocking)
-        if email:
-            background_tasks.add_task(
-                get_email_service().send_welcome_email, email, full_name or ""
-            )
+        # NOTE: Welcome email is NOT sent here. It now fires from the
+        # onboarding-complete handler in api/v1/users/profile.py once we
+        # actually have the user's name, goal, weight, macros, training
+        # days, and first scheduled workout. See plan A2b + C1.
 
         # Notify Discord #growth channel
         background_tasks.add_task(
@@ -249,11 +248,9 @@ async def email_auth(request: Request, body: EmailAuthRequest,
         created = db.create_user(new_user_data)
         logger.info(f"New user created via email auth: id={created['id']}, email={email}, role={created.get('role', 'user')}")
 
-        # Send welcome email in background (non-blocking)
-        if email:
-            background_tasks.add_task(
-                get_email_service().send_welcome_email, email, full_name or ""
-            )
+        # NOTE: Welcome email moved to onboarding-complete handler — see
+        # api/v1/users/profile.py. We can't fire it here because we don't
+        # yet have the user's first_name, goal, weight, or first workout.
 
         return row_to_user(created, is_new_user=True, support_friend_added=False)
 
@@ -344,11 +341,9 @@ async def email_signup(request: Request, body: EmailSignupRequest,
         created = db.create_user(new_user_data)
         logger.info(f"New user created via email signup: id={created['id']}, email={email}, role={created.get('role', 'user')}")
 
-        # Send welcome email in background (non-blocking)
-        if email:
-            background_tasks.add_task(
-                get_email_service().send_welcome_email, email, full_name or ""
-            )
+        # NOTE: Welcome email moved to onboarding-complete handler — see
+        # api/v1/users/profile.py. Fires once name/goal/macros/first
+        # workout are known so the email can show real numbers.
 
         # Notify Discord #growth channel
         background_tasks.add_task(

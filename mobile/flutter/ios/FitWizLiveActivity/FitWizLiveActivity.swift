@@ -22,7 +22,7 @@ struct LiveActivitiesAppAttributes: ActivityAttributes, Identifiable {
 // MARK: - Workout state read from App Group UserDefaults
 //
 // The Dart-side LiveActivityService writes a Map<String, dynamic> via the
-// package; the package persists it in UserDefaults(suite: group.fitwiz.liveactivity).
+// package; the package persists it in UserDefaults(suite: group.zealova.liveactivity).
 // We read it back here on every SwiftUI re-render.
 struct WorkoutLiveActivityState {
     let workoutName: String
@@ -52,7 +52,7 @@ struct WorkoutLiveActivityState {
     }
 
     static func current(
-        appGroupId: String = "group.fitwiz.liveactivity"
+        appGroupId: String = "group.zealova.liveactivity"
     ) -> WorkoutLiveActivityState? {
         guard let defaults = UserDefaults(suiteName: appGroupId) else {
             return nil

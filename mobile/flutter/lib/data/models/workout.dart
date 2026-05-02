@@ -197,6 +197,34 @@ class Workout extends Equatable {
   /// Check if workout has a challenge exercise
   bool get hasChallenge => challengeExercise != null;
 
+  /// True for rows imported from Apple Health / Health Connect / Garmin /
+  /// Fitbit rather than authored by Zealova. Drives source-aware rendering
+  /// on the hero carousel, week-strip calendar dot, missed-banner filter,
+  /// and Workout Summary screen — synced rows must never masquerade as
+  /// completed Zealova plans.
+  bool get isSyncedFromHealthApp =>
+      generationMethod == 'health_connect_import';
+
+  /// Human-readable platform label sourced from `generation_metadata.source`.
+  /// Falls back to "Synced" when the source is missing or unknown.
+  String get syncedPlatformLabel {
+    final src = generationMetadata?['source']?.toString().toLowerCase();
+    switch (src) {
+      case 'apple_health':
+      case 'healthkit':
+        return 'Apple Health';
+      case 'health_connect':
+      case 'google_fit':
+        return 'Health Connect';
+      case 'garmin':
+        return 'Garmin';
+      case 'fitbit':
+        return 'Fitbit';
+      default:
+        return 'Synced';
+    }
+  }
+
   /// Best available duration: AI-estimated > user-requested > 45 default
   int get bestDurationMinutes =>
       estimatedDurationMinutes ?? durationMinutes ?? 45;
@@ -1134,4 +1162,32 @@ class WorkoutSummaryResponse {
 
   /// Whether this was a quick mark-as-done (no tracking)
   bool get isMarkedDone => completionMethod == 'marked_done';
+
+  /// True when the underlying workout row is an Apple Health / Health
+  /// Connect / Garmin / Fitbit import (mirrors `Workout.isSyncedFromHealthApp`).
+  /// The summary screen branches on this so synced rows render the
+  /// "Synced from {platform}" view instead of the misleading "Marked Done"
+  /// + "Manually marked as done at {ts}" Zealova layout.
+  bool get isSyncedFromHealthApp =>
+      workout['generation_method'] == 'health_connect_import';
+
+  String get syncedPlatformLabel {
+    final meta = workout['generation_metadata'];
+    if (meta is! Map) return 'Synced';
+    final src = meta['source']?.toString().toLowerCase();
+    switch (src) {
+      case 'apple_health':
+      case 'healthkit':
+        return 'Apple Health';
+      case 'health_connect':
+      case 'google_fit':
+        return 'Health Connect';
+      case 'garmin':
+        return 'Garmin';
+      case 'fitbit':
+        return 'Fitbit';
+      default:
+        return 'Synced';
+    }
+  }
 }

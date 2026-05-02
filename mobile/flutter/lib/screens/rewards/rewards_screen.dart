@@ -461,8 +461,8 @@ class _RewardCard extends StatelessWidget {
     final rewardType = reward['reward_type'] as String? ?? 'unknown';
     final rewardValue = reward['reward_value'] as num? ?? 0;
     final triggerType = reward['trigger_type'] as String? ?? '';
-    final status = reward['status'] as String? ?? '';
     final claimedAt = reward['claimed_at'] as String?;
+    final displayStatus = reward['display_status'] as String? ?? _defaultDisplayStatus(rewardType);
 
     IconData icon;
     Color iconColor;
@@ -492,7 +492,10 @@ class _RewardCard extends StatelessWidget {
       case 'discount':
         icon = Icons.local_offer;
         iconColor = const Color(0xFF4CAF50);
-        title = '${rewardValue.toInt()}% Discount';
+        // Guard against Infinity/NaN from DB — `.toInt()` throws UnsupportedError
+        // on non-finite doubles, which crashed the Rewards screen in production.
+        final discountPercent = rewardValue.isFinite ? rewardValue.toInt() : 0;
+        title = '$discountPercent% Discount';
         subtitle = _getTriggerDescription(triggerType);
         break;
       default:
@@ -594,22 +597,22 @@ class _RewardCard extends StatelessWidget {
                 vertical: 6,
               ),
               decoration: BoxDecoration(
-                color: Colors.green.withValues(alpha: 0.2),
+                color: _statusColor(displayStatus).withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(
-                    status == 'delivered' ? Icons.check_circle : Icons.hourglass_top,
-                    color: status == 'delivered' ? Colors.green : Colors.amber,
+                    _statusIcon(displayStatus),
+                    color: _statusColor(displayStatus),
                     size: 16,
                   ),
                   const SizedBox(width: 4),
                   Text(
-                    status == 'delivered' ? 'Delivered' : 'Processing',
+                    _statusLabel(displayStatus),
                     style: TextStyle(
-                      color: status == 'delivered' ? Colors.green : Colors.amber,
+                      color: _statusColor(displayStatus),
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
                     ),
@@ -620,6 +623,63 @@ class _RewardCard extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  String _defaultDisplayStatus(String rewardType) {
+    switch (rewardType) {
+      case 'daily_crate':
+        return 'claimed';
+      case 'consumable':
+        return 'redeemed';
+      case 'merch':
+        return 'processing';
+      default:
+        return 'claimed';
+    }
+  }
+
+  IconData _statusIcon(String status) {
+    switch (status) {
+      case 'delivered':
+      case 'claimed':
+      case 'redeemed':
+        return Icons.check_circle;
+      case 'shipped':
+        return Icons.local_shipping;
+      case 'processing':
+      default:
+        return Icons.hourglass_top;
+    }
+  }
+
+  Color _statusColor(String status) {
+    switch (status) {
+      case 'delivered':
+      case 'claimed':
+      case 'redeemed':
+        return Colors.green;
+      case 'shipped':
+        return Colors.blue;
+      case 'processing':
+      default:
+        return Colors.amber;
+    }
+  }
+
+  String _statusLabel(String status) {
+    switch (status) {
+      case 'delivered':
+        return 'Delivered';
+      case 'claimed':
+        return 'Claimed';
+      case 'redeemed':
+        return 'Redeemed';
+      case 'shipped':
+        return 'Shipped';
+      case 'processing':
+      default:
+        return 'Processing';
+    }
   }
 
   String _getTriggerDescription(String triggerType) {

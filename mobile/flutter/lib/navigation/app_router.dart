@@ -13,15 +13,12 @@ import '../data/repositories/auth_repository.dart';
 import '../data/services/bootstrap_prefetch_service.dart';
 import '../screens/achievements/achievements_screen.dart';
 import '../screens/challenges/challenge_compare_screen.dart';
-import '../screens/auth/stats_welcome_screen.dart';
 import '../screens/auth/sign_in_screen.dart';
 import '../screens/auth/email_sign_in_screen.dart';
-import '../screens/auth/pricing_preview_screen.dart';
 import '../screens/chat/chat_screen.dart';
 import '../screens/features/feature_voting_screen.dart';
 import '../screens/coming_soon/coming_soon_screen.dart';
 import '../screens/home/home_screen.dart';
-import '../screens/home/senior_home_screen.dart';
 import '../screens/library/library_screen.dart';
 import '../screens/library/screens/all_splits_screen.dart';
 import '../screens/nutrition/nutrition_screen.dart';
@@ -29,19 +26,22 @@ import '../screens/nutrition/nutrition_settings_screen.dart';
 import '../screens/fasting/fasting_screen_redesigned.dart';
 import '../screens/stats/comprehensive_stats_screen.dart';
 import '../screens/onboarding/pre_auth_quiz_screen.dart';
-import '../screens/onboarding/senior_onboarding_screen.dart';
 import '../screens/onboarding/notification_prime_screen.dart';
 import '../screens/onboarding/permissions_primer_screen.dart';
-import '../screens/onboarding/mode_selection_screen.dart';
 import '../screens/onboarding/coach_selection_screen.dart';
 import '../screens/onboarding/fitness_assessment_screen.dart';
-import '../screens/onboarding/how_it_works_screen.dart';
-import '../screens/onboarding/personal_info_screen.dart';
-import '../screens/onboarding/ai_consent_screen.dart';
-import '../screens/onboarding/health_disclaimer_screen.dart';
-import '../screens/onboarding/training_split_screen.dart';
 import '../screens/onboarding/weight_projection_screen.dart';
 import '../screens/onboarding/workout_generation_screen.dart';
+// ── Onboarding v5 screens
+import '../screens/onboarding/plan_analyzing_screen.dart';
+// ── Onboarding v5.1: merged trust + expectations screen
+import '../screens/onboarding/trust_and_expectations_screen.dart';
+import '../screens/onboarding/demo_tasks_screen.dart';
+import '../screens/onboarding/workout_showcase_screen.dart';
+import '../screens/onboarding/nutrition_showcase_screen.dart';
+import '../screens/onboarding/founder_note_sheet.dart';
+import '../screens/onboarding/capability_and_community_screen.dart';
+import '../screens/onboarding/commitment_pact_screen.dart';
 import '../screens/you/you_hub_screen.dart';
 import '../screens/reports/reports_hub_screen.dart';
 import '../screens/summaries/insights_screen.dart';
@@ -86,7 +86,6 @@ import '../screens/paywall/hard_paywall_screen.dart';
 import '../screens/paywall/paywall_features_screen.dart';
 import '../screens/paywall/paywall_timeline_screen.dart';
 import '../screens/paywall/paywall_pricing_screen.dart';
-import '../screens/paywall/subscription_success_screen.dart';
 import '../screens/loading/workout_loading_screen.dart';
 import '../screens/profile/workout_gallery_screen.dart';
 import '../screens/profile/synced_workouts_history_screen.dart';
@@ -160,9 +159,6 @@ import '../screens/habits/habit_detail_screen.dart';
 import '../screens/wrapped/wrapped_viewer_screen.dart';
 import '../screens/wrapped/my_wrapped_screen.dart';
 import '../screens/wrapped/weekly_wrapped_screen.dart';
-import '../screens/onboarding/accuracy_intro_screen.dart';
-import '../screens/onboarding/health_connect_screen.dart';
-import '../screens/onboarding/feature_showcase_screen.dart';
 import '../screens/dashboard/coach_dashboard_screen.dart';
 import '../screens/nutrition/recipes/public_recipe_screen.dart';
 
@@ -185,12 +181,9 @@ class _AuthStateNotifier extends ChangeNotifier {
     _ref.listen<AccessibilitySettings>(accessibilityProvider, (_, __) {
       notifyListeners();
     });
-    // Re-run router redirect when AI consent loads from SharedPreferences.
-    // Without this, the router reads the default false value and incorrectly
-    // routes to /ai-consent on app reopen even when the user already accepted.
-    _ref.listen<bool>(aiConsentProvider, (_, __) {
-      notifyListeners();
-    });
+    // Onboarding v5.1: aiConsentProvider listener removed — consent is now
+    // captured as an inline checkbox on the sign-in screen, not a separate
+    // gated screen, so we no longer need a redirect-driving listener.
   }
 
   final Ref _ref;
@@ -242,8 +235,12 @@ String? _handleLoadingState(GoRouterState state, AuthState authState, LanguageSt
 
   // Allow pre-auth screens to stay during loading (don't interrupt sign-in flow)
   const preAuthScreens = {
-    '/how-it-works', '/pre-auth-quiz', '/sign-in', '/email-sign-in',
-    '/pricing-preview', '/demo-workout', '/plan-preview', '/intro',
+    '/pre-auth-quiz', '/sign-in', '/email-sign-in',
+    '/demo-workout', '/plan-preview', '/intro',
+    // Onboarding v5.1 pre-signup screens
+    '/trust-and-expectations', '/plan-analyzing',
+    '/weight-projection', '/demo-tasks',
+    '/demo-workout-showcase', '/demo-nutrition-showcase',
   };
   if (preAuthScreens.contains(loc)) return null;
 
@@ -259,8 +256,11 @@ String? _handleAuthError(GoRouterState state, AuthState authState) {
   if (loc == '/sign-in' || loc == '/email-sign-in') return null;
   // Allow other pre-auth pages to stay
   const preAuthScreens = {
-    '/how-it-works', '/pre-auth-quiz', '/pricing-preview',
-    '/demo-workout', '/plan-preview', '/intro',
+    '/pre-auth-quiz', '/demo-workout', '/plan-preview', '/intro',
+    // Onboarding v5.1 pre-signup screens
+    '/trust-and-expectations', '/plan-analyzing',
+    '/weight-projection', '/demo-tasks',
+    '/demo-workout-showcase', '/demo-nutrition-showcase',
   };
   if (preAuthScreens.contains(loc)) return null;
 
@@ -281,25 +281,13 @@ String? _getNextOnboardingStep(app_user.User user, Ref ref) {
     }
   }
 
-  // Step 1: Personal info (name, DOB, gender, height, weight)
-  if (!user.isPersonalInfoComplete) {
-    return '/personal-info';
-  }
+  // Onboarding v5.1: personal-info step removed.
+  // Name + body metrics are collected on the pre-auth quiz body-metrics gate.
+  // AI consent is now an inline checkbox on the sign-in screen.
+  // The post-signup chain jumps straight to coach-selection.
 
-  // Step 1.5: AI consent (after personal info, before coach selection)
-  // Skip if user already selected a coach (existing users before this feature)
-  if (!user.isCoachSelected) {
-    final consentNotifier = ref.read(aiConsentProvider.notifier);
-    final hasAiConsent = ref.read(aiConsentProvider);
-    // Only block on AI consent once SharedPreferences has loaded.
-    // On app reopen the notifier starts as false (default) before the async
-    // load completes. Routing to /ai-consent based on that false would force
-    // users who already accepted to re-accept. The router refreshes again
-    // once isLoaded=true (aiConsentProvider is in the refreshListenable).
-    if (consentNotifier.isLoaded && !hasAiConsent) {
-      return '/ai-consent';
-    }
-  }
+  // Onboarding v5.1: AI consent gate removed — consent is captured as an
+  // inline checkbox on the sign-in screen and persisted as part of auth.
 
   // Step 2: Coach selection
   if (!user.isCoachSelected) {
@@ -371,20 +359,27 @@ String? _handleAuthRedirect(
     return null;
   }
 
-  // Pre-auth flow screens (how-it-works, quiz, sign-in, pricing)
+  // Pre-auth flow screens — Onboarding v5.1 pre-signup funnel
   const preAuthFlowScreens = {
-    '/how-it-works', '/pre-auth-quiz', '/sign-in', '/email-sign-in', '/pricing-preview',
+    '/pre-auth-quiz', '/sign-in', '/email-sign-in',
+    '/trust-and-expectations', '/plan-analyzing',
+    '/weight-projection', '/demo-tasks',
+    '/demo-workout-showcase', '/demo-nutrition-showcase',
   };
   if (preAuthFlowScreens.contains(loc)) {
     if (isLoggedIn) {
       final user = authState.user;
-      // Allow quiz/how-it-works if user is starting over (no coach selected)
-      if ((loc == '/how-it-works' || loc == '/pre-auth-quiz') &&
+      // Allow replay of pre-signup flow for users starting over (no coach selected)
+      const replayableForReturningUser = {
+        '/pre-auth-quiz',
+        '/trust-and-expectations', '/plan-analyzing',
+        '/weight-projection', '/demo-tasks',
+        '/demo-workout-showcase', '/demo-nutrition-showcase',
+      };
+      if (replayableForReturningUser.contains(loc) &&
           user != null && !user.isCoachSelected) {
         return null;
       }
-      // Allow pricing preview for logged-in users
-      if (loc == '/pricing-preview') return null;
 
       if (user != null) {
         final nextStep = _getNextOnboardingStep(user, ref);
@@ -395,38 +390,17 @@ String? _handleAuthRedirect(
     return null; // Allow for non-logged-in users
   }
 
-  // Personal info - auth required
-  if (loc == '/personal-info') {
-    return isLoggedIn ? null : '/intro';
-  }
-
-  // Weight projection - auth required
-  if (loc == '/weight-projection') {
-    return isLoggedIn ? null : '/intro';
-  }
-
-  // Training split - auth required
-  if (loc == '/training-split') {
-    return isLoggedIn ? null : '/intro';
-  }
-
-  // AI consent - auth required
-  if (loc == '/ai-consent') {
-    return isLoggedIn ? null : '/intro';
-  }
-
-  // Health disclaimer - auth required
-  if (loc == '/health-disclaimer') {
-    return isLoggedIn ? null : '/intro';
-  }
+  // Onboarding v5.1 removed: /personal-info, /training-split,
+  // /ai-consent, /health-disclaimer, /accuracy-intro, /health-connect-setup,
+  // /feature-showcase — consolidated into quiz/sign-in/Phase 2 or deferred.
 
   // Coach selection - auth required (also used for changing coach from settings)
   if (loc == '/coach-selection') {
     return isLoggedIn ? null : '/intro';
   }
 
-  // New onboarding education screens - auth required
-  if (loc == '/accuracy-intro' || loc == '/health-connect-setup' || loc == '/feature-showcase') {
+  // (deprecated v4 education screens — guard kept for backward-compat redirects)
+  if (false) {
     return isLoggedIn ? null : '/intro';
   }
 

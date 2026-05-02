@@ -477,11 +477,18 @@ class FoodAnalysisCacheServicePart2:
                     await self._resolve_single_parsed_item(item, lookup_service)
                 )
 
-            # Phase B: per-item Gemini fallback for every local miss, in parallel
-            # with bounded concurrency.
+            # Phase B: per-item Gemini fallback for local misses, but ONLY when at
+            # least one item already resolved locally. If every item missed, the
+            # per-item fan-out is wasted work — the caller will fall through to
+            # the full-description Gemini path, which sees more context and is
+            # strictly more capable than N independent per-item calls. Skipping
+            # this branch here saves ~30–40 s on regional/complex multi-item
+            # queries (e.g. "chicken 65 biryani with gobi manchuria") where every
+            # item misses local DB.
+            local_hit_indexes = [i for i, r in enumerate(local_results) if r is not None]
             miss_indexes = [i for i, r in enumerate(local_results) if r is None]
             used_gemini = False
-            if miss_indexes:
+            if miss_indexes and local_hit_indexes:
                 sem = asyncio.Semaphore(self._PER_ITEM_GEMINI_CONCURRENCY)
 
                 async def _gemini_one(item: ParsedFoodItem) -> Optional[Dict[str, Any]]:

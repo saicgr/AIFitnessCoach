@@ -1,9 +1,11 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/constants/api_constants.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/models/chat_message.dart';
@@ -502,6 +504,32 @@ class AISettingsNotifier extends StateNotifier<AISettings> {
     NotificationServiceScheduled.cacheCoachId(coach.id, coachingStyle: coach.coachingStyle);
   }
 
+  /// Rename the current coach without changing the underlying persona.
+  /// Display name only — `coach_persona_id`, `coaching_style`, `tone`, and
+  /// `encouragement_level` all stay locked. Empty/whitespace input reverts
+  /// to the preset's original name.
+  Future<void> setCoachDisplayName(String newName) async {
+    final trimmed = newName.trim();
+    String? finalName = trimmed.isEmpty ? null : trimmed;
+
+    // If user clears the field on a preset, fall back to the preset's name
+    // so we never end up with a blank coach.
+    if (finalName == null && state.coachPersonaId != null && !state.isCustomCoach) {
+      final preset = CoachPersona.findById(state.coachPersonaId!);
+      finalName = preset?.name;
+    }
+    // For custom coaches that get cleared, default to "My Coach" (matches
+    // setCustomCoach fallback).
+    finalName ??= 'My Coach';
+
+    // Cap at 24 chars to keep UI bounded.
+    if (finalName.length > 24) finalName = finalName.substring(0, 24);
+
+    state = state.copyWith(coachName: finalName);
+    _isLoaded = true;
+    _saveSettings();
+  }
+
   /// Set a custom coach with user-defined settings
   void setCustomCoach({
     required String name,
@@ -555,13 +583,67 @@ class AISettingsScreen extends ConsumerStatefulWidget {
 }
 
 class _AISettingsScreenState extends ConsumerState<AISettingsScreen> {
+  // Per-section expanded state, persisted across visits via SharedPreferences.
+  // Defaults reflect the most-used sections being open. Power-user sections
+  // (AI Agents, Fitness Coaching, Privacy) are folded behind the Advanced
+  // toggle so the screen fits without long scrolling for most users.
+  static const _kAdvancedKey = 'ai_settings_advanced_enabled';
+  static const _kSectionPrefix = 'ai_settings_section_expanded_';
+
+  bool _advancedEnabled = false;
+  final Map<String, bool> _expanded = {
+    'coach': true,
+    'personality': true,
+    'response': false,
+    'agents': false,
+    'coaching': false,
+    'privacy': false,
+  };
+
   @override
   void initState() {
     super.initState();
-    // Load settings from API on screen open
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(aiSettingsProvider.notifier).loadSettings();
     });
+    _loadExpansionPrefs();
+  }
+
+  Future<void> _loadExpansionPrefs() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final advanced = prefs.getBool(_kAdvancedKey) ?? false;
+      final updated = <String, bool>{};
+      for (final entry in _expanded.entries) {
+        final stored = prefs.getBool('$_kSectionPrefix${entry.key}');
+        updated[entry.key] = stored ?? entry.value;
+      }
+      if (!mounted) return;
+      setState(() {
+        _advancedEnabled = advanced;
+        _expanded
+          ..clear()
+          ..addAll(updated);
+      });
+    } catch (_) {
+      // Non-fatal — defaults are perfectly usable.
+    }
+  }
+
+  Future<void> _setExpanded(String key, bool value) async {
+    setState(() => _expanded[key] = value);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('$_kSectionPrefix$key', value);
+    } catch (_) {}
+  }
+
+  Future<void> _setAdvanced(bool value) async {
+    setState(() => _advancedEnabled = value);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_kAdvancedKey, value);
+    } catch (_) {}
   }
 
   @override
@@ -580,61 +662,167 @@ class _AISettingsScreenState extends ConsumerState<AISettingsScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header card
               _AIHeaderCard().animate().fadeIn().slideY(begin: 0.1),
 
-              const SizedBox(height: 24),
+              const SizedBox(height: 16),
 
-              // Coach Persona
-              _SectionHeader(title: 'YOUR COACH'),
-              const SizedBox(height: 12),
-              _CoachPersonaSection(settings: settings, ref: ref)
-                  .animate().fadeIn(delay: 50.ms),
+              // Always-visible essentials.
+              _CollapsibleSection(
+                title: 'YOUR COACH',
+                expanded: _expanded['coach']!,
+                onChanged: (v) => _setExpanded('coach', v),
+                child: _CoachPersonaSection(settings: settings, ref: ref),
+              ),
+              _CollapsibleSection(
+                title: 'PERSONALITY & TONE',
+                expanded: _expanded['personality']!,
+                onChanged: (v) => _setExpanded('personality', v),
+                child: _PersonalitySection(settings: settings, ref: ref),
+              ),
+              _CollapsibleSection(
+                title: 'RESPONSE PREFERENCES',
+                expanded: _expanded['response']!,
+                onChanged: (v) => _setExpanded('response', v),
+                child: _ResponsePreferencesSection(settings: settings, ref: ref),
+              ),
 
-              const SizedBox(height: 24),
+              const SizedBox(height: 8),
+              _AdvancedToggleRow(
+                value: _advancedEnabled,
+                onChanged: _setAdvanced,
+                isDark: isDark,
+                textPrimary: textPrimary,
+                textSecondary: textSecondary,
+              ),
+              const SizedBox(height: 8),
 
-              // Personality & Tone
-              _SectionHeader(title: 'PERSONALITY & TONE'),
-              const SizedBox(height: 12),
-              _PersonalitySection(settings: settings, ref: ref)
-                  .animate().fadeIn(delay: 100.ms),
-
-              const SizedBox(height: 24),
-
-              // Response Preferences
-              _SectionHeader(title: 'RESPONSE PREFERENCES'),
-              const SizedBox(height: 12),
-              _ResponsePreferencesSection(settings: settings, ref: ref)
-                  .animate().fadeIn(delay: 150.ms),
-
-              const SizedBox(height: 24),
-
-              // AI Agents
-              _SectionHeader(title: 'AI AGENTS'),
-              const SizedBox(height: 12),
-              _AgentsSection(settings: settings, ref: ref)
-                  .animate().fadeIn(delay: 200.ms),
-
-              const SizedBox(height: 24),
-
-              // Fitness Coaching
-              _SectionHeader(title: 'FITNESS COACHING'),
-              const SizedBox(height: 12),
-              _FitnessCoachingSection(settings: settings, ref: ref)
-                  .animate().fadeIn(delay: 250.ms),
-
-              const SizedBox(height: 24),
-
-              // Privacy & Data
-              _SectionHeader(title: 'PRIVACY & DATA'),
-              const SizedBox(height: 12),
-              _PrivacySection(settings: settings, ref: ref)
-                  .animate().fadeIn(delay: 300.ms),
+              if (_advancedEnabled) ...[
+                _CollapsibleSection(
+                  title: 'AI AGENTS',
+                  expanded: _expanded['agents']!,
+                  onChanged: (v) => _setExpanded('agents', v),
+                  child: _AgentsSection(settings: settings, ref: ref),
+                ),
+                _CollapsibleSection(
+                  title: 'FITNESS COACHING',
+                  expanded: _expanded['coaching']!,
+                  onChanged: (v) => _setExpanded('coaching', v),
+                  child: _FitnessCoachingSection(settings: settings, ref: ref),
+                ),
+                _CollapsibleSection(
+                  title: 'PRIVACY & DATA',
+                  expanded: _expanded['privacy']!,
+                  onChanged: (v) => _setExpanded('privacy', v),
+                  child: _PrivacySection(settings: settings, ref: ref),
+                ),
+              ],
 
               const SizedBox(height: 100),
             ],
           ),
         ),
+    );
+  }
+}
+
+/// Wraps a section header + body in a Material `ExpansionTile`. Keeps the
+/// section's title styling consistent with the existing `_SectionHeader`
+/// look so the screen reads as one design language.
+class _CollapsibleSection extends StatelessWidget {
+  final String title;
+  final bool expanded;
+  final ValueChanged<bool> onChanged;
+  final Widget child;
+
+  const _CollapsibleSection({
+    required this.title,
+    required this.expanded,
+    required this.onChanged,
+    required this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    return Theme(
+      // ExpansionTile draws default dividers via the outer ListTileTheme;
+      // strip them so adjacent sections stack cleanly.
+      data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+      child: ExpansionTile(
+        key: PageStorageKey<String>('ai_section_$title'),
+        initiallyExpanded: expanded,
+        onExpansionChanged: onChanged,
+        tilePadding: const EdgeInsets.symmetric(horizontal: 4),
+        childrenPadding: const EdgeInsets.fromLTRB(0, 4, 0, 16),
+        title: Text(
+          title,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 1.2,
+            color: textMuted,
+          ),
+        ),
+        children: [child],
+      ),
+    );
+  }
+}
+
+/// Single toggle that collapses the power-user sections behind a single
+/// switch. Persists to SharedPreferences via `_setAdvanced`.
+class _AdvancedToggleRow extends StatelessWidget {
+  final bool value;
+  final ValueChanged<bool> onChanged;
+  final bool isDark;
+  final Color textPrimary;
+  final Color textSecondary;
+
+  const _AdvancedToggleRow({
+    required this.value,
+    required this.onChanged,
+    required this.isDark,
+    required this.textPrimary,
+    required this.textSecondary,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cardBg = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: BorderRadius.circular(12),
+        border: isDark ? null : Border.all(color: AppColorsLight.cardBorder),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.tune, size: 18, color: textSecondary),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Advanced settings',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: textPrimary,
+                  ),
+                ),
+                Text(
+                  'Show AI agents, fitness coaching toggles, and privacy controls',
+                  style: TextStyle(fontSize: 12, color: textSecondary),
+                ),
+              ],
+            ),
+          ),
+          Switch.adaptive(value: value, onChanged: onChanged),
+        ],
+      ),
     );
   }
 }

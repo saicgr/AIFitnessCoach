@@ -80,6 +80,19 @@ async def pause_subscription(user_id: str, request: PauseSubscriptionRequest, cu
             .eq("user_id", user_id)\
             .execute()
 
+        # Onboarding v5: mirror pause state to users table so home-screen
+        # widgets and trial-cron jobs can read pause status from a single row.
+        try:
+            supabase.client.table("users")\
+                .update({
+                    "paused_at": now.isoformat(),
+                    "pause_duration_days": request.duration_days,
+                })\
+                .eq("id", user_id)\
+                .execute()
+        except Exception as e:
+            logger.warning(f"Could not mirror pause state to users table for {user_id}: {e}")
+
         supabase.client.table("subscription_pauses").insert({
             "user_id": user_id,
             "subscription_id": subscription.get("id"),

@@ -7,6 +7,8 @@ import Landing from './pages/Landing';
 import MarketingLanding from './pages/MarketingLanding';
 import Features from './pages/Features';
 import Pricing from './pages/Pricing';
+import Lifetime from './pages/Lifetime';
+import LifetimeSuccess from './pages/LifetimeSuccess';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsOfService from './pages/TermsOfService';
 import HealthDisclaimer from './pages/HealthDisclaimer';
@@ -33,6 +35,7 @@ import Metrics from './pages/Metrics';
 import Nutrition from './pages/Nutrition';
 import Library from './pages/Library';
 import Achievements from './pages/Achievements';
+import PublicWorkout from './pages/PublicWorkout';
 import ChatWidget from './components/chat/ChatWidget';
 // Admin pages
 import { AdminLogin, AdminDashboard, LiveChatQueue } from './pages/admin';
@@ -84,6 +87,9 @@ function App() {
         <Route path="/" element={<MarketingLanding />} />
         <Route path="/features" element={<Features />} />
         <Route path="/pricing" element={<Pricing />} />
+        {/* Founding 500 Lifetime — web-only, $149.99 one-time. NEVER linked from inside the iOS/Android app. */}
+        <Route path="/lifetime" element={<Lifetime />} />
+        <Route path="/lifetime/success" element={<LifetimeSuccess />} />
         <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route path="/terms" element={<TermsOfService />} />
         <Route path="/health-disclaimer" element={<HealthDisclaimer />} />
@@ -98,6 +104,9 @@ function App() {
             the `fitwiz://` scheme if installed (see Invite.tsx); desktop
             or not-installed → show the code + store CTAs. */}
         <Route path="/invite/:code" element={<Invite />} />
+        {/* Public workout share — anyone can view; backend resolves the
+            opaque token via /api/v1/workouts/public/{token}. */}
+        <Route path="/w/:token" element={<PublicWorkout />} />
         {/* Legacy landing page */}
         <Route path="/app" element={<Landing />} />
         {/* Protected home (dashboard) */}

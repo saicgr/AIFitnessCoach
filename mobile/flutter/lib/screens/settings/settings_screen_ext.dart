@@ -321,6 +321,24 @@ extension __SettingsScreenStateExt on _SettingsScreenState {
       }
     }
 
+    // Backend re-auth gate: email-auth accounts must include their password
+    // in the DELETE body. OAuth accounts (Google/Apple) authenticate via JWT
+    // alone — no prompt needed. Without this, the backend returns 400
+    // "Password required for email accounts" and the user sees a silent
+    // failure.
+    final supabaseUser = Supabase.instance.client.auth.currentUser;
+    final authProvider =
+        (supabaseUser?.appMetadata['provider'] as String?) ?? 'email';
+    String? password;
+    if (authProvider == 'email') {
+      password = await _promptForPassword(context);
+      if (password == null || password.isEmpty) {
+        // User cancelled — bail without deleting.
+        if (mounted) setState(() => _isDeleting = false);
+        return;
+      }
+    }
+
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -340,6 +358,7 @@ extension __SettingsScreenStateExt on _SettingsScreenState {
 
       final response = await apiClient.delete(
         '${ApiConstants.users}/$userId/reset',
+        data: password != null ? {'password': password} : null,
       );
 
       navigator.pop();
@@ -443,22 +462,6 @@ extension __SettingsScreenStateExt on _SettingsScreenState {
   }
 
 
-  /// Reset Tips — clears every dismissed onboarding tour across BOTH
-  /// tooltip systems (`EmptyStateTipTour` first-run hints AND
-  /// `AppTour` multi-screen flows) so the next time the user lands on
-  /// any tour-bearing screen the spotlights reappear. Single entry
-  /// point so future tour systems hook in here once and the user
-  /// keeps a single button.
-  Future<void> _resetEmptyStateTips(BuildContext context) async {
-    final scaffold = ScaffoldMessenger.of(context);
-    final cleared = await Tooltips.resetAll();
-    if (!context.mounted) return;
-    final msg = cleared == 0
-        ? 'No tips to reset.'
-        : 'Reset $cleared tip${cleared == 1 ? '' : 's'} — they\'ll show again on your next visit.';
-    scaffold.showSnackBar(SnackBar(content: Text(msg)));
-  }
-
   void _showReplayTutorialsSheet(BuildContext context, WidgetRef ref, bool isDark) {
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
@@ -496,10 +499,12 @@ extension __SettingsScreenStateExt on _SettingsScreenState {
                 ),
               ),
               const SizedBox(height: 16),
-              Text('Replay Tutorials', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: textPrimary)),
+              Text('Tutorials & Hints', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: textPrimary)),
               const SizedBox(height: 4),
-              Text('Tap a tutorial to replay it next time you visit that screen', style: TextStyle(fontSize: 13, color: textMuted)),
+              Text('Replay full screen tours, or reset the small inline hints', style: TextStyle(fontSize: 13, color: textMuted)),
               const SizedBox(height: 16),
+              Text('REPLAY TOURS', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: textMuted, letterSpacing: 0.6)),
+              const SizedBox(height: 6),
               Flexible(
                 child: ListView(
                   shrinkWrap: true,
@@ -553,7 +558,41 @@ extension __SettingsScreenStateExt on _SettingsScreenState {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     padding: const EdgeInsets.symmetric(vertical: 12),
                   ),
-                  child: Text('Reset All Tutorials', style: TextStyle(fontSize: 14, color: textPrimary)),
+                  child: Text('Replay All Tours', style: TextStyle(fontSize: 14, color: textPrimary)),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Divider(color: cardBorder.withValues(alpha: 0.4), height: 1),
+              const SizedBox(height: 16),
+              Text('INLINE HINTS', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: textMuted, letterSpacing: 0.6)),
+              const SizedBox(height: 6),
+              Text(
+                'Small empty-state hints scattered through the app. Reset them to see the help text again.',
+                style: TextStyle(fontSize: 12, color: textMuted),
+              ),
+              const SizedBox(height: 10),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  icon: Icon(Icons.tips_and_updates_outlined, size: 18, color: textPrimary),
+                  label: Text('Reset inline hints', style: TextStyle(fontSize: 14, color: textPrimary)),
+                  onPressed: () async {
+                    final cleared = await Tooltips.resetAll();
+                    if (!ctx.mounted) return;
+                    Navigator.pop(ctx);
+                    if (!context.mounted) return;
+                    AppSnackBar.info(
+                      context,
+                      cleared == 0
+                          ? 'No hints to reset — they will appear naturally as you use new screens.'
+                          : 'Reset $cleared hint${cleared == 1 ? '' : 's'} — they\'ll show again on your next visit.',
+                    );
+                  },
+                  style: OutlinedButton.styleFrom(
+                    side: BorderSide(color: cardBorder),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
                 ),
               ),
             ],
@@ -610,6 +649,86 @@ extension __SettingsScreenStateExt on _SettingsScreenState {
                     height: 1.5,
                   ),
                 ),
+                const SizedBox(height: 16),
+                // Onboarding v5.1: re-entry to the founder note for users who
+                // either missed the auto-trigger or want to revisit it. Always
+                // renders, never gated by seen-flags.
+                InkWell(
+                  borderRadius: BorderRadius.circular(10),
+                  onTap: () {
+                    Navigator.pop(context);
+                    FounderNoteSheet.showManual(context);
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: AppColors.orange.withValues(alpha: 0.10),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: AppColors.orange.withValues(alpha: 0.30),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        ClipOval(
+                          child: Image.asset(
+                            'assets/images/founder_chetan.jpg',
+                            width: 32,
+                            height: 32,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => Container(
+                              width: 32,
+                              height: 32,
+                              color: AppColors.orange.withValues(alpha: 0.2),
+                              alignment: Alignment.center,
+                              child: const Text(
+                                'C',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                'A note from Chetan',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.orange,
+                                  letterSpacing: 0.3,
+                                ),
+                              ),
+                              Text(
+                                'Why I built ${Branding.appName}',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: isDark
+                                      ? AppColors.textSecondary
+                                      : AppColorsLight.textSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Icon(
+                          Icons.chevron_right_rounded,
+                          color: AppColors.orange,
+                          size: 18,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ],
             );
           },
@@ -655,6 +774,67 @@ extension __SettingsScreenStateExt on _SettingsScreenState {
       AppSnackBar.info(context, '$remaining taps away from Beast Mode...');
       HapticService.light();
     }
+  }
+
+  /// Re-auth password prompt for destructive actions (account delete /
+  /// full reset). Returns the typed password, or null if the user cancels.
+  /// OAuth users (Google/Apple) skip this flow entirely — JWT is enough.
+  Future<String?> _promptForPassword(BuildContext context) async {
+    final controller = TextEditingController();
+    bool obscured = true;
+    return showDialog<String>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (ctx, setLocal) => AlertDialog(
+          title: const Text('Confirm with password'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'For your security, enter your account password to permanently delete your data.',
+                style: TextStyle(fontSize: 13),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: controller,
+                obscureText: obscured,
+                autofocus: true,
+                textInputAction: TextInputAction.done,
+                onSubmitted: (v) =>
+                    Navigator.of(dialogContext).pop(v.trim()),
+                decoration: InputDecoration(
+                  labelText: 'Password',
+                  border: const OutlineInputBorder(),
+                  suffixIcon: IconButton(
+                    icon: Icon(obscured
+                        ? Icons.visibility
+                        : Icons.visibility_off),
+                    onPressed: () => setLocal(() => obscured = !obscured),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(null),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext)
+                  .pop(controller.text.trim()),
+              child: const Text(
+                'Confirm Delete',
+                style: TextStyle(
+                    color: Colors.red, fontWeight: FontWeight.w700),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
 }

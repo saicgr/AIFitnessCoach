@@ -7,6 +7,7 @@
 library;
 
 import 'dart:async';
+import 'dart:ui';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
@@ -145,7 +146,6 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
   SortSpecList _sort = SortSpecList.empty;
   MenuFilterState _filter = MenuFilterState.empty;
   RecommendationResult? _recommendation;
-  bool _searchOpen = false;
   final TextEditingController _searchController = TextEditingController();
   Timer? _searchDebounce;
   bool _showRecommended = true;
@@ -534,6 +534,22 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
     }
   }
 
+  // ───────────────────────── glass tint helpers ─────────────────────────
+
+  /// Theme-aware semi-transparent overlay tint. In light mode the base is
+  /// black so glass overlays read as a subtle darken against the bright
+  /// backdrop; in dark mode the base is white so they read as a lift.
+  /// Replaces hard-coded `Colors.white.withValues(alpha:)` overlay calls.
+  Color _glassTint(BuildContext context, double alpha) {
+    final isLight = Theme.of(context).brightness == Brightness.light;
+    return (isLight ? Colors.black : Colors.white).withValues(alpha: alpha);
+  }
+
+  /// Theme-aware border tint counterpart for [_glassTint] — used for hairline
+  /// strokes around glass cards. Same flip rule as the fill helper.
+  Color _glassBorder(BuildContext context, double alpha) =>
+      _glassTint(context, alpha);
+
   // ───────────────────────── build ─────────────────────────
 
   @override
@@ -627,18 +643,30 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
     final consumedC = (summary?.totalCarbsG ?? 0) + totals.carbs;
     final consumedF = (summary?.totalFatG ?? 0) + totals.fat;
 
+    // Inner BackdropFilter so the glassmorphism reads even when the outer
+    // GlassSheet's blur is partially obscured by content. ClipRRect is
+    // required for the blur to honour the rounded corners.
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 8),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.04),
+      child: ClipRRect(
         borderRadius: BorderRadius.circular(14),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          MacroBudgetRing(
-            label: 'Cal',
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: _glassTint(context, 0.05),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: _glassBorder(context, 0.10),
+                width: 0.5,
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                MacroBudgetRing(
+                  label: 'Cal',
             consumed: consumedCal.toDouble(),
             target: state.currentCalorieTarget.toDouble(),
             color: AppColors.coral,
@@ -657,14 +685,17 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
             color: AppColors.macroCarbs,
             unit: 'g',
           ),
-          MacroBudgetRing(
-            label: 'Fat',
-            consumed: consumedF,
-            target: state.currentFatTarget.toDouble(),
-            color: AppColors.macroFat,
-            unit: 'g',
+                MacroBudgetRing(
+                  label: 'Fat',
+                  consumed: consumedF,
+                  target: state.currentFatTarget.toDouble(),
+                  color: AppColors.macroFat,
+                  unit: 'g',
+                ),
+              ],
+            ),
           ),
-        ],
+        ),
       ),
     );
   }
@@ -733,45 +764,46 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
           Row(
             children: [
               Expanded(
-                child: _searchOpen
-                    ? TextField(
-                        controller: _searchController,
-                        autofocus: true,
-                        onChanged: _onSearchChanged,
-                        decoration: InputDecoration(
-                          isDense: true,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                          hintText: 'Search dishes…',
-                          prefixIcon: const Icon(Icons.search, size: 18),
-                          suffixIcon: IconButton(
-                            icon: const Icon(Icons.close, size: 18),
-                            onPressed: () => setState(() {
-                              _searchOpen = false;
+                // Always-on search field — the filter pipeline is wired
+                // through `_filter.searchQuery`, so leaving it dormant
+                // behind a tap-to-open button just made the bar feel idle.
+                child: TextField(
+                  controller: _searchController,
+                  autofocus: false,
+                  onChanged: _onSearchChanged,
+                  style: TextStyle(fontSize: 13, color: colors.textPrimary),
+                  decoration: InputDecoration(
+                    isDense: true,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    hintText: 'Search dishes',
+                    hintStyle: TextStyle(fontSize: 13, color: colors.textMuted),
+                    prefixIcon: Icon(Icons.search, size: 18, color: colors.textMuted),
+                    prefixIconConstraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                    suffixIcon: _searchController.text.isEmpty
+                        ? null
+                        : IconButton(
+                            icon: Icon(Icons.close, size: 18, color: colors.textMuted),
+                            onPressed: () {
                               _searchController.clear();
-                              _filter = _filter.copyWith(searchQuery: '');
-                            }),
+                              setState(() => _filter = _filter.copyWith(searchQuery: ''));
+                            },
                           ),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                        ),
-                      )
-                    : InkWell(
-                        onTap: () => setState(() => _searchOpen = true),
-                        borderRadius: BorderRadius.circular(12),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.05),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(Icons.search, size: 18, color: colors.textMuted),
-                              const SizedBox(width: 6),
-                              Text('Search dishes', style: TextStyle(fontSize: 13, color: colors.textMuted)),
-                            ],
-                          ),
-                        ),
-                      ),
+                    filled: true,
+                    fillColor: _glassTint(context, 0.06),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: _glassBorder(context, 0.10), width: 0.5),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: AppColors.orange.withValues(alpha: 0.55), width: 1),
+                    ),
+                  ),
+                ),
               ),
               const SizedBox(width: 8),
               KeyedSubtree(
@@ -877,7 +909,7 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
     return Material(
       color: active
           ? AppColors.orange.withValues(alpha: 0.15)
-          : Colors.white.withValues(alpha: 0.05),
+          : _glassTint(context, 0.05),
       borderRadius: BorderRadius.circular(10),
       child: InkWell(
         onTap: () {
@@ -923,7 +955,7 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
     return Material(
       color: highlighted
           ? AppColors.orange.withValues(alpha: 0.15)
-          : Colors.white.withValues(alpha: 0.05),
+          : _glassTint(context, 0.05),
       borderRadius: BorderRadius.circular(10),
       child: InkWell(
         onTap: _openSortSheet,
@@ -972,7 +1004,7 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
       child: Material(
         color: hasSort
             ? AppColors.orange.withValues(alpha: 0.15)
-            : Colors.white.withValues(alpha: 0.05),
+            : _glassTint(context, 0.05),
         borderRadius: BorderRadius.circular(10),
         child: InkWell(
           onTap: _openSortSheet,
@@ -1176,7 +1208,7 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
               ),
               const SizedBox(width: 6),
               Material(
-                color: Colors.white.withValues(alpha: 0.08),
+                color: _glassTint(context, 0.08),
                 shape: const CircleBorder(),
                 child: InkWell(
                   customBorder: const CircleBorder(),
@@ -1383,8 +1415,8 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 6, 16, 2),
       decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.35),
-        border: Border(top: BorderSide(color: Colors.white.withValues(alpha: 0.08))),
+        color: _glassTint(context, 0.35),
+        border: Border(top: BorderSide(color: _glassBorder(context, 0.10))),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,

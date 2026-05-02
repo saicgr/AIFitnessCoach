@@ -38,6 +38,17 @@ class _XPGoalsScreenState extends ConsumerState<XPGoalsScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    // Force a fresh server fetch on every visit to this screen. The XP
+    // provider hangs onto a static in-memory cache (`_xpInMemoryCache`)
+    // so pre-level-up state can survive an app restart and produce the
+    // contradiction the user reported (orange "you leveled up to 9" banner
+    // while the Level Progress card still ringed Level 8). Refetching
+    // silently keeps the screen instant but always truthful.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        ref.read(xpProvider.notifier).loadUserXP(showLoading: false);
+      }
+    });
   }
 
   @override

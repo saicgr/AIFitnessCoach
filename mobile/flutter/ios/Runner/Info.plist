@@ -101,7 +101,7 @@
 				<key>CFBundleTypeRole</key>
 				<string>Editor</string>
 				<key>CFBundleURLName</key>
-				<string>com.aifitnesscoach.app</string>
+				<string>com.zealova.app</string>
 				<key>CFBundleURLSchemes</key>
 				<array>
 					<string>fitwiz</string>
@@ -110,6 +110,8 @@
 			</dict>
 		</array>
 		<key>UIStatusBarHidden</key>
+		<false/>
+		<key>ITSAppUsesNonExemptEncryption</key>
 		<false/>
 	</dict>
 </plist>

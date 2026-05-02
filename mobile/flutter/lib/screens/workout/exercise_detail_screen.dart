@@ -454,6 +454,8 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen>
         left: 16,
         child: GlassBackButton(
           onTap: () => context.pop(),
+          // Hero video can be light or dark — keep dark scrim for contrast.
+          forceDarkScrim: true,
         ),
       ),
       // Floating pill bar at bottom

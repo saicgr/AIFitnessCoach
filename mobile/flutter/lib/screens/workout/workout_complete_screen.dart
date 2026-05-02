@@ -26,6 +26,7 @@ import '../../data/providers/scores_provider.dart';
 import '../../data/providers/subjective_feedback_provider.dart';
 import '../../data/providers/xp_provider.dart';
 import '../ai_settings/ai_settings_screen.dart';
+import '../settings/sections/social_privacy_section.dart' show publicShareLinksProvider;
 import '../../data/models/subjective_feedback.dart';
 import '../challenges/widgets/challenge_complete_dialog.dart';
 import '../challenges/widgets/challenge_friends_dialog.dart';

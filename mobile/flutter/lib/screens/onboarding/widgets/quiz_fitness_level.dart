@@ -78,11 +78,14 @@ class QuizFitnessLevel extends StatelessWidget {
             if (showHeader) ...[
               Text(
                 "What's your current fitness level?",
+                maxLines: 1,
+                overflow: TextOverflow.visible,
                 style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
                   color: t.textPrimary,
-                  height: 1.3,
+                  height: 1.2,
+                  letterSpacing: -0.5,
                 ),
               ).animate().fadeIn(delay: 100.ms).slideX(begin: -0.05),
               const SizedBox(height: 6),

@@ -18,6 +18,7 @@ import '../../data/repositories/auth_repository.dart';
 import '../../data/services/api_client.dart';
 import '../../data/services/notification_service.dart';
 import '../../core/services/posthog_service.dart';
+import 'widgets/inline_referral_expander.dart';
 import '../../screens/onboarding/pre_auth_quiz_data.dart';
 import '../../widgets/glass_back_button.dart';
 import '../onboarding/widgets/foldable_quiz_scaffold.dart';
@@ -79,32 +80,32 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
 
   /// Get the monthly equivalent price string for yearly plan
   String _getMonthlyEquivalent({required Offerings? offerings}) {
-    if (offerings?.current == null) return '\$4.17';
+    if (offerings?.current == null) return '\$5.00';
     for (final pkg in offerings!.current!.availablePackages) {
       if (pkg.storeProduct.identifier == SubscriptionNotifier.premiumYearlyId) {
         final monthly = pkg.storeProduct.price / 12;
         return '\$${monthly.toStringAsFixed(2)}';
       }
     }
-    return '\$4.17';
+    return '\$5.00';
   }
 
   /// Get per-day price string for yearly plan
   String _getDailyEquivalent({required Offerings? offerings}) {
-    if (offerings?.current == null) return '\$0.14';
+    if (offerings?.current == null) return '\$0.16';
     for (final pkg in offerings!.current!.availablePackages) {
       if (pkg.storeProduct.identifier == SubscriptionNotifier.premiumYearlyId) {
         final daily = pkg.storeProduct.price / 365;
         return '\$${daily.toStringAsFixed(2)}';
       }
     }
-    return '\$0.14';
+    return '\$0.16';
   }
 
   /// Get savings percentage (yearly vs monthly * 12)
   int _getSavingsPercent({required Offerings? offerings}) {
-    double yearlyPrice = 49.99;
-    double monthlyPrice = 4.99;
+    double yearlyPrice = 59.99;
+    double monthlyPrice = 7.99;
     if (offerings?.current != null) {
       for (final pkg in offerings!.current!.availablePackages) {
         if (pkg.storeProduct.identifier == SubscriptionNotifier.premiumYearlyId) {
@@ -259,7 +260,7 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                       ),
                       _BillingTab(
                         label: 'Monthly',
-                        sublabel: '${_getDynamicPrice(offerings: subscriptionState.offerings, productId: SubscriptionNotifier.premiumMonthlyId, fallback: '\$4.99')}/mo',
+                        sublabel: '${_getDynamicPrice(offerings: subscriptionState.offerings, productId: SubscriptionNotifier.premiumMonthlyId, fallback: '\$7.99')}/mo',
                         isSelected: _selectedBillingCycle == 'monthly',
                         onTap: () {
                           setState(() {
@@ -297,11 +298,11 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                         : _getDynamicPrice(
                             offerings: subscriptionState.offerings,
                             productId: SubscriptionNotifier.premiumMonthlyId,
-                            fallback: '\$4.99',
+                            fallback: '\$7.99',
                           ),
                     period: '/mo',
                     billedAs: _selectedBillingCycle == 'yearly'
-                        ? '${_getDynamicPrice(offerings: subscriptionState.offerings, productId: SubscriptionNotifier.premiumYearlyId, fallback: '\$49.99')}/year \u00b7 ${_getDailyEquivalent(offerings: subscriptionState.offerings)}/day'
+                        ? '${_getDynamicPrice(offerings: subscriptionState.offerings, productId: SubscriptionNotifier.premiumYearlyId, fallback: '\$59.99')}/year \u00b7 ${_getDailyEquivalent(offerings: subscriptionState.offerings)}/day'
                         : 'Billed monthly',
                     features: const [
                       'Unlimited personalized AI workouts',
@@ -317,7 +318,13 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                   ),
                 ),
 
-                SizedBox(height: isFoldable ? 12 : 16),
+                SizedBox(height: isFoldable ? 8 : 10),
+
+                // Onboarding v5.1: inline referral code expander
+                // (replaces the standalone /referral-code screen).
+                const InlineReferralExpander(),
+
+                SizedBox(height: isFoldable ? 8 : 10),
 
                 // Main action button with shimmer
                 _ShimmerOverlay(
@@ -494,7 +501,7 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
           final isReturning = ref.read(authStateProvider).user?.isPaywallComplete ?? false;
           if (isReturning) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Welcome to ${Branding.appName} Pro! Your subscription is active.'), behavior: SnackBarBehavior.floating),
+              const SnackBar(content: Text('You\'re all set. Your trial is now active.'), behavior: SnackBarBehavior.floating),
             );
             context.go('/home');
           } else {
@@ -518,7 +525,7 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
     if (trialSuccess && context.mounted) {
       if (isReturningUser) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Welcome to ${Branding.appName} Pro! Your subscription is active.'), behavior: SnackBarBehavior.floating),
+          const SnackBar(content: Text('You\'re all set. Your trial is now active.'), behavior: SnackBarBehavior.floating),
         );
         context.go('/home');
       } else {
@@ -564,7 +571,7 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
   Future<void> _navigateAfterPaywall(BuildContext context, WidgetRef ref) async {
     if (context.mounted) {
       debugPrint('🎉 [Paywall] Navigating to subscription success');
-      context.go('/subscription-success');
+      context.go('/commitment-pact');
     }
   }
 
@@ -606,7 +613,7 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
         // Existing user upgrading — snackbar + go home
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(isSubscribed ? 'Plan updated successfully!' : 'Welcome to ${Branding.appName} Pro! Your subscription is active.'),
+            content: Text(isSubscribed ? 'Plan updated successfully!' : 'You\'re all set. Your trial is now active.'),
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -645,23 +652,23 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
       case 'premium_yearly':
         return {
           'name': 'Premium Yearly',
-          'price': 49.99,
+          'price': 59.99,
           'period': 'year',
-          'monthlyPrice': 4.17,
+          'monthlyPrice': 5.00,
         };
       case 'premium_yearly_discount':
         return {
           'name': 'Premium Yearly (Discounted)',
-          'price': 39.99,
+          'price': 47.99,
           'period': 'year',
-          'monthlyPrice': 3.33,
+          'monthlyPrice': 4.00,
         };
       case 'premium_monthly':
         return {
           'name': 'Premium Monthly',
-          'price': 4.99,
+          'price': 7.99,
           'period': 'month',
-          'monthlyPrice': 4.99,
+          'monthlyPrice': 7.99,
         };
       default:
         return {

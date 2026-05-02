@@ -813,6 +813,11 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
 
             yield f"event: done\ndata: {json.dumps(workout_response)}\n\n"
 
+        except asyncio.CancelledError:
+            # Client disconnected mid-stream — log and re-raise so the task
+            # is cleanly cancelled. Do NOT yield (connection is gone).
+            logger.info(f"[generate-stream] Client disconnected for user {body.user_id}")
+            raise
         except Exception as e:
             logger.error(f"Streaming workout generation failed: {e}", exc_info=True)
             yield f"event: error\ndata: {json.dumps({'error': str(e)})}\n\n"

@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/repositories/auth_repository.dart';
+import '../onboarding/pre_auth_quiz_data.dart';
 import '../onboarding/widgets/onboarding_theme.dart';
 import 'widgets/pre_auth_referral_chip.dart';
 import 'package:fitwiz/core/constants/branding.dart';
@@ -39,34 +40,89 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen> {
   }
 
   Future<void> _signIn() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (!_formKey.currentState!.validate()) {
+      debugPrint('🔴 [Auth] Form validation failed — sign-in not attempted');
+      return;
+    }
+
+    final email = _emailController.text.trim();
+    // Trim only trailing whitespace from password — leading/trailing
+    // accidental spaces (autocomplete on iOS adds them) shouldn't lock
+    // out a returning user with valid credentials.
+    final password = _passwordController.text.trim();
 
     setState(() {
       _isLoading = true;
       _errorMessage = null;
     });
 
+    debugPrint('🔵 [Auth] Sign-in attempt: email=$email isSignUp=$_isSignUp');
+
     try {
       if (_isSignUp) {
+        // Pull pre-auth quiz answers (already collected before this screen)
+        // and forward them as Supabase user_metadata. Without this the
+        // welcome email + Supabase confirm template can't personalize and
+        // fall back to "Welcome, there." See feedback_name_personalization_required.
+        final quiz = ref.read(preAuthQuizProvider);
+        final formName = _nameController.text.trim();
+        final resolvedName = formName.isNotEmpty ? formName : (quiz.name ?? '');
+        final firstName =
+            resolvedName.split(RegExp(r'\s+')).first;
+        final goalKey = (quiz.goals != null && quiz.goals!.isNotEmpty)
+            ? quiz.goals!.first
+            : null;
+        final quizMetadata = <String, dynamic>{
+          if (firstName.isNotEmpty) 'first_name': firstName,
+          if (goalKey != null) 'goal': goalKey,
+          if (quiz.daysPerWeek != null) 'days_per_week': quiz.daysPerWeek,
+          if (quiz.weightKg != null) 'weight_kg': quiz.weightKg,
+          if (quiz.goalWeightKg != null) 'goal_weight_kg': quiz.goalWeightKg,
+          if (quiz.weightDirection != null)
+            'weight_direction': quiz.weightDirection,
+          if (quiz.fitnessLevel != null) 'fitness_level': quiz.fitnessLevel,
+        };
         await ref.read(authStateProvider.notifier).signUpWithEmail(
-              _emailController.text.trim(),
-              _passwordController.text,
-              name: _nameController.text.trim().isNotEmpty
-                  ? _nameController.text.trim()
-                  : null,
+              email,
+              password,
+              name: resolvedName.isNotEmpty ? resolvedName : null,
+              quizMetadata: quizMetadata,
             );
       } else {
         await ref.read(authStateProvider.notifier).signInWithEmail(
-              _emailController.text.trim(),
-              _passwordController.text,
+              email,
+              password,
             );
       }
 
-      final user = ref.read(authStateProvider).user;
+      // CRITICAL: AuthNotifier.signInWithEmail swallows exceptions and stores
+      // them in state.errorMessage instead of re-throwing. If we don't read
+      // the state here, a failed sign-in silently succeeds at this layer:
+      // the button stops loading, no error shows, the user sees nothing
+      // happen. We have to inspect state explicitly.
+      final auth = ref.read(authStateProvider);
+      if (auth.status == AuthStatus.error || auth.user == null) {
+        final raw = auth.errorMessage ?? 'Sign-in failed. Please try again.';
+        final friendly = _humanizeAuthError(raw);
+        debugPrint('🔴 [Auth] Sign-in returned error state: $raw');
+        if (mounted) {
+          setState(() {
+            _errorMessage = friendly;
+          });
+        }
+        return;
+      }
+
+      debugPrint('🟢 [Auth] Sign-in success: userId=${auth.user?.id}');
+
+      final user = auth.user;
       if (user != null && user.isFirstLogin && user.hasSupportFriend && mounted) {
         _showSupportFriendWelcome();
       }
+      // Founder sheet is shown on MainShell (the actual destination) — showing
+      // it here would race with the GoRouter redirect and tear down under us.
     } catch (e) {
+      debugPrint('🔴 [Auth] Sign-in threw exception: $e');
       final errorMsg = e.toString().replaceAll('Exception: ', '');
 
       if (errorMsg.contains('check your email') || errorMsg.contains('verify your account')) {
@@ -102,6 +158,48 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen> {
         setState(() => _isLoading = false);
       }
     }
+  }
+
+  /// Translate raw Supabase / repository auth errors into actionable copy.
+  /// Without this, users see strings like "Exception: AuthApiException(...)"
+  /// or "Invalid login credentials" without context — hard to act on.
+  String _humanizeAuthError(String raw) {
+    final lower = raw.toLowerCase();
+    if (lower.contains('invalid login credentials') ||
+        lower.contains('invalid email or password') ||
+        lower.contains('wrong password')) {
+      return _isSignUp
+          ? 'Could not create the account. Try a different email or password.'
+          : "Email or password doesn't match our records. Tap Forgot Password if you need to reset.";
+    }
+    if (lower.contains('email not confirmed') ||
+        lower.contains('verify your account') ||
+        lower.contains('check your email')) {
+      return 'Please confirm your email first — check your inbox for a verification link.';
+    }
+    if (lower.contains('user already registered') ||
+        lower.contains('already exists') ||
+        lower.contains('duplicate key')) {
+      return 'An account with that email already exists. Try signing in instead.';
+    }
+    if (lower.contains('rate limit') || lower.contains('too many requests')) {
+      return 'Too many attempts. Wait a minute and try again.';
+    }
+    if (lower.contains('network') ||
+        lower.contains('socket') ||
+        lower.contains('timed out') ||
+        lower.contains('connection')) {
+      return "Can't reach the server. Check your connection and try again.";
+    }
+    if (lower.contains('weak password') ||
+        lower.contains('password is too short')) {
+      return 'Use a stronger password — at least 8 characters with a letter and a number.';
+    }
+    // Strip the most verbose decoration before showing raw text as a fallback.
+    return raw
+        .replaceAll('Exception: ', '')
+        .replaceAll(RegExp(r'^AuthApiException\([^)]*\)\s*:?\s*'), '')
+        .trim();
   }
 
   void _showSupportFriendWelcome() {
@@ -414,44 +512,62 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen> {
 
                             const SizedBox(height: 24),
 
-                            // Submit button — glassmorphic
+                            // Submit button — warm brand orange so it
+                            // doesn't read as a disabled glassmorphic card
+                            // on light backgrounds. Spinner stays white so
+                            // it remains visible against the gradient.
                             GestureDetector(
                               onTap: _isLoading ? null : _signIn,
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(26),
-                                child: BackdropFilter(
-                                  filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-                                  child: Container(
-                                    height: 52,
-                                    decoration: BoxDecoration(
-                                      gradient: LinearGradient(
-                                        colors: t.buttonGradient,
-                                        begin: Alignment.topLeft,
-                                        end: Alignment.bottomRight,
-                                      ),
-                                      borderRadius: BorderRadius.circular(26),
-                                      border: Border.all(color: t.buttonBorder),
-                                    ),
-                                    child: Center(
-                                      child: _isLoading
-                                          ? SizedBox(
-                                              width: 24,
-                                              height: 24,
-                                              child: CircularProgressIndicator(
-                                                strokeWidth: 2.5,
-                                                valueColor: AlwaysStoppedAnimation<Color>(t.textPrimary),
-                                              ),
-                                            )
-                                          : Text(
-                                              _isSignUp ? 'Create Account' : 'Sign In',
-                                              style: TextStyle(
-                                                fontSize: 16,
-                                                fontWeight: FontWeight.w600,
-                                                color: t.textPrimary,
-                                              ),
-                                            ),
-                                    ),
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 180),
+                                height: 54,
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                    colors: _isLoading
+                                        ? [
+                                            AppColors.orange.withValues(alpha: 0.55),
+                                            const Color(0xFFFFB366).withValues(alpha: 0.55),
+                                          ]
+                                        : const [
+                                            Color(0xFFFFB366),
+                                            AppColors.orange,
+                                          ],
                                   ),
+                                  borderRadius: BorderRadius.circular(16),
+                                  boxShadow: _isLoading
+                                      ? null
+                                      : [
+                                          BoxShadow(
+                                            color: AppColors.orange
+                                                .withValues(alpha: 0.35),
+                                            blurRadius: 14,
+                                            offset: const Offset(0, 6),
+                                          ),
+                                        ],
+                                ),
+                                child: Center(
+                                  child: _isLoading
+                                      ? const SizedBox(
+                                          width: 22,
+                                          height: 22,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2.5,
+                                            valueColor:
+                                                AlwaysStoppedAnimation<Color>(
+                                                    Colors.white),
+                                          ),
+                                        )
+                                      : Text(
+                                          _isSignUp ? 'Create Account' : 'Sign In',
+                                          style: const TextStyle(
+                                            fontSize: 17,
+                                            fontWeight: FontWeight.w800,
+                                            color: Colors.white,
+                                            letterSpacing: 0.2,
+                                          ),
+                                        ),
                                 ),
                               ),
                             ),

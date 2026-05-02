@@ -66,6 +66,9 @@ class ActiveWorkoutBodyV2 extends StatelessWidget {
   final VoidCallback onAddSet;
   final VoidCallback? onSelectAllTapped;
 
+  /// Onboarding v5: showcase mode — display-only, no real interactions.
+  final bool showcase;
+
   const ActiveWorkoutBodyV2({
     super.key,
     required this.exercises,
@@ -88,6 +91,7 @@ class ActiveWorkoutBodyV2 extends StatelessWidget {
     this.onSetUpdated,
     required this.onAddSet,
     this.onSelectAllTapped,
+    this.showcase = false,
   });
 
   @override

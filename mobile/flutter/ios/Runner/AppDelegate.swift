@@ -31,7 +31,7 @@ import UIKit
 class InstagramSharePlugin: NSObject {
   private static let channelName = "com.fitwiz/instagram_share"
   // Must match the iOS bundle ID registered in Xcode (project.pbxproj).
-  private static let sourceApplication = "com.aifitnesscoach.aiFitnessCoach"
+  private static let sourceApplication = "com.zealova.app"
 
   static func register(messenger: FlutterBinaryMessenger) {
     let channel = FlutterMethodChannel(name: channelName, binaryMessenger: messenger)

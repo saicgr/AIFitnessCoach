@@ -166,9 +166,10 @@ class _AvoidedExercisesScreenState extends ConsumerState<AvoidedExercisesScreen>
       return Stack(
         children: [
           body,
+          // Above the floating tab bar in MyExercisesScreen (Issue 2).
           Positioned(
             right: 16,
-            bottom: 16,
+            bottom: 96,
             child: FloatingActionButton(
               mini: true,
               backgroundColor: AppColors.error,

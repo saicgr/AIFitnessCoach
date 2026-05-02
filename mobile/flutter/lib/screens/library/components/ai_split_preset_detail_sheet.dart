@@ -353,20 +353,24 @@ class _AISplitPresetDetailSheetState extends ConsumerState<AISplitPresetDetailSh
   void _handleStartSplit(BuildContext context) {
     HapticService.medium();
 
-    // Get current workout days from auth state
     final authState = ref.read(authStateProvider);
-    final currentWorkoutDays = authState.user?.workoutDays ?? [];
+    final currentWorkoutDays = authState.user?.workoutDays ?? <int>[];
 
-    // Close the bottom sheet first
-    Navigator.of(context).pop();
+    // NOTE: Do NOT pop the sheet here. Popping disposes this State, which
+    // would short-circuit the `if (!mounted) return` guards inside the save
+    // helper. The sheet is closed by `_applyPresetChange` after the backend
+    // regenerate call completes.
 
-    // Check for mismatch (flexible splits like AI modes with 0 days skip check)
-    if (widget.preset.daysPerWeek > 0 && currentWorkoutDays.length != widget.preset.daysPerWeek) {
-      // Show mismatch dialog
+    // Flexible splits (e.g. ai_decide) report daysPerWeek = 0 → skip mismatch.
+    if (widget.preset.daysPerWeek > 0 &&
+        currentWorkoutDays.length != widget.preset.daysPerWeek) {
       _showScheduleMismatchDialog(context, currentWorkoutDays);
     } else {
-      // No mismatch - save directly
-      _savePresetAsActiveSplit(context);
+      // No mismatch — apply the preset using the user's existing days.
+      _applyPresetChange(
+        splitValue: widget.preset.trainingSplitValue,
+        splitDisplayName: widget.preset.name,
+      );
     }
   }
 
@@ -393,13 +397,20 @@ class _AISplitPresetDetailSheetState extends ConsumerState<AISplitPresetDetailSh
         compatibleSplitName: compatibleSplitName,
         onKeepDays: () {
           Navigator.pop(dialogContext);
-          // Save compatible split for current days
-          _saveCompatibleSplit(context, compatibleSplit, compatibleSplitName);
+          // Keep the user's current days, but switch to a compatible split.
+          _applyPresetChange(
+            splitValue: compatibleSplit,
+            splitDisplayName: compatibleSplitName,
+          );
         },
-        onUpdateDays: () async {
+        onUpdateDays: () {
           Navigator.pop(dialogContext);
-          // Save the preset and update workout days
-          await _savePresetAndUpdateDays(context, newDays);
+          // Adopt the preset's recommended days AND switch to its split.
+          _applyPresetChange(
+            splitValue: widget.preset.trainingSplitValue,
+            splitDisplayName: widget.preset.name,
+            newDays: newDays,
+          );
         },
       ),
     );
@@ -416,145 +427,100 @@ class _AISplitPresetDetailSheetState extends ConsumerState<AISplitPresetDetailSh
     }
   }
 
-  /// Save the preset as the active training split and regenerate workouts
-  void _savePresetAsActiveSplit(BuildContext context) {
+  /// Apply a preset change for any of the three branches (no-mismatch,
+  /// keep-days, update-days). Routes through the canonical
+  /// `POST /workouts/update-program` endpoint, which:
+  ///   • writes `training_split` + `selected_days` to user prefs
+  ///   • deletes future incomplete workouts so they regenerate under the
+  ///     new split
+  ///   • re-indexes program preferences in RAG
+  /// Then refreshes local state and the home carousel/date strip.
+  Future<void> _applyPresetChange({
+    required String splitValue,
+    required String splitDisplayName,
+    List<int>? newDays,
+  }) async {
     if (!mounted) return;
-    final isDark = Theme.of(this.context).brightness == Brightness.dark;
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
-
-    // Update training split via user preferences AND gym profile
-    ref.read(trainingPreferencesProvider.notifier)
-       .setTrainingSplit(widget.preset.trainingSplitValue);
-    _syncToGymProfile(widget.preset.trainingSplitValue);
-
-    // Reset generation state so new split triggers fresh workout generation
-    TodayWorkoutNotifier.resetGenerationState();
-
-    // Refresh workout providers silently (no loading flash)
-    ref.read(todayWorkoutProvider.notifier).invalidateAndRefresh();
-    ref.read(workoutsProvider.notifier).silentRefresh();
-
-    // Show success snackbar
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'Switched to ${widget.preset.name}. Generating new workouts...',
-          style: const TextStyle(color: Colors.white),
-        ),
-        backgroundColor: cyan,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
-      ),
-    );
-  }
-
-  /// Save a compatible split when user keeps their current days
-  void _saveCompatibleSplit(
-    BuildContext context,
-    String compatibleSplit,
-    String compatibleSplitName,
-  ) {
-    if (!mounted) return;
-    final isDark = Theme.of(this.context).brightness == Brightness.dark;
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
-
-    // Update training split via user preferences AND gym profile
-    ref.read(trainingPreferencesProvider.notifier)
-       .setTrainingSplit(compatibleSplit);
-    _syncToGymProfile(compatibleSplit);
-
-    // Reset generation state so new split triggers fresh workout generation
-    TodayWorkoutNotifier.resetGenerationState();
-
-    // Refresh workout providers silently (no loading flash)
-    ref.read(todayWorkoutProvider.notifier).invalidateAndRefresh();
-    ref.read(workoutsProvider.notifier).silentRefresh();
-
-    // Show success snackbar
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'Switched to $compatibleSplitName. Generating new workouts...',
-          style: const TextStyle(color: Colors.white),
-        ),
-        backgroundColor: cyan,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
-      ),
-    );
-  }
-
-  /// Save the preset and update workout days
-  Future<void> _savePresetAndUpdateDays(
-    BuildContext context,
-    List<int> newDays,
-  ) async {
-    if (!mounted) return;
-    final isDark = Theme.of(this.context).brightness == Brightness.dark;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
 
     setState(() => _isLoading = true);
 
     try {
-      // Update training split via user preferences AND gym profile
-      ref.read(trainingPreferencesProvider.notifier)
-         .setTrainingSplit(widget.preset.trainingSplitValue);
-      _syncToGymProfile(widget.preset.trainingSplitValue);
-
-      // Update workout days via API
       final authState = ref.read(authStateProvider);
       final userId = authState.user?.id;
-      if (userId != null) {
-        final repo = ref.read(workoutRepositoryProvider);
-        final dayNamesList = newDays.map((idx) {
-          const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-          return days[idx];
-        }).toList();
-
-        await repo.quickDayChange(userId, dayNamesList);
-        await ref.read(authStateProvider.notifier).refreshUser();
+      if (userId == null) {
+        throw Exception('Not signed in');
       }
 
-      // Reset generation state so new split triggers fresh workout generation
-      TodayWorkoutNotifier.resetGenerationState();
+      // Map indices → backend day names. When `newDays` is null we leave
+      // workoutDays off the request so the endpoint doesn't touch days.
+      const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+      final List<String>? workoutDays = newDays
+          ?.map((i) => dayNames[i])
+          .toList(growable: false);
 
-      // Refresh workout providers silently (no loading flash)
+      // 1. Single canonical backend call: training_split + selected_days +
+      //    delete future incomplete workouts + re-index RAG.
+      final repo = ref.read(workoutRepositoryProvider);
+      await repo.updateProgramAndRegenerate(
+        userId: userId,
+        workoutType: splitValue,
+        workoutDays: workoutDays,
+      );
+
+      // 2. Mirror the split onto the active gym profile (per-profile field).
+      _syncToGymProfile(splitValue);
+
+      // 3. Pull the updated user (training_split, workoutDays) into auth state.
+      await ref.read(authStateProvider.notifier).refreshUser();
+
+      // 4. Keep the trainingPreferences StateNotifier in sync so any widget
+      //    reading it (e.g. settings rows) shows the new value immediately.
+      //    setTrainingSplit short-circuits if the value already matches.
+      await ref
+          .read(trainingPreferencesProvider.notifier)
+          .setTrainingSplit(splitValue);
+
+      // 5. Force the home hero carousel + date strip + workouts list to
+      //    refetch the freshly regenerated workouts.
+      TodayWorkoutNotifier.resetGenerationState();
       ref.read(todayWorkoutProvider.notifier).invalidateAndRefresh();
       ref.read(workoutsProvider.notifier).silentRefresh();
 
-      // Show success snackbar
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Switched to ${widget.preset.name} with ${newDays.length}-day schedule. Generating new workouts...',
-              style: const TextStyle(color: Colors.white),
-            ),
-            backgroundColor: cyan,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
+      if (!mounted) return;
+
+      final scheduleSuffix = newDays != null
+          ? ' with ${newDays.length}-day schedule'
+          : '';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Switched to $splitDisplayName$scheduleSuffix. Generating new workouts...',
+            style: const TextStyle(color: Colors.white),
           ),
-        );
-      }
+          backgroundColor: cyan,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+        ),
+      );
+
+      // Close the sheet last, after the regenerate call has succeeded.
+      Navigator.of(context).pop();
     } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to update: ${e.toString()}'),
-            backgroundColor: AppColors.error,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to update: ${e.toString()}'),
+          backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
           ),
-        );
-      }
+        ),
+      );
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);

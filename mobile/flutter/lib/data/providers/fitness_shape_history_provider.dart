@@ -6,6 +6,9 @@ import '../services/api_client.dart';
 
 /// Time ranges the user can select on the peek-sheet scrubber.
 enum FitnessHistoryRange {
+  oneDay,
+  threeDays,
+  sevenDays,
   oneWeek,
   oneMonth,
   threeMonths,
@@ -16,6 +19,9 @@ enum FitnessHistoryRange {
 
 extension FitnessHistoryRangeX on FitnessHistoryRange {
   String get label => switch (this) {
+        FitnessHistoryRange.oneDay => '1D',
+        FitnessHistoryRange.threeDays => '3D',
+        FitnessHistoryRange.sevenDays => '7D',
         FitnessHistoryRange.oneWeek => '1W',
         FitnessHistoryRange.oneMonth => '1M',
         FitnessHistoryRange.threeMonths => '3M',
@@ -28,6 +34,12 @@ extension FitnessHistoryRangeX on FitnessHistoryRange {
   int resolveDays() {
     final now = DateTime.now();
     switch (this) {
+      case FitnessHistoryRange.oneDay:
+        return 1;
+      case FitnessHistoryRange.threeDays:
+        return 3;
+      case FitnessHistoryRange.sevenDays:
+        return 7;
       case FitnessHistoryRange.oneWeek:
         return 7;
       case FitnessHistoryRange.oneMonth:
@@ -41,7 +53,7 @@ extension FitnessHistoryRangeX on FitnessHistoryRange {
       case FitnessHistoryRange.ytd:
         final jan1 = DateTime(now.year, 1, 1);
         final days = now.difference(jan1).inDays + 1;
-        return days < 7 ? 7 : days;
+        return days < 1 ? 1 : days;
     }
   }
 }

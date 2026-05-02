@@ -158,7 +158,7 @@ export default function Features() {
             Ready to start?
           </h2>
           <p className="text-[16px] text-[var(--color-text-secondary)] mb-8">
-            $4.99/month. Cancel anytime. Your AI coach is waiting.
+            From $5/month (yearly) or $7.99/month. 7-day free trial, cancel anytime.
           </p>
           <a
             href="https://play.google.com/store/apps/details?id=com.aifitnesscoach.app"

@@ -5,8 +5,11 @@ import '../widgets/section_header.dart';
 import 'audio_settings_section.dart';
 import 'sound_settings_section.dart';
 
-/// Collapsible "Advanced Audio" card that groups Sound Effects and
-/// Workout Audio under a single expandable tile to keep the page compact.
+/// Collapsible "Audio" card that groups Sound Effects and Workout Audio
+/// under a single expandable tile. Header reads "AUDIO" (not "ADVANCED
+/// AUDIO") because the Notifications card already exposes its own
+/// "Advanced" disclosure — having both sections labeled "Advanced" on
+/// the same page made it unclear which one held what.
 class AdvancedAudioSection extends StatefulWidget {
   const AdvancedAudioSection({super.key});
 
@@ -30,7 +33,7 @@ class _AdvancedAudioSectionState extends State<AdvancedAudioSection> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SectionHeader(title: 'ADVANCED AUDIO'),
+        const SectionHeader(title: 'AUDIO'),
         const SizedBox(height: 12),
         Container(
           decoration: BoxDecoration(

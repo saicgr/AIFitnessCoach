@@ -841,14 +841,26 @@ RESTAURANT/LOCATION QUALIFIERS — DO NOT create food items from restaurant name
         try:
             logger.info(f"[Gemini] Parsing food description: {description[:100]}...")
 
+            # Single Gemini call WITHOUT response_schema. The previous
+            # structured-output path (response_schema=FoodAnalysisResponse,
+            # max_output_tokens=8192) consistently hit MAX_TOKENS on
+            # complex/multi-item queries because the schema's per-item +
+            # micronutrient + scores fields forced the model to over-emit
+            # field names — returning parsed=None after ~25 s of wasted
+            # generation, then we ran an unstructured fallback (~3 s)
+            # anyway. Dropping the schema removes the bloat without changing
+            # the budget: keep max_output_tokens at 8192 so dense regional
+            # multi-item meals (5+ items × full macros) don't truncate, and
+            # let `_extract_json_robust` recover from any partial JSON.
+            # USDA/per-item enhancement below still computes accurate
+            # macros from the food names.
             response = await gemini_generate_with_retry(
                 model=self.model,
                 contents=prompt,
                 config=types.GenerateContentConfig(
                     response_mime_type="application/json",
-                    response_schema=FoodAnalysisResponse,
-                    max_output_tokens=8192,  # High limit to prevent truncation (MAX_TOKENS causes parsed=None)
-                    temperature=0.2,  # Lower = faster, more deterministic
+                    max_output_tokens=8192,
+                    temperature=0.2,
                 ),
                 user_id=user_id,
                 max_retries=2,
@@ -856,34 +868,17 @@ RESTAURANT/LOCATION QUALIFIERS — DO NOT create food items from restaurant name
                 method_name="parse_food_description",
             )
 
-            # Use response.parsed for structured output - SDK handles JSON parsing
-            parsed = response.parsed
-            result = None
+            raw_text = response.text if response.text else ""
+            result = self._extract_json_robust(raw_text) if raw_text else None
 
-            if parsed:
-                result = parsed.model_dump()
-            else:
-                # Log details about why structured parsing failed
-                logger.warning(f"[Gemini] Structured parsing returned None")
-                raw_text = response.text if response.text else ""
-                logger.info(f"[Gemini] Raw response text: {raw_text[:500] if raw_text else 'None'}")
-
-                # Check for safety/blocking issues
+            if not result:
+                logger.warning(f"[Gemini] JSON parsing returned None")
                 if hasattr(response, 'candidates') and response.candidates:
                     for i, candidate in enumerate(response.candidates):
                         if hasattr(candidate, 'finish_reason'):
                             logger.info(f"[Gemini] Candidate {i} finish_reason: {candidate.finish_reason}")
                         if hasattr(candidate, 'safety_ratings'):
                             logger.info(f"[Gemini] Candidate {i} safety_ratings: {candidate.safety_ratings}")
-
-                # Try to parse raw text as JSON fallback
-                if raw_text:
-                    logger.info(f"[Gemini] Attempting fallback JSON parsing from raw text...")
-                    result = self._extract_json_robust(raw_text)
-                    if result:
-                        logger.info(f"[Gemini] Fallback JSON parsing succeeded")
-                    else:
-                        logger.warning(f"[Gemini] Fallback JSON parsing also failed")
 
             if result and result.get('food_items'):
                 logger.info(f"[Gemini] Parsed {len(result.get('food_items', []))} food items")
@@ -934,13 +929,16 @@ RESTAURANT/LOCATION QUALIFIERS — DO NOT create food items from restaurant name
             logger.warning(f"[Gemini] Food description parsing failed: {e}", exc_info=True)
             last_error = str(e)
 
-        # Fallback: try without response_schema - just ask for JSON
+        # Fallback: re-issue the same unstructured call with a slightly higher
+        # token budget and longer timeout. The primary call may have failed
+        # parsing (truncated JSON, repair failed) — give it more room.
         try:
             fallback_response = await gemini_generate_with_retry(
                 model=self.model,
                 contents=prompt,
                 config=types.GenerateContentConfig(
-                    max_output_tokens=4096,
+                    response_mime_type="application/json",
+                    max_output_tokens=8192,
                     temperature=0.2,
                 ),
                 user_id=user_id,

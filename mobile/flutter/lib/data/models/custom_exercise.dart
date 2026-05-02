@@ -520,6 +520,7 @@ extension CustomExerciseToLibraryItem on CustomExercise {
       equipment: equipment,
       targetMuscle: primaryMuscle,
       videoUrl: customVideoUrl,
+      imageUrl: imageUrl,
     );
   }
 }

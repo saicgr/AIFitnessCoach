@@ -10,7 +10,7 @@ import '../repositories/muscle_analytics_repository.dart';
 final selectedMuscleGroupProvider = StateProvider<String?>((ref) => null);
 
 /// Time range for muscle analytics queries
-final muscleAnalyticsTimeRangeProvider = StateProvider<String>((ref) => '4_weeks');
+final muscleAnalyticsTimeRangeProvider = StateProvider<String>((ref) => '1_day');
 
 /// Current tab in muscle analytics screen
 final muscleAnalyticsTabProvider = StateProvider<int>((ref) => 0);

@@ -61,6 +61,13 @@ class UserCreate(BaseModel):
     # TRUE once user manually toggled their tier — prevents auto-defaulting from overriding their choice.
     workout_ui_mode_user_explicit: Optional[bool] = None
 
+    # ── Onboarding v5 fields (migration 2041) ─────────────────────
+    referral_source: Optional[str] = Field(default=None, max_length=100)
+    prior_apps_tried: Optional[list] = None
+    referral_code: Optional[str] = Field(default=None, max_length=50)
+    coach_name: Optional[str] = Field(default=None, max_length=50)
+    goal_target_date: Optional[str] = Field(default=None, max_length=10)
+
 
 class NotificationPreferences(BaseModel):
     """User's notification preferences and schedule times.
@@ -200,6 +207,23 @@ class UserUpdate(BaseModel):
     # Used as warm-lead segment for Reppora alpha launch invites.
     is_trainer: Optional[bool] = None
 
+    # ── Onboarding v5 fields (migration 2041) ─────────────────────
+    # Market research — captured during pre-auth quiz
+    referral_source: Optional[str] = Field(default=None, max_length=100)  # "tiktok", "friend", "appstore", etc.
+    prior_apps_tried: Optional[list] = None  # JSON array of competitor apps user tried before
+    # Personalization
+    referral_code: Optional[str] = Field(default=None, max_length=50)  # Optional discount code at signup
+    coach_name: Optional[str] = Field(default=None, max_length=50)  # User-named AI coach (loss aversion lever)
+    # One-time UX flags
+    seen_founder_note: Optional[bool] = None  # Gates Base Camp–style post-signup welcome sheet
+    commitment_pact_accepted: Optional[bool] = None  # Tracked psychological commitment to week 1
+    commitment_pact_accepted_at: Optional[str] = Field(default=None, max_length=30)  # ISO timestamp
+    # Trial mechanics
+    trial_start_date: Optional[str] = Field(default=None, max_length=10)  # ISO date YYYY-MM-DD
+    goal_target_date: Optional[str] = Field(default=None, max_length=10)  # Computed weight projection target date
+    paused_at: Optional[str] = Field(default=None, max_length=30)  # ISO timestamp if user accepted pause-on-cancel
+    pause_duration_days: Optional[int] = Field(default=None, ge=1, le=90)  # 14 or 30 typically
+
 
 class User(BaseModel):
     id: str = Field(..., max_length=100)  # UUID from Supabase
@@ -268,3 +292,16 @@ class User(BaseModel):
     # TRUE if user identified as a personal trainer at onboarding (migration 100).
     # Warm-lead segment for Reppora alpha launch invites.
     is_trainer: bool = False
+
+    # ── Onboarding v5 fields (migration 2041) ─────────────────────
+    referral_source: Optional[str] = Field(default=None, max_length=100)
+    prior_apps_tried: Optional[list] = None
+    referral_code: Optional[str] = Field(default=None, max_length=50)
+    coach_name: Optional[str] = Field(default=None, max_length=50)
+    seen_founder_note: bool = False
+    commitment_pact_accepted: bool = False
+    commitment_pact_accepted_at: Optional[datetime] = None
+    trial_start_date: Optional[str] = Field(default=None, max_length=10)
+    goal_target_date: Optional[str] = Field(default=None, max_length=10)
+    paused_at: Optional[datetime] = None
+    pause_duration_days: Optional[int] = Field(default=None, ge=1, le=90)

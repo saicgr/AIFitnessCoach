@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:io' show Platform;
 import 'dart:ui';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -58,6 +60,49 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
     super.dispose();
   }
 
+  /// True only on real iOS / iPadOS devices. Apple Sign In is not supported
+  /// on web (where Platform throws) or other platforms.
+  bool get _showAppleSignIn => !kIsWeb && Platform.isIOS;
+
+  Future<void> _signInWithApple() async {
+    setState(() {
+      _isLoading = true;
+      _loadingMessage = _loadingMessages[0];
+    });
+
+    int messageIndex = 0;
+    final messageTimer = Stream.periodic(
+      const Duration(seconds: 3),
+      (_) => _loadingMessages[++messageIndex % _loadingMessages.length],
+    ).listen((message) {
+      if (mounted && _isLoading) {
+        setState(() => _loadingMessage = message);
+      }
+    });
+
+    try {
+      await ref.read(authStateProvider.notifier).signInWithApple();
+
+      final user = ref.read(authStateProvider).user;
+      if (user != null && user.isFirstLogin && user.hasSupportFriend && mounted) {
+        _showSupportFriendWelcome();
+      }
+
+      // Founder sheet is shown on MainShell (the actual destination) — showing
+      // it here would race with the GoRouter redirect and tear down under us.
+
+      _triggerEarlyGeneration();
+    } finally {
+      messageTimer.cancel();
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _loadingMessage = null;
+        });
+      }
+    }
+  }
+
   Future<void> _signInWithGoogle() async {
     setState(() {
       _isLoading = true;
@@ -81,6 +126,9 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
       if (user != null && user.isFirstLogin && user.hasSupportFriend && mounted) {
         _showSupportFriendWelcome();
       }
+
+      // Founder sheet is shown on MainShell (the actual destination) — showing
+      // it here would race with the GoRouter redirect and tear down under us.
 
       _triggerEarlyGeneration();
     } finally {
@@ -195,8 +243,13 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
                           const Spacer(),
                           _buildSignInButtons(t),
                           errorWidget,
-                          const SizedBox(height: 24),
-                          _buildTermsText(t),
+                          // Single consent disclosure lives above the
+                          // sign-in buttons in `_ConsentDisclosure` —
+                          // covers Terms, Privacy Policy, AND the
+                          // Health Disclaimer (the legally required
+                          // one for an AI fitness app). The duplicate
+                          // "By continuing…" line that used to render
+                          // here was redundant.
                           const SizedBox(height: 24),
                         ],
                       ),
@@ -232,9 +285,20 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
           // entry screens feel like one flow instead of two unrelated
           // pages with mismatched chrome.
           GestureDetector(
-            onTap: () => context.go(
-              (!widget.forceReturning && quizStarted) ? '/pre-auth-quiz' : '/intro',
-            ),
+            // Pop one screen back if anything pushed us here (demo-tasks,
+            // capability-and-community, etc.). Only fall back to /intro
+            // when sign-in is the root (deep-link / cold returning user).
+            onTap: () {
+              if (context.canPop()) {
+                context.pop();
+              } else {
+                context.go(
+                  (!widget.forceReturning && quizStarted)
+                      ? '/pre-auth-quiz'
+                      : '/intro',
+                );
+              }
+            },
             child: ClipRRect(
               borderRadius: BorderRadius.circular(20),
               child: BackdropFilter(
@@ -351,7 +415,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
     // the email screen has its own Sign In / Sign Up toggle).
     final title = quizStarted ? 'Almost There!' : "Let's get started";
     final subtitle = quizStarted
-        ? 'Sign in to save your personalized plan and start your fitness journey'
+        ? _buildPersonalizedSubtitle(quizData)
         : 'Sign in or create an account to continue';
     return Column(
       children: [
@@ -477,26 +541,13 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
               ),
               const SizedBox(width: 16),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Your $goalDisplay Plan',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: t.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      '${quizData.daysPerWeek ?? 3} days/week • Personalized for you',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: t.textMuted,
-                      ),
-                    ),
-                  ],
+                child: Text(
+                  'Your $goalDisplay Plan · ${quizData.daysPerWeek ?? 3} days/week',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: t.textPrimary,
+                  ),
                 ),
               ),
               ClipRRect(
@@ -602,6 +653,44 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
           ),
         ).animate().fadeIn(delay: 600.ms).slideY(begin: 0.1),
 
+        // Apple Sign In button — iOS / iPadOS only (App Store guideline 4.8)
+        if (_showAppleSignIn) ...[
+          const SizedBox(height: 12),
+          GestureDetector(
+            onTap: _isLoading ? null : _signInWithApple,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(27),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+                child: Container(
+                  width: double.infinity,
+                  height: 54,
+                  decoration: BoxDecoration(
+                    color: Colors.black,
+                    borderRadius: BorderRadius.circular(27),
+                    border: Border.all(color: Colors.white.withOpacity(0.15)),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: const [
+                      Icon(Icons.apple, color: Colors.white, size: 22),
+                      SizedBox(width: 10),
+                      Text(
+                        'Continue with Apple',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ).animate().fadeIn(delay: 700.ms).slideY(begin: 0.1),
+        ],
+
         const SizedBox(height: 16),
 
         // Email Sign In link
@@ -624,59 +713,147 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
         // Referral code capture — stored pre-auth, auto-applied after
         // sign-in completes (see AuthStateNotifier._flushPendingReferral).
         const PreAuthReferralChip(),
+
+        const SizedBox(height: 18),
+
+        // Legal disclosure — moved BELOW the sign-in buttons to match
+        // the iOS HIG / Apple App Store convention (terms shown after
+        // the action, not before). Single comprehensive disclosure
+        // that covers Terms · Privacy · Health Disclaimer.
+        _ConsentDisclosure(t: t),
       ],
     );
   }
 
-  Widget _buildTermsText(OnboardingTheme t) {
-    return RichText(
-      textAlign: TextAlign.center,
-      text: TextSpan(
-        style: TextStyle(fontSize: 12, color: t.textMuted, height: 1.4),
-        children: [
-          const TextSpan(text: 'By continuing, you agree to our '),
-          TextSpan(
-            text: 'Terms of Service',
-            style: TextStyle(
-              color: t.textSecondary,
-              decoration: TextDecoration.underline,
-              decorationColor: t.textMuted,
-            ),
-            recognizer: TapGestureRecognizer()
-              ..onTap = () => launchUrl(Uri.parse('${AppLinks.termsOfService}'), mode: LaunchMode.externalApplication),
-          ),
-          const TextSpan(text: ' and '),
-          TextSpan(
-            text: 'Privacy Policy',
-            style: TextStyle(
-              color: t.textSecondary,
-              decoration: TextDecoration.underline,
-              decorationColor: t.textMuted,
-            ),
-            recognizer: TapGestureRecognizer()
-              ..onTap = () => launchUrl(Uri.parse('${AppLinks.privacyPolicy}'), mode: LaunchMode.externalApplication),
-          ),
-        ],
-      ),
-    ).animate().fadeIn(delay: 800.ms);
+  /// Builds a founder-note style subtitle — first-person, warm,
+  /// handwritten voice instead of marketing copy. Pulls the user's
+  /// first name + goal + weight delta from the quiz to make it feel
+  /// like a real letter from Chetan, not a template. The aim is to
+  /// nudge the user to continue, not to sell.
+  String _buildPersonalizedSubtitle(PreAuthQuizData quiz) {
+    final firstName = (quiz.name ?? '').trim().split(RegExp(r'\s+')).first;
+    final hasName = firstName.isNotEmpty;
+    final greeting = hasName ? 'Hey $firstName' : 'Hey';
+    final direction = (quiz.weightDirection ?? '').toLowerCase();
+    final goalKg = quiz.goalWeightKg;
+    final currentKg = quiz.weightKg;
+
+    // If we have a real weight delta, lead with the human-sized number.
+    if (goalKg != null && currentKg != null && direction.isNotEmpty) {
+      final deltaKg = (currentKg - goalKg).abs();
+      final deltaLb = (deltaKg * 2.20462).round();
+      if (deltaLb >= 1) {
+        if (direction == 'gain') {
+          return "$greeting — I built your plan to put on $deltaLb lb. Save it and let's start tomorrow.";
+        }
+        return "$greeting — I built your plan to drop $deltaLb lb. Save it and let's start tomorrow.";
+      }
+    }
+
+    // Strength / endurance / maintain users get a goal-shaped variant.
+    final goalKey = (quiz.goal ?? '').toLowerCase();
+    String voice;
+    if (goalKey.contains('muscle')) {
+      voice = "I built you a plan to put on real muscle.";
+    } else if (goalKey.contains('strength')) {
+      voice = "I built you a plan to get stronger every week.";
+    } else if (goalKey.contains('endurance')) {
+      voice = "I built you a plan to outlast everyone.";
+    } else if (goalKey.contains('active')) {
+      voice = "I built you a plan to actually keep moving.";
+    } else if (goalKey.contains('athletic')) {
+      voice = "I built you a plan to perform like an athlete.";
+    } else {
+      voice = "Your plan is ready and shaped around what you told me.";
+    }
+    return "$greeting — $voice Save it and let's start tomorrow.";
   }
 
+  /// Renders the goal as a noun phrase so "Your $goalDisplay Plan"
+  /// reads naturally — "Your Weight Loss Plan" / "Your Strength Plan"
+  /// instead of the verb-led "Your Lose Weight Plan".
   String _formatGoal(String goal) {
     switch (goal) {
       case 'build_muscle':
-        return 'Build Muscle';
+        return 'Muscle Building';
       case 'lose_weight':
-        return 'Lose Weight';
+        return 'Weight Loss';
       case 'increase_strength':
         return 'Strength';
       case 'improve_endurance':
         return 'Endurance';
       case 'stay_active':
-        return 'Stay Active';
+        return 'Active Lifestyle';
       case 'athletic_performance':
-        return 'Athletic';
+        return 'Performance';
       default:
         return 'Fitness';
     }
+  }
+}
+
+/// Inline consent disclosure shown above the sign-in buttons.
+///
+/// Onboarding v5.1: replaces the standalone /ai-consent and /health-disclaimer
+/// screens. The pattern is "by tapping sign-in you agree to..." with the
+/// three legal documents linked inline — same legal coverage as a blocking
+/// screen but without the friction. Standard for AI fitness apps in 2026.
+class _ConsentDisclosure extends StatelessWidget {
+  final OnboardingTheme t;
+  const _ConsentDisclosure({required this.t});
+
+  Future<void> _open(String url) async {
+    final uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final base = TextStyle(
+      fontSize: 11,
+      color: t.textSecondary,
+      height: 1.45,
+    );
+    final link = base.copyWith(
+      color: AppColors.orange,
+      fontWeight: FontWeight.w700,
+      decoration: TextDecoration.underline,
+      decorationColor: AppColors.orange,
+    );
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: RichText(
+        textAlign: TextAlign.center,
+        text: TextSpan(
+          style: base,
+          children: [
+            const TextSpan(text: 'By signing in you agree to our '),
+            TextSpan(
+              text: 'Terms',
+              style: link,
+              recognizer: TapGestureRecognizer()
+                ..onTap = () => _open(AppLinks.termsOfService),
+            ),
+            const TextSpan(text: ', '),
+            TextSpan(
+              text: 'Privacy Policy',
+              style: link,
+              recognizer: TapGestureRecognizer()
+                ..onTap = () => _open(AppLinks.privacyPolicy),
+            ),
+            const TextSpan(text: ', and '),
+            TextSpan(
+              text: 'Health Disclaimer',
+              style: link,
+              recognizer: TapGestureRecognizer()
+                ..onTap = () => _open('${AppLinks.website}/health-disclaimer'),
+            ),
+            const TextSpan(text: '.'),
+          ],
+        ),
+      ),
+    );
   }
 }

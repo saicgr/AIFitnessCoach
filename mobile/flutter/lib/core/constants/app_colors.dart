@@ -36,7 +36,11 @@ class AppColors {
   // Accent Colors - With orange as primary app accent
   static const Color orange = Color(0xFFF97316); // Primary app accent - orange
   static const Color orangeLight = Color(0xFFFFB366); // Lighter orange for hover/subtle states
-  static const Color onboardingAccent = Color(0xFF6366F1); // Indigo for pre-onboarding screens (matches background orbs)
+  // Onboarding accent — warm brand orange. Was previously indigo
+  // (`#6366F1`) which produced muddy purple→orange gradients on every
+  // pre-auth CTA + progress bar + demo screen. User explicitly rejected
+  // any non-orange branding in the pre-auth flow.
+  static const Color onboardingAccent = orange;
   static const Color purple = Color(0xFFA855F7);
   static const Color coral = Color(0xFFF87171);
   static const Color magenta = Color(0xFFEC4899);

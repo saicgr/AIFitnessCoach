@@ -501,7 +501,7 @@ class FoodSearchService {
     try {
       final queryParams = <String, dynamic>{
         'query': query,
-        'page_size': 15,
+        'page_size': 10,
         'user_id': userId, // triggers search_food_database_unified() — includes saved foods
       };
       if (_currentSource != null) {

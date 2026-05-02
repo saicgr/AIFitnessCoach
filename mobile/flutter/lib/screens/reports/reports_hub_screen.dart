@@ -529,12 +529,20 @@ class _CarouselViewState extends ConsumerState<_CarouselView> {
                   onToggleFavorite: () => widget.onToggleFavorite(r.route),
                   onTap: () {
                     HapticService.selection();
-                    context.push(r.route);
+                    if (r.route == '/nutrition') {
+                      context.go(r.route);
+                    } else {
+                      context.push(r.route);
+                    }
                   },
                   onShare: () => _shareReport(r, _currentMonth),
                   onMaximize: () {
                     HapticService.selection();
-                    context.push(r.route);
+                    if (r.route == '/nutrition') {
+                      context.go(r.route);
+                    } else {
+                      context.push(r.route);
+                    }
                   },
                 ),
               );

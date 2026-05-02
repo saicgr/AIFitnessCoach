@@ -92,6 +92,9 @@ class _MuscleAnalyticsScreenState extends ConsumerState<MuscleAnalyticsScreen>
                 context: context,
                 position: const RelativeRect.fromLTRB(100, 100, 0, 0),
                 items: [
+                  _buildTimeRangeItem('1_day', '1D', timeRange),
+                  _buildTimeRangeItem('3_days', '3D', timeRange),
+                  _buildTimeRangeItem('7_days', '7D', timeRange),
                   _buildTimeRangeItem('1_week', '1 Week', timeRange),
                   _buildTimeRangeItem('2_weeks', '2 Weeks', timeRange),
                   _buildTimeRangeItem('4_weeks', '4 Weeks', timeRange),

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/providers/tts_provider.dart';
+import '../../../core/theme/theme_colors.dart';
 import '../../../data/providers/audio_preferences_provider.dart';
 import '../../../data/services/api_client.dart';
 import '../../../widgets/glass_sheet.dart';
@@ -59,7 +60,8 @@ class _AudioCardState extends ConsumerState<_AudioCard> {
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
+    final accent = ThemeColors.of(context).accent;
+    final activeTrack = accent.withValues(alpha: 0.45);
 
     final voiceState = ref.watch(voiceAnnouncementsProvider);
     final audioPrefsState = ref.watch(audioPreferencesProvider);
@@ -76,7 +78,7 @@ class _AudioCardState extends ConsumerState<_AudioCard> {
           SwitchListTile(
             secondary: Icon(
               Icons.record_voice_over,
-              color: voiceState.isEnabled ? cyan : textSecondary,
+              color: voiceState.isEnabled ? accent : textSecondary,
               size: 22,
             ),
             title: const Text('Voice Announcements', style: TextStyle(fontSize: 15)),
@@ -85,7 +87,8 @@ class _AudioCardState extends ConsumerState<_AudioCard> {
               style: TextStyle(fontSize: 12, color: textMuted),
             ),
             value: voiceState.isEnabled,
-            activeThumbColor: cyan,
+            activeThumbColor: accent,
+            activeTrackColor: activeTrack,
             onChanged: voiceState.isLoading
                 ? null
                 : (value) async {
@@ -131,9 +134,12 @@ class _AudioCardState extends ConsumerState<_AudioCard> {
             ),
             Divider(height: 1, color: cardBorder, indent: 50),
 
-            // Advanced audio settings
+            // Voice volume + video mute settings (renamed from "Advanced
+            // Audio" — the parent card is already in an Audio disclosure,
+            // so a child labeled "Advanced Audio" was confusingly recursive).
             InkWell(
-              onTap: () => _showAdvancedAudioSheet(context, isDark, textMuted, cardBorder, cyan, prefs),
+              onTap: () => _showAdvancedAudioSheet(
+                  context, isDark, textMuted, cardBorder, accent, prefs),
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Row(
@@ -144,8 +150,11 @@ class _AudioCardState extends ConsumerState<_AudioCard> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('Advanced Audio', style: TextStyle(fontSize: 15)),
-                          Text('Volume, ducking level, video mute', style: TextStyle(fontSize: 12, color: textMuted)),
+                          const Text('Voice volume & video',
+                              style: TextStyle(fontSize: 15)),
+                          Text('Voice volume, ducking level, mute on videos',
+                              style:
+                                  TextStyle(fontSize: 12, color: textMuted)),
                         ],
                       ),
                     ),
@@ -180,7 +189,7 @@ class _AudioCardState extends ConsumerState<_AudioCard> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    'Advanced Audio Settings',
+                    'Voice volume & video',
                     style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 16),
@@ -225,11 +234,18 @@ class _AudioCardState extends ConsumerState<_AudioCard> {
 
                   // Mute During Video toggle
                   SwitchListTile(
-                    secondary: Icon(Icons.videocam_off, color: p.muteDuringVideo ? AppColors.success : Colors.grey, size: 20),
+                    secondary: Icon(Icons.videocam_off,
+                        color: p.muteDuringVideo
+                            ? ThemeColors.of(context).accent
+                            : Colors.grey,
+                        size: 20),
                     title: const Text('Mute Voice During Videos', style: TextStyle(fontSize: 14)),
                     subtitle: Text('Silence announcements when watching demos', style: TextStyle(fontSize: 11, color: textMuted)),
                     value: p.muteDuringVideo,
-                    activeThumbColor: AppColors.cyan,
+                    activeThumbColor: ThemeColors.of(context).accent,
+                    activeTrackColor: ThemeColors.of(context)
+                        .accent
+                        .withValues(alpha: 0.45),
                     dense: true,
                     contentPadding: EdgeInsets.zero,
                     onChanged: (v) {

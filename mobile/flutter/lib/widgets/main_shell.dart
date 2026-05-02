@@ -17,6 +17,8 @@ import '../data/providers/guest_usage_limits_provider.dart';
 import '../data/services/deep_link_service.dart';
 import '../data/services/widget_action_service.dart';
 import '../screens/ai_settings/ai_settings_screen.dart';
+import '../screens/onboarding/founder_note_sheet.dart';
+import '../data/repositories/auth_repository.dart' show authStateProvider;
 import '../screens/nutrition/quick_log_overlay.dart';
 import '../screens/workout/widgets/quick_workout_sheet.dart';
 import 'coach_avatar.dart';
@@ -201,6 +203,19 @@ class MainShell extends ConsumerWidget {
         widgetActionService.initialize(context, ref);
       }
     });
+
+    // Founder welcome sheet — shown ONCE, only for brand-new accounts
+    // (backend marks `is_new_user=true` on the row-creation response).
+    // Returning users with existing accounts skip this entirely. Lives in
+    // MainShell (not on auth screens) so the GoRouter redirect can't tear
+    // the modal down mid-display.
+    final authUser = ref.read(authStateProvider).user;
+    if (authUser != null && authUser.isFirstLogin) {
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        if (!context.mounted) return;
+        await FounderNoteSheet.showIfFirstTime(context);
+      });
+    }
 
     // Consume any pending meal-reminder notification action (set by the FCM
     // handler in notification_service_ext._handleMessageOpenedApp). No-op if

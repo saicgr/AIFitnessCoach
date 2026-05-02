@@ -183,6 +183,14 @@ class SetTrackingTable extends StatefulWidget {
   /// tapped set is visible. null = rail tap only re-centers the window.
   final void Function(int setIndex)? onJumpToSet;
 
+  // ── Onboarding v5: showcase mode ──────────────────────────────────
+  /// True = render in display-only mode for the onboarding workout-showcase
+  /// screen. Disables all input fields, suppresses keyboard, ignores tap
+  /// gestures on checkboxes/RIR/swipe. The widget renders identically to a
+  /// real session so the user sees the actual product UI, frozen.
+  /// Wrapped externally with [AbsorbPointer] for the strongest guarantee.
+  final bool showcase;
+
   const SetTrackingTable({
     super.key,
     required this.exercise,
@@ -210,6 +218,7 @@ class SetTrackingTable extends StatefulWidget {
     this.preSetBannerAnimationKey,
     this.maxVisibleRows = 4,
     this.onJumpToSet,
+    this.showcase = false,
   });
 
   @override

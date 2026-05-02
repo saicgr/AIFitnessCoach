@@ -237,67 +237,31 @@ extension __PreAuthQuizScreenStateExt on _PreAuthQuizScreenState {
   }
 
 
-  /// Generate workout preview and navigate to plan preview screen
-  ///
-  /// Shows instant template-based preview without waiting for AI generation.
-  /// Background AI generation is NOT started here because the user hasn't
-  /// authenticated yet (this is a pre-auth quiz). Real AI generation happens
-  /// later in WorkoutGenerationScreen after sign-in.
+  /// Onboarding v5: Advance from Primary Goal directly to the body-metrics
+  /// gate (step 7). The legacy "Your Personalized Plan" modal preview was
+  /// removed because it duplicated the v5 plan-analyzing → weight-projection
+  /// → demo-tasks sequence that owns the "your plan is ready" reveal.
   Future<void> _generateAndShowPreview() async {
     try {
-      // Save current primary goal selection
       await _saveCurrentQuestionData();
 
-      // Log analytics
       AnalyticsService.logWorkoutGenerated(
         primaryGoal: _selectedPrimaryGoal ?? 'unknown',
         duration: _workoutDurationMax ?? 60,
         equipment: _selectedEquipment.toList(),
       );
 
-      // Get current quiz data
-      final quizData = ref.read(preAuthQuizProvider);
-
       if (!mounted) return;
-
-      // Generate instant template-based workout preview
-      final templateWorkout = TemplateWorkoutGenerator.generateTemplateWorkout(quizData);
-
-      debugPrint('✅ [Onboarding] Generated template workout: ${templateWorkout.name}');
-      debugPrint('   Exercises: ${templateWorkout.exercises.length}');
-      debugPrint('   Duration: ${templateWorkout.estimatedDurationMinutes} min');
-
-      // Show plan preview immediately with template workout
-      final navigator = Navigator.of(context);
-      await navigator.push(
-        MaterialPageRoute(
-          builder: (_) => PlanPreviewScreen(
-            quizData: quizData,
-            generatedWorkout: templateWorkout,
-            onContinue: () {
-              navigator.pop();
-              if (!mounted) return;
-              setState(() => _currentQuestion = 7); // Go to personalization gate
-              _questionController.forward(from: 0);
-            },
-            onStartNow: () {
-              navigator.pop();
-              if (!mounted) return;
-              setState(() => _skipPersonalization = true);
-              _finishOnboarding(); // Screens 11-12 (nutrition gate) removed — finish directly
-            },
-          ),
-        ),
-      );
+      setState(() => _currentQuestion = 7); // body metrics + fork
+      _questionController.forward(from: 0);
     } catch (e) {
-      debugPrint('❌ [Onboarding] Failed to generate preview: $e');
-      // Show error and stay on current screen
+      debugPrint('❌ [Onboarding] Failed to advance from Primary Goal: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to generate workout: ${e.toString()}'),
+            content: Text('Something went wrong. Please try again.'),
             backgroundColor: Colors.red,
-            duration: const Duration(seconds: 4),
+            duration: const Duration(seconds: 3),
           ),
         );
       }
@@ -333,10 +297,14 @@ extension __PreAuthQuizScreenStateExt on _PreAuthQuizScreenState {
         },
       );
 
-      // Navigate to sign-in screen (user must create account before coach selection)
-      // Flow: Pre-Auth Quiz → Sign In → Coach Selection → Paywall → Home
+      // Onboarding v5 flow: Pre-Auth Quiz → Honest Expectations →
+      //                     Privacy Trust → Plan Analyzing → Weight Projection
+      //                     → Demo Tasks → Sign In → Setup → Capability →
+      //                     Paywall → Commitment Pact → Home
+      // Sign-in is now AFTER the aha moment (Duolingo pattern), so the
+      // quiz flows into honest-expectations before reaching sign-in.
       if (mounted) {
-        context.go('/sign-in');
+        context.go('/trust-and-expectations');
       }
     } catch (e) {
       debugPrint('❌ [Onboarding] Failed to finish onboarding: $e');
@@ -592,10 +560,40 @@ extension __PreAuthQuizScreenStateExt on _PreAuthQuizScreenState {
       case 6: // Training Focus (Primary Goal) + Generate Preview
         return _buildPrimaryGoal(showHeader: showHeader);
 
-      // PHASE 2: OPTIONAL PERSONALIZATION (Screens 7-10, shown AFTER preview)
-      case 7: // Personalization Gate
+      // PHASE 2 GATE — Onboarding v5: body metrics + fast-path fork.
+      // Required body metrics (gender, height, weight, goal weight) flow
+      // into PreAuthQuizData so the v5 weight-projection screen has real
+      // data pre-signup. Both fork paths persist metrics first.
+      case 7: {
+        final quiz = ref.read(preAuthQuizProvider);
         return QuizPersonalizationGate(
           key: const ValueKey('personalization_gate'),
+          initialName: quiz.name,
+          initialGender: quiz.gender,
+          initialHeightCm: quiz.heightCm,
+          initialWeightKg: quiz.weightKg,
+          initialGoalWeightKg: quiz.goalWeightKg,
+          initialUseMetric: quiz.useMetricUnits,
+          onSaveBodyMetrics: ({
+            required name,
+            required gender,
+            required heightCm,
+            required weightKg,
+            required goalWeightKg,
+            required useMetric,
+          }) async {
+            // Onboarding v5.1: name now collected on this gate (replacing
+            // /personal-info screen). setBodyMetrics writes name + height/
+            // weight/goal/gender + unit prefs in one transaction.
+            await ref.read(preAuthQuizProvider.notifier).setBodyMetrics(
+              name: name,
+              gender: gender,
+              heightCm: heightCm,
+              weightKg: weightKg,
+              goalWeightKg: goalWeightKg,
+              useMetric: useMetric,
+            );
+          },
           onPersonalize: () {
             HapticFeedback.mediumImpact();
             setState(() => _skipPersonalization = false);
@@ -605,9 +603,10 @@ extension __PreAuthQuizScreenStateExt on _PreAuthQuizScreenState {
             HapticFeedback.selectionClick();
             AnalyticsService.logPersonalizationSkipped();
             setState(() => _skipPersonalization = true);
-            _finishOnboarding(); // Screens 11-12 (nutrition gate) removed — finish directly
+            _finishOnboarding();
           },
         );
+      }
 
       case 8: // Muscle Focus Points
         return _buildMuscleFocus(showHeader: showHeader);

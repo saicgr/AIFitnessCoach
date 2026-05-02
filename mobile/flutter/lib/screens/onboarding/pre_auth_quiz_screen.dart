@@ -34,7 +34,6 @@ import 'widgets/did_you_know_chip.dart';
 import 'widgets/foldable_quiz_scaffold.dart';
 import 'widgets/onboarding_theme.dart';
 import '../../core/providers/window_mode_provider.dart';
-import 'plan_preview_screen.dart';
 
 // Re-export so existing imports of PreAuthQuizData/preAuthQuizProvider from this file still work
 export 'pre_auth_quiz_data.dart';
@@ -519,21 +518,23 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
 
   /// Contextual "Did you know?" hints shown below quiz content on select steps.
   String? _getDidYouKnowHint(int step) {
+    // Compact chip — full fact stays in the tooltip on tap.
+    // Only verifiable claims about real Zealova features. No fabricated stats.
     switch (step) {
       case 0:
-        return '${Branding.appName} tracks 52 skill progressions — from wall pushups to one-arm pushups.';
+        return 'Your plan progresses with you — beginner movements ramp up over time.';
       case 2:
-        return 'Missed a day? AI auto-adjusts your week — no guilt, no wasted workouts.';
+        return 'Miss a day? Your AI coach reshapes the week — no wasted workouts.';
       case 4:
-        return '${Branding.appName} supports 23+ equipment types and adapts every exercise to your setup.';
+        return 'Every exercise adapts to your equipment — home, gym, or none.';
       case 5:
-        return 'AI automatically avoids 200+ exercises that could stress your injured areas.';
+        return 'AI swaps exercises that could aggravate your injuries.';
       case 6:
-        return 'Your plan updates every month with progressive overload built in.';
+        return 'Your plan adjusts every week with progressive overload.';
       case 9:
-        return 'Chat with your AI coach anytime to swap exercises or change your split.';
+        return 'Chat with your AI coach to swap exercises or change your split.';
       case 12:
-        return 'Snap a photo of your meal — AI estimates calories and macros instantly.';
+        return 'Snap a meal photo — AI estimates calories and macros instantly.';
       default:
         return null;
     }
@@ -567,6 +568,10 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
                 context.go('/intro');
               },
             ),
+            // Did-you-know chip sits ABOVE the Continue button at the
+            // bottom — both are pinned, only the question content scrolls.
+            // The chip is now compact (1-2 lines) so it costs ~40px max
+            // while keeping the educational moment near the user's CTA.
             content: Column(
               children: [
                 Expanded(

@@ -4,6 +4,12 @@ part 'progress_charts.g.dart';
 
 /// Time range options for progress charts
 enum ProgressTimeRange {
+  @JsonValue('1_day')
+  oneDay,
+  @JsonValue('3_days')
+  threeDays,
+  @JsonValue('7_days')
+  sevenDays,
   @JsonValue('4_weeks')
   fourWeeks,
   @JsonValue('8_weeks')
@@ -15,6 +21,12 @@ enum ProgressTimeRange {
 
   String get value {
     switch (this) {
+      case ProgressTimeRange.oneDay:
+        return '1_day';
+      case ProgressTimeRange.threeDays:
+        return '3_days';
+      case ProgressTimeRange.sevenDays:
+        return '7_days';
       case ProgressTimeRange.fourWeeks:
         return '4_weeks';
       case ProgressTimeRange.eightWeeks:
@@ -28,19 +40,31 @@ enum ProgressTimeRange {
 
   String get displayName {
     switch (this) {
+      case ProgressTimeRange.oneDay:
+        return '1D';
+      case ProgressTimeRange.threeDays:
+        return '3D';
+      case ProgressTimeRange.sevenDays:
+        return '7D';
       case ProgressTimeRange.fourWeeks:
-        return '4 Weeks';
+        return '4W';
       case ProgressTimeRange.eightWeeks:
-        return '8 Weeks';
+        return '8W';
       case ProgressTimeRange.twelveWeeks:
-        return '12 Weeks';
+        return '12W';
       case ProgressTimeRange.allTime:
-        return 'All Time';
+        return 'All';
     }
   }
 
   int get weeks {
     switch (this) {
+      case ProgressTimeRange.oneDay:
+        return 0; // sub-week; use days instead
+      case ProgressTimeRange.threeDays:
+        return 0;
+      case ProgressTimeRange.sevenDays:
+        return 1;
       case ProgressTimeRange.fourWeeks:
         return 4;
       case ProgressTimeRange.eightWeeks:
@@ -48,7 +72,7 @@ enum ProgressTimeRange {
       case ProgressTimeRange.twelveWeeks:
         return 12;
       case ProgressTimeRange.allTime:
-        return 52; // Default to 1 year for "all time"
+        return 52;
     }
   }
 }

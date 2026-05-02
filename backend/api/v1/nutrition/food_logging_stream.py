@@ -65,6 +65,10 @@ async def analyze_food_from_text_streaming(request: Request, body: LogTextReques
 
     async def generate_sse() -> AsyncGenerator[str, None]:
         start_time = time.time()
+        # Hoisted so the CancelledError handler below can cancel the inflight
+        # Gemini call when the client disconnects — otherwise the task leaks
+        # and we keep paying for tokens we'll never deliver.
+        analysis_task: Optional[asyncio.Task] = None
 
         def elapsed_ms() -> int:
             return int((time.time() - start_time) * 1000)
@@ -356,6 +360,15 @@ async def analyze_food_from_text_streaming(request: Request, body: LogTextReques
             }
             yield f"event: done\ndata: {json.dumps(response_data)}\n\n"
 
+        except asyncio.CancelledError:
+            # Client disconnected mid-stream. Cancel the inflight Gemini call
+            # so we stop awaiting it (we already paid for any in-flight HTTP
+            # request, but at least the task doesn't leak and we don't
+            # serialize a result no one will read).
+            logger.info(f"[ANALYZE-STREAM] Client disconnected for user {body.user_id}")
+            if analysis_task is not None and not analysis_task.done():
+                analysis_task.cancel()
+            raise
         except Exception as e:
             logger.error(f"[ANALYZE-STREAM] Food analysis error: {e}", exc_info=True)
             yield send_error(str(e))

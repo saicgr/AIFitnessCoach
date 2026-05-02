@@ -54,11 +54,18 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
   late final PageController _pageController;
   int _currentPageIndex = 0;
 
-  // Custom coach settings (kept for future use)
-  final String _customName = '';
-  final String _customStyle = 'motivational';
-  final String _customTone = 'encouraging';
-  final double _customEncouragement = 0.7;
+  // Custom coach settings — user-editable in the Build Your Own sheet.
+  // Persisted via setCustomCoach() + PATCH /users/me on continue.
+  String _customName = '';
+  String _customStyle = 'motivational';
+  String _customTone = 'encouraging';
+  double _customEncouragement = 0.7;
+  // Optional inline rename for a selected preset (preserves persona, only
+  // overrides display name).
+  String? _renamedSelectedName;
+  late final TextEditingController _renameController =
+      TextEditingController();
+  bool _editingPresetName = false;
 
   @override
   void initState() {
@@ -71,6 +78,7 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
   @override
   void dispose() {
     _pageController.dispose();
+    _renameController.dispose();
     super.dispose();
   }
 
@@ -79,6 +87,10 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
     setState(() {
       _selectedCoach = coach;
       _isCustomMode = false;
+      // Reset any previously typed rename when user picks a different preset
+      _renamedSelectedName = null;
+      _editingPresetName = false;
+      _renameController.text = '';
     });
     // Update app accent color to match the selected coach
     ref.read(accentColorProvider.notifier).setAccent(coach.appAccentColor);
@@ -446,6 +458,245 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
                     _buildFeatureRow(Icons.tune, 'Encouragement Level', 'From gentle nudges to maximum hype', textPrimary, textSecondary, exampleColor),
                     _buildFeatureRow(Icons.palette_outlined, 'Theme Color', 'Pick your coach\'s signature color across the app', textPrimary, textSecondary, exampleColor),
                     _buildFeatureRow(Icons.emoji_emotions_outlined, 'Emoji & Catchphrases', 'Custom reactions and signature phrases', textPrimary, textSecondary, exampleColor),
+
+                    const SizedBox(height: 24),
+
+                    // ── Real input section (functional, not preview) ──────
+                    Text(
+                      'Name your coach',
+                      style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          color: textPrimary),
+                    ),
+                    const SizedBox(height: 8),
+                    StatefulBuilder(
+                      builder: (sheetCtx, sheetSetState) {
+                        final controller = TextEditingController(
+                            text: _customName);
+                        controller.selection = TextSelection.collapsed(
+                            offset: controller.text.length);
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            TextField(
+                              controller: controller,
+                              maxLength: 24,
+                              textCapitalization: TextCapitalization.words,
+                              onChanged: (v) {
+                                _customName = v;
+                                sheetSetState(() {});
+                              },
+                              style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: textPrimary),
+                              decoration: InputDecoration(
+                                hintText: 'e.g. Atlas, Riley, Sensei',
+                                counterText: '',
+                                filled: true,
+                                fillColor: elevated,
+                                contentPadding:
+                                    const EdgeInsets.symmetric(
+                                        horizontal: 14, vertical: 14),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide:
+                                      BorderSide(color: exampleColor.withValues(alpha: 0.3)),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(
+                                      color: exampleColor, width: 1.5),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              'Coaching style',
+                              style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: textPrimary),
+                            ),
+                            const SizedBox(height: 8),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: [
+                                ('motivational', 'Motivational'),
+                                ('drill-sergeant', 'Drill Sergeant'),
+                                ('zen-master', 'Zen Master'),
+                                ('scientist', 'Scientist'),
+                                ('hype-beast', 'Hype Beast'),
+                                ('friendly', 'Friendly'),
+                              ].map((s) {
+                                final selected = _customStyle == s.$1;
+                                return GestureDetector(
+                                  onTap: () {
+                                    HapticFeedback.selectionClick();
+                                    _customStyle = s.$1;
+                                    sheetSetState(() {});
+                                  },
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 12, vertical: 8),
+                                    decoration: BoxDecoration(
+                                      color: selected
+                                          ? exampleColor.withValues(alpha: 0.18)
+                                          : Colors.transparent,
+                                      borderRadius: BorderRadius.circular(10),
+                                      border: Border.all(
+                                        color: selected
+                                            ? exampleColor
+                                            : (isDark
+                                                ? AppColors.cardBorder
+                                                : AppColorsLight.cardBorder),
+                                      ),
+                                    ),
+                                    child: Text(
+                                      s.$2,
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: selected
+                                            ? FontWeight.w700
+                                            : FontWeight.w500,
+                                        color: selected
+                                            ? exampleColor
+                                            : textSecondary,
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              'Communication tone',
+                              style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: textPrimary),
+                            ),
+                            const SizedBox(height: 8),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: [
+                                ('encouraging', 'Encouraging'),
+                                ('casual', 'Casual'),
+                                ('formal', 'Formal'),
+                                ('gen-z', 'Gen Z'),
+                                ('tough-love', 'Tough Love'),
+                                ('sarcastic', 'Sarcastic'),
+                              ].map((t) {
+                                final selected = _customTone == t.$1;
+                                return GestureDetector(
+                                  onTap: () {
+                                    HapticFeedback.selectionClick();
+                                    _customTone = t.$1;
+                                    sheetSetState(() {});
+                                  },
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 12, vertical: 8),
+                                    decoration: BoxDecoration(
+                                      color: selected
+                                          ? exampleColor.withValues(alpha: 0.18)
+                                          : Colors.transparent,
+                                      borderRadius: BorderRadius.circular(10),
+                                      border: Border.all(
+                                        color: selected
+                                            ? exampleColor
+                                            : (isDark
+                                                ? AppColors.cardBorder
+                                                : AppColorsLight.cardBorder),
+                                      ),
+                                    ),
+                                    child: Text(
+                                      t.$2,
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: selected
+                                            ? FontWeight.w700
+                                            : FontWeight.w500,
+                                        color: selected
+                                            ? exampleColor
+                                            : textSecondary,
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                            const SizedBox(height: 16),
+                            Row(
+                              children: [
+                                Text(
+                                  'Encouragement',
+                                  style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                      color: textPrimary),
+                                ),
+                                const Spacer(),
+                                Text(
+                                  '${(_customEncouragement * 100).toInt()}%',
+                                  style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w700,
+                                      color: exampleColor),
+                                ),
+                              ],
+                            ),
+                            Slider(
+                              value: _customEncouragement,
+                              min: 0.0,
+                              max: 1.0,
+                              divisions: 10,
+                              activeColor: exampleColor,
+                              onChanged: (v) {
+                                _customEncouragement = v;
+                                sheetSetState(() {});
+                              },
+                            ),
+                            const SizedBox(height: 12),
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton(
+                                onPressed: _customName.trim().isEmpty
+                                    ? null
+                                    : () {
+                                        HapticFeedback.mediumImpact();
+                                        setState(() {
+                                          _isCustomMode = true;
+                                          _selectedCoach = null;
+                                        });
+                                        Navigator.of(sheetCtx).pop();
+                                      },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: exampleColor,
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(
+                                      vertical: 16),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                  ),
+                                ),
+                                child: Text(
+                                  _customName.trim().isEmpty
+                                      ? 'Enter a name to continue'
+                                      : 'Use ${_customName.trim()}',
+                                  style: const TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w700),
+                                ),
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
                   ],
                 ),
               ),
@@ -469,21 +720,29 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
 
     if (_isCustomMode) {
       aiNotifier.setCustomCoach(
-        name: _customName.isEmpty ? 'My Coach' : _customName,
+        name: _customName.trim().isEmpty ? 'My Coach' : _customName.trim(),
         coachingStyle: _customStyle,
         communicationTone: _customTone,
         encouragementLevel: _customEncouragement,
       );
     } else if (_selectedCoach != null) {
       aiNotifier.setCoachPersona(_selectedCoach!);
+      // If user inline-renamed a preset, persist the override now (preserves
+      // persona id, only changes display name).
+      final renamed = _renamedSelectedName?.trim();
+      if (renamed != null && renamed.isNotEmpty && renamed != _selectedCoach!.name) {
+        await aiNotifier.setCoachDisplayName(renamed);
+      }
     }
 
     // If coming from AI settings (changing coach), add notification and pop back
     if (widget.fromSettings) {
       // Add system notification to chat about coach change
       final coachName = _isCustomMode
-          ? (_customName.isEmpty ? 'My Coach' : _customName)
-          : _selectedCoach?.name ?? 'your new coach';
+          ? (_customName.trim().isEmpty ? 'My Coach' : _customName.trim())
+          : (_renamedSelectedName?.trim().isNotEmpty == true
+              ? _renamedSelectedName!.trim()
+              : _selectedCoach?.name ?? 'your new coach');
       ref.read(chatMessagesProvider.notifier).addSystemNotification(
         '🔄 Coach changed to $coachName',
       );
@@ -608,6 +867,15 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
 
           // Coach
           'coach_id': _isCustomMode ? 'custom' : _selectedCoach?.id,
+          // Onboarding v5: persist user-given coach name for loss aversion
+          // referencing in proactive trial coach messages. If the user
+          // inline-renamed a preset, the override beats the preset's
+          // canonical name; coach_id still holds the persona behavior.
+          'coach_name': _isCustomMode
+              ? (_customName.trim().isEmpty ? null : _customName.trim())
+              : (_renamedSelectedName?.trim().isNotEmpty == true
+                  ? _renamedSelectedName!.trim()
+                  : _selectedCoach?.name),
         };
 
         // Submit preferences to backend (with retry for cold starts)

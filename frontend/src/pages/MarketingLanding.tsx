@@ -151,10 +151,10 @@ export default function MarketingLanding() {
               <h3 className="text-2xl font-semibold mb-1">Yearly</h3>
               <p className="text-[var(--color-text-secondary)] text-sm mb-6">Full AI-powered fitness</p>
               <div className="flex items-baseline gap-1 mb-1">
-                <span className="text-[48px] font-bold tracking-tight bg-gradient-to-r from-emerald-400 to-green-400 bg-clip-text text-transparent">$4.17</span>
+                <span className="text-[48px] font-bold tracking-tight bg-gradient-to-r from-emerald-400 to-green-400 bg-clip-text text-transparent">$5</span>
                 <span className="text-[var(--color-text-secondary)] text-sm">/month</span>
               </div>
-              <p className="text-[13px] text-[var(--color-text-muted)] mb-2">Billed as $49.99/year</p>
+              <p className="text-[13px] text-[var(--color-text-muted)] mb-2">Billed as $59.99/year — 38% off</p>
               <p className="text-[13px] text-emerald-500 font-medium mb-6">7-day free trial included</p>
               <ul className="space-y-3 mb-8">
                 {premiumFeatures.map((f) => (
@@ -184,7 +184,7 @@ export default function MarketingLanding() {
               <h3 className="text-2xl font-semibold mb-1">Monthly</h3>
               <p className="text-[var(--color-text-secondary)] text-sm mb-6">Pay as you go</p>
               <div className="flex items-baseline gap-1 mb-2">
-                <span className="text-[48px] font-bold tracking-tight">$4.99</span>
+                <span className="text-[48px] font-bold tracking-tight">$7.99</span>
                 <span className="text-[var(--color-text-secondary)] text-sm">/month</span>
               </div>
               <p className="text-[13px] text-[var(--color-text-muted)] mb-8">Billed monthly, cancel anytime</p>

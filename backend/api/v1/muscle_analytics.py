@@ -33,6 +33,9 @@ logger = get_logger(__name__)
 
 class TimeRange(str, Enum):
     """Time range options for muscle analytics."""
+    ONE_DAY = "1_day"
+    THREE_DAYS = "3_days"
+    SEVEN_DAYS = "7_days"
     ONE_WEEK = "1_week"
     TWO_WEEKS = "2_weeks"
     FOUR_WEEKS = "4_weeks"
@@ -183,6 +186,9 @@ class ViewLogRequest(BaseModel):
 def get_days_for_time_range(time_range: TimeRange) -> int:
     """Convert time range enum to days."""
     mapping = {
+        TimeRange.ONE_DAY: 1,
+        TimeRange.THREE_DAYS: 3,
+        TimeRange.SEVEN_DAYS: 7,
         TimeRange.ONE_WEEK: 7,
         TimeRange.TWO_WEEKS: 14,
         TimeRange.FOUR_WEEKS: 28,

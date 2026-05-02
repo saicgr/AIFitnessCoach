@@ -63,6 +63,11 @@ class RewardItem(BaseModel):
     icon: Optional[str] = None       # Material icon name hint for the client
     earned_at: Optional[str] = None  # ISO-8601
     metadata: Dict[str, Any] = {}
+    # display_status drives the trailing pill on the Flutter Rewards UI
+    # ("Claimed" / "Processing" / "Shipped" / "Delivered" / "Redeemed").
+    # Default "claimed" so any new helper that forgets to set it doesn't
+    # regress to the old null → "Processing" UI bug.
+    display_status: str = "claimed"
 
 
 class ClaimRequest(BaseModel):
@@ -231,8 +236,22 @@ def _fetch_claimed_crates(db, user_id: str) -> List[RewardItem]:
                 "reward_type": rtype,
                 "reward_amount": amount,
             },
+            # Crates are opened in-place; once they appear in /claimed they
+            # are fully resolved — no shipping pipeline.
+            display_status="claimed",
         ))
     return out
+
+
+# Map merch_claims.status → user-facing pill on the Rewards screen. Any
+# unknown future status falls back to "processing" so the UI never lies
+# about a reward being already shipped.
+_MERCH_DISPLAY_STATUS = {
+    "address_submitted": "processing",
+    "awaiting_outreach": "processing",
+    "shipped": "shipped",
+    "delivered": "delivered",
+}
 
 
 def _fetch_shipped_merch(db, user_id: str) -> List[RewardItem]:
@@ -262,6 +281,7 @@ def _fetch_shipped_merch(db, user_id: str) -> List[RewardItem]:
                 "status": status,
                 "claim_id": row["id"],
             },
+            display_status=_MERCH_DISPLAY_STATUS.get(status, "processing"),
         ))
     return out
 
@@ -294,6 +314,10 @@ def _fetch_acknowledged_levelups(db, user_id: str) -> List[RewardItem]:
                 "level_reached": row.get("level_reached"),
                 "items": consumable_items,
             },
+            # Consumables are added to inventory at level-up time and the
+            # acknowledgment row is purely a "celebration replay" — render
+            # as Redeemed in the history list.
+            display_status="redeemed",
         ))
     return out
 
@@ -432,8 +456,49 @@ async def claim_reward(
     """
     verify_user_ownership(current_user, user_id)
     reward_id = body.reward_id or ""
+    if not reward_id:
+        raise HTTPException(status_code=400, detail="Missing reward_id")
+
+    # Legacy clients may send a bare UUID (no `kind:` prefix). Look it up against
+    # the two tables that store row-level reward IDs (merch_claims, level_up_events)
+    # and synthesize the prefixed form so the dispatcher below handles it.
     if ":" not in reward_id:
-        raise HTTPException(status_code=400, detail="Invalid reward_id")
+        try:
+            db_legacy = get_supabase_db()
+            merch_row = (db_legacy.client.table("merch_claims")
+                         .select("id")
+                         .eq("id", reward_id)
+                         .eq("user_id", user_id)
+                         .limit(1)
+                         .execute().data or [])
+            if merch_row:
+                logger.info(f"[rewards] /claim resolved legacy uuid {reward_id} → merch claim")
+                return {
+                    "success": True,
+                    "reward_type": "merch",
+                    "redirect": "merch_address",
+                    "claim_id": reward_id,
+                    "message": "Submit your shipping address to finish claiming this reward.",
+                }
+            event_row = (db_legacy.client.table("level_up_events")
+                         .select("id")
+                         .eq("id", reward_id)
+                         .eq("user_id", user_id)
+                         .limit(1)
+                         .execute().data or [])
+            if event_row:
+                logger.info(f"[rewards] /claim resolved legacy uuid {reward_id} → level-up event")
+                reward_id = f"consumable:{reward_id}"
+            else:
+                raise HTTPException(
+                    status_code=404,
+                    detail="Reward not found or already claimed",
+                )
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.error(f"[rewards] legacy-uuid lookup failed for {reward_id}: {e}", exc_info=True)
+            raise HTTPException(status_code=400, detail="Invalid reward_id")
 
     kind, _, remainder = reward_id.partition(":")
 

@@ -46,7 +46,7 @@ class EmailSecurityMixin:
 
         from core.config import get_settings
         backend_url = get_settings().backend_base_url
-        logo_url = f"{backend_url}/static/logo.png"
+        logo_url = get_settings().email_logo_url
         # Sign-out URL is opaque to the email; the backend resolves the
         # device_id token from the link. None → hide the button rather than
         # ship a broken link.

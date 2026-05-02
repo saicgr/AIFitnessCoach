@@ -21,6 +21,72 @@ class VolumeChart extends StatelessWidget {
     final maxVolume = sortedData
         .map((e) => e.totalVolumeKg)
         .reduce((a, b) => a > b ? a : b);
+
+    // Edge case: weeks have workout counts but every set's weight aggregated
+    // to 0 (cardio/yoga sessions, bodyweight-only training, or — historically
+    // — a unit-conversion bug between the lb-logged set and the kg-keyed
+    // backend view). Render an explicit empty state instead of a silent
+    // gray rectangle so the user knows the screen isn't broken.
+    if (maxVolume <= 0) {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: colorScheme.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.bar_chart, color: colorScheme.primary),
+                const SizedBox(width: 8),
+                Text(
+                  'Weekly Volume (kg)',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: colorScheme.onSurface,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 16),
+                child: Column(
+                  children: [
+                    Icon(Icons.fitness_center,
+                        size: 36,
+                        color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5)),
+                    const SizedBox(height: 12),
+                    Text(
+                      'No weighted volume yet',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: colorScheme.onSurface,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Log a few weighted sets to see your volume trend.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     final yMax = (maxVolume * 1.2).ceilToDouble();
 
     return Container(

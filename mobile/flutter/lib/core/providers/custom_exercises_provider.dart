@@ -144,6 +144,7 @@ class CustomExercisesNotifier extends StateNotifier<CustomExercisesState> {
     double? defaultInclinePercent,
     int? defaultDurationSeconds,
     double? defaultDistanceMiles,
+    String? imageFilePath,
   }) async {
     state = state.copyWith(isLoading: true, clearError: true, clearSuccess: true);
 
@@ -175,10 +176,26 @@ class CustomExercisesNotifier extends StateNotifier<CustomExercisesState> {
         defaultDistanceMiles: defaultDistanceMiles,
       );
 
-      final exercise = await repository.createSimpleExercise(
+      var exercise = await repository.createSimpleExercise(
         userId: userId,
         request: request,
       );
+
+      // If the user attached a photo, upload it now and patch the local model
+      // with the returned public URL. Surface upload failures non-fatally so
+      // the exercise itself still gets created.
+      if (imageFilePath != null && imageFilePath.isNotEmpty) {
+        try {
+          final publicUrl = await repository.uploadExerciseImage(
+            userId: userId,
+            exerciseId: exercise.id,
+            filePath: imageFilePath,
+          );
+          exercise = exercise.copyWith(imageUrl: publicUrl);
+        } catch (e) {
+          debugPrint('⚠️ [CustomExercisesProvider] Image upload failed (exercise still saved): $e');
+        }
+      }
 
       // Add to local state
       state = state.copyWith(

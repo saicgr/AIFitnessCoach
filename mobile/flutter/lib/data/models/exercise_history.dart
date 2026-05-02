@@ -10,6 +10,12 @@ part 'exercise_history.g.dart';
 /// Time range options for exercise history queries
 /// Must match backend TimeRange enum: 4_weeks, 8_weeks, 12_weeks, 6_months, 1_year, all_time
 enum ExerciseHistoryTimeRange {
+  @JsonValue('1_day')
+  oneDay,
+  @JsonValue('3_days')
+  threeDays,
+  @JsonValue('7_days')
+  sevenDays,
   @JsonValue('4_weeks')
   fourWeeks,
   @JsonValue('8_weeks')
@@ -25,6 +31,12 @@ enum ExerciseHistoryTimeRange {
 
   String get value {
     switch (this) {
+      case ExerciseHistoryTimeRange.oneDay:
+        return '1_day';
+      case ExerciseHistoryTimeRange.threeDays:
+        return '3_days';
+      case ExerciseHistoryTimeRange.sevenDays:
+        return '7_days';
       case ExerciseHistoryTimeRange.fourWeeks:
         return '4_weeks';
       case ExerciseHistoryTimeRange.eightWeeks:
@@ -42,23 +54,35 @@ enum ExerciseHistoryTimeRange {
 
   String get displayName {
     switch (this) {
+      case ExerciseHistoryTimeRange.oneDay:
+        return '1D';
+      case ExerciseHistoryTimeRange.threeDays:
+        return '3D';
+      case ExerciseHistoryTimeRange.sevenDays:
+        return '7D';
       case ExerciseHistoryTimeRange.fourWeeks:
-        return '4 Weeks';
+        return '4W';
       case ExerciseHistoryTimeRange.eightWeeks:
-        return '8 Weeks';
+        return '8W';
       case ExerciseHistoryTimeRange.twelveWeeks:
-        return '12 Weeks';
+        return '12W';
       case ExerciseHistoryTimeRange.sixMonths:
-        return '6 Months';
+        return '6M';
       case ExerciseHistoryTimeRange.oneYear:
-        return '1 Year';
+        return '1Y';
       case ExerciseHistoryTimeRange.allTime:
-        return 'All Time';
+        return 'All';
     }
   }
 
   int get days {
     switch (this) {
+      case ExerciseHistoryTimeRange.oneDay:
+        return 1;
+      case ExerciseHistoryTimeRange.threeDays:
+        return 3;
+      case ExerciseHistoryTimeRange.sevenDays:
+        return 7;
       case ExerciseHistoryTimeRange.fourWeeks:
         return 28;
       case ExerciseHistoryTimeRange.eightWeeks:
@@ -70,7 +94,7 @@ enum ExerciseHistoryTimeRange {
       case ExerciseHistoryTimeRange.oneYear:
         return 365;
       case ExerciseHistoryTimeRange.allTime:
-        return 3650; // ~10 years
+        return 3650;
     }
   }
 }

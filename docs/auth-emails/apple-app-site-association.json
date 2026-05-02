@@ -1,0 +1,33 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "G9RL26P89Q.com.zealova.app",
+        "paths": [
+          "/auth/callback",
+          "/auth/callback/*",
+          "/invite/*",
+          "/r/*",
+          "/share/*"
+        ]
+      },
+      {
+        "appID": "G9RL26P89Q.com.aifitnesscoach.app",
+        "paths": [
+          "/auth/callback",
+          "/auth/callback/*",
+          "/invite/*",
+          "/r/*",
+          "/share/*"
+        ]
+      }
+    ]
+  },
+  "webcredentials": {
+    "apps": [
+      "G9RL26P89Q.com.zealova.app",
+      "G9RL26P89Q.com.aifitnesscoach.app"
+    ]
+  }
+}

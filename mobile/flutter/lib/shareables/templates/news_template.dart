@@ -317,9 +317,14 @@ class NewsTemplate extends StatelessWidget {
   }
 
   String _headline(Shareable d) {
-    final name = (d.userDisplayName ?? '').trim();
+    final fullName = (d.userDisplayName ?? '').trim();
+    final firstName = fullName.isEmpty
+        ? ''
+        : fullName.split(RegExp(r'\s+')).first;
     final period = d.periodLabel.trim().isEmpty ? 'this month' : d.periodLabel;
-    final subject = name.isEmpty ? 'Local lifter' : name;
+    // Use the user's first name as the subject. Falls back to "Athlete"
+    // when display name is missing (was "Local lifter" — too generic).
+    final subject = firstName.isEmpty ? 'Athlete' : firstName;
     final workoutTitle = d.title.trim();
 
     // Prefer a workout-specific headline using real numbers from the
@@ -356,7 +361,7 @@ class NewsTemplate extends StatelessWidget {
 
     final hero = shareableHeroString(d);
     final unit = shareableHeroUnit(d);
-    if (hero == '—' && name.isEmpty) {
+    if (hero == '—' && firstName.isEmpty) {
       return '${d.title} report — $period';
     }
     if (unit.isEmpty) {

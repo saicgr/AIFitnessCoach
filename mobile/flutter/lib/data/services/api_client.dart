@@ -12,13 +12,138 @@ import 'package:supabase_flutter/supabase_flutter.dart' hide MultipartFile;
 import '../../core/constants/api_constants.dart';
 import '../../core/services/sentry_service.dart';
 
-/// Secure storage for auth tokens
+/// Secure storage for auth tokens.
+///
+/// Returns a [FlutterSecureStorage] subclass that automatically falls
+/// back to `SharedPreferences` on `errSecMissingEntitlement` (-34018).
+/// Without this, every sign-in crashes on iOS simulator builds run via
+/// `--no-codesign` (Live Activity workaround on iOS 26 sim) and on
+/// certain TestFlight provisioning configs, because the keychain
+/// entitlement is only embedded at signing time.
 final secureStorageProvider = Provider<FlutterSecureStorage>((ref) {
-  return const FlutterSecureStorage(
-    aOptions: AndroidOptions(encryptedSharedPreferences: true),
-    iOptions: IOSOptions(accessibility: KeychainAccessibility.first_unlock),
-  );
+  return _ResilientSecureStorage();
 });
+
+/// Drop-in replacement for [FlutterSecureStorage] that catches Keychain
+/// entitlement errors (-34018) and persists to `SharedPreferences`
+/// instead. Same `read` / `write` / `delete` API — callers don't need
+/// to know which backend is active.
+///
+/// Trade-off when SharedPreferences is used: token is sandbox-isolated
+/// (other apps can't read it) but not hardware-encrypted. For a 1-hour
+/// Supabase access token this is acceptable — Supabase's own SDK
+/// documents `SharedPreferencesLocalStorage` as the supported fallback.
+class _ResilientSecureStorage extends FlutterSecureStorage {
+  _ResilientSecureStorage()
+      : super(
+          aOptions: const AndroidOptions(encryptedSharedPreferences: true),
+          iOptions: const IOSOptions(
+              accessibility: KeychainAccessibility.first_unlock),
+        );
+
+  bool _shouldFallback(Object e) {
+    final msg = e.toString();
+    return msg.contains('-34018') ||
+        msg.contains('errSecMissingEntitlement') ||
+        msg.contains('required entitlement');
+  }
+
+  @override
+  Future<void> write({
+    required String key,
+    required String? value,
+    AppleOptions? iOptions,
+    AndroidOptions? aOptions,
+    LinuxOptions? lOptions,
+    WebOptions? webOptions,
+    AppleOptions? mOptions,
+    WindowsOptions? wOptions,
+  }) async {
+    try {
+      await super.write(
+        key: key,
+        value: value,
+        iOptions: iOptions,
+        aOptions: aOptions,
+        lOptions: lOptions,
+        webOptions: webOptions,
+        mOptions: mOptions,
+        wOptions: wOptions,
+      );
+    } catch (e) {
+      if (!_shouldFallback(e)) rethrow;
+      debugPrint(
+          '⚠️ [SecureStorage] Keychain write failed (-34018), using SharedPreferences for "$key"');
+      final prefs = await SharedPreferences.getInstance();
+      if (value == null) {
+        await prefs.remove('secure.$key');
+      } else {
+        await prefs.setString('secure.$key', value);
+      }
+    }
+  }
+
+  @override
+  Future<String?> read({
+    required String key,
+    AppleOptions? iOptions,
+    AndroidOptions? aOptions,
+    LinuxOptions? lOptions,
+    WebOptions? webOptions,
+    AppleOptions? mOptions,
+    WindowsOptions? wOptions,
+  }) async {
+    try {
+      final fromKeychain = await super.read(
+        key: key,
+        iOptions: iOptions,
+        aOptions: aOptions,
+        lOptions: lOptions,
+        webOptions: webOptions,
+        mOptions: mOptions,
+        wOptions: wOptions,
+      );
+      // Migration aid: if Keychain has nothing but SharedPreferences does
+      // (because an earlier write fell back), surface the SharedPreferences
+      // copy so reads stay consistent.
+      if (fromKeychain != null) return fromKeychain;
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getString('secure.$key');
+    } catch (e) {
+      if (!_shouldFallback(e)) rethrow;
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getString('secure.$key');
+    }
+  }
+
+  @override
+  Future<void> delete({
+    required String key,
+    AppleOptions? iOptions,
+    AndroidOptions? aOptions,
+    LinuxOptions? lOptions,
+    WebOptions? webOptions,
+    AppleOptions? mOptions,
+    WindowsOptions? wOptions,
+  }) async {
+    try {
+      await super.delete(
+        key: key,
+        iOptions: iOptions,
+        aOptions: aOptions,
+        lOptions: lOptions,
+        webOptions: webOptions,
+        mOptions: mOptions,
+        wOptions: wOptions,
+      );
+    } catch (e) {
+      if (!_shouldFallback(e)) rethrow;
+    }
+    // Always sweep SharedPreferences too, in case a fallback write landed there.
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('secure.$key');
+  }
+}
 
 /// API client provider
 final apiClientProvider = Provider<ApiClient>((ref) {

@@ -7,7 +7,9 @@ import 'package:go_router/go_router.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../onboarding/founder_note_sheet.dart';
 import '../../core/constants/api_constants.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_links.dart';
@@ -147,7 +149,7 @@ const Map<String, List<String>> _settingsSearchIndex = {
     'about', 'app info', 'info', 'version', 'app version',
     'update', 'changelog', 'what\'s new',
     'check version', 'current version', 'app details',
-    'licenses', 'credits', 'about app', 'about fitwiz',
+    'licenses', 'credits', 'about app', 'about zealova', 'about fitwiz',
   ],
   'privacy_policy': [
     'privacy', 'privacy policy', 'data policy',
@@ -173,7 +175,7 @@ const Map<String, List<String>> _settingsSearchIndex = {
     'update', 'changelog', 'what\'s new',
     'check version', 'current version', 'app details',
     'terms', 'privacy policy', 'licenses', 'credits',
-    'about app', 'about fitwiz',
+    'about app', 'about zealova', 'about fitwiz',
   ],
   'data_management': [
     'data', 'management', 'export', 'import', 'backup',
@@ -283,7 +285,7 @@ const Map<String, List<String>> _settingsSearchIndex = {
   'shop': [
     'shop', 'store', 'merch', 'merchandise', 'apparel', 'gear', 'products',
     'clothing', 'buy', 'purchase', 'order',
-    'buy merchandise', 'get gear', 'fitwiz store', 'fitwiz shop',
+    'buy merchandise', 'get gear', 'zealova store', 'zealova shop', 'fitwiz store', 'fitwiz shop',
     'buy clothes', 'buy apparel', 'fitness gear', 'workout gear',
     't-shirt', 'hoodie', 'tank top', 'shorts', 'accessories',
     'bottle', 'shaker', 'bag', 'bands', 'supplements', 'ebook', 'program',
@@ -750,21 +752,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             sectionKeys: const ['help_center', 'report_issue', 'support'],
             onTap: () => _launchExternalUrl('mailto:${AppLinks.supportEmail}?subject=${Branding.appName} Support Request'),
           ),
+          // Replay Tutorials and Reset Tips were two separate entries that
+          // confused users (image #7 — bare "No tips to reset" snackbar made
+          // Reset Tips look broken). Merge into a single entry that opens a
+          // sheet with both flows clearly labeled.
           _SettingsRow(
             icon: Icons.play_circle_outline_rounded,
             iconColor: isDark ? AppColors.orange : AppColorsLight.orange,
-            title: 'Replay Tutorials',
-            value: 'Choose which tour to replay',
-            sectionKeys: const ['tutorial', 'help_center'],
-            onTap: () => _showReplayTutorialsSheet(context, ref, isDark),
-          ),
-          _SettingsRow(
-            icon: Icons.tips_and_updates_outlined,
-            iconColor: isDark ? AppColors.yellow : AppColorsLight.warning,
-            title: 'Reset Tips',
-            value: 'Show empty-state hints again',
+            title: 'Tutorials & Hints',
+            value: 'Replay tours or reset inline hints',
             sectionKeys: const ['tutorial', 'tips', 'help_center'],
-            onTap: () => _resetEmptyStateTips(context),
+            onTap: () => _showReplayTutorialsSheet(context, ref, isDark),
           ),
         ],
       ),
@@ -806,7 +804,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             sectionKeys: const ['rate_app'],
             onTap: () => _launchExternalUrl(
               Platform.isIOS
-                  ? (AppLinks.appStore.isNotEmpty ? AppLinks.appStore : 'https://apps.apple.com/app/fitwiz')
+                  ? (AppLinks.appStore.isNotEmpty ? AppLinks.appStore : 'https://apps.apple.com/app/zealova')
                   : AppLinks.playStore,
             ),
           ),

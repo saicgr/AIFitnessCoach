@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/api_constants.dart';
@@ -107,6 +108,7 @@ class CustomExerciseRepository {
           defaultReps: data['default_reps'] as int?,
           isCompound: data['is_compound'] as bool? ?? false,
           isComposite: false,
+          imageUrl: data['image_url'] as String?,
           tags: ['custom'],
           usageCount: 0,
           createdAt: data['created_at'] as String,
@@ -221,6 +223,44 @@ class CustomExerciseRepository {
       throw Exception('Failed to update exercise: No data returned');
     } catch (e, stackTrace) {
       debugPrint('❌ [CustomExerciseRepo] Error updating exercise: $e');
+      debugPrint('Stack trace: $stackTrace');
+      rethrow;
+    }
+  }
+
+  // ============================================================================
+  // Media Upload
+  // ============================================================================
+
+  /// Upload an image file for an existing custom exercise. Returns the public URL.
+  ///
+  /// Uses the `/custom-exercises/{user_id}/{exercise_id}/upload/image` endpoint
+  /// (the media-enabled router, distinct from `/exercises/custom/...`).
+  Future<String> uploadExerciseImage({
+    required String userId,
+    required String exerciseId,
+    required String filePath,
+  }) async {
+    debugPrint('🏋️ [CustomExerciseRepo] Uploading image for exercise $exerciseId');
+
+    try {
+      final formData = FormData.fromMap({
+        'file': await MultipartFile.fromFile(filePath),
+      });
+
+      final response = await _apiClient.post<Map<String, dynamic>>(
+        '${ApiConstants.apiBaseUrl}/custom-exercises/$userId/$exerciseId/upload/image',
+        data: formData,
+      );
+
+      final publicUrl = response.data?['public_url'] as String?;
+      if (publicUrl == null || publicUrl.isEmpty) {
+        throw Exception('Upload succeeded but no public URL was returned');
+      }
+      debugPrint('✅ [CustomExerciseRepo] Image uploaded: $publicUrl');
+      return publicUrl;
+    } catch (e, stackTrace) {
+      debugPrint('❌ [CustomExerciseRepo] Image upload failed: $e');
       debugPrint('Stack trace: $stackTrace');
       rethrow;
     }

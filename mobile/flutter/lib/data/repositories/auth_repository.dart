@@ -1,9 +1,13 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io' show Platform;
+import 'dart:math';
+import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/constants/api_constants.dart';
 import '../models/ai_profile_payload.dart';
@@ -161,6 +165,94 @@ class AuthRepository {
     }
   }
 
+  /// Sign in with Apple via Supabase. iOS / iPadOS only — guard at call site
+  /// with `Platform.isIOS`. Apple sends fullName + email ONLY on the very
+  /// first authorization for a given (Apple ID, app) pair; on every later
+  /// sign-in those fields come back null. The Supabase user record is
+  /// populated from the identity token's verified email claim, so we don't
+  /// rely on the optional fullName.
+  Future<app_user.User> signInWithApple() async {
+    try {
+      debugPrint('🍎 [Auth] Starting Apple Sign-In...');
+
+      // Nonce: send sha256(rawNonce) to Apple, send rawNonce to Supabase.
+      // Supabase verifies the identity token's `nonce` claim equals
+      // sha256(rawNonce) — prevents replay attacks.
+      final rawNonce = _generateAppleNonce();
+      final hashedNonce = sha256.convert(utf8.encode(rawNonce)).toString();
+
+      final credential = await SignInWithApple.getAppleIDCredential(
+        scopes: [
+          AppleIDAuthorizationScopes.email,
+          AppleIDAuthorizationScopes.fullName,
+        ],
+        nonce: hashedNonce,
+      );
+
+      final idToken = credential.identityToken;
+      if (idToken == null) {
+        throw Exception('Apple Sign-In failed: missing identity token');
+      }
+
+      debugPrint('✅ [Auth] Apple credential received, exchanging with Supabase...');
+
+      final response = await _supabase.auth.signInWithIdToken(
+        provider: OAuthProvider.apple,
+        idToken: idToken,
+        nonce: rawNonce,
+      );
+
+      if (response.session == null) {
+        throw Exception('Failed to get Supabase session');
+      }
+
+      final supabaseAccessToken = response.session!.accessToken;
+      debugPrint('✅ [Auth] Supabase auth success, authenticating with backend...');
+
+      // Backend uses the same Google OAuth request shape (it accepts any
+      // Supabase access token regardless of upstream provider — the backend
+      // only verifies it against Supabase, not the original IdP).
+      final backendResponse = await _apiClient.post(
+        ApiConstants.auth,
+        data: app_user.GoogleAuthRequest(accessToken: supabaseAccessToken).toJson(),
+      );
+
+      if (backendResponse.statusCode == 200 || backendResponse.statusCode == 201) {
+        final user = app_user.User.fromJson(backendResponse.data as Map<String, dynamic>);
+        debugPrint('✅ [Auth] Backend auth success: ${user.id}');
+
+        if (user.isFirstLogin && user.hasSupportFriend) {
+          debugPrint('🎉 [Auth] New user signed up via Apple! ${Branding.appName} Support auto-added as friend');
+        }
+
+        await _apiClient.setUserId(user.id);
+        await _apiClient.setAuthToken(supabaseAccessToken);
+
+        return user;
+      } else {
+        throw Exception('Backend authentication failed');
+      }
+    } on SignInWithAppleAuthorizationException catch (e) {
+      // User canceled Apple sheet, or Apple denied. Treat the same as Google
+      // cancel — surface a clean message rather than a stack trace.
+      if (e.code == AuthorizationErrorCode.canceled) {
+        throw Exception('Apple Sign-In was cancelled');
+      }
+      debugPrint('❌ [Auth] Apple authorization error: ${e.code} ${e.message}');
+      rethrow;
+    } catch (e) {
+      debugPrint('❌ [Auth] Apple sign-in error: $e');
+      rethrow;
+    }
+  }
+
+  /// Cryptographically secure nonce for Sign in with Apple.
+  String _generateAppleNonce([int length = 32]) {
+    const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._';
+    final random = Random.secure();
+    return List.generate(length, (_) => charset[random.nextInt(charset.length)]).join();
+  }
+
   /// Sign in with email and password
   Future<app_user.User> signInWithEmail(String email, String password) async {
     try {
@@ -212,16 +304,34 @@ class AuthRepository {
     }
   }
 
-  /// Sign up with email and password
-  Future<app_user.User> signUpWithEmail(String email, String password, {String? name}) async {
+  /// Sign up with email and password.
+  ///
+  /// `quizMetadata` carries pre-auth quiz answers (first_name, goal, days,
+  /// weight) that get embedded into Supabase Auth user_metadata so the
+  /// post-onboarding welcome email + Supabase auth templates can personalize
+  /// without round-tripping back to the backend. Without this, Supabase's
+  /// `user_metadata.full_name` was empty → welcome email said "Hey there".
+  Future<app_user.User> signUpWithEmail(
+    String email,
+    String password, {
+    String? name,
+    Map<String, dynamic>? quizMetadata,
+  }) async {
     try {
       debugPrint('🔍 [Auth] Starting Email Sign-Up for $email...');
+
+      final firstName = (name ?? '').trim().split(RegExp(r'\s+')).first;
+      final metadata = <String, dynamic>{
+        'full_name': name ?? '',
+        if (firstName.isNotEmpty) 'first_name': firstName,
+        ...?quizMetadata,
+      };
 
       // Sign up with Supabase Auth
       final response = await _supabase.auth.signUp(
         email: email,
         password: password,
-        data: {'full_name': name ?? ''},
+        data: metadata,
       );
 
       if (response.user == null) {
@@ -729,6 +839,23 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
+  /// Sign in with Apple (iOS / iPadOS only)
+  Future<void> signInWithApple() async {
+    state = state.copyWith(status: AuthStatus.loading, errorMessage: null);
+    try {
+      final user = await _repository.signInWithApple();
+      await _syncQuizAfterSignIn(user);
+      state = AuthState(status: AuthStatus.authenticated, user: user);
+      _updateDeviceInfo(user.id);
+      unawaited(_flushPendingReferral());
+    } catch (e) {
+      state = AuthState(
+        status: AuthStatus.error,
+        errorMessage: e.toString(),
+      );
+    }
+  }
+
   /// Sign in with email and password
   Future<void> signInWithEmail(String email, String password) async {
     state = state.copyWith(status: AuthStatus.loading, errorMessage: null);
@@ -746,11 +873,25 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
-  /// Sign up with email and password
-  Future<void> signUpWithEmail(String email, String password, {String? name}) async {
+  /// Sign up with email and password.
+  ///
+  /// `quizMetadata` is forwarded into Supabase Auth user_metadata so
+  /// transactional emails (welcome, magic link, reset) can personalize
+  /// without depending on the backend round-trip having completed.
+  Future<void> signUpWithEmail(
+    String email,
+    String password, {
+    String? name,
+    Map<String, dynamic>? quizMetadata,
+  }) async {
     state = state.copyWith(status: AuthStatus.loading, errorMessage: null);
     try {
-      final user = await _repository.signUpWithEmail(email, password, name: name);
+      final user = await _repository.signUpWithEmail(
+        email,
+        password,
+        name: name,
+        quizMetadata: quizMetadata,
+      );
       await _syncQuizAfterSignIn(user);
       state = AuthState(status: AuthStatus.authenticated, user: user);
       _updateDeviceInfo(user.id, isFreshSignin: true);

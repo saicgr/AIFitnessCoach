@@ -22,7 +22,13 @@ extension __WeightProjectionScreenStateExt on _WeightProjectionScreenState {
         child: GlassBackButton(
           onTap: () {
             HapticFeedback.lightImpact();
-            context.go('/personal-info');
+            // Maintain-weight branch — pop back into the v5 flow rather
+            // than nuking quiz state by jumping to /intro.
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/plan-analyzing');
+            }
           },
         ),
       ),
@@ -218,7 +224,10 @@ extension __WeightProjectionScreenStateExt on _WeightProjectionScreenState {
                       },
                     );
 
-                    context.go('/training-split');
+                    // Onboarding v5: weight-projection now flows to apptaste
+                    // demo tasks (workout + nutrition showcases), then sign-in.
+                    // Setup screens (training-split etc.) come AFTER sign-in.
+                    context.go('/demo-tasks');
                   },
                   child: Container(
                     width: double.infinity,

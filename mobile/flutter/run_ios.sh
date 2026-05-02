@@ -78,7 +78,7 @@ $FLUTTER_PATH pub get
 
 # Uninstall existing app
 echo -e "${YELLOW}Uninstalling existing app...${NC}"
-xcrun simctl uninstall booted com.aifitnesscoach.app 2>/dev/null || echo -e "${YELLOW}App was not installed.${NC}"
+xcrun simctl uninstall booted com.zealova.app 2>/dev/null || echo -e "${YELLOW}App was not installed.${NC}"
 
 # Build and run
 echo -e "${GREEN}Building and running app on simulator: $DEVICE_ID${NC}"

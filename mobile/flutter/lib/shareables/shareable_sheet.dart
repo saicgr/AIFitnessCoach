@@ -11,6 +11,7 @@ import '../data/providers/cosmetics_provider.dart';
 import '../data/services/share_service.dart';
 import '../utils/image_capture_utils.dart';
 import '../widgets/glass_sheet.dart';
+import 'recent_templates_store.dart';
 import 'shareable_canvas.dart';
 import 'shareable_catalog.dart';
 import 'shareable_data.dart';
@@ -106,6 +107,12 @@ class _ShareableSheetState extends ConsumerState<ShareableSheet> {
   /// the laid-out RenderRepaintBoundary persists.
   late final Map<ShareableTemplate, GlobalKey> _captureKeys;
 
+  /// Recently-used template IDs (most recent first, max 5). Loaded from
+  /// SharedPreferences on init, updated on every template selection.
+  /// Drives the `RECENT` badge in the thumbnail strip + lets the sheet
+  /// preselect the user's last-picked template on open.
+  List<String> _recentTemplateIds = const [];
+
   @override
   void initState() {
     super.initState();
@@ -143,6 +150,56 @@ class _ShareableSheetState extends ConsumerState<ShareableSheet> {
         available.first;
     _category = pick.category.effective;
     _template = pick.template;
+
+    // Async-load recents and, when no explicit override is supplied,
+    // prefer the user's last-picked template if it's still available.
+    // Falls through to the existing pick when the recents list is empty
+    // or stale.
+    _loadRecents(
+      respectExplicit: wantedExplicit != null,
+      available: available,
+    );
+  }
+
+  Future<void> _loadRecents({
+    required bool respectExplicit,
+    required List<ShareableTemplateSpec> available,
+  }) async {
+    final ids = await RecentTemplatesStore.load();
+    if (!mounted) return;
+    if (respectExplicit || ids.isEmpty) {
+      // Just store the list for the badge UI; don't override the pick.
+      setState(() => _recentTemplateIds = ids);
+      return;
+    }
+    // Walk the recents list in order; first one available for current
+    // data wins. If none match, leave the existing pick alone.
+    ShareableTemplateSpec? recentPick;
+    for (final id in ids) {
+      final match = available.where((s) => s.template.name == id);
+      if (match.isNotEmpty) {
+        recentPick = match.first;
+        break;
+      }
+    }
+    setState(() {
+      _recentTemplateIds = ids;
+      if (recentPick != null) {
+        _category = recentPick.category.effective;
+        _template = recentPick.template;
+      }
+    });
+  }
+
+  void _recordTemplateUsed(ShareableTemplate t) {
+    // Local optimistic update so the badge re-paints instantly.
+    final next = <String>[
+      t.name,
+      ..._recentTemplateIds.where((id) => id != t.name),
+    ].take(5).toList();
+    setState(() => _recentTemplateIds = next);
+    // Persist async (fire-and-forget — non-fatal on failure).
+    RecentTemplatesStore.recordUsed(t.name);
   }
 
   bool get _ownsElite => ref
@@ -186,6 +243,8 @@ class _ShareableSheetState extends ConsumerState<ShareableSheet> {
             category: _category,
             template: _template,
             ownsCosmetic: _ownsElite,
+            recentTemplateIds: _recentTemplateIds,
+            showWatermark: _showWatermark,
             onAspectChanged: (a) => setState(() => _aspect = a),
             onCategoryChanged: (c) {
               setState(() {
@@ -195,10 +254,16 @@ class _ShareableSheetState extends ConsumerState<ShareableSheet> {
                   c,
                   ownsCosmetic: _ownsElite,
                 );
-                if (inCat.isNotEmpty) _template = inCat.first.template;
+                if (inCat.isNotEmpty) {
+                  _template = inCat.first.template;
+                  _recordTemplateUsed(_template);
+                }
               });
             },
-            onTemplateChanged: (t) => setState(() => _template = t),
+            onTemplateChanged: (t) {
+              setState(() => _template = t);
+              _recordTemplateUsed(t);
+            },
           ),
           if (showLinkPill)
             Padding(

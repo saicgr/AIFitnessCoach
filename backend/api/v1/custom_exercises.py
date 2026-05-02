@@ -899,10 +899,10 @@ async def upload_exercise_image(
         if error:
             raise HTTPException(status_code=400, detail=error)
 
-        # Update exercise with image URL
+        # Update exercise with public image URL (not raw s3_key — clients render this directly)
         public_url = media_service.get_public_url(s3_key)
         db.client.table("custom_exercises").update({
-            "image_url": s3_key
+            "image_url": public_url
         }).eq("id", exercise_id).execute()
 
         logger.info(f"✅ Uploaded image for exercise {exercise_id}")
@@ -1060,14 +1060,13 @@ async def confirm_presigned_upload(
         if not s3_key.startswith(expected_prefix):
             raise HTTPException(status_code=400, detail="Invalid S3 key for this exercise")
 
-        # Update the appropriate field
-        update_field = "image_url" if media_type == "image" else "video_url"
-        db.client.table("custom_exercises").update({
-            update_field: s3_key
-        }).eq("id", exercise_id).execute()
-
+        # Compute public URL and store that (not raw s3_key) so clients can render directly
         media_service = get_custom_exercise_media_service()
         public_url = media_service.get_public_url(s3_key)
+        update_field = "image_url" if media_type == "image" else "video_url"
+        db.client.table("custom_exercises").update({
+            update_field: public_url
+        }).eq("id", exercise_id).execute()
 
         logger.info(f"✅ Confirmed {media_type} upload for exercise {exercise_id}")
 

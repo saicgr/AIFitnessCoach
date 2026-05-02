@@ -14,58 +14,6 @@ List<RouteBase> _preAuthRoutes() => [
         builder: (context, state) => const IntroScreen(),
       ),
 
-      // How It Works - explains the 3-step onboarding journey before quiz
-      GoRoute(
-        path: '/how-it-works',
-        pageBuilder: (context, state) => CustomTransitionPage(
-          key: state.pageKey,
-          child: const HowItWorksScreen(),
-          transitionDuration: const Duration(milliseconds: 400),
-          reverseTransitionDuration: const Duration(milliseconds: 300),
-          transitionsBuilder: (context, animation, secondaryAnimation, child) {
-            return FadeTransition(
-              opacity: animation,
-              child: SlideTransition(
-                position: Tween<Offset>(
-                  begin: const Offset(0.05, 0),
-                  end: Offset.zero,
-                ).animate(CurvedAnimation(
-                  parent: animation,
-                  curve: Curves.easeOutCubic,
-                )),
-                child: child,
-              ),
-            );
-          },
-        ),
-      ),
-
-      // Pricing Preview - see pricing before creating account (pre-auth)
-      GoRoute(
-        path: '/pricing-preview',
-        pageBuilder: (context, state) => CustomTransitionPage(
-          key: state.pageKey,
-          child: const PricingPreviewScreen(),
-          transitionDuration: const Duration(milliseconds: 400),
-          reverseTransitionDuration: const Duration(milliseconds: 300),
-          transitionsBuilder: (context, animation, secondaryAnimation, child) {
-            return FadeTransition(
-              opacity: animation,
-              child: SlideTransition(
-                position: Tween<Offset>(
-                  begin: const Offset(0, 0.1),
-                  end: Offset.zero,
-                ).animate(CurvedAnimation(
-                  parent: animation,
-                  curve: Curves.easeOutCubic,
-                )),
-                child: child,
-              ),
-            );
-          },
-        ),
-      ),
-
       // Demo Workout - sample workout preview before sign-up (no auth required)
       GoRoute(
         path: '/demo-workout',
@@ -153,17 +101,6 @@ List<RouteBase> _preAuthRoutes() => [
         ),
       ),
 
-      // Guest routes removed - guest mode is disabled
-      // /guest-home and /guest-library redirected to /intro for any stale links
-      GoRoute(
-        path: '/guest-home',
-        redirect: (context, state) => '/intro',
-      ),
-      GoRoute(
-        path: '/guest-library',
-        redirect: (context, state) => '/intro',
-      ),
-
       // Pre-Auth Quiz - 5 questions before sign-in
       GoRoute(
         path: '/pre-auth-quiz',
@@ -244,116 +181,12 @@ List<RouteBase> _preAuthRoutes() => [
         ),
       ),
 
-      // Personal Info Screen - collect name, DOB, gender, height, weight after sign-in
-      GoRoute(
-        path: '/personal-info',
-        pageBuilder: (context, state) => CustomTransitionPage(
-          key: state.pageKey,
-          child: const PersonalInfoScreen(),
-          transitionDuration: const Duration(milliseconds: 400),
-          reverseTransitionDuration: const Duration(milliseconds: 300),
-          transitionsBuilder: (context, animation, secondaryAnimation, child) {
-            return FadeTransition(
-              opacity: animation,
-              child: SlideTransition(
-                position: Tween<Offset>(
-                  begin: const Offset(0.05, 0),
-                  end: Offset.zero,
-                ).animate(CurvedAnimation(
-                  parent: animation,
-                  curve: Curves.easeOutCubic,
-                )),
-                child: child,
-              ),
-            );
-          },
-        ),
-      ),
-
       // Weight Projection Screen - show goal timeline graph
       GoRoute(
         path: '/weight-projection',
         pageBuilder: (context, state) => CustomTransitionPage(
           key: state.pageKey,
           child: const WeightProjectionScreen(),
-          transitionDuration: const Duration(milliseconds: 400),
-          reverseTransitionDuration: const Duration(milliseconds: 300),
-          transitionsBuilder: (context, animation, secondaryAnimation, child) {
-            return FadeTransition(
-              opacity: animation,
-              child: SlideTransition(
-                position: Tween<Offset>(
-                  begin: const Offset(0.05, 0),
-                  end: Offset.zero,
-                ).animate(CurvedAnimation(
-                  parent: animation,
-                  curve: Curves.easeOutCubic,
-                )),
-                child: child,
-              ),
-            );
-          },
-        ),
-      ),
-
-      // Training Split - choose training split after weight projection, before AI consent
-      GoRoute(
-        path: '/training-split',
-        pageBuilder: (context, state) => CustomTransitionPage(
-          key: state.pageKey,
-          child: const TrainingSplitScreen(),
-          transitionDuration: const Duration(milliseconds: 400),
-          reverseTransitionDuration: const Duration(milliseconds: 300),
-          transitionsBuilder: (context, animation, secondaryAnimation, child) {
-            return FadeTransition(
-              opacity: animation,
-              child: SlideTransition(
-                position: Tween<Offset>(
-                  begin: const Offset(0.05, 0),
-                  end: Offset.zero,
-                ).animate(CurvedAnimation(
-                  parent: animation,
-                  curve: Curves.easeOutCubic,
-                )),
-                child: child,
-              ),
-            );
-          },
-        ),
-      ),
-
-      // AI Consent - privacy and data usage consent before coach selection
-      GoRoute(
-        path: '/ai-consent',
-        pageBuilder: (context, state) => CustomTransitionPage(
-          key: state.pageKey,
-          child: const AiConsentScreen(),
-          transitionDuration: const Duration(milliseconds: 400),
-          reverseTransitionDuration: const Duration(milliseconds: 300),
-          transitionsBuilder: (context, animation, secondaryAnimation, child) {
-            return FadeTransition(
-              opacity: animation,
-              child: SlideTransition(
-                position: Tween<Offset>(
-                  begin: const Offset(0.05, 0),
-                  end: Offset.zero,
-                ).animate(CurvedAnimation(
-                  parent: animation,
-                  curve: Curves.easeOutCubic,
-                )),
-                child: child,
-              ),
-            );
-          },
-        ),
-      ),
-
-      // Health Disclaimer - health & safety acknowledgment before coach selection
-      GoRoute(
-        path: '/health-disclaimer',
-        pageBuilder: (context, state) => CustomTransitionPage(
-          key: state.pageKey,
-          child: const HealthDisclaimerScreen(),
           transitionDuration: const Duration(milliseconds: 400),
           reverseTransitionDuration: const Duration(milliseconds: 300),
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
@@ -431,84 +264,6 @@ List<RouteBase> _preAuthRoutes() => [
         ),
       ),
 
-      // Accuracy Intro - shows vague vs specific food logging comparison
-      GoRoute(
-        path: '/accuracy-intro',
-        pageBuilder: (context, state) => CustomTransitionPage(
-          key: state.pageKey,
-          child: const AccuracyIntroScreen(),
-          transitionDuration: const Duration(milliseconds: 400),
-          reverseTransitionDuration: const Duration(milliseconds: 300),
-          transitionsBuilder: (context, animation, secondaryAnimation, child) {
-            return FadeTransition(
-              opacity: animation,
-              child: SlideTransition(
-                position: Tween<Offset>(
-                  begin: const Offset(0.05, 0),
-                  end: Offset.zero,
-                ).animate(CurvedAnimation(
-                  parent: animation,
-                  curve: Curves.easeOutCubic,
-                )),
-                child: child,
-              ),
-            );
-          },
-        ),
-      ),
-
-      // Health Connect Setup - connect Google Health Connect / Apple HealthKit
-      GoRoute(
-        path: '/health-connect-setup',
-        pageBuilder: (context, state) => CustomTransitionPage(
-          key: state.pageKey,
-          child: const HealthConnectScreen(),
-          transitionDuration: const Duration(milliseconds: 400),
-          reverseTransitionDuration: const Duration(milliseconds: 300),
-          transitionsBuilder: (context, animation, secondaryAnimation, child) {
-            return FadeTransition(
-              opacity: animation,
-              child: SlideTransition(
-                position: Tween<Offset>(
-                  begin: const Offset(0.05, 0),
-                  end: Offset.zero,
-                ).animate(CurvedAnimation(
-                  parent: animation,
-                  curve: Curves.easeOutCubic,
-                )),
-                child: child,
-              ),
-            );
-          },
-        ),
-      ),
-
-      // Feature Showcase - swipeable cards highlighting key features
-      GoRoute(
-        path: '/feature-showcase',
-        pageBuilder: (context, state) => CustomTransitionPage(
-          key: state.pageKey,
-          child: const FeatureShowcaseScreen(),
-          transitionDuration: const Duration(milliseconds: 400),
-          reverseTransitionDuration: const Duration(milliseconds: 300),
-          transitionsBuilder: (context, animation, secondaryAnimation, child) {
-            return FadeTransition(
-              opacity: animation,
-              child: SlideTransition(
-                position: Tween<Offset>(
-                  begin: const Offset(0.05, 0),
-                  end: Offset.zero,
-                ).animate(CurvedAnimation(
-                  parent: animation,
-                  curve: Curves.easeOutCubic,
-                )),
-                child: child,
-              ),
-            );
-          },
-        ),
-      ),
-
       // Workout Generation - full screen progress while generating workouts
       GoRoute(
         path: '/workout-generation',
@@ -524,25 +279,6 @@ List<RouteBase> _preAuthRoutes() => [
             );
           },
         ),
-      ),
-
-      // Mode Selection (shown during onboarding after name/age)
-      GoRoute(
-        path: '/mode-selection',
-        builder: (context, state) {
-          final extra = state.extra as Map<String, dynamic>?;
-          return ModeSelectionScreen(
-            userAge: extra?['userAge'] as int?,
-            onNormalSelected: extra?['onNormalSelected'] as VoidCallback?,
-            onSeniorSelected: extra?['onSeniorSelected'] as VoidCallback?,
-          );
-        },
-      ),
-
-      // Senior Onboarding (Visual, simplified - NOT AI chat)
-      GoRoute(
-        path: '/senior-onboarding',
-        builder: (context, state) => const SeniorOnboardingScreen(),
       ),
 
       // Hard paywall — shown after trial/subscription expires
@@ -570,16 +306,6 @@ List<RouteBase> _preAuthRoutes() => [
       ),
 
       GoRoute(
-        path: '/senior-home',
-        builder: (context, state) => const SeniorHomeScreen(),
-      ),
-
-      GoRoute(
-        path: '/subscription-success',
-        builder: (context, state) => const SubscriptionSuccessScreen(),
-      ),
-
-      GoRoute(
         path: '/workout-loading',
         builder: (context, state) => const WorkoutLoadingScreen(),
       ),
@@ -598,6 +324,57 @@ List<RouteBase> _preAuthRoutes() => [
       GoRoute(
         path: '/notifications-prime',
         builder: (context, state) => const NotificationPrimeScreen(),
+      ),
+
+      // Commitment Pact — post-paywall psychological commitment screen.
+      // The screen file existed and was imported but the route was never
+      // registered, so paywall_pricing_screen.dart's `context.go('/commitment-pact')`
+      // (line 574) was hitting the GoRouter 404 page. Side-effect of fixing
+      // this: FounderNoteSheet now displays correctly because
+      // CommitmentPactScreen._commit() is its only post-conversion trigger.
+      GoRoute(
+        path: '/commitment-pact',
+        builder: (context, state) => const CommitmentPactScreen(),
+      ),
+
+      // Onboarding v5.1 — merged trust + expectations (replaces /honest-expectations + /privacy-trust)
+      GoRoute(
+        path: '/trust-and-expectations',
+        builder: (context, state) => const TrustAndExpectationsScreen(),
+      ),
+
+      // Onboarding v5 — analyzing screen between trust-and-expectations and
+      // weight-projection. Was referenced in the auth-redirect whitelist
+      // but the GoRoute itself was missing → "Page not found".
+      GoRoute(
+        path: '/plan-analyzing',
+        builder: (context, state) => const PlanAnalyzingScreen(),
+      ),
+
+      // Onboarding v5 — demo tasks (workout + nutrition apptaste) between
+      // weight-projection and sign-in. Same omitted-route bug as above.
+      GoRoute(
+        path: '/demo-tasks',
+        builder: (context, state) => const DemoTasksScreen(),
+      ),
+
+      // Demo showcase screens pushed from /demo-tasks tiles. Imports
+      // existed in app_router.dart but routes were never registered →
+      // tapping a demo tile crashed with "Page not found".
+      GoRoute(
+        path: '/demo-workout-showcase',
+        builder: (context, state) => const WorkoutShowcaseScreen(),
+      ),
+      GoRoute(
+        path: '/demo-nutrition-showcase',
+        builder: (context, state) => const NutritionShowcaseScreen(),
+      ),
+
+      // Onboarding v5 — capability + social-proof page navigated from
+      // fitness-assessment. Import existed, GoRoute didn't.
+      GoRoute(
+        path: '/capability-and-community',
+        builder: (context, state) => const CapabilityAndCommunityScreen(),
       ),
 
 ];

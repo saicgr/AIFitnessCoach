@@ -249,10 +249,18 @@ class SentryService {
   /// HTTP path and status code on backend-induced crashes.
   static void attachToDio(Dio dio) {
     if (!_enabled) return;
+    // Exclude 401/403 — the auth interceptor handles these via token refresh
+    // + forced sign-out. They're expected state transitions (JWT expired,
+    // session terminated server-side), not server bugs. Capturing them
+    // produces a Sentry-storm every time a session expires while the home
+    // screen has half a dozen providers in flight.
     dio.addSentry(
       captureFailedRequests: true,
       failedRequestStatusCodes: [
-        SentryStatusCode.range(400, 599),
+        SentryStatusCode.range(400, 400),
+        SentryStatusCode.range(402, 402),
+        SentryStatusCode.range(404, 499),
+        SentryStatusCode.range(500, 599),
       ],
     );
   }

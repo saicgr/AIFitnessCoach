@@ -18,6 +18,9 @@ class _ExercisePickerSheetState extends ConsumerState<_ExercisePickerSheet> {
   final Set<String> _selectedBodyParts = {};
   final Set<String> _selectedEquipment = {};
   final Set<String> _selectedExerciseTypes = {};
+  // When true, results are limited to the user's own custom exercises —
+  // skips the server search entirely so users can browse just their library.
+  bool _customOnly = false;
 
   // Smart search state
   bool _useSmartSearch = true;
@@ -33,7 +36,8 @@ class _ExercisePickerSheetState extends ConsumerState<_ExercisePickerSheet> {
   int get _activeFilterCount =>
       _selectedBodyParts.length +
       _selectedEquipment.length +
-      _selectedExerciseTypes.length;
+      _selectedExerciseTypes.length +
+      (_customOnly ? 1 : 0);
 
   bool get _hasActiveFilters => _activeFilterCount > 0;
 
@@ -115,15 +119,20 @@ class _ExercisePickerSheetState extends ConsumerState<_ExercisePickerSheet> {
     }
   }
 
-  /// Icon shown on each exercise card's action button
+  /// Icon shown on each exercise card's action button. The outlined variants
+  /// signal "tap to add" — the card swaps to the filled variant once selected
+  /// (handled in `_ExerciseCard`).
   IconData get _actionIcon {
     switch (widget.type) {
       case ExercisePickerType.favorite:
         return Icons.favorite_border;
       case ExercisePickerType.staple:
-        return Icons.lock_open;
+        // Pin matches the sheet's header icon ("Add Staple Exercise") so the
+        // affordance is consistent. Avoid lock icons — users read locked as
+        // "can't tap" rather than "click to staple".
+        return Icons.push_pin_outlined;
       case ExercisePickerType.queue:
-        return Icons.add_circle_outline;
+        return Icons.bookmark_border;
       case ExercisePickerType.avoided:
         return Icons.block_outlined;
     }
@@ -227,6 +236,22 @@ class _ExercisePickerSheetState extends ConsumerState<_ExercisePickerSheet> {
       if (mounted) {
         setState(() {
           _searchResults = [];
+          _isSearching = false;
+          _searchCorrection = null;
+          _searchTimeMs = null;
+        });
+      }
+      return;
+    }
+
+    // "Custom only" short-circuits the network search — we already have all
+    // the data locally, and skipping the server keeps results instant.
+    if (_customOnly) {
+      final customMatches =
+          _getMatchingCustomExercises(hasQuery ? query : null);
+      if (mounted) {
+        setState(() {
+          _searchResults = customMatches;
           _isSearching = false;
           _searchCorrection = null;
           _searchTimeMs = null;
@@ -395,6 +420,7 @@ class _ExercisePickerSheetState extends ConsumerState<_ExercisePickerSheet> {
       _selectedBodyParts.clear();
       _selectedEquipment.clear();
       _selectedExerciseTypes.clear();
+      _customOnly = false;
       _showFilters = false;
     });
     if (_searchQuery.length >= 2) {
@@ -613,7 +639,7 @@ class _ExercisePickerSheetState extends ConsumerState<_ExercisePickerSheet> {
                   ),
                 )
               : !showResults
-                  ? _buildEmptyState(textMuted)
+                  ? _buildEmptyState(textMuted, textPrimary)
                   : _searchResults.isEmpty
                       ? Center(
                           child: Column(
@@ -945,6 +971,44 @@ class _ExercisePickerSheetState extends ConsumerState<_ExercisePickerSheet> {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
+            // Custom-only toggle. Surfacing this as a filter (vs a separate
+            // tab) keeps the picker model simple and lets users intersect
+            // "Custom only" with body part / equipment filters.
+            Builder(builder: (context) {
+              final customCount =
+                  ref.watch(customExercisesProvider).exercises.length;
+              return Row(
+                children: [
+                  Icon(Icons.tune, size: 16, color: _accentColor),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Custom only',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: textPrimary,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    '($customCount)',
+                    style: TextStyle(fontSize: 12, color: textMuted),
+                  ),
+                  const Spacer(),
+                  Switch.adaptive(
+                    value: _customOnly,
+                    activeColor: _accentColor,
+                    onChanged: (v) {
+                      HapticFeedback.selectionClick();
+                      setState(() => _customOnly = v);
+                      // Re-run search so the result set updates immediately.
+                      _performSearch();
+                    },
+                  ),
+                ],
+              );
+            }),
+            const SizedBox(height: 8),
             // Body Parts
             if (_filterOptions['body_parts']?.isNotEmpty == true) ...[
               _buildFilterSectionHeader('Body Part', Icons.accessibility_new, textPrimary),
@@ -1050,36 +1114,107 @@ class _ExercisePickerSheetState extends ConsumerState<_ExercisePickerSheet> {
     );
   }
 
-  Widget _buildEmptyState(Color textMuted) {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.search, size: 48, color: textMuted.withValues(alpha: 0.5)),
-          const SizedBox(height: 16),
-          Text(
-            'Search for exercises',
-            style: TextStyle(fontSize: 16, color: textMuted),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Type to search or use filters to browse',
-            style: TextStyle(fontSize: 13, color: textMuted.withValues(alpha: 0.7)),
-          ),
-          const SizedBox(height: 24),
-          OutlinedButton.icon(
-            onPressed: _openCreateExerciseSheet,
-            icon: const Icon(Icons.add_circle_outline, size: 18),
-            label: const Text('Create Custom Exercise'),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: _accentColor,
-              side: BorderSide(color: _accentColor.withValues(alpha: 0.5)),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-            ),
-          ),
-        ],
+  Widget _buildEmptyState(Color textMuted, Color textPrimary) {
+    // Surface the user's existing custom exercises BEFORE the generic search
+    // hint — they're the most-likely target when adding to a preference list.
+    // Sort by recently created (createdAt desc) and cap at 10 to avoid scroll
+    // jail; the rest are reachable via search or the "Custom only" filter.
+    final customs = ref.watch(customExercisesProvider).exercises;
+    final sortedCustoms = [...customs]
+      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    final displayCustoms = sortedCustoms.take(10).toList();
+    final hasCustoms = displayCustoms.isNotEmpty;
+    final hasMoreCustoms = sortedCustoms.length > displayCustoms.length;
+
+    final createButton = OutlinedButton.icon(
+      onPressed: _openCreateExerciseSheet,
+      icon: const Icon(Icons.add_circle_outline, size: 18),
+      label: const Text('Create Custom Exercise'),
+      style: OutlinedButton.styleFrom(
+        foregroundColor: _accentColor,
+        side: BorderSide(color: _accentColor.withValues(alpha: 0.5)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       ),
+    );
+
+    if (!hasCustoms) {
+      // No customs yet — keep the original placeholder so the empty state
+      // doesn't look broken.
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.search, size: 48, color: textMuted.withValues(alpha: 0.5)),
+            const SizedBox(height: 16),
+            Text(
+              'Search for exercises',
+              style: TextStyle(fontSize: 16, color: textMuted),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Type to search or use filters to browse',
+              style: TextStyle(fontSize: 13, color: textMuted.withValues(alpha: 0.7)),
+            ),
+            const SizedBox(height: 24),
+            createButton,
+          ],
+        ),
+      );
+    }
+
+    return ListView(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      children: [
+        Row(
+          children: [
+            Icon(Icons.tune, size: 16, color: textMuted),
+            const SizedBox(width: 6),
+            Text(
+              'YOUR CUSTOM EXERCISES',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: textMuted,
+                letterSpacing: 0.6,
+              ),
+            ),
+            const Spacer(),
+            Text(
+              hasMoreCustoms
+                  ? 'Showing ${displayCustoms.length} of ${sortedCustoms.length}'
+                  : '${sortedCustoms.length}',
+              style: TextStyle(fontSize: 11, color: textMuted),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        ...displayCustoms.map((ce) {
+          final exercise = ce.toLibraryItem();
+          final isSelected = widget.multiSelect && _multiPickedIds.contains(exercise.id);
+          return _ExerciseCard(
+            exercise: exercise,
+            accentColor: _accentColor,
+            actionIcon: _actionIcon,
+            textPrimary: textPrimary,
+            textMuted: textMuted,
+            isAiMatch: false,
+            isSelected: isSelected,
+            onDetailTap: () => _selectExercise(exercise),
+            onAddTap: () => _selectExercise(exercise),
+          );
+        }),
+        const SizedBox(height: 16),
+        Center(child: createButton),
+        const SizedBox(height: 24),
+        // Light hint reminding the user they can also browse the full library.
+        Center(
+          child: Text(
+            'Or type above to search the full exercise library',
+            style: TextStyle(fontSize: 12, color: textMuted.withValues(alpha: 0.7)),
+          ),
+        ),
+      ],
     );
   }
 }

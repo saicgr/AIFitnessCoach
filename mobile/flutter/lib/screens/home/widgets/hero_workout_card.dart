@@ -18,11 +18,10 @@ import 'regenerate_workout_sheet.dart';
 import '../../social/widgets/create_post_sheet.dart';
 import '../../workout/widgets/exercise_add_sheet.dart';
 import '../../../core/services/posthog_service.dart';
-import 'package:share_plus/share_plus.dart';
-import 'package:fitwiz/core/constants/branding.dart';
 import '../../../shareables/shareable_sheet.dart';
 import '../../../shareables/adapters/workout_adapter.dart';
 import '../../../data/providers/consistency_provider.dart';
+import '../../settings/sections/social_privacy_section.dart' show publicShareLinksProvider;
 
 
 part 'hero_workout_card_part_completed_workout_hero_card.dart';
@@ -293,37 +292,63 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
     context.push('/workout-summary/${widget.workout.id}?tab=summary');
   }
 
+  /// Share a completed workout — routes through the unified
+  /// `ShareableSheet` (same gallery used on the completed-workout screen)
+  /// so users get rich Wrapped / Trading Card / Receipt / Workout Details
+  /// templates plus the public share-link pill (with copy + revoke
+  /// guidance) in one place.
   Future<void> _shareCompletedWorkout() async {
     HapticService.light();
-    final id = widget.workout.id;
+    final workout = widget.workout;
+    final id = workout.id;
     if (id == null || id.isEmpty) return;
-    try {
-      final api = ref.read(apiClientProvider);
-      final res = await api.dio.post('/workouts/$id/share-link');
-      final data = res.data;
-      String? url;
-      if (data is Map && data['url'] is String) url = data['url'] as String;
-      if (!mounted || url == null) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Could not create share link')),
-          );
-        }
-        return;
-      }
-      await Share.share(
-        '${widget.workout.name ?? 'My workout'} — ${Branding.appName}\n$url',
-        subject: '${Branding.appName} workout',
-      );
-    } catch (e) {
-      debugPrint('❌ [HeroCard] share-link failed: $e');
+
+    final streak = ref.read(currentStreakProvider);
+    final shareable = WorkoutAdapter.fromCompletion(
+      ref: ref,
+      workoutName: workout.name ?? 'Workout',
+      durationSeconds:
+          (workout.estimatedDurationMinutes ?? workout.durationMinutes ?? 45) * 60,
+      plannedExercises: workout.exercises,
+      totalSets: workout.exercises.fold<int>(0, (a, e) => a + (e.sets ?? 0)),
+      totalReps: workout.exercises.fold<int>(
+          0, (a, e) => a + ((e.sets ?? 0) * (e.reps ?? 0))),
+      currentStreak: streak > 0 ? streak : null,
+    );
+    if (shareable == null) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Couldn't generate share link — please try again"),
-          ),
+          const SnackBar(content: Text('Nothing to share yet — log a workout first')),
         );
       }
+      return;
+    }
+
+    ref.read(floatingNavBarVisibleProvider.notifier).state = false;
+    final allowPublicLinks = ref.read(publicShareLinksProvider);
+    await ShareableSheet.show(
+      context,
+      data: shareable,
+      // When the user has disabled public share links in Privacy settings
+      // we suppress the link pill entirely (no URL is ever generated, the
+      // image stays clean of any link footer).
+      onGenerateShareLink: !allowPublicLinks
+          ? null
+          : () async {
+              try {
+                final api = ref.read(apiClientProvider);
+                final res = await api.dio.post('/workouts/$id/share-link');
+                final data = res.data;
+                if (data is Map && data['url'] is String) return data['url'] as String;
+                return null;
+              } catch (e) {
+                debugPrint('❌ [HeroCard] share-link failed: $e');
+                return null;
+              }
+            },
+    );
+    if (mounted) {
+      ref.read(floatingNavBarVisibleProvider.notifier).state = true;
     }
   }
 
@@ -855,80 +880,12 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
                 ),
               ),
 
-            // Completed workout overlay
+            // Completed workout overlay — branches on synced vs Zealova so
+            // an Apple-Health import never masquerades as a completed
+            // Zealova plan.
             if (widget.workout.isCompleted == true)
               Positioned.fill(
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(22),
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
-                    child: Container(
-                      color: AppColors.success.withValues(alpha: isDark ? 0.25 : 0.2),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Container(
-                            width: 60,
-                            height: 60,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              border: Border.all(color: AppColors.success, width: 3),
-                              // Solid green fill + white checkmark — the
-                              // previous translucent-green fill made the
-                              // green checkmark blend into the background
-                              // and vanish.
-                              color: AppColors.success,
-                              boxShadow: [
-                                BoxShadow(
-                                  color: AppColors.success.withValues(alpha: 0.45),
-                                  blurRadius: 18,
-                                ),
-                              ],
-                            ),
-                            child: const Icon(
-                              Icons.check_rounded,
-                              color: Colors.white,
-                              size: 36,
-                              weight: 800,
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          Text(
-                            'Workout Complete',
-                            style: TextStyle(
-                              color: isDark ? Colors.white : Colors.black87,
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            workout.name ?? '',
-                            style: TextStyle(
-                              color: isDark ? Colors.white70 : Colors.black54,
-                              fontSize: 14,
-                            ),
-                          ),
-                          const SizedBox(height: 24),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              _buildOverlayButton(icon: Icons.replay, label: 'Repeat', onTap: _repeatWorkout, isDark: isDark),
-                              if (widget.workout.completionMethod == 'marked_done') ...[
-                                const SizedBox(width: 12),
-                                _buildOverlayButton(icon: Icons.undo, label: 'Undo', onTap: _markAsUndone, isDark: isDark),
-                              ],
-                              const SizedBox(width: 12),
-                              _buildOverlayButton(icon: Icons.bar_chart, label: 'Summary', onTap: _viewSummary, isDark: isDark),
-                              const SizedBox(width: 12),
-                              _buildOverlayButton(icon: Icons.ios_share_rounded, label: 'Share', onTap: _shareCompletedWorkout, isDark: isDark),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
+                child: _buildCompletedOverlay(workout: workout, isDark: isDark),
               ),
 
             // Missed workout overlay (past date, not completed).
@@ -1085,3 +1042,4 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
     );
   }
 }
+

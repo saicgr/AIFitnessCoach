@@ -101,6 +101,19 @@ class Settings(BaseSettings):
     cron_secret: Optional[str] = None
     cron_allowed_ips: Optional[str] = None  # Comma-separated IPs allowed to call cron endpoints
 
+    # Stripe — web-only Lifetime ($149.99 Founding 500 cap).
+    # Phase 1 launches as "Coming Soon" + email waitlist (no Stripe needed).
+    # Phase 2 (post-app-launch ~3mo) flips `lifetime_checkout_enabled = True`.
+    # NEVER reference these inside the iOS/Android app — App Store anti-steering.
+    stripe_secret_key: Optional[str] = None
+    stripe_webhook_secret: Optional[str] = None
+    stripe_lifetime_price_id: Optional[str] = None  # Stripe Price ID for $149.99 one-time
+    lifetime_checkout_enabled: bool = False  # Flip to True when going live in Phase 2
+    lifetime_price_usd_cents: int = 14999  # $149.99 — snapshotted into web_lifetime_purchases.amount_paid_cents
+    lifetime_founder_seats_total: int = 500
+    # Public marketing URL for success / cancel redirects (no app deep links)
+    web_marketing_url: str = "https://zealova.com"
+
     # USDA FoodData Central API Configuration
     # Get API key from: https://fdc.nal.usda.gov/api-key-signup.html
     usda_api_key: Optional[str] = None
@@ -134,13 +147,17 @@ class Settings(BaseSettings):
     # Public-facing backend URL used in emails (must match deployment URL)
     backend_base_url: str = "https://aifitnesscoach-zqi3.onrender.com"
 
+    # Logo URL used in all email templates — hosted on S3 for deliverability.
+    # Override via EMAIL_LOGO_URL env var if the asset moves.
+    email_logo_url: str = "https://ai-fitness-coach.s3.us-east-1.amazonaws.com/static/logo.png"
+
     # ── Public contact channels (rendered as chips in chat "need help") ───
     # Override via env (DISCORD_URL, SUPPORT_EMAIL, INSTAGRAM_URL).
     # The Discord invite is intentionally a generic landing page until the
     # real invite is provisioned; the email + IG handle are the canonical
     # ones used elsewhere in the app.
     discord_url: str = "https://discord.gg/zealova"
-    support_email: str = "support@fitwiz.us"
+    support_email: str = "support@zealova.com"
     instagram_url: str = "https://instagram.com/zealova.app"
 
     # Redis (shared cache across workers)

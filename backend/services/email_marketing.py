@@ -41,7 +41,7 @@ class EmailMarketingMixin:
 
         from core.config import get_settings
         backend_url = get_settings().backend_base_url
-        logo_url = f"{backend_url}/static/logo.png"
+        logo_url = get_settings().email_logo_url
         open_url = f"{backend_url}/open"
 
         name = first_name_value or "there"
@@ -102,7 +102,7 @@ class EmailMarketingMixin:
 
         from core.config import get_settings
         backend_url = get_settings().backend_base_url
-        logo_url = f"{backend_url}/static/logo.png"
+        logo_url = get_settings().email_logo_url
         open_url = f"{backend_url}/open"
 
         name = first_name_value or "there"
@@ -175,7 +175,7 @@ class EmailMarketingMixin:
 
         from core.config import get_settings
         backend_url = get_settings().backend_base_url
-        logo_url = f"{backend_url}/static/logo.png"
+        logo_url = get_settings().email_logo_url
         open_url = f"{backend_url}/open"
 
         name = first_name_value or "there"

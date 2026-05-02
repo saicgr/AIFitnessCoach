@@ -30,7 +30,7 @@ class ProgressChartsState {
     this.strengthData,
     this.exerciseData,
     this.muscleGroups,
-    this.selectedTimeRange = ProgressTimeRange.twelveWeeks,
+    this.selectedTimeRange = ProgressTimeRange.oneDay,
     this.selectedMuscleGroup,
     this.selectedExercise,
     this.isLoading = false,

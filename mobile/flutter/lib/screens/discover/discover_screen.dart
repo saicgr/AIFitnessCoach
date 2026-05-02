@@ -1523,7 +1523,7 @@ class _FitnessRadar extends ConsumerStatefulWidget {
 }
 
 class _FitnessRadarState extends ConsumerState<_FitnessRadar> {
-  FitnessHistoryRange _range = FitnessHistoryRange.threeMonths;
+  FitnessHistoryRange _range = FitnessHistoryRange.oneDay;
 
   /// First-of-month anchor for the displayed snapshot. null = show the
   /// latest snapshot (default).
@@ -1757,12 +1757,38 @@ class _FitnessRadarState extends ConsumerState<_FitnessRadar> {
                     ),
                     if (targetIsFlat)
                       IgnorePointer(
-                        child: Text(
-                          'Not enough data yet',
-                          style: TextStyle(
-                            color: widget.textMuted,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 24),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.insights_rounded,
+                                size: 32,
+                                color: widget.textMuted.withValues(alpha: 0.6),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Not enough data yet',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: widget.textColor,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Complete 3 workouts to unlock your fitness profile.',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: widget.textMuted,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                  height: 1.4,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),

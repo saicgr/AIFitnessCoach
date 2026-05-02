@@ -8,7 +8,7 @@ The Flutter app captures `/invite/{code}` links via `IncomingLinkService`
 under `frontend/public/.well-known/`** and are deployed automatically on
 every `git push` via Vite + Vercel. No separate server hosting step.
 
-Web host: **`fitwiz.us`** (Vercel). Bundle / package id remains
+Web host: **`zealova.com`** (Vercel). Bundle / package id remains
 `com.aifitnesscoach.app` — do NOT conflate the two.
 
 ## What you still need to do before production
@@ -29,15 +29,15 @@ Web host: **`fitwiz.us`** (Vercel). Bundle / package id remains
    ```
 
 3. **Commit + push** — Vercel redeploys; the files will be live at:
-   - `https://fitwiz.us/.well-known/apple-app-site-association`
-   - `https://fitwiz.us/.well-known/assetlinks.json`
+   - `https://zealova.com/.well-known/apple-app-site-association`
+   - `https://zealova.com/.well-known/assetlinks.json`
    Both will serve with `Content-Type: application/json` thanks to the
    `headers` block in `frontend/vercel.json`.
 
 4. **Validate:**
-   - Apple: https://branch.io/resources/aasa-validator/ → enter `fitwiz.us`
+   - Apple: https://branch.io/resources/aasa-validator/ → enter `zealova.com`
    - Google: https://developers.google.com/digital-asset-links/tools/generator
-     → enter host `fitwiz.us`, relation `delegate_permission/common.handle_all_urls`,
+     → enter host `zealova.com`, relation `delegate_permission/common.handle_all_urls`,
      package `com.aifitnesscoach.app`.
 
 5. **TestFlight / Play internal test** — tap a share link in iMessage /
@@ -50,10 +50,10 @@ Web host: **`fitwiz.us`** (Vercel). Bundle / package id remains
 ### App side (already done)
 
 - **iOS entitlement** (`mobile/flutter/ios/Runner/Runner.entitlements`):
-  `applinks:fitwiz.us` under `com.apple.developer.associated-domains`.
+  `applinks:zealova.com` under `com.apple.developer.associated-domains`.
 
 - **Android intent-filter** (`mobile/flutter/android/app/src/main/AndroidManifest.xml`):
-  `autoVerify="true"` on `https://fitwiz.us/invite/*`.
+  `autoVerify="true"` on `https://zealova.com/invite/*`.
 
 - **Flutter listener** (`mobile/flutter/lib/data/services/incoming_link_service.dart`):
   Subscribes to `app_links` cold-start + warm-start streams; extracts
@@ -90,7 +90,7 @@ fitwiz://invite/ABC123
 fitwiz://invite?code=ABC123
 ```
 Use these for manual QA. Share links from the app use
-`https://fitwiz.us/invite/...` — those land on the web page until the
+`https://zealova.com/invite/...` — those land on the web page until the
 AASA / assetlinks files have valid Team ID / SHA-256 values deployed.
 
 ## Deferred install (app NOT yet installed)

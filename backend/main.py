@@ -689,6 +689,19 @@ async def http_exception_handler(request: Request, exc: HTTPException):
 
 @app.exception_handler(Exception)
 async def unhandled_exception_handler(request: Request, exc: Exception):
+    # Benign: starlette.middleware.base.BaseHTTPMiddleware (used by
+    # SlowAPIMiddleware) raises this when a client disconnects mid-stream
+    # on an SSE endpoint. The response is already partially sent and the
+    # connection is closed — there's nothing to recover and no user to
+    # page. Log at INFO and return a 499-style placeholder so starlette's
+    # contract is satisfied without a Sentry/Discord alert.
+    if isinstance(exc, RuntimeError) and str(exc) == "No response returned.":
+        logger.info(
+            f"Client disconnected mid-stream on {request.method} {request.url.path}"
+        )
+        return JSONResponse(
+            status_code=499, content={"detail": "client_disconnected"}
+        )
     logger.error(f"Unhandled exception on {request.method} {request.url.path}: {exc}", exc_info=True)
     try:
         user_id = getattr(request.state, "user_id", None)

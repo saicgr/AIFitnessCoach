@@ -50,9 +50,9 @@ async def get_nutrition_streak(user_id: str, current_user: dict = Depends(get_cu
         if not data.get("last_logged_date"):
             try:
                 import pytz
-                user_tz_result = db.client.table("user_profiles") \
+                user_tz_result = db.client.table("users") \
                     .select("timezone") \
-                    .eq("user_id", user_id) \
+                    .eq("id", user_id) \
                     .maybe_single() \
                     .execute()
                 tz_str = (user_tz_result.data or {}).get("timezone") or "UTC"

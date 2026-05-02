@@ -70,11 +70,13 @@ class _CrateOption {
 class OpenAllCratesSheet extends ConsumerStatefulWidget {
   final List<UnclaimedCrate> unclaimedCrates;
   final VoidCallback? onAllCollected;
+  final bool autoSelectAll;
 
   const OpenAllCratesSheet({
     super.key,
     required this.unclaimedCrates,
     this.onAllCollected,
+    this.autoSelectAll = false,
   });
 
   @override
@@ -104,6 +106,11 @@ class _OpenAllCratesSheetState extends ConsumerState<OpenAllCratesSheet>
         duration: const Duration(milliseconds: 600),
       );
       _buildOptions();
+      if (widget.autoSelectAll) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) _selectAll();
+        });
+      }
     } catch (e, st) {
       // Surface to Sentry but don't crash the modal lifecycle — dispose()
       // would otherwise throw on the un-set late fields and mask the real

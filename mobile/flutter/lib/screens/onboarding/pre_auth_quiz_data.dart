@@ -74,6 +74,18 @@ class PreAuthQuizData {
   // Warm-lead segment for Reppora alpha launch invites.
   final bool? isTrainer;
 
+  // ── Onboarding v5 fields ───────────────────────────────────────
+  // Market research — captured during pre-auth quiz, useful even for
+  // users who never sign up (analytics on funnel sources + competitors).
+  final String? referralSource;          // "tiktok" | "friend" | "appstore" | etc.
+  final List<String>? priorAppsTried;    // competitor apps user tried before
+  // Personalization
+  final String? referralCode;            // optional discount code at signup
+  final String? coachName;               // user-named AI coach (loss aversion lever)
+  // Pre-signup goal projection — server-computed via /onboarding/computed-goal-date.
+  // Anchored throughout trial (home header, coach messages, trial summary).
+  final String? goalTargetDate;          // ISO date YYYY-MM-DD
+
   /// Computed age from dateOfBirth
   int? get age {
     if (dateOfBirth == null) return null;
@@ -135,6 +147,11 @@ class PreAuthQuizData {
     this.squatCapacity,
     this.cardioCapacity,
     this.isTrainer,
+    this.referralSource,
+    this.priorAppsTried,
+    this.referralCode,
+    this.coachName,
+    this.goalTargetDate,
   });
 
   String? get goal => goals?.isNotEmpty == true ? goals!.first : null;
@@ -201,6 +218,11 @@ class PreAuthQuizData {
     String? squatCapacity,
     String? cardioCapacity,
     bool? isTrainer,
+    String? referralSource,
+    List<String>? priorAppsTried,
+    String? referralCode,
+    String? coachName,
+    String? goalTargetDate,
   }) {
     return PreAuthQuizData(
       goals: goals ?? this.goals,
@@ -251,6 +273,11 @@ class PreAuthQuizData {
       squatCapacity: squatCapacity ?? this.squatCapacity,
       cardioCapacity: cardioCapacity ?? this.cardioCapacity,
       isTrainer: isTrainer ?? this.isTrainer,
+      referralSource: referralSource ?? this.referralSource,
+      priorAppsTried: priorAppsTried ?? this.priorAppsTried,
+      referralCode: referralCode ?? this.referralCode,
+      coachName: coachName ?? this.coachName,
+      goalTargetDate: goalTargetDate ?? this.goalTargetDate,
     );
   }
 
@@ -304,6 +331,11 @@ class PreAuthQuizData {
         'squatCapacity': squatCapacity,
         'cardioCapacity': cardioCapacity,
         'isTrainer': isTrainer,
+        'referralSource': referralSource,
+        'priorAppsTried': priorAppsTried,
+        'referralCode': referralCode,
+        'coachName': coachName,
+        'goalTargetDate': goalTargetDate,
       };
 
   factory PreAuthQuizData.fromJson(Map<String, dynamic> json) => PreAuthQuizData(
@@ -360,6 +392,11 @@ class PreAuthQuizData {
         squatCapacity: json['squatCapacity'] as String?,
         cardioCapacity: json['cardioCapacity'] as String?,
         isTrainer: json['isTrainer'] as bool?,
+        referralSource: json['referralSource'] as String?,
+        priorAppsTried: (json['priorAppsTried'] as List<dynamic>?)?.cast<String>(),
+        referralCode: json['referralCode'] as String?,
+        coachName: json['coachName'] as String?,
+        goalTargetDate: json['goalTargetDate'] as String?,
       );
 }
 
@@ -489,6 +526,11 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
     final squatCapacity = prefs.getString('preAuth_squatCapacity');
     final cardioCapacity = prefs.getString('preAuth_cardioCapacity');
     final isTrainer = prefs.getBool('preAuth_isTrainer');
+    final referralSource = prefs.getString('preAuth_referralSource');
+    final priorAppsTried = prefs.getStringList('preAuth_priorAppsTried');
+    final referralCode = prefs.getString('preAuth_referralCode');
+    final coachName = prefs.getString('preAuth_coachName');
+    final goalTargetDate = prefs.getString('preAuth_goalTargetDate');
 
     _suppressTouch = true;
     try {
@@ -541,6 +583,11 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
         squatCapacity: squatCapacity,
         cardioCapacity: cardioCapacity,
         isTrainer: isTrainer,
+        referralSource: referralSource,
+        priorAppsTried: priorAppsTried,
+        referralCode: referralCode,
+        coachName: coachName,
+        goalTargetDate: goalTargetDate,
       );
     } finally {
       _suppressTouch = false;
@@ -972,6 +1019,10 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       'preAuth_pullupCapacity', 'preAuth_plankCapacity',
       'preAuth_squatCapacity', 'preAuth_cardioCapacity',
       'preAuth_isTrainer',
+      // Onboarding v5 fields
+      'preAuth_referralSource', 'preAuth_priorAppsTried',
+      'preAuth_referralCode', 'preAuth_coachName',
+      'preAuth_goalTargetDate',
     ];
     for (final key in keysToRemove) {
       await prefs.remove(key);
@@ -1024,5 +1075,42 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
   Future<void> setIsComplete(bool isComplete) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('preAuth_isComplete', isComplete);
+  }
+
+  // ── Onboarding v5 setters ─────────────────────────────────────────
+
+  Future<void> setReferralSource(String source) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('preAuth_referralSource', source);
+    state = state.copyWith(referralSource: source);
+  }
+
+  Future<void> setPriorAppsTried(List<String> apps) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList('preAuth_priorAppsTried', apps);
+    state = state.copyWith(priorAppsTried: apps);
+  }
+
+  Future<void> setReferralCode(String? code) async {
+    final prefs = await SharedPreferences.getInstance();
+    if (code == null || code.isEmpty) {
+      await prefs.remove('preAuth_referralCode');
+      state = state.copyWith(referralCode: null);
+    } else {
+      await prefs.setString('preAuth_referralCode', code);
+      state = state.copyWith(referralCode: code);
+    }
+  }
+
+  Future<void> setCoachName(String name) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('preAuth_coachName', name);
+    state = state.copyWith(coachName: name);
+  }
+
+  Future<void> setGoalTargetDate(String isoDate) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('preAuth_goalTargetDate', isoDate);
+    state = state.copyWith(goalTargetDate: isoDate);
   }
 }

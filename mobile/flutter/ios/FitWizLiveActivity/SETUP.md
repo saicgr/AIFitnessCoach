@@ -68,14 +68,14 @@ NOT the Runner target):
 
 **Runner target** → Signing & Capabilities:
 1. `+ Capability` → **App Groups** → enable and add
-   `group.fitwiz.liveactivity` (exact string — matches `_appGroupId` in
+   `group.zealova.liveactivity` (exact string — matches `_appGroupId` in
    `lib/data/services/live_activity_service.dart`).
 2. `+ Capability` → **Push Notifications**. (Required by the
    `live_activities` Flutter package even though we only do local updates.)
 
 **ZealovaLiveActivity target** → Signing & Capabilities:
 1. `+ Capability` → **App Groups** → enable and add the **same**
-   `group.fitwiz.liveactivity`.
+   `group.zealova.liveactivity`.
 
 ## 5. Info.plist — Runner
 

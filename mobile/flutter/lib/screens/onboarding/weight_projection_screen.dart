@@ -289,7 +289,14 @@ class _WeightProjectionScreenState
         child: GlassBackButton(
           onTap: () {
             HapticFeedback.lightImpact();
-            context.go('/personal-info');
+            // Back goes one step in the v5 flow: ← plan-analyzing
+            // (not all the way to /intro — losing all quiz answers
+            // mid-projection is a footgun).
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/plan-analyzing');
+            }
           },
         ),
       ),
@@ -428,7 +435,9 @@ class _WeightProjectionScreenState
                       },
                     );
 
-                    context.go('/training-split');
+                    // v5 flow: weight-projection → demo-tasks (workout
+                    // + nutrition apptaste) → sign-in.
+                    context.go('/demo-tasks');
                   },
                   child: Container(
                     width: double.infinity,

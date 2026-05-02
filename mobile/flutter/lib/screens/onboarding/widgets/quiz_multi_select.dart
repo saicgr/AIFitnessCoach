@@ -39,23 +39,23 @@ class QuizMultiSelect extends StatelessWidget {
             Text(
               question,
               style: TextStyle(
-                fontSize: 26,
+                fontSize: 22,
                 fontWeight: FontWeight.w700,
                 color: t.textPrimary,
-                height: 1.3,
+                height: 1.2,
                 letterSpacing: -0.5,
               ),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 4),
             Text(
               subtitle,
               style: TextStyle(
-                fontSize: 15,
+                fontSize: 13,
                 color: t.textSecondary,
                 fontWeight: FontWeight.w500,
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 14),
           ],
           Expanded(
             child: ListView.builder(
@@ -106,7 +106,7 @@ class _GlassOptionCard extends StatelessWidget {
     final color = option['color'] as Color? ?? AppColors.onboardingAccent;
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.only(bottom: 6),
       child: GestureDetector(
         onTap: onTap,
         child: ClipRRect(
@@ -115,7 +115,7 @@ class _GlassOptionCard extends StatelessWidget {
             filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: BoxDecoration(
                 gradient: isSelected
                     ? LinearGradient(
@@ -144,8 +144,8 @@ class _GlassOptionCard extends StatelessWidget {
               child: Row(
                 children: [
                   Container(
-                    width: 36,
-                    height: 36,
+                    width: 30,
+                    height: 30,
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: isSelected
@@ -154,7 +154,7 @@ class _GlassOptionCard extends StatelessWidget {
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(8),
                       border: Border.all(
                         color: isSelected
                             ? t.iconContainerSelectedBorder(color)
@@ -165,10 +165,10 @@ class _GlassOptionCard extends StatelessWidget {
                     child: Icon(
                       option['icon'] as IconData,
                       color: color,
-                      size: 20,
+                      size: 16,
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 10),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,

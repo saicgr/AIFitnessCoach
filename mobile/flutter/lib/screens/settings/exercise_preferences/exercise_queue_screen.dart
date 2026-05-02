@@ -80,9 +80,10 @@ class ExerciseQueueScreen extends ConsumerWidget {
       return Stack(
         children: [
           body,
+          // Sit above the floating tab bar in MyExercisesScreen (Issue 2).
           Positioned(
             right: 16,
-            bottom: 16,
+            bottom: 96,
             child: FloatingActionButton(
               mini: true,
               backgroundColor: AppColors.cyan,

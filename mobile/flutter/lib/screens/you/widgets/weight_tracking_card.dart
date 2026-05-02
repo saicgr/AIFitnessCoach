@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/providers/auth_provider.dart';
@@ -10,19 +11,21 @@ import '../../../data/models/user.dart' as app_user;
 import '../../../data/repositories/measurements_repository.dart';
 import '../../../data/services/haptic_service.dart';
 
-/// Time-range buckets shown above the weight chart. Mirrors the GymBeat
-/// reference (D / W / M / 3M / Y) — local to this card; not promoted to a
+/// Time-range buckets shown above the weight chart. Seven options covering
+/// 1D / 3D / 7D / 1M / 3M / 6M / 1Y — local to this card; not promoted to a
 /// global provider because the range is a private viewing concern.
 enum _WeightRange {
-  day('D', Duration(days: 1)),
-  week('W', Duration(days: 7)),
-  month('M', Duration(days: 30)),
+  oneDay('1D', Duration(days: 1)),
+  threeDays('3D', Duration(days: 3)),
+  oneWeek('7D', Duration(days: 7)),
+  oneMonth('1M', Duration(days: 30)),
   threeMonths('3M', Duration(days: 90)),
-  year('Y', Duration(days: 365));
+  sixMonths('6M', Duration(days: 180)),
+  oneYear('1Y', Duration(days: 365));
 
+  const _WeightRange(this.label, this.window);
   final String label;
   final Duration window;
-  const _WeightRange(this.label, this.window);
 }
 
 /// Rich "Weight Tracking" card — current → target with delta-to-go, ALL-TIME
@@ -41,7 +44,40 @@ class WeightTrackingCard extends ConsumerStatefulWidget {
 }
 
 class _WeightTrackingCardState extends ConsumerState<WeightTrackingCard> {
-  _WeightRange _range = _WeightRange.week;
+  _WeightRange _range = _WeightRange.oneDay;
+
+  /// Whether the card displays weights in kg (true) or lbs (false).
+  /// Initialized from user profile preference and persisted to SharedPreferences
+  /// so the choice survives widget rebuilds and app restarts.
+  bool _displayKg = true;
+
+  static const _kDisplayUnitKey = 'weight_card_display_unit';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDisplayUnit();
+  }
+
+  Future<void> _loadDisplayUnit() async {
+    final prefs = await SharedPreferences.getInstance();
+    final stored = prefs.getString(_kDisplayUnitKey);
+    if (stored != null) {
+      // Use persisted preference.
+      if (mounted) setState(() => _displayKg = stored == 'kg');
+    } else {
+      // Fall back to user's profile weight unit on first run.
+      final user = ref.read(authStateProvider).user;
+      final profileIsKg = (user?.weightUnit ?? 'kg').toLowerCase() == 'kg';
+      if (mounted) setState(() => _displayKg = profileIsKg);
+    }
+  }
+
+  Future<void> _setDisplayUnit(bool isKg) async {
+    setState(() => _displayKg = isKg);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_kDisplayUnitKey, isKg ? 'kg' : 'lbs');
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -65,10 +101,12 @@ class _WeightTrackingCardState extends ConsumerState<WeightTrackingCard> {
     final sortedAsc = [...allEntries]
       ..sort((a, b) => a.recordedAt.compareTo(b.recordedAt));
 
-    final unitIsKg = (user?.weightUnit ?? 'kg').toLowerCase() == 'kg';
-    final unitLabel = unitIsKg ? 'kg' : 'lbs';
+    final unitLabel = _displayKg ? 'kg' : 'lbs';
 
     final latest = sortedAsc.last;
+    // Second-to-last entry for "Previously" display.
+    final MeasurementEntry? previous =
+        sortedAsc.length >= 2 ? sortedAsc[sortedAsc.length - 2] : null;
     final currentKg = latest.value;
     final targetKg = user?.targetWeightKg;
     final allTimeMin = sortedAsc
@@ -112,7 +150,7 @@ class _WeightTrackingCardState extends ConsumerState<WeightTrackingCard> {
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: cardBorder, width: 1),
       ),
-      padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -120,8 +158,9 @@ class _WeightTrackingCardState extends ConsumerState<WeightTrackingCard> {
           const SizedBox(height: 16),
           _buildHeroRow(
             currentKg: currentKg,
+            previousEntry: previous,
             targetKg: targetKg,
-            unitIsKg: unitIsKg,
+            unitIsKg: _displayKg,
             unitLabel: unitLabel,
             textPrimary: textPrimary,
             textMuted: textMuted,
@@ -130,7 +169,7 @@ class _WeightTrackingCardState extends ConsumerState<WeightTrackingCard> {
           _buildAllTimeChips(
             allTimeMin: allTimeMin,
             allTimeMax: allTimeMax,
-            unitIsKg: unitIsKg,
+            unitIsKg: _displayKg,
             unitLabel: unitLabel,
           ),
           const SizedBox(height: 16),
@@ -143,14 +182,14 @@ class _WeightTrackingCardState extends ConsumerState<WeightTrackingCard> {
               isDark: isDark,
               textMuted: textMuted,
               cardBorder: cardBorder,
-              unitIsKg: unitIsKg,
+              unitIsKg: _displayKg,
             ),
           ),
           const SizedBox(height: 14),
           _buildHighLowRow(
             low: rangeLow,
             high: rangeHigh,
-            unitIsKg: unitIsKg,
+            unitIsKg: _displayKg,
             unitLabel: unitLabel,
             textPrimary: textPrimary,
             textMuted: textMuted,
@@ -163,7 +202,7 @@ class _WeightTrackingCardState extends ConsumerState<WeightTrackingCard> {
           const SizedBox(height: 18),
           _buildRecentEntries(
             entries: sortedAsc,
-            unitIsKg: unitIsKg,
+            unitIsKg: _displayKg,
             unitLabel: unitLabel,
             textPrimary: textPrimary,
             textMuted: textMuted,
@@ -214,6 +253,7 @@ class _WeightTrackingCardState extends ConsumerState<WeightTrackingCard> {
 
   Widget _buildHeroRow({
     required double currentKg,
+    required MeasurementEntry? previousEntry,
     required double? targetKg,
     required bool unitIsKg,
     required String unitLabel,
@@ -242,41 +282,129 @@ class _WeightTrackingCardState extends ConsumerState<WeightTrackingCard> {
       pillText = '$dir$disp$unitLabel to go';
     }
 
-    return Wrap(
-      spacing: 8,
-      runSpacing: 6,
-      crossAxisAlignment: WrapCrossAlignment.end,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _bigNumber(current, unitLabel, textPrimary, textMuted),
-        if (target != null) ...[
-          Padding(
-            padding: const EdgeInsets.only(bottom: 10),
-            child: Icon(Icons.arrow_forward_rounded,
-                color: textMuted, size: 22),
-          ),
-          _bigNumber(target, unitLabel, textPrimary, textMuted),
-        ],
-        Padding(
-          padding: const EdgeInsets.only(bottom: 12),
-          child: Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(
-              color: pillColor.withValues(alpha: 0.18),
-              borderRadius: BorderRadius.circular(20),
+        // Row 1: big numbers + target pill + kg/lbs toggle
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Wrap(
+                spacing: 8,
+                runSpacing: 6,
+                crossAxisAlignment: WrapCrossAlignment.end,
+                children: [
+                  _bigNumber(current, unitLabel, textPrimary, textMuted),
+                  if (target != null) ...[
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: Icon(Icons.arrow_forward_rounded,
+                          color: textMuted, size: 22),
+                    ),
+                    _bigNumber(target, unitLabel, textPrimary, textMuted),
+                  ],
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: pillColor.withValues(alpha: 0.18),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        pillText,
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: pillColor,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
+            // kg / lbs segmented toggle pill
+            _buildUnitToggle(textMuted),
+          ],
+        ),
+        // Row 2: "Previously" muted line
+        if (previousEntry != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 2, bottom: 2),
             child: Text(
-              pillText,
+              'Previously: ${_displayValue(previousEntry.value, unitIsKg)} $unitLabel'
+              ' · ${_previousDateLabel(previousEntry.recordedAt)}',
               style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                color: pillColor,
+                fontSize: 13,
+                color: textMuted.withValues(alpha: 0.6),
+                fontWeight: FontWeight.w400,
               ),
             ),
           ),
-        ),
       ],
     );
+  }
+
+  /// Two-button segmented pill: [kg | lbs]
+  Widget _buildUnitToggle(Color textMuted) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final activeBg = AppColors.success;
+    final inactiveBg = isDark
+        ? Colors.white.withValues(alpha: 0.06)
+        : Colors.black.withValues(alpha: 0.05);
+
+    Widget btn(String label, bool active, VoidCallback onTap) {
+      return GestureDetector(
+        onTap: () {
+          HapticService.selection();
+          onTap();
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+          decoration: BoxDecoration(
+            color: active ? activeBg : Colors.transparent,
+            borderRadius: BorderRadius.circular(7),
+          ),
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: active ? Colors.white : textMuted,
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(
+        color: inactiveBg,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          btn('kg', _displayKg, () => _setDisplayUnit(true)),
+          btn('lbs', !_displayKg, () => _setDisplayUnit(false)),
+        ],
+      ),
+    );
+  }
+
+  /// Human-readable label for the "Previously" line.
+  /// Returns "Yesterday" if 1 day ago, otherwise "Mon Apr 28" style.
+  String _previousDateLabel(DateTime d) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final dDay = DateTime(d.year, d.month, d.day);
+    final diff = today.difference(dDay).inDays;
+    if (diff == 1) return 'Yesterday';
+    return DateFormat('EEE MMM d').format(d);
   }
 
   Widget _bigNumber(String value, String unit, Color textPrimary, Color textMuted) {
@@ -368,11 +496,13 @@ class _WeightTrackingCardState extends ConsumerState<WeightTrackingCard> {
         color: inactiveBg,
         borderRadius: BorderRadius.circular(10),
       ),
-      child: Row(
-        children: _WeightRange.values.map((r) {
-          final selected = r == _range;
-          return Expanded(
-            child: GestureDetector(
+      // Wrap in horizontal scroll so all 7 tabs fit on small screens (e.g. iPhone SE).
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: _WeightRange.values.map((r) {
+            final selected = r == _range;
+            return GestureDetector(
               behavior: HitTestBehavior.opaque,
               onTap: () {
                 HapticService.selection();
@@ -380,7 +510,8 @@ class _WeightTrackingCardState extends ConsumerState<WeightTrackingCard> {
               },
               child: Container(
                 margin: const EdgeInsets.symmetric(horizontal: 2),
-                padding: const EdgeInsets.symmetric(vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 12, vertical: 6),
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
                   color: selected ? selectedBg : Colors.transparent,
@@ -395,9 +526,9 @@ class _WeightTrackingCardState extends ConsumerState<WeightTrackingCard> {
                   ),
                 ),
               ),
-            ),
-          );
-        }).toList(),
+            );
+          }).toList(),
+        ),
       ),
     );
   }
@@ -512,7 +643,67 @@ class _WeightTrackingCardState extends ConsumerState<WeightTrackingCard> {
             ),
           ),
         ],
-        lineTouchData: const LineTouchData(enabled: false),
+        lineTouchData: LineTouchData(
+          enabled: true,
+          handleBuiltInTouches: true,
+          getTouchedSpotIndicator: (barData, spotIndexes) =>
+              spotIndexes.map((idx) {
+            return TouchedSpotIndicatorData(
+              FlLine(
+                color: Colors.white54,
+                strokeWidth: 1,
+                dashArray: [4, 4],
+              ),
+              FlDotData(
+                show: true,
+                getDotPainter: (spot, percent, bar, index) =>
+                    FlDotCirclePainter(
+                  radius: 5,
+                  color: Colors.white,
+                  strokeWidth: 2,
+                  strokeColor: barData.color ?? Colors.white,
+                ),
+              ),
+            );
+          }).toList(),
+          touchTooltipData: LineTouchTooltipData(
+            tooltipRoundedRadius: 10,
+            tooltipPadding:
+                const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            tooltipMargin: 12,
+            getTooltipColor: (_) => Colors.black.withValues(alpha: 0.85),
+            getTooltipItems: (touchedSpots) => touchedSpots.map((spot) {
+              // spot.x is the integer index into the entries list built above.
+              final i = spot.x.toInt();
+              // spot.y is already in the display unit (kg or lbs) because
+              // spots were built via _displayDouble(entry.value, unitIsKg).
+              final weight = spot.y.toStringAsFixed(1);
+              final unit = unitIsKg ? 'kg' : 'lbs';
+              final dateStr = (i >= 0 && i < entries.length)
+                  ? DateFormat('MMM d').format(entries[i].recordedAt)
+                  : '';
+              return LineTooltipItem(
+                '$weight $unit',
+                const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 14,
+                ),
+                children: [
+                  if (dateStr.isNotEmpty)
+                    TextSpan(
+                      text: '\n$dateStr',
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontWeight: FontWeight.w400,
+                        fontSize: 11,
+                      ),
+                    ),
+                ],
+              );
+            }).toList(),
+          ),
+        ),
       ),
     );
   }

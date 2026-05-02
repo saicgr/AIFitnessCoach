@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/coach_persona.dart';
 import '../../../data/services/notification_service.dart';
@@ -13,17 +14,55 @@ import '../../../widgets/pill_app_bar.dart';
 import '../sections/sections.dart';
 
 /// Sub-page for AI Coach settings: voice, edge handle, privacy.
-class AiCoachPage extends ConsumerWidget {
+///
+/// Layout: essentials (Coach card, voice, nudge intensity + AI-personalized
+/// + missed-workout) are always visible. Power-user toggles (floating chat
+/// bubble, niche notifications, privacy) collapse behind an Advanced
+/// settings switch persisted in SharedPreferences.
+class AiCoachPage extends ConsumerStatefulWidget {
   const AiCoachPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<AiCoachPage> createState() => _AiCoachPageState();
+}
+
+class _AiCoachPageState extends ConsumerState<AiCoachPage> {
+  static const _kAdvancedKey = 'ai_coach_page_advanced_enabled';
+  bool _advancedEnabled = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAdvancedPref();
+  }
+
+  Future<void> _loadAdvancedPref() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final v = prefs.getBool(_kAdvancedKey) ?? false;
+      if (!mounted) return;
+      setState(() => _advancedEnabled = v);
+    } catch (_) {}
+  }
+
+  Future<void> _setAdvanced(bool value) async {
+    setState(() => _advancedEnabled = value);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_kAdvancedKey, value);
+    } catch (_) {}
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final backgroundColor =
         isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final textSecondary =
+        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final cardBorder =
         isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
 
@@ -35,7 +74,6 @@ class AiCoachPage extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ── Selected Coach + Voice & Personality ──
               _buildCoachCard(
                 context: context,
                 ref: ref,
@@ -43,41 +81,230 @@ class AiCoachPage extends ConsumerWidget {
                 textMuted: textMuted,
                 cardBorder: cardBorder,
               ),
-
               const SizedBox(height: 16),
-
-              // ── Coach Voice (TTS) with cosmetic gating for alt voices ──
               const CoachVoicePicker(),
-
               const SizedBox(height: 16),
-
-              // ── Edge AI Coach Handle toggle ──
-              _buildEdgeHandleToggle(
+              _buildEssentialNudgeSection(
                 ref: ref,
                 textPrimary: textPrimary,
                 textMuted: textMuted,
                 cardBorder: cardBorder,
               ),
-
               const SizedBox(height: 16),
-
-              // ── AI Coach Notifications ──
-              _buildCoachNotificationsSection(
-                ref: ref,
+              _AdvancedToggleRow(
+                value: _advancedEnabled,
+                onChanged: _setAdvanced,
+                isDark: isDark,
                 textPrimary: textPrimary,
-                textMuted: textMuted,
-                cardBorder: cardBorder,
+                textSecondary: textSecondary,
               ),
-
-              const SizedBox(height: 16),
-
-              // ── AI Privacy section ──
-              const AIPrivacySection(),
-
+              if (_advancedEnabled) ...[
+                const SizedBox(height: 16),
+                _buildEdgeHandleToggle(
+                  ref: ref,
+                  textPrimary: textPrimary,
+                  textMuted: textMuted,
+                  cardBorder: cardBorder,
+                ),
+                const SizedBox(height: 16),
+                _buildAdvancedNotificationsSection(
+                  ref: ref,
+                  textPrimary: textPrimary,
+                  textMuted: textMuted,
+                  cardBorder: cardBorder,
+                ),
+                const SizedBox(height: 16),
+                const AIPrivacySection(),
+              ],
               const SizedBox(height: 32),
             ],
           ),
         ),
+    );
+  }
+
+  /// Essentials: nudge intensity + the two notification toggles users care
+  /// about most (AI-personalized + missed workout). Other toggles move
+  /// behind Advanced.
+  Widget _buildEssentialNudgeSection({
+    required WidgetRef ref,
+    required Color textPrimary,
+    required Color textMuted,
+    required Color cardBorder,
+  }) {
+    final prefs = ref.watch(notificationPreferencesProvider);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 4, bottom: 8),
+          child: Text(
+            'COACH NOTIFICATIONS',
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: textMuted,
+              letterSpacing: 1.2,
+            ),
+          ),
+        ),
+        Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: cardBorder),
+          ),
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Nudge Intensity',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'How much your AI coach pushes you',
+                      style: TextStyle(fontSize: 12, color: textMuted),
+                    ),
+                    const SizedBox(height: 10),
+                    SizedBox(
+                      width: double.infinity,
+                      child: SegmentedButton<String>(
+                        showSelectedIcon: false,
+                        segments: const [
+                          ButtonSegment(value: 'gentle', label: Text('Gentle', style: TextStyle(fontSize: 11))),
+                          ButtonSegment(value: 'balanced', label: Text('Balanced', style: TextStyle(fontSize: 11))),
+                          ButtonSegment(value: 'tough_love', label: Text('Tough', style: TextStyle(fontSize: 11))),
+                          ButtonSegment(value: 'off', label: Text('Off', style: TextStyle(fontSize: 11))),
+                        ],
+                        selected: {prefs.accountabilityIntensity},
+                        onSelectionChanged: (values) {
+                          HapticFeedback.selectionClick();
+                          ref.read(notificationPreferencesProvider.notifier).setAccountabilityIntensity(values.first);
+                        },
+                        style: ButtonStyle(visualDensity: VisualDensity.compact),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Divider(height: 1, color: cardBorder),
+              _coachToggle(
+                icon: Icons.auto_awesome,
+                iconColor: AppColors.purple,
+                title: 'AI-Personalized Messages',
+                subtitle: "Match your coach's personality",
+                value: prefs.aiPersonalizedNudges,
+                onChanged: (v) => ref.read(notificationPreferencesProvider.notifier).setAiPersonalizedNudges(v),
+                cardBorder: cardBorder,
+              ),
+              _coachToggle(
+                icon: Icons.alarm,
+                iconColor: AppColors.error,
+                title: 'Missed Workout Nudge',
+                subtitle: 'Remind by evening if you skip',
+                value: prefs.missedWorkoutNudge,
+                onChanged: (v) => ref.read(notificationPreferencesProvider.notifier).setMissedWorkoutNudge(v),
+                cardBorder: cardBorder,
+                isLast: true,
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Advanced notifications: post-workout meal, habit reminders, streak
+  /// celebrations, daily crate reminders, vacation mode escape hatch.
+  Widget _buildAdvancedNotificationsSection({
+    required WidgetRef ref,
+    required Color textPrimary,
+    required Color textMuted,
+    required Color cardBorder,
+  }) {
+    final prefs = ref.watch(notificationPreferencesProvider);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 4, bottom: 8),
+          child: Text(
+            'OTHER NOTIFICATIONS',
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: textMuted,
+              letterSpacing: 1.2,
+            ),
+          ),
+        ),
+        Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: cardBorder),
+          ),
+          child: Column(
+            children: [
+              _coachToggle(
+                icon: Icons.lunch_dining,
+                iconColor: AppColors.success,
+                title: 'Post-Workout Meal',
+                subtitle: 'Refuel reminder after training',
+                value: prefs.postWorkoutMealReminder,
+                onChanged: (v) => ref.read(notificationPreferencesProvider.notifier).setPostWorkoutMealReminder(v),
+                cardBorder: cardBorder,
+              ),
+              _coachToggle(
+                icon: Icons.checklist,
+                iconColor: AppColors.cyan,
+                title: 'Habit Reminders',
+                subtitle: 'Evening check-in for habits',
+                value: prefs.habitReminders,
+                onChanged: (v) => ref.read(notificationPreferencesProvider.notifier).setHabitReminders(v),
+                cardBorder: cardBorder,
+              ),
+              _coachToggle(
+                icon: Icons.celebration,
+                iconColor: AppColors.warning,
+                title: 'Streak Celebrations',
+                subtitle: 'Celebrate streak milestones',
+                value: prefs.streakCelebration,
+                onChanged: (v) => ref.read(notificationPreferencesProvider.notifier).setStreakCelebration(v),
+                cardBorder: cardBorder,
+              ),
+              _coachToggle(
+                icon: Icons.card_giftcard,
+                iconColor: const Color(0xFFFFB300),
+                title: 'Daily Crate Reminders',
+                subtitle: 'Get notified when your crate is ready',
+                value: prefs.dailyCrateReminders,
+                onChanged: (v) => ref.read(notificationPreferencesProvider.notifier).setDailyCrateReminders(v),
+                cardBorder: cardBorder,
+              ),
+              Divider(height: 1, color: cardBorder),
+              Builder(
+                builder: (context) => ListTile(
+                  leading: const Icon(Icons.beach_access_rounded, color: Color(0xFF4FC3F7), size: 20),
+                  title: const Text('Vacation Mode', style: TextStyle(fontSize: 14)),
+                  subtitle: const Text('Pause all non-critical notifications', style: TextStyle(fontSize: 11)),
+                  trailing: Icon(Icons.chevron_right_rounded, color: textMuted, size: 20),
+                  dense: true,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                  onTap: () => context.push('/settings/vacation-mode'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
@@ -154,223 +381,6 @@ class AiCoachPage extends ConsumerWidget {
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildNavigationTile({
-    required BuildContext context,
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required Color color,
-    required Color textPrimary,
-    required Color textMuted,
-    required Color cardBorder,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      onTap: () {
-        HapticFeedback.lightImpact();
-        onTap();
-      },
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: cardBorder),
-        ),
-        child: Row(
-          children: [
-            Icon(icon, color: color, size: 20),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: textPrimary,
-                    ),
-                  ),
-                  Text(
-                    subtitle,
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: textMuted,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Icon(Icons.chevron_right, color: textMuted, size: 18),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCoachNotificationsSection({
-    required WidgetRef ref,
-    required Color textPrimary,
-    required Color textMuted,
-    required Color cardBorder,
-  }) {
-    final prefs = ref.watch(notificationPreferencesProvider);
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(left: 4, bottom: 8),
-          child: Text(
-            'COACH NOTIFICATIONS',
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              color: textMuted,
-              letterSpacing: 1.2,
-            ),
-          ),
-        ),
-        Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: cardBorder),
-          ),
-          child: Column(
-            children: [
-              // Intensity selector
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Nudge Intensity',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'How much your AI coach pushes you',
-                      style: TextStyle(fontSize: 12, color: textMuted),
-                    ),
-                    const SizedBox(height: 10),
-                    SizedBox(
-                      width: double.infinity,
-                      child: SegmentedButton<String>(
-                        showSelectedIcon: false,
-                        segments: const [
-                          ButtonSegment(value: 'gentle', label: Text('Gentle', style: TextStyle(fontSize: 11))),
-                          ButtonSegment(value: 'balanced', label: Text('Balanced', style: TextStyle(fontSize: 11))),
-                          ButtonSegment(value: 'tough_love', label: Text('Tough', style: TextStyle(fontSize: 11))),
-                          ButtonSegment(value: 'off', label: Text('Off', style: TextStyle(fontSize: 11))),
-                        ],
-                        selected: {prefs.accountabilityIntensity},
-                        onSelectionChanged: (values) {
-                          HapticFeedback.selectionClick();
-                          ref.read(notificationPreferencesProvider.notifier).setAccountabilityIntensity(values.first);
-                        },
-                        style: ButtonStyle(visualDensity: VisualDensity.compact),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Divider(height: 1, color: cardBorder),
-
-              // Individual toggles
-              _coachToggle(
-                icon: Icons.auto_awesome,
-                iconColor: AppColors.purple,
-                title: 'AI-Personalized Messages',
-                subtitle: 'Match your coach\'s personality',
-                value: prefs.aiPersonalizedNudges,
-                onChanged: (v) => ref.read(notificationPreferencesProvider.notifier).setAiPersonalizedNudges(v),
-                cardBorder: cardBorder,
-              ),
-              _coachToggle(
-                icon: Icons.alarm,
-                iconColor: AppColors.error,
-                title: 'Missed Workout Nudge',
-                subtitle: 'Remind by evening if you skip',
-                value: prefs.missedWorkoutNudge,
-                onChanged: (v) => ref.read(notificationPreferencesProvider.notifier).setMissedWorkoutNudge(v),
-                cardBorder: cardBorder,
-              ),
-              _coachToggle(
-                icon: Icons.lunch_dining,
-                iconColor: AppColors.success,
-                title: 'Post-Workout Meal',
-                subtitle: 'Refuel reminder after training',
-                value: prefs.postWorkoutMealReminder,
-                onChanged: (v) => ref.read(notificationPreferencesProvider.notifier).setPostWorkoutMealReminder(v),
-                cardBorder: cardBorder,
-              ),
-              _coachToggle(
-                icon: Icons.checklist,
-                iconColor: AppColors.cyan,
-                title: 'Habit Reminders',
-                subtitle: 'Evening check-in for habits',
-                value: prefs.habitReminders,
-                onChanged: (v) => ref.read(notificationPreferencesProvider.notifier).setHabitReminders(v),
-                cardBorder: cardBorder,
-              ),
-              _coachToggle(
-                icon: Icons.celebration,
-                iconColor: AppColors.warning,
-                title: 'Streak Celebrations',
-                subtitle: 'Celebrate streak milestones',
-                value: prefs.streakCelebration,
-                onChanged: (v) => ref.read(notificationPreferencesProvider.notifier).setStreakCelebration(v),
-                cardBorder: cardBorder,
-              ),
-              _coachToggle(
-                icon: Icons.card_giftcard,
-                iconColor: const Color(0xFFFFB300),
-                title: 'Daily Crate Reminders',
-                subtitle: 'Get notified when your crate is ready',
-                value: prefs.dailyCrateReminders,
-                onChanged: (v) => ref.read(notificationPreferencesProvider.notifier).setDailyCrateReminders(v),
-                cardBorder: cardBorder,
-              ),
-              Divider(height: 1, color: cardBorder),
-              // Vacation mode — deep-links to the dedicated page. Suppresses
-              // ALL non-critical notifications (not just coach nudges), so it
-              // belongs here as an escape hatch even though it's not a pref.
-              Builder(
-                builder: (context) => ListTile(
-                  leading: const Icon(
-                    Icons.beach_access_rounded,
-                    color: Color(0xFF4FC3F7),
-                    size: 20,
-                  ),
-                  title: const Text('Vacation Mode', style: TextStyle(fontSize: 14)),
-                  subtitle: const Text(
-                    'Pause all non-critical notifications',
-                    style: TextStyle(fontSize: 11),
-                  ),
-                  trailing: Icon(
-                    Icons.chevron_right_rounded,
-                    color: textMuted,
-                    size: 20,
-                  ),
-                  dense: true,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-                  onTap: () => context.push('/settings/vacation-mode'),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
     );
   }
 
@@ -453,6 +463,63 @@ class AiCoachPage extends ConsumerWidget {
             },
             activeColor: AppColors.info,
           ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Switch row that hides power-user options behind a single toggle.
+/// State is owned by the parent page (persisted to SharedPreferences).
+class _AdvancedToggleRow extends StatelessWidget {
+  final bool value;
+  final ValueChanged<bool> onChanged;
+  final bool isDark;
+  final Color textPrimary;
+  final Color textSecondary;
+
+  const _AdvancedToggleRow({
+    required this.value,
+    required this.onChanged,
+    required this.isDark,
+    required this.textPrimary,
+    required this.textSecondary,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cardBg = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: BorderRadius.circular(12),
+        border: isDark ? null : Border.all(color: AppColorsLight.cardBorder),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.tune, size: 18, color: textSecondary),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Advanced settings',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: textPrimary,
+                  ),
+                ),
+                Text(
+                  'Show floating chat bubble, niche notifications, and privacy controls',
+                  style: TextStyle(fontSize: 12, color: textSecondary),
+                ),
+              ],
+            ),
+          ),
+          Switch.adaptive(value: value, onChanged: onChanged),
         ],
       ),
     );

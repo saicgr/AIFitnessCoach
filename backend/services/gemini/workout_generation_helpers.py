@@ -66,6 +66,13 @@ class WorkoutGenerationMixin(WorkoutGenerationMixinPart2):
         user_dob: Optional[str] = None,
         user_id: Optional[str] = None,
         workout_weight_unit: Optional[str] = None,
+        # Progression Pace + Weekly Variety — Settings the user can adjust in
+        # Workout Settings. Up until 2026-05 these values were stored but never
+        # consumed by the prompt builder, so changing them produced no
+        # visible difference in generated workouts. Wiring them here so the
+        # user's preference actually steers Gemini.
+        progression_pace: Optional[str] = None,  # 'slow' | 'medium' | 'fast'
+        weekly_variety: Optional[int] = None,   # 25 | 50 | 75
     ) -> Dict:
         """
         Generate a personalized workout plan using AI.
@@ -803,12 +810,73 @@ This assessment data reflects the user's ACTUAL capabilities - use it to create 
             "Deadlift, Romanian Deadlift, Barbell Row, Good Morning, Barbell Hip Thrust"
         )
 
+        # Progression Pace — translate the user-selected setting into explicit
+        # weight-progression cues. Falls back to silent (no instruction) when
+        # the setting is missing so we don't override default Gemini behavior.
+        progression_pace_instruction = ""
+        if progression_pace:
+            pace_key = progression_pace.lower()
+            unit = (workout_weight_unit or "lb").lower()
+            unit_label = "lb" if unit.startswith("lb") else "kg"
+            small_step = "2.5 lb" if unit_label == "lb" else "1 kg"
+            medium_step = "5 lb" if unit_label == "lb" else "2.5 kg"
+            big_step = "5–10 lb" if unit_label == "lb" else "2.5–5 kg"
+            pace_mapping = {
+                "slow": (
+                    "🐢 PROGRESSION PACE: SLOW. The user wants conservative weight progression.\n"
+                    f"- Target weights should match the user's last logged weights for compound lifts (no jumps).\n"
+                    f"- Recommend tiny load bumps (~{small_step}) only every 3–4 weeks.\n"
+                    "- Best for: injury recovery, perfecting form, or returning users.\n"
+                    "- For bodyweight moves: progress reps by +1 every 2–3 weeks, not weight."
+                ),
+                "medium": (
+                    "🚶 PROGRESSION PACE: MEDIUM (default). The user wants steady, sustainable progress.\n"
+                    f"- Target compound lifts ~{medium_step} above last logged weights when sets/reps were completed.\n"
+                    f"- Apply increments roughly every 1–2 weeks, not every session.\n"
+                    "- For bodyweight: +1 rep per week is appropriate."
+                ),
+                "fast": (
+                    "🚀 PROGRESSION PACE: FAST. The user wants aggressive newbie-gain style progression.\n"
+                    f"- Target compound lifts {big_step} above last logged weights when the previous session was clean.\n"
+                    "- Increase every session for major lifts (squat, bench, deadlift, OHP) until form breaks down.\n"
+                    "- Cap weekly bumps at +10% to avoid overuse injury.\n"
+                    "- For bodyweight: +1 rep per session is appropriate."
+                ),
+            }
+            instr = pace_mapping.get(pace_key)
+            if instr:
+                progression_pace_instruction = "\n\n" + instr
+
+        # Weekly Variety — translate the percent setting into explicit rotation
+        # guidance plus an avoid-overlap target the model can act on.
+        weekly_variety_instruction = ""
+        if weekly_variety is not None:
+            try:
+                v = int(weekly_variety)
+            except (TypeError, ValueError):
+                v = 50
+            if v <= 30:
+                weekly_variety_instruction = (
+                    "\n\n🔁 WEEKLY VARIETY: LOW (≈25%). Keep at least 75% of exercises identical to last week so the user can\n"
+                    "track strength gains on familiar movements. Rotate at most a couple of accessory lifts. Staples NEVER rotate."
+                )
+            elif v >= 70:
+                weekly_variety_instruction = (
+                    "\n\n🔁 WEEKLY VARIETY: HIGH (≈75%). Rotate roughly 75% of exercises week-over-week — only keep core staple lifts.\n"
+                    "Use the broader exercise library to bring fresh accessories each week. Avoid repeating last week's accessories."
+                )
+            else:
+                weekly_variety_instruction = (
+                    "\n\n🔁 WEEKLY VARIETY: MEDIUM (≈50%). Rotate about half the exercises week-over-week. Keep all staple lifts and\n"
+                    "the user's favorite compound movements; vary accessories and isolation work."
+                )
+
         prompt = f"""Generate a {duration_text}-minute workout plan for a user with:
 - Fitness Level: {fitness_level}
 - Goals: {safe_join_list(goals, 'General fitness')}
 - Available Equipment: {safe_join_list(equipment, 'Bodyweight only')}
 - Focus Areas: {safe_join_list(focus_areas, 'Full body')}
-- Workout Type: {workout_type}{environment_instruction}{age_activity_context}{training_split_instruction}{fitness_assessment_instruction}{safety_instruction}{workout_type_instruction}{custom_program_instruction}{custom_exercises_instruction}{equipment_details_instruction}{preference_constraints_instruction}{comeback_instruction}{progression_philosophy_instruction}{workout_patterns_instruction}{favorite_workouts_instruction}{primary_goal_instruction}{muscle_focus_instruction}{body_analyzer_instruction}
+- Workout Type: {workout_type}{environment_instruction}{age_activity_context}{training_split_instruction}{fitness_assessment_instruction}{safety_instruction}{workout_type_instruction}{custom_program_instruction}{custom_exercises_instruction}{equipment_details_instruction}{preference_constraints_instruction}{comeback_instruction}{progression_philosophy_instruction}{progression_pace_instruction}{weekly_variety_instruction}{workout_patterns_instruction}{favorite_workouts_instruction}{primary_goal_instruction}{muscle_focus_instruction}{body_analyzer_instruction}
 
 ⚠️ CRITICAL - MUSCLE GROUP TARGETING:
 {focus_instruction if focus_instruction else 'Select a balanced mix of exercises.'}

@@ -11,7 +11,7 @@ final selectedExerciseProvider = StateProvider<String?>((ref) => null);
 
 /// Time range for exercise history queries
 final exerciseHistoryTimeRangeProvider = StateProvider<ExerciseHistoryTimeRange>(
-  (ref) => ExerciseHistoryTimeRange.twelveWeeks,
+  (ref) => ExerciseHistoryTimeRange.oneDay,
 );
 
 /// Chart data type selector (weight, volume, 1rm)

@@ -96,6 +96,7 @@ from api.v1 import push_nudge_cron  # Hourly accountability push nudge cron jobs
 from api.v1 import weekly_wrapped_cron  # Sunday Wrapped hourly cron (tz-aware fire)
 from api.v1 import fitness_profile_cron  # Daily radar-shape snapshotter
 from api.v1 import retention_cron  # Data retention sweeps (chat 12mo, etc.)
+from api.v1 import trial_coach_cron  # Onboarding v5: proactive coach DMs during 7-day trial
 from api.v1 import dsar  # Out-of-app GDPR/CCPA data request flow
 from api.v1 import export  # Authenticated in-app data export (csv/json/excel/parquet)
 from api.v1 import dashboard  # Weekly dashboard summary endpoint
@@ -103,6 +104,7 @@ from api.v1 import home  # Home screen bootstrap (single-request aggregated data
 from api.v1 import chat_proposals  # Apply / dismiss AI-proposed workout changes
 from api.v1 import plan_share_link  # Public plan/period share tokens (zealova.com/p/{token})
 from api.v1 import public_profile  # Public profile pages (zealova.com/u/{username})
+from api.v1 import ai_endpoints  # Lightweight AI helpers (exercise insights, etc.)
 from api.v1.users.mcp_integrations import router as mcp_integrations_router  # MCP connected-client management
 
 # Create v1 router
@@ -441,6 +443,10 @@ router.include_router(fitness_profile_cron.router, tags=["Fitness Cron"])
 # that pings /nudges/cron and /emails/cron — no separate Render Cron service.
 router.include_router(retention_cron.router, prefix="/retention", tags=["Retention Cron"])
 
+# Onboarding v5: proactive coach messages during 7-day trial.
+# Hourly cron — fires Day 0/2/4/6/7 touchpoints based on user's local time.
+router.include_router(trial_coach_cron.router, prefix="/cron", tags=["Trial Coach Cron"])
+
 # Out-of-app GDPR/CCPA data request flow. PUBLIC — no auth, no JWT — so a
 # locked-out user can still exercise Art. 15/17/20 rights. Protected by
 # email-ownership verification tokens + per-email rate limit.
@@ -475,3 +481,6 @@ router.include_router(plan_share_link.router, prefix="/plans", tags=["Plan Shari
 
 # Public profile pages — zealova.com/u/{username} backed view
 router.include_router(public_profile.router, prefix="/users/public", tags=["Public Profile"])
+
+# Lightweight AI helpers — exercise insights bottom sheet, etc.
+router.include_router(ai_endpoints.router, tags=["AI Utilities"])

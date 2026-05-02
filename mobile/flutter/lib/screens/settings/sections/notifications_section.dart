@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/theme_colors.dart';
 import '../../../data/services/notification_service.dart';
 import '../widgets/widgets.dart';
 
@@ -39,6 +40,13 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
     final cardBackground = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    // Toggle colors: pair the active thumb with a translucent matching
+    // track so on/off reads as one color, not the previous orange-track /
+    // cyan-thumb mismatch. Falls back through the user's selected accent
+    // → app default — so changing the accent in Appearance restyles every
+    // switch on this screen automatically.
+    final accent = ThemeColors.of(context).accent;
+    final activeTrack = accent.withValues(alpha: 0.45);
 
     final notifPrefs = ref.watch(notificationPreferencesProvider);
     final preset = notifPrefs.frequencyPreset;
@@ -181,7 +189,8 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
                     value: notifPrefs.weekendTimesEnabled,
                     onChanged: (value) =>
                         ref.read(notificationPreferencesProvider.notifier).setWeekendTimesEnabled(value),
-                    activeThumbColor: AppColors.cyan,
+                    activeThumbColor: accent,
+                    activeTrackColor: activeTrack,
                   ),
                 ],
               ),
@@ -324,70 +333,9 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
               ],
             ),
           ),
-          Divider(height: 1, color: cardBorder, indent: 50),
 
-          // Guilt Notifications
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.sentiment_dissatisfied_outlined,
-                  color: notifPrefs.guiltNotifications ? const Color(0xFFF97316) : textMuted,
-                  size: 22,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text('Guilt Notifications', style: TextStyle(fontSize: 15)),
-                      Text(
-                        'Duolingo-style nudges when inactive',
-                        style: TextStyle(fontSize: 12, color: textMuted),
-                      ),
-                    ],
-                  ),
-                ),
-                Switch(
-                  value: notifPrefs.guiltNotifications,
-                  onChanged: (value) =>
-                      ref.read(notificationPreferencesProvider.notifier).setGuiltNotifications(value),
-                  activeThumbColor: AppColors.cyan,
-                ),
-              ],
-            ),
-          ),
-          Divider(height: 1, color: cardBorder, indent: 50),
-
-          // Notification Style
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: Row(
-              children: [
-                Icon(Icons.emoji_emotions_outlined, color: textMuted, size: 22),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text('Include Emoji', style: TextStyle(fontSize: 15)),
-                      Text(
-                        'Show emoji in notification text',
-                        style: TextStyle(fontSize: 12, color: textMuted),
-                      ),
-                    ],
-                  ),
-                ),
-                Switch(
-                  value: notifPrefs.notificationEmoji,
-                  onChanged: (value) =>
-                      ref.read(notificationPreferencesProvider.notifier).setNotificationEmoji(value),
-                  activeThumbColor: AppColors.cyan,
-                ),
-              ],
-            ),
-          ),
+          // Guilt Notifications + Include Emoji moved into the Advanced
+          // disclosure below — they're niche tuning, not first-line settings.
 
           // ─── Advanced Notifications (Collapsible) ─────────
           Divider(height: 1, color: cardBorder),
@@ -606,6 +554,77 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
                     ],
                   ),
                 ),
+                Divider(height: 1, color: cardBorder, indent: 50),
+                // Guilt Notifications (moved here from the always-visible section)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.sentiment_dissatisfied_outlined,
+                        color: notifPrefs.guiltNotifications
+                            ? const Color(0xFFF97316)
+                            : textMuted,
+                        size: 22,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text('Guilt Notifications',
+                                style: TextStyle(fontSize: 15)),
+                            Text(
+                              'Duolingo-style nudges when inactive',
+                              style: TextStyle(fontSize: 12, color: textMuted),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Switch(
+                        value: notifPrefs.guiltNotifications,
+                        onChanged: (value) => ref
+                            .read(notificationPreferencesProvider.notifier)
+                            .setGuiltNotifications(value),
+                        activeThumbColor: accent,
+                    activeTrackColor: activeTrack,
+                      ),
+                    ],
+                  ),
+                ),
+                Divider(height: 1, color: cardBorder, indent: 50),
+                // Include Emoji (moved here from the always-visible section)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  child: Row(
+                    children: [
+                      Icon(Icons.emoji_emotions_outlined,
+                          color: textMuted, size: 22),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text('Include Emoji',
+                                style: TextStyle(fontSize: 15)),
+                            Text(
+                              'Show emoji in notification text',
+                              style: TextStyle(fontSize: 12, color: textMuted),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Switch(
+                        value: notifPrefs.notificationEmoji,
+                        onChanged: (value) => ref
+                            .read(notificationPreferencesProvider.notifier)
+                            .setNotificationEmoji(value),
+                        activeThumbColor: accent,
+                    activeTrackColor: activeTrack,
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
             crossFadeState: _advancedExpanded ? CrossFadeState.showSecond : CrossFadeState.showFirst,
@@ -774,6 +793,8 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
   }) {
     final isExpanded = _expandedSection == sectionKey;
     final cardBackground = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final accent = ThemeColors.of(context).accent;
+    final activeTrack = accent.withValues(alpha: 0.45);
 
     return Column(
       children: [
@@ -826,7 +847,8 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
                       setState(() => _expandedSection = null);
                     }
                   },
-                  activeThumbColor: AppColors.cyan,
+                  activeThumbColor: accent,
+                    activeTrackColor: activeTrack,
                 ),
               ],
             ),

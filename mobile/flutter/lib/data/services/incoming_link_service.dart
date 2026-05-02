@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:app_links/app_links.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../providers/referral_provider.dart';
 import 'pending_referral_service.dart';
@@ -66,11 +67,39 @@ class IncomingLinkService {
   static Future<void> _handle(Uri uri, ProviderContainer container) async {
     debugPrint('🔗 [IncomingLink] handling: $uri');
 
+    // Supabase Auth callback (email confirm / magic link / OAuth).
+    // Exchanges the PKCE `?code=` for a real session so the user lands
+    // back in the app already signed in. Matches BOTH:
+    //   zealova://auth/callback?code=...
+    //   https://zealova.com/auth/callback?code=...
+    //   fitwiz://auth/callback?code=...   (legacy scheme)
+    final isAuthCallback =
+        uri.queryParameters.containsKey('code') &&
+            ((uri.scheme == 'zealova' || uri.scheme == 'fitwiz') &&
+                    (uri.host == 'auth' ||
+                        uri.pathSegments.contains('callback')) ||
+                ((uri.scheme == 'https' || uri.scheme == 'http') &&
+                    uri.host == _inviteHost &&
+                    uri.pathSegments.isNotEmpty &&
+                    uri.pathSegments.first == 'auth' &&
+                    uri.pathSegments.length > 1 &&
+                    uri.pathSegments[1] == 'callback'));
+    if (isAuthCallback) {
+      final code = uri.queryParameters['code']!;
+      try {
+        await Supabase.instance.client.auth.exchangeCodeForSession(code);
+        debugPrint('✅ [IncomingLink] Supabase session established from callback');
+      } catch (e) {
+        debugPrint('❌ [IncomingLink] exchangeCodeForSession failed: $e');
+      }
+      return;
+    }
+
     final isHttpsInvite = (uri.scheme == 'https' || uri.scheme == 'http') &&
         uri.host == _inviteHost &&
         uri.pathSegments.isNotEmpty &&
         uri.pathSegments.first == _inviteSegment;
-    final isCustomInvite = uri.scheme == 'fitwiz' &&
+    final isCustomInvite = (uri.scheme == 'fitwiz' || uri.scheme == 'zealova') &&
         (uri.host == _inviteSegment ||
             uri.pathSegments.contains(_inviteSegment));
 

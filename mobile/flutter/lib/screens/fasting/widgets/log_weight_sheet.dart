@@ -1138,11 +1138,39 @@ class _LogWeightSheetState extends ConsumerState<_LogWeightSheet>
     );
   }
 
+  /// Returns a relative date string like "today", "yesterday", "3 days ago",
+  /// "Apr 12", etc., for display in the "Previously" hint row.
+  String _relativeDate(DateTime date) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final d = DateTime(date.year, date.month, date.day);
+    final diff = today.difference(d).inDays;
+    if (diff == 0) return 'today';
+    if (diff == 1) return 'yesterday';
+    if (diff < 7) return '$diff days ago';
+    return DateFormat('MMM d').format(date);
+  }
+
+  /// Formats a raw kg weight value in the currently selected unit.
+  String _formatWeight(double kg) {
+    final val = _selectedUnit.fromKg(kg);
+    return '${val.toStringAsFixed(1)} ${_selectedUnit.label}';
+  }
+
   Widget _buildWeightInput(SheetColors colors) {
     final displayWeight = _selectedUnit.fromKg(_weightKg);
 
     return Column(
       children: [
+        // Previously logged weight hint (shown when history exists)
+        if (_previousWeightKg != null && _previousWeightAt != null) ...[
+          Text(
+            'Previously: ${_formatWeight(_previousWeightKg!)} · ${_relativeDate(_previousWeightAt!)}',
+            style: TextStyle(color: Colors.white54, fontSize: 13),
+          ),
+          const SizedBox(height: 8),
+        ],
+
         // Smaller circular weight input
         GestureDetector(
           onTap: () => _showDirectInput(colors),

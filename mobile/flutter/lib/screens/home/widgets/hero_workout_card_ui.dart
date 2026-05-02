@@ -3,6 +3,118 @@ part of 'hero_workout_card.dart';
 /// UI builder methods extracted from _HeroWorkoutCardState
 extension _HeroWorkoutCardStateUI on _HeroWorkoutCardState {
 
+  /// Completed-state overlay. Branches on synced (cyan, Apple-Health style,
+  /// no Repeat / Share — those buttons assume Zealova-shaped data) vs
+  /// Zealova-completed (green, full action set). Replaces the previous
+  /// inline overlay that rendered identical green "Workout Complete" UI
+  /// for both, which made synced cardio look like a finished Zealova plan.
+  Widget _buildCompletedOverlay({
+    required Workout workout,
+    required bool isDark,
+  }) {
+    final synced = workout.isSyncedFromHealthApp;
+    final accent = synced ? AppColors.cyan : AppColors.success;
+    final headline = synced
+        ? 'Synced from ${workout.syncedPlatformLabel}'
+        : 'Workout Complete';
+    final iconData = synced ? Icons.favorite_rounded : Icons.check_rounded;
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(22),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 6, sigmaY: 6),
+        child: Container(
+          color: accent.withValues(alpha: isDark ? 0.25 : 0.2),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 60,
+                height: 60,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: accent, width: 3),
+                  color: accent,
+                  boxShadow: [
+                    BoxShadow(
+                      color: accent.withValues(alpha: 0.45),
+                      blurRadius: 18,
+                    ),
+                  ],
+                ),
+                child: Icon(
+                  iconData,
+                  color: Colors.white,
+                  size: 36,
+                  weight: 800,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                headline,
+                style: TextStyle(
+                  color: isDark ? Colors.white : Colors.black87,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                workout.name ?? '',
+                style: TextStyle(
+                  color: isDark ? Colors.white70 : Colors.black54,
+                  fontSize: 14,
+                ),
+              ),
+              const SizedBox(height: 24),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Synced rows: Repeat (no Zealova plan to clone) and
+                  // Share (backend share-link rejects non-Zealova workouts)
+                  // are hidden — only Summary remains.
+                  if (!synced) ...[
+                    _buildOverlayButton(
+                      icon: Icons.replay,
+                      label: 'Repeat',
+                      onTap: _repeatWorkout,
+                      isDark: isDark,
+                    ),
+                    if (workout.completionMethod == 'marked_done') ...[
+                      const SizedBox(width: 12),
+                      _buildOverlayButton(
+                        icon: Icons.undo,
+                        label: 'Undo',
+                        onTap: _markAsUndone,
+                        isDark: isDark,
+                      ),
+                    ],
+                    const SizedBox(width: 12),
+                  ],
+                  _buildOverlayButton(
+                    icon: Icons.bar_chart,
+                    label: 'Summary',
+                    onTap: _viewSummary,
+                    isDark: isDark,
+                  ),
+                  if (!synced) ...[
+                    const SizedBox(width: 12),
+                    _buildOverlayButton(
+                      icon: Icons.ios_share_rounded,
+                      label: 'Share',
+                      onTap: _shareCompletedWorkout,
+                      isDark: isDark,
+                    ),
+                  ],
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildOverlayButton({
     required IconData icon,
     required String label,
