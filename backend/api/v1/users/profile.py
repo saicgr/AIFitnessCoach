@@ -1090,6 +1090,20 @@ async def delete_user(user_id: str,
                 })
             except Exception:
                 raise HTTPException(status_code=401, detail="Invalid password — re-authentication required")
+            finally:
+                # CRITICAL: sign_in_with_password mutates the auth_client's
+                # Authorization header to the user's JWT via supabase-py's
+                # auth listener. The downstream admin.delete_user call needs
+                # service_role, so drop the user session here to restore the
+                # apikey header. Without this, admin returns 403 "User not
+                # allowed" and the whole reset 500s.
+                try:
+                    supabase.auth_client.auth.sign_out()
+                except Exception as _sign_out_err:
+                    logger.warning(
+                        "Failed to clear auth_client session after password verify: %s",
+                        _sign_out_err,
+                    )
         # For OAuth providers (google, apple, etc.), JWT auth via get_current_user() is sufficient
 
         db = get_supabase_db()
@@ -1268,6 +1282,20 @@ async def full_reset(user_id: str,
                 })
             except Exception:
                 raise HTTPException(status_code=401, detail="Invalid password — re-authentication required")
+            finally:
+                # CRITICAL: sign_in_with_password mutates the auth_client's
+                # Authorization header to the user's JWT via supabase-py's
+                # auth listener. The downstream admin.delete_user call needs
+                # service_role, so drop the user session here to restore the
+                # apikey header. Without this, admin returns 403 "User not
+                # allowed" and the whole reset 500s.
+                try:
+                    supabase.auth_client.auth.sign_out()
+                except Exception as _sign_out_err:
+                    logger.warning(
+                        "Failed to clear auth_client session after password verify: %s",
+                        _sign_out_err,
+                    )
         # For OAuth providers (google, apple, etc.), JWT auth via get_current_user() is sufficient
 
         db = get_supabase_db()
