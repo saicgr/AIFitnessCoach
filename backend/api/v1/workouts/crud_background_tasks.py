@@ -26,6 +26,48 @@ from services.nutrition_calculator_service import NutritionCalculatorService
 logger = get_logger(__name__)
 
 
+# Per-user coalesce/debounce locks for score recalculation. When five workouts
+# complete within a few seconds (sync queue replay, bulk import, rapid manual
+# logging), each one would otherwise enqueue its own strength + fitness recalc
+# pair, fanning out 5×2 = 10 expensive DB jobs that all read the same rows.
+# `_recalc_locks[user_id]` holds the in-flight task; subsequent enqueues during
+# the debounce window become no-ops because the existing task will pick up the
+# latest data when it runs.
+_recalc_locks: Dict[str, asyncio.Task] = {}
+_RECALC_DEBOUNCE_SECONDS = 5.0
+
+
+def schedule_score_recalc(user_id: str, supabase, timezone_str: str) -> None:
+    """Coalesce strength + fitness recalc per user.
+
+    First call schedules a task that fires after [_RECALC_DEBOUNCE_SECONDS].
+    Concurrent calls during the debounce window are absorbed — the already-
+    scheduled task will read the latest workout data when it runs, so the
+    coalescing is safe (correctness preserved, work compressed).
+
+    Drop-in replacement for the two prior `background_tasks.add_task(
+    recalculate_user_strength_scores, ...)` + `background_tasks.add_task(
+    recalculate_user_fitness_score, ...)` calls. Failures swallowed; never
+    raises into the caller.
+    """
+    existing = _recalc_locks.get(user_id)
+    if existing is not None and not existing.done():
+        # Already scheduled for this user — skip.
+        return
+
+    async def _run():
+        try:
+            await asyncio.sleep(_RECALC_DEBOUNCE_SECONDS)
+            await recalculate_user_strength_scores(user_id, supabase, timezone_str)
+            await recalculate_user_fitness_score(user_id, supabase, timezone_str)
+        except Exception as e:
+            logger.warning(f"Background: Coalesced recalc for {user_id} failed: {e}")
+        finally:
+            _recalc_locks.pop(user_id, None)
+
+    _recalc_locks[user_id] = asyncio.create_task(_run())
+
+
 def _calculate_completion_calories(
     exercises: list,
     duration_seconds: int,

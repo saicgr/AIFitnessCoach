@@ -524,6 +524,21 @@ async def lifespan(app: FastAPI):
     logger.info(f"Gemini Model: {settings.gemini_model}")
     logger.info(f"Embedding Model: {settings.gemini_embedding_model}")
 
+    # Confirm Supavisor pooler is in use — direct connections to db.<ref>.supabase.co
+    # cap at ~15 server-side and starved the pool under burst load. If the host
+    # logged below isn't `*.pooler.supabase.com:6543`, the env var change didn't
+    # take effect and search/workout endpoints will time out under any concurrency.
+    try:
+        from urllib.parse import urlparse
+        _parsed = urlparse(settings.database_url.replace("postgresql+asyncpg://", "postgresql://"))
+        logger.info(
+            f"🗄️  DB host: {_parsed.hostname}:{_parsed.port}  "
+            f"pool_size={settings.db_pool_size} max_overflow={settings.db_max_overflow} "
+            f"pool_timeout={settings.db_pool_timeout}s"
+        )
+    except Exception as _e:
+        logger.warning(f"Could not parse DATABASE_URL for diagnostic log: {_e}")
+
     # Re-attach the health-check access filter inside lifespan so it survives
     # gunicorn's UvicornWorker fork — the worker re-initializes uvicorn's
     # access logger after our module-import-time setup_logging() runs, which

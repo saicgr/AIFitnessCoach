@@ -106,18 +106,29 @@ class SupabaseManager:
             )
             old_session.close()
 
-            # Initialize SQLAlchemy engine for Postgres
-            # Lambda-optimized connection pooling:
-            # - pool_pre_ping: Tests connections before use (handles frozen connections)
-            # - pool_size: 10 connections (Lambda containers reuse connections)
-            # - max_overflow: 20 (allows bursts in concurrent requests)
-            # connect_args disables prepared-statement caching, which is
-            # REQUIRED when the URL points at Supavisor in transaction mode
-            # (port 6543). pgbouncer-style transaction pooling reuses backend
-            # connections across transactions and breaks asyncpg's prepared
-            # statements (DuplicatePreparedStatementError). Setting both keys
-            # to 0 is also a no-op when pointed at a direct DB or session-mode
-            # pooler, so it's safe to leave on unconditionally.
+            # Initialize SQLAlchemy engine for Postgres.
+            #
+            # Why connect_args looks the way it does — Supavisor transaction
+            # mode (port 6543) recycles backend Postgres connections across
+            # client transactions. asyncpg's default prepared-statement names
+            # are sequential (`__asyncpg_stmt_1__`, `__asyncpg_stmt_2__`),
+            # so two clients that grab the same backend at different times
+            # both try to PREPARE statement #1 → DuplicatePreparedStatementError
+            # → SQLAlchemy retries → request times out.
+            #
+            #   • statement_cache_size=0 — don't reuse prepared statements
+            #     within a connection (asyncpg-side cache off)
+            #   • prepared_statement_cache_size=0 — same toggle, asyncpg's
+            #     newer alias for the above (set both for forward-compat)
+            #   • prepared_statement_name_func=lambda: f"__asyncpg_{uuid4().hex}__"
+            #     — generate a UNIQUE name per prepare call so two clients
+            #     can both prepare on the same recycled backend without
+            #     colliding. This is the only thing that actually makes
+            #     transaction-mode pooling work with asyncpg + SQLAlchemy.
+            #
+            # All three are no-ops when pointed at a direct DB connection or a
+            # session-mode pooler — safe to leave on unconditionally.
+            from uuid import uuid4
             self._engine = create_async_engine(
                 settings.database_url,
                 echo=settings.debug,
@@ -129,6 +140,7 @@ class SupabaseManager:
                 connect_args={
                     "statement_cache_size": 0,
                     "prepared_statement_cache_size": 0,
+                    "prepared_statement_name_func": lambda: f"__asyncpg_{uuid4().hex}__",
                 },
             )
 
@@ -182,13 +194,21 @@ class SupabaseManager:
 
     @asynccontextmanager
     async def get_managed_session(self):
-        """Get a database session guarded by the concurrency semaphore."""
-        async with self._db_semaphore:
-            session = self._session_maker()
-            try:
-                yield session
-            finally:
-                await session.close()
+        """Get a database session.
+
+        Concurrency is governed by SQLAlchemy's pool (`pool_size`,
+        `max_overflow`, `pool_timeout`) — Supavisor on the other side then
+        multiplexes onto its server-side pool. The asyncio.Semaphore that
+        previously wrapped this call layered a second FIFO queue at the Python
+        level, causing requests to block at the semaphore even when the pool
+        had capacity, and producing the observed "_phase1 timed out at 5s
+        while asyncpg was still mid-handshake" pattern under burst load.
+        """
+        session = self._session_maker()
+        try:
+            yield session
+        finally:
+            await session.close()
 
     async def close(self):
         """Close database connections."""

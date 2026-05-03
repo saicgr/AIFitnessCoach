@@ -127,16 +127,17 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
     stream_gym_profile_id = body.gym_profile_id or get_active_gym_profile_id(db, body.user_id)
 
     try:
-        generating_query = db.client.table("workouts").select("id").eq(
+        # NB: dedup intentionally ignores gym_profile_id. A user can have at most one
+        # *current* AI workout per day; gym profile is contextual, not part of the
+        # natural key. Filtering by profile lets a parallel writer with profile=NULL
+        # (or a different profile) sneak past, producing duplicate today rows.
+        existing_generating = db.client.table("workouts").select("id").eq(
             "user_id", body.user_id
         ).eq(
             "scheduled_date", scheduled_date
         ).eq(
             "status", "generating"
-        )
-        if stream_gym_profile_id:
-            generating_query = generating_query.eq("gym_profile_id", stream_gym_profile_id)
-        existing_generating = generating_query.execute()
+        ).execute()
 
         if existing_generating.data:
             workout_id = existing_generating.data[0]["id"]
@@ -147,17 +148,19 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
 
             return StreamingResponse(already_generating_sse(), media_type="text/event-stream")
 
-        # Duplicate check: If a completed/active workout already exists for this user+date+profile, return it
-        duplicate_query = db.client.table("workouts").select("id,name,status").eq(
+        # Duplicate check: if a current, non-cancelled workout already exists for
+        # this user+date, return it — regardless of gym_profile_id (see comment above).
+        existing_workout = db.client.table("workouts").select("id,name,status").eq(
             "user_id", body.user_id
         ).eq(
             "scheduled_date", scheduled_date
+        ).eq(
+            "is_current", True
         ).neq(
             "status", "generating"
-        )
-        if stream_gym_profile_id:
-            duplicate_query = duplicate_query.eq("gym_profile_id", stream_gym_profile_id)
-        existing_workout = duplicate_query.limit(1).execute()
+        ).neq(
+            "status", "cancelled"
+        ).limit(1).execute()
 
         if existing_workout.data:
             workout_id = existing_workout.data[0]["id"]

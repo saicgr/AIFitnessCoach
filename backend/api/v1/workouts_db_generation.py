@@ -77,6 +77,30 @@ async def generate_workout(request: Request, body: GenerateWorkoutRequest, backg
     try:
         db = get_supabase_db()
 
+        # Duplicate check: if a current, non-cancelled workout already exists for
+        # this user+scheduled_date, return it. Mirrors the dedup in
+        # /workouts/generate and /workouts/generate-stream — without it, a stale
+        # client or background job calling this endpoint stomps a second workout
+        # onto today during onboarding.
+        if body.scheduled_date:
+            try:
+                sched = body.scheduled_date
+                end_of_day = sched + "T23:59:59.999999+00:00" if len(sched) == 10 else sched
+                existing = db.client.table("workouts").select("*").eq(
+                    "user_id", body.user_id
+                ).gte(
+                    "scheduled_date", sched
+                ).lte(
+                    "scheduled_date", end_of_day
+                ).eq(
+                    "is_current", True
+                ).neq("status", "cancelled").limit(1).execute()
+                if existing.data:
+                    logger.info(f"✅ [Dedup] Workout already exists for {body.user_id} on {body.scheduled_date}, returning existing")
+                    return row_to_workout(existing.data[0])
+            except Exception as dedup_err:
+                logger.warning(f"Dedup check failed, proceeding with generation: {dedup_err}", exc_info=True)
+
         primary_goal = None
         muscle_focus_points = None
         user_dob = None

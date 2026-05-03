@@ -103,23 +103,26 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
                             },
                         )
 
-        # Duplicate check: return existing workout if one already exists for this date+profile
+        # Duplicate check: return existing current workout if one already exists for this date.
+        # NB: intentionally ignores gym_profile_id — a user has at most one *current* AI workout
+        # per day. Filtering by profile lets a parallel writer with profile=NULL (or a different
+        # profile resolved a few hundred ms apart in the onboarding race) sneak past, producing
+        # duplicate today rows. See generation_streaming.py for the symmetric fix.
         if body.scheduled_date:
             try:
                 sched = body.scheduled_date
                 end_of_day = sched + "T23:59:59.999999+00:00" if len(sched) == 10 else sched
-                query = db.client.table("workouts").select("*").eq(
+                existing = db.client.table("workouts").select("*").eq(
                     "user_id", body.user_id
                 ).gte(
                     "scheduled_date", sched
                 ).lte(
                     "scheduled_date", end_of_day
-                ).neq("status", "cancelled")
-                if dedup_gym_profile_id:
-                    query = query.eq("gym_profile_id", dedup_gym_profile_id)
-                existing = query.limit(1).execute()
+                ).eq(
+                    "is_current", True
+                ).neq("status", "cancelled").limit(1).execute()
                 if existing.data:
-                    logger.info(f"✅ [Dedup] Workout already exists for {body.user_id} on {body.scheduled_date} (profile={dedup_gym_profile_id}), returning existing")
+                    logger.info(f"✅ [Dedup] Workout already exists for {body.user_id} on {body.scheduled_date} (existing profile={existing.data[0].get('gym_profile_id')}, requested profile={dedup_gym_profile_id}), returning existing")
                     return row_to_workout(existing.data[0])
             except Exception as dedup_err:
                 logger.warning(f"Dedup check failed, proceeding with generation: {dedup_err}", exc_info=True)

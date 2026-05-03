@@ -45,8 +45,7 @@ from .crud_models import (
 )
 from .crud_background_tasks import (
     _calculate_completion_calories,
-    recalculate_user_strength_scores,
-    recalculate_user_fitness_score,
+    schedule_score_recalc,
     populate_performance_logs,
     _send_post_workout_nutrition_nudge,
     _send_streak_celebration_if_milestone,
@@ -270,8 +269,10 @@ async def complete_workout(
 
         # Background: Recalculate Strength Scores and Fitness Score
         tz_str = resolve_timezone(request, db, user_id)
-        background_tasks.add_task(recalculate_user_strength_scores, user_id=user_id, supabase=supabase, timezone_str=tz_str)
-        background_tasks.add_task(recalculate_user_fitness_score, user_id=user_id, supabase=supabase, timezone_str=tz_str)
+        # Coalesced: bulk-completion bursts (5 workouts in 1s from sync replay)
+        # would otherwise enqueue 5 strength + 5 fitness recalcs reading the
+        # same rows. schedule_score_recalc debounces to one of each per user.
+        schedule_score_recalc(user_id=user_id, supabase=supabase, timezone_str=tz_str)
 
         # Background: Trophy + milestone awards (volume / time / consistency
         # / muscle-mastery / specific-exercise). The function inspects the
@@ -286,7 +287,9 @@ async def complete_workout(
             workout_data={"exercises": exercises},
         )
 
-        await index_workout_to_rag(workout)
+        # RAG re-index runs as a background task — keeps the completion
+        # response under 1s instead of waiting on embedding API + ChromaDB.
+        background_tasks.add_task(index_workout_to_rag, workout)
 
         # Performance Comparison
         performance_comparison: Optional[PerformanceComparisonInfo] = None

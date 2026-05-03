@@ -59,7 +59,9 @@ router.include_router(completion_router)
 
 
 @router.post("/", response_model=Workout)
-async def create_workout(workout: WorkoutCreate,
+async def create_workout(
+    workout: WorkoutCreate,
+    background_tasks: BackgroundTasks,
     current_user: dict = Depends(get_current_user),
 ):
     """Create a new workout."""
@@ -97,7 +99,10 @@ async def create_workout(workout: WorkoutCreate,
         )
 
         created_workout = row_to_workout(created)
-        await index_workout_to_rag(created_workout)
+        # RAG indexing makes embedding API + ChromaDB calls (~10-15s).
+        # Running it inline blocks the response and starves DB connections
+        # during burst sync — see BackgroundTasks dispatch instead.
+        background_tasks.add_task(index_workout_to_rag, created_workout)
 
         return created_workout
 
@@ -173,6 +178,7 @@ async def get_workout(
 @router.put("/{workout_id}", response_model=Workout)
 async def update_workout(
     workout: WorkoutUpdate,
+    background_tasks: BackgroundTasks,
     workout_id: str = Path(..., pattern=_UUID_REGEX, description="Workout UUID"),
     current_user: dict = Depends(get_current_user),
 ):
@@ -218,7 +224,9 @@ async def update_workout(
 
         updated_workout = row_to_workout(updated)
         logger.info(f"Workout updated: id={workout_id}")
-        await index_workout_to_rag(updated_workout)
+        # RAG re-indexing dispatched as a background task — see create_workout
+        # for the rationale (10-15s embedding + ChromaDB write blocks response).
+        background_tasks.add_task(index_workout_to_rag, updated_workout)
         return updated_workout
 
     except HTTPException:
