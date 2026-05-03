@@ -69,10 +69,12 @@ class Settings(BaseSettings):
     sqlite_url: Optional[str] = None
 
     # Database Connection Pool (only applies to PostgreSQL, ignored for SQLite)
-    db_pool_size: int = 5            # Base number of persistent connections
-    db_max_overflow: int = 10        # Extra connections allowed under load
-    db_pool_timeout: int = 30       # Seconds to wait for a connection
-    db_pool_recycle: int = 1800     # Recycle connections every 30 minutes
+    # Sized for Supavisor transaction-mode pooler (port 6543), which multiplexes
+    # ~200 client connections onto the small server-side pool.
+    db_pool_size: int = 20           # Base number of persistent connections
+    db_max_overflow: int = 40        # Extra connections allowed under load
+    db_pool_timeout: int = 30        # Seconds to wait for a connection
+    db_pool_recycle: int = 1800      # Recycle connections every 30 minutes
 
     # RAG Configuration
     chroma_persist_dir: str = "./data/chroma"

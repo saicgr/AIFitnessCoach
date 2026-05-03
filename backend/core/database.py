@@ -32,6 +32,12 @@ if not _is_sqlite:
         "pool_timeout": settings.db_pool_timeout,
         "pool_recycle": settings.db_pool_recycle,
         "pool_pre_ping": True,
+        # Required for Supavisor transaction-mode pooler (port 6543).
+        # Safe no-op for direct connections / session-mode pooling.
+        "connect_args": {
+            "statement_cache_size": 0,
+            "prepared_statement_cache_size": 0,
+        },
     }
 
 # Create async engine with connection pooling

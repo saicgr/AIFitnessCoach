@@ -111,6 +111,13 @@ class SupabaseManager:
             # - pool_pre_ping: Tests connections before use (handles frozen connections)
             # - pool_size: 10 connections (Lambda containers reuse connections)
             # - max_overflow: 20 (allows bursts in concurrent requests)
+            # connect_args disables prepared-statement caching, which is
+            # REQUIRED when the URL points at Supavisor in transaction mode
+            # (port 6543). pgbouncer-style transaction pooling reuses backend
+            # connections across transactions and breaks asyncpg's prepared
+            # statements (DuplicatePreparedStatementError). Setting both keys
+            # to 0 is also a no-op when pointed at a direct DB or session-mode
+            # pooler, so it's safe to leave on unconditionally.
             self._engine = create_async_engine(
                 settings.database_url,
                 echo=settings.debug,
@@ -119,6 +126,10 @@ class SupabaseManager:
                 max_overflow=settings.db_max_overflow,
                 pool_timeout=settings.db_pool_timeout,
                 pool_recycle=settings.db_pool_recycle,
+                connect_args={
+                    "statement_cache_size": 0,
+                    "prepared_statement_cache_size": 0,
+                },
             )
 
             # Create session maker
