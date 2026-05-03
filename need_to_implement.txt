@@ -1,0 +1,145 @@
+This is not a typical product
+announcement. There are no slides, no
+feature walkthroughs. And instead, I
+want to tell you a true story about
+failing, about getting things almost
+completely wrong and how all of that led
+us to be level 3.0.
+It was November 2025.
+I ran the New York City Marathon. When I
+crossed that finish line, it felt like I
+could do anything. So, I signed up for
+the NYC half in March and the Brooklyn
+half in May. The goal, beat my PR, not
+once, but twice. Half the distance.
+Easy, right?
+Right. This winter was brutal.
+Record-breaking snow and the coldest New
+York had been in decades. Every time I
+got back on track with my training, a
+blizzard would hit or I got sick. It was
+a neverending cycle.
+>> Severe weather alert.
+>> My training fell apart and so did I. By
+February, I was so far behind. I had no
+idea how I was going to catch up. So, I
+did what I always do. I pushed harder.
+harder runs, more miles, long, boring
+treadmill sessions. I figured if I could
+just grind through it, I would get back
+on pace.
+But I was exhausted all the time. All my
+stats tanked. I wasn't improving. Those
+PRs became a long lost dream. I had two
+races coming up and I did not know if I
+was even going to make it to the start
+line. If pushing harder wasn't the
+answer. I needed a different approach.
+What I needed wasn't more miles. It was
+a coach. Someone who could look at my
+body, my goals, my limits, and tell me
+exactly what I need to do.
+And that's what we built. We rebuilt
+Bevel Intelligence from the ground up to
+be your 247 coach. With a new Bevel
+Intelligence, I gave it everything. My
+fitness levels, constraints, and
+schedule. It rode me a day-by-day
+training plan all the way through May.
+This plan was stored under a new feature
+we called files. Files gives Bevel
+intelligence persistent knowledge it
+needs to create informed and accurate
+advice. Anything it learns gets saved so
+it can reference it anytime.
+But Bevel Intelligence took all this
+information and told me something I did
+not want to hear. It basically said,
+"Look, you are not ready to PR on that
+NYC half. Use March as a building block.
+Shift your PR goal to Brooklyn in May."
+And it was right. I was pushing it in a
+way that wasn't realistic.
+I decided to give it a shot and listen
+to it.
+It adjusted my paces so I would not
+overdo it. It generated charts to show
+me exactly where I was falling short. If
+I felt like my body wasn't ready for a
+certain workout, Bevel Intelligence
+would adjust.
+For strength, it customized a plan just
+for me. My body, my gym, my goals.
+Every morning it would check in, look at
+my sleep and recovery, and tweak things
+if something was off. It had my back.
+But I still felt off. No matter what I
+did, I'd wake up exhausted.
+It got me thinking,
+what if I'm missing something?
+I uploaded my blood work into health
+records. It's a new way to store all of
+my medical documents securely in one
+place.
+Bevel started connecting the dots I
+never would have seen on my own. It
+searched publicly available research,
+cross reference it with my daily
+biometrics, and checked my blood
+biomarkers to triangulate what was going
+on inside my body. It was like having a
+data analyst working around the clock
+for me. Turns out my free T3 was out of
+range. Based on the fruits I've been
+logging, Beville recommended I eat
+certain types of vegetables and nuts to
+bring it down. I was not just
+overtraining. My body was fighting
+something I did not even know about.
+Once I made these changes, everything
+shifted. I was actually recovering. With
+this experience, I learned that health
+is never straight line. You have some
+good weeks and some bad weeks. Most of
+the time, the battle is more mental than
+it is physical. All I wanted was
+something to reassure me I was doing
+fine in the long run, but I had no way
+to prove it.
+This leads me to the third big feature
+in this release, biological age.
+Biological age is a metric that looks at
+every angle of my health from my daily
+biometrics like HRV and sleep to my
+blood work, nutrition, and habits. It
+contextualized all of that and told me
+where I actually stood in the grand
+scheme of things. This put everything
+into perspective for me. Even during my
+worst weeks, my biological age was still
+stable. The long-term gains were still
+there. That gave me permission to
+actually rest instead of panicking when
+I had a bad week. To trust that I was
+still on track.
+After months of adjustments, trusting
+the process, and letting Beville guide
+the way,
+race week had finally arrived. My
+recovery scores were the best they had
+been all winter.
+And for the first time in a long time, I
+was not nervous about whether I had done
+enough. I actually felt ready.
+I did not PR, but I ran way stronger
+than I expected and I finished, which
+honestly mattered more after this whole
+experience. But now I'm on track for
+Brooklyn in May. And this time, I'm
+actually going for it. When I started
+Bevel, this was what I had always
+envisioned. something that takes your
+wearables, your blood work, your
+lifestyle, and turns them into
+recommendations that are personalized to
+you for you. And this is Bevel 3.0.

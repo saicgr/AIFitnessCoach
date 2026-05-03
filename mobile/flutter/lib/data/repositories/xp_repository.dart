@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import '../models/user_xp.dart';
 import '../models/trophy.dart';
@@ -494,17 +495,71 @@ class XPRepository {
   /// [crateDate] is optional — pass an ISO date string (e.g. '2026-04-05')
   /// to claim a past unclaimed crate.
   Future<CrateRewardResult> claimDailyCrate(String crateType, {String? crateDate}) async {
+    final data = <String, dynamic>{'crate_type': crateType};
+    if (crateDate != null) data['crate_date'] = crateDate;
+    debugPrint('🔍 [Crate] POST /xp/claim-daily-crate body=$data');
     try {
-      final data = <String, dynamic>{'crate_type': crateType};
-      if (crateDate != null) data['crate_date'] = crateDate;
       final response = await _client.post('/xp/claim-daily-crate', data: data);
+      debugPrint('✅ [Crate] Claim response: ${response.statusCode} body=${response.data}');
       return CrateRewardResult.fromJson(response.data);
-    } catch (e) {
-      debugPrint('Error claiming daily crate: $e');
+    } on DioException catch (e, stack) {
+      // Dio error — preserve the HTTP status + server message so the UI can
+      // display the actual reason (NOT a generic "Failed to claim crate").
+      final status = e.response?.statusCode;
+      final body = e.response?.data;
+      final serverDetail = (body is Map ? body['detail'] ?? body['message'] : null)?.toString();
+      final detailMsg = serverDetail ?? e.message ?? e.type.toString();
+      final userMsg = status != null
+          ? 'Claim failed (HTTP $status): $detailMsg'
+          : 'Claim failed: $detailMsg';
+
+      debugPrint('❌ [Crate] DioException claiming daily crate '
+          '(status=$status, type=${e.type}): $detailMsg');
+      debugPrint('❌ [Crate] Response body: $body');
+      debugPrint('❌ [Crate] Request: ${e.requestOptions.method} ${e.requestOptions.uri} '
+          'data=${e.requestOptions.data}');
+      debugPrint('❌ [Crate] Stack:\n$stack');
+
+      unawaited(SentryService.captureError(
+        e,
+        stack,
+        hint: 'Claim daily crate failed',
+        tags: {
+          'feature': 'daily_crate',
+          'op': 'claim',
+          if (status != null) 'http_status': status.toString(),
+          'dio_type': e.type.toString(),
+        },
+        extra: {
+          'crate_type': crateType,
+          'crate_date': crateDate ?? 'default(today)',
+          'response_body': body?.toString() ?? '',
+          'request_path': e.requestOptions.path,
+        },
+      ));
+
       return CrateRewardResult(
         success: false,
         crateType: crateType,
-        message: 'Error claiming crate',
+        message: userMsg,
+      );
+    } catch (e, stack) {
+      debugPrint('❌ [Crate] Non-Dio error claiming daily crate: $e');
+      debugPrint('❌ [Crate] Stack:\n$stack');
+      unawaited(SentryService.captureError(
+        e,
+        stack,
+        hint: 'Claim daily crate failed (non-Dio)',
+        tags: {'feature': 'daily_crate', 'op': 'claim'},
+        extra: {
+          'crate_type': crateType,
+          'crate_date': crateDate ?? 'default(today)',
+        },
+      ));
+      return CrateRewardResult(
+        success: false,
+        crateType: crateType,
+        message: 'Claim failed: $e',
       );
     }
   }

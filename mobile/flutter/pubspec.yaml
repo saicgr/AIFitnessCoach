@@ -1,7 +1,7 @@
 name: fitwiz
 description: "AI-powered fitness coaching app with personalized workouts"
 publish_to: 'none'
-version: 1.2.61+1134
+version: 1.2.62+1135
 
 environment:
   sdk: ^3.10.1
@@ -95,6 +95,13 @@ dependencies:
   posthog_flutter: ^4.0.0
   device_info_plus: ^10.1.0
   package_info_plus: ^8.0.0
+
+  # In-app rating prompt — wraps SKStoreReviewController (iOS) and Play
+  # Core ReviewManager (Android) with a single Flutter API. Used by
+  # RatingPromptService at "happy moments" (3rd workout completed,
+  # 3rd meal logged, 3rd menu scan) following the two-step pattern
+  # (custom pre-prompt → system review sheet only on positive response).
+  in_app_review: ^2.0.9
 
   # Error tracking (runs alongside Firebase Crashlytics; no Discord changes)
   sentry_flutter: ^8.9.0

@@ -74,7 +74,7 @@ extension _QuizBodyMetricsStateUI on _QuizBodyMetricsState {
             textCapitalization: TextCapitalization.words,
             style: TextStyle(
               fontSize: compact ? 16 : 18,
-              fontWeight: FontWeight.w600,
+              fontWeight: FontWeight.w300,
               color: textPrimary,
             ),
             decoration: InputDecoration(

@@ -138,7 +138,10 @@ class _WorkoutShowcaseScreenState
         return 'Continue →';
       case 3:
       default:
-        return "I'm in →";
+        // Reserve "I'm in" for the canonical commit-pact screen so the
+        // commitment moment lands harder. Earlier showcase screens use
+        // a quieter "Continue" so the verb doesn't get diluted.
+        return 'Continue →';
     }
   }
 

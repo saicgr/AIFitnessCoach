@@ -155,7 +155,11 @@ class ReferralsScreen extends ConsumerWidget {
           Positioned(
             top: MediaQuery.of(context).padding.top + 8,
             left: 16,
-            child: GlassBackButton(onTap: () => context.pop()),
+            child: GlassBackButton(
+              // Guard: deep-linked entries (FITWIZ-FLUTTER-71)
+              onTap: () =>
+                  context.canPop() ? context.pop() : context.go('/home'),
+            ),
           ),
         ],
       ),

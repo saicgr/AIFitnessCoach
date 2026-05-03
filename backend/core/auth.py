@@ -35,6 +35,33 @@ STALE_SESSION_MARKERS: tuple[str, ...] = (
     "bad_jwt",
 )
 
+# Substrings that mean the user row backing this JWT was hard-deleted from
+# Supabase Auth (typically by our own /users/{id}/reset endpoint, an admin
+# action, or a project auth wipe). The JWT itself is cryptographically valid
+# and can even be refreshed — but every API call against it 401s forever
+# because the `sub` claim points at a row that no longer exists. This is a
+# DIFFERENT failure mode from a stale/expired session: refreshing won't
+# recover, and the only fix is for the client to drop the token and route
+# the user to sign-in. We surface a stable error code so the Flutter client
+# can distinguish this case and stop the 401 storm.
+JWT_USER_DELETED_MARKERS: tuple[str, ...] = (
+    "user from sub claim in jwt does not exist",
+    "user_not_found",
+)
+# Stable error code returned in the response `detail` so the client can
+# branch on a string match instead of parsing free-form Supabase messages.
+JWT_USER_DELETED_CODE: str = "JWT_USER_DELETED"
+
+
+def is_jwt_user_deleted_error(err: BaseException) -> bool:
+    """True when the auth backend says the JWT's `sub` user no longer exists.
+    Distinct from `is_stale_session_error` because refreshSession() cannot
+    recover from this — the client must hard-sign-out."""
+    if not isinstance(err, AuthApiError):
+        return False
+    msg = (getattr(err, "message", None) or str(err) or "").lower()
+    return any(m in msg for m in JWT_USER_DELETED_MARKERS)
+
 
 def is_stale_session_error(err: BaseException) -> bool:
     """True when the exception is a Supabase auth failure that just means
@@ -136,6 +163,16 @@ async def get_verified_auth_token(
     except HTTPException:
         raise
     except AuthApiError as e:
+        if is_jwt_user_deleted_error(e):
+            logger.info(f"JWT user deleted (verified_auth_token): {e}")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail=JWT_USER_DELETED_CODE,
+                headers={
+                    "WWW-Authenticate": "Bearer",
+                    "X-Auth-Error": JWT_USER_DELETED_CODE,
+                },
+            )
         if is_stale_session_error(e):
             logger.info(f"Stale Supabase session (verified_auth_token): {e}")
             raise HTTPException(
@@ -222,10 +259,23 @@ async def get_current_user(
                     raise
 
         if not result.data:
-            logger.error(f"User not found in database for auth_id: {supabase_auth_id}")
+            # JWT is cryptographically valid and the auth row still exists,
+            # but our public.users row is gone. This is the post-full_reset
+            # half-state (or a partially-completed signup). It is NOT
+            # recoverable by token refresh — the client must sign out and
+            # restart. Reuse the JWT_USER_DELETED code so the Flutter
+            # interceptor handles both cases the same way.
+            logger.info(
+                f"public.users row missing for auth_id {supabase_auth_id} "
+                "— signaling client to sign out"
+            )
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="User not found in database. Please complete sign-up first.",
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail=JWT_USER_DELETED_CODE,
+                headers={
+                    "WWW-Authenticate": "Bearer",
+                    "X-Auth-Error": JWT_USER_DELETED_CODE,
+                },
             )
 
         user_row = result.data[0]
@@ -254,6 +304,22 @@ async def get_current_user(
             detail="Authentication service temporarily unavailable. Please try again.",
         )
     except AuthApiError as e:
+        # User row backing this JWT was hard-deleted (full_reset, admin
+        # action, project wipe). refreshSession() can't recover from this —
+        # return a stable error code so the client signs out instead of
+        # spinning on retries. Log at INFO so we don't pollute Sentry: every
+        # bricked client will fire one of these per screen mount until the
+        # client picks up the signal and signs out.
+        if is_jwt_user_deleted_error(e):
+            logger.info(f"JWT user deleted — forcing client sign-out: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail=JWT_USER_DELETED_CODE,
+                headers={
+                    "WWW-Authenticate": "Bearer",
+                    "X-Auth-Error": JWT_USER_DELETED_CODE,
+                },
+            )
         # Known stale-session patterns: rotate / expired / revoked JWT.
         # Log at INFO (breadcrumb only) so Sentry's LoggingIntegration
         # doesn't report each one as an error event. Response is still

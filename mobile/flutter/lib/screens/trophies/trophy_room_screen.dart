@@ -254,7 +254,9 @@ class _TrophyRoomScreenState extends ConsumerState<TrophyRoomScreen> {
             top: MediaQuery.of(context).padding.top + 8,
             left: 16,
             child: GlassBackButton(
-              onTap: () => context.pop(),
+              // Guard: deep-linked entries (FITWIZ-FLUTTER-71)
+              onTap: () =>
+                  context.canPop() ? context.pop() : context.go('/home'),
             ),
           ),
 

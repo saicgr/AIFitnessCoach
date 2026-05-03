@@ -340,12 +340,17 @@ class _DailyCrateSelectionSheetState
           _showRewardToast(rootOverlay, result.reward);
         }
       } else {
+        // result.success == false: repo + notifier already debugPrinted +
+        // captured to Sentry. result.message now carries the actual reason
+        // (HTTP status + server detail, or RPC "No crate available", etc.).
+        debugPrint('❌ [Crate UI] Claim failed for type=$crateType: ${result.message}');
         HapticService.error();
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(result.message ?? 'Failed to claim crate'),
               backgroundColor: Colors.red,
+              duration: const Duration(seconds: 6),
             ),
           );
           setState(() {
@@ -354,13 +359,16 @@ class _DailyCrateSelectionSheetState
           });
         }
       }
-    } catch (e) {
+    } catch (e, stack) {
+      debugPrint('❌ [Crate UI] Unexpected exception claiming crate: $e');
+      debugPrint('❌ [Crate UI] Stack:\n$stack');
       HapticService.error();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error: $e'),
             backgroundColor: Colors.red,
+            duration: const Duration(seconds: 6),
           ),
         );
         setState(() {

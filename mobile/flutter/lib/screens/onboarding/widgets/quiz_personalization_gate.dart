@@ -90,7 +90,12 @@ class _QuizPersonalizationGateState extends State<QuizPersonalizationGate> {
     // load but are toggleable per-row from then on.
     _heightInCm = widget.initialUseMetric;
     _weightInKg = widget.initialUseMetric;
-    _nameCtrl.text = widget.initialName ?? '';
+    // Strip meaningless backend defaults — Supabase/our user-create path
+    // seeds new accounts with display_name = "User" when none is provided.
+    // Showing that as a prefilled value confuses people; let the hint show
+    // instead so they actually type their real name.
+    final seed = widget.initialName?.trim() ?? '';
+    _nameCtrl.text = seed.toLowerCase() == 'user' ? '' : seed;
 
     // Seed height controllers depending on selected unit.
     if (widget.initialHeightCm != null) {
@@ -192,12 +197,19 @@ class _QuizPersonalizationGateState extends State<QuizPersonalizationGate> {
   Widget build(BuildContext context) {
     final t = OnboardingTheme.of(context);
 
+    // Belt-and-suspenders: also strip "User" at every build so the field
+    // clears even on hot-reload (where initState doesn't re-fire) and no
+    // matter which upstream path seeded it.
+    if (_nameCtrl.text.trim().toLowerCase() == 'user') {
+      _nameCtrl.clear();
+    }
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: 8),
+          const SizedBox(height: 4),
           Text(
             'A few quick measurements',
             style: TextStyle(
@@ -208,7 +220,7 @@ class _QuizPersonalizationGateState extends State<QuizPersonalizationGate> {
               letterSpacing: -0.4,
             ),
           ).animate().fadeIn(delay: 100.ms),
-          const SizedBox(height: 4),
+          const SizedBox(height: 2),
           Text(
             'Used to personalize your plan and projection',
             style: TextStyle(
@@ -217,11 +229,18 @@ class _QuizPersonalizationGateState extends State<QuizPersonalizationGate> {
             ),
           ).animate().fadeIn(delay: 200.ms),
 
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
 
+          // Form area takes all remaining vertical space so the CTA pair
+          // (Quick start + Fine-tune) is always pinned at the bottom of
+          // the screen on every device size. The scroll-view's bottom
+          // padding plus the explicit SizedBox below `Expanded`
+          // guarantee a visible breathing gap between the last metric
+          // card (Goal weight) and the Quick start button — the previous
+          // 8 px felt cramped on tall phones and clipped on short ones.
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.only(bottom: 12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -238,7 +257,7 @@ class _QuizPersonalizationGateState extends State<QuizPersonalizationGate> {
                     textCapitalization: TextCapitalization.words,
                     style: TextStyle(
                       fontSize: 16,
-                      fontWeight: FontWeight.w700,
+                      fontWeight: FontWeight.w300,
                       color: t.textPrimary,
                       letterSpacing: -0.2,
                     ),
@@ -269,13 +288,13 @@ class _QuizPersonalizationGateState extends State<QuizPersonalizationGate> {
                     ),
                   ).animate().fadeIn(delay: 240.ms),
 
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 10),
 
                   // ── Gender
                   _SectionLabel(text: 'Gender', t: t)
                       .animate()
                       .fadeIn(delay: 250.ms),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 6),
                   Row(
                     children: [
                       _GenderChip(
@@ -301,38 +320,31 @@ class _QuizPersonalizationGateState extends State<QuizPersonalizationGate> {
                     ],
                   ).animate().fadeIn(delay: 300.ms),
 
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 12),
 
-                  const SizedBox(height: 14),
-
-                  // ── Height row. In metric mode → single cm field.
-                  // In imperial mode → dual ft + in fields so users can
-                  // enter "5 ft 1 in" naturally instead of total inches.
-                  _HeightField(
-                    inCm: _heightInCm,
-                    cmController: _heightCtrl,
-                    feetController: _heightCtrl,
-                    inchesController: _heightInchesCtrl,
-                    onChanged: () => setState(() {}),
-                    onUnitChanged: (toCm) {
+                  // Stacked metric cards (Whoop / Centr style): tiny
+                  // uppercase label on top, large number below, segmented
+                  // unit toggle at the bottom. Same shape for all three
+                  // fields so the section reads as a tidy column of cards.
+                  _MetricCard(
+                    label: 'HEIGHT',
+                    units: const ['cm', 'in'],
+                    selectedUnit: _heightInCm ? 'cm' : 'in',
+                    onUnitChanged: (u) {
+                      final toCm = u == 'cm';
                       if (toCm == _heightInCm) return;
                       setState(() {
                         if (toCm) {
-                          // imperial → metric: combine ft + in then convert
                           final ft =
                               double.tryParse(_heightCtrl.text) ?? 0;
                           final inches =
                               double.tryParse(_heightInchesCtrl.text) ?? 0;
                           final totalInches = ft * 12 + inches;
-                          if (totalInches > 0) {
-                            _heightCtrl.text =
-                                (totalInches * 2.54).toStringAsFixed(0);
-                          } else {
-                            _heightCtrl.text = '';
-                          }
+                          _heightCtrl.text = totalInches > 0
+                              ? (totalInches * 2.54).toStringAsFixed(0)
+                              : '';
                           _heightInchesCtrl.text = '';
                         } else {
-                          // metric → imperial: split cm into ft + in
                           final cm = double.tryParse(_heightCtrl.text);
                           if (cm != null && cm > 0) {
                             final totalInches = cm / 2.54;
@@ -349,19 +361,44 @@ class _QuizPersonalizationGateState extends State<QuizPersonalizationGate> {
                         _heightInCm = toCm;
                       });
                     },
+                    valueChild: _heightInCm
+                        ? _BigNumberInput(
+                            controller: _heightCtrl,
+                            onChanged: () => setState(() {}),
+                            suffix: 'cm',
+                            t: t,
+                          )
+                        : Row(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Flexible(
+                                child: _BigNumberInput(
+                                  controller: _heightCtrl,
+                                  onChanged: () => setState(() {}),
+                                  suffix: 'ft',
+                                  t: t,
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Flexible(
+                                child: _BigNumberInput(
+                                  controller: _heightInchesCtrl,
+                                  onChanged: () => setState(() {}),
+                                  suffix: 'in',
+                                  t: t,
+                                ),
+                              ),
+                            ],
+                          ),
                     t: t,
                   ).animate().fadeIn(delay: 400.ms),
 
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 8),
 
-                  // ── Current weight + Goal weight share a single unit:
-                  // toggling one converts both fields automatically.
-                  _NumberField(
-                    label: 'Current weight',
+                  _MetricCard(
+                    label: 'CURRENT WEIGHT',
                     units: const ['kg', 'lb'],
                     selectedUnit: _weightInKg ? 'kg' : 'lb',
-                    controller: _weightCtrl,
-                    onChanged: (_) => setState(() {}),
                     onUnitChanged: (u) {
                       final toKg = u == 'kg';
                       if (toKg == _weightInKg) return;
@@ -381,20 +418,21 @@ class _QuizPersonalizationGateState extends State<QuizPersonalizationGate> {
                         _weightInKg = toKg;
                       });
                     },
+                    valueChild: _BigNumberInput(
+                      controller: _weightCtrl,
+                      onChanged: () => setState(() {}),
+                      suffix: _weightInKg ? 'kg' : 'lb',
+                      t: t,
+                    ),
                     t: t,
                   ).animate().fadeIn(delay: 450.ms),
 
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 8),
 
-                  _NumberField(
-                    label: 'Goal weight',
+                  _MetricCard(
+                    label: 'GOAL WEIGHT',
                     units: const ['kg', 'lb'],
                     selectedUnit: _weightInKg ? 'kg' : 'lb',
-                    controller: _goalWeightCtrl,
-                    onChanged: (_) => setState(() {}),
-                    // Goal mirrors current-weight unit; tapping a unit
-                    // here is treated the same as toggling current weight
-                    // so values stay coherent.
                     onUnitChanged: (u) {
                       final toKg = u == 'kg';
                       if (toKg == _weightInKg) return;
@@ -414,12 +452,24 @@ class _QuizPersonalizationGateState extends State<QuizPersonalizationGate> {
                         _weightInKg = toKg;
                       });
                     },
+                    valueChild: _BigNumberInput(
+                      controller: _goalWeightCtrl,
+                      onChanged: () => setState(() {}),
+                      suffix: _weightInKg ? 'kg' : 'lb',
+                      t: t,
+                    ),
                     t: t,
                   ).animate().fadeIn(delay: 500.ms),
                 ],
               ),
             ),
           ),
+
+          // Fixed gap between the scrollable form and the pinned CTAs so
+          // the buttons never feel glued to the last metric card. Lives
+          // OUTSIDE the scroll view so it's preserved at every scroll
+          // position, including when content is too short to scroll.
+          const SizedBox(height: 10),
 
           // ── Primary CTA — exact copy of the "Generate My First Workout"
           // button from quiz step 6 (pre_auth_quiz_screen_ui.dart line 17).
@@ -514,7 +564,10 @@ class _QuizPersonalizationGateState extends State<QuizPersonalizationGate> {
             ),
           ).animate().fadeIn(delay: 650.ms),
 
-          const SizedBox(height: 4),
+          // Bottom safe-area buffer — keeps the Fine-tune label clear of
+          // the home-indicator on iPhones with a notch and adds visual
+          // weight to the bottom block on shorter Androids.
+          const SizedBox(height: 16),
         ],
       ),
     );
@@ -554,6 +607,17 @@ class _GenderChip extends StatelessWidget {
     required this.t,
   });
 
+  IconData? get _icon {
+    switch (label.toLowerCase()) {
+      case 'male':
+        return Icons.male_rounded;
+      case 'female':
+        return Icons.female_rounded;
+      default:
+        return null;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Expanded(
@@ -564,7 +628,7 @@ class _GenderChip extends StatelessWidget {
         },
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 180),
-          height: 44,
+          height: 46,
           decoration: BoxDecoration(
             // Reuse the same selection tokens used by the training-focus
             // card so visual weight is identical across the funnel.
@@ -583,13 +647,27 @@ class _GenderChip extends StatelessWidget {
             ),
           ),
           alignment: Alignment.center,
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
-              color: t.textPrimary,
-            ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (_icon != null) ...[
+                Icon(
+                  _icon,
+                  size: 18,
+                  color: selected ? t.borderSelected : t.textMuted,
+                ),
+                const SizedBox(width: 6),
+              ],
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight:
+                      selected ? FontWeight.w700 : FontWeight.w500,
+                  color: t.textPrimary,
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -597,22 +675,28 @@ class _GenderChip extends StatelessWidget {
   }
 }
 
-class _NumberField extends StatelessWidget {
+
+// ─────────────────────────────────────────────────────────────────────
+// Stacked metric card — the Whoop / Centr / Apple Health pattern.
+// Tiny uppercase label on top, large bold number with unit suffix in
+// the middle, segmented unit toggle pinned to the bottom-right. Used
+// for Height / Current weight / Goal weight so the section reads as a
+// uniform column of cards instead of a label + nested input row.
+// ─────────────────────────────────────────────────────────────────────
+class _MetricCard extends StatelessWidget {
   final String label;
-  final List<String> units; // e.g. ['cm', 'in'] or ['kg', 'lb']
+  final List<String> units;
   final String selectedUnit;
   final ValueChanged<String> onUnitChanged;
-  final TextEditingController controller;
-  final ValueChanged<String> onChanged;
+  final Widget valueChild;
   final OnboardingTheme t;
 
-  const _NumberField({
+  const _MetricCard({
     required this.label,
     required this.units,
     required this.selectedUnit,
     required this.onUnitChanged,
-    required this.controller,
-    required this.onChanged,
+    required this.valueChild,
     required this.t,
   });
 
@@ -621,121 +705,37 @@ class _NumberField extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: t.cardFill,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: t.borderDefault),
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      child: Row(
+      padding: const EdgeInsets.fromLTRB(16, 10, 12, 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(
-            width: 110,
-            child: Text(
-              label,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: t.textSecondary,
-              ),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: t.textMuted,
+              letterSpacing: 1.0,
             ),
           ),
-          // Tap target: subtly bordered input area with a faded
-          // placeholder zero. Without this the field is invisible —
-          // users couldn't tell where to tap.
-          Expanded(
-            child: Container(
-              decoration: BoxDecoration(
-                color: t.borderDefault.withValues(alpha: 0.18),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: t.borderDefault.withValues(alpha: 0.5),
-                  width: 1,
-                ),
+          const SizedBox(height: 4),
+          // Number + unit toggle on the same baseline so the card feels
+          // composed even when the value is empty.
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Expanded(child: valueChild),
+              const SizedBox(width: 12),
+              _SegmentedUnitToggle(
+                units: units,
+                selected: selectedUnit,
+                onChanged: onUnitChanged,
+                t: t,
               ),
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              child: TextField(
-                controller: controller,
-                onChanged: onChanged,
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w800,
-                  color: t.textPrimary,
-                  letterSpacing: -0.3,
-                ),
-                decoration: InputDecoration(
-                  isDense: true,
-                  contentPadding: EdgeInsets.zero,
-                  filled: false,
-                  fillColor: Colors.transparent,
-                  border: InputBorder.none,
-                  enabledBorder: InputBorder.none,
-                  focusedBorder: InputBorder.none,
-                  disabledBorder: InputBorder.none,
-                  errorBorder: InputBorder.none,
-                  focusedErrorBorder: InputBorder.none,
-                  hintText: '0',
-                  hintStyle: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800,
-                    color: t.textMuted.withValues(alpha: 0.5),
-                  ),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          // Per-row unit toggle — segmented chip. Tapping a unit converts
-          // the current value via the parent's onUnitChanged callback.
-          Container(
-            decoration: BoxDecoration(
-              color: t.borderDefault.withValues(alpha: 0.25),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            padding: const EdgeInsets.all(2),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: units.map((u) {
-                final selected = u == selectedUnit;
-                return GestureDetector(
-                  onTap: () {
-                    if (!selected) {
-                      HapticFeedback.selectionClick();
-                      onUnitChanged(u);
-                    }
-                  },
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 160),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 5),
-                    decoration: BoxDecoration(
-                      // Reuse the same selection tokens as training-focus
-                      // / gender chip — full visual consistency across the
-                      // funnel. No bespoke colors.
-                      gradient: selected
-                          ? LinearGradient(colors: t.cardSelectedGradient)
-                          : null,
-                      borderRadius: BorderRadius.circular(6),
-                      border: Border.all(
-                        color: selected
-                            ? t.borderSelected
-                            : Colors.transparent,
-                        width: selected ? 1.5 : 1,
-                      ),
-                    ),
-                    child: Text(
-                      u,
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w800,
-                        color: t.textPrimary,
-                      ),
-                    ),
-                  ),
-                );
-              }).toList(),
-            ),
+            ],
           ),
         ],
       ),
@@ -743,213 +743,131 @@ class _NumberField extends StatelessWidget {
   }
 }
 
-/// Height field with conditional layout: a single cm input when in metric
-/// mode, or a dual ft + in row when in imperial mode (so a user can type
-/// "5" "1" instead of the unintuitive "61" total inches).
-class _HeightField extends StatelessWidget {
-  final bool inCm;
-  final TextEditingController cmController;
-  final TextEditingController feetController; // same controller as cm
-  final TextEditingController inchesController;
-  final VoidCallback onChanged;
-  final ValueChanged<bool> onUnitChanged; // true = cm, false = ft+in
-  final OnboardingTheme t;
-
-  const _HeightField({
-    required this.inCm,
-    required this.cmController,
-    required this.feetController,
-    required this.inchesController,
-    required this.onChanged,
-    required this.onUnitChanged,
-    required this.t,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: t.cardFill,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: t.borderDefault),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 78,
-            child: Text(
-              'Height',
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: t.textSecondary,
-              ),
-            ),
-          ),
-          Expanded(
-            child: inCm
-                ? _SingleNumberInput(
-                    controller: cmController,
-                    onChanged: onChanged,
-                    t: t,
-                    align: TextAlign.right,
-                  )
-                : Row(
-                    children: [
-                      Expanded(
-                        child: _SingleNumberInput(
-                          controller: feetController,
-                          onChanged: onChanged,
-                          t: t,
-                          align: TextAlign.right,
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        'ft',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: t.textMuted,
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: _SingleNumberInput(
-                          controller: inchesController,
-                          onChanged: onChanged,
-                          t: t,
-                          align: TextAlign.right,
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        'in',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: t.textMuted,
-                        ),
-                      ),
-                    ],
-                  ),
-          ),
-          const SizedBox(width: 8),
-          // Unit toggle (cm / in). Only shows the unit name once — the
-          // ft/in labels live inline with the dual inputs above.
-          Container(
-            decoration: BoxDecoration(
-              color: t.borderDefault.withValues(alpha: 0.25),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            padding: const EdgeInsets.all(2),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _unitChip('cm', inCm, () => onUnitChanged(true)),
-                _unitChip('in', !inCm, () => onUnitChanged(false)),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _unitChip(String label, bool selected, VoidCallback onTap) {
-    return GestureDetector(
-      onTap: () {
-        if (!selected) {
-          HapticFeedback.selectionClick();
-          onTap();
-        }
-      },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 160),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-        decoration: BoxDecoration(
-          gradient: selected
-              ? LinearGradient(colors: t.cardSelectedGradient)
-              : null,
-          borderRadius: BorderRadius.circular(6),
-          border: Border.all(
-            color: selected ? t.borderSelected : Colors.transparent,
-            width: selected ? 1.5 : 1,
-          ),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w800,
-            color: t.textPrimary,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _SingleNumberInput extends StatelessWidget {
+class _BigNumberInput extends StatelessWidget {
   final TextEditingController controller;
   final VoidCallback onChanged;
+  final String suffix; // small unit label rendered after the number
   final OnboardingTheme t;
-  final TextAlign align;
-  final String hint; // placeholder shown when empty (e.g. "0")
 
-  const _SingleNumberInput({
+  const _BigNumberInput({
     required this.controller,
     required this.onChanged,
+    required this.suffix,
     required this.t,
-    this.align = TextAlign.center,
-    this.hint = '0',
   });
 
   @override
   Widget build(BuildContext context) {
-    // Visible tap target — neutral fill so it doesn't compete with the
-    // green selection accents elsewhere on the screen.
-    final t = OnboardingTheme.of(context);
-    return Container(
-      decoration: BoxDecoration(
-        color: t.borderDefault.withValues(alpha: 0.18),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: t.borderDefault.withValues(alpha: 0.5),
-          width: 1,
-        ),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      child: TextField(
-        controller: controller,
-        onChanged: (_) => onChanged(),
-        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-        textAlign: align,
-        style: TextStyle(
-          fontSize: 18,
-          fontWeight: FontWeight.w800,
-          color: t.textPrimary,
-          letterSpacing: -0.3,
-        ),
-        decoration: InputDecoration(
-          isDense: true,
-          contentPadding: EdgeInsets.zero,
-          filled: false,
-          fillColor: Colors.transparent,
-          border: InputBorder.none,
-          enabledBorder: InputBorder.none,
-          focusedBorder: InputBorder.none,
-          disabledBorder: InputBorder.none,
-          errorBorder: InputBorder.none,
-          focusedErrorBorder: InputBorder.none,
-          hintText: hint,
-          hintStyle: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w800,
-            color: t.textMuted.withValues(alpha: 0.5),
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        Flexible(
+          child: TextField(
+            controller: controller,
+            onChanged: (_) => onChanged(),
+            keyboardType:
+                const TextInputType.numberWithOptions(decimal: true),
+            textAlign: TextAlign.left,
+            style: TextStyle(
+              fontSize: 26,
+              fontWeight: FontWeight.w700,
+              color: t.textPrimary,
+              letterSpacing: -0.8,
+              height: 1.0,
+            ),
+            decoration: InputDecoration(
+              isDense: true,
+              contentPadding: EdgeInsets.zero,
+              filled: false,
+              border: InputBorder.none,
+              enabledBorder: InputBorder.none,
+              focusedBorder: InputBorder.none,
+              disabledBorder: InputBorder.none,
+              errorBorder: InputBorder.none,
+              focusedErrorBorder: InputBorder.none,
+              hintText: '0',
+              hintStyle: TextStyle(
+                fontSize: 26,
+                fontWeight: FontWeight.w700,
+                color: t.textMuted.withValues(alpha: 0.45),
+                height: 1.0,
+              ),
+            ),
           ),
         ),
+        const SizedBox(width: 6),
+        Padding(
+          padding: const EdgeInsets.only(bottom: 4),
+          child: Text(
+            suffix,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: t.textMuted,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _SegmentedUnitToggle extends StatelessWidget {
+  final List<String> units;
+  final String selected;
+  final ValueChanged<String> onChanged;
+  final OnboardingTheme t;
+
+  const _SegmentedUnitToggle({
+    required this.units,
+    required this.selected,
+    required this.onChanged,
+    required this.t,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: t.textPrimary.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      padding: const EdgeInsets.all(3),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: units.map((u) {
+          final isSelected = u == selected;
+          return GestureDetector(
+            onTap: () {
+              if (!isSelected) {
+                HapticFeedback.selectionClick();
+                onChanged(u);
+              }
+            },
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 160),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+              decoration: BoxDecoration(
+                gradient: isSelected
+                    ? LinearGradient(colors: t.cardSelectedGradient)
+                    : null,
+                borderRadius: BorderRadius.circular(8),
+                border: isSelected
+                    ? Border.all(color: t.borderSelected, width: 1.5)
+                    : null,
+              ),
+              child: Text(
+                u,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
+                  color: t.textPrimary,
+                ),
+              ),
+            ),
+          );
+        }).toList(),
       ),
     );
   }

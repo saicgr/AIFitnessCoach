@@ -52,7 +52,9 @@ class _TrainingFocusScreenState extends ConsumerState<TrainingFocusScreen> {
 
   Future<void> _saveSettings() async {
     if (!_hasChanges) {
-      context.pop();
+      // Deep-link entry can land users here with no underlying route
+      // (FITWIZ-FLUTTER-71 "There is nothing to pop").
+      if (context.canPop()) context.pop();
       return;
     }
 
@@ -82,7 +84,7 @@ class _TrainingFocusScreenState extends ConsumerState<TrainingFocusScreen> {
             behavior: SnackBarBehavior.floating,
           ),
         );
-        context.pop();
+        if (context.canPop()) context.pop();
       }
     } catch (e) {
       if (mounted) {

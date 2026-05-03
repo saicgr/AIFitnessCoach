@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../data/services/rating_prompt_service.dart';
+import '../../widgets/rating_prompt_sheet.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../core/animations/app_animations.dart';
@@ -348,6 +350,25 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
     }
     if (_userId != null) {
       _refreshLoggedDateKeys(_userId!);
+    }
+    // Bump rating-prompt counter — meal logs are a "happy moment"
+    // (snap a menu, get macros, done). Service surfaces the sheet only
+    // after the threshold + install-age + cooldown all pass, so this
+    // call is safe to fire on every log.
+    _maybeShowRatingAfterLog();
+  }
+
+  Future<void> _maybeShowRatingAfterLog() async {
+    try {
+      final svc = ref.read(ratingPromptServiceProvider);
+      await svc.recordMealLogged();
+      if (!mounted) return;
+      if (await svc.shouldPrompt()) {
+        if (!mounted) return;
+        await showRatingPromptSheet(context, ref);
+      }
+    } catch (e) {
+      debugPrint('[NutritionScreen] Rating prompt skipped: $e');
     }
   }
 

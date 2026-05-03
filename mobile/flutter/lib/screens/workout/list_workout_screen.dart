@@ -6,6 +6,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/utils/weight_utils.dart';
+import '../../data/services/rating_prompt_service.dart';
+import '../../widgets/rating_prompt_sheet.dart';
 import '../../core/providers/user_provider.dart';
 import '../../core/services/posthog_service.dart';
 import '../../widgets/app_dialog.dart';
@@ -383,6 +385,24 @@ class _ListWorkoutScreenState extends ConsumerState<ListWorkoutScreen> {
 
         // Award XP for daily goal
         ref.read(xpProvider.notifier).markWorkoutCompleted(workoutId: widget.workout.id);
+
+        // Bump rating-prompt counter — surface the prompt sheet
+        // (two-step pre-prompt → native review) the moment the user
+        // crosses the threshold post-completion. Service handles all
+        // gating (install age, cooldown, version, dismissed flags).
+        try {
+          await ref
+              .read(ratingPromptServiceProvider)
+              .recordWorkoutCompleted();
+          if (mounted &&
+              await ref.read(ratingPromptServiceProvider).shouldPrompt()) {
+            if (mounted) {
+              await showRatingPromptSheet(context, ref);
+            }
+          }
+        } catch (e) {
+          debugPrint('Rating prompt skipped: $e');
+        }
 
         // Refresh the home/workouts surfaces so the carousel + week strip
         // reflect the completion immediately. Previously this screen only

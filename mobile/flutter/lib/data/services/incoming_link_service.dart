@@ -68,29 +68,45 @@ class IncomingLinkService {
     debugPrint('🔗 [IncomingLink] handling: $uri');
 
     // Supabase Auth callback (email confirm / magic link / OAuth).
-    // Exchanges the PKCE `?code=` for a real session so the user lands
-    // back in the app already signed in. Matches BOTH:
+    // Supabase ships TWO callback formats depending on the template:
+    //   • PKCE flow    → ?code=...                    → exchangeCodeForSession
+    //   • Classic OTP  → ?token_hash=...&type=signup  → verifyOTP
+    // Both arrive on the same /auth/callback path, so we sniff the query
+    // params and call whichever Supabase API matches. Matches:
     //   zealova://auth/callback?code=...
     //   https://zealova.com/auth/callback?code=...
-    //   fitwiz://auth/callback?code=...   (legacy scheme)
-    final isAuthCallback =
-        uri.queryParameters.containsKey('code') &&
-            ((uri.scheme == 'zealova' || uri.scheme == 'fitwiz') &&
-                    (uri.host == 'auth' ||
-                        uri.pathSegments.contains('callback')) ||
-                ((uri.scheme == 'https' || uri.scheme == 'http') &&
-                    uri.host == _inviteHost &&
-                    uri.pathSegments.isNotEmpty &&
-                    uri.pathSegments.first == 'auth' &&
-                    uri.pathSegments.length > 1 &&
-                    uri.pathSegments[1] == 'callback'));
-    if (isAuthCallback) {
-      final code = uri.queryParameters['code']!;
+    //   https://zealova.com/auth/callback?token_hash=...&type=signup
+    //   fitwiz://auth/callback?...   (legacy scheme — pre-rebrand)
+    final hasCode = uri.queryParameters.containsKey('code');
+    final hasTokenHash = uri.queryParameters.containsKey('token_hash');
+    final pathIsAuthCallback = (uri.scheme == 'zealova' ||
+                uri.scheme == 'fitwiz') &&
+            (uri.host == 'auth' || uri.pathSegments.contains('callback')) ||
+        ((uri.scheme == 'https' || uri.scheme == 'http') &&
+            uri.host == _inviteHost &&
+            uri.pathSegments.isNotEmpty &&
+            uri.pathSegments.first == 'auth');
+    if (pathIsAuthCallback && (hasCode || hasTokenHash)) {
       try {
-        await Supabase.instance.client.auth.exchangeCodeForSession(code);
-        debugPrint('✅ [IncomingLink] Supabase session established from callback');
+        if (hasCode) {
+          final code = uri.queryParameters['code']!;
+          await Supabase.instance.client.auth.exchangeCodeForSession(code);
+          debugPrint(
+              '✅ [IncomingLink] Supabase session established (PKCE)');
+        } else {
+          final tokenHash = uri.queryParameters['token_hash']!;
+          final typeStr =
+              uri.queryParameters['type']?.toLowerCase() ?? 'signup';
+          final otpType = _parseOtpType(typeStr);
+          await Supabase.instance.client.auth.verifyOTP(
+            type: otpType,
+            tokenHash: tokenHash,
+          );
+          debugPrint(
+              '✅ [IncomingLink] Supabase session established (OTP type=$typeStr)');
+        }
       } catch (e) {
-        debugPrint('❌ [IncomingLink] exchangeCodeForSession failed: $e');
+        debugPrint('❌ [IncomingLink] auth-callback exchange failed: $e');
       }
       return;
     }
@@ -142,6 +158,27 @@ class IncomingLinkService {
       }
     } catch (e) {
       debugPrint('🔍 [IncomingLink] deferring apply until signed-in: $e');
+    }
+  }
+
+  /// Map a Supabase OTP `type` query-string value to the SDK enum.
+  /// Email-template defaults: `signup` (verify new account),
+  /// `recovery` (forgot-password reset), `email_change` (change-email
+  /// confirm), `magiclink` (passwordless sign-in), `invite` (admin invite).
+  static OtpType _parseOtpType(String type) {
+    switch (type) {
+      case 'recovery':
+        return OtpType.recovery;
+      case 'email_change':
+        return OtpType.emailChange;
+      case 'magiclink':
+        return OtpType.magiclink;
+      case 'invite':
+        return OtpType.invite;
+      case 'email':
+      case 'signup':
+      default:
+        return OtpType.signup;
     }
   }
 }

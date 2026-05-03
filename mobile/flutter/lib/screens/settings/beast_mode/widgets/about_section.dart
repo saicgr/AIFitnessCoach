@@ -48,7 +48,8 @@ class AboutSection extends ConsumerWidget {
                 HapticService.medium();
                 ref.read(beastModeProvider.notifier).lock();
                 AppSnackBar.info(context, 'Beast Mode disabled');
-                context.pop();
+                // Guard: deep-linked entries (FITWIZ-FLUTTER-71)
+                if (context.canPop()) context.pop();
               },
               icon: const Icon(Icons.lock_outline, size: 18),
               label: const Text('Disable Beast Mode'),

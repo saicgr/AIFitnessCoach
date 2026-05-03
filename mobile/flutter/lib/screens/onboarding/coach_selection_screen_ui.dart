@@ -360,10 +360,17 @@ extension _CoachSelectionScreenStateUI on _CoachSelectionScreenState {
               GlassBackButton(
                 onTap: () {
                   HapticFeedback.lightImpact();
-                  if (widget.fromSettings) {
+                  // GoRouter's pop() throws "There is nothing to pop" when
+                  // there's no previous route on the stack — which happens
+                  // here whenever we landed via context.go() (replace) or
+                  // came in fresh from a deep link / redirect. canPop()
+                  // gates the pop and falls back to a known landing route.
+                  if (context.canPop()) {
                     context.pop();
+                  } else if (widget.fromSettings) {
+                    context.go('/settings');
                   } else {
-                    context.pop();
+                    context.go('/pre-auth-quiz');
                   }
                 },
               ),

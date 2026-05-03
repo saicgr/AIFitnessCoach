@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'dart:io' show Platform;
 
-import 'package:dio/dio.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -12,10 +11,9 @@ import '../../core/constants/app_colors.dart';
 import '../../core/services/posthog_service.dart';
 import '../../core/theme/theme_colors.dart';
 import '../../data/repositories/auth_repository.dart';
-import '../../data/services/account_deletion_service.dart';
 import '../../data/services/api_client.dart';
 import '../../data/services/haptic_service.dart';
-import '../../widgets/delete_account_progress_dialog.dart';
+import '../../widgets/delete_account_flow.dart';
 import '../../widgets/app_snackbar.dart';
 import '../../widgets/dismissed_banners_section.dart';
 import '../../widgets/glass_sheet.dart';
@@ -581,194 +579,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   // --- Delete account ---
 
   void _showDeleteAccountDialog() {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
-        title: Row(
-          children: [
-            Icon(Icons.delete_forever, color: AppColors.error, size: 24),
-            const SizedBox(width: 12),
-            Text(
-              'Delete Account?',
-              style: TextStyle(
-                color: isDark
-                    ? AppColors.textPrimary
-                    : AppColorsLight.textPrimary,
-              ),
-            ),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppColors.error.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(8),
-                border:
-                    Border.all(color: AppColors.error.withValues(alpha: 0.3)),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.warning_amber_rounded,
-                      color: AppColors.error, size: 20),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'This action cannot be undone!',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.error,
-                        fontSize: 13,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'This will permanently delete:',
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                color: isDark
-                    ? AppColors.textPrimary
-                    : AppColorsLight.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 12),
-            _buildBulletPoint('Your account and profile', isDark),
-            _buildBulletPoint('All workout history', isDark),
-            _buildBulletPoint('All saved preferences', isDark),
-            const SizedBox(height: 16),
-            Text(
-              'You will need to sign up again to use the app.',
-              style: TextStyle(
-                fontSize: 13,
-                color: isDark
-                    ? AppColors.textSecondary
-                    : AppColorsLight.textSecondary,
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              'Cancel',
-              style: TextStyle(
-                color: isDark ? AppColors.textMuted : AppColorsLight.textMuted,
-              ),
-            ),
-          ),
-          TextButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              await _deleteAccount();
-            },
-            child: const Text(
-              'Delete Account',
-              style: TextStyle(color: AppColors.error),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBulletPoint(String text, bool isDark) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            margin: const EdgeInsets.only(top: 6),
-            width: 6,
-            height: 6,
-            decoration: BoxDecoration(
-              color: AppColors.error,
-              shape: BoxShape.circle,
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              text,
-              style: TextStyle(
-                fontSize: 14,
-                color: isDark
-                    ? AppColors.textSecondary
-                    : AppColorsLight.textSecondary,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _deleteAccount() async {
-    final navigator = Navigator.of(context, rootNavigator: true);
-    final scaffoldMessenger = ScaffoldMessenger.of(context);
-    final router = GoRouter.of(context);
-
-    final authState = ref.read(authStateProvider);
-    final userId = authState.user?.id;
-    if (userId == null || userId.isEmpty) {
-      scaffoldMessenger.showSnackBar(
-        const SnackBar(
-          content: Text('Error: User not found'),
-          backgroundColor: AppColors.error,
-        ),
-      );
-      return;
-    }
-
-    final status = ValueNotifier<String>('Deleting account from server…');
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      useRootNavigator: true,
-      builder: (_) => DeleteAccountProgressDialog(status: status),
-    );
-
-    try {
-      await ref.read(accountDeletionServiceProvider).deleteAccount(
-            userId: userId,
-            status: status,
-          );
-
-      // Let GoRouter's refreshListenable observe the unauthenticated state
-      // before we trigger navigation, then route via the root navigator so
-      // MainShell tears down cleanly (avoids the post-signOut black frame).
-      await Future<void>.delayed(const Duration(milliseconds: 50));
-      router.go('/intro');
-      // Pop the loading dialog AFTER navigation so the scrim covers the
-      // unmount race for the previous route.
-      await Future<void>.delayed(const Duration(milliseconds: 50));
-      if (navigator.canPop()) navigator.pop();
-    } catch (e) {
-      if (navigator.canPop()) navigator.pop();
-      String msg = e.toString();
-      if (e is DioException && e.response?.data is Map) {
-        msg = (e.response?.data as Map)['detail']?.toString() ?? msg;
-      }
-      scaffoldMessenger.showSnackBar(
-        SnackBar(
-          content: Text('Error: $msg'),
-          backgroundColor: AppColors.error,
-        ),
-      );
-    } finally {
-      status.dispose();
-    }
+    showDeleteAccountFlow(context, ref);
   }
 
   // --- Build ---

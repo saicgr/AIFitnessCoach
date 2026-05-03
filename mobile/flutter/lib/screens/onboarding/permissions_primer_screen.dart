@@ -10,21 +10,22 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/services/posthog_service.dart';
+import '../../data/services/notification_service.dart';
 
-/// Pre-permission rationale screen for camera, photos, and microphone —
-/// the three media permissions Zealova needs for food logging, progress
-/// photos, and voice input. Shown ONCE post-onboarding (after the
-/// notification primer) so reviewers and real users see *why* before the
-/// OS prompts them.
+/// Unified pre-permission rationale screen for the four most-used
+/// runtime permissions: camera, photos, microphone, and notifications.
+/// Replaces the previous two-screen flow (NotificationPrimeScreen +
+/// PermissionsPrimerScreen) that made users sit through two separate
+/// "explainer + grant" pages back to back.
 ///
-/// Mirrors the `NotificationPrimeScreen` pattern: prefs flag flips the
-/// moment the screen is shown, regardless of which buttons get tapped.
-/// Skipping is allowed — the app still works, individual features will
-/// re-prompt on first use.
+/// Shown ONCE post-onboarding (after commit-pact). Prefs flag flips
+/// the moment the screen is shown, regardless of which buttons get
+/// tapped — skipping is fine, individual features will re-prompt on
+/// first use if granted permissions were denied here.
 ///
-/// We DO NOT request location, Health Connect, or notifications here.
-/// Location is request-on-feature (gym auto-switch), Health Connect has its
-/// own onboarding screen, notifications have NotificationPrimeScreen.
+/// We DO NOT request location or Health Connect here. Location is
+/// request-on-feature (gym auto-switch). Health Connect has its own
+/// onboarding screen.
 class PermissionsPrimerScreen extends ConsumerStatefulWidget {
   const PermissionsPrimerScreen({super.key});
 
@@ -43,6 +44,11 @@ class _PermissionsPrimerScreenState
   Future<void> _markShown() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(PermissionsPrimerScreen.prefsKey, true);
+    // Mirror the legacy notification-prime flag too so the home-screen
+    // post-frame redirect (which still checks both flags as a guard)
+    // never tries to bounce the user to the deprecated standalone
+    // notification screen after this unified primer has run.
+    await prefs.setBool('notification_prime_shown', true);
   }
 
   /// Walks Camera → Photos → Microphone in sequence. We deliberately ask
@@ -77,10 +83,29 @@ class _PermissionsPrimerScreenState
     } catch (e) {
       debugPrint('Microphone permission request failed: $e');
     }
+    // Notifications — last in the sequence so the user has already
+    // tapped through the media OS prompts before iOS shows its
+    // "Allow notifications?" sheet. Routing through
+    // NotificationService.requestPermissionWhenReady() keeps the
+    // Firebase Messaging listener wiring identical to the legacy
+    // NotificationPrimeScreen, so push delivery + tap-to-deeplink
+    // still work without a separate post-grant init step.
+    try {
+      final notificationService = ref.read(notificationServiceProvider);
+      await notificationService.requestPermissionWhenReady();
+    } catch (e) {
+      debugPrint('Notification permission request failed: $e');
+    }
 
     await _markShown();
     if (!mounted) return;
-    context.go('/notifications-prime');
+    // Route directly to home — the home-screen post-frame logic only
+    // bounces to /notifications-prime when its prefs flag is unset,
+    // and by the time the user reaches this primer the notification
+    // screen has already run as part of the commit-pact → home chain.
+    // The previous `context.go('/notifications-prime')` here caused
+    // users to see the notification screen twice.
+    context.go('/home');
   }
 
   Future<void> _skip() async {
@@ -90,7 +115,13 @@ class _PermissionsPrimerScreenState
     );
     await _markShown();
     if (!mounted) return;
-    context.go('/notifications-prime');
+    // Route directly to home — the home-screen post-frame logic only
+    // bounces to /notifications-prime when its prefs flag is unset,
+    // and by the time the user reaches this primer the notification
+    // screen has already run as part of the commit-pact → home chain.
+    // The previous `context.go('/notifications-prime')` here caused
+    // users to see the notification screen twice.
+    context.go('/home');
   }
 
   @override
@@ -188,10 +219,23 @@ class _PermissionsPrimerScreenState
                           icon: Icons.mic_rounded,
                           title: 'Microphone',
                           subtitle:
-                              'Talk to your AI coach hands-free and dictate quick food logs.',
+                              'Talk to your AI coach hands-free and dictate quick food + workout notes.',
                           accent: accent,
                           isDark: isDark,
                         ).animate().fadeIn(delay: 550.ms).slideX(
+                              begin: -0.05,
+                              end: 0,
+                              duration: 300.ms,
+                            ),
+                        const SizedBox(height: 16),
+                        _BenefitRow(
+                          icon: Icons.notifications_active_rounded,
+                          title: 'Notifications',
+                          subtitle:
+                              'Workout reminders, weekly check-ins, and a heads-up before your trial ends.',
+                          accent: accent,
+                          isDark: isDark,
+                        ).animate().fadeIn(delay: 650.ms).slideX(
                               begin: -0.05,
                               end: 0,
                               duration: 300.ms,

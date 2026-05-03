@@ -44,7 +44,9 @@ class _NutritionShowcaseScreenState
         return 'Log them →';
       case 3:
       default:
-        return "I'm in →";
+        // "I'm in" is reserved for the commitment-pact screen so the
+        // commit moment isn't diluted by earlier showcase taps.
+        return 'Continue →';
     }
   }
 
@@ -412,39 +414,57 @@ class _Frame1Sheet extends StatelessWidget {
           // tile owns its own tooltip + arrow indicator (in the same
           // column), so the indicator stays anchored to the tile no
           // matter the screen size, tile order, or spacing.
+          //
+          // Layout note: the 5 icon tiles (5 × 44 = 220) + 4 gaps (24)
+          // + Analyze pill (~110) totalled ~354 which overflowed by
+          // ~15px on iPhone SE (Sentry FITWIZ-FLUTTER-57). Fix: wrap
+          // the icon group in `Flexible` + horizontal SingleChildScrollView
+          // so the row never overflows even on the smallest device,
+          // while Analyze stays pinned right.
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              ActionIconButton(
-                icon: Icons.camera_alt_rounded,
-                onTap: () {},
-                isDark: isDark,
-                color: const Color(0xFF3B82F6),
+              Flexible(
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  physics: const NeverScrollableScrollPhysics(),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      ActionIconButton(
+                        icon: Icons.camera_alt_rounded,
+                        onTap: () {},
+                        isDark: isDark,
+                        color: const Color(0xFF3B82F6),
+                      ),
+                      const SizedBox(width: 6),
+                      ActionIconButton(
+                        icon: Icons.photo_library_outlined,
+                        onTap: () {},
+                        isDark: isDark,
+                        color: const Color(0xFF8B5CF6),
+                      ),
+                      const SizedBox(width: 6),
+                      _PulsingMenuTile(onTap: onScanMenu, isDark: isDark),
+                      const SizedBox(width: 6),
+                      ActionIconButton(
+                        icon: Icons.qr_code_scanner_rounded,
+                        onTap: () {},
+                        isDark: isDark,
+                        color: const Color(0xFF10B981),
+                      ),
+                      const SizedBox(width: 6),
+                      ActionIconButton(
+                        icon: Icons.chat_bubble_outline_rounded,
+                        onTap: () {},
+                        isDark: isDark,
+                        color: AppColors.onboardingAccent,
+                      ),
+                    ],
+                  ),
+                ),
               ),
               const SizedBox(width: 6),
-              ActionIconButton(
-                icon: Icons.photo_library_outlined,
-                onTap: () {},
-                isDark: isDark,
-                color: const Color(0xFF8B5CF6),
-              ),
-              const SizedBox(width: 6),
-              _PulsingMenuTile(onTap: onScanMenu, isDark: isDark),
-              const SizedBox(width: 6),
-              ActionIconButton(
-                icon: Icons.qr_code_scanner_rounded,
-                onTap: () {},
-                isDark: isDark,
-                color: const Color(0xFF10B981),
-              ),
-              const SizedBox(width: 6),
-              ActionIconButton(
-                icon: Icons.chat_bubble_outline_rounded,
-                onTap: () {},
-                isDark: isDark,
-                color: AppColors.onboardingAccent,
-              ),
-              const Spacer(),
               Container(
                 padding: const EdgeInsets.symmetric(
                     horizontal: 14, vertical: 10),
@@ -2349,8 +2369,15 @@ class _PulsingMenuTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Tight (44 x 44) constraints on both axes prevent the inner Stack
+    // (and downstream OverflowBox/RRect math) from receiving an infinite
+    // height when the parent Row is itself laid out under unbounded
+    // height (Column > FadeTransition > Row). Without an explicit height
+    // here, Sentry FITWIZ-FLUTTER-52..56 ("infinite size during layout"
+    // + RRect NaN downstream) fires on /demo-nutrition-showcase.
     return SizedBox(
       width: 44,
+      height: 44,
       child: Stack(
         clipBehavior: Clip.none,
         alignment: Alignment.bottomCenter,

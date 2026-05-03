@@ -7,10 +7,8 @@ import 'package:go_router/go_router.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../onboarding/founder_note_sheet.dart';
-import '../../core/constants/api_constants.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_links.dart';
 import '../../core/theme/theme_colors.dart';
@@ -20,11 +18,10 @@ import '../../core/providers/training_preferences_provider.dart';
 import '../../data/providers/billing_reminder_provider.dart';
 import '../../data/providers/gym_profile_provider.dart';
 import '../../data/repositories/auth_repository.dart';
-import '../../data/repositories/onboarding_repository.dart';
-import '../../data/services/api_client.dart';
 import '../../data/providers/beast_mode_provider.dart';
 import '../../data/services/haptic_service.dart';
 import '../../widgets/app_snackbar.dart';
+import '../../widgets/delete_account_flow.dart';
 import '../../widgets/app_tour/app_tour_controller.dart';
 import '../../widgets/level_up_dialog.dart';
 import '../../data/models/user.dart' as app_user;
@@ -34,8 +31,6 @@ import 'coming_soon_screen.dart';
 import 'meal_reminders_settings_screen.dart';
 import '../../core/providers/subscription_provider.dart';
 import '../../core/services/posthog_service.dart';
-import 'package:purchases_flutter/purchases_flutter.dart';
-import 'package:sentry_flutter/sentry_flutter.dart';
 import 'pages/workout_ui_mode_sheet.dart';
 import 'sections/sections.dart';
 import 'widgets/widgets.dart';
@@ -1022,7 +1017,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 GestureDetector(
                   onTap: () {
                     HapticService.light();
-                    context.pop();
+                    // Settings can be reached via deep link
+                    // (notifications-prime → settings); guard so the
+                    // back chevron never throws "nothing to pop"
+                    // (FITWIZ-FLUTTER-71). Fall back to /home if root.
+                    if (context.canPop()) {
+                      context.pop();
+                    } else {
+                      context.go('/home');
+                    }
                   },
                   child: Container(
                     height: 44,

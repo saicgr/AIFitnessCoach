@@ -155,6 +155,10 @@ class _BillingTab extends StatelessWidget {
   final bool isSelected;
   final VoidCallback onTap;
   final ThemeColors colors;
+  /// Optional badge ("Save 37%") rendered next to the label. Used to
+  /// promote the discounted Yearly tab without putting the badge inside
+  /// the price card where it competes with the price itself.
+  final String? badge;
 
   const _BillingTab({
     required this.label,
@@ -162,6 +166,7 @@ class _BillingTab extends StatelessWidget {
     required this.isSelected,
     required this.onTap,
     required this.colors,
+    this.badge,
   });
 
   @override
@@ -170,26 +175,59 @@ class _BillingTab extends StatelessWidget {
       child: GestureDetector(
         onTap: onTap,
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 10),
+          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
           decoration: BoxDecoration(
             color: isSelected ? colors.accent : Colors.transparent,
             borderRadius: BorderRadius.circular(10),
           ),
           child: Column(
             children: [
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: isSelected ? colors.accentContrast : colors.textSecondary,
-                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: isSelected
+                          ? colors.accentContrast
+                          : colors.textSecondary,
+                    ),
+                  ),
+                  if (badge != null && badge!.isNotEmpty) ...[
+                    const SizedBox(width: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? Colors.white.withValues(alpha: 0.22)
+                            : const Color(0xFF16A34A),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        badge!,
+                        style: TextStyle(
+                          fontSize: 9,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 0.4,
+                          color: isSelected
+                              ? colors.accentContrast
+                              : Colors.white,
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
               ),
               Text(
                 sublabel,
                 style: TextStyle(
                   fontSize: 10,
-                  color: isSelected ? colors.accentContrast.withOpacity(0.8) : colors.textSecondary.withOpacity(0.7),
+                  color: isSelected
+                      ? colors.accentContrast.withOpacity(0.85)
+                      : colors.textSecondary.withOpacity(0.7),
                 ),
               ),
             ],
@@ -215,6 +253,10 @@ class _TierPlanCard extends StatelessWidget {
   final bool isSelected;
   final VoidCallback onTap;
   final ThemeColors colors;
+  /// Optional struck-through anchor price rendered to the LEFT of the
+  /// real price. Used to surface the monthly rate as a "was" anchor when
+  /// the user has selected Yearly — doubles perceived value.
+  final String? anchorPrice;
 
   const _TierPlanCard({
     required this.planId,
@@ -229,6 +271,7 @@ class _TierPlanCard extends StatelessWidget {
     required this.isSelected,
     required this.onTap,
     required this.colors,
+    this.anchorPrice,
   });
 
   @override
@@ -285,6 +328,20 @@ class _TierPlanCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.baseline,
                   textBaseline: TextBaseline.alphabetic,
                   children: [
+                    if (anchorPrice != null && anchorPrice!.isNotEmpty) ...[
+                      Text(
+                        anchorPrice!,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: colors.textMuted,
+                          decoration: TextDecoration.lineThrough,
+                          decorationColor: colors.textMuted,
+                          decorationThickness: 2,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                    ],
                     Text(
                       price,
                       style: TextStyle(
@@ -315,7 +372,10 @@ class _TierPlanCard extends StatelessWidget {
               padding: const EdgeInsets.only(bottom: 4),
               child: Row(
                 children: [
-                  Icon(Icons.check_circle, size: 16, color: accentColor),
+                  // Green ✓ universally reads "included". Reserve the
+                  // brand orange for price + CTA so it stays meaningful.
+                  Icon(Icons.check_circle,
+                      size: 16, color: const Color(0xFF16A34A)),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(

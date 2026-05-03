@@ -14,6 +14,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../data/models/exercise.dart';
+import '../../../data/services/rating_prompt_service.dart';
 import '../../../data/models/workout.dart';
 import '../../../data/providers/consistency_provider.dart';
 import '../../../data/providers/milestones_provider.dart';
@@ -347,6 +348,14 @@ Future<EasyFinalizeResult> finalizeEasyWorkout({
   ref.invalidate(muscleFrequencyProvider);
   ref.invalidate(muscleBalanceProvider);
   ref.invalidate(scoresProvider);
+
+  // Bump rating-prompt counter — fire-and-forget. The active workout
+  // flow doesn't surface the sheet directly here because the user is
+  // mid-summary screen; the next home-screen visit picks up the
+  // banner-eligible state via shouldShowBanner().
+  try {
+    unawaited(ref.read(ratingPromptServiceProvider).recordWorkoutCompleted());
+  } catch (_) {}
   ref.invalidate(milestonesProvider);
   ref.invalidate(consistencyProvider);
   ref.invalidate(consistencyDataProvider);

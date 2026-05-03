@@ -1,0 +1,169 @@
+Bevel 3.0 is a complete evolution in how
+we understand our health. You've seen
+how the new Bevel intelligence is
+changing the way we interpret data. But
+an intelligence engine is only as good
+as the data that you feed it. That's why
+today we're introducing the two most
+powerful data foundations we've ever
+built. Biological age and health
+records. Biological age translates your
+daily physiology into a long-term road
+map of your longevity. While health
+records finally bring your clinical labs
+and medical history out of your archives
+and into the app. Together, they give
+you the most comprehensive health
+profile, showing you where you stand
+today and where you're headed tomorrow.
+We've completely refreshed the biology
+experience to give you a clearer, more
+powerful look at what's actually
+happening inside your body over time.
+Chronological age is just a count of
+your birthdays. But your biological age,
+that's a deeper story. It uses your
+unique physiology, daily habits, and
+blood work to see how your body is
+performing relative to your peers. The
+goal here isn't to reduce your health to
+a single number. It's to give you a
+definitive long-term view of your
+behaviors and biomarkers and how they're
+shaping your health over time. It's time
+to look past the calendar and see the
+full picture. Your biological age is
+powered by biomarkers backed by
+long-term clinical research on mortality
+and chronic disease. Essentially, if
+you're outperforming the healthy
+baseline for your demographic, you'll
+see your age drop. Under sleep, you'll
+find time of sleep and sleep
+consistency. Under activity, you'll find
+daily step count, weekly time in zones 2
+to three and zones 4 to 5, and weekly
+strength training time. Under fitness,
+you'll find V2 max, resting heart rate,
+and lean body mass. Under lifestyle,
+you'll find nutrition, smoking, and
+alcohol.
+Nutrition is based on your nutrition
+score. So, better day-to-day nutrition
+quality can positively influence your
+biological age over time.
+Smoking reflects the long-term impact of
+cigarettes and vaping, taking into
+account how long you've been smoking,
+how often, and how much, and alcohol is
+based on your average drinks per week.
+Finally, we integrate nine core blood
+biomarkers using a gold standard
+biological age formula to ensure your
+internal data complements your wearable
+insights.
+Right at the top, you'll notice your
+confidence score. This is Bevel's
+integrity check. It shows you exactly
+how much weight to put behind your
+biological age estimate based on the
+freshness and completeness of your data.
+Health data has a shelf life. An
+18-month-old blood test may not reflect
+your current state as accurately as the
+past month of sleep or recovery data. As
+your lab results age, Bevel
+automatically shifts the weight of your
+most recent physiological signals like
+activity, fitness, and lifestyle trends.
+We think of it like this. Your daily
+habits show how you're living right now,
+while your blood work provides the deep
+validation beneath the surface.
+Biological age fuses these signals into
+one personalized estimate. And the
+confidence score tells you exactly how
+strong that signal is. When your data is
+fresh, you can trust the score
+implicitly. When it's older, Beville is
+transparent about what's missing. You're
+not just getting a number. You're
+getting the context to understand it.
+Your previous biology stats like HRV and
+resting heart rate baselines, weight,
+and body fat are still here, too. Now
+with a cleaner design and more
+flexibility,
+you can press edit and pin the
+biomarkers you still want to keep
+closest at hand. So whether you want a
+single long-term signal or a deeper look
+at the metrics behind it, the new
+biology experience gives you both. But
+of course, some of the most important
+health data doesn't come from your watch
+or your daily habits alone. It lives in
+your lab results, your reports, and the
+records that usually sit somewhere else.
+And that's where health records comes
+in.
+>> One of the biggest hurdles in health is
+that your most important data is often
+the most fragmented. It's scattered
+across patient portals, PDFs, and paper
+files you rarely look at. We're changing
+that. You can now bridge the gap between
+your daily habits and your medical
+history by uploading blood tests and
+health documents directly into Bevel.
+Whether it's lab results, clinical
+notes, or imaging reports, your medical
+history now lives exactly where it
+belongs, alongside the rest of your
+health data. Here's how you work it.
+From Bevel intelligence, navigate to
+health records. When you upload a blood
+test, Bevel's engine automatically
+extracts your biomarkers and maps them
+directly into your biology tab. For
+other documents like clinical notes or
+immonization records, Bevel Intelligence
+uses them as a knowledge base to better
+understand your unique health profile.
+You'll get reminders to update your
+blood tests if they become stale, which
+you can also do through the web, making
+it easier to keep everything current
+over time. What makes this powerful is
+what it unlocks. Wearables are
+incredible for tracking the now, your
+sleep, recovery, and activity. But blood
+work provides the biological foundation.
+By integrating biomarkers like Apo B for
+cardiovascular risk, HBA1C for metabolic
+health, or HSCP for inflammation, you
+are getting a 360 degree view of your
+longevity.
+By bringing this data into Bevel, it's
+no longer static information. its active
+intelligence. It gives Bevel the context
+needed to ensure the guidance you
+receive is more informed, more relevant,
+and deeply personal. And because this
+information is deeply personal, privacy
+and security are core to the experience.
+We use industry standard security
+practices, never sell or share your data
+with third parties, and ensure your data
+is protected through encryption both in
+transit and at rest. Together,
+biological age and health records give
+you a more complete view of your health,
+connecting the signals you generate
+every day with the deeper clinical
+context that usually lives elsewhere.
+The result is a clearer, richer picture
+of what's happening in your body over
+time, all in one place. Check out our
+other videos to see what's new in Bevel
+3.0.

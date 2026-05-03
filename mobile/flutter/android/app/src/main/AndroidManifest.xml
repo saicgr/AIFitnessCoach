@@ -192,6 +192,23 @@
                       android:pathPrefix="/u"/>
             </intent-filter>
 
+            <!-- Supabase email-verify + magic-link callbacks
+                 (https://zealova.com/auth/callback?code=...). Captured by
+                 IncomingLinkService → exchangeCodeForSession so the user
+                 returns from their email client and lands inside the app
+                 instead of stuck on a Safari/Chrome confirm page. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="https"
+                      android:host="zealova.com"
+                      android:pathPrefix="/auth"/>
+                <data android:scheme="http"
+                      android:host="zealova.com"
+                      android:pathPrefix="/auth"/>
+            </intent-filter>
+
             <!-- Long-press app-icon shortcuts (Android 7.1+) — staged
                  alongside the meal-suggestion widget (see Settings →
                  Coming Soon). Uncomment to surface on the launcher.

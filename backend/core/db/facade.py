@@ -768,7 +768,7 @@ class SupabaseDB:
 
     # ==================== FULL USER RESET ====================
 
-    def full_user_reset(self, user_id: str, skip_storage: bool = False) -> bool:
+    def full_user_reset(self, user_id: str, skip_storage: bool = False, auth_id: Optional[str] = None) -> bool:
         """
         Delete all data for a user — including the Supabase Auth identity.
 
@@ -791,6 +791,23 @@ class SupabaseDB:
         Returns:
             True on success
         """
+        # CRITICAL: Capture the Supabase auth_id BEFORE we delete public.users.
+        # `auth.admin.delete_user` requires the auth UUID, NOT the public.users.id.
+        # In some user rows these UUIDs coincide (e.g. legacy email signups where
+        # we mirrored the auth UUID into public.users.id) but for OAuth users they
+        # diverge. If we lose the row before reading auth_id, the only IDs we have
+        # left to pass to admin.delete_user are wrong → "User not allowed" / 404,
+        # the auth row is left orphaned, and every subsequent JWT for that auth
+        # row 401s with "User from sub claim in JWT does not exist".
+        if auth_id is None:
+            existing = self.get_user(user_id)
+            if existing:
+                auth_id = existing.get("auth_id") or existing.get("id")
+            else:
+                # No public.users row at all — fall back to the passed user_id
+                # so we still try to clean up any auth row keyed under that UUID.
+                auth_id = user_id
+
         # Get workout IDs first
         workouts = self.list_workouts(user_id, limit=1000)
         workout_ids = [w["id"] for w in workouts]
@@ -822,22 +839,25 @@ class SupabaseDB:
         self.delete_user_metrics_by_user(user_id)
         self.delete_chat_history_by_user(user_id)
 
-        # 11. Delete user row (public.users)
+        # 11. Delete the Supabase Auth identity FIRST. THIS is the policy-critical
+        # step — without it the user can sign back in with the same email and
+        # Google Play / App Store will reject the app for non-compliant account
+        # deletion. We do it before deleting public.users so a failure here
+        # leaves both rows intact (consistent state) instead of the previous
+        # half-state where public.users was gone but the auth row stuck around,
+        # producing a permanently-401-ing JWT in the user's app.
+        # Idempotent: a missing auth user is treated as success.
+        self._delete_auth_user(auth_id)
+
+        # 12. Delete user row (public.users) — only after auth deletion succeeds.
         self.delete_user(user_id)
 
-        # 12. Purge Storage objects keyed under "<user_id>/...". Failures
+        # 13. Purge Storage objects keyed under "<user_id>/...". Failures
         # here log + continue — orphaned blobs are recoverable (background
-        # janitor can sweep), but a failure to delete the auth user is
-        # NOT recoverable from the user's perspective so we proceed.
+        # janitor can sweep). Auth + public.users are already gone at this
+        # point, so the user-facing reset is complete either way.
         if not skip_storage:
             self._purge_user_storage(user_id)
-
-        # 13. Delete the Supabase Auth identity. THIS is the policy-critical
-        # step — without it the user can sign back in with the same email
-        # and Google Play / App Store will reject the app for non-compliant
-        # account deletion. Idempotent: a missing auth user is treated as
-        # success (next attempt has nothing left to delete).
-        self._delete_auth_user(user_id)
 
         return True
 
@@ -871,11 +891,15 @@ class SupabaseDB:
                     bucket, user_id, e,
                 )
 
-    def _delete_auth_user(self, user_id: str) -> None:
-        """Delete the Supabase Auth user. Idempotent on 404."""
+    def _delete_auth_user(self, auth_id: str) -> None:
+        """Delete the Supabase Auth user. Idempotent on 404.
+
+        IMPORTANT: `auth_id` MUST be the Supabase Auth UUID (auth.users.id),
+        not the public.users.id — they are not always equal.
+        """
         try:
-            self._manager.auth_client.auth.admin.delete_user(user_id)
-            logger.info("Deleted Supabase Auth user %s", user_id)
+            self._manager.auth_client.auth.admin.delete_user(auth_id)
+            logger.info("Deleted Supabase Auth user %s", auth_id)
         except Exception as e:
             # supabase-py raises a generic exception with the HTTP detail
             # in the message. Treat "user not found" as success so retries
@@ -884,10 +908,24 @@ class SupabaseDB:
             if "not found" in msg or "user_not_found" in msg or "404" in msg:
                 logger.info(
                     "Supabase Auth user %s already gone — treating as success",
-                    user_id,
+                    auth_id,
                 )
                 return
-            logger.error("Failed to delete Supabase Auth user %s: %s", user_id, e)
+            # "User not allowed" is the canonical Supabase response when the
+            # admin endpoint is hit with a NON-service-role key (e.g. anon or
+            # publishable). Surface it loudly — the only fix is to set the
+            # SUPABASE_KEY env var to the service_role secret. Letting it
+            # propagate aborts full_user_reset BEFORE we delete public.users,
+            # which is exactly what we want (no half-state).
+            if "user not allowed" in msg or "not_admin" in msg or "403" in msg:
+                logger.error(
+                    "Supabase Auth admin.delete_user returned 'User not allowed' "
+                    "for %s. The SUPABASE_KEY env var on this backend is NOT "
+                    "the service_role key — admin endpoints will keep failing "
+                    "until it is rotated to the service_role secret.",
+                    auth_id,
+                )
+            logger.error("Failed to delete Supabase Auth user %s: %s", auth_id, e)
             raise
 
 

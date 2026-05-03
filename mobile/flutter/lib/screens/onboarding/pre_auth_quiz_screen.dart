@@ -40,6 +40,8 @@ export 'pre_auth_quiz_data.dart';
 
 import 'pre_auth_quiz_data.dart';
 import 'package:fitwiz/core/constants/branding.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../data/repositories/auth_repository.dart';
 
 part 'pre_auth_quiz_screen_ui.dart';
 
@@ -563,8 +565,21 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
               totalQuestions: _totalQuestions,
               canGoBack: _currentQuestion > 0,
               onBack: _previousQuestion,
-              onBackToWelcome: () {
+              onBackToWelcome: () async {
                 HapticFeedback.lightImpact();
+                // If a session is still attached (returning user replaying
+                // the quiz, or a stale session left over from a prior delete),
+                // /intro's redirect will bounce the user straight back here
+                // because the quiz isn't complete. Sign out first so /intro
+                // accepts the navigation.
+                final hasSession =
+                    Supabase.instance.client.auth.currentSession != null;
+                if (hasSession) {
+                  try {
+                    await ref.read(authStateProvider.notifier).signOut();
+                  } catch (_) {}
+                }
+                if (!context.mounted) return;
                 context.go('/intro');
               },
             ),

@@ -363,6 +363,83 @@ async def email_signup(request: Request, body: EmailSignupRequest,
         raise HTTPException(status_code=400, detail="Signup failed. Please try again.")
 
 
+@router.post("/auth/sync", response_model=User)
+@limiter.limit("10/minute")
+async def auth_sync(request: Request,
+    background_tasks: BackgroundTasks,
+    verified_token: dict = Depends(get_verified_auth_token),
+):
+    """
+    Idempotent backfill: ensure a `public.users` row exists for the JWT's auth_id.
+
+    Bug this fixes: when Supabase email-confirmation is enabled, signup creates
+    only `auth.users` (no session, no backend call). When the user later confirms
+    via the email-link deep-link OR the app auto-restores the session, we get a
+    valid JWT but no `public.users` row — so every subsequent backend call 401s.
+
+    The Flutter `onAuthStateChange.signedIn` listener calls this endpoint on
+    every sign-in event so the row is guaranteed to exist before any other
+    request runs. Safe to call repeatedly: returns the existing row when present.
+    """
+    auth_id = verified_token["auth_id"]
+    email = verified_token.get("email") or ""
+    metadata = verified_token.get("user_metadata") or {}
+    full_name = metadata.get("full_name") or metadata.get("name") or metadata.get("first_name") or ""
+
+    logger.info(f"auth_sync invoked for auth_id={auth_id}, email=...{email[-10:] if email else ''}")
+
+    try:
+        db = get_supabase_db()
+
+        existing = db.get_user_by_auth_id(auth_id)
+        if existing:
+            return row_to_user(existing)
+
+        # Row missing — create it. Mirrors the "rare case" branch in /auth/email
+        # so users who arrive via the email-confirmation deep-link (no password
+        # round-trip) don't end up with an orphaned auth row.
+        unique_username = generate_username_sync(name=full_name, email=email)
+        admin_service = get_admin_service()
+        is_admin = admin_service.should_be_admin(email)
+        is_support = admin_service.should_be_support_user(email)
+
+        new_user_data = {
+            "auth_id": auth_id,
+            "email": email,
+            "name": full_name or "User",
+            "username": unique_username,
+            "role": "admin" if is_admin else "user",
+            "is_support_user": is_support,
+            "onboarding_completed": False,
+            "coach_selected": False,
+            "paywall_completed": False,
+            "fitness_level": "beginner",
+            "goals": "[]",
+            "equipment": "[]",
+            "equipment_v2": [],
+            "preferences": {"name": full_name, "email": email},
+            "active_injuries": [],
+        }
+
+        created = db.create_user(new_user_data)
+        logger.info(f"auth_sync backfilled public.users row: id={created['id']}, email=...{email[-10:] if email else ''}")
+
+        # Mirror the email-signup Discord notify so growth funnel still tracks
+        # users who arrived via email-link confirmation.
+        background_tasks.add_task(
+            notify_signup, email=email or "", user_id=created["id"],
+            name=full_name, provider="email_confirm",
+        )
+
+        return row_to_user(created, is_new_user=True, support_friend_added=False)
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"auth_sync failed: {e}", exc_info=True)
+        raise safe_internal_error(e, "auth_sync")
+
+
 @router.post("/auth/forgot-password")
 @limiter.limit("3/minute")
 async def forgot_password(request: Request, body: ForgotPasswordRequest):

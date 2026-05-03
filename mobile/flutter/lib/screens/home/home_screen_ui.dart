@@ -81,11 +81,14 @@ extension __HomeScreenStateExt on _HomeScreenState {
     if (ref.read(isWorkoutMinimizedProvider)) return;
 
     final prefs = await SharedPreferences.getInstance();
+    // Unified primer covers camera + photos + microphone +
+    // notifications, so a single flag gates it. The legacy
+    // notification-prime flag is also written by the unified screen
+    // for back-compat, so checking either works — but the canonical
+    // gate is the permissions-primer flag.
     final permissionsPrimerShown =
         prefs.getBool(PermissionsPrimerScreen.prefsKey) ?? false;
-    final notificationPrimeShown =
-        prefs.getBool(NotificationPrimeScreen.prefsKey) ?? false;
-    if (permissionsPrimerShown && notificationPrimeShown) return;
+    if (permissionsPrimerShown) return;
     if (!mounted) return;
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -95,13 +98,7 @@ extension __HomeScreenStateExt on _HomeScreenState {
       final current =
           router.routerDelegate.currentConfiguration.uri.toString();
       if (current != '/home' && current != '/senior-home') return;
-      // Permissions primer chains into notifications-prime on completion,
-      // so we only need to launch the first missing one.
-      if (!permissionsPrimerShown) {
-        context.go(PermissionsPrimerScreen.routePath);
-      } else {
-        context.go('/notifications-prime');
-      }
+      context.go(PermissionsPrimerScreen.routePath);
     });
   }
 

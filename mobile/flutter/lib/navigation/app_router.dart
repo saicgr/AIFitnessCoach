@@ -137,6 +137,7 @@ import '../screens/xp_goals/xp_goals_screen.dart';
 // Guest mode provider import kept for potential future re-enablement
 // import '../data/providers/guest_mode_provider.dart';
 import '../data/providers/xp_provider.dart';
+import '../data/providers/today_workout_provider.dart';
 import '../screens/injuries/injuries_list_screen.dart';
 import '../screens/injuries/report_injury_screen.dart';
 import '../screens/injuries/injury_detail_screen.dart';
@@ -460,6 +461,10 @@ String? _handleAuthRedirect(
 /// a microtask to process daily login XP, adding main-thread pressure.
 bool _dailyLoginXpProcessed = false;
 
+/// Flag to ensure today's workout is pre-warmed only once per auth session.
+/// Reset on logout so a fresh sign-in re-triggers the warm.
+bool _todayWorkoutPrewarmed = false;
+
 /// Router provider
 final routerProvider = Provider<GoRouter>((ref) {
   final authNotifier = _AuthStateNotifier(ref);
@@ -498,6 +503,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       // 2. Reset daily-login flag on logout so re-login processes it again
       if (authState.status == AuthStatus.unauthenticated) {
         _dailyLoginXpProcessed = false;
+        _todayWorkoutPrewarmed = false;
       }
 
       // 3. Process daily login XP for authenticated users (fire-and-forget, once per auth session)
@@ -505,6 +511,23 @@ final routerProvider = Provider<GoRouter>((ref) {
         _dailyLoginXpProcessed = true;
         Future.microtask(() {
           ref.read(xpProvider.notifier).processDailyLogin();
+        });
+      }
+
+      // 4. Pre-warm today's workout the moment auth completes — before
+      // paywall / commitment-pact / notifications-prime — so by the time
+      // a brand-new user lands on home/workouts the personalized plan is
+      // already in cache and the "Preparing your workout…" placeholder
+      // never renders. Backend reads quiz answers from user_metadata
+      // attached at signUp, so the JIT generation can run immediately.
+      if (authState.status == AuthStatus.authenticated && !_todayWorkoutPrewarmed) {
+        _todayWorkoutPrewarmed = true;
+        Future.microtask(() {
+          try {
+            ref.read(todayWorkoutProvider);
+          } catch (e) {
+            debugPrint('Router: today workout pre-warm failed (non-fatal): $e');
+          }
         });
       }
 

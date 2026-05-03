@@ -5,6 +5,18 @@
         "appIDs": ["G9RL26P89Q.com.zealova.app"],
         "components": [
           {
+            "/": "/auth/callback",
+            "comment": "Supabase email-verify + magic-link callbacks. Captured by IncomingLinkService → exchangeCodeForSession so the app auto-signs in instead of dumping the user in Safari."
+          },
+          {
+            "/": "/auth/callback/*",
+            "comment": "Supabase callback with extra path segments (provider OAuth flows)."
+          },
+          {
+            "/": "/auth/*",
+            "comment": "Forward-compat for any future /auth/reset-password, /auth/magic, etc."
+          },
+          {
             "/": "/invite/*",
             "comment": "Referral invite links — captured by IncomingLinkService (Flutter) → PendingReferralService → applied automatically after sign-in."
           },
@@ -23,5 +35,8 @@
         ]
       }
     ]
+  },
+  "webcredentials": {
+    "apps": ["G9RL26P89Q.com.zealova.app"]
   }
 }

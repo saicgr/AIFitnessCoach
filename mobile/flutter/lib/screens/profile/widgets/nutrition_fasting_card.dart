@@ -9,11 +9,22 @@ import '../../../core/providers/user_provider.dart';
 import '../../settings/sections/nutrition_fasting_section.dart';
 
 /// Displays nutrition and fasting profile information from onboarding
-class NutritionFastingCard extends ConsumerWidget {
+class NutritionFastingCard extends ConsumerStatefulWidget {
   const NutritionFastingCard({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<NutritionFastingCard> createState() =>
+      _NutritionFastingCardState();
+}
+
+class _NutritionFastingCardState extends ConsumerState<NutritionFastingCard> {
+  // One-shot guard: triggering initialize() from build() would re-fire on
+  // every rebuild when the user has no nutrition prefs row yet (init returns
+  // prefs=null, isLoading=false → build re-runs → microtask refires → flicker).
+  bool _initAttempted = false;
+
+  @override
+  Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
@@ -23,11 +34,15 @@ class NutritionFastingCard extends ConsumerWidget {
     final fastingState = ref.watch(fastingSettingsProvider);
     final prefs = nutritionState.preferences;
 
-    // Ensure provider is initialized if preferences haven't loaded yet
-    if (prefs == null && !nutritionState.isLoading) {
+    if (!_initAttempted &&
+        prefs == null &&
+        !nutritionState.isLoading) {
+      _initAttempted = true;
       final userId = ref.read(currentUserIdProvider);
       if (userId != null) {
-        Future.microtask(() => ref.read(nutritionPreferencesProvider.notifier).initialize(userId));
+        Future.microtask(() => ref
+            .read(nutritionPreferencesProvider.notifier)
+            .initialize(userId));
       }
     }
 

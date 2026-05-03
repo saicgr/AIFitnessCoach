@@ -1311,7 +1311,36 @@ async def full_reset(user_id: str,
         # storage purge to a BackgroundTask — orphaned blobs are recoverable
         # and shaving the storage round-trips off the hot path makes the
         # app-side flow ~1-3s faster, which is what users perceive.
-        db.full_user_reset(user_id, skip_storage=True)
+        #
+        # Pass auth_id explicitly so the auth deletion uses the Supabase Auth
+        # UUID, not the public.users.id (they diverge for OAuth users). Without
+        # this, admin.delete_user runs against the wrong UUID, leaving the auth
+        # row orphaned — and every JWT issued for that auth row then 401s with
+        # "User from sub claim in JWT does not exist", bricking the user's app.
+        try:
+            db.full_user_reset(
+                user_id,
+                skip_storage=True,
+                auth_id=current_user.get("auth_id"),
+            )
+        except Exception as reset_err:
+            # Auth-deletion failure now aborts BEFORE public.users is removed
+            # (see facade.full_user_reset). Surface the cause so ops can fix
+            # the underlying issue (almost always: SUPABASE_KEY is not the
+            # service_role secret).
+            logger.error(
+                "full_reset aborted for user %s — both auth and public.users "
+                "rows left intact: %s",
+                user_id, reset_err, exc_info=True,
+            )
+            raise HTTPException(
+                status_code=500,
+                detail=(
+                    "Account deletion could not be completed. Both your account "
+                    "data and login remain intact. Please try again or contact "
+                    "support if this persists."
+                ),
+            )
         background_tasks.add_task(db.purge_user_storage_async, user_id)
         logger.info(f"Full reset complete for user {user_id} (storage purge queued)")
 
@@ -1437,6 +1466,102 @@ async def update_my_privacy(
         }).eq("id", current_user["id"]).execute()
         return body
     except Exception as e:
+        raise safe_internal_error(e, "users")
+
+
+# ─── PATCH /me — partial profile update ───────────────────────────────────
+# Why this exists:
+#   The Flutter app PATCHes /users/me with small partial bodies (commitment
+#   pact accept/skip, future settings toggles). We previously only had
+#   PUT /users/{id}, which 405'd on PATCH and forced callers to know their
+#   own UUID. This handler accepts an arbitrary JSON dict, filters it
+#   against an allowlist of user-mutable columns, and writes through to the
+#   same `users` table the PUT route ultimately updates.
+#
+# Why not reuse update_user() directly:
+#   update_user() is bound to the strongly-typed UserUpdate Pydantic model,
+#   which doesn't model the smaller "diary-style" fields like
+#   commitment_pact_accepted / commitment_pact_accepted_at. Adding every
+#   new boolean toggle to UserUpdate is high-friction. PATCH /me takes an
+#   open dict and validates against a column allowlist — same DB write
+#   path (db.client.table("users").update(...)), no regression risk to the
+#   typed PUT contract.
+_PATCH_ME_ALLOWED_FIELDS: set = {
+    # Commitment pact (onboarding behaviour signal)
+    "commitment_pact_accepted",
+    "commitment_pact_accepted_at",
+    # Founder note seen flag
+    "seen_founder_note",
+    # Lightweight UI flags users toggle from settings
+    "renewal_banner_dismissed_until",
+    "last_celebration_ack_at",
+    # Notification + privacy toggles already exposed elsewhere but safe to
+    # patch here too so settings can use a single endpoint.
+    "billing_notifications_enabled",
+    "show_on_leaderboard",
+    "leaderboard_anonymous",
+    "profile_stats_visible",
+    "share_favorite_templates",
+    "share_template_order",
+    # Timezone — set once on app open if device timezone changed.
+    "timezone",
+    # Trial / paywall state mirrors written by client-side IAP listeners.
+    "paywall_completed",
+    "trial_start_date",
+}
+
+
+@router.patch("/me")
+async def patch_me(
+    body: dict = Body(...),
+    current_user: dict = Depends(get_current_user),
+):
+    """
+    Partial update of the current user's row. Accepts a flat JSON dict;
+    silently drops unknown / non-allowlisted keys so a forward-compatible
+    client (sending a field this version doesn't know about) doesn't 4xx.
+
+    Returns the keys that were actually written so the caller can verify.
+    """
+    if not isinstance(body, dict):
+        raise HTTPException(status_code=400, detail="body must be a JSON object")
+
+    # Filter against allowlist — silent drop, not 400, so older backends
+    # tolerate newer clients sending fields they don't yet recognise
+    # (e.g. commitment_pact_skipped_at — not yet a column, frontend already
+    # sends it inside a try/except).
+    update_data = {k: v for k, v in body.items() if k in _PATCH_ME_ALLOWED_FIELDS}
+    dropped = [k for k in body.keys() if k not in _PATCH_ME_ALLOWED_FIELDS]
+    if dropped:
+        logger.info(
+            "[PATCH /me] user %s — dropped unknown fields: %s",
+            current_user.get("id"),
+            dropped,
+        )
+
+    if not update_data:
+        # Nothing to write, but the request itself is valid.
+        return {"updated_fields": [], "dropped_fields": dropped}
+
+    try:
+        db = get_supabase_db()
+        db.client.table("users").update(update_data).eq(
+            "id", current_user["id"]
+        ).execute()
+        logger.info(
+            "[PATCH /me] user %s updated fields: %s",
+            current_user.get("id"),
+            list(update_data.keys()),
+        )
+        return {
+            "updated_fields": list(update_data.keys()),
+            "dropped_fields": dropped,
+        }
+    except Exception as e:
+        logger.error(
+            f"PATCH /me failed for user {current_user.get('id')}: {e}",
+            exc_info=True,
+        )
         raise safe_internal_error(e, "users")
 
 

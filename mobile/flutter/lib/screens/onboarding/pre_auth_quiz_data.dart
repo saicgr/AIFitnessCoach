@@ -467,7 +467,11 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
     final level = prefs.getString('preAuth_fitnessLevel');
     final trainingExp = prefs.getString('preAuth_trainingExperience');
     final activityLevel = prefs.getString('preAuth_activityLevel');
-    final name = prefs.getString('preAuth_name');
+    final rawName = prefs.getString('preAuth_name');
+    // Discard the meaningless "User" backend default if it leaked into prefs.
+    final name = (rawName != null && rawName.trim().toLowerCase() == 'user')
+        ? null
+        : rawName;
     final dateOfBirthStr = prefs.getString('preAuth_dateOfBirth');
     final dateOfBirth = dateOfBirthStr != null ? DateTime.tryParse(dateOfBirthStr) : null;
     final gender = prefs.getString('preAuth_gender');
@@ -682,8 +686,14 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
     final gender = pick<String>('gender', 'gender');
     if (gender != null) await prefs.setString('preAuth_gender', gender);
 
+    // Skip the literal "User" placeholder — backend signup seeds new accounts
+    // with display_name = "User" when none was supplied, and prefilling that
+    // in the name field is confusing UX. Treat it as no value so the hint
+    // shows and the user types their real name.
     final name = pick<String>('name', 'name');
-    if (name != null) await prefs.setString('preAuth_name', name);
+    if (name != null && name.trim().toLowerCase() != 'user') {
+      await prefs.setString('preAuth_name', name);
+    }
 
     final dob = pick<String>('date_of_birth', 'date_of_birth');
     if (dob != null) await prefs.setString('preAuth_dateOfBirth', dob);

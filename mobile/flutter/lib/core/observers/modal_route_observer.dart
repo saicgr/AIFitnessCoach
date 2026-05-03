@@ -27,9 +27,25 @@ class WorkoutMiniPlayerRouteObserver extends NavigatorObserver {
   }
 
   void _sync() {
+    // NavigatorObserver callbacks (didPush/didPop/didRemove/didReplace)
+    // fire synchronously during a Navigator update — which itself runs
+    // inside the widget build phase. Mutating a Riverpod StateNotifier
+    // during build is illegal (StateNotifierListenerError → "Tried to
+    // modify a provider while the widget tree was building"). Defer
+    // the mutation to a post-frame callback so it lands after the
+    // current build completes.
     final shouldSuppress = _activeModalCount > 0;
-    final notifier = _ref.read(workoutMiniPlayerProvider.notifier);
-    notifier.setSuppressedForModal(shouldSuppress);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      try {
+        final notifier =
+            _ref.read(workoutMiniPlayerProvider.notifier);
+        notifier.setSuppressedForModal(shouldSuppress);
+      } catch (_) {
+        // Provider container may have been torn down (sign-out, full
+        // reset) between the navigator event and the post-frame tick.
+        // Swallow — the next push/pop will re-sync if it still exists.
+      }
+    });
   }
 
   @override

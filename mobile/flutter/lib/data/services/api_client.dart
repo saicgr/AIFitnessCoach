@@ -165,6 +165,39 @@ class ApiClient with WidgetsBindingObserver {
   static const _tokenKey = 'auth_token';
   static const _userIdKey = 'user_id';
 
+  /// Set true once we've detected a JWT_USER_DELETED 401 in this session and
+  /// kicked off the forced sign-out. Prevents the 401 storm: every subsequent
+  /// in-flight request that returns the same 401 short-circuits instead of
+  /// re-triggering signOut() / route navigation. Reset on next signedIn event.
+  bool _userDeletedSignOutInFlight = false;
+
+  /// Detect the backend's stable "JWT user is gone, sign out now" signal.
+  /// Backend emits both an `X-Auth-Error: JWT_USER_DELETED` header and the
+  /// same string in the response body's `detail` field. We also accept the
+  /// raw Supabase substring "User from sub claim in JWT does not exist" as
+  /// a fallback so this works against backend revisions that haven't picked
+  /// up the new error code yet (the symptom is identical).
+  bool _isJwtUserDeleted(Response? response) {
+    if (response == null) return false;
+    final headerVal = response.headers.value('x-auth-error');
+    if (headerVal != null && headerVal.contains('JWT_USER_DELETED')) {
+      return true;
+    }
+    final body = response.data;
+    String? detail;
+    if (body is Map) {
+      final d = body['detail'];
+      if (d is String) detail = d;
+    } else if (body is String) {
+      detail = body;
+    }
+    if (detail == null) return false;
+    final lower = detail.toLowerCase();
+    return lower.contains('jwt_user_deleted') ||
+        lower.contains('user from sub claim in jwt does not exist') ||
+        lower.contains('user_not_found');
+  }
+
   // In-memory timezone cache — avoids hitting SharedPreferences on every request
   static String? _cachedTimezone;
   static DateTime? _cachedTimezoneTime;
@@ -342,10 +375,47 @@ class ApiClient with WidgetsBindingObserver {
         },
         onError: (error, handler) async {
           if (error.response?.statusCode == 401) {
+            // FIRST: detect the unrecoverable "JWT's user was hard-deleted"
+            // case. refreshSession() can't fix this — the refresh token will
+            // happily mint a new JWT for a sub claim that no longer exists,
+            // and every subsequent call 401s again, producing the production
+            // 401 storm. Short-circuit straight to sign-out so the auth
+            // listener routes the user back to /sign-in.
+            if (_isJwtUserDeleted(error.response)) {
+              if (!_userDeletedSignOutInFlight) {
+                _userDeletedSignOutInFlight = true;
+                debugPrint(
+                    '🚪 [API] JWT_USER_DELETED detected — auth user gone server-side, forcing sign-out');
+                // Fire-and-forget: we still want to reject this request below
+                // so the caller's UI gets an error frame instead of hanging
+                // on a Future that never completes. The signOut triggers the
+                // onAuthStateChange listener which clears tokens and the
+                // app.dart route guard sends the user to /sign-in.
+                unawaited(() async {
+                  try {
+                    await Supabase.instance.client.auth.signOut();
+                  } catch (e) {
+                    debugPrint('❌ [API] Forced sign-out after JWT_USER_DELETED failed: $e');
+                    await clearAuth();
+                  }
+                }());
+              } else {
+                debugPrint(
+                    '🚪 [API] JWT_USER_DELETED already handled — dropping duplicate 401 from ${error.requestOptions.path}');
+              }
+              return handler.next(error);
+            }
+
             // A 401 on an auth endpoint means bad credentials, not expired token —
             // don't try to refresh/retry or we'll nuke the user's existing session.
             final path = error.requestOptions.path;
-            if (path.contains('/users/auth/') || path.contains('/auth/email') || path.contains('/auth/signup') || path.contains('/auth/password')) {
+            final method = error.requestOptions.method.toUpperCase();
+            // DELETE /users/{id}/reset re-authenticates with the user's
+            // password and returns 401 on wrong password. Treating that as
+            // "expired session" makes us refresh + sign out, leaving the user
+            // with no JWT for the retry → "Authorization header required".
+            final isFullReset = method == 'DELETE' && path.contains('/users/') && path.endsWith('/reset');
+            if (path.contains('/users/auth/') || path.contains('/auth/email') || path.contains('/auth/signup') || path.contains('/auth/password') || isFullReset) {
               return handler.next(error);
             }
             final retryCount = error.requestOptions.extra['_retryCount'] as int? ?? 0;
@@ -460,6 +530,9 @@ class ApiClient with WidgetsBindingObserver {
             (event == AuthChangeEvent.tokenRefreshed ||
              event == AuthChangeEvent.signedIn)) {
           debugPrint('🔄 [API] Auth state changed ($event), updating stored token');
+          // New session means we're past any prior JWT_USER_DELETED storm —
+          // re-arm the flag so a future server-side deletion is handled.
+          _userDeletedSignOutInFlight = false;
           await _storage.write(key: _tokenKey, value: session.accessToken);
           // Re-schedule proactive refresh whenever we get a new token
           _scheduleProactiveRefresh();
@@ -468,6 +541,15 @@ class ApiClient with WidgetsBindingObserver {
             id: session.user.id,
             email: session.user.email,
           ));
+          // Backfill `public.users` row for sessions that came in via paths
+          // other than the explicit signUp/signIn methods — most importantly
+          // the email-confirmation deep-link flow, where Supabase mints a
+          // valid JWT but no backend create-user call ever ran. Without
+          // this, every subsequent request 401s and the user is invisible
+          // in `SELECT email FROM users`. Idempotent + non-blocking.
+          if (event == AuthChangeEvent.signedIn) {
+            unawaited(_ensurePublicUserRow(session.accessToken));
+          }
         } else if (event == AuthChangeEvent.signedOut) {
           debugPrint('🚪 [API] Auth state: signed out, clearing stored token');
           _tokenRefreshTimer?.cancel();
@@ -487,6 +569,33 @@ class ApiClient with WidgetsBindingObserver {
 
     // Register lifecycle observer so we can check token on app resume
     WidgetsBinding.instance.addObserver(this);
+  }
+
+  /// Idempotent backend backfill — POST /users/auth/sync.
+  ///
+  /// Every Supabase signedIn event triggers this so the `public.users` row
+  /// is guaranteed to exist before any other API call runs. Critical for the
+  /// email-confirmation deep-link path, where Supabase auto-restores a
+  /// session without going through `signInWithEmail` (the only existing
+  /// path that creates the public.users row).
+  ///
+  /// Uses a raw Dio call with the fresh token directly to avoid relying on
+  /// the storage-write→read race in the same listener tick.
+  Future<void> _ensurePublicUserRow(String accessToken) async {
+    try {
+      await _dio.post(
+        '${ApiConstants.users}/auth/sync',
+        options: Options(
+          headers: {'Authorization': 'Bearer $accessToken'},
+        ),
+      );
+      debugPrint('✅ [API] auth/sync ensured public.users row');
+    } catch (e) {
+      // Non-fatal: next protected call will surface the underlying error if
+      // the row is genuinely missing. We log and move on so transient
+      // failures don't block app startup.
+      debugPrint('⚠️ [API] auth/sync failed (non-fatal): $e');
+    }
   }
 
   /// Schedule a timer to proactively refresh the Supabase token

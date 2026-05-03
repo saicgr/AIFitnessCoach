@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_links.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
@@ -31,7 +33,10 @@ part 'paywall_pricing_screen_part_plan_change_confirmation_dialog.dart';
 /// Fixed paywall accent — warm orange (Strava-style).
 /// Research: warm tones outperform cool by 43.9% on mobile (4,100+ A/B tests).
 const _paywallAccent = Color(0xFFFC4C02);
-const _paywallAccentContrast = Color(0xFF000000);
+// Industry-standard contrast on a brand-fill CTA. Black-on-orange reads
+// bargain; every top fitness paywall (Cal AI, Fastic, Lumen, Centr, Whoop,
+// BetterMe, Noom) uses pure white at weight 700.
+const _paywallAccentContrast = Color(0xFFFFFFFF);
 
 
 /// Paywall/Membership Screen
@@ -52,15 +57,69 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
   String _selectedBillingCycle = 'yearly'; // 'yearly' or 'monthly'
   bool _hasShownDiscount = false;
 
+  // Cal AI / BetterMe / Headway / Lose It-style 3-page intro flow.
+  // Used only for non-subscribed users in the post-quiz funnel; subscribed
+  // users coming from settings still see the legacy Change-Plan layout
+  // because the intro framing doesn't apply to them.
+  late final PageController _pageController;
+  int _currentPage = 0;
+  static const int _totalPages = 3;
+
   @override
   void initState() {
     super.initState();
+    _pageController = PageController();
     // Track paywall pricing screen view
     Future.microtask(() {
       ref.read(posthogServiceProvider).capture(
         eventName: 'paywall_pricing_viewed',
       );
     });
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  void _goToNextPage() {
+    HapticFeedback.lightImpact();
+    if (_currentPage < _totalPages - 1) {
+      _pageController.nextPage(
+        duration: const Duration(milliseconds: 320),
+        curve: Curves.easeOutCubic,
+      );
+    }
+  }
+
+  void _goToPreviousPage() {
+    HapticFeedback.selectionClick();
+    if (_currentPage > 0) {
+      _pageController.previousPage(
+        duration: const Duration(milliseconds: 280),
+        curve: Curves.easeOutCubic,
+      );
+    } else {
+      // Page 0 → bail out of the paywall entirely.
+      if (context.canPop()) {
+        context.pop();
+      }
+    }
+  }
+
+  /// Date 7 days from now in the user's local timezone, formatted "Mar 9".
+  /// Used on the timeline page to ground the trial-end commitment in a
+  /// real, concrete date instead of "in 7 days."
+  String _trialEndDateString() {
+    final end = DateTime.now().add(const Duration(days: 7));
+    return DateFormat('MMM d').format(end);
+  }
+
+  /// Date 5 days from now (reminder fires 2 days before trial ends).
+  String _reminderDateString() {
+    final reminder = DateTime.now().add(const Duration(days: 5));
+    return DateFormat('MMM d').format(reminder);
   }
 
   /// Get dynamic price string from RevenueCat offerings, with fallback
@@ -121,13 +180,41 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
     return ((monthlyAnnualized - yearlyPrice) / monthlyAnnualized * 100).round();
   }
 
-  /// Personalized headline from onboarding goal
+  /// Personalized headline from onboarding goal. When the goal is weight-
+  /// related (lose_weight / body_recomp / build_muscle) and we have both
+  /// current and goal weight, surface the actual delta — e.g. "Your plan
+  /// to lose 12 lb" — same pattern Cal AI / Fastic / Noom use to anchor
+  /// the user on a concrete outcome before the price.
   String _getPersonalizedHeadline() {
     try {
       final quizData = ref.read(preAuthQuizProvider);
       final goal = quizData.goal;
+      final currentKg = quizData.weightKg;
+      final goalKg = quizData.goalWeightKg;
+      final useMetric = quizData.useMetricUnits;
+
+      if (currentKg != null &&
+          goalKg != null &&
+          currentKg > 0 &&
+          goalKg > 0) {
+        final deltaKg = goalKg - currentKg;
+        final absDeltaKg = deltaKg.abs();
+        if (absDeltaKg >= 0.5) {
+          final unit = useMetric ? 'kg' : 'lb';
+          final amount = useMetric
+              ? absDeltaKg.round()
+              : (absDeltaKg * 2.20462).round();
+          if (amount > 0) {
+            if (deltaKg < 0) return 'Your plan to lose $amount $unit';
+            if (deltaKg > 0) return 'Your plan to gain $amount $unit';
+          }
+        } else {
+          // Maintenance: explicit, not vague.
+          return 'Your plan to maintain your weight';
+        }
+      }
+
       if (goal != null && goal.isNotEmpty) {
-        // Map goal IDs to readable phrases
         const goalPhrases = {
           'lose_weight': 'Your weight loss plan is ready',
           'build_muscle': 'Your muscle-building plan is ready',
@@ -153,6 +240,13 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
     final windowState = ref.watch(windowModeProvider);
     final isFoldable = FoldableQuizScaffold.shouldUseFoldableLayout(windowState);
     final hPad = isFoldable ? 14.0 : 20.0;
+
+    // Non-subscribed (post-onboarding) users get the Cal AI-style 3-page
+    // intro flow. Subscribed users coming from Settings → Manage Plan get
+    // the legacy single-page Change-Plan layout below.
+    if (!isSubscribed) {
+      return _buildIntroFlow(context, colors, subscriptionState, currentTier);
+    }
 
     return Scaffold(
       backgroundColor: colors.background,
@@ -245,6 +339,7 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                       _BillingTab(
                         label: 'Yearly',
                         sublabel: 'Best value',
+                        badge: 'SAVE ${_getSavingsPercent(offerings: subscriptionState.offerings)}%',
                         isSelected: _selectedBillingCycle == 'yearly',
                         onTap: () {
                           setState(() {
@@ -288,11 +383,24 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                   child: _TierPlanCard(
                     planId: _selectedBillingCycle == 'yearly' ? 'premium_yearly' : 'premium_monthly',
                     tierName: 'Premium',
-                    badge: _selectedBillingCycle == 'yearly'
-                        ? 'SAVE ${_getSavingsPercent(offerings: subscriptionState.offerings)}%'
-                        : '',
+                    // Badge moved to the Yearly tab pill; keep empty here
+                    // so the price doesn't fight a sibling badge.
+                    badge: '',
                     badgeColor: const Color(0xFF16A34A),
                     accentColor: _paywallAccent,
+                    // Anchor: when Yearly is selected, render the full
+                    // monthly price as a strikethrough so users perceive
+                    // the discount as a real reduction rather than a flat
+                    // rate. Standard price-anchoring pattern (Cal AI,
+                    // BetterMe, Headway, Lumen).
+                    anchorPrice: _selectedBillingCycle == 'yearly'
+                        ? _getDynamicPrice(
+                            offerings: subscriptionState.offerings,
+                            productId:
+                                SubscriptionNotifier.premiumMonthlyId,
+                            fallback: '\$7.99',
+                          )
+                        : null,
                     price: _selectedBillingCycle == 'yearly'
                         ? _getMonthlyEquivalent(offerings: subscriptionState.offerings)
                         : _getDynamicPrice(
@@ -318,13 +426,7 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                   ),
                 ),
 
-                SizedBox(height: isFoldable ? 8 : 10),
-
-                // Onboarding v5.1: inline referral code expander
-                // (replaces the standalone /referral-code screen).
-                const InlineReferralExpander(),
-
-                SizedBox(height: isFoldable ? 8 : 10),
+                SizedBox(height: isFoldable ? 12 : 16),
 
                 // Main action button with shimmer
                 _ShimmerOverlay(
@@ -355,52 +457,24 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                         : Text(
                             _getButtonText(isSubscribed, currentTier),
                             style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w500,
-                              letterSpacing: 0.3,
+                              fontSize: 17,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: -0.2,
+                              color: _paywallAccentContrast,
                             ),
                           ),
                     ),
                   ),
                 ),
 
-                // Reassurance text
+                // 3-row trust strip \u2014 replaces the single muted
+                // "Cancel anytime. No charge today." line. Each row pairs
+                // a small icon with a one-line reassurance \u2014 same pattern
+                // used by Cal AI, Fastic, BetterMe, Headway, Lumen.
                 if (!isSubscribed) ...[
-                  const SizedBox(height: 8),
-                  Text(
-                    'Cancel anytime. No charge today.',
-                    style: TextStyle(fontSize: 12, color: colors.textMuted),
-                    textAlign: TextAlign.center,
-                  ),
+                  const SizedBox(height: 12),
+                  _TrustStrip(colors: colors),
                 ],
-
-                SizedBox(height: isFoldable ? 10 : 16),
-
-                // Preview options (de-emphasized text links)
-                if (!isSubscribed && widget.showPlanPreview)
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      GestureDetector(
-                        onTap: () => context.push('/plan-preview'),
-                        child: Text(
-                          'See Your AI Plan',
-                          style: TextStyle(fontSize: 13, color: colors.textSecondary, decoration: TextDecoration.underline, decorationColor: colors.textSecondary),
-                        ),
-                      ),
-                      Text(
-                        '  \u00b7  ',
-                        style: TextStyle(fontSize: 13, color: colors.textMuted),
-                      ),
-                      GestureDetector(
-                        onTap: () => context.push('/demo-workout'),
-                        child: Text(
-                          'Try a Free Workout',
-                          style: TextStyle(fontSize: 13, color: colors.textSecondary, decoration: TextDecoration.underline, decorationColor: colors.textSecondary),
-                        ),
-                      ),
-                    ],
-                  ),
 
                 // Maybe later (de-emphasized skip)
                 if (!isSubscribed) ...[
@@ -453,6 +527,14 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                   ],
                 ),
 
+                // Referral expander lives at the very bottom — matches the
+                // "Have a code?" pattern on Cal AI / BetterMe paywalls
+                // where it's reachable but never competes with the CTA.
+                if (!isSubscribed) ...[
+                  const SizedBox(height: 8),
+                  const InlineReferralExpander(),
+                ],
+
                 const SizedBox(height: 16),
               ],
             ),
@@ -468,6 +550,557 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
       return _selectedPlan.contains('yearly') ? 'Start Free Trial' : 'Subscribe Now';
     }
     return 'Change Plan';
+  }
+
+  // ─────────────────────────────────────────────────────────────────────
+  // Cal AI-style 3-page intro flow (non-subscribed users only)
+  // ─────────────────────────────────────────────────────────────────────
+
+  Widget _buildIntroFlow(
+    BuildContext context,
+    ThemeColors colors,
+    SubscriptionState subscriptionState,
+    SubscriptionTier currentTier,
+  ) {
+    return Scaffold(
+      backgroundColor: colors.background,
+      body: SafeArea(
+        child: PopScope(
+          canPop: _currentPage == 0,
+          onPopInvokedWithResult: (didPop, _) {
+            if (!didPop && _currentPage > 0) _goToPreviousPage();
+          },
+          child: Column(
+            children: [
+              _buildIntroTopBar(colors, context, ref),
+              Expanded(
+                child: PageView(
+                  controller: _pageController,
+                  physics: const ClampingScrollPhysics(),
+                  onPageChanged: (i) => setState(() => _currentPage = i),
+                  children: [
+                    _buildIntroPageHero(colors),
+                    _buildIntroPageReminder(colors),
+                    _buildIntroPageTimeline(colors, subscriptionState),
+                  ],
+                ),
+              ),
+              _buildIntroBottomBar(
+                colors,
+                subscriptionState,
+                currentTier,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildIntroTopBar(
+      ThemeColors colors, BuildContext context, WidgetRef ref) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+      child: Row(
+        children: [
+          // Back chevron only on pages 1-2; on page 0 it'd duplicate the
+          // system back gesture and risk dropping the user out of the flow
+          // before they've even seen page 1.
+          SizedBox(
+            width: 44,
+            height: 44,
+            child: _currentPage > 0
+                ? IconButton(
+                    splashRadius: 22,
+                    icon: Icon(Icons.chevron_left,
+                        size: 28, color: colors.textPrimary),
+                    onPressed: _goToPreviousPage,
+                  )
+                : null,
+          ),
+          const Spacer(),
+          GestureDetector(
+            onTap: () => _restorePurchases(context, ref),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 8, vertical: 8),
+              child: Text(
+                'Restore',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: colors.textMuted,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildIntroBottomBar(
+    ThemeColors colors,
+    SubscriptionState subscriptionState,
+    SubscriptionTier currentTier,
+  ) {
+    final isLast = _currentPage == _totalPages - 1;
+    final label = switch (_currentPage) {
+      0 => 'Try for \$0.00',
+      1 => 'Continue for FREE',
+      _ => _selectedPlan.contains('yearly')
+          ? 'Start My 7-Day Free Trial'
+          : 'Subscribe Now',
+    };
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.check_rounded,
+                  size: 16, color: colors.textSecondary),
+              const SizedBox(width: 6),
+              Text(
+                'No Payment Due Now',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: colors.textSecondary,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          SizedBox(
+            width: double.infinity,
+            height: 56,
+            child: ElevatedButton(
+              onPressed: subscriptionState.isLoading
+                  ? null
+                  : () {
+                      if (isLast) {
+                        _handleAction(
+                            context, ref, false, currentTier);
+                      } else {
+                        _goToNextPage();
+                      }
+                    },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: _paywallAccent,
+                foregroundColor: _paywallAccentContrast,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(28),
+                ),
+                elevation: 0,
+              ),
+              child: subscriptionState.isLoading
+                  ? const SizedBox(
+                      width: 22,
+                      height: 22,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation(
+                            _paywallAccentContrast),
+                      ),
+                    )
+                  : Text(
+                      label,
+                      style: const TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: -0.2,
+                        color: _paywallAccentContrast,
+                      ),
+                    ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          // Page-position dots — quiet wayfinding so users feel the
+          // 3-step shape rather than wondering how deep the flow is.
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(_totalPages, (i) {
+              final selected = i == _currentPage;
+              return AnimatedContainer(
+                duration: const Duration(milliseconds: 220),
+                margin: const EdgeInsets.symmetric(horizontal: 3),
+                width: selected ? 18 : 6,
+                height: 6,
+                decoration: BoxDecoration(
+                  color: selected
+                      ? _paywallAccent
+                      : colors.textMuted.withValues(alpha: 0.3),
+                  borderRadius: BorderRadius.circular(3),
+                ),
+              );
+            }),
+          ),
+          // Quiet exit on the last page only — once user has seen all 3
+          // beats, give them a way out without a buried "Maybe later" on
+          // the first hopeful page.
+          if (isLast) ...[
+            const SizedBox(height: 6),
+            GestureDetector(
+              onTap: () => _handleMaybeLater(context, ref),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                child: Text(
+                  'Maybe later',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: colors.textMuted.withValues(alpha: 0.7),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  // ── Page 1: hero ─────────────────────────────────────────────────
+  Widget _buildIntroPageHero(ThemeColors colors) {
+    final headline = _heroHeadline();
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          const SizedBox(height: 8),
+          Text(
+            headline,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.w800,
+              height: 1.18,
+              color: colors.textPrimary,
+              letterSpacing: -0.4,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Free for 7 days. Cancel anytime.',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: colors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 24),
+          Expanded(
+            child: Center(
+              child: _PhoneFrame(
+                colors: colors,
+                child: _WorkoutMockCard(colors: colors),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _heroHeadline() {
+    try {
+      final quizData = ref.read(preAuthQuizProvider);
+      final cur = quizData.weightKg;
+      final goal = quizData.goalWeightKg;
+      final useMetric = quizData.useMetricUnits;
+      if (cur != null && goal != null && cur > 0 && goal > 0) {
+        final delta = (goal - cur).abs();
+        if (delta >= 0.5) {
+          final unit = useMetric ? 'kg' : 'lb';
+          final amt = useMetric ? delta.round() : (delta * 2.20462).round();
+          if (amt > 0) {
+            return goal < cur
+                ? 'Your plan to lose $amt $unit'
+                : 'Your plan to gain $amt $unit';
+          }
+        }
+      }
+      final g = quizData.goal;
+      if (g == 'lose_weight') return 'Your weight loss plan is ready';
+      if (g == 'build_muscle') return 'Your muscle plan is ready';
+      if (g == 'gain_strength') return 'Your strength plan is ready';
+    } catch (_) {}
+    return 'Your ${Branding.appName} plan is ready';
+  }
+
+  // ── Page 2: reminder bell ────────────────────────────────────────
+  Widget _buildIntroPageReminder(ThemeColors colors) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 32),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          const SizedBox(height: 8),
+          Text(
+            "We'll send you a reminder\nbefore your free trial ends",
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.w800,
+              height: 1.25,
+              color: colors.textPrimary,
+              letterSpacing: -0.3,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'No surprises. Cancel anytime in Settings before day 7.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: colors.textSecondary,
+            ),
+          ),
+          Expanded(
+            child: Center(
+              child: SizedBox(
+                width: 220,
+                height: 220,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    // Soft halo behind the bell.
+                    Container(
+                      width: 220,
+                      height: 220,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: RadialGradient(
+                          colors: [
+                            _paywallAccent.withValues(alpha: 0.16),
+                            _paywallAccent.withValues(alpha: 0.0),
+                          ],
+                        ),
+                      ),
+                    ),
+                    // Bell — shakes once on entry, then again every 2.4s
+                    // so the screen never goes fully static. Subtle enough
+                    // to read as "ringing" without being distracting.
+                    Animate(
+                      onPlay: (c) => c.repeat(reverse: false),
+                      effects: [
+                        const ShakeEffect(
+                          duration: Duration(milliseconds: 700),
+                          hz: 4,
+                          rotation: 0.12,
+                        ),
+                        const ThenEffect(
+                            delay: Duration(milliseconds: 1700)),
+                      ],
+                      child: Icon(
+                        Icons.notifications_rounded,
+                        size: 150,
+                        color: colors.textMuted.withValues(alpha: 0.45),
+                      ),
+                    ),
+                    // Badge — pops in with a spring on first build.
+                    Positioned(
+                      top: 30,
+                      right: 50,
+                      child: Container(
+                        width: 46,
+                        height: 46,
+                        alignment: Alignment.center,
+                        decoration: const BoxDecoration(
+                          color: _paywallAccent,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Color(0x33000000),
+                              blurRadius: 8,
+                              offset: Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: const Text(
+                          '1',
+                          style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                          ),
+                        ),
+                      )
+                          .animate()
+                          .scale(
+                            begin: const Offset(0, 0),
+                            end: const Offset(1, 1),
+                            duration: const Duration(milliseconds: 420),
+                            curve: Curves.elasticOut,
+                          )
+                          .fadeIn(
+                              duration: const Duration(milliseconds: 220)),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── Page 3: timeline + plans ─────────────────────────────────────
+  Widget _buildIntroPageTimeline(
+      ThemeColors colors, SubscriptionState subscriptionState) {
+    final monthlyPrice = _getDynamicPrice(
+      offerings: subscriptionState.offerings,
+      productId: SubscriptionNotifier.premiumMonthlyId,
+      fallback: '\$7.99',
+    );
+    final yearlyMonthly =
+        _getMonthlyEquivalent(offerings: subscriptionState.offerings);
+    final yearlyTotal = _getDynamicPrice(
+      offerings: subscriptionState.offerings,
+      productId: SubscriptionNotifier.premiumYearlyId,
+      fallback: '\$59.99',
+    );
+    final savings =
+        _getSavingsPercent(offerings: subscriptionState.offerings);
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: 4),
+          Text(
+            'Start your 7-day FREE\ntrial to continue',
+            style: TextStyle(
+              fontSize: 26,
+              fontWeight: FontWeight.w800,
+              height: 1.2,
+              color: colors.textPrimary,
+              letterSpacing: -0.4,
+            ),
+          ),
+          const SizedBox(height: 24),
+          _TimelineNode(
+            icon: Icons.lock_open_rounded,
+            iconBg: _paywallAccent.withValues(alpha: 0.15),
+            iconColor: _paywallAccent,
+            title: 'Today',
+            subtitle:
+                "Unlock unlimited AI workouts, food scan & macros, form analysis, and full progress tracking.",
+            isFirst: true,
+            isLast: false,
+            colors: colors,
+          ),
+          _TimelineNode(
+            icon: Icons.notifications_rounded,
+            iconBg: _paywallAccent.withValues(alpha: 0.15),
+            iconColor: _paywallAccent,
+            title: 'In 5 Days · Reminder',
+            subtitle:
+                "We'll send you a reminder on ${_reminderDateString()} that your trial is ending soon.",
+            isFirst: false,
+            isLast: false,
+            colors: colors,
+          ),
+          _TimelineNode(
+            icon: Icons.workspace_premium_rounded,
+            iconBg: colors.textPrimary,
+            iconColor: Colors.white,
+            title: 'In 7 Days · Billing Starts',
+            subtitle:
+                "You'll be charged on ${_trialEndDateString()} unless you cancel anytime before.",
+            isFirst: false,
+            isLast: true,
+            colors: colors,
+          ),
+          const SizedBox(height: 18),
+          Row(
+            children: [
+              Expanded(
+                child: _PlanTile(
+                  title: 'Monthly',
+                  price: monthlyPrice,
+                  unit: '/mo',
+                  isSelected: _selectedBillingCycle == 'monthly',
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    setState(() {
+                      _selectedBillingCycle = 'monthly';
+                      _selectedPlan = 'premium_monthly';
+                    });
+                    ref.read(posthogServiceProvider).capture(
+                      eventName: 'paywall_plan_selected',
+                      properties: {
+                        'plan_name': 'premium_monthly',
+                        'billing_cycle': 'monthly',
+                      },
+                    );
+                  },
+                  colors: colors,
+                  ribbon: null,
+                  anchorPrice: null,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _PlanTile(
+                  title: 'Yearly',
+                  price: yearlyMonthly,
+                  unit: '/mo',
+                  anchorPrice: monthlyPrice,
+                  isSelected: _selectedBillingCycle == 'yearly',
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    setState(() {
+                      _selectedBillingCycle = 'yearly';
+                      _selectedPlan = 'premium_yearly';
+                    });
+                    ref.read(posthogServiceProvider).capture(
+                      eventName: 'paywall_plan_selected',
+                      properties: {
+                        'plan_name': 'premium_yearly',
+                        'billing_cycle': 'yearly',
+                      },
+                    );
+                  },
+                  ribbon: '7 DAYS FREE · SAVE $savings%',
+                  subtitle: '$yearlyTotal/year',
+                  colors: colors,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          const InlineReferralExpander(),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              GestureDetector(
+                onTap: _openTermsOfService,
+                child: Text('Terms',
+                    style: TextStyle(
+                        fontSize: 12, color: colors.textMuted)),
+              ),
+              Text('  ·  ',
+                  style: TextStyle(
+                      fontSize: 12, color: colors.textMuted)),
+              GestureDetector(
+                onTap: _openPrivacyPolicy,
+                child: Text('Privacy',
+                    style: TextStyle(
+                        fontSize: 12, color: colors.textMuted)),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 
   void _handleMaybeLater(BuildContext context, WidgetRef ref) async {
@@ -891,4 +1524,591 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
     );
   }
 
+}
+
+/// Three-row reassurance strip rendered under the CTA. Mirrors the
+/// "no commitment / reminder before charge / cancel anywhere" pattern
+/// used by every top fitness paywall (Cal AI, Fastic, BetterMe, Lumen,
+/// Headway, Centr). Stronger than a single muted line because each row
+/// addresses a different objection on its own line with its own icon.
+class _TrustStrip extends StatelessWidget {
+  final ThemeColors colors;
+  const _TrustStrip({required this.colors});
+
+  @override
+  Widget build(BuildContext context) {
+    final rows = <(IconData, String)>[
+      (Icons.lock_open_rounded, 'No commitment — cancel anytime'),
+      (Icons.notifications_active_outlined,
+          'Reminder before your trial ends'),
+      (Icons.payments_outlined, 'No charge today'),
+    ];
+    return Column(
+      children: rows.map((r) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 3),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(r.$1, size: 14, color: colors.textSecondary),
+              const SizedBox(width: 8),
+              Text(
+                r.$2,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: colors.textSecondary,
+                ),
+              ),
+            ],
+          ),
+        );
+      }).toList(),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// Intro-flow widgets — phone-frame mock, timeline node, plan tile.
+// All defined in this file to keep the paywall as a single touch-point.
+// ─────────────────────────────────────────────────────────────────────
+
+/// Stylized iPhone bezel rendered fully in code (no asset). Wraps the
+/// hero workout-card mock so page 1 reads as "this is the app" without
+/// needing a screenshot file shipped in the bundle.
+class _PhoneFrame extends StatelessWidget {
+  final Widget child;
+  final ThemeColors colors;
+  const _PhoneFrame({required this.child, required this.colors});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 240,
+      height: 480,
+      decoration: BoxDecoration(
+        color: const Color(0xFF0A0A0A),
+        borderRadius: BorderRadius.circular(40),
+        border: Border.all(color: const Color(0xFF1E1E1E), width: 2),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.18),
+            blurRadius: 32,
+            spreadRadius: 0,
+            offset: const Offset(0, 16),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(6),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(34),
+        child: Container(
+          color: colors.background,
+          child: Column(
+            children: [
+              // Status-bar / Dynamic Island stub.
+              SizedBox(
+                height: 28,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 18, top: 4),
+                        child: Text(
+                          '9:41',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: colors.textPrimary,
+                          ),
+                        ),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Container(
+                        width: 60,
+                        height: 16,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF0A0A0A),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 4),
+              Expanded(child: child),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// In-app workout-day card mock used on page 1. Stylized — not a real
+/// screenshot — so it stays in sync with the app's visual language even
+/// as the app evolves, with no asset to maintain.
+class _WorkoutMockCard extends StatelessWidget {
+  final ThemeColors colors;
+  const _WorkoutMockCard({required this.colors});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Today',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: colors.textMuted,
+              letterSpacing: 0.5,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            'Push Day',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
+              color: colors.textPrimary,
+              letterSpacing: -0.4,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  _paywallAccent,
+                  _paywallAccent.withValues(alpha: 0.78),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(18),
+            ),
+            padding: const EdgeInsets.all(14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.22),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Text(
+                        'AI · 6 EXERCISES',
+                        style: TextStyle(
+                          fontSize: 9,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
+                          letterSpacing: 0.6,
+                        ),
+                      ),
+                    ),
+                    const Spacer(),
+                    const Icon(Icons.bolt_rounded,
+                        color: Colors.white, size: 16),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                const Text(
+                  '45 min',
+                  style: TextStyle(
+                    fontSize: 26,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                    letterSpacing: -0.5,
+                  ),
+                ),
+                const Text(
+                  '· chest · shoulders · triceps',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white70,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 10),
+          ..._mockExerciseRows(colors),
+          const Spacer(),
+          // Quick stats strip — mimics the home dashboard chips.
+          Row(
+            children: [
+              _miniStat(colors, '🔥', '2,148', 'kcal'),
+              const SizedBox(width: 6),
+              _miniStat(colors, '💪', '128g', 'protein'),
+              const SizedBox(width: 6),
+              _miniStat(colors, '🔁', '4', 'streak'),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  List<Widget> _mockExerciseRows(ThemeColors colors) {
+    final rows = const [
+      ('Bench Press', '4 × 8'),
+      ('Incline DB Press', '3 × 10'),
+      ('Cable Fly', '3 × 12'),
+    ];
+    return rows
+        .map(
+          (e) => Padding(
+            padding: const EdgeInsets.only(bottom: 6),
+            child: Container(
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 10, vertical: 8),
+              decoration: BoxDecoration(
+                color: colors.surface,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: colors.cardBorder),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 6,
+                    height: 6,
+                    decoration: BoxDecoration(
+                      color: _paywallAccent,
+                      borderRadius: BorderRadius.circular(3),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      e.$1,
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: colors.textPrimary,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  Text(
+                    e.$2,
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: colors.textMuted,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        )
+        .toList();
+  }
+
+  Widget _miniStat(
+      ThemeColors colors, String emoji, String value, String label) {
+    return Expanded(
+      child: Container(
+        padding:
+            const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
+        decoration: BoxDecoration(
+          color: colors.surface,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: colors.cardBorder),
+        ),
+        child: Column(
+          children: [
+            Text(emoji, style: const TextStyle(fontSize: 12)),
+            const SizedBox(height: 2),
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w800,
+                color: colors.textPrimary,
+              ),
+            ),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 8,
+                fontWeight: FontWeight.w600,
+                color: colors.textMuted,
+                letterSpacing: 0.3,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Vertical timeline row (icon · connector · title + subtitle).
+/// Renders one node. The connector to the next node is drawn inline so
+/// users perceive the three steps as a continuous progression.
+class _TimelineNode extends StatelessWidget {
+  final IconData icon;
+  final Color iconBg;
+  final Color iconColor;
+  final String title;
+  final String subtitle;
+  final bool isFirst;
+  final bool isLast;
+  final ThemeColors colors;
+
+  const _TimelineNode({
+    required this.icon,
+    required this.iconBg,
+    required this.iconColor,
+    required this.title,
+    required this.subtitle,
+    required this.isFirst,
+    required this.isLast,
+    required this.colors,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Rail: icon disc + connector line.
+          Column(
+            children: [
+              Container(
+                width: 38,
+                height: 38,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: iconBg,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, size: 20, color: iconColor),
+              ),
+              if (!isLast)
+                Expanded(
+                  child: Container(
+                    width: 2,
+                    margin: const EdgeInsets.symmetric(vertical: 2),
+                    color: colors.cardBorder,
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Padding(
+              padding: EdgeInsets.only(bottom: isLast ? 0 : 18),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
+                      color: colors.textPrimary,
+                      letterSpacing: -0.2,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      height: 1.35,
+                      color: colors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Selectable plan tile used on page 3 (Monthly · Yearly). Selected
+/// state shows a filled radio + accent border; ribbon promotes the
+/// trial-bundled yearly offer.
+class _PlanTile extends StatelessWidget {
+  final String title;
+  final String price;
+  final String unit;
+  final String? anchorPrice;
+  final String? subtitle;
+  final String? ribbon;
+  final bool isSelected;
+  final VoidCallback onTap;
+  final ThemeColors colors;
+
+  const _PlanTile({
+    required this.title,
+    required this.price,
+    required this.unit,
+    required this.isSelected,
+    required this.onTap,
+    required this.colors,
+    this.anchorPrice,
+    this.subtitle,
+    this.ribbon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.fromLTRB(14, 16, 14, 14),
+        decoration: BoxDecoration(
+          color: colors.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isSelected ? _paywallAccent : colors.cardBorder,
+            width: isSelected ? 2 : 1,
+          ),
+        ),
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        title,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: colors.textPrimary,
+                        ),
+                      ),
+                    ),
+                    Container(
+                      width: 20,
+                      height: 20,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: isSelected
+                            ? _paywallAccent
+                            : Colors.transparent,
+                        border: Border.all(
+                          color: isSelected
+                              ? _paywallAccent
+                              : colors.textMuted.withValues(alpha: 0.5),
+                          width: 1.5,
+                        ),
+                      ),
+                      child: isSelected
+                          ? const Icon(Icons.check_rounded,
+                              size: 14, color: Colors.white)
+                          : null,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                if (anchorPrice != null) ...[
+                  Text(
+                    anchorPrice!,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: colors.textMuted,
+                      decoration: TextDecoration.lineThrough,
+                      decorationThickness: 2,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                ],
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      price,
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w800,
+                        color: colors.textPrimary,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 3),
+                      child: Text(
+                        unit,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: colors.textMuted,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                if (subtitle != null) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle!,
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                      color: colors.textMuted,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+            if (ribbon != null && ribbon!.isNotEmpty)
+              Positioned(
+                top: -22,
+                left: -2,
+                right: -2,
+                child: Container(
+                  alignment: Alignment.center,
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  decoration: BoxDecoration(
+                    color: colors.textPrimary,
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(10),
+                      topRight: Radius.circular(10),
+                    ),
+                  ),
+                  child: Text(
+                    ribbon!,
+                    style: const TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
 }

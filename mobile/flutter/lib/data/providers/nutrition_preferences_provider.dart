@@ -119,6 +119,13 @@ class NutritionPreferencesState {
 class NutritionPreferencesNotifier extends StateNotifier<NutritionPreferencesState> {
   final NutritionPreferencesRepository _repository;
 
+  // De-dupe guards. Without these, every widget that mounts and sees
+  // `prefs == null && !isLoading` re-fires initialize(), and for users with
+  // no nutrition prefs row that condition stays true after each call —
+  // hammering the 4-endpoint init at frame rate (HTTP 429 storm).
+  Future<void>? _inFlightInit;
+  bool _initAttempted = false;
+
   NutritionPreferencesNotifier(this._repository)
       : super(_nutritionPrefsInMemoryCache ?? const NutritionPreferencesState());
 
@@ -131,6 +138,9 @@ class NutritionPreferencesNotifier extends StateNotifier<NutritionPreferencesSta
   /// Initialize nutrition preferences for a user.
   /// Set [forceRefresh] to bypass the in-memory cache and re-fetch from backend.
   Future<void> initialize(String userId, {bool forceRefresh = false}) async {
+    // Coalesce concurrent callers onto the same future.
+    if (_inFlightInit != null) return _inFlightInit;
+
     if (!forceRefresh) {
       // Skip re-initialization if already loaded and onboarding is complete
       // The in-memory flag is preserved once set
@@ -148,8 +158,27 @@ class NutritionPreferencesNotifier extends StateNotifier<NutritionPreferencesSta
         }
         return;
       }
+
+      // Already attempted at least once this session and prefs are still
+      // null (user has no row). Don't re-fetch unless forceRefresh — caller
+      // must opt in to a retry.
+      if (_initAttempted) {
+        debugPrint('🥗 [NutritionPrefsProvider] Init already attempted, skipping (use forceRefresh to retry)');
+        return;
+      }
     }
 
+    final future = _runInitialize(userId);
+    _inFlightInit = future;
+    try {
+      await future;
+    } finally {
+      _inFlightInit = null;
+      _initAttempted = true;
+    }
+  }
+
+  Future<void> _runInitialize(String userId) async {
     state = state.copyWith(isLoading: true, clearError: true);
     try {
       debugPrint('🥗 [NutritionPrefsProvider] Initializing for $userId');

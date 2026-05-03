@@ -35,6 +35,7 @@ import 'widgets/cards/cards.dart';
 import 'widgets/daily_activity_card.dart';
 import 'widgets/edit_tracking_sheet.dart';
 import 'widgets/stacked_banner_panel.dart';
+import '../../widgets/rating_prompt_banner.dart';
 import 'widgets/tile_factory.dart';
 import 'widgets/my_program_summary_card.dart';
 import 'widgets/hero_workout_card.dart';
@@ -900,6 +901,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               // Stacked notification-panel banners (all active, swipeable)
               const SliverToBoxAdapter(
                 child: StackedBannerPanel(),
+              ),
+
+              // Rating-prompt banner — visible when the user has hit
+              // the engagement threshold but the auto-trigger sheet
+              // window has passed (or they tapped Maybe Later). The
+              // widget self-gates via RatingPromptService.
+              const SliverToBoxAdapter(
+                child: RatingPromptBanner(),
               ),
 
               // Dynamic tiles from local layout

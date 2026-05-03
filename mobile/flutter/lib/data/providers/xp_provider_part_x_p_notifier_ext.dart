@@ -168,13 +168,20 @@ extension XPNotifierExt on XPNotifier {
         debugPrint('[XPProvider] Daily crate claimed! Reward: ${result.reward?.displayName}');
       }
 
+      if (!result.success) {
+        // Repo already logged + Sentry-captured the underlying cause; surface
+        // the repo's message (which now contains HTTP status + server detail
+        // when applicable) so the UI snackbar shows the real reason.
+        debugPrint('❌ [XPProvider] Claim returned success=false: ${result.message}');
+      }
       return result;
-    } catch (e) {
-      debugPrint('[XPProvider] Error claiming daily crate: $e');
+    } catch (e, stack) {
+      debugPrint('❌ [XPProvider] Unexpected exception claiming daily crate: $e');
+      debugPrint('❌ [XPProvider] Stack:\n$stack');
       return CrateRewardResult(
         success: false,
         crateType: crateType,
-        message: 'Error claiming crate',
+        message: 'Claim failed: $e',
       );
     }
   }
