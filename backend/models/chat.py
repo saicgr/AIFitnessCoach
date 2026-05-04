@@ -101,14 +101,74 @@ class AISettings(BaseModel):
     enabled_agents: Optional[Dict[str, bool]] = None
 
 
+# Canonical aliases for equipment items. Used to collapse synonym duplicates
+# (e.g. "Smith Machine" and "smith_machine" both refer to the same physical
+# rack). Conservative — only entries actually observed in production payloads.
+# NOT a whitelist: unknown equipment passes through unchanged.
+_EQUIPMENT_ALIASES: Dict[str, str] = {
+    "kettlebells": "kettlebell",
+    "weight plate": "weight_plates",
+    "dip station": "dip_station",
+    "smith machine": "smith_machine",
+    "ez bar": "ez_curl_bar",
+    "cable pulley machine": "cable_machine",
+    "cable row machine": "cable_machine",
+    "chest press machine": "chest_press_machine",
+    "shoulder press machine": "shoulder_press_machine",
+    "hack squat machine": "hack_squat",
+    "lat pull down machine": "lat_pulldown",
+    "leg press machine": "leg_press",
+    "leg extension machine": "leg_extension_machine",
+    "stationary exercise bike": "stationary_bike",
+    "elliptical machine": "elliptical",
+    "rowing machine": "rowing_machine",
+    "medicine ball": "medicine_ball",
+    "battle ropes": "battle_ropes",
+    "suspension trainer": "suspension_trainer",
+    "loop resistance band": "resistance_bands",
+}
+
+
+def _canonicalize_equipment_item(raw: Any) -> Optional[str]:
+    if raw is None:
+        return None
+    s = str(raw).strip().lower()
+    if not s:
+        return None
+    # Alias lookup happens BEFORE whitespace→underscore so multi-word forms
+    # ("smith machine") match their canonical snake_case version.
+    if s in _EQUIPMENT_ALIASES:
+        return _EQUIPMENT_ALIASES[s]
+    # Collapse whitespace/hyphens to single underscores.
+    parts = [p for p in s.replace("-", " ").replace("_", " ").split() if p]
+    return "_".join(parts) if parts else None
+
+
 class UserProfile(BaseModel):
     """User profile for context in chat."""
     id: str = Field(..., max_length=100)  # UUID from Supabase
     fitness_level: str = Field(default="beginner", max_length=50)
-    goals: List[str] = Field(default=[], max_length=20)
-    equipment: List[str] = Field(default=[], max_length=50)
-    active_injuries: List[str] = Field(default=[], max_length=20)
+    # No upper bound on user-supplied list fields. A real commercial gym has
+    # 80+ pieces of equipment, a user with multiple goals or chronic
+    # injuries can legitimately exceed any number we'd pick, and per-string
+    # max_length already bounds individual entries. See
+    # feedback_no_arbitrary_backend_caps.md.
+    goals: List[str] = Field(default=[])
+    equipment: List[str] = Field(default=[])
+    active_injuries: List[str] = Field(default=[])
     name: Optional[str] = Field(default=None, max_length=200)
+
+    @field_validator("equipment", mode="before")
+    @classmethod
+    def _normalize_equipment(cls, v):
+        if not isinstance(v, list):
+            return v
+        seen: Dict[str, None] = {}
+        for item in v:
+            canon = _canonicalize_equipment_item(item)
+            if canon and canon not in seen:
+                seen[canon] = None
+        return list(seen.keys())
 
 
 class WorkoutContext(BaseModel):

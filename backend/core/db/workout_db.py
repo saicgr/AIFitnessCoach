@@ -202,12 +202,14 @@ class WorkoutDB(BaseDB):
             if is_uniq_violation:
                 user_id = data.get("user_id")
                 scheduled_date = data.get("scheduled_date")
-                gym_profile_id = data.get("gym_profile_id")
                 if user_id and scheduled_date:
-                    # scheduled_date may be ISO timestamp or YYYY-MM-DD —
-                    # the partial index keys on `(scheduled_date AT TIME ZONE
-                    # 'UTC')::date`, so a date-only filter on the date prefix
-                    # is sufficient to find the winner.
+                    # The partial unique index keys ONLY on (user_id, day) —
+                    # gym_profile_id is NOT part of the constraint. Filtering
+                    # the refetch by gym_profile_id would miss the conflicting
+                    # row when the user has an existing workout from a
+                    # different (or null) profile, causing the refetch to
+                    # silently return nothing and re-raise — exactly the
+                    # production crash this handler exists to prevent.
                     sd_str = str(scheduled_date)[:10]
                     refetch = self.client.table("workouts").select("*").eq(
                         "user_id", user_id
@@ -218,8 +220,6 @@ class WorkoutDB(BaseDB):
                     ).eq(
                         "is_current", True
                     ).neq("status", "cancelled")
-                    if gym_profile_id:
-                        refetch = refetch.eq("gym_profile_id", gym_profile_id)
                     winner = refetch.order("created_at", desc=True).limit(1).execute()
                     if winner.data:
                         return winner.data[0]

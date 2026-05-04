@@ -105,20 +105,7 @@ def _row_to_mini_summary(row: dict) -> WorkoutMiniSummary:
     )
 
 
-def _get_active_gym_profile_id(db, user_id: str) -> Optional[str]:
-    """Get the active gym profile ID for a user."""
-    try:
-        result = db.client.table("gym_profiles") \
-            .select("id") \
-            .eq("user_id", user_id) \
-            .eq("is_active", True) \
-            .single() \
-            .execute()
-        if result.data:
-            return result.data.get("id")
-    except Exception as e:
-        logger.warning(f"Failed to get active gym profile: {e}", exc_info=True)
-    return None
+from ._gym_profile_helpers import get_active_gym_profile_id as _get_active_gym_profile_id  # noqa: E402,F401
 
 
 @router.get("/screen-summary", response_model=WorkoutScreenSummary)

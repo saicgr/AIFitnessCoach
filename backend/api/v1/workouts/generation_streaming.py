@@ -762,6 +762,32 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
                 "generation_source": "streaming_generation",
             }
 
+            # Replace today's canonical workout if one already exists for the
+            # same (user_id, scheduled_date). Migration 2048's partial unique
+            # index `workouts_one_current_per_user_day` blocks the insert
+            # otherwise; production prior bug was a 23505 duplicate-key crash
+            # on every Regenerate/Replace tap. Mark the prior canonical row
+            # is_current=FALSE BEFORE inserting so the index admits the new
+            # row, mirroring the SCD2 supersede pattern used elsewhere.
+            sd_str = scheduled_date_str[:10] if scheduled_date_str else None
+            if sd_str:
+                try:
+                    now_iso = datetime.utcnow().isoformat()
+                    db.client.table("workouts").update({
+                        "is_current": False,
+                        "valid_to": now_iso,
+                    }).eq("user_id", body.user_id).gte(
+                        "scheduled_date", f"{sd_str}T00:00:00+00:00"
+                    ).lte(
+                        "scheduled_date", f"{sd_str}T23:59:59+00:00"
+                    ).eq("is_current", True).neq("status", "cancelled").execute()
+                except Exception as supersede_err:
+                    logger.warning(
+                        f"[Streaming] supersede prior canonical failed for user "
+                        f"{body.user_id} on {sd_str}: {supersede_err}",
+                        exc_info=True,
+                    )
+
             try:
                 created = db.create_workout(workout_db_data)
             except Exception as insert_err:

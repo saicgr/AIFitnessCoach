@@ -197,7 +197,8 @@ class GenerateWorkoutRequest(BaseModel):
     exclude_exercises: Optional[List[str]] = Field(default=None, max_length=50)
     fitness_level: Optional[str] = Field(default=None, max_length=50)
     goals: Optional[List[str]] = Field(default=None, max_length=20)
-    equipment: Optional[List[str]] = Field(default=None, max_length=50)
+    # No upper bound — commercial gyms legitimately have 80+ equipment items.
+    equipment: Optional[List[str]] = Field(default=None)
     scheduled_date: Optional[str] = Field(default=None, description="Target date for workout (YYYY-MM-DD). If not provided, uses today's date.")
     skip_comeback: Optional[bool] = Field(default=None, description="If True, skip comeback mode adjustments even if user qualifies")
     adjacent_day_exercises: Optional[List[str]] = Field(default=None, description="Exercises from adjacent-day workouts to avoid for variety")
@@ -314,7 +315,8 @@ class RegenerateWorkoutRequest(BaseModel):
     duration_minutes_max: Optional[int] = Field(default=None, ge=1, le=480)
     fitness_level: Optional[str] = Field(default=None, max_length=50)
     difficulty: Optional[str] = Field(default=None, max_length=50)
-    equipment: Optional[List[str]] = Field(default=None, max_length=50)
+    # No upper bound — commercial gyms legitimately have 80+ equipment items.
+    equipment: Optional[List[str]] = Field(default=None)
     focus_areas: Optional[List[str]] = Field(default=None, max_length=20)
     injuries: Optional[List[str]] = Field(default=None, max_length=20)  # List of injury areas to avoid
     workout_type: Optional[str] = Field(default=None, max_length=50)  # Workout style: "Strength", "HIIT", etc.
@@ -335,7 +337,8 @@ class UpdateProgramRequest(BaseModel):
     duration_minutes_max: Optional[int] = Field(default=None, ge=1, le=480)
     workout_type: Optional[str] = Field(default=None, max_length=50)
     workout_days: Optional[List[str]] = Field(default=None, max_length=7)  # ["Mon", "Wed", "Fri"]
-    equipment: Optional[List[str]] = Field(default=None, max_length=50)
+    # No upper bound — commercial gyms legitimately have 80+ equipment items.
+    equipment: Optional[List[str]] = Field(default=None)
     focus_areas: Optional[List[str]] = Field(default=None, max_length=20)
     injuries: Optional[List[str]] = Field(default=None, max_length=20)
     dumbbell_count: Optional[int] = Field(default=2, ge=1, le=10)  # 1 or 2 dumbbells
