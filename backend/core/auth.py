@@ -291,6 +291,7 @@ async def get_current_user(
             "email": user_row["email"],
             "auth_id": supabase_auth_id,  # Supabase Auth ID if needed
             "user_metadata": user_response.user.user_metadata,
+            "app_metadata": user_response.user.app_metadata or {},
         }
 
     except HTTPException:
