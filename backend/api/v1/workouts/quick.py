@@ -394,7 +394,9 @@ async def generate_quick_workout(request: Request, body: QuickWorkoutRequest, ba
             logger.error(f"AI generation failed: {ai_error}", exc_info=True)
             raise safe_internal_error(ai_error, "quick_workout")
 
-        # Save the workout
+        # Save the workout. Quick workouts are EXTRA sessions on top of the
+        # day's planned/canonical workout, so is_current=False keeps them out
+        # of the workouts_one_current_per_user_day partial unique index.
         workout_db_data = {
             "user_id": body.user_id,
             "name": workout_name,
@@ -414,6 +416,7 @@ async def generate_quick_workout(request: Request, body: QuickWorkoutRequest, ba
                 "quick_workout": True,
                 "source": body.source,
             }),
+            "is_current": False,
         }
 
         created = db.create_workout(workout_db_data)
@@ -530,6 +533,8 @@ async def save_quick_workout(request: Request, body: QuickWorkoutSaveRequest, ba
             "generation_method": body.generation_method,
             "generation_source": body.generation_source,
             "generation_metadata": json.dumps(body.generation_metadata) if body.generation_metadata else None,
+            # Quick saved workouts are extra sessions — not the canonical day plan.
+            "is_current": False,
         }
 
         # Upsert to handle both new and re-saved workouts

@@ -80,8 +80,18 @@ class WorkoutDB(BaseDB):
         if gym_profile_id:
             query = query.or_(f"gym_profile_id.eq.{gym_profile_id},gym_profile_id.is.null")
 
-        # Only show current workouts (filter out superseded versions from SCD2)
-        query = query.eq("is_current", True)
+        # Show canonical workouts (is_current=TRUE — the active row in the
+        # SCD2 versioning chain) AND user-manual extras (is_current=FALSE
+        # because they're not the day's canonical plan, but valid_to IS NULL
+        # because they're not superseded). Manual extras carry a recognizable
+        # generation_source so we can distinguish them from old superseded
+        # rows. Per product spec: "one current per day unless the user
+        # created manually then they can have two."
+        query = query.or_(
+            "is_current.eq.true,"
+            "and(is_current.eq.false,valid_to.is.null,"
+            "generation_source.in.(manual,user_created,quick_workout,manual_create))"
+        )
 
         # Exclude generation placeholders (status='generating') — these are temporary
         # rows inserted during workout generation to prevent duplicates.
@@ -122,8 +132,12 @@ class WorkoutDB(BaseDB):
         if not result.data:
             return []
 
-        # Deduplicate: keep only the most recently created workout per scheduled_date
-        seen_dates = set()
+        # Deduplicate canonical (is_current=TRUE) workouts to one-per-date —
+        # this collapses the SCD2 history. User-manual extras
+        # (is_current=FALSE) are NEVER deduplicated against the canonical
+        # row; they always pass through so the user sees them on top of the
+        # day's planned workout.
+        seen_canonical_dates = set()
         deduplicated = []
         for workout in result.data:
             scheduled_date = workout.get("scheduled_date", "")
@@ -132,8 +146,13 @@ class WorkoutDB(BaseDB):
             else:
                 date_only = workout.get("id")
 
-            if date_only not in seen_dates:
-                seen_dates.add(date_only)
+            if workout.get("is_current") is False:
+                # Manual extra — always include, never dedup.
+                deduplicated.append(workout)
+                continue
+
+            if date_only not in seen_canonical_dates:
+                seen_canonical_dates.add(date_only)
                 deduplicated.append(workout)
 
         return deduplicated[offset : offset + limit]

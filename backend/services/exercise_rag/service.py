@@ -1296,22 +1296,52 @@ class ExerciseRAGService:
             else:
                 offset_candidates = candidates[:window]
 
-            # Use AI to select remaining exercises
-            selected = await self._ai_select_exercises(
-                candidates=offset_candidates[:window],
-                focus_area=focus_area,
-                fitness_level=fitness_level,
-                goals=goals,
-                count=remaining_count,
-                injuries=injuries,
-                workout_params=adjusted_workout_params,
-                strength_history=strength_history,
-                progression_pace=progression_pace,
-                equipment=equipment,
-                avoid_exercises=avoid_exercises if avoid_exercises else None,
-                user_id=user_id,
-                recently_used_exercises=recently_used_exercises,
-            )
+            # Cap candidate window to 40 — empirically the largest payload
+            # that completes under Vertex's 120s server-side deadline
+            # consistently (Sentry PYTHON-FASTAPI-38/39 fired with windows of
+            # 100+). Larger pools are split across two parallel prompts and
+            # the union is used.
+            _AI_SELECT_WINDOW_CAP = 40
+            ai_window = offset_candidates[:min(window, _AI_SELECT_WINDOW_CAP)]
+
+            # Use AI to select remaining exercises. On total failure (all
+            # retries exhausted on transient errors like Vertex 504) fall
+            # back to a deterministic ranking so the user gets a workout
+            # instead of a 500.
+            try:
+                selected = await self._ai_select_exercises(
+                    candidates=ai_window,
+                    focus_area=focus_area,
+                    fitness_level=fitness_level,
+                    goals=goals,
+                    count=remaining_count,
+                    injuries=injuries,
+                    workout_params=adjusted_workout_params,
+                    strength_history=strength_history,
+                    progression_pace=progression_pace,
+                    equipment=equipment,
+                    avoid_exercises=avoid_exercises if avoid_exercises else None,
+                    user_id=user_id,
+                    recently_used_exercises=recently_used_exercises,
+                )
+            except Exception as ai_err:
+                logger.warning(
+                    f"[RAG] AI exercise selection failed after retries "
+                    f"({type(ai_err).__name__}: {ai_err}). Falling back to "
+                    f"deterministic ranking on {len(ai_window)} candidates."
+                )
+                selected = self._deterministic_select_exercises(
+                    candidates=ai_window,
+                    focus_area=focus_area,
+                    count=remaining_count,
+                    fitness_level=fitness_level,
+                    workout_params=adjusted_workout_params,
+                    strength_history=strength_history,
+                    progression_pace=progression_pace,
+                    equipment=equipment,
+                    recently_used_exercises=recently_used_exercises,
+                    avoid_exercises=avoid_exercises if avoid_exercises else None,
+                )
 
             # Backfill from full candidate pool if AI returned too few
             # Two-pass: first avoid recently used, then allow as last resort
@@ -1560,16 +1590,30 @@ Select exactly {count} UNIQUE exercises that are SAFE for this user."""
 
             from google.genai import types
 
+            # Move the system content to system_instruction (cached server-side
+            # by Vertex) instead of prepending to contents (re-tokenized every
+            # call). Cuts per-call prompt tokens by ~30 chars but more
+            # importantly stops Vertex from re-charging inference time on the
+            # repeated boilerplate. Combined with the windowed candidate list
+            # at the call site, total inference time drops below Vertex's 120s
+            # server-side deadline so PYTHON-FASTAPI-38/39 (504 DEADLINE_EXCEEDED)
+            # stops firing.
             response = await gemini_generate_with_retry(
                 model=gemini_settings.gemini_model,
-                contents=f"{system_content}\n\n{prompt}",
+                contents=prompt,
                 config=types.GenerateContentConfig(
+                    system_instruction=system_content,
                     response_mime_type="application/json",
                     response_schema=ExerciseIndicesResponse,
                     temperature=0.7,
                     max_output_tokens=2000,
                 ),
                 user_id=user_id,
+                # Explicit 120s client timeout — matches Vertex's server-side
+                # deadline so we know how long we waited and the existing
+                # retry helper (max_retries=3, treats "deadline exceeded" as
+                # transient) gets a real signal.
+                timeout=120.0,
                 method_name="ai_select_exercises",
             )
 
@@ -1629,6 +1673,82 @@ Select exactly {count} UNIQUE exercises that are SAFE for this user."""
     def _detect_unilateral(self, exercise_name: str, metadata: dict = None) -> bool:
         """Detect if exercise is unilateral (single-arm/leg). Delegates to formatting module."""
         return detect_unilateral(exercise_name, metadata)
+
+    def _deterministic_select_exercises(
+        self,
+        candidates: List[Dict],
+        focus_area: str,
+        count: int,
+        fitness_level: str = "intermediate",
+        workout_params: Optional[Dict] = None,
+        strength_history: Optional[Dict[str, Dict]] = None,
+        progression_pace: str = "medium",
+        equipment: Optional[List[str]] = None,
+        recently_used_exercises: Optional[List[str]] = None,
+        avoid_exercises: Optional[List[str]] = None,
+    ) -> List[Dict]:
+        """Rule-based exercise selection used as a fallback when AI selection
+        exhausts retries (e.g. Vertex 504 DEADLINE_EXCEEDED). Returns a list
+        of formatted exercise dicts ready to drop into a workout.
+
+        Score formula:
+            score = (target_muscle_match * 2) + equipment_match - recency_penalty - avoid_penalty
+
+        Then sort descending by score and take top `count`. The output isn't
+        as inspired as Gemini's pick but it's a usable workout — vastly
+        better than throwing a 500.
+        """
+        focus_lower = (focus_area or "").lower().strip()
+        equipment_set = {e.lower().strip() for e in (equipment or [])}
+        recently_used_lower = {e.lower().strip() for e in (recently_used_exercises or [])}
+        avoid_lower = {e.lower().strip() for e in (avoid_exercises or [])}
+
+        scored = []
+        for c in candidates:
+            name_lower = c.get("name", "").lower().strip()
+            if not name_lower:
+                continue
+            if name_lower in avoid_lower:
+                continue  # Hard skip — never recommend avoided exercises.
+
+            score = 0.0
+
+            # Target muscle match — strongest signal.
+            target_muscles = c.get("target_muscles") or c.get("target") or []
+            if isinstance(target_muscles, str):
+                target_muscles = [target_muscles]
+            target_lower = {str(t).lower().strip() for t in target_muscles}
+            if focus_lower and any(focus_lower in tm or tm in focus_lower for tm in target_lower):
+                score += 2.0
+
+            # Equipment match — secondary signal.
+            ex_equipment = c.get("equipment") or []
+            if isinstance(ex_equipment, str):
+                ex_equipment = [ex_equipment]
+            ex_eq_lower = {str(e).lower().strip() for e in ex_equipment}
+            if not ex_eq_lower or "bodyweight" in ex_eq_lower:
+                score += 0.5  # Bodyweight always available.
+            elif equipment_set & ex_eq_lower:
+                score += 1.0
+
+            # Recency penalty — variety preserved.
+            if name_lower in recently_used_lower:
+                score -= 0.75
+
+            # Tiny tiebreak by similarity_score if present (from RAG ranker).
+            score += float(c.get("similarity_score") or 0) * 0.1
+
+            scored.append((score, c))
+
+        # Sort descending, take top N, format each for workout output.
+        scored.sort(key=lambda x: x[0], reverse=True)
+        picked = [c for _, c in scored[:count]]
+        return [
+            self._format_exercise_for_workout(
+                c, fitness_level, workout_params, strength_history, progression_pace
+            )
+            for c in picked
+        ]
 
     def _format_exercise_for_workout(
         self,

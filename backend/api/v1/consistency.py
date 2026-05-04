@@ -198,7 +198,14 @@ async def get_consistency_insights(
                 current_streak += 1
                 cursor = cursor - timedelta(days=1)
 
-        # Get longest streak from history
+        # Get longest streak from history. Three sources, each guarded:
+        #   1. get_longest_streak RPC (preferred — likely doesn't exist yet)
+        #   2. streak_history table (Sentry PYTHON-FASTAPI-35: "Could not find
+        #      the table 'public.streak_history' in the schema cache")
+        #   3. fall back to current_streak as the floor
+        # Any combination of missing infra defaults to current_streak rather
+        # than 500-ing the whole endpoint.
+        longest_streak = current_streak
         try:
             longest_response = db.client.rpc(
                 "get_longest_streak",
@@ -206,22 +213,35 @@ async def get_consistency_insights(
             ).execute()
             longest_streak = longest_response.data or current_streak
         except Exception:
-            # Function might not exist yet, fall back to query
-            history_response = db.client.table("streak_history").select(
-                "streak_length"
-            ).eq("user_id", user_id).order("streak_length", desc=True).limit(1).execute()
-            historical_max = history_response.data[0]["streak_length"] if history_response.data else 0
-            longest_streak = max(historical_max, current_streak)
+            try:
+                history_response = db.client.table("streak_history").select(
+                    "streak_length"
+                ).eq("user_id", user_id).order("streak_length", desc=True).limit(1).execute()
+                historical_max = (
+                    history_response.data[0]["streak_length"]
+                    if history_response.data else 0
+                )
+                longest_streak = max(historical_max, current_streak)
+            except Exception as _e:
+                # streak_history may not exist; current_streak is the best we have.
+                logger.debug(f"streak_history fallback failed: {_e}")
+                longest_streak = current_streak
 
         # Calculate days since last workout
         days_since_last = 0
         if last_workout_date:
             days_since_last = (today - last_workout_date).days
 
-        # Get workout time patterns
-        patterns_response = db.client.table("workout_time_patterns").select(
-            "day_of_week, hour_of_day, completion_count, skip_count"
-        ).eq("user_id", user_id).execute()
+        # Get workout time patterns. Defensively guarded — workout_time_patterns
+        # is an analytics aggregation table that may not exist on all
+        # environments; missing table degrades to empty patterns rather than 500.
+        try:
+            patterns_response = db.client.table("workout_time_patterns").select(
+                "day_of_week, hour_of_day, completion_count, skip_count"
+            ).eq("user_id", user_id).execute()
+        except Exception as _e:
+            logger.debug(f"workout_time_patterns missing or failed: {_e}")
+            patterns_response = type("R", (), {"data": []})()
 
         # Aggregate by day of week
         day_totals = defaultdict(lambda: {"completions": 0, "skips": 0})
@@ -426,10 +446,14 @@ async def get_consistency_patterns(
     try:
         logger.info(f"Fetching consistency patterns for user {user_id}")
 
-        # Get workout time patterns
-        patterns_response = db.client.table("workout_time_patterns").select(
-            "day_of_week, hour_of_day, completion_count, skip_count, updated_at"
-        ).eq("user_id", user_id).execute()
+        # Get workout time patterns. Defensively guarded — table may not exist.
+        try:
+            patterns_response = db.client.table("workout_time_patterns").select(
+                "day_of_week, hour_of_day, completion_count, skip_count, updated_at"
+            ).eq("user_id", user_id).execute()
+        except Exception as _e:
+            logger.debug(f"workout_time_patterns missing or failed: {_e}")
+            patterns_response = type("R", (), {"data": []})()
 
         # Aggregate patterns
         day_totals = defaultdict(lambda: {"completions": 0, "skips": 0})
@@ -509,10 +533,16 @@ async def get_consistency_patterns(
                     p.is_preferred = True
                     break
 
-        # Get streak history
-        history_response = db.client.table("streak_history").select("*").eq(
-            "user_id", user_id
-        ).order("ended_at", desc=True).limit(20).execute()
+        # Get streak history. Defensively guarded — table may not exist
+        # (Sentry PYTHON-FASTAPI-35); empty history just means no past streaks
+        # to display, not a 500-worthy error.
+        history_response = type("R", (), {"data": []})()
+        try:
+            history_response = db.client.table("streak_history").select("*").eq(
+                "user_id", user_id
+            ).order("ended_at", desc=True).limit(20).execute()
+        except Exception as _e:
+            logger.debug(f"streak_history missing or failed: {_e}")
 
         streak_history = []
         total_streak_length = 0

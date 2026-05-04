@@ -74,6 +74,15 @@ async def create_workout(
         # Override user_id with authenticated user to prevent IDOR
         workout.user_id = current_user["id"]
 
+        # User-driven POST /workouts/ — the user is creating an EXTRA workout
+        # for a day (e.g. a Quick HIIT on top of today's planned session).
+        # Per product spec: "one current per day unless the user created
+        # manually, then they can have two". Manual creates are NOT canonical;
+        # they coexist with the auto-generated canonical workout via the
+        # `is_current=False` flag, which excludes them from the
+        # workouts_one_current_per_user_day partial unique index. List
+        # endpoints (today.py, GET /workouts) include both is_current=TRUE
+        # AND manual rows so the user still sees their addition.
         workout_data = {
             "user_id": workout.user_id,
             "name": workout.name,
@@ -83,8 +92,9 @@ async def create_workout(
             "exercises_json": exercises,
             "duration_minutes": workout.duration_minutes,
             "generation_method": workout.generation_method,
-            "generation_source": workout.generation_source,
+            "generation_source": workout.generation_source or "manual",
             "generation_metadata": workout.generation_metadata,
+            "is_current": False,
         }
 
         created = db.create_workout(workout_data)

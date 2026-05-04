@@ -1144,19 +1144,75 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
             "generation_source": "gemini_generation",
         }
 
-        try:
-            created = db.create_workout(workout_db_data)
-        except Exception as insert_err:
-            # Retry without estimated_calories if column doesn't exist yet
-            if 'PGRST204' in str(insert_err) and 'estimated_calories' in str(insert_err):
-                logger.warning("[Calories] estimated_calories column not in schema cache, retrying without it", exc_info=True)
-                workout_db_data.pop('estimated_calories', None)
+        # If we reserved a placeholder up-front (lines 138-152), UPDATE it
+        # in-place with the real workout payload instead of INSERT + DELETE.
+        # The previous INSERT-then-DELETE-placeholder dance collided with the
+        # workouts_one_current_per_user_day partial unique index — both rows
+        # had is_current=TRUE for the same (user_id, day) so the new INSERT
+        # hit 23505. The workout_db.py refetch then returned the placeholder
+        # itself as the "winner", and a few lines later the placeholder was
+        # deleted, leaving log_workout_change to FK-violate against a row
+        # that no longer existed (Sentry PYTHON-FASTAPI-36, root cause for
+        # the duplicate-key + FK-violation cascade tonight).
+        #
+        # UPDATE-in-place: same row keeps the same id and stays is_current,
+        # no INSERT collision possible, no follow-up DELETE needed.
+        #
+        # CRITICAL: must override status='generating' (set on the placeholder
+        # at line 143) → status='scheduled' (the value normal workouts carry
+        # per `SELECT status, COUNT(*) FROM workouts GROUP BY status`). Without
+        # the override the row stays status='generating' and list_workouts
+        # filters it out (workout_db.py:89: status.neq.generating), so the
+        # user generates a workout but never sees it in /today or /workouts.
+        if placeholder_id:
+            update_payload = {**workout_db_data, "status": "scheduled"}
+            try:
+                db.client.table("workouts").update(update_payload).eq(
+                    "id", placeholder_id
+                ).execute()
+                # Refetch the now-updated row so downstream code has the
+                # full record (including server-assigned timestamps etc.).
+                created = db.client.table("workouts").select("*").eq(
+                    "id", placeholder_id
+                ).single().execute().data
+                logger.info(
+                    f"🔄 [Dedup] Updated placeholder {placeholder_id} with real workout"
+                )
+                # Null out so the now-defunct delete-placeholder block below
+                # becomes a no-op and the error-cleanup blocks (1195+, 1203+)
+                # don't try to delete the row we just promoted.
+                placeholder_id = None
+            except Exception as update_err:
+                # Same schema-cache-miss retry as the INSERT path.
+                if 'PGRST204' in str(update_err) and 'estimated_calories' in str(update_err):
+                    logger.warning("[Calories] estimated_calories column not in schema cache, retrying without it", exc_info=True)
+                    update_payload.pop('estimated_calories', None)
+                    db.client.table("workouts").update(update_payload).eq(
+                        "id", placeholder_id
+                    ).execute()
+                    created = db.client.table("workouts").select("*").eq(
+                        "id", placeholder_id
+                    ).single().execute().data
+                    placeholder_id = None
+                else:
+                    raise
+        else:
+            try:
                 created = db.create_workout(workout_db_data)
-            else:
-                raise
+            except Exception as insert_err:
+                # Retry without estimated_calories if column doesn't exist yet
+                if 'PGRST204' in str(insert_err) and 'estimated_calories' in str(insert_err):
+                    logger.warning("[Calories] estimated_calories column not in schema cache, retrying without it", exc_info=True)
+                    workout_db_data.pop('estimated_calories', None)
+                    created = db.create_workout(workout_db_data)
+                else:
+                    raise
         logger.info(f"Workout generated: id={created['id']}, gym_profile_id={gym_profile_id}")
 
-        # Delete placeholder now that real workout exists
+        # Delete placeholder now that real workout exists. With the
+        # UPDATE-in-place fix above, placeholder_id is None on the happy
+        # path and this is a no-op. Kept for defense-in-depth in case a
+        # future code path skips the UPDATE branch.
         if placeholder_id:
             try:
                 db.client.table("workouts").delete().eq("id", placeholder_id).execute()

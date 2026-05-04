@@ -270,8 +270,18 @@ If user has gym equipment (full_gym, barbell, dumbbells, cable_machine, machines
             # retry loop handles ReadTimeout transparently (was Sentry
             # PYTHON-FASTAPI-31/32: "ReadTimeout: The read operation timed out"
             # surfacing as a 500 instead of a transparent retry).
-            _STREAM_CREATE_TIMEOUT_S = 30.0
-            _PER_CHUNK_TIMEOUT_S = 45.0
+            # Two-tier timeouts:
+            #   stream-create: 45s — Vertex stream-create handshake under load.
+            #   chunk 1: 150s — full inference cost (Vertex DEADLINE_EXCEEDED
+            #     occurs at ~120s server-side; we give ourselves a hair more
+            #     so the SERVER's error reaches us before our client timeout).
+            #   chunk 2+: 30s — once inference done, chunks stream in ms.
+            # My earlier blanket 45s per-chunk fired before Vertex returned
+            # chunk 1, surfacing PYTHON-FASTAPI-37 "TimeoutError: Gemini stream
+            # stalled at chunk 1" as a 500 even though Vertex was still working.
+            _STREAM_CREATE_TIMEOUT_S = 45.0
+            _FIRST_CHUNK_TIMEOUT_S = 150.0
+            _SUBSEQUENT_CHUNK_TIMEOUT_S = 30.0
             stream = None
             for _attempt in range(_streaming_max_retries + 1):
                 try:
@@ -311,21 +321,25 @@ If user has gym equipment (full_gym, barbell, dumbbells, cable_machine, machines
             # abort the stream so caller can retry. async-for doesn't support
             # a per-iteration timeout natively, so we wrap the iterator in an
             # async generator that applies asyncio.wait_for per __anext__.
-            async def _with_chunk_timeout(_src, _timeout_s: float):
+            async def _with_chunk_timeout(_src, _first_s: float, _rest_s: float):
+                """Two-tier timeout: first chunk gets [_first_s] (full inference
+                cost), subsequent chunks get [_rest_s] (just streaming bytes).
+                """
                 _it = _src.__aiter__()
                 _idx = 0
                 while True:
+                    _budget = _first_s if _idx == 0 else _rest_s
                     try:
                         _val = await asyncio.wait_for(
                             _it.__anext__(),
-                            timeout=_timeout_s,
+                            timeout=_budget,
                         )
                     except StopAsyncIteration:
                         return
                     except asyncio.TimeoutError as _te:
                         logger.warning(
                             f"⚠️ [Streaming] Chunk {_idx + 1} timed out after "
-                            f"{_timeout_s}s — aborting stream so caller can retry"
+                            f"{_budget}s — aborting stream so caller can retry"
                         )
                         raise TimeoutError(
                             f"Gemini stream stalled at chunk {_idx + 1}"
@@ -333,7 +347,7 @@ If user has gym equipment (full_gym, barbell, dumbbells, cable_machine, machines
                     _idx += 1
                     yield _val
 
-            async for chunk in _with_chunk_timeout(stream, _PER_CHUNK_TIMEOUT_S):
+            async for chunk in _with_chunk_timeout(stream, _FIRST_CHUNK_TIMEOUT_S, _SUBSEQUENT_CHUNK_TIMEOUT_S):
                 chunk_count += 1
                 logger.debug(f"[Streaming] Received chunk {chunk_count}, type={type(chunk).__name__}")
 
@@ -487,8 +501,18 @@ If user has gym equipment (full_gym, barbell, dumbbells, cable_machine, machines
             _streaming_max_retries = 3
             _streaming_delays = [2.0, 5.0, 10.0]
             # Per-stage timeouts — see non-cached path above for rationale.
-            _STREAM_CREATE_TIMEOUT_S = 30.0
-            _PER_CHUNK_TIMEOUT_S = 45.0
+            # Two-tier timeouts:
+            #   stream-create: 45s — Vertex stream-create handshake under load.
+            #   chunk 1: 150s — full inference cost (Vertex DEADLINE_EXCEEDED
+            #     occurs at ~120s server-side; we give ourselves a hair more
+            #     so the SERVER's error reaches us before our client timeout).
+            #   chunk 2+: 30s — once inference done, chunks stream in ms.
+            # My earlier blanket 45s per-chunk fired before Vertex returned
+            # chunk 1, surfacing PYTHON-FASTAPI-37 "TimeoutError: Gemini stream
+            # stalled at chunk 1" as a 500 even though Vertex was still working.
+            _STREAM_CREATE_TIMEOUT_S = 45.0
+            _FIRST_CHUNK_TIMEOUT_S = 150.0
+            _SUBSEQUENT_CHUNK_TIMEOUT_S = 30.0
             stream = None
             for _attempt in range(_streaming_max_retries + 1):
                 try:
@@ -546,7 +570,7 @@ If user has gym equipment (full_gym, barbell, dumbbells, cable_machine, machines
                     _idx += 1
                     yield _val
 
-            async for chunk in _with_chunk_timeout(stream, _PER_CHUNK_TIMEOUT_S):
+            async for chunk in _with_chunk_timeout(stream, _FIRST_CHUNK_TIMEOUT_S, _SUBSEQUENT_CHUNK_TIMEOUT_S):
                 chunk_count += 1
 
                 # Check for blocked content or safety issues

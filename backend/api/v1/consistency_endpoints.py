@@ -297,13 +297,18 @@ async def initiate_streak_recovery(
         if last_workout_date:
             days_since = (user_today - last_workout_date).days
 
-        # Get previous streak length from most recent streak history
-        history_response = db.client.table("streak_history").select(
-            "streak_length"
-        ).eq("user_id", user_id).order("ended_at", desc=True).limit(1).execute()
-
-        if history_response.data:
-            previous_streak = history_response.data[0]["streak_length"]
+        # Get previous streak length from most recent streak history.
+        # Defensively guarded — streak_history table may not exist on this
+        # environment (Sentry PYTHON-FASTAPI-35).
+        try:
+            history_response = db.client.table("streak_history").select(
+                "streak_length"
+            ).eq("user_id", user_id).order("ended_at", desc=True).limit(1).execute()
+            if history_response.data:
+                previous_streak = history_response.data[0]["streak_length"]
+        except Exception as _e:
+            logger.debug(f"streak_history missing or failed: {_e}")
+            # previous_streak stays at the 0 initialized above.
 
         # Generate motivation message
         from .consistency import get_recovery_message, get_motivation_quote  # Lazy import to avoid circular import

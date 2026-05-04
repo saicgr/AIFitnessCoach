@@ -547,7 +547,25 @@ def log_workout_change(
         db.create_workout_change(change_data)
         logger.debug(f"Logged workout change: workout_id={workout_id}, type={change_type}")
     except Exception as e:
-        logger.error(f"Failed to log workout change: {e}", exc_info=True)
+        # FK violation on workout_changes_workout_id_fkey means the workout
+        # was deleted/replaced between create and log (race with the
+        # workouts_one_current_per_user_day refetch path, or a delete during
+        # an in-flight modification). The audit log isn't user-facing and a
+        # missing entry isn't worth a Sentry event — demote to WARNING so it
+        # stays out of Sentry's default capture (Sentry PYTHON-FASTAPI-36).
+        err_str = str(e)
+        is_fk_violation = (
+            "workout_changes_workout_id_fkey" in err_str
+            or ("foreign key" in err_str.lower() and "workout_changes" in err_str)
+            or "23503" in err_str  # Postgres foreign_key_violation
+        )
+        if is_fk_violation:
+            logger.warning(
+                f"Skipping workout_change log — workout {workout_id} no longer exists "
+                f"(likely a refetch race or concurrent delete)"
+            )
+        else:
+            logger.error(f"Failed to log workout change: {e}", exc_info=True)
 
 
 async def index_workout_to_rag(workout: Workout):
