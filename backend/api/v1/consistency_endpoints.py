@@ -265,20 +265,30 @@ async def initiate_streak_recovery(
 
         logger.info(f"Initiating streak recovery for user {user_id}")
 
-        # Get user's last workout info
-        user_response = safe_maybe_single(
-            db.client.table("users").select(
-                "current_streak, last_workout_date"
-            ).eq("id", user_id).maybe_single()
-        )
+        # Get last workout date directly from completed workouts. The `users`
+        # table doesn't carry `current_streak` / `last_workout_date` columns
+        # (Sentry PYTHON-FASTAPI-2X: "column users.current_streak does not
+        # exist") — derive from the workouts table instead.
+        last_workout_resp = db.client.table("workouts").select(
+            "scheduled_date"
+        ).eq(
+            "user_id", user_id
+        ).eq(
+            "is_completed", True
+        ).order("scheduled_date", desc=True).limit(1).execute()
 
         last_workout_date = None
         previous_streak = 0
 
-        if user_response.data:
-            last_workout_str = user_response.data.get("last_workout_date")
+        if last_workout_resp.data:
+            last_workout_str = last_workout_resp.data[0].get("scheduled_date")
             if last_workout_str:
-                last_workout_date = date.fromisoformat(last_workout_str) if isinstance(last_workout_str, str) else last_workout_str
+                # scheduled_date may be ISO timestamp or YYYY-MM-DD.
+                last_workout_date = (
+                    date.fromisoformat(last_workout_str[:10])
+                    if isinstance(last_workout_str, str)
+                    else last_workout_str
+                )
 
         # Calculate days since last workout
         user_tz = resolve_timezone(http_request, db, user_id)

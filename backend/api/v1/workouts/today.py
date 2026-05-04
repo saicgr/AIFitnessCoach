@@ -588,7 +588,40 @@ async def auto_generate_workout(user_id: str, target_date: date, gym_profile_id:
         # Note: request=None means resolve_timezone() will fall back to DB/UTC for timezone,
         # and skip_comeback reads from body (not request).
         unwrapped = getattr(generate_workout, "__wrapped__", generate_workout)
-        result = await unwrapped(None, body=request, background_tasks=BackgroundTasks(), current_user={"id": user_id})
+        try:
+            result = await unwrapped(None, body=request, background_tasks=BackgroundTasks(), current_user={"id": user_id})
+        except Exception as e:
+            # The `workouts_one_current_per_user_day` partial unique index
+            # (migration 2048) raises Postgres SQLSTATE 23505 / "duplicate key
+            # value violates unique constraint" when a concurrent writer beat
+            # us to creating today's is_current row. The migration's own
+            # comment states: "Losing INSERTs raise unique_violation; the
+            # writer catches and refetches the winner." Sentry PYTHON-FASTAPI-2Z
+            # was the missing catch — surfaced as 500 instead of returning
+            # the existing workout.
+            err_str = str(e)
+            is_uniq_violation = (
+                "23505" in err_str
+                or "duplicate key" in err_str
+                or "workouts_one_current_per_user_day" in err_str
+            )
+            if is_uniq_violation:
+                logger.info(
+                    f"[BG-GEN] Lost the race for {generation_key} "
+                    "(unique_violation) — refetching the winner"
+                )
+                refetched = db.list_workouts(
+                    user_id=user_id,
+                    from_date=tz_from,
+                    to_date=tz_to,
+                    limit=1,
+                    gym_profile_id=gym_profile_id,
+                )
+                if refetched:
+                    return refetched[0]
+                # If we can't find the winner, fall through to the outer
+                # except-handler so the (real) error propagates with context.
+            raise
         logger.info(f"[BG-GEN] Successfully generated workout for {generation_key}: {result.name if result else 'unknown'}")
         return result
 

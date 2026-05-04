@@ -159,20 +159,44 @@ async def get_consistency_insights(
     try:
         logger.info(f"Fetching consistency insights for user {user_id}")
 
-        # Get user's current streak from users table
-        user_response = safe_maybe_single(
-            db.client.table("users").select(
-                "current_streak, last_workout_date"
-            ).eq("id", user_id).maybe_single()
-        )
+        # Compute current streak + last_workout_date directly from the workouts
+        # table. The `users` table does NOT carry `current_streak` /
+        # `last_workout_date` columns (Sentry PYTHON-FASTAPI-2X: "column
+        # users.current_streak does not exist") — that data is derived from
+        # completed workouts on demand. Pull the last 90 days of completed
+        # workouts ordered by scheduled_date DESC, then walk backwards from
+        # `today` counting consecutive completed days.
+        recent_completed = db.client.table("workouts").select(
+            "scheduled_date"
+        ).eq(
+            "user_id", user_id
+        ).eq(
+            "is_completed", True
+        ).gte(
+            "scheduled_date", (today - timedelta(days=90)).isoformat()
+        ).order("scheduled_date", desc=True).limit(120).execute()
 
+        completed_dates: set = set()
+        for row in (recent_completed.data or []):
+            sd = row.get("scheduled_date")
+            if not sd:
+                continue
+            try:
+                # scheduled_date may arrive as ISO timestamp or YYYY-MM-DD.
+                d = date.fromisoformat(sd[:10]) if isinstance(sd, str) else sd
+                completed_dates.add(d)
+            except Exception:
+                continue
+
+        last_workout_date = max(completed_dates) if completed_dates else None
         current_streak = 0
-        last_workout_date = None
-        if user_response.data:
-            current_streak = user_response.data.get("current_streak", 0) or 0
-            last_workout_str = user_response.data.get("last_workout_date")
-            if last_workout_str:
-                last_workout_date = date.fromisoformat(last_workout_str) if isinstance(last_workout_str, str) else last_workout_str
+        if last_workout_date is not None:
+            # Streak counts from `today` (or yesterday — one rest day grace)
+            # backward through consecutive completed days.
+            cursor = today if today in completed_dates else (today - timedelta(days=1))
+            while cursor in completed_dates:
+                current_streak += 1
+                cursor = cursor - timedelta(days=1)
 
         # Get longest streak from history
         try:

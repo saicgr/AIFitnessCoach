@@ -165,6 +165,47 @@ class WorkoutDB(BaseDB):
                 data_copy = {k: v for k, v in data.items() if k != "estimated_duration_minutes"}
                 result = self.client.table("workouts").insert(data_copy).execute()
                 return result.data[0] if result.data else None
+
+            # Migration 2048 added a partial unique index
+            # `workouts_one_current_per_user_day` ensuring exactly one
+            # is_current=TRUE row per (user_id, day). Per the migration's own
+            # docstring: "Losing INSERTs raise unique_violation; the writer
+            # catches and refetches the winner." Sentry PYTHON-FASTAPI-2Z / 33
+            # were the missing catch — surfaced as 500 instead of returning
+            # the existing workout. Handling here at the canonical insert
+            # site means /today, /generate, /generate-stream, /quick all get
+            # the fix without per-caller patches.
+            is_uniq_violation = (
+                "23505" in error_msg
+                or "duplicate key" in error_msg
+                or "workouts_one_current_per_user_day" in error_msg
+            )
+            if is_uniq_violation:
+                user_id = data.get("user_id")
+                scheduled_date = data.get("scheduled_date")
+                gym_profile_id = data.get("gym_profile_id")
+                if user_id and scheduled_date:
+                    # scheduled_date may be ISO timestamp or YYYY-MM-DD —
+                    # the partial index keys on `(scheduled_date AT TIME ZONE
+                    # 'UTC')::date`, so a date-only filter on the date prefix
+                    # is sufficient to find the winner.
+                    sd_str = str(scheduled_date)[:10]
+                    refetch = self.client.table("workouts").select("*").eq(
+                        "user_id", user_id
+                    ).gte(
+                        "scheduled_date", f"{sd_str}T00:00:00+00:00"
+                    ).lte(
+                        "scheduled_date", f"{sd_str}T23:59:59+00:00"
+                    ).eq(
+                        "is_current", True
+                    ).neq("status", "cancelled")
+                    if gym_profile_id:
+                        refetch = refetch.eq("gym_profile_id", gym_profile_id)
+                    winner = refetch.order("created_at", desc=True).limit(1).execute()
+                    if winner.data:
+                        return winner.data[0]
+                # Refetch turned up nothing — re-raise so the caller sees
+                # the real error context instead of silently returning None.
             # Re-raise other errors
             raise
 
