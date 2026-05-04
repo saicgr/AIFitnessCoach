@@ -443,15 +443,37 @@ class TestAcceptTier:
         result = await accept_tier("chicken tikka masala", rows)
         assert result.partial_match is True
 
-    async def test_single_word_query(self, gemini_accept_all):
+    async def test_single_word_query_prefers_exact(self, gemini_accept_all):
+        # Single-word query with an exact-match row → tier A wins outright,
+        # variants with extras drop to tier B (hidden by the tier-A return
+        # contract). Prevents "dosa" being silently logged as "Masala Dosa".
         rows = [
             _row("Masala Dosa", variant_names=["masala dosa"]),
             _row("Paneer Masala Dosa", variant_names=["paneer masala dosa"]),
             _row("Dosa", variant_names=["dosa"]),
         ]
         result = await accept_tier("dosa", rows)
-        assert len(result.rows) == 3
+        assert len(result.rows) == 1
+        assert result.rows[0]["display_name"] == "Dosa"
         assert result.partial_match is False
+
+    async def test_single_word_extras_demoted_to_gemini(self, gemini_reject_all):
+        # The reported "mutton fry" → "Mutton Liver Fry" bug. With no exact-match
+        # row in the DB, the candidate has an extra distinguishing word ("liver")
+        # that the query never asked for. Must hit Gemini for validation; on
+        # reject, the gate returns empty rather than silently logging organ meat.
+        rows = [_row("Mutton Liver Fry", variant_names=["mutton liver fry"])]
+        result = await accept_tier("mutton fry", rows)
+        assert result.rows == []
+
+    async def test_single_word_extras_accepted_when_descriptor(self, gemini_accept_all):
+        # Same shape as above but with a benign descriptor extra ("whole" in
+        # "Whole Milk" for query "milk"). Gemini approves → returned with
+        # partial_match flagged so the UI can render an "approximate match" hint.
+        rows = [_row("Whole Milk", variant_names=["whole milk"])]
+        result = await accept_tier("milk", rows)
+        assert len(result.rows) == 1
+        assert result.partial_match is True
 
 
 class TestSanitizeForPrompt:

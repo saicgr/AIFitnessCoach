@@ -60,7 +60,7 @@ async def _get_popularity_data(
             if fitness_level:
                 params["fitness_level_filter"] = fitness_level
 
-            response = supabase.rpc(
+            response = supabase.client.rpc(
                 "get_exercise_popularity_stats",
                 params,
             ).execute()
@@ -84,7 +84,7 @@ async def _get_popularity_data(
 
         # Query aggregated exercise stats from performance_logs
         # This is a simplified aggregation - the full version runs as a batch job
-        response = supabase.rpc(
+        response = supabase.client.rpc(
             "get_exercise_popularity_stats",
             params,
         ).execute()

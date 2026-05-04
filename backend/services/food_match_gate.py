@@ -10,10 +10,13 @@ Design reference:
   /Users/saichetangrandhe/.claude/plans/lovely-discovering-mccarthy.md (Part A)
 
 Acceptance tiers (see classify()):
-  A — coverage == 1.0                    → accept
-  B — 0.75 ≤ coverage < 1.0              → Gemini YES to accept (partial_match)
-  C — coverage < 0.75 ∧ trigram ≥ 0.9    → Gemini YES to accept (partial_match)
-  D — everything else                    → drop
+  A — coverage == 1.0 ∧ no candidate extras  → accept
+  B — coverage == 1.0 ∧ candidate has extras → Gemini YES to accept
+       (e.g. query "mutton fry" vs "Mutton Liver Fry" — liver is the extra
+       and Gemini must decide whether the extras are distinguishing)
+  B — 2/3 ≤ coverage < 1.0                   → Gemini YES to accept (partial_match)
+  C — coverage < 2/3 ∧ trigram ≥ 0.9         → Gemini YES to accept (partial_match)
+  D — everything else                         → drop
 
 Return contract (see accept_tier()):
   • ≥1 tier-A row  → return only tier A (hides the wrong generic match)
@@ -292,6 +295,8 @@ class MatchScore:
     head_bonus: float
     phrase_bonus: float
     missing: Set[str] = field(default_factory=set)
+    extras: Set[str] = field(default_factory=set)
+    query_len: int = 0
     tier: str = "D"
 
 
@@ -327,6 +332,22 @@ def score_row(query_content: List[str], row: Dict[str, Any]) -> MatchScore:
         and display_content[-1] == query_content[-1]
     ) else 0.0
 
+    # Candidate-side extras: content words in the display that the query
+    # does NOT cover. e.g. query "mutton fry" (content=["mutton"]) vs
+    # candidate "Mutton Liver Fry" (content=["mutton","liver"]) → extras={"liver"}.
+    # These are distinguishing ingredients/cuts and must not be silently absorbed
+    # into a tier-A match — see classify().
+    query_set = set(query_content)
+    extras: Set[str] = set()
+    for w in display_content:
+        if w in query_set:
+            continue
+        if _stem_plural(w) in query_set:
+            continue
+        if any(_stem_plural(q) == _stem_plural(w) for q in query_content):
+            continue
+        extras.add(w)
+
     # Contiguous sub-sequence match → phrase bonus
     phrase_bonus = 0.0
     candidate_phrases = [normalize_query(display_name)] + [
@@ -347,7 +368,8 @@ def score_row(query_content: List[str], row: Dict[str, Any]) -> MatchScore:
 
     return MatchScore(
         row=row, coverage=coverage, trigram_score=tri,
-        head_bonus=head_bonus, phrase_bonus=phrase_bonus, missing=missing,
+        head_bonus=head_bonus, phrase_bonus=phrase_bonus,
+        missing=missing, extras=extras, query_len=len(query_content),
     )
 
 
@@ -365,7 +387,24 @@ def classify(score: MatchScore) -> str:
     much semantic drift for Gemini to reliably validate.
     """
     if score.coverage >= 1.0:
-        return "A"
+        # Candidate has no extra distinguishing content words → outright accept.
+        if not score.extras:
+            return "A"
+        # Multi-word query whose full phrase appears contiguously in the
+        # candidate ("milk chocolate" → "Milk Chocolate Bar"): the matched
+        # phrase is intact and the extras live around it. Keep tier A so the
+        # downstream phrase/head ranking still picks the most-faithful row.
+        # Single-word phrase matches don't count — for query "mutton", every
+        # mutton-containing row trivially "preserves the phrase", which is
+        # exactly the false-positive shape we're guarding against
+        # ("Mutton Liver Fry" must be Gemini-validated, not auto-accepted).
+        if score.query_len >= 2 and score.phrase_bonus >= 0.2:
+            return "A"
+        # Candidate has extras the query never asked for ("mutton" → "Mutton
+        # Liver Fry"). Demote to B so Gemini decides whether the extras are
+        # benign descriptors ("Whole Milk" for "milk") or distinguishing
+        # cuts/ingredients ("Liver Fry" for "fry").
+        return "B"
     if score.coverage >= _TIER_B_MIN_COVERAGE and len(score.missing) <= 1:
         return "B"
     if score.trigram_score >= 0.9:
@@ -465,7 +504,7 @@ async def gemini_batch_validate(
     )
     # "v2" salt invalidates cached verdicts from before the stricter
     # region/brand/protein rules were added to the validator prompt.
-    cache_key = (query.strip().lower(), frozenset(cand_names), region, "v2")
+    cache_key = (query.strip().lower(), frozenset(cand_names), region, "v3")
     now = time.time()
     cached = _VALIDATE_CACHE.get(cache_key)
     if cached and (now - cached[0]) < _VALIDATE_TTL:
@@ -517,6 +556,13 @@ async def gemini_batch_validate(
         "  other are DISTINGUISHING — REJECT. Examples: chicken, beef,\n"
         "  lamb, mutton, pork, paneer, tofu, shrimp, fish, egg, vegan,\n"
         "  vegetarian. A chicken biryani is not a mutton biryani.\n"
+        "- ORGAN-MEAT or specific CUT words on either side that the other\n"
+        "  side lacks are DISTINGUISHING — REJECT. Examples: liver, kidney,\n"
+        "  heart, brain, tongue, tripe, gizzard, marrow, sweetbreads,\n"
+        "  breast, thigh, wing, drumstick, leg, shank, ribs, loin, chuck,\n"
+        "  brisket, shoulder, belly, tenderloin. \"mutton fry\" is NOT\n"
+        "  \"mutton liver fry\"; \"chicken curry\" is NOT \"chicken liver\n"
+        "  curry\".\n"
         "- Unknown non-English words in the query default to DISTINGUISHING\n"
         "  unless they are clearly a COOKING METHOD or BREADING/COATING\n"
         "  STYLE with similar macros (panko, tempura, tandoori, tikka are\n"

@@ -1,6 +1,6 @@
 """Secondary endpoints for personal_goals.  Sub-router included by main module."""
 from typing import Optional
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta, date, timezone
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 import logging
 logger = logging.getLogger(__name__)

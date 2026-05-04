@@ -34,6 +34,11 @@ from services.strength_calculator_service import StrengthCalculatorService, Stre
 from services.personal_records_service import PersonalRecordsService
 from services.nutrition_calculator_service import NutritionCalculatorService, NutritionTargets, DailyNutrition
 from services.fitness_score_calculator_service import FitnessScoreCalculatorService, FitnessScore, FitnessLevel
+# Used at lines 648, 650, 951 — were previously undefined names that would
+# crash with NameError whenever the score-view telemetry or readiness-
+# recommendation paths fired. Same pattern as scores.py:48,61.
+from services.user_context_service import user_context_service, EventType
+from services.ai_insights_service import ai_insights_service
 from .scores_models import (
     ReadinessCheckInRequest,
     ReadinessResponse,

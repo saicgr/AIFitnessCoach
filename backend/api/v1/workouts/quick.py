@@ -33,6 +33,17 @@ from .utils import (
     get_user_avoided_muscles,
     validate_and_cap_exercise_parameters,
 )
+# Progression context — quick workouts previously generated with NO awareness
+# of the user's training history (rep preferences, mastery, training focus,
+# pace), so weight defaulted to 0 and reps to a generic 10 every time.
+# Pulling these matches what /generate does at lines 259-270, 408 of
+# generation_endpoints.py, so quick workouts now inherit progressive overload.
+from .progression_utils import (
+    build_progression_philosophy_prompt,
+    get_user_progression_context,
+    get_user_rep_preferences,
+)
+from .user_preference_utils import get_user_progression_pace
 
 router = APIRouter()
 logger = get_logger(__name__)
@@ -114,6 +125,10 @@ async def generate_quick_workout_prompt(
     avoided_exercises: Optional[List[str]] = None,
     avoided_muscles: Optional[dict] = None,
     injuries: Optional[List[str]] = None,
+    # Progression-overload context — when None, the quick workout prompt
+    # behaves as before (no progression awareness, fixed rep defaults).
+    progression_philosophy: Optional[str] = None,
+    progression_pace: str = "medium",
 ) -> str:
     """Build a prompt specifically for quick workouts."""
 
@@ -174,11 +189,28 @@ FOCUS: BALANCED QUICK WORKOUT
 
     equipment_str = ", ".join(equipment) if equipment else "bodyweight only"
 
+    # Progression block — pulled from generation_endpoints.py's pattern.
+    # When present, the philosophy explains the user's training focus + rep
+    # ranges + which exercises they've mastered, and the pace ("slow",
+    # "medium", "aggressive") biases how big each weight/rep bump should be.
+    progression_block = ""
+    if progression_philosophy and progression_philosophy.strip():
+        progression_block = (
+            f"\n\n{progression_philosophy}\n\n"
+            f"## Progression Pace\n"
+            f"User's overall progression pace: **{progression_pace}**\n"
+            "- 'slow': nudge reps by +1 / weight by smallest increment when ready\n"
+            "- 'medium': standard +1-2 reps OR +2.5kg jumps when last set was clean\n"
+            "- 'aggressive': bigger jumps (+3 reps OR +5kg) when previous workout was easy\n"
+            "- For BODYWEIGHT exercises with no weight load, focus on rep progression "
+            "OR move to a harder variant per the philosophy above\n"
+        )
+
     prompt = f"""Generate a {duration}-minute quick workout for a {fitness_level} user.
 
 {focus_instruction}
 
-EQUIPMENT AVAILABLE: {equipment_str}
+EQUIPMENT AVAILABLE: {equipment_str}{progression_block}
 
 CRITICAL REQUIREMENTS for {duration}-minute workout:
 1. Total workout time MUST fit within {duration} minutes including rest
@@ -292,6 +324,28 @@ async def generate_quick_workout(request: Request, body: QuickWorkoutRequest, ba
         if avoided_exercises:
             logger.info(f"[Quick Workout] Filtering {len(avoided_exercises)} avoided exercises")
 
+        # Pull progression context in parallel so the Gemini prompt can apply
+        # progressive overload (rep ranges from user prefs + mastery hints +
+        # pace). Each call swallows its own errors and returns a sane default,
+        # so a missing signal degrades the prompt instead of blocking the
+        # request. None of these block — gather() runs them concurrently.
+        try:
+            progression_pace, rep_preferences, progression_context = await asyncio.gather(
+                get_user_progression_pace(body.user_id),
+                get_user_rep_preferences(body.user_id),
+                get_user_progression_context(body.user_id, days=30),
+            )
+        except Exception as _e:
+            logger.warning(f"[Quick Workout] progression fetch partially failed: {_e}")
+            progression_pace = "medium"
+            rep_preferences = {"training_focus": "balanced", "min_reps": 8, "max_reps": 12}
+            progression_context = {"mastery_context": ""}
+
+        progression_philosophy = build_progression_philosophy_prompt(
+            rep_preferences=rep_preferences,
+            progression_context=progression_context,
+        )
+
         # Build the prompt
         prompt = await generate_quick_workout_prompt(
             duration=body.duration,
@@ -301,6 +355,8 @@ async def generate_quick_workout(request: Request, body: QuickWorkoutRequest, ba
             avoided_exercises=avoided_exercises,
             avoided_muscles=avoided_muscles if (avoided_muscles.get("avoid") or avoided_muscles.get("reduce")) else None,
             injuries=body.injuries,
+            progression_philosophy=progression_philosophy,
+            progression_pace=progression_pace,
         )
 
         # Generate with Gemini (with retry + semaphore via utility)

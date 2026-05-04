@@ -823,15 +823,19 @@ class PercentageTrainingService:
         if not self.supabase:
             return 0
 
-        # Get workout history
+        # Get workout history. The previous implementation read from a
+        # `completed_exercises` table that doesn't exist in the schema —
+        # auto-populate ALWAYS returned 0 and the My 1RMs / Exercise History
+        # screens stayed empty no matter how many workouts the user logged.
+        # Source of truth is `workout_logs.sets_json` (per-set rows with
+        # weight_kg + reps_completed + exercise_name + is_completed).
         cutoff_date = (datetime.utcnow() - timedelta(days=days_lookback)).isoformat()
 
-        result = self.supabase.table('completed_exercises').select('''
-            exercise_name,
-            weight_kg,
-            reps,
-            created_at
-        ''').eq('user_id', user_id).gte('created_at', cutoff_date).execute()
+        result = self.supabase.table('workout_logs').select(
+            'sets_json,completed_at,status'
+        ).eq('user_id', user_id).eq(
+            'status', 'completed'
+        ).gte('completed_at', cutoff_date).execute()
 
         if not result.data:
             return 0
@@ -839,40 +843,70 @@ class PercentageTrainingService:
         # Group by exercise and find best estimated 1RM
         exercise_best: Dict[str, Tuple[float, float, datetime]] = {}  # name -> (1rm, confidence, date)
 
-        for row in result.data:
-            exercise_name = row['exercise_name']
-            weight_kg = float(row.get('weight_kg', 0))
-            reps = int(row.get('reps', 0))
-
-            if weight_kg <= 0 or reps <= 0 or reps > 20:
+        for log in result.data:
+            sets = log.get('sets_json') or []
+            if not isinstance(sets, list):
                 continue
+            log_completed_at = log.get('completed_at')
 
-            # Calculate estimated 1RM
-            one_rm_result = strength_calculator_service.calculate_1rm(
-                weight_kg, reps, formula='brzycki'
-            )
-
-            # Only consider if confidence meets threshold
-            if one_rm_result.confidence < min_confidence:
-                continue
-
-            # Update if better than existing
-            if exercise_name not in exercise_best:
-                exercise_best[exercise_name] = (
-                    one_rm_result.estimated_1rm,
-                    one_rm_result.confidence,
-                    datetime.fromisoformat(row['created_at'].replace('Z', '+00:00')),
+            for s in sets:
+                if not isinstance(s, dict):
+                    continue
+                # Only count sets the user actually completed. Some logs
+                # carry incomplete-set placeholders with weight_kg=0/reps=0.
+                if s.get('is_completed') is False:
+                    continue
+                exercise_name = (s.get('exercise_name') or '').strip()
+                if not exercise_name:
+                    continue
+                # `reps_completed` is the runtime field; older payloads use
+                # `reps`. Fall back to target_reps only as a last resort.
+                weight_kg = float(s.get('weight_kg') or 0)
+                reps = int(
+                    s.get('reps_completed')
+                    or s.get('reps')
+                    or 0
                 )
-            else:
-                existing_1rm, existing_conf, _ = exercise_best[exercise_name]
-                # Prefer higher 1RM with similar confidence, or higher confidence
-                if (one_rm_result.estimated_1rm > existing_1rm and
-                    one_rm_result.confidence >= existing_conf * 0.9):
+
+                if weight_kg <= 0 or reps <= 0 or reps > 20:
+                    continue
+
+                # Per-set timestamp falls back to the log's completed_at when
+                # the set didn't carry its own.
+                set_completed_iso = s.get('completed_at') or log_completed_at
+                try:
+                    set_dt = datetime.fromisoformat(
+                        str(set_completed_iso).replace('Z', '+00:00')
+                    )
+                except (TypeError, ValueError):
+                    set_dt = datetime.utcnow()
+
+                # Calculate estimated 1RM
+                one_rm_result = strength_calculator_service.calculate_1rm(
+                    weight_kg, reps, formula='brzycki'
+                )
+
+                # Only consider if confidence meets threshold
+                if one_rm_result.confidence < min_confidence:
+                    continue
+
+                # Update if better than existing
+                if exercise_name not in exercise_best:
                     exercise_best[exercise_name] = (
                         one_rm_result.estimated_1rm,
                         one_rm_result.confidence,
-                        datetime.fromisoformat(row['created_at'].replace('Z', '+00:00')),
+                        set_dt,
                     )
+                else:
+                    existing_1rm, existing_conf, _ = exercise_best[exercise_name]
+                    # Prefer higher 1RM with similar confidence, or higher confidence
+                    if (one_rm_result.estimated_1rm > existing_1rm and
+                        one_rm_result.confidence >= existing_conf * 0.9):
+                        exercise_best[exercise_name] = (
+                            one_rm_result.estimated_1rm,
+                            one_rm_result.confidence,
+                            set_dt,
+                        )
 
         # Save calculated 1RMs
         saved_count = 0

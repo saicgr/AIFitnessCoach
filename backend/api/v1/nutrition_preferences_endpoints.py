@@ -39,7 +39,7 @@ from core.auth import get_current_user
 from core.db import get_supabase_db
 from core.exceptions import safe_internal_error
 from core.activity_logger import log_user_activity, log_user_error
-from services.user_context_service import UserContextService
+from services.user_context_service import UserContextService, user_context_service
 
 
 def _nutrition_prefs_parent():

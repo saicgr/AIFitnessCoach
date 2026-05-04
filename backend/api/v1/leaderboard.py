@@ -950,7 +950,7 @@ class FitnessHistoryResponse(_BaseModel):
 )
 async def get_fitness_profile_history(
     target_user_id: str,
-    days: int = Query(90, ge=7, le=365),
+    days: int = Query(90, ge=1, le=365),
     current_user: dict = Depends(get_current_user),
 ):
     """

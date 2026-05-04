@@ -100,7 +100,7 @@ async def get_habits(
     except Exception as e:
         logger.error(f"❌ Error getting habits: {e}", exc_info=True)
         await log_user_error(user_id, "get_habits", str(e))
-        raise safe_internal_error(e, "endpoint")
+        raise safe_internal_error(RuntimeError("DB insert returned no data"), "endpoint")
 
 
 @router.get("/{user_id}/today", response_model=TodayHabitsResponse)
@@ -213,7 +213,7 @@ async def get_today_habits(
     except Exception as e:
         logger.error(f"❌ Error getting today's habits: {e}", exc_info=True)
         await log_user_error(user_id, "get_today_habits", str(e))
-        raise safe_internal_error(e, "endpoint")
+        raise safe_internal_error(RuntimeError("DB insert returned no data"), "endpoint")
 
 
 @router.post("/{user_id}", response_model=Habit)
@@ -259,7 +259,7 @@ async def create_habit(
         result = db.client.table("habits").insert(habit_data).execute()
 
         if not result.data:
-            raise safe_internal_error(e, "endpoint")
+            raise safe_internal_error(RuntimeError("DB insert returned no data"), "endpoint")
 
         created_habit = result.data[0]
 
@@ -279,7 +279,7 @@ async def create_habit(
     except Exception as e:
         logger.error(f"❌ Error creating habit: {e}", exc_info=True)
         await log_user_error(user_id, "create_habit", str(e))
-        raise safe_internal_error(e, "endpoint")
+        raise safe_internal_error(RuntimeError("DB insert returned no data"), "endpoint")
 
 
 @router.put("/{user_id}/{habit_id}", response_model=Habit)
@@ -349,7 +349,7 @@ async def update_habit(
         ).eq("user_id", user_id).execute()
 
         if not result.data:
-            raise safe_internal_error(e, "endpoint")
+            raise safe_internal_error(RuntimeError("DB insert returned no data"), "endpoint")
 
         logger.info(f"✅ Updated habit: id={habit_id}")
         return result.data[0]
@@ -359,7 +359,7 @@ async def update_habit(
     except Exception as e:
         logger.error(f"❌ Error updating habit: {e}", exc_info=True)
         await log_user_error(user_id, "update_habit", str(e))
-        raise safe_internal_error(e, "endpoint")
+        raise safe_internal_error(RuntimeError("DB insert returned no data"), "endpoint")
 
 
 @router.delete("/{user_id}/{habit_id}")
@@ -421,7 +421,7 @@ async def delete_habit(
     except Exception as e:
         logger.error(f"❌ Error deleting habit: {e}", exc_info=True)
         await log_user_error(user_id, "delete_habit", str(e))
-        raise safe_internal_error(e, "endpoint")
+        raise safe_internal_error(RuntimeError("DB insert returned no data"), "endpoint")
 
 
 @router.post("/{user_id}/{habit_id}/archive")
@@ -504,7 +504,7 @@ async def log_habit(
         ).execute()
 
         if not result.data:
-            raise safe_internal_error(e, "endpoint")
+            raise safe_internal_error(RuntimeError("DB insert returned no data"), "endpoint")
 
         log_entry = result.data[0]
 
@@ -525,7 +525,7 @@ async def log_habit(
     except Exception as e:
         logger.error(f"❌ Error logging habit: {e}", exc_info=True)
         await log_user_error(user_id, "log_habit", str(e))
-        raise safe_internal_error(e, "endpoint")
+        raise safe_internal_error(RuntimeError("DB insert returned no data"), "endpoint")
 
 
 @router.put("/{user_id}/log/{log_id}", response_model=HabitLog)
@@ -583,7 +583,7 @@ async def update_habit_log(
         ).eq("user_id", user_id).execute()
 
         if not result.data:
-            raise safe_internal_error(e, "endpoint")
+            raise safe_internal_error(RuntimeError("DB insert returned no data"), "endpoint")
 
         logger.info(f"✅ Updated habit log: id={log_id}")
         return result.data[0]
@@ -593,7 +593,7 @@ async def update_habit_log(
     except Exception as e:
         logger.error(f"❌ Error updating habit log: {e}", exc_info=True)
         await log_user_error(user_id, "update_habit_log", str(e))
-        raise safe_internal_error(e, "endpoint")
+        raise safe_internal_error(RuntimeError("DB insert returned no data"), "endpoint")
 
 
 @router.get("/{user_id}/{habit_id}/logs", response_model=List[HabitLog])
@@ -654,7 +654,7 @@ async def get_habit_logs(
     except Exception as e:
         logger.error(f"❌ Error getting habit logs: {e}", exc_info=True)
         await log_user_error(user_id, "get_habit_logs", str(e))
-        raise safe_internal_error(e, "endpoint")
+        raise safe_internal_error(RuntimeError("DB insert returned no data"), "endpoint")
 
 
 

@@ -410,6 +410,15 @@ class AdaptiveWorkoutService(AdaptiveWorkoutServicePart2):
             logs = response.data if response.data else []
 
             if not logs:
+                # Fall back to workout_logs.sets_json — Quick workouts and
+                # legacy completion paths don't write per-set performance_logs
+                # rows, so without this fallback the My 1RMs and Exercise
+                # History screens stay empty even after completed sessions.
+                logs = await self._derive_logs_from_workout_logs(
+                    user_id, exercise_name, ninety_days_ago
+                )
+
+            if not logs:
                 return {
                     "total_sets": 0,
                     "has_data": False,
@@ -426,6 +435,67 @@ class AdaptiveWorkoutService(AdaptiveWorkoutServicePart2):
         except Exception as e:
             logger.error(f"Error fetching exercise stats: {e}", exc_info=True)
             return {"error": str(e)}
+
+    async def _derive_logs_from_workout_logs(
+        self,
+        user_id: str,
+        exercise_name: Optional[str],
+        cutoff_iso: str,
+    ) -> List[Dict[str, Any]]:
+        """Synthesize per-set rows from `workout_logs.sets_json` so the rest
+        of the stats pipeline can run when the user has zero
+        `performance_logs` rows (Quick workouts, legacy completion paths).
+
+        Returns rows shaped like performance_logs columns:
+        `exercise_name`, `weight_kg`, `reps_completed`, `set_type`, `rpe`,
+        `recorded_at`.
+        """
+        if not self.supabase:
+            return []
+        try:
+            wl = self.supabase.table("workout_logs").select(
+                "sets_json,completed_at,status"
+            ).eq("user_id", user_id).eq(
+                "status", "completed"
+            ).gte("completed_at", cutoff_iso).execute()
+            data = wl.data or []
+        except Exception as e:
+            logger.warning(f"workout_logs fallback failed: {e}", exc_info=True)
+            return []
+
+        derived: List[Dict[str, Any]] = []
+        target_lower = exercise_name.strip().lower() if exercise_name else None
+        for log in data:
+            sets = log.get("sets_json") or []
+            if not isinstance(sets, list):
+                continue
+            log_completed_at = log.get("completed_at")
+            for s in sets:
+                if not isinstance(s, dict):
+                    continue
+                if s.get("is_completed") is False:
+                    continue
+                name = (s.get("exercise_name") or "").strip()
+                if not name:
+                    continue
+                if target_lower and name.lower() != target_lower:
+                    continue
+                derived.append({
+                    "exercise_name": name,
+                    "weight_kg": float(s.get("weight_kg") or 0),
+                    "reps_completed": int(
+                        s.get("reps_completed") or s.get("reps") or 0
+                    ),
+                    "set_type": s.get("set_type") or "working",
+                    "rpe": s.get("rpe"),
+                    "recorded_at": s.get("completed_at") or log_completed_at,
+                })
+        # Most-recent first — matches performance_logs query ordering.
+        derived.sort(
+            key=lambda r: str(r.get("recorded_at") or ""),
+            reverse=True,
+        )
+        return derived
 
     def _calculate_exercise_stats(self, logs: List[Dict]) -> Dict[str, Any]:
         """Calculate stats for a single exercise from logs."""

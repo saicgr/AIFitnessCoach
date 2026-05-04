@@ -1,0 +1,76 @@
+==============================================
+APP NAME (paste into Play Console > App name)
+==============================================
+Zealova: AI Coach, Diet & Gym
+
+==============================================
+SHORT DESCRIPTION (paste into Play Console > Short description, 80 char max)
+==============================================
+AI personal trainer + calorie tracker. Snap meals, scan menus, train smart.
+
+==============================================
+FULL DESCRIPTION (paste into Play Console > Full description, 4000 char max)
+==============================================
+Your AI fitness coach for workouts AND nutrition.
+
+Zealova is the AI personal trainer that connects your training and diet into one smart plan. It knows what you ate, how you trained, and adjusts both to keep you on track. No more juggling a workout app and a separate calorie tracker. Start with a free trial — plans from $4.99/mo.
+
+HOW IT WORKS:
+Tell Zealova your goal — lose weight, build muscle, get healthier. Your AI coach builds a personalized workout plan and sets daily nutrition targets. As you train and eat, it learns your preferences and adapts. That's it.
+
+AI WORKOUT PLANNER BUILT FOR YOU:
+Every workout is generated around your equipment, fitness level, and schedule. Not a template — an AI workout plan that's actually yours.
+- Adapts around injuries automatically
+- Progressive overload: suggests when to increase weight based on your history
+- Warm-ups and cool-downs included
+- Quick gym sessions (5-15 min) for busy days
+- Multiple gym profiles for home, work, or travel
+- Your AI personal trainer explains why each exercise was chosen
+- Works for strength training, hypertrophy, fat loss, and conditioning
+
+CALORIE TRACKER & FOOD SCANNER — LOG MEALS YOUR WAY:
+However is fastest for you:
+- Type it — "2 eggs, toast, coffee" and it's logged in seconds
+- Snap it — AI food scanner identifies your meal from a photo
+- Scan a barcode — instant macros for packaged foods
+- Scan a restaurant menu — AI estimates calories, protein, and macros for every dish before you order
+- Voice it — describe your meal hands-free, and it logs automatically
+
+Full calorie tracker with macro tracking: protein, carbs, fats, and 20+ micronutrients tracked automatically. Get a health score for every meal and personalized tips from your AI nutrition coach.
+
+AI MEAL PLANNER & RECIPES:
+Tell Zealova what you have, what you like, and your macro targets. Your AI meal planner generates recipes that fit your calorie deficit (or surplus), respect your preferences, and actually taste good.
+
+YOUR AI COACH, 24/7:
+Ask anything. "Can I replace squats — my knee hurts?" "How much protein have I had today?" "What should I eat before my workout?" Your AI fitness coach knows your full workout history, your nutrition, and your goals. It gives answers that actually apply to you — not generic advice from a blog.
+
+TRACK YOUR PROGRESS:
+- Workout streaks and personal records
+- Weight and body composition trends
+- Progress photos from multiple angles
+- Before and after comparisons
+- Weekly performance summaries
+- Health Connect sync (steps, heart rate, sleep, calories burned)
+
+EXERCISE PREFERENCES:
+Zealova learns what you love. Mark your favorite exercises, avoid the ones you hate, and queue up moves you want to try. Your AI workout planner gets smarter over time.
+
+DETAILS:
+- Works with any equipment setup, including bodyweight only
+- Nutrition targets that adjust to your goals (cutting, bulking, recomp)
+- XP system and monthly achievements to keep you motivated
+- Water intake tracking
+- Dark mode
+- Personalized warm-up and cool-down routines
+- Offline mode
+
+One AI fitness coach for training and nutrition. No guesswork. Start your free trial today.
+
+WHO IT'S FOR:
+Beginners, lifters, anyone cutting, bulking, or doing body recomp. Travelers who need a home workout app. People tired of using 3 separate fitness apps.
+
+WHY ZEALOVA:
+- The only AI fitness coach that plans workouts AND scans food
+- Replaces your workout tracker, calorie counter & recipe generator
+- Smarter than ChatGPT for fitness — remembers your full history
+- Cheaper than a human personal trainer

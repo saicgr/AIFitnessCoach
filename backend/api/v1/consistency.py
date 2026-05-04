@@ -10,7 +10,7 @@ Endpoints:
 - GET /consistency/calendar - Get calendar heatmap data
 - POST /consistency/streak-recovery - Initiate streak recovery
 """
-from .consistency_endpoints import router as _endpoints_router
+from .consistency_endpoints import router as _endpoints_router, log_insights_view
 
 
 from datetime import datetime, date, timedelta

@@ -25,6 +25,7 @@ from core.exceptions import safe_internal_error
 from core.timezone_utils import user_today_date, get_user_today
 
 from .exercise_preferences_models import (
+    MUSCLE_GROUPS,
     StapleExerciseCreate,
     StapleExerciseResponse,
     VariationPreferenceUpdate,

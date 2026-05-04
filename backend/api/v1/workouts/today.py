@@ -488,15 +488,18 @@ async def auto_generate_workout(user_id: str, target_date: date, gym_profile_id:
     try:
         db = get_supabase_db()
 
-        # Double-check: workout may have been created between the /today check and now
-        # Use timezone-aware UTC range to correctly find workouts stored with TZ offset
+        # Double-check: workout may have been created between the /today check and now.
+        # NB: do NOT filter by gym_profile_id — a quick workout (no profile) or a
+        # previously-replaced workout under a different profile both still occupy
+        # the user's slot for this date. The user's Replace flow in the Quick sheet
+        # deletes the AI workout and inserts a quick replacement; profile-scoped
+        # dedup let auto-gen sneak past and re-create the AI row.
         tz_from, tz_to = local_date_to_utc_range(target_date.isoformat(), user_tz)
         existing = db.list_workouts(
             user_id=user_id,
             from_date=tz_from,
             to_date=tz_to,
             limit=1,
-            gym_profile_id=gym_profile_id,
         )
         if existing:
             logger.info(f"[BG-GEN] Workout already exists for {generation_key}, skipping generation")
@@ -507,6 +510,8 @@ async def auto_generate_workout(user_id: str, target_date: date, gym_profile_id:
             target_str = target_date.isoformat()
             # Use timezone-aware range for generating check too
             gen_range_start, gen_range_end = local_date_to_utc_range(target_str, user_tz)
+            # gym_profile_id intentionally NOT included — see comment on the prior
+            # dedup block. A placeholder under any profile claims this slot.
             gen_query = db.client.table("workouts").select("id, created_at").eq(
                 "user_id", user_id
             ).gte(
@@ -516,8 +521,6 @@ async def auto_generate_workout(user_id: str, target_date: date, gym_profile_id:
             ).eq(
                 "status", "generating"
             )
-            if gym_profile_id:
-                gen_query = gen_query.eq("gym_profile_id", gym_profile_id)
             generating_check = gen_query.execute()
             if generating_check.data:
                 # Check if placeholder is stuck (older than 5 minutes)
@@ -537,7 +540,7 @@ async def auto_generate_workout(user_id: str, target_date: date, gym_profile_id:
                     except Exception:
                         pass
                 if not is_stuck:
-                    logger.info(f"[BG-GEN] Workout already being generated for {generation_key} (profile={gym_profile_id}), skipping")
+                    logger.info(f"[BG-GEN] Workout already being generated for {generation_key}, skipping")
                     return
         except Exception as e:
             logger.debug(f"Dedup check failed, proceeding: {e}")

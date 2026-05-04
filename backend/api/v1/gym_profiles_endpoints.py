@@ -119,7 +119,7 @@ async def update_gym_profile(
             .execute()
 
         if not result.data:
-            raise safe_internal_error(e, "endpoint")
+            raise safe_internal_error(RuntimeError("DB insert returned no data"), "endpoint")
 
         from .gym_profiles import row_to_gym_profile
         updated_profile = row_to_gym_profile(result.data[0])
@@ -210,7 +210,7 @@ async def update_gym_profile(
         if "0 rows" in str(e).lower() or "no rows" in str(e).lower():
             raise HTTPException(status_code=404, detail="Profile not found")
         logger.error(f"❌ [GymProfile] Failed to update profile: {e}", exc_info=True)
-        raise safe_internal_error(e, "endpoint")
+        raise safe_internal_error(RuntimeError("DB insert returned no data"), "endpoint")
 
 
 # =============================================================================
@@ -346,7 +346,7 @@ async def delete_gym_profile(
         raise
     except Exception as e:
         logger.error(f"❌ [GymProfile] Failed to delete profile: {e}", exc_info=True)
-        raise safe_internal_error(e, "endpoint")
+        raise safe_internal_error(RuntimeError("DB insert returned no data"), "endpoint")
 
 
 # =============================================================================
@@ -488,7 +488,7 @@ async def activate_gym_profile(
         raise
     except Exception as e:
         logger.error(f"❌ [GymProfile] Failed to activate profile: {e}", exc_info=True)
-        raise safe_internal_error(e, "endpoint")
+        raise safe_internal_error(RuntimeError("DB insert returned no data"), "endpoint")
 
 
 # =============================================================================
@@ -604,7 +604,7 @@ async def duplicate_gym_profile(
             .execute()
 
         if not result.data:
-            raise safe_internal_error(e, "endpoint")
+            raise safe_internal_error(RuntimeError("DB insert returned no data"), "endpoint")
 
         from .gym_profiles import row_to_gym_profile
         duplicated_profile = row_to_gym_profile(result.data[0])
@@ -632,7 +632,7 @@ async def duplicate_gym_profile(
         raise
     except Exception as e:
         logger.error(f"❌ [GymProfile] Failed to duplicate profile: {e}", exc_info=True)
-        raise safe_internal_error(e, "endpoint")
+        raise safe_internal_error(RuntimeError("DB insert returned no data"), "endpoint")
 
 
 # =============================================================================
@@ -700,4 +700,4 @@ async def reorder_gym_profiles(
         raise
     except Exception as e:
         logger.error(f"❌ [GymProfile] Failed to reorder profiles: {e}", exc_info=True)
-        raise safe_internal_error(e, "endpoint")
+        raise safe_internal_error(RuntimeError("DB insert returned no data"), "endpoint")

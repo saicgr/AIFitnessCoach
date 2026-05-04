@@ -27,7 +27,7 @@ from core.db import get_supabase_db
 from core.exceptions import safe_internal_error
 from core.activity_logger import log_user_activity
 from core.timezone_utils import user_today_date
-from services.user_context_service import UserContextService, EventType
+from services.user_context_service import UserContextService, EventType, user_context_service
 
 
 def _neat_parent():
