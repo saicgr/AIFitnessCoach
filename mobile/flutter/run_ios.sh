@@ -80,8 +80,19 @@ $FLUTTER_PATH pub get
 echo -e "${YELLOW}Uninstalling existing app...${NC}"
 xcrun simctl uninstall booted com.zealova.app 2>/dev/null || echo -e "${YELLOW}App was not installed.${NC}"
 
+# RevenueCat keys — paywall throws "Purchase service not configured" without these.
+# Override per-shell: export REVENUECAT_APPLE_KEY=appl_xxx REVENUECAT_GOOGLE_KEY=goog_xxx
+RC_GOOGLE_KEY="${REVENUECAT_GOOGLE_KEY:-goog_oWxJnYQrUSCtIxMqTPcEPfWgBxq}"
+RC_APPLE_KEY="${REVENUECAT_APPLE_KEY:-}"
+DART_DEFINES=("--dart-define=REVENUECAT_GOOGLE_KEY=$RC_GOOGLE_KEY")
+if [[ -n "$RC_APPLE_KEY" ]]; then
+  DART_DEFINES+=("--dart-define=REVENUECAT_APPLE_KEY=$RC_APPLE_KEY")
+else
+  echo -e "${YELLOW}⚠️  REVENUECAT_APPLE_KEY not set — iOS purchases will fail until you export it.${NC}"
+fi
+
 # Build and run
 echo -e "${GREEN}Building and running app on simulator: $DEVICE_ID${NC}"
-$FLUTTER_PATH run -d "$DEVICE_ID"
+$FLUTTER_PATH run -d "$DEVICE_ID" "${DART_DEFINES[@]}"
 
 echo -e "${GREEN}=== Done! ===${NC}"

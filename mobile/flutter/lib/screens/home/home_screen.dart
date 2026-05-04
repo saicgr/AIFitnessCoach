@@ -14,6 +14,7 @@ import '../../core/providers/window_mode_provider.dart';
 import '../../core/providers/workout_mini_player_provider.dart';
 import '../../data/models/home_layout.dart';
 import '../../data/providers/home_layout_provider.dart';
+import '../../data/services/home_prewarmer.dart';
 import '../../data/providers/local_layout_provider.dart';
 import '../../data/services/haptic_service.dart';
 import '../../data/providers/branded_program_provider.dart';
@@ -882,6 +883,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             ref.read(todayWorkoutProvider.notifier).invalidateAndRefresh();
             // Silently reload layout from SharedPreferences
             ref.read(localLayoutProvider.notifier).reload();
+            // Invalidate the Home prewarmer cache + force-refresh so the next
+            // tab swap doesn't briefly show stale workouts/consistency data.
+            unawaited(HomePrewarmer.invalidateAndRefresh(ref));
             debugPrint('✅ [Home] Pull-to-refresh complete');
           },
           color: AppColors.cyan,

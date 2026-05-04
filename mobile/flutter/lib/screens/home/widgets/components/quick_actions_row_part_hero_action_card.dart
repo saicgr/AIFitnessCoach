@@ -779,7 +779,9 @@ Future<void> showWaterQuickAddSheet(BuildContext context, WidgetRef ref) async {
               TextButton(
                 onPressed: () {
                   Navigator.pop(sheetContext);
-                  context.go('/nutrition?tab=2');
+                  // Fuel tab (index 3) with Water sub-section preselected.
+                  // tab=2 lands on Patterns — wrong target for hydration.
+                  context.go('/nutrition?tab=3&fuelSection=water');
                 },
                 child: Text(
                   'Open Hydration Tracker',
@@ -976,7 +978,7 @@ class _WaterGridActionItemState extends ConsumerState<_WaterGridActionItem> {
               TextButton(
                 onPressed: () {
                   Navigator.pop(context);
-                  context.go('/nutrition?tab=2');
+                  context.go('/nutrition?tab=3&fuelSection=water');
                 },
                 child: Text(
                   'Open Hydration Tracker',

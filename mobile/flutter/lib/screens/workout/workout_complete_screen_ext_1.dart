@@ -24,6 +24,26 @@ extension __WorkoutCompleteScreenStateExt1 on _WorkoutCompleteScreenState {
       ref.read(soundPreferencesProvider.notifier).playWorkoutCompletion();
     });
 
+    // Cache-first: if WorkoutCompletionPrewarmer already populated the cache
+    // (fired from set_logging_mixin when N-1 sets logged + from
+    // workout_flow_mixin right after the /complete API returned), the next
+    // two _load calls become free re-renders. Without this, the user saw
+    // 1-2s of internal spinners on the "X workouts complete!" milestone
+    // headline + the trophy strip.
+    if (workoutCompletionCache.hasData) {
+      if (workoutCompletionCache.totalWorkoutCount != null) {
+        _totalWorkoutCount = workoutCompletionCache.totalWorkoutCount!;
+      }
+      if (workoutCompletionCache.achievements != null && _achievements == null) {
+        _achievements = workoutCompletionCache.achievements;
+        _isLoadingAchievements = false;
+      }
+      debugPrint(
+        '⚡ [Complete] Hydrated from prewarmer cache '
+        '(workouts=$_totalWorkoutCount, achievements=${_achievements != null ? "yes" : "no"})',
+      );
+    }
+
     _loadAICoachFeedback();
 
     // Load total workout count for milestone detection

@@ -29,54 +29,16 @@ import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/providers/xp_provider.dart';
 import '../../../data/services/api_client.dart';
 import '../../../data/services/health_service.dart';
+import '../../../data/services/you_overview_prewarmer.dart';
 import '../../../widgets/xp_hero_tile.dart';
 import '../../home/widgets/cards/last_night_sleep_card.dart';
 import '../../home/widgets/cards/todays_health_card.dart';
 import '../widgets/weight_tracking_card.dart';
 
-/// Module-level in-memory cache for the Overview tab.
-///
-/// Mirrors the `_xpInMemoryCache` pattern used by `xp_provider.dart` —
-/// keeps the last successful payload alive across tab switches so reopening
-/// the You hub renders instantly from cache while a silent refresh runs in
-/// the background. Without this, every tab switch refetched 6+ endpoints
-/// and showed a spinner for ~1.5s on a warm device.
-///
-/// Cleared in two places:
-///   • `AppLifecycleState.resumed` if the cache is older than 5 minutes
-///   • Manual refresh button (refresh icon in AppBar / pull-to-refresh)
-class _OverviewCache {
-  List<dynamic>? streaks;
-  Map<String, dynamic>? latestSummary;
-  Map<String, dynamic>? trophySummary;
-  List<dynamic>? recentTrophies;
-  Map<String, dynamic>? skillsSummary;
-  bool? leaderboardUnlocked;
-  int workoutsNeeded = 10;
-  double? percentile;
-  DateTime? cachedAt;
-
-  bool get hasData => cachedAt != null;
-
-  Duration get age =>
-      cachedAt == null ? Duration.zero : DateTime.now().difference(cachedAt!);
-
-  void clear() {
-    streaks = null;
-    latestSummary = null;
-    trophySummary = null;
-    recentTrophies = null;
-    skillsSummary = null;
-    leaderboardUnlocked = null;
-    workoutsNeeded = 10;
-    percentile = null;
-    cachedAt = null;
-  }
-}
-
-/// Single shared cache instance — survives tab swaps inside the You hub
-/// because it lives at module scope, not in widget state.
-final _overviewCache = _OverviewCache();
+// Cache lives in `youOverviewCache` (lib/data/services/you_overview_prewarmer.dart).
+// It's shared with the prewarmer service so post-sign-in / post-onboarding
+// pre-warming and the live tab read/write the same singleton.
+final _overviewCache = youOverviewCache;
 
 /// Stale threshold for the lifecycle-resumed invalidation. Anything older
 /// than 5 minutes gets a forced background refresh. Within the window we
@@ -360,31 +322,28 @@ class _YouOverviewTabState extends ConsumerState<YouOverviewTab>
       child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          // ─── Inline header with refresh button. The You hub host doesn't
-          // give us an AppBar, so we render the refresh affordance inline
-          // at the top of the scroll view. Tapping it invalidates BOTH the
-          // dashboard cache and the health caches.
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              IconButton(
-                icon: const Icon(Icons.refresh),
-                color: fg.withValues(alpha: 0.7),
-                tooltip: 'Refresh',
-                onPressed: _refreshing ? null : _manualRefresh,
-              ),
-            ],
-          ),
           // HEALTH SNAPSHOT — first thing the user sees on the You tab.
           // Each card auto-hides via SizedBox.shrink when it has nothing
           // to show (no Health Connect connection, no sleep last night,
           // no weight log), so first-day users still see a clean Overview
-          // headed by XpHeroTile.
-          const TodaysHealthCard(),
+          // headed by XpHeroTile. The refresh affordance lives inside the
+          // Today's Health card header (see `onRefresh` below) — the You
+          // hub host doesn't give us an AppBar to host it.
+          TodaysHealthCard(
+            onRefresh: _refreshing ? null : _manualRefresh,
+            isRefreshing: _refreshing,
+          ),
           const SizedBox(height: 12),
           const LastNightSleepCard(),
           const SizedBox(height: 12),
-          const WeightTrackingCard(),
+          // WeightTrackingCard has no built-in horizontal padding (unlike
+          // the two health cards above which self-pad for reuse on the
+          // home tile grid). Wrap it here so all three cards inset the
+          // same 32px / side and visually align.
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            child: WeightTrackingCard(),
+          ),
           const SizedBox(height: 14),
 
           // Hero XP tile — three rows (weekly XP + sparkline, level +

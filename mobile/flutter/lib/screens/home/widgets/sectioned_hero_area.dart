@@ -4,6 +4,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/accent_color_provider.dart';
 import '../../../core/providers/user_provider.dart';
 import '../../../core/providers/week_start_provider.dart';
+import '../../../core/providers/synced_visibility_provider.dart';
 import '../../../data/providers/gym_profile_provider.dart';
 import '../../../data/models/workout.dart';
 import '../../../data/providers/today_workout_provider.dart';
@@ -309,32 +310,92 @@ class _HeroTabPills extends ConsumerWidget {
             );
           }),
           const Spacer(),
-          // Mon/Sun day toggle
+          // Overflow menu: holds the week-start swap and the synced-workout
+          // visibility toggle. Replaces the previous always-visible "Mon/Sun"
+          // pill — these are infrequent toggles, so a 3-dot menu keeps the
+          // header strip cleaner while still keeping them one tap away.
           if (currentFocus == HomeFocus.workout)
-            GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: () {
-                HapticService.selection();
-                ref.read(weekStartsSundayProvider.notifier).toggle();
-              },
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.swap_horiz, size: 13, color: textMuted),
-                  const SizedBox(width: 2),
-                  Text(
-                    startsSunday ? 'Sun' : 'Mon',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w500,
-                      color: textMuted,
-                    ),
-                  ),
-                ],
-              ),
+            _HeroOverflowMenu(
+              startsSunday: startsSunday,
+              isDark: isDark,
+              tint: textMuted,
             ),
         ],
       ),
     );
   }
 }
+
+class _HeroOverflowMenu extends ConsumerWidget {
+  final bool startsSunday;
+  final bool isDark;
+  final Color tint;
+
+  const _HeroOverflowMenu({
+    required this.startsSunday,
+    required this.isDark,
+    required this.tint,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final showSynced = ref.watch(showSyncedInCarouselProvider);
+    return PopupMenuButton<_HeroOverflowAction>(
+      tooltip: 'More options',
+      icon: Icon(Icons.more_vert, size: 18, color: tint),
+      padding: EdgeInsets.zero,
+      onSelected: (action) {
+        HapticService.selection();
+        switch (action) {
+          case _HeroOverflowAction.toggleWeekStart:
+            ref.read(weekStartsSundayProvider.notifier).toggle();
+            break;
+          case _HeroOverflowAction.toggleSynced:
+            ref.read(showSyncedInCarouselProvider.notifier).toggle();
+            break;
+        }
+      },
+      itemBuilder: (_) => [
+        PopupMenuItem(
+          value: _HeroOverflowAction.toggleWeekStart,
+          child: Row(
+            children: [
+              const Icon(Icons.swap_horiz, size: 18),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  startsSunday ? 'Start week on Monday' : 'Start week on Sunday',
+                ),
+              ),
+              Text(
+                startsSunday ? 'Sun' : 'Mon',
+                style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+              ),
+            ],
+          ),
+        ),
+        PopupMenuItem(
+          value: _HeroOverflowAction.toggleSynced,
+          child: Row(
+            children: [
+              Icon(
+                showSynced ? Icons.visibility : Icons.visibility_off_outlined,
+                size: 18,
+              ),
+              const SizedBox(width: 10),
+              const Expanded(child: Text('Show synced workouts')),
+              Switch.adaptive(
+                value: showSynced,
+                onChanged: (_) {
+                  Navigator.of(context).pop(_HeroOverflowAction.toggleSynced);
+                },
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+enum _HeroOverflowAction { toggleWeekStart, toggleSynced }

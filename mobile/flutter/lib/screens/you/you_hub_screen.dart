@@ -30,6 +30,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/accent_color_provider.dart';
+import '../../widgets/liquid_glass_action_bar.dart';
 import '../profile/profile_screen.dart';
 import 'tabs/overview_tab.dart';
 import 'tabs/stats_rewards_tab.dart';
@@ -87,69 +88,85 @@ class _YouHubScreenState extends ConsumerState<YouHubScreen>
     return Scaffold(
       backgroundColor: bg,
       body: SafeArea(
-        child: Column(
+        bottom: false,
+        child: Stack(
           children: [
-            // Persistent header: title row + settings cog. Avatar could be
-            // added here in a future pass; keep header minimal for now so
-            // the first-time user sees the tab content immediately.
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 12, 8),
-              child: Row(
-                children: [
-                  Text(
-                    'You',
-                    style: TextStyle(
-                      color: fg,
-                      fontSize: 28,
-                      fontWeight: FontWeight.w800,
-                    ),
+            Column(
+              children: [
+                // Persistent header: title row + settings cog. Avatar could
+                // be added here in a future pass; keep header minimal for
+                // now so the first-time user sees the tab content
+                // immediately.
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 12, 8),
+                  child: Row(
+                    children: [
+                      Text(
+                        'You',
+                        style: TextStyle(
+                          color: fg,
+                          fontSize: 28,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const Spacer(),
+                      IconButton(
+                        icon: Icon(Icons.bar_chart_rounded, color: fg),
+                        tooltip: 'Stats & Scores',
+                        onPressed: () => context.push('/stats'),
+                      ),
+                      IconButton(
+                        icon: Icon(Icons.settings_outlined, color: fg),
+                        tooltip: 'Settings',
+                        onPressed: () => context.push('/settings'),
+                      ),
+                    ],
                   ),
-                  const Spacer(),
-                  IconButton(
-                    icon: Icon(Icons.bar_chart_rounded, color: fg),
-                    tooltip: 'Stats & Scores',
-                    onPressed: () => context.push('/stats'),
-                  ),
-                  IconButton(
-                    icon: Icon(Icons.settings_outlined, color: fg),
-                    tooltip: 'Settings',
-                    onPressed: () => context.push('/settings'),
-                  ),
-                ],
-              ),
-            ),
-            // Top-tabs
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              child: TabBar(
-                controller: _tabController,
-                isScrollable: true,
-                tabAlignment: TabAlignment.start,
-                indicatorColor: accent,
-                indicatorSize: TabBarIndicatorSize.label,
-                indicatorWeight: 3,
-                labelColor: fg,
-                unselectedLabelColor: fg.withValues(alpha: 0.5),
-                labelStyle: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
                 ),
-                dividerColor: Colors.transparent,
-                tabs: const [
-                  Tab(text: 'Overview'),
-                  Tab(text: 'Profile'),
-                  Tab(text: 'Stats & Rewards'),
-                ],
-              ),
+                Expanded(
+                  child: TabBarView(
+                    controller: _tabController,
+                    children: [
+                      const YouOverviewTab(),
+                      ProfileScreen(scrollTo: widget.profileScrollTo),
+                      const YouStatsRewardsTab(),
+                    ],
+                  ),
+                ),
+              ],
             ),
-            Expanded(
-              child: TabBarView(
-                controller: _tabController,
-                children: [
-                  const YouOverviewTab(),
-                  ProfileScreen(scrollTo: widget.profileScrollTo),
-                  const YouStatsRewardsTab(),
-                ],
+            // Floating iOS 26 Liquid Glass tab bar — moves the
+            // Overview / Profile / Stats & Rewards tabs to the thumb-zone
+            // at the bottom, matching the Nutrition + Discover treatment.
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: MediaQuery.of(context).viewPadding.bottom + 60,
+              child: Center(
+                child: AnimatedBuilder(
+                  animation: _tabController,
+                  builder: (_, __) => LiquidGlassActionBar(
+                    accentColor: accent,
+                    selectedIndex: _tabController.index,
+                    items: [
+                      LiquidGlassAction(
+                        label: 'Overview',
+                        icon: Icons.home_outlined,
+                        onTap: () => _tabController.animateTo(0),
+                      ),
+                      LiquidGlassAction(
+                        label: 'Profile',
+                        icon: Icons.person_outline,
+                        onTap: () => _tabController.animateTo(1),
+                      ),
+                      LiquidGlassAction(
+                        label: 'Stats',
+                        icon: Icons.emoji_events_outlined,
+                        onTap: () => _tabController.animateTo(2),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
           ],

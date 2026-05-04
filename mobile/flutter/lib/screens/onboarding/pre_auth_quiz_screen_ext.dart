@@ -568,25 +568,21 @@ extension __PreAuthQuizScreenStateExt on _PreAuthQuizScreenState {
         final quiz = ref.read(preAuthQuizProvider);
         return QuizPersonalizationGate(
           key: const ValueKey('personalization_gate'),
-          initialName: quiz.name,
           initialGender: quiz.gender,
           initialHeightCm: quiz.heightCm,
           initialWeightKg: quiz.weightKg,
           initialGoalWeightKg: quiz.goalWeightKg,
           initialUseMetric: quiz.useMetricUnits,
           onSaveBodyMetrics: ({
-            required name,
             required gender,
             required heightCm,
             required weightKg,
             required goalWeightKg,
             required useMetric,
           }) async {
-            // Onboarding v5.1: name now collected on this gate (replacing
-            // /personal-info screen). setBodyMetrics writes name + height/
-            // weight/goal/gender + unit prefs in one transaction.
+            // Name + DOB are collected post-sign-in on /personal-info per
+            // ONBOARDING_FLOW.md. The quiz gate persists body metrics only.
             await ref.read(preAuthQuizProvider.notifier).setBodyMetrics(
-              name: name,
               gender: gender,
               heightCm: heightCm,
               weightKg: weightKg,

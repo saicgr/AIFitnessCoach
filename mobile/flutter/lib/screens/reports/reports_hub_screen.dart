@@ -1244,7 +1244,9 @@ class _ListView extends ConsumerWidget {
       );
       if (!context.mounted) return;
       if (shareable == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        final messenger = ScaffoldMessenger.of(context);
+        messenger.hideCurrentSnackBar();
+        messenger.showSnackBar(
           const SnackBar(
             content: Text(
                 'Not enough data yet — try again after your next workout'),

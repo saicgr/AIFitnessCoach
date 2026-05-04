@@ -134,20 +134,33 @@ class OfflineWorkoutRepository {
   // --------------------------------------------------------------------------
 
   /// Complete a workout — optimistic local update + sync queue.
+  ///
+  /// Idempotency contract:
+  ///   - Queue insert is deduped via [SyncQueueDao.enqueueIfNotPending] so
+  ///     double-taps don't create two queued completions for the same workout.
+  ///   - On a successful immediate API call, the queue row is marked completed
+  ///     before returning, so the 15-minute background sync engine never
+  ///     re-POSTs an already-applied completion. (This was the root cause of
+  ///     the "[XP] workout_complete already claimed today" warning storm and
+  ///     the resulting DB-pool starvation that timed out food searches.)
   Future<void> completeWorkout(String workoutId) async {
     // Optimistic local update
     await _db.workoutDao.markWorkoutCompleted(workoutId);
     debugPrint('⚡ [OfflineRepo] Optimistic: marked $workoutId completed locally');
 
-    // Enqueue sync
-    await _db.syncQueueDao.enqueue(PendingSyncQueueCompanion(
+    // Dio's baseUrl already includes /api/v1, so paths must be relative.
+    const entityType = 'workout';
+    final endpoint = '/workouts/$workoutId/complete';
+
+    // Idempotent enqueue — no-op if a pending completion for this workout
+    // is already queued (covers double-tap + background sync race).
+    await _db.syncQueueDao.enqueueIfNotPending(PendingSyncQueueCompanion(
       operationType: const Value('update'),
-      entityType: const Value('workout'),
+      entityType: const Value(entityType),
       entityId: Value(workoutId),
       payload: Value(jsonEncode({'is_completed': true})),
       httpMethod: const Value('POST'),
-      // Dio's baseUrl already includes /api/v1, so paths must be relative.
-      endpoint: Value('/workouts/$workoutId/complete'),
+      endpoint: Value(endpoint),
       createdAt: Value(DateTime.now()),
       priority: const Value(1), // Highest priority
     ));
@@ -157,8 +170,13 @@ class OfflineWorkoutRepository {
     if (isOnline) {
       try {
         await _remote.completeWorkout(workoutId);
-        // Mark sync item as completed
-        debugPrint('✅ [OfflineRepo] Workout completion synced to server');
+        // Burn the queue row so background sync doesn't replay it.
+        await _db.syncQueueDao.markCompletedByEntity(
+          entityType: entityType,
+          entityId: workoutId,
+          endpoint: endpoint,
+        );
+        debugPrint('✅ [OfflineRepo] Workout completion synced + queue cleared');
       } catch (e) {
         debugPrint('⚠️ [OfflineRepo] Workout completion will sync later: $e');
       }
@@ -229,18 +247,20 @@ class OfflineWorkoutRepository {
   }
 
   /// Save a locally-generated workout (from rule-based or on-device AI).
+  ///
+  /// Uses dedup-enqueue so calling this twice for the same workout id (e.g.
+  /// from a retry on save UI) doesn't create two pending creates.
   Future<void> saveLocalWorkout(Workout workout, String userId) async {
     await _db.workoutDao.upsertWorkout(_workoutToCompanion(workout, userId));
     debugPrint('✅ [OfflineRepo] Saved local workout: ${workout.name}');
 
-    // Enqueue sync to upload to server when online
-    await _db.syncQueueDao.enqueue(PendingSyncQueueCompanion(
+    // Dio's baseUrl already includes /api/v1, so paths must be relative.
+    await _db.syncQueueDao.enqueueIfNotPending(PendingSyncQueueCompanion(
       operationType: const Value('create'),
       entityType: const Value('workout'),
       entityId: Value(workout.id ?? ''),
       payload: Value(jsonEncode(workout.toJson())),
       httpMethod: const Value('POST'),
-      // Dio's baseUrl already includes /api/v1, so paths must be relative.
       endpoint: const Value('/workouts'),
       createdAt: Value(DateTime.now()),
       priority: const Value(3),

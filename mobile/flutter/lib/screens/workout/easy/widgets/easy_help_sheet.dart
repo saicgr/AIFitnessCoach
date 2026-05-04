@@ -23,6 +23,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/providers/workout_ui_mode_provider.dart';
 import '../../../../core/services/haptic_service.dart';
 import '../../../../core/theme/accent_color_provider.dart';
+import '../../../../widgets/glass_sheet.dart';
 
 const String _tourSeenKey = 'tour_seen_easy';
 
@@ -41,12 +42,12 @@ class EasyHelpSheet extends ConsumerStatefulWidget {
     if (prefs.getBool(_tourSeenKey) == true) return;
     if (!context.mounted) return;
 
-    await showModalBottomSheet(
+    await showGlassSheet(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      barrierColor: Colors.black.withValues(alpha: 0.55),
-      builder: (ctx) => EasyHelpSheet(onSkipToNext: onSkipToNext),
+      builder: (ctx) => GlassSheet(
+        showHandle: false, // sheet renders its own custom handle below
+        child: EasyHelpSheet(onSkipToNext: onSkipToNext),
+      ),
     );
 
     await prefs.setBool(_tourSeenKey, true);
@@ -84,16 +85,15 @@ class _EasyHelpSheetState extends ConsumerState<EasyHelpSheet> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final accent = AccentColorScope.of(context).getColor(isDark);
-    final bg = isDark ? const Color(0xFF141414) : Colors.white;
     final fg = isDark ? Colors.white : Colors.black;
     final slide = _slides[_step];
     final isLast = _step == _slides.length - 1;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-      ),
+    // Outer glass surface is provided by `GlassSheet` (showGlassSheet wraps
+    // us). Here we just lay out the slide content; bg/borderRadius come from
+    // the GlassSheet so the coachmark matches every other glass sheet in
+    // the app (was an opaque white card before — see issue #1).
+    return Padding(
       padding: EdgeInsets.only(
         left: 20,
         right: 20,

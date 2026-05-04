@@ -2,6 +2,9 @@ import 'dart:async';
 import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
+// dio_http2_adapter intentionally NOT imported — see comment block where the
+// adapter is configured below. Reintroduce only after wiring a gzip
+// decompressor for HTTP/2 responses, otherwise sign-in breaks.
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -282,12 +285,30 @@ class ApiClient with WidgetsBindingObserver {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
+          // gzip only — `dio_http2_adapter` does NOT auto-decompress responses,
+          // and Dio's body parser only handles gzip via the IOHttpClientAdapter
+          // (`autoUncompress = true`). Adding `br` here previously caused the
+          // server to brotli-encode responses, which the client then tried to
+          // JSON-parse byte-for-byte → "FormatException Unexpected character
+          // (at offset 0)" → sign-in error pill. Stick with gzip + the default
+          // IOHttpClientAdapter until we have a decompressor for HTTP/2.
           'Accept-Encoding': 'gzip',
         },
       ),
     );
 
-    // Configure HttpClient for connection keep-alive and reuse
+    // Reverted from `dio_http2_adapter` back to the default IOHttpClientAdapter.
+    // The HTTP/2 adapter would multiplex 12+ parallel prewarmer requests onto
+    // one TCP connection (faster), but it does NOT auto-decompress gzipped
+    // response bodies. With `Accept-Encoding: gzip` set, the server compresses
+    // responses, the HTTP/2 adapter delivers raw 0x1f-prefixed bytes, and Dio's
+    // JSON decoder throws FormatException at offset 0 → sign-in fails.
+    //
+    // We accept the loss of HTTP/2 multiplexing (~200-400ms slower cold-start
+    // prewarmer fan-out on cellular) in exchange for sign-in actually working.
+    // Re-enable HTTP/2 only after wiring an explicit gzip decompressor or
+    // switching to a HTTP/2 adapter that handles Content-Encoding (cronet_http
+    // is a candidate — it auto-handles compression server-side).
     (_dio.httpClientAdapter as IOHttpClientAdapter).createHttpClient = () {
       final client = HttpClient();
       client.idleTimeout = const Duration(seconds: 30);
@@ -367,6 +388,19 @@ class ApiClient with WidgetsBindingObserver {
     _dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) async {
+          // Short-circuit: once we've detected JWT_USER_DELETED, the auth
+          // user is gone server-side and every subsequent request will 401.
+          // Reject in-flight requests locally to avoid the duplicate 401
+          // storm + noisy DioException stack traces in the console.
+          if (_userDeletedSignOutInFlight) {
+            return handler.reject(
+              DioException(
+                requestOptions: options,
+                type: DioExceptionType.cancel,
+                error: 'JWT_USER_DELETED — request cancelled',
+              ),
+            );
+          }
           final token = await _getCurrentAccessToken();
           if (token != null) {
             options.headers['Authorization'] = 'Bearer $token';
@@ -403,7 +437,16 @@ class ApiClient with WidgetsBindingObserver {
                 debugPrint(
                     '🚪 [API] JWT_USER_DELETED already handled — dropping duplicate 401 from ${error.requestOptions.path}');
               }
-              return handler.next(error);
+              // Replace the noisy 401 bad-response with a benign cancel —
+              // callers' catch handlers will see a cancellation instead of
+              // re-logging a full DioException stack for every duplicate.
+              return handler.reject(
+                DioException(
+                  requestOptions: error.requestOptions,
+                  type: DioExceptionType.cancel,
+                  error: 'JWT_USER_DELETED — duplicate 401 suppressed',
+                ),
+              );
             }
 
             // A 401 on an auth endpoint means bad credentials, not expired token —

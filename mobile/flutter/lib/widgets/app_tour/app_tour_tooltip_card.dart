@@ -32,27 +32,47 @@ class AppTourTooltipCard extends StatelessWidget {
     final cardWidth = (screenWidth - 48).clamp(0.0, 360.0);
     final isLastStep = currentStep == totalSteps;
 
+    // Fills are intentionally translucent so the BackdropFilter blur reads.
+    // Previous values (0.75 dark / 0.92 light) were nearly opaque, which
+    // killed the glass effect even with the blur layer present.
     final bgColor = isDark
-        ? Colors.black.withValues(alpha: 0.75)
-        : Colors.white.withValues(alpha: 0.92);
+        ? Colors.white.withValues(alpha: 0.10)
+        : Colors.white.withValues(alpha: 0.62);
     final borderColor = isDark
-        ? Colors.white.withValues(alpha: 0.15)
-        : Colors.black.withValues(alpha: 0.06);
+        ? Colors.white.withValues(alpha: 0.18)
+        : Colors.white.withValues(alpha: 0.55);
     final textPrimary = isDark ? Colors.white : Colors.black87;
     final textSecondary = isDark
-        ? Colors.white.withValues(alpha: 0.65)
-        : Colors.black.withValues(alpha: 0.55);
+        ? Colors.white.withValues(alpha: 0.70)
+        : Colors.black.withValues(alpha: 0.60);
 
     return ClipRRect(
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(20),
       child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+        filter: ImageFilter.blur(sigmaX: 28, sigmaY: 28),
         child: Container(
           width: cardWidth,
           decoration: BoxDecoration(
             color: bgColor,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: borderColor, width: 0.5),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: borderColor, width: 1),
+            // Top-to-bottom highlight gradient gives the glass a subtle
+            // sheen edge so it doesn't look like a flat translucent slab.
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                Colors.white.withValues(alpha: isDark ? 0.06 : 0.18),
+                Colors.transparent,
+              ],
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: isDark ? 0.45 : 0.18),
+                blurRadius: 28,
+                offset: const Offset(0, 8),
+              ),
+            ],
           ),
           child: AnimatedSwitcher(
             duration: const Duration(milliseconds: 200),

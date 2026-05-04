@@ -24,11 +24,21 @@ void callbackDispatcher() {
   Workmanager().executeTask((taskName, inputData) async {
     debugPrint('🔄 [BackgroundSync] Executing task: $taskName');
 
-    // WorkManager runs in a separate isolate — Supabase must be initialized here.
+    // WorkManager runs in a separate isolate — Supabase must be initialized
+    // here with the SAME storage config as main.dart so the background
+    // isolate can read the persisted session. Without matching authOptions,
+    // the default `flutter_secure_storage` backend is used here while the
+    // main app writes to SharedPreferences under `supabase.auth.token`,
+    // and the background isolate never finds a refresh token.
     try {
       await Supabase.initialize(
         url: ApiConstants.supabaseUrl,
         anonKey: ApiConstants.supabaseAnonKey,
+        authOptions: FlutterAuthClientOptions(
+          localStorage: SharedPreferencesLocalStorage(
+            persistSessionKey: 'supabase.auth.token',
+          ),
+        ),
       );
       debugPrint('✅ [BackgroundSync] Supabase initialized in background isolate');
     } catch (e) {
@@ -74,13 +84,19 @@ Future<bool> _processBackgroundSync() async {
             await Supabase.instance.client.auth.refreshSession();
         token = refreshed.session?.accessToken;
       }
+    } on AuthSessionMissingException {
+      // Expected when the user is signed out, hasn't signed in yet, or the
+      // refresh token expired between WorkManager firings. NOT an error —
+      // sync simply has nothing to do until the user is back in foreground.
+      debugPrint(
+          'ℹ️ [BackgroundSync] No persisted session in background isolate (user signed out or refresh token expired) — skipping');
     } catch (e) {
-      debugPrint('❌ [BackgroundSync] Auth error: $e');
+      debugPrint('⚠️ [BackgroundSync] Unexpected auth error (will skip): $e');
     }
 
     if (token == null) {
       debugPrint(
-          '❌ [BackgroundSync] No auth token available, skipping sync');
+          'ℹ️ [BackgroundSync] No auth token available, skipping sync (normal when signed out)');
       return true; // Return true so workmanager doesn't immediately retry
     }
 

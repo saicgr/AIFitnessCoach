@@ -29,6 +29,7 @@ import '../screens/onboarding/pre_auth_quiz_screen.dart';
 import '../screens/onboarding/notification_prime_screen.dart';
 import '../screens/onboarding/permissions_primer_screen.dart';
 import '../screens/onboarding/coach_selection_screen.dart';
+import '../screens/onboarding/personal_info_screen.dart';
 import '../screens/onboarding/fitness_assessment_screen.dart';
 import '../screens/onboarding/weight_projection_screen.dart';
 import '../screens/onboarding/workout_generation_screen.dart';
@@ -282,13 +283,22 @@ String? _getNextOnboardingStep(app_user.User user, Ref ref) {
     }
   }
 
-  // Onboarding v5.1: personal-info step removed.
-  // Name + body metrics are collected on the pre-auth quiz body-metrics gate.
-  // AI consent is now an inline checkbox on the sign-in screen.
-  // The post-signup chain jumps straight to coach-selection.
+  // Onboarding v5.1.1 (May 2026): name moved BACK to /personal-info post
+  // sign-in per ONBOARDING_FLOW.md. The quiz body-metrics gate captures
+  // gender/height/weight only; /personal-info collects name + DOB and
+  // re-confirms body metrics so the user record is complete before we
+  // route to coach-selection.
+  // AI consent is captured as an inline checkbox on the sign-in screen.
 
-  // Onboarding v5.1: AI consent gate removed — consent is captured as an
-  // inline checkbox on the sign-in screen and persisted as part of auth.
+  // Step 1: Personal info (name, DOB) — gate exists at user.dart:194 and
+  // requires name + dateOfBirth + gender + heightCm + weightKg.
+  if (!user.isPersonalInfoComplete) {
+    debugPrint('🧭 [Router] _getNextOnboardingStep → /personal-info '
+        '(name=${user.name != null}, dob=${user.dateOfBirth != null}, '
+        'gender=${user.gender != null}, h=${user.heightCm != null}, '
+        'w=${user.weightKg != null})');
+    return '/personal-info';
+  }
 
   // Step 2: Coach selection
   if (!user.isCoachSelected) {
@@ -379,6 +389,21 @@ String? _handleAuthRedirect(
       };
       if (replayableForReturningUser.contains(loc) &&
           user != null && !user.isCoachSelected) {
+        // Edge case: sign_in_screen pushes /sign-in via context.push (not
+        // context.go), which stacks the screen on top of /demo-tasks (or
+        // wherever the funnel terminates). After Google/Apple sign-in
+        // flips authState to authenticated, the redirect listener fires
+        // with state.matchedLocation = /demo-tasks (the BASE go-route
+        // under the pushed /sign-in modal — not the pushed route itself).
+        // Without this guard, the replay path returns null and the user
+        // is trapped on /demo-tasks under the lingering /sign-in stack.
+        // !isPersonalInfoComplete reliably identifies a fresh sign-up:
+        // a returning user replaying the funnel intentionally has name +
+        // DOB + body metrics on file from a prior attempt.
+        if (!user.isPersonalInfoComplete) {
+          final nextStep = _getNextOnboardingStep(user, ref);
+          if (nextStep != null) return nextStep;
+        }
         return null;
       }
 
@@ -391,9 +416,16 @@ String? _handleAuthRedirect(
     return null; // Allow for non-logged-in users
   }
 
-  // Onboarding v5.1 removed: /personal-info, /training-split,
-  // /ai-consent, /health-disclaimer, /accuracy-intro, /health-connect-setup,
-  // /feature-showcase — consolidated into quiz/sign-in/Phase 2 or deferred.
+  // Onboarding v5.1 removed: /training-split, /ai-consent, /health-disclaimer,
+  // /accuracy-intro, /health-connect-setup, /feature-showcase — consolidated
+  // into quiz/sign-in/Phase 2 or deferred.
+  // /personal-info was REINTRODUCED in v5.1.1 to collect name + DOB
+  // post-sign-in (see _getNextOnboardingStep above).
+
+  // Personal info — auth required, post-sign-in only.
+  if (loc == '/personal-info') {
+    return isLoggedIn ? null : '/intro';
+  }
 
   // Coach selection - auth required (also used for changing coach from settings)
   if (loc == '/coach-selection') {

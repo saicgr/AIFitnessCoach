@@ -1009,8 +1009,8 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
           ),
           _TimelineNode(
             icon: Icons.workspace_premium_rounded,
-            iconBg: colors.textPrimary,
-            iconColor: Colors.white,
+            iconBg: _paywallAccent.withValues(alpha: 0.15),
+            iconColor: _paywallAccent,
             title: 'In 7 Days · Billing Starts',
             subtitle:
                 "You'll be charged on ${_trialEndDateString()} unless you cancel anytime before.",
@@ -1146,33 +1146,30 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
       }
     }
 
-    // User declined discount (or second tap) — start 7-day RevenueCat trial
-    // by purchasing yearly plan (which has a 7-day free trial attached)
+    // "Maybe later" must be a true skip — no Google Play / App Store purchase
+    // sheet. Earlier behavior auto-launched a `premium_yearly` purchase, which
+    // surfaced the billing sheet; if the user dismissed it, the next-screen
+    // navigation still ran. That looked like "skip → store popup → minimize →
+    // app advances anyway" and also pulled trial activations from users who
+    // never opted in. Keep skip cleanly free.
     ref.read(posthogServiceProvider).capture(
-      eventName: 'paywall_trial_auto_started',
+      eventName: 'paywall_skipped_no_purchase',
       properties: {},
     );
 
     final isReturningUser = ref.read(authStateProvider).user?.isPaywallComplete ?? false;
-    final trialSuccess = await ref.read(subscriptionProvider.notifier).purchase('premium_yearly');
-    if (trialSuccess && context.mounted) {
-      if (isReturningUser) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('You\'re all set. Your trial is now active.'), behavior: SnackBarBehavior.floating),
-        );
+    if (!context.mounted) return;
+    if (isReturningUser) {
+      if (context.canPop()) {
+        context.pop();
+      } else {
         context.go('/home');
-      } else {
-        await _markPaywallComplete(ref);
-        await _navigateAfterPaywall(context, ref);
       }
-    } else if (context.mounted) {
-      if (isReturningUser) {
-        if (context.canPop()) context.pop();
-      } else {
-        // New user — let them through, hard paywall will gate premium features
-        await _markPaywallComplete(ref);
-        await _navigateAfterPaywall(context, ref);
-      }
+    } else {
+      // New user — flag paywall complete so we don't loop them back here on
+      // the next launch. Hard paywall on premium-gated features still kicks in.
+      await _markPaywallComplete(ref);
+      await _navigateAfterPaywall(context, ref);
     }
   }
 
@@ -1626,17 +1623,7 @@ class _PhoneFrame extends StatelessWidget {
                         ),
                       ),
                     ),
-                    Padding(
-                      padding: const EdgeInsets.only(top: 4),
-                      child: Container(
-                        width: 60,
-                        height: 16,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF0A0A0A),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                    ),
+                    // Notch / Dynamic Island removed for a cleaner frame.
                   ],
                 ),
               ),
@@ -2089,7 +2076,7 @@ class _PlanTile extends StatelessWidget {
                   alignment: Alignment.center,
                   padding: const EdgeInsets.symmetric(vertical: 4),
                   decoration: BoxDecoration(
-                    color: colors.textPrimary,
+                    color: _paywallAccent,
                     borderRadius: const BorderRadius.only(
                       topLeft: Radius.circular(10),
                       topRight: Radius.circular(10),

@@ -7,6 +7,7 @@ import '../../../data/models/workout.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/services/api_client.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:flutter/services.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
 /// Shows a bottom sheet with workout actions
@@ -164,13 +165,30 @@ class _WorkoutActionsSheetState extends ConsumerState<_WorkoutActionsSheet> {
                     isLoading: _loadingAction == 'stretches',
                     onTap: () => _handleGenerateStretches(context),
                   ),
-                  _ActionTile(
-                    icon: Icons.ios_share_rounded,
-                    title: 'Share Workout',
-                    subtitle: 'Get a ${Branding.marketingDomain} link for friends',
-                    isLoading: _loadingAction == 'share',
-                    onTap: () => _handleShare(context),
-                  ),
+                  // Backend rejects share-link generation for unfinished
+                  // workouts (only completed sessions get a public token).
+                  // Hide the affordance entirely so the user isn't left
+                  // tapping a button that silently 400s.
+                  if (widget.workout.isCompleted == true)
+                    _ActionTile(
+                      icon: Icons.ios_share_rounded,
+                      title: 'Share Workout',
+                      subtitle: 'Get a ${Branding.marketingDomain} link for friends',
+                      isLoading: _loadingAction == 'share',
+                      onTap: () => _handleShare(context),
+                    )
+                  else
+                    _ActionTile(
+                      icon: Icons.ios_share_rounded,
+                      title: 'Share Workout',
+                      subtitle: 'Finish this workout to share it',
+                      isLoading: false,
+                      onTap: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Complete the workout first to generate a share link')),
+                        );
+                      },
+                    ),
                   _ActionTile(
                     icon: Icons.delete_outline,
                     title: 'Delete Workout',
@@ -270,6 +288,14 @@ class _WorkoutActionsSheetState extends ConsumerState<_WorkoutActionsSheet> {
         );
         return;
       }
+      // Copy first so the user has a guaranteed result even if the OS share
+      // sheet is unavailable (iOS Simulator, missing target apps). Then show
+      // the snackbar BEFORE popping the sheet — popping first hides the
+      // SnackBar behind the dismissed sheet and makes the action look silent.
+      await Clipboard.setData(ClipboardData(text: url));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Link copied to clipboard')),
+      );
       Navigator.of(context).pop();
       await Share.share(
         '${widget.workout.name ?? 'My workout'} — ${Branding.appName}\n$url',
@@ -277,6 +303,8 @@ class _WorkoutActionsSheetState extends ConsumerState<_WorkoutActionsSheet> {
       );
     } catch (e) {
       if (!mounted) return;
+      // Surface the failure visibly: keep the sheet open so the SnackBar
+      // isn't hidden behind a popping animation.
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Share failed: $e')),
       );

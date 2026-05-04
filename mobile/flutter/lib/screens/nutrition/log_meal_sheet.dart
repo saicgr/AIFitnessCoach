@@ -104,23 +104,30 @@ Future<void> showLogMealSheet(
   ref.read(floatingNavBarVisibleProvider.notifier).state = false;
 
   debugPrint('showLogMealSheet: About to show modal bottom sheet');
-  await showGlassSheet(
-    context: context,
-    builder: (context) => LogMealSheet(
-      userId: userId!,
-      isDark: isDark,
-      initialMealType: mealType,
-      autoOpenCamera: autoOpenCamera,
-      autoOpenBarcode: autoOpenBarcode,
-      autoOpenMultiImage: autoOpenMultiImage,
-      autoOpenMenuScan: autoOpenMenuScan,
-      selectedDate: selectedDate,
-    ),
-  );
-
-  debugPrint('showLogMealSheet: Bottom sheet closed');
-  // Show nav bar when sheet is closed
-  ref.read(floatingNavBarVisibleProvider.notifier).state = true;
+  try {
+    await showGlassSheet(
+      context: context,
+      builder: (context) => LogMealSheet(
+        userId: userId!,
+        isDark: isDark,
+        initialMealType: mealType,
+        autoOpenCamera: autoOpenCamera,
+        autoOpenBarcode: autoOpenBarcode,
+        autoOpenMultiImage: autoOpenMultiImage,
+        autoOpenMenuScan: autoOpenMenuScan,
+        selectedDate: selectedDate,
+      ),
+    );
+  } finally {
+    // CRITICAL: restore nav bar even if Analyze is in flight when the user
+    // swipe-dismisses, or any awaited future throws. Was naked before —
+    // matched the same disappearing-nav-bar class as weekly_checkin had
+    // (now fixed there with try/finally; mirroring the pattern here).
+    debugPrint('showLogMealSheet: Bottom sheet closed');
+    try {
+      ref.read(floatingNavBarVisibleProvider.notifier).state = true;
+    } catch (_) {/* container disposed mid-dismiss */}
+  }
 }
 
 /// Bottom sheet for logging meals with multiple input methods

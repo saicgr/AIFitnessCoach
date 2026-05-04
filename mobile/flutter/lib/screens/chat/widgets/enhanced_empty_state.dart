@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/theme_colors.dart';
@@ -30,6 +32,11 @@ class EnhancedEmptyState extends StatelessWidget {
     ('YTD workout summary', Icons.summarize_outlined, Color(0xFF10B981)),
     ('Share my 1RM progress', Icons.trending_up_rounded, Color(0xFFEC4899)),
   ];
+
+  // First N suggestions shown inline; the rest live behind a "More" pill that
+  // expands a bottom sheet. Keeps the empty state compact on small phones
+  // (was 11 chips → ~5 rows tall on iPhone SE) without losing discoverability.
+  static const _previewCount = 5;
 
   @override
   Widget build(BuildContext context) {
@@ -101,25 +108,246 @@ class EnhancedEmptyState extends StatelessWidget {
           Wrap(
             spacing: 8,
             runSpacing: 8,
-            children: _suggestions.map((s) {
-              final (text, icon, color) = s;
-              return _CompactChip(
-                text: text,
-                icon: icon,
-                color: color,
-                isDark: isDark,
-                colors: colors,
-                onTap: () {
-                  HapticService.selection();
-                  onSuggestionTap(text);
-                },
-              );
-            }).toList(),
+            children: [
+              for (final s in _suggestions.take(_previewCount))
+                _CompactChip(
+                  text: s.$1,
+                  icon: s.$2,
+                  color: s.$3,
+                  isDark: isDark,
+                  colors: colors,
+                  onTap: () {
+                    HapticService.selection();
+                    onSuggestionTap(s.$1);
+                  },
+                ),
+              if (_suggestions.length > _previewCount)
+                _CompactChip(
+                  text: 'More',
+                  icon: Icons.keyboard_arrow_up_rounded,
+                  color: colors.accent,
+                  isDark: isDark,
+                  colors: colors,
+                  onTap: () => _showMoreSuggestions(context, colors, isDark),
+                ),
+            ],
           ),
 
           const SizedBox(height: 16),
         ],
       ),
+    );
+  }
+
+  void _showMoreSuggestions(
+    BuildContext context,
+    ThemeColors colors,
+    bool isDark,
+  ) {
+    HapticService.selection();
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      barrierColor: Colors.black.withOpacity(isDark ? 0.55 : 0.35),
+      isScrollControlled: true,
+      builder: (sheetContext) {
+        return _SuggestionsSheet(
+          coach: coach,
+          colors: colors,
+          isDark: isDark,
+          suggestions: _suggestions,
+          onSuggestionTap: (text) {
+            Navigator.of(sheetContext).pop();
+            onSuggestionTap(text);
+          },
+        );
+      },
+    );
+  }
+}
+
+class _SuggestionsSheet extends StatelessWidget {
+  final CoachPersona coach;
+  final ThemeColors colors;
+  final bool isDark;
+  final List<(String, IconData, Color)> suggestions;
+  final void Function(String prompt) onSuggestionTap;
+
+  const _SuggestionsSheet({
+    required this.coach,
+    required this.colors,
+    required this.isDark,
+    required this.suggestions,
+    required this.onSuggestionTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final mq = MediaQuery.of(context);
+    // Glassmorphism: BackdropFilter blur over a translucent surface, with a
+    // 1px hairline border + soft outer shadow. Matches the app's other
+    // bottom sheets (food edit, share gallery).
+    final glassFill = isDark
+        ? Colors.white.withOpacity(0.08)
+        : Colors.white.withOpacity(0.72);
+    final glassBorder = isDark
+        ? Colors.white.withOpacity(0.14)
+        : Colors.white.withOpacity(0.55);
+    return DraggableScrollableSheet(
+      initialChildSize: 0.55,
+      minChildSize: 0.35,
+      maxChildSize: 0.9,
+      expand: false,
+      builder: (context, scrollController) {
+        return ClipRRect(
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 28, sigmaY: 28),
+            child: Container(
+              decoration: BoxDecoration(
+                color: glassFill,
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(24)),
+                border: Border(
+                  top: BorderSide(color: glassBorder, width: 1),
+                  left: BorderSide(color: glassBorder, width: 1),
+                  right: BorderSide(color: glassBorder, width: 1),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(isDark ? 0.45 : 0.18),
+                    blurRadius: 32,
+                    offset: const Offset(0, -8),
+                  ),
+                ],
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.white.withOpacity(isDark ? 0.06 : 0.18),
+                    Colors.transparent,
+                  ],
+                ),
+              ),
+              padding: EdgeInsets.only(bottom: mq.viewInsets.bottom),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const SizedBox(height: 8),
+                  Container(
+                    width: 36,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: colors.textMuted.withOpacity(0.35),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Row(
+                      children: [
+                        Text(
+                          'Try asking ${coach.name}',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: colors.textPrimary,
+                          ),
+                        ),
+                        const Spacer(),
+                        IconButton(
+                          icon: Icon(Icons.close_rounded,
+                              color: colors.textMuted),
+                          onPressed: () => Navigator.of(context).pop(),
+                          tooltip: 'Close',
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    height: 1,
+                    margin: const EdgeInsets.symmetric(horizontal: 16),
+                    color: glassBorder.withOpacity(0.5),
+                  ),
+                  Expanded(
+                    child: ListView.separated(
+                      controller: scrollController,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 12),
+                      itemCount: suggestions.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 6),
+                      itemBuilder: (context, i) {
+                        final (text, icon, color) = suggestions[i];
+                        return Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(14),
+                            onTap: () {
+                              HapticService.selection();
+                              onSuggestionTap(text);
+                            },
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: isDark
+                                    ? Colors.white.withOpacity(0.04)
+                                    : Colors.white.withOpacity(0.45),
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(
+                                  color: isDark
+                                      ? Colors.white.withOpacity(0.08)
+                                      : Colors.white.withOpacity(0.6),
+                                  width: 0.5,
+                                ),
+                              ),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 12,
+                              ),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      color: color.withOpacity(0.14),
+                                      borderRadius: BorderRadius.circular(10),
+                                      border: Border.all(
+                                        color: color.withOpacity(0.25),
+                                        width: 0.5,
+                                      ),
+                                    ),
+                                    child: Icon(icon, size: 18, color: color),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Text(
+                                      text,
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w500,
+                                        color: colors.textPrimary,
+                                      ),
+                                    ),
+                                  ),
+                                  Icon(
+                                    Icons.chevron_right_rounded,
+                                    size: 20,
+                                    color: colors.textMuted.withOpacity(0.5),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

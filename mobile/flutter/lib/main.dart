@@ -21,6 +21,8 @@ import 'data/services/live_activity_service.dart';
 import 'data/services/notification_service.dart';
 import 'data/services/widget_action_headless_service.dart';
 import 'data/services/background_sync_service.dart';
+import 'data/services/prewarmer_boot.dart';
+import 'data/local/database.dart' show AppDatabase;
 import 'data/local/database_provider.dart';
 // Meal-suggestion widget (see coming_soon_screen.dart) — code is staged
 // but not yet wired. When bringing live, uncomment these imports and the
@@ -57,6 +59,11 @@ void main() async {
       debugPrint('⚠️ Firebase initialization failed: $e');
     }),
     SharedPreferences.getInstance().then((prefs) => sharedPreferences = prefs),
+    // Batched prewarmer disk hydration. Single SharedPreferences open shared
+    // across all 5 tab prewarmers (You, Home, Nutrition, Workouts, Social) —
+    // dispatches each blob to its respective in-memory cache so first taps
+    // on any tab render from cache instead of waiting on a network round-trip.
+    PrewarmerBoot.hydrateAll(),
     Supabase.initialize(
       url: ApiConstants.supabaseUrl,
       anonKey: ApiConstants.supabaseAnonKey,
@@ -244,6 +251,24 @@ Future<void> _initNonCriticalServices(
   await BackgroundSyncService.initialize().then<void>((_) {}).catchError((e) {
     debugPrint('⚠️ BackgroundSyncService initialization failed: $e');
   });
+
+  // One-time queue cleanup. Devices that ran the pre-fix offline_workout_repository
+  // have a backlog of `pending` sync items that were never marked completed
+  // after their inline API call succeeded — those items have been replaying
+  // every 15 minutes for weeks, generating "[XP] workout_complete already
+  // claimed today" warnings server-side and starving the DB pool. 7 days is
+  // generous enough that any legitimately-pending offline write still gets a
+  // chance to flush, while everything older is unambiguous junk.
+  try {
+    final db = AppDatabase();
+    final wiped = await db.syncQueueDao.deleteOlderThan(const Duration(days: 7));
+    if (wiped > 0) {
+      debugPrint('🧹 [SyncQueue] Purged $wiped stale items older than 7 days');
+    }
+    await db.close();
+  } catch (e) {
+    debugPrint('⚠️ Stale sync-queue cleanup failed: $e');
+  }
 
   // Live Activities (iOS) + ongoing workout notification (Android).
   // init() is idempotent and also clears any orphan iOS activities from

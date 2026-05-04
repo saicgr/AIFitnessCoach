@@ -116,7 +116,18 @@ echo -e "${GREEN}Building app in DEBUG mode for $TARGET_SIM...${NC}"
 # The extension installs fine on physical devices; only the iOS 26 simulator's
 # install daemon rejects it. Stripping the .appex before install lets the rest
 # of the app run for normal sim testing.
-$FLUTTER_PATH build ios --simulator --debug --no-codesign
+# RevenueCat keys — paywall throws "Purchase service not configured" without these.
+# Override per-shell: export REVENUECAT_APPLE_KEY=appl_xxx REVENUECAT_GOOGLE_KEY=goog_xxx
+RC_GOOGLE_KEY="${REVENUECAT_GOOGLE_KEY:-goog_oWxJnYQrUSCtIxMqTPcEPfWgBxq}"
+RC_APPLE_KEY="${REVENUECAT_APPLE_KEY:-}"
+DART_DEFINES=("--dart-define=REVENUECAT_GOOGLE_KEY=$RC_GOOGLE_KEY")
+if [[ -n "$RC_APPLE_KEY" ]]; then
+  DART_DEFINES+=("--dart-define=REVENUECAT_APPLE_KEY=$RC_APPLE_KEY")
+else
+  echo -e "${YELLOW}⚠️  REVENUECAT_APPLE_KEY not set — iOS purchases will fail until you export it.${NC}"
+fi
+
+$FLUTTER_PATH build ios --simulator --debug --no-codesign "${DART_DEFINES[@]}"
 
 APP_PATH="$PROJECT_DIR/build/ios/iphonesimulator/Runner.app"
 EXT_PATH="$APP_PATH/PlugIns/FitWizLiveActivityExtension.appex"

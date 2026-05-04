@@ -26,6 +26,17 @@ def _pct_parent():
     from .percentage_training_service import LinkedExercise, WorkingWeightResult
     from .strength_calculator_service import strength_calculator_service
     return LinkedExercise, WorkingWeightResult, strength_calculator_service
+
+
+def _user_exercise_1rm_cls():
+    """Lazy import of UserExercise1RM. The TYPE_CHECKING import above is
+    compile-time only; methods that instantiate UserExercise1RM at runtime
+    must call this helper to avoid the `NameError: UserExercise1RM is not
+    defined` (Sentry PYTHON-FASTAPI-3J / 3G). Same circular-import dodge as
+    `_pct_parent`.
+    """
+    from .percentage_training_service import UserExercise1RM
+    return UserExercise1RM
 class PercentageTrainingService:
     """
     Service for percentage-based 1RM training.
@@ -158,7 +169,7 @@ class PercentageTrainingService:
     # Database Operations: 1RM Storage
     # -------------------------------------------------------------------------
 
-    async def get_user_1rms(self, user_id: str) -> List[UserExercise1RM]:
+    async def get_user_1rms(self, user_id: str) -> List["UserExercise1RM"]:
         """Get all stored 1RMs for a user."""
         if not self.supabase:
             return []
@@ -167,6 +178,7 @@ class PercentageTrainingService:
             'user_id', user_id
         ).execute()
 
+        UserExercise1RM = _user_exercise_1rm_cls()
         return [
             UserExercise1RM(
                 exercise_name=row['exercise_name'],
@@ -180,7 +192,7 @@ class PercentageTrainingService:
             for row in result.data
         ]
 
-    async def get_user_1rm(self, user_id: str, exercise_name: str) -> Optional[UserExercise1RM]:
+    async def get_user_1rm(self, user_id: str, exercise_name: str) -> Optional["UserExercise1RM"]:
         """Get stored 1RM for a specific exercise."""
         if not self.supabase:
             return None
@@ -193,6 +205,7 @@ class PercentageTrainingService:
             return None
 
         row = result.data
+        UserExercise1RM = _user_exercise_1rm_cls()
         return UserExercise1RM(
             exercise_name=row['exercise_name'],
             one_rep_max_kg=float(row['one_rep_max_kg']),
@@ -211,7 +224,7 @@ class PercentageTrainingService:
         source: str = 'manual',
         confidence: float = 1.0,
         last_tested_at: Optional[datetime] = None,
-    ) -> UserExercise1RM:
+    ) -> "UserExercise1RM":
         """Set or update a user's 1RM for an exercise."""
         if not self.supabase:
             raise ValueError("Supabase client not configured")
@@ -236,6 +249,7 @@ class PercentageTrainingService:
         ).execute()
 
         row = result.data[0]
+        UserExercise1RM = _user_exercise_1rm_cls()
         return UserExercise1RM(
             exercise_name=row['exercise_name'],
             one_rep_max_kg=float(row['one_rep_max_kg']),

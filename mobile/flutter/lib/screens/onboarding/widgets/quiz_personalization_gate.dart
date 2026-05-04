@@ -22,7 +22,6 @@ class QuizPersonalizationGate extends StatefulWidget {
   final VoidCallback onSkip;         // Fast-path: jump to plan-analyzing
 
   // Initial values (pre-fill from PreAuthQuizData)
-  final String? initialName;
   final String? initialGender;
   final double? initialHeightCm;
   final double? initialWeightKg;
@@ -30,9 +29,13 @@ class QuizPersonalizationGate extends StatefulWidget {
   final bool initialUseMetric;
 
   // Persistence callback — invoked when user proceeds with valid metrics.
-  // Onboarding v5.1: name is now collected here too, replacing personal-info.
+  // Name is captured post-sign-in on /personal-info per the canonical
+  // ONBOARDING_FLOW.md ordering. The pre-auth quiz body-metrics gate
+  // intentionally does NOT collect name — collecting it here surfaces the
+  // user's name on the sign-in screen and "before signup" UX, which is the
+  // exact symptom users complained about. See plan
+  // ~/.claude/plans/i-am-still-not-quizzical-comet.md.
   final Future<void> Function({
-    required String name,
     required String gender,
     required double heightCm,
     required double weightKg,
@@ -45,7 +48,6 @@ class QuizPersonalizationGate extends StatefulWidget {
     required this.onPersonalize,
     required this.onSkip,
     required this.onSaveBodyMetrics,
-    this.initialName,
     this.initialGender,
     this.initialHeightCm,
     this.initialWeightKg,
@@ -70,7 +72,6 @@ class _QuizPersonalizationGateState extends State<QuizPersonalizationGate> {
   // a build that fires before initState completes, or a partial
   // hot-reload swap) can never throw LateInitializationError. Real
   // values get assigned in initState below.
-  final TextEditingController _nameCtrl = TextEditingController();
   // In metric mode `_heightCtrl` holds cm. In imperial mode it holds the
   // feet portion and `_heightInchesCtrl` holds the leftover inches
   // (so a user can enter "5 ft 1 in" the natural way).
@@ -90,12 +91,6 @@ class _QuizPersonalizationGateState extends State<QuizPersonalizationGate> {
     // load but are toggleable per-row from then on.
     _heightInCm = widget.initialUseMetric;
     _weightInKg = widget.initialUseMetric;
-    // Strip meaningless backend defaults — Supabase/our user-create path
-    // seeds new accounts with display_name = "User" when none is provided.
-    // Showing that as a prefilled value confuses people; let the hint show
-    // instead so they actually type their real name.
-    final seed = widget.initialName?.trim() ?? '';
-    _nameCtrl.text = seed.toLowerCase() == 'user' ? '' : seed;
 
     // Seed height controllers depending on selected unit.
     if (widget.initialHeightCm != null) {
@@ -125,7 +120,6 @@ class _QuizPersonalizationGateState extends State<QuizPersonalizationGate> {
 
   @override
   void dispose() {
-    _nameCtrl.dispose();
     _heightCtrl.dispose();
     _heightInchesCtrl.dispose();
     _weightCtrl.dispose();
@@ -147,7 +141,6 @@ class _QuizPersonalizationGateState extends State<QuizPersonalizationGate> {
   }
 
   bool get _isValid {
-    if (_nameCtrl.text.trim().length < 2) return false;
     if (_gender == null) return false;
     final heightCm = _resolveHeightCm();
     final weight = double.tryParse(_weightCtrl.text);
@@ -173,7 +166,6 @@ class _QuizPersonalizationGateState extends State<QuizPersonalizationGate> {
 
     try {
       await widget.onSaveBodyMetrics(
-        name: _nameCtrl.text.trim(),
         gender: _gender!,
         heightCm: heightCm,
         weightKg: weightKg,
@@ -196,13 +188,6 @@ class _QuizPersonalizationGateState extends State<QuizPersonalizationGate> {
   @override
   Widget build(BuildContext context) {
     final t = OnboardingTheme.of(context);
-
-    // Belt-and-suspenders: also strip "User" at every build so the field
-    // clears even on hot-reload (where initState doesn't re-fire) and no
-    // matter which upstream path seeded it.
-    if (_nameCtrl.text.trim().toLowerCase() == 'user') {
-      _nameCtrl.clear();
-    }
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -244,52 +229,6 @@ class _QuizPersonalizationGateState extends State<QuizPersonalizationGate> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // ── Name (Onboarding v5.1: was on personal-info screen)
-                  // Single-box: TextField owns its own border so we don't
-                  // double-stack a wrapping Container border on top.
-                  _SectionLabel(text: 'Your name', t: t)
-                      .animate()
-                      .fadeIn(delay: 220.ms),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: _nameCtrl,
-                    onChanged: (_) => setState(() {}),
-                    textCapitalization: TextCapitalization.words,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w300,
-                      color: t.textPrimary,
-                      letterSpacing: -0.2,
-                    ),
-                    decoration: InputDecoration(
-                      hintText: 'First name',
-                      hintStyle: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                        color: t.textMuted,
-                      ),
-                      filled: true,
-                      fillColor: t.cardFill,
-                      contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 14, vertical: 14),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: t.borderDefault),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: t.borderDefault),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(
-                            color: AppColors.orange, width: 1.5),
-                      ),
-                    ),
-                  ).animate().fadeIn(delay: 240.ms),
-
-                  const SizedBox(height: 10),
-
                   // ── Gender
                   _SectionLabel(text: 'Gender', t: t)
                       .animate()

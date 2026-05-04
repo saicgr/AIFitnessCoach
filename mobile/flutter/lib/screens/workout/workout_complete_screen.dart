@@ -19,6 +19,7 @@ import '../../data/repositories/workout_repository.dart';
 import '../../data/services/api_client.dart';
 import '../../data/services/challenges_service.dart';
 import '../../data/services/personal_goals_service.dart';
+import '../../data/services/workout_completion_prewarmer.dart';
 import '../../data/providers/discover_provider.dart';
 import '../../data/providers/fitness_profile_provider.dart';
 import '../../data/providers/fitness_shape_history_provider.dart';

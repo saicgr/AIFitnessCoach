@@ -256,13 +256,39 @@ async def set_user_1rm(body: Set1RMRequest,
 async def get_user_1rms(user_id: str,
     current_user: dict = Depends(get_current_user),
 ):
-    """Get all stored 1RMs for a user."""
+    """Get all stored 1RMs for a user.
+
+    On first read (empty table), auto-populates from the user's workout
+    history before returning. Per user feedback: "1RMs should always
+    autopopulate, the user shouldn't hit autopopulate." Failure to
+    auto-populate is non-fatal — empty list still returns instead of
+    a 500 — so the My-1RMs screen always renders.
+    """
     verify_user_ownership(current_user, user_id)
     try:
         supabase = get_supabase_client()
         service = PercentageTrainingService(supabase)
 
         results = await service.get_user_1rms(user_id)
+
+        # First-read bootstrap: if the user has no 1RMs yet, try to derive
+        # them from completed workouts. Quiet on failure — auto-populate is
+        # a "nice to have" here; the read should never 500 because the
+        # bootstrap couldn't run.
+        if not results:
+            try:
+                count = await service.auto_populate_1rms(
+                    user_id=user_id,
+                    days_lookback=90,
+                    min_confidence=0.7,
+                )
+                if count > 0:
+                    results = await service.get_user_1rms(user_id)
+            except Exception as bootstrap_err:
+                logger.warning(
+                    f"Auto-populate-on-read failed for {user_id}: {bootstrap_err}",
+                    exc_info=True,
+                )
 
         return [
             UserExercise1RMResponse(
@@ -608,11 +634,13 @@ async def auto_populate_1rms(
         await log_user_activity(
             user_id=user_id,
             action="auto_populate_1rms",
-            details={
+            # `details` was a stale kwarg name; activity_logger signature
+            # is `metadata`. Sentry PYTHON-FASTAPI-3E.
+            metadata={
                 "count": count,
                 "days_lookback": days_lookback,
                 "min_confidence": min_confidence,
-            }
+            },
         )
 
         # Index all auto-populated 1RMs to ChromaDB for AI context

@@ -180,13 +180,65 @@ extension __SettingsScreenStateExt on _SettingsScreenState {
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final accent = isDark ? AppColors.accent : AppColorsLight.accent;
 
-    const tours = [
-      ('nav_tour', 'Home Navigation', 'Home screen walkthrough', Icons.home_outlined),
-      ('workout_tour', 'Active Workout', 'Workout screen walkthrough', Icons.fitness_center),
-      ('nutrition_tour', 'Nutrition Tracking', 'Nutrition screen walkthrough', Icons.restaurant_outlined),
-      ('schedule_tour', 'Workout Schedule', 'Schedule screen walkthrough', Icons.calendar_today_outlined),
-      ('profile_tour', 'Profile', 'Profile screen walkthrough', Icons.person_outline),
+    // Each tour fires its first-run UI when at least one of the listed
+    // SharedPrefs keys is absent. The two underlying systems use different
+    // key formats (AppTour: has_seen_<id>; EmptyStateTipTour:
+    // has_seen_empty_tour_<id>; tier-aware active workout: tour_seen_<tier>),
+    // so we need to clear the right key per tour for "Replay" to actually
+    // re-fire. Source of truth: lib/widgets/tooltips/tooltip_ids.dart.
+    final tours = <(String, String, String, IconData, List<String>)>[
+      (
+        'nav_tour',
+        'Home Navigation',
+        'Home screen walkthrough',
+        Icons.home_outlined,
+        ['has_seen_nav_tour'],
+      ),
+      (
+        'workout_tour',
+        'Active Workout',
+        'Easy / Simple / Advanced walkthroughs',
+        Icons.fitness_center,
+        ['tour_seen_easy', 'tour_seen_simple', 'tour_seen_advanced'],
+      ),
+      (
+        'nutrition_tour',
+        'Nutrition Tracking',
+        'Log meals + swipe dates + My Foods',
+        Icons.restaurant_outlined,
+        // Legacy EmptyStateTipTour-backed; key prefix differs from AppTour.
+        ['has_seen_empty_tour_nutrition_v1'],
+      ),
+      (
+        'workouts_tab_tour',
+        'Workouts Tab',
+        'Quick actions + Today + library',
+        Icons.calendar_view_week_rounded,
+        ['has_seen_workouts_tab_tour', 'has_seen_empty_tour_workouts_v1'],
+      ),
+      (
+        'discover_tour',
+        'Discover',
+        'Leaderboard + peer profiles walkthrough',
+        Icons.public,
+        ['has_seen_empty_tour_discover_v1'],
+      ),
+      (
+        'schedule_tour',
+        'Workout Schedule',
+        'Calendar + workout card walkthrough',
+        Icons.calendar_today_outlined,
+        ['has_seen_schedule_tour'],
+      ),
+      (
+        'profile_tour',
+        'Profile',
+        'Profile + stats walkthrough',
+        Icons.person_outline,
+        ['has_seen_profile_tour'],
+      ),
     ];
 
     showModalBottomSheet(
@@ -214,16 +266,55 @@ extension __SettingsScreenStateExt on _SettingsScreenState {
               const SizedBox(height: 16),
               Text('Tutorials & Hints', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: textPrimary)),
               const SizedBox(height: 4),
-              Text('Replay full screen tours, or reset the small inline hints', style: TextStyle(fontSize: 13, color: textMuted)),
+              Text('Replay the onboarding walkthrough, individual screen tours, or reset inline hints.', style: TextStyle(fontSize: 13, color: textMuted)),
               const SizedBox(height: 16),
-              Text('REPLAY TOURS', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: textMuted, letterSpacing: 0.6)),
+              // Primary: re-fire the entire first-run sequence the user saw at
+              // onboarding. Clears every tour key + inline-hint flag in one
+              // shot, then routes back to /home so the nav tour kicks off
+              // immediately and follow-on tours fire as the user navigates.
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  icon: const Icon(Icons.replay_rounded, size: 18),
+                  label: const Text(
+                    'Replay onboarding walkthrough',
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                  ),
+                  onPressed: () async {
+                    final prefs = await SharedPreferences.getInstance();
+                    for (final tour in tours) {
+                      for (final key in tour.$5) {
+                        await prefs.remove(key);
+                      }
+                    }
+                    await Tooltips.resetAll();
+                    ref.read(appTourControllerProvider.notifier).dismiss();
+                    if (ctx.mounted) {
+                      Navigator.pop(ctx);
+                      AppSnackBar.info(
+                        context,
+                        'Walkthrough reset — head to Home to start it again',
+                      );
+                      if (context.mounted) context.go('/home');
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: accent,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text('REPLAY INDIVIDUAL TOURS', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: textMuted, letterSpacing: 0.6)),
               const SizedBox(height: 6),
               Flexible(
                 child: ListView(
                   shrinkWrap: true,
                   padding: EdgeInsets.zero,
                   children: tours.map((tour) {
-                    final (tourId, label, subtitle, icon) = tour;
+                    final (tourId, label, subtitle, icon, keys) = tour;
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 4),
                       child: ListTile(
@@ -235,7 +326,9 @@ extension __SettingsScreenStateExt on _SettingsScreenState {
                         trailing: TextButton(
                           onPressed: () async {
                             final prefs = await SharedPreferences.getInstance();
-                            await prefs.remove('has_seen_$tourId');
+                            for (final key in keys) {
+                              await prefs.remove(key);
+                            }
                             ref.read(appTourControllerProvider.notifier).dismiss();
                             if (ctx.mounted) {
                               Navigator.pop(ctx);
@@ -249,29 +342,6 @@ extension __SettingsScreenStateExt on _SettingsScreenState {
                       ),
                     );
                   }).toList(),
-                ),
-              ),
-              const SizedBox(height: 8),
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton(
-                  onPressed: () async {
-                    final prefs = await SharedPreferences.getInstance();
-                    for (final tour in tours) {
-                      await prefs.remove('has_seen_${tour.$1}');
-                    }
-                    ref.read(appTourControllerProvider.notifier).dismiss();
-                    if (ctx.mounted) {
-                      Navigator.pop(ctx);
-                      AppSnackBar.info(context, 'All tutorials will replay on next visit');
-                    }
-                  },
-                  style: OutlinedButton.styleFrom(
-                    side: BorderSide(color: cardBorder),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                  ),
-                  child: Text('Replay All Tours', style: TextStyle(fontSize: 14, color: textPrimary)),
                 ),
               ),
               const SizedBox(height: 16),

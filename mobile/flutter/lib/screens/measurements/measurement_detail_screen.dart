@@ -11,6 +11,8 @@ import '../../data/services/haptic_service.dart';
 import '../../widgets/glass_back_button.dart';
 import '../../widgets/glass_circle_fab.dart';
 import '../../widgets/glass_sheet.dart';
+import '../../utils/share_report_helper.dart';
+import '../../core/constants/branding.dart';
 
 part 'measurement_detail_screen_part_stat_item.dart';
 
@@ -38,6 +40,8 @@ class _MeasurementDetailScreenState
   late bool _isMetric;
   late MeasurementType _type;
   String? _userGender;
+  // Used by share_report_helper to capture the chart + summary stats as a PNG.
+  final GlobalKey _shareRepaintKey = GlobalKey();
 
   final _periods = [
     {'label': '1D', 'value': '1d', 'days': 1},
@@ -99,8 +103,12 @@ class _MeasurementDetailScreenState
       body: SafeArea(
         child: Stack(
           children: [
-            // Main content
-            RefreshIndicator(
+            // Main content. RepaintBoundary lets share_report_helper snapshot
+            // the chart + stats into a PNG without including the floating
+            // back button or share FAB in the exported image.
+            RepaintBoundary(
+              key: _shareRepaintKey,
+              child: RefreshIndicator(
               onRefresh: _loadMeasurements,
               color: cyan,
               child: CustomScrollView(
@@ -318,6 +326,7 @@ class _MeasurementDetailScreenState
                   const SliverToBoxAdapter(child: SizedBox(height: 100)),
                 ],
               ),
+              ),
             ),
 
             // Floating back button
@@ -329,6 +338,26 @@ class _MeasurementDetailScreenState
                   HapticService.light();
                   Navigator.pop(context);
                 },
+              ),
+            ),
+            // Floating share button (mirrors the per-row share affordance on
+            // Reports & Insights — exports the chart as a PNG via
+            // share_report_helper.shareReportScreen).
+            Positioned(
+              top: 8,
+              right: 8,
+              child: _ShareIconButton(
+                onTap: () {
+                  HapticService.light();
+                  shareReportScreen(
+                    context: context,
+                    repaintKey: _shareRepaintKey,
+                    caption: '${_type.displayName} trend'
+                        '${latest != null ? ' — ${latest.value.toStringAsFixed(1)} $unit' : ''}',
+                    subject: '${Branding.appName} ${_type.displayName}',
+                  );
+                },
+                isDark: isDark,
               ),
             ),
           ],
@@ -941,6 +970,44 @@ class _MeasurementDetailScreenState
           ),
         ),
       ),
+      ),
+    );
+  }
+}
+
+/// Frosted-glass share icon. Mirrors GlassBackButton's circle shape so the
+/// header reads as a symmetric pair of floating affordances.
+class _ShareIconButton extends StatelessWidget {
+  final VoidCallback onTap;
+  final bool isDark;
+
+  const _ShareIconButton({required this.onTap, required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
+    final fg = isDark ? Colors.white : Colors.black87;
+    final bg = isDark
+        ? Colors.white.withValues(alpha: 0.08)
+        : Colors.black.withValues(alpha: 0.05);
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        customBorder: const CircleBorder(),
+        child: Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: bg,
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: fg.withValues(alpha: 0.12),
+              width: 1,
+            ),
+          ),
+          alignment: Alignment.center,
+          child: Icon(Icons.ios_share_rounded, size: 18, color: fg),
+        ),
       ),
     );
   }

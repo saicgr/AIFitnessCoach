@@ -71,6 +71,15 @@ class ShareableSheet extends ConsumerStatefulWidget {
   ConsumerState<ShareableSheet> createState() => _ShareableSheetState();
 }
 
+enum _GallerySort {
+  defaultOrder('Default'),
+  recents('Recents'),
+  favorites('Favorites');
+
+  final String label;
+  const _GallerySort(this.label);
+}
+
 class _ShareableSheetState extends ConsumerState<ShareableSheet> {
   late ShareableAspect _aspect;
   late ShareableCategory _category;
@@ -112,6 +121,11 @@ class _ShareableSheetState extends ConsumerState<ShareableSheet> {
   /// Drives the `RECENT` badge in the thumbnail strip + lets the sheet
   /// preselect the user's last-picked template on open.
   List<String> _recentTemplateIds = const [];
+
+  /// Gallery sort affordance — surfaces in `_galleryHeaderRow`. "Recents"
+  /// floats most-recently-shared templates to the top, "Favorites" floats
+  /// the user's pinned favorites. Default keeps the catalog order.
+  _GallerySort _gallerySort = _GallerySort.defaultOrder;
 
   @override
   void initState() {
@@ -236,7 +250,10 @@ class _ShareableSheetState extends ConsumerState<ShareableSheet> {
           _watermarkRow(accent),
           _textScaleRow(accent),
           if (_isPhotoTemplate) _photoUploadRow(accent),
-          Expanded(child: _gallery()),
+          // Category pills + aspect ratio MOVED ABOVE the gallery to match
+          // the demo (progress_share_gallery_screen) layout: filters on top,
+          // grid below. Old layout had the pills under the preview which
+          // forced the user to scroll past the canvas to find them.
           NestedPillSelector(
             data: _currentData,
             aspect: _aspect,
@@ -256,15 +273,21 @@ class _ShareableSheetState extends ConsumerState<ShareableSheet> {
                 );
                 if (inCat.isNotEmpty) {
                   _template = inCat.first.template;
-                  _recordTemplateUsed(_template);
                 }
               });
+              // NOTE: _recordTemplateUsed intentionally NOT called here.
+              // Browsing categories must not mark templates as RECENT —
+              // user complaint: "clicking everything is showing as recent".
+              // RECENT is now stamped only on actual share-success
+              // (_onShareInstagram / _onShareGeneric / _onSave / _onPreviewTapped).
             },
             onTemplateChanged: (t) {
               setState(() => _template = t);
-              _recordTemplateUsed(t);
+              // Same — only stamp on share success, not on browse tap.
             },
           ),
+          _galleryHeaderRow(accent, isDark),
+          Expanded(child: _gallery()),
           if (showLinkPill)
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
@@ -482,13 +505,27 @@ class _ShareableSheetState extends ConsumerState<ShareableSheet> {
     required VoidCallback onClear,
   }) {
     final picked = path != null && path.isNotEmpty;
+    // Theme-aware: previously hardcoded `Colors.white70` text on
+    // `Colors.white.withValues(alpha:0.06)` background was invisible against
+    // light bg in light mode (user complaint: "I do not see the texts and
+    // same with before and after").
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final unpickedFg = isDark
+        ? Colors.white70
+        : Colors.black.withValues(alpha: 0.75);
+    final unpickedBorder = isDark
+        ? Colors.white24
+        : Colors.black.withValues(alpha: 0.18);
+    final unpickedBg = isDark
+        ? Colors.white.withValues(alpha: 0.06)
+        : Colors.black.withValues(alpha: 0.04);
     return Material(
       color: picked
-          ? accent.withValues(alpha: 0.18)
-          : Colors.white.withValues(alpha: 0.06),
+          ? accent.withValues(alpha: isDark ? 0.18 : 0.12)
+          : unpickedBg,
       shape: StadiumBorder(
         side: BorderSide(
-          color: picked ? accent : Colors.white24,
+          color: picked ? accent : unpickedBorder,
           width: 1.2,
         ),
       ),
@@ -505,7 +542,7 @@ class _ShareableSheetState extends ConsumerState<ShareableSheet> {
                     ? Icons.check_circle_rounded
                     : Icons.photo_camera_outlined,
                 size: 16,
-                color: picked ? accent : Colors.white70,
+                color: picked ? accent : unpickedFg,
               ),
               const SizedBox(width: 6),
               Flexible(
@@ -514,7 +551,7 @@ class _ShareableSheetState extends ConsumerState<ShareableSheet> {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    color: picked ? accent : Colors.white70,
+                    color: picked ? accent : unpickedFg,
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
                   ),
@@ -568,16 +605,97 @@ class _ShareableSheetState extends ConsumerState<ShareableSheet> {
     }
   }
 
-  /// **Eager build** — every available template renders into the widget
-  /// tree immediately. The active one is on top via `IndexedStack`; the
-  /// others sit `Offstage` but still get a layout pass, so their
-  /// RepaintBoundaries are real and capture works on first tap.
+  /// **Vertical scrollable gallery** — every available template renders as
+  /// a real preview tile in a ListView, all visible at once via scrolling.
+  /// Replaces the previous `IndexedStack` carousel pattern that only showed
+  /// one template at a time and required pill navigation to switch.
   ///
-  /// This is the fix for the white-screen-on-preview bug. The old sheet
-  /// used `PageView.builder` which lazy-builds pages, so capturing before
-  /// the page was scrolled into view returned a 0×0 boundary, then the
-  /// preview dialog rendered an empty image.
+  /// Per project memory `feedback_share_gallery_viral_templates.md`:
+  ///   "Share UIs — use a gallery (all visible at once), not a carousel.
+  ///    Default to 15+ viral formats."
+  ///
+  /// Each tile keeps the same `RepaintBoundary(key: _captureKeys[template])`
+  /// wrapper so the capture pipeline (which keys by template enum) keeps
+  /// working — the keyed boundary just lives inside a tile in the list
+  /// instead of inside an IndexedStack child. Because every tile is in the
+  /// tree AND visible (vs the old Offstage trick), the white-screen-on-
+  /// first-capture bug is also gone — RepaintBoundaries always have real
+  /// pixels.
+  ///
+  /// The tile that matches `_template` gets an accent border + ~1.04x scale
+  /// so the user sees clearly which one the action buttons (Instagram /
+  /// Share / Save) will target.
+  /// Row above the gallery — count of available templates + a Sort
+  /// dropdown (Default / Recents / Favorites). Mirrors the
+  /// progress_share_gallery_screen.dart layout the user referenced.
+  Widget _galleryHeaderRow(Color accent, bool isDark) {
+    final inCategory = ShareableCatalog.templatesInCategory(
+      _currentData,
+      _category,
+      ownsCosmetic: _ownsElite,
+    );
+    final textMuted = (isDark ? Colors.white : Colors.black)
+        .withValues(alpha: 0.55);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 8, 16, 4),
+      child: Row(
+        children: [
+          Icon(Icons.auto_awesome, size: 14, color: accent),
+          const SizedBox(width: 6),
+          Text(
+            '${inCategory.length} viral formats',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: isDark ? Colors.white : Colors.black87,
+              letterSpacing: 0.2,
+            ),
+          ),
+          const Spacer(),
+          PopupMenuButton<_GallerySort>(
+            initialValue: _gallerySort,
+            tooltip: 'Sort',
+            position: PopupMenuPosition.under,
+            onSelected: (v) => setState(() => _gallerySort = v),
+            itemBuilder: (_) => const [
+              PopupMenuItem(
+                value: _GallerySort.defaultOrder,
+                child: Text('Default'),
+              ),
+              PopupMenuItem(
+                value: _GallerySort.recents,
+                child: Text('Recents first'),
+              ),
+              PopupMenuItem(
+                value: _GallerySort.favorites,
+                child: Text('Favorites first'),
+              ),
+            ],
+            child: Row(
+              children: [
+                Icon(Icons.sort_rounded, size: 16, color: textMuted),
+                const SizedBox(width: 4),
+                Text(
+                  _gallerySort.label,
+                  style: TextStyle(fontSize: 12, color: textMuted),
+                ),
+                Icon(Icons.arrow_drop_down_rounded, size: 18, color: textMuted),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _gallery() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    // Gallery RESPECTS the category pill at the bottom — narrows to the
+    // currently-selected category so the scrollable list stays manageable
+    // (Cards: ~6 / Editorial: ~7 / Rich: ~8 / etc) instead of dumping all
+    // 30+ templates in one stream. The aspect-ratio pill still controls
+    // the canvas size globally. Recently-used templates float to the top
+    // of whichever category they belong to so the user re-finds them fast.
     final available =
         ShareableCatalog.availableFor(_currentData, ownsCosmetic: _ownsElite);
     if (available.isEmpty) {
@@ -588,107 +706,225 @@ class _ShareableSheetState extends ConsumerState<ShareableSheet> {
             'Not enough data yet — try again after your next workout',
             textAlign: TextAlign.center,
             style: TextStyle(
-              color: Colors.white.withValues(alpha: 0.7),
+              color: (isDark ? Colors.white : Colors.black)
+                  .withValues(alpha: 0.7),
               fontSize: 14,
             ),
           ),
         ),
       );
     }
-    final activeIndex =
-        available.indexWhere((s) => s.template == _template).clamp(0, available.length - 1);
 
-    return GestureDetector(
-      onTap: _onPreviewTapped,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-        // Templates use absolute pixel sizes (e.g. 88pt top padding,
-        // 96pt hero numbers) tuned for the full output canvas (1080×
-        // 1920 / 1080×1350 / 1080×1080). Rendering them at preview
-        // size (~340pt wide) makes the padding eat the whole canvas,
-        // overflowing the inner Column by hundreds of pixels.
-        //
-        // Solution: lay the IndexedStack out at its DESIGN size, then
-        // scale the whole thing down with FittedBox for display. The
-        // inner RepaintBoundaries see the full design size, so the
-        // existing capture pipeline (pixelRatio = target/boundary)
-        // still produces a crisp 1080-wide PNG with zero quality loss.
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final designSize = _aspect.size; // 1080×1920 / 1080×1350 …
-            final ratio = _aspect.ratio;
-            var w = constraints.maxWidth;
-            var h = w / ratio;
-            if (h > constraints.maxHeight) {
-              h = constraints.maxHeight;
-              w = h * ratio;
-            }
-            return Center(
-              child: SizedBox(
-                width: w,
-                height: h,
-                child: Stack(
-                  children: [
-                    FittedBox(
-                      fit: BoxFit.contain,
-                      alignment: Alignment.center,
+    final inCategory = ShareableCatalog.templatesInCategory(
+      _currentData,
+      _category,
+      ownsCosmetic: _ownsElite,
+    );
+    // Sort honors the gallery sort dropdown:
+    //   Default  → catalog order
+    //   Recents  → recently-shared first, then catalog order
+    //   Favorites→ same as Recents until we wire a real favorites store
+    //              (catalog has no favorite flag yet; using recents is a
+    //              meaningful proxy and avoids leaving the affordance dead).
+    final recentSet = _recentTemplateIds.toSet();
+    List<ShareableTemplateSpec> sorted;
+    if (_gallerySort == _GallerySort.defaultOrder) {
+      sorted = inCategory;
+    } else {
+      sorted = <ShareableTemplateSpec>[
+        ...inCategory.where((s) => recentSet.contains(s.template.name)),
+        ...inCategory.where((s) => !recentSet.contains(s.template.name)),
+      ];
+    }
+    final renderList = sorted.isEmpty ? available : sorted;
+
+    final accent = _currentData.accentColor;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 4, 12, 4),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          // 4-column grid matches the onboarding `workout_showcase_screen.dart`
+          // demo layout — a true gallery where the user sees a row of
+          // previews at a glance instead of two giant scrollable tiles.
+          // Per-tile zoom button (top-right) opens the full-screen preview
+          // viewer; tapping the tile body just selects it as the active
+          // template (the one the action buttons target).
+          final designSize = _aspect.size;
+          final ratio = _aspect.ratio; // width / height
+          const cols = 4;
+          const spacing = 8.0;
+          final tileW = (constraints.maxWidth - spacing * (cols - 1)) / cols;
+          final tileH = tileW / ratio;
+
+          return GridView.builder(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: cols,
+              crossAxisSpacing: spacing,
+              mainAxisSpacing: spacing,
+              // Add a hair of headroom for the RECENT badge / label so the
+              // tile content doesn't clip.
+              childAspectRatio: ratio * 0.97,
+            ),
+            itemCount: renderList.length,
+            itemBuilder: (ctx, i) {
+              final spec = renderList[i];
+              final isActive = spec.template == _template;
+              final isRecent = recentSet.contains(spec.template.name);
+              final tileScale = isActive ? 1.0 : 0.96;
+              return Padding(
+                padding: EdgeInsets.zero,
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    setState(() => _template = spec.template);
+                  },
+                  // Long-press = expand to full-screen preview viewer
+                  // (replaces the previous tap-to-zoom corner button).
+                  onLongPress: () {
+                    HapticFeedback.mediumImpact();
+                    setState(() => _template = spec.template);
+                    _onPreviewTapped();
+                  },
+                  child: AnimatedScale(
+                    scale: tileScale,
+                    duration: const Duration(milliseconds: 200),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(18),
+                        border: Border.all(
+                          color: isActive
+                              ? accent
+                              : (isDark
+                                  ? Colors.white.withValues(alpha: 0.08)
+                                  : Colors.black.withValues(alpha: 0.06)),
+                          width: isActive ? 2.4 : 1,
+                        ),
+                        boxShadow: isActive
+                            ? [
+                                BoxShadow(
+                                  color: accent.withValues(alpha: 0.25),
+                                  blurRadius: 16,
+                                  spreadRadius: 1,
+                                )
+                              ]
+                            : null,
+                      ),
+                      clipBehavior: Clip.antiAlias,
                       child: SizedBox(
-                        width: designSize.width,
-                        height: designSize.height,
-                        // Apply the user-controlled font scale via a
-                        // MediaQuery override. Templates pick this up
-                        // automatically through their Text widgets, so
-                        // no per-template plumbing is needed.
-                        child: MediaQuery(
-                          data: MediaQuery.of(context).copyWith(
-                            textScaler: TextScaler.linear(_textScale),
-                          ),
-                          child: ClipRect(
-                            child: IndexedStack(
-                              index: activeIndex,
-                              sizing: StackFit.expand,
-                              children: [
-                                for (final spec in available)
-                                  RepaintBoundary(
-                                    key: _captureKeys[spec.template],
-                                    child:
-                                        spec.builder(_currentData, _showWatermark),
+                        width: tileW,
+                        height: tileH,
+                        child: Stack(
+                          children: [
+                            FittedBox(
+                              fit: BoxFit.contain,
+                              alignment: Alignment.center,
+                              child: SizedBox(
+                                width: designSize.width,
+                                height: designSize.height,
+                                child: MediaQuery(
+                                  data: MediaQuery.of(context).copyWith(
+                                    textScaler: TextScaler.linear(_textScale),
                                   ),
-                              ],
+                                  child: RepaintBoundary(
+                                    key: _captureKeys[spec.template],
+                                    child: spec.builder(
+                                        _currentData, _showWatermark),
+                                  ),
+                                ),
+                              ),
                             ),
-                          ),
+                            // Template-name label — sized down for the
+                            // 4-up grid so it doesn't crowd the preview.
+                            Positioned(
+                              left: 4,
+                              right: 4,
+                              bottom: 4,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withValues(alpha: 0.55),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(
+                                  spec.name,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: 0.3,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            // RECENT pill — top-left to leave the top-right
+                            // corner free for the zoom affordance.
+                            if (isRecent)
+                              Positioned(
+                                top: 4,
+                                left: 4,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 5, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: accent,
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: const Text(
+                                    '•',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w900,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            // Zoom icon — top-right. Tap = expand THIS tile
+                            // (without committing it as the action target).
+                            // Discoverable affordance the user explicitly asked
+                            // for in the gallery review (#5).
+                            Positioned(
+                              top: 2,
+                              right: 2,
+                              child: GestureDetector(
+                                behavior: HitTestBehavior.opaque,
+                                onTap: () {
+                                  HapticFeedback.selectionClick();
+                                  setState(() => _template = spec.template);
+                                  _onPreviewTapped();
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withValues(alpha: 0.55),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.zoom_out_map_rounded,
+                                    color: Colors.white,
+                                    size: 12,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
-                    // Maximize-to-zoom affordance — surfaces the
-                    // tap-to-expand gesture so users know they can
-                    // pinch-zoom the preview in a full-screen viewer.
-                    Positioned(
-                      top: 8,
-                      right: 8,
-                      child: Material(
-                        color: Colors.black.withValues(alpha: 0.55),
-                        shape: const CircleBorder(),
-                        child: InkWell(
-                          customBorder: const CircleBorder(),
-                          onTap: _onPreviewTapped,
-                          child: const Padding(
-                            padding: EdgeInsets.all(8),
-                            child: Icon(
-                              Icons.zoom_out_map_rounded,
-                              size: 18,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
-              ),
-            );
-          },
-        ),
+              );
+            },
+          );
+        },
       ),
     );
   }
@@ -765,6 +1001,8 @@ class _ShareableSheetState extends ConsumerState<ShareableSheet> {
       final result = await ShareService.shareToInstagramStories(captured);
       if (result.success) {
         await ShareService.saveToGallery(captured);
+        // Only mark as RECENT after a SUCCESSFUL share — not on browse tap.
+        _recordTemplateUsed(_template);
         if (mounted) Navigator.pop(context);
       } else if (result.error != null) {
         _toast('Could not open Instagram');
@@ -788,6 +1026,8 @@ class _ShareableSheetState extends ConsumerState<ShareableSheet> {
         bytes,
         caption: 'My ${Branding.appName} ${widget.data.title}',
       );
+      // Mark RECENT on successful generic share too.
+      _recordTemplateUsed(_template);
     } finally {
       if (mounted) setState(() => _isCapturing = false);
     }
@@ -806,6 +1046,9 @@ class _ShareableSheetState extends ConsumerState<ShareableSheet> {
       final result = await ShareService.saveToGallery(bytes);
       if (mounted) {
         if (result.success) {
+          // Mark RECENT on successful save-to-gallery (saving counts as
+          // intentional use, same as Instagram or generic share).
+          _recordTemplateUsed(_template);
           Navigator.pop(context);
           _toast('Saved to device');
         } else {
@@ -889,7 +1132,9 @@ class _ShareableSheetState extends ConsumerState<ShareableSheet> {
 
   void _toast(String msg) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.hideCurrentSnackBar();
+    messenger.showSnackBar(
       SnackBar(
         content: Text(msg),
         behavior: SnackBarBehavior.floating,

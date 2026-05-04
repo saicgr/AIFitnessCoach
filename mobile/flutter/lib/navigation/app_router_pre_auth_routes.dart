@@ -207,6 +207,35 @@ List<RouteBase> _preAuthRoutes() => [
         ),
       ),
 
+      // Personal Info — name + DOB collected post-sign-in (v5.1.1).
+      // Body metrics (gender/height/weight) come from the pre-auth quiz
+      // body-metrics gate via preAuthQuizProvider; this screen confirms
+      // them and writes everything to the backend in one PUT.
+      GoRoute(
+        path: '/personal-info',
+        pageBuilder: (context, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const PersonalInfoScreen(),
+          transitionDuration: const Duration(milliseconds: 400),
+          reverseTransitionDuration: const Duration(milliseconds: 300),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(
+              opacity: animation,
+              child: SlideTransition(
+                position: Tween<Offset>(
+                  begin: const Offset(0.05, 0),
+                  end: Offset.zero,
+                ).animate(CurvedAnimation(
+                  parent: animation,
+                  curve: Curves.easeOutCubic,
+                )),
+                child: child,
+              ),
+            );
+          },
+        ),
+      ),
+
       // Coach Selection - pick your AI coach personality before onboarding
       // Also used for changing coach from AI settings (with ?fromSettings=true)
       GoRoute(

@@ -140,28 +140,92 @@ extension __ExerciseSwapSheetStateExt on _ExerciseSwapSheetState {
             ),
           ),
 
-        // Loading state
+        // Loading state — animated pulsing accent halo behind a sparkle
+        // glyph, three-line micro-copy. Replaces the bare CircularProgressIndicator
+        // that read as a "system error placeholder" rather than intentional UI.
         if (_isLoadingAI)
           Expanded(
             child: Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const CircularProgressIndicator(color: AppColors.cyan),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Getting AI suggestions...',
-                    style: TextStyle(color: textMuted),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'This may take 10-15 seconds',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: textMuted.withOpacity(0.7),
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TweenAnimationBuilder<double>(
+                      tween: Tween(begin: 0.85, end: 1.15),
+                      duration: const Duration(milliseconds: 1100),
+                      curve: Curves.easeInOut,
+                      builder: (_, scale, child) => Transform.scale(
+                        scale: scale,
+                        child: child,
+                      ),
+                      onEnd: () {
+                        // Re-trigger by forcing a frame; setState toggles nothing
+                        // visible but restarts the tween. Cheap, no controller needed.
+                        if (mounted) setState(() {});
+                      },
+                      child: Container(
+                        width: 84,
+                        height: 84,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: RadialGradient(
+                            colors: [
+                              AppColors.cyan.withValues(alpha: 0.30),
+                              AppColors.cyan.withValues(alpha: 0.0),
+                            ],
+                          ),
+                        ),
+                        alignment: Alignment.center,
+                        child: Container(
+                          width: 56,
+                          height: 56,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: AppColors.cyan.withValues(alpha: 0.18),
+                            border: Border.all(
+                              color: AppColors.cyan.withValues(alpha: 0.4),
+                              width: 1,
+                            ),
+                          ),
+                          child: const Icon(
+                            Icons.auto_awesome,
+                            color: AppColors.cyan,
+                            size: 26,
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 18),
+                    Text(
+                      'Finding your best alternatives',
+                      style: TextStyle(
+                        color: AppColors.textPrimary,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Matching equipment, muscles, and your training history',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: textMuted,
+                        height: 1.35,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: 120,
+                      child: LinearProgressIndicator(
+                        backgroundColor: AppColors.cyan.withValues(alpha: 0.12),
+                        valueColor: const AlwaysStoppedAnimation(AppColors.cyan),
+                        minHeight: 3,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           )

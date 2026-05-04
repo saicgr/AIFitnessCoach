@@ -163,7 +163,16 @@ class ReportsAdapter {
       }
     }
     final list = byId.values.toList();
-    if (list.isEmpty) return null;
+    if (list.isEmpty) {
+      return _starterFallback(
+        userId: userId,
+        kind: ShareableKind.periodInsights,
+        title: 'Period Insights',
+        period: period,
+        displayName: displayName,
+        accent: accent,
+      );
+    }
 
     final totalMin = list.fold<int>(
         0, (s, w) => s + ((w['duration_minutes'] as num?)?.toInt() ?? 0));
@@ -251,31 +260,77 @@ class ReportsAdapter {
     required Color accent,
   }) async {
     final prStats = ref.read(prStatsProvider);
-    if (prStats == null || prStats.totalPrs == 0) return null;
-
     final useKg = ref.read(useKgForWorkoutProvider);
     final unit = useKg ? 'kg' : 'lb';
-    // Best 1RM per exercise across recent PRs — same logic the Personal
-    // Records screen uses so the hub share matches.
-    final byExercise = <String, double>{};
-    for (final pr in prStats.recentPrs) {
-      final key = pr.exerciseName.toLowerCase();
-      final cur = byExercise[key] ?? 0;
-      if (pr.estimated1rmKg > cur) byExercise[key] = pr.estimated1rmKg;
-    }
-    final top = prStats.recentPrs
-        .where((pr) =>
-            byExercise[pr.exerciseName.toLowerCase()] == pr.estimated1rmKg)
-        .take(5)
-        .toList();
 
-    final highlights = top.map((lift) {
-      final kg = lift.estimated1rmKg;
+    // Fast path — user has actual PRs.
+    if (prStats != null && prStats.totalPrs > 0) {
+      final byExercise = <String, double>{};
+      for (final pr in prStats.recentPrs) {
+        final key = pr.exerciseName.toLowerCase();
+        final cur = byExercise[key] ?? 0;
+        if (pr.estimated1rmKg > cur) byExercise[key] = pr.estimated1rmKg;
+      }
+      final top = prStats.recentPrs
+          .where((pr) =>
+              byExercise[pr.exerciseName.toLowerCase()] == pr.estimated1rmKg)
+          .take(5)
+          .toList();
+
+      final highlights = top.map((lift) {
+        final kg = lift.estimated1rmKg;
+        final v = useKg ? kg : kg * 2.20462;
+        return ShareableMetric(
+          label: lift.exerciseDisplayName,
+          value: '${v.round()} $unit',
+          icon: Icons.emoji_events_rounded,
+        );
+      }).toList();
+
+      return Shareable(
+        kind: ShareableKind.personalRecords,
+        title: 'Personal Records',
+        periodLabel: period,
+        heroValue: prStats.totalPrs,
+        heroUnitSingular: 'PR',
+        highlights: highlights,
+        userDisplayName: displayName,
+        accentColor: accent,
+      );
+    }
+
+    // Fallback — no PRs yet (e.g., first workout where the system didn't
+    // detect a "PR" but the user logged real lifts). Pull top weights from
+    // strength_records as baselines so the user can still share their
+    // first lifts instead of hitting a "not enough data" snackbar.
+    final db = Supabase.instance.client;
+    final userId = Supabase.instance.client.auth.currentUser?.id;
+    if (userId == null) return null;
+    final res = await db
+        .from('strength_records')
+        .select('exercise_name, estimated_1rm')
+        .eq('user_id', userId)
+        .order('estimated_1rm', ascending: false)
+        .limit(5);
+    final list = (res as List).cast<Map<String, dynamic>>();
+    if (list.isEmpty) {
+      return _starterFallback(
+        userId: userId,
+        kind: ShareableKind.personalRecords,
+        title: 'Personal Records',
+        period: period,
+        displayName: displayName,
+        accent: accent,
+      );
+    }
+
+    final highlights = list.map((r) {
+      final kg = (r['estimated_1rm'] as num).toDouble();
       final v = useKg ? kg : kg * 2.20462;
       return ShareableMetric(
-        label: lift.exerciseDisplayName,
+        label: r['exercise_name'] as String? ?? '—',
         value: '${v.round()} $unit',
-        icon: Icons.emoji_events_rounded,
+        icon: Icons.fitness_center_rounded,
       );
     }).toList();
 
@@ -283,8 +338,8 @@ class ReportsAdapter {
       kind: ShareableKind.personalRecords,
       title: 'Personal Records',
       periodLabel: period,
-      heroValue: prStats.totalPrs,
-      heroUnitSingular: 'PR',
+      heroValue: list.length,
+      heroUnitSingular: 'baseline',
       highlights: highlights,
       userDisplayName: displayName,
       accentColor: accent,
@@ -310,7 +365,16 @@ class ReportsAdapter {
         .gte('recorded_at', monthStart.toIso8601String())
         .lt('recorded_at', monthEnd.toIso8601String());
     final list = (res as List).cast<Map<String, dynamic>>();
-    if (list.isEmpty) return null;
+    if (list.isEmpty) {
+      return _starterFallback(
+        userId: userId,
+        kind: ShareableKind.exerciseHistory,
+        title: 'Exercise History',
+        period: period,
+        displayName: displayName,
+        accent: accent,
+      );
+    }
 
     final counts = <String, int>{};
     for (final r in list) {
@@ -320,7 +384,16 @@ class ReportsAdapter {
     }
     final sorted = counts.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
-    if (sorted.isEmpty) return null;
+    if (sorted.isEmpty) {
+      return _starterFallback(
+        userId: userId,
+        kind: ShareableKind.exerciseHistory,
+        title: 'Exercise History',
+        period: period,
+        displayName: displayName,
+        accent: accent,
+      );
+    }
     final topFive = sorted.take(5).toList();
 
     final highlights = topFive
@@ -356,32 +429,96 @@ class ReportsAdapter {
         .eq('user_id', userId)
         .gte('period_start', monthStart.toIso8601String().substring(0, 10));
     final list = (res as List).cast<Map<String, dynamic>>();
-    if (list.isEmpty) return null;
 
-    final scores =
-        list.map((r) => (r['strength_score'] as num).toInt()).toList();
-    final avg = scores.isEmpty ? 0 : scores.reduce((a, b) => a + b) ~/ scores.length;
-    list.sort((a, b) => (b['strength_score'] as num)
-        .compareTo(a['strength_score'] as num));
-    final top = list.take(3).toList();
+    if (list.isNotEmpty) {
+      final scores =
+          list.map((r) => (r['strength_score'] as num).toInt()).toList();
+      final avg = scores.isEmpty ? 0 : scores.reduce((a, b) => a + b) ~/ scores.length;
+      list.sort((a, b) => (b['strength_score'] as num)
+          .compareTo(a['strength_score'] as num));
+      final top = list.take(3).toList();
 
-    final highlights = [
-      ShareableMetric(label: 'AVG SCORE', value: '$avg / 100'),
-      for (final m in top)
-        ShareableMetric(
-          label: (m['muscle_group'] as String).toUpperCase(),
-          value: '${(m['strength_score'] as num).toInt()}',
-        ),
-    ];
+      final highlights = [
+        ShareableMetric(label: 'AVG SCORE', value: '$avg / 100'),
+        for (final m in top)
+          ShareableMetric(
+            label: (m['muscle_group'] as String).toUpperCase(),
+            value: '${(m['strength_score'] as num).toInt()}',
+          ),
+      ];
+
+      return Shareable(
+        kind: ShareableKind.muscleAnalytics,
+        title: 'Muscle Strength',
+        periodLabel: period,
+        heroValue: avg,
+        heroUnitSingular: '',
+        heroSuffix: ' / 100',
+        highlights: highlights,
+        userDisplayName: displayName,
+        accentColor: accent,
+      );
+    }
+
+    // Fallback — strength_scores rollup hasn't run yet (first workout, or
+    // backend roll-up cron hasn't fired). Derive per-muscle volume from
+    // performance_logs so the share works on day 1 instead of bouncing
+    // with "Not enough data".
+    final monthEnd = DateTime(month.year, month.month + 1, 1);
+    final perfRes = await db
+        .from('performance_logs')
+        .select('muscle_group, sets_completed, reps_completed, weight_used')
+        .eq('user_id', userId)
+        .gte('recorded_at', monthStart.toIso8601String())
+        .lt('recorded_at', monthEnd.toIso8601String());
+    final perfList = (perfRes as List).cast<Map<String, dynamic>>();
+    if (perfList.isEmpty) {
+      return _starterFallback(
+        userId: userId,
+        kind: ShareableKind.muscleAnalytics,
+        title: 'Muscle Strength',
+        period: period,
+        displayName: displayName,
+        accent: accent,
+      );
+    }
+
+    final byMuscle = <String, int>{};
+    for (final r in perfList) {
+      final mg = (r['muscle_group'] as String?)?.trim();
+      if (mg == null || mg.isEmpty) continue;
+      final sets = (r['sets_completed'] as num?)?.toInt() ?? 0;
+      byMuscle[mg] = (byMuscle[mg] ?? 0) + sets;
+    }
+    if (byMuscle.isEmpty) {
+      return _starterFallback(
+        userId: userId,
+        kind: ShareableKind.muscleAnalytics,
+        title: 'Muscle Strength',
+        period: period,
+        displayName: displayName,
+        accent: accent,
+      );
+    }
+    final sorted = byMuscle.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+    final totalSets = byMuscle.values.fold<int>(0, (s, v) => s + v);
+    final top = sorted.take(3);
 
     return Shareable(
       kind: ShareableKind.muscleAnalytics,
       title: 'Muscle Strength',
       periodLabel: period,
-      heroValue: avg,
-      heroUnitSingular: '',
-      heroSuffix: ' / 100',
-      highlights: highlights,
+      heroValue: byMuscle.length,
+      heroUnitSingular: 'muscle',
+      highlights: [
+        ShareableMetric(label: 'TOTAL SETS', value: totalSets.toString()),
+        for (final m in top)
+          ShareableMetric(
+            label: m.key.toUpperCase(),
+            value: '${m.value} sets',
+          ),
+      ],
       userDisplayName: displayName,
       accentColor: accent,
     );
@@ -404,7 +541,16 @@ class ReportsAdapter {
         .order('estimated_1rm', ascending: false)
         .limit(8);
     final list = (res as List).cast<Map<String, dynamic>>();
-    if (list.isEmpty) return null;
+    if (list.isEmpty) {
+      return _starterFallback(
+        userId: userId,
+        kind: ShareableKind.oneRm,
+        title: '1-Rep Maxes',
+        period: period,
+        displayName: displayName,
+        accent: accent,
+      );
+    }
 
     final useKg = ref.read(useKgForWorkoutProvider);
     final unit = useKg ? 'kg' : 'lb';
@@ -473,21 +619,49 @@ class ReportsAdapter {
     final db = Supabase.instance.client;
     final monthStart = DateTime(month.year, month.month, 1);
     final monthEnd = DateTime(month.year, month.month + 1, 1);
-    final res = await db
+
+    // Try this month first — but fall back to ALL-TIME if this month is
+    // empty so the user with one workout (or one earned earlier) can still
+    // share. Was returning null and showing "Not enough data" even when
+    // the user had achievements from last month.
+    final monthRes = await db
         .from('user_achievements')
         .select('xp_awarded, achievement_id, earned_at')
         .eq('user_id', userId)
         .gte('earned_at', monthStart.toIso8601String())
         .lt('earned_at', monthEnd.toIso8601String());
-    final list = (res as List).cast<Map<String, dynamic>>();
-    if (list.isEmpty) return null;
+    var list = (monthRes as List).cast<Map<String, dynamic>>();
+    var isAllTime = false;
+
+    if (list.isEmpty) {
+      final allRes = await db
+          .from('user_achievements')
+          .select('xp_awarded, achievement_id, earned_at')
+          .eq('user_id', userId)
+          .order('earned_at', ascending: false)
+          .limit(20);
+      list = (allRes as List).cast<Map<String, dynamic>>();
+      isAllTime = true;
+    }
+    if (list.isEmpty) {
+      return _starterFallback(
+        userId: userId,
+        kind: kind,
+        title: kind == ShareableKind.milestones ? 'Milestones' : 'Achievements',
+        period: period,
+        displayName: displayName,
+        accent: accent,
+      );
+    }
 
     final totalXp = list.fold<int>(
         0, (s, a) => s + ((a['xp_awarded'] as num?)?.toInt() ?? 0));
 
     final highlights = <ShareableMetric>[
       ShareableMetric(label: 'EARNED', value: list.length.toString()),
-      ShareableMetric(label: 'XP THIS MONTH', value: totalXp.toString()),
+      ShareableMetric(
+          label: isAllTime ? 'TOTAL XP' : 'XP THIS MONTH',
+          value: totalXp.toString()),
       if (list.isNotEmpty)
         ShareableMetric(
           label: 'LATEST',
@@ -500,7 +674,7 @@ class ReportsAdapter {
       kind: kind,
       title:
           kind == ShareableKind.milestones ? 'Milestones' : 'Achievements',
-      periodLabel: period,
+      periodLabel: isAllTime ? 'ALL TIME' : period,
       heroValue: list.length,
       heroUnitSingular: kind == ShareableKind.milestones ? 'milestone' : 'badge',
       highlights: highlights,
@@ -529,7 +703,16 @@ class ReportsAdapter {
         .gte('completed_at', monthStart.toIso8601String())
         .lt('completed_at', monthEnd.toIso8601String());
     final list = (res as List).cast<Map<String, dynamic>>();
-    if (list.isEmpty) return null;
+    if (list.isEmpty) {
+      return _starterFallback(
+        userId: userId,
+        kind: ShareableKind.progressCharts,
+        title: 'Progress Charts',
+        period: period,
+        displayName: displayName,
+        accent: accent,
+      );
+    }
 
     final totalMin = list.fold<int>(
         0, (s, w) => s + ((w['duration_minutes'] as num?)?.toInt() ?? 0));
@@ -573,7 +756,16 @@ class ReportsAdapter {
         .order('measured_at', ascending: false)
         .limit(30);
     final list = (res as List).cast<Map<String, dynamic>>();
-    if (list.isEmpty) return null;
+    if (list.isEmpty) {
+      return _starterFallback(
+        userId: userId,
+        kind: ShareableKind.bodyMeasurements,
+        title: 'Body Measurements',
+        period: period,
+        displayName: displayName,
+        accent: accent,
+      );
+    }
 
     final last = (list.first['weight_kg'] as num?)?.toDouble() ?? 0;
     final earlier =
@@ -629,7 +821,16 @@ class ReportsAdapter {
         .gte('logged_at', monthStart.toIso8601String())
         .lt('logged_at', monthEnd.toIso8601String());
     final list = (res as List).cast<Map<String, dynamic>>();
-    if (list.isEmpty) return null;
+    if (list.isEmpty) {
+      return _starterFallback(
+        userId: userId,
+        kind: ShareableKind.nutrition,
+        title: 'Nutrition',
+        period: period,
+        displayName: displayName,
+        accent: accent,
+      );
+    }
 
     num total(String key) =>
         list.fold<num>(0, (s, r) => s + ((r[key] as num?) ?? 0));
@@ -657,6 +858,100 @@ class ReportsAdapter {
       periodLabel: period,
       heroValue: avgCal,
       heroUnitSingular: 'kcal',
+      highlights: highlights,
+      userDisplayName: displayName,
+      accentColor: accent,
+    );
+  }
+
+  // ─── unified starter fallback ─────────────────────────────────────
+  //
+  // Single fallback used by every adapter when its rich data path turns
+  // up empty. Per user: "why would they use independent gates, it all
+  // must be unified" — the share button must NEVER bounce the user with
+  // "Not enough data". Worst case we return a minimal "starter" share
+  // with whatever signal the user has (completed-workout count, earliest
+  // workout date, app-join date), kind-tagged so each report still
+  // renders its own template.
+  //
+  // Returns null only if Supabase auth is not present (caller already
+  // handles that case before dispatching).
+  static Future<Shareable?> _starterFallback({
+    required String userId,
+    required ShareableKind kind,
+    required String title,
+    required String period,
+    required String? displayName,
+    required Color accent,
+  }) async {
+    final db = Supabase.instance.client;
+
+    // Pull a thin user signal: completed workouts count + first completion.
+    // Two cheap queries; if both fail or return nothing, we still render
+    // the share with a "Day 1" framing rather than bouncing the user.
+    int workoutCount = 0;
+    DateTime? firstCompleted;
+    int totalMin = 0;
+    try {
+      final res = await db
+          .from('workouts')
+          .select('id, duration_minutes, completed_at, scheduled_date')
+          .eq('user_id', userId)
+          .eq('is_completed', true)
+          .order('completed_at', ascending: true)
+          .limit(50);
+      final list = (res as List).cast<Map<String, dynamic>>();
+      workoutCount = list.length;
+      totalMin = list.fold<int>(
+          0, (s, w) => s + ((w['duration_minutes'] as num?)?.toInt() ?? 0));
+      for (final w in list) {
+        final c = w['completed_at'] as String?;
+        final s = w['scheduled_date'] as String?;
+        final dt = (c != null && c.isNotEmpty)
+            ? DateTime.tryParse(c)
+            : (s != null && s.isNotEmpty ? DateTime.tryParse(s) : null);
+        if (dt != null) {
+          firstCompleted ??= dt;
+          break;
+        }
+      }
+    } catch (_) {
+      // Network/permission failure → still render the share with zeros
+      // rather than bouncing. The template handles count==0 gracefully.
+    }
+
+    final daysSinceStart = firstCompleted == null
+        ? 0
+        : DateTime.now().difference(firstCompleted).inDays + 1;
+
+    final highlights = <ShareableMetric>[
+      ShareableMetric(
+        label: 'WORKOUTS',
+        value: workoutCount.toString(),
+        icon: Icons.fitness_center_rounded,
+      ),
+      if (totalMin > 0)
+        ShareableMetric(
+          label: 'TOTAL TIME',
+          value: _fmtMinutes(totalMin),
+          icon: Icons.timer_outlined,
+          accent: AppColors.success,
+        ),
+      if (daysSinceStart > 0)
+        ShareableMetric(
+          label: daysSinceStart == 1 ? 'DAY' : 'DAYS IN',
+          value: daysSinceStart.toString(),
+          icon: Icons.calendar_today_rounded,
+          accent: AppColors.purple,
+        ),
+    ];
+
+    return Shareable(
+      kind: kind,
+      title: title,
+      periodLabel: workoutCount > 0 ? 'JUST STARTED' : 'DAY 1',
+      heroValue: workoutCount,
+      heroUnitSingular: 'workout',
       highlights: highlights,
       userDisplayName: displayName,
       accentColor: accent,

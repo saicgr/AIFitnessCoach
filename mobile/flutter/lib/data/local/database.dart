@@ -100,7 +100,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 6;
+  int get schemaVersion => 7;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -120,6 +120,30 @@ class AppDatabase extends _$AppDatabase {
           }
           if (from < 6) {
             await m.createTable(cachedQuickPresets);
+          }
+          if (from < 7) {
+            // Indexes for hot read paths. Drift codegen on this project is
+            // intentionally disabled (see project_codegen_gotcha.md), so we
+            // create indexes via raw SQL in the migration instead of via
+            // `.indexed()` column annotations + regenerated .g.dart files.
+            // Each `IF NOT EXISTS` is harmless on fresh installs (createAll
+            // already populated the tables) and idempotent on re-runs.
+            await customStatement(
+              'CREATE INDEX IF NOT EXISTS idx_cached_workouts_user_id '
+              'ON cached_workouts(user_id);',
+            );
+            await customStatement(
+              'CREATE INDEX IF NOT EXISTS idx_cached_foods_external_id '
+              'ON cached_foods(external_id);',
+            );
+            await customStatement(
+              'CREATE INDEX IF NOT EXISTS idx_cached_foods_barcode '
+              'ON cached_foods(barcode);',
+            );
+            await customStatement(
+              'CREATE INDEX IF NOT EXISTS idx_pending_sync_status_created '
+              'ON pending_sync_queue(status, created_at);',
+            );
           }
         },
       );

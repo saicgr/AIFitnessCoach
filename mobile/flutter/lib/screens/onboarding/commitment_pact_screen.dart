@@ -259,8 +259,15 @@ class _CommitmentPactScreenState extends ConsumerState<CommitmentPactScreen> {
 
     final quiz = ref.watch(preAuthQuizProvider);
 
+    // Storage convention: quiz_days_selector.dart emits 0-indexed weekdays
+    // (Mon=0..Sun=6, see _dayInfo at quiz_days_selector.dart:34-42). Earlier
+    // versions of this file assumed ISO 1-7 indexing, which (a) silently
+    // dropped Monday (index 0) at the filter and (b) shifted all surviving
+    // labels backwards by one (Thu→Wed, Sat→Fri, etc) — Sentry-tagged user
+    // complaint: "I picked Thu/Sat/Sun but the screen shows Wed/Fri/Sat".
+    // Now treats input as 0-indexed end-to-end.
     List<int> selected = (quiz.workoutDays ?? const <int>[])
-        .where((d) => d >= 1 && d <= 7)
+        .where((d) => d >= 0 && d <= 6)
         .toList()
       ..sort();
     if (selected.isEmpty) {
@@ -290,7 +297,7 @@ class _CommitmentPactScreenState extends ConsumerState<CommitmentPactScreen> {
     // Rest of the workout days as compact rows.
     final restWorkoutDays = selected.skip(1).toList();
     final unselectedDays =
-        [1, 2, 3, 4, 5, 6, 7].where((d) => !selected.contains(d)).toList();
+        [0, 1, 2, 3, 4, 5, 6].where((d) => !selected.contains(d)).toList();
 
     const dayShort = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
@@ -304,7 +311,7 @@ class _CommitmentPactScreenState extends ConsumerState<CommitmentPactScreen> {
               .fadeIn(delay: 380.ms),
           const SizedBox(height: 18),
           _FirstSessionCard(
-            dayLabel: dayShort[firstDay - 1].toUpperCase(),
+            dayLabel: dayShort[firstDay].toUpperCase(),
             workoutName: firstLabel,
             duration: durationLabel(),
             muscles: _muscleGroupsFor(firstLabel),
@@ -326,12 +333,12 @@ class _CommitmentPactScreenState extends ConsumerState<CommitmentPactScreen> {
             ),
             ...restWorkoutDays.asMap().entries.map((entry) {
               final i = entry.key;
-              final isoDay = entry.value;
+              final dayIdx = entry.value; // 0-indexed (Mon=0..Sun=6)
               final label = labels[(i + 1) % labels.length];
               return Padding(
                 padding: const EdgeInsets.only(bottom: 8),
                 child: _OtherDayRow(
-                  day: dayShort[isoDay - 1],
+                  day: dayShort[dayIdx],
                   label: label,
                   duration: durationLabel(),
                 ).animate(delay: (650 + i * 100).ms).fadeIn().slideX(
@@ -344,7 +351,7 @@ class _CommitmentPactScreenState extends ConsumerState<CommitmentPactScreen> {
           if (unselectedDays.isNotEmpty) ...[
             const SizedBox(height: 14),
             _RestPill(
-              days: unselectedDays.map((d) => dayShort[d - 1]).toList(),
+              days: unselectedDays.map((d) => dayShort[d]).toList(),
             ).animate(delay: 1050.ms).fadeIn().slideY(begin: 0.05),
           ],
           const SizedBox(height: 18),
@@ -491,24 +498,28 @@ class _CommitmentPactScreenState extends ConsumerState<CommitmentPactScreen> {
     return 'Your first week starts here.';
   }
 
+  /// 0-indexed defaults (Mon=0..Sun=6) — match storage convention from
+  /// quiz_days_selector.dart. Previous version returned ISO 1-7 which then
+  /// got `- 1`'d everywhere, masking the convention mismatch on the happy
+  /// path while breaking when the user explicitly selected Monday.
   List<int> _defaultDaysFor(int n) {
     switch (n) {
       case 1:
-        return [3];
+        return [2]; // Wed
       case 2:
-        return [1, 4];
+        return [0, 3]; // Mon, Thu
       case 3:
-        return [1, 3, 5];
+        return [0, 2, 4]; // Mon, Wed, Fri
       case 4:
-        return [1, 2, 4, 5];
+        return [0, 1, 3, 4]; // Mon, Tue, Thu, Fri
       case 5:
-        return [1, 2, 3, 5, 6];
+        return [0, 1, 2, 4, 5]; // Mon-Wed + Fri-Sat
       case 6:
-        return [1, 2, 3, 4, 5, 6];
+        return [0, 1, 2, 3, 4, 5]; // Mon-Sat
       case 7:
-        return [1, 2, 3, 4, 5, 6, 7];
+        return [0, 1, 2, 3, 4, 5, 6]; // every day
       default:
-        return [1, 3, 5];
+        return [0, 2, 4];
     }
   }
 
@@ -702,7 +713,9 @@ class _WeekDotStrip extends StatelessWidget {
     final dotEmpty =
         (isDark ? AppColors.textMuted : AppColorsLight.textMuted)
             .withValues(alpha: 0.25);
-    final today = DateTime.now().weekday; // 1..7
+    // DateTime.weekday is 1..7 (Mon=1..Sun=7). Convert to our 0-indexed
+    // convention (Mon=0..Sun=6) to match selectedDays from the quiz.
+    final today = DateTime.now().weekday - 1; // 0..6
     const initials = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
     return Container(
@@ -717,9 +730,9 @@ class _WeekDotStrip extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: List.generate(7, (i) {
-          final isoDay = i + 1;
-          final isWorkout = selectedDays.contains(isoDay);
-          final isToday = isoDay == today;
+          final dayIdx = i; // 0=Mon, 6=Sun (matches selectedDays)
+          final isWorkout = selectedDays.contains(dayIdx);
+          final isToday = dayIdx == today;
           return Column(
             mainAxisSize: MainAxisSize.min,
             children: [

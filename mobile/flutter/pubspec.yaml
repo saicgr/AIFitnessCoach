@@ -1,7 +1,7 @@
 name: fitwiz
 description: "AI-powered fitness coaching app with personalized workouts"
 publish_to: 'none'
-version: 1.2.62+1135
+version: 1.2.65+1138
 
 environment:
   sdk: ^3.10.1
@@ -31,6 +31,11 @@ dependencies:
 
   # Networking
   dio: ^5.4.3+1
+  # HTTP/2 transport for Dio. Multiplexes 12+ parallel post-sign-in prewarmer
+  # requests onto ONE persistent TCP+TLS connection (vs HTTP/1.1's 6-per-host
+  # serialization). Falls back to HTTP/1.1 automatically per-request when the
+  # server doesn't negotiate h2.
+  dio_http2_adapter: ^2.5.0
   http_parser: ^4.0.0
 
   # Auth

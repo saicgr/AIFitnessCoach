@@ -83,7 +83,15 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
     try {
       await ref.read(authStateProvider.notifier).signInWithApple();
 
-      final user = ref.read(authStateProvider).user;
+      // Auth flip can synchronously dispose this ConsumerState via the
+      // GoRouter redirect listener — touching `ref` after that throws
+      // StateError("Cannot use ref after the widget was disposed"), which
+      // leaves the loading overlay stuck and the user seeing a frozen
+      // sign-in screen even though the redirect already happened.
+      if (!mounted) return;
+
+      final authState = ref.read(authStateProvider);
+      final user = authState.user;
       if (user != null && user.isFirstLogin && user.hasSupportFriend && mounted) {
         _showSupportFriendWelcome();
       }
@@ -92,6 +100,38 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
       // it here would race with the GoRouter redirect and tear down under us.
 
       _triggerEarlyGeneration();
+
+      // See _signInWithGoogle for rationale.
+      if (authState.status == AuthStatus.authenticated && user != null) {
+        // 250ms grace before checking — by then the SignIn screen MAY have been
+        // popped by GoRouter's refreshListenable. If so, the BuildContext is no
+        // longer under a route subtree and `GoRouterState.of(context)` throws
+        // "There is no GoRouterState above the current context" (Sentry
+        // FITWIZ-FLUTTER-7A). Use the router-level routerDelegate path which
+        // is available on any Element under the GoRouter widget tree —
+        // including a stale SignIn context that's been popped off the route
+        // stack but not yet disposed.
+        Future<void>.delayed(const Duration(milliseconds: 250), () {
+          if (!mounted) return;
+          String? loc;
+          try {
+            loc = GoRouter.of(context)
+                .routerDelegate
+                .currentConfiguration
+                .uri
+                .path;
+          } catch (e) {
+            // Truly disconnected from the router — nothing we can safely do.
+            debugPrint('🧭 [SignIn] Router unreachable post-auth: $e');
+            return;
+          }
+          if (loc == '/sign-in') {
+            debugPrint('🧭 [SignIn] Auth flipped but redirect did not fire — '
+                'force-navigating to /personal-info (router will rewrite if needed)');
+            context.go('/personal-info');
+          }
+        });
+      }
     } finally {
       messageTimer.cancel();
       if (mounted) {
@@ -122,7 +162,11 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
     try {
       await ref.read(authStateProvider.notifier).signInWithGoogle();
 
-      final user = ref.read(authStateProvider).user;
+      // See _signInWithApple — same dispose-during-await race.
+      if (!mounted) return;
+
+      final authState = ref.read(authStateProvider);
+      final user = authState.user;
       if (user != null && user.isFirstLogin && user.hasSupportFriend && mounted) {
         _showSupportFriendWelcome();
       }
@@ -131,6 +175,43 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
       // it here would race with the GoRouter redirect and tear down under us.
 
       _triggerEarlyGeneration();
+
+      // Belt-and-suspenders: GoRouter's refreshListenable should redirect us
+      // off /sign-in the instant authState flips to authenticated. If — for
+      // any reason (notifier race, stale sub) — we're still mounted on
+      // /sign-in 250 ms after the auth flip, force-navigate to the next
+      // onboarding step ourselves. The router's redirect handler will pick
+      // the right destination based on the user record.
+      if (authState.status == AuthStatus.authenticated && user != null) {
+        // 250ms grace before checking — by then the SignIn screen MAY have been
+        // popped by GoRouter's refreshListenable. If so, the BuildContext is no
+        // longer under a route subtree and `GoRouterState.of(context)` throws
+        // "There is no GoRouterState above the current context" (Sentry
+        // FITWIZ-FLUTTER-7A). Use the router-level routerDelegate path which
+        // is available on any Element under the GoRouter widget tree —
+        // including a stale SignIn context that's been popped off the route
+        // stack but not yet disposed.
+        Future<void>.delayed(const Duration(milliseconds: 250), () {
+          if (!mounted) return;
+          String? loc;
+          try {
+            loc = GoRouter.of(context)
+                .routerDelegate
+                .currentConfiguration
+                .uri
+                .path;
+          } catch (e) {
+            // Truly disconnected from the router — nothing we can safely do.
+            debugPrint('🧭 [SignIn] Router unreachable post-auth: $e');
+            return;
+          }
+          if (loc == '/sign-in') {
+            debugPrint('🧭 [SignIn] Auth flipped but redirect did not fire — '
+                'force-navigating to /personal-info (router will rewrite if needed)');
+            context.go('/personal-info');
+          }
+        });
+      }
     } finally {
       messageTimer.cancel();
       if (mounted) {

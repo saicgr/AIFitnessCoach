@@ -29,46 +29,37 @@ Future<void> showWeeklyCheckinSheet(BuildContext context, WidgetRef ref) async {
       prefs.lastWeeklyCheckinAt == null &&
       prefs.weeklyCheckinDismissCount == 0;
 
-  // Hide nav bar while sheet is open
-  ref.read(floatingNavBarVisibleProvider.notifier).state = false;
+  // Nav-bar hide/show is now done INSIDE the sheet's own State
+  // (initState/dispose) so the show-call doesn't depend on this caller's
+  // ref staying alive across the await. The previous helper-level
+  // try/finally was being eaten by a silent catch when the parent's ref
+  // was mid-rebuild on barrier-dismiss, leaving the bar permanently
+  // hidden. The sheet's own dispose() ALWAYS runs on every dismiss path
+  // (X tap, barrier tap, swipe-down, back gesture).
+  final result = await showGlassSheet<bool>(
+    context: context,
+    builder: (context) => GlassSheet(
+      child: WeeklyCheckinSheet(
+          userId: userId, isDark: isDark, isFirstTime: isFirstTime),
+    ),
+  );
 
-  try {
-    final result = await showGlassSheet<bool>(
-      context: context,
-      builder: (context) => GlassSheet(
-        child: WeeklyCheckinSheet(
-            userId: userId, isDark: isDark, isFirstTime: isFirstTime),
-      ),
-    );
-
-    // Track dismiss without completing — increment DB counter
-    if (result != true) {
-      final prefsState = ref.read(nutritionPreferencesProvider);
-      if (prefsState.preferences != null) {
-        final currentCount = prefsState.preferences!.weeklyCheckinDismissCount;
-        try {
-          await ref.read(nutritionPreferencesProvider.notifier).savePreferences(
-                userId: userId,
-                preferences: prefsState.preferences!.copyWith(
-                  weeklyCheckinDismissCount: currentCount + 1,
-                ),
-              );
-        } catch (e) {
-          debugPrint('⚠️ [WeeklyCheckin] Failed to save dismiss count: $e');
-        }
+  // Track dismiss without completing — increment DB counter
+  if (result != true) {
+    final prefsState = ref.read(nutritionPreferencesProvider);
+    if (prefsState.preferences != null) {
+      final currentCount = prefsState.preferences!.weeklyCheckinDismissCount;
+      try {
+        await ref.read(nutritionPreferencesProvider.notifier).savePreferences(
+              userId: userId,
+              preferences: prefsState.preferences!.copyWith(
+                weeklyCheckinDismissCount: currentCount + 1,
+              ),
+            );
+      } catch (e) {
+        debugPrint('⚠️ [WeeklyCheckin] Failed to save dismiss count: $e');
       }
     }
-  } finally {
-    // CRITICAL: restore the floating nav bar no matter how the sheet exits.
-    // Previously if the user minimized/swiped-dismissed the sheet while the
-    // caller widget was being torn down, or if anything between here and the
-    // old trailing `state = true` threw, the nav bar stayed hidden forever.
-    // try/finally guarantees the restore runs; the inner try/catch protects
-    // against the ProviderContainer being disposed (can happen if the app
-    // is backgrounded mid-dismiss).
-    try {
-      ref.read(floatingNavBarVisibleProvider.notifier).state = true;
-    } catch (_) {/* container already disposed — nothing to do */}
   }
 }
 
@@ -108,6 +99,31 @@ class _WeeklyCheckinSheetState extends ConsumerState<WeeklyCheckinSheet> {
     super.initState();
     _showIntro = widget.isFirstTime;
     if (!_showIntro) _loadData();
+
+    // Hide nav bar from inside the sheet's own lifecycle. Using
+    // addPostFrameCallback because Riverpod doesn't allow mutating provider
+    // state during widget construction. dispose() below pairs the restore.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ref.read(floatingNavBarVisibleProvider.notifier).state = false;
+    });
+  }
+
+  @override
+  void dispose() {
+    // Always restore the floating nav bar when the sheet's element unmounts.
+    // dispose() runs on EVERY dismiss path (X tap, barrier tap, swipe-down,
+    // back gesture, route pop). The previous show-helper's try/finally was
+    // being silently eaten by a parent-ref rebuild race; doing it from the
+    // sheet's own ref + own lifecycle is race-free because this State and
+    // its ref live exactly as long as the sheet route.
+    try {
+      ref.read(floatingNavBarVisibleProvider.notifier).state = true;
+    } catch (_) {
+      // Container disposed (app backgrounded mid-pop) — no action needed,
+      // a fresh container will start with the default `true`.
+    }
+    super.dispose();
   }
 
   Future<void> _loadData() async {

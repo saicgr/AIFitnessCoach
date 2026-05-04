@@ -14,6 +14,63 @@ class SyncQueueDao extends DatabaseAccessor<AppDatabase>
     return into(pendingSyncQueue).insert(entry);
   }
 
+  /// Idempotent enqueue. Skips insert if a pending/in_progress entry already
+  /// exists for the same (entityType, entityId, endpoint, httpMethod) tuple —
+  /// prevents the device from queuing the same workout completion (or set-log,
+  /// or workout creation) twice when the user double-taps or when an
+  /// optimistic local-write path enqueues a row that the immediate online API
+  /// call also handles. Returns true if a new row was inserted, false if a
+  /// duplicate was already pending.
+  Future<bool> enqueueIfNotPending(PendingSyncQueueCompanion entry) async {
+    final eType = entry.entityType.value;
+    final eId = entry.entityId.value;
+    final endpoint = entry.endpoint.value;
+    final method = entry.httpMethod.value;
+
+    final existing = await (select(pendingSyncQueue)
+          ..where((q) =>
+              q.entityType.equals(eType) &
+              q.entityId.equals(eId) &
+              q.endpoint.equals(endpoint) &
+              q.httpMethod.equals(method) &
+              (q.status.equals('pending') | q.status.equals('in_progress')))
+          ..limit(1))
+        .get();
+
+    if (existing.isNotEmpty) return false;
+    await into(pendingSyncQueue).insert(entry);
+    return true;
+  }
+
+  /// Mark every pending/in_progress queue entry matching the given entity +
+  /// endpoint as completed. Use after a successful inline API call so the
+  /// background sync engine doesn't replay the same operation 15 minutes
+  /// later. Returns the number of rows updated.
+  Future<int> markCompletedByEntity({
+    required String entityType,
+    required String entityId,
+    required String endpoint,
+  }) {
+    return (update(pendingSyncQueue)
+          ..where((q) =>
+              q.entityType.equals(entityType) &
+              q.entityId.equals(entityId) &
+              q.endpoint.equals(endpoint) &
+              (q.status.equals('pending') | q.status.equals('in_progress'))))
+        .write(const PendingSyncQueueCompanion(status: Value('completed')));
+  }
+
+  /// Hard-delete queue entries older than [age] regardless of status.
+  /// Called once at app boot to nuke stale items left over from earlier
+  /// versions (e.g. the offline-mode-removed era when items were enqueued
+  /// but never marked completed by the bug we're fixing in this commit).
+  /// Without this, devices upgrading from an old build keep replaying weeks-
+  /// old workout completions every 15 minutes forever.
+  Future<int> deleteOlderThan(Duration age) {
+    final cutoff = DateTime.now().subtract(age);
+    return (delete(pendingSyncQueue)..where((q) => q.createdAt.isSmallerThanValue(cutoff))).go();
+  }
+
   Future<List<PendingSyncQueueData>> getPendingItems({int limit = 50}) {
     return (select(pendingSyncQueue)
           ..where((q) => q.status.equals('pending'))

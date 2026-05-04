@@ -807,6 +807,10 @@ class _MoodPickerSheetState extends ConsumerState<MoodPickerSheet> {
       // `regenerate_workout_sheet_part_regenerate_workout_sheet_state_ext.dart:110-123`).
       if (replacedId != null) {
         WorkoutsNotifier.replaceInCache(replacedId, workout);
+        // Synchronously evict the old workout from todayWorkoutProvider's
+        // current state so the carousel doesn't render old + new during
+        // the network refresh window. See evictWorkoutById docs for context.
+        ref.read(todayWorkoutProvider.notifier).evictWorkoutById(replacedId);
       }
       TodayWorkoutNotifier.clearCache();
       ref.read(todayWorkoutProvider.notifier).invalidateAndRefresh();

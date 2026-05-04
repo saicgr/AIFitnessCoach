@@ -173,10 +173,48 @@ class MagazineCoverTemplate extends StatelessWidget {
                           letterSpacing: 2,
                         ),
                       ),
+                      // Stat strip — pull from data.highlights (which the
+                      // adapter populates with Duration / Volume / Sets etc.)
+                      // so the cover shows REAL workout content instead of
+                      // just a title floating in an empty gradient.
+                      if (data.highlights.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 10),
+                          child: Wrap(
+                            spacing: 14,
+                            runSpacing: 4,
+                            children: data.highlights.take(3).map((h) {
+                              return RichText(
+                                text: TextSpan(
+                                  children: [
+                                    TextSpan(
+                                      text: h.value,
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 13 * mul,
+                                        fontWeight: FontWeight.w900,
+                                        letterSpacing: 0.5,
+                                      ),
+                                    ),
+                                    TextSpan(
+                                      text: '  ${h.label.toUpperCase()}',
+                                      style: TextStyle(
+                                        color: Colors.white.withValues(alpha: 0.7),
+                                        fontSize: 10 * mul,
+                                        fontWeight: FontWeight.w700,
+                                        letterSpacing: 1.4,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                        ),
                       if (data.userDisplayName != null &&
                           data.userDisplayName!.trim().isNotEmpty)
                         Padding(
-                          padding: const EdgeInsets.only(top: 4),
+                          padding: const EdgeInsets.only(top: 6),
                           child: Text(
                             'BY ${data.userDisplayName!.toUpperCase()}',
                             style: TextStyle(

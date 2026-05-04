@@ -198,6 +198,8 @@ PODS:
     - TOCropViewController (~> 2.7.4)
   - image_picker_ios (0.0.1):
     - Flutter
+  - in_app_review (2.0.0):
+    - Flutter
   - large_file_handler (0.0.1):
     - Flutter
   - libwebp (1.5.0):
@@ -327,6 +329,7 @@ DEPENDENCIES:
   - home_widget (from `.symlinks/plugins/home_widget/ios`)
   - image_cropper (from `.symlinks/plugins/image_cropper/ios`)
   - image_picker_ios (from `.symlinks/plugins/image_picker_ios/ios`)
+  - in_app_review (from `.symlinks/plugins/in_app_review/ios`)
   - large_file_handler (from `.symlinks/plugins/large_file_handler/ios`)
   - live_activities (from `.symlinks/plugins/live_activities/ios`)
   - mobile_scanner (from `.symlinks/plugins/mobile_scanner/darwin`)
@@ -442,6 +445,8 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/image_cropper/ios"
   image_picker_ios:
     :path: ".symlinks/plugins/image_picker_ios/ios"
+  in_app_review:
+    :path: ".symlinks/plugins/in_app_review/ios"
   large_file_handler:
     :path: ".symlinks/plugins/large_file_handler/ios"
   live_activities:
@@ -538,6 +543,7 @@ SPEC CHECKSUMS:
   home_widget: f169fc41fd807b4d46ab6615dc44d62adbf9f64f
   image_cropper: 5f162dcf988100dc1513f9c6b7eb42cd6fbf9156
   image_picker_ios: e0ece4aa2a75771a7de3fa735d26d90817041326
+  in_app_review: 7dd1ea365263f834b8464673f9df72c80c17c937
   large_file_handler: b37481e9b4972562ffcdc8f75700f47cd592bcec
   libwebp: 02b23773aedb6ff1fd38cec7a77b81414c6842a8
   live_activities: 4dfa736d0736e1c77866a2f9c056a76513cc9e7b

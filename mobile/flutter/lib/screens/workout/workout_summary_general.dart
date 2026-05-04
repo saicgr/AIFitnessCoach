@@ -359,7 +359,10 @@ class WorkoutSummaryGeneral extends StatelessWidget {
           targetWeightKg: targetWeightKg,
           targetWeightLbs:
               targetWeightKg != null ? targetWeightKg * 2.20462 : null,
-          actualReps: s['reps'] as int?,
+          // Easy/Quick mode historically wrote `reps_completed`; Advanced
+          // and post-fix Easy write canonical `reps`. Read both so logs from
+          // either path render correctly in Summary.
+          actualReps: (s['reps'] as int?) ?? (s['reps_completed'] as int?),
           actualWeightKg: weightKg,
           actualWeightLbs: weightKg != null ? weightKg * 2.20462 : null,
           rir: s['rir'] as int?,

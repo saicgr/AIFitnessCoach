@@ -547,6 +547,61 @@ class TodayWorkoutNotifier extends StateNotifier<AsyncValue<TodayWorkoutResponse
     await _fetchFromApi(showLoading: false);
   }
 
+  /// Synchronously evict a workout (by id) from the current `state` and the
+  /// in-memory cache, before any network refresh. Used by the Replace flow:
+  /// after `WorkoutsNotifier.replaceInCache(oldId, newWorkout)` updates the
+  /// all-workouts cache, this removes the old workout from the today/extra
+  /// fields here so the hero carousel doesn't render BOTH the new replacement
+  /// (from workoutsProvider) AND the stale old one (from todayWorkoutProvider)
+  /// during the 1–2s gap before `_fetchFromApi` returns.
+  ///
+  /// Why: the carousel merges from two providers and dedupes by id. Replace
+  /// gives the new workout a new id, so both pass dedup, both share the same
+  /// scheduled_date, and `_findAllWorkoutsForDate` returns both. Evicting
+  /// synchronously closes that visual race.
+  void evictWorkoutById(String oldId) {
+    final current = state.valueOrNull;
+    if (current == null) return;
+    bool changed = false;
+    final newToday = (current.todayWorkout?.id == oldId)
+        ? null
+        : current.todayWorkout;
+    if (newToday != current.todayWorkout) changed = true;
+    final newNext = (current.nextWorkout?.id == oldId)
+        ? null
+        : current.nextWorkout;
+    if (newNext != current.nextWorkout) changed = true;
+    final newCompleted = (current.completedWorkout?.id == oldId)
+        ? null
+        : current.completedWorkout;
+    if (newCompleted != current.completedWorkout) changed = true;
+    final filteredExtras = current.extraTodayWorkouts
+        .where((w) => w.id != oldId)
+        .toList(growable: false);
+    if (filteredExtras.length != current.extraTodayWorkouts.length) {
+      changed = true;
+    }
+    if (!changed) return;
+    final updated = TodayWorkoutResponse(
+      hasWorkoutToday: newToday != null,
+      todayWorkout: newToday,
+      nextWorkout: newNext,
+      daysUntilNext: current.daysUntilNext,
+      restDayMessage: current.restDayMessage,
+      completedToday: current.completedToday,
+      completedWorkout: newCompleted,
+      extraTodayWorkouts: filteredExtras,
+      isGenerating: current.isGenerating,
+      generationMessage: current.generationMessage,
+      needsGeneration: current.needsGeneration,
+      nextWorkoutDate: current.nextWorkoutDate,
+      gymProfileId: current.gymProfileId,
+    );
+    _inMemoryCache = updated;
+    _safeSetState(AsyncValue.data(updated));
+    debugPrint('⚡ [TodayWorkout] Evicted $oldId from state (Replace flow)');
+  }
+
   /// Invalidate cache and refresh silently (no loading flash)
   /// Keeps _inMemoryCache intact so stale data shows while refreshing
   Future<void> invalidateAndRefresh() async {

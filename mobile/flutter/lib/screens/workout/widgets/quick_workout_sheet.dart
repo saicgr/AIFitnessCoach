@@ -21,6 +21,7 @@ import '../../../data/services/haptic_service.dart';
 import '../../../models/equipment_item.dart';
 import '../../../models/quick_workout_preset.dart';
 import '../../../widgets/glass_sheet.dart';
+import '../../../widgets/glass_loading_overlay.dart';
 import '../../../widgets/main_shell.dart';
 
 part 'quick_workout_sheet_part_quick_workout_sheet.dart';

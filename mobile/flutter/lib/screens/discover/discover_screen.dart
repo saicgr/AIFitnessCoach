@@ -17,6 +17,7 @@ import '../../data/providers/fitness_profile_provider.dart';
 import '../../data/providers/fitness_shape_history_provider.dart';
 import '../../data/providers/xp_provider.dart';
 import '../../data/services/haptic_service.dart';
+import '../../widgets/liquid_glass_action_bar.dart';
 import '../../widgets/glass_sheet.dart';
 import '../../widgets/tooltips/tooltips.dart';
 import '../../widgets/main_shell.dart' show floatingNavBarVisibleProvider;
@@ -166,7 +167,9 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
                       border: border,
                       accent: accent,
                     ),
-                  const SizedBox(height: 80),
+                  // Clear the floating MainShell nav AND the Liquid Glass
+                  // board-tab bar stacked above it.
+                  const SizedBox(height: 180),
                 ]),
               ),
             ),
@@ -181,6 +184,42 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
           // uses `Positioned.fill` so the painter can dim the whole
           // screen and ring the highlighted target.
           DiscoverTour.overlay(),
+
+          // Floating iOS 26 Liquid Glass board-tab bar. Keeps the
+          // XP/Volume/Streaks tabs in the thumb zone above the
+          // MainShell nav, matching the Nutrition tab bar treatment.
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: MediaQuery.of(context).viewPadding.bottom + 60,
+            child: Center(
+              child: Builder(builder: (context) {
+              final board = ref.watch(discoverBoardProvider);
+              final selectedIndex = DiscoverScreen._boardOptions
+                  .indexWhere((opt) => opt.$1 == board);
+              return LiquidGlassActionBar(
+                accentColor: accent,
+                selectedIndex: selectedIndex < 0 ? 0 : selectedIndex,
+                items: [
+                  for (final opt in DiscoverScreen._boardOptions)
+                    LiquidGlassAction(
+                      label: opt.$2,
+                      icon: switch (opt.$1) {
+                        'xp' => Icons.bolt_outlined,
+                        'volume' => Icons.fitness_center_outlined,
+                        'streaks' => Icons.local_fire_department_outlined,
+                        _ => Icons.tune_rounded,
+                      },
+                      onTap: () {
+                        ref.read(discoverBoardProvider.notifier).state =
+                            opt.$1;
+                      },
+                    ),
+                ],
+              );
+            }),
+            ),
+          ),
         ],
       ),
     );
@@ -231,13 +270,14 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
           ),
         ),
         const SizedBox(height: 14),
-        // Tour anchor — the segmented XP/Volume/Streaks tabs are step
-        // 3 of `discover_v1`.
+        // Board tabs (XP/Volume/Streaks) are now rendered as a floating
+        // iOS 26 Liquid Glass capsule bar at the bottom of the screen
+        // (see the `Positioned` in build()). The keyed subtree stays as
+        // a tour anchor placeholder so `discover_v1` step 3 still resolves.
         KeyedSubtree(
           key: TooltipAnchors.discoverBoardTabs,
-          child: _filterPills(context, ref, textColor: textColor, textMuted: textMuted, border: border, accent: accent),
+          child: const SizedBox.shrink(),
         ),
-        const SizedBox(height: 18),
         if (s.risingStars.isNotEmpty) ...[
           // Tour anchor — Rising Stars header is step 1 of `discover_v1`.
           KeyedSubtree(

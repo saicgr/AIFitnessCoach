@@ -1,3 +1,5 @@
+import 'dart:ui' show ImageFilter;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -126,11 +128,31 @@ class NestedPillSelector extends StatelessWidget {
           final isRecent = recentTemplateIds.contains(spec.template.name) &&
               !isSelected;
           final tileSize = aspect.size;
+          // Theme-aware so labels + tile borders stay visible in light mode
+          // (previous hardcoded `Colors.white.withValues(alpha: 0.7)` rendered
+          // invisible against light backgrounds — see screenshot).
+          final isDark = Theme.of(context).brightness == Brightness.dark;
+          final tileBorder = isSelected
+              ? accent
+              : (isDark
+                  ? Colors.white.withValues(alpha: 0.15)
+                  : Colors.black.withValues(alpha: 0.12));
+          final labelColor = isSelected
+              ? accent
+              : (isDark
+                  ? Colors.white.withValues(alpha: 0.7)
+                  : Colors.black.withValues(alpha: 0.75));
+          // Glassmorphism — frosted-glass panel behind each thumbnail to
+          // match the rest of the app's modal aesthetic.
+          final glassBg = (isDark ? Colors.white : Colors.black)
+              .withValues(alpha: isDark ? 0.06 : 0.04);
           return GestureDetector(
             onTap: () {
               HapticFeedback.selectionClick();
               if (!isAvailable) {
-                ScaffoldMessenger.of(context).showSnackBar(
+                final messenger = ScaffoldMessenger.of(context);
+                messenger.hideCurrentSnackBar();
+                messenger.showSnackBar(
                   const SnackBar(
                     content: Text(
                       'Not enough data yet — log more to unlock',
@@ -147,20 +169,23 @@ class NestedPillSelector extends StatelessWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Container(
-                    width: 60,
-                    height: 60,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: isSelected
-                            ? accent
-                            : Colors.white.withValues(alpha: 0.15),
-                        width: isSelected ? 2 : 1,
-                      ),
-                    ),
-                    clipBehavior: Clip.antiAlias,
-                    child: Stack(
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+                      child: Container(
+                        width: 60,
+                        height: 60,
+                        decoration: BoxDecoration(
+                          color: glassBg,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: tileBorder,
+                            width: isSelected ? 2 : 1,
+                          ),
+                        ),
+                        clipBehavior: Clip.antiAlias,
+                        child: Stack(
                       children: [
                         Positioned.fill(
                           child: FittedBox(
@@ -208,6 +233,8 @@ class NestedPillSelector extends StatelessWidget {
                             ),
                           ),
                       ],
+                        ),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 3),
@@ -218,9 +245,7 @@ class NestedPillSelector extends StatelessWidget {
                       fontSize: 10,
                       fontWeight:
                           isSelected ? FontWeight.w800 : FontWeight.w600,
-                      color: isSelected
-                          ? accent
-                          : Colors.white.withValues(alpha: 0.7),
+                      color: labelColor,
                     ),
                   ),
                 ],

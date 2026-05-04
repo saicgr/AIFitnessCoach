@@ -6,6 +6,7 @@ import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/models/workout.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../utils/forecast_math.dart';
+import '../../../widgets/glass_sheet.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
 /// Workstream 1 (Day 0-7 retention magic moment).
@@ -23,18 +24,16 @@ Future<void> showFirstWorkoutForecastSheet(
   required int sessionsPerWeek,
   int firstWorkoutPrImprovementPercent = 0,
 }) {
-  return showModalBottomSheet<void>(
+  // Use the canonical `GlassSheet` so this matches every other glass sheet
+  // in the app. Was using a bespoke BackdropFilter recipe that read
+  // visually different from the rest (issue #4 — "why is glassmorphism not
+  // just like every other screen?").
+  return showGlassSheet<void>(
     context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
-    isDismissible: true,
-    enableDrag: true,
-    builder: (ctx) => DraggableScrollableSheet(
-      initialChildSize: 0.88,
-      minChildSize: 0.5,
-      maxChildSize: 0.95,
-      expand: false,
-      builder: (_, scrollController) => _FirstWorkoutForecastSheet(
+    builder: (ctx) => GlassSheet(
+      maxHeightFraction: 0.95,
+      showHandle: false, // we draw our own handle inside the content column
+      child: _FirstWorkoutForecastSheet(
         workout: workout,
         totalVolumeKg: totalVolumeKg,
         caloriesBurned: caloriesBurned,
@@ -42,7 +41,6 @@ Future<void> showFirstWorkoutForecastSheet(
         sessionsPerWeek: sessionsPerWeek,
         firstWorkoutPrImprovementPercent:
             firstWorkoutPrImprovementPercent.toDouble(),
-        scrollController: scrollController,
       ),
     ),
   );
@@ -55,7 +53,6 @@ class _FirstWorkoutForecastSheet extends ConsumerWidget {
   final int durationMinutes;
   final int sessionsPerWeek;
   final double firstWorkoutPrImprovementPercent;
-  final ScrollController scrollController;
 
   const _FirstWorkoutForecastSheet({
     required this.workout,
@@ -64,13 +61,11 @@ class _FirstWorkoutForecastSheet extends ConsumerWidget {
     required this.durationMinutes,
     required this.sessionsPerWeek,
     required this.firstWorkoutPrImprovementPercent,
-    required this.scrollController,
   });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bg = isDark ? AppColors.background : AppColorsLight.background;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textColor = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
@@ -101,25 +96,27 @@ class _FirstWorkoutForecastSheet extends ConsumerWidget {
     final volumeComparison = ForecastMath.poundsToCars(projected30dVolumeLbs);
     final caloriesComparison = ForecastMath.caloriesToBodyFat(projected30dCalories);
 
-    return Container(
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-      ),
-      child: Column(
-        children: [
-          const SizedBox(height: 10),
-          Container(
-            width: 48,
-            height: 4,
-            decoration: BoxDecoration(
-              color: textMuted.withValues(alpha: 0.3),
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-          Expanded(
+    // Outer glass shell + handle are provided by `GlassSheet` (showGlassSheet
+    // wraps us). We just lay out the content column here.
+    return Column(
+      children: [
+              const SizedBox(height: 10),
+              Container(
+                width: 48,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: textMuted.withValues(alpha: 0.35),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+          // Flexible (not Expanded): GlassSheet's Column has
+          // mainAxisSize.min, and Expanded would push us to fill the parent
+          // which is a FractionallySizedBox without a bounded height in some
+          // mount paths (Sentry: RenderFractionallySizedOverflowBox crash).
+          // Flexible lets the ListView size to the available remainder
+          // without forcing infinite-height constraints upward.
+          Flexible(
             child: ListView(
-              controller: scrollController,
               padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
               children: [
                 // ── Hero header ──
@@ -290,8 +287,7 @@ class _FirstWorkoutForecastSheet extends ConsumerWidget {
               ],
             ),
           ),
-        ],
-      ),
+      ],
     );
   }
 

@@ -239,6 +239,11 @@ Future<EasyFinalizeResult> finalizeEasyWorkout({
         'exercise_index': i,
         'exercise_name': exercise.name,
         'set_number': sIdx + 1,
+        // Write BOTH `reps` (canonical, matches Advanced/buildSetsJson) and
+        // `reps_completed` (legacy alias). Summary's general parser keys off
+        // `reps`; older Easy logs that only have `reps_completed` are still
+        // read via the fallback in workout_summary_general.dart.
+        'reps': s.reps,
         'reps_completed': s.reps,
         'weight_kg': s.weight,
         'set_type': s.setType,

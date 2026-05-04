@@ -10,24 +10,48 @@ import '../../../data/providers/today_workout_provider.dart';
 import '../../../data/providers/synced_workouts_provider.dart';
 import '../../../data/providers/gym_profile_provider.dart';
 import '../../../data/services/haptic_service.dart';
+import '../../../core/providers/synced_visibility_provider.dart';
 import 'hero_workout_card.dart';
+import 'synced_workouts_summary_card.dart';
 
-/// Represents either a workout or a placeholder date in the carousel
+/// Represents either a workout, a placeholder date, or an aggregate of all
+/// synced workouts for one day in the carousel.
 class CarouselItem {
   final Workout? workout;
   final DateTime? placeholderDate;
   final bool isAutoGenerating;
   final bool isGenerationFailed;
+  final List<Workout>? syncedAggregate;
+  final DateTime? syncedAggregateDate;
 
-  CarouselItem.workout(this.workout) : placeholderDate = null, isAutoGenerating = false, isGenerationFailed = false;
-  CarouselItem.placeholder(this.placeholderDate, {this.isAutoGenerating = false, this.isGenerationFailed = false}) : workout = null;
+  CarouselItem.workout(this.workout)
+      : placeholderDate = null,
+        isAutoGenerating = false,
+        isGenerationFailed = false,
+        syncedAggregate = null,
+        syncedAggregateDate = null;
+  CarouselItem.placeholder(this.placeholderDate,
+      {this.isAutoGenerating = false, this.isGenerationFailed = false})
+      : workout = null,
+        syncedAggregate = null,
+        syncedAggregateDate = null;
+  CarouselItem.syncedAggregateFor(
+      DateTime date, List<Workout> rows)
+      : workout = null,
+        placeholderDate = null,
+        isAutoGenerating = false,
+        isGenerationFailed = false,
+        syncedAggregate = rows,
+        syncedAggregateDate = date;
 
   bool get isWorkout => workout != null;
   bool get isPlaceholder => placeholderDate != null;
+  bool get isSyncedAggregate => syncedAggregate != null;
 
-  /// The date this carousel item represents (from workout or placeholder)
+  /// The date this carousel item represents (from workout, placeholder, or aggregate)
   DateTime? get date {
     if (placeholderDate != null) return placeholderDate;
+    if (syncedAggregateDate != null) return syncedAggregateDate;
     if (workout?.scheduledDate != null) {
       try {
         final dateStr = workout!.scheduledDate!.split('T')[0];
@@ -332,29 +356,30 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
         _locallyGeneratedWorkouts.removeWhere(
           (local) => allWorkouts.any((w) => w.id == local.id),
         );
-        // Surface Health Connect / wearable-synced workouts on the day they
-        // were performed. Without this, a user who logs an Apple Watch or
-        // Pixel Watch session sees "No workout yet" on Home even though the
-        // workouts tab counted it toward the weekly target. Only merge today
-        // and yesterday — synced rows for older dates still belong to the
-        // workouts tab, not the home carousel.
-        final syncedWorkouts = ref.watch(syncedWorkoutsProvider);
-        final nowForSynced = DateTime.now();
-        final todayForSynced =
-            DateTime(nowForSynced.year, nowForSynced.month, nowForSynced.day);
-        final keepSyncedAfter =
-            todayForSynced.subtract(const Duration(days: 1));
-        for (final w in syncedWorkouts) {
-          final wDate = _scheduledDate(w);
-          if (wDate == null) continue;
-          if (wDate.isBefore(keepSyncedAfter)) continue;
-          if (mergedWorkouts.any((m) => m.id == w.id)) continue;
-          // Only surface HC imports that are already marked complete — they are
-          // past activities and should never appear as actionable "Ready to start"
-          // cards. Skipping incomplete ones guards against the brief stale-cache
-          // window between workout creation and the /complete API call.
-          if (w.isCompleted != true) continue;
-          mergedWorkouts.add(w);
+        // Health-Connect / wearable-synced workouts: gated by the user's
+        // "Show synced workouts" toggle in the home overflow menu (default
+        // OFF — synced rows always live in the Synced Workouts history tab).
+        // When ON, all synced rows for today/yesterday are aggregated into a
+        // SINGLE summary card per day via the syncedAggregatesByDay map below;
+        // we deliberately do NOT mergeWorkouts here, so they don't appear as
+        // separate per-row cyan cards.
+        final showSynced = ref.watch(showSyncedInCarouselProvider);
+        final syncedAggregatesByDay = <String, List<Workout>>{};
+        if (showSynced) {
+          final syncedWorkouts = ref.watch(syncedWorkoutsProvider);
+          final nowForSynced = DateTime.now();
+          final todayForSynced = DateTime(
+              nowForSynced.year, nowForSynced.month, nowForSynced.day);
+          final keepSyncedAfter =
+              todayForSynced.subtract(const Duration(days: 1));
+          for (final w in syncedWorkouts) {
+            final wDate = _scheduledDate(w);
+            if (wDate == null) continue;
+            if (wDate.isBefore(keepSyncedAfter)) continue;
+            if (w.isCompleted != true) continue;
+            final key = _dateKey(wDate);
+            syncedAggregatesByDay.putIfAbsent(key, () => []).add(w);
+          }
         }
 
         // NOTE: No date-based dedup here. Two non-quick workouts can legitimately
@@ -423,6 +448,26 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
               }
             }
           }
+        }
+
+        // Synced aggregate slides: one card per day, inserted in chronological
+        // order alongside scheduled workout cards. Skipped entirely when the
+        // user keeps the "Show synced workouts" toggle OFF.
+        for (final entry in syncedAggregatesByDay.entries) {
+          final parts = entry.key.split('-');
+          if (parts.length != 3) continue;
+          final aggDate = DateTime(
+              int.parse(parts[0]), int.parse(parts[1]), int.parse(parts[2]));
+          int insertIdx = carouselItems.length;
+          for (int i = 0; i < carouselItems.length; i++) {
+            final itemDate = carouselItems[i].date;
+            if (itemDate != null && aggDate.isBefore(itemDate)) {
+              insertIdx = i;
+              break;
+            }
+          }
+          carouselItems.insert(
+              insertIdx, CarouselItem.syncedAggregateFor(aggDate, entry.value));
         }
 
         // Always surface the next scheduled workout — even when it's beyond
@@ -496,9 +541,15 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
         // Signature = ordered list of item identities; only fires when the
         // visible content actually changed, not on every Riverpod rebuild.
         final itemsSignature = carouselItems
-            .map((i) => i.isWorkout
-                ? 'w:${i.workout?.id ?? ''}:${i.workout?.isCompleted == true ? 1 : 0}'
-                : 'p:${i.placeholderDate != null ? _dateKey(i.placeholderDate!) : ''}')
+            .map((i) {
+              if (i.isWorkout) {
+                return 'w:${i.workout?.id ?? ''}:${i.workout?.isCompleted == true ? 1 : 0}';
+              }
+              if (i.isSyncedAggregate) {
+                return 's:${i.syncedAggregateDate != null ? _dateKey(i.syncedAggregateDate!) : ''}:${i.syncedAggregate?.length ?? 0}';
+              }
+              return 'p:${i.placeholderDate != null ? _dateKey(i.placeholderDate!) : ''}';
+            })
             .join('|');
         if (_hasScrolledToInitial &&
             _lastItemsSignature != null &&
@@ -577,9 +628,7 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
             height: HeroWorkoutCarousel.cardHeight,
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: item.isWorkout
-                  ? HeroWorkoutCard(workout: item.workout!, inCarousel: true)
-                  : _buildPendingCard(item.placeholderDate!, isDark, accentColor, isAutoGenerating: item.isAutoGenerating),
+              child: _buildItemContent(item, isDark, accentColor, today),
             ),
           );
         }
@@ -609,9 +658,7 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
                 child: AnimatedOpacity(
                   opacity: opacity,
                   duration: const Duration(milliseconds: 200),
-                  child: item.isWorkout
-                      ? HeroWorkoutCard(workout: item.workout!, inCarousel: true)
-                      : _buildPendingCard(item.placeholderDate!, isDark, accentColor, isAutoGenerating: item.isAutoGenerating),
+                  child: _buildItemContent(item, isDark, accentColor, today),
                 ),
               );
             },
@@ -620,6 +667,24 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
       },
     ),
     );
+  }
+
+  /// Resolve carousel item → rendered widget. Centralised so the single-item
+  /// fallback and the PageView builder stay in sync.
+  Widget _buildItemContent(
+      CarouselItem item, bool isDark, Color accentColor, DateTime today) {
+    if (item.isWorkout) {
+      return HeroWorkoutCard(workout: item.workout!, inCarousel: true);
+    }
+    if (item.isSyncedAggregate) {
+      return SyncedWorkoutsSummaryCard(
+        date: item.syncedAggregateDate!,
+        workouts: item.syncedAggregate!,
+        isToday: item.syncedAggregateDate == today,
+      );
+    }
+    return _buildPendingCard(item.placeholderDate!, isDark, accentColor,
+        isAutoGenerating: item.isAutoGenerating);
   }
 
   /// Minimal card for workout days that don't have a generated workout yet.

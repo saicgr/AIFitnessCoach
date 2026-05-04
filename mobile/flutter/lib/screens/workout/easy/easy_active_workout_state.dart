@@ -48,6 +48,7 @@ import 'easy_active_workout_state_models.dart';
 import 'easy_active_workout_view.dart';
 import 'easy_insight_helpers.dart';
 import 'easy_persistence_helpers.dart';
+import '../../../widgets/glass_loading_overlay.dart';
 import 'easy_rest_controller.dart';
 import 'easy_sheet_helpers.dart';
 import 'widgets/easy_help_sheet.dart';
@@ -577,14 +578,26 @@ class EasyActiveWorkoutScreenState
     _restBroadcaster?.dispose();
     _restBroadcaster = null;
 
-    final result = await finalizeEasyWorkout(
-      ref: ref,
-      workout: widget.workout,
-      exercises: _exercises,
-      perExercise: _perExercise,
-      totalTimeSeconds: _timer.workoutSeconds,
-      workoutLogId: _workoutLogId,
+    // Glass loading overlay covers the 3-5s blocking /complete API call so
+    // the screen doesn't sit silent while the server detects PRs, builds
+    // performance summaries, and awards XP. Always dismissed in finally.
+    final overlay = showGlassLoadingOverlay(
+      context,
+      message: 'Finishing workout…',
     );
+    final EasyFinalizeResult result;
+    try {
+      result = await finalizeEasyWorkout(
+        ref: ref,
+        workout: widget.workout,
+        exercises: _exercises,
+        perExercise: _perExercise,
+        totalTimeSeconds: _timer.workoutSeconds,
+        workoutLogId: _workoutLogId,
+      );
+    } finally {
+      overlay.dismiss();
+    }
 
     if (!mounted) return;
 

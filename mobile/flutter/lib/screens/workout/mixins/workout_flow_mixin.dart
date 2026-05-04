@@ -24,6 +24,7 @@ import '../../../data/providers/today_workout_provider.dart';
 import '../../../data/providers/xp_provider.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/services/api_client.dart';
+import '../../../data/services/workout_completion_prewarmer.dart';
 import '../../../core/providers/ble_heart_rate_provider.dart';
 import '../../../core/providers/heart_rate_provider.dart';
 import '../../../core/providers/warmup_duration_provider.dart';
@@ -32,6 +33,7 @@ import '../../../data/services/live_activity_service.dart';
 import '../../../data/services/set_note_media_service.dart';
 import '../../../data/services/workout_notification_service.dart';
 import '../../../widgets/app_snackbar.dart';
+import '../../../widgets/glass_loading_overlay.dart';
 import '../../ai_settings/ai_settings_screen.dart';
 import '../controllers/workout_timer_controller.dart';
 import '../models/workout_state.dart';
@@ -169,6 +171,21 @@ mixin WorkoutFlowMixin<T extends StatefulWidget> on State<T> {
 
     setState(() => currentPhase = WorkoutPhase.complete);
 
+    // Glass loading overlay covers the 3-5s blocking save → /complete →
+    // performance-summary chain so the user sees a clear "Finishing workout"
+    // affordance instead of staring at a frozen UI.
+    final loadingOverlay = mounted
+        ? showGlassLoadingOverlay(context, message: 'Finishing workout…')
+        : null;
+    try {
+      await _runFinalizeWorkoutCompletion();
+    } finally {
+      loadingOverlay?.dismiss();
+    }
+  }
+
+  Future<void> _runFinalizeWorkoutCompletion() async {
+
     final workout = (workoutWidget as dynamic).workout as Workout;
     final challengeId = (workoutWidget as dynamic).challengeId as String?;
     final challengeData = (workoutWidget as dynamic).challengeData as Map<String, dynamic>?;
@@ -302,14 +319,33 @@ mixin WorkoutFlowMixin<T extends StatefulWidget> on State<T> {
           }
         });
 
-        await Future.wait(<Future>[
-          completionFuture,
-          setPerfsFuture,
-          ...ancillaryFutures,
-        ]);
-        // Already resolved — returns immediately.
+        // Only await the COMPLETION call — the rest can finish in the
+        // background while the user is already looking at the
+        // workout-complete screen. Previously we awaited Future.wait of all
+        // 5+ futures (completion + set-performances + drink intake + exit
+        // log + superset usage), which blocked the screen-push for 2-4s
+        // because set-performances includes media uploads. Now: complete →
+        // navigate → background drains the rest.
         completionResponse = await completionFuture;
         debugPrint('✅ Workout marked as complete');
+
+        // Kick off the completion-screen data prewarmer the moment we know
+        // the workout is officially complete — by the time the user lands
+        // on the screen (~16ms later), the totalWorkoutCount + achievements
+        // are already in cache so the screen renders instantly with stats
+        // populated instead of showing 1-2s of internal spinners.
+        unawaited(WorkoutCompletionPrewarmer.warm(ref, force: true));
+
+        // Fire-and-forget the rest of wave 2 + ancillary writes. Errors
+        // logged to console; never blocks navigation.
+        unawaited(setPerfsFuture.catchError((e) {
+          debugPrint('⚠️ Background set-performances POST failed: $e');
+        }));
+        for (final f in ancillaryFutures) {
+          unawaited(f.catchError((e) {
+            debugPrint('⚠️ Background ancillary write failed: $e');
+          }));
+        }
 
         // Refresh every screen that summarizes workout history so the user
         // sees this session reflected immediately — no app restart, no

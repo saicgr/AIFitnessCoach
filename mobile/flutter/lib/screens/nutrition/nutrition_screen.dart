@@ -16,7 +16,7 @@ import '../../data/repositories/nutrition_repository.dart';
 import '../../data/services/api_client.dart';
 import '../../data/providers/xp_provider.dart';
 import '../../widgets/glass_sheet.dart';
-import '../../widgets/segmented_tab_bar.dart';
+import 'widgets/glass_nutrition_tab_bar.dart';
 import '../../widgets/tooltips/tooltips.dart';
 import '../../widgets/main_shell.dart';
 import '../../widgets/pill_swipe_navigation.dart';
@@ -560,19 +560,10 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
                 onDaySelected: _jumpToDate,
               ),
             ),
-            // Tab Bar with colored tabs
-            SegmentedTabBar(
-              controller: _tabController,
-              showIcons: false,
-              showBorder: true,
-              tabs: const [
-                SegmentedTabItem(label: 'Daily', icon: Icons.restaurant_menu_rounded),
-                SegmentedTabItem(label: 'Recipes', icon: Icons.menu_book_rounded),
-                SegmentedTabItem(label: 'Patterns', icon: Icons.insights_outlined),
-                SegmentedTabItem(label: 'Fuel', icon: Icons.bolt_outlined),
-              ],
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-            ),
+            // Tab Bar moved to a floating glassmorphic pill bar docked just
+            // above the bottom nav (see Positioned widget below). Keeping
+            // this slot empty preserves the column rhythm while the actual
+            // selector lives where the user's thumb naturally rests.
 
           // Tab Content.
           //
@@ -665,6 +656,31 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
           ],
         ),
       ),
+      ),
+      // Floating glassmorphic tab selector. Docked above MainShell's
+      // bottom nav so the four sub-screens are reachable from the thumb
+      // zone instead of the screen top. The Stack is bounded by the
+      // Scaffold so MediaQuery.viewPadding.bottom gives the safe-area
+      // inset; MainShell's nav adds another ~80px on top of that.
+      Positioned(
+        left: 0,
+        right: 0,
+        // Sit one 8px gap above the floating MainShell nav bar (52px tall).
+        // The previous +80 inset left a noticeable empty band between the
+        // pill row and the nav, breaking the "thumb zone" intent.
+        bottom: MediaQuery.of(context).viewPadding.bottom + 60,
+        child: Center(
+          child: GlassNutritionTabBar(
+            controller: _tabController,
+            accentColor: accentColor,
+            items: const [
+              NutritionTabItem(label: 'Daily', icon: Icons.restaurant_menu_rounded),
+              NutritionTabItem(label: 'Recipes', icon: Icons.menu_book_rounded),
+              NutritionTabItem(label: 'Patterns', icon: Icons.insights_outlined),
+              NutritionTabItem(label: 'Fuel', icon: Icons.bolt_outlined),
+            ],
+          ),
+        ),
       ),
       // First-run spotlight tour. Anchors + copy live in
       // `widgets/tooltips/tours/nutrition_tour.dart`.
@@ -837,13 +853,18 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
 
     ref.read(floatingNavBarVisibleProvider.notifier).state = false;
 
+    // Use whenComplete (always runs, including on error) instead of .then
+    // (only runs on success). Otherwise a thrown future leaves the nav bar
+    // hidden forever — same disappearing-bar class fixed in weekly_checkin.
     showGlassSheet(
       context: context,
       builder: (context) => GlassSheet(
         child: RecipeBuilderSheet(userId: _userId!, isDark: isDark),
       ),
-    ).then((_) {
-      ref.read(floatingNavBarVisibleProvider.notifier).state = true;
+    ).whenComplete(() {
+      try {
+        ref.read(floatingNavBarVisibleProvider.notifier).state = true;
+      } catch (_) {/* container disposed mid-dismiss */}
       _loadRecipes(_userId!);
     });
   }

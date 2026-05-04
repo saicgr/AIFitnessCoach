@@ -179,11 +179,24 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
   }
 
   Future<void> _regenerateWorkout() async {
-    final newWorkout = await showRegenerateWorkoutSheet(
-      context,
-      ref,
-      widget.workout,
-    );
+    final Workout? newWorkout;
+    try {
+      newWorkout = await showRegenerateWorkoutSheet(
+        context,
+        ref,
+        widget.workout,
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Couldn\'t regenerate workout. Please try again.'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+      return;
+    }
 
     if (newWorkout != null && mounted) {
       // Provider refresh already handled by showRegenerateWorkoutSheet

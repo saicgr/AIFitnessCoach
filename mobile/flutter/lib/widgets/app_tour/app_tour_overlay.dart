@@ -81,7 +81,16 @@ class _AppTourOverlayState extends ConsumerState<AppTourOverlay>
       return (spotlightRect.top - spotlightPadding - gap - cardHeight)
           .clamp(24.0, screenHeight - cardHeight - 24);
     }
-    // Default: below; fallback to above if not enough space
+    // Default: below — but auto-flip ABOVE when the target sits in the lower
+    // half of the screen. Mirrors the smart placement in the legacy
+    // EmptyStateTipTour (empty_state_tip_tour.dart:299-306). Without this,
+    // a target near the bottom shows a long bubble cramped between the target
+    // and the bottom safe area, often partially off-screen.
+    final targetCenterY = spotlightRect.center.dy;
+    final shouldFlipAbove = targetCenterY > screenHeight * 0.55;
+    if (shouldFlipAbove && spaceAbove >= cardHeight + gap) {
+      return spotlightRect.top - spotlightPadding - gap - cardHeight;
+    }
     if (spaceBelow >= cardHeight + gap) {
       return spotlightRect.bottom + spotlightPadding + gap;
     } else if (spaceAbove >= cardHeight + gap) {
@@ -238,6 +247,13 @@ class _AppTourOverlayState extends ConsumerState<AppTourOverlay>
                   final paintRect = rect ?? endRect;
                   final hasGradient = step.highlightColors != null;
                   final radius = step.cornerRadius ?? 12.0;
+                  // Leave the floating tab bar undimmed at the bottom of the
+                  // canvas. 52px nav bar height (matches navBarHeight in
+                  // main_shell_part_edge_panel_handle.dart:176) + system
+                  // bottom safe-area + an 8px breathing gap.
+                  final tabBarInset = 52.0 +
+                      MediaQuery.of(context).padding.bottom +
+                      8.0;
                   if (hasGradient) {
                     return AnimatedBuilder(
                       animation: _gradientController,
@@ -249,6 +265,7 @@ class _AppTourOverlayState extends ConsumerState<AppTourOverlay>
                           spotlightPadding: spotlightPadding,
                           ringGradientColors: step.highlightColors,
                           gradientRotation: _gradientController.value,
+                          bottomInset: tabBarInset,
                         ),
                       ),
                     );
@@ -259,6 +276,7 @@ class _AppTourOverlayState extends ConsumerState<AppTourOverlay>
                       ringColor: accentColor,
                       cornerRadius: radius,
                       spotlightPadding: spotlightPadding,
+                      bottomInset: tabBarInset,
                     ),
                   );
                 },

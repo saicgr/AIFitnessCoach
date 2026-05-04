@@ -128,8 +128,13 @@ $FLUTTER_PATH pub get
 echo -e "${YELLOW}Uninstalling existing app from $TARGET_DEVICE...${NC}"
 $ADB_PATH -s "$TARGET_DEVICE" uninstall com.aifitnesscoach.app 2>/dev/null || echo -e "${YELLOW}App was not installed.${NC}"
 
+# RevenueCat keys — paywall throws "Purchase service not configured" without these.
+RC_GOOGLE_KEY="${REVENUECAT_GOOGLE_KEY:-goog_oWxJnYQrUSCtIxMqTPcEPfWgBxq}"
+DART_DEFINES=("--dart-define=REVENUECAT_GOOGLE_KEY=$RC_GOOGLE_KEY")
+[[ -n "${REVENUECAT_APPLE_KEY:-}" ]] && DART_DEFINES+=("--dart-define=REVENUECAT_APPLE_KEY=$REVENUECAT_APPLE_KEY")
+
 # Build and run on target device (arm64 only to reduce APK size ~40MB)
 echo -e "${GREEN}Building and running app on $TARGET_DEVICE...${NC}"
-$FLUTTER_PATH run --release -d "$TARGET_DEVICE"
+$FLUTTER_PATH run --release -d "$TARGET_DEVICE" "${DART_DEFINES[@]}"
 
 echo -e "${GREEN}=== Done! ===${NC}"

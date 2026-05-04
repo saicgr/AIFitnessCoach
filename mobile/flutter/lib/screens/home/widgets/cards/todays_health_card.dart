@@ -17,7 +17,17 @@ import '../../../../data/services/health_service.dart';
 /// `DailyStepsTile` shows the connect CTA in that case so we don't
 /// duplicate it here).
 class TodaysHealthCard extends ConsumerStatefulWidget {
-  const TodaysHealthCard({super.key});
+  const TodaysHealthCard({
+    super.key,
+    this.onRefresh,
+    this.isRefreshing = false,
+  });
+
+  /// When non-null, an inline refresh affordance is rendered in the card
+  /// header (left of the settings cog). The host owns the refresh state and
+  /// passes `isRefreshing: true` to swap the icon for a spinner.
+  final VoidCallback? onRefresh;
+  final bool isRefreshing;
 
   @override
   ConsumerState<TodaysHealthCard> createState() => _TodaysHealthCardState();
@@ -160,6 +170,27 @@ class _TodaysHealthCardState extends ConsumerState<TodaysHealthCard> {
                     ),
                   ),
                   const Spacer(),
+                  if (widget.onRefresh != null) ...[
+                    if (widget.isRefreshing)
+                      SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: textMuted,
+                        ),
+                      )
+                    else
+                      GestureDetector(
+                        onTap: () {
+                          HapticService.light();
+                          widget.onRefresh!();
+                        },
+                        child: Icon(Icons.refresh,
+                            size: 18, color: textMuted),
+                      ),
+                    const SizedBox(width: 8),
+                  ],
                   GestureDetector(
                     onTap: () {
                       HapticService.light();

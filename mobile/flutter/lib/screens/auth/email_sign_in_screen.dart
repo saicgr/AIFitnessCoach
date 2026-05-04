@@ -233,9 +233,11 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen>
           );
         }
       } else {
-        setState(() {
-          _errorMessage = errorMsg;
-        });
+        if (mounted) {
+          setState(() {
+            _errorMessage = errorMsg;
+          });
+        }
       }
     } finally {
       if (mounted) {

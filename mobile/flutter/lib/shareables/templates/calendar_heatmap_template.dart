@@ -22,14 +22,66 @@ class CalendarHeatmapTemplate extends StatelessWidget {
   Widget build(BuildContext context) {
     final mul = data.aspect.bodyFontMultiplier;
     final accent = data.accentColor;
-    final values = _values(data);
-    final total = values.fold<int>(0, (s, v) => s + v);
+    final hasRealData = _hasEnoughRealData(data);
+    final values = hasRealData ? _values(data) : const <int>[];
+    // "Active days" = days WITH activity, not the sum of intensity values.
+    // Previously summed values which inflated the count by exercise reps —
+    // user-facing "818 active days" headline looked completely fake because
+    // it was summing all set counts, not counting unique active days.
+    final activeDays = values.where((v) => v > 0).length;
     final streakValue = data.highlights
         .firstWhere(
           (h) => h.label.toUpperCase().contains('STREAK'),
           orElse: () => const ShareableMetric(label: '', value: ''),
         )
         .value;
+
+    // Empty-state guard: if upstream adapter didn't fill subMetrics with
+    // real activity data (most common on first-day users + on quick-workout
+    // shareables that don't carry year-of-history), render a placeholder
+    // rather than synthesizing fake fills via the previous deterministic-
+    // pattern fallback. Per `feedback_no_silent_fallbacks.md`: never
+    // silently fall back to degraded data — surface the empty state.
+    if (!hasRealData) {
+      return ShareableCanvas(
+        aspect: data.aspect,
+        accentColor: accent,
+        child: Padding(
+          padding: const EdgeInsets.all(40),
+          child: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.calendar_today_outlined,
+                    size: 56, color: accent.withValues(alpha: 0.7)),
+                const SizedBox(height: 16),
+                Text(
+                  'Year-in-review unlocks at 30+ logged days',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 22 * mul,
+                    fontWeight: FontWeight.w800,
+                    height: 1.2,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Keep showing up — your real heatmap will look way cooler than mock data ever could.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.65),
+                    fontSize: 14 * mul,
+                    height: 1.4,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+    final total = activeDays;
 
     return ShareableCanvas(
       aspect: data.aspect,
@@ -201,30 +253,25 @@ class CalendarHeatmapTemplate extends StatelessWidget {
     );
   }
 
-  /// Build a 52*7=364 cell intensity vector. Prefers sub-metrics if
-  /// adapters provide enough granular data; otherwise generates a
-  /// deterministic pattern seeded by title + total workout count so the
-  /// asset still looks like real data.
+  /// Returns true only when the adapter provided real per-day data.
+  /// Threshold: 30+ subMetric entries so we have enough signal for a
+  /// believable visualization. Below that we render the empty-state in
+  /// `build()` instead of synthesizing fake fills.
+  bool _hasEnoughRealData(Shareable d) => d.subMetrics.length >= 30;
+
+  /// Build a 52*7=364 cell intensity vector from sub-metrics. Only called
+  /// after `_hasEnoughRealData` returns true, so we never fall back to the
+  /// deterministic synthetic pattern (the source of the previous fake-
+  /// looking "818 active days" heatmap).
   List<int> _values(Shareable d) {
     final n = 52 * 7;
-    if (d.subMetrics.length >= 30) {
-      return List.generate(n, (i) {
-        if (i < d.subMetrics.length) {
-          return int.tryParse(d.subMetrics[i].value
-                  .replaceAll(RegExp(r'[^0-9]'), '')) ??
-              0;
-        }
-        return 0;
-      });
-    }
-    final r = math.Random(d.title.hashCode + (d.heroValue ?? 1).toInt());
     return List.generate(n, (i) {
-      // Higher density in later weeks to look like growing momentum.
-      final week = i ~/ 7;
-      final base = (week / 52.0) * 0.55;
-      final roll = r.nextDouble();
-      if (roll < 0.35 - base) return 0;
-      return 1 + r.nextInt(4);
+      if (i < d.subMetrics.length) {
+        return int.tryParse(d.subMetrics[i].value
+                .replaceAll(RegExp(r'[^0-9]'), '')) ??
+            0;
+      }
+      return 0;
     });
   }
 }

@@ -176,6 +176,12 @@ extension __RegenerateWorkoutSheetStateExt on _RegenerateWorkoutSheetState {
                   duration: Duration(seconds: 4),
                 ),
               );
+              // Effective state is Replace — also seed the all-workouts cache
+              // and synchronously evict the stale today entry so the carousel
+              // doesn't briefly show old + new.
+              WorkoutsNotifier.replaceInCache(widget.workout.id!, approvedWorkout);
+              ref.read(todayWorkoutProvider.notifier)
+                  .evictWorkoutById(widget.workout.id!);
               TodayWorkoutNotifier.clearCache();
               ref.read(todayWorkoutProvider.notifier).invalidateAndRefresh();
               ref.read(workoutsProvider.notifier).silentRefresh();
@@ -185,6 +191,12 @@ extension __RegenerateWorkoutSheetStateExt on _RegenerateWorkoutSheetState {
 
             if (shouldReplace) {
               WorkoutsNotifier.replaceInCache(widget.workout.id!, approvedWorkout);
+              // Synchronously evict the old workout from the today provider's
+              // current state so the carousel doesn't render BOTH the new
+              // (from workoutsProvider) AND the stale old one (from
+              // todayWorkoutProvider) during the network refresh window.
+              ref.read(todayWorkoutProvider.notifier)
+                  .evictWorkoutById(widget.workout.id!);
             } else {
               // Un-supersede old workout so both appear in carousel. If this
               // fails the user gets the silent Replace they didn't ask for —
@@ -369,6 +381,12 @@ extension __RegenerateWorkoutSheetStateExt on _RegenerateWorkoutSheetState {
                   duration: Duration(seconds: 4),
                 ),
               );
+              // Effective state is Replace — also seed the all-workouts cache
+              // and synchronously evict the stale today entry so the carousel
+              // doesn't briefly show old + new.
+              WorkoutsNotifier.replaceInCache(widget.workout.id!, approvedWorkout);
+              ref.read(todayWorkoutProvider.notifier)
+                  .evictWorkoutById(widget.workout.id!);
               TodayWorkoutNotifier.clearCache();
               ref.read(todayWorkoutProvider.notifier).invalidateAndRefresh();
               ref.read(workoutsProvider.notifier).silentRefresh();
@@ -378,6 +396,11 @@ extension __RegenerateWorkoutSheetStateExt on _RegenerateWorkoutSheetState {
 
             if (shouldReplace) {
               WorkoutsNotifier.replaceInCache(widget.workout.id!, approvedWorkout);
+              // See _regenerate() for why: synchronously evict the stale
+              // workout from todayWorkoutProvider state so the hero carousel
+              // doesn't show old + new during the network refresh window.
+              ref.read(todayWorkoutProvider.notifier)
+                  .evictWorkoutById(widget.workout.id!);
             } else {
               // Un-supersede old workout so both appear in carousel. Surface
               // failures — silent fallback would look like Replace.

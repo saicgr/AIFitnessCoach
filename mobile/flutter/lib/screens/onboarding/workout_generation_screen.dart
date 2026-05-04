@@ -183,33 +183,47 @@ class _WorkoutGenerationScreenState extends ConsumerState<WorkoutGenerationScree
             });
           }
         },
-        onDone: () {
+        onDone: () async {
           debugPrint('✅ [WorkoutGeneration] Complete!');
           // Track generation completed
           ref.read(posthogServiceProvider).capture(
             eventName: 'onboarding_workout_generation_completed',
           );
-          if (mounted) {
-            setState(() {
-              _isGenerating = false;
-              _currentStep = _steps.length;
-              _progress = 1.0;
-            });
+          if (!mounted) return;
+          setState(() {
+            _isGenerating = false;
+            _currentStep = _steps.length;
+            _progress = 1.0;
+          });
 
-            // If returnWorkout is true, pop with the generated workout
-            // Otherwise, navigate to program summary after showing completion
-            Future.delayed(const Duration(milliseconds: 1500), () {
-              if (mounted) {
-                if (widget.returnWorkout) {
-                  Navigator.of(context).pop(_generatedWorkout);
-                } else {
-                  Navigator.of(context).pushReplacement(
-                    MaterialPageRoute(builder: (_) => const ProgramSummaryScreen()),
-                  );
-                }
-              }
-            });
+          // If the SSE stream finished without delivering a workout (server emitted
+          // `event: already_generating`, or `done` with no payload), confirm today's
+          // workout actually exists before navigating. Otherwise ProgramSummaryScreen
+          // hits /upcoming which kicks off the multi-day plan generator, which then
+          // races our /generate-stream call and produces a duplicate today row.
+          if (_generatedWorkout == null && !widget.returnWorkout) {
+            try {
+              final today = await ref.read(workoutRepositoryProvider).getTodayWorkout();
+              debugPrint('🔍 [WorkoutGeneration] Confirmed today row before nav: '
+                  'has_workout=${today?.hasWorkoutToday}');
+            } catch (e) {
+              debugPrint('⚠️ [WorkoutGeneration] /today confirm failed: $e');
+            }
           }
+
+          // If returnWorkout is true, pop with the generated workout
+          // Otherwise, navigate to program summary after showing completion
+          Future.delayed(const Duration(milliseconds: 1500), () {
+            if (mounted) {
+              if (widget.returnWorkout) {
+                Navigator.of(context).pop(_generatedWorkout);
+              } else {
+                Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(builder: (_) => const ProgramSummaryScreen()),
+                );
+              }
+            }
+          });
         },
       );
     } catch (e) {

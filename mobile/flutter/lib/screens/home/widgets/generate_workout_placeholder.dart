@@ -276,10 +276,19 @@ class _GenerateWorkoutPlaceholderState
           ],
         ),
         const SizedBox(height: 14),
-        // Title silhouette (two lines)
-        shimmerBlock(height: 22, widthFactor: 0.75),
+        // Title silhouette (two lines).
+        // SizedBox(width: infinity) gives the FractionallySizedBox a bounded
+        // parent. Without it, a CrossAxisAlignment.start Column passes
+        // unbounded width down → "BoxConstraints forces an infinite width".
+        SizedBox(
+          width: double.infinity,
+          child: shimmerBlock(height: 22, widthFactor: 0.75),
+        ),
         const SizedBox(height: 8),
-        shimmerBlock(height: 16, widthFactor: 0.45),
+        SizedBox(
+          width: double.infinity,
+          child: shimmerBlock(height: 16, widthFactor: 0.45),
+        ),
         const SizedBox(height: 16),
         // Metric pill row (duration · exercises · difficulty)
         Row(

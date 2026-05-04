@@ -29,6 +29,12 @@ import '../services/data_cache_service.dart';
 import '../services/device_info_service.dart';
 import '../services/pending_referral_service.dart';
 import '../services/wearable_service.dart';
+import '../services/home_prewarmer.dart';
+import '../services/nutrition_prewarmer.dart';
+import '../services/social_prewarmer.dart';
+import '../services/workout_completion_prewarmer.dart';
+import '../services/workouts_prewarmer.dart';
+import '../services/you_overview_prewarmer.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
 /// Auth state
@@ -394,11 +400,25 @@ class AuthRepository {
 
   /// Sign out
   Future<void> signOut() async {
+    // Cache wipes run in `finally` so a partial Supabase signOut failure
+    // (network blip, expired token) cannot leave the previous user's
+    // cached profile sitting in SharedPreferences. Without this, a flaky
+    // sign-out followed by a fresh sign-in would surface the OLD user
+    // on /home until the background restoreSession() completes.
+    Object? signOutError;
     try {
       await _googleSignIn.signOut();
       await _supabase.auth.signOut();
       await _apiClient.clearAuth();
+    } catch (e) {
+      // Capture but don't rethrow yet — we still need to clear local
+      // caches so the next user doesn't see stale data. Surface the
+      // error after cleanup (matches the pre-fix behavior).
+      signOutError = e;
+      debugPrint('❌ [Auth] Sign-out (Supabase/Google) error: $e — continuing with local cleanup');
+    }
 
+    try {
       // Clear all cached data for next user
       await DataCacheService.instance.clearAll();
       // Clear ALL in-memory caches
@@ -412,6 +432,20 @@ class AuthRepository {
       HydrationNotifier.clearCache();
       FastingNotifier.clearCache();
       MeasurementsNotifier.clearCache();
+
+      // Wipe ALL tab prewarmer caches (in-memory + on-disk where applicable)
+      // so the next user signing in on this device doesn't briefly see the
+      // prior account's streaks / workouts / food / social state before the
+      // network refresh lands. Run in parallel — none of them block each
+      // other and clearAll on each is idempotent.
+      await Future.wait([
+        YouOverviewPrewarmer.clearAll(),
+        HomePrewarmer.clearAll(),
+        NutritionPrewarmer.clearAll(),
+        WorkoutsPrewarmer.clearAll(),
+        SocialPrewarmer.clearAll(),
+        WorkoutCompletionPrewarmer.clearAll(),
+      ]);
 
       // Clear local onboarding flags so next user gets fresh experience
       final prefs = await SharedPreferences.getInstance();
@@ -432,8 +466,14 @@ class AuthRepository {
 
       debugPrint('✅ [Auth] Sign-out success (all caches cleared)');
     } catch (e) {
-      debugPrint('❌ [Auth] Sign-out error: $e');
-      rethrow;
+      debugPrint('❌ [Auth] Sign-out cleanup error: $e');
+      // If we already had a Supabase/Google error, prefer that one.
+      signOutError ??= e;
+    }
+
+    if (signOutError != null) {
+      // ignore: only_throw_errors
+      throw signOutError;
     }
   }
 
@@ -601,9 +641,42 @@ class AuthRepository {
   ///
   /// Returns cached user immediately if available, then fetches fresh in background
   Future<({app_user.User? cached, Future<app_user.User?> fresh})> restoreSessionWithCache() async {
+    // Step 0: Validate cache against the live Supabase session BEFORE
+    // surfacing the cached user. Without this guard, a prior account's
+    // user (sitting in SharedPreferences from a previous install or a
+    // partially-completed sign-out) gets shown instantly on app open and
+    // the router routes the user to /home with someone else's name. The
+    // user then sees "names and everything before signing up" — see plan
+    // ~/.claude/plans/i-am-still-not-quizzical-comet.md for the symptom.
+    //
+    // Rule: cache is only trustworthy if there's an active Supabase
+    // session right now. If the session is gone (signed out, expired,
+    // never-existed-on-this-device), the cached user is stale. Drop it
+    // and fall through to the no-cache branch.
+    final liveSession = _supabase.auth.currentSession;
+    if (liveSession == null) {
+      if (await _getCachedUser() != null) {
+        debugPrint('🧹 [Auth] Cache rejected: no live Supabase session — clearing stale user cache');
+        await DataCacheService.instance.invalidate(DataCacheService.userProfileKey);
+      }
+      return (cached: null, fresh: restoreSession());
+    }
+
     // Step 1: Try to load cached user instantly
     final cachedUser = await _getCachedUser();
     if (cachedUser != null) {
+      // Account-switch guard: the User model does NOT carry the Supabase
+      // auth_id, but it does carry email. If the live session's email
+      // doesn't match the cached user, we're looking at a different
+      // account on the same device — drop the cache and force a fresh
+      // by-auth lookup before painting any UI.
+      final sessionEmail = liveSession.user.email?.toLowerCase().trim();
+      final cachedEmail = cachedUser.email?.toLowerCase().trim();
+      if (sessionEmail != null && cachedEmail != null && sessionEmail != cachedEmail) {
+        debugPrint('🧹 [Auth] Cache rejected: account switch detected ($cachedEmail → $sessionEmail)');
+        await DataCacheService.instance.invalidate(DataCacheService.userProfileKey);
+        return (cached: null, fresh: restoreSession());
+      }
       debugPrint('⚡ [Auth] Loaded user from cache instantly: ${cachedUser.name}');
 
       // Step 1.5: Set user ID in secure storage from cached user
@@ -781,6 +854,23 @@ class AuthNotifier extends StateNotifier<AuthState> {
     });
   }
 
+  /// Fire all 5 tab prewarmers in parallel, fire-and-forget. Call this BEFORE
+  /// flipping `state = AuthState(authenticated)` so the prewarmer fetches start
+  /// running concurrently with the router's redirect → home-screen-mount cycle
+  /// (which costs ~16ms of frame time before initState fires). The Supabase
+  /// session is already populated by the time `_repository.signInXxx()`
+  /// returns, so `apiClient.getUserId()` inside each warm() succeeds.
+  ///
+  /// Each prewarmer has its own dedup + staleness check, so calling this from
+  /// multiple sites (sign-in + _init cache-restore) is safe.
+  void _firePrewarmers() {
+    unawaited(YouOverviewPrewarmer.warm(_ref));
+    unawaited(HomePrewarmer.warm(_ref));
+    unawaited(NutritionPrewarmer.warm(_ref));
+    unawaited(WorkoutsPrewarmer.warm(_ref));
+    unawaited(SocialPrewarmer.warm(_ref));
+  }
+
   /// Initialize with cache-first pattern for instant auth
   Future<void> _init() async {
     try {
@@ -790,6 +880,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
       if (result.cached != null) {
         // Show cached user immediately - no loading spinner!
         debugPrint('⚡ [Auth] Authenticated from cache instantly');
+        // Fire prewarmers BEFORE the state flip so their fetches overlap with
+        // the router redirect → home mount frame (~16ms head start).
+        _firePrewarmers();
         state = AuthState(status: AuthStatus.authenticated, user: result.cached);
         _updateDeviceInfo(result.cached!.id);
 
@@ -808,6 +901,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         state = state.copyWith(status: AuthStatus.loading);
         final user = await result.fresh;
         if (user != null) {
+          _firePrewarmers();
           state = AuthState(status: AuthStatus.authenticated, user: user);
         } else {
           state = const AuthState(status: AuthStatus.unauthenticated);
@@ -827,14 +921,28 @@ class AuthNotifier extends StateNotifier<AuthState> {
       // state flips to authenticated so the router sees correct quiz state
       // on its next redirect. See _syncQuizAfterSignIn for the 3 jobs.
       await _syncQuizAfterSignIn(user);
+      // Fire all 5 tab prewarmers BEFORE the state flip so their fetches
+      // overlap with the router redirect + home mount frame.
+      _firePrewarmers();
       state = AuthState(status: AuthStatus.authenticated, user: user);
+      // Persist the freshly-signed-in user to cache so the next cold start
+      // hits the cache-first happy path with THIS user — not whatever
+      // previous account left a row in SharedPreferences.
+      await _repository._cacheUser(user);
       _updateDeviceInfo(user.id);
       // Fire-and-forget referral flush — never block auth UX on this.
       unawaited(_flushPendingReferral());
     } catch (e) {
+      // User dismissing the Google account picker is not an error — don't
+      // render a red error pill on a deliberate cancellation. Same for
+      // Apple. Reset to unauthenticated so the sign-in screen looks clean.
+      if (_isUserCancellation(e)) {
+        state = const AuthState(status: AuthStatus.unauthenticated);
+        return;
+      }
       state = AuthState(
         status: AuthStatus.error,
-        errorMessage: e.toString(),
+        errorMessage: _humanizeAuthException(e),
       );
     }
   }
@@ -845,15 +953,59 @@ class AuthNotifier extends StateNotifier<AuthState> {
     try {
       final user = await _repository.signInWithApple();
       await _syncQuizAfterSignIn(user);
+      _firePrewarmers();
       state = AuthState(status: AuthStatus.authenticated, user: user);
+      await _repository._cacheUser(user);
       _updateDeviceInfo(user.id);
       unawaited(_flushPendingReferral());
     } catch (e) {
+      if (_isUserCancellation(e)) {
+        state = const AuthState(status: AuthStatus.unauthenticated);
+        return;
+      }
       state = AuthState(
         status: AuthStatus.error,
-        errorMessage: e.toString(),
+        errorMessage: _humanizeAuthException(e),
       );
     }
+  }
+
+  /// True for the well-known "user dismissed the OS sheet" exceptions —
+  /// Google's account picker or Apple's auth sheet. These are deliberate
+  /// user actions, not failures, so they shouldn't surface as error UI.
+  bool _isUserCancellation(Object e) {
+    final s = e.toString().toLowerCase();
+    return s.contains('cancelled') ||
+        s.contains('canceled') ||
+        s.contains('user_cancelled') ||
+        s.contains('sign_in_canceled') ||
+        s.contains('sign-in was cancelled');
+  }
+
+  /// Translate raw network/SDK exceptions into copy a user can act on.
+  /// Without this, the sign-in screen renders strings like
+  /// `Exception: DioException [connection error]: ...` verbatim.
+  String _humanizeAuthException(Object e) {
+    final raw = e.toString().replaceAll('Exception: ', '').trim();
+    final l = raw.toLowerCase();
+    if (l.contains('socketexception') ||
+        l.contains('connection') ||
+        l.contains('network') ||
+        l.contains('failed host lookup') ||
+        l.contains('timed out') ||
+        l.contains('timeout')) {
+      return "Can't reach the server. Check your connection and try again.";
+    }
+    if (l.contains('429') || l.contains('rate limit') || l.contains('too many')) {
+      return 'Too many attempts. Wait a minute and try again.';
+    }
+    if (l.contains('500') || l.contains('502') || l.contains('503') || l.contains('504')) {
+      return "Our servers had a hiccup. Please try again in a moment.";
+    }
+    if (l.contains('id token') || l.contains('idtoken')) {
+      return "Couldn't verify your account with Google. Try again.";
+    }
+    return raw;
   }
 
   /// Sign in with email and password
@@ -862,15 +1014,32 @@ class AuthNotifier extends StateNotifier<AuthState> {
     try {
       final user = await _repository.signInWithEmail(email, password);
       await _syncQuizAfterSignIn(user);
+      _firePrewarmers();
       state = AuthState(status: AuthStatus.authenticated, user: user);
+      await _repository._cacheUser(user);
       _updateDeviceInfo(user.id, isFreshSignin: true);
       unawaited(_flushPendingReferral());
     } catch (e) {
+      // Email-screen has its own _humanizeAuthError that runs on
+      // state.errorMessage, so we keep the original string here for
+      // signal preservation (it inspects "invalid login credentials"
+      // etc.). Only swap network-class noise into something readable.
       state = AuthState(
         status: AuthStatus.error,
-        errorMessage: e.toString(),
+        errorMessage: _isNetworkException(e) ? _humanizeAuthException(e) : e.toString(),
       );
     }
+  }
+
+  bool _isNetworkException(Object e) {
+    final l = e.toString().toLowerCase();
+    return l.contains('socketexception') ||
+        l.contains('failed host lookup') ||
+        l.contains('connection error') ||
+        l.contains('connection refused') ||
+        l.contains('connection closed') ||
+        l.contains('connection timed out') ||
+        l.contains('timed out');
   }
 
   /// Sign up with email and password.
@@ -894,6 +1063,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       );
       await _syncQuizAfterSignIn(user);
       state = AuthState(status: AuthStatus.authenticated, user: user);
+      await _repository._cacheUser(user);
       _updateDeviceInfo(user.id, isFreshSignin: true);
       unawaited(_flushPendingReferral());
     } catch (e) {

@@ -203,6 +203,7 @@ class _ConsistencyInsightCardState
 
     if (needsRecovery) {
       return Column(
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
@@ -226,6 +227,7 @@ class _ConsistencyInsightCardState
     }
 
     return Column(
+      mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(

@@ -81,7 +81,12 @@ class _PlanAnalyzingScreenState extends ConsumerState<PlanAnalyzingScreen>
     }
 
     try {
-      final dio = Dio(BaseOptions(baseUrl: ApiConstants.baseUrl));
+      // ApiConstants.baseUrl is the bare host (e.g. https://aifitnesscoach-zqi3.onrender.com).
+      // The router mounts onboarding under /api/v1, so we need apiBaseUrl
+      // (which appends /api/v1). Hitting baseUrl alone returned 404 → JSON
+      // parse failure on the FastAPI 404 body → silent goal-date fallback +
+      // misleading Sentry error in the next screen.
+      final dio = Dio(BaseOptions(baseUrl: ApiConstants.apiBaseUrl));
       final response = await dio.post(
         '/onboarding/computed-goal-date',
         data: {

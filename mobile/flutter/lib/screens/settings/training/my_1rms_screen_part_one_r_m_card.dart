@@ -66,6 +66,7 @@ class _OneRMCardState extends ConsumerState<_OneRMCard> {
         side: BorderSide(color: widget.cardBorder),
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
           // Main card content
           InkWell(

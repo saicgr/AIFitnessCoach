@@ -204,40 +204,50 @@ class _MiniBarChart extends StatelessWidget {
       accent.withValues(alpha: 0.5),
       accent.withValues(alpha: 0.35),
     ];
+    // Use LayoutBuilder so the bar's height/width are concrete values rather
+    // than fractional ones — FractionallySizedBox crashes when its parent
+    // hands it unbounded constraints, which happens when the share template
+    // is captured off-screen via RepaintBoundary.
     return Expanded(
-      child: Stack(
-        alignment: Alignment.bottomCenter,
-        children: [
-          FractionallySizedBox(
-            heightFactor: h,
-            child: Container(
-              width: w,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.bottomCenter,
-                  end: Alignment.topCenter,
-                  colors: [colors[i % colors.length], Colors.transparent],
-                ),
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(8),
+      child: LayoutBuilder(
+        builder: (context, c) {
+          final maxH = c.maxHeight.isFinite ? c.maxHeight : 120.0;
+          final maxW = c.maxWidth.isFinite ? c.maxWidth : w;
+          return Stack(
+            alignment: Alignment.bottomCenter,
+            children: [
+              SizedBox(
+                height: maxH * h,
+                width: maxW,
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.bottomCenter,
+                      end: Alignment.topCenter,
+                      colors: [colors[i % colors.length], Colors.transparent],
+                    ),
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(8),
+                    ),
+                  ),
                 ),
               ),
-            ),
-          ),
-          Positioned(
-            bottom: 6,
-            child: Text(
-              m.value,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 11 * mul,
-                fontWeight: FontWeight.w900,
+              Positioned(
+                bottom: 6,
+                child: Text(
+                  m.value,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 11 * mul,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
               ),
-            ),
-          ),
-        ],
+            ],
+          );
+        },
       ),
     );
   }

@@ -158,12 +158,13 @@ class _RecipesTabState extends ConsumerState<RecipesTab>
           ),
         ),
 
-        // Floating Build FAB — sits above the root floating nav bar.
-        // Styled as a pill with a gradient + sparkle icon to signal AI creation
-        // rather than a random crossed-spoon glyph.
+        // Floating Build FAB — sits above BOTH the root floating nav bar
+        // AND the Nutrition glass tab bar (Daily/Recipes/Patterns/Fuel),
+        // which adds ~64px of vertical space above the nav. Without this
+        // extra inset, the FAB overlaps the right end of the tab bar.
         Positioned(
           right: 20,
-          bottom: 96,
+          bottom: 160,
           child: Material(
             color: Colors.transparent,
             child: InkWell(
@@ -180,14 +181,20 @@ class _RecipesTabState extends ConsumerState<RecipesTab>
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                    colors: [accent, accent.withValues(alpha: 0.75)],
+                    colors: [accent, accent.withValues(alpha: 0.85)],
                   ),
                   borderRadius: BorderRadius.circular(28),
+                  // Neutral shadow — the previous accent-tinted shadow
+                  // (alpha 0.35 blur 16 offset 0,6) painted a soft red
+                  // halo around the FAB that read as a pink rectangle on
+                  // light backgrounds and tinted the glass tab bar
+                  // through the BackdropFilter. Black at low alpha gives
+                  // depth without the red bleed.
                   boxShadow: [
                     BoxShadow(
-                      color: accent.withValues(alpha: 0.35),
-                      blurRadius: 16,
-                      offset: const Offset(0, 6),
+                      color: Colors.black.withValues(alpha: 0.18),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
                     ),
                   ],
                 ),

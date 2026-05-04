@@ -104,8 +104,13 @@ $FLUTTER_PATH pub get
 echo -e "${YELLOW}Uninstalling existing app...${NC}"
 $ADB_PATH -s "$FOLD_SERIAL" uninstall com.aifitnesscoach.app 2>/dev/null || echo -e "${YELLOW}App was not installed.${NC}"
 
+# RevenueCat keys — paywall throws "Purchase service not configured" without these.
+RC_GOOGLE_KEY="${REVENUECAT_GOOGLE_KEY:-goog_oWxJnYQrUSCtIxMqTPcEPfWgBxq}"
+DART_DEFINES=("--dart-define=REVENUECAT_GOOGLE_KEY=$RC_GOOGLE_KEY")
+[[ -n "${REVENUECAT_APPLE_KEY:-}" ]] && DART_DEFINES+=("--dart-define=REVENUECAT_APPLE_KEY=$REVENUECAT_APPLE_KEY")
+
 # Build and run on foldable
 echo -e "${GREEN}Building and running app on foldable ($FOLD_SERIAL)...${NC}"
-$FLUTTER_PATH run -d "$FOLD_SERIAL"
+$FLUTTER_PATH run -d "$FOLD_SERIAL" "${DART_DEFINES[@]}"
 
 echo -e "${GREEN}=== Done! ===${NC}"

@@ -12,6 +12,11 @@ class AppTourSpotlightPainter extends CustomPainter {
   final List<Color>? ringGradientColors;
   /// Rotation angle for the gradient ring (0.0 – 1.0).
   final double gradientRotation;
+  /// Pixels at the BOTTOM of the canvas to leave undimmed — typically the
+  /// floating tab bar's height + safe-area inset. Without this, the dim
+  /// overlay sits underneath the floating nav and the bar looks washed out
+  /// for the entire tour.
+  final double bottomInset;
 
   const AppTourSpotlightPainter({
     required this.spotlightRect,
@@ -21,11 +26,16 @@ class AppTourSpotlightPainter extends CustomPainter {
     this.spotlightPadding = 10.0,
     this.ringGradientColors,
     this.gradientRotation = 0.0,
+    this.bottomInset = 0.0,
   });
 
   @override
   void paint(Canvas canvas, Size size) {
-    final fullRect = Offset.zero & size;
+    // Shrink the dimmed area so it stops above the floating tab bar — the
+    // tab bar then renders at full brightness on top of an undimmed
+    // background instead of fighting the dim layer.
+    final dimHeight = (size.height - bottomInset).clamp(0.0, size.height);
+    final fullRect = Rect.fromLTWH(0, 0, size.width, dimHeight);
 
     // When spotlight rect is zero (target not yet visible), just draw the
     // full overlay without a cutout hole or ring.
@@ -92,6 +102,7 @@ class AppTourSpotlightPainter extends CustomPainter {
         old.ringColor != ringColor ||
         old.cornerRadius != cornerRadius ||
         old.ringGradientColors != ringGradientColors ||
-        old.gradientRotation != gradientRotation;
+        old.gradientRotation != gradientRotation ||
+        old.bottomInset != bottomInset;
   }
 }

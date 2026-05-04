@@ -1013,6 +1013,7 @@ class ProgressBarTemplate extends StatelessWidget {
           const Text('CONSISTENCY', style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w800, letterSpacing: 3)),
           const SizedBox(height: 18),
           Container(
+            width: double.infinity,
             height: 16,
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.1),

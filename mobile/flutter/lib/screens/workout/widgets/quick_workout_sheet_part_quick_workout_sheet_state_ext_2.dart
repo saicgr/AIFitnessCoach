@@ -138,42 +138,60 @@ extension __QuickWorkoutSheetStateExt2 on _QuickWorkoutSheetState {
       scheduledDateOverride = pickedDate;
     }
 
-    // If user chose "Replace", delete the existing workout first
-    if (conflictResult == _ConflictAction.replace && _conflictWorkoutId != null) {
-      try {
-        final apiClient = ref.read(apiClientProvider);
-        await apiClient.delete(
-          '${ApiConstants.workouts}/$_conflictWorkoutId',
-        );
-      } catch (e) {
-        debugPrint('[QuickWorkout] Failed to delete existing workout: $e');
-        // Continue anyway — the new workout will still be created
+    // Glass loading overlay covers the multi-step flow (delete existing →
+    // generate → invalidate providers → pop) so the user sees a continuous
+    // affordance instead of the in-button spinner alone, which leaves a
+    // 1-2s "stuck" gap during the DELETE that runs OUTSIDE quickWorkoutProvider.
+    final loadingOverlay = mounted
+        ? showGlassLoadingOverlay(context, message: 'Generating workout…')
+        : null;
+
+    try {
+      // If user chose "Replace", delete the existing workout first
+      if (conflictResult == _ConflictAction.replace && _conflictWorkoutId != null) {
+        try {
+          final apiClient = ref.read(apiClientProvider);
+          await apiClient.delete(
+            '${ApiConstants.workouts}/$_conflictWorkoutId',
+          );
+        } catch (e) {
+          debugPrint('[QuickWorkout] Failed to delete existing workout: $e');
+          // Continue anyway — the new workout will still be created
+        }
       }
-    }
 
-    final workout = await ref.read(quickWorkoutProvider.notifier).generateQuickWorkout(
-      duration: _selectedDuration,
-      focus: _selectedFocus,
-      difficulty: _selectedDifficulty,
-      mood: _selectedMood,
-      goal: _selectedGoal,
-      useSupersets: _useSupersets,
-      equipment: _selectedEquipment.isNotEmpty ? _selectedEquipment.toList() : null,
-      injuries: _selectedInjuries.isNotEmpty ? _selectedInjuries.toList() : null,
-      equipmentDetails: _equipmentDetails.isNotEmpty ? _equipmentDetails : null,
-      scheduledDate: scheduledDateOverride,
-    );
+      final workout = await ref.read(quickWorkoutProvider.notifier).generateQuickWorkout(
+        duration: _selectedDuration,
+        focus: _selectedFocus,
+        difficulty: _selectedDifficulty,
+        mood: _selectedMood,
+        goal: _selectedGoal,
+        useSupersets: _useSupersets,
+        equipment: _selectedEquipment.isNotEmpty ? _selectedEquipment.toList() : null,
+        injuries: _selectedInjuries.isNotEmpty ? _selectedInjuries.toList() : null,
+        equipmentDetails: _equipmentDetails.isNotEmpty ? _equipmentDetails : null,
+        scheduledDate: scheduledDateOverride,
+      );
 
-    if (workout != null && mounted) {
-      // Auto-capture preset
-      _autoCapturePreset();
+      if (workout != null && mounted) {
+        // Auto-capture preset
+        _autoCapturePreset();
 
-      // Refresh today workout provider so carousel picks up the new workout
-      ref.read(todayWorkoutProvider.notifier).refresh();
-      // Also refresh workoutsProvider silently (no loading flash)
-      ref.read(workoutsProvider.notifier).silentRefresh();
+        // AWAIT both refreshes before popping — the previous fire-and-forget
+        // pattern returned to home with stale provider state, so the carousel
+        // didn't show the new quick workout until the user switched tabs and
+        // came back. invalidateAndRefresh() also clears the static dedup cache
+        // so a Replace flow doesn't pull a still-cached deleted workout.
+        await Future.wait([
+          ref.read(todayWorkoutProvider.notifier).invalidateAndRefresh(),
+          ref.read(workoutsProvider.notifier).silentRefresh(),
+        ]);
 
-      Navigator.pop(context, workout);
+        if (!mounted) return;
+        Navigator.pop(context, workout);
+      }
+    } finally {
+      loadingOverlay?.dismiss();
     }
   }
 

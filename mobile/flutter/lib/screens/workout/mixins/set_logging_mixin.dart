@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -16,6 +17,7 @@ import '../../../data/models/exercise.dart';
 import '../../../data/providers/gym_profile_provider.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/services/haptic_service.dart';
+import '../../../data/services/workout_completion_prewarmer.dart';
 import '../../../core/services/posthog_service.dart';
 import '../../../core/providers/sound_preferences_provider.dart';
 import '../../../models/equipment_item.dart';
@@ -201,6 +203,20 @@ mixin SetLoggingMixin<T extends StatefulWidget> on State<T> {
 
     final totalSets = totalSetsPerExercise[currentExerciseIndex] ?? 3;
     final completedCount = completedSets[currentExerciseIndex]?.length ?? 0;
+
+    // Heuristic: if this set we just logged was the SECOND-TO-LAST set of
+    // the LAST exercise, kick off the workout-completion prewarmer in the
+    // background. Total workouts + achievements API calls take 300-800ms
+    // each; running them now means they're already cached by the time the
+    // user finishes their actual last set + sees the completion screen.
+    // Belt-and-suspenders: workout_flow_mixin also fires the prewarmer
+    // unconditionally from finalizeWorkoutCompletion so this heuristic
+    // missing edge cases (single-set workouts, supersets) doesn't matter.
+    final isLastExercise = currentExerciseIndex >= exercises.length - 1;
+    final isSecondToLastSet = completedCount == totalSets - 1;
+    if (isLastExercise && isSecondToLastSet) {
+      unawaited(WorkoutCompletionPrewarmer.warm(ref));
+    }
 
     if (completedCount >= totalSets) {
       ref.read(soundPreferencesProvider.notifier).playExerciseCompletion();
