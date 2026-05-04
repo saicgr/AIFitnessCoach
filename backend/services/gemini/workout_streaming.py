@@ -263,19 +263,31 @@ If user has gym equipment (full_gym, barbell, dumbbells, cable_machine, machines
             logger.info(f"[Streaming] Calling Gemini API with model={self.model}, prompt length={len(prompt)}")
             _streaming_max_retries = 3
             _streaming_delays = [2.0, 5.0, 10.0]
+            # Per-stage timeouts: stream-create hangs are usually fast-fail
+            # (auth, prompt rejection); per-chunk hangs are mid-stream socket
+            # silences. asyncio.wait_for raises asyncio.TimeoutError which
+            # _is_transient_gemini_error treats as retryable, so the existing
+            # retry loop handles ReadTimeout transparently (was Sentry
+            # PYTHON-FASTAPI-31/32: "ReadTimeout: The read operation timed out"
+            # surfacing as a 500 instead of a transparent retry).
+            _STREAM_CREATE_TIMEOUT_S = 30.0
+            _PER_CHUNK_TIMEOUT_S = 45.0
             stream = None
             for _attempt in range(_streaming_max_retries + 1):
                 try:
                     async with _gemini_semaphore(user_id=user_id):
-                        stream = await client.aio.models.generate_content_stream(
-                            model=self.model,
-                            contents=prompt,
-                            config=types.GenerateContentConfig(
-                                response_mime_type="application/json",
-                                response_schema=GeneratedWorkoutResponse,
-                                temperature=0.7,
-                                max_output_tokens=16384  # Increased to prevent truncation with detailed workouts
+                        stream = await asyncio.wait_for(
+                            client.aio.models.generate_content_stream(
+                                model=self.model,
+                                contents=prompt,
+                                config=types.GenerateContentConfig(
+                                    response_mime_type="application/json",
+                                    response_schema=GeneratedWorkoutResponse,
+                                    temperature=0.7,
+                                    max_output_tokens=16384  # Increased to prevent truncation with detailed workouts
+                                ),
                             ),
+                            timeout=_STREAM_CREATE_TIMEOUT_S,
                         )
                     break
                 except Exception as _e:
@@ -295,7 +307,33 @@ If user has gym equipment (full_gym, barbell, dumbbells, cable_machine, machines
 
             chunk_count = 0
             total_chars = 0
-            async for chunk in stream:
+            # Per-chunk timeout: if a single chunk takes >_PER_CHUNK_TIMEOUT_S,
+            # abort the stream so caller can retry. async-for doesn't support
+            # a per-iteration timeout natively, so we wrap the iterator in an
+            # async generator that applies asyncio.wait_for per __anext__.
+            async def _with_chunk_timeout(_src, _timeout_s: float):
+                _it = _src.__aiter__()
+                _idx = 0
+                while True:
+                    try:
+                        _val = await asyncio.wait_for(
+                            _it.__anext__(),
+                            timeout=_timeout_s,
+                        )
+                    except StopAsyncIteration:
+                        return
+                    except asyncio.TimeoutError as _te:
+                        logger.warning(
+                            f"⚠️ [Streaming] Chunk {_idx + 1} timed out after "
+                            f"{_timeout_s}s — aborting stream so caller can retry"
+                        )
+                        raise TimeoutError(
+                            f"Gemini stream stalled at chunk {_idx + 1}"
+                        ) from _te
+                    _idx += 1
+                    yield _val
+
+            async for chunk in _with_chunk_timeout(stream, _PER_CHUNK_TIMEOUT_S):
                 chunk_count += 1
                 logger.debug(f"[Streaming] Received chunk {chunk_count}, type={type(chunk).__name__}")
 
@@ -448,20 +486,26 @@ If user has gym equipment (full_gym, barbell, dumbbells, cable_machine, machines
 
             _streaming_max_retries = 3
             _streaming_delays = [2.0, 5.0, 10.0]
+            # Per-stage timeouts — see non-cached path above for rationale.
+            _STREAM_CREATE_TIMEOUT_S = 30.0
+            _PER_CHUNK_TIMEOUT_S = 45.0
             stream = None
             for _attempt in range(_streaming_max_retries + 1):
                 try:
                     async with _gemini_semaphore(user_id=user_id):
-                        stream = await client.aio.models.generate_content_stream(
-                            model=self.model,
-                            contents=user_prompt,
-                            config=types.GenerateContentConfig(
-                                cached_content=cache_name,  # USE THE CACHE!
-                                response_mime_type="application/json",
-                                response_schema=GeneratedWorkoutResponse,
-                                temperature=0.7,
-                                max_output_tokens=16384,  # Must match non-cached - workouts with set_targets can exceed 4000 tokens
+                        stream = await asyncio.wait_for(
+                            client.aio.models.generate_content_stream(
+                                model=self.model,
+                                contents=user_prompt,
+                                config=types.GenerateContentConfig(
+                                    cached_content=cache_name,  # USE THE CACHE!
+                                    response_mime_type="application/json",
+                                    response_schema=GeneratedWorkoutResponse,
+                                    temperature=0.7,
+                                    max_output_tokens=16384,  # Must match non-cached - workouts with set_targets can exceed 4000 tokens
+                                ),
                             ),
+                            timeout=_STREAM_CREATE_TIMEOUT_S,
                         )
                     break
                 except Exception as _e:
@@ -479,7 +523,30 @@ If user has gym equipment (full_gym, barbell, dumbbells, cable_machine, machines
 
             chunk_count = 0
             total_chars = 0
-            async for chunk in stream:
+            # Per-chunk timeout wrapper — same pattern as non-cached path.
+            async def _with_chunk_timeout(_src, _timeout_s: float):
+                _it = _src.__aiter__()
+                _idx = 0
+                while True:
+                    try:
+                        _val = await asyncio.wait_for(
+                            _it.__anext__(),
+                            timeout=_timeout_s,
+                        )
+                    except StopAsyncIteration:
+                        return
+                    except asyncio.TimeoutError as _te:
+                        logger.warning(
+                            f"⚠️ [CachedStreaming] Chunk {_idx + 1} timed out after "
+                            f"{_timeout_s}s — aborting stream so caller can retry"
+                        )
+                        raise TimeoutError(
+                            f"Gemini stream stalled at chunk {_idx + 1}"
+                        ) from _te
+                    _idx += 1
+                    yield _val
+
+            async for chunk in _with_chunk_timeout(stream, _PER_CHUNK_TIMEOUT_S):
                 chunk_count += 1
 
                 # Check for blocked content or safety issues

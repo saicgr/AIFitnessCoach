@@ -12,9 +12,20 @@ import tempfile
 from typing import Optional
 
 from google import genai
+from google.genai import types as genai_types
 
 from core.config import get_settings
 from core.logger import get_logger
+
+# Default HTTP timeout for all Gemini SDK calls. The SDK's underlying httpx
+# client defaults to ~5s read, which is FAR too tight for large workout-plan
+# generations (10-30s) and meal plans (30-90s). 120s gives the SDK headroom
+# while still failing fast on truly hung backends. Per-call asyncio.wait_for
+# wrappers can tighten this further on hot paths (e.g. workout streaming).
+# Value is milliseconds (HttpOptions schema).
+_GEMINI_DEFAULT_TIMEOUT_MS = 120_000
+
+_GEMINI_HTTP_OPTIONS = genai_types.HttpOptions(timeout=_GEMINI_DEFAULT_TIMEOUT_MS)
 
 logger = get_logger(__name__)
 
@@ -84,6 +95,7 @@ def get_genai_client() -> genai.Client:
             vertexai=True,
             project=settings.gcp_project_id,
             location=settings.gcp_location,
+            http_options=_GEMINI_HTTP_OPTIONS,
         )
 
     # Fail closed in production. The developer Gemini API may ingest
@@ -103,7 +115,10 @@ def get_genai_client() -> genai.Client:
         "Gemini client falling back to developer API key. This is intended "
         "for local development only — never for production user data."
     )
-    return genai.Client(api_key=settings.gemini_api_key)
+    return genai.Client(
+        api_key=settings.gemini_api_key,
+        http_options=_GEMINI_HTTP_OPTIONS,
+    )
 
 
 def get_genai_files_client() -> genai.Client:
@@ -115,7 +130,10 @@ def get_genai_files_client() -> genai.Client:
     settings = get_settings()
     if not settings.gemini_api_key:
         raise ValueError("GEMINI_API_KEY is required for Gemini Files API uploads")
-    return genai.Client(api_key=settings.gemini_api_key)
+    return genai.Client(
+        api_key=settings.gemini_api_key,
+        http_options=_GEMINI_HTTP_OPTIONS,
+    )
 
 
 def get_langchain_llm(
