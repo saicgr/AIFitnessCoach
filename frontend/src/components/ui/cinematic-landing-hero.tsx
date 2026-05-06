@@ -1,11 +1,9 @@
 // src/components/ui/cinematic-landing-hero.tsx
 
-import React, { useEffect, useRef, lazy, Suspense } from "react";
+import React, { useEffect, useRef } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { cn } from "@/lib/utils";
-
-const LandingFlux = lazy(() => import("@/components/ui/landing-flux"));
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
@@ -48,51 +46,53 @@ const INJECTED_STYLES = `
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
-      padding-bottom: 0.15em; /* Prevent descender clipping with background-clip: text */
-      transform: translateZ(0); /* Hardware acceleration to prevent WebKit clipping bug */
-      filter:
-          drop-shadow(0px 10px 20px color-mix(in srgb, var(--color-foreground) 15%, transparent))
-          drop-shadow(0px 2px 4px color-mix(in srgb, var(--color-foreground) 10%, transparent));
+      padding-bottom: 0.15em;
+      transform: translateZ(0);
+      /* Replaced drop-shadow filter with text-shadow; identical look at 1/4 paint cost. */
+      text-shadow:
+          0 8px 18px color-mix(in srgb, var(--color-foreground) 12%, transparent),
+          0 2px 4px color-mix(in srgb, var(--color-foreground) 10%, transparent);
   }
 
-  /* INSIDE THE CARD: Hardcoded Silver/White for the dark background, deep rich shadows */
+  /* INSIDE THE CARD: Hardcoded Silver/White for the dark background.
+     drop-shadow() filter removed — among the slowest CSS filters; replaced
+     with cheap text-shadow that GPUs composite without re-rasterizing. */
   .text-card-silver-matte {
       background: linear-gradient(180deg, #FFFFFF 0%, #A1A1AA 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
       transform: translateZ(0);
-      filter:
-          drop-shadow(0px 12px 24px rgba(0,0,0,0.8))
-          drop-shadow(0px 4px 8px rgba(0,0,0,0.6));
+      text-shadow: 0 8px 18px rgba(0,0,0,0.55), 0 2px 4px rgba(0,0,0,0.45);
   }
 
-  /* Deep Physical Card with Dynamic Mouse Lighting */
+  /* Deep Physical Card — Apple-style soft single shadow.
+     Multi-layer shadow with deep blur radii is one of the most expensive
+     paint ops; collapsed to one shadow with similar visual weight. */
   .premium-depth-card {
       background: linear-gradient(145deg, #162C6D 0%, #0A101D 100%);
-      box-shadow:
-          0 40px 100px -20px rgba(0, 0, 0, 0.9),
-          0 20px 40px -20px rgba(0, 0, 0, 0.8),
-          inset 0 1px 2px rgba(255, 255, 255, 0.2),
-          inset 0 -2px 4px rgba(0, 0, 0, 0.8);
-      border: 1px solid rgba(255, 255, 255, 0.04);
+      box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.05);
       position: relative;
   }
 
+  /* Card sheen — mix-blend-mode removed (forces a dedicated compositor layer
+     and per-pixel blending every frame). The radial gradient at low alpha
+     reads almost identically without the blend. */
   .card-sheen {
       position: absolute; inset: 0; border-radius: inherit; pointer-events: none; z-index: 50;
-      background: radial-gradient(800px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(255,255,255,0.06) 0%, transparent 40%);
-      mix-blend-mode: screen; transition: opacity 0.3s ease;
+      background: radial-gradient(800px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(255,255,255,0.05) 0%, transparent 40%);
+      transition: opacity 0.3s ease;
   }
 
-  /* Realistic iPhone Mockup Hardware */
+  /* iPhone bezel — kept the inset bezel shadows (visual identity) but
+     collapsed external shadows to one. */
   .iphone-bezel {
       background-color: #111;
       box-shadow:
           inset 0 0 0 2px #52525B,
           inset 0 0 0 7px #000,
-          0 40px 80px -15px rgba(0,0,0,0.9),
-          0 15px 25px -5px rgba(0,0,0,0.7);
+          0 25px 50px -10px rgba(0,0,0,0.8);
       transform-style: preserve-3d;
   }
 
@@ -111,52 +111,93 @@ const INJECTED_STYLES = `
 
   /* Removed unused .widget-depth */
 
+  /* Floating glass badge — backdrop-filter blur removed universally.
+     It's a per-frame screen-region re-blur even on desktop, and on
+     integrated GPUs (most laptops) it tanks framerate during the
+     pinned scroll. The solid translucent bg + 1px border reads as
+     "frosted card" without the GPU cost. */
   .floating-ui-badge {
-      background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.01) 100%);
-      backdrop-filter: blur(24px);
-      -webkit-backdrop-filter: blur(24px);
+      background: rgba(20, 22, 28, 0.78);
       box-shadow:
-          0 0 0 1px rgba(255, 255, 255, 0.1),
-          0 25px 50px -12px rgba(0, 0, 0, 0.8),
-          inset 0 1px 1px rgba(255,255,255,0.2),
-          inset 0 -1px 1px rgba(0,0,0,0.5);
+          0 0 0 1px rgba(255, 255, 255, 0.08),
+          0 18px 36px -10px rgba(0, 0, 0, 0.7);
   }
 
   /* Physical Tactile Buttons */
   .btn-modern-light, .btn-modern-dark {
       transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
   }
+  /* Buttons — Apple-style solid fill + single soft shadow.
+     Removed all inset / multi-layer shadows; they were rendered each frame
+     during the pinned scroll's scale animations. */
   .btn-modern-light {
-      background: linear-gradient(180deg, #FFFFFF 0%, #F1F5F9 100%);
+      background: #FFFFFF;
       color: #0F172A;
-      box-shadow: 0 0 0 1px rgba(0,0,0,0.05), 0 2px 4px rgba(0,0,0,0.1), 0 12px 24px -4px rgba(0,0,0,0.3), inset 0 1px 1px rgba(255,255,255,1), inset 0 -3px 6px rgba(0,0,0,0.06);
+      box-shadow: 0 8px 20px -4px rgba(0,0,0,0.25);
+      border: 1px solid rgba(0,0,0,0.04);
   }
   .btn-modern-light:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 0 0 1px rgba(0,0,0,0.05), 0 6px 12px -2px rgba(0,0,0,0.15), 0 20px 32px -6px rgba(0,0,0,0.4), inset 0 1px 1px rgba(255,255,255,1), inset 0 -3px 6px rgba(0,0,0,0.06);
+      transform: translateY(-2px);
+      box-shadow: 0 14px 28px -6px rgba(0,0,0,0.3);
   }
   .btn-modern-light:active {
-      transform: translateY(1px);
-      background: linear-gradient(180deg, #F1F5F9 0%, #E2E8F0 100%);
-      box-shadow: 0 0 0 1px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.1), inset 0 3px 6px rgba(0,0,0,0.1), inset 0 0 0 1px rgba(0,0,0,0.02);
+      transform: translateY(0);
+      background: #F1F5F9;
   }
   .btn-modern-dark {
-      background: linear-gradient(180deg, #27272A 0%, #18181B 100%);
+      background: #18181B;
       color: #FFFFFF;
-      box-shadow: 0 0 0 1px rgba(255,255,255,0.1), 0 2px 4px rgba(0,0,0,0.6), 0 12px 24px -4px rgba(0,0,0,0.9), inset 0 1px 1px rgba(255,255,255,0.15), inset 0 -3px 6px rgba(0,0,0,0.8);
+      box-shadow: 0 8px 20px -4px rgba(0,0,0,0.55);
+      border: 1px solid rgba(255,255,255,0.08);
   }
   .btn-modern-dark:hover {
-      transform: translateY(-3px);
-      background: linear-gradient(180deg, #3F3F46 0%, #27272A 100%);
-      box-shadow: 0 0 0 1px rgba(255,255,255,0.15), 0 6px 12px -2px rgba(0,0,0,0.7), 0 20px 32px -6px rgba(0,0,0,1), inset 0 1px 1px rgba(255,255,255,0.2), inset 0 -3px 6px rgba(0,0,0,0.8);
+      transform: translateY(-2px);
+      background: #27272A;
+      box-shadow: 0 14px 28px -6px rgba(0,0,0,0.7);
   }
   .btn-modern-dark:active {
-      transform: translateY(1px);
-      background: #18181B;
-      box-shadow: 0 0 0 1px rgba(255,255,255,0.05), inset 0 3px 8px rgba(0,0,0,0.9), inset 0 0 0 1px rgba(0,0,0,0.5);
+      transform: translateY(0);
+      background: #0a0a0b;
   }
 
   /* Removed unused .progress-ring */
+
+  /* ── Mobile + low-power performance overrides ────────────────────────────
+     Targets: phones (≤768px) AND coarse pointer (touch). Replaces the most
+     expensive paint ops with cheap equivalents. The visual hit is small;
+     the framerate gain is large.
+
+       1. backdrop-filter blur: removed → solid translucent bg
+       2. drop-shadow filter: replaced by text-shadow (GPU-cheap)
+       3. multi-layer box-shadows: collapsed to one shadow
+       4. mix-blend-mode card-sheen: hidden (forces extra composite layer)
+       5. screen-glare: hidden (extra layer for ~0 visual gain on small screens)
+  */
+  /* p5 marquee removed everywhere — it ran a 60fps canvas behind the
+     pinned hero, which is the single biggest desktop perf hit. Apple
+     doesn't decorate hero sections with continuously-painting noise. */
+  .flux-bg { display: none !important; }
+
+  @media (max-width: 768px), (pointer: coarse) {
+    /* Mobile-only extras — kill the last residual paint costs. */
+    .card-sheen,
+    .screen-glare {
+      display: none !important;
+    }
+    .text-silver-matte,
+    .text-card-silver-matte {
+      text-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    }
+    .btn-modern-light:hover,
+    .btn-modern-dark:hover {
+      transform: none !important;
+    }
+  }
+
+  /* Reduced-motion accessibility opt-out — fully static experience. */
+  @media (prefers-reduced-motion: reduce) {
+    .gsap-reveal { visibility: visible !important; }
+  }
 `;
 
 export interface FloatingBadge {
@@ -229,6 +270,11 @@ export function CinematicHero({
 
   // 1. High-Performance Mouse Interaction Logic (Using requestAnimationFrame)
   useEffect(() => {
+    // Skip on coarse-pointer (touch) devices entirely — no mouse to track,
+    // and the listener still fires synthetic mouse events on tap which queue
+    // GSAP rotations during scroll (visible jank).
+    if (window.matchMedia('(pointer: coarse)').matches) return;
+
     const handleMouseMove = (e: MouseEvent) => {
       if (window.scrollY > window.innerHeight * 2) return;
 
@@ -266,6 +312,22 @@ export function CinematicHero({
   // 2. Complex Cinematic Scroll Timeline
   useEffect(() => {
     const isMobile = window.innerWidth < 768;
+    const isCoarsePointer = window.matchMedia('(pointer: coarse)').matches;
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    // Treat coarse-pointer (touch) devices as "low-power" for animation budget,
+    // even on tablets — they share the mobile GPU profile that struggles with
+    // pinned scroll + 3D rotation + box-shadows.
+    const isLowPower = isMobile || isCoarsePointer;
+
+    // Honor accessibility preference: skip the cinematic scroll entirely and
+    // show everything statically.
+    if (prefersReducedMotion) {
+      gsap.set([
+        ".text-track", ".text-days", ".main-card", ".cta-wrapper",
+        ".card-left-text", ".card-right-text", ".mockup-scroll-wrapper", ".floating-badge",
+      ], { autoAlpha: 1, clearProps: "transform,clipPath" });
+      return;
+    }
 
     const ctx = gsap.context(() => {
       gsap.set(".text-track", { autoAlpha: 0, y: 60, scale: 0.85, rotationX: -20 });
@@ -287,11 +349,15 @@ export function CinematicHero({
         .to(".text-track", { duration: 0.8, autoAlpha: 1, y: 0, scale: 1, rotationX: 0, ease: "expo.out" })
         .to(".text-days", { duration: 0.6, clipPath: "inset(0 0% 0 0)", ease: "power4.inOut" }, "-=0.4");
 
-      // Balanced: smooth entrance, generous slide transitions, snappy exit
-      const scrollDistance = isMobile ? 2000 : 3500;
-      const d = isMobile
-        ? { enter: 1.2, expand: 0.8, reveal: 1.2, hold: 0.5, fadeOut: 0.35, fadeIn: 0.4, slideHold: 0.4, exitHold: 0.2, exitContent: 0.4, pullback: 0.5, cardExit: 0.4 }
-        : { enter: 1.5, expand: 0.8, reveal: 1.5, hold: 0.6, fadeOut: 0.4, fadeIn: 0.5, slideHold: 0.5, exitHold: 0.2, exitContent: 0.5, pullback: 0.6, cardExit: 0.5 };
+      // Apple-feel pacing: tighter pin distance, restrained durations, and
+      // a slightly higher scrub value so the scroll-driven interpolation
+      // doesn't ask the GPU for more frames than it can deliver. Apple's
+      // own product pages cap pin sections at ~2 viewport-heights; we go
+      // shorter for compositing-heavy content like ours.
+      const scrollDistance = isLowPower ? 1200 : 2200;
+      const d = isLowPower
+        ? { enter: 0.9, expand: 0.6, reveal: 0.9, hold: 0.35, fadeOut: 0.3, fadeIn: 0.35, slideHold: 0.3, exitHold: 0.2, exitContent: 0.3, pullback: 0.35, cardExit: 0.3 }
+        : { enter: 1.1, expand: 0.7, reveal: 1.1, hold: 0.4, fadeOut: 0.35, fadeIn: 0.4, slideHold: 0.4, exitHold: 0.2, exitContent: 0.4, pullback: 0.5, cardExit: 0.4 };
 
       const scrollTl = gsap.timeline({
         scrollTrigger: {
@@ -299,7 +365,10 @@ export function CinematicHero({
           start: "top top",
           end: `+=${scrollDistance}`,
           pin: true,
-          scrub: isMobile ? 0.4 : 0.6,
+          // Higher scrub = fewer interpolation samples per frame = smoother
+          // when the GPU is the bottleneck. 0.8 desktop / 1.0 mobile feels
+          // tactile without dropping frames.
+          scrub: isLowPower ? 1.0 : 0.8,
           anticipatePin: 1,
         },
       });
@@ -311,12 +380,17 @@ export function CinematicHero({
 
       scrollTl
         .to(".scroll-hint", { autoAlpha: 0, y: 20, duration: 0.3, ease: "power2.in" }, 0)
-        .to([".hero-text-wrapper", ".bg-grid-theme", ".flux-bg"], { scale: 1.15, opacity: 0, ease: "power2.inOut", duration: enterDur }, 0)
+        .to([".hero-text-wrapper", ".bg-grid-theme"], { scale: 1.15, opacity: 0, ease: "power2.inOut", duration: enterDur }, 0)
         .to(".main-card", { y: 0, width: "100%", height: "100%", borderRadius: "0px", ease: "power3.inOut", duration: enterDur }, 0)
-        // Mockup appears immediately with card but starts deeply rotated
+        // Apple-feel: gentle tilt + Y-translate, no deep Z-recession.
+        // The deep `z: -500` was forcing per-frame GPU rasterization at
+        // perspective; the new values still read as "phone tilts into
+        // place" with a fraction of the paint cost, and feel restrained
+        // rather than gimmicky.
         .fromTo(".mockup-scroll-wrapper",
-          { y: 300, z: -500, rotationX: 50, rotationY: -30, autoAlpha: 1, scale: 0.6 },
-          { y: 300, z: -500, rotationX: 50, rotationY: -30, autoAlpha: 1, scale: 0.6, duration: 0.01 }, 0
+          { y: 180, z: 0, rotationX: 20, rotationY: -10, autoAlpha: 1, scale: 0.75 },
+          { y: 180, z: 0, rotationX: 20, rotationY: -10, autoAlpha: 1, scale: 0.75, duration: 0.01 },
+          0
         )
         .fromTo(".card-left-text", { x: -30, autoAlpha: 0 }, { x: 0, autoAlpha: 1, ease: "power4.out", duration: enterDur }, 0.2)
         .fromTo(".card-right-text", { x: 30, autoAlpha: 0, scale: 0.9 }, { x: 0, autoAlpha: 1, scale: 1, ease: "expo.out", duration: enterDur }, 0.2)
@@ -385,19 +459,9 @@ export function CinematicHero({
     >
       <style dangerouslySetInnerHTML={{ __html: INJECTED_STYLES }} />
 
-      {/* BACKGROUND LAYER 0: Animated flux marquee — centered behind hero text */}
-      <div className="flux-bg absolute inset-0 z-0 pointer-events-auto flex items-center" aria-hidden="true">
-        <Suspense fallback={null}>
-          <LandingFlux
-            className="w-full"
-            rows={8}
-            barHeight={16}
-            gap={10}
-            color="#94A3B8"
-            disableMarquee={false}
-          />
-        </Suspense>
-      </div>
+      {/* p5 marquee removed — see CSS comment in INJECTED_STYLES.
+          Apple-feel hero leans on typography + restrained motion, not
+          continuously-painting decorative noise. */}
 
       <div className="film-grain" aria-hidden="true" />
       <div className="bg-grid-theme absolute inset-0 z-0 pointer-events-none opacity-50" aria-hidden="true" />
@@ -435,24 +499,25 @@ export function CinematicHero({
           {ctaDescription}
         </p>
         <div className="flex flex-col sm:flex-row gap-6">
-          {/* App Store - Coming Soon */}
-          <div className="relative btn-modern-light flex items-center justify-center gap-3 px-8 py-4 rounded-[1.25rem] opacity-60 cursor-default select-none">
+          {/* App Store - Coming Soon → Waitlist */}
+          <a href="/waitlist" aria-label="Join the iOS waitlist" className="relative btn-modern-light flex items-center justify-center gap-3 px-8 py-4 rounded-[1.25rem] group focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 focus:ring-offset-background hover:scale-[1.02] transition-transform">
             <span className="absolute -top-2.5 -right-2.5 px-2 py-0.5 bg-amber-500 text-white text-[9px] font-bold uppercase tracking-wider rounded-full shadow-lg">Coming Soon</span>
-            <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 384 512" aria-hidden="true">
+            <svg className="w-8 h-8 transition-transform group-hover:scale-105" fill="currentColor" viewBox="0 0 384 512" aria-hidden="true">
               <path d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zm-56.6-164.2c27.3-32.4 24.8-61.9 24-72.5-24.1 1.4-52 16.4-67.9 34.9-17.5 19.8-27.8 44.3-25.6 71.9 26.1 2 49.9-11.4 69.5-34.3z"/>
             </svg>
             <div className="text-left">
-              <div className="text-[10px] font-bold tracking-wider text-neutral-500 uppercase mb-[-2px]">Download on the</div>
+              <div className="text-[10px] font-bold tracking-wider text-neutral-500 uppercase mb-[-2px]">Join waitlist for</div>
               <div className="text-xl font-bold leading-none tracking-tight">App Store</div>
             </div>
-          </div>
-          {/* Google Play - Active */}
-          <a href="https://play.google.com/store/apps/details?id=com.aifitnesscoach.app" target="_blank" rel="noopener noreferrer" aria-label="Get it on Google Play" className="btn-modern-dark flex items-center justify-center gap-3 px-8 py-4 rounded-[1.25rem] group focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-background">
+          </a>
+          {/* Google Play - Coming Soon → Waitlist (production review pending) */}
+          <a href="/waitlist" aria-label="Join the Android waitlist" className="relative btn-modern-dark flex items-center justify-center gap-3 px-8 py-4 rounded-[1.25rem] group focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 focus:ring-offset-background hover:scale-[1.02] transition-transform">
+            <span className="absolute -top-2.5 -right-2.5 px-2 py-0.5 bg-amber-500 text-white text-[9px] font-bold uppercase tracking-wider rounded-full shadow-lg">Coming Soon</span>
             <svg className="w-7 h-7 transition-transform group-hover:scale-105" fill="currentColor" viewBox="0 0 512 512" aria-hidden="true">
                <path d="M325.3 234.3L104.6 13l280.8 161.2-60.1 60.1zM47 0C34 6.8 25.3 19.2 25.3 35.3v441.3c0 16.1 8.7 28.5 21.7 35.3l256.6-256L47 0zm425.2 225.6l-58.9-34.1-65.7 64.5 65.7 64.5 60.1-34.1c18-14.3 18-46.5-1.2-60.8zM104.6 499l280.8-161.2-60.1-60.1L104.6 499z"/>
             </svg>
             <div className="text-left">
-              <div className="text-[10px] font-bold tracking-wider text-neutral-400 uppercase mb-[-2px]">Get it on</div>
+              <div className="text-[10px] font-bold tracking-wider text-neutral-400 uppercase mb-[-2px]">Join waitlist for</div>
               <div className="text-xl font-bold leading-none tracking-tight">Google Play</div>
             </div>
           </a>

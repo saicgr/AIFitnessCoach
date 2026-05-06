@@ -16,6 +16,7 @@ food_curation/output/
 *.csv
 data_keys.gz
 *.pdf
+*.p8 
 
 # Chroma vector store data
 backend/data/chroma/

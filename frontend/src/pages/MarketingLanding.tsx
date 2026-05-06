@@ -3,6 +3,7 @@ import { motion, useInView } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import MarketingNav from '../components/marketing/MarketingNav';
 import MarketingFooter from '../components/marketing/MarketingFooter';
+import WaitlistSection from '../components/marketing/WaitlistSection';
 import { CinematicHero } from '../components/ui/cinematic-landing-hero';
 import GalleryHoverCarousel from '../components/ui/gallery-hover-carousel';
 import { BRANDING } from '../lib/branding';
@@ -15,8 +16,6 @@ const fadeUp = {
 const stagger = {
   visible: { transition: { staggerChildren: 0.08 } },
 };
-
-const PLAY_STORE = 'https://play.google.com/store/apps/details?id=com.aifitnesscoach.app';
 
 const premiumFeatures = [
   '1,722 exercises with video demos',
@@ -166,14 +165,12 @@ export default function MarketingLanding() {
                   </li>
                 ))}
               </ul>
-              <a
-                href={PLAY_STORE}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block w-full text-center py-3 rounded-full bg-emerald-500 hover:bg-emerald-400 text-white font-medium transition-colors"
+              <Link
+                to="/waitlist"
+                className="block w-full text-center py-3 rounded-full bg-emerald-500 hover:bg-emerald-400 text-white font-medium transition-colors shadow-lg shadow-emerald-500/20"
               >
-                Start 7-Day Free Trial
-              </a>
+                Join Waitlist
+              </Link>
             </motion.div>
 
             {/* Premium Monthly */}
@@ -198,14 +195,12 @@ export default function MarketingLanding() {
                   </li>
                 ))}
               </ul>
-              <a
-                href={PLAY_STORE}
-                target="_blank"
-                rel="noopener noreferrer"
+              <Link
+                to="/waitlist"
                 className="block w-full text-center py-3 rounded-full border border-[var(--color-border)] hover:border-emerald-500/50 text-[var(--color-text)] font-medium transition-colors"
               >
-                Start 7-Day Free Trial
-              </a>
+                Join Waitlist
+              </Link>
             </motion.div>
           </motion.div>
 
@@ -222,6 +217,9 @@ export default function MarketingLanding() {
           </motion.div>
         </div>
       </section>
+
+      {/* ── Waitlist ── */}
+      <WaitlistSection source="marketing_landing" />
 
       <MarketingFooter />
     </div>

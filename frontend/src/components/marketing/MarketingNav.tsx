@@ -261,17 +261,16 @@ export default function MarketingNav() {
               )}
             </button>
 
-            <a
-              href="https://play.google.com/store/apps/details?id=com.aifitnesscoach.app"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-white rounded-full transition-colors text-sm font-medium"
+            <Link
+              to="/waitlist"
+              className="flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-white rounded-full transition-all text-sm font-medium shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/40"
             >
-              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 512 512">
-                <path d="M325.3 234.3L104.6 13l280.8 161.2-60.1 60.1zM47 0C34 6.8 25.3 19.2 25.3 35.3v441.3c0 16.1 8.7 28.5 21.7 35.3l256.6-256L47 0zm425.2 225.6l-58.9-34.1-65.7 64.5 65.7 64.5 60.1-34.1c18-14.3 18-46.5-1.2-60.8zM104.6 499l280.8-161.2-60.1-60.1L104.6 499z"/>
-              </svg>
-              From $5/mo
-            </a>
+              <span className="relative flex w-2 h-2">
+                <span className="absolute inline-flex w-full h-full rounded-full bg-white opacity-75 animate-ping" />
+                <span className="relative inline-flex w-2 h-2 rounded-full bg-white" />
+              </span>
+              Join Waitlist
+            </Link>
           </div>
 
           {/* Mobile: theme toggle + hamburger */}
@@ -389,18 +388,17 @@ export default function MarketingNav() {
               <hr className="border-[var(--color-border)] my-2" />
 
               {/* CTA */}
-              <a
-                href="https://play.google.com/store/apps/details?id=com.aifitnesscoach.app"
-                target="_blank"
-                rel="noopener noreferrer"
+              <Link
+                to="/waitlist"
                 onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center justify-center gap-2 text-sm font-medium py-3 px-4 bg-emerald-500 text-white rounded-full mt-1"
+                className="flex items-center justify-center gap-2 text-sm font-medium py-3 px-4 bg-emerald-500 text-white rounded-full mt-1 shadow-lg shadow-emerald-500/20"
               >
-                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 512 512">
-                  <path d="M325.3 234.3L104.6 13l280.8 161.2-60.1 60.1zM47 0C34 6.8 25.3 19.2 25.3 35.3v441.3c0 16.1 8.7 28.5 21.7 35.3l256.6-256L47 0zm425.2 225.6l-58.9-34.1-65.7 64.5 65.7 64.5 60.1-34.1c18-14.3 18-46.5-1.2-60.8zM104.6 499l280.8-161.2-60.1-60.1L104.6 499z"/>
-                </svg>
-                From $5/mo — Get on Google Play
-              </a>
+                <span className="relative flex w-2 h-2">
+                  <span className="absolute inline-flex w-full h-full rounded-full bg-white opacity-75 animate-ping" />
+                  <span className="relative inline-flex w-2 h-2 rounded-full bg-white" />
+                </span>
+                Join Waitlist — iOS + Android
+              </Link>
             </div>
           </motion.div>
         )}

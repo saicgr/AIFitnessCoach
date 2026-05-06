@@ -289,18 +289,16 @@ export default function Pricing() {
                 )}
               </div>
 
-              <a
-                href="https://play.google.com/store/apps/details?id=com.aifitnesscoach.app"
-                target="_blank"
-                rel="noopener noreferrer"
+              <Link
+                to="/waitlist"
                 className={`block w-full py-3.5 rounded-xl text-center text-[15px] font-medium transition-colors mb-6 ${
                   plan.highlight
                     ? 'bg-emerald-500 text-white hover:bg-emerald-400'
                     : 'bg-[var(--color-surface-elevated)] text-[var(--color-text)] hover:bg-[var(--color-surface-elevated)]'
                 }`}
               >
-                {plan.cta}
-              </a>
+                Join Waitlist — {plan.cta}
+              </Link>
 
               <ul className="space-y-3">
                 {plan.features.map((feature, i) => (
@@ -607,14 +605,12 @@ export default function Pricing() {
             Try every feature free for 7 days. No credit card required.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <a
-              href="https://play.google.com/store/apps/details?id=com.aifitnesscoach.app"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="px-8 py-3.5 bg-emerald-500 text-white text-[17px] rounded-full hover:bg-emerald-400 transition-colors"
+            <Link
+              to="/waitlist"
+              className="px-8 py-3.5 bg-emerald-500 text-white text-[17px] rounded-full hover:bg-emerald-400 transition-colors shadow-lg shadow-emerald-500/20"
             >
-              Start 7-Day Free Trial
-            </a>
+              Join Waitlist — iOS + Android
+            </Link>
             <Link
               to="/features"
               className="px-8 py-3.5 text-emerald-400 text-[17px] hover:underline transition-all"

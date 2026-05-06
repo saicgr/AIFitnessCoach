@@ -18,6 +18,7 @@ import About from './pages/About';
 import Contact from './pages/Contact';
 import Changelog from './pages/Changelog';
 import Roadmap from './pages/Roadmap';
+import Waitlist from './pages/Waitlist';
 import DeleteAccount from './pages/DeleteAccount';
 import Invite from './pages/Invite';
 import Onboarding from './pages/Onboarding';
@@ -99,6 +100,7 @@ function App() {
         <Route path="/contact" element={<Contact />} />
         <Route path="/changelog" element={<Changelog />} />
         <Route path="/roadmap" element={<Roadmap />} />
+        <Route path="/waitlist" element={<Waitlist />} />
         <Route path="/delete-account" element={<DeleteAccount />} />
         {/* Referral invite landing page. iOS/Android opens the app via
             the `fitwiz://` scheme if installed (see Invite.tsx); desktop

@@ -16,6 +16,14 @@
       "source": "/api/v1/workouts/public/:token",
       "destination": "https://aifitnesscoach-zqi3.onrender.com/api/v1/workouts/public/:token"
     },
+    {
+      "source": "/api/v1/waitlist/",
+      "destination": "https://aifitnesscoach-zqi3.onrender.com/api/v1/waitlist/"
+    },
+    {
+      "source": "/api/v1/waitlist",
+      "destination": "https://aifitnesscoach-zqi3.onrender.com/api/v1/waitlist/"
+    },
     { "source": "/(.*)", "destination": "/" }
   ],
   "headers": [
