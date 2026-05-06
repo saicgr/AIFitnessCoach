@@ -91,11 +91,31 @@ export default function MarketingNav() {
   useClickOutside(legalRef, () => { if (openDropdown === 'legal') setOpenDropdown(null); });
   useClickOutside(contactRef, () => { if (openDropdown === 'contact') setOpenDropdown(null); });
 
+  // Apple-style transparent-at-rest nav: stay transparent over the hero,
+  // only become a frosted glass bar once the user scrolls past it.
+  // Landing page pins the cinematic hero for ~vh × 4 of scroll, so the
+  // threshold there is much higher than on other pages where one viewport
+  // of scroll = past the hero.
   useEffect(() => {
-    const handleScroll = () => setIsScrolled(window.scrollY > 10);
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+    const isLanding = location.pathname === '/';
+    const computeThreshold = () =>
+      isLanding ? Math.max(2400, window.innerHeight * 4) : window.innerHeight * 0.6;
+
+    let threshold = computeThreshold();
+    const handleScroll = () => setIsScrolled(window.scrollY > threshold);
+    const handleResize = () => {
+      threshold = computeThreshold();
+      handleScroll();
+    };
+
+    handleScroll();
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    window.addEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('resize', handleResize);
+    };
+  }, [location.pathname]);
 
   const isActive = (path: string) => location.pathname === path;
   const toggle = (key: string) => setOpenDropdown(openDropdown === key ? null : key);
