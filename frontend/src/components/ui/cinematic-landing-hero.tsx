@@ -349,15 +349,24 @@ export function CinematicHero({
         .to(".text-track", { duration: 0.8, autoAlpha: 1, y: 0, scale: 1, rotationX: 0, ease: "expo.out" })
         .to(".text-days", { duration: 0.6, clipPath: "inset(0 0% 0 0)", ease: "power4.inOut" }, "-=0.4");
 
-      // Apple-feel pacing: tighter pin distance, restrained durations, and
-      // a slightly higher scrub value so the scroll-driven interpolation
-      // doesn't ask the GPU for more frames than it can deliver. Apple's
-      // own product pages cap pin sections at ~2 viewport-heights; we go
-      // shorter for compositing-heavy content like ours.
-      const scrollDistance = isLowPower ? 1200 : 2200;
+      // Pin / pacing budget — sized so each slide gets ~1 viewport-height
+      // of scroll to itself. Apple product walkthroughs (e.g.
+      // apple.com/iphone) allocate ~700–900px of scroll PER feature panel,
+      // not per phase. With slideCount slides and 2 entry/exit phases,
+      // we budget: enter (~1 vh) + (slideCount × 1 vh hold) + exit (~1 vh).
+      const vh = window.innerHeight;
+      const scrollDistance = Math.max(
+        isLowPower ? 1800 : 2400,
+        Math.round(vh * (slideCount + 1.2)),
+      );
+
+      // Per-slide hold dominates the timeline so each slide has a clear
+      // rest period before the crossfade to the next. Previously hold was
+      // 0.3–0.4 (≈ 120px of scroll), which let one trackpad swipe blast
+      // through multiple slides with no visible dwell.
       const d = isLowPower
-        ? { enter: 0.9, expand: 0.6, reveal: 0.9, hold: 0.35, fadeOut: 0.3, fadeIn: 0.35, slideHold: 0.3, exitHold: 0.2, exitContent: 0.3, pullback: 0.35, cardExit: 0.3 }
-        : { enter: 1.1, expand: 0.7, reveal: 1.1, hold: 0.4, fadeOut: 0.35, fadeIn: 0.4, slideHold: 0.4, exitHold: 0.2, exitContent: 0.4, pullback: 0.5, cardExit: 0.4 };
+        ? { enter: 1.0, expand: 0.7, reveal: 1.0, hold: 0.5, fadeOut: 0.45, fadeIn: 0.5, slideHold: 1.6, exitHold: 0.3, exitContent: 0.45, pullback: 0.45, cardExit: 0.45 }
+        : { enter: 1.2, expand: 0.8, reveal: 1.2, hold: 0.6, fadeOut: 0.5, fadeIn: 0.55, slideHold: 1.8, exitHold: 0.3, exitContent: 0.5, pullback: 0.55, cardExit: 0.5 };
 
       const scrollTl = gsap.timeline({
         scrollTrigger: {
@@ -366,9 +375,10 @@ export function CinematicHero({
           end: `+=${scrollDistance}`,
           pin: true,
           // Higher scrub = fewer interpolation samples per frame = smoother
-          // when the GPU is the bottleneck. 0.8 desktop / 1.0 mobile feels
-          // tactile without dropping frames.
-          scrub: isLowPower ? 1.0 : 0.8,
+          // when the GPU is the bottleneck. 1.0 desktop / 1.2 mobile feels
+          // tactile and avoids the "scroll one notch, blast past 3 slides"
+          // problem the previous values had.
+          scrub: isLowPower ? 1.2 : 1.0,
           anticipatePin: 1,
         },
       });
