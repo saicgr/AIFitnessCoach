@@ -22,7 +22,7 @@ export default function WaitlistSection({ source }: WaitlistSectionProps) {
   return (
     <section
       ref={ref}
-      className="relative overflow-hidden py-24 sm:py-32 px-6"
+      className="relative overflow-hidden py-16 sm:py-20 px-6"
     >
       {/* Animated background gradient orbs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -74,28 +74,31 @@ export default function WaitlistSection({ source }: WaitlistSectionProps) {
         {/* Big headline */}
         <motion.h2
           variants={fadeUp}
-          className="text-center text-4xl sm:text-6xl md:text-7xl font-bold tracking-tight text-[var(--color-text)] leading-[1.05]"
+          className="text-center text-3xl sm:text-5xl md:text-6xl font-bold tracking-tight text-[var(--color-text)] leading-[1.05]"
         >
-          Something better
-          <br />
+          Be first when{' '}
           <span className="bg-gradient-to-r from-emerald-400 via-emerald-300 to-cyan-300 bg-clip-text text-transparent">
-            is almost here.
+            iOS drops.
           </span>
         </motion.h2>
 
         {/* Subhead */}
         <motion.p
           variants={fadeUp}
-          className="mt-6 text-center text-lg sm:text-xl text-[var(--color-text-muted)] max-w-[640px] mx-auto leading-relaxed"
+          className="mt-4 text-center text-base sm:text-lg text-[var(--color-text-muted)] max-w-[560px] mx-auto leading-relaxed"
         >
-          The MyFitnessPal grind is over. Snap a photo of your plate. Get a workout that actually
-          fits your gym. Talk to a coach that knows your knee. <span className="text-[var(--color-text)] font-semibold">All in one app.</span>
+          Android link goes out the moment Google approves. iOS launches right after — waitlist gets it first.
         </motion.p>
+
+        {/* The waitlist form, centerpiece — placed above the fold */}
+        <motion.div variants={fadeUp} className="mt-8">
+          <WaitlistForm source={source} />
+        </motion.div>
 
         {/* Visual pillars (3 promise tiles) */}
         <motion.div
           variants={fadeUp}
-          className="mt-12 grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-[720px] mx-auto"
+          className="mt-12 grid grid-cols-3 gap-3 sm:gap-4 max-w-[720px] mx-auto"
         >
           {[
             { emoji: '📸', title: 'Snap a meal', sub: '2-second macros' },
@@ -107,24 +110,13 @@ export default function WaitlistSection({ source }: WaitlistSectionProps) {
               initial={{ opacity: 0, y: 20 }}
               animate={inView ? { opacity: 1, y: 0 } : {}}
               transition={{ delay: 0.4 + i * 0.08, duration: 0.5 }}
-              className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)]/40 backdrop-blur-sm p-5 text-center hover:border-emerald-500/40 transition-colors"
+              className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)]/40 backdrop-blur-sm p-4 sm:p-5 text-center hover:border-emerald-500/40 transition-colors"
             >
-              <div className="text-3xl mb-2">{tile.emoji}</div>
-              <div className="text-sm font-semibold text-[var(--color-text)]">{tile.title}</div>
-              <div className="text-xs text-[var(--color-text-muted)] mt-1">{tile.sub}</div>
+              <div className="text-2xl sm:text-3xl mb-2">{tile.emoji}</div>
+              <div className="text-xs sm:text-sm font-semibold text-[var(--color-text)]">{tile.title}</div>
+              <div className="text-[10px] sm:text-xs text-[var(--color-text-muted)] mt-1">{tile.sub}</div>
             </motion.div>
           ))}
-        </motion.div>
-
-        {/* The waitlist form, centerpiece */}
-        <motion.div variants={fadeUp} className="mt-14">
-          <h3 className="text-center text-xl sm:text-2xl font-semibold text-[var(--color-text)] mb-2">
-            Be first when iOS drops.
-          </h3>
-          <p className="text-center text-sm text-[var(--color-text-muted)] mb-8 max-w-[480px] mx-auto">
-            Public Android link goes out the moment Google approves. iOS launches right after — waitlist gets it first.
-          </p>
-          <WaitlistForm source={source} />
         </motion.div>
 
         {/* Trust strip */}

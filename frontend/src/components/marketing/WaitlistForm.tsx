@@ -13,6 +13,90 @@ interface WaitlistFormProps {
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 const WAITLIST_ENDPOINT = '/api/v1/waitlist/';
 
+// Allowed by backend ALLOWED_SOURCES — anything else is coerced to 'other'.
+const ALLOWED_SOURCES = new Set([
+  'marketing_landing',
+  'waitlist_page',
+  'twitter',
+  'linkedin',
+  'tiktok',
+  'instagram',
+  'reddit',
+  'other',
+]);
+
+// Map common ?utm_source= values to the backend's canonical set.
+const UTM_SOURCE_MAP: Record<string, string> = {
+  twitter: 'twitter',
+  x: 'twitter',
+  'twitter.com': 'twitter',
+  't.co': 'twitter',
+  linkedin: 'linkedin',
+  'linkedin.com': 'linkedin',
+  li: 'linkedin',
+  tiktok: 'tiktok',
+  'tiktok.com': 'tiktok',
+  tt: 'tiktok',
+  instagram: 'instagram',
+  'instagram.com': 'instagram',
+  ig: 'instagram',
+  reddit: 'reddit',
+  'reddit.com': 'reddit',
+};
+
+// Referrer hostname → canonical source. Only used as a fallback when no
+// UTM params are present — direct visits keep the page-default source.
+const REFERRER_HOST_MAP: Record<string, string> = {
+  'twitter.com': 'twitter',
+  'mobile.twitter.com': 'twitter',
+  'x.com': 'twitter',
+  't.co': 'twitter',
+  'linkedin.com': 'linkedin',
+  'www.linkedin.com': 'linkedin',
+  'lnkd.in': 'linkedin',
+  'tiktok.com': 'tiktok',
+  'www.tiktok.com': 'tiktok',
+  'instagram.com': 'instagram',
+  'www.instagram.com': 'instagram',
+  'l.instagram.com': 'instagram',
+  'reddit.com': 'reddit',
+  'www.reddit.com': 'reddit',
+  'old.reddit.com': 'reddit',
+};
+
+function resolveSource(defaultSource: string): string {
+  if (typeof window === 'undefined') return defaultSource;
+
+  // 1. ?utm_source= wins — explicit campaign tagging.
+  try {
+    const utm = new URLSearchParams(window.location.search)
+      .get('utm_source')
+      ?.trim()
+      .toLowerCase();
+    if (utm) {
+      const mapped = UTM_SOURCE_MAP[utm] ?? utm;
+      if (ALLOWED_SOURCES.has(mapped)) return mapped;
+    }
+  } catch {
+    // URL parsing failed — fall through.
+  }
+
+  // 2. document.referrer hostname — covers organic clicks from socials.
+  try {
+    const ref = typeof document !== 'undefined' ? document.referrer : '';
+    if (ref) {
+      const host = new URL(ref).hostname.toLowerCase();
+      const mapped = REFERRER_HOST_MAP[host];
+      if (mapped && ALLOWED_SOURCES.has(mapped)) return mapped;
+    }
+  } catch {
+    // Referrer wasn't a parseable URL — fall through.
+  }
+
+  // 3. Page default (marketing_landing / waitlist_page).
+  return defaultSource;
+}
+
 export default function WaitlistForm({
   source,
   platformInterest = 'both',
@@ -52,7 +136,7 @@ export default function WaitlistForm({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           email: trimmed.toLowerCase(),
-          source,
+          source: resolveSource(source),
           platform_interest: platformInterest,
           referrer: typeof document !== 'undefined' ? document.referrer || null : null,
           user_agent: typeof navigator !== 'undefined' ? navigator.userAgent : null,
