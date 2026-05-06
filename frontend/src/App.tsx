@@ -15,6 +15,7 @@ import HealthDisclaimer from './pages/HealthDisclaimer';
 import RefundPolicy from './pages/RefundPolicy';
 import FAQ from './pages/FAQ';
 import About from './pages/About';
+import Architecture from './pages/Architecture';
 import Contact from './pages/Contact';
 import Changelog from './pages/Changelog';
 import Roadmap from './pages/Roadmap';
@@ -97,6 +98,7 @@ function App() {
         <Route path="/refunds" element={<RefundPolicy />} />
         <Route path="/faq" element={<FAQ />} />
         <Route path="/about" element={<About />} />
+        <Route path="/architecture" element={<Architecture />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/changelog" element={<Changelog />} />
         <Route path="/roadmap" element={<Roadmap />} />
