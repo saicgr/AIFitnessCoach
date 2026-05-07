@@ -80,3 +80,95 @@ Try it: https://zealova.com — Android public link drops as soon as Google appr
 update: still waiting on Google. day 3 of refreshing the console. will post the moment it greenlights.
 
 ### 📝 END POST CONTENT
+
+---
+
+## 2026-05-07 — "never trust an LLM to count its own chars"
+
+**Status:** Drafted, not yet posted
+
+<details>
+<summary>🔬 Research log + plan (click to expand)</summary>
+
+**Research log (2026-05-07):**
+- Algo finding: Replies are worth 150× likes and bookmarks carry a 5× multiplier (confirmed May 2026). Threads get 3× engagement vs single tweets but distribution past tweet 1 is gated on tweet-1 engagement — hook must convert. Text-first outperforms video by 30%. External links penalised; product link goes in self-reply only.
+- Hashtag finding: 1 tag total is optimal on X in 2026 — `#buildinpublic` is the evergreen indie-hacker tag. Woven into a sentence in the final CTA tweet, not appended. 3+ tags = −17% engagement, per AutoTweet + Sprout Social May 2026 guides.
+- Trend hook hijack: "LLM can't count its own characters" is a live frustration in the indie-dev + AI tooling community — anchored to commit dee5c43 (May 6 2026) which tightened the publisher cap from 275 → 225 after a real miscounting incident. No fabricated facts: the 266 vs 285 gap and the cap numbers are directly from the commit diff.
+- Source links:
+  - https://posteverywhere.ai/blog/how-the-x-twitter-algorithm-works
+  - https://www.autotweet.io/blog/best-hashtags-for-x-twitter-2026
+  - https://socialbee.com/blog/twitter-algorithm/
+  - https://opentweet.io/blog/how-twitter-x-algorithm-works-2026
+  - https://www.teract.ai/resources/twitter-strategy-indie-hackers-2026
+
+**Plan:**
+- Anchored commit: `dee5c43` — "fix(x-publisher): tighten per-tweet cap from 275 to 225 chars"
+- Day/time: Thu May 7, 2026 — 9–11am ET or 2–4pm ET
+- Stagger 3–4 days from any LinkedIn post on same topic
+- Pin tweet 1 after posting
+- Self-reply after tweet 5: drop zealova.com link + Render/FastAPI/Supabase stack mention
+- Quote-tweet tweet 1 ~2h later: "update: the Telegram gate worked — publisher live, first post approved"
+- First-hour: reply to every comment within 5 min; the "Reply how and I'll DM" CTA drives high-multiplier reply signals
+- Hashtag: `#buildinpublic` woven into tweet 5 (final CTA), 1 tag total
+
+</details>
+
+### 📝 POST CONTENT BELOW — copy-paste this
+
+**1/** (177 chars)
+Never trust an LLM to count its own characters. 🧵
+
+My publisher reported tweet 5 as 266 chars.
+Python len() said 285.
+
+That's a 20-char gap — and it slipped past the safety cap.
+
+---
+
+**2/** (197 chars)
+Why it happens:
+
+LLMs estimate. Python counts exactly.
+
+Newlines, emoji, long words — all add up differently than the model thinks.
+
+My old cap was 275. The tweet landed at 285. It slipped through.
+
+---
+
+**3/** (210 chars)
+The fix: lower the publisher cap to 225.
+
+That's a 55-char margin under X's 280 limit. Big enough that no LLM miscounting can sneak through.
+
+Now: the agent verifies with Python len() BEFORE posting. Not after.
+
+---
+
+**4/** (219 chars)
+The publisher works like this:
+
+Claude drafts the thread → POSTs to my FastAPI backend → Supabase stores the draft → Telegram bot sends it to me with 🚀 / ❌ buttons.
+
+Tap 🚀: it posts the reply-chain to X. Tap ❌: skipped.
+
+---
+
+**5/** (203 chars)
+Building Zealova — AI fitness app with LangGraph multi-agent chat.
+
+The publisher: 420 lines of Python. Ship → Telegram review → X thread posted.
+
+Reply "how" and I'll DM the architecture. #buildinpublic
+
+---
+
+**Self-reply (after tweet 5 is posted):**
+Stack: FastAPI on Render, Supabase (asyncpg pooler compat), Telegram bot, OAuth 2.0 PKCE refresh-token rotation. All 420 lines: https://zealova.com
+
+---
+
+**Quote-tweet tweet 1 ~2h later (separate session):**
+update: Telegram gate worked — first draft approved and posted. the Python len() check held.
+
+### 📝 END POST CONTENT
