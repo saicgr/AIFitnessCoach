@@ -103,7 +103,7 @@ update: still waiting on Google. day 3 of refreshing the console. will post the 
 
 **Plan:**
 - Anchored commit: `dee5c43` — "fix(x-publisher): tighten per-tweet cap from 275 to 225 chars"
-- Day/time: Thu May 7, 2026 — 9–11am ET or 2–4pm ET
+- Day/time: Thu May 8, 9–11am ET or 2–4pm ET. ⚠️ Last post was May 5 — hold until May 8 (72h gap) to avoid algorithmic suppression.
 - Stagger 3–4 days from any LinkedIn post on same topic
 - Pin tweet 1 after posting
 - Self-reply after tweet 5: drop zealova.com link + Render/FastAPI/Supabase stack mention
