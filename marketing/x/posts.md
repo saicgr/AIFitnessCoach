@@ -784,3 +784,96 @@ Stack: FastAPI on Render, Supabase, Health Connect + Apple Health. Try Zealova: 
 update: Data Safety form re-submitted. the 7-field strip was the unlock. one less blocker between Zealova and the Play Store.
 
 ### 📝 END POST CONTENT
+
+---
+
+## 2026-05-07 — "Sentry 422, stale client, API heals itself"
+
+**Status:** Drafted, not yet posted
+
+<details>
+<summary>🔬 Research log + plan (click to expand)</summary>
+
+**Research log (2026-05-07):**
+- Algo finding: Replies are worth 150× likes; bookmarks carry a 5× multiplier (PostEverywhere, OpenTweet, May 2026). Threads get 3× total engagement vs single tweets but distribution past tweet 1 is gated on tweet-1 engagement — hook must convert. Text-first outperforms video 30%. External links in main tweets suppressed; product link in self-reply only. 1–2 hashtags optimal; 3+ = −17% engagement penalty (AutoTweet, SocialBee May 2026). X algorithm continues to favor author-engagement-with-replies as the top individual ranking signal (+75 signal per reply from author).
+- Hashtag finding: 1 tag total — `#buildinpublic` woven into the CTA tweet body, not appended. Confirmed as evergreen indie-hacker tag for X May 2026 (AutoTweet, SocialRails). No second tag; multiple tags push into penalty band. The Sentry/API angle is niche enough that tag reach matters less than reply-signal quality from backend/mobile devs.
+- Trend hook hijack: "Defensive API design for mobile clients" is a recurring pain point in indie-dev build-in-public communities — the combination of Play Store approval delays (cannot hotfix) + Sentry production errors creates a concrete, datable story that other solo mobile devs immediately recognize. No news event hijacked — this is a lived, specific incident from commit 2f6cfd1.
+- Dev event anchor: Commit `2f6cfd1` (2026-05-07) — "google play rejectio update" — includes a resilience fix in `habits.py`: `is_active` query param changed from strict `bool` to `Optional[str]` with custom coercion (handles null, empty string, 0, 1, yes/no, on/off). Sentry comment in the diff attributes the change to a 422 error from build `1.2.65+1138` — an old production client sending a malformed value that the strict Pydantic validator was silently failing. The Google Play gate (cannot push a hotfix) is the dramatic constraint that made API-level healing the only viable fix.
+- Source links:
+  - https://posteverywhere.ai/blog/how-the-x-twitter-algorithm-works
+  - https://opentweet.io/blog/how-twitter-x-algorithm-works-2026
+  - https://www.autotweet.io/blog/best-hashtags-for-x-twitter-2026
+  - https://adlibrary.com/guides/x-twitter-algorithm-explained
+  - https://socialbee.com/blog/twitter-algorithm/
+
+**Plan:**
+- Anchored commit: `2f6cfd1` — habits.py Sentry 422 resilience fix (May 7, 2026)
+- Day/time: Thu May 7, 2026 — 2–4pm ET (afternoon peak window)
+- Stagger: multiple drafts exist for today — minimum 6h gap from any posted thread
+- Pin tweet 1 to profile after posting
+- Self-reply immediately after tweet 5 with zealova.com link
+- Quote-tweet tweet 1 ~2h later: "update: no more 422s from stale clients — coercion block held on first production request"
+- First-hour: reply to every comment within 5 min; tweet 3 (coercion block) is bookmark-bait for backend/mobile devs; tweet 4 (Play Store lock-in) is discussion-bait for founders in review limbo
+- Hashtag: 1 tag total — `#buildinpublic` woven into tweet 5's CTA body, not appended
+
+</details>
+
+### 📝 POST CONTENT BELOW — copy-paste this
+
+**1/** (201 chars)
+Sentry showed me a 422 on my habits API. No stack trace. No field name. Just: 422.
+
+Old app build. Stale client. Sending is_active=null instead of true.
+
+Here is what I changed in Zealova to stop it. 🧵
+
+---
+
+**2/** (184 chars)
+The bug:
+
+FastAPI + Pydantic v2 strict bool. Client sends is_active=null. Pydantic rejects it. 422 fires.
+
+Silent failure for the user. Habits never load. They think the app is broken.
+
+---
+
+**3/** (214 chars)
+The fix: swap bool for Optional[str]. Coerce the value.
+
+"true"/"1"/"yes" → True
+"false"/"0"/"no" → False
+"null"/""/​"none" → no filter
+Anything else → True by default.
+
+Unknown value hits the default. Not the user.
+
+---
+
+**4/** (208 chars)
+Why not just force an app update?
+
+Zealova is pending Google Play approval. Cannot push a hot fix to Android users who have not seen the public build yet.
+
+The API had to heal itself without a client release.
+
+---
+
+**5/** (213 chars)
+Building Zealova — AI fitness app. Pending Play Store, iOS this month.
+
+Defensive API tip: any param a mobile client sends should coerce, not crash.
+
+Reply "habits" and I will DM the coercion block. #buildinpublic
+
+---
+
+**Self-reply (post immediately after tweet 5):**
+Stack: FastAPI on Render, Pydantic v2, Supabase. Full coercion block in habits.py. Try Zealova: https://zealova.com — Android incoming.
+
+---
+
+**Quote-tweet tweet 1 ~2h later (fresh session):**
+update: no more 422s from stale clients. coercion block held on the first production request. zero forced updates.
+
+### 📝 END POST CONTENT
