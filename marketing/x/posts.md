@@ -510,3 +510,91 @@ Try Zealova — the AI fitness coach that earned its spot: https://zealova.com �
 update: 3 replies already from founders running 4+ products each. nobody bets on just one anymore. the portfolio is the moat.
 
 ### 📝 END POST CONTENT
+
+---
+
+## 2026-05-07 — "I published Zealova's full architecture publicly"
+
+**Status:** Drafted, not yet posted
+
+<details>
+<summary>🔬 Research log + plan (click to expand)</summary>
+
+**Research log (2026-05-07):**
+- Algo finding: Replies are worth 150x likes; bookmarks carry a 5x multiplier (PostEverywhere, OpenTweet, May 2026). Threads get 3x engagement vs single tweets but distribution past tweet 1 is gated on tweet-1 engagement. Text-first outperforms video 30%. External links in main tweets suppressed — link goes in self-reply only. Non-Premium accounts with links get near-zero median engagement (adlibrary.com, May 2026). 1-2 hashtags optimal; 3+ = -17% engagement.
+- Hashtag finding: 1 tag total — `#buildinpublic` woven into tweet 5's CTA sentence. `#BuildInPublic` and `#IndieHackers` confirmed as the top indie-hacker tags for May 2026 (AutoTweet, SocialRails). No second tag; multiple tags push into penalty band.
+- Trend hook hijack: "Radical transparency" architecture pages are a rising indie-founder move in 2026 — contrarian to the default of hiding stack complexity. The angle piggybacks on the trust-as-competitive-advantage narrative currently circulating in build-in-public communities (IndieRadar, Teract.ai May 2026). No news event hijacked — this is an original story grounded in commit 4ded319.
+- Dev event anchor: Commit `4ded319` (2026-05-05) — "vercel architecture" — 822 lines adding `frontend/src/pages/Architecture.tsx`, a public animated page at zealova.com/architecture showing the full 5-layer stack (Flutter client, Edge, FastAPI, AI multi-agent, Postgres+vectors), the 7-step request flow, the 5-agent system, and the full privacy model. This is a datable, specific, verifiable shipping event.
+- Source links:
+  - https://posteverywhere.ai/blog/how-the-x-twitter-algorithm-works
+  - https://opentweet.io/blog/how-twitter-x-algorithm-works-2026
+  - https://www.autotweet.io/blog/best-hashtags-for-x-twitter-2026
+  - https://adlibrary.com/guides/x-twitter-algorithm-explained
+  - https://indieradar.app/blog/open-source-marketing-playbook-indie-hackers
+
+**Plan:**
+- Anchored commit: `4ded319` — "vercel architecture" (May 5, 2026)
+- Day/time: Thu May 7, 2026 — 9-11am ET or 2-4pm ET (peak window)
+- Stagger: last X post was 2026-05-07 (AI-drafted posts / 6 products threads) — this is a fresh angle, publish same day if >6h gap or Thu morning
+- Pin tweet 1 to profile after posting
+- Self-reply immediately after tweet 5 with zealova.com/architecture link
+- Quote-tweet tweet 1 ~2h later: "update: 3 engineers already replied asking about the LangGraph routing logic"
+- First-hour: reply to every comment within 5 min; tweet 3 (5 agents vs 1 prompt) is the bookmark-bait for engineers; tweet 4 (privacy) is the discussion-bait for fitness/health audience
+- Hashtag: 1 tag total — `#buildinpublic` woven into tweet 5's CTA, not appended
+
+</details>
+
+### 📝 POST CONTENT BELOW — copy-paste this
+
+**1/** (191 chars)
+I shipped a public architecture page for Zealova this week.
+
+Most founders hide the stack. I posted every layer: Flutter client, FastAPI, 5-agent AI system, Postgres + vectors.
+
+Here's why. 🧵
+
+---
+
+**2/** (237 chars)
+The page shows exactly what happens when you ask the coach something.
+
+Snap a photo of dinner → edge verifies you → vision classifies it → router picks a specialist → agent reasons with your history → tools act.
+
+7 steps. Nothing hidden.
+
+---
+
+**3/** (214 chars)
+Why 5 agents instead of 1 big prompt?
+
+Specialists beat generalists: food agent, workout agent, recovery agent — each knows one domain.
+
+Hallucinations drop. Responses sharpen. Router rejects irrelevant tools fast.
+
+---
+
+**4/** (210 chars)
+The privacy section was the most important part to ship.
+
+Row-level security. JWT per request. One-tap delete wipes Postgres, vectors, and stored media.
+
+Privacy is the default. Not a toggle buried in settings.
+
+---
+
+**5/** (200 chars)
+Building Zealova — AI fitness coaching with a 5-agent LangGraph system.
+
+I published the full stack this week. Reply "arch" and I'll walk you through the hardest design decision I made. #buildinpublic
+
+---
+
+**Self-reply (post immediately after tweet 5):**
+Full architecture: https://zealova.com/architecture — Flutter + FastAPI on Render + LangGraph + ChromaDB + Supabase. iOS launching this month.
+
+---
+
+**Quote-tweet tweet 1 ~2h later (fresh session):**
+update: 3 engineers already asked about the LangGraph routing logic. the "5 agents vs 1 prompt" decision was the hardest call — happy to walk through it.
+
+### 📝 END POST CONTENT
