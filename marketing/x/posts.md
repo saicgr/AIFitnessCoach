@@ -965,3 +965,92 @@ Stack: FastAPI on Render, Flutter, Supabase, Gemini. Zealova vs Google Health �
 update: waitlist just opened. if you want Zealova before Google ships — zealova.com
 
 ### 📝 END POST CONTENT
+
+---
+
+## 2026-05-07 — "waitlist shipped inside a rejection commit at 2am"
+
+**Status:** Drafted, not yet posted
+
+<details>
+<summary>🔬 Research log + plan (click to expand)</summary>
+
+**Research log (2026-05-07):**
+- Algo finding: Replies worth 150x likes; bookmarks carry a 5x multiplier (PostEverywhere, OpenTweet, May 2026). Threads get 3x total engagement vs single tweets but tweet 2+ distribution is gated on tweet 1 engagement — hook must convert on the first line. Text-first outperforms video by 30%. External links in main tweet body are suppressed — link in self-reply only (CLAUDE.md rule confirmed). 1–2 hashtags optimal; 3+ = -17% engagement penalty (AutoTweet, SocialBee, May 2026). Author replies in the first hour are the top individual ranking signal.
+- Hashtag finding: 1 tag total — `#buildinpublic` woven into tweet 5 body sentence, not appended. Confirmed evergreen high-volume indie-hacker tag for X May 2026 (AutoTweet, SocialRails). No second tag — additional tags push into the -17% penalty band. The "late-night rejection + waitlist ship" arc is niche enough that reply-signal quality from founders matters more than tag reach.
+- Trend hook hijack: Google Health AI coach launching May 19 (TechCrunch, May 7 2026) makes the Zealova waitlist mention timely — "get access before Google ships" is implicit without stating it. No direct news hijack; the angle is the founder's lived late-night dev event, not a tech news reaction.
+- Dev event anchor: Commit `2f6cfd1` (2026-05-07 02:06 AM CST) — "google play rejectio update". The diff includes both the Health Connect 7-field strip (the rejection fix) AND the silent addition of `waitlist.router` to `__init__.py` (the new feature). Two distinct outcomes in one 2am commit. The timestamp and the dual-nature of the commit are the story — not the technical contents of either change.
+- Source links:
+  - https://posteverywhere.ai/blog/how-the-x-twitter-algorithm-works
+  - https://opentweet.ai/blog/how-twitter-x-algorithm-works-2026
+  - https://www.autotweet.io/blog/best-hashtags-for-x-twitter-2026
+  - https://techcrunch.com/2026/05/07/googles-9-99-per-month-ai-health-coach-launches-may-19/
+  - https://socialbee.com/blog/twitter-algorithm/
+
+**Plan:**
+- Anchored commit: `2f6cfd1` — 2026-05-07 02:06 AM CST — "google play rejectio update" (waitlist endpoint shipped in same commit)
+- Day/time: Thu May 7, 2026 — stagger at least 6h after the earlier drafts; target evening ET slot (6–8pm ET) or next-morning 9–11am ET
+- Hashtags: 1 tag — `#buildinpublic` woven into tweet 5 body
+- Pre-post warmup: 15 min commenting on #buildinpublic / #indiedev threads before posting
+- Self-reply immediately after tweet 5 with zealova.com link
+- Quote-tweet tweet 1 ~2h later: "update: form re-submitted. waitlist email confirms on signup. both shipped in the same 2am commit."
+- First-hour: reply to every comment within 5 min; tweet 3 (46-line waitlist endpoint) is bookmark-bait for indie devs; tweet 4 (bundling fix + ship) is discussion-bait for founders who have had bad nights
+
+</details>
+
+### 📝 POST CONTENT BELOW — copy-paste this
+
+**1/** (161 chars)
+2am. Google Play rejected Zealova again.
+
+So I fixed the rejection — and snuck the waitlist backend into the same commit.
+
+Here is what a solo dev does at 2am. 🧵
+
+---
+
+**2/** (202 chars)
+The rejection: Health Connect permissions. I was collecting 7 health fields I never showed users.
+
+Play Store Data Safety rule: collect only what you display.
+
+Stripped them all. Filed the updated form.
+
+---
+
+**3/** (179 chars)
+While the backend was open, I added the waitlist endpoint.
+
+FastAPI router. Supabase insert. Resend confirmation email.
+
+46 lines. One commit. Shipped alongside the rejection fix.
+
+---
+
+**4/** (174 chars)
+Why bundle them?
+
+At 2am you are already in the code. Context is loaded. The rejection dread is fuel.
+
+Shipping something new on top of a fix turns a bad night into two wins.
+
+---
+
+**5/** (195 chars)
+Building Zealova — AI fitness coach. Play Store review pending. Waitlist open now.
+
+If you want early access before Android goes live — join the waitlist.
+
+Building this in public. #buildinpublic
+
+---
+
+**Self-reply (post immediately after tweet 5):**
+Stack: FastAPI on Render, Supabase, Resend, Flutter. Try the waitlist: https://zealova.com — Android incoming.
+
+---
+
+**Quote-tweet tweet 1 ~2h later (fresh session):**
+update: form re-submitted. waitlist email confirms on signup. both shipped in the same 2am commit.
+
+### 📝 END POST CONTENT
