@@ -877,3 +877,91 @@ Stack: FastAPI on Render, Pydantic v2, Supabase. Full coercion block in habits.p
 update: no more 422s from stale clients. coercion block held on the first production request. zero forced updates.
 
 ### 📝 END POST CONTENT
+
+---
+
+## 2026-05-07 — "Google launches $9.99 AI health coach — solo dev responds"
+
+**Status:** Drafted, not yet posted
+
+<details>
+<summary>🔬 Research log + plan (click to expand)</summary>
+
+**Research log (2026-05-07):**
+- Algo finding: Replies worth 150x likes; bookmarks carry 5x multiplier. Threads get 3x total engagement vs single tweets but tweet 2+ distribution is gated on tweet 1 engagement — hook must convert. Text-first outperforms video 30%. Non-Premium accounts posting external links get near-zero median engagement; link goes in self-reply only. 1-2 hashtags optimal; 3+ = -17% engagement penalty (PostEverywhere, OpenTweet, SocialBee, May 2026). Author replies in first hour are the top individual ranking signal.
+- Hashtag finding: 1 tag total — #buildinpublic woven into tweet 5 body sentence. Confirmed evergreen for indie-hacker X audience May 2026 (AutoTweet, SocialRails). No second tag — additional tags push into penalty band. Market-moment angle (Google vs indie) is broad enough that tag reach is secondary to reply velocity from founders.
+- Trend hook hijack: Google officially announced its $9.99/mo AI health coach launching May 19, 2026 (TechCrunch, May 7 2026 — event is 0 days old, well within 14-day freshness window). "David vs Goliath" contrarian framing is a canonical high-engagement build-in-public format. Indie dev reacts to Big Tech launch with specific tactical reasons why the niche wins — no vague "competition makes the space better" platitudes.
+- Source links:
+  - https://techcrunch.com/2026/05/07/googles-9-99-per-month-ai-health-coach-launches-may-19/
+  - https://posteverywhere.ai/blog/how-the-x-twitter-algorithm-works
+  - https://opentweet.io/blog/how-twitter-x-algorithm-works-2026
+  - https://www.autotweet.io/blog/best-hashtags-for-x-twitter-2026
+  - https://socialbee.com/blog/twitter-algorithm/
+
+**Plan:**
+- Angle anchor: TechCrunch report on Google Health AI coach launch, published today (May 7, 2026)
+- Day/time: Thu May 7, 2026 — stagger at least 6h from the two earlier drafts (post at 6-8pm ET or later today, or first thing tomorrow morning)
+- Hashtags: 1 tag — #buildinpublic in tweet 5
+- Pre-post warmup: 15 min commenting on #buildinpublic and #indiedev threads before posting
+- Self-reply immediately after tweet 5 with zealova.com link
+- Quote-tweet tweet 1 ~2h later: "update: waitlist just opened. if you want Zealova before Google ships — zealova.com"
+- First-hour: reply to every comment within 5 min; tweet 3 (lifetime vs subscription) and tweet 4 (speed/directness) are bookmark-bait for indie founders; tweet 2 (niche depth) is discussion-bait for fitness devs
+
+</details>
+
+### 📝 POST CONTENT BELOW — copy-paste this
+
+**1/** (161 chars)
+Google just announced a $9.99/mo AI health coach launching May 19.
+
+I'm building Zealova — an AI fitness coach — with 0 employees.
+
+Here is why I'm not scared. 🧵
+
+---
+
+**2/** (211 chars)
+Google's version: bundled into a subscription. Requires their ecosystem. One-size plan.
+
+Zealova: tracks YOUR workouts, YOUR meals, YOUR Apple/Google Health data.
+
+The niche always beats the generalist on depth.
+
+---
+
+**3/** (166 chars)
+Google charges $9.99 every month forever.
+
+Zealova has a $99.99 lifetime tier. Pay once. Own it forever.
+
+A solo dev can offer that. Google's shareholder deck cannot.
+
+---
+
+**4/** (207 chars)
+What Google can't do:
+
+→ Ship a fix at 2am after a Play Store rejection
+→ DM every beta user personally
+→ Rebuild the workout algorithm around one user's feedback
+
+Speed + directness. That edge never erodes.
+
+---
+
+**5/** (161 chars)
+Building Zealova in public. Google ships May 19. I ship sooner.
+
+If you want to follow a solo dev competing with Google in fitness — follow along. #buildinpublic
+
+---
+
+**Self-reply (post immediately after tweet 5):**
+Stack: FastAPI on Render, Flutter, Supabase, Gemini. Zealova vs Google Health — pick the one that doesn't need your Gmail. https://zealova.com
+
+---
+
+**Quote-tweet tweet 1 ~2h later (fresh session):**
+update: waitlist just opened. if you want Zealova before Google ships — zealova.com
+
+### 📝 END POST CONTENT
