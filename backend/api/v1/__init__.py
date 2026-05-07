@@ -105,6 +105,7 @@ from api.v1 import chat_proposals  # Apply / dismiss AI-proposed workout changes
 from api.v1 import plan_share_link  # Public plan/period share tokens (zealova.com/p/{token})
 from api.v1 import public_profile  # Public profile pages (zealova.com/u/{username})
 from api.v1 import ai_endpoints  # Lightweight AI helpers (exercise insights, etc.)
+from api.v1 import x_webhook  # X (Twitter) build-in-public publisher + Telegram webhook
 from api.v1.users.mcp_integrations import router as mcp_integrations_router  # MCP connected-client management
 
 # Create v1 router
@@ -484,3 +485,6 @@ router.include_router(public_profile.router, prefix="/users/public", tags=["Publ
 
 # Lightweight AI helpers — exercise insights bottom sheet, etc.
 router.include_router(ai_endpoints.router, tags=["AI Utilities"])
+
+# X (Twitter) build-in-public publisher — Telegram-driven daily posting flow
+router.include_router(x_webhook.router, tags=["X Publisher"])
