@@ -172,3 +172,105 @@ Stack: FastAPI on Render, Supabase (asyncpg pooler compat), Telegram bot, OAuth 
 update: Telegram gate worked — first draft approved and posted. the Python len() check held.
 
 ### 📝 END POST CONTENT
+
+---
+
+## 2026-05-07 — "AI-drafted posts, Telegram kill switch"
+
+**Status:** Drafted, not yet posted
+
+<details>
+<summary>🔬 Research log + plan (click to expand)</summary>
+
+**Research log (2026-05-07):**
+- Algo finding: Replies are 150× likes; author engaging with replies = +75 signal (single strongest ranking factor). Threads accumulate 3× total engagement vs single tweets, but post-tweet-1 distribution is gated on tweet-1 engagement. Long-form single posts now favored for distribution, but threads still outperform on total engagement accumulation. External links in main tweets penalized — product link in self-reply only.
+- Hashtag finding: #buildinpublic confirmed as evergreen indie-hacker tag for X May 2026 (AutoTweet, SocialRails sources). 1 tag optimal — generic hashtags "effectively irrelevant" for algorithmic distribution, multiple tags penalized. Tag woven into CTA tweet body, not appended.
+- Trend hook hijack: AI fitness coaching hitting mainstream — Fitbit just launched Gemini-based Personal Health Coach; Ray launched voice-rep-counting app in 2026. Build-in-public + AI automation tooling is a high-engagement lane. The "AI writes content but human approves" framing is a current live conversation in indie dev / AI tooling communities.
+- Source links:
+  - https://posteverywhere.ai/blog/how-the-x-twitter-algorithm-works
+  - https://opentweet.io/blog/how-twitter-x-algorithm-works-2026
+  - https://socialbee.com/blog/twitter-algorithm/
+  - https://www.autotweet.io/blog/best-hashtags-for-x-twitter-2026
+  - https://www.teract.ai/resources/twitter-strategy-indie-hackers-2026
+  - https://askvora.com/blog/ai-fitness-coaching-2026
+
+**Plan:**
+- Anchored commit: `7e11029` — "feat: X (Twitter) build-in-public publisher with Telegram review gate"
+- Day/time: Thu May 7, 2026 — 9–11am ET or 2–4pm ET
+- Stagger 3–4 days from any LinkedIn post on same topic
+- Pin tweet 1 after posting
+- Self-reply after tweet 5: drop zealova.com link + full stack mention
+- Quote-tweet tweet 1 ~2h later: "update: approved it, it shipped, Telegram gate held"
+- First-hour: reply to every comment within 5 min; "Reply gate" CTA drives high-multiplier reply signals
+- Hashtag: `#buildinpublic` woven into tweet 5 (final CTA), 1 tag total
+- Pre-post warmup: 15 min of substantive comments on #buildinpublic / indie dev accounts before posting
+
+</details>
+
+### 📝 POST CONTENT BELOW — copy-paste this
+
+**1/** (189 chars)
+I'm automating my X posts with AI.
+
+But I kept a kill switch.
+
+Every draft hits Telegram with 🚀/❌ buttons first. I decide what ships.
+
+This week I shipped the system. Here's how it works. 🧵
+
+---
+
+**2/** (196 chars)
+The pipeline:
+
+Claude drafts a thread from my recent git commits
+→ POSTs to my FastAPI backend
+→ Supabase stores the draft
+→ Telegram bot sends me the full thread + char counts
+
+Then I tap 🚀 or ❌.
+
+---
+
+**3/** (199 chars)
+Why I kept a human in the loop:
+
+The AI drafts from git commits — but doesn't know:
+– which features are half-done
+– which bugs are still on fire
+– what I actually want to say
+
+Context is still mine.
+
+---
+
+**4/** (211 chars)
+The tech:
+
+FastAPI on Render handles the webhook
+Supabase stores pending drafts
+Telegram bot sends the review message
+OAuth 2.0 PKCE rotates the X token on every post
+
+The whole publisher is 420 lines of Python.
+
+---
+
+**5/** (188 chars)
+Building Zealova — AI fitness coaching app with LangGraph multi-agent chat.
+
+Shipped the Telegram-gated publisher this week.
+
+Reply "gate" and I'll DM the full architecture. #buildinpublic
+
+---
+
+**Self-reply (after tweet 5 is posted):**
+Stack: FastAPI on Render, Supabase, Telegram bot API, X OAuth 2.0 PKCE. x_publisher.py + x_webhook.py = 420 lines total. App: https://zealova.com
+
+---
+
+**Quote-tweet tweet 1 ~2h later (separate session):**
+update: approved it in Telegram, tapped 🚀, it posted the reply-chain live. kill switch works.
+
+### 📝 END POST CONTENT
