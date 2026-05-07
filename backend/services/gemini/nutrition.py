@@ -138,7 +138,7 @@ WEIGHT/COUNT FIELDS (required for portion editing):
 - COUNTABLE items — discrete pieces you pick up and eat individually. ALWAYS set count + weight_per_unit_g:
   - Breads: naan(~90g), roti/chapati(~45g), paratha(~80g), puri(~25g), bhatura(~60g), dosa(~120g), appam(~50g), bread slice(~30g), tortilla(~35g), pita(~60g)
   - Indian snacks/starters: samosa(~80g), pakora/pakoda(~45g), vada/medu vada(~40g), bonda(~35g), bajji(~40g), cutlet(~60g), paneer tikka piece(~30g), chicken tikka piece(~35g), seekh kebab(~50g), shami kebab(~60g), chicken 65 piece(~25g), gobi/paneer manchurian piece(~25g), spring roll(~50g), egg roll(~80g), kachori(~50g), aloo tikki(~60g), dhokla piece(~30g), idli(~40g), momos/dumpling(~30g)
-  - Western snacks: french fry(~8g), chip/crisp(~2g), tater tot(~10g), chicken nugget(~18g), meatball(~30g), falafel(~17g), chicken wing(~85g), sushi piece(~35g), pizza slice(~100g), taco(~80g), egg(~50g), cookie(~15g), donut(~60g), muffin(~120g), pancake(~40g), waffle(~75g), sausage/hot dog(~45g), crab rangoon(~25g), wonton(~15g), empanada(~80g), pierogi(~40g), gyoza(~25g), tempura piece(~30g)
+  - Western snacks: french fry(~8g), chip/crisp(~2g), tater tot(~10g), chicken nugget(~18g), meatball(~30g), falafel(~17g), chicken wing(~85g bone-in / ~28g boneless), sushi piece(~35g), pizza slice(~100g), taco(~80g), egg(~50g), cookie(~15g), donut(~60g), muffin(~120g), pancake(~40g), waffle(~75g), sausage/hot dog(~45g), crab rangoon(~25g), wonton(~15g), empanada(~80g), pierogi(~40g), gyoza(~25g), tempura piece(~30g)
   - Sweets: laddoo(~40g), gulab jamun(~40g), rasgulla(~40g), barfi piece(~30g), peda(~20g), jalebi piece(~25g), mysore pak piece(~30g), chocolate piece(~10g)
   - count: Number of pieces visible/described
   - weight_per_unit_g: Weight of ONE piece
@@ -701,7 +701,7 @@ COUNTABLE ITEMS - Discrete pieces you pick up and eat individually (NOT by weigh
 - ALWAYS include "count" (number of pieces) and "weight_per_unit_g" (weight of ONE piece)
 - Breads: naan(~90g), roti/chapati(~45g), paratha(~80g), puri(~25g), bhatura(~60g), dosa(~120g), appam(~50g), idli(~40g), bread slice(~30g), tortilla(~35g), pita(~60g)
 - Indian snacks: samosa(~80g), pakora(~45g), vada(~40g), bonda(~35g), bajji(~40g), cutlet(~60g), paneer tikka piece(~30g), chicken tikka piece(~35g), seekh kebab(~50g), shami kebab(~60g), chicken 65 piece(~25g), gobi manchurian piece(~25g), spring roll(~50g), kachori(~50g), aloo tikki(~60g), dhokla piece(~30g), momos(~30g)
-- Western: french fry(~8g), chip(~2g), tater tot(~10g), nugget(~18g), meatball(~30g), falafel(~17g), wing(~85g), sushi(~35g), pizza slice(~100g), taco(~80g), egg(~50g), cookie(~15g), donut(~60g), sausage(~45g), wonton(~15g), gyoza(~25g), tempura(~30g), empanada(~80g)
+- Western: french fry(~8g), chip(~2g), tater tot(~10g), nugget(~18g), meatball(~30g), falafel(~17g), wing(~85g bone-in / ~28g boneless), sushi(~35g), pizza slice(~100g), taco(~80g), egg(~50g), cookie(~15g), donut(~60g), sausage(~45g), wonton(~15g), gyoza(~25g), tempura(~30g), empanada(~80g)
 - Sweets: laddoo(~40g), gulab jamun(~40g), rasgulla(~40g), barfi(~30g), peda(~20g), jalebi piece(~25g)
 - weight_g = count × weight_per_unit_g
 - If user mentions count (e.g., "18 tater tots"), use that count

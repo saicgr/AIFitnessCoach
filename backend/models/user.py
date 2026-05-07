@@ -1,7 +1,7 @@
 """User-related Pydantic models."""
 
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import Optional, Union, List
 from datetime import datetime
 
 
@@ -120,7 +120,7 @@ class UserUpdate(BaseModel):
     equipment: Optional[str] = Field(default=None, max_length=2000)
     custom_equipment: Optional[str] = Field(default=None, max_length=2000)  # User-added equipment
     preferences: Optional[str] = Field(default=None, max_length=10000)
-    active_injuries: Optional[str] = Field(default=None, max_length=2000)
+    active_injuries: Optional[Union[str, List[str]]] = Field(default=None)
     onboarding_completed: Optional[bool] = None  # Set to True after onboarding
     coach_selected: Optional[bool] = None  # Set to True after coach selection
     paywall_completed: Optional[bool] = None  # Set to True after paywall flow
@@ -139,6 +139,7 @@ class UserUpdate(BaseModel):
     weight_kg: Optional[float] = Field(default=None, ge=20, le=500)
     target_weight_kg: Optional[float] = Field(default=None, ge=20, le=500)
     selected_days: Optional[str] = Field(default=None, max_length=100)  # JSON array of day indices
+    workout_days: Optional[List[int]] = Field(default=None)  # [0=Mon..6=Sun]; merged into preferences JSONB
     workout_experience: Optional[str] = Field(default=None, max_length=1000)  # JSON array
     workout_variety: Optional[str] = Field(default=None, max_length=100)
     health_conditions: Optional[str] = Field(default=None, max_length=2000)  # JSON array

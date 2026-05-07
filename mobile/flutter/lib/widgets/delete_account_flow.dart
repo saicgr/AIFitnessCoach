@@ -1,4 +1,7 @@
+import 'dart:io' show Platform;
+
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -18,25 +21,31 @@ import 'delete_account_progress_dialog.dart';
 /// (with inline password field for email-auth users), runs the backend
 /// delete via [AccountDeletionService], and navigates to /intro on success.
 Future<void> showDeleteAccountFlow(BuildContext context, WidgetRef ref) async {
-  // Pre-flight: warn if there's an active paid subscription. Play Store
-  // doesn't auto-cancel when the auth user is deleted — the user keeps
-  // getting charged. Surface this BEFORE we destroy data.
+  // Pre-flight: warn if there's an active paid subscription. Neither store
+  // auto-cancels when the auth user is deleted — the user keeps getting
+  // charged. Surface this BEFORE we destroy data.
   final subscription = ref.read(subscriptionProvider);
   if (subscription.tier != SubscriptionTier.free &&
       subscription.tier != SubscriptionTier.lifetime) {
+    final isIOS = !kIsWeb && Platform.isIOS;
+    final storeName = isIOS ? 'App Store' : 'Play Store';
+    final manageUrl = isIOS
+        ? 'https://apps.apple.com/account/subscriptions'
+        : 'https://play.google.com/store/account/subscriptions';
+
     final proceed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: const Text('Active subscription'),
-        content: const Text(
-          'Deleting your account does NOT cancel your Play Store subscription. '
-          'You will continue to be billed unless you cancel from the Play Store first.\n\n'
+        content: Text(
+          'Deleting your account does NOT cancel your $storeName subscription. '
+          'You will continue to be billed unless you cancel from the $storeName first.\n\n'
           'Cancel your subscription, then come back here to delete your account.',
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Open Play Store'),
+            child: Text('Open $storeName'),
           ),
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
@@ -47,7 +56,7 @@ Future<void> showDeleteAccountFlow(BuildContext context, WidgetRef ref) async {
     );
     if (proceed != true) {
       await launchUrl(
-        Uri.parse('https://play.google.com/store/account/subscriptions'),
+        Uri.parse(manageUrl),
         mode: LaunchMode.externalApplication,
       );
       return;

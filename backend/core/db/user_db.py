@@ -285,8 +285,10 @@ class UserDB(BaseDB):
         result = (
             self.client.table("user_metrics")
             .select(
-                "id, user_id, weight_kg, body_fat_pct, muscle_mass_kg, "
-                "bmi, recorded_at"
+                "id, user_id, weight_kg, body_fat_measured, body_fat_calculated, "
+                "lean_body_mass, bmi, bmi_category, bmr, tdee, "
+                "ffmi, waist_to_height_ratio, waist_to_hip_ratio, "
+                "ideal_body_weight, recorded_at"
             )
             .eq("user_id", user_id)
             .order("recorded_at", desc=True)
@@ -321,8 +323,10 @@ class UserDB(BaseDB):
         result = (
             self.client.table("user_metrics")
             .select(
-                "id, user_id, weight_kg, body_fat_pct, muscle_mass_kg, "
-                "bmi, recorded_at"
+                "id, user_id, weight_kg, body_fat_measured, body_fat_calculated, "
+                "lean_body_mass, bmi, bmi_category, bmr, tdee, "
+                "ffmi, waist_to_height_ratio, waist_to_hip_ratio, "
+                "ideal_body_weight, recorded_at"
             )
             .eq("user_id", user_id)
             .order("recorded_at", desc=True)

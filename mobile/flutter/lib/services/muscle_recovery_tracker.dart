@@ -168,26 +168,8 @@ class MuscleRecoveryTracker {
     return scores;
   }
 
-  /// Adjust recovery scores based on HRV/sleep modifiers.
-  ///
-  /// If HRV is suppressed (volumeMultiplier < 0.95), reduce all recovery
-  /// scores proportionally. This feeds into exercise selection to
-  /// prioritize more-recovered muscles.
-  static Map<String, double> adjustRecoveryScoresWithHrv(
-    Map<String, double> scores,
-    double hrvVolumeMultiplier,
-  ) {
-    // No adjustment needed if multiplier is normal or above
-    if (hrvVolumeMultiplier >= 0.95) return scores;
-
-    // Scale factor: how much to reduce recovery scores
-    // hrvMult 0.80 -> reduce by 20%, hrvMult 0.90 -> reduce by 10%
-    final reductionFactor = hrvVolumeMultiplier;
-
-    return scores.map((muscle, score) {
-      // Reduce recovery score proportionally
-      final adjusted = score * reductionFactor;
-      return MapEntry(muscle, adjusted.clamp(0.0, 100.0));
-    });
-  }
+  // adjustRecoveryScoresWithHrv removed 2026-05-07 — Google Play Health
+  // Connect minimum-scope policy required dropping HRV permission. Recovery
+  // scores are now driven by per-muscle session timing only (no HRV
+  // suppression multiplier).
 }

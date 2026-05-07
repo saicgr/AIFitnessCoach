@@ -499,6 +499,25 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
 
                 SizedBox(height: isFoldable ? 10 : 16),
 
+                // App Store 3.1.2 + Google Play: auto-renewal must be
+                // disclosed adjacent to the purchase CTA.
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Text(
+                    'Subscription auto-renews at the listed price unless '
+                    'cancelled at least 24 hours before the end of the '
+                    'current period. Manage or cancel anytime in your device '
+                    'account settings.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 11,
+                      height: 1.35,
+                      color: colors.textMuted,
+                    ),
+                  ),
+                ),
+                SizedBox(height: isFoldable ? 8 : 12),
+
                 // Footer links
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -1077,6 +1096,23 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
           ),
           const SizedBox(height: 8),
           const InlineReferralExpander(),
+          const SizedBox(height: 8),
+          // App Store Guideline 3.1.2 + Google Play subscription policy:
+          // auto-renewal terms must be disclosed adjacent to the purchase CTA.
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Text(
+              'Subscription auto-renews at the price above unless cancelled at '
+              'least 24 hours before the end of the current period. Manage or '
+              'cancel anytime in your device account settings.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 11,
+                height: 1.35,
+                color: colors.textMuted,
+              ),
+            ),
+          ),
           const SizedBox(height: 8),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,

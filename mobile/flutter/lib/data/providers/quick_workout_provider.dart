@@ -3,7 +3,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../services/collaborative_score_service.dart';
-import '../../services/hrv_recovery_service.dart';
 import '../../services/mesocycle_planner.dart';
 import '../../services/mrv_learning_service.dart';
 import '../../services/muscle_recovery_tracker.dart';
@@ -195,16 +194,10 @@ class QuickWorkoutNotifier extends StateNotifier<QuickWorkoutState> {
       final userAsync = _ref.read(currentUserProvider);
       final user = userAsync.valueOrNull;
 
-      // 5b. Load muscle recovery scores
-      var recoveryScores = await MuscleRecoveryTracker.getAllRecoveryScores();
-
-      // 5b2. Load HRV/sleep recovery modifiers
-      final hrvModifiers = await HrvRecoveryService.getModifiers();
-      if (hrvModifiers.hasData) {
-        recoveryScores = MuscleRecoveryTracker.adjustRecoveryScoresWithHrv(
-          recoveryScores, hrvModifiers.volumeMultiplier,
-        );
-      }
+      // 5b. Load muscle recovery scores. HRV-based adjustment was removed
+      // 2026-05-07 along with Health Connect HRV permission (Google Play
+      // minimum scope policy).
+      final recoveryScores = await MuscleRecoveryTracker.getAllRecoveryScores();
 
       // 5c. Load exercise session tracking
       final sessionTrackingJson = prefs.getString('quick_workout_exercise_sessions');
@@ -324,7 +317,6 @@ class QuickWorkoutNotifier extends StateNotifier<QuickWorkoutState> {
         mesocycleContext: mesocycleContext,
         collaborativeScores: collaborativeScores,
         sfrScores: sfrScores,
-        hrvModifiers: hrvModifiers,
       );
 
       debugPrint('[QuickWorkout] Generated locally: ${workout.name} '

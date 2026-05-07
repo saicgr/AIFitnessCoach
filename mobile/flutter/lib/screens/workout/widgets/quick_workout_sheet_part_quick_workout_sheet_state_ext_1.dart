@@ -32,20 +32,7 @@ extension __QuickWorkoutSheetStateExt1 on _QuickWorkoutSheetState {
     _initFromUserProfile();
     _loadDupSuggestion();
     _loadMesocycleStatus();
-    _loadHrvModifiers();
     _loadPresets();
-  }
-
-
-  Future<void> _loadHrvModifiers() async {
-    try {
-      final modifiers = await HrvRecoveryService.getModifiers();
-      if (mounted && modifiers.hasData) {
-        setState(() => _hrvModifiers = modifiers);
-      }
-    } catch (_) {
-      // Non-critical: continue without HRV data
-    }
   }
 
 
@@ -521,33 +508,8 @@ extension __QuickWorkoutSheetStateExt1 on _QuickWorkoutSheetState {
   }
 
 
-  Color _getReadinessColor(ReadinessLevel level) {
-    switch (level) {
-      case ReadinessLevel.low:
-        return Colors.red;
-      case ReadinessLevel.moderate:
-        return Colors.orange;
-      case ReadinessLevel.high:
-        return Colors.green;
-      case ReadinessLevel.peak:
-        return Colors.blue;
-    }
-  }
-
-
-  IconData _getReadinessIcon(ReadinessLevel level) {
-    switch (level) {
-      case ReadinessLevel.low:
-        return Icons.battery_1_bar;
-      case ReadinessLevel.moderate:
-        return Icons.battery_3_bar;
-      case ReadinessLevel.high:
-        return Icons.battery_full;
-      case ReadinessLevel.peak:
-        return Icons.bolt;
-    }
-  }
-
+  // _getReadinessColor / _getReadinessIcon removed 2026-05-07 along with
+  // the HRV readiness UI pill (Google Play Health Connect minimum scope).
 
   void _showMoreFocusDialog({
     required Color accentColor,

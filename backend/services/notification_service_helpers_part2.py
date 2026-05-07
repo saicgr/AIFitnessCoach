@@ -143,12 +143,38 @@ class NotificationServicePart2:
                 ),
             )
 
+            # Build iOS APNs-specific config. Without this, FCM ships
+            # default APS payload which:
+            #   1. Doesn't render `image_url` (requires mutable-content + a
+            #      Notification Service Extension client-side).
+            #   2. Doesn't set apns-priority/push-type explicitly, leaving
+            #      delivery quality at FCM's default.
+            #   3. Loses sound/badge control.
+            apns_config = messaging.APNSConfig(
+                headers={
+                    "apns-priority": "10",
+                    "apns-push-type": "alert",
+                },
+                payload=messaging.APNSPayload(
+                    aps=messaging.Aps(
+                        sound="default",
+                        # mutable-content lets a Notification Service
+                        # Extension fetch + attach the image_url. Safe to
+                        # set even if no NSE is installed (iOS just ignores
+                        # the rich-media attachment in that case).
+                        mutable_content=True if image_url else False,
+                        content_available=True,
+                    ),
+                ),
+            )
+
             # Build the message
             message = messaging.Message(
                 notification=notification,
                 data=payload,
                 token=fcm_token,
                 android=android_config,
+                apns=apns_config,
             )
 
             # Send the message
@@ -226,11 +252,22 @@ class NotificationServicePart2:
                 ),
             )
 
+            apns_config = messaging.APNSConfig(
+                headers={
+                    "apns-priority": "10",
+                    "apns-push-type": "alert",
+                },
+                payload=messaging.APNSPayload(
+                    aps=messaging.Aps(sound="default"),
+                ),
+            )
+
             message = messaging.MulticastMessage(
                 notification=notification,
                 data=payload,
                 tokens=fcm_tokens,
                 android=android_config,
+                apns=apns_config,
             )
 
             response = messaging.send_each_for_multicast(message)

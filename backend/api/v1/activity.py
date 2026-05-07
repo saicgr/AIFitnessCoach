@@ -43,23 +43,27 @@ def _require_health_consent(user_id: str) -> None:
 
 
 class DailyActivityInput(BaseModel):
-    """Input for recording daily activity from Health Connect / Apple Health."""
+    """Input for recording daily activity from Health Connect / Apple Health.
+
+    The following fields were removed 2026-05-07 from the active write path
+    to keep the Google Play Data Safety declaration honest after the
+    Health Connect "Minimum Scope" permission removal:
+      ``distance_meters``, ``hrv``, ``blood_oxygen``, ``body_temperature``,
+      ``respiratory_rate``, ``flights_climbed``, ``basal_calories``.
+    Old app builds in production may still send those keys — Pydantic v2
+    ignores unknown fields silently, so no client error is raised, but the
+    server no longer persists them. The corresponding ``daily_activity``
+    columns are kept for historical data; new writes leave them NULL/0.
+    """
     user_id: str
     activity_date: date
     steps: int = Field(default=0, ge=0)
     calories_burned: float = Field(default=0, ge=0, description="Total calories burned")
     active_calories: float = Field(default=0, ge=0, description="Active calories only")
-    distance_meters: float = Field(default=0, ge=0, description="Distance in meters")
     resting_heart_rate: Optional[int] = Field(None, ge=30, le=250)
     avg_heart_rate: Optional[int] = Field(None, ge=30, le=250)
     max_heart_rate: Optional[int] = Field(None, ge=30, le=250)
     sleep_minutes: Optional[int] = Field(None, ge=0, le=1440)
-    hrv: Optional[float] = Field(None, ge=0, le=500)
-    blood_oxygen: Optional[float] = Field(None, ge=0, le=100)
-    body_temperature: Optional[float] = Field(None, ge=30, le=45)
-    respiratory_rate: Optional[int] = Field(None, ge=5, le=60)
-    flights_climbed: Optional[int] = Field(default=0, ge=0)
-    basal_calories: Optional[float] = Field(default=0, ge=0)
     deep_sleep_minutes: Optional[int] = Field(None, ge=0, le=1440)
     light_sleep_minutes: Optional[int] = Field(None, ge=0, le=1440)
     awake_sleep_minutes: Optional[int] = Field(None, ge=0, le=1440)
@@ -69,26 +73,24 @@ class DailyActivityInput(BaseModel):
 
 
 class DailyActivityResponse(BaseModel):
-    """Response for daily activity data."""
+    """Response for daily activity data.
+
+    See ``DailyActivityInput`` — the same 7 health metrics were dropped
+    from the response shape on 2026-05-07. Old app builds in production
+    treat all health fields as Optional and null-check before display, so
+    omitting them from the response is safe for backwards compatibility.
+    """
     id: str
     user_id: str
     activity_date: date
     steps: int
     calories_burned: float
     active_calories: float
-    distance_meters: float
-    distance_km: float
     resting_heart_rate: Optional[int]
     avg_heart_rate: Optional[int]
     max_heart_rate: Optional[int]
     sleep_minutes: Optional[int]
     sleep_hours: Optional[float]
-    hrv: Optional[float]
-    blood_oxygen: Optional[float]
-    body_temperature: Optional[float]
-    respiratory_rate: Optional[int]
-    flights_climbed: int
-    basal_calories: float
     deep_sleep_minutes: Optional[int]
     light_sleep_minutes: Optional[int]
     awake_sleep_minutes: Optional[int]
@@ -99,20 +101,29 @@ class DailyActivityResponse(BaseModel):
 
 
 class ActivitySummaryResponse(BaseModel):
-    """Summary of activity over a period."""
+    """Summary of activity over a period.
+
+    `total_distance_km` / `avg_distance_km` removed 2026-05-07 — the
+    `daily_activity.distance_meters` column is no longer being written to
+    after the Health Connect minimum-scope edit, so the rolling totals
+    would have trended toward 0 anyway.
+    """
     total_steps: int
     avg_steps: float
     total_calories: float
     avg_calories: float
-    total_distance_km: float
-    avg_distance_km: float
     avg_heart_rate: Optional[float]
     days_tracked: int
 
 
 def row_to_activity_response(row: dict) -> DailyActivityResponse:
-    """Convert database row to response model."""
-    distance_m = row.get("distance_meters") or 0
+    """Convert database row to response model.
+
+    Stale columns (``distance_meters`` / ``hrv`` / ``blood_oxygen`` /
+    ``body_temperature`` / ``respiratory_rate`` / ``flights_climbed`` /
+    ``basal_calories``) on the row are intentionally dropped here — see
+    ``DailyActivityResponse`` docstring.
+    """
     sleep_min = row.get("sleep_minutes")
 
     return DailyActivityResponse(
@@ -122,19 +133,11 @@ def row_to_activity_response(row: dict) -> DailyActivityResponse:
         steps=row.get("steps") or 0,
         calories_burned=row.get("calories_burned") or 0,
         active_calories=row.get("active_calories") or 0,
-        distance_meters=distance_m,
-        distance_km=round(distance_m / 1000, 2),
         resting_heart_rate=row.get("resting_heart_rate"),
         avg_heart_rate=row.get("avg_heart_rate"),
         max_heart_rate=row.get("max_heart_rate"),
         sleep_minutes=sleep_min,
         sleep_hours=round(sleep_min / 60, 1) if sleep_min else None,
-        hrv=row.get("hrv"),
-        blood_oxygen=row.get("blood_oxygen"),
-        body_temperature=row.get("body_temperature"),
-        respiratory_rate=row.get("respiratory_rate"),
-        flights_climbed=row.get("flights_climbed") or 0,
-        basal_calories=row.get("basal_calories") or 0,
         deep_sleep_minutes=row.get("deep_sleep_minutes"),
         light_sleep_minutes=row.get("light_sleep_minutes"),
         awake_sleep_minutes=row.get("awake_sleep_minutes"),
@@ -159,23 +162,20 @@ async def sync_daily_activity(input: DailyActivityInput, current_user: dict = De
 
     db = get_supabase_db()
 
+    # distance_meters / hrv / blood_oxygen / body_temperature /
+    # respiratory_rate / flights_climbed / basal_calories removed from
+    # the upsert payload 2026-05-07 — see DailyActivityInput docstring.
+    # Existing DB columns are preserved for historical rows.
     data = {
         "user_id": input.user_id,
         "activity_date": input.activity_date.isoformat(),
         "steps": input.steps,
         "calories_burned": input.calories_burned,
         "active_calories": input.active_calories,
-        "distance_meters": input.distance_meters,
         "resting_heart_rate": input.resting_heart_rate,
         "avg_heart_rate": input.avg_heart_rate,
         "max_heart_rate": input.max_heart_rate,
         "sleep_minutes": input.sleep_minutes,
-        "hrv": input.hrv,
-        "blood_oxygen": input.blood_oxygen,
-        "body_temperature": input.body_temperature,
-        "respiratory_rate": input.respiratory_rate,
-        "flights_climbed": input.flights_climbed or 0,
-        "basal_calories": input.basal_calories or 0,
         "deep_sleep_minutes": input.deep_sleep_minutes,
         "light_sleep_minutes": input.light_sleep_minutes,
         "awake_sleep_minutes": input.awake_sleep_minutes,
@@ -293,8 +293,6 @@ async def get_activity_summary(user_id: str, days: int = 7, current_user: dict =
         avg_steps=summary.get("avg_steps") or 0,
         total_calories=summary.get("total_calories") or 0,
         avg_calories=summary.get("avg_calories") or 0,
-        total_distance_km=summary.get("total_distance_km") or 0,
-        avg_distance_km=summary.get("avg_distance_km") or 0,
         avg_heart_rate=summary.get("avg_heart_rate"),
         days_tracked=summary.get("days_tracked") or 0,
     )
@@ -350,23 +348,18 @@ async def sync_batch_activity(activities: List[DailyActivityInput], current_user
 
     for activity in activities:
         try:
+            # Same field-strip as `/activity/sync` — see DailyActivityInput
+            # docstring (Google Play Health Connect minimum scope, 2026-05-07).
             data = {
                 "user_id": activity.user_id,
                 "activity_date": activity.activity_date.isoformat(),
                 "steps": activity.steps,
                 "calories_burned": activity.calories_burned,
                 "active_calories": activity.active_calories,
-                "distance_meters": activity.distance_meters,
                 "resting_heart_rate": activity.resting_heart_rate,
                 "avg_heart_rate": activity.avg_heart_rate,
                 "max_heart_rate": activity.max_heart_rate,
                 "sleep_minutes": activity.sleep_minutes,
-                "hrv": activity.hrv,
-                "blood_oxygen": activity.blood_oxygen,
-                "body_temperature": activity.body_temperature,
-                "respiratory_rate": activity.respiratory_rate,
-                "flights_climbed": activity.flights_climbed,
-                "basal_calories": activity.basal_calories,
                 "deep_sleep_minutes": activity.deep_sleep_minutes,
                 "light_sleep_minutes": activity.light_sleep_minutes,
                 "awake_sleep_minutes": activity.awake_sleep_minutes,

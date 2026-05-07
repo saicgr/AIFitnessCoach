@@ -170,6 +170,113 @@ def invalidate_workouts_after_equipment_change(
     }
 
 
+def invalidate_workouts_after_schedule_change(
+    user_id: str,
+    timezone_str: str = None,
+    new_workout_days: List[int] = None,
+) -> dict:
+    """Delete workouts that fall on days no longer in the user's schedule.
+
+    Mirrors `invalidate_workouts_after_equipment_change` but the predicate is
+    "weekday is no longer scheduled" instead of "always". Same status guards:
+    in-progress / completed rows are preserved.
+
+      - Today not started, today's weekday not in new_workout_days → delete
+      - Today scheduled in new list                                → leave (still valid)
+      - Today in progress / completed                              → never touch
+      - Upcoming on dropped weekday, not started                   → delete
+      - Upcoming on still-scheduled weekday                        → leave
+
+    Returns {today_deleted, upcoming_deleted} for caller telemetry.
+    `new_workout_days` is a list of ints 0=Mon..6=Sun (matches Python's
+    `date.weekday()`).
+    """
+    today_deleted = 0
+    upcoming_deleted = 0
+    new_days_set = set(new_workout_days or [])
+
+    try:
+        db = get_supabase_db()
+        if timezone_str:
+            today_str = get_user_today(timezone_str)
+        else:
+            today_str = get_user_today("UTC")
+
+        today_dt = date.fromisoformat(today_str)
+
+        # Today: delete only if today's weekday was removed AND row is not
+        # in-progress / completed / generating.
+        if today_dt.weekday() not in new_days_set:
+            today_rows = db.client.table("workouts").select(
+                "id, status, is_completed"
+            ).eq("user_id", user_id).eq("scheduled_date", today_str).execute()
+
+            ids_to_delete = [
+                r["id"] for r in (today_rows.data or [])
+                if not r.get("is_completed")
+                and r.get("status") not in ("generating", "in_progress")
+            ]
+            if ids_to_delete:
+                res = db.client.table("workouts").delete().in_(
+                    "id", ids_to_delete
+                ).execute()
+                today_deleted = len(res.data) if res.data else 0
+                logger.info(
+                    f"[INVALIDATE-SCHED] Deleted {today_deleted} today workouts "
+                    f"for user {user_id} (today weekday {today_dt.weekday()} no "
+                    f"longer scheduled)"
+                )
+    except Exception as e:
+        logger.warning(
+            f"[INVALIDATE-SCHED] Failed to delete today's workout for user "
+            f"{user_id}: {e}",
+            exc_info=True,
+        )
+
+    try:
+        # Upcoming: only delete rows whose scheduled_date.weekday() was dropped.
+        rows = db.client.table("workouts").select(
+            "id, scheduled_date, status"
+        ).eq("user_id", user_id).gt(
+            "scheduled_date", today_str
+        ).eq("is_completed", False).execute()
+
+        ids_to_delete = []
+        for r in (rows.data or []):
+            if r.get("status") == "generating":
+                continue
+            sd = r.get("scheduled_date")
+            if not sd:
+                continue
+            try:
+                wd = date.fromisoformat(str(sd)[:10]).weekday()
+            except (ValueError, TypeError):
+                continue
+            if wd not in new_days_set:
+                ids_to_delete.append(r["id"])
+
+        if ids_to_delete:
+            deleted = db.client.table("workouts").delete().in_(
+                "id", ids_to_delete
+            ).execute()
+            upcoming_deleted = len(deleted.data) if deleted.data else 0
+            logger.info(
+                f"[INVALIDATE-SCHED] Deleted {upcoming_deleted} upcoming "
+                f"workouts for user {user_id} on dropped weekdays"
+            )
+    except Exception as e:
+        logger.warning(
+            f"[INVALIDATE-SCHED] Failed to delete upcoming workouts for user "
+            f"{user_id}: {e}",
+            exc_info=True,
+        )
+
+    return {
+        "today_deleted": today_deleted,
+        "upcoming_deleted": upcoming_deleted,
+    }
+
+
 def parse_json_field(value, default):
     """Parse a field that could be a JSON string or already parsed."""
     if value is None:

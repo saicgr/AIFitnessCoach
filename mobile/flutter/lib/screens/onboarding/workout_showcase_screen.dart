@@ -180,7 +180,12 @@ class _WorkoutShowcaseScreenState
     ref.read(posthogServiceProvider).capture(
           eventName: 'onboarding_workout_showcase_completed',
         );
-    if (mounted) context.pop();
+    if (!mounted) return;
+    if (context.canPop()) {
+      context.pop();
+    } else {
+      context.go('/home');
+    }
   }
 
   Future<void> _skip() async {
@@ -189,7 +194,12 @@ class _WorkoutShowcaseScreenState
           eventName: 'onboarding_workout_showcase_skipped',
           properties: {'frame': _frame},
         );
-    if (mounted) context.pop();
+    if (!mounted) return;
+    if (context.canPop()) {
+      context.pop();
+    } else {
+      context.go('/home');
+    }
   }
 
   @override

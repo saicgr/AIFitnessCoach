@@ -93,11 +93,36 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
     # force_non_preferred_day (e.g., "Do this today" in the Regenerate sheet).
     # Without this gate, any stale client or accidental call plants a workout on
     # a rest day and the home carousel dutifully surfaces it as TODAY.
+    #
+    # Schedule resolution mirrors the upstream `_get_upcoming_dates_needing_generation`
+    # in today.py — active gym profile's workout_days wins, fallback to user-level
+    # preferences. See the matching gate in generation_endpoints.py for the full
+    # rationale (2026-05-07 BG-GEN rejection-loop fix).
     if not body.force_non_preferred_day:
-        from .today import _get_user_workout_days, _calculate_next_workout_date
+        from .today import _resolve_workout_days, _calculate_next_workout_date
         _gate_user = db.get_user(body.user_id)
         if _gate_user:
-            _selected_days = _get_user_workout_days(_gate_user)
+            _gate_profile = None
+            _gate_profile_id = body.gym_profile_id
+            if not _gate_profile_id:
+                try:
+                    _active_resp = db.client.table("gym_profiles").select(
+                        "id, workout_days"
+                    ).eq("user_id", body.user_id).eq("is_active", True).maybe_single().execute()
+                    if _active_resp and _active_resp.data:
+                        _gate_profile = _active_resp.data
+                except Exception:
+                    pass
+            else:
+                try:
+                    _profile_resp = db.client.table("gym_profiles").select(
+                        "id, workout_days"
+                    ).eq("id", _gate_profile_id).maybe_single().execute()
+                    if _profile_resp and _profile_resp.data:
+                        _gate_profile = _profile_resp.data
+                except Exception:
+                    pass
+            _selected_days = _resolve_workout_days(_gate_user, _gate_profile)
             if _selected_days:
                 try:
                     _weekday = datetime.strptime(scheduled_date, "%Y-%m-%d").weekday()

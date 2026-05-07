@@ -153,6 +153,40 @@ extension NotificationServiceCore on NotificationService {
       return null;
     }
 
+    // iOS quirk: firebase_messaging.getToken() returns null until the APNs
+    // device token has been registered with Firebase. On a fresh install
+    // there's a race between requestPermission completing and APNs
+    // registration finishing — without an explicit getAPNSToken() wait,
+    // ~10-20% of first-launch users land with a null FCM token and never
+    // receive push. Spin until APNs token shows up (or we time out).
+    if (Platform.isIOS) {
+      for (int i = 0; i < 10; i++) {
+        try {
+          final apns = await messaging!.getAPNSToken();
+          if (apns != null) {
+            debugPrint('🔔 [FCM] APNs token ready after ${i * 500}ms');
+            break;
+          }
+        } catch (e) {
+          debugPrint('⚠️ [FCM] getAPNSToken() error (attempt ${i + 1}/10): $e');
+        }
+        await Future.delayed(const Duration(milliseconds: 500));
+      }
+
+      // Foreground presentation: by default iOS suppresses FCM banners
+      // when the app is open. Opt in so users can see workout reminders
+      // without our manual local-notification re-display kicking in.
+      try {
+        await messaging!.setForegroundNotificationPresentationOptions(
+          alert: true,
+          badge: true,
+          sound: true,
+        );
+      } catch (e) {
+        debugPrint('⚠️ [FCM] setForegroundNotificationPresentationOptions failed: $e');
+      }
+    }
+
     // Retry up to 3 times — emulators can be slow to provision tokens
     for (int attempt = 0; attempt < 3; attempt++) {
       try {

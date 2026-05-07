@@ -62,9 +62,12 @@ class AccountDeletionService {
     ]);
     debugPrint('[DeleteAccount] local data cleared');
 
-    // Phase 3: in-memory provider reset + Supabase sign-out.
+    // Phase 3: in-memory provider reset + revoke third-party grants +
+    // Supabase sign-out. Google disconnect() runs BEFORE signOut so the
+    // user's Google grant is fully revoked even if signOut throws.
     status.value = 'Signing out…';
     _ref.read(onboardingStateProvider.notifier).reset();
+    await _ref.read(authRepositoryProvider).disconnectGoogle();
     await _ref.read(authStateProvider.notifier).signOut();
     debugPrint('[DeleteAccount] signed out');
   }

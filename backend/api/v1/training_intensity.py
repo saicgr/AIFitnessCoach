@@ -216,7 +216,7 @@ async def set_user_1rm(body: Set1RMRequest,
         await log_user_activity(
             user_id=body.user_id,
             action="set_1rm",
-            details={
+            metadata={
                 "exercise_name": body.exercise_name,
                 "one_rep_max_kg": body.one_rep_max_kg,
                 "source": body.source,
@@ -352,7 +352,7 @@ async def delete_user_1rm(user_id: str, exercise_name: str,
         await log_user_activity(
             user_id=user_id,
             action="delete_1rm",
-            details={"exercise_name": exercise_name}
+            metadata={"exercise_name": exercise_name}
         )
 
         return {"message": f"Deleted 1RM for {exercise_name}"}
@@ -396,7 +396,7 @@ async def set_global_intensity(request: SetIntensityRequest,
         await log_user_activity(
             user_id=request.user_id,
             action="set_training_intensity",
-            details={
+            metadata={
                 "intensity_percent": intensity,
                 "description": description,
             }
@@ -468,7 +468,7 @@ async def set_exercise_intensity_override(request: SetExerciseIntensityRequest,
         await log_user_activity(
             user_id=request.user_id,
             action="set_exercise_intensity_override",
-            details={
+            metadata={
                 "exercise_name": request.exercise_name,
                 "intensity_percent": intensity,
             }
@@ -499,7 +499,7 @@ async def delete_exercise_intensity_override(user_id: str, exercise_name: str,
         await log_user_activity(
             user_id=user_id,
             action="delete_exercise_intensity_override",
-            details={"exercise_name": exercise_name}
+            metadata={"exercise_name": exercise_name}
         )
 
         return {"message": f"Removed intensity override for {exercise_name}"}
@@ -708,7 +708,7 @@ async def create_linked_exercise(request: CreateLinkedExerciseRequest,
         await log_user_activity(
             user_id=request.user_id,
             action="create_linked_exercise",
-            details={
+            metadata={
                 "primary_exercise": request.primary_exercise_name,
                 "linked_exercise": request.linked_exercise_name,
                 "strength_multiplier": request.strength_multiplier,
@@ -823,7 +823,7 @@ async def update_linked_exercise(
         await log_user_activity(
             user_id=request.user_id,
             action="update_linked_exercise",
-            details={
+            metadata={
                 "link_id": link_id,
                 "strength_multiplier": request.strength_multiplier,
                 "relationship_type": request.relationship_type,
@@ -871,7 +871,7 @@ async def delete_linked_exercise(link_id: str, user_id: str = Query(...),
         await log_user_activity(
             user_id=user_id,
             action="delete_linked_exercise",
-            details={"link_id": link_id}
+            metadata={"link_id": link_id}
         )
 
         return {"message": "Linked exercise deleted successfully"}

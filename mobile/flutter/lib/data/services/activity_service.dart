@@ -34,6 +34,13 @@ class ActivityService {
     try {
       debugPrint('🏃 [Activity] Syncing activity for ${activity.date}...');
 
+      // distance_meters / hrv / blood_oxygen / body_temperature /
+      // respiratory_rate / flights_climbed / basal_calories were dropped
+      // from the client payload 2026-05-07 — Google Play Health Connect
+      // minimum scope policy required removing those permissions, so the
+      // mobile DailyActivity model no longer carries them. Backend Pydantic
+      // schema still accepts them as Optional fields (back-compat with
+      // older app versions still in production).
       final response = await _apiClient.post(
         '/activity/sync',
         data: {
@@ -42,19 +49,12 @@ class ActivityService {
           'steps': activity.steps,
           'calories_burned': activity.caloriesBurned,
           'active_calories': activity.caloriesBurned, // Use same value if no separate active calories
-          'distance_meters': activity.distanceMeters,
           'resting_heart_rate': activity.restingHeartRate,
           'sleep_minutes': activity.sleepMinutes,
           'deep_sleep_minutes': activity.deepSleepMinutes,
           'rem_sleep_minutes': activity.remSleepMinutes,
           'avg_heart_rate': activity.avgHeartRate,
           'max_heart_rate': activity.maxHeartRate,
-          'hrv': activity.hrv,
-          'blood_oxygen': activity.bloodOxygen,
-          'body_temperature': activity.bodyTemperature,
-          'respiratory_rate': activity.respiratoryRate,
-          'flights_climbed': activity.flightsClimbed,
-          'basal_calories': activity.basalCalories,
           'light_sleep_minutes': activity.lightSleepMinutes,
           'awake_sleep_minutes': activity.awakeSleepMinutes,
           'water_ml': activity.waterMl,
@@ -160,25 +160,19 @@ class ActivityService {
     try {
       debugPrint('🏃 [Activity] Batch syncing ${activities.length} days...');
 
+      // See `syncActivity` above — same minimum-scope payload trim applies.
       final data = activities.map((a) => {
         'user_id': userId,
         'activity_date': _formatDate(a.date),
         'steps': a.steps,
         'calories_burned': a.caloriesBurned,
         'active_calories': a.caloriesBurned,
-        'distance_meters': a.distanceMeters,
         'resting_heart_rate': a.restingHeartRate,
         'sleep_minutes': a.sleepMinutes,
         'deep_sleep_minutes': a.deepSleepMinutes,
         'rem_sleep_minutes': a.remSleepMinutes,
         'avg_heart_rate': a.avgHeartRate,
         'max_heart_rate': a.maxHeartRate,
-        'hrv': a.hrv,
-        'blood_oxygen': a.bloodOxygen,
-        'body_temperature': a.bodyTemperature,
-        'respiratory_rate': a.respiratoryRate,
-        'flights_climbed': a.flightsClimbed,
-        'basal_calories': a.basalCalories,
         'light_sleep_minutes': a.lightSleepMinutes,
         'awake_sleep_minutes': a.awakeSleepMinutes,
         'water_ml': a.waterMl,
@@ -201,12 +195,15 @@ class ActivityService {
     }
   }
 
-  /// Parse activity from JSON response
+  /// Parse activity from JSON response. The backend may still return
+  /// `distance_meters` / `hrv` / `blood_oxygen` / `body_temperature` /
+  /// `respiratory_rate` / `flights_climbed` / `basal_calories` for rows
+  /// written by older app versions, but the new client doesn't surface
+  /// them — see Google Play Health Connect minimum-scope edit (2026-05-07).
   DailyActivity _parseActivity(Map<String, dynamic> json) {
     return DailyActivity(
       steps: json['steps'] as int? ?? 0,
       caloriesBurned: (json['calories_burned'] as num?)?.toDouble() ?? 0,
-      distanceMeters: (json['distance_meters'] as num?)?.toDouble() ?? 0,
       restingHeartRate: json['resting_heart_rate'] as int?,
       sleepMinutes: json['sleep_minutes'] as int?,
       deepSleepMinutes: json['deep_sleep_minutes'] as int?,
@@ -215,12 +212,6 @@ class ActivityService {
       isFromHealthConnect: true,
       avgHeartRate: json['avg_heart_rate'] as int?,
       maxHeartRate: json['max_heart_rate'] as int?,
-      hrv: (json['hrv'] as num?)?.toDouble(),
-      bloodOxygen: (json['blood_oxygen'] as num?)?.toDouble(),
-      bodyTemperature: (json['body_temperature'] as num?)?.toDouble(),
-      respiratoryRate: json['respiratory_rate'] as int?,
-      flightsClimbed: json['flights_climbed'] as int?,
-      basalCalories: (json['basal_calories'] as num?)?.toDouble(),
       lightSleepMinutes: json['light_sleep_minutes'] as int?,
       awakeSleepMinutes: json['awake_sleep_minutes'] as int?,
       waterMl: json['water_ml'] as int?,

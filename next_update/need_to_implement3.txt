@@ -1,0 +1,398 @@
+Right now, thousands of vibe coders are
+launching their mobile app, but most of
+them are making the exact same mistake.
+They ship the app and just hope that
+people will find it. But the truth is,
+if your app store listing isn't set up
+right, then nobody will ever see it, no
+matter how good your app is. To prove
+this, I invited Sebastian, a $50,000 per
+month iOS app builder, to break down the
+exact app store optimization
+fundamentals that took his app from
+invisible to top two in the app store.
+In this video, I had Sebastian walk
+through the three foundations when it
+comes to doing ASO right. specifically
+what everyone gets wrong about keywords,
+a simple AB test that you can run to up
+your conversion rate, and the single
+most important thing you need to do if
+you want to rank high in the iOS app
+store. These are the highest impact
+things you can do today, even this
+afternoon, if you want to get thousands
+of downloads without doing any marketing
+at all. If you've launched an app,
+you're building one, or you're even
+thinking about it, do not skip this
+video. This is our ASO master class.
+Let's dive in. Welcome to Starter Story
+Build.
+All right, Sebastian, welcome back to
+Starter Story. We had you on recently.
+You built this awesome app and you have
+some cool things to share today about
+how you grew it. But before we get into
+all that, can you just give me an update
+about how things are going and what you
+built?
+>> I'm Sebastian. I built four apps that
+together make over $50,000 per month. My
+main app is Habit Kit. It's a habit
+tracking app for iOS and Android. I also
+recently launched a new app called Focus
+Kit, which has been great so far. My
+apps crossed $500,000 in total revenue
+in 2025, and I made over $100,000 in
+January alone. And today, I'm excited to
+share more about my app store
+optimization strategy and show you
+everything I know.
+>> Wow, Sebastian, when we had you on the
+channel, I think it was maybe 8 months
+ago, you were doing like $15,000 a
+month. Now your app is making $100,000 a
+month. you did a lot of amazing stuff,
+but a lot of this is just being in the
+right place at the right time. And I
+think the right place to be right now is
+the iOS app store. So, that's what we're
+going to be talking about today. How to
+rank in the app store. We have a bunch
+of stuff to go over today, but can you
+let us know like by the end of this
+video and all the stuff you're going to
+share, what are people going to get from
+our conversation? Yeah, by the end of
+this video, you will know exactly what I
+did to get my app habit kit ranking in
+the top three on the US app store for
+the keyword habit tracker, which is
+actually one of the most competitive
+keywords out there.
+>> Okay, cool. I'm excited about this.
+Before we dive in, can you just give us
+a high level of what is ASO and what
+does it mean for your business?
+>> Absolutely. ASO stands for app store
+optimization. Think of it as SEO, but
+for mobile apps, when someone opens the
+app store and types, for example, habit
+tracker or fitness app, meditation app,
+ASO is actually what determines whether
+your app shows up at the top of the
+search results or deep down at position
+34 where nobody will ever find it. About
+98% of my users find Habit Kit directly
+through the App Store, Google Play. I
+literally do no marketing at all besides
+that. Not from Twitter, not from
+Instagram ads, just people opening the
+store.
+>> Okay, cool. I mean, this is amazing.
+There are hundreds of millions of people
+that are browsing the app store looking
+for apps and you've kind of capitalized
+on this where you don't have to spend
+money on paid ads. You don't need to do
+Twitter marketing. You don't need to go
+on TikTok. You just did a few things and
+98% of your customers came from app
+store search. You are the example of
+someone who has nailed it perfectly. So,
+I wanted to bring you on to talk about
+what are the three highest impact,
+lowest effort things that you can do now
+that anybody who's building apps could
+do right now to rank better in ASO and
+get thousands of free customers. The
+most important thing you can do is
+optimizing your keywords. ASO is
+basically the strategic placement of
+keywords in your apps meet metadata.
+This is what Apple and Google use to
+understand your app and decide when to
+show it in search results. The app name
+and the subtitle are the most important
+ASO factor. Nothing else comes close to
+it.
+>> Okay, cool. So, what you're saying is
+you may want to think about what the
+keywords that people are searching for
+when you come up with the name. The name
+of your app is habit kit. It has habit
+in the name, which is kind of genius.
+How can someone watching this do the
+same?
+>> Yeah. So, before you actually name your
+app, you have to go one step back and
+actually do some keyword research.
+Before that, you need to understand the
+keyword landscape you're moving in. What
+do people actually search for on the app
+store? LLMs like CHPT or Claude can help
+you with that. It's a great tool to
+brainstorm new keywords. And then you
+have to validate whether people actually
+search for those terms. I use a tool
+called Astro for that because it's very
+affordable and it lets you track
+unlimited keywords, which is perfect
+when you're building a new app. Stor
+shows you a popularity score of your
+keyword. That means how often do people
+search for this keyword. And the other
+is the difficulty. How hard is it to
+actually rank for the keyword based on
+competition. So the sweet spot is a high
+popularity and a manageable difficulty.
+But honestly, my advice would be for
+your primary keyword, rather compete for
+a hard high value keyword than dominate
+an easy low volume one. After you got
+that done, you can finally name your
+app. The most important rule, put your
+primary keyword in your app name. This
+is why habit kit is actually called
+habit tracker-habit
+kit. My brand name is habit kit of
+course, but the keyword habit tracker is
+much more valuable to me. Companies like
+Dualingo can afford to put it second
+because they are such a popular app, but
+you as an indie developer can't really
+afford it. The other thing, put your
+keywords into the subtitle of your app.
+Your subtitle gets another 30 characters
+on the app store and you can use these
+for secondary keywords. For habit kits,
+my subtitle is streaks and
+accountability. Another important rule
+is to don't repeat keywords in the name
+and the subtitle. Apple sees them as one
+combined string for indexing. And the
+last part is the keyword field. and App
+Store Connect. There's a keyword field
+with 100 characters. Users in the App
+Store never see this, but Apple indexes
+it for search. There's some rules that
+you have to follow for this field. You
+have to separate keywords with commas.
+Don't use spaces. Don't repeat words
+from your name or subtitle. Don't use
+plurals if you already use singular.
+Don't include competitor app names.
+Apple might reject this. Try to utilize
+all 100 characters. I love everything
+that Sebastian is sharing right now
+about how to actually rank in the app
+store, but this is just one of many ways
+to grow your app. As you guys know,
+right here in this channel, I've talked
+to dozens of successful mobile app
+founders, and they've shared a bunch of
+different ways to grow your apps in 2026
+and beyond. And from all these
+conversations, I've decided to put
+together the mobile app growth cheat
+sheet. It's a free resource to help you
+figure out the strategies that real
+founders that are making real revenue
+are using right now to actually grow
+their apps. Inside this guide, you'll
+find the seven different tactics broken
+down into bite-siz lessons to help you
+grow your app today. If you're ready to
+stop building and start growing, then
+head to the link in the description to
+download the mobile app growth cheat
+sheet for free right now. All right,
+let's get back to the episode. Okay, so
+what I love about these is these are
+things that get right. They don't take a
+lot of time. you just do it right the
+first time or at least if you're
+building an app now you can kind of make
+some of these quick changes and clearly
+it's working for you because you're
+doing a ton of revenue on the app store.
+So that's super cool. What is the second
+foundation, the second kind of lowest
+effort, highest impact thing you can do
+to rank high in the iOS app store?
+>> Okay, now we're getting a little bit
+more visual. The second most important
+thing about your app store listing are
+screenshots. Screenshots affect your
+conversion rate the most. The brutal
+truth is you only have about three to
+five seconds to convince someone to
+download on your app store listing and
+users are scrolling through your
+screenshots like crazy. There are some
+strategies that I would follow. The
+first one is always put your best and
+most visually impressive feature on your
+first screenshot. For habit kit, I put
+gritbased habit view there. It's unique.
+It's beautiful. It's colorful. And it
+immediately differentiates us from other
+habit trackers. Don't put some generic
+welcome screen or onboarding screen
+there. That wouldn't make sense. Another
+rule that I would follow is show real
+user interface. People want to see what
+they're actually getting. Don't put too
+many abstract graphics or lifestyle
+photos that might look fancy in there,
+but ultimately they don't really help
+someone understand your app. Make sure
+to AB test different versions. Apple
+lets you do this with their product page
+optimization feature, and this lets you
+test different versions of your app
+page. For example, I recently had a
+designer create beautiful new
+screenshots for Habit Kit, way better
+looking than my original self-made ones.
+I was sure they would boost conversions
+because they looked so much better. But
+I did the AB test and my old less
+polished screenshots actually had a
+higher conversion rate. So, the lesson,
+don't assume fancier is always better.
+Always test and sometimes authentic
+beats professional.
+>> Yeah. visually showing the user what
+they're going to get, keeping it
+authentic. I can see how it's super
+important, especially if someone is
+scrolling through the app store and you
+want to catch their eye and if you lose
+them, you may never get that install.
+Thanks for sharing that. What would be
+the number three foundation when it
+comes to ASO? Last but not least, we
+have reviews and ratings in the app
+store for your app. Gathering those
+ratings and reviews is super important.
+They actually give app social proof.
+Ratings boost your search rankings.
+Apple and Google heavily factor ratings
+into their algorithms and they also up
+your conversion rate. Even if you rank
+well, poor reviews tank your downloads.
+Habit Kits has over 7,400 ratings on iOS
+with a 4.8 star average and over 10,000
+ratings on Google Play with 4.6. And
+this took years to build, but this is a
+massive competitive advantage against
+newer apps.
+>> Yeah, I was just chatting with my buddy
+who launched his first app and he kept
+asking me, "What features do I build? Do
+I add a paint wall?" The first thing I
+said to him from a lot of the
+conversations we've had on this channel
+is you need to get a lot more reviews
+and you need to up your star rating. And
+that should be like your number one
+thing to focus on right now because as
+you mentioned more reviews push your app
+up get it more downloads which sends
+more data back to Apple saying we like
+this app. So it's this like virtuous
+cycle. This is maybe the biggest thing I
+think. How can someone watching this
+implement this? Yeah, getting new
+reviews is really hard. But I can tell
+you what worked for me. So timing is
+everything. Show the review prompt at a
+happy moment in the life cycle of your
+app. Not during onboarding, not when
+something breaks. For habit kits, as an
+example, I show it right after someone
+completes their first habit. They feel
+accomplished at this moment, and that's
+when you usually have to ask for a
+review. Don't be annoying. If someone
+dismisses the prompt, don't show it
+again for a while. Respect your user and
+his needs. Definitely respond to every
+review. I do this since I started
+building apps. I reply to every review.
+I thank the good ones. I try to help on
+the bad ones. This builds massive trust
+and people sometimes update their
+one-star reviews to a fivestar after you
+fix the issue. And I have a email
+signature trick. I get a lot of support
+emails for Habit Kit. And after each
+reply, I always add, "Hey, if you're
+enjoying the app, I'd be grateful for
+review." And in this moment, the users
+just got a quick and kind help from an
+engaged indie developer. And a gentle
+ask for a review at this moment often
+works. And that amounts to a lot of
+happy five-star reviews. Actually, my
+last tip, use reviews as product
+insights. If 20 people mention wanting
+the same features in your reviews,
+that's a strong signal. I've prioritized
+entire features based on review
+patterns.
+>> That's amazing. thing. I mean, that's
+one of those little things that I see
+with a lot of founders who come on to
+the channel is the care they have for
+every single person that uses their app.
+Almost a feeling of gratitude. Hey,
+you're using this thing that I built and
+I hope it works for you and I'll do
+whatever it takes to try to fix your
+issues. This is usually what I see in
+founders like you who are crushing it.
+Thank you for coming on and sharing
+these three foundations. This is the
+real stuff here. Last question that I
+ask every founder who comes on. If you
+could go back in time to just starting
+your app, hoping to one day be at this
+place that you're at, what advice would
+you have for app builders who want to
+follow in your footsteps?
+>> So, one piece of advice I would wish
+someone had given me at the start of my
+journey is give it time. ASO is not a
+quick win. It's a long game. When I
+launched Habit Kit in November 2022, I
+was invisible on the app store. I
+searched for Habit tracker and scrolled
+through pages without finding my app. I
+was doing all the right things. I did my
+keyword research. I made cool looking
+screenshots. I was collecting reviews,
+but I wasn't ranking. But I kept going.
+I kept shipping updates. I improved the
+app. And very slowly, things started to
+shift. After about 6 months, I cracked
+the top 10 in some non- US markets like
+the UK and Germany. That was pretty
+encouraging and big for me. After about
+a year, I started appearing in the top
+10 in the US. occasionally, not
+consistently, but I was there. And after
+nearly 3 years, I'm now consistently in
+the top five. Yeah. So, ultimately,
+success in the app store is a marathon,
+not a sprint.
+>> Okay, cool. So, one thing that I love
+about ASO is that the actions that you
+take today, you may not see the results
+for many, many months. So, stick with
+it. Focus on the principles. Thanks for
+coming on and sharing all this,
+Sebastian. Congrats on all your success.
+>> Thank you very much for having me.

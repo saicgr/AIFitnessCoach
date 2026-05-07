@@ -26,18 +26,18 @@ final sleepProvider = FutureProvider.autoDispose<SleepSummary?>((ref) async {
 });
 
 /// Objective recovery score computed from Health Connect metrics.
+///
+/// Note: `hrv` and `bloodOxygen` were removed 2026-05-07 — Google Play Health
+/// Connect minimum-scope policy required dropping those permissions. Score
+/// is now derived from resting heart rate + sleep only.
 class ObjectiveRecoveryScore {
   final int score;
   final int? restingHR;
-  final double? hrv;
-  final double? bloodOxygen;
   final SleepSummary? sleepSummary;
 
   const ObjectiveRecoveryScore({
     required this.score,
     this.restingHR,
-    this.hrv,
-    this.bloodOxygen,
     this.sleepSummary,
   });
 
@@ -80,18 +80,8 @@ final recoveryProvider =
       totalWeight += 30;
     }
 
-    // --- HRV scoring (weight 25, iOS only typically) ---
-    if (metrics.hrv != null) {
-      final hrvPoints = _scoreHRV(metrics.hrv!, healthService);
-      totalPoints += await hrvPoints;
-      totalWeight += 25;
-    }
-
-    // --- Blood oxygen scoring (weight 20) ---
-    if (metrics.bloodOxygen != null) {
-      totalPoints += _scoreBloodOxygen(metrics.bloodOxygen!);
-      totalWeight += 20;
-    }
+    // HRV + blood-oxygen scoring removed 2026-05-07 (Google Play Health
+    // Connect minimum scope). Score now weighted across RHR + Sleep only.
 
     // --- Sleep quality scoring (weight 25) ---
     if (sleep != null && sleep.hasData) {
@@ -108,8 +98,6 @@ final recoveryProvider =
     return ObjectiveRecoveryScore(
       score: finalScore,
       restingHR: metrics.restingHR,
-      hrv: metrics.hrv,
-      bloodOxygen: metrics.bloodOxygen,
       sleepSummary: sleep,
     );
   } catch (e) {
@@ -152,44 +140,10 @@ Future<double> _scoreRestingHR(
   }
 }
 
-/// Score HRV by comparing today vs 7-day baseline.
-/// Returns points out of 25 max.
-Future<double> _scoreHRV(double todayHRV, HealthService healthService) async {
-  try {
-    final hrData = await healthService.getHeartRateData(days: 7);
-
-    final hrvValues = <double>[];
-    for (final point in hrData) {
-      if (point.type == HealthDataType.HEART_RATE_VARIABILITY_SDNN ||
-          point.type == HealthDataType.HEART_RATE_VARIABILITY_RMSSD) {
-        final v =
-            (point.value as NumericHealthValue).numericValue.toDouble();
-        hrvValues.add(v);
-      }
-    }
-
-    if (hrvValues.isEmpty) {
-      return 15; // Moderate default
-    }
-
-    final avg = hrvValues.reduce((a, b) => a + b) / hrvValues.length;
-
-    if (todayHRV > avg) return 25; // Higher HRV than avg -- excellent
-    if ((todayHRV - avg).abs() <= avg * 0.1) return 15; // Within 10% of avg
-    return 5; // Lower HRV -- stressed
-  } catch (e) {
-    debugPrint('⚠️ [Recovery] Error scoring HRV: $e');
-    return 15;
-  }
-}
-
-/// Score blood oxygen saturation.
-/// Returns points out of 20 max.
-double _scoreBloodOxygen(double spo2) {
-  if (spo2 >= 97) return 20;
-  if (spo2 >= 95) return 15;
-  return 5;
-}
+// _scoreHRV and _scoreBloodOxygen removed 2026-05-07 — Google Play Health
+// Connect minimum-scope policy required dropping HRV / SpO2 permissions, so
+// the gating callers in `recoveryProvider` were deleted and these helpers
+// are no longer reachable.
 
 /// Score sleep quality string.
 /// Returns points out of 25 max.

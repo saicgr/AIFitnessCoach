@@ -278,21 +278,29 @@ enum SyncedKind {
   /// workout-level durationMinutes.
   List<String> get heroMetricOrder {
     switch (this) {
+      // pace_sec_per_km / avg_speed_mps / elevation_gain_m /
+      // avg_respiratory_rate were removed from the hero chips on
+      // 2026-05-07 — those metrics depended on Health Connect /
+      // HealthKit permissions (DISTANCE, ELEVATION, SPEED, RESPIRATORY_RATE)
+      // that were dropped to comply with Google Play's minimum-scope
+      // Health Connect policy. distance_m stays because Strava / Garmin /
+      // Apple Watch direct sync still supplies it via the workout envelope,
+      // independent of Health Connect.
       case SyncedKind.walking:
       case SyncedKind.running:
       case SyncedKind.hiking:
         return const [
           'distance_m',
-          'pace_sec_per_km',
           'calories_active',
           'steps',
+          'avg_heart_rate',
         ];
       case SyncedKind.cycling:
         return const [
           'distance_m',
-          'avg_speed_mps',
           'calories_active',
-          'elevation_gain_m',
+          'avg_heart_rate',
+          'max_heart_rate',
         ];
       case SyncedKind.swimming:
       case SyncedKind.rowing:
@@ -315,7 +323,7 @@ enum SyncedKind {
           'duration',
           'calories_active',
           'avg_heart_rate',
-          'avg_respiratory_rate',
+          'max_heart_rate',
         ];
       case SyncedKind.hiit:
         return const [

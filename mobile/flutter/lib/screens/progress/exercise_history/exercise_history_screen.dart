@@ -29,6 +29,9 @@ class _ExerciseHistoryScreenState extends ConsumerState<ExerciseHistoryScreen>
   final GlobalKey _reportKey = GlobalKey();
   late final TabController _tabController;
   DateTime? _screenOpenTime;
+  // Cached so dispose() never has to touch `ref` after the widget is gone
+  // (Riverpod throws "Cannot use ref after the widget was disposed").
+  ExerciseHistoryRepository? _historyRepo;
 
   @override
   void initState() {
@@ -36,6 +39,12 @@ class _ExerciseHistoryScreenState extends ConsumerState<ExerciseHistoryScreen>
     _screenOpenTime = DateTime.now();
     _tabController = TabController(length: 2, vsync: this);
     ref.read(posthogServiceProvider).capture(eventName: 'exercise_history_viewed');
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _historyRepo ??= ref.read(exerciseHistoryRepositoryProvider);
   }
 
   @override
@@ -47,13 +56,14 @@ class _ExerciseHistoryScreenState extends ConsumerState<ExerciseHistoryScreen>
   }
 
   void _logViewDuration() {
-    if (_screenOpenTime != null) {
-      final duration = DateTime.now().difference(_screenOpenTime!).inSeconds;
-      ref.read(exerciseHistoryRepositoryProvider).logView(
-        exerciseName: 'list_view',
-        sessionDurationSeconds: duration,
-      );
-    }
+    final repo = _historyRepo;
+    final openedAt = _screenOpenTime;
+    if (repo == null || openedAt == null) return;
+    final duration = DateTime.now().difference(openedAt).inSeconds;
+    repo.logView(
+      exerciseName: 'list_view',
+      sessionDurationSeconds: duration,
+    );
   }
 
   @override

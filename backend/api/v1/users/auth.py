@@ -1,6 +1,8 @@
 """
 User authentication endpoints: Google OAuth, email auth, signup, password management.
 """
+from typing import Optional
+
 from core.db import get_supabase_db
 from fastapi import APIRouter, Depends, BackgroundTasks, HTTPException, Request
 from core.auth import get_current_user, get_verified_auth_token
@@ -13,6 +15,7 @@ from models.schemas import User
 from services.admin_service import get_admin_service
 from services.email_service import get_email_service
 from services.discord_webhooks import notify_signup
+from services.apple_auth_revocation import exchange_authorization_code
 
 from api.v1.users.models import (
     GoogleAuthRequest,
@@ -63,6 +66,18 @@ async def google_auth(request: Request, body: GoogleAuthRequest,
         email = supabase_user.email
         full_name = supabase_user.user_metadata.get("full_name") or supabase_user.user_metadata.get("name", "")
 
+        # Apple Sign-In only ships fullName on the FIRST authorization for a
+        # given (Apple ID, app) pair. The iOS client forwards those fields
+        # explicitly so we don't lose them — Supabase does not surface them in
+        # user_metadata for the SIWA OAuth flow.
+        apple_full_name = None
+        if body.apple_given_name or body.apple_family_name:
+            apple_full_name = " ".join(
+                [p for p in (body.apple_given_name, body.apple_family_name) if p]
+            ).strip()
+            if apple_full_name and not full_name:
+                full_name = apple_full_name
+
         logger.info(f"Supabase user verified: id={supabase_user_id}, email={email}")
 
         db = get_supabase_db()
@@ -70,12 +85,30 @@ async def google_auth(request: Request, body: GoogleAuthRequest,
         # Check if user already exists by auth_id (supabase user id)
         existing = db.get_user_by_auth_id(supabase_user_id)
 
+        # If client supplied an Apple authorization_code, exchange it for a
+        # long-lived refresh_token now. We need this on file for App Store
+        # Guideline 5.1.1.v compliance — on account deletion we call
+        # /auth/revoke with the refresh_token. Best-effort: never block sign-in.
+        apple_refresh_token: Optional[str] = None
+        if body.apple_authorization_code:
+            apple_refresh_token = await exchange_authorization_code(
+                body.apple_authorization_code,
+            )
+
         if existing:
             logger.info(f"Existing user found: id={existing['id']}")
-            # Ensure 'fitwiz' is in the apps list
+            updates: dict = {}
             current_apps = existing.get("apps") or []
             if "fitwiz" not in current_apps:
-                db.update_user(existing["id"], {"apps": current_apps + ["fitwiz"]})
+                updates["apps"] = current_apps + ["fitwiz"]
+            if apple_refresh_token:
+                updates["apple_refresh_token"] = apple_refresh_token
+            # Backfill the name on existing rows that landed empty (legacy
+            # Apple users predating the explicit forward).
+            if apple_full_name and not (existing.get("name") or "").strip():
+                updates["name"] = apple_full_name
+            if updates:
+                db.update_user(existing["id"], updates)
             return row_to_user(existing)
 
         # Create new user
@@ -108,6 +141,8 @@ async def google_auth(request: Request, body: GoogleAuthRequest,
             "active_injuries": [],  # JSONB - can be list
             "apps": ["fitwiz"],  # Track which apps this user uses
         }
+        if apple_refresh_token:
+            new_user_data["apple_refresh_token"] = apple_refresh_token
 
         try:
             created = db.create_user(new_user_data)

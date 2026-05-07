@@ -21,7 +21,7 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
   }
 
   /// Trigger save from outside the widget.
-  Future<void> saveChanges() => _saveChanges();
+  Future<bool> saveChanges() => _saveChanges();
 
   /// setState + notify sheet listeners
   void _updateField(VoidCallback fn) {
@@ -96,7 +96,8 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
     return '$min-$max min';
   }
 
-  Future<void> _saveChanges() async {
+  Future<bool> _saveChanges() async {
+    if (_isSaving) return false; // re-entrance guard
     setState(() => _isSaving = true);
 
     try {
@@ -169,6 +170,7 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
           ),
         );
       }
+      return true;
     } catch (e) {
       if (mounted) {
         setState(() => _isSaving = false);
@@ -179,6 +181,7 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
           ),
         );
       }
+      return false;
     }
   }
 
@@ -343,6 +346,7 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
+    bool sheetSaving = false;
     showGlassSheet(
       context: context,
       builder: (sheetContext) => GlassSheet(
@@ -388,11 +392,20 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
                   SizedBox(
                     width: double.infinity,
                     child: FilledButton(
-                      onPressed: _isSaving
+                      onPressed: sheetSaving
                           ? null
                           : () async {
-                              await _saveChanges();
-                              if (ctx.mounted) Navigator.pop(ctx);
+                              setSheetState(() => sheetSaving = true);
+                              final ok = await _saveChanges();
+                              if (!mounted) return;
+                              if (ok && ctx.mounted) {
+                                Navigator.pop(ctx);
+                              } else {
+                                // Failure: re-enable so user can retry once
+                                // they've adjusted (or after a transient
+                                // network blip).
+                                setSheetState(() => sheetSaving = false);
+                              }
                             },
                       style: FilledButton.styleFrom(
                         backgroundColor: iconColor,
@@ -402,7 +415,7 @@ class EditableFitnessCardState extends ConsumerState<EditableFitnessCard> {
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      child: _isSaving
+                      child: sheetSaving
                           ? const SizedBox(
                               width: 20,
                               height: 20,

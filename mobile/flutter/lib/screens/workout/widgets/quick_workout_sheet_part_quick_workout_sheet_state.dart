@@ -10,7 +10,6 @@ class _QuickWorkoutSheetState extends ConsumerState<_QuickWorkoutSheet> {
   String? _dupSuggestion;
   MesocyclePlan? _activeMesocycle;
   MesocycleContext? _mesocycleContext;
-  HrvRecoveryModifiers? _hrvModifiers;
   bool _useSupersets = true;
   bool _showAdvanced = false;
   String _weightUnit = 'kg';
@@ -885,54 +884,10 @@ class _QuickWorkoutSheetState extends ConsumerState<_QuickWorkoutSheet> {
                       ),
                     ),
 
-                  // HRV readiness indicator
-                  if (_hrvModifiers != null && _hrvModifiers!.hasData)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                        decoration: BoxDecoration(
-                          color: _getReadinessColor(_hrvModifiers!.readinessLevel).withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(
-                            color: _getReadinessColor(_hrvModifiers!.readinessLevel).withOpacity(0.3),
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              _getReadinessIcon(_hrvModifiers!.readinessLevel),
-                              size: 18,
-                              color: _getReadinessColor(_hrvModifiers!.readinessLevel),
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Recovery: ${_hrvModifiers!.readinessDisplayName}',
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w600,
-                                      color: textPrimary,
-                                    ),
-                                  ),
-                                  if (_hrvModifiers!.explanation != null)
-                                    Text(
-                                      _hrvModifiers!.explanation!,
-                                      style: TextStyle(
-                                        fontSize: 11,
-                                        color: textSecondary,
-                                      ),
-                                    ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
+                  // HRV readiness indicator removed 2026-05-07 — Google Play
+                  // Health Connect minimum scope policy required dropping
+                  // HRV permissions, so the recovery readiness pill no
+                  // longer has a data source.
 
                   // Info text
                   Container(

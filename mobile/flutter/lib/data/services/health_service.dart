@@ -128,31 +128,50 @@ class HealthService {
     }
   }
 
-  // Types that are only available on iOS (not supported on Android)
+  // Types that are only available on iOS (not supported on Android).
   static const Set<HealthDataType> _iOSOnlyTypes = {
-    HealthDataType.HEART_RATE_VARIABILITY_SDNN,
     HealthDataType.SLEEP_IN_BED,
     HealthDataType.INSULIN_DELIVERY,
-    HealthDataType.DISTANCE_WALKING_RUNNING,
   };
 
-  // Types that are only available on Android (not supported on iOS)
+  // Types that are only available on Android (not supported on iOS).
   static const Set<HealthDataType> _androidOnlyTypes = {
-    HealthDataType.DISTANCE_DELTA,
     HealthDataType.TOTAL_CALORIES_BURNED,
     HealthDataType.SLEEP_DEEP,
     HealthDataType.SLEEP_LIGHT,
     HealthDataType.SLEEP_REM,
-    HealthDataType.HEART_RATE_VARIABILITY_RMSSD,
     HealthDataType.SLEEP_AWAKE,
     HealthDataType.SLEEP_AWAKE_IN_BED,
     HealthDataType.SLEEP_OUT_OF_BED,
     HealthDataType.SLEEP_SESSION,
   };
 
+  // Types that were removed entirely (both Android Health Connect AND iOS
+  // HealthKit) on 2026-05-07 to comply with Google Play's "Minimum Scope"
+  // Health Connect Permissions policy. None of these data types are read
+  // or surfaced anywhere in the user-facing product, so requesting them
+  // would be excessive scope on both platforms.
+  //
+  // Removed: Distance (delta + walking/running), FloorsClimbed,
+  // HeartRateVariability (RMSSD + SDNN), ElevationGained, Power, Speed,
+  // RespiratoryRate, BasalMetabolicRate (basal energy burned),
+  // OxygenSaturation (blood oxygen), BodyTemperature.
+  static const Set<HealthDataType> _removedTypes = {
+    HealthDataType.DISTANCE_DELTA,
+    HealthDataType.DISTANCE_WALKING_RUNNING,
+    HealthDataType.FLIGHTS_CLIMBED,
+    HealthDataType.HEART_RATE_VARIABILITY_RMSSD,
+    HealthDataType.HEART_RATE_VARIABILITY_SDNN,
+    HealthDataType.RESPIRATORY_RATE,
+    HealthDataType.BASAL_ENERGY_BURNED,
+    HealthDataType.BLOOD_OXYGEN,
+    HealthDataType.BODY_TEMPERATURE,
+  };
+
   /// Get health data types available on current platform
   List<HealthDataType> _getAvailableTypes(List<HealthDataType> types) {
     return types.where((type) {
+      if (_removedTypes.contains(type)) return false;
       if (Platform.isAndroid) {
         return !_iOSOnlyTypes.contains(type);
       } else if (Platform.isIOS) {
@@ -291,16 +310,15 @@ class HealthService {
       final now = DateTime.now();
       final start = now.subtract(Duration(days: days));
 
-      final distanceType = Platform.isIOS
-          ? HealthDataType.DISTANCE_WALKING_RUNNING
-          : HealthDataType.DISTANCE_DELTA;
+      // Distance was removed 2026-05-07 (Google Play Health Connect minimum
+      // scope policy). Activity summary now reports steps + active calories
+      // only — these are the values surfaced in the home/health card UI.
       final rawData = await _health.getHealthDataFromTypes(
         startTime: start,
         endTime: now,
         types: [
           HealthDataType.STEPS,
           HealthDataType.ACTIVE_ENERGY_BURNED,
-          distanceType,
         ],
       );
 
@@ -309,7 +327,6 @@ class HealthService {
 
       int totalSteps = 0;
       double totalCalories = 0;
-      double totalDistance = 0;
 
       for (final point in data) {
         final value = (point.value as NumericHealthValue).numericValue.toDouble();
@@ -320,10 +337,6 @@ class HealthService {
           case HealthDataType.ACTIVE_ENERGY_BURNED:
             totalCalories += value;
             break;
-          case HealthDataType.DISTANCE_DELTA:
-          case HealthDataType.DISTANCE_WALKING_RUNNING:
-            totalDistance += value;
-            break;
           default:
             break;
         }
@@ -332,12 +345,11 @@ class HealthService {
       return {
         'steps': totalSteps,
         'calories': totalCalories,
-        'distance': totalDistance, // in meters
         'days': days,
       };
     } catch (e) {
       debugPrint('❌ Error getting activity summary: $e');
-      return {'steps': 0, 'calories': 0, 'distance': 0, 'days': days};
+      return {'steps': 0, 'calories': 0, 'days': days};
     }
   }
 
@@ -454,8 +466,6 @@ class HealthService {
       case HealthDataType.ACTIVE_ENERGY_BURNED:
       case HealthDataType.TOTAL_CALORIES_BURNED:
         return 'kcal';
-      case HealthDataType.DISTANCE_DELTA:
-        return 'm';
       case HealthDataType.BLOOD_GLUCOSE:
         return 'mg/dL';
       case HealthDataType.INSULIN_DELIVERY:

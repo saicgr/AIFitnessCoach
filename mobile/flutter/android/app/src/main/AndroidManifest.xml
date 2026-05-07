@@ -48,16 +48,64 @@
         android:maxSdkVersion="30" />
     -->
 
-    <!-- Health Connect permissions -->
+    <!--
+        Health Connect permissions — MINIMUM SCOPE.
+
+        Each entry below maps 1:1 to a shipped, user-facing feature. The
+        same set is requested on iOS via HealthKit (Dart `_readTypes` /
+        `_writeTypes`); the matching iOS HealthKit categories are listed
+        in parentheses for the Play Console "Health Connect declaration"
+        / Apple "Privacy Nutrition Label" forms.
+
+        Removed 2026-05-07 per Google Play "Health Connect Permissions"
+        policy ("Excessive data access for declared feature"):
+          READ_DISTANCE, READ_FLOORS_CLIMBED, READ_HEART_RATE_VARIABILITY,
+          READ_ELEVATION_GAINED, READ_POWER, READ_SPEED, READ_RESPIRATORY_RATE,
+          READ_BASAL_METABOLIC_RATE, READ_OXYGEN_SATURATION,
+          READ_BODY_TEMPERATURE.
+        These data types were also dropped from the iOS HealthKit request
+        set at the same time so Android and iOS stay aligned.
+
+        Permission → feature map:
+          READ_WEIGHT, WRITE_WEIGHT     → Body-measurements card on Home,
+                                          weight history graph on Profile
+                                          (Dart: getWeightHistory, writeWeight)
+          READ_BODY_FAT, WRITE_BODY_FAT → Body composition card / charts
+                                          (Dart: getBodyFatHistory, writeBodyFat)
+          READ_HEART_RATE               → Live HR during in-app workouts
+                                          + post-workout HR series + zones
+                                          (Dart: streamLiveHeartRate,
+                                          getHeartRateForTimeRange)
+          READ_RESTING_HEART_RATE       → Recovery readiness score on Home
+                                          (Dart: getRecoveryMetrics)
+          READ_STEPS                    → Daily Activity card "Steps" pill,
+                                          NEAT hourly tracking + 30-day
+                                          backfill
+                                          (Dart: getTodaySteps, getStepsForRange)
+          READ_ACTIVE_CALORIES_BURNED   → Daily Activity card "Active Cal"
+          WRITE_ACTIVE_CALORIES_BURNED  → Push completed in-app workout
+                                          calories back to Health Connect
+          READ_TOTAL_CALORIES_BURNED    → Workout import enrichment
+          READ_SLEEP                    → Sleep summary card + recovery
+                                          score input
+                                          (Dart: getSleepData)
+          READ_BLOOD_GLUCOSE            → Diabetic-mode CGM display
+                                          (Dart: getBloodGlucoseData)
+          READ_EXERCISE                 → Auto-import workouts from other
+                                          fitness apps for tracking
+          WRITE_EXERCISE                → Write completed Zealova workouts
+                                          to Health Connect
+          READ_HYDRATION                → Water-intake tile on Home
+          WRITE_HYDRATION               → Log water intake from in-app
+                                          quick-add buttons
+    -->
     <uses-permission android:name="android.permission.health.READ_WEIGHT"/>
     <uses-permission android:name="android.permission.health.WRITE_WEIGHT"/>
     <uses-permission android:name="android.permission.health.READ_BODY_FAT"/>
     <uses-permission android:name="android.permission.health.WRITE_BODY_FAT"/>
     <uses-permission android:name="android.permission.health.READ_HEART_RATE"/>
     <uses-permission android:name="android.permission.health.READ_RESTING_HEART_RATE"/>
-    <uses-permission android:name="android.permission.health.READ_HEART_RATE_VARIABILITY"/>
     <uses-permission android:name="android.permission.health.READ_STEPS"/>
-    <uses-permission android:name="android.permission.health.READ_DISTANCE"/>
     <uses-permission android:name="android.permission.health.READ_ACTIVE_CALORIES_BURNED"/>
     <uses-permission android:name="android.permission.health.READ_TOTAL_CALORIES_BURNED"/>
     <uses-permission android:name="android.permission.health.READ_SLEEP"/>
@@ -65,26 +113,8 @@
     <uses-permission android:name="android.permission.health.READ_EXERCISE"/>
     <uses-permission android:name="android.permission.health.WRITE_EXERCISE"/>
     <uses-permission android:name="android.permission.health.WRITE_ACTIVE_CALORIES_BURNED"/>
-    <uses-permission android:name="android.permission.health.READ_FLOORS_CLIMBED"/>
-    <!--
-        Missing permissions added 2026-04-25 — without these, Health Connect
-        silently denies the matching READ types in our requestAuthorization()
-        call, which is why workouts arrived as "summary only" with no in-window
-        HR samples / SpO2 / BMR / etc, and why the Today's Health card stayed
-        empty while competitors like GymBeat showed steps + cal + avg HR.
-        The Dart side already requests BASAL_ENERGY_BURNED, BLOOD_OXYGEN,
-        BODY_TEMPERATURE, RESPIRATORY_RATE, WATER, and elevation_gain on
-        SLEEP_STAGES — manifest now matches.
-    -->
-    <uses-permission android:name="android.permission.health.READ_BASAL_METABOLIC_RATE"/>
-    <uses-permission android:name="android.permission.health.READ_OXYGEN_SATURATION"/>
-    <uses-permission android:name="android.permission.health.READ_BODY_TEMPERATURE"/>
-    <uses-permission android:name="android.permission.health.READ_RESPIRATORY_RATE"/>
     <uses-permission android:name="android.permission.health.READ_HYDRATION"/>
     <uses-permission android:name="android.permission.health.WRITE_HYDRATION"/>
-    <uses-permission android:name="android.permission.health.READ_ELEVATION_GAINED"/>
-    <uses-permission android:name="android.permission.health.READ_SPEED"/>
-    <uses-permission android:name="android.permission.health.READ_POWER"/>
 
     <application
         android:label="Zealova"

@@ -63,6 +63,127 @@ _FOREIGN_INDICATORS = frozenset({
 })
 
 
+# Per-piece weight caps (grams) for countable foods, keyed by lowercased
+# name fragment. The number is the realistic *upper bound* — if Gemini or the
+# DB suggest a per-piece weight above this, we clamp to it. This is the
+# deterministic safety net that runs after both prompt guidance (L1) and the
+# food-DB override lookup (L2). Below caps are the "biggest plausible"
+# variant: a giant Korean bone-in jumbo wing tops out around 80g, a hefty
+# meatball at 50g, etc. Per-piece kcal cap is a coarser sanity check derived
+# from realistic max kcal/g (≈4.0 for a deeply fried item) × the weight cap.
+_PER_PIECE_WEIGHT_CAPS_G = (
+    # (name_fragment, max_per_piece_g, max_per_piece_kcal)
+    ("boneless wing", 35, 110),       # breaded chicken-breast piece
+    ("boneless buffalo", 35, 110),
+    ("chicken bite", 35, 110),
+    ("chicken nugget", 30, 90),
+    ("popcorn chicken", 18, 60),
+    ("chicken popper", 18, 60),
+    ("wing", 80, 220),                # bone-in wing whole-with-bone (catches all other wing variants)
+    ("chicken tender", 60, 180),
+    ("chicken strip", 60, 180),
+    ("chicken finger", 60, 180),
+    ("meatball", 50, 130),
+    ("falafel", 30, 90),
+    ("mozzarella stick", 35, 110),
+    ("cheese stick", 35, 110),
+    ("french fry", 12, 35),
+    ("fry", 12, 35),
+    ("tater tot", 18, 50),
+    ("chip", 5, 25),
+)
+_TOTAL_KCAL_PER_GRAM_CAP = 6.0  # 9 = pure fat; no real food exceeds 6 kcal/g.
+
+
+def _apply_portion_sanity_caps(item: dict, query_name: str) -> None:
+    """Final-stage clamp for absurd portion estimates.
+
+    Runs AFTER Gemini parsing + food-DB override. Catches the residual
+    failure modes that prompt rules and DB seeding can't fully prevent:
+      * Gemini guesses 85g/piece for a boneless wing.
+      * DB row matched but `default_weight_per_piece_g` is NULL.
+      * Vision pass conflates two stacked items into one weight.
+
+    Mutates `item` in place:
+      * If `weight_per_unit_g` exceeds the cap for the matched food
+        category, scales weight_g, calories, and macros down proportionally.
+      * If final calories / weight > 6 kcal/g (impossible for any food
+        short of pure fat), scales the calorie + macro values down to
+        4 kcal/g (a realistic max for fried items).
+
+    Idempotent — calling twice on already-clamped data is a no-op.
+    """
+    if not isinstance(item, dict):
+        return
+    haystack = f"{(item.get('name') or '').lower()} {(query_name or '').lower()}"
+
+    weight_g = item.get("weight_g") or 0
+    count = item.get("count") or 0
+    weight_per_unit = item.get("weight_per_unit_g")
+    calories = item.get("calories") or 0
+
+    # Per-piece weight cap (longest matching fragment wins).
+    matched_cap = None
+    for fragment, max_w, max_kcal in _PER_PIECE_WEIGHT_CAPS_G:
+        if fragment in haystack:
+            if matched_cap is None or len(fragment) > len(matched_cap[0]):
+                matched_cap = (fragment, max_w, max_kcal)
+    if matched_cap and count and count > 0:
+        _, max_w, max_kcal = matched_cap
+        # Use whichever per-piece weight the item carries; fall back to
+        # weight_g / count when weight_per_unit_g wasn't populated.
+        effective_per_piece = weight_per_unit or (weight_g / count if count else None)
+        if effective_per_piece and effective_per_piece > max_w:
+            scale = max_w / effective_per_piece
+            new_weight_g = round(count * max_w, 1)
+            new_calories = round(calories * scale)
+            try:
+                from core.logger import get_logger
+                _l = get_logger(__name__)
+                _l.warning(
+                    f"[SanityGate] Clamped per-piece weight for '{item.get('name')}' "
+                    f"({matched_cap[0]}): {effective_per_piece:.0f}g → {max_w}g "
+                    f"(weight {weight_g}g → {new_weight_g}g, kcal {calories} → {new_calories})"
+                )
+            except Exception:
+                pass
+            item["weight_g"] = new_weight_g
+            item["weight_per_unit_g"] = max_w
+            item["calories"] = new_calories
+            for macro in ("protein_g", "carbs_g", "fat_g", "fiber_g"):
+                if item.get(macro) is not None:
+                    item[macro] = round(item[macro] * scale, 1)
+            item["sanity_clamped"] = True
+            weight_g = new_weight_g
+            calories = new_calories
+
+    # Calorie-density cap: no whole food exceeds 6 kcal/g. If we're above,
+    # scale the kcal + macros down to ~4 kcal/g — the realistic max for
+    # deeply-fried foods. Don't touch weight (the visual estimate is the
+    # most reliable signal here).
+    if weight_g and weight_g > 0 and calories and calories > 0:
+        density = calories / weight_g
+        if density > _TOTAL_KCAL_PER_GRAM_CAP:
+            target_density = 4.0
+            scale = target_density / density
+            new_calories = round(calories * scale)
+            try:
+                from core.logger import get_logger
+                _l = get_logger(__name__)
+                _l.warning(
+                    f"[SanityGate] Clamped calorie density for '{item.get('name')}': "
+                    f"{density:.1f} kcal/g → {target_density:.1f} kcal/g "
+                    f"(kcal {calories} → {new_calories} for {weight_g}g)"
+                )
+            except Exception:
+                pass
+            item["calories"] = new_calories
+            for macro in ("protein_g", "carbs_g", "fat_g", "fiber_g"):
+                if item.get(macro) is not None:
+                    item[macro] = round(item[macro] * scale, 1)
+            item["sanity_clamped"] = True
+
+
 def _looks_foreign(name: str) -> bool:
     """True when `name` is either non-ASCII OR contains a token from
     `_FOREIGN_INDICATORS`. Used to gate the sanitizer so composite-meal
@@ -550,6 +671,13 @@ class ParsersMixin:
             # despite the prompt rule (e.g. "Fromage La Vache Qui Rit" for a user
             # query of "laughing cow cheese"), rewrite it to the user's wording.
             item['name'] = _sanitize_foreign_name(item.get('name', ''), original_query)
+
+            # L3 sanity gate (added 2026-05-07 after the buffalo-wings 2122-kcal
+            # incident): clamp impossibly-high portion estimates regardless of
+            # whether they came from Gemini's vision pass or the DB lookup.
+            # This is the deterministic floor — runs even when L1 (prompt) and
+            # L2 (food DB override) both miss.
+            _apply_portion_sanity_caps(item, food_names[i] if i < len(food_names) else item.get('name', ''))
 
             enhanced_items.append(item)
 

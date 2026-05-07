@@ -656,8 +656,23 @@ async def update_user(user_id: str, user: UserUpdate,
             user.days_per_week, user.workout_duration, user.training_split,
             user.intensity_preference, user.preferred_time,
             user.progression_pace, user.workout_type_preference,
-            user.workout_environment, user.gym_name, user.workout_variety
+            user.workout_environment, user.gym_name, user.workout_variety,
+            user.workout_days,
         ])
+
+        # Detect schedule change BEFORE merging — needed for invalidation hook
+        # below. Compares old prefs.workout_days to incoming list.
+        schedule_changed = False
+        if user.workout_days is not None:
+            existing_prefs_raw = existing.get("preferences") or {}
+            if isinstance(existing_prefs_raw, str):
+                try:
+                    existing_prefs_raw = json.loads(existing_prefs_raw)
+                except (json.JSONDecodeError, TypeError):
+                    existing_prefs_raw = {}
+            old_days = sorted(existing_prefs_raw.get("workout_days") or [])
+            new_days = sorted(user.workout_days)
+            schedule_changed = old_days != new_days
 
         if user.preferences is not None or has_extended_fields:
             current_prefs = existing.get("preferences", {})
@@ -673,6 +688,7 @@ async def update_user(user_id: str, user: UserUpdate,
                 user.workout_environment,
                 user.gym_name,
                 workout_variety=user.workout_variety,
+                workout_days=user.workout_days,
             )
             update_data["preferences"] = final_preferences
             logger.info(f"🔍 [DEBUG] Final preferences to save: {final_preferences}")
@@ -852,6 +868,35 @@ async def update_user(user_id: str, user: UserUpdate,
                     logger.warning(
                         f"[Equipment-Change] Invalidation failed for user "
                         f"{user_id}: {inval_err}",
+                        exc_info=True,
+                    )
+
+            # Schedule-change → workout-invalidation hook. When the user
+            # removes a day from workout_days, drop today's pending workout
+            # if today is no longer scheduled, plus upcoming pre-cached
+            # workouts on now-removed days. Mirror of equipment hook above.
+            if schedule_changed:
+                try:
+                    from api.v1.workouts.utils import (
+                        invalidate_workouts_after_schedule_change,
+                    )
+                    from core.timezone_utils import resolve_timezone
+
+                    tz = resolve_timezone(existing.get("timezone"))
+                    sched_counts = invalidate_workouts_after_schedule_change(
+                        user_id=user_id,
+                        timezone_str=tz,
+                        new_workout_days=user.workout_days or [],
+                    )
+                    logger.info(
+                        f"[Schedule-Change] User {user_id}: invalidated "
+                        f"{sched_counts['today_deleted']} today + "
+                        f"{sched_counts['upcoming_deleted']} upcoming workouts"
+                    )
+                except Exception as sched_err:
+                    logger.warning(
+                        f"[Schedule-Change] Invalidation failed for user "
+                        f"{user_id}: {sched_err}",
                         exc_info=True,
                     )
 
@@ -1305,6 +1350,27 @@ async def full_reset(user_id: str,
         if not existing:
             logger.warning(f"User not found for reset: id={user_id}")
             raise HTTPException(status_code=404, detail="User not found")
+
+        # App Store Guideline 5.1.1.v — Sign in with Apple users must have
+        # their refresh_token revoked at Apple's /auth/revoke before we tear
+        # down the local account. Best-effort: a missing token (Apple env
+        # vars unset, or user signed up pre-revocation) does not block
+        # deletion. Apple grades reviewers on the attempt being made, not on
+        # success of every individual revoke.
+        apple_refresh = existing.get("apple_refresh_token")
+        if apple_refresh:
+            try:
+                from services.apple_auth_revocation import revoke_apple_token
+                revoked = await revoke_apple_token(refresh_token=apple_refresh)
+                logger.info(
+                    "Apple revoke for user %s: %s", user_id,
+                    "ok" if revoked else "skipped/failed (non-blocking)",
+                )
+            except Exception as e:
+                logger.warning(
+                    "Apple revoke threw for user %s (non-blocking): %s",
+                    user_id, e,
+                )
 
         # Run the security-critical path inline (DB cascade + auth delete)
         # so the user's JWT is invalidated before we return. Defer the

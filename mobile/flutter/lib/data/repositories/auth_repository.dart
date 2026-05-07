@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io' show Platform;
 import 'dart:math';
 import 'package:crypto/crypto.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -215,12 +216,27 @@ class AuthRepository {
       final supabaseAccessToken = response.session!.accessToken;
       debugPrint('✅ [Auth] Supabase auth success, authenticating with backend...');
 
-      // Backend uses the same Google OAuth request shape (it accepts any
-      // Supabase access token regardless of upstream provider — the backend
-      // only verifies it against Supabase, not the original IdP).
+      // Backend's /auth/google endpoint accepts any Supabase access token
+      // regardless of upstream IdP. We additionally forward Apple-only
+      // payload bits the backend needs for compliance:
+      //   - apple_authorization_code: backend exchanges for refresh_token
+      //     used at App Store-required /auth/revoke on account deletion.
+      //   - apple_given_name / apple_family_name: Apple emits these ONLY on
+      //     the first sign-in for a given (Apple ID, app) pair. If we don't
+      //     forward them now, users.name lands empty and we can never
+      //     recover the real name.
+      final backendBody = <String, dynamic>{
+        'access_token': supabaseAccessToken,
+        if (credential.authorizationCode.isNotEmpty)
+          'apple_authorization_code': credential.authorizationCode,
+        if ((credential.givenName ?? '').isNotEmpty)
+          'apple_given_name': credential.givenName,
+        if ((credential.familyName ?? '').isNotEmpty)
+          'apple_family_name': credential.familyName,
+      };
       final backendResponse = await _apiClient.post(
         ApiConstants.auth,
-        data: app_user.GoogleAuthRequest(accessToken: supabaseAccessToken).toJson(),
+        data: backendBody,
       );
 
       if (backendResponse.statusCode == 200 || backendResponse.statusCode == 201) {
@@ -395,6 +411,22 @@ class AuthRepository {
     } catch (e) {
       debugPrint('❌ [Auth] Password reset error: $e');
       // Don't rethrow - always show success for security
+    }
+  }
+
+  /// Fully revoke the Google session for this device. Used only from the
+  /// account-deletion path — a regular sign-out only calls signOut() so the
+  /// account picker is shown on next login. disconnect() additionally
+  /// revokes our app's grant on Google's side, which is the right behavior
+  /// when the user is permanently destroying their account.
+  Future<void> disconnectGoogle() async {
+    try {
+      await _googleSignIn.disconnect();
+      debugPrint('✅ [Auth] Google session disconnected');
+    } catch (e) {
+      // disconnect() throws if the user wasn't signed in via Google — safe
+      // to ignore; we just want to ensure the grant is gone if it existed.
+      debugPrint('⚠️ [Auth] Google disconnect skipped: $e');
     }
   }
 
@@ -579,7 +611,16 @@ class AuthRepository {
 
         int? lookupStatus;
         try {
-          final response = await _apiClient.get('${ApiConstants.users}/by-auth/$authId');
+          // 404 here is an EXPECTED state (auth row exists but public.users
+          // was deleted — orphan auth user). Whitelist it through
+          // validateStatus so Dio doesn't throw, which keeps the Sentry
+          // HTTP integration from reporting it as a production error.
+          final response = await _apiClient.get(
+            '${ApiConstants.users}/by-auth/$authId',
+            options: Options(
+              validateStatus: (s) => s != null && (s < 400 || s == 404),
+            ),
+          );
           lookupStatus = response.statusCode;
 
           if (response.statusCode == 200) {

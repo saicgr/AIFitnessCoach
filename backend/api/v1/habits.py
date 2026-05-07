@@ -61,7 +61,13 @@ logger = get_logger(__name__)
 @router.get("/{user_id}", response_model=List[Habit])
 async def get_habits(
     user_id: str,
-    is_active: bool = Query(True, description="Filter by active status"),
+    # `is_active` accepts a permissive string instead of strict bool so older
+    # clients sending oddly-encoded values (e.g. `is_active=null`,
+    # `is_active=`, `is_active=1`) can't trigger Pydantic's 422 validator.
+    # Sentry reported a 422 on this endpoint from build 1.2.65+1138 with
+    # no query-param details; this is the resilience fix for that class
+    # of stale-client failures.
+    is_active: Optional[str] = Query("true", description="Filter by active status (true/false/1/0)"),
     category: Optional[str] = Query(None, description="Filter by category"),
     current_user: dict = Depends(get_current_user),
 ):
@@ -76,7 +82,22 @@ async def get_habits(
     Returns:
         List of habits
     """
-    logger.info(f"🔍 Getting habits for user={user_id}, is_active={is_active}, category={category}")
+    # Coerce the loose string into a tri-state: True (filter active=true),
+    # False (filter active=false), or None (no filter). Default = True.
+    if is_active is None:
+        active_filter: Optional[bool] = True
+    else:
+        v = str(is_active).strip().lower()
+        if v in ("true", "1", "yes", "y", "on"):
+            active_filter = True
+        elif v in ("false", "0", "no", "n", "off"):
+            active_filter = False
+        elif v in ("", "null", "none", "all", "any"):
+            active_filter = None
+        else:
+            # Unknown — fall back to default True rather than erroring.
+            active_filter = True
+    logger.info(f"🔍 Getting habits for user={user_id}, is_active={active_filter}, category={category}")
 
     try:
         verify_user_ownership(current_user, user_id)
@@ -84,8 +105,8 @@ async def get_habits(
 
         query = db.client.table("habits").select("*").eq("user_id", user_id)
 
-        if is_active is not None:
-            query = query.eq("is_active", is_active)
+        if active_filter is not None:
+            query = query.eq("is_active", active_filter)
 
         if category:
             query = query.eq("category", category)

@@ -113,13 +113,19 @@ class ChatMessageBubble extends ConsumerWidget {
                             builder: (_) => FullscreenImageViewer(
                               imageUrl: message.mediaUrl,
                               localFilePath: message.localFilePath,
-                              heroTag: 'chat_media_${message.id}',
+                              // Match the bubble's Hero tag exactly. Suffixing
+                              // with identityHashCode guarantees uniqueness
+                              // even when two messages briefly share the same
+                              // id (e.g. optimistic-send + server echo).
+                              heroTag:
+                                  'chat_media_${message.id}_${identityHashCode(message)}',
                             ),
                           ),
                         )
                     : null,
                 child: Hero(
-                  tag: 'chat_media_${message.id}',
+                  tag:
+                      'chat_media_${message.id}_${identityHashCode(message)}',
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(10),
                     child: SizedBox(

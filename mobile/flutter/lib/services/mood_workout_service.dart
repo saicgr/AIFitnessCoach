@@ -12,7 +12,6 @@ import '../data/models/workout.dart';
 import '../data/models/workout_style.dart';
 import '../data/repositories/offline_workout_repository.dart';
 import '../data/services/exercise_library_loader.dart';
-import 'hrv_recovery_service.dart';
 import 'mood_workout_adaptation.dart';
 import 'mood_workout_context.dart';
 import 'mood_workout_presets.dart';
@@ -61,23 +60,15 @@ class MoodWorkoutService {
     var effectiveDifficulty = difficulty ?? preset.recommendedDifficulty;
     var effectiveDuration = duration ?? preset.recommendedDuration;
 
-    // Safety gate: Tired + low recovery readiness → 10 min stretching.
-    // (HRV/sleep-driven downgrade so users don't grind while fried.)
-    if (mood == Mood.tired) {
-      final hrv = await HrvRecoveryService.getModifiers();
-      if (hrv.hasData && hrv.readinessLevel == ReadinessLevel.low) {
-        effectiveStyle = WorkoutStyle.yogaStretch;
-        effectiveDuration = effectiveDuration > 10 ? 10 : effectiveDuration;
-        debugPrint(
-          '🛡 [MoodWorkout] Tired + low readiness → capping to 10min stretch',
-        );
-      }
-    }
+    // HRV-based "tired + low readiness" downgrade was removed 2026-05-07
+    // along with Health Connect HRV permission (Google Play minimum scope).
+    // Mood = Mood.tired now flows through MoodWorkoutContext like the
+    // others — no special HRV-gated cap here.
 
-    // Contextual intelligence: time-of-day, comeback streak, mood repeats,
-    // general HRV downgrade. Only applies modifications the user didn't
-    // explicitly override (we never undo a deliberate style pick, but we
-    // may soft-cap difficulty / duration when context warrants it).
+    // Contextual intelligence: time-of-day, comeback streak, mood repeats.
+    // Only applies modifications the user didn't explicitly override (we
+    // never undo a deliberate style pick, but we may soft-cap difficulty /
+    // duration when context warrants it).
     final ctxAdjustment = await MoodWorkoutContext.evaluate(
       mood: mood,
       currentStyle: effectiveStyle,

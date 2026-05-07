@@ -87,7 +87,10 @@ class VolumeChart extends StatelessWidget {
       );
     }
 
-    final yMax = (maxVolume * 1.2).ceilToDouble();
+    // Floor to a positive value: a yMax of 0 makes fl_chart's
+    // iterateThroughAxis divide by zero ("Unsupported operation: Infinity
+    // or NaN toInt") on devices with no logged volume yet.
+    final yMax = ((maxVolume * 1.2).ceilToDouble()).clamp(1.0, double.infinity);
 
     return Container(
       padding: const EdgeInsets.all(16),

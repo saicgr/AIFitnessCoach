@@ -31,7 +31,6 @@ extension QuickWorkoutEngineExt on QuickWorkoutEngine {
     MesocycleContext? mesocycleContext,
     Map<String, double> collaborativeScores = const {},
     Map<String, double> sfrScores = const {},
-    HrvRecoveryModifiers? hrvModifiers,
   }) {
     // =====================================================================
     // Phase 1: Preparation
@@ -87,12 +86,6 @@ extension QuickWorkoutEngineExt on QuickWorkoutEngine {
     // Mesocycle intensity override
     if (mesocycleContext != null) {
       intensityMultiplier *= mesocycleContext.intensityMultiplier;
-    }
-
-    // HRV/sleep recovery modifiers (Feature 4)
-    if (hrvModifiers != null && hrvModifiers.hasData) {
-      volumeMultiplier *= hrvModifiers.volumeMultiplier;
-      intensityMultiplier *= hrvModifiers.intensityMultiplier;
     }
 
     // RPE floor for very short workouts — ensure sufficient stimulus
@@ -833,8 +826,6 @@ extension QuickWorkoutEngineExt on QuickWorkoutEngine {
         'mesocycle_week': mesocycleContext?.weekNumber,
         'has_collaborative_scores': collaborativeScores.isNotEmpty,
         'has_sfr_scores': sfrScores.isNotEmpty,
-        'has_hrv_data': hrvModifiers?.hasData ?? false,
-        'hrv_readiness': hrvModifiers?.readinessLevel.name,
         'generation_source': 'quick_workout',
       },
       createdAt: now.toIso8601String(),

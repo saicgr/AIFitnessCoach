@@ -30,13 +30,13 @@ class PendingWorkoutImport {
   final int durationMinutes;
 
   // --- Envelope / summary
+  // basalCalories, flightsClimbed, elevationGainM removed 2026-05-07 —
+  // Google Play Health Connect minimum-scope policy required dropping
+  // BASAL_METABOLIC_RATE / FLOORS_CLIMBED / ELEVATION_GAINED permissions.
   final double? caloriesBurned;      // active kcal
   final double? totalCalories;       // active + basal kcal
-  final double? basalCalories;
-  final double? distanceMeters;
+  final double? distanceMeters;      // still populated from envelope (Strava/Apple Watch)
   final int? totalSteps;
-  final int? flightsClimbed;
-  final double? elevationGainM;
   final String? sourceName;          // app name (e.g. "Zepp")
   final String? sourceDevice;        // device model (e.g. "Amazfit T-Rex 3")
 
@@ -49,29 +49,24 @@ class PendingWorkoutImport {
   final int? recoveryHrBpm;
   final int? recoveryDropBpm;
 
-  // --- Pace / speed (from distance deltas)
-  final double? avgSpeedMps;
-  final double? maxSpeedMps;
-  final double? paceSecPerKm;
-  final List<Map<String, dynamic>> paceSamples; // [{'t': sec, 'mps': double}]
+  // --- Pace / speed: removed 2026-05-07. Required DISTANCE / SPEED
+  // permissions that no longer flow through Health Connect.
 
   // --- Cadence (from step deltas)
   final double? avgCadenceSpm;
   final double? maxCadenceSpm;
   final List<Map<String, dynamic>> cadenceSamples; // [{'t': sec, 'spm': double}]
-  final double? avgStrideIn;
+  // avgStrideIn removed — depends on distance which is no longer enriched.
 
   // --- Vitals
-  final double? avgSpo2;
-  final double? avgRespiratoryRate;
-  final double? peakBodyTemperatureC;
-  final double? avgHrvRmssdPre;
-  final double? avgHrvRmssdPost;
+  // avgSpo2, avgRespiratoryRate, peakBodyTemperatureC, avgHrvRmssd*
+  // removed 2026-05-07 — Google Play Health Connect minimum-scope policy
+  // required dropping OXYGEN_SATURATION / RESPIRATORY_RATE / BODY_TEMPERATURE
+  // / HEART_RATE_VARIABILITY permissions.
   final int? restingHrSameDay;
   final double? bodyWeightKgNearest;
 
-  // --- Splits + training load
-  final List<Map<String, dynamic>> splits;
+  // --- Splits + training load. splits removed (depend on distance).
   final double? trainingLoadTrimp;
   final int? effortScore; // 0-100
 
@@ -84,11 +79,8 @@ class PendingWorkoutImport {
     required this.durationMinutes,
     this.caloriesBurned,
     this.totalCalories,
-    this.basalCalories,
     this.distanceMeters,
     this.totalSteps,
-    this.flightsClimbed,
-    this.elevationGainM,
     this.sourceName,
     this.sourceDevice,
     this.avgHeartRate,
@@ -98,22 +90,11 @@ class PendingWorkoutImport {
     this.hrZonesPct = const {},
     this.recoveryHrBpm,
     this.recoveryDropBpm,
-    this.avgSpeedMps,
-    this.maxSpeedMps,
-    this.paceSecPerKm,
-    this.paceSamples = const [],
     this.avgCadenceSpm,
     this.maxCadenceSpm,
     this.cadenceSamples = const [],
-    this.avgStrideIn,
-    this.avgSpo2,
-    this.avgRespiratoryRate,
-    this.peakBodyTemperatureC,
-    this.avgHrvRmssdPre,
-    this.avgHrvRmssdPost,
     this.restingHrSameDay,
     this.bodyWeightKgNearest,
-    this.splits = const [],
     this.trainingLoadTrimp,
     this.effortScore,
   });
@@ -141,11 +122,8 @@ class PendingWorkoutImport {
     String? activityKind,
     double? caloriesBurned,
     double? totalCalories,
-    double? basalCalories,
     double? distanceMeters,
     int? totalSteps,
-    int? flightsClimbed,
-    double? elevationGainM,
     String? sourceName,
     String? sourceDevice,
     int? avgHeartRate,
@@ -155,22 +133,11 @@ class PendingWorkoutImport {
     Map<String, double>? hrZonesPct,
     int? recoveryHrBpm,
     int? recoveryDropBpm,
-    double? avgSpeedMps,
-    double? maxSpeedMps,
-    double? paceSecPerKm,
-    List<Map<String, dynamic>>? paceSamples,
     double? avgCadenceSpm,
     double? maxCadenceSpm,
     List<Map<String, dynamic>>? cadenceSamples,
-    double? avgStrideIn,
-    double? avgSpo2,
-    double? avgRespiratoryRate,
-    double? peakBodyTemperatureC,
-    double? avgHrvRmssdPre,
-    double? avgHrvRmssdPost,
     int? restingHrSameDay,
     double? bodyWeightKgNearest,
-    List<Map<String, dynamic>>? splits,
     double? trainingLoadTrimp,
     int? effortScore,
   }) {
@@ -183,11 +150,8 @@ class PendingWorkoutImport {
       durationMinutes: durationMinutes,
       caloriesBurned: caloriesBurned ?? this.caloriesBurned,
       totalCalories: totalCalories ?? this.totalCalories,
-      basalCalories: basalCalories ?? this.basalCalories,
       distanceMeters: distanceMeters ?? this.distanceMeters,
       totalSteps: totalSteps ?? this.totalSteps,
-      flightsClimbed: flightsClimbed ?? this.flightsClimbed,
-      elevationGainM: elevationGainM ?? this.elevationGainM,
       sourceName: sourceName ?? this.sourceName,
       sourceDevice: sourceDevice ?? this.sourceDevice,
       avgHeartRate: avgHeartRate ?? this.avgHeartRate,
@@ -197,23 +161,11 @@ class PendingWorkoutImport {
       hrZonesPct: hrZonesPct ?? this.hrZonesPct,
       recoveryHrBpm: recoveryHrBpm ?? this.recoveryHrBpm,
       recoveryDropBpm: recoveryDropBpm ?? this.recoveryDropBpm,
-      avgSpeedMps: avgSpeedMps ?? this.avgSpeedMps,
-      maxSpeedMps: maxSpeedMps ?? this.maxSpeedMps,
-      paceSecPerKm: paceSecPerKm ?? this.paceSecPerKm,
-      paceSamples: paceSamples ?? this.paceSamples,
       avgCadenceSpm: avgCadenceSpm ?? this.avgCadenceSpm,
       maxCadenceSpm: maxCadenceSpm ?? this.maxCadenceSpm,
       cadenceSamples: cadenceSamples ?? this.cadenceSamples,
-      avgStrideIn: avgStrideIn ?? this.avgStrideIn,
-      avgSpo2: avgSpo2 ?? this.avgSpo2,
-      avgRespiratoryRate: avgRespiratoryRate ?? this.avgRespiratoryRate,
-      peakBodyTemperatureC:
-          peakBodyTemperatureC ?? this.peakBodyTemperatureC,
-      avgHrvRmssdPre: avgHrvRmssdPre ?? this.avgHrvRmssdPre,
-      avgHrvRmssdPost: avgHrvRmssdPost ?? this.avgHrvRmssdPost,
       restingHrSameDay: restingHrSameDay ?? this.restingHrSameDay,
       bodyWeightKgNearest: bodyWeightKgNearest ?? this.bodyWeightKgNearest,
-      splits: splits ?? this.splits,
       trainingLoadTrimp: trainingLoadTrimp ?? this.trainingLoadTrimp,
       effortScore: effortScore ?? this.effortScore,
     );
@@ -236,11 +188,8 @@ class PendingWorkoutImport {
     if (sourceDevice != null) m['source_device'] = sourceDevice;
     if (caloriesBurned != null) m['calories_active'] = caloriesBurned;
     if (totalCalories != null) m['calories_total'] = totalCalories;
-    if (basalCalories != null) m['calories_basal'] = basalCalories;
     if (distanceMeters != null) m['distance_m'] = distanceMeters;
     if (totalSteps != null) m['steps'] = totalSteps;
-    if (flightsClimbed != null) m['flights_climbed'] = flightsClimbed;
-    if (elevationGainM != null) m['elevation_gain_m'] = elevationGainM;
     if (avgHeartRate != null) m['avg_heart_rate'] = avgHeartRate;
     if (maxHeartRate != null) m['max_heart_rate'] = maxHeartRate;
     if (minHeartRate != null) m['min_heart_rate'] = minHeartRate;
@@ -248,30 +197,21 @@ class PendingWorkoutImport {
     if (hrZonesPct.isNotEmpty) m['hr_zones_pct'] = hrZonesPct;
     if (recoveryHrBpm != null) m['recovery_hr_bpm'] = recoveryHrBpm;
     if (recoveryDropBpm != null) m['recovery_drop_bpm'] = recoveryDropBpm;
-    if (avgSpeedMps != null) m['avg_speed_mps'] = avgSpeedMps;
-    if (maxSpeedMps != null) m['max_speed_mps'] = maxSpeedMps;
-    if (paceSecPerKm != null) m['pace_sec_per_km'] = paceSecPerKm;
-    if (paceSamples.isNotEmpty) m['pace_samples'] = paceSamples;
     if (avgCadenceSpm != null) m['avg_cadence_spm'] = avgCadenceSpm;
     if (maxCadenceSpm != null) m['max_cadence_spm'] = maxCadenceSpm;
     if (cadenceSamples.isNotEmpty) m['cadence_samples'] = cadenceSamples;
-    if (avgStrideIn != null) m['avg_stride_in'] = avgStrideIn;
-    if (avgSpo2 != null) m['avg_spo2'] = avgSpo2;
-    if (avgRespiratoryRate != null) {
-      m['avg_respiratory_rate'] = avgRespiratoryRate;
-    }
-    if (peakBodyTemperatureC != null) {
-      m['peak_body_temperature_c'] = peakBodyTemperatureC;
-    }
-    if (avgHrvRmssdPre != null) m['avg_hrv_rmssd_pre'] = avgHrvRmssdPre;
-    if (avgHrvRmssdPost != null) m['avg_hrv_rmssd_post'] = avgHrvRmssdPost;
     if (restingHrSameDay != null) m['resting_hr_same_day'] = restingHrSameDay;
     if (bodyWeightKgNearest != null) {
       m['body_weight_kg_nearest'] = bodyWeightKgNearest;
     }
-    if (splits.isNotEmpty) m['splits'] = splits;
     if (trainingLoadTrimp != null) m['training_load_trimp'] = trainingLoadTrimp;
     if (effortScore != null) m['effort_score'] = effortScore;
+    // basal_calories, flights_climbed, elevation_gain_m, avg_speed_mps,
+    // max_speed_mps, pace_sec_per_km, pace_samples, avg_stride_in, avg_spo2,
+    // avg_respiratory_rate, peak_body_temperature_c, avg_hrv_rmssd_pre/post,
+    // splits — all dropped 2026-05-07 (Google Play Health Connect minimum
+    // scope). The synced workout detail UI null-checks each metadata key,
+    // so missing keys simply hide the corresponding tile.
     return m;
   }
 
@@ -532,32 +472,27 @@ class HealthImportService {
 
     // Window data: everything during [start, end + 2min recovery buffer].
     final windowEnd = end.add(const Duration(minutes: 2));
+    // Distance / FlightsClimbed / BasalEnergy / BloodOxygen / BodyTemperature
+    // / RespiratoryRate / HRV (RMSSD + SDNN) were removed 2026-05-07 to
+    // comply with Google Play's Health Connect minimum-scope policy. Workout
+    // enrichment now only pulls heart rate, steps, and active/total energy.
     final windowPoints = await healthService.getDataInRange(
       start: start,
       end: windowEnd,
       types: const [
         HealthDataType.HEART_RATE,
         HealthDataType.STEPS,
-        HealthDataType.DISTANCE_DELTA,
-        HealthDataType.DISTANCE_WALKING_RUNNING,
         HealthDataType.ACTIVE_ENERGY_BURNED,
         HealthDataType.TOTAL_CALORIES_BURNED,
-        HealthDataType.BASAL_ENERGY_BURNED,
-        HealthDataType.FLIGHTS_CLIMBED,
-        HealthDataType.BLOOD_OXYGEN,
-        HealthDataType.BODY_TEMPERATURE,
-        HealthDataType.RESPIRATORY_RATE,
       ],
     );
 
-    // Pre-window data: HRV / resting HR captured in the 4h before workout.
+    // Pre-window data: resting HR captured in the 4h before workout.
     final preStart = start.subtract(const Duration(hours: 4));
     final prePoints = await healthService.getDataInRange(
       start: preStart,
       end: start,
       types: const [
-        HealthDataType.HEART_RATE_VARIABILITY_RMSSD,
-        HealthDataType.HEART_RATE_VARIABILITY_SDNN,
         HealthDataType.RESTING_HEART_RATE,
       ],
     );
@@ -569,17 +504,14 @@ class HealthImportService {
       types: const [HealthDataType.WEIGHT],
     );
 
-    // Partition windowPoints by type.
+    // Partition windowPoints by type. Distance / FlightsClimbed / Basal /
+    // SpO2 / BodyTemperature / RespiratoryRate were removed from the
+    // request set on 2026-05-07 (Google Play minimum scope), so the
+    // matching buckets are gone.
     final hrRaw = <HealthDataPoint>[];
     final stepsRaw = <HealthDataPoint>[];
-    final distRaw = <HealthDataPoint>[];
     final activeEnergy = <HealthDataPoint>[];
     final totalEnergy = <HealthDataPoint>[];
-    final basalEnergy = <HealthDataPoint>[];
-    final flights = <HealthDataPoint>[];
-    final spo2 = <HealthDataPoint>[];
-    final bodyTemp = <HealthDataPoint>[];
-    final respRate = <HealthDataPoint>[];
 
     for (final p in windowPoints) {
       switch (p.type) {
@@ -589,30 +521,11 @@ class HealthImportService {
         case HealthDataType.STEPS:
           stepsRaw.add(p);
           break;
-        case HealthDataType.DISTANCE_DELTA:
-        case HealthDataType.DISTANCE_WALKING_RUNNING:
-          distRaw.add(p);
-          break;
         case HealthDataType.ACTIVE_ENERGY_BURNED:
           activeEnergy.add(p);
           break;
         case HealthDataType.TOTAL_CALORIES_BURNED:
           totalEnergy.add(p);
-          break;
-        case HealthDataType.BASAL_ENERGY_BURNED:
-          basalEnergy.add(p);
-          break;
-        case HealthDataType.FLIGHTS_CLIMBED:
-          flights.add(p);
-          break;
-        case HealthDataType.BLOOD_OXYGEN:
-          spo2.add(p);
-          break;
-        case HealthDataType.BODY_TEMPERATURE:
-          bodyTemp.add(p);
-          break;
-        case HealthDataType.RESPIRATORY_RATE:
-          respRate.add(p);
           break;
         default:
           break;
@@ -701,16 +614,18 @@ class HealthImportService {
       recoveryDrop = maxHr - recoveryHr;
     }
 
-    // --- Energy
+    // --- Energy. Basal removed 2026-05-07 — minimum scope.
     double? activeKcal = _sum(activeEnergy);
     if (activeKcal == null && pending.caloriesBurned != null) {
       activeKcal = pending.caloriesBurned;
     }
     final totalKcal = _sum(totalEnergy);
-    final basalKcal = _sum(basalEnergy);
 
-    // --- Distance (prefer envelope if present)
-    double? totalDistance = pending.distanceMeters ?? _sum(distRaw);
+    // Distance is no longer pulled from Health Connect / HealthKit. If the
+    // pending envelope (e.g. Apple Watch workout summary) already carried a
+    // distance, keep it; otherwise null. Distance-derived series (pace,
+    // speed, splits, stride) are no longer computed.
+    final totalDistance = pending.distanceMeters;
 
     // --- Steps (prefer envelope if present)
     int? totalSteps = pending.totalSteps;
@@ -719,39 +634,9 @@ class HealthImportService {
       if (sum != null) totalSteps = sum.round();
     }
 
-    // --- Flights + elevation
-    int? flightsClimbed;
-    final flightsSum = _sum(flights);
-    if (flightsSum != null) flightsClimbed = flightsSum.round();
-    double? elevationGainM =
-        flightsClimbed != null ? flightsClimbed * 3.0 : null;
-
-    // --- Speed / pace series (bucketed 30s deltas from distance)
-    final paceSeries = <Map<String, dynamic>>[];
-    double? avgSpeedMps, maxSpeedMps, paceSecPerKm;
-    if (distRaw.isNotEmpty && totalDistance != null && totalDistance > 0) {
-      final bucketSec = math.max(30.0, durationSec / 60);
-      final bucketMeters = <int, double>{};
-      for (final p in distRaw) {
-        final t = p.dateTo.difference(start).inSeconds.toDouble();
-        if (t < 0 || t > durationSec) continue;
-        final b = (t / bucketSec).floor();
-        final v = (p.value as NumericHealthValue).numericValue.toDouble();
-        bucketMeters[b] = (bucketMeters[b] ?? 0) + v;
-      }
-      final keys = bucketMeters.keys.toList()..sort();
-      final speeds = <double>[];
-      for (final k in keys) {
-        final mps = bucketMeters[k]! / bucketSec;
-        paceSeries.add({'t': k * bucketSec, 'mps': mps});
-        speeds.add(mps);
-      }
-      if (speeds.isNotEmpty) {
-        avgSpeedMps = totalDistance / durationSec;
-        maxSpeedMps = speeds.reduce((a, b) => a > b ? a : b);
-        paceSecPerKm = 1000 / avgSpeedMps;
-      }
-    }
+    // FlightsClimbed, ElevationGained, pace/speed series removed 2026-05-07
+    // (minimum scope) — locals deleted along with the matching copyWith
+    // arguments below.
 
     // --- Cadence series (bucketed 30s step-deltas → spm)
     final cadenceSeries = <Map<String, dynamic>>[];
@@ -779,28 +664,10 @@ class HealthImportService {
       }
     }
 
-    // --- Stride length — inches
-    double? avgStrideIn;
-    if (totalSteps != null &&
-        totalSteps > 0 &&
-        totalDistance != null &&
-        totalDistance > 0) {
-      final meters = totalDistance / totalSteps;
-      avgStrideIn = meters * 39.3701;
-    }
-
-    // --- Vitals
-    final avgSpo2 = _average(spo2);
-    final avgResp = _average(respRate);
-    final peakTemp = _peak(bodyTemp);
-
-    // --- HRV (post) from recovery window
-    final hrvPoints = prePoints
-        .where((p) =>
-            p.type == HealthDataType.HEART_RATE_VARIABILITY_RMSSD ||
-            p.type == HealthDataType.HEART_RATE_VARIABILITY_SDNN)
-        .toList();
-    final avgHrvPre = _average(hrvPoints);
+    // Stride length, SpO2, respiratory rate, body temperature, and HRV
+    // were all removed 2026-05-07 (Google Play Health Connect minimum
+    // scope) — the matching PendingWorkoutImport fields and copyWith
+    // arguments are gone.
 
     // Resting HR same-day
     final rhrPoints = prePoints
@@ -822,16 +689,7 @@ class HealthImportService {
           .toDouble();
     }
 
-    // --- Splits (distance-based, only if we have distance series)
-    final splits = (totalDistance != null && totalDistance > 1000)
-        ? _buildSplits(
-            distancePoints: distRaw,
-            hrSeries: hrSeries,
-            workoutStart: start,
-            splitMeters: 1609.344, // miles (US default); later: user pref
-            unitLabel: 'mi',
-          )
-        : <Map<String, dynamic>>[];
+    // Distance-based splits removed (no distance series source).
 
     // --- TRIMP (Banister, Edwards-simplified)
     double? trimp;
@@ -853,11 +711,8 @@ class HealthImportService {
     return pending.copyWith(
       caloriesBurned: activeKcal,
       totalCalories: totalKcal,
-      basalCalories: basalKcal,
       distanceMeters: totalDistance,
       totalSteps: totalSteps,
-      flightsClimbed: flightsClimbed,
-      elevationGainM: elevationGainM,
       avgHeartRate: avgHr,
       maxHeartRate: maxHr,
       minHeartRate: minHr,
@@ -867,21 +722,11 @@ class HealthImportService {
       hrZonesPct: zonesPct,
       recoveryHrBpm: recoveryHr,
       recoveryDropBpm: recoveryDrop,
-      avgSpeedMps: avgSpeedMps,
-      maxSpeedMps: maxSpeedMps,
-      paceSecPerKm: paceSecPerKm,
-      paceSamples: paceSeries,
       avgCadenceSpm: avgCadenceSpm,
       maxCadenceSpm: maxCadenceSpm,
       cadenceSamples: cadenceSeries,
-      avgStrideIn: avgStrideIn,
-      avgSpo2: avgSpo2,
-      avgRespiratoryRate: avgResp,
-      peakBodyTemperatureC: peakTemp,
-      avgHrvRmssdPre: avgHrvPre,
       restingHrSameDay: restingHr,
       bodyWeightKgNearest: bodyKg,
-      splits: splits,
       trainingLoadTrimp: trimp,
       effortScore: effortScore,
     );
@@ -913,72 +758,6 @@ class HealthImportService {
     return s;
   }
 
-  static double? _average(List<HealthDataPoint> points) {
-    if (points.isEmpty) return null;
-    double s = 0;
-    for (final p in points) {
-      s += (p.value as NumericHealthValue).numericValue.toDouble();
-    }
-    return s / points.length;
-  }
-
-  static double? _peak(List<HealthDataPoint> points) {
-    if (points.isEmpty) return null;
-    double m = double.negativeInfinity;
-    for (final p in points) {
-      final v = (p.value as NumericHealthValue).numericValue.toDouble();
-      if (v > m) m = v;
-    }
-    return m == double.negativeInfinity ? null : m;
-  }
-
-  /// Build per-split summaries by integrating the distance time-series.
-  /// `hrSeries` is the already-downsampled HR data used for avg-HR per split.
-  static List<Map<String, dynamic>> _buildSplits({
-    required List<HealthDataPoint> distancePoints,
-    required List<({double t, int bpm})> hrSeries,
-    required DateTime workoutStart,
-    required double splitMeters,
-    required String unitLabel,
-  }) {
-    if (distancePoints.isEmpty) return [];
-    // Sort chronologically.
-    final sorted = [...distancePoints]
-      ..sort((a, b) => a.dateTo.compareTo(b.dateTo));
-    double cum = 0;
-    final boundaries = <double>[]; // seconds-from-start at each split
-    for (final p in sorted) {
-      cum += (p.value as NumericHealthValue).numericValue.toDouble();
-      while (cum >= (boundaries.length + 1) * splitMeters) {
-        final tSec = p.dateTo.difference(workoutStart).inSeconds.toDouble();
-        boundaries.add(tSec);
-      }
-    }
-    final splits = <Map<String, dynamic>>[];
-    double prev = 0;
-    for (int i = 0; i < boundaries.length; i++) {
-      final t = boundaries[i];
-      final duration = (t - prev).round();
-      if (duration <= 0) {
-        prev = t;
-        continue;
-      }
-      final within =
-          hrSeries.where((s) => s.t >= prev && s.t <= t).toList();
-      int? avgHr;
-      if (within.isNotEmpty) {
-        avgHr =
-            within.map((s) => s.bpm).reduce((a, b) => a + b) ~/ within.length;
-      }
-      splits.add({
-        'i': i,
-        'unit': unitLabel,
-        'duration_sec': duration,
-        if (avgHr != null) 'avg_hr': avgHr,
-        'avg_speed_mps': splitMeters / duration,
-      });
-      prev = t;
-    }
-    return splits;
-  }
+  // _average / _peak / _buildSplits removed 2026-05-07 along with the
+  // distance / vitals enrichment they fed (Google Play minimum scope).
 }

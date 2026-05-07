@@ -45,7 +45,9 @@ class StrengthChart extends StatelessWidget {
         maxVolume = entry.totalVolumeKg;
       }
     }
-    final yMax = (maxVolume * 1.2).ceilToDouble();
+    // Floor to ≥ 1.0 — fl_chart's iterateThroughAxis divides by the tick
+    // interval, which is 0 when yMax is 0 ("Infinity or NaN toInt").
+    final yMax = ((maxVolume * 1.2).ceilToDouble()).clamp(1.0, double.infinity);
 
     // Build line data for each muscle group
     final lineBarsData = <LineChartBarData>[];

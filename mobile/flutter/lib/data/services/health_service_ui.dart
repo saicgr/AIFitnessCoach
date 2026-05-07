@@ -3,7 +3,14 @@ part of 'health_service.dart';
 /// Methods extracted from HealthService
 extension HealthServiceExt on HealthService {
 
-  // Data types we want to read from Health Connect
+  // Data types we want to read from Health Connect / HealthKit.
+  //
+  // Removed 2026-05-07 to comply with Google Play "Minimum Scope" Health
+  // Connect Permissions policy: Distance (delta + walking/running),
+  // FloorsClimbed (FLIGHTS_CLIMBED), HeartRateVariability (RMSSD + SDNN),
+  // ElevationGained, Power, Speed, RespiratoryRate, BasalMetabolicRate
+  // (BASAL_ENERGY_BURNED), OxygenSaturation (BLOOD_OXYGEN), BodyTemperature.
+  // None of these surface in the user-facing product.
   static final List<HealthDataType> _readTypes = [
     // Body measurements
     HealthDataType.WEIGHT,
@@ -12,17 +19,11 @@ extension HealthServiceExt on HealthService {
     // Heart
     HealthDataType.HEART_RATE,
     HealthDataType.RESTING_HEART_RATE,
-    HealthDataType.HEART_RATE_VARIABILITY_SDNN,
-    HealthDataType.HEART_RATE_VARIABILITY_RMSSD,
 
     // Activity
     HealthDataType.STEPS,
-    HealthDataType.DISTANCE_DELTA,          // Android
-    HealthDataType.DISTANCE_WALKING_RUNNING, // iOS
     HealthDataType.ACTIVE_ENERGY_BURNED,
     HealthDataType.TOTAL_CALORIES_BURNED,
-    HealthDataType.BASAL_ENERGY_BURNED,
-    HealthDataType.FLIGHTS_CLIMBED,
 
     // Workout
     HealthDataType.WORKOUT,
@@ -38,12 +39,8 @@ extension HealthServiceExt on HealthService {
     HealthDataType.SLEEP_OUT_OF_BED,
     HealthDataType.SLEEP_SESSION,
 
-    // Vitals (used during workout enrichment + daily summaries)
-    HealthDataType.BLOOD_OXYGEN,
-    HealthDataType.BODY_TEMPERATURE,
-    HealthDataType.RESPIRATORY_RATE,
+    // Hydration
     HealthDataType.WATER,
-    HealthDataType.TOTAL_CALORIES_BURNED,
 
     // Diabetic metrics
     HealthDataType.BLOOD_GLUCOSE,
@@ -176,7 +173,10 @@ extension HealthServiceExt on HealthService {
   // Recovery Metrics
   // ============================================
 
-  /// Get recovery metrics (resting HR, HRV, SpO2) in parallel
+  /// Get recovery metrics. HRV and SpO2 were removed 2026-05-07 (Google Play
+  /// minimum scope), so this now only returns resting heart rate. The
+  /// RecoveryMetrics class still carries hrv/bloodOxygen fields for
+  /// backwards compatibility — they are always null.
   Future<RecoveryMetrics> getRecoveryMetrics() async {
     try {
       await _ensureConfigured();
@@ -185,9 +185,6 @@ extension HealthServiceExt on HealthService {
 
       final types = _getAvailableTypes([
         HealthDataType.RESTING_HEART_RATE,
-        HealthDataType.HEART_RATE_VARIABILITY_SDNN,
-        HealthDataType.HEART_RATE_VARIABILITY_RMSSD,
-        HealthDataType.BLOOD_OXYGEN,
       ]);
 
       final data = await _health.getHealthDataFromTypes(
@@ -199,34 +196,16 @@ extension HealthServiceExt on HealthService {
       final uniqueData = _health.removeDuplicates(data);
 
       int? restingHR;
-      double? hrv;
-      double? bloodOxygen;
 
-      // Get the most recent value for each type
       for (final point in uniqueData) {
         final value = (point.value as NumericHealthValue).numericValue.toDouble();
-        switch (point.type) {
-          case HealthDataType.RESTING_HEART_RATE:
-            restingHR ??= value.toInt();
-            break;
-          case HealthDataType.HEART_RATE_VARIABILITY_SDNN:
-          case HealthDataType.HEART_RATE_VARIABILITY_RMSSD:
-            hrv ??= value;
-            break;
-          case HealthDataType.BLOOD_OXYGEN:
-            bloodOxygen ??= value;
-            break;
-          default:
-            break;
+        if (point.type == HealthDataType.RESTING_HEART_RATE) {
+          restingHR ??= value.toInt();
         }
       }
 
-      debugPrint('💚 Recovery: HR=$restingHR, HRV=$hrv, SpO2=$bloodOxygen');
-      return RecoveryMetrics(
-        restingHR: restingHR,
-        hrv: hrv,
-        bloodOxygen: bloodOxygen,
-      );
+      debugPrint('💚 Recovery: HR=$restingHR');
+      return RecoveryMetrics(restingHR: restingHR);
     } catch (e) {
       debugPrint('❌ Error getting recovery metrics: $e');
       return const RecoveryMetrics();
@@ -234,7 +213,12 @@ extension HealthServiceExt on HealthService {
   }
 
 
-  /// Get today's vitals data (HRV, SpO2, body temp, respiratory rate, basal cal, flights, water)
+  /// Get today's vitals (heart rate + water).
+  ///
+  /// HRV, SpO2, body temperature, respiratory rate, basal calories, and
+  /// flights climbed were removed 2026-05-07 (Google Play minimum scope).
+  /// The legacy null-valued keys for those metrics were also dropped — UI
+  /// consumers no longer look them up.
   Future<Map<String, dynamic>> getTodayVitals() async {
     try {
       await _ensureConfigured();
@@ -243,13 +227,6 @@ extension HealthServiceExt on HealthService {
 
       final types = _getAvailableTypes([
         HealthDataType.HEART_RATE,
-        HealthDataType.HEART_RATE_VARIABILITY_SDNN,
-        HealthDataType.HEART_RATE_VARIABILITY_RMSSD,
-        HealthDataType.BLOOD_OXYGEN,
-        HealthDataType.BODY_TEMPERATURE,
-        HealthDataType.RESPIRATORY_RATE,
-        HealthDataType.BASAL_ENERGY_BURNED,
-        HealthDataType.FLIGHTS_CLIMBED,
         HealthDataType.WATER,
       ]);
 
@@ -265,12 +242,6 @@ extension HealthServiceExt on HealthService {
       int heartRateCount = 0;
       int maxHeartRate = 0;
       int? minHeartRate;
-      double? hrv;
-      double? bloodOxygen;
-      double? bodyTemperature;
-      int? respiratoryRate;
-      double basalCalories = 0;
-      int flightsClimbed = 0;
       double waterMl = 0;
 
       for (final point in uniqueData) {
@@ -282,25 +253,6 @@ extension HealthServiceExt on HealthService {
             heartRateCount++;
             if (v > maxHeartRate) maxHeartRate = v;
             if (minHeartRate == null || v < minHeartRate) minHeartRate = v;
-            break;
-          case HealthDataType.HEART_RATE_VARIABILITY_SDNN:
-          case HealthDataType.HEART_RATE_VARIABILITY_RMSSD:
-            hrv ??= value;
-            break;
-          case HealthDataType.BLOOD_OXYGEN:
-            bloodOxygen ??= value;
-            break;
-          case HealthDataType.BODY_TEMPERATURE:
-            bodyTemperature ??= value;
-            break;
-          case HealthDataType.RESPIRATORY_RATE:
-            respiratoryRate ??= value.toInt();
-            break;
-          case HealthDataType.BASAL_ENERGY_BURNED:
-            basalCalories += value;
-            break;
-          case HealthDataType.FLIGHTS_CLIMBED:
-            flightsClimbed += value.toInt();
             break;
           case HealthDataType.WATER:
             waterMl += value;
@@ -314,12 +266,6 @@ extension HealthServiceExt on HealthService {
         'avgHeartRate': heartRateCount > 0 ? heartRateSum ~/ heartRateCount : null,
         'maxHeartRate': maxHeartRate > 0 ? maxHeartRate : null,
         'minHeartRate': minHeartRate,
-        'hrv': hrv,
-        'bloodOxygen': bloodOxygen,
-        'bodyTemperature': bodyTemperature,
-        'respiratoryRate': respiratoryRate,
-        'basalCalories': basalCalories > 0 ? basalCalories : null,
-        'flightsClimbed': flightsClimbed > 0 ? flightsClimbed : null,
         'waterMl': waterMl > 0 ? waterMl.toInt() : null,
       };
     } catch (e) {

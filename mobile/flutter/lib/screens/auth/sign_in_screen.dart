@@ -661,8 +661,47 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
   }
 
   Widget _buildSignInButtons(OnboardingTheme t) {
+    // On iOS, Apple Sign-In renders ABOVE Google to satisfy Apple Human
+    // Interface Guidelines for "Sign in with Apple" — reviewers occasionally
+    // flag apps that hide the SIWA option below other social sign-ins.
     return Column(
       children: [
+        if (_showAppleSignIn) ...[
+          GestureDetector(
+            onTap: _isLoading ? null : _signInWithApple,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(27),
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+                child: Container(
+                  width: double.infinity,
+                  height: 54,
+                  decoration: BoxDecoration(
+                    color: Colors.black,
+                    borderRadius: BorderRadius.circular(27),
+                    border: Border.all(color: Colors.white.withOpacity(0.15)),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: const [
+                      Icon(Icons.apple, color: Colors.white, size: 22),
+                      SizedBox(width: 10),
+                      Text(
+                        'Continue with Apple',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ).animate().fadeIn(delay: 600.ms).slideY(begin: 0.1),
+          const SizedBox(height: 12),
+        ],
         // Google Sign In button — glassmorphic
         GestureDetector(
           onTap: _isLoading ? null : _signInWithGoogle,
@@ -732,45 +771,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen>
               ),
             ),
           ),
-        ).animate().fadeIn(delay: 600.ms).slideY(begin: 0.1),
-
-        // Apple Sign In button — iOS / iPadOS only (App Store guideline 4.8)
-        if (_showAppleSignIn) ...[
-          const SizedBox(height: 12),
-          GestureDetector(
-            onTap: _isLoading ? null : _signInWithApple,
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(27),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-                child: Container(
-                  width: double.infinity,
-                  height: 54,
-                  decoration: BoxDecoration(
-                    color: Colors.black,
-                    borderRadius: BorderRadius.circular(27),
-                    border: Border.all(color: Colors.white.withOpacity(0.15)),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: const [
-                      Icon(Icons.apple, color: Colors.white, size: 22),
-                      SizedBox(width: 10),
-                      Text(
-                        'Continue with Apple',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ).animate().fadeIn(delay: 700.ms).slideY(begin: 0.1),
-        ],
+        ).animate().fadeIn(delay: 700.ms).slideY(begin: 0.1),
 
         const SizedBox(height: 16),
 

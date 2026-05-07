@@ -34,6 +34,7 @@ from api.v1 import training_intensity  # Percentage-based 1RM training
 from api.v1 import layouts  # Home screen layout customization
 from api.v1 import recipe_suggestions  # AI recipe suggestions based on culture, body type, diet
 from api.v1 import support  # Support ticket system
+from api.v1 import waitlist  # Pre-launch marketing-site waitlist
 from api.v1 import skill_progressions  # Bodyweight skill progressions
 from api.v1 import cardio  # Heart rate zones and cardio metrics
 from api.v1 import flexibility  # Flexibility assessments and progress tracking
@@ -250,6 +251,9 @@ router.include_router(recipe_suggestions.router, tags=["Recipe Suggestions"])
 
 # Support ticket system for user issues
 router.include_router(support.router, prefix="/support", tags=["Support"])
+
+# Pre-launch waitlist (marketing site signup → Resend confirmation)
+router.include_router(waitlist.router, prefix="/waitlist", tags=["Waitlist"])
 
 # Bodyweight skill progressions (push-up, pull-up, squat progressions, etc.)
 router.include_router(skill_progressions.router, prefix="/skill-progressions", tags=["Skill Progressions"])

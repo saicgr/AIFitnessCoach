@@ -82,13 +82,31 @@ class WindowModeLogRequest(BaseModel):
         description="Optional device information (model, OS version, etc.)"
     )
 
-    @field_validator("mode")
+    @field_validator("mode", mode="before")
     @classmethod
     def validate_mode(cls, v: str) -> str:
-        """Validate that mode is one of the allowed values."""
-        if v not in VALID_MODES:
+        """Validate that mode is one of the allowed values.
+
+        Accepts both snake_case (canonical) and camelCase (Flutter enum
+        ``WindowMode.fullScreen.name`` style). Flutter's enum ``.name``
+        getter renders ``WindowMode.fullScreen`` as ``"fullScreen"`` —
+        previously this 422'd because the backend only accepted
+        ``"full_screen"``. Normalise camelCase → snake_case here so
+        client and server agree.
+        """
+        if not isinstance(v, str):
+            raise ValueError(f"Invalid mode: {v!r} (expected string)")
+        # Normalise camelCase → snake_case (e.g. "fullScreen" → "full_screen").
+        normalized = ""
+        for ch in v:
+            if ch.isupper():
+                normalized += "_" + ch.lower()
+            else:
+                normalized += ch
+        normalized = normalized.lstrip("_")
+        if normalized not in VALID_MODES:
             raise ValueError(f"Invalid mode: {v}. Must be one of: {', '.join(VALID_MODES)}")
-        return v
+        return normalized
 
     @field_validator("timestamp")
     @classmethod

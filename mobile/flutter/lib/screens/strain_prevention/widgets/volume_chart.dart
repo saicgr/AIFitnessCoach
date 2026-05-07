@@ -28,7 +28,9 @@ class StrainVolumeChart extends StatelessWidget {
     final maxVolume = sortedWeeks
         .map((e) => e.totalVolumeKg)
         .reduce((a, b) => a > b ? a : b);
-    final yMax = (maxVolume * 1.2).ceilToDouble();
+    // Floor to ≥ 1.0 — fl_chart crashes ("Infinity or NaN toInt") when
+    // yMax is 0 (no volume logged → tick interval divides by zero).
+    final yMax = ((maxVolume * 1.2).ceilToDouble()).clamp(1.0, double.infinity);
 
     final chartColor = primaryColor ?? colorScheme.primary;
 

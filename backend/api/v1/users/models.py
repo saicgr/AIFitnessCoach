@@ -21,8 +21,19 @@ def get_default_equipment_for_environment(environment: str) -> list:
 
 
 class GoogleAuthRequest(BaseModel):
-    """Request body for Google OAuth authentication."""
+    """Request body for Google / Apple OAuth authentication via Supabase.
+
+    For Apple Sign-In, the iOS client additionally forwards:
+      - apple_authorization_code: short-lived code from AuthorizationCredentialAppleID,
+        exchanged on the backend for an Apple refresh_token used later for revocation
+        on account deletion (App Store Guideline 5.1.1.v).
+      - apple_given_name / apple_family_name: only populated by Apple on the FIRST
+        sign-in — must be persisted immediately or they are lost forever.
+    """
     access_token: str
+    apple_authorization_code: Optional[str] = None
+    apple_given_name: Optional[str] = None
+    apple_family_name: Optional[str] = None
 
 
 def _validate_password_complexity(v: str) -> str:

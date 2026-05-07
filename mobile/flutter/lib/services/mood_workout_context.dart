@@ -3,7 +3,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../data/models/mood.dart';
 import '../data/models/workout_style.dart';
-import 'hrv_recovery_service.dart';
 
 /// Adjustment to a mood preset derived from real-time user context.
 ///
@@ -70,20 +69,11 @@ class MoodWorkoutContext {
       captions.add("Late night — keeping it low-impact");
     }
 
-    // ---- 2. HRV / recovery ----
-    try {
-      final hrv = await HrvRecoveryService.getModifiers();
-      if (hrv.hasData && hrv.readinessLevel == ReadinessLevel.low) {
-        // Low readiness → cap intensity by one difficulty level.
-        final downgraded = _downgrade(currentDifficulty);
-        if (downgraded != currentDifficulty) {
-          overrideDifficulty = downgraded;
-          captions.add("Low readiness — capping intensity");
-        }
-      }
-    } catch (_) {
-      // Health permissions not granted / unavailable — skip silently.
-    }
+    // ---- 2. HRV / recovery ---- removed 2026-05-07: Google Play Health
+    // Connect minimum scope policy required us to drop HRV permissions.
+    // Without an HRV signal there is no reliable "low readiness" gate to
+    // downgrade intensity. The comeback-streak rule below still catches
+    // users coming back from layoffs.
 
     // ---- 3. Comeback streak ----
     // If the last mood workout was ≥3 days ago, ease the user back in by

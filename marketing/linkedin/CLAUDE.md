@@ -2,6 +2,21 @@
 
 Read `marketing/CLAUDE.md` first for cross-platform rules. This file is LinkedIn-specific tactics for 2026.
 
+## Required reading before drafting any LinkedIn post
+
+**Read `marketing/linkedin/research/linkedin-algorithm-study-2026.md`** — Metricool's 2026 study (673,658 posts analyzed, 65,000 accounts) extracted to markdown. The PDF is alongside it for reference but the markdown is what the agent reads. This is internal-source data and treats existing-conversation "I know LinkedIn's algorithm" claims as stale; the study supersedes intuition.
+
+## Headline 2026 numbers from the study (verify against the markdown for full context)
+
+- **Carousels get 11× more interactions than single images.** This is the single biggest format lever — default to carousel (multi-page PDF "Document" post) for any post where the message can be split into 5-10 slides.
+- **Posts with a question get +77% more comments** vs. statement-only posts. End every post with a specific question, not just a CTA.
+- **Personal Profiles outperform Company Pages by +51% engagement** on accounts >10K followers. Post from `@chetwitt123` / personal handle, never the Zealova company page, until the company page passes 10K.
+- **Posts with links get +63% more impressions on Company Pages** but suppress reach on Personal Profiles. So the cross-platform rule (link in first comment, not body) still holds for personal posts — only the Company Page exception flips.
+- **First 48 hours = 50% of a post's lifetime impressions.** First 60-90 min = ~70% of those. The "golden hour" reply discipline is non-optional.
+- **Personal Profiles drove +5% more clicks per post than Company Pages.** Reinforces "post personal until 10K."
+
+These are the headline numbers — the markdown file has the full breakdown by industry, post format, account size, and time-of-day. Re-read it any time you draft a post that touches a niche the headline numbers don't cover (carousel vs polls, video vs single image, B2B SaaS vs creator content, etc.).
+
 ## Algorithm in 2026 (verify with WebSearch before drafting)
 
 - **Golden hour**: first 60–90 min decide ~70% of total reach. 5 comments in first 10 min ≫ 50 comments after 24h.
@@ -51,12 +66,40 @@ Read `marketing/CLAUDE.md` first for cross-platform rules. This file is LinkedIn
 
 ## When the user asks for "another LinkedIn post"
 
-1. Read the most recent 2 posts in `posts.md` to know what's already been said + which angles to avoid.
-2. Run a parallel WebSearch batch (THIS SESSION, no caching):
+1. Read `marketing/linkedin/research/linkedin-algorithm-study-2026.md` — the Metricool 2026 study. Anchor the format choice (carousel vs single image vs text-only vs video) to the data, not memory.
+2. Read the most recent 2 posts in `posts.md` to know what's already been said + which angles to avoid.
+3. Run a parallel WebSearch batch (THIS SESSION, no caching):
    - `LinkedIn algorithm [Month] [Year] reach hooks dwell time`
    - `best LinkedIn hashtags [Month] [Year] AI fitness indie founder build in public`
    - `viral LinkedIn post [Month] [Year] solo founder app launch`
-3. Pick a NEW angle (story / technical / demo / metric) — never recycle the previous angle.
-4. Check the previous post's status — if posted <72h ago, push back and suggest waiting.
-5. Draft. Place the chosen hashtag set (3–5 PascalCase, picked from this session's research) as the very last line, on its own line, separated from the body by one blank line.
-6. Append to `posts.md` with date + research log + plan + body verbatim. Never overwrite.
+4. Pick a NEW angle (story / technical / demo / metric) — never recycle the previous angle.
+5. Pick the format using the study's data: carousel (11× engagement) is the default unless the post is a tight 1,200-char story with a strong hook. If carousel, draft 6–10 slides with title/key-line per slide AND prepare it for the carousel-PDF helper (see "Carousel automation" below).
+6. End the post with a specific QUESTION (not a vanity CTA). Question-ending posts get +77% more comments per the study.
+7. Check the previous post's status — if posted <72h ago, push back and suggest waiting.
+8. Draft. Place the chosen hashtag set (3–5 PascalCase, picked from this session's research) as the very last line, on its own line, separated from the body by one blank line.
+9. Append to `posts.md` with date + research log + plan + body verbatim. Never overwrite.
+
+## Carousel automation (the 11× format)
+
+When the post is a carousel, the agent must ALSO produce a slide deck spec — one slide per markdown block — that downstream tooling can render as a multi-page PDF for upload to LinkedIn as a Document post. Format inside `posts.md`:
+
+```markdown
+### 🎴 CAROUSEL SLIDES
+
+**Slide 1 (cover):**
+Title: <8-12 words, scroll-stop>
+Subtitle: <1 line>
+
+**Slide 2:**
+Headline: <6-10 words>
+Body: <1-2 short sentences, large type>
+
+... (slides 3-9)
+
+**Slide N (CTA):**
+Headline: Save this for your next launch
+Body: Follow @chetwitt123 for daily build-in-public lessons
+Action: comment "<one word>" — I'll DM the longer write-up
+```
+
+The renderer (Python + reportlab, see `backend/scripts/render_linkedin_carousel.py` once built) takes this spec and produces `marketing/linkedin/carousels/YYYY-MM-DD-<angle>.pdf`. Until that script lands, output the slide spec anyway so it's ready to render OR copy-paste into a Canva template.

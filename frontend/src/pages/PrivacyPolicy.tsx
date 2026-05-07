@@ -61,11 +61,14 @@ export default function PrivacyPolicy() {
                 <li>Body measurements and progress photos</li>
                 <li>Nutrition and meal logs (including photos you upload)</li>
                 <li>Hydration, fasting, and sleep data</li>
-                <li>Heart rate, HRV, and other signals from connected devices</li>
-                <li>Apple HealthKit / Google Health Connect data if you enable sync</li>
+                <li>Heart rate (live and resting) from connected devices</li>
+                <li>Apple HealthKit / Google Health Connect data if you enable sync — limited to weight, body fat, heart rate, resting heart rate, steps, active and total calories burned, sleep, exercise sessions, blood glucose, and water intake</li>
                 <li>Menstrual cycle and hormonal health logs (optional)</li>
                 <li>Exercise form videos you upload for technique feedback</li>
               </ul>
+              <p className="mb-4 text-sm text-[var(--color-text-secondary)]">
+                Effective May 2026, we no longer read distance, floors climbed, elevation gained, speed, power, heart rate variability (HRV), respiratory rate, basal metabolic rate, oxygen saturation, or body temperature from Health Connect / HealthKit. Those data types were removed because they were not used by any user-facing feature.
+              </p>
 
               <h3 className="text-[17px] font-semibold text-[var(--color-text)] mb-2">Usage &amp; Device Data</h3>
               <ul className="list-disc pl-6 space-y-1">

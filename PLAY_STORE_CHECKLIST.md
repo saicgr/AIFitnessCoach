@@ -58,7 +58,7 @@
 - [x] Terms of service URL configured (`https://zealova.com/terms`)
 - [ ] Privacy policy page is LIVE and accessible at https://zealova.com/privacy
 - [ ] Terms of service page is LIVE and accessible at https://zealova.com/terms
-- [ ] Data safety form completed in Google Play Console
+- [ ] Data safety form completed in Google Play Console (REVIEW REQUIRED 2026-05-07: ensure removed Health Connect types — distance, floors climbed, HRV, elevation, power, speed, respiratory rate, basal metabolic rate, oxygen saturation, body temperature — are NOT listed under "Data types collected" / "Data types shared". See section "Play Console action items — 2026-05-07 Health Connect minimum-scope cleanup" below.)
   - [ ] Data collected: health/fitness data, personal info, app activity
   - [ ] Data shared: Supabase (backend), RevenueCat (payments), Firebase (analytics)
   - [ ] Data security: HTTPS encryption, JWT auth
@@ -78,7 +78,7 @@ All permissions are declared in AndroidManifest.xml. Google Play Console require
 - [x] ACCESS_FINE_LOCATION / ACCESS_COARSE_LOCATION - gym profile auto-switch
 - [x] POST_NOTIFICATIONS - workout reminders, hydration reminders
 - [x] BLUETOOTH_SCAN / BLUETOOTH_CONNECT - wearable device sync
-- [x] Health Connect permissions (24 total) - fitness tracking, body measurements, exercise data
+- [x] Health Connect permissions (16 total, minimum scope as of 2026-05-07) — body measurements (weight, body fat), heart rate (live + resting), steps, active/total calories, sleep, exercise sessions, blood glucose, hydration. Removed 2026-05-07 per Google Play "Excessive data access" rejection: distance, floors climbed, HRV, elevation, power, speed, respiratory rate, basal metabolic rate, oxygen saturation, body temperature.
 - [x] READ_MEDIA_IMAGES (Android 13+) - progress photo access
 - [ ] Write justification text for each sensitive permission in Play Console
 
@@ -135,3 +135,90 @@ All permissions are declared in AndroidManifest.xml. Google Play Console require
 ---
 
 **Overall Status: ~70% complete** - All technical/code requirements are done. Remaining items are Play Console configuration, store listing assets, and testing.
+
+---
+
+## Play Console action items — 2026-05-07 Health Connect minimum-scope cleanup
+
+These steps **must be completed in the Play Console UI** before resubmitting; they cannot be automated from the repo. They correspond 1:1 with the manifest / Dart / backend code edits made on 2026-05-07.
+
+### 1. Health Connect declaration form
+
+**Path:** Play Console → App content → Health Connect by Android (Health apps declaration).
+
+Untick / remove these 10 data types from the declared list (they are no longer in the manifest):
+
+- Distance
+- FloorsClimbed
+- HeartRateVariabilityRmssd (and SDNN if it was listed under that name)
+- ElevationGained
+- Power
+- Speed
+- RespiratoryRate
+- BasalMetabolicRate
+- OxygenSaturation
+- BodyTemperature
+
+Keep declared (matches the manifest's `<uses-permission android:name="android.permission.health.READ_…">` / `WRITE_…` entries):
+
+| Permission | Read | Write | Feature |
+|---|---|---|---|
+| Weight | ✅ | ✅ | Body-measurements card, weight history graph |
+| BodyFat | ✅ | ✅ | Body composition card |
+| HeartRate | ✅ | — | Live HR during workouts, post-workout zones |
+| RestingHeartRate | ✅ | — | Recovery readiness score |
+| Steps | ✅ | — | Daily Activity card, NEAT |
+| ActiveCaloriesBurned | ✅ | ✅ | Daily Activity card; push completed workouts |
+| TotalCaloriesBurned | ✅ | — | Workout enrichment |
+| Sleep | ✅ | — | Sleep summary card, recovery score |
+| BloodGlucose | ✅ | — | Diabetic-mode CGM display |
+| Exercise (workout sessions) | ✅ | ✅ | Auto-import other apps' workouts; write Zealova workouts |
+| Hydration | ✅ | ✅ | Water-intake tile + in-app logging |
+
+For each, write a one-sentence justification using the per-permission feature-map block in `mobile/flutter/android/app/src/main/AndroidManifest.xml`.
+
+### 2. Data Safety form
+
+**Path:** Play Console → App content → Data safety.
+
+Under **"Data types your app collects or shares"**, remove these entries if they were previously declared under the **Health and fitness** category:
+
+- Heart rate variability
+- Distance
+- Floors climbed (or elevation)
+- Speed / pace / power
+- Respiratory rate
+- Body temperature
+- Oxygen saturation (SpO₂)
+- Basal metabolic rate / basal calories
+
+What should remain declared under **Health and fitness** (collected, transmitted to backend / Vertex AI):
+
+- Heart rate (live + resting) — collected, encrypted in transit + at rest, used for app functionality + AI personalization
+- Steps — same
+- Sleep — same
+- Weight + Body fat — same
+- Active / total calories — same
+- Exercise sessions — same
+- Blood glucose — only if user enables diabetic mode
+- Water / hydration — same
+
+For every retained data type confirm: encrypted in transit (TLS), encrypted at rest (Supabase managed), not sold, not used for advertising, user can request deletion via Settings → Privacy & Data → Delete Account.
+
+### 3. Privacy policy
+
+The hosted policy at `zealova.com/privacy` (sourced from `mobile/flutter/privacy_policy.html` and `frontend/src/pages/PrivacyPolicy.tsx` — both updated 2026-05-07) now lists only the minimum-scope set and explicitly disclaims the removed data types. **Re-deploy the marketing site so the live URL matches the AAB before resubmitting** — Play reviewers cross-reference the linked privacy policy against the Data Safety form and the Health Connect declaration.
+
+### 4. Backend write paths (already done in this commit)
+
+`POST /api/v1/activity/sync` and `POST /api/v1/activity/sync-batch` no longer persist `hrv`, `blood_oxygen`, `body_temperature`, `respiratory_rate`, `flights_climbed`, `basal_calories`, or `distance_meters` to the `daily_activity` table. Pydantic ignores those keys silently if older clients still send them. The matching DB columns are kept for historical rows; new rows leave them NULL.
+
+### 5. Resubmission
+
+1. Bump `versionCode` in `mobile/flutter/android/app/build.gradle.kts` (or `local.properties`).
+2. Build a new AAB.
+3. Push backend with the activity.py edits (FastAPI auto-redeploys on Render).
+4. Update `mobile/flutter/privacy_policy.html` deploy + `frontend/src/pages/PrivacyPolicy.tsx` deploy so the live URL is current.
+5. Update Health Connect declaration + Data Safety form per sections 1 + 2 above.
+6. Submit for review with a release-note line: *"Resubmission for Health Connect Permissions policy compliance — narrowed Health Connect data types to minimum scope."*
+

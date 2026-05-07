@@ -1,0 +1,12 @@
+// Reppora Client flavor — iOS build settings.
+// Inherits from the project default; overrides bundle id + display name.
+
+#include "Generated.xcconfig"
+
+PRODUCT_BUNDLE_IDENTIFIER = com.reppora.app
+DISPLAY_NAME = Reppora
+CURRENT_PROJECT_VERSION = 1
+MARKETING_VERSION = 0.1.0
+ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon-Reppora
+PROVISIONING_PROFILE_SPECIFIER =
+DEVELOPMENT_TEAM =

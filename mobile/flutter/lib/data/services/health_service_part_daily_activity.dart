@@ -1,11 +1,19 @@
 part of 'health_service.dart';
 
 
-/// Daily activity data
+/// Daily activity data.
+///
+/// The following fields were removed 2026-05-07 to comply with Google Play's
+/// Health Connect "Minimum Scope" policy (and dropped on iOS per the same
+/// product decision):
+///   distanceMeters / distanceKm / distanceMiles, hrv, bloodOxygen,
+///   bodyTemperature, respiratoryRate, flightsClimbed, basalCalories.
+/// Distance for cardio workouts is still tracked through the cardio session
+/// pipeline (manual entry / Strava / Garmin / direct watch sync), which is
+/// independent of Health Connect.
 class DailyActivity {
   final int steps;
   final double caloriesBurned;
-  final double distanceMeters;
   final int? restingHeartRate;
   final int? sleepMinutes;
   final int? deepSleepMinutes;
@@ -16,12 +24,6 @@ class DailyActivity {
   final int? avgHeartRate;
   final int? maxHeartRate;
   final int? minHeartRate;
-  final double? hrv;              // RMSSD (Android) or SDNN (iOS)
-  final double? bloodOxygen;      // SpO2 %
-  final double? bodyTemperature;  // Celsius
-  final int? respiratoryRate;     // breaths/min
-  final int? flightsClimbed;
-  final double? basalCalories;    // BMR calories
   final int? lightSleepMinutes;
   final int? awakeSleepMinutes;   // time awake during sleep
   final int? waterMl;             // hydration in ml
@@ -29,7 +31,6 @@ class DailyActivity {
   const DailyActivity({
     this.steps = 0,
     this.caloriesBurned = 0,
-    this.distanceMeters = 0,
     this.restingHeartRate,
     this.sleepMinutes,
     this.deepSleepMinutes,
@@ -40,22 +41,10 @@ class DailyActivity {
     this.avgHeartRate,
     this.maxHeartRate,
     this.minHeartRate,
-    this.hrv,
-    this.bloodOxygen,
-    this.bodyTemperature,
-    this.respiratoryRate,
-    this.flightsClimbed,
-    this.basalCalories,
     this.lightSleepMinutes,
     this.awakeSleepMinutes,
     this.waterMl,
   });
-
-  /// Distance in kilometers
-  double get distanceKm => distanceMeters / 1000;
-
-  /// Distance in miles
-  double get distanceMiles => distanceMeters / 1609.344;
 }
 
 
@@ -108,19 +97,19 @@ class SleepSummary {
 }
 
 
-/// Recovery metrics from Health Connect
+/// Recovery metrics from Health Connect / HealthKit.
+///
+/// `hrv` and `bloodOxygen` removed 2026-05-07 — Google Play Health Connect
+/// minimum-scope policy required dropping those permissions on Android, and
+/// per the same product decision they were dropped on iOS too.
 class RecoveryMetrics {
   final int? restingHR;
-  final double? hrv;
-  final double? bloodOxygen;
 
   const RecoveryMetrics({
     this.restingHR,
-    this.hrv,
-    this.bloodOxygen,
   });
 
-  bool get hasData => restingHR != null || hrv != null || bloodOxygen != null;
+  bool get hasData => restingHR != null;
 }
 
 
@@ -257,7 +246,6 @@ class DailyActivityNotifier extends StateNotifier<DailyActivityState> {
       final today = DailyActivity(
         steps: steps,
         caloriesBurned: (activityData['calories'] as num?)?.toDouble() ?? 0,
-        distanceMeters: (activityData['distance'] as num?)?.toDouble() ?? 0,
         restingHeartRate: restingHR,
         sleepMinutes: sleepData.hasData ? sleepData.totalMinutes : null,
         deepSleepMinutes: sleepData.hasData ? sleepData.deepMinutes : null,
@@ -267,12 +255,6 @@ class DailyActivityNotifier extends StateNotifier<DailyActivityState> {
         avgHeartRate: vitalsData['avgHeartRate'] as int?,
         maxHeartRate: vitalsData['maxHeartRate'] as int?,
         minHeartRate: vitalsData['minHeartRate'] as int?,
-        hrv: vitalsData['hrv'] as double?,
-        bloodOxygen: vitalsData['bloodOxygen'] as double?,
-        bodyTemperature: vitalsData['bodyTemperature'] as double?,
-        respiratoryRate: vitalsData['respiratoryRate'] as int?,
-        flightsClimbed: vitalsData['flightsClimbed'] as int?,
-        basalCalories: vitalsData['basalCalories'] as double?,
         lightSleepMinutes: sleepData.hasData ? sleepData.lightMinutes : null,
         awakeSleepMinutes: sleepData.hasData && sleepData.awakeMinutes > 0 ? sleepData.awakeMinutes : null,
         waterMl: vitalsData['waterMl'] as int?,
@@ -293,7 +275,6 @@ class DailyActivityNotifier extends StateNotifier<DailyActivityState> {
         properties: <String, Object>{
           'steps': today.steps,
           'calories_burned': today.caloriesBurned,
-          'distance_meters': today.distanceMeters,
         },
       );
 
@@ -325,7 +306,7 @@ class DailyActivityNotifier extends StateNotifier<DailyActivityState> {
       }
 
       // Only sync if there's actual data
-      if (activity.steps == 0 && activity.caloriesBurned == 0 && activity.distanceMeters == 0) {
+      if (activity.steps == 0 && activity.caloriesBurned == 0) {
         debugPrint('⚠️ [Activity] No activity data to sync');
         return;
       }
@@ -396,7 +377,6 @@ class DailyActivityNotifier extends StateNotifier<DailyActivityState> {
             date: dayStart,
             steps: steps,
             caloriesBurned: 0,
-            distanceMeters: 0,
             isFromHealthConnect: true,
           ));
         } catch (e) {
@@ -440,7 +420,6 @@ class DailyActivityNotifier extends StateNotifier<DailyActivityState> {
     final updated = DailyActivity(
       steps: steps ?? current?.steps ?? 0,
       caloriesBurned: caloriesBurned?.toDouble() ?? current?.caloriesBurned ?? 0,
-      distanceMeters: current?.distanceMeters ?? 0, // Keep existing, watch doesn't send this
       restingHeartRate: heartRate ?? current?.restingHeartRate,
       sleepMinutes: current?.sleepMinutes,
       deepSleepMinutes: current?.deepSleepMinutes,
@@ -451,12 +430,6 @@ class DailyActivityNotifier extends StateNotifier<DailyActivityState> {
       avgHeartRate: current?.avgHeartRate,
       maxHeartRate: current?.maxHeartRate,
       minHeartRate: current?.minHeartRate,
-      hrv: current?.hrv,
-      bloodOxygen: current?.bloodOxygen,
-      bodyTemperature: current?.bodyTemperature,
-      respiratoryRate: current?.respiratoryRate,
-      flightsClimbed: current?.flightsClimbed,
-      basalCalories: current?.basalCalories,
       lightSleepMinutes: current?.lightSleepMinutes,
       awakeSleepMinutes: current?.awakeSleepMinutes,
       waterMl: current?.waterMl,

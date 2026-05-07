@@ -350,8 +350,8 @@
                 </tr>
                 <tr>
                     <td>Health Connect / HealthKit</td>
-                    <td>Steps, heart rate, sleep, body composition, exercise sessions, calories burned, blood pressure, oxygen saturation</td>
-                    <td>Comprehensive fitness tracking and AI-informed coaching</td>
+                    <td>Steps, heart rate, resting heart rate, sleep, weight, body fat, active &amp; total calories burned, exercise sessions, blood glucose, water intake</td>
+                    <td>Daily activity tracking, AI-informed coaching, recovery scoring, and reading/writing your in-app workouts</td>
                 </tr>
                 <tr>
                     <td>Storage</td>
@@ -393,23 +393,27 @@
         <p>Zealova integrates with Android Health Connect and Apple HealthKit to read and write health and fitness data. This integration is optional and requires your explicit permission.</p>
 
         <h3>Data We Read</h3>
+        <p>The list below reflects our minimum-scope data set (effective May 2026). Each data type is tied to a specific shipped feature so that we never request more than we use.</p>
         <ul>
-            <li>Weight, height, body fat percentage, lean body mass, body water mass, bone mass</li>
-            <li>Heart rate, resting heart rate, heart rate variability (SDNN and RMSSD)</li>
-            <li>Steps, distance, active and total calories burned, basal energy burned, floors climbed</li>
-            <li>Oxygen saturation, blood pressure, respiratory rate, body temperature</li>
-            <li>Sleep data (total, deep, light, REM, awake phases, session data)</li>
-            <li>Exercise sessions</li>
-            <li>Basal metabolic rate</li>
-            <li>Water/hydration intake</li>
+            <li>Weight and body fat percentage &mdash; for the body-measurements card and progress charts</li>
+            <li>Heart rate &mdash; for live tracking during in-app workouts and post-workout zones</li>
+            <li>Resting heart rate &mdash; for the recovery readiness score</li>
+            <li>Steps &mdash; for the Daily Activity card and 30-day backfill</li>
+            <li>Active calories burned and total calories burned &mdash; for the Daily Activity card and workout enrichment</li>
+            <li>Sleep data (total, deep, light, REM, awake phases, sessions) &mdash; for the sleep summary card and recovery score</li>
+            <li>Exercise sessions &mdash; to import workouts you complete in other fitness apps</li>
+            <li>Blood glucose &mdash; only when diabetic mode is enabled, to display CGM readings</li>
+            <li>Water / hydration intake &mdash; for the hydration tile</li>
         </ul>
+        <p><strong>What we no longer read (effective May 2026):</strong> distance, floors climbed, elevation gained, speed, power, heart rate variability (HRV / RMSSD / SDNN), respiratory rate, basal metabolic rate, oxygen saturation, and body temperature. These data types were removed from our Health Connect (Android) and HealthKit (iOS) request set because they were not used by any user-facing feature. Any historical values previously synced may still appear in older app builds for backwards compatibility but are no longer collected, stored, or processed by the current app.</p>
 
         <h3>Data We Write</h3>
         <ul>
             <li>Weight measurements</li>
-            <li>Height measurements</li>
             <li>Body fat measurements</li>
+            <li>Active calories burned (from completed in-app workouts)</li>
             <li>Exercise sessions completed in Zealova</li>
+            <li>Water / hydration intake (when you log it inside the app)</li>
         </ul>
 
         <div class="highlight-box">

@@ -75,11 +75,31 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
         # the same gate on /generate-stream). Keeps accidental / stale-client
         # calls from planting rest-day workouts that the home carousel would
         # then surface as TODAY.
+        #
+        # CRITICAL: must use the SAME schedule-resolution rule as the upstream
+        # `_get_upcoming_dates_needing_generation` / `_sequential_generate_workouts`
+        # caller (today.py), which is `_resolve_workout_days(user, active_profile)`
+        # — i.e. active gym profile's workout_days wins, fallback to user-level.
+        # Previously this gate only looked at user-level days, so a user whose
+        # active profile had a different schedule got stuck in a 5-deep BG-GEN
+        # rejection loop on every `/today` poll (see Render logs 2026-05-07,
+        # 4 of 5 batch dates rejected as "not_a_workout_day" while the upstream
+        # had legitimately queued them per the active profile's schedule).
         if body.scheduled_date and not body.force_non_preferred_day:
-            from .today import _get_user_workout_days, _calculate_next_workout_date
+            from .today import _resolve_workout_days, _calculate_next_workout_date
             _gate_user = db.get_user(body.user_id)
             if _gate_user:
-                _selected_days = _get_user_workout_days(_gate_user)
+                _gate_profile = None
+                if dedup_gym_profile_id:
+                    try:
+                        _gate_profile_resp = db.client.table("gym_profiles").select(
+                            "id, workout_days"
+                        ).eq("id", dedup_gym_profile_id).maybe_single().execute()
+                        if _gate_profile_resp and _gate_profile_resp.data:
+                            _gate_profile = _gate_profile_resp.data
+                    except Exception as e:
+                        logger.debug(f"[PreferredDayGate] profile lookup failed: {e}")
+                _selected_days = _resolve_workout_days(_gate_user, _gate_profile)
                 if _selected_days:
                     try:
                         _weekday = datetime.strptime(body.scheduled_date, "%Y-%m-%d").weekday()

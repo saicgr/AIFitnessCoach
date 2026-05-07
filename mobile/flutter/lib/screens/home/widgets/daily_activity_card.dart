@@ -154,24 +154,11 @@ class _DailyActivityCardState extends ConsumerState<DailyActivityCard> {
                   ),
                 ),
 
-                // Divider
-                Container(
-                  width: 1,
-                  height: 40,
-                  color: cardBorder,
-                ),
-
-                // Distance
-                Expanded(
-                  child: _ActivityStatItem(
-                    icon: Icons.straighten,
-                    value: _formatDistance(activity?.distanceKm ?? 0),
-                    label: 'Distance',
-                    color: AppColors.success,
-                    textPrimary: textPrimary,
-                    textMuted: textMuted,
-                  ),
-                ),
+                // Distance pill removed 2026-05-07 — Google Play Health
+                // Connect minimum scope policy required dropping the
+                // READ_DISTANCE permission, so daily distance no longer has
+                // a data source. Resting HR fills the third slot when
+                // available; otherwise the row is two pills wide.
 
                 // Heart rate (if available)
                 if (activity?.restingHeartRate != null) ...[
@@ -216,12 +203,6 @@ class _DailyActivityCardState extends ConsumerState<DailyActivityCard> {
     return number.toString();
   }
 
-  String _formatDistance(double km) {
-    if (km < 1) {
-      return '${(km * 1000).toInt()}m';
-    }
-    return '${km.toStringAsFixed(1)}km';
-  }
 }
 
 class _ActivityStatItem extends StatelessWidget {

@@ -111,3 +111,4 @@ garminconnect>=0.2.19          # Garmin Connect (consumer OAuth1; personal-use o
 reportlab>=4.2.0               # PDF export for the reverse-direction pipeline
 polyline>=2.0.0                # Decode Google encoded polylines → GPX waypoints
 cryptography>=42.0.0           # AES-GCM Fernet token encryption for oauth_sync_accounts
+PyJWT[crypto]>=2.8.0           # ES256 client_secret signing for Apple Sign-In token revocation

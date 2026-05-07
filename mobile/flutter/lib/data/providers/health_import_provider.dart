@@ -133,7 +133,7 @@ class HealthImportNotifier extends StateNotifier<HealthImportState> {
       // Enrich if we haven't already (covers auto-import flows that skipped
       // the explicit enrichCurrentWorkoutHR call).
       var enriched = pending;
-      if (pending.hrSamples.isEmpty && pending.paceSamples.isEmpty) {
+      if (pending.hrSamples.isEmpty) {
         try {
           enriched = await _importService.enrichWithFullMetrics(
               pending, _healthService);
@@ -280,7 +280,7 @@ class HealthImportNotifier extends StateNotifier<HealthImportState> {
 
         // Enrich if needed (HR series, zones, pace, cadence, splits, vitals).
         var enriched = pending;
-        if (pending.hrSamples.isEmpty && pending.paceSamples.isEmpty) {
+        if (pending.hrSamples.isEmpty) {
           try {
             enriched = await _importService.enrichWithFullMetrics(
                 pending, _healthService);

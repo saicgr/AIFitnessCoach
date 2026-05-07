@@ -16,7 +16,6 @@ import 'quick_workout_templates.dart';
 import 'advanced_techniques.dart';
 import 'movement_patterns.dart';
 import 'quick_workout_rest.dart';
-import 'hrv_recovery_service.dart';
 import 'rpe_feedback_service.dart';
 import 'volume_landmark_service.dart';
 import 'workout_templates.dart' show muscleAliases;

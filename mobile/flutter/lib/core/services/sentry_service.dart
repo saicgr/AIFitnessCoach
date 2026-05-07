@@ -95,16 +95,31 @@ class SentryService {
           // drop a few truly redundant framework messages.
           options.beforeSend = (event, hint) {
             final msg = event.message?.formatted ?? '';
+            final exceptionMsg = event.throwable?.toString() ?? '';
+
             if (msg.contains('Failed to interpolate TextStyles')) {
               return null;
             }
+
+            // Drop "There is nothing to pop" assertions. These are go_router /
+            // Navigator complaining when a `pop()` fires on an empty stack —
+            // benign in every observed case (double-tap on back, deep-linked
+            // root screen, async-resolved-after-manual-pop). Patching all 950+
+            // pop call sites is the wrong layer; we filter the assertion here
+            // and offer `context.safePop()` (lib/core/utils/safe_pop.dart) as
+            // the explicit-intent alternative for new code. See FITWIZ-FLUTTER-71
+            // and FITWIZ-FLUTTER-8D for prior incidents in this family.
+            if (exceptionMsg.contains('There is nothing to pop') ||
+                msg.contains('There is nothing to pop')) {
+              return null;
+            }
+
             // Tag null-check operator crashes so we can filter and triage them
             // as a family in Sentry. The default exception type for `foo!` on
             // null is `_TypeError` / `TypeError` with the message starting
             // "Null check operator used on a null value". Attaching a tag here
             // makes it groupable + searchable without polluting other typing
             // errors.
-            final exceptionMsg = event.throwable?.toString() ?? '';
             if (exceptionMsg.contains('Null check operator used on a null value') ||
                 msg.contains('Null check operator used on a null value')) {
               event = event.copyWith(
