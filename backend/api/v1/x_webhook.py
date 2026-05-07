@@ -80,6 +80,52 @@ class DraftRequest(BaseModel):
     tweets: list[str] = Field(..., min_length=1, max_length=20)
 
 
+@router.get("/recent-drafts")
+async def list_recent_drafts(
+    limit: int = 30,
+    status: Optional[str] = None,
+    x_internal_token: Optional[str] = Header(None, alias="X-Internal-Token"),
+) -> list[dict]:
+    """Return recent drafts so the social-post-creator agent can avoid
+    re-pitching angles the user already skipped or posted. Same internal
+    token gating as /draft."""
+    expected = os.environ.get("X_DRAFT_INTERNAL_TOKEN")
+    if not expected or x_internal_token != expected:
+        raise HTTPException(status_code=401, detail="unauthorized")
+    if limit < 1 or limit > 200:
+        raise HTTPException(status_code=422, detail="limit must be 1-200")
+    if status and status not in ("pending", "posted", "skipped", "failed"):
+        raise HTTPException(status_code=422, detail="invalid status")
+
+    conn = await _db()
+    try:
+        if status:
+            rows = await conn.fetch(
+                "SELECT id, status, angle, created_at, posted_url "
+                "FROM x_pending_drafts WHERE status = $1 "
+                "ORDER BY id DESC LIMIT $2",
+                status, limit,
+            )
+        else:
+            rows = await conn.fetch(
+                "SELECT id, status, angle, created_at, posted_url "
+                "FROM x_pending_drafts ORDER BY id DESC LIMIT $1",
+                limit,
+            )
+        return [
+            {
+                "id": r["id"],
+                "status": r["status"],
+                "angle": r["angle"],
+                "created_at": r["created_at"].isoformat(),
+                "posted_url": r["posted_url"],
+            }
+            for r in rows
+        ]
+    finally:
+        await conn.close()
+
+
 @router.post("/draft")
 async def submit_draft(
     payload: DraftRequest,
