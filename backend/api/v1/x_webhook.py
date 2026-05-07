@@ -89,14 +89,14 @@ async def submit_draft(
     if not expected or x_internal_token != expected:
         raise HTTPException(status_code=401, detail="unauthorized")
 
-    # Per-tweet length validation. X allows up to 280 chars on standard
-    # accounts; we leave a safety margin so emoji + RTL combinations don't
-    # silently 422.
+    # Per-tweet length validation. X allows 280 chars but our cap is 225 —
+    # tighter safety margin (LLM char-counters are unreliable, especially
+    # with embedded newlines and emoji), AND shorter tweets read better.
     for i, t in enumerate(payload.tweets):
-        if len(t) > 275:
+        if len(t) > 225:
             raise HTTPException(
                 status_code=422,
-                detail=f"tweet {i+1} is {len(t)} chars (max 275)",
+                detail=f"tweet {i+1} is {len(t)} chars (max 225)",
             )
 
     chat_id = int(os.environ["TELEGRAM_CHAT_ID"])
