@@ -1054,3 +1054,72 @@ Stack: FastAPI on Render, Supabase, Resend, Flutter. Try the waitlist: https://z
 update: form re-submitted. waitlist email confirms on signup. both shipped in the same 2am commit.
 
 ### 📝 END POST CONTENT
+
+---
+
+## 2026-05-08 — "1.2.67 midnight — gym profile schema drift silent 422"
+
+**Status:** Drafted, not yet posted
+
+<details>
+<summary>🔬 Research log + plan (click to expand)</summary>
+
+**Research log (2026-05-08):**
+- Algo finding: Threads 3× total engagement vs single tweets; tweet 2+ distribution gated on tweet-1 engagement (PostEverywhere, OpenTweet, May 2026). Replies worth 150× likes; bookmarks 5× multiplier. Text-first outperforms video 30%. External links in main tweets suppressed. 1–2 hashtags optimal (+21% vs zero; 3+ = −40% penalty). First-hour author replies are the top individual ranking signal (AutoTweet, HashtagTools, SocialBee, May 2026).
+- Hashtag finding: 1 tag total — `#buildinpublic` woven into tweet 5 body sentence. Confirmed top-performing evergreen tag for indie-hacker X audience May 2026 (AutoTweet, Accio trending hashtags May 2026). No second tag; additional tags push into the −17%/−40% penalty bands. Schema-drift/API-versioning angle is technical enough that reply signal from mobile/backend devs outweighs marginal tag reach.
+- Trend hook hijack: None — original builder story anchored to a datable midnight commit. AI fitness market is $10.68B (2025) growing to $57.80B by 2035 (InsightAce, May 2026); solo dev building in a hot niche is authentic framing without needing a news hijack.
+- Dev event anchor: Commit `046bf0d` (2026-05-08, 00:25:44 -0500) — "1.2.67+1140". Diff includes `gym_profile.py` `_normalize_equipment()` Pydantic field_validator that accepts both `["barbell"]` strings AND `[{"name": "barbell", ...}]` dicts from old Flutter builds. Old builds were 422-ing silently on workout generation for any user with a gym profile. Midnight timing — prepping 1.2.67 for Play Store resubmission.
+- Source links:
+  - https://posteverywhere.ai/blog/how-the-x-twitter-algorithm-works
+  - https://opentweet.io/blog/how-twitter-x-algorithm-works-2026
+  - https://www.autotweet.io/blog/best-hashtags-for-x-twitter-2026
+  - https://www.accio.com/business/trending-hashtags-may-2026
+  - https://www.insightaceanalytic.com/report/ai-in-fitness-and-wellness-market/2744
+
+**Plan:**
+- Anchored commit: `046bf0d` — 2026-05-08, 00:25:44 -0500 — "1.2.67+1140" (gym profile schema normalizer + resubmission build)
+- Day/time: Fri May 8, 2026 — 9–11am ET or 2–4pm ET peak window
+- Hashtags: 1 tag — `#buildinpublic` woven into tweet 5 body
+- Pre-post warmup: 15 min commenting on #buildinpublic / #indiedev threads before posting
+- Self-reply immediately after tweet 5 with zealova.com link
+- Quote-tweet tweet 1 ~2h later: "update: 1.2.67 queued. normalizer live. old gym profiles generating workouts again."
+- First-hour: reply to every comment within 5 min; tweet 3 (the normalizer pattern) is bookmark-bait for Flutter/FastAPI devs; tweet 4 (Play Store lag forces API defensiveness) is discussion-bait for founders in review
+
+</details>
+
+### 📝 POST CONTENT BELOW — copy-paste this
+
+**1/** (198 chars)
+Midnight. Prepping build 1.2.67 for Play Store resubmission. Found old app builds were silently 422-ing on workout generation. No alert. No crash log. Just users with gym profiles getting nothing. 🧵
+
+---
+
+**2/** (207 chars)
+Old Flutter builds sent equipment as JSON objects — full name, display name, weights list. New Pydantic model expected strings. Valid client data, wrong format. Pydantic 422'd it. No workout. No explanation.
+
+---
+
+**3/** (192 chars)
+The fix: a Pydantic field_validator. If equipment arrives as a dict, extract the name. If it's already a string, pass it through. 20 lines. Old builds, new builds — same endpoint, same result.
+
+---
+
+**4/** (185 chars)
+This is the real cost of Play Store lag. Ship a schema change. Old clients are frozen mid-review. You can't force them to update. Your API has to absorb every version that ever shipped.
+
+---
+
+**5/** (206 chars)
+Building Zealova — AI fitness coach. Build 1.2.67 queued for Play Store. The rule: never let a schema change break clients you can't update. Reply 'schema' and I'll DM the 20-line normalizer. #buildinpublic
+
+---
+
+**Self-reply (post immediately after tweet 5):**
+Stack: FastAPI on Render, Pydantic v2, Flutter, Supabase. Play Store resubmission in progress. Try Zealova: https://zealova.com
+
+---
+
+**Quote-tweet tweet 1 ~2h later (fresh session):**
+update: 1.2.67 queued. normalizer live. old gym profiles generating workouts again.
+
+### 📝 END POST CONTENT
