@@ -924,14 +924,36 @@ class FoodDatabaseLookupService(FoodDatabaseLookupServicePart2):
                     return (name_exact, word_hits, len(dn))
                 resp.data.sort(key=_display_match_score)
                 row = resp.data[0]
-                override_data = self._row_to_override_dict(row)
-                # Cache for future exact lookups
-                self._overrides[normalized] = override_data
-                logger.info(
-                    f"[FoodDB] OVERRIDE HIT (variant): '{food_name}' → "
-                    f"{override_data['display_name']} ({override_data['calories_per_100g']} cal/100g)"
-                )
-                return override_data
+
+                # Sanity gate — for short single-token queries (e.g. 'wings',
+                # 'rice'), require the chosen row's display_name OR
+                # food_name_normalized to contain the query stem. This
+                # prevents bad variant_names entries (a row tagged with an
+                # unrelated single-word variant — e.g. "Chicken Barbecue
+                # Timor" tagged with `wings`) from masquerading as the
+                # canonical answer for that word.
+                gate_ok = True
+                if len(query_words) == 1 and len(normalized) >= 3:
+                    stem = normalized[:-1] if normalized.endswith("s") and len(normalized) > 3 else normalized
+                    dn = (row.get("display_name") or "").lower()
+                    fn = (row.get("food_name_normalized") or "").replace("_", " ").lower()
+                    if stem not in dn and stem not in fn:
+                        gate_ok = False
+                        logger.info(
+                            f"[FoodDB] Variant-gate rejected: '{food_name}' → "
+                            f"'{row.get('display_name')}' (stem '{stem}' missing "
+                            f"from display/normalized name) — falling through to fuzzy"
+                        )
+
+                if gate_ok:
+                    override_data = self._row_to_override_dict(row)
+                    # Cache for future exact lookups
+                    self._overrides[normalized] = override_data
+                    logger.info(
+                        f"[FoodDB] OVERRIDE HIT (variant): '{food_name}' → "
+                        f"{override_data['display_name']} ({override_data['calories_per_100g']} cal/100g)"
+                    )
+                    return override_data
 
             # Step 3: Stemmed + reordered candidates vs variant_names
             candidates = self._generate_fuzzy_candidates(normalized)

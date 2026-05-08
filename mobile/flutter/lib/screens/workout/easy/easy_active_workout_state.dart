@@ -42,15 +42,19 @@ import '../../../data/services/api_client.dart';
 import '../../../data/services/pr_detection_service.dart';
 import '../controllers/workout_timer_controller.dart';
 import '../models/workout_state.dart';
+import '../widgets/change_equipment_helper.dart';
 import '../widgets/enhanced_notes_sheet.dart';
+import '../widgets/exercise_swap_sheet.dart';
+import '../widgets/report_pain_sheet.dart';
 import 'easy_active_workout_screen.dart';
+import '../providers/active_workout_session_provider.dart';
 import 'easy_active_workout_state_models.dart';
 import 'easy_active_workout_view.dart';
 import 'easy_insight_helpers.dart';
 import 'easy_persistence_helpers.dart';
-import '../../../widgets/glass_loading_overlay.dart';
 import 'easy_rest_controller.dart';
 import 'easy_sheet_helpers.dart';
+import 'widgets/easy_exercise_actions_sheet.dart';
 import 'widgets/easy_help_sheet.dart';
 
 class EasyActiveWorkoutScreenState
@@ -109,6 +113,22 @@ class EasyActiveWorkoutScreenState
     final useKg = ref.read(useKgForWorkoutProvider);
     _perExercise = seedEasyExerciseStates(_exercises, useKg: useKg);
 
+    // Restore any sets logged earlier this session — covers the
+    // tier-swap case (user logs 2 sets in Easy, flips to Advanced, flips
+    // back, expects their 2 sets still there). The shared session
+    // provider is keyed by workout.id; `start` is a no-op if the same
+    // workout is already in play.
+    final session = ref.read(activeWorkoutSessionProvider.notifier);
+    session.start(widget.workout.id);
+    final stored = ref.read(activeWorkoutSessionProvider);
+    if (stored.workoutId == widget.workout.id) {
+      stored.completedSets.forEach((idx, logs) {
+        final s = _perExercise[idx];
+        if (s != null) s.completed.addAll(logs);
+      });
+      _currentIndex = stored.currentExerciseIndex.clamp(0, _exercises.length - 1);
+    }
+
     _timer = WorkoutTimerController()
       ..onWorkoutTick = (_) {
         if (mounted) setState(() {});
@@ -152,6 +172,11 @@ class EasyActiveWorkoutScreenState
 
   void _setReps(double v) {
     setState(() => _perExercise[_currentIndex]!.reps = v.round());
+    HapticService.instance.tick();
+  }
+
+  void _setDuration(double v) {
+    setState(() => _perExercise[_currentIndex]!.durationSeconds = v.round());
     HapticService.instance.tick();
   }
 
@@ -422,6 +447,9 @@ class EasyActiveWorkoutScreenState
           loggingMode: 'easy',
         );
         state.completed[idx] = updated;
+        ref
+            .read(activeWorkoutSessionProvider.notifier)
+            .replaceSet(_currentIndex, idx, updated);
       }
       await HapticService.instance.success();
       _returnToCurrentSet();
@@ -439,12 +467,16 @@ class EasyActiveWorkoutScreenState
           .clamp(0, 600);
     }
 
+    // Timed exercises (planks, wall sits): the user-entered hold seconds
+    // ARE the metric — write them into durationSeconds and zero out
+    // weight/reps so volume/PR math stays correct.
+    final isTimed = state.isTimed;
     final setLog = SetLog(
-      reps: state.reps,
-      weight: weightKg,
+      reps: isTimed ? 0 : state.reps,
+      weight: isTimed ? 0 : weightKg,
       targetReps: state.targetReps,
       startedAt: _currentSetStartTime,
-      durationSeconds: setDuration,
+      durationSeconds: isTimed ? state.durationSeconds : setDuration,
       loggingMode: 'easy',
       notes: _pendingNoteText.trim().isNotEmpty
           ? [_pendingNoteText.trim()]
@@ -453,6 +485,11 @@ class EasyActiveWorkoutScreenState
       notesPhotoPaths: List.unmodifiable(_pendingNotePhotoPaths),
     );
     state.completed.add(setLog);
+    // Mirror into the shared session so a tier swap (Easy → Advanced)
+    // sees the same logged sets.
+    ref
+        .read(activeWorkoutSessionProvider.notifier)
+        .recordSet(_currentIndex, setLog);
     // Clear pending note staging so the next set starts clean.
     _pendingNoteText = '';
     _pendingNoteAudioPath = null;
@@ -525,6 +562,7 @@ class EasyActiveWorkoutScreenState
         return;
       }
       setState(() => _currentIndex = next);
+    ref.read(activeWorkoutSessionProvider.notifier).setCurrentIndex(next);
       return;
     }
     // Re-seed working values for the NEXT set from target table / last log.
@@ -555,11 +593,93 @@ class EasyActiveWorkoutScreenState
       return;
     }
     setState(() => _currentIndex = next);
+    ref.read(activeWorkoutSessionProvider.notifier).setCurrentIndex(next);
     _currentSetStartTime = DateTime.now();
+  }
+
+  /// Open the per-exercise actions sheet (Swap / Report pain / Change
+  /// equipment / Skip / Video). Reachable from the "•••" header chip and
+  /// from a long-press on the focal column body. Easy mode previously had
+  /// NO swap path mid-workout; this wiring is the fix.
+  void _showExerciseActions() {
+    if (_currentIndex >= _exercises.length) return;
+    final exercise = _exercises[_currentIndex];
+    final workoutId = widget.workout.id;
+    EasyExerciseActionsSheet.show(
+      context,
+      exerciseName: exercise.name,
+      onSwap: () async {
+        if (workoutId == null) return;
+        final updated = await showExerciseSwapSheet(
+          context,
+          ref,
+          workoutId: workoutId,
+          exercise: exercise,
+        );
+        if (updated == null || !mounted) return;
+        // Replace the swapped exercise in our local list and reseed its
+        // per-exercise state so the focal column rerenders against the new
+        // movement (sets/reps/weight/duration). Other exercises retain
+        // their completed-set state. We rebuild the full seed map and keep
+        // each surviving exercise's prior `completed` list — index alignment
+        // holds because swapExercise replaces in-place at the same index.
+        setState(() {
+          final oldPerExercise = Map<int, EasyExerciseState>.from(_perExercise);
+          _exercises
+            ..clear()
+            ..addAll(updated.exercises);
+          final useKg = ref.read(useKgProvider);
+          final reseeded = seedEasyExerciseStates(_exercises, useKg: useKg);
+          for (final entry in reseeded.entries) {
+            final old = oldPerExercise[entry.key];
+            if (old != null && entry.key != _currentIndex) {
+              // Preserve in-progress state for non-swapped exercises.
+              _perExercise[entry.key] = entry.value
+                ..completed.clear()
+                ..completed.addAll(old.completed)
+                ..displayWeight = old.displayWeight
+                ..reps = old.reps
+                ..durationSeconds = old.durationSeconds;
+            } else {
+              _perExercise[entry.key] = entry.value;
+            }
+          }
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Exercise swapped'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      },
+      onReportPain: () async {
+        await ReportPainSheet.show(
+          context,
+          exerciseName: exercise.name,
+          exerciseId: exercise.id ?? exercise.libraryId,
+        );
+        // The avoided-list provider already invalidates today/all-workouts
+        // caches; for the *current* session we leave the exercise in place
+        // unless the user also taps Skip / Swap. (User explicitly preferred
+        // not to disrupt the active set on a soft pain flag.)
+      },
+      onChangeEquipment: () {
+        showChangeEquipmentForActiveWorkout(
+          context,
+          ref,
+          activeWorkout: widget.workout,
+        );
+      },
+      onSkipToNext: _skipToNextExercise,
+      onShowVideo: () => openEasyVideo(context, exercise, ref: ref),
+    );
   }
 
   void _jumpTo(int idx) {
     setState(() => _currentIndex = idx.clamp(0, _exercises.length - 1));
+    ref
+        .read(activeWorkoutSessionProvider.notifier)
+        .setCurrentIndex(_currentIndex);
     _currentSetStartTime = DateTime.now();
   }
 
@@ -578,26 +698,18 @@ class EasyActiveWorkoutScreenState
     _restBroadcaster?.dispose();
     _restBroadcaster = null;
 
-    // Glass loading overlay covers the 3-5s blocking /complete API call so
-    // the screen doesn't sit silent while the server detects PRs, builds
-    // performance summaries, and awards XP. Always dismissed in finally.
-    final overlay = showGlassLoadingOverlay(
-      context,
-      message: 'Finishing workout…',
+    // No glass loading overlay here — the screen already swaps to
+    // `_EasySavingOverlay` (trophy + "Saving workout..." + spinner) via
+    // `_isFinishing`, so layering another overlay on top would duplicate
+    // the loader and the underlying trophy bleeds through the scrim.
+    final result = await finalizeEasyWorkout(
+      ref: ref,
+      workout: widget.workout,
+      exercises: _exercises,
+      perExercise: _perExercise,
+      totalTimeSeconds: _timer.workoutSeconds,
+      workoutLogId: _workoutLogId,
     );
-    final EasyFinalizeResult result;
-    try {
-      result = await finalizeEasyWorkout(
-        ref: ref,
-        workout: widget.workout,
-        exercises: _exercises,
-        perExercise: _perExercise,
-        totalTimeSeconds: _timer.workoutSeconds,
-        workoutLogId: _workoutLogId,
-      );
-    } finally {
-      overlay.dismiss();
-    }
 
     if (!mounted) return;
 
@@ -605,6 +717,8 @@ class EasyActiveWorkoutScreenState
     // the active-workout phase flag so re-entry restarts cleanly.
     ref.read(workoutMiniPlayerProvider.notifier).close();
     ref.read(activeWorkoutWarmupDoneProvider.notifier).state = false;
+    // Wipe the shared session so the next workout starts clean.
+    ref.read(activeWorkoutSessionProvider.notifier).clear();
 
     context.go('/workout-complete', extra: <String, dynamic>{
       'workout': widget.workout,
@@ -728,7 +842,12 @@ class EasyActiveWorkoutScreenState
         ],
       ),
     );
-    if (ok == true && mounted) Navigator.of(context).maybePop();
+    if (ok == true && mounted) {
+      // Clear the shared session — user explicitly walked away. Re-entry
+      // should rehydrate from persisted server data, not stale memory.
+      ref.read(activeWorkoutSessionProvider.notifier).clear();
+      Navigator.of(context).maybePop();
+    }
   }
 
 
@@ -842,6 +961,7 @@ class EasyActiveWorkoutScreenState
       },
       onWeightChanged: _setWeight,
       onRepsChanged: _setReps,
+      onDurationChanged: _setDuration,
       onLogSet: _logCurrentSet,
       editingSetIndex: _editingSetIndex,
       onEditSet: _editSet,
@@ -855,6 +975,7 @@ class EasyActiveWorkoutScreenState
       hasNote: _focalSetHasNote,
       onSkipToNext:
           _currentIndex < _exercises.length - 1 ? _skipToNextExercise : null,
+      onShowExerciseActions: _showExerciseActions,
       onQuitWorkout: _quitWorkout,
       onCompleteWorkoutNow: _completeWorkoutNow,
       allCompletedSets: [

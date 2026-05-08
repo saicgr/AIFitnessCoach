@@ -1,7 +1,7 @@
 name: fitwiz
 description: "AI-powered fitness coaching app with personalized workouts"
 publish_to: 'none'
-version: 1.2.65+1138
+version: 1.2.67+1140
 
 environment:
   sdk: ^3.10.1

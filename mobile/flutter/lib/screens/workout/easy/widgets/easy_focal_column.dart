@@ -18,6 +18,7 @@ class EasyFocalColumn extends StatelessWidget {
   final bool compact;
   final ValueChanged<double> onWeightChanged;
   final ValueChanged<double> onRepsChanged;
+  final ValueChanged<double> onDurationChanged;
   final Future<void> Function() onLogSet;
 
   /// When non-null, the user is editing a previously-logged set. The Log
@@ -33,6 +34,7 @@ class EasyFocalColumn extends StatelessWidget {
     required this.compact,
     required this.onWeightChanged,
     required this.onRepsChanged,
+    required this.onDurationChanged,
     required this.onLogSet,
     this.editingSetIndex,
   });
@@ -55,59 +57,103 @@ class EasyFocalColumn extends StatelessWidget {
         final verticalPad = tight ? 4.0 : 8.0;
         final logFontSize = tight ? 17.0 : 19.0;
 
+        // Timed exercises (planks, wall sits, dead-hangs) measure hold
+        // duration, not weight × reps. Render a single seconds stepper
+        // and write the user's value into SetLog.durationSeconds.
+        final timedBody = Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Spacer(),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: Row(
+                children: [
+                  Text(
+                    'Hold',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: (Theme.of(context).brightness == Brightness.dark
+                              ? Colors.white
+                              : Colors.black)
+                          .withValues(alpha: 0.62),
+                      letterSpacing: 0.2,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            FocalStepper(
+              value: state.durationSeconds.toDouble(),
+              step: 5,
+              unit: 'sec',
+              integerOnly: true,
+              min: 5,
+              max: 600,
+              compact: stepperCompact,
+              onChanged: onDurationChanged,
+            ),
+            const Spacer(),
+          ],
+        );
+
+        final repsBody = Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Spacer(),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Text(
+                    'Weight',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: (Theme.of(context).brightness == Brightness.dark
+                              ? Colors.white
+                              : Colors.black)
+                          .withValues(alpha: 0.62),
+                      letterSpacing: 0.2,
+                    ),
+                  ),
+                  const Spacer(),
+                  const UnitChip(),
+                ],
+              ),
+            ),
+            FocalStepper(
+              value: state.displayWeight,
+              step: weightStep,
+              unit: useKg ? 'kg' : 'lb',
+              min: 0,
+              max: 999,
+              compact: stepperCompact,
+              onChanged: onWeightChanged,
+            ),
+            SizedBox(height: gapBetweenSteppers),
+            FocalStepper(
+              label: 'Reps',
+              value: state.reps.toDouble(),
+              step: 1,
+              unit: 'reps',
+              integerOnly: true,
+              min: 0,
+              max: 99,
+              compact: stepperCompact,
+              onChanged: onRepsChanged,
+            ),
+            const Spacer(),
+          ],
+        );
+
         return Padding(
           padding: EdgeInsets.symmetric(horizontal: 20, vertical: verticalPad),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Spacer(),
-              // Weight row header: "Weight" label on the left, kg/lb
-              // toggle flushed to the RIGHT edge of the row. Stepper below
-              // uses label: null so we don't render the label twice.
-              Padding(
-                padding: const EdgeInsets.only(bottom: 6),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Text(
-                      'Weight',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: (Theme.of(context).brightness == Brightness.dark
-                                ? Colors.white
-                                : Colors.black)
-                            .withValues(alpha: 0.62),
-                        letterSpacing: 0.2,
-                      ),
-                    ),
-                    const Spacer(),
-                    const UnitChip(),
-                  ],
-                ),
-              ),
-              FocalStepper(
-                value: state.displayWeight,
-                step: weightStep,
-                unit: useKg ? 'kg' : 'lb',
-                min: 0,
-                max: 999,
-                compact: stepperCompact,
-                onChanged: onWeightChanged,
-              ),
-              SizedBox(height: gapBetweenSteppers),
-              FocalStepper(
-                label: 'Reps',
-                value: state.reps.toDouble(),
-                step: 1,
-                unit: 'reps',
-                integerOnly: true,
-                min: 0,
-                max: 99,
-                compact: stepperCompact,
-                onChanged: onRepsChanged,
-              ),
-              const Spacer(),
+              Expanded(child: state.isTimed ? timedBody : repsBody),
               SizedBox(
                 height: logBtnHeight,
                 child: ElevatedButton(

@@ -303,6 +303,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     await Future.delayed(const Duration(milliseconds: 300));
     if (!mounted) return;
 
+    // Wait for the onboarding tour to finish if it's currently showing —
+    // otherwise the modal-bottom-sheet barrier scrims the tooltip and the
+    // two overlays collide visually (light-mode tooltip becomes unreadable).
+    if (ref.read(appTourControllerProvider).isVisible) {
+      final completer = Completer<void>();
+      final sub = ref.listenManual(appTourControllerProvider, (prev, next) {
+        if (!next.isVisible && !completer.isCompleted) completer.complete();
+      });
+      await completer.future;
+      sub.close();
+      if (!mounted) return;
+      // Brief breathing room after the tour closes before opening the sheet.
+      await Future.delayed(const Duration(milliseconds: 400));
+      if (!mounted) return;
+    }
+
     // Check SharedPreferences directly to avoid race condition with
     // HealthSyncNotifier's async _loadSyncState() not completing yet
     final prefs = await SharedPreferences.getInstance();

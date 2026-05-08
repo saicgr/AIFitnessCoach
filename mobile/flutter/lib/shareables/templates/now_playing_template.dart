@@ -148,8 +148,14 @@ class NowPlayingTemplate extends StatelessWidget {
                         ),
                       ),
                     ),
+                    // left+right span the Stack so the inner
+                    // FractionallySizedBox gets a bounded width — without
+                    // both edges set, Positioned hands its child unbounded
+                    // constraints and FractionallySizedBox crashes
+                    // (RenderFractionallySizedOverflowBox: w=Infinity).
                     Positioned(
-                      left: MediaQuery.of(context).size.width * 0,
+                      left: 0,
+                      right: 0,
                       top: -3,
                       child: FractionallySizedBox(
                         widthFactor: 0.78,

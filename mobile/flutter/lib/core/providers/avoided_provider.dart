@@ -205,6 +205,37 @@ class AvoidedNotifier extends StateNotifier<AvoidedState> {
     }
   }
 
+  /// Report pain on an exercise — adds it to the avoided list with a
+  /// structured `pain:<severity>` reason and an optional auto-expiring
+  /// window. Wraps [addAvoided] so the existing optimistic update + workout
+  /// invalidation paths apply unchanged.
+  ///
+  /// [severity] must be one of `mild`, `sharp`, `severe` (used by analytics
+  /// + future pain-history surfacing).
+  /// [duration] = null means "until I remove it" (permanent flag, no
+  /// `is_temporary`). Otherwise the avoidance auto-expires at
+  /// `now + duration`.
+  Future<bool> reportPain(
+    String exerciseName, {
+    String? exerciseId,
+    required String severity,
+    Duration? duration,
+  }) async {
+    assert(
+      severity == 'mild' || severity == 'sharp' || severity == 'severe',
+      'severity must be mild|sharp|severe',
+    );
+    final isTemporary = duration != null;
+    final endDate = duration == null ? null : DateTime.now().add(duration);
+    return addAvoided(
+      exerciseName,
+      exerciseId: exerciseId,
+      reason: 'pain:$severity',
+      isTemporary: isTemporary,
+      endDate: endDate,
+    );
+  }
+
   /// Toggle avoided status for an exercise
   Future<bool> toggleAvoided(String exerciseName, {String? exerciseId}) async {
     if (state.isAvoided(exerciseName)) {

@@ -18,6 +18,7 @@ import '../../data/providers/xp_provider.dart';
 import '../../widgets/glass_sheet.dart';
 import 'widgets/glass_nutrition_tab_bar.dart';
 import '../../widgets/tooltips/tooltips.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../widgets/main_shell.dart';
 import '../../widgets/pill_swipe_navigation.dart';
 import 'log_meal_sheet.dart';
@@ -386,6 +387,18 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
     if (prefs.isWeeklyCheckinDue) {
       if (prefs.weeklyCheckinDismissCount >= 3) {
         debugPrint('[NutritionScreen] Weekly check-in due but user dismissed ${prefs.weeklyCheckinDismissCount} times, skipping auto-show');
+        return;
+      }
+
+      // Defer if the first-run nutrition tour hasn't been seen yet —
+      // otherwise the bottom-sheet barrier scrims the spotlight tooltip
+      // and the two overlays collide. The tour auto-marks itself seen
+      // after a 1s impression, so the next visit gets the check-in.
+      final sp = await SharedPreferences.getInstance();
+      final tourSeen =
+          sp.getBool('has_seen_empty_tour_${TooltipIds.nutrition}') ?? false;
+      if (!tourSeen) {
+        debugPrint('[NutritionScreen] Deferring weekly check-in — nutrition tour not yet seen');
         return;
       }
 

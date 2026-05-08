@@ -397,12 +397,19 @@ Map<int, EasyExerciseState> seedEasyExerciseStates(
     final total = (ex.setTargets != null && ex.setTargets!.isNotEmpty)
         ? ex.setTargets!.length
         : (ex.sets ?? 3);
+    final timed = ex.isTimedExercise;
+    final defaultDuration = ex.holdSeconds ??
+        (firstTarget?.targetHoldSeconds) ??
+        ex.durationSeconds ??
+        30;
     out[i] = EasyExerciseState(
       displayWeight: displayWeight,
       reps: targetReps,
       targetReps: targetReps,
       targetWeightKg: targetWeightKg,
       totalSets: total.clamp(1, 20),
+      isTimed: timed,
+      durationSeconds: defaultDuration.clamp(5, 600),
     );
   }
   return out;

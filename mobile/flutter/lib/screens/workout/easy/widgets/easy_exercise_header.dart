@@ -37,6 +37,11 @@ class EasyExerciseHeader extends ConsumerWidget {
   /// Whether a note/audio/photo is currently attached to the focal set.
   final bool hasNote;
 
+  /// Tap handler for the "•••" More chip — opens the easy exercise
+  /// actions sheet (Swap / Report pain / Change equipment / Skip / Video).
+  /// Null hides the chip; in practice always wired by easy_active_workout_state.
+  final VoidCallback? onShowMore;
+
   /// When true, compact layout for SE-class devices (180 pt thumbnail).
   final bool compact;
 
@@ -52,6 +57,7 @@ class EasyExerciseHeader extends ConsumerWidget {
     this.onRemoveSet,
     this.onEditNote,
     this.hasNote = false,
+    this.onShowMore,
     this.compact = false,
   });
 
@@ -189,6 +195,18 @@ class EasyExerciseHeader extends ConsumerWidget {
                     onTap: onEditNote!,
                     hasNote: hasNote,
                     color: textColor,
+                  ),
+                ],
+                if (onShowMore != null) ...[
+                  const SizedBox(width: 10),
+                  _LinkChip(
+                    icon: Icons.more_horiz_rounded,
+                    label: 'More',
+                    color: textColor,
+                    onTap: () async {
+                      await HapticService.instance.tap();
+                      onShowMore!();
+                    },
                   ),
                 ],
               ],

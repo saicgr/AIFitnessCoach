@@ -22,12 +22,15 @@ class GlassLoadingOverlay extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    // Translucent enough to read as glass, opaque enough to stay light
+    // in light mode. Previous 0.72 white composited over the 0.25 black
+    // scrim to a muddy gray that read as a dark card.
     final fill = isDark
-        ? Colors.white.withValues(alpha: 0.08)
-        : Colors.white.withValues(alpha: 0.72);
+        ? const Color(0xFF1C1C1E).withValues(alpha: 0.86)
+        : Colors.white.withValues(alpha: 0.94);
     final border = isDark
         ? Colors.white.withValues(alpha: 0.14)
-        : Colors.white.withValues(alpha: 0.55);
+        : Colors.black.withValues(alpha: 0.06);
     final textPrimary = isDark ? Colors.white : Colors.black87;
 
     return PopScope(

@@ -1732,11 +1732,11 @@ export const features: Feature[] = [
   },
   {
     id: 'heart-rate-sync',
-    title: 'Heart Rate & HRV Sync',
-    description: 'Read heart rate and heart rate variability from wearables.',
+    title: 'Heart Rate Sync',
+    description: 'Read heart rate from wearables and Health Connect / Apple Health.',
     category: 'health-devices',
     tier: 'premium',
-    tags: ['heart-rate', 'hrv', 'wearables'],
+    tags: ['heart-rate', 'wearables'],
   },
   {
     id: 'body-metrics-sync',

@@ -313,11 +313,16 @@ async def _handle_cancellation(supabase, event: dict, background_tasks=None):
                 .eq("user_id", user_id) \
                 .maybe_single() \
                 .execute()
+            # `.maybe_single().execute()` may return None (no row) on some
+            # supabase-py versions instead of an APIResponse with data=None.
             promotional_ok = True
-            if pref_result.data and pref_result.data.get("promotional") is False:
+            if pref_result is not None and getattr(pref_result, "data", None) \
+                    and pref_result.data.get("promotional") is False:
                 promotional_ok = False
-            if user_result.data and promotional_ok:
-                tier_name = sub_result.data.get("tier", "premium") if sub_result.data else "premium"
+            user_data = getattr(user_result, "data", None) if user_result is not None else None
+            sub_data = getattr(sub_result, "data", None) if sub_result is not None else None
+            if user_data and promotional_ok:
+                tier_name = sub_data.get("tier", "premium") if sub_data else "premium"
                 workout_count_result = supabase.client.table("workout_logs") \
                     .select("id") \
                     .eq("user_id", user_id) \
@@ -325,8 +330,8 @@ async def _handle_cancellation(supabase, event: dict, background_tasks=None):
                 workout_count = len(workout_count_result.data or [])
                 background_tasks.add_task(
                     get_email_service().send_cancellation_retention,
-                    user_result.data["email"],
-                    user_result.data.get("name", ""),
+                    user_data["email"],
+                    user_data.get("name", ""),
                     tier_name,
                     workout_count,
                     0.0,  # total_volume_kg simplified

@@ -29,12 +29,23 @@ class EasyExerciseState {
   double targetWeightKg; // always kg; converted for display only
   int totalSets;
 
+  /// True when the exercise is measured by hold time (planks, wall sits,
+  /// dead-hangs) rather than reps. Drives the focal column to render a
+  /// seconds stepper instead of weight + reps.
+  final bool isTimed;
+
+  /// User-entered hold target for the current set, in seconds. Only
+  /// meaningful when [isTimed] is true. Persists into `SetLog.durationSeconds`.
+  int durationSeconds;
+
   EasyExerciseState({
     required this.displayWeight,
     required this.reps,
     required this.targetReps,
     required this.targetWeightKg,
     required this.totalSets,
+    this.isTimed = false,
+    this.durationSeconds = 30,
     List<SetLog>? completed,
   }) : completed = completed ?? <SetLog>[];
 

@@ -5,7 +5,9 @@ import '../../utils/tz.dart';
 import '../models/gym_profile.dart';
 import '../repositories/gym_profile_repository.dart';
 import '../repositories/auth_repository.dart';
+import '../repositories/workout_repository.dart';
 import '../services/data_cache_service.dart';
+import 'today_workout_provider.dart';
 
 /// In-memory cache for instant display on provider recreation
 /// Survives provider invalidation and prevents loading flash
@@ -311,6 +313,12 @@ class GymProfilesNotifier extends StateNotifier<AsyncValue<List<GymProfile>>> {
     try {
       debugPrint('✏️ [GymProfileProvider] Updating profile: $profileId');
 
+      // Snapshot the previous active profile so we can detect equipment /
+      // environment changes that should invalidate cached workouts.
+      final previousActive = state.valueOrNull
+          ?.where((p) => p.id == profileId)
+          .firstOrNull;
+
       final updated = await _repository.updateProfile(profileId, update);
 
       // Update local state and cache
@@ -324,12 +332,71 @@ class GymProfilesNotifier extends StateNotifier<AsyncValue<List<GymProfile>>> {
         }
       });
 
+      // If the active profile's equipment or environment changed, the cached
+      // today/upcoming workouts were generated against stale equipment —
+      // invalidate so generation re-evaluates against the new set. Without
+      // this, equipment edits look saved (server-side) but the UI keeps
+      // showing the old plan until the next manual refresh.
+      if (updated.isActive && previousActive != null) {
+        final equipmentChanged = !_listEq(previousActive.equipment, updated.equipment);
+        final detailsChanged = !_detailsEq(
+          previousActive.equipmentDetails,
+          updated.equipmentDetails,
+        );
+        final envChanged =
+            previousActive.workoutEnvironment != updated.workoutEnvironment;
+        if (equipmentChanged || detailsChanged || envChanged) {
+          debugPrint(
+              '🔄 [GymProfileProvider] Equipment/env changed on active profile — invalidating workout caches');
+          _invalidateWorkoutCaches();
+        }
+      }
+
       debugPrint('✅ [GymProfileProvider] Profile updated: ${updated.name}');
       return updated;
     } catch (e) {
       debugPrint('❌ [GymProfileProvider] Error updating profile: $e');
       rethrow;
     }
+  }
+
+  /// Invalidate the today + all-workouts caches so the next read regenerates
+  /// against the current gym profile equipment.
+  void _invalidateWorkoutCaches() {
+    try {
+      _ref.read(todayWorkoutProvider.notifier).invalidateAndRefresh();
+    } catch (e) {
+      debugPrint('⚠️ [GymProfileProvider] todayWorkoutProvider invalidate failed: $e');
+    }
+    try {
+      _ref.read(workoutsProvider.notifier).silentRefresh();
+    } catch (e) {
+      debugPrint('⚠️ [GymProfileProvider] workoutsProvider refresh failed: $e');
+    }
+  }
+
+  static bool _listEq(List<String> a, List<String> b) {
+    if (a.length != b.length) return false;
+    final sa = {...a};
+    final sb = {...b};
+    return sa.length == sb.length && sa.containsAll(sb);
+  }
+
+  static bool _detailsEq(
+    List<Map<String, dynamic>>? a,
+    List<Map<String, dynamic>>? b,
+  ) {
+    if (identical(a, b)) return true;
+    if (a == null || b == null) return a == b;
+    if (a.length != b.length) return false;
+    String key(Map<String, dynamic> m) =>
+        '${m['name']}|${m['quantity']}|${(m['weights'] ?? []).join(',')}';
+    final ka = a.map(key).toList()..sort();
+    final kb = b.map(key).toList()..sort();
+    for (var i = 0; i < ka.length; i++) {
+      if (ka[i] != kb[i]) return false;
+    }
+    return true;
   }
 
   /// Delete a profile

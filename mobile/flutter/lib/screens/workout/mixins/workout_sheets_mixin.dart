@@ -20,14 +20,13 @@ import '../../../data/providers/gym_profile_provider.dart';
 import '../../../data/repositories/hydration_repository.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/services/api_client.dart';
-import '../../../models/equipment_item.dart';
 import '../../../core/services/weight_suggestion_service.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/log_1rm_sheet.dart';
 import '../models/workout_state.dart';
 import '../widgets/breathing_guide_sheet.dart';
 import '../widgets/barbell_plate_indicator.dart';
-import '../widgets/edit_workout_equipment_sheet.dart';
+import '../widgets/change_equipment_helper.dart';
 import '../widgets/enhanced_notes_sheet.dart';
 import '../widgets/exercise_options_sheet.dart' show RepProgressionType, RepProgressionTypeExtension;
 import '../widgets/hydration_dialog.dart';
@@ -668,48 +667,17 @@ mixin WorkoutSheetsMixin<T extends StatefulWidget> on State<T> {
     showWeightIncrementsSheet(context);
   }
 
-  /// Show equipment profile sheet — lets user view/edit their gym equipment
+  /// Show equipment profile sheet — lets the user edit the active gym
+  /// profile's equipment without leaving the active workout, then prompts
+  /// regenerate-or-continue. Routes through `showChangeEquipmentForActiveWorkout`
+  /// so the same flow is shared with Easy mode.
   void showEquipmentProfileSheetImpl() {
-    final activeProfile = ref.read(activeGymProfileProvider);
-    if (activeProfile == null) return;
-
-    // Get current equipment details from profile
-    final currentEquipmentDetails = (activeProfile.equipmentDetails ?? [])
-        .map((detail) {
-          if (detail is Map<String, dynamic>) {
-            return EquipmentItem.fromJson(detail);
-          }
-          return null;
-        })
-        .whereType<EquipmentItem>()
-        .toList();
-
-    showGlassSheet(
-      context: context,
-      builder: (context) => GlassSheet(
-        child: EditWorkoutEquipmentSheet(
-          currentEquipment: activeProfile.equipment,
-          equipmentDetails: currentEquipmentDetails,
-          onApply: (selectedEquipment) async {
-            Navigator.pop(context);
-            // Save to gym profile via API
-            try {
-              final apiClient = ref.read(apiClientProvider);
-              await apiClient.put(
-                '/gym-profiles/${activeProfile.id}',
-                data: {'equipment': selectedEquipment},
-              );
-              ref.read(gymProfilesProvider.notifier).refresh();
-              if (mounted) {
-                setState(() {}); // Rebuild to reflect new equipment
-              }
-              debugPrint('✅ [Equipment] Updated gym profile');
-            } catch (e) {
-              debugPrint('⚠️ [Equipment] Failed to save: $e');
-            }
-          },
-        ),
-      ),
+    // ignore: avoid_dynamic_calls
+    final workout = (workoutWidget as dynamic).workout;
+    showChangeEquipmentForActiveWorkout(
+      context,
+      ref,
+      activeWorkout: workout,
     );
   }
 

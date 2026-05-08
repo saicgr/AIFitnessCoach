@@ -296,22 +296,68 @@ class _EmptyStateTipTourState extends State<EmptyStateTipTour> {
     return ValueListenableBuilder<Rect?>(
       valueListenable: _targetRect,
       builder: (context, rect, _) {
-        // Card placement: if we have a rect, flip the card to the
-        // opposite half so it never covers the spotlight; otherwise
-        // honour the configured alignment.
-        final screenSize = MediaQuery.of(context).size;
-        final placeBelow =
-            rect == null ? true : rect.center.dy < screenSize.height / 2;
-        final cardAlignment =
-            placeBelow ? Alignment.bottomCenter : Alignment.topCenter;
-        final cardPadding = placeBelow
-            ? const EdgeInsets.fromLTRB(16, 0, 16, 24)
-            : EdgeInsets.fromLTRB(
-                16,
-                MediaQuery.of(context).padding.top + 16,
-                16,
-                0,
-              );
+        final mq = MediaQuery.of(context);
+        final screenSize = mq.size;
+        final topSafe = mq.padding.top + 16;
+        final bottomSafe = mq.padding.bottom + 24;
+        // 16pt gap between spotlight ring and card.
+        const gap = 16.0;
+
+        // Decide which side has more room, then position the card
+        // adjacent to the spotlight (not at the far screen edge). The
+        // old logic pinned the card to topCenter / bottomCenter and
+        // would land on top of unrelated UI like a segment toggle that
+        // happened to share the screen edge with the card.
+        final spaceBelow = rect == null
+            ? screenSize.height
+            : screenSize.height -
+                (rect.bottom + tip.targetPadding.bottom) -
+                bottomSafe;
+        final spaceAbove = rect == null
+            ? 0.0
+            : (rect.top - tip.targetPadding.top) - topSafe;
+        final placeBelow = rect == null ? true : spaceBelow >= spaceAbove;
+
+        Widget positionedCard;
+        if (rect == null) {
+          // No layout yet — fall back to a centered alignment.
+          positionedCard = Align(
+            alignment: Alignment.bottomCenter,
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(16, 0, 16, bottomSafe),
+              child: card,
+            ),
+          );
+        } else if (placeBelow) {
+          final top = rect.bottom + tip.targetPadding.bottom + gap;
+          final maxH = (screenSize.height - top - bottomSafe).clamp(80.0, double.infinity);
+          positionedCard = Positioned(
+            left: 16,
+            right: 16,
+            top: top,
+            child: Center(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(maxHeight: maxH),
+                child: card,
+              ),
+            ),
+          );
+        } else {
+          final bottomFromBottom =
+              (screenSize.height - rect.top) + tip.targetPadding.top + gap;
+          final maxH = (screenSize.height - bottomFromBottom - topSafe).clamp(80.0, double.infinity);
+          positionedCard = Positioned(
+            left: 16,
+            right: 16,
+            bottom: bottomFromBottom,
+            child: Center(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(maxHeight: maxH),
+                child: card,
+              ),
+            ),
+          );
+        }
 
         return Stack(
           children: [
@@ -336,10 +382,7 @@ class _EmptyStateTipTourState extends State<EmptyStateTipTour> {
             ),
             // Card sits above the dim and absorbs taps — its own
             // Next / Got it / Close buttons drive navigation.
-            Align(
-              alignment: cardAlignment,
-              child: Padding(padding: cardPadding, child: card),
-            ),
+            positionedCard,
           ],
         );
       },

@@ -1,8 +1,30 @@
 """Gym Profile Pydantic models for multi-gym profile system."""
 
-from pydantic import BaseModel, Field
-from typing import Optional, List
+from pydantic import BaseModel, Field, field_validator
+from typing import Optional, List, Union, Any
 from datetime import datetime
+
+
+def _normalize_equipment(value: Any) -> Any:
+    """Accept either a list of equipment names (strings) or a list of detail
+    dicts (`{"name": "...", "display_name": ..., "weights": [...], ...}`) and
+    return a flat list of canonical name strings. Older mobile clients send
+    detail dicts in the `equipment` field; the rich form belongs in
+    `equipment_details`. Normalizing here keeps PUT /gym-profiles/{id} from
+    422'ing while clients update."""
+    if value is None:
+        return value
+    if not isinstance(value, list):
+        return value
+    out: List[str] = []
+    for item in value:
+        if isinstance(item, str):
+            out.append(item)
+        elif isinstance(item, dict):
+            name = item.get("name") or item.get("display_name")
+            if isinstance(name, str) and name:
+                out.append(name)
+    return out
 
 
 class GymProfileBase(BaseModel):
@@ -14,6 +36,11 @@ class GymProfileBase(BaseModel):
     # Equipment configuration
     equipment: List[str] = Field(default=[], description="List of equipment IDs (e.g., ['dumbbells', 'barbell'])")
     equipment_details: List[dict] = Field(default=[], description="Detailed equipment with quantities and weights")
+
+    @field_validator("equipment", mode="before")
+    @classmethod
+    def _coerce_equipment(cls, v):
+        return _normalize_equipment(v)
     workout_environment: str = Field(default="commercial_gym", max_length=50, description="Environment type: commercial_gym, home_gym, home, hotel, outdoors")
 
     # Location fields for geofencing/auto-switch
@@ -54,6 +81,11 @@ class GymProfileUpdate(BaseModel):
     equipment: Optional[List[str]] = None
     equipment_details: Optional[List[dict]] = None
     workout_environment: Optional[str] = Field(default=None, max_length=50)
+
+    @field_validator("equipment", mode="before")
+    @classmethod
+    def _coerce_equipment(cls, v):
+        return _normalize_equipment(v)
 
     # Location fields for geofencing/auto-switch
     address: Optional[str] = Field(default=None, max_length=255)

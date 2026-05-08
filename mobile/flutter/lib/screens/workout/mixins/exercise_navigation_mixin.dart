@@ -21,6 +21,7 @@ import '../widgets/exercise_options_sheet.dart' as options_sheet;
 import '../widgets/exercise_options_sheet.dart' show RepProgressionType;
 import '../widgets/exercise_analytics_page.dart';
 import '../widgets/exercise_info_sheet.dart';
+import '../widgets/report_pain_sheet.dart';
 import '../widgets/parsed_exercises_preview_sheet.dart';
 import '../widgets/superset_pair_sheet.dart';
 import '../widgets/workout_plan_drawer.dart' as plan_drawer;
@@ -584,6 +585,16 @@ mixin ExerciseNavigationMixin<T extends StatefulWidget> on State<T> {
               showEquipmentProfileSheetImpl();
             }
           : null,
+      onReportPain: () {
+        // Open the thin pain-report sheet. On confirm the avoided-list
+        // provider invalidates the today/all workouts caches so the next
+        // regeneration drops this exercise.
+        ReportPainSheet.show(
+          context,
+          exerciseName: exercise.name,
+          exerciseId: exercise.id ?? exercise.libraryId,
+        );
+      },
     );
   }
 

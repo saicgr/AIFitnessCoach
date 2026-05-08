@@ -32,15 +32,17 @@ class AppTourTooltipCard extends StatelessWidget {
     final cardWidth = (screenWidth - 48).clamp(0.0, 360.0);
     final isLastStep = currentStep == totalSteps;
 
-    // Fills are intentionally translucent so the BackdropFilter blur reads.
-    // Previous values (0.75 dark / 0.92 light) were nearly opaque, which
-    // killed the glass effect even with the blur layer present.
+    // Translucent enough to keep the glass feel, opaque enough to stay
+    // readable when something dark sits behind the card (modal scrim,
+    // dark hero imagery, etc.). Light mode previously used 0.62 white
+    // which composited to muddy gray + unreadable black text whenever a
+    // bottom-sheet barrier or busy background was underneath.
     final bgColor = isDark
-        ? Colors.white.withValues(alpha: 0.10)
-        : Colors.white.withValues(alpha: 0.62);
+        ? const Color(0xFF1C1C1E).withValues(alpha: 0.86)
+        : Colors.white.withValues(alpha: 0.94);
     final borderColor = isDark
         ? Colors.white.withValues(alpha: 0.18)
-        : Colors.white.withValues(alpha: 0.55);
+        : Colors.black.withValues(alpha: 0.08);
     final textPrimary = isDark ? Colors.white : Colors.black87;
     final textSecondary = isDark
         ? Colors.white.withValues(alpha: 0.70)

@@ -190,6 +190,13 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
         cardio_capacity = None
         training_experience = None
 
+        # Bind defaults so the body-only fast-path below doesn't leave them
+        # unbound when downstream code reads `gym_profile`, `user.get(...)`,
+        # or passes `gym_profile=gym_profile` to resolve_target_duration.
+        # Empty dict (not None) for `user` so `.get(...)` calls remain safe.
+        gym_profile = None
+        user = {}
+
         if body.fitness_level and body.goals and body.equipment:
             fitness_level = body.fitness_level
             goals = body.goals

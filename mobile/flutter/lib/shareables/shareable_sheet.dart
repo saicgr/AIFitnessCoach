@@ -286,6 +286,7 @@ class _ShareableSheetState extends ConsumerState<ShareableSheet> {
               // Same — only stamp on share success, not on browse tap.
             },
           ),
+          _previewPane(accent, isDark),
           _galleryHeaderRow(accent, isDark),
           Expanded(child: _gallery()),
           if (showLinkPill)
@@ -625,6 +626,66 @@ class _ShareableSheetState extends ConsumerState<ShareableSheet> {
   /// The tile that matches `_template` gets an accent border + ~1.04x scale
   /// so the user sees clearly which one the action buttons (Instagram /
   /// Share / Save) will target.
+  /// Live preview of the currently-selected template at the active
+  /// aspect ratio. Sits above the gallery — tapping any tile in the
+  /// gallery updates this pane (and vice-versa). Replaces the old
+  /// horizontal subcategory thumbnail strip, which duplicated the
+  /// gallery and gave no real preview affordance.
+  Widget _previewPane(Color accent, bool isDark) {
+    final spec = ShareableCatalog.all()
+        .cast<ShareableTemplateSpec?>()
+        .firstWhere((s) => s?.template == _template, orElse: () => null);
+    if (spec == null) return const SizedBox.shrink();
+    final designSize = _aspect.size;
+    final ratio = _aspect.ratio; // width / height
+    // Cap the preview height so the gallery still has room. Tall 9:16
+    // aspect uses ~38% of the sheet, square/4:5 uses less.
+    final mq = MediaQuery.of(context);
+    final maxH = mq.size.height * (ratio < 0.7 ? 0.32 : 0.26);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxHeight: maxH),
+          child: AspectRatio(
+            aspectRatio: ratio,
+            child: GestureDetector(
+              onTap: _onPreviewTapped,
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: accent.withValues(alpha: 0.4), width: 1.5),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: isDark ? 0.45 : 0.18),
+                      blurRadius: 24,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: FittedBox(
+                  fit: BoxFit.contain,
+                  alignment: Alignment.center,
+                  child: SizedBox(
+                    width: designSize.width,
+                    height: designSize.height,
+                    child: MediaQuery(
+                      data: mq.copyWith(
+                        textScaler: TextScaler.linear(_textScale),
+                      ),
+                      child: spec.builder(_currentData, _showWatermark),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   /// Row above the gallery — count of available templates + a Sort
   /// dropdown (Default / Recents / Favorites). Mirrors the
   /// progress_share_gallery_screen.dart layout the user referenced.

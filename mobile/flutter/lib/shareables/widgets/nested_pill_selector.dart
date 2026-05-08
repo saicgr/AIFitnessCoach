@@ -50,18 +50,15 @@ class NestedPillSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final available = ShareableCatalog.availableFor(
-      data,
-      ownsCosmetic: ownsCosmetic,
-    );
     final categories = ShareableCatalog.categoriesFor(
       data,
       ownsCosmetic: ownsCosmetic,
     );
-    final inCategory = ShareableCatalog.all()
-        .where((s) => s.category == category)
-        .toList();
 
+    // Tier 2 (subcategory thumbnail strip) removed — it duplicated the
+    // gallery grid below. The grid now drives a live preview pane in
+    // [ShareableSheet] above it, and tapping a tile updates the preview
+    // directly.
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Column(
@@ -69,8 +66,6 @@ class NestedPillSelector extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           _aspectRow(context),
-          const SizedBox(height: 8),
-          _subcategoryRow(context, inCategory, available),
           const SizedBox(height: 8),
           _categoryRow(context, categories),
         ],
@@ -102,11 +97,10 @@ class NestedPillSelector extends StatelessWidget {
     );
   }
 
-  /// Tier 2 — horizontal thumbnail strip. Each tile renders the real
-  /// template at design size, scaled down via `FittedBox(BoxFit.cover)`.
-  /// Selected tile carries an orange border, recently-used tiles carry
-  /// a small `RECENT` badge, and unavailable templates are greyed with
-  /// a lock overlay (preserving the prior availability-gate semantics).
+  // Tier 2 (subcategory thumbnail strip) was removed; the gallery grid
+  // below now serves the same browse role and drives a single live
+  // preview pane in [ShareableSheet].
+  // ignore: unused_element
   Widget _subcategoryRow(
     BuildContext context,
     List<ShareableTemplateSpec> inCategory,

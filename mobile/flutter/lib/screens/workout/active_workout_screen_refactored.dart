@@ -50,6 +50,7 @@ import '../settings/equipment/environment_list_screen.dart';
 import 'controllers/workout_timer_controller.dart';
 import 'foldable/foldable_warmup_layout.dart';
 import 'models/workout_state.dart';
+import 'providers/active_workout_session_provider.dart';
 import 'widgets/action_chips_row.dart';
 import 'widgets/quick_adjust_sheet.dart';
 import 'widgets/ai_input_preview_sheet.dart';
@@ -435,7 +436,13 @@ class _ActiveWorkoutScreenState
   @override List<WorkoutExercise> get exercises => _exercises;
   @override set exercises(List<WorkoutExercise> value) => _exercises = value;
   @override int get currentExerciseIndex => _currentExerciseIndex;
-  @override set currentExerciseIndex(int value) => _currentExerciseIndex = value;
+  @override set currentExerciseIndex(int value) {
+    _currentExerciseIndex = value;
+    // Mirror to the shared session so a tier swap lands on the same exercise.
+    if (mounted) {
+      ref.read(activeWorkoutSessionProvider.notifier).setCurrentIndex(value);
+    }
+  }
   @override Map<int, List<SetLog>> get completedSets => _completedSets;
   @override Map<int, int> get totalSetsPerExercise => _totalSetsPerExercise;
   @override Map<String, double> get exerciseMaxWeights => _exerciseMaxWeights;
@@ -901,6 +908,28 @@ class _ActiveWorkoutScreenState
       debugPrint('🎬 [ActiveWorkout] Restored ${miniPlayerState.completedSets.length} exercise completed sets');
     }
 
+    // Tier-swap restore: if a sister tier (Easy) was active earlier this
+    // session for THIS workout, pick up its logged sets so flipping tiers
+    // doesn't drop the user's progress.
+    final sessionNotifier = ref.read(activeWorkoutSessionProvider.notifier);
+    sessionNotifier.start(widget.workout.id);
+    final session = ref.read(activeWorkoutSessionProvider);
+    if (session.workoutId == widget.workout.id &&
+        session.completedSets.isNotEmpty) {
+      session.completedSets.forEach((idx, logs) {
+        if (idx < _exercises.length) {
+          // Don't double up if mini-player already populated us.
+          if ((_completedSets[idx] ?? const <SetLog>[]).isEmpty) {
+            _completedSets[idx] = List<SetLog>.from(logs);
+          }
+        }
+      });
+      _currentExerciseIndex =
+          session.currentExerciseIndex.clamp(0, _exercises.length - 1);
+      debugPrint(
+          '🔁 [ActiveWorkout] Restored ${session.completedSets.length} exercise sets from tier swap');
+    }
+
     // Fetch historical data (fire-and-forget, doesn't block workout start)
     fetchExerciseHistory();
 
@@ -1221,6 +1250,11 @@ class _ActiveWorkoutScreenState
       // Add to completed sets
       _completedSets[exerciseIndex] ??= [];
       _completedSets[exerciseIndex]!.add(setLog);
+      // Mirror to the shared session so a flip to Easy mid-workout
+      // sees the same sets.
+      ref
+          .read(activeWorkoutSessionProvider.notifier)
+          .recordSet(exerciseIndex, setLog);
     }
 
     // Update total sets if more were added than expected

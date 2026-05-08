@@ -33,10 +33,10 @@ import '../../../data/services/live_activity_service.dart';
 import '../../../data/services/set_note_media_service.dart';
 import '../../../data/services/workout_notification_service.dart';
 import '../../../widgets/app_snackbar.dart';
-import '../../../widgets/glass_loading_overlay.dart';
 import '../../ai_settings/ai_settings_screen.dart';
 import '../controllers/workout_timer_controller.dart';
 import '../models/workout_state.dart';
+import '../providers/active_workout_session_provider.dart';
 import '../widgets/quit_workout_dialog.dart';
 
 /// Mixin providing workout flow control: pause, quit, minimize,
@@ -168,20 +168,17 @@ mixin WorkoutFlowMixin<T extends StatefulWidget> on State<T> {
   Future<void> finalizeWorkoutCompletion() async {
     // Clear mini player state so reopening this workout starts fresh
     ref.read(workoutMiniPlayerProvider.notifier).close();
+    // Clear the shared tier-swap session so the next workout starts clean.
+    ref.read(activeWorkoutSessionProvider.notifier).clear();
 
     setState(() => currentPhase = WorkoutPhase.complete);
 
-    // Glass loading overlay covers the 3-5s blocking save → /complete →
-    // performance-summary chain so the user sees a clear "Finishing workout"
-    // affordance instead of staring at a frozen UI.
-    final loadingOverlay = mounted
-        ? showGlassLoadingOverlay(context, message: 'Finishing workout…')
-        : null;
-    try {
-      await _runFinalizeWorkoutCompletion();
-    } finally {
-      loadingOverlay?.dismiss();
-    }
+    // The completion-phase Scaffold (`buildCompletionScreen`) already shows
+    // a centered trophy + "Saving workout..." label + spinner — adding a
+    // glass loading overlay on top duplicates the affordance and the trophy
+    // bleeds out from behind the overlay's translucent scrim. The Scaffold
+    // alone is enough.
+    await _runFinalizeWorkoutCompletion();
   }
 
   Future<void> _runFinalizeWorkoutCompletion() async {
@@ -835,6 +832,7 @@ mixin WorkoutFlowMixin<T extends StatefulWidget> on State<T> {
     if (result != null && mounted) {
       cancelWorkoutNotification();
       ref.read(workoutMiniPlayerProvider.notifier).close();
+      ref.read(activeWorkoutSessionProvider.notifier).clear();
       logWorkoutExit(result.reason, result.notes);
       if (mounted) {
         context.pop();

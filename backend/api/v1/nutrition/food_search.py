@@ -136,7 +136,7 @@ async def search_foods(
                         food_category=category,
                         region=country,
                     ),
-                    timeout=5.0,
+                    timeout=10.0,
                 )
             else:
                 results = await asyncio.wait_for(
@@ -149,10 +149,10 @@ async def search_foods(
                         food_category=category,
                         region=country,
                     ),
-                    timeout=5.0,
+                    timeout=10.0,
                 )
         except asyncio.TimeoutError:
-            logger.warning(f"⚠️ [FoodSearch] search timeout (>5s) for query='{query}'")
+            logger.warning(f"⚠️ [FoodSearch] search timeout (>10s) for query='{query}'")
             raise HTTPException(
                 status_code=504,
                 detail={"results": [], "error": "search_timeout"},

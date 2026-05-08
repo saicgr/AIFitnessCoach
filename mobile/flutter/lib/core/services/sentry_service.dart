@@ -129,6 +129,39 @@ class SentryService {
                 },
               );
             }
+
+            // Flutter layout asserts arrive as terse one-liners — tag them
+            // so they group cleanly in Sentry and we can search the
+            // `crash_family` facet to see all live layout regressions at
+            // once. The `widget_name` heuristic lifts the offending widget
+            // out of the message so it appears as a searchable tag instead
+            // of being buried in the exception body.
+            final combined = '$exceptionMsg $msg';
+            String? layoutFamily;
+            if (combined.contains('forces an infinite width') ||
+                combined.contains('forces an infinite height')) {
+              layoutFamily = 'unbounded_constraints';
+            } else if (combined.contains('overflowed by') &&
+                combined.contains('pixels')) {
+              layoutFamily = 'render_flex_overflow';
+            } else if (combined.contains('hasSize') &&
+                combined.contains('RenderBox was not laid out')) {
+              layoutFamily = 'render_box_not_laid_out';
+            } else if (combined.contains('BoxConstraints') &&
+                combined.contains('NaN')) {
+              layoutFamily = 'nan_constraints';
+            }
+
+            if (layoutFamily != null) {
+              final widget = _extractFlutterWidgetName(combined);
+              event = event.copyWith(
+                tags: {
+                  ...?event.tags,
+                  'crash_family': layoutFamily,
+                  if (widget != null) 'widget_name': widget,
+                },
+              );
+            }
             return event;
           };
 
@@ -283,6 +316,20 @@ class SentryService {
   /// A NavigatorObserver you can add to your router for nav breadcrumbs.
   static SentryNavigatorObserver navigatorObserver() =>
       SentryNavigatorObserver();
+
+  /// Heuristic: pull the offending Render*/widget class out of a Flutter
+  /// layout error message so Sentry has a searchable `widget_name` tag.
+  /// Looks for the common `RenderXxx` / `Xxx#hash` patterns Flutter uses
+  /// in its overflow/infinite-constraint messages.
+  static String? _extractFlutterWidgetName(String text) {
+    // RenderFlex / RenderFractionallySizedOverflowBox / RenderPositionedBox
+    final renderRe = RegExp(r'(Render[A-Z][A-Za-z]+)');
+    final m = renderRe.firstMatch(text);
+    if (m != null) return m.group(1);
+    // Fallback: capture Foo#abcde patterns (Flutter's instance dump).
+    final hashRe = RegExp(r'([A-Z][A-Za-z]+)#[0-9a-f]+');
+    return hashRe.firstMatch(text)?.group(1);
+  }
 
   static String _platformTag() {
     if (kIsWeb) return 'web';

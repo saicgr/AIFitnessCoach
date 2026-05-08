@@ -51,6 +51,7 @@ class EasyActiveWorkoutView extends StatelessWidget {
   final VoidCallback? onMinimize;
   final ValueChanged<double> onWeightChanged;
   final ValueChanged<double> onRepsChanged;
+  final ValueChanged<double> onDurationChanged;
   final Future<void> Function() onLogSet;
 
   /// 0-indexed past set currently being edited; null ⇒ live set.
@@ -76,6 +77,12 @@ class EasyActiveWorkoutView extends StatelessWidget {
   /// Skip the current exercise and jump to the next. Null disables (e.g.
   /// final exercise of the workout).
   final VoidCallback? onSkipToNext;
+
+  /// Open the per-exercise actions sheet (Swap / Report pain / Change
+  /// equipment / Skip / Video). Wired by the state to the new
+  /// `EasyExerciseActionsSheet.show()` helper. Reachable via the "•••"
+  /// chip in the header AND a long-press anywhere on the focal card.
+  final VoidCallback? onShowExerciseActions;
 
   /// Quit the whole workout — confirms + pops back to the list.
   final VoidCallback? onQuitWorkout;
@@ -111,6 +118,7 @@ class EasyActiveWorkoutView extends StatelessWidget {
     this.onMinimize,
     required this.onWeightChanged,
     required this.onRepsChanged,
+    required this.onDurationChanged,
     required this.onLogSet,
     this.editingSetIndex,
     this.onEditSet,
@@ -122,6 +130,7 @@ class EasyActiveWorkoutView extends StatelessWidget {
     this.onEditNote,
     this.hasNote = false,
     this.onSkipToNext,
+    this.onShowExerciseActions,
     this.onQuitWorkout,
     this.onCompleteWorkoutNow,
     this.allCompletedSets = const [],
@@ -161,6 +170,7 @@ class EasyActiveWorkoutView extends StatelessWidget {
             onRemoveSet: onRemoveSet,
             onEditNote: onEditNote,
             hasNote: hasNote,
+            onShowMore: onShowExerciseActions,
           ),
           EasyCompletedDots(
             completedSetsForCurrentExercise: state.completed,
@@ -199,16 +209,25 @@ class EasyActiveWorkoutView extends StatelessWidget {
             when: lastSet?.when,
           ),
           Expanded(
-            child: EasyFocalColumn(
-              state: state,
-              useKg: useKg,
-              weightStep: weightStep,
-              accent: accent,
-              compact: compact,
-              onWeightChanged: onWeightChanged,
-              onRepsChanged: onRepsChanged,
-              onLogSet: onLogSet,
-              editingSetIndex: editingSetIndex,
+            // Long-press anywhere on the focal column body opens the same
+            // actions sheet as the "•••" header chip. `behavior: deferToChild`
+            // ensures the inner +/− stepper buttons and the big Log set CTA
+            // still get their own taps before this gesture wins.
+            child: GestureDetector(
+              behavior: HitTestBehavior.deferToChild,
+              onLongPress: onShowExerciseActions,
+              child: EasyFocalColumn(
+                state: state,
+                useKg: useKg,
+                weightStep: weightStep,
+                accent: accent,
+                compact: compact,
+                onWeightChanged: onWeightChanged,
+                onRepsChanged: onRepsChanged,
+                onDurationChanged: onDurationChanged,
+                onLogSet: onLogSet,
+                editingSetIndex: editingSetIndex,
+              ),
             ),
           ),
           // Up next + Ask-coach share one row so Log Set stays the only

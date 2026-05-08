@@ -6,6 +6,7 @@ import '../core/observers/modal_route_observer.dart';
 import '../core/services/posthog_service.dart';
 import '../core/services/sentry_service.dart';
 import 'posthog_route_observer.dart';
+import 'sentry_screen_tag_observer.dart';
 import '../shareables/widgets/share_plan_period_sheet.dart';
 import '../data/models/workout.dart';
 import '../data/models/user.dart' as app_user;
@@ -517,6 +518,11 @@ final routerProvider = Provider<GoRouter>((ref) {
       WorkoutMiniPlayerRouteObserver(ref),
       // No-op when Sentry is disabled; otherwise adds nav breadcrumbs.
       if (SentryService.isEnabled) SentryService.navigatorObserver(),
+      // Pins `screen` + `route` tags onto every Sentry event so framework
+      // asserts (RenderFlex overflow / FractionallySizedBox crash) are
+      // searchable by screen in the issue list — the default observer only
+      // attaches them to transactions, which framework asserts skip.
+      if (SentryService.isEnabled) SentryScreenTagObserver(),
     ],
     redirect: (context, state) {
       final authState = ref.read(authStateProvider);

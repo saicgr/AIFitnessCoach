@@ -105,6 +105,7 @@ Future<void> showExerciseOptionsSheet({
   VoidCallback? onAddToSuperset,
   VoidCallback? onRemoveAndDontRecommend,
   VoidCallback? onChangeEquipment,
+  VoidCallback? onReportPain,
 }) {
   HapticFeedback.mediumImpact();
 
@@ -124,6 +125,7 @@ Future<void> showExerciseOptionsSheet({
         onAddToSuperset: onAddToSuperset,
         onRemoveAndDontRecommend: onRemoveAndDontRecommend,
         onChangeEquipment: onChangeEquipment,
+        onReportPain: onReportPain,
       ),
     ),
   );
@@ -142,6 +144,7 @@ class ExerciseOptionsSheet extends StatefulWidget {
   final VoidCallback? onAddToSuperset;
   final VoidCallback? onRemoveAndDontRecommend;
   final VoidCallback? onChangeEquipment;
+  final VoidCallback? onReportPain;
 
   const ExerciseOptionsSheet({
     super.key,
@@ -156,6 +159,7 @@ class ExerciseOptionsSheet extends StatefulWidget {
     this.onAddToSuperset,
     this.onRemoveAndDontRecommend,
     this.onChangeEquipment,
+    this.onReportPain,
   });
 
   @override
@@ -272,10 +276,11 @@ class _ExerciseOptionsSheetState extends State<ExerciseOptionsSheet> {
   Widget _buildOptionsList(bool isDark, Color textPrimary, Color textMuted) {
     return Column(
       children: [
-        // Replace
+        // Swap exercise — promoted to first row so the most-used mid-workout
+        // action is one tap from a long-press (was 3-tap "Replace" before).
         _buildOptionItem(
           icon: Icons.swap_horiz_rounded,
-          label: 'Replace',
+          label: 'Swap exercise',
           onTap: () {
             Navigator.pop(context);
             widget.onReplace();
@@ -283,6 +288,36 @@ class _ExerciseOptionsSheetState extends State<ExerciseOptionsSheet> {
           isDark: isDark,
           textPrimary: textPrimary,
         ),
+
+        // Report pain — adds the exercise to the avoided list so the
+        // generator skips it next time. Sheet handles severity + duration.
+        if (widget.onReportPain != null)
+          _buildOptionItem(
+            icon: Icons.healing_outlined,
+            label: 'Report pain',
+            onTap: () {
+              Navigator.pop(context);
+              widget.onReportPain!();
+            },
+            isDark: isDark,
+            textPrimary: textPrimary,
+          ),
+
+        // Change Equipment — surfaced above progression so the user can
+        // pivot mid-workout when the gym doesn't have what the plan called
+        // for. Wired by the active workout screen to the new
+        // showChangeEquipmentForActiveWorkout helper.
+        if (widget.onChangeEquipment != null)
+          _buildOptionItem(
+            icon: Icons.fitness_center_rounded,
+            label: 'Change equipment',
+            onTap: () {
+              Navigator.pop(context);
+              widget.onChangeEquipment!();
+            },
+            isDark: isDark,
+            textPrimary: textPrimary,
+          ),
 
         // Change Reps Progression
         _buildOptionItem(
@@ -346,19 +381,6 @@ class _ExerciseOptionsSheetState extends State<ExerciseOptionsSheet> {
           isDark: isDark,
           textPrimary: textPrimary,
         ),
-
-        // Change Equipment (if available and exercise uses equipment)
-        if (widget.onChangeEquipment != null)
-          _buildOptionItem(
-            icon: Icons.build_outlined,
-            label: "Don't Have This Equipment?",
-            onTap: () {
-              Navigator.pop(context);
-              widget.onChangeEquipment!();
-            },
-            isDark: isDark,
-            textPrimary: textPrimary,
-          ),
 
         // Divider before destructive actions
         Padding(
