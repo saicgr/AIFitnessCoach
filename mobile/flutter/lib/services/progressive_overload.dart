@@ -95,6 +95,18 @@ String detectEquipmentType(String? equipment) {
 ///
 /// Produces warmup sets (for compounds with known 1RM), working sets with
 /// progressive RPE/RIR, and appropriate rep ranges for the training goal.
+///
+/// RIR/RPE produced here are TARGETS (planned), not LOGGED values. The UI
+/// must render planned RIR as an outline pill ("Target RIR 3") and only mark
+/// it filled once the user has actually logged via the rest screen. Never
+/// pre-select a logged RIR.
+///
+/// Adaptation tie-break (used by set_progression.dart:adaptTargetsWithFeedback):
+///   When the RIR signal says "increase" but the rep ratio came in below
+///   target (user fell short), the rep-ratio path wins — see Step 1 in
+///   _adaptWeightRepPatternWithFeedback. We bias toward the user's actual
+///   performance, not their self-reported reserve, because reps are
+///   observed and RIR is reported.
 List<SetTarget> generateSetTargets({
   required String exerciseName,
   double? oneRepMax,

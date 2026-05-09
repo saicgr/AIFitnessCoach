@@ -46,6 +46,31 @@ from .coach_tools import (
     import_exercise,
 )
 
+# === Issue 3: workout mutation tools ===
+# Direct in-workout mutations (swap one exercise, log a set, build/break
+# supersets, reorder). Frontend renders a confirm-card via action_data
+# before applying. Kept in a separate module to avoid merge conflicts
+# with the parallel Issue 2 edits to workout_tools.py.
+from .workout_mutation_tools import (
+    swap_single_exercise,
+    log_set,
+    create_superset,
+    break_superset,
+    reorder_exercises,
+    ISSUE_3_MUTATION_TOOLS,
+)
+
+# === Issue 2: equipment identify ===
+# "What's this?" — when a user attaches a gym-equipment photo to chat,
+# the Coach agent calls identify_equipment(s3_key) which delegates to
+# the same `equipment_snap_core` powering POST /api/v1/equipment/snap.
+# Returns action_data with action='open_swap_or_add' so the frontend
+# can render the EquipmentMatchCard.
+from .equipment_tools import (
+    identify_equipment,
+    ISSUE_2_EQUIPMENT_TOOLS,
+)
+
 from .base import get_vision_service, get_form_analysis_service
 
 # Registry of all available tools
@@ -78,6 +103,10 @@ ALL_TOOLS = [
     # Coach import tools (gym equipment + custom exercise)
     import_gym_equipment,
     import_exercise,
+    # === Issue 3: workout mutation tools ===
+    *ISSUE_3_MUTATION_TOOLS,
+    # === Issue 2: equipment identify ===
+    *ISSUE_2_EQUIPMENT_TOOLS,
 ]
 
 # Tool name to function mapping
@@ -112,6 +141,16 @@ __all__ = [
     # Coach import tools
     "import_gym_equipment",
     "import_exercise",
+    # Issue 3: workout mutation tools
+    "swap_single_exercise",
+    "log_set",
+    "create_superset",
+    "break_superset",
+    "reorder_exercises",
+    "ISSUE_3_MUTATION_TOOLS",
+    # Issue 2: equipment identify tool
+    "identify_equipment",
+    "ISSUE_2_EQUIPMENT_TOOLS",
     # Utilities
     "get_vision_service",
     "get_form_analysis_service",

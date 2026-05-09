@@ -434,7 +434,14 @@ extension _ExpandedExerciseCardStateUI1 on _ExpandedExerciseCardState {
   ) {
     final muscleAsset = _muscleAssetForExercise(exercise);
 
-    return Container(
+    return GestureDetector(
+      // Tap on thumbnail = open the exercise info modal (muscle illustration,
+      // setup, tips, video). Card-body taps still expand/collapse via the
+      // outer InkWell — only the thumbnail short-circuits to info, which
+      // matches the user's mental model from the exercise library.
+      behavior: HitTestBehavior.opaque,
+      onTap: () => showExerciseInfoSheet(context: context, exercise: exercise),
+      child: Container(
       width: 60,
       height: 60,
       decoration: BoxDecoration(
@@ -477,6 +484,7 @@ extension _ExpandedExerciseCardStateUI1 on _ExpandedExerciseCardState {
               ),
             ),
         ],
+      ),
       ),
     );
   }

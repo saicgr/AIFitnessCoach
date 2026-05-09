@@ -5,6 +5,7 @@ import '../../../core/services/weight_suggestion_service.dart';
 import '../../../widgets/glass_card.dart';
 import '../../../widgets/glow_button.dart';
 import '../../../widgets/number_stepper.dart';
+import 'set_row_visuals.dart';
 
 
 part 'set_row_part_weight_increments.dart';
@@ -143,6 +144,56 @@ class _SetRowState extends State<SetRow> {
     }
   }
 
+  // ── Fix #5 / #6 helpers ──────────────────────────────────────────────
+  // The TARGET cell of every set row now carries:
+  //   • a trend pill (↑/↓/·) comparing this set's target to the prior set's
+  //     target (suppressed when progressive overload is disabled OR the
+  //     exercise has no prior history → "Starter weight" hint instead).
+  //   • an "Edited" chip when the user manually overrode the planned target.
+  // The RIR cell carries an outline pill for the planned (target) RIR and a
+  // separate filled pill for the logged (actual) RIR. AMRAP renders as
+  // "Target RIR · AMRAP" (no number). Easy mode hides RIR entirely.
+  //
+  // Visual parity is shipped: identical pills render in the canonical
+  // `set_tracking_table_part_set_number_badge.dart` via shared helpers in
+  // `set_row_visuals.dart`. Exercise-header "Progression: $pattern • $delta"
+  // subtitle lives in `workout_ui_builders_mixin_ui_2.dart`.
+
+  // Thin wrappers that delegate to [SetRowVisuals] so the same visuals are
+  // reused by `set_tracking_table.dart` (canonical active-workout renderer).
+  Widget? _buildTrendPill() {
+    final data = widget.setData;
+    return SetRowVisuals.buildTrendPill(
+      progressiveOverloadEnabled: data.progressiveOverloadEnabled,
+      isFirstSetEver: data.isFirstSetEver,
+      isDeload: data.isDeload,
+      metric: data.metric,
+      targetWeightDisplay: data.targetWeight,
+      targetReps: data.targetReps,
+      durationSeconds: data.durationSeconds,
+      previousSetTargetWeightDisplay: data.previousSetTargetWeight,
+      previousSetTargetReps: data.previousSetTargetReps,
+      previousSetTargetSeconds: data.previousSetTargetSeconds,
+      // SetRow assumes lb display (its data already arrives in display units);
+      // SetTrackingTable converts via WeightUtils and passes its actual unit.
+      unitLabel: 'lb',
+    );
+  }
+
+  Widget? _buildEditedChip() {
+    return SetRowVisuals.buildEditedChip(isEdited: widget.setData.isEdited);
+  }
+
+  Widget? _buildRirPills() {
+    final data = widget.setData;
+    return SetRowVisuals.buildRirPills(
+      isEasyMode: data.isEasyMode,
+      isAmrap: data.isAmrap,
+      targetRir: data.targetRir,
+      actualRir: data.actualRir,
+    );
+  }
+
   /// Build the 1RM target label showing target weight and percentage
   Widget _buildOneRMTargetLabel() {
     final oneRM = widget.setData.oneRepMax!;
@@ -274,6 +325,28 @@ class _SetRowState extends State<SetRow> {
                       color: AppColors.textMuted,
                     ),
                   ),
+                // Fix #5 — trend pill (↑/↓ vs prior set's target) and Edited
+                // chip live on the same line so they stay anchored to the
+                // TARGET column even on narrow rows.
+                Builder(builder: (context) {
+                  final trend = _buildTrendPill();
+                  final edited = _buildEditedChip();
+                  if (trend == null && edited == null) {
+                    return const SizedBox.shrink();
+                  }
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 2, bottom: 2),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (trend != null) trend,
+                        if (trend != null && edited != null)
+                          const SizedBox(width: 4),
+                        if (edited != null) edited,
+                      ],
+                    ),
+                  );
+                }),
                 Row(
                   children: [
                     _IncrementButton(
@@ -401,6 +474,19 @@ class _SetRowState extends State<SetRow> {
             ),
           ),
           const SizedBox(width: 8),
+
+          // Fix #6 — target vs logged RIR pills (outline = target, filled =
+          // logged). Wrapped in a fixed-width column so it doesn't push the
+          // complete button off-screen on narrow phones; renders empty when
+          // Easy mode is on or no target/actual RIR data is present.
+          Builder(builder: (context) {
+            final pills = _buildRirPills();
+            if (pills == null) return const SizedBox.shrink();
+            return Padding(
+              padding: const EdgeInsets.only(right: 4),
+              child: pills,
+            );
+          }),
 
           // Complete button
           if (!isCompleted)

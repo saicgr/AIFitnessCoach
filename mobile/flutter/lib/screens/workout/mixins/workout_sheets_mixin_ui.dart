@@ -240,12 +240,81 @@ extension WorkoutSheetsMixinUI on WorkoutSheetsMixin {
     final isDark = Theme.of(_ctx).brightness == Brightness.dark;
     final currentBarType = exerciseBarType[viewingExerciseIndex] ?? exercise.equipment ?? 'barbell';
 
+    // Bar-type catalog. `lbs`/`kg` is the bar's own weight (0 for fixed
+    // bars where the labeled weight IS the total). `desc` is a one-line
+    // description shown under each row. Order: removable-plate bars first,
+    // then fixed/pre-loaded bars at the bottom.
     final barTypes = <String, Map<String, dynamic>>{
-      'barbell': {'label': 'Standard Barbell', 'lbs': 45.0, 'kg': 20.0, 'icon': _BarIcon.standard},
-      'womens_barbell': {'label': "Women's Olympic Bar", 'lbs': 35.0, 'kg': 15.0, 'icon': _BarIcon.womens},
-      'ez_curl_bar': {'label': 'EZ Curl Bar', 'lbs': 25.0, 'kg': 11.0, 'icon': _BarIcon.ezCurl},
-      'trap_bar': {'label': 'Trap / Hex Bar', 'lbs': 55.0, 'kg': 25.0, 'icon': _BarIcon.trap},
-      'smith_machine': {'label': 'Smith Machine', 'lbs': 20.0, 'kg': 9.0, 'icon': _BarIcon.smith},
+      'barbell': {
+        'label': 'Standard Barbell',
+        'lbs': 45.0, 'kg': 20.0,
+        'icon': _BarIcon.standard,
+        'desc': 'Olympic 45 lb / 20 kg — plates load on each side.',
+        'fixed': false,
+      },
+      'womens_barbell': {
+        'label': "Women's Olympic Bar",
+        'lbs': 35.0, 'kg': 15.0,
+        'icon': _BarIcon.womens,
+        'desc': "35 lb / 15 kg — thinner shaft, removable plates.",
+        'fixed': false,
+      },
+      'ez_curl_bar': {
+        'label': 'EZ Curl Bar',
+        'lbs': 25.0, 'kg': 11.0,
+        'icon': _BarIcon.ezCurl,
+        'desc': '25 lb / 11 kg — wavy shaft, plates load on the ends.',
+        'fixed': false,
+      },
+      'trap_bar': {
+        'label': 'Trap / Hex Bar',
+        'lbs': 55.0, 'kg': 25.0,
+        'icon': _BarIcon.trap,
+        'desc': '55 lb / 25 kg — hex frame, neutral grip, plates load on sleeves.',
+        'fixed': false,
+      },
+      'smith_machine': {
+        'label': 'Smith Machine',
+        'lbs': 20.0, 'kg': 9.0,
+        'icon': _BarIcon.smith,
+        'desc': 'Counter-balanced bar (~20 lb / 9 kg) — plates on each side.',
+        'fixed': false,
+      },
+      'safety_squat_bar': {
+        'label': 'Safety Squat Bar',
+        'lbs': 65.0, 'kg': 30.0,
+        'icon': _BarIcon.standard,
+        'desc': '~65 lb / 30 kg — yoke + handles, plates load on sleeves.',
+        'fixed': false,
+      },
+      'cambered_bar': {
+        'label': 'Cambered Bar',
+        'lbs': 50.0, 'kg': 23.0,
+        'icon': _BarIcon.standard,
+        'desc': '~50 lb / 23 kg — bent shaft, plates load on each side.',
+        'fixed': false,
+      },
+      'technique_bar': {
+        'label': 'Technique Bar',
+        'lbs': 15.0, 'kg': 7.0,
+        'icon': _BarIcon.standard,
+        'desc': '15 lb / 7 kg — light bar for warm-ups; plates optional.',
+        'fixed': false,
+      },
+      'fixed_preloaded': {
+        'label': 'Fixed / Pre-Loaded Bar',
+        'lbs': 0.0, 'kg': 0.0,
+        'icon': _BarIcon.standard,
+        'desc': 'Short labeled bar (5–35 lb). The label IS the total weight — no plate math.',
+        'fixed': true,
+      },
+      'preset_curl_bar': {
+        'label': 'Preset Curl Bar',
+        'lbs': 0.0, 'kg': 0.0,
+        'icon': _BarIcon.ezCurl,
+        'desc': 'Gym fixed EZ-bar (20–110 lb labeled). Total weight is the label.',
+        'fixed': true,
+      },
     };
 
     showGlassSheet(
@@ -260,13 +329,36 @@ extension WorkoutSheetsMixinUI on WorkoutSheetsMixin {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Bar Type',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: isDark ? Colors.white : Colors.black87,
-                    ),
+                  Row(
+                    children: [
+                      Text(
+                        'Bar Type',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: isDark ? Colors.white : Colors.black87,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Tooltip(
+                        message:
+                            'Standard bar: removable plates load on each side.\n'
+                            'Fixed / pre-loaded: the labeled weight IS the total bar — no plate math.',
+                        triggerMode: TooltipTriggerMode.tap,
+                        showDuration: const Duration(seconds: 4),
+                        textStyle: const TextStyle(fontSize: 12, color: Colors.white),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.85),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                        child: Icon(
+                          Icons.info_outline_rounded,
+                          size: 16,
+                          color: isDark ? Colors.white54 : Colors.black45,
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 4),
                   Text(
@@ -277,75 +369,118 @@ extension WorkoutSheetsMixinUI on WorkoutSheetsMixin {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  ...barTypes.entries.map((entry) {
-                    final key = entry.key;
-                    final info = entry.value;
-                    final isSelected = currentBarType.toLowerCase().contains(key.replaceAll('_', ' ').split(' ').first) ||
-                        (key == 'barbell' && !barTypes.keys.skip(1).any((k) =>
-                            currentBarType.toLowerCase().contains(k.replaceAll('_', ' ').split(' ').first)
-                        ));
-                    final weightStr = useKg
-                        ? '${(info['kg'] as double).toStringAsFixed((info['kg'] as double) % 1 == 0 ? 0 : 1)} kg'
-                        : '${(info['lbs'] as double).toStringAsFixed(0)} lb';
+                  Flexible(
+                    child: ListView(
+                      shrinkWrap: true,
+                      children: barTypes.entries.map((entry) {
+                        final key = entry.key;
+                        final info = entry.value;
+                        // Strict equality on the saved key — substring match was
+                        // brittle (e.g. "fixed_preloaded" partially matched "preset").
+                        final isSelected = currentBarType == key ||
+                            (key == 'barbell' && !barTypes.keys.contains(currentBarType));
+                        final isFixed = info['fixed'] == true;
+                        final weightStr = isFixed
+                            ? 'labeled'
+                            : (useKg
+                                ? '${(info['kg'] as double).toStringAsFixed((info['kg'] as double) % 1 == 0 ? 0 : 1)} kg'
+                                : '${(info['lbs'] as double).toStringAsFixed(0)} lb');
 
-                    final iconBuilder = info['icon'] as Widget Function(Color);
-                    final iconColor = isSelected
-                        ? (isDark ? AppColors.cyan : AppColorsLight.cyan)
-                        : (isDark ? Colors.white38 : Colors.black26);
+                        final iconBuilder = info['icon'] as Widget Function(Color);
+                        final iconColor = isSelected
+                            ? (isDark ? AppColors.cyan : AppColorsLight.cyan)
+                            : (isDark ? Colors.white38 : Colors.black26);
 
-                    return ListTile(
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 8),
-                      leading: iconBuilder(iconColor),
-                      title: Text(
-                        info['label'] as String,
-                        style: TextStyle(
-                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                          color: isDark ? Colors.white : Colors.black87,
-                        ),
-                      ),
-                      trailing: Text(
-                        weightStr,
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: isDark ? Colors.white54 : Colors.black45,
-                        ),
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      selected: isSelected,
-                      selectedTileColor: isDark
-                          ? AppColors.cyan.withValues(alpha: 0.1)
-                          : AppColorsLight.cyan.withValues(alpha: 0.08),
-                      onTap: () {
-                        // Calculate weight adjustment: old bar → new bar
-                        final oldBarType = exerciseBarType[viewingExerciseIndex]
-                            ?? exercise.equipment ?? 'barbell';
-                        final oldBarWeight = getBarWeight(oldBarType, useKg: useKg);
-                        final newBarWeight = getBarWeight(key, useKg: useKg);
-                        final weightDiff = newBarWeight - oldBarWeight;
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 4),
+                          child: ListTile(
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+                            leading: iconBuilder(iconColor),
+                            title: Row(
+                              children: [
+                                Flexible(
+                                  child: Text(
+                                    info['label'] as String,
+                                    style: TextStyle(
+                                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                                      color: isDark ? Colors.white : Colors.black87,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                if (isFixed) ...[
+                                  const SizedBox(width: 6),
+                                  Icon(
+                                    Icons.lock_outline_rounded,
+                                    size: 12,
+                                    color: isDark ? Colors.white54 : Colors.black45,
+                                  ),
+                                ],
+                              ],
+                            ),
+                            subtitle: Text(
+                              info['desc'] as String,
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: isDark ? Colors.white38 : Colors.black45,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            trailing: Text(
+                              weightStr,
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: isDark ? Colors.white54 : Colors.black45,
+                              ),
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            selected: isSelected,
+                            selectedTileColor: isDark
+                                ? AppColors.cyan.withValues(alpha: 0.1)
+                                : AppColorsLight.cyan.withValues(alpha: 0.08),
+                            onTap: () {
+                              final oldBarType = exerciseBarType[viewingExerciseIndex]
+                                  ?? exercise.equipment ?? 'barbell';
+                              final oldFixed = isFixedBar(oldBarType);
+                              final newFixed = isFixed;
 
-                        _setState(() {
-                          exerciseBarType[viewingExerciseIndex] = key;
-                        });
+                              // Only adjust the typed weight when BOTH bars carry
+                              // their own weight (i.e. neither side is fixed). For
+                              // fixed bars the user enters the labeled total, so
+                              // no math should happen.
+                              double weightDiff = 0;
+                              double newBarWeight = 0;
+                              if (!oldFixed && !newFixed) {
+                                final oldBarWeight = getBarWeight(oldBarType, useKg: useKg);
+                                newBarWeight = getBarWeight(key, useKg: useKg);
+                                weightDiff = newBarWeight - oldBarWeight;
+                              }
 
-                        // Adjust weight controller for the bar weight difference
-                        final currentWeight = double.tryParse(weightController.text) ?? 0;
-                        if (currentWeight > 0 && weightDiff != 0) {
-                          final adjusted = (currentWeight + weightDiff)
-                              .clamp(newBarWeight, 9999.0);
-                          weightController.text = adjusted.toStringAsFixed(
-                              adjusted % 1 == 0 ? 0 : 1);
-                        }
+                              _setState(() {
+                                exerciseBarType[viewingExerciseIndex] = key;
+                              });
 
-                        // Persist to SharedPreferences
-                        ref.read(exerciseBarTypeProvider.notifier)
-                            .setBarType(exercise.name, key);
-                        Navigator.pop(sheetContext);
-                      },
-                    );
-                  }),
+                              final currentWeight = double.tryParse(weightController.text) ?? 0;
+                              if (currentWeight > 0 && weightDiff != 0) {
+                                final adjusted = (currentWeight + weightDiff)
+                                    .clamp(newBarWeight, 9999.0);
+                                weightController.text = adjusted.toStringAsFixed(
+                                    adjusted % 1 == 0 ? 0 : 1);
+                              }
+
+                              ref.read(exerciseBarTypeProvider.notifier)
+                                  .setBarType(exercise.name, key);
+                              Navigator.pop(sheetContext);
+                            },
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
                   const SizedBox(height: 8),
                 ],
               ),

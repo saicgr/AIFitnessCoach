@@ -314,6 +314,12 @@ extension ExerciseNavigationMixinUI on ExerciseNavigationMixin {
       });
     }
 
+    // Sync the partner's totalSets to anchor so round-robin treats the group
+    // uniformly. Done outside the setState above because precomputeSupersetIndices
+    // must run first to expose the new group membership in the cache.
+    precomputeSupersetIndices();
+    syncSupersetSetCountsFromAnchor(groupId);
+
     if (_mounted) {
       ScaffoldMessenger.of(_ctx).clearSnackBars();
       ScaffoldMessenger.of(_ctx).showSnackBar(

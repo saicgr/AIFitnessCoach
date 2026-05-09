@@ -442,67 +442,38 @@ class _EditWeightsSheetState extends State<EditWeightsSheet> {
             ),
           ),
 
-          // Common weights grid
+          // Common weights — rack-style row.
+          //
+          // Replaces the previous flat number grid (which the user called
+          // "uncreative") with a physical-rack metaphor borrowed from Strong
+          // / Hevy / Fitbod equipment screens: each tile is a stylized
+          // dumbbell whose plate size scales with the weight, so a 5 lb pair
+          // looks visibly smaller than a 100 lb pair. Quantity badge sits on
+          // the plate; tap cycles 0→1→2→3→4→0; long-press opens the keypad
+          // (existing behavior preserved).
           Flexible(
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Wrap(
-                spacing: 8,
-                runSpacing: 8,
+                spacing: 10,
+                runSpacing: 12,
                 children: _commonWeights.map((weight) {
                   final qty = _weightInventory[weight] ?? 0;
                   final isSelected = qty > 0;
-
-                  return GestureDetector(
+                  return _DumbbellRackTile(
+                    weight: weight,
+                    quantity: qty,
+                    isSelected: isSelected,
+                    weightUnit: _weightUnit,
+                    minWeight: _commonWeights.first,
+                    maxWeight: _commonWeights.last,
+                    accentColor: accentColor,
+                    isDark: isDark,
+                    bgColor: bgColor,
+                    textSecondary: textSecondary,
                     onTap: () => _cycleQuantity(weight),
                     onLongPress: () => _setQuantity(weight),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 150),
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                      decoration: BoxDecoration(
-                        color: isSelected
-                            ? accentColor.withValues(alpha: 0.2)
-                            : bgColor,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: isSelected ? accentColor : (isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.1)),
-                          width: isSelected ? 1.5 : 1,
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          if (isSelected) ...[
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: accentColor,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Text(
-                                '$qty',
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
-                                  color: isDark ? Colors.black : Colors.white,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 6),
-                          ],
-                          Text(
-                            '${_formatWeight(weight)}',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                              color: isSelected
-                                  ? accentColor
-                                  : textSecondary,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                    formatWeight: _formatWeight,
                   );
                 }).toList(),
               ),
@@ -618,5 +589,163 @@ class _EditWeightsSheetState extends State<EditWeightsSheet> {
     );
     widget.onSave(updated);
     Navigator.pop(context);
+  }
+}
+
+
+/// Rack-tile renderer for a single weight option.
+///
+/// Visual: handle bar with two stacked plates whose width and tint scale with
+/// the weight relative to the rack range. Light weights = small thin plates,
+/// heavy = wide chunky plates with deeper accent. Owned weights show a
+/// floating quantity badge that mirrors a real dumbbell rack count tag.
+class _DumbbellRackTile extends StatelessWidget {
+  final double weight;
+  final int quantity;
+  final bool isSelected;
+  final String weightUnit;
+  final double minWeight;
+  final double maxWeight;
+  final Color accentColor;
+  final bool isDark;
+  final Color bgColor;
+  final Color textSecondary;
+  final VoidCallback onTap;
+  final VoidCallback onLongPress;
+  final String Function(double) formatWeight;
+
+  const _DumbbellRackTile({
+    required this.weight,
+    required this.quantity,
+    required this.isSelected,
+    required this.weightUnit,
+    required this.minWeight,
+    required this.maxWeight,
+    required this.accentColor,
+    required this.isDark,
+    required this.bgColor,
+    required this.textSecondary,
+    required this.onTap,
+    required this.onLongPress,
+    required this.formatWeight,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    // Normalize to 0–1 across the rack range, then map to plate dimensions.
+    final span = (maxWeight - minWeight).abs() < 0.01
+        ? 1.0
+        : (weight - minWeight) / (maxWeight - minWeight);
+    final plateWidth = 14.0 + (span.clamp(0.0, 1.0) * 18.0);   // 14 → 32
+    final plateHeight = 22.0 + (span.clamp(0.0, 1.0) * 16.0);  // 22 → 38
+    final tileWidth = plateWidth * 2 + 36; // plates + handle gap
+
+    final unselectedPlate = isDark
+        ? Colors.white.withValues(alpha: 0.18)
+        : Colors.black.withValues(alpha: 0.12);
+    final selectedPlate = accentColor;
+    final handleColor = isDark
+        ? Colors.white.withValues(alpha: 0.55)
+        : Colors.black.withValues(alpha: 0.55);
+
+    return GestureDetector(
+      onTap: onTap,
+      onLongPress: onLongPress,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeOutCubic,
+        width: tileWidth,
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? accentColor.withValues(alpha: 0.12) : bgColor,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: isSelected
+                ? accentColor
+                : (isDark
+                    ? Colors.white.withValues(alpha: 0.08)
+                    : Colors.black.withValues(alpha: 0.08)),
+            width: isSelected ? 1.5 : 1,
+          ),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Dumbbell graphic — two plates + handle bar.
+            SizedBox(
+              height: plateHeight + 4,
+              child: Stack(
+                alignment: Alignment.center,
+                clipBehavior: Clip.none,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        width: plateWidth,
+                        height: plateHeight,
+                        decoration: BoxDecoration(
+                          color: isSelected ? selectedPlate : unselectedPlate,
+                          borderRadius: BorderRadius.circular(3),
+                        ),
+                      ),
+                      Container(
+                        width: 14,
+                        height: 4,
+                        color: handleColor,
+                      ),
+                      Container(
+                        width: plateWidth,
+                        height: plateHeight,
+                        decoration: BoxDecoration(
+                          color: isSelected ? selectedPlate : unselectedPlate,
+                          borderRadius: BorderRadius.circular(3),
+                        ),
+                      ),
+                    ],
+                  ),
+                  if (quantity > 0)
+                    Positioned(
+                      top: -6,
+                      right: 0,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                        decoration: BoxDecoration(
+                          color: accentColor,
+                          borderRadius: BorderRadius.circular(8),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.25),
+                              blurRadius: 3,
+                              offset: const Offset(0, 1),
+                            ),
+                          ],
+                        ),
+                        child: Text(
+                          '×$quantity',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: isDark ? Colors.black : Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              formatWeight(weight),
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                color: isSelected ? accentColor : textSecondary,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

@@ -327,6 +327,76 @@ class GymEquipmentExtractor:
         return list(matched_by_canonical.values()), unmatched
 
     # --------------------------------------------------------------
+    # Single-image classifier (snap-equipment flow, Issue #1).
+    #
+    # The bulk pipeline (`extract`) is heavyweight: it returns a full
+    # matched/unmatched/inferred-environment payload for many items at once.
+    # The active-workout snap flow only needs the canonical name + confidence
+    # for the single most-prominent piece of equipment in the photo, so we
+    # expose a leaner entrypoint that re-uses the same Gemini prompt + the
+    # same EquipmentResolver.
+    # --------------------------------------------------------------
+    async def classify_single_image(self, s3_key: str) -> dict:
+        """Classify the dominant gym-equipment item in a single S3 image.
+
+        Returns:
+          {
+            "canonical": Optional[str],   # None when nothing canonicalized
+            "raw_name":  Optional[str],   # Best raw name from Gemini
+            "confidence": float,          # 0..1, 0.0 when nothing detected
+            "all_candidates": list[dict], # Full Gemini list (raw, untouched)
+          }
+
+        Raises on Gemini / S3 errors — never silently returns empty when the
+        underlying call failed (per `feedback_no_silent_fallbacks`).
+        """
+        if self._resolver is None:
+            self._resolver = await EquipmentResolver.get_instance()
+
+        logger.info(f"🏋️ [SnapEquipment] Classifying single image s3_key={s3_key}")
+        raw_items = await self._extract_from_images([s3_key])
+        if not raw_items:
+            logger.info("🏋️ [SnapEquipment] No items detected in image")
+            return {
+                "canonical": None,
+                "raw_name": None,
+                "confidence": 0.0,
+                "all_candidates": [],
+            }
+
+        # Sort by confidence DESC and pick the first one that canonicalizes.
+        # Items already have validated/clamped confidence from
+        # `_parse_gemini_equipment_json`.
+        ranked = sorted(
+            raw_items,
+            key=lambda x: float(x.get("confidence") or 0.0),
+            reverse=True,
+        )
+
+        for item in ranked:
+            raw = (item.get("raw_name") or "").strip()
+            if not raw:
+                continue
+            canonical = self._resolver.resolve(raw)
+            if canonical:
+                return {
+                    "canonical": canonical,
+                    "raw_name": raw,
+                    "confidence": float(item.get("confidence") or 0.5),
+                    "all_candidates": ranked,
+                }
+
+        # Nothing canonicalized — return the top raw guess so the caller can
+        # surface "describe instead" CTA with a reasonable hint.
+        top = ranked[0]
+        return {
+            "canonical": None,
+            "raw_name": (top.get("raw_name") or "").strip() or None,
+            "confidence": float(top.get("confidence") or 0.0),
+            "all_candidates": ranked,
+        }
+
+    # --------------------------------------------------------------
     # Step 4: Environment inference
     # --------------------------------------------------------------
     def _infer_environment(self, canonical_names: list[str]) -> str:

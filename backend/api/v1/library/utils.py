@@ -216,12 +216,19 @@ def static_url(s3_path: Optional[str]) -> Optional[str]:
     from core.config import get_settings
     settings = get_settings()
 
+    # Cache-bust query param keyed on the S3 key itself so any CDN edge cache
+    # naturally misses when the underlying row's image_s3_path is updated. We
+    # use a short crc32 of the key — stable per path, changes when the path
+    # changes (e.g. populate_missing_exercise_images.py updates the row).
+    import zlib
+    cache_bust = format(zlib.crc32(key.encode("utf-8")) & 0xFFFFFFFF, "x")
+
     if settings.static_cdn_base_url:
         cdn_base = settings.static_cdn_base_url.rstrip('/')
-        return f"{cdn_base}/{quote(key, safe='/')}"
+        return f"{cdn_base}/{quote(key, safe='/')}?v={cache_bust}"
 
     region = settings.aws_default_region
-    return f"https://{bucket}.s3.{region}.amazonaws.com/{quote(key, safe='/')}"
+    return f"https://{bucket}.s3.{region}.amazonaws.com/{quote(key, safe='/')}?v={cache_bust}"
 
 
 def resolve_image_url(s3_path: Optional[str]) -> Optional[str]:

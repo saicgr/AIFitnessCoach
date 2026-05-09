@@ -185,11 +185,29 @@ MOVEMENT_PATTERNS = {
 }
 
 
-# Patterns that strongly indicate a stretch/flexibility exercise
+# Patterns that strongly indicate a stretch/flexibility/yoga exercise.
+# Hard rule (2026-05-08): these MUST NOT appear in non-mobility workouts.
+# `filter_main_exercises(is_mobility_workout=False)` strips them.
 _STRETCH_NAME_PATTERNS = [
     "stretch", "opener", "opens", "child pose", "pigeon",
-    "cat cow", "cobra stretch", "scorpion", "pretzel",
+    "cat cow", "cat-cow", "cobra stretch", "scorpion", "pretzel",
     "90/90", "world's greatest",
+    # Yoga poses (extended)
+    " pose", "cobra pose", "downward dog", "downward-facing dog",
+    "warrior pose", "warrior i", "warrior ii", "warrior iii",
+    "triangle pose", "tree pose", "boat pose", "bridge pose",
+    "camel pose", "fish pose", "wheel pose", "lotus", "savasana",
+    "sun salutation", "vinyasa flow", "yin yoga",
+    # Static-hold / mobility flows
+    "hip flexor stretch", "quad stretch", "hamstring stretch",
+    "calf stretch", "shoulder stretch", "chest stretch",
+    "lats stretch", "tricep stretch", "neck stretch",
+    "back stretch", "spinal twist", "thread the needle",
+    "happy baby", "puppy pose", "cow face",
+    # Flow-style mobility
+    " flow", "dynamic mobility", "joint mobility",
+    "foam roll", "foam rolling", "myofascial release",
+    "lacrosse ball release", "trigger point",
 ]
 
 # Exercises that are warmup/cardio filler — not suitable as main strength exercises
@@ -205,6 +223,186 @@ def is_warmup_filler_exercise(name: str) -> bool:
     """Return True if the exercise is a warmup/cardio filler not suitable for strength workouts."""
     name_lower = (name or "").lower()
     return any(pattern in name_lower for pattern in _WARMUP_FILLER_PATTERNS)
+
+
+# Combat / martial-arts patterns. Hard rule (2026-05-08): these MUST NOT
+# appear in strength/hypertrophy/general workouts. Allowed only in cardio/
+# HIIT/boxing/combat sessions where they're the intended content.
+_COMBAT_NAME_PATTERNS = [
+    # Punches
+    "punch", "alternate punching", "alternate punches",
+    "jab cross", "jab-cross", "1-2 combo", "boxing combo",
+    "uppercut", "hook punch", "cross punch", "jab punch",
+    "shadow box", "shadow-box", "bag work", "heavy bag",
+    "speed bag", "double end bag", "mitt work", "pad work",
+    # Kicks (martial-arts kicks, NOT glute-kickback / leg-kickback)
+    "front kick", "side kick", "back kick", "round kick",
+    "round house", "roundhouse kick", "high kick", "low kick",
+    "axe kick", "spinning kick", "thai kick", "muay thai",
+    "knee strike", "elbow strike", "spinning elbow",
+    # Generic martial arts
+    "boxing", "kickbox", "kick-box", "muay-thai", "krav maga",
+    "mma", "bjj", "jiu-jitsu", "karate", "taekwondo",
+    "combat training", "fight conditioning",
+]
+
+
+def is_combat_movement(name: str) -> bool:
+    """Return True if the exercise is a combat/martial-arts movement.
+
+    Carefully excludes false positives like 'Cable Glute Kickback',
+    'Donkey Kick', 'Hip Kickback' (legitimate posterior-chain exercises).
+    """
+    name_lower = (name or "").lower()
+    # False-positive guard: exclude common non-combat "kick" exercises
+    safe_kick_patterns = ["kickback", "donkey kick", "fire hydrant",
+                          "leg kick back", "glute kick"]
+    for safe in safe_kick_patterns:
+        if safe in name_lower:
+            return False
+    return any(pattern in name_lower for pattern in _COMBAT_NAME_PATTERNS)
+
+
+# ============================================
+# Workout-type → muscle whitelist (hard filter)
+# ============================================
+#
+# When the user picks "Upper Body" we got hamstring deadlifts in the result
+# because the existing apply_workout_type_filter only score-boosts; nothing
+# rejects an off-region candidate. This whitelist enforces a HARD rule:
+# every exercise must touch at least one allowed muscle keyword for the
+# selected workout_type, otherwise it's dropped before selection.
+#
+# Keywords match against body_part OR target_muscle via substring contains.
+# `None` means "any muscle is fine" (full_body / unspecified).
+WORKOUT_TYPE_MUSCLE_WHITELIST: Dict[str, Optional[set]] = {
+    "upper_body": {
+        "chest", "pecs", "pec ",
+        "back", "lat", "lats", "trap", "traps", "rhomboid",
+        "shoulder", "shoulders", "delt", "deltoid",
+        "arm", "arms", "bicep", "biceps", "tricep", "triceps",
+        "forearm", "forearms",
+    },
+    "lower_body": {
+        "leg", "legs", "quad", "quads", "quadriceps",
+        "hamstring", "hamstrings", "glute", "glutes",
+        "calf", "calves", "adductor", "abductor",
+        "hip", "hips",
+    },
+    "legs": {
+        "leg", "legs", "quad", "quads", "quadriceps",
+        "hamstring", "hamstrings", "glute", "glutes",
+        "calf", "calves", "adductor", "abductor",
+        "hip", "hips",
+    },
+    "push": {
+        "chest", "pecs", "pec ",
+        "shoulder", "shoulders", "delt", "deltoid",
+        "tricep", "triceps",
+    },
+    "pull": {
+        "back", "lat", "lats", "trap", "traps", "rhomboid",
+        "rear delt", "bicep", "biceps", "forearm", "forearms",
+    },
+    "core": {
+        "core", "abs", "abdominal", "abdominals", "oblique", "obliques",
+        "lower back", "spinal erector", "erector spinae",
+    },
+    "full_body": None,
+    "fullbody": None,
+}
+
+
+def filter_by_workout_type_muscles(
+    exercises: List[Dict[str, Any]],
+    workout_type: Optional[str],
+) -> List[Dict[str, Any]]:
+    """Drop exercises whose primary muscles don't match the workout_type
+    whitelist. No-op for full_body / unknown / None.
+
+    Edge cases handled:
+    - Exercise with empty body_part AND empty target_muscle → kept (we can't
+      classify, prefer false-positive over over-filtering).
+    - Compound full-body lifts (deadlift, thruster) tagged with multiple
+      muscles → kept if ANY muscle keyword matches the whitelist. Pure
+      lower-body lifts in upper_body request still get dropped.
+    - workout_type values that don't appear in the map (custom strings,
+      training styles like "strength" / "hiit") → no filter applied; the
+      caller is responsible for not passing those here.
+    """
+    if not workout_type:
+        return exercises
+    key = workout_type.strip().lower().replace(" ", "_")
+    if key not in WORKOUT_TYPE_MUSCLE_WHITELIST:
+        return exercises
+    whitelist = WORKOUT_TYPE_MUSCLE_WHITELIST[key]
+    if whitelist is None:
+        return exercises
+    kept: List[Dict[str, Any]] = []
+    dropped: List[str] = []
+    for ex in exercises:
+        body_part = str(ex.get("body_part") or "").lower()
+        target_muscle = str(ex.get("target_muscle") or "").lower()
+        secondary = str(ex.get("secondary_muscles") or "").lower()
+        haystack = f"{body_part} | {target_muscle} | {secondary}"
+        if not body_part and not target_muscle:
+            kept.append(ex)
+            continue
+        if any(kw in haystack for kw in whitelist):
+            kept.append(ex)
+        else:
+            dropped.append(ex.get("name") or "")
+    if dropped:
+        logger.info(
+            f"[WorkoutTypeWhitelist] dropped {len(dropped)} off-region "
+            f"exercises for workout_type={workout_type}: {dropped[:5]}"
+            + ("..." if len(dropped) > 5 else "")
+        )
+    return kept
+
+
+def filter_main_exercises(
+    exercises: List[Dict[str, Any]],
+    *,
+    is_mobility_workout: bool = False,
+    is_combat_workout: bool = False,
+) -> List[Dict[str, Any]]:
+    """Drop warmup-filler / stretch / combat exercises from the main pool.
+
+    User rules (2026-05-08):
+    - Stretches: only in mobility/stretch/recovery workouts.
+    - Combat moves (punches, kicks, jabs, MMA, kickboxing): only in
+      cardio/HIIT/boxing/combat workouts.
+
+    `is_mobility_workout`: when True, keep stretches.
+    `is_combat_workout`: when True, keep combat movements.
+    """
+    kept: List[Dict[str, Any]] = []
+    dropped: List[str] = []
+    for ex in exercises:
+        name = ex.get("name") or ""
+        if is_warmup_filler_exercise(name):
+            dropped.append(f"warmup:{name}")
+            continue
+        if not is_mobility_workout and is_stretch_exercise(
+            name,
+            str(ex.get("body_part") or ""),
+            str(ex.get("category") or ""),
+        ):
+            dropped.append(f"stretch:{name}")
+            continue
+        if not is_combat_workout and is_combat_movement(name):
+            dropped.append(f"combat:{name}")
+            continue
+        kept.append(ex)
+    if dropped:
+        logger.info(
+            f"[MainPoolFilter] dropped {len(dropped)} warmup/stretch/combat "
+            f"from main pool (mobility={is_mobility_workout}, "
+            f"combat={is_combat_workout}): {dropped[:5]}"
+            + ("..." if len(dropped) > 5 else "")
+        )
+    return kept
 
 
 def is_stretch_exercise(name: str, body_part: str, category: str) -> bool:

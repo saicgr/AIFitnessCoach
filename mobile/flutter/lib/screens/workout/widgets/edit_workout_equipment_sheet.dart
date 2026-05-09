@@ -172,9 +172,33 @@ class _EditWorkoutEquipmentSheetState extends State<EditWorkoutEquipmentSheet> {
     });
   }
 
+  /// Items in `_selectedEquipment` that aren't part of any hardcoded
+  /// `equipmentCategories` row. Without this, the user's full-gym profile
+  /// (74+ items including custom AI-imported gear, brand-specific machines,
+  /// etc) reports "74 items selected" but only the ~32 hardcoded items
+  /// render — making most of the rack appear unchecked. Surfacing them in
+  /// an "Also Selected" group keeps the counter and the visible checkboxes
+  /// in sync.
+  List<String> get _orphanSelected {
+    final known = <String>{};
+    for (final entry in equipmentCategories.entries) {
+      known.addAll(entry.value);
+    }
+    return _selectedEquipment
+        .where((name) => !known.contains(name))
+        .toList()
+      ..sort();
+  }
+
   List<MapEntry<String, List<String>>> get _filteredCategories {
+    final base = <MapEntry<String, List<String>>>[];
     if (_searchQuery.isEmpty) {
-      return equipmentCategories.entries.toList();
+      base.addAll(equipmentCategories.entries);
+      final orphans = _orphanSelected;
+      if (orphans.isNotEmpty) {
+        base.add(MapEntry('Also Selected', orphans));
+      }
+      return base;
     }
 
     final query = _searchQuery.toLowerCase();
@@ -190,6 +214,15 @@ class _EditWorkoutEquipmentSheetState extends State<EditWorkoutEquipmentSheet> {
       if (matchingItems.isNotEmpty) {
         filtered[entry.key] = matchingItems;
       }
+    }
+
+    final orphanMatches = _orphanSelected
+        .where((name) =>
+            name.toLowerCase().contains(query) ||
+            _formatEquipmentName(name).toLowerCase().contains(query))
+        .toList();
+    if (orphanMatches.isNotEmpty) {
+      filtered['Also Selected'] = orphanMatches;
     }
 
     return filtered.entries.toList();

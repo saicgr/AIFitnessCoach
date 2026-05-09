@@ -26,6 +26,8 @@ import '../../../widgets/exercise_image.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/segmented_tab_bar.dart';
 import '../../../data/services/image_url_cache.dart';
+import 'equipment_snap_flow.dart';
+import 'snapped_equipment_section.dart';
 
 
 part 'exercise_add_sheet_part_exercise_add_sheet_state.dart';

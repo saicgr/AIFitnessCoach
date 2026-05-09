@@ -265,8 +265,16 @@ extension WorkoutRepositoryGeneration on WorkoutRepository {
       );
 
       if (response.statusCode == 200 && response.data != null) {
-        final committed =
-            Workout.fromJson(response.data as Map<String, dynamic>);
+        final raw = response.data as Map<String, dynamic>;
+        // Backend wraps the new workout under "workout" alongside metadata
+        // (original_workout_id, supersede_at, idempotent_replay). Hydrating
+        // the envelope as-is loses the new UUID and triggers a 404 on the
+        // next GET /workouts/{id}. Extract it; fall back to root for legacy
+        // shape during the rollout window.
+        final workoutJson = (raw['workout'] is Map<String, dynamic>)
+            ? raw['workout'] as Map<String, dynamic>
+            : raw;
+        final committed = Workout.fromJson(workoutJson);
         debugPrint('✅ [Workout] Regenerate commit succeeded: ${committed.id}');
         return committed;
       }

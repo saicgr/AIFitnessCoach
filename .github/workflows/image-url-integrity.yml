@@ -1,0 +1,29 @@
+name: Exercise Image URL Integrity
+
+on:
+  schedule:
+    - cron: '0 12 * * 1'   # weekly Mondays 12:00 UTC
+  workflow_dispatch:        # manual trigger
+
+jobs:
+  check-no-null-images:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install psql
+        run: sudo apt-get update -y && sudo apt-get install -y postgresql-client
+
+      - name: Fail if any exercise_library row has NULL image_s3_path
+        env:
+          DATABASE_URL: ${{ secrets.SUPABASE_DATABASE_URL }}
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo "::error::SUPABASE_DATABASE_URL secret missing"
+            exit 1
+          fi
+          count=$(psql "$DATABASE_URL" -tAc "SELECT count(*) FROM exercise_library WHERE image_s3_path IS NULL OR image_s3_path = ''")
+          echo "NULL/empty image_s3_path rows: $count"
+          if [ "$count" -gt 0 ]; then
+            echo "::error::$count exercise_library rows have NULL image_s3_path. Run backend/scripts/populate_missing_exercise_images.py."
+            psql "$DATABASE_URL" -c "SELECT id, exercise_name, body_part FROM exercise_library WHERE image_s3_path IS NULL OR image_s3_path = '' ORDER BY exercise_name LIMIT 50"
+            exit 1
+          fi

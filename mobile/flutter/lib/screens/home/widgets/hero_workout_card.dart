@@ -8,6 +8,7 @@ import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/models/workout.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/providers/today_workout_provider.dart';
+import '../../../data/providers/quick_workout_provider.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../data/services/api_client.dart';
 import '../../../data/services/image_url_cache.dart';

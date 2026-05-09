@@ -16,8 +16,10 @@ library;
 
 import 'dart:async';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
@@ -35,9 +37,27 @@ import 'import_exercise_preview_sheet.dart';
 /// Public entry. Pushes the importer as a full screen route. When the user
 /// successfully saves, the created/edited exercise flows back via Navigator
 /// pop value so callers (e.g. the swap sheet) can refresh state.
-Future<bool> showImportExerciseScreen(BuildContext context) async {
+/// Public entry. Pushes the importer as a full screen route.
+///
+/// When [prefilledImageBytes] / [prefilledImageS3Key] / [prefilledNameHint]
+/// are provided (e.g. from the equipment-snap flow's "Describe instead"
+/// fallback), the importer opens directly on the Photo tab with the image
+/// preview and hint pre-populated. The caller doesn't need to upload —
+/// the same import pipeline runs on the bytes.
+Future<bool> showImportExerciseScreen(
+  BuildContext context, {
+  Uint8List? prefilledImageBytes,
+  String? prefilledImageS3Key,
+  String? prefilledNameHint,
+}) async {
   final result = await Navigator.of(context).push<bool>(
-    MaterialPageRoute(builder: (_) => const ImportExerciseScreen()),
+    MaterialPageRoute(
+      builder: (_) => ImportExerciseScreen(
+        prefilledImageBytes: prefilledImageBytes,
+        prefilledImageS3Key: prefilledImageS3Key,
+        prefilledNameHint: prefilledNameHint,
+      ),
+    ),
   );
   return result == true;
 }
@@ -45,7 +65,23 @@ Future<bool> showImportExerciseScreen(BuildContext context) async {
 enum _ImportTab { photo, video, describe }
 
 class ImportExerciseScreen extends ConsumerStatefulWidget {
-  const ImportExerciseScreen({super.key});
+  /// Optional: bytes of an image already captured (e.g. from the snap flow).
+  /// When provided, written to a tmp file and used as the Photo-tab source.
+  final Uint8List? prefilledImageBytes;
+
+  /// Optional: server-side S3 key (used for telemetry / future reuse). The
+  /// import pipeline still re-uploads bytes; this is metadata only.
+  final String? prefilledImageS3Key;
+
+  /// Optional: name hint pre-filled into the Photo tab's name field.
+  final String? prefilledNameHint;
+
+  const ImportExerciseScreen({
+    super.key,
+    this.prefilledImageBytes,
+    this.prefilledImageS3Key,
+    this.prefilledNameHint,
+  });
 
   @override
   ConsumerState<ImportExerciseScreen> createState() =>
@@ -81,6 +117,36 @@ class _ImportExerciseScreenState extends ConsumerState<ImportExerciseScreen> {
 
   // Max allowed video length. Plan says 5-10s target, 10s max.
   static const int _maxVideoSeconds = 10;
+
+  @override
+  void initState() {
+    super.initState();
+    // Pre-fill from snap-equipment flow when present. We force the Photo tab
+    // open and write the bytes to a temp file so the existing photo pipeline
+    // (presign → upload → /import) just works without code branches.
+    if (widget.prefilledNameHint != null && widget.prefilledNameHint!.isNotEmpty) {
+      _photoHintCtrl.text = widget.prefilledNameHint!;
+    }
+    if (widget.prefilledImageBytes != null) {
+      _tab = _ImportTab.photo;
+      _hydratePrefilledImage(widget.prefilledImageBytes!);
+    }
+  }
+
+  Future<void> _hydratePrefilledImage(Uint8List bytes) async {
+    try {
+      final tmp = await getTemporaryDirectory();
+      final ts = DateTime.now().millisecondsSinceEpoch;
+      final f = File('${tmp.path}/import_prefilled_$ts.jpg');
+      await f.writeAsBytes(bytes, flush: true);
+      if (!mounted) return;
+      setState(() {
+        _photoFile = f;
+      });
+    } catch (e) {
+      debugPrint('⚠️ [ImportExercise] prefill image hydrate failed: $e');
+    }
+  }
 
   @override
   void dispose() {

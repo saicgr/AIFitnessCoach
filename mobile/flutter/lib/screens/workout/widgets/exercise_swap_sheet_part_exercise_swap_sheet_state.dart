@@ -52,7 +52,7 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 5, vsync: this);
     _tabController.addListener(_onTabChanged);
     // Defer provider state mutation until after the first frame so we don't
     // trip Riverpod's "modify while building" guard. initialize() synchronously
@@ -104,7 +104,7 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
   void _onTabChanged() {
     // Load AI suggestions when user switches to AI Picks tab (index 3)
     // Only auto-load if no custom input is provided
-    if (_tabController.index == 3 &&
+    if (_tabController.index == 4 &&
         !_aiLoaded &&
         !_isLoadingAI &&
         _aiInputController.text.isEmpty) {
@@ -533,6 +533,56 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
     final glassSurface =
         isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
 
+    return Stack(
+      children: [
+        _buildSheetBody(
+          isDark: isDark,
+          cardBackground: cardBackground,
+          textPrimary: textPrimary,
+          textSecondary: textSecondary,
+          textMuted: textMuted,
+          glassSurface: glassSurface,
+        ),
+        // Snap-equipment FAB (Issue #1, Task #6). Fixed bottom-right; doesn't
+        // overlap content because the tab bodies have their own bottom padding.
+        Positioned(
+          right: 16,
+          bottom: 16,
+          child: FloatingActionButton.extended(
+            heroTag: 'swap_snap_fab',
+            backgroundColor: AppColors.cyan,
+            icon: const Icon(Icons.camera_alt, color: Colors.black),
+            label: const Text(
+              'Snap equipment',
+              style: TextStyle(color: Colors.black, fontWeight: FontWeight.w700),
+            ),
+            onPressed: () async {
+              final updated = await showEquipmentSnapFlow(
+                context, ref,
+                mode: SnapMode.swap,
+                workoutId: widget.workoutId,
+                replacingExerciseId: widget.exercise.exerciseId,
+                replacingExerciseName: widget.exercise.name,
+                previewId: widget.previewId,
+              );
+              if (updated != null && mounted) {
+                Navigator.of(context).pop(updated);
+              }
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSheetBody({
+    required bool isDark,
+    required Color cardBackground,
+    required Color textPrimary,
+    required Color textSecondary,
+    required Color textMuted,
+    required Color glassSurface,
+  }) {
     return Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -571,7 +621,7 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
                               if (_searchQuery.isNotEmpty) {
                                 _searchLibrary(_searchQuery);
                               }
-                              if (_tabController.index == 3) {
+                              if (_tabController.index == 4) {
                                 // Let the user regenerate AI picks on demand —
                                 // don't silently burn tokens.
                                 setState(() => _aiLoaded = false);
@@ -705,6 +755,7 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
                 tabs: [
                   SegmentedTabItem(label: 'Similar'),
                   SegmentedTabItem(label: 'Recent'),
+                  SegmentedTabItem(label: 'Snapped'),
                   SegmentedTabItem(label: 'Library'),
                   SegmentedTabItem(label: 'AI Picks'),
                 ],
@@ -720,6 +771,39 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
 
                     // Recent tab
                     _buildRecentTab(textMuted, textPrimary),
+
+                    // Snapped tab (Issue #1, Task #6) — re-rank prior snaps
+                    SnappedEquipmentSection(
+                      mode: SnapMode.swap,
+                      workoutId: widget.workoutId,
+                      replacingExerciseId: widget.exercise.id,
+                      replacingExerciseName: widget.exercise.name,
+                      previewId: widget.previewId,
+                      onSwapOrAdd: (match) async {
+                        final name = (match['name'] as String?) ?? '';
+                        final oldName = widget.exercise.name;
+                        if (name.isEmpty || oldName.isEmpty) return null;
+                        final repo = ref.read(workoutRepositoryProvider);
+                        final (workout, err) = await repo.swapExercise(
+                          workoutId: widget.workoutId,
+                          oldExerciseName: oldName,
+                          newExerciseName: name,
+                          swapSource: 'equipment_snap_history',
+                          previewId: widget.previewId,
+                        );
+                        if (!mounted) return null;
+                        if (err != null) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text(err)),
+                          );
+                          return null;
+                        }
+                        if (workout != null) {
+                          Navigator.of(context).pop(workout);
+                        }
+                        return workout;
+                      },
+                    ),
 
                     // Library search tab
                     _buildLibraryTab(cardBackground, textMuted, textPrimary),
@@ -825,7 +909,7 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
             ),
             const SizedBox(height: 8),
             TextButton(
-              onPressed: () => _tabController.animateTo(3),
+              onPressed: () => _tabController.animateTo(4),
               child: const Text('Try AI Suggestions', style: TextStyle(color: accentColor)),
             ),
           ],

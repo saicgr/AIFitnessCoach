@@ -23,6 +23,7 @@ import '../models/workout_state.dart';
 import '../shared/set_rail.dart';
 import '../shared/set_rail_overflow_sheet.dart';
 import 'pre_set_coaching_banner.dart';
+import 'set_row_visuals.dart';
 
 part 'set_tracking_table_part_set_number_badge.dart';
 
@@ -67,6 +68,28 @@ class SetRowData {
   /// the TARGET cell and hide the barbell plate indicator.
   final bool isBodyweight;
 
+  // ── Trend / Edited / Easy-mode plumbing (parity with ActiveSetData) ─────
+  /// User has progressive overload enabled in prefs. When false the trend
+  /// pill is suppressed entirely.
+  final bool progressiveOverloadEnabled;
+  /// User manually overrode this set's target — render an "Edited" chip.
+  final bool isEdited;
+  /// Active training block is a deload week — colour the trend pill with
+  /// the deload theme rather than red on decreases.
+  final bool isDeload;
+  /// AMRAP set — RIR pill renders "Target RIR · AMRAP" without a number.
+  final bool isAmrap;
+  /// True when there is no prior history for this exercise — render a
+  /// "Starter weight" muted hint instead of a trend pill.
+  final bool isFirstSetEver;
+  /// Easy mode hides the RIR pill entirely.
+  final bool isEasyMode;
+  /// Previous set's target (in kg, internal unit) for trend delta.
+  /// Null on the first set of the exercise.
+  final double? previousSetTargetWeight;
+  final int? previousSetTargetReps;
+  final int? previousSetTargetSeconds;
+
   const SetRowData({
     required this.setNumber,
     this.isWarmup = false,
@@ -87,6 +110,15 @@ class SetRowData {
     this.restDurationSeconds,
     this.isTimedExercise = false,
     this.isBodyweight = false,
+    this.progressiveOverloadEnabled = true,
+    this.isEdited = false,
+    this.isDeload = false,
+    this.isAmrap = false,
+    this.isFirstSetEver = false,
+    this.isEasyMode = false,
+    this.previousSetTargetWeight,
+    this.previousSetTargetReps,
+    this.previousSetTargetSeconds,
   });
 }
 
@@ -850,6 +882,19 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
                 useKg: widget.useKg,
                 isWarmup: set.isWarmup,
                 isDark: isDark,
+                // Trend pill / Edited chip plumbing — passes through the
+                // optional fields on SetRowData. Existing callers that don't
+                // yet supply these get the safe defaults (PO=true, no edit).
+                progressiveOverloadEnabled: set.progressiveOverloadEnabled,
+                isEdited: set.isEdited,
+                isDeload: set.isDeload,
+                isFirstSetEver: set.isFirstSetEver,
+                previousSetTargetWeight: set.previousSetTargetWeight,
+                previousSetTargetReps: set.previousSetTargetReps,
+                previousSetTargetSeconds: set.previousSetTargetSeconds,
+                isEasyMode: set.isEasyMode,
+                isAmrap: set.isAmrap,
+                actualRir: set.actualRir,
               ),
             ),
 

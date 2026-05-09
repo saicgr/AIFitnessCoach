@@ -25,6 +25,8 @@ import '../../widgets/coach_avatar.dart';
 import '../../widgets/floating_chat/floating_chat_overlay.dart';
 import '../../widgets/medical_disclaimer_banner.dart';
 import '../ai_settings/ai_settings_screen.dart';
+import '../exercises/import_exercise_screen.dart';
+import '../workout/widgets/quick_workout_sheet.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../data/repositories/nutrition_repository.dart';
 import 'widgets/food_analysis_inline_card.dart';
@@ -454,6 +456,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                             ? () => _retryMessage(messages, msgIndex)
                             : null,
                         onRegenerate: message.role == 'assistant' ? () => _regenerateResponse(messages, msgIndex) : null,
+                        onEquipmentMatchTap: _handleEquipmentMatchTap,
+                        onCreateCustomFromEquipment: _handleCreateCustomFromEquipment,
+                        onStartWorkoutWithEquipment: _handleStartWorkoutWithEquipment,
                       ).animate().fadeIn(duration: 200.ms);
 
                       // Highlight animation for scroll-to-message
@@ -772,6 +777,40 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     final la = a.toLocal();
     final lb = b.toLocal();
     return la.year == lb.year && la.month == lb.month && la.day == lb.day;
+  }
+
+  // Issue 2 — route taps from EquipmentMatchCard.
+  // Pragmatic v1 binding: tapping a match navigates to /workout/active so the
+  // user can swap/add from the canonical sheet UI. A snackbar carries the
+  // match name as confirmation since chat is decoupled from the workout sheet.
+  void _handleEquipmentMatchTap(
+    Map<String, dynamic> match,
+    Map<String, dynamic> actionData,
+  ) {
+    final matchName = (match['name'] as String?) ?? 'Equipment match';
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Selected: $matchName — open your workout to apply')),
+    );
+    // Best-effort: deeplink to active workout. If route doesn't exist on this
+    // tab, fall through silently — the snackbar is the confirmation.
+    try {
+      context.push('/workout/active');
+    } catch (_) {}
+  }
+
+  void _handleCreateCustomFromEquipment(Map<String, dynamic> actionData) {
+    final canonical = actionData['canonical_name'] as String?;
+    final s3Key = actionData['snapped_equipment_s3_key'] as String?
+        ?? actionData['s3_key'] as String?;
+    showImportExerciseScreen(
+      context,
+      prefilledImageS3Key: s3Key,
+      prefilledNameHint: canonical,
+    );
+  }
+
+  void _handleStartWorkoutWithEquipment(Map<String, dynamic> actionData) {
+    showQuickWorkoutSheet(context, ref);
   }
 
   void _retryMessage(List<ChatMessage> messages, int errorIndex) {

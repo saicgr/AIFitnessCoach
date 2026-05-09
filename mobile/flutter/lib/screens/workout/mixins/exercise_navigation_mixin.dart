@@ -563,6 +563,11 @@ mixin ExerciseNavigationMixin<T extends StatefulWidget> on State<T> {
         if (result != null && mounted) {
           setState(() {
             precomputeSupersetIndicesImpl();
+            // Copy anchor's totalSets onto every newly-linked partner so the
+            // round-robin treats them uniformly. Without this, a 2-set partner
+            // joining a 3-set anchor would render as "Set 1 of 2" and the
+            // round-robin would exit early on the third pass.
+            syncAllSupersetSetCounts();
           });
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -991,6 +996,81 @@ mixin ExerciseNavigationMixin<T extends StatefulWidget> on State<T> {
 
   // ── Superset helper methods ──
 
+  /// After a superset is created or a partner added/swapped, copy the anchor
+  /// exercise's totalSets count onto every partner in the group so the
+  /// round-robin treats them uniformly. The "anchor" is the lowest
+  /// supersetOrder member (typically the first one declared).
+  ///
+  /// Call right after a copyWith(supersetGroup: …) write OR after
+  /// precomputeSupersetIndices() has rebuilt the cache.
+  ///
+  /// Safe to call repeatedly — idempotent.
+  void syncSupersetSetCountsFromAnchor(int groupId) {
+    final indices = getSupersetIndices(groupId);
+    if (indices.length < 2) return;
+    final anchorIdx = indices.first; // sorted by supersetOrder asc
+    final anchorTotal = totalSetsPerExercise[anchorIdx]
+        ?? exercises[anchorIdx].sets
+        ?? 3;
+    for (final idx in indices) {
+      if (idx == anchorIdx) continue;
+      final current = totalSetsPerExercise[idx];
+      if (current == null || current != anchorTotal) {
+        totalSetsPerExercise[idx] = anchorTotal;
+        debugPrint('🔗 [Superset] Copied anchor totalSets=$anchorTotal onto partner ex=$idx (group=$groupId)');
+      }
+    }
+  }
+
+  /// Sync totalSets across every superset group. Cheap to run after any
+  /// reorder/link/swap mutation.
+  void syncAllSupersetSetCounts() {
+    for (final groupId in supersetIndicesCache.keys) {
+      syncSupersetSetCountsFromAnchor(groupId);
+    }
+  }
+
+  /// Prompt the user when they manually change one member's set count to
+  /// decide whether to apply across the linked group.
+  ///
+  /// Returns:
+  ///  - true  → propagate the new count to all partners
+  ///  - false → leave partners alone (round-robin gracefully handles uneven)
+  ///  - null  → cancelled (no change at all; caller should revert)
+  Future<bool?> confirmApplySetCountToSupersetGroup({
+    required int groupId,
+    required int newCount,
+  }) async {
+    if (!mounted) return false;
+    final indices = getSupersetIndices(groupId);
+    if (indices.length < 2) return false; // No partners to apply to.
+    return showDialog<bool?>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Apply to all linked exercises?'),
+        content: Text(
+          'Set this count ($newCount sets) on every exercise in the superset group? '
+          '"No" keeps the count only on this exercise — the round-robin handles '
+          'the difference automatically.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, null),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('No, just this one'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Yes, apply to all'),
+          ),
+        ],
+      ),
+    );
+  }
+
   /// Pre-compute superset indices for all groups.
   void precomputeSupersetIndices() {
     var cache = <int, List<int>>{};
@@ -1016,21 +1096,35 @@ mixin ExerciseNavigationMixin<T extends StatefulWidget> on State<T> {
     return supersetIndicesCache[groupId] ?? [];
   }
 
-  /// Get the next exercise index in the superset round
+  /// Get the next exercise index in the superset round.
+  ///
+  /// Round-robin walk through ALL partners in supersetIndices order, skipping
+  /// any whose completed sets count == its configured totalSets (i.e. exhausted)
+  /// AND any already done in this round. This correctly handles uneven set
+  /// counts (e.g. anchor=3, partner=2): once partner is done, anchor continues
+  /// linearly. Trisets / giant-sets cycle A→B→C→A→… within the round.
+  ///
+  /// Returns null when EVERY partner in the group is exhausted (workout-level)
+  /// OR when every partner has been visited in this round and the caller
+  /// should advance to the next round (rest timer).
   int? getNextSupersetExerciseIndex(int currentIndex, int groupId) {
     final supersetIndices = getSupersetIndices(groupId);
     if (supersetIndices.isEmpty) return null;
 
     final doneInRound = supersetRoundProgress[groupId] ?? <int>{};
 
+    // First sweep — find any partner not yet visited THIS round and not exhausted.
     for (final idx in supersetIndices) {
-      if (idx != currentIndex &&
-          !doneInRound.contains(idx) &&
-          !isExerciseCompleted(idx)) {
-        return idx;
-      }
+      if (idx == currentIndex) continue;
+      if (doneInRound.contains(idx)) continue;
+      if (isExerciseCompleted(idx)) continue;
+      return idx;
     }
 
+    // No unvisited partner this round. If the round is incomplete because
+    // some partners are already exhausted, the caller will resetSupersetRound
+    // and we return null so it triggers end-of-round rest. The next round
+    // starts with whichever partners still have remaining sets.
     return null;
   }
 

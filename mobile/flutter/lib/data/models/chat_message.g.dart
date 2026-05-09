@@ -24,6 +24,7 @@ ChatMessage _$ChatMessageFromJson(Map<String, dynamic> json) => ChatMessage(
   audioUrl: json['audio_url'] as String?,
   audioDurationMs: (json['audio_duration_ms'] as num?)?.toInt(),
   coachPersonaId: json['coach_persona_id'] as String?,
+  source: json['source'] as String?,
 );
 
 Map<String, dynamic> _$ChatMessageToJson(ChatMessage instance) =>
@@ -43,6 +44,7 @@ Map<String, dynamic> _$ChatMessageToJson(ChatMessage instance) =>
       'audio_url': instance.audioUrl,
       'audio_duration_ms': instance.audioDurationMs,
       'coach_persona_id': instance.coachPersonaId,
+      'source': instance.source,
     };
 
 const _$AgentTypeEnumMap = {

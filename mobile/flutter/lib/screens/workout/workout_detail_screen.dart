@@ -597,121 +597,86 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen>
             ),
 
           // ─────────────────────────────────────────────────────────────────
-          // EXERCISES SECTION (with + icon)
-          // ─────────────────────────────────────────────────────────────────
+          // EXERCISES SECTION header — uses the same card shell as Equipment /
+          // Warm Up / Cool Down / More Info so all five sections share one
+          // visual language (rounded card, colored icon chip, count badge,
+          // muted uppercase title). Trailing slot carries the kg/lbs toggle
+          // and the + add button as compact icon affordances.
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      color: accentColor.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Icon(Icons.fitness_center, color: accentColor, size: 16),
-                  ),
-                  const SizedBox(width: 12),
-                  Text(
-                    'EXERCISES',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: textMuted,
-                      letterSpacing: 1.5,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: accentColor.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Text(
-                      '${exercises.length}',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                        color: accentColor,
-                      ),
-                    ),
-                  ),
-                  const Spacer(),
-                  // kg/lb toggle button
-                  GestureDetector(
-                    onTap: () {
-                      HapticService.light();
-                      _toggleUnit();
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: accentColor.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: accentColor.withValues(alpha: 0.3),
+              padding: const EdgeInsets.only(top: 16),
+              child: _buildCollapsibleSectionHeader(
+                title: 'EXERCISES',
+                icon: Icons.fitness_center,
+                color: accentColor,
+                isExpanded: true,
+                onTap: () {/* always expanded */},
+                itemCount: exercises.length,
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    GestureDetector(
+                      onTap: () {
+                        HapticService.light();
+                        _toggleUnit();
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: accentColor.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: accentColor.withValues(alpha: 0.3)),
                         ),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.swap_horiz,
-                            color: accentColor,
-                            size: 14,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            (_useKgOverride ?? ref.watch(useKgForWorkoutProvider)) ? 'kg' : 'lbs',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: accentColor,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.swap_horiz, color: accentColor, size: 14),
+                            const SizedBox(width: 4),
+                            Text(
+                              (_useKgOverride ?? ref.watch(useKgForWorkoutProvider))
+                                  ? 'kg'
+                                  : 'lbs',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: accentColor,
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  // Add exercise button (+ icon)
-                  GestureDetector(
-                    onTap: () async {
-                      await _flushPendingAutoSave();
-                      if (!context.mounted) return;
-                      final currentExerciseNames = exercises.map((e) => e.name).toList();
-                      final updatedWorkout = await showExerciseAddSheet(
-                        context,
-                        ref,
-                        workoutId: widget.workoutId,
-                        workoutType: _workout?.type ?? 'strength',
-                        currentExerciseNames: currentExerciseNames,
-                      );
-                      if (updatedWorkout != null && context.mounted) {
-                        setState(() => _workout = updatedWorkout);
-                        ref.read(todayWorkoutProvider.notifier).invalidateAndRefresh();
-                        ref.read(workoutsProvider.notifier).silentRefresh();
-                      }
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        color: accentColor.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: accentColor.withValues(alpha: 0.3),
+                          ],
                         ),
                       ),
-                      child: Icon(
-                        Icons.add,
-                        color: accentColor,
-                        size: 18,
+                    ),
+                    const SizedBox(width: 8),
+                    GestureDetector(
+                      onTap: () async {
+                        await _flushPendingAutoSave();
+                        if (!context.mounted) return;
+                        final currentExerciseNames = exercises.map((e) => e.name).toList();
+                        final updatedWorkout = await showExerciseAddSheet(
+                          context,
+                          ref,
+                          workoutId: widget.workoutId,
+                          workoutType: _workout?.type ?? 'strength',
+                          currentExerciseNames: currentExerciseNames,
+                        );
+                        if (updatedWorkout != null && context.mounted) {
+                          setState(() => _workout = updatedWorkout);
+                          ref.read(todayWorkoutProvider.notifier).invalidateAndRefresh();
+                          ref.read(workoutsProvider.notifier).silentRefresh();
+                        }
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: accentColor.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: accentColor.withValues(alpha: 0.3)),
+                        ),
+                        child: Icon(Icons.add, color: accentColor, size: 18),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),

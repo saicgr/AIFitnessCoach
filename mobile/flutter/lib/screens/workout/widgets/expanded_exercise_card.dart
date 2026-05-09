@@ -17,6 +17,7 @@ import '../../../data/services/haptic_service.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../library/providers/muscle_group_images_provider.dart';
 import 'exercise_options_info_sheet.dart';
+import 'exercise_info_sheet.dart';
 
 part 'expanded_exercise_card_ui_1.dart';
 part 'expanded_exercise_card_ui_2.dart';

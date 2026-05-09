@@ -24,6 +24,7 @@ from models.email import UserStats, ScheduleState, TimeBand
 from services.email_helpers import (
     build_persona_signature_html,
     build_stats_grid_html,
+    build_first_workout_stats_grid,
     build_zero_state_row_html,
     build_nutrition_grid_html,
     overdue_tier,
@@ -498,13 +499,39 @@ class EmailLifecycleMixin:
     async def send_first_workout_done(
         self, to_email: str, first_name_value: str, stats: UserStats,
         workout_name: str, duration_min: int = 20,
+        *,
+        duration_seconds: Optional[int] = None,
+        calories_burned: Optional[int] = None,
+        user_weight_kg: Optional[float] = None,
+        min_duration_seconds: int = 180,
     ) -> Dict[str, Any]:
         """N2. One-shot celebration when the user's first-ever workout is logged.
 
         Fires inline from the workout-completion endpoint, not from a cron.
         Gated by `workouts_total == 1` (enforced by caller) + `email_send_log`
         dedup with a one-year cooldown (effectively one-shot per user).
+
+        Args:
+            duration_seconds: Authoritative duration (preferred over duration_min).
+                Used for both the MET fallback AND the min-duration gate that
+                suppresses the email for accidental sub-3-minute "workouts".
+            calories_burned: Workout kcal from the completion endpoint. Renders
+                in the stats grid as "WORKOUT KCAL" (not nutrition daily avg).
+            user_weight_kg: For the MET fallback when calories_burned is missing.
+            min_duration_seconds: Sub-threshold workouts are skipped (default 180).
+                Returns {"skipped": "below_min_duration"} so callers can log it.
         """
+        # Min-duration gate — a 60-second tap-through "workout" should NOT fire
+        # the celebration email. We use authoritative duration_seconds when
+        # available; otherwise fall back to the legacy duration_min argument.
+        effective_seconds = duration_seconds if duration_seconds is not None else duration_min * 60
+        if effective_seconds is not None and effective_seconds < min_duration_seconds:
+            logger.info(
+                f"First-workout email skipped for {to_email}: duration "
+                f"{effective_seconds}s < min {min_duration_seconds}s"
+            )
+            return {"skipped": "below_min_duration", "duration_seconds": effective_seconds}
+
         if not self.is_configured():
             return {"error": "Email service not configured"}
 
@@ -517,10 +544,20 @@ class EmailLifecycleMixin:
         coach = stats.coach_name
         next_name = stats.next_workout_name or "your next session"
 
+        # Prefer the authoritative duration_seconds for the subtitle copy so
+        # the displayed minute count matches what the user actually did. The
+        # legacy duration_min stays as fallback for older callers.
+        display_minutes = (
+            max(1, int(duration_seconds // 60))
+            if duration_seconds is not None and duration_seconds > 0
+            else max(1, duration_min)
+        )
+        minute_word = "minute" if display_minutes == 1 else "minutes"
+
         subject = f"Your first workout is in the books, {name}."
         title = f"First one's done, {name}."
         subtitle = (
-            f"{coach} saw that. {duration_min} minutes of work that puts you ahead "
+            f"{coach} saw that. {display_minutes} {minute_word} of work that puts you ahead "
             f"of every person who never started."
         )
         features = [
@@ -539,7 +576,12 @@ class EmailLifecycleMixin:
             features=features,
             footer_text="You received this because you logged your first workout.",
             persona_signature_html=build_persona_signature_html(stats),
-            stats_row_html=build_stats_grid_html(stats),
+            stats_row_html=build_first_workout_stats_grid(
+                stats,
+                workout_calories_burned=calories_burned,
+                duration_seconds=duration_seconds if duration_seconds is not None else effective_seconds,
+                user_weight_kg=user_weight_kg,
+            ),
             category_name="achievements",
         )
 

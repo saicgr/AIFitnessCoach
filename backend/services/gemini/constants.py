@@ -162,6 +162,11 @@ def _is_transient_gemini_error(e: Exception) -> bool:
     return any(kw in error_str for kw in [
         "429", "resource_exhausted", "503", "rate limit",
         "timeout", "unavailable", "deadline exceeded",
+        # Streaming-specific transients (validation harness 2026-05-08:
+        # 7% of /generate-stream calls failed with "stream stalled at chunk N",
+        # uniform chunk distribution → transient, not deterministic).
+        "stalled", "stream stall", "streaming failed",
+        "incomplete chunked read", "connection reset", "premature",
     ])
 
 

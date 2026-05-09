@@ -108,6 +108,7 @@ from api.v1 import public_profile  # Public profile pages (zealova.com/u/{userna
 from api.v1 import ai_endpoints  # Lightweight AI helpers (exercise insights, etc.)
 from api.v1 import x_webhook  # X (Twitter) build-in-public publisher + Telegram webhook
 from api.v1.users.mcp_integrations import router as mcp_integrations_router  # MCP connected-client management
+from api.v1 import equipment  # Snap-equipment flow (point camera at gym machine)
 
 # Create v1 router
 router = APIRouter(prefix="/v1")
@@ -122,6 +123,7 @@ router.include_router(health.router, prefix="/health", tags=["Health"])
 router.include_router(users.router, prefix="/users", tags=["Users"])
 router.include_router(exercises.router, prefix="/exercises", tags=["Exercises"])
 router.include_router(workouts.router, prefix="/workouts", tags=["Workouts"])
+router.include_router(equipment.router, prefix="/equipment", tags=["Equipment"])
 router.include_router(performance_db.router, prefix="/performance", tags=["Performance"])
 
 # Health metrics endpoints

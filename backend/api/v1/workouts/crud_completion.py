@@ -293,6 +293,10 @@ async def complete_workout(
 
         # Performance Comparison
         performance_comparison: Optional[PerformanceComparisonInfo] = None
+        # Hoisted out of the try-block so it remains defined even if the
+        # comparison/calorie pipeline raises — the N2 first-workout email
+        # below reads this and we must not crash the completion response.
+        calories_burned: Optional[int] = None
 
         try:
             comparison_service = PerformanceComparisonService()
@@ -620,6 +624,7 @@ async def complete_workout(
             user_id=user_id,
             workout_name=workout.name,
             duration_seconds=duration_seconds,
+            calories_burned=calories_burned,
         )
 
         # Server-side guaranteed XP award (fixes the leaderboard "completed
@@ -763,17 +768,33 @@ def _award_workout_complete_xp(
 
 async def _maybe_send_first_workout_email(
     *, supabase, user_id: str, workout_name: str, duration_seconds: int = 0,
+    calories_burned: Optional[int] = None,
 ):
     """Background task: send N2 first-workout-done email iff this is the first.
 
     Gate cascade (all must be true):
+      - duration_seconds >= 180 (skip sub-3-minute "accidental" workouts)
       - workouts_total == 1 (from workout_logs count)
       - email_preferences.workout_reminders != false
       - no prior "first_workout_done" row in email_send_log (one-shot)
     Any failure logs a warning and returns silently — never blocks the
     completion response.
+
+    Args:
+        calories_burned: Workout kcal computed by the completion endpoint. Passed
+            through to the email's stats grid as "WORKOUT KCAL". When None or 0,
+            the email helper falls back to a MET-based estimate using the user's
+            most recent weight (or 70 kg default).
     """
     try:
+        # Min-duration gate first — cheapest check, no DB hits.
+        if duration_seconds is not None and duration_seconds < 180:
+            logger.info(
+                f"N2 first-workout email skipped for user {user_id}: "
+                f"duration {duration_seconds}s below 180s threshold"
+            )
+            return
+
         # Must be exactly 1 completed workout (this one)
         logs = supabase.table("workout_logs") \
             .select("id") \
@@ -821,13 +842,33 @@ async def _maybe_send_first_workout_email(
         # _get_user_stats and its helpers expect the SupabaseManager (which exposes
         # `.client`), not the raw Client we receive here from `db.client` upstream.
         stats = _get_user_stats(get_supabase(), user)
+
+        # Fetch most-recent body weight for the MET-fallback kcal estimate when
+        # calories_burned is missing. Best-effort — if the table/row doesn't
+        # exist, we pass None and the helper falls back to its 70 kg default.
+        user_weight_kg: Optional[float] = None
+        try:
+            wm = supabase.table("user_metrics") \
+                .select("weight_kg") \
+                .eq("user_id", user_id) \
+                .order("recorded_at", desc=True) \
+                .limit(1) \
+                .execute()
+            if wm.data and wm.data[0].get("weight_kg"):
+                user_weight_kg = float(wm.data[0]["weight_kg"])
+        except Exception as _e:
+            logger.debug(f"N2 weight lookup skipped for {user_id}: {_e}")
+
         email_svc = get_email_service()
         await email_svc.send_first_workout_done(
             to_email=user["email"],
             first_name_value=first_name(user),
             stats=stats,
             workout_name=workout_name,
-            duration_min=max(1, int(duration_seconds // 60)),
+            duration_min=max(1, int((duration_seconds or 0) // 60)),
+            duration_seconds=duration_seconds,
+            calories_burned=calories_burned,
+            user_weight_kg=user_weight_kg,
         )
         # Record one-shot fire
         supabase.table("email_send_log").insert({

@@ -3,8 +3,17 @@ import 'sheet_theme_colors.dart';
 import 'selectable_chip.dart';
 import 'section_title.dart';
 
-/// Default list of focus area options
+/// Default list of focus area options.
+///
+/// Focus Areas = body REGIONS / muscles. "Full Body", "Upper Body" and
+/// "Lower Body" used to live in WorkoutTypeSelector — they're regions, so
+/// they belong here. Region selection layered on top of the Training Style
+/// chip removes the previous overlap (e.g. user picks Strength + Upper Body
+/// + Chest rather than Upper Body in two different sections).
 const List<String> defaultFocusAreas = [
+  'Full Body',
+  'Upper Body',
+  'Lower Body',
   'Chest',
   'Back',
   'Shoulders',
@@ -12,7 +21,6 @@ const List<String> defaultFocusAreas = [
   'Core',
   'Legs',
   'Glutes',
-  'Full Body',
 ];
 
 /// A widget for selecting muscle groups / focus areas
@@ -84,7 +92,7 @@ class FocusAreasSelector extends StatelessWidget {
             children: [
               SectionTitle(
                 icon: Icons.track_changes,
-                title: 'Focus Areas',
+                title: 'Target Areas',
                 iconColor: colors.purple,
               ),
               const Spacer(),
@@ -94,6 +102,11 @@ class FocusAreasSelector extends StatelessWidget {
                   style: TextStyle(color: colors.purple, fontSize: 12),
                 ),
             ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Which body regions to hit. Combine with a Training Style above.',
+            style: TextStyle(color: colors.textMuted, fontSize: 12),
           ),
           const SizedBox(height: 12),
           Wrap(

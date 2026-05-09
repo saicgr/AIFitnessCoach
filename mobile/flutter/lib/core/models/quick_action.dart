@@ -13,6 +13,9 @@ enum QuickActionBehavior {
   fastingNav,
   quickWorkout,
   chat,
+  // Issue 2: opens EquipmentSnapFlow in identify mode → success routes to
+  // chat with the photo attached and identify_equipment tool already running.
+  identifyEquipment,
 }
 
 class QuickAction {
@@ -251,6 +254,18 @@ const quickActionRegistry = <String, QuickAction>{
     behavior: QuickActionBehavior.route,
     route: '/share-plan',
   ),
+  // Issue 2: lives ONLY in the More overflow sheet (never the 2×5 grid —
+  // memory feedback_quick_actions_layout: slot 9 = scan_menu, slot 10 =
+  // More, never remove). Tapping opens EquipmentSnapFlow in identify
+  // mode; on success, returns to chat with photo + identify_equipment
+  // tool result already pre-loaded.
+  'identify_equipment': QuickAction(
+    id: 'identify_equipment',
+    label: "What's this?",
+    icon: Icons.camera_alt_outlined,
+    color: Color(0xFF06B6D4),
+    behavior: QuickActionBehavior.identifyEquipment,
+  ),
 };
 
 // Home shortcut bar layout: 2 rows × 5 slots.
@@ -269,4 +284,7 @@ const defaultQuickActionOrder = [
   'progress', 'stats', 'achievements', 'hydration', 'summaries',
   // ─── More-only overflow ── never appears in primary 2×5 grid:
   'share_plan',
+  // Issue 2: discoverable in More sheet, but never promoted into the 2×5
+  // grid (slot 9 default stays scan_menu — quick_actions_layout rule).
+  'identify_equipment',
 ];

@@ -3,19 +3,18 @@ import 'sheet_theme_colors.dart';
 import 'selectable_chip.dart';
 import 'section_title.dart';
 
-/// Default list of workout type options
+/// Default list of workout type options.
+///
+/// Workout Type = TRAINING STYLE only (how you train). Body regions —
+/// Full Body / Upper Body / Lower Body / Legs / Core / Glutes — live in
+/// FocusAreasSelector to avoid the redundancy users called out.
 const List<String> defaultWorkoutTypes = [
   'Strength',
   'HIIT',
   'Cardio',
   'Flexibility',
-  'Full Body',
-  'Upper Body',
-  'Lower Body',
-  'Core',
   'Push',
   'Pull',
-  'Legs',
 ];
 
 /// A widget for selecting workout type
@@ -75,8 +74,13 @@ class WorkoutTypeSelector extends StatelessWidget {
         children: [
           SectionTitle(
             icon: Icons.category,
-            title: 'Workout Type',
+            title: 'Training Style',
             iconColor: colors.cyan,
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'How you want to train. Pick body regions in Target Areas below.',
+            style: TextStyle(color: colors.textMuted, fontSize: 12),
           ),
           const SizedBox(height: 12),
           Wrap(

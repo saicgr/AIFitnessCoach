@@ -218,6 +218,13 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
         # resolver can consult them (short-circuit path leaves both as None).
         user = None
         gym_profile = None
+        # Bind defaults so the body-only fast-path below doesn't leave these
+        # unbound when downstream code (e.g. line ~455 generator_kwargs) reads
+        # them. See generation_endpoints.py for the same fix on /generate.
+        training_split = None
+        workout_days: List[str] = []
+        gym_profile_id = None
+        preferences: Dict[str, Any] = {}
 
         try:
 
@@ -459,6 +466,50 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
                 generator_kwargs["strength_history"] = strength_history
                 generator_kwargs["workout_weight_unit"] = user.get("workout_weight_unit") or user.get("weight_unit") or "lbs" if user else "lbs"
 
+                # RAG-FIRST refactor (2026-05-08, user request): pre-fetch
+                # library exercises and pass them to Gemini so it can ONLY use
+                # library-backed names. Eliminates exercise hallucination —
+                # every output gets an exercise_id, video_url, image_s3_path.
+                # Falls back to AI-first if library returns nothing (rare).
+                try:
+                    from services.exercise_library_service import get_exercise_library_service
+                    _lib_svc = get_exercise_library_service()
+                    _focus_for_lib = (
+                        body.focus_areas[0] if body.focus_areas else "full_body"
+                    )
+                    _eq_for_lib = (
+                        equipment if (isinstance(equipment, list) and equipment)
+                        else ["body weight"]
+                    )
+                    # Fetch a generous pool (3× the workout's exercise count)
+                    # so Gemini has selection room within the focus/equipment
+                    # constraints. Cap at 50 in the prompt block.
+                    _library_pool = _lib_svc.get_exercises_for_workout(
+                        focus_area=_focus_for_lib,
+                        equipment=_eq_for_lib,
+                        count=max(15, exercise_count * 3),
+                        fitness_level=fitness_level or "intermediate",
+                    )
+                    if _library_pool:
+                        generator_kwargs["library_exercises"] = _library_pool
+                        logger.info(
+                            f"[Streaming RAG-first] Pre-fetched {len(_library_pool)} "
+                            f"library exercises for focus={_focus_for_lib}, "
+                            f"eq={len(_eq_for_lib)} items, fl={fitness_level}"
+                        )
+                    else:
+                        logger.warning(
+                            f"[Streaming RAG-first] Library returned 0 exercises "
+                            f"for focus={_focus_for_lib}/eq={_eq_for_lib} — "
+                            f"falling back to AI-first (Gemini may hallucinate)"
+                        )
+                except Exception as _lib_err:
+                    logger.warning(
+                        f"[Streaming RAG-first] Library lookup failed: {_lib_err} — "
+                        f"falling back to AI-first",
+                        exc_info=True,
+                    )
+
                 async for chunk in generator_func(**generator_kwargs):
                     accumulated_chunks.append(chunk)
                     total_chars += len(chunk)
@@ -518,8 +569,148 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
                         ex["equipment"] = normalize_equipment_value(raw_eq, ex.get("name", ""))
 
                 workout_name = workout_data.get("name", "Generated Workout")
-                workout_type = workout_data.get("type", body.workout_type or "strength")
+                # Derive workout_type from focus + goal when Gemini omits it.
+                # Default-to-"strength" was making 96% of workouts labeled strength
+                # even when actual content was cardio/mobility (validation harness
+                # 2026-05-08: idx 15/37/56 had 100% cardio content labeled strength;
+                # 0/7 hypertrophy goals returned type=hypertrophy).
+                _focus_for_type = (body.focus_areas[0] if body.focus_areas else "").lower()
+                _focus_to_type = {
+                    "cardio": "cardio",
+                    "mobility": "mobility",
+                    "stretch": "mobility",
+                }
+                _derived_type = _focus_to_type.get(_focus_for_type)
+                # If focus didn't pin a type, fall back to goal-keyed type.
+                if not _derived_type:
+                    _goals_lower = [str(g).lower() for g in (goals or [])]
+                    if "hypertrophy" in _goals_lower:
+                        _derived_type = "hypertrophy"
+                    elif "endurance" in _goals_lower or "fat_loss" in _goals_lower:
+                        _derived_type = "cardio" if "cardio" in (workout_type_override or "").lower() else "hybrid"
+                    elif "mobility" in _goals_lower:
+                        _derived_type = "mobility"
+                    elif "power" in _goals_lower:
+                        _derived_type = "strength"  # power is in the strength family for tagging
+                    else:
+                        _derived_type = "strength"
+                workout_type = workout_data.get("type", body.workout_type or _derived_type)
                 difficulty = workout_data.get("difficulty", intensity_preference)
+
+                # Content-vs-declared-type override: if Gemini's exercises clearly
+                # don't match the declared type, fix it server-side. Heuristic
+                # match on exercise name keywords.
+                _ex_names_lower = " | ".join(
+                    (ex.get("name", "") or "").lower() for ex in (exercises or [])
+                )
+                _has_cardio = any(kw in _ex_names_lower for kw in [
+                    "treadmill", "rowing machine", "stationary bike", "elliptical",
+                    "sprint", "jump rope",
+                ])
+                _has_stretch = any(kw in _ex_names_lower for kw in [
+                    "stretch", " pose", "foam roll", "child pose", "cobra pose",
+                ])
+                if exercises and len(exercises) >= 3:
+                    _cardio_count = sum(
+                        1 for ex in exercises
+                        if any(kw in (ex.get("name", "") or "").lower() for kw in [
+                            "treadmill", "rowing machine", "stationary bike",
+                            "elliptical", "sprint", "jump rope",
+                        ])
+                    )
+                    _stretch_count = sum(
+                        1 for ex in exercises
+                        if any(kw in (ex.get("name", "") or "").lower() for kw in [
+                            "stretch", "pose", "foam roll", "release",
+                        ])
+                    )
+                    _total = len(exercises)
+                    if _cardio_count / _total >= 0.5 and (workout_type or "").lower() != "cardio":
+                        logger.warning(
+                            f"⚠️ [TypeContent] {_cardio_count}/{_total} cardio exercises "
+                            f"but type='{workout_type}' — overriding to 'cardio'"
+                        )
+                        workout_type = "cardio"
+                    elif _stretch_count / _total >= 0.5 and (workout_type or "").lower() not in ("mobility", "recovery"):
+                        logger.warning(
+                            f"⚠️ [TypeContent] {_stretch_count}/{_total} stretch exercises "
+                            f"but type='{workout_type}' — overriding to 'mobility'"
+                        )
+                        workout_type = "mobility"
+
+                # Difficulty-ceiling enforcement (validation harness 2026-05-08:
+                # beginner request idx 6 returned `difficulty=hard` with Pistol
+                # Squats / Pull-ups / Archer Push-ups — strict ceiling violated).
+                # Beginners NEVER get hard/hell; advanced+non-mobility never gets easy.
+                _fl = (fitness_level or "intermediate").lower()
+                _diff = (difficulty or "").lower()
+                _focus_str = (body.focus_areas[0] if body.focus_areas else "").lower()
+                _is_mobility_intent = (
+                    "mobility" in _focus_str or "stretch" in _focus_str
+                    or (workout_type or "").lower() in ("mobility", "recovery", "stretch")
+                )
+
+                if _fl == "beginner" and _diff in ("hard", "hell"):
+                    logger.warning(
+                        f"⚠️ [DifficultyCeiling] Beginner request returned '{difficulty}' "
+                        f"— forcing to 'medium' (workout='{workout_name}')"
+                    )
+                    difficulty = "medium"
+                    workout_data["difficulty"] = "medium"
+                elif _fl == "advanced" and _diff == "easy" and not _is_mobility_intent:
+                    logger.warning(
+                        f"⚠️ [DifficultyCeiling] Advanced non-mobility request returned 'easy' "
+                        f"— bumping to 'medium' (workout='{workout_name}', focus={_focus_str})"
+                    )
+                    difficulty = "medium"
+                    workout_data["difficulty"] = "medium"
+                elif _is_mobility_intent and _diff in ("hard", "hell"):
+                    # idx 21 (advanced + mobility focus + 30min): output was 'hard'
+                    # with 8 resistance-band exercises — wrong intent. Mobility/
+                    # stretch sessions cap at 'medium' so users actually get
+                    # recovery, not a hard workout in disguise.
+                    logger.warning(
+                        f"⚠️ [DifficultyCeiling] Mobility/stretch focus returned '{difficulty}' "
+                        f"— capping to 'easy' (workout='{workout_name}', focus={_focus_str})"
+                    )
+                    difficulty = "easy"
+                    workout_data["difficulty"] = "easy"
+
+                # workout_type ↔ focus consistency override (idx 52: focus=mobility
+                # but type=strength is internally inconsistent).
+                _wo_type_lc = (workout_type or "").lower()
+                if _is_mobility_intent and _wo_type_lc in ("strength", "hypertrophy"):
+                    logger.warning(
+                        f"⚠️ [TypeConsistency] Mobility focus + type='{workout_type}' "
+                        f"— overriding type to 'mobility'"
+                    )
+                    workout_type = "mobility"
+                elif _focus_str == "cardio" and _wo_type_lc in ("strength", "hypertrophy"):
+                    logger.warning(
+                        f"⚠️ [TypeConsistency] Cardio focus + type='{workout_type}' "
+                        f"— overriding type to 'cardio'"
+                    )
+                    workout_type = "cardio"
+
+                # exclude_exercises + adjacent_day_exercises post-filter
+                # (idx 93/94: Gemini ignored these. Filter here as last line of defense.
+                # If too many drop, log warning but return what's left — user can regenerate.)
+                _excl = [s.lower() for s in (body.exclude_exercises or []) if s]
+                _adj = [s.lower() for s in (body.adjacent_day_exercises or []) if s]
+                _forbidden = list(set(_excl + _adj))
+                if _forbidden and exercises:
+                    pre_count = len(exercises)
+                    exercises = [
+                        ex for ex in exercises
+                        if not any(f in (ex.get("name", "") or "").lower() for f in _forbidden)
+                    ]
+                    dropped = pre_count - len(exercises)
+                    if dropped:
+                        logger.warning(
+                            f"⚠️ [ExcludeFilter] Dropped {dropped}/{pre_count} exercises "
+                            f"matching forbidden list (excl={_excl}, adj={_adj})"
+                        )
+
                 workout_description = workout_data.get("description")
                 estimated_duration = workout_data.get("estimated_duration_minutes")
                 if estimated_duration is not None:
@@ -621,6 +812,64 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
                         )
                         exercises = equipment_compatible
 
+                # Hard filters — drop warmup/stretch leakage and off-region
+                # exercises BEFORE dedup. Mirrors versioning.py post-RAG step
+                # so /generate-stream and /regenerate-stream behave the same.
+                # Note: focus_areas (body regions) is the right signal here —
+                # body.workout_type carries training STYLE post-Issue-1 split
+                # (Strength/HIIT/Cardio/Push/Pull) which doesn't whitelist
+                # muscles. We feed each focus_area through the whitelist and
+                # union the survivors so multi-focus selections (e.g. Chest +
+                # Full Body) don't get over-filtered.
+                if exercises:
+                    from services.exercise_rag.filters import (
+                        filter_main_exercises,
+                        filter_by_workout_type_muscles,
+                    )
+                    # User rule (2026-05-08): stretches must NEVER appear in
+                    # workouts. They belong only in dedicated mobility/stretch
+                    # sessions. Pass `is_mobility_workout` so the filter strips
+                    # stretches from strength/hypertrophy/cardio workouts but
+                    # KEEPS them in mobility/stretch/recovery sessions.
+                    _focus_lc = [
+                        (s or "").lower()
+                        for s in (body.focus_areas or [])
+                    ]
+                    _is_mobility = any(
+                        f in {"mobility", "stretch", "recovery"} for f in _focus_lc
+                    ) or (workout_type_override or "").lower() in {
+                        "mobility", "recovery", "stretch"
+                    }
+                    _is_combat = any(
+                        f in {"cardio", "hiit", "conditioning", "boxing", "combat"}
+                        for f in _focus_lc
+                    ) or (workout_type_override or "").lower() in {
+                        "cardio", "hiit", "boxing", "combat"
+                    }
+                    exercises = filter_main_exercises(
+                        exercises,
+                        is_mobility_workout=_is_mobility,
+                        is_combat_workout=_is_combat,
+                    )
+                    _focus_for_filter = (
+                        body.focus_areas
+                        if hasattr(body, 'focus_areas') and body.focus_areas
+                        else []
+                    )
+                    if _focus_for_filter:
+                        # Union across selected regions: an exercise survives
+                        # if it matches ANY selected region.
+                        survivor_names: set = set()
+                        all_survivors: list = []
+                        for region in _focus_for_filter:
+                            for ex in filter_by_workout_type_muscles(exercises, region):
+                                nm = (ex.get("name") or "").lower()
+                                if nm and nm not in survivor_names:
+                                    survivor_names.add(nm)
+                                    all_survivors.append(ex)
+                        if all_survivors:
+                            exercises = all_survivors
+
                 # Defensive dedup: strip "(N)" suffixes that come from duplicate
                 # library imports (e.g. Burpee vs Burpee(1)), then collapse
                 # remaining duplicates by case-insensitive base name.
@@ -673,7 +922,31 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
                         is_comeback=is_comeback,
                         difficulty=intensity_preference
                     )
-                    logger.info(f"[Streaming Safety] Validated exercise parameters (fitness={fitness_level}, age={user_age}, comeback={is_comeback}, difficulty={intensity_preference})")
+                    # Density cap: drop exercises beyond ~1 per 7 min (or 1 per 4
+                    # min for cardio/HIIT). Validation harness 2026-05-08 found
+                    # workouts with 8 ex / 30 min (3.8 min/ex) — too crowded to
+                    # execute properly with sets+rest. See validation_utils.py.
+                    from api.v1.workouts.validation_utils import (
+                        cap_exercise_count_by_density,
+                        reorder_exercises_canonically,
+                    )
+                    _wo_type = (body.workout_type if hasattr(body, "workout_type") else None) or workout_type_override or "strength"
+                    exercises = cap_exercise_count_by_density(
+                        exercises=exercises,
+                        duration_minutes=target_duration or 45,
+                        workout_type=_wo_type,
+                    )
+                    # Reorder to canonical CNS-demand cascade:
+                    # plyo → compound → secondary → isolation → core →
+                    # static_hold → cardio → stretch (cooldown).
+                    # Validation harness 2026-05-08: 11 rows had compound-after-
+                    # isolation, 1 started with static hold. This fixes those.
+                    exercises = reorder_exercises_canonically(
+                        exercises,
+                        focus_areas=body.focus_areas,
+                        workout_type=_wo_type,
+                    )
+                    logger.info(f"[Streaming Safety] Validated exercise parameters (fitness={fitness_level}, age={user_age}, comeback={is_comeback}, difficulty={intensity_preference}, density_cap_applied={len(exercises)} exercises for {target_duration}min)")
 
                 # FOCUS AREA VALIDATION
                 MIN_EXERCISES_REQUIRED = 3
@@ -851,7 +1124,13 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
                 "scheduled_date": generated_workout.scheduled_date.isoformat() if generated_workout.scheduled_date else None,
                 "exercises": exercises_list,
                 "exercises_json": generated_workout.exercises_json,
-                "duration_minutes": generated_workout.duration_minutes,
+                # Force duration_minutes to the resolved target (request's
+                # authoritative value) — defensive against internal drift seen
+                # in validation harness 2026-05-08 (idx 6: req=30min, response=60min;
+                # idx 8: req=60min, response=30min; idx 11: req=20min, response=45min).
+                # The DB row already stores target_duration but downstream readers
+                # were sometimes seeing estimated_duration_minutes — pin it here.
+                "duration_minutes": target_duration or generated_workout.duration_minutes,
                 "total_time_ms": total_time_ms,
                 "chunk_count": chunk_count,
                 "comeback_detected": comeback_status.get("in_comeback_mode", False),

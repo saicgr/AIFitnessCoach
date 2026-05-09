@@ -32,7 +32,7 @@ from core.timezone_utils import resolve_timezone, get_user_today, local_date_to_
 from services.user_context_service import user_context_service
 from core.redis_cache import RedisCache
 
-from .utils import parse_json_field, get_workout_focus, resolve_training_split, infer_workout_type_from_focus
+from .utils import parse_json_field, get_workout_focus, resolve_training_split, infer_workout_type_from_focus, get_recently_used_exercises
 
 
 # Thread pool for running synchronous DB calls concurrently
@@ -73,6 +73,13 @@ _active_background_generations: Set[str] = set()
 # Key: user_id, Value: timestamp of last scheduled generation.
 _last_bg_gen_schedule: dict = {}
 _BG_GEN_SCHEDULE_COOLDOWN = 30  # seconds
+
+# Bounded parallelism for the home-carousel batch backfill. Each /generate
+# call hits Gemini, so we cap to avoid burning per-user RPM (15/min) or the
+# project quota. 3 in flight × ~12s = ~4 dates/min — well under the 15/min
+# user limit, leaves headroom for /generate-stream taps. Bump if Gemini tier
+# is upgraded; lower to 2 if 429s appear in prod logs.
+_PARALLEL_BG_GEN = 3
 
 
 def _get_active_gym_profile_id(db, user_id: str) -> Optional[str]:
@@ -650,36 +657,86 @@ async def _sequential_generate_workouts(
     selected_days: Optional[List[int]] = None,
     user_tz: str = "UTC",
 ) -> None:
-    """Generate workouts one at a time so each sees the previous one's exercises.
+    """Generate missing workouts with TODAY-FIRST + bounded parallelism.
 
-    This ensures get_recently_used_exercises returns the exercises from
-    the just-generated workout, preventing duplicate exercises across
-    adjacent days. Adjacent-day exercise names are also passed explicitly
-    to the next generation call for additional deduplication.
+    Previously fully sequential (12s × N days = 60s for 5 missing days), which
+    blocked /today polling — users saw a spinner while bg gen plowed through.
+    Validation harness 2026-05-08 + user feedback flagged this as the dominant
+    speed regression.
+
+    New strategy:
+    1. If `today` is in the missing list, generate it FIRST so the polling
+       /today endpoint gets a hit ASAP.
+    2. Generate remaining days in PARALLEL batches of `_PARALLEL_BG_GEN`
+       (default 3). Avoid-list seeded from already-completed workouts plus the
+       prior batch's exercises — adjacent-day variety degrades from
+       "perfect dedup" to "batch-level dedup" but wall time drops 50-70%.
     """
+    if not dates:
+        return
+
+    today_str = get_user_today(user_tz)
+    sorted_dates = sorted(dates, key=lambda d: (d.isoformat() != today_str, d))
+
+    # Seed avoid list from recent existing workouts so the first parallel batch
+    # has dedup info without depending on an in-batch predecessor.
     all_batch_exercises: List[str] = []
-    for i, gen_date in enumerate(dates):
-        logger.info(f"[SEQ-GEN] Generating workout {i+1}/{len(dates)} for {gen_date.isoformat()} (batch_offset={i}, avoiding {len(all_batch_exercises)} exercises)")
+    try:
+        all_batch_exercises = list(await get_recently_used_exercises(user_id, days=14)) or []
+    except Exception as e:
+        logger.debug(f"[BG-GEN] Could not seed avoid list: {e}")
+
+    async def _gen_one(idx: int, gen_date: date, avoid_list: List[str]) -> Optional[Any]:
+        logger.info(
+            f"[BG-GEN] Generating workout {idx+1}/{len(sorted_dates)} for "
+            f"{gen_date.isoformat()} (batch_offset={idx}, avoiding {len(avoid_list)} exercises)"
+        )
         try:
-            result = await auto_generate_workout(
+            return await auto_generate_workout(
                 user_id=user_id,
                 target_date=gen_date,
                 gym_profile_id=gym_profile_id,
                 selected_days=selected_days,
-                adjacent_day_exercises=all_batch_exercises if all_batch_exercises else None,
-                batch_offset=i,
+                adjacent_day_exercises=avoid_list if avoid_list else None,
+                batch_offset=idx,
                 user_tz=user_tz,
             )
         except Exception as e:
-            logger.error(f"[SEQ-GEN] Failed workout {i+1}/{len(dates)} for {gen_date}: {e}", exc_info=True)
-            result = None
-        # Accumulate exercise names from ALL generated workouts for the avoid list
-        if result and hasattr(result, 'exercises') and result.exercises:
-            new_exercises = [ex.name for ex in result.exercises if hasattr(ex, 'name') and ex.name]
-            all_batch_exercises.extend(new_exercises)
-            logger.info(f"[SEQ-GEN] Accumulated {len(all_batch_exercises)} total exercises to avoid (added {len(new_exercises)} from day {i+1})")
-            # Invalidate today cache so the next poll picks up the newly generated workout
-            await invalidate_today_workout_cache(user_id, gym_profile_id, gen_date.isoformat())
+            logger.error(
+                f"[BG-GEN] Failed {idx+1}/{len(sorted_dates)} for {gen_date}: {e}",
+                exc_info=True,
+            )
+            return None
+
+    # Step 1: TODAY first (single call, blocks for ~12s) so the polling client
+    # gets a real workout ASAP.
+    today_done = 0
+    if sorted_dates and sorted_dates[0].isoformat() == today_str:
+        result = await _gen_one(0, sorted_dates[0], list(all_batch_exercises))
+        if result and hasattr(result, "exercises") and result.exercises:
+            new_ex = [ex.name for ex in result.exercises if hasattr(ex, "name") and ex.name]
+            all_batch_exercises.extend(new_ex)
+            await invalidate_today_workout_cache(user_id, gym_profile_id, sorted_dates[0].isoformat())
+        today_done = 1
+
+    # Step 2: remaining dates in PARALLEL batches.
+    rest = sorted_dates[today_done:]
+    for batch_start in range(0, len(rest), _PARALLEL_BG_GEN):
+        batch = rest[batch_start: batch_start + _PARALLEL_BG_GEN]
+        avoid_snapshot = list(all_batch_exercises)
+        results = await asyncio.gather(
+            *[_gen_one(today_done + batch_start + i, d, avoid_snapshot) for i, d in enumerate(batch)],
+            return_exceptions=False,
+        )
+        for d, result in zip(batch, results):
+            if result and hasattr(result, "exercises") and result.exercises:
+                new_ex = [ex.name for ex in result.exercises if hasattr(ex, "name") and ex.name]
+                all_batch_exercises.extend(new_ex)
+                await invalidate_today_workout_cache(user_id, gym_profile_id, d.isoformat())
+    logger.info(
+        f"[BG-GEN] Done: {len(sorted_dates)} dates ({today_done} today-first + "
+        f"{len(rest)} parallel @ {_PARALLEL_BG_GEN}-concurrency)"
+    )
 
 
 async def enqueue_schedule_top_up(

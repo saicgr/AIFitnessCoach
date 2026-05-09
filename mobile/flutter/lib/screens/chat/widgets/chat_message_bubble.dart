@@ -18,6 +18,8 @@ import 'form_check_result_card.dart';
 import 'form_comparison_result_card.dart';
 import 'fullscreen_image_viewer.dart';
 import 'proposed_change_card.dart';
+import 'chat_action_confirm_card.dart';
+import 'equipment_match_card.dart';
 import 'share_artifact_card.dart';
 import 'report_message_sheet.dart';
 import 'voice_message_widget.dart';
@@ -31,6 +33,12 @@ class ChatMessageBubble extends ConsumerWidget {
   final void Function(List<Map<String, dynamic>>)? onLogAnalysisItems;
   final VoidCallback? onRetry;
   final VoidCallback? onRegenerate;
+  // Issue 2: invoked when the user taps a row in EquipmentMatchCard.
+  // The parent (chat_screen / inline_workout_chat) holds the active
+  // workout context and decides between Swap / Add / quick-workout.
+  final void Function(Map<String, dynamic> match, Map<String, dynamic> actionData)? onEquipmentMatchTap;
+  final void Function(Map<String, dynamic> actionData)? onCreateCustomFromEquipment;
+  final void Function(Map<String, dynamic> actionData)? onStartWorkoutWithEquipment;
 
   const ChatMessageBubble({
     super.key,
@@ -40,6 +48,9 @@ class ChatMessageBubble extends ConsumerWidget {
     this.onLogAnalysisItems,
     this.onRetry,
     this.onRegenerate,
+    this.onEquipmentMatchTap,
+    this.onCreateCustomFromEquipment,
+    this.onStartWorkoutWithEquipment,
   });
 
   @override
@@ -309,6 +320,54 @@ class ChatMessageBubble extends ConsumerWidget {
           if (!isUser &&
               message.actionData?['action'] == 'share_artifact_generated')
             ShareArtifactCard(data: message.actionData!),
+          // ── Issue 2: Equipment match card ──────────────────────────
+          // Rendered when the identify_equipment tool returns
+          // action='open_swap_or_add'. Tapping a match row hands off to
+          // the parent so it can deeplink into Swap / Add / quick-workout.
+          if (!isUser &&
+              message.actionData?['action'] == 'open_swap_or_add')
+            EquipmentMatchCard(
+              actionData: Map<String, dynamic>.from(message.actionData!),
+              onMatchTap: (match) {
+                onEquipmentMatchTap?.call(
+                  match,
+                  Map<String, dynamic>.from(message.actionData!),
+                );
+              },
+              onCreateCustom: onCreateCustomFromEquipment != null
+                  ? () => onCreateCustomFromEquipment!(
+                        Map<String, dynamic>.from(message.actionData!),
+                      )
+                  : null,
+              onStartWorkoutWithEquipment: onStartWorkoutWithEquipment != null
+                  ? () => onStartWorkoutWithEquipment!(
+                        Map<String, dynamic>.from(message.actionData!),
+                      )
+                  : null,
+            ),
+          // ── Issue 3: AI-coach mutation confirm card ───────────────
+          // For actions that mutate the workout and require explicit
+          // user confirmation (log_set, swap_exercise, supersets,
+          // reorder), render an Apply / Cancel card. Auto-cancels
+          // after 90s.
+          if (!isUser &&
+              message.actionData != null &&
+              const {
+                'swap_exercise',
+                'log_set',
+                'create_superset',
+                'break_superset',
+                'reorder_exercises',
+              }.contains(message.actionData!['action'] as String?) &&
+              (message.actionData!['requires_confirmation'] == true ||
+                  message.actionData!['action'] == 'swap_exercise' ||
+                  message.actionData!['action'] == 'reorder_exercises' ||
+                  message.actionData!['action'] == 'log_set'))
+            ChatActionConfirmCard(
+              actionData: Map<String, dynamic>.from(message.actionData!),
+              summaryText: (message.actionData!['summary_text'] as String?) ??
+                  _scrubLegacyActionTokens(message.content),
+            ),
           if (!isUser && message.hasProposedChange)
             ProposedChangeCard(
               proposalId: message.proposalId!,

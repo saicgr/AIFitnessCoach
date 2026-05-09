@@ -76,6 +76,19 @@ class _AutoTargetCell extends StatelessWidget {
   /// True when exercise uses no external load — render reps only, never "0 kg".
   final bool isBodyweight;
 
+  // ── Trend pill / Edited chip plumbing ─────────────────────────────────
+  final bool progressiveOverloadEnabled;
+  final bool isEdited;
+  final bool isDeload;
+  final bool isFirstSetEver;
+  final double? previousSetTargetWeight; // in kg
+  final int? previousSetTargetReps;
+  final int? previousSetTargetSeconds;
+  // ── RIR pills plumbing (parity with set_row.dart) ─────────────────────
+  final bool isEasyMode;
+  final bool isAmrap;
+  final int? actualRir;
+
   const _AutoTargetCell({
     this.targetWeight,
     this.targetReps,
@@ -89,6 +102,16 @@ class _AutoTargetCell extends StatelessWidget {
     this.targetDurationSeconds,
     this.isTimedExercise = false,
     this.isBodyweight = false,
+    this.progressiveOverloadEnabled = true,
+    this.isEdited = false,
+    this.isDeload = false,
+    this.isFirstSetEver = false,
+    this.previousSetTargetWeight,
+    this.previousSetTargetReps,
+    this.previousSetTargetSeconds,
+    this.isEasyMode = false,
+    this.isAmrap = false,
+    this.actualRir,
   });
 
   /// Format seconds as "45s" or "1:30" for ≥60s, "5 min" for clean minutes.
@@ -456,6 +479,44 @@ class _AutoTargetCell extends StatelessWidget {
       targetString = '—';
     }
 
+    // ── Trend pill + Edited chip (parity with set_row.dart) ──────────────
+    // Renders on its own line under the TARGET string. Suppressed entirely
+    // when progressive overload is off; renders a "Starter weight" muted hint
+    // when this is the first set ever performed for the exercise.
+    final String metric = (targetHoldSeconds != null && targetHoldSeconds! > 0) ||
+            (targetDurationSeconds != null && targetDurationSeconds! > 0) ||
+            isTimedExercise
+        ? 'time'
+        : (isBodyweight ? 'reps' : 'weight');
+    final double targetDisplay = (targetWeight != null && targetWeight! > 0)
+        ? (useKg ? targetWeight! : WeightUtils.fromKgSnapped(targetWeight!, displayInLbs: true))
+        : 0.0;
+    final double? prevDisplay = previousSetTargetWeight != null && previousSetTargetWeight! > 0
+        ? (useKg
+            ? previousSetTargetWeight!
+            : WeightUtils.fromKgSnapped(previousSetTargetWeight!, displayInLbs: true))
+        : null;
+    // Best-effort numeric reps for trend math: parse the lo end of "8-12".
+    final int targetRepsInt = (() {
+      final s = targetReps;
+      if (s == null || s.isEmpty) return 0;
+      return int.tryParse(s.split('-').first.trim()) ?? 0;
+    })();
+    final trendPill = SetRowVisuals.buildTrendPill(
+      progressiveOverloadEnabled: progressiveOverloadEnabled,
+      isFirstSetEver: isFirstSetEver,
+      isDeload: isDeload,
+      metric: metric,
+      targetWeightDisplay: targetDisplay,
+      targetReps: targetRepsInt,
+      durationSeconds: targetDurationSeconds ?? targetHoldSeconds,
+      previousSetTargetWeightDisplay: prevDisplay,
+      previousSetTargetReps: previousSetTargetReps,
+      previousSetTargetSeconds: previousSetTargetSeconds,
+      unitLabel: useKg ? 'kg' : 'lb',
+    );
+    final editedChip = SetRowVisuals.buildEditedChip(isEdited: isEdited);
+
     return ClipRect(
       child: Padding(
         padding: const EdgeInsets.only(right: 4),
@@ -473,6 +534,19 @@ class _AutoTargetCell extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
+            if (trendPill != null || editedChip != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 2),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (trendPill != null) trendPill,
+                    if (trendPill != null && editedChip != null)
+                      const SizedBox(width: 4),
+                    if (editedChip != null) editedChip,
+                  ],
+                ),
+              ),
             // RIR pill with info icon - only ? icon is tappable
             if (targetRir != null)
               Padding(
@@ -512,6 +586,29 @@ class _AutoTargetCell extends StatelessWidget {
                   ),
                 ),
               ),
+            // ── Outline target / filled logged RIR pills (parity with
+            // set_row.dart). The existing colored pill above doubles as the
+            // canonical target indicator + ? affordance; these helper pills
+            // explicitly call out AMRAP and the user-logged RIR after pick.
+            // Suppressed in Easy mode by the helper itself.
+            Builder(builder: (context) {
+              // Avoid duplicating the existing colored target-RIR pill: the
+              // helper renders an outline "Target RIR N" only when AMRAP (so
+              // the AMRAP override surfaces) or the logged value is set, in
+              // which case the filled chip is what we really need.
+              final showTargetCopy = isAmrap; // surfaces the "· AMRAP" override
+              final pills = SetRowVisuals.buildRirPills(
+                isEasyMode: isEasyMode,
+                isAmrap: isAmrap,
+                targetRir: showTargetCopy ? targetRir : null,
+                actualRir: actualRir,
+              );
+              if (pills == null) return const SizedBox.shrink();
+              return Padding(
+                padding: const EdgeInsets.only(top: 2),
+                child: pills,
+              );
+            }),
           ],
         ),
       ),

@@ -519,7 +519,19 @@ Be personable, encouraging, and adapt to their fitness level!"""
         media_content_type = state.get("media_content_type", "unknown")
         vision_hints = {
             "progress_photo": "Analyze the physique in this progress photo. Note visible muscle development, body composition, and provide encouraging, constructive feedback. Compare to fitness goals if known.",
-            "gym_equipment": "Identify the gym equipment or machine in this image. Explain proper usage, suggest exercises that can be done with it, and provide safety tips.",
+            # Issue 2: when the user attaches a gym-equipment photo (with or
+            # without an explicit "what's this?" prompt) the coach should
+            # surface the structured identify_equipment result. The actual
+            # Vision-classify + library-match runs server-side (the
+            # identify_equipment tool wraps equipment_snap_core); your job
+            # here is to write a short caption-style reply that pairs with
+            # the EquipmentMatchCard the frontend will render from the
+            # tool's action_data. Mention the canonical equipment name if
+            # you can read it in the image, suggest 2-3 exercises that
+            # belong on it, and end with "Want to add or swap one of these
+            # into your workout?". Keep it under 60 words — the card
+            # carries the visual detail.
+            "gym_equipment": "Identify the gym equipment or machine in this image. Briefly name it, list 2-3 exercises that belong on it, and prompt the user to add/swap into their workout. The Equipment Match card will render with full image+name+actions, so keep your text tight (≤60 words).",
             "document": "Read and analyze this fitness-related document (workout plan, medical note, etc.). Provide relevant coaching advice based on its contents.",
         }
         vision_hint = vision_hints.get(media_content_type, "Analyze the image and provide relevant coaching advice.")

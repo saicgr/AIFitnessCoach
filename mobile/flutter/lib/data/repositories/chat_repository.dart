@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/api_constants.dart';
+import '../../core/services/exercise_tip_service.dart';
 import '../../core/theme/theme_provider.dart';
 import '../../navigation/app_router.dart';
 import '../../screens/ai_settings/ai_settings_screen.dart';

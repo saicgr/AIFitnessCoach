@@ -333,7 +333,12 @@ mixin AIFeaturesMixin<T extends StatefulWidget> on State<T> {
 
     try {
       final apiClient = ref.read(apiClientProvider);
-      final currentWeight = double.tryParse(weightController.text) ?? 0;
+      // The weight controller is in DISPLAY units (lb when useKg=false). The
+      // backend API contract treats `current_weight` as kg, so convert here
+      // before sending. Without this, a 100 lb input would be sent as 100 kg
+      // and inflate the suggested reduction.
+      final displayWeight = double.tryParse(weightController.text) ?? 0;
+      final currentWeight = useKg ? displayWeight : displayWeight * 0.453592;
 
       final pattern = exerciseProgressionPattern[currentExerciseIndex]
           ?? SetProgressionPattern.pyramidUp;
@@ -385,10 +390,34 @@ mixin AIFeaturesMixin<T extends StatefulWidget> on State<T> {
     }
   }
 
-  /// Handle accepting fatigue suggestion (reduce weight)
+  /// Handle accepting fatigue suggestion (reduce weight).
+  ///
+  /// `suggestedWeight` from the backend is already in the user's
+  /// `workout_weight_unit` (Bug A fix), so we write it directly to the
+  /// controller — which is also in display units. We only write when the
+  /// value is strictly LOWER than the current input (Bug C guard: never
+  /// flip the direction of the suggestion).
   void handleAcceptFatigueSuggestion() {
-    if (fatigueAlertData != null && fatigueAlertData!.suggestedWeight > 0) {
-      weightController.text = fatigueAlertData!.suggestedWeight.toStringAsFixed(1);
+    final alert = fatigueAlertData;
+    if (alert != null) {
+      final suggested = alert.suggestedWeight;
+      if (suggested != null && suggested > 0) {
+        // Defensive direction check — backend already enforces this, but a
+        // belt-and-suspenders guard prevents the inverted-clamp regression.
+        final currentDisplay = double.tryParse(weightController.text) ?? double.infinity;
+        if (suggested < currentDisplay) {
+          weightController.text = suggested.toStringAsFixed(1);
+        } else {
+          debugPrint('⚠️ [Fatigue] Refusing to apply non-decreasing suggestion '
+              '($currentDisplay → $suggested ${alert.weightUnit})');
+        }
+      }
+      // Bodyweight branch: rep target reduction is informational; we don't
+      // mutate a rep field here because the next-set rep target lives in the
+      // exercise's setTargets, not in a controller. Logged for analytics.
+      if (alert.repTargetReduction != null) {
+        debugPrint('🏋️ [Fatigue] Suggested rep target: ${alert.repTargetReduction}');
+      }
     }
     setState(() {
       showFatigueAlert = false;

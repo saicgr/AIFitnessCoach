@@ -641,3 +641,269 @@ Generate exactly {payload.additional_exercises} exercises that complement the ex
     except Exception as e:
         logger.error(f"Failed to extend workout: {e}", exc_info=True)
         raise safe_internal_error(e, "generation")
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Issue 3: AI-coach in-workout mutation endpoints
+#
+# These match the LangGraph mutation tools in
+# services/langgraph_agents/tools/workout_mutation_tools.py and are the
+# Apply targets of the Flutter ChatActionConfirmCard. Kept inline rather
+# than in a new router file to minimize cross-file diffs.
+# ─────────────────────────────────────────────────────────────────────────────
+
+LBS_TO_KG = 0.45359237
+
+
+@router.post("/{workout_id}/log-set")
+@limiter.limit("60/minute")
+async def log_set_endpoint(
+    request: Request,
+    workout_id: str,
+    payload: dict,
+    current_user: dict = Depends(get_current_user),
+):
+    """Log a single completed set to performance_logs."""
+    try:
+        db = get_supabase_db()
+        workout = db.get_workout(workout_id)
+        if not workout:
+            raise HTTPException(status_code=404, detail="Workout not found")
+
+        exercise_id = str(payload.get("exercise_id") or "")
+        set_index = int(payload.get("set_index") or 0)
+        weight = payload.get("weight")
+        weight_unit = (payload.get("weight_unit") or "lb").lower()
+        reps = payload.get("reps")
+        rir = payload.get("rir")
+        side = payload.get("side")
+        override = bool(payload.get("override", False))
+
+        if set_index < 1:
+            raise HTTPException(status_code=400, detail="set_index must be ≥ 1")
+
+        # Resolve the exercise within the workout (by exercise_id, library_id, or name).
+        exercises_json = workout.get("exercises_json") or workout.get("exercises") or []
+        if isinstance(exercises_json, str):
+            exercises_json = json.loads(exercises_json) if exercises_json else []
+        target = None
+        for ex in exercises_json:
+            if str(ex.get("exercise_id") or ex.get("id") or ex.get("library_id") or "") == exercise_id:
+                target = ex
+                break
+            if ex.get("name", "").lower() == exercise_id.lower():
+                target = ex
+                break
+        if not target:
+            raise HTTPException(status_code=404, detail="Exercise not in workout")
+
+        weight_kg = None
+        if weight is not None:
+            w = float(weight)
+            weight_kg = w * LBS_TO_KG if weight_unit in ("lb", "lbs") else w
+
+        # Override-check: if a log exists for this slot and override=False → 409.
+        if not override:
+            existing = (
+                db.client.table("performance_logs")
+                .select("id")
+                .eq("user_id", workout.get("user_id"))
+                .eq("exercise_name", target.get("name"))
+                .eq("set_number", set_index)
+                .limit(1)
+                .execute()
+            )
+            if existing.data:
+                raise HTTPException(
+                    status_code=409,
+                    detail=f"Set {set_index} already logged. Pass override=true to replace.",
+                )
+        else:
+            db.client.table("performance_logs").delete().eq(
+                "user_id", workout.get("user_id")
+            ).eq("exercise_name", target.get("name")).eq("set_number", set_index).execute()
+
+        row = {
+            "user_id": workout.get("user_id"),
+            "exercise_name": target.get("name"),
+            "exercise_id": target.get("library_id") or exercise_id,
+            "set_number": set_index,
+            "reps_completed": reps,
+            "weight_kg": weight_kg,
+            "rir": rir,
+            "set_type": "side_L" if side == "L" else ("side_R" if side == "R" else "working"),
+            "recorded_at": datetime.now().isoformat(),
+        }
+        result = db.client.table("performance_logs").insert(row).execute()
+        return {"success": True, "log_id": (result.data or [{}])[0].get("id")}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"log-set failed: {e}", exc_info=True)
+        raise safe_internal_error(e, "workout_operations")
+
+
+def _exercises_from_workout(workout: Dict[str, Any]) -> List[Dict[str, Any]]:
+    raw = workout.get("exercises_json") or workout.get("exercises") or []
+    if isinstance(raw, str):
+        try:
+            raw = json.loads(raw) if raw else []
+        except json.JSONDecodeError:
+            raw = []
+    return list(raw or [])
+
+
+@router.post("/{workout_id}/superset")
+@limiter.limit("20/minute")
+async def superset_endpoint(
+    request: Request,
+    workout_id: str,
+    payload: dict,
+    current_user: dict = Depends(get_current_user),
+):
+    """Create or break a superset. ``op`` = 'create' | 'break'."""
+    op = (payload.get("op") or "create").lower()
+    try:
+        db = get_supabase_db()
+        workout = db.get_workout(workout_id)
+        if not workout:
+            raise HTTPException(status_code=404, detail="Workout not found")
+        exercises = _exercises_from_workout(workout)
+
+        if op == "create":
+            ids = list(payload.get("exercise_ids") or [])
+            if len(ids) < 2:
+                raise HTTPException(status_code=400, detail="Need ≥2 exercises")
+
+            wt = (workout.get("type") or "").lower()
+            if any(t in wt for t in ("amrap", "circuit", "emom", "tabata")):
+                raise HTTPException(
+                    status_code=400,
+                    detail="Workout type doesn't support supersets — convert to circuit?",
+                )
+
+            id_to_idx: Dict[str, int] = {}
+            for i, ex in enumerate(exercises):
+                key = str(ex.get("exercise_id") or ex.get("id") or ex.get("library_id") or "")
+                if key:
+                    id_to_idx[key] = i
+                id_to_idx.setdefault(ex.get("name", "").lower(), i)
+            indices = [id_to_idx.get(str(x)) or id_to_idx.get(str(x).lower()) for x in ids]
+            if any(i is None for i in indices):
+                raise HTTPException(status_code=404, detail="Some exercises not in workout")
+
+            new_group = str(uuid.uuid4())
+            for ex in exercises:
+                eid = str(ex.get("exercise_id") or ex.get("id") or ex.get("library_id") or "")
+                if eid in {str(x) for x in ids}:
+                    ex.pop("superset_group_id", None)
+                    ex.pop("superset_group", None)
+
+            needs_reorder = any(b - a != 1 for a, b in zip(indices, indices[1:]))
+            if needs_reorder:
+                anchor = min(indices)
+                selected = [exercises[i] for i in indices]
+                remaining = [ex for i, ex in enumerate(exercises) if i not in indices]
+                exercises = remaining[:anchor] + selected + remaining[anchor:]
+                indices = list(range(anchor, anchor + len(selected)))
+
+            for i in indices:
+                exercises[i]["superset_group_id"] = new_group
+                exercises[i]["superset_group"] = abs(hash(new_group)) % 1000
+
+            db.update_workout(workout_id, {
+                "exercises_json": json.dumps(exercises),
+                "last_modified_at": datetime.now().isoformat(),
+                "last_modified_method": "ai_create_superset",
+            })
+            return {"success": True, "superset_group_id": new_group, "reordered": needs_reorder}
+
+        elif op == "break":
+            group_id = payload.get("superset_group_id")
+            if not group_id:
+                raise HTTPException(status_code=400, detail="superset_group_id required")
+            matched = [ex for ex in exercises if ex.get("superset_group_id") == group_id]
+            if not matched:
+                raise HTTPException(status_code=404, detail="Superset not found")
+            for ex in matched:
+                ex.pop("superset_group_id", None)
+                ex.pop("superset_group", None)
+            db.update_workout(workout_id, {
+                "exercises_json": json.dumps(exercises),
+                "last_modified_at": datetime.now().isoformat(),
+                "last_modified_method": "ai_break_superset",
+            })
+            return {"success": True, "broken_count": len(matched)}
+
+        else:
+            raise HTTPException(status_code=400, detail=f"Unknown op: {op}")
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"superset endpoint failed: {e}", exc_info=True)
+        raise safe_internal_error(e, "workout_operations")
+
+
+@router.post("/{workout_id}/reorder")
+@limiter.limit("20/minute")
+async def reorder_endpoint(
+    request: Request,
+    workout_id: str,
+    payload: dict,
+    current_user: dict = Depends(get_current_user),
+):
+    """Reorder exercises in a workout. Pins any in-progress exercise."""
+    try:
+        db = get_supabase_db()
+        workout = db.get_workout(workout_id)
+        if not workout:
+            raise HTTPException(status_code=404, detail="Workout not found")
+
+        ids = list(payload.get("exercise_ids") or [])
+        if not ids:
+            raise HTTPException(status_code=400, detail="exercise_ids required")
+
+        exercises = _exercises_from_workout(workout)
+        by_id: Dict[str, Dict[str, Any]] = {}
+        for ex in exercises:
+            key = str(ex.get("exercise_id") or ex.get("id") or ex.get("library_id") or "")
+            if key:
+                by_id[key] = ex
+            by_id.setdefault(ex.get("name", "").lower(), ex)
+
+        in_progress_idx = next(
+            (i for i, ex in enumerate(exercises) if ex.get("in_progress") or ex.get("active_set")),
+            None,
+        )
+
+        desired: List[Dict[str, Any]] = []
+        for token in ids:
+            ex = by_id.get(str(token)) or by_id.get(str(token).lower())
+            if not ex:
+                raise HTTPException(status_code=404, detail=f"Exercise '{token}' not in workout")
+            desired.append(ex)
+
+        if in_progress_idx is not None:
+            anchor = exercises[in_progress_idx]
+            if anchor in desired:
+                desired.remove(anchor)
+            desired.insert(in_progress_idx, anchor)
+
+        mentioned = {id(x) for x in desired}
+        leftovers = [ex for ex in exercises if id(ex) not in mentioned]
+        final_list = desired + leftovers
+
+        db.update_workout(workout_id, {
+            "exercises_json": json.dumps(final_list),
+            "last_modified_at": datetime.now().isoformat(),
+            "last_modified_method": "ai_reorder",
+        })
+        return {"success": True, "count": len(final_list)}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"reorder endpoint failed: {e}", exc_info=True)
+        raise safe_internal_error(e, "workout_operations")

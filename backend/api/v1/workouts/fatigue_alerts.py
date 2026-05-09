@@ -13,6 +13,7 @@ Endpoints:
 
 from fastapi import APIRouter, Depends, HTTPException
 from core.auth import get_current_user
+from core.db import get_supabase_db
 from core.exceptions import safe_internal_error
 from typing import List, Optional
 from pydantic import BaseModel, Field
@@ -24,6 +25,36 @@ from services.fatigue_detection_service import (
     FatigueAlert,
     NextSetPreview,
 )
+
+
+def _resolve_user_unit_settings(user_id: Optional[str]) -> tuple[str, float]:
+    """Look up the user's workout_weight_unit + increment.
+
+    Falls back to ('kg', 2.5) on any error so the alert math is still safe —
+    but we log the failure so it surfaces (no silent degradation,
+    feedback_no_silent_fallbacks).
+    """
+    if not user_id:
+        return "kg", 2.5
+    try:
+        db = get_supabase_db()
+        user = db.get_user(user_id)
+        if not user:
+            logger.warning(f"[Fatigue] User {user_id} not found for unit resolution")
+            return "kg", 2.5
+        # workout_weight_unit is the workout-specific setting; weight_unit is
+        # the body-measurement unit (separate setting per
+        # feedback_weight_unit_separation). Never collapse them.
+        unit = (user.get("workout_weight_unit") or user.get("weight_unit") or "kg").lower()
+        # increment_kg lives on per-equipment rows in `weight_increments`. The
+        # generic per-set fatigue inference uses the user's default — 2.5 kg
+        # (≈5.5 lb) is the safe across-equipment default. A future pass can
+        # plumb per-equipment increments if needed.
+        increment_kg = float(user.get("weight_increment_kg") or 2.5)
+        return ("lb" if unit in ("lb", "lbs") else "kg"), increment_kg
+    except Exception as e:
+        logger.error(f"[Fatigue] Failed to resolve user unit settings: {e}", exc_info=True)
+        return "kg", 2.5
 
 router = APIRouter()
 logger = get_logger(__name__)
@@ -48,6 +79,15 @@ class SetData(BaseModel):
     is_failure: bool = Field(
         False,
         description="Whether the set was taken to failure"
+    )
+    is_warmup: bool = Field(
+        False,
+        description="Whether the set is a warmup set. Warmups are excluded from "
+                    "fatigue math (intentionally light/low-rep)."
+    )
+    set_type: Optional[str] = Field(
+        None,
+        description="Optional set type label ('warmup', 'working', 'amrap', 'drop')."
     )
     target_reps: Optional[int] = Field(
         None, ge=0,
@@ -87,6 +127,11 @@ class FatigueCheckRequest(BaseModel):
         description="Active progression pattern: pyramidUp, straightSets, reversePyramid, "
                     "dropSets, topSetBackOff, restPause, myoReps, endurance"
     )
+    consecutive_dismissals: int = Field(
+        0, ge=0, le=10,
+        description="How many times the user has dismissed an alert on this "
+                    "exercise. >=2 silences further alerts (per-exercise cooldown)."
+    )
 
     class Config:
         json_schema_extra = {
@@ -117,9 +162,23 @@ class FatigueCheckResponse(BaseModel):
         ..., ge=0, le=30,
         description="Suggested weight reduction percentage"
     )
-    suggested_weight: float = Field(
-        ..., ge=0,
-        description="Suggested weight in kg for next set"
+    suggested_weight: Optional[float] = Field(
+        None, ge=0,
+        description="Suggested weight for next set, expressed in `weight_unit`. "
+                    "None for bodyweight exercises (see `rep_target_reduction`)."
+    )
+    weight_unit: str = Field(
+        "kg",
+        description="Unit for `suggested_weight` ('kg' or 'lb'). "
+                    "Snapshotted from user's workout_weight_unit at alert time."
+    )
+    weight_increment: float = Field(
+        2.5, ge=0,
+        description="Increment used to round `suggested_weight`, in `weight_unit`."
+    )
+    rep_target_reduction: Optional[int] = Field(
+        None, ge=0,
+        description="For bodyweight exercises, recommended rep target for next set."
     )
     reasoning: str = Field(
         ...,
@@ -267,21 +326,33 @@ class NextSetPreviewResponse(BaseModel):
     """,
     tags=["Fatigue Detection"],
 )
-async def check_fatigue(request: FatigueCheckRequest) -> FatigueCheckResponse:
+async def check_fatigue(
+    request: FatigueCheckRequest,
+    current_user: dict = Depends(get_current_user),
+) -> FatigueCheckResponse:
     """
     Check for fatigue based on session set data.
 
     This endpoint is designed to be called after each set completion
     during an active workout to provide real-time fatigue monitoring.
+    Uses the authenticated user's `workout_weight_unit` and increment
+    settings so suggested weights are returned in the unit the user
+    actually trains in (Bug A fix).
     """
+    user_id = (current_user or {}).get("id")
+    user_unit, user_increment_kg = _resolve_user_unit_settings(user_id)
+
     logger.info(
         f"[Fatigue Check] Processing {len(request.sets_data)} sets, "
         f"current_weight={request.current_weight}kg, "
-        f"exercise_type={request.exercise_type}"
+        f"exercise_type={request.exercise_type}, "
+        f"user_unit={user_unit}, user_increment_kg={user_increment_kg}"
     )
 
     try:
-        # Convert Pydantic models to dicts for the service function
+        # Convert Pydantic models to dicts for the service function. We now
+        # forward is_warmup/set_type so the service can correctly exclude
+        # warmups (edge case 52).
         sets_data = [
             {
                 "reps": s.reps,
@@ -289,6 +360,8 @@ async def check_fatigue(request: FatigueCheckRequest) -> FatigueCheckResponse:
                 "rpe": s.rpe,
                 "rir": s.rir,
                 "is_failure": s.is_failure,
+                "is_warmup": s.is_warmup,
+                "set_type": s.set_type,
                 "target_reps": s.target_reps,
                 "target_weight": s.target_weight,
                 "target_rir": s.target_rir,
@@ -303,18 +376,25 @@ async def check_fatigue(request: FatigueCheckRequest) -> FatigueCheckResponse:
             exercise_type=request.exercise_type,
             target_reps=request.target_reps,
             progression_pattern=request.progression_pattern,
+            user_workout_unit=user_unit,
+            user_increment_kg=user_increment_kg,
+            consecutive_dismissals=request.consecutive_dismissals,
         )
 
         logger.info(
             f"[Fatigue Check] Result: detected={alert.fatigue_detected}, "
-            f"severity={alert.severity}, reduction={alert.suggested_weight_reduction}%"
+            f"severity={alert.severity}, reduction={alert.suggested_weight_reduction}%, "
+            f"suggested={alert.suggested_weight}{alert.weight_unit}"
         )
 
         return FatigueCheckResponse(
             fatigue_detected=alert.fatigue_detected,
             severity=alert.severity,
             suggested_weight_reduction=alert.suggested_weight_reduction,
-            suggested_weight=alert.suggested_weight_kg,
+            suggested_weight=alert.suggested_weight,
+            weight_unit=alert.weight_unit,
+            weight_increment=alert.weight_increment,
+            rep_target_reduction=alert.rep_target_reduction,
             reasoning=alert.reasoning,
             indicators=alert.indicators,
             confidence=alert.confidence,
@@ -494,7 +574,10 @@ async def check_fatigue_with_preview(
                 "detected": alert.fatigue_detected,
                 "severity": alert.severity,
                 "suggested_weight_reduction": alert.suggested_weight_reduction,
-                "suggested_weight": alert.suggested_weight_kg,
+                "suggested_weight": alert.suggested_weight,
+                "weight_unit": alert.weight_unit,
+                "weight_increment": alert.weight_increment,
+                "rep_target_reduction": alert.rep_target_reduction,
                 "reasoning": alert.reasoning,
                 "indicators": alert.indicators,
                 "confidence": alert.confidence,

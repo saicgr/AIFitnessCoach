@@ -484,6 +484,66 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
           }
         }
 
+        // Fix #1 (carousel duplication after Quick regenerate / dismiss):
+        // Second-pass dedup specifically for QUICK workouts. The id-based
+        // dedup above lets the OLD and NEW quick coexist for the brief
+        // window between regenerate (new id) and the supersede DELETE
+        // round-trip (old id removal). Without this filter, the user sees
+        // two "Quick" cards momentarily.
+        //
+        // Strategy: keep at most ONE quick workout — the most recent by
+        // created_at. Heuristic for `is_quick` mirrors hero_workout_card's
+        // `_isQuickWorkout`: generation_method in (quick_rule_based,
+        // ai_quick_workout) OR <=15min duration AND <=5 exercises.
+        // Edge case (midnight rollover): a quick generated late last night
+        // that happens to be flagged for today still gets compared on
+        // created_at — last one wins regardless of scheduled date.
+        {
+          bool isQuick(Workout w) {
+            final m = (w.generationMethod ?? '').toLowerCase();
+            if (m == 'quick_rule_based' || m == 'ai_quick_workout') return true;
+            final dur = w.durationMinutes ?? w.durationMinutesMax ?? 0;
+            return dur > 0 && dur <= 15 && w.exerciseCount <= 5;
+          }
+          DateTime? parseCreated(String? s) {
+            if (s == null || s.isEmpty) return null;
+            try {
+              return DateTime.parse(s).toLocal();
+            } catch (_) {
+              return null;
+            }
+          }
+          int? mostRecentQuickIdx;
+          DateTime? mostRecentTs;
+          for (int i = 0; i < carouselItems.length; i++) {
+            final it = carouselItems[i];
+            if (!it.isWorkout) continue;
+            final w = it.workout!;
+            if (!isQuick(w)) continue;
+            final ts = parseCreated(w.createdAt);
+            if (mostRecentQuickIdx == null) {
+              mostRecentQuickIdx = i;
+              mostRecentTs = ts;
+              continue;
+            }
+            // Treat null timestamps as oldest so a real timestamp always wins.
+            final challengerNewer = (ts != null) &&
+                (mostRecentTs == null || ts.isAfter(mostRecentTs));
+            if (challengerNewer) {
+              mostRecentQuickIdx = i;
+              mostRecentTs = ts;
+            }
+          }
+          if (mostRecentQuickIdx != null) {
+            final keepId = carouselItems[mostRecentQuickIdx].workout!.id;
+            carouselItems.removeWhere(
+              (it) => it.isWorkout &&
+                  isQuick(it.workout!) &&
+                  it.workout!.id != keepId,
+            );
+          }
+        }
+
         // Defensive (date-keyed) dedup. Returning users hit a race where the
         // placeholder for a future date and the actual workout for the same
         // date both end up in the list — produces a "two Tomorrow tiles" UI

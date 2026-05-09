@@ -17,6 +17,8 @@ import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/segmented_tab_bar.dart';
 import '../../../data/services/image_url_cache.dart';
 import '../../exercises/import_exercise_screen.dart';
+import 'equipment_snap_flow.dart';
+import 'snapped_equipment_section.dart';
 
 
 part 'exercise_swap_sheet_part_exercise_swap_sheet_state.dart';
@@ -40,8 +42,12 @@ Future<Workout?> showExerciseSwapSheet(
 }) async {
   return await showGlassSheet<Workout>(
     context: context,
+    isDismissible: true,
+    enableDrag: true,
     builder: (context) => GlassSheet(
-      showHandle: false,
+      // Fix #3: drag handle visible for swipe-to-resize/dismiss affordance.
+      // Other workout sheets (workout_ai_coach_sheet) get the same treatment.
+      showHandle: true,
       child: _ExerciseSwapSheet(
         workoutId: workoutId,
         exercise: exercise,

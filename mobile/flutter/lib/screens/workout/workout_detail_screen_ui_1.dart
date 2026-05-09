@@ -135,18 +135,36 @@ extension __WorkoutDetailScreenStateExt1 on _WorkoutDetailScreenState {
     } catch (e) {
       debugPrint('❌ [WorkoutDetail] Failed to load workout ${widget.workoutId}: $e');
       // 404 means the workout was deleted or the plan was regenerated since
-      // the cached ID in the hero carousel was captured. Surface a friendlier
-      // message AND invalidate the today-workout cache so Try Again picks up
-      // the fresh plan (no more chasing the phantom ID).
+      // the cached ID was captured (deep link, push notification, stale
+      // navigation). Instead of showing a red error screen that makes the
+      // app feel broken, silently swap to today's current workout and show
+      // a one-line snackbar. Eliminates user-perceived breakage from the
+      // most common stale-id paths (hero carousel race, multi-device
+      // regenerate, calendar deep link to superseded workout).
       final is404 = e is DioException && e.response?.statusCode == 404;
-      if (is404) {
+      if (is404 && mounted) {
+        // Stale id — most common after a regenerate/quick-workout, push
+        // notification deep link, or multi-device session. Invalidate the
+        // today cache so the home screen pulls the fresh plan, then pop
+        // back. A snackbar tells the user the workout was updated rather
+        // than showing a red error screen that feels broken.
         try {
           ref.read(todayWorkoutProvider.notifier).invalidateAndRefresh();
         } catch (_) {/* best effort — notifier may not be available */}
+        if (Navigator.of(context).canPop()) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Workout updated — showing latest plan.'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+          Navigator.of(context).pop();
+          return;
+        }
       }
       setState(() {
         _error = is404
-            ? 'This workout no longer exists. Your plan may have been updated — tap Try Again to refresh.'
+            ? 'Workout updated — head back to home for the latest plan.'
             : e.toString();
         _isLoading = false;
       });

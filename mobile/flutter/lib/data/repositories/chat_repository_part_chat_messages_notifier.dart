@@ -44,6 +44,180 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
   // Offline message queue (#31)
   final List<String> _pendingOfflineMessages = [];
 
+  // Fix #10 — one-time prune migration runs on first loadHistory of the
+  // notifier's lifetime. Guarded by SharedPreferences claim so it never
+  // re-runs across cold starts (or across concurrent notifier rebuilds).
+  bool _pruneAttemptedThisSession = false;
+
+  /// Heuristic: should the candidate assistant message be treated as an
+  /// auto-fired coach tip? The model has no `source` / `metadata` field
+  /// today, so we fall back to a content-pattern check for the canonical
+  /// coach-persona prefix ("Listen up,…", "Yep, that's right,…", etc.)
+  /// emitted by the active-workout coach-tip pipeline.
+  bool _looksLikeAutoCoachTip(ChatMessage m) {
+    if (m.role != 'assistant') return false;
+    final content = m.content.trimLeft();
+    if (content.isEmpty) return false;
+    // Coach-persona greeting prefixes pulled from data/models/coach_persona.dart
+    // and the auto-tip pipeline. Conservative; better to under-tag than to
+    // wrongly drop a real reply.
+    const prefixes = <String>[
+      'Listen up',
+      "Yep, that's right",
+      'Yep that\'s right',
+    ];
+    for (final p in prefixes) {
+      if (content.startsWith(p)) return true;
+    }
+    return false;
+  }
+
+  /// Fix #10 dedup gate. Returns true if the message should be APPENDED to
+  /// chat state, false if it should be skipped. Skips:
+  ///   - Auto-coach-tip messages when the user has not opted in to keeping
+  ///     them in chat history.
+  ///   - Long (> 80 char) assistant messages that are near-duplicates of one
+  ///     of the last 3 assistant bubbles.
+  /// User messages are NEVER skipped.
+  Future<bool> _shouldAppendAssistantMessage(ChatMessage candidate) async {
+    if (candidate.role != 'assistant') return true;
+
+    // 1) Coach-tip opt-in gate.
+    if (_looksLikeAutoCoachTip(candidate)) {
+      final saveTips = await ExerciseTipService.shouldSaveCoachTipsToChat();
+      if (!saveTips) {
+        debugPrint(
+          '🛑 [Chat] Skipping auto-coach-tip append (opt-in disabled). '
+          'Tip remains visible as inline banner only.',
+        );
+        return false;
+      }
+    }
+
+    // 2) Levenshtein dedup gate.
+    final content = candidate.content;
+    if (content.length > kCoachTipDedupMinChars) {
+      final recent = (state.valueOrNull ?? const <ChatMessage>[])
+          .where((m) => m.role == 'assistant')
+          .map((m) => m.content)
+          .toList();
+      if (ExerciseTipService.isNearDuplicateOfRecent(content, recent)) {
+        debugPrint(
+          '🛑 [Chat] Skipping near-duplicate assistant append '
+          '(Levenshtein > $kCoachTipDedupSimilarityThreshold against last '
+          '$kCoachTipDedupWindow assistant messages).',
+        );
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /// Fix #10 one-time prune migration. Runs ONCE per device (idempotent via
+  /// SharedPreferences claim flag). Walks the last 30 days of assistant
+  /// messages and deletes the LATER of every Levenshtein-near-duplicate pair
+  /// (similarity > 0.85). Only assistant rows that look like auto-coach-tips
+  /// are eligible for deletion — never user messages or normal replies.
+  ///
+  /// Failure-safe: any exception during prune leaves the claim flag set
+  /// (avoiding re-runs that could race with future state) but logs the error.
+  Future<void> _runOneTimeCoachTipPrune() async {
+    if (_pruneAttemptedThisSession) return;
+    _pruneAttemptedThisSession = true;
+
+    final shouldRun = await ExerciseTipService.claimPruneCoachDuplicatesV1();
+    if (!shouldRun) {
+      debugPrint('💡 [Chat] Coach-tip prune already complete — skipping');
+      return;
+    }
+
+    try {
+      final messages = state.valueOrNull ?? const <ChatMessage>[];
+      if (messages.isEmpty) return;
+
+      final cutoff = DateTime.now().subtract(const Duration(days: 30));
+      // Walk chronologically; identify clusters of assistant rows where
+      // consecutive content has similarity > 0.85, and the later candidate
+      // looks like an auto-coach-tip (heuristic).
+      final toDeleteIds = <String>{};
+      final toDeleteCreatedAt = <String>{};
+      ChatMessage? prevAsst;
+      for (final m in messages) {
+        if (m.role != 'assistant') continue;
+        final created = m.timestamp;
+        if (created != null && created.isBefore(cutoff)) {
+          prevAsst = m;
+          continue;
+        }
+        if (prevAsst != null) {
+          final prevText = prevAsst.content;
+          if (prevText.length > kCoachTipDedupMinChars &&
+              m.content.length > kCoachTipDedupMinChars) {
+            // Reuse public dedup helper — it scans a list, so wrap prev as a
+            // single-element window.
+            final isDup =
+                ExerciseTipService.isNearDuplicateOfRecent(m.content, [prevText]);
+            // Only delete the LATER message, and only when it looks like an
+            // auto-coach-tip — never strip a real user-initiated reply.
+            if (isDup && _looksLikeAutoCoachTip(m)) {
+              if (m.id != null && m.id!.isNotEmpty) {
+                toDeleteIds.add(m.id!);
+              } else if (m.createdAt != null) {
+                toDeleteCreatedAt.add(m.createdAt!);
+              }
+              // Keep prevAsst as the cluster anchor — fall through.
+              continue;
+            }
+          }
+        }
+        prevAsst = m;
+      }
+
+      if (toDeleteIds.isEmpty && toDeleteCreatedAt.isEmpty) {
+        debugPrint('💡 [Chat] Coach-tip prune: no duplicates found');
+        return;
+      }
+
+      // Apply local state delete first so the UI reflects immediately.
+      final pruned = messages
+          .where((m) =>
+              !(m.role == 'assistant' &&
+                  ((m.id != null && toDeleteIds.contains(m.id)) ||
+                      (m.id == null &&
+                          m.createdAt != null &&
+                          toDeleteCreatedAt.contains(m.createdAt)))))
+          .toList();
+      state = AsyncValue.data(pruned);
+      debugPrint(
+        '🧹 [Chat] Coach-tip prune removed '
+        '${messages.length - pruned.length} duplicate assistant rows '
+        '(${toDeleteIds.length} by id, ${toDeleteCreatedAt.length} by ts).',
+      );
+
+      // Persist to backend best-effort. Failures here don't unset the claim
+      // — local state is already pruned and replays from cache will reflect
+      // the new shape. Server-side prune is durability.
+      for (final id in toDeleteIds) {
+        try {
+          await _repository.deleteMessage(id);
+        } catch (e) {
+          debugPrint('⚠️ [Chat] Coach-tip prune: deleteMessage($id) failed: $e');
+        }
+      }
+
+      // Update cache.
+      final userId = await _apiClient.getUserId();
+      if (userId != null) {
+        await _saveToCache(userId, pruned);
+      }
+    } catch (e, st) {
+      debugPrint('❌ [Chat] Coach-tip prune failed: $e');
+      debugPrint('❌ [Chat] Stack: $st');
+      // Note: claim flag is intentionally LEFT SET so we don't keep retrying
+      // on every cold start. Fixing a botched prune is a manual reset.
+    }
+  }
+
   /// Keywords that indicate user wants a quick workout (mirrors backend)
   static const _quickWorkoutKeywords = [
     'quick workout', 'short workout', 'fast workout',
@@ -225,6 +399,12 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
       // has settled (regardless of outcome). Before this point, the initial
       // fetch owns the offset cursor; after, pagination can extend it.
       _initialHistoryLoaded = true;
+      // Fix #10 — kick off the one-time coach-tip prune migration. Runs
+      // exactly once per device (idempotent via SharedPreferences claim).
+      // Fire-and-forget so loadHistory's caller isn't blocked. Errors are
+      // logged inside the helper.
+      // ignore: unawaited_futures
+      _runOneTimeCoachTipPrune();
     }
   }
 
@@ -417,7 +597,13 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
       // Dedup by server-issued message_id (Realtime/loadHistory race guard).
       final alreadyPresent = assistantMessageId != null &&
           finalMsgs.any((m) => m.id == assistantMessageId);
-      final newMessages = alreadyPresent ? finalMsgs : [...finalMsgs, assistantMessage];
+      // Fix #10 — content/source-level dedup gate (drops auto-coach-tip
+      // opt-outs and Levenshtein near-duplicates).
+      final passesDedupGate =
+          alreadyPresent ? false : await _shouldAppendAssistantMessage(assistantMessage);
+      final newMessages = (alreadyPresent || !passesDedupGate)
+          ? finalMsgs
+          : [...finalMsgs, assistantMessage];
       state = AsyncValue.data(newMessages);
       await _saveToCache(userId, newMessages);
     } catch (e, stackTrace) {
@@ -520,7 +706,11 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
       );
 
       final updatedMessages = state.valueOrNull ?? [];
-      final newMessages = [...updatedMessages, timedResponse];
+      // Fix #10 — apply dedup gate even for offline replies.
+      final passesDedupGate = await _shouldAppendAssistantMessage(timedResponse);
+      final newMessages = passesDedupGate
+          ? [...updatedMessages, timedResponse]
+          : updatedMessages;
       state = AsyncValue.data(newMessages);
 
       // Cache offline messages too
@@ -763,7 +953,12 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
       final updatedMessages = state.valueOrNull ?? [];
       final alreadyPresent = assistantMessageId != null &&
           updatedMessages.any((m) => m.id == assistantMessageId);
-      final newMessages = alreadyPresent ? updatedMessages : [...updatedMessages, assistantMessage];
+      // Fix #10 — content/source-level dedup gate.
+      final passesDedupGate =
+          alreadyPresent ? false : await _shouldAppendAssistantMessage(assistantMessage);
+      final newMessages = (alreadyPresent || !passesDedupGate)
+          ? updatedMessages
+          : [...updatedMessages, assistantMessage];
       state = AsyncValue.data(newMessages);
       await _saveToCache(userId, newMessages);
     } catch (e, stackTrace) {
@@ -880,6 +1075,36 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
       case 'reschedule':
       case 'delete_workout':
         await _handleWorkoutModified(actionData);
+        break;
+      // Issue 3: workout mutation actions. The backend tools already
+      // applied create_superset / break_superset, so just refresh.
+      // log_set / swap_exercise / reorder_exercises require user
+      // confirmation — the ChatActionConfirmCard handles the actual
+      // repo call; we only refresh once it succeeds.
+      case 'create_superset':
+      case 'break_superset':
+        debugPrint('🏋️ [Chat] Superset op applied (${actionData['action']})');
+        await _workoutsNotifier.refresh();
+        break;
+      case 'log_set':
+      case 'swap_exercise':
+      case 'reorder_exercises':
+        debugPrint(
+          '🏋️ [Chat] Mutation proposal awaiting confirm: ${actionData['action']}',
+        );
+        // No-op here — ChatActionConfirmCard drives the apply.
+        break;
+      // Issue 2: identify_equipment tool result. The card itself
+      // (EquipmentMatchCard inside the chat bubble) carries the user
+      // interaction — Swap / Add / quick-workout deeplinks fire from
+      // there with full BuildContext. Here we just log and skip the
+      // 'unknown action' warning so the action_data stays clean.
+      case 'open_swap_or_add':
+        debugPrint(
+          '🏋️ [Chat] Equipment match card rendered '
+          '(canonical=${actionData['canonical_name']}, '
+          'matches=${(actionData['matches'] as List?)?.length ?? 0})',
+        );
         break;
       case 'food_logged':
         debugPrint('🍽️ [Chat] Food logged via chat - refreshing nutrition data');

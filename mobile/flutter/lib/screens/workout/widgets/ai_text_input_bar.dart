@@ -52,6 +52,12 @@ class AiTextInputBar extends ConsumerStatefulWidget {
   /// Optional callback when dismissed
   final VoidCallback? onDismiss;
 
+  /// When true, render as a 36×36 floating "✦" pill instead of the full
+  /// inline bar. Tap expands. Used by Advanced mode to reclaim ~50px of
+  /// table room. Easy mode and tablet/landscape pass false to keep the
+  /// expanded bar (discoverability).
+  final bool compact;
+
   const AiTextInputBar({
     super.key,
     required this.workoutId,
@@ -63,6 +69,7 @@ class AiTextInputBar extends ConsumerStatefulWidget {
     this.onV2Parsed,
     required this.onExercisesParsed,
     this.onDismiss,
+    this.compact = false,
   });
 
   @override
@@ -76,6 +83,12 @@ class _AiTextInputBarState extends ConsumerState<AiTextInputBar>
   bool _isLoading = false;
   bool _isListening = false;
   String? _errorMessage;
+
+  /// User explicitly toggled expand/collapse this session — don't fight them
+  /// when widget.compact flips back. Resets next workout (StatefulWidget
+  /// disposes when leaving the screen).
+  bool _userOverrodeCompact = false;
+  bool _showedCompactTooltip = false;
 
   // Controllers
   final _textController = TextEditingController();
@@ -123,11 +136,81 @@ class _AiTextInputBarState extends ConsumerState<AiTextInputBar>
     _speechInitialized = true;
   }
 
-  void _expand() {
-    setState(() => _isExpanded = true);
+  void _expand({bool focusVoice = false}) {
+    setState(() {
+      _isExpanded = true;
+      _userOverrodeCompact = true; // sticky until session end
+    });
     _animationController.forward();
     _focusNode.requestFocus();
     HapticFeedback.lightImpact();
+    if (focusVoice) {
+      // Long-press on the compact pill jumps directly into voice input.
+      // Tiny delay so the field has time to mount + claim focus first.
+      Future.delayed(const Duration(milliseconds: 150), () {
+        if (mounted) _toggleVoiceInput();
+      });
+    }
+  }
+
+  /// Compact 36px-tall pill shown in Advanced mode. Bottom-LEFT anchored
+  /// inside its parent so it doesn't collide with Sergeant Max's avatar
+  /// (bottom-right). The parent passes `compact: true` based on
+  /// `workoutUiModeProvider.mode == WorkoutUiMode.advanced`.
+  Widget _buildCompactPill(bool isDark, Color accentColor) {
+    final pillBg = isDark ? AppColors.elevated : Colors.white;
+    final pillBorder = isDark ? AppColors.cardBorder : Colors.grey.shade300;
+
+    // First-time discoverability tooltip (auto-dismiss 3s).
+    if (!_showedCompactTooltip) {
+      _showedCompactTooltip = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Tap ✦ to add exercises with AI'),
+            duration: Duration(seconds: 3),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      });
+    }
+
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Padding(
+        padding: const EdgeInsets.only(left: 4),
+        child: Semantics(
+          label: 'Open AI exercise input',
+          button: true,
+          child: GestureDetector(
+            onTap: _expand,
+            onLongPress: () => _expand(focusVoice: true),
+            child: Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: pillBg,
+                shape: BoxShape.circle,
+                border: Border.all(color: pillBorder),
+                boxShadow: [
+                  BoxShadow(
+                    color: accentColor.withOpacity(0.18),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Icon(
+                Icons.auto_awesome,
+                size: 18,
+                color: accentColor,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   void _showExamplesDialog(BuildContext context, bool isDark) {
@@ -277,6 +360,10 @@ class _AiTextInputBarState extends ConsumerState<AiTextInputBar>
       setState(() {
         _isExpanded = false;
         _errorMessage = null;
+        // In compact mode, an explicit collapse means "go back to the pill".
+        // Note: typed-but-unsent text is preserved on the controller, which
+        // is intentional — re-expanding restores the draft.
+        if (widget.compact) _userOverrodeCompact = false;
       });
     });
   }
@@ -498,6 +585,16 @@ class _AiTextInputBarState extends ConsumerState<AiTextInputBar>
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final accentColor = ref.watch(accentColorProvider).getColor(isDark);
+
+    // Compact mode = Advanced E/A toggle wants a small ✦ pill instead of the
+    // full bar. The user can still expand by tapping, and once they do we
+    // honor that for the rest of the session via _userOverrodeCompact.
+    final shouldRenderCompactPill =
+        widget.compact && !_isExpanded && !_userOverrodeCompact;
+
+    if (shouldRenderCompactPill) {
+      return _buildCompactPill(isDark, accentColor);
+    }
 
     return AnimatedBuilder(
       animation: _heightAnimation,

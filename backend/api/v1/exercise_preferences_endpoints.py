@@ -553,27 +553,186 @@ def detect_injury_type(reason: Optional[str]) -> Optional[str]:
 
 
 def get_exercise_muscle_group(exercise_name: str) -> Optional[str]:
-    """Determine muscle group from exercise name."""
+    """Determine muscle group from exercise name. Order matters — most-specific first."""
     name_lower = exercise_name.lower()
 
-    if any(x in name_lower for x in ["squat", "leg press", "leg extension", "lunge"]):
+    # Cardio / full-body conditioning (check FIRST so "burpee" doesn't fall through)
+    if any(x in name_lower for x in ["burpee", "mountain climber", "jumping jack", "jump rope",
+                                      "high knee", "skater", "sprint", "treadmill", "rowing machine",
+                                      "battle rope", "bear crawl", "shuttle run"]):
+        return "cardio"
+    # Core / abs (Plank, Crunch, Twist, Leg Raise, Ab Wheel, Hanging Leg Raise, etc.)
+    if any(x in name_lower for x in ["plank", "crunch", "sit-up", "situp", "russian twist",
+                                      "ab wheel", "rollout", "hanging leg raise", "hanging knee",
+                                      "leg raise", "flutter kick", "dead bug", "bird dog",
+                                      "hollow hold", "v-up", "v up", "toe touch", "windshield",
+                                      "woodchop", "pallof", "side bend", "cable crunch"]):
+        return "core"
+    # Plyometrics → quads/glutes (treat as quad-dominant)
+    if any(x in name_lower for x in ["box jump", "jump squat", "broad jump", "tuck jump",
+                                      "depth jump", "bound", "skip "]):
         return "quadriceps"
-    elif any(x in name_lower for x in ["leg curl", "hamstring", "romanian"]):
-        return "hamstrings"
-    elif any(x in name_lower for x in ["deadlift", "hip thrust", "glute"]):
-        return "glutes"
-    elif any(x in name_lower for x in ["bench", "chest", "push", "fly", "pec"]):
-        return "chest"
-    elif any(x in name_lower for x in ["row", "pulldown", "pull up", "lat"]):
-        return "back"
-    elif any(x in name_lower for x in ["press", "shoulder", "lateral", "raise"]):
-        return "shoulders"
-    elif any(x in name_lower for x in ["curl", "bicep"]):
+    # Calves
+    if any(x in name_lower for x in ["calf raise", "calves", "donkey calf", "seated calf",
+                                      "standing calf", "tibialis"]):
+        return "calves"
+    # Forearms / grip
+    if any(x in name_lower for x in ["wrist curl", "farmer", "forearm", "grip"]):
+        return "forearms"
+    # Triceps (BEFORE biceps so "tricep extension" doesn't fall to triceps via "extension")
+    if any(x in name_lower for x in ["tricep", "skull crusher", "skullcrusher", "pushdown",
+                                      "kickback", "close grip bench", "diamond push", "dip"]):
+        return "triceps"
+    # Biceps
+    if any(x in name_lower for x in ["bicep curl", "barbell curl", "dumbbell curl",
+                                      "preacher curl", "concentration curl", "hammer curl",
+                                      "ez bar curl", "ez-bar curl", "spider curl", "21s"]):
         return "biceps"
-    elif any(x in name_lower for x in ["tricep", "pushdown", "extension", "skull"]):
+    # Hamstrings (BEFORE quadriceps so "leg curl" wins)
+    if any(x in name_lower for x in ["leg curl", "lying leg curl", "seated leg curl",
+                                      "hamstring", "romanian deadlift", "rdl", "good morning",
+                                      "nordic", "stiff leg deadlift", "stiff-leg deadlift"]):
+        return "hamstrings"
+    # Glutes (BEFORE quadriceps for "hip thrust", "glute bridge")
+    if any(x in name_lower for x in ["hip thrust", "glute bridge", "glute kickback",
+                                      "cable kickback", "donkey kick", "fire hydrant",
+                                      "clamshell", "single leg bridge", "frog pump"]):
+        return "glutes"
+    # Quadriceps
+    if any(x in name_lower for x in ["squat", "leg press", "leg extension", "lunge",
+                                      "step up", "step-up", "split squat", "wall sit",
+                                      "sissy squat", "pistol squat", "bulgarian"]):
+        return "quadriceps"
+    # Deadlift family (compound posterior chain) — bucket under glutes for substitute purposes
+    if any(x in name_lower for x in ["deadlift", "trap bar", "sumo deadlift",
+                                      "conventional deadlift"]):
+        return "glutes"
+    # Chest
+    if any(x in name_lower for x in ["bench press", "chest press", "incline press",
+                                      "decline press", "push-up", "push up", "pushup",
+                                      "chest fly", "cable fly", "dumbbell fly", "pec deck",
+                                      "pec-deck", "svend press", "archer push"]):
+        return "chest"
+    # Back / lats
+    if any(x in name_lower for x in ["row", "pulldown", "pull-up", "pull up", "pullup",
+                                      "chin-up", "chin up", "chinup", "lat pulldown",
+                                      "lat pull", "face pull", "shrug", "rear delt fly",
+                                      "rear-delt fly", "inverted row", "t-bar", "t bar"]):
+        return "back"
+    # Shoulders (after triceps, after chest "press" specifics handled)
+    if any(x in name_lower for x in ["overhead press", "shoulder press", "military press",
+                                      "arnold press", "push press", "lateral raise",
+                                      "front raise", "side raise", "upright row",
+                                      "handstand", "pike push"]):
+        return "shoulders"
+    # Generic fallbacks for keywords missed above
+    if any(x in name_lower for x in ["press"]):
+        return "shoulders"
+    if any(x in name_lower for x in ["curl"]):
+        return "biceps"
+    if any(x in name_lower for x in ["extension"]):
         return "triceps"
 
     return None
+
+
+# Maps logical muscle_group (from get_exercise_muscle_group) to the canonical
+# `display_body_part` value in exercise_library_cleaned (the materialized view used
+# everywhere else in the app — 51× faster than raw exercise_library). The MV's
+# `display_body_part` column has 16 clean values: Quadriceps, Triceps, Hamstrings,
+# Core, Shoulders, Lower Back, Neck, Glutes, Hips, Chest, Back, Calves, Biceps,
+# Full Body, Forearms, Rotator Cuff. category is used for cardio.
+MUSCLE_TO_LIBRARY_QUERY: Dict[str, Dict[str, Optional[str]]] = {
+    "quadriceps": {"display_body_part": "Quadriceps", "category": None},
+    "hamstrings": {"display_body_part": "Hamstrings", "category": None},
+    "glutes":     {"display_body_part": "Glutes",     "category": None},
+    "calves":     {"display_body_part": "Calves",     "category": None},
+    "chest":      {"display_body_part": "Chest",      "category": None},
+    "back":       {"display_body_part": "Back",       "category": None},
+    "shoulders":  {"display_body_part": "Shoulders",  "category": None},
+    "biceps":     {"display_body_part": "Biceps",     "category": None},
+    "triceps":    {"display_body_part": "Triceps",    "category": None},
+    "forearms":   {"display_body_part": "Forearms",   "category": None},
+    "core":       {"display_body_part": "Core",       "category": None},
+    "abs":        {"display_body_part": "Core",       "category": None},
+    "cardio":     {"display_body_part": None,         "category": "cardio"},
+    "lower_back": {"display_body_part": "Lower Back", "category": None},
+    "hips":       {"display_body_part": "Hips",       "category": None},
+}
+
+# Cross-muscle library expansion: when an injury restricts the original muscle group,
+# we query OTHER muscle groups the user can still safely train. All hits remain real
+# exercise_library rows (contraindication-filtered).
+INJURY_SAFE_MUSCLE_EXPANSION: Dict[str, List[str]] = {
+    "knee":       ["chest", "back", "shoulders", "biceps", "triceps", "core"],
+    "shoulder":   ["quadriceps", "hamstrings", "glutes", "calves", "core"],
+    "lower_back": ["chest", "back", "biceps", "triceps", "shoulders", "calves"],
+    "elbow":      ["quadriceps", "hamstrings", "glutes", "calves", "core"],
+    "wrist":      ["quadriceps", "hamstrings", "glutes", "calves", "core"],
+    "hip":        ["chest", "back", "shoulders", "biceps", "triceps", "calves"],
+    "ankle":      ["chest", "back", "shoulders", "biceps", "triceps", "core"],
+    "neck":       ["quadriceps", "hamstrings", "glutes", "biceps", "triceps", "calves"],
+}
+
+
+def _query_library_by_muscle(db, muscle_group: str, limit: int = 10) -> List[Dict[str, Any]]:
+    """Query exercise_library_cleaned (materialized view) by canonical display_body_part
+    or category. All returned rows have id + name + gif_url + avoid_if + equipment.
+    """
+    mapping = MUSCLE_TO_LIBRARY_QUERY.get(muscle_group, {})
+    cols = "id, name, body_part, display_body_part, equipment, gif_url, target_muscle, category, avoid_if"
+
+    if mapping.get("display_body_part"):
+        try:
+            res = db.client.table("exercise_library_cleaned").select(cols)\
+                .eq("display_body_part", mapping["display_body_part"])\
+                .limit(limit).execute()
+            if res.data:
+                return res.data
+        except Exception as e:
+            logger.warning(f"display_body_part query failed for {muscle_group}: {e}")
+
+    if mapping.get("category"):
+        try:
+            res = db.client.table("exercise_library_cleaned").select(cols)\
+                .eq("category", mapping["category"])\
+                .limit(limit).execute()
+            if res.data:
+                return res.data
+        except Exception as e:
+            logger.warning(f"category query failed for {muscle_group}: {e}")
+
+    return []
+
+
+# Maps injury_type (knee/shoulder/etc.) to substring keywords found in `avoid_if` arrays
+# of exercise_library_cleaned rows. If any keyword matches, the exercise is unsafe for
+# that injury. This replaces brittle name-based contraindication matching with the
+# library's authoritative safety metadata.
+INJURY_AVOID_IF_KEYWORDS: Dict[str, List[str]] = {
+    "knee":       ["knee"],
+    "shoulder":   ["shoulder", "rotator cuff"],
+    "lower_back": ["lower back", "back", "spine", "lumbar"],
+    "elbow":      ["elbow"],
+    "wrist":      ["wrist"],
+    "hip":        ["hip"],
+    "ankle":      ["ankle"],
+    "neck":       ["neck", "cervical"],
+}
+
+
+def _is_unsafe_for_injury(row: Dict[str, Any], injury_type: Optional[str]) -> bool:
+    """Check exercise_library_cleaned.avoid_if[] for injury contraindications."""
+    if not injury_type:
+        return False
+    keywords = INJURY_AVOID_IF_KEYWORDS.get(injury_type, [])
+    if not keywords:
+        return False
+    avoid_if = row.get("avoid_if") or []
+    if not isinstance(avoid_if, list):
+        return False
+    blob = " ".join(str(x).lower() for x in avoid_if)
+    return any(k in blob for k in keywords)
 
 
 @router.post("/suggest-substitutes", response_model=SubstituteResponse)
@@ -595,71 +754,81 @@ async def suggest_exercise_substitutes(request: SubstituteRequest, current_user:
         injury_type = detect_injury_type(request.reason)
         muscle_group = get_exercise_muscle_group(request.exercise_name)
 
-        # 1. First, try to get safe alternatives from our curated list
-        if injury_type and injury_type in SAFE_ALTERNATIVES:
-            injury_alternatives = SAFE_ALTERNATIVES[injury_type]
-            if muscle_group and muscle_group in injury_alternatives:
-                for alt in injury_alternatives[muscle_group]:
+        # All substitutes MUST come from the exercise_library table so every result has
+        # a library_id + gif_url + verified safety metadata. No curated/synthetic names.
+
+        # 1. (removed — no curated SAFE_ALTERNATIVES; library is the source of truth)
+        # 2. (removed — no curated EXERCISE_SUBSTITUTES; library is the source of truth)
+
+        # 3. Library search by muscle_group on exercise_library_cleaned MV.
+        if muscle_group:
+            for row in _query_library_by_muscle(db, muscle_group, limit=12):
+                name_lib = row.get("name") or ""
+                if not name_lib or name_lib.lower() == request.exercise_name.lower():
+                    continue
+                if _is_unsafe_for_injury(row, injury_type):
+                    continue
+                if not any(s.name.lower() == name_lib.lower() for s in substitutes):
                     substitutes.append(SubstituteExercise(
-                        name=alt["name"],
-                        equipment=alt.get("equipment"),
+                        name=name_lib,
+                        muscle_group=row.get("display_body_part") or row.get("body_part"),
+                        equipment=row.get("equipment"),
+                        library_id=row.get("id"),
+                        gif_url=row.get("gif_url"),
                         is_safe_for_reason=True,
                     ))
 
-        # 2. Get general substitutes from EXERCISE_SUBSTITUTES
-        from core.exercise_data import EXERCISE_SUBSTITUTES
-        exercise_lower = request.exercise_name.lower()
-
-        for key, subs in EXERCISE_SUBSTITUTES.items():
-            if key in exercise_lower:
-                for sub in subs:
-                    # Check if this substitute is safe for the injury
-                    is_safe = True
-                    if injury_type and injury_type in INJURY_EXERCISE_CONTRAINDICATIONS:
-                        contraindicated = INJURY_EXERCISE_CONTRAINDICATIONS[injury_type]
-                        is_safe = not any(c in sub.lower() for c in contraindicated)
-
-                    if is_safe:
-                        # Check if already added
-                        if not any(s.name.lower() == sub.lower() for s in substitutes):
-                            substitutes.append(SubstituteExercise(
-                                name=sub,
-                                is_safe_for_reason=is_safe,
-                            ))
-
-        # 3. Search exercise library for similar exercises
-        if muscle_group:
+        # 4. Token-based library search on exercise_library_cleaned.name — when
+        # muscle_group detection missed OR same-muscle search was thin.
+        if len(substitutes) < 3:
             try:
-                library_result = db.client.table("exercise_library").select(
-                    "id", "name", "body_part", "equipment", "gif_url"
-                ).ilike("body_part", f"%{muscle_group}%").limit(10).execute()
-
-                for row in library_result.data or []:
-                    exercise_name_lib = row.get("name", "")
-
-                    # Skip if it's the original exercise
-                    if exercise_name_lib.lower() == request.exercise_name.lower():
-                        continue
-
-                    # Check if safe for injury
-                    is_safe = True
-                    if injury_type and injury_type in INJURY_EXERCISE_CONTRAINDICATIONS:
-                        contraindicated = INJURY_EXERCISE_CONTRAINDICATIONS[injury_type]
-                        is_safe = not any(c in exercise_name_lib.lower() for c in contraindicated)
-
-                    if is_safe:
-                        # Check if already added
-                        if not any(s.name.lower() == exercise_name_lib.lower() for s in substitutes):
+                tokens = [t for t in request.exercise_name.lower().replace("-", " ").split()
+                          if len(t) >= 4 and t not in {"with", "the", "and", "for"}]
+                for token in tokens[:3]:
+                    if len(substitutes) >= 6:
+                        break
+                    res = db.client.table("exercise_library_cleaned").select(
+                        "id, name, body_part, display_body_part, equipment, gif_url, target_muscle, avoid_if"
+                    ).ilike("name", f"%{token}%").limit(8).execute()
+                    for row in res.data or []:
+                        name_lib = row.get("name") or ""
+                        if not name_lib or name_lib.lower() == request.exercise_name.lower():
+                            continue
+                        if _is_unsafe_for_injury(row, injury_type):
+                            continue
+                        if not any(s.name.lower() == name_lib.lower() for s in substitutes):
                             substitutes.append(SubstituteExercise(
-                                name=exercise_name_lib,
-                                muscle_group=row.get("body_part"),
+                                name=name_lib,
+                                muscle_group=row.get("display_body_part") or row.get("body_part"),
                                 equipment=row.get("equipment"),
                                 library_id=row.get("id"),
                                 gif_url=row.get("gif_url"),
-                                is_safe_for_reason=is_safe,
+                                is_safe_for_reason=True,
                             ))
             except Exception as e:
-                logger.warning(f"Error searching exercise library: {e}", exc_info=True)
+                logger.warning(f"Token-based library search error: {e}", exc_info=True)
+
+        # 5. Cross-muscle library expansion — when injury restricts the original muscle,
+        # query OTHER muscle groups the user can safely train.
+        if injury_type and injury_type in INJURY_SAFE_MUSCLE_EXPANSION and len(substitutes) < 3:
+            for alt_muscle in INJURY_SAFE_MUSCLE_EXPANSION[injury_type]:
+                if len(substitutes) >= 6:
+                    break
+                for row in _query_library_by_muscle(db, alt_muscle, limit=6):
+                    name_lib = row.get("name") or ""
+                    if not name_lib or name_lib.lower() == request.exercise_name.lower():
+                        continue
+                    if _is_unsafe_for_injury(row, injury_type):
+                        continue
+                    if not any(s.name.lower() == name_lib.lower() for s in substitutes):
+                        substitutes.append(SubstituteExercise(
+                            name=name_lib,
+                            muscle_group=row.get("display_body_part") or row.get("body_part"),
+                            equipment=row.get("equipment"),
+                            library_id=row.get("id"),
+                            gif_url=row.get("gif_url"),
+                            is_safe_for_reason=True,
+                        ))
 
         # Limit to top 8 substitutes
         substitutes = substitutes[:8]

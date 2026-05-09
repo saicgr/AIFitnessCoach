@@ -159,6 +159,40 @@ extension WorkoutUIBuildersMixinUI2 on WorkoutUIBuildersMixin {
                                             );
                                           },
                                         ),
+                                        // ── Progression subtitle ─────────
+                                        // "Progression: $patternName • $deltaPerSet"
+                                        // Reads the active pattern from the
+                                        // mixin's exerciseProgressionPattern
+                                        // map and derives a per-set delta
+                                        // from setTargets when available;
+                                        // falls back to a hold copy for
+                                        // straight sets and suppresses on
+                                        // bodyweight/cardio without weight
+                                        // delta. Returns SizedBox.shrink()
+                                        // when there's nothing meaningful to
+                                        // say (no pattern, PO disabled at
+                                        // exercise level, etc.).
+                                        Builder(builder: (context) {
+                                          final subtitle = _buildProgressionSubtitle(
+                                            viewingExerciseIndex,
+                                          );
+                                          if (subtitle == null) return const SizedBox.shrink();
+                                          return Padding(
+                                            padding: const EdgeInsets.only(top: 2),
+                                            child: Text(
+                                              subtitle,
+                                              style: TextStyle(
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.w500,
+                                                color: isDark
+                                                    ? WorkoutDesign.textMuted
+                                                    : Colors.grey.shade600,
+                                              ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          );
+                                        }),
                                       ],
                                     ),
                                   ),
@@ -425,24 +459,42 @@ extension WorkoutUIBuildersMixinUI2 on WorkoutUIBuildersMixin {
 
                         // AI Text Input Bar — always on screen (below the
                         // table), never pushed off by a long set list.
+                        //
+                        // Compact-pill behavior: in Advanced mode portrait the
+                        // bar collapses to a 36px ✦ pill to give the table
+                        // ~50px more room. Easy mode and tablet/landscape stay
+                        // expanded for discoverability. The widget itself
+                        // honors a per-session manual expand/collapse choice.
                         const SizedBox(height: 8),
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 16),
-                          child: AiTextInputBar(
-                            workoutId: (workoutWidget as dynamic).workout.id ?? '',
-                            useKg: useKg,
-                            currentExerciseName: exercises.isNotEmpty
-                                ? exercises[viewingExerciseIndex].name
-                                : null,
-                            currentExerciseIndex: viewingExerciseIndex,
-                            lastSetWeight: completedSets[viewingExerciseIndex]?.isNotEmpty == true
-                                ? completedSets[viewingExerciseIndex]!.last.weight
-                                : null,
-                            lastSetReps: completedSets[viewingExerciseIndex]?.isNotEmpty == true
-                                ? completedSets[viewingExerciseIndex]!.last.reps
-                                : null,
-                            onExercisesParsed: (exercises) => handleParsedExercises(exercises),
-                            onV2Parsed: (response) => handleV2Parsed(response),
+                          child: Consumer(
+                            builder: (context, ref, _) {
+                              final mode = ref.watch(workoutUiModeProvider).mode;
+                              final mq = MediaQuery.of(context);
+                              final isLandscape = mq.orientation == Orientation.landscape;
+                              final isTablet = mq.size.shortestSide >= 600;
+                              final compact = mode == WorkoutUiMode.advanced
+                                  && !isLandscape
+                                  && !isTablet;
+                              return AiTextInputBar(
+                                workoutId: (workoutWidget as dynamic).workout.id ?? '',
+                                useKg: useKg,
+                                currentExerciseName: exercises.isNotEmpty
+                                    ? exercises[viewingExerciseIndex].name
+                                    : null,
+                                currentExerciseIndex: viewingExerciseIndex,
+                                lastSetWeight: completedSets[viewingExerciseIndex]?.isNotEmpty == true
+                                    ? completedSets[viewingExerciseIndex]!.last.weight
+                                    : null,
+                                lastSetReps: completedSets[viewingExerciseIndex]?.isNotEmpty == true
+                                    ? completedSets[viewingExerciseIndex]!.last.reps
+                                    : null,
+                                onExercisesParsed: (exercises) => handleParsedExercises(exercises),
+                                onV2Parsed: (response) => handleV2Parsed(response),
+                                compact: compact,
+                              );
+                            },
                           ),
                         ),
                         const SizedBox(height: 8),
@@ -726,6 +778,96 @@ extension WorkoutUIBuildersMixinUI2 on WorkoutUIBuildersMixin {
         ),
       ),
     );
+  }
+
+  /// Compute the progression subtitle string for the exercise at [index].
+  ///
+  /// Format: "Progression: $patternName • $deltaPerSet"
+  ///   • Pyramid Up:        "Progression: Pyramid Up • +5 lb each set"
+  ///   • Reverse Pyramid:   "Progression: Reverse Pyramid • −2.5 lb each set"
+  ///   • Straight Sets:     "Progression: Straight Sets • Hold 10 reps"
+  ///   • Endurance:         "Progression: Endurance • Hold 15 reps"
+  ///   • Bodyweight/cardio: rep delta or seconds delta where computable.
+  ///
+  /// Returns null when the subtitle should be suppressed entirely:
+  ///   • exercise has no progression pattern recorded
+  ///   • setTargets are missing or yield no usable delta
+  ///   • drop sets / rest-pause / myo-reps (use protocol-specific copy)
+  String? _buildProgressionSubtitle(int index) {
+    if (index < 0 || index >= exercises.length) return null;
+    final pattern = exerciseProgressionPattern[index];
+    if (pattern == null) return null;
+    final exercise = exercises[index];
+    final targets = (exercise.setTargets ?? const <SetTarget>[])
+        .where((t) => !t.isWarmup)
+        .toList();
+
+    // ── Hold/cardio time deltas ─────────────────────────────────────────
+    final holdSecs = targets
+        .map((t) => t.targetHoldSeconds ?? 0)
+        .where((s) => s > 0)
+        .toList();
+    if (holdSecs.length >= 2) {
+      final delta = holdSecs[1] - holdSecs[0];
+      final body = delta == 0
+          ? 'Hold ${holdSecs.first}s'
+          : '${delta > 0 ? '+' : '−'}${delta.abs()}s each set';
+      return 'Progression: ${pattern.displayName} • $body';
+    }
+    if (exercise.isTimedExercise && holdSecs.isNotEmpty) {
+      return 'Progression: ${pattern.displayName} • Hold ${holdSecs.first}s';
+    }
+
+    // ── Bodyweight rep deltas (no external load) ────────────────────────
+    final eqLower = (exercise.equipment ?? '').toLowerCase();
+    final isBodyweight = eqLower.contains('bodyweight') ||
+        eqLower.contains('body weight') ||
+        eqLower == 'none' ||
+        eqLower == 'no equipment';
+    if (isBodyweight) {
+      if (targets.length >= 2) {
+        final repDelta = targets[1].targetReps - targets[0].targetReps;
+        final body = repDelta == 0
+            ? 'Hold ${targets.first.targetReps} reps'
+            : '${repDelta > 0 ? '+' : '−'}${repDelta.abs()} rep${repDelta.abs() == 1 ? '' : 's'} each set';
+        return 'Progression: ${pattern.displayName} • $body';
+      }
+      if (targets.isNotEmpty) {
+        return 'Progression: ${pattern.displayName} • Hold ${targets.first.targetReps} reps';
+      }
+      return null;
+    }
+
+    // ── Weight delta (most strength patterns) ───────────────────────────
+    final weighted = targets
+        .where((t) => (t.targetWeightKg ?? 0) > 0)
+        .toList();
+    if (weighted.length >= 2) {
+      final wDeltaKg = (weighted[1].targetWeightKg ?? 0) -
+          (weighted[0].targetWeightKg ?? 0);
+      // Display unit: respect the user's workout-unit toggle on the screen.
+      final unit = useKg ? 'kg' : 'lb';
+      final wDeltaDisplay = useKg ? wDeltaKg : wDeltaKg * 2.20462;
+      if (wDeltaDisplay.abs() < 0.05) {
+        // Same weight every set → fall through to a rep-based story.
+        final repDelta = weighted[1].targetReps - weighted[0].targetReps;
+        if (repDelta == 0) {
+          return 'Progression: ${pattern.displayName} • Hold ${weighted.first.targetReps} reps';
+        }
+        return 'Progression: ${pattern.displayName} • '
+            '${repDelta > 0 ? '+' : '−'}${repDelta.abs()} rep${repDelta.abs() == 1 ? '' : 's'} each set';
+      }
+      final mag = wDeltaDisplay.abs();
+      final body =
+          '${wDeltaDisplay > 0 ? '+' : '−'}${mag.toStringAsFixed(mag >= 10 ? 0 : 1)} $unit each set';
+      return 'Progression: ${pattern.displayName} • $body';
+    }
+
+    // ── Single-set or pattern-only fallback (Straight Sets etc.) ────────
+    if (targets.length == 1) {
+      return 'Progression: ${pattern.displayName} • Hold ${targets.first.targetReps} reps';
+    }
+    return null;
   }
 
 }

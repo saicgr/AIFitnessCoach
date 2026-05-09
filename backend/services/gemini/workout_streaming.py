@@ -60,6 +60,9 @@ class WorkoutStreamingMixin:
         training_split: Optional[str] = None,
         workout_days: Optional[List[int]] = None,
         workout_weight_unit: Optional[str] = None,
+        # RAG-first refactor (2026-05-08): if provided, constrains Gemini to
+        # use ONLY these pre-filtered library exercises (no hallucinations).
+        library_exercises: Optional[List[Dict]] = None,
     ):
         """
         Generate a workout plan using streaming for faster perceived response.
@@ -198,11 +201,40 @@ STRENGTH HISTORY:
 
 Use this split information to guide exercise selection and workout structure."""
 
+            # RAG-first: if library_exercises provided, build the
+            # "Available Exercises" block and add a hard constraint to use ONLY
+            # those names. Mirrors generate_workout_from_library pattern in
+            # workout_generation_helpers_part2.py:289-336.
+            library_block = ""
+            library_constraint = ""
+            if library_exercises:
+                # Cap at 50 to keep prompt size manageable (~2KB block).
+                _capped = library_exercises[:50]
+                exercise_list_str = "\n".join([
+                    f"- {ex.get('name','Unknown')}: targets "
+                    f"{ex.get('muscle_group','unknown')}, equipment: "
+                    f"{ex.get('equipment','bodyweight')}"
+                    for ex in _capped
+                ])
+                library_block = (
+                    f"\n\n📚 AVAILABLE EXERCISES (pre-filtered from library — "
+                    f"use EXACTLY these {len(_capped)} names, no inventions, "
+                    f"no substitutions):\n{exercise_list_str}\n"
+                )
+                library_constraint = (
+                    "\n\n🚨 CRITICAL: Every exercise's `name` MUST match EXACTLY "
+                    "one of the names in the AVAILABLE EXERCISES list above. "
+                    "Do NOT invent exercise names. Do NOT modify or rephrase. "
+                    "Pick the most appropriate ones and structure them into the "
+                    "workout. If you cannot find suitable exercises, return "
+                    "fewer exercises rather than inventing new ones."
+                )
+
             prompt = f"""Generate a {duration_text}-minute workout for:
 - Fitness Level: {fitness_level}
 - Goals: {safe_join_list(goals, 'General fitness')}
 - Equipment: {safe_join_list(equipment, 'Bodyweight only')}
-- Focus: {safe_join_list(focus_areas, 'Full body')}{age_activity_context}{training_split_instruction}{preference_constraints}
+- Focus: {safe_join_list(focus_areas, 'Full body')}{age_activity_context}{training_split_instruction}{preference_constraints}{library_block}{library_constraint}
 
 Return ONLY valid JSON (no markdown):
 {{
@@ -293,7 +325,7 @@ If user has gym equipment (full_gym, barbell, dumbbells, cable_machine, machines
                                 config=types.GenerateContentConfig(
                                     response_mime_type="application/json",
                                     response_schema=GeneratedWorkoutResponse,
-                                    temperature=0.7,
+                                    temperature=0.85,  # bumped from 0.7 for variety (harness 2026-05-08)
                                     max_output_tokens=16384  # Increased to prevent truncation with detailed workouts
                                 ),
                             ),
@@ -407,6 +439,7 @@ If user has gym equipment (full_gym, barbell, dumbbells, cable_machine, machines
         training_split: Optional[str] = None,
         workout_days: Optional[List[int]] = None,
         workout_weight_unit: Optional[str] = None,
+        library_exercises: Optional[List[Dict]] = None,  # RAG-first
     ):
         """
         FAST workout generation using Gemini context caching.
@@ -492,6 +525,7 @@ If user has gym equipment (full_gym, barbell, dumbbells, cable_machine, machines
             training_split=training_split,
             workout_days=workout_days,
             workout_weight_unit=workout_weight_unit,
+            library_exercises=library_exercises,
         )
 
         try:
@@ -525,7 +559,7 @@ If user has gym equipment (full_gym, barbell, dumbbells, cable_machine, machines
                                     cached_content=cache_name,  # USE THE CACHE!
                                     response_mime_type="application/json",
                                     response_schema=GeneratedWorkoutResponse,
-                                    temperature=0.7,
+                                    temperature=0.85,  # bumped from 0.7 for variety (harness 2026-05-08)
                                     max_output_tokens=16384,  # Must match non-cached - workouts with set_targets can exceed 4000 tokens
                                 ),
                             ),
@@ -648,6 +682,7 @@ If user has gym equipment (full_gym, barbell, dumbbells, cable_machine, machines
         training_split: Optional[str] = None,
         workout_days: Optional[List[int]] = None,
         workout_weight_unit: Optional[str] = None,
+        library_exercises: Optional[List[Dict]] = None,
     ) -> str:
         """
         Build the user-specific prompt for cached generation.
@@ -782,6 +817,26 @@ If user has gym equipment (full_gym, barbell, dumbbells, cable_machine, machines
         if avoid_name_words and len(avoid_name_words) > 0:
             user_context_parts.append("")
             user_context_parts.append(f"⚠️ Do NOT use these words in workout name: {', '.join(avoid_name_words)}")
+
+        # RAG-first library block (validation harness 2026-05-08).
+        if library_exercises:
+            _capped = library_exercises[:50]
+            user_context_parts.append("")
+            user_context_parts.append(
+                f"## 📚 AVAILABLE EXERCISES ({len(_capped)} pre-filtered from library)"
+            )
+            for ex in _capped:
+                user_context_parts.append(
+                    f"- {ex.get('name','Unknown')}: targets "
+                    f"{ex.get('muscle_group','unknown')}, equipment: "
+                    f"{ex.get('equipment','bodyweight')}"
+                )
+            user_context_parts.append("")
+            user_context_parts.append(
+                "🚨 CRITICAL: Every exercise's `name` MUST match EXACTLY one of the "
+                "names above. Do NOT invent exercise names. Do NOT modify or "
+                "rephrase. Pick the most appropriate ones."
+            )
 
         # Final instructions
         user_context_parts.append("")

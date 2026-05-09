@@ -203,4 +203,21 @@ def normalize_exercise_numeric_fields(exercises: List[Dict[str, Any]]) -> List[D
                         except (ValueError, TypeError) as e:
                             logger.debug(f"Failed to convert target {field} to int: {e}")
 
+            # Schema clarification fix (validation harness 2026-05-08): the `sets`
+            # field was inconsistent — sometimes counted total (warmup + working),
+            # sometimes only working. Pin the contract: `sets` = WORKING SET
+            # COUNT (excludes warmup). Downstream consumers (UI rep counters,
+            # set tracking, analytics) all expect this. Also expose
+            # `total_sets_count` for callers that need warmup-inclusive count.
+            st = exercise['set_targets']
+            working_types = {"working", "drop", "failure", "amrap"}
+            working_count = sum(
+                1 for t in st
+                if isinstance(t, dict) and t.get("set_type", "working") in working_types
+            )
+            total_count = sum(1 for t in st if isinstance(t, dict))
+            if working_count >= 1:
+                exercise['sets'] = working_count
+                exercise['total_sets_count'] = total_count
+
     return exercises

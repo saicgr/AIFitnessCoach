@@ -134,18 +134,38 @@ class FatigueAlert:
         fatigue_detected: Whether fatigue was detected above threshold
         severity: 'low', 'moderate', 'high', 'critical'
         suggested_weight_reduction: Percentage to reduce weight (0-30)
-        suggested_weight_kg: Actual suggested weight in kg
+        suggested_weight: Actual suggested weight expressed in `weight_unit`
+            (None for bodyweight exercises where reps are reduced instead).
+        weight_unit: Unit for `suggested_weight` ('kg' or 'lb'). Snapshotted
+            from the user's workout_weight_unit at alert creation time so a
+            mid-session settings flip cannot mismatch labels with values.
+        weight_increment: Increment (in `weight_unit`) used to round
+            `suggested_weight`. Surfaced so the client can render
+            "Reducing weight by N <unit>" without recomputing.
+        rep_target_reduction: For bodyweight exercises (no weight to reduce),
+            the recommended rep target for the next set. None for weighted
+            exercises.
         reasoning: Human-readable explanation of why fatigue was detected
         indicators: List of specific fatigue indicators triggered
         confidence: Confidence score (0-1) in the detection
+
+        suggested_weight_kg: DEPRECATED alias kept for one release of
+            backward compatibility (mirrors `suggested_weight` when
+            `weight_unit == 'kg'`, otherwise the kg-equivalent).
     """
     fatigue_detected: bool
     severity: Literal["none", "low", "moderate", "high", "critical"]
     suggested_weight_reduction: int
-    suggested_weight_kg: float
+    suggested_weight: Optional[float]
+    weight_unit: str
+    weight_increment: float
+    rep_target_reduction: Optional[int]
     reasoning: str
     indicators: List[str]
     confidence: float
+    # Back-compat: callers that still read `.suggested_weight_kg` keep working
+    # for one release window. Always populated in kg regardless of `weight_unit`.
+    suggested_weight_kg: float = 0.0
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for API response."""
@@ -153,6 +173,11 @@ class FatigueAlert:
             "fatigue_detected": self.fatigue_detected,
             "severity": self.severity,
             "suggested_weight_reduction": self.suggested_weight_reduction,
+            "suggested_weight": self.suggested_weight,
+            "weight_unit": self.weight_unit,
+            "weight_increment": self.weight_increment,
+            "rep_target_reduction": self.rep_target_reduction,
+            # Back-compat field; clients are migrating to `suggested_weight`+`weight_unit`.
             "suggested_weight_kg": self.suggested_weight_kg,
             "reasoning": self.reasoning,
             "indicators": self.indicators,
@@ -173,12 +198,69 @@ _PATTERN_PROPERTIES: Dict[str, Dict[str, bool]] = {
 }
 
 
+def _kg_to_unit(value_kg: float, unit: str) -> float:
+    """Convert a kg value to the user's display unit. Pure helper."""
+    if unit == "lb":
+        return value_kg / 0.453592
+    return value_kg
+
+
+def _unit_to_kg(value: float, unit: str) -> float:
+    """Convert a display-unit value back to kg. Pure helper."""
+    if unit == "lb":
+        return value * 0.453592
+    return value
+
+
+def _round_to_increment(value: float, increment: float) -> float:
+    """Round `value` to the nearest `increment`. Falls back to value if
+    increment is non-positive (defensive — never divide by zero)."""
+    if increment <= 0:
+        return round(value, 1)
+    return round(value / increment) * increment
+
+
+def _no_alert(
+    current_weight_kg: float,
+    weight_unit: str,
+    weight_increment: float,
+    reasoning: str,
+    confidence: float = 0.5,
+) -> "FatigueAlert":
+    """Build a 'no fatigue' FatigueAlert in the user's display unit.
+
+    Centralized so every early-return path stays consistent.
+    """
+    suggested_user_unit = _kg_to_unit(current_weight_kg, weight_unit)
+    return FatigueAlert(
+        fatigue_detected=False,
+        severity="none",
+        suggested_weight_reduction=0,
+        suggested_weight=round(suggested_user_unit, 2),
+        weight_unit=weight_unit,
+        weight_increment=weight_increment,
+        rep_target_reduction=None,
+        reasoning=reasoning,
+        indicators=[],
+        confidence=confidence,
+        suggested_weight_kg=round(current_weight_kg, 2),
+    )
+
+
+# Minimum sane load (kg). Below this we recommend rest-pause / stop the
+# exercise rather than chasing an even lower weight (edge case 59).
+_MIN_LOAD_KG = 2.5
+
+
 def detect_fatigue(
     session_sets: List[Dict[str, Any]],
     current_weight: float,
     exercise_type: str = "compound",
     target_reps: Optional[int] = None,
     progression_pattern: Optional[str] = None,
+    user_workout_unit: str = "kg",
+    user_increment_kg: float = 2.5,
+    consecutive_dismissals: int = 0,
 ) -> FatigueAlert:
     """
     Standalone function to detect fatigue from session set data.
@@ -221,28 +303,73 @@ def detect_fatigue(
     Returns:
         FatigueAlert with detection result and recommendations
     """
-    # Early return if no sets or only one set
+    # Normalize unit: accept 'lbs' (Flutter convention) and 'lb' (backend convention).
+    # Edge case: if caller can't fetch user setting, default 'kg' is used so labels
+    # never mismatch numbers (feedback_no_silent_fallbacks).
+    weight_unit = "lb" if (user_workout_unit or "").lower() in ("lb", "lbs") else "kg"
+    # Convert kg increment to user unit so the rounding bucket matches what the
+    # user sees on plates / dial. Edge case 49: workout in lb + increment in kg
+    # → convert kg increment to lb.
+    weight_increment_user = round(_kg_to_unit(user_increment_kg, weight_unit), 3)
+
+    # Edge case 55: per-exercise cooldown — if user has already dismissed two
+    # alerts on this exercise, suppress further alerts for the rest of the
+    # exercise so we don't nag.
+    if consecutive_dismissals >= 2:
+        return _no_alert(
+            current_weight, weight_unit, weight_increment_user,
+            "Alerts paused for this exercise (you've dismissed twice).",
+        )
+
+    # Edge case 50/51: first set of session OR swapped-in exercise (no history)
+    # → no baseline to compare against. Suppress.
     if not session_sets:
-        return FatigueAlert(
-            fatigue_detected=False,
-            severity="none",
-            suggested_weight_reduction=0,
-            suggested_weight_kg=current_weight,
-            reasoning="No sets completed yet.",
-            indicators=[],
-            confidence=0.5,
+        return _no_alert(
+            current_weight, weight_unit, weight_increment_user,
+            "No sets completed yet.",
         )
 
     if len(session_sets) < 2:
-        return FatigueAlert(
-            fatigue_detected=False,
-            severity="none",
-            suggested_weight_reduction=0,
-            suggested_weight_kg=current_weight,
-            reasoning="Only one set completed. Continue with current weight.",
-            indicators=[],
-            confidence=0.5,
+        return _no_alert(
+            current_weight, weight_unit, weight_increment_user,
+            "Only one set completed. Continue with current weight.",
         )
+
+    # Edge case 52: warmup sets must not contribute to fatigue math. They are
+    # intentionally light/low-rep and would otherwise pollute decline detection.
+    def _is_warmup(s: Dict[str, Any]) -> bool:
+        if s.get("is_warmup"):
+            return True
+        st = (s.get("set_type") or "").lower()
+        return st in ("warmup", "warm_up", "warm-up")
+
+    working_sets = [s for s in session_sets if not _is_warmup(s)]
+    if len(working_sets) < 2:
+        return _no_alert(
+            current_weight, weight_unit, weight_increment_user,
+            "Need at least 2 working sets to assess fatigue.",
+        )
+
+    # Edge case 53: AMRAP sets target RIR 0 — hitting RIR 0 is success, not fatigue.
+    # Suppress alerts when the most recent working set was an AMRAP.
+    last_target_rir = working_sets[-1].get("target_rir")
+    if last_target_rir == 0:
+        return _no_alert(
+            current_weight, weight_unit, weight_increment_user,
+            "AMRAP set — RIR 0 is expected, not fatigue.",
+        )
+
+    # Edge case 54: drop sets are intentionally fatiguing within the drop
+    # sequence. Skip alerts for those patterns (already covered for failure-
+    # based math below, but suppress alerts entirely up front).
+    if (progression_pattern or "").lower() in ("dropsets", "drop_sets"):
+        return _no_alert(
+            current_weight, weight_unit, weight_increment_user,
+            "Drop set sequence — fatigue is the intent.",
+        )
+
+    # Re-bind: from here on we analyze working_sets only.
+    session_sets = working_sets
 
     # Initialize tracking
     indicators: List[str] = []
@@ -253,11 +380,17 @@ def detect_fatigue(
     # Get pattern properties (empty dict if unknown/not provided)
     pattern_props = _PATTERN_PROPERTIES.get(progression_pattern or "", {})
 
-    # Get reference values
+    # Get reference values.
+    # SOURCE FIX (Bug B): we now anchor decline math on the LAST COMPLETED set's
+    # actual weight & reps — not target_weight from the progression model. The
+    # target is preserved only for the human-readable "below target" framing.
     first_set = session_sets[0]
     last_set = session_sets[-1]
     first_reps = first_set.get("reps", 0)
     last_reps = last_set.get("reps", 0)
+    # Actual weight the user lifted on the last completed set (kg). Falls back
+    # to current_weight when the set didn't record a weight (bodyweight).
+    last_actual_weight_kg = float(last_set.get("weight") or current_weight or 0.0)
 
     # --------------------------------------------------------------------------
     # Trigger 0 (PRIMARY): RIR deviation from expected
@@ -430,13 +563,9 @@ def detect_fatigue(
     # Calculate overall fatigue level and severity
     # --------------------------------------------------------------------------
     if not fatigue_scores:
-        return FatigueAlert(
-            fatigue_detected=False,
-            severity="none",
-            suggested_weight_reduction=0,
-            suggested_weight_kg=current_weight,
-            reasoning="Performance looks good. Continue with current weight.",
-            indicators=[],
+        return _no_alert(
+            current_weight, weight_unit, weight_increment_user,
+            "Performance looks good. Continue with current weight.",
             confidence=0.80,
         )
 
@@ -491,22 +620,102 @@ def detect_fatigue(
         # Isolation exercises can handle more aggressive reduction
         weight_reduction = min(weight_reduction + 5, 30)
 
-    # Calculate actual suggested weight
-    suggested_weight = round(current_weight * (1 - weight_reduction / 100), 1)
-
-    # Round to nearest 2.5kg for practical gym weights
-    suggested_weight = round(suggested_weight / 2.5) * 2.5
-
-    # Clamp to pattern direction: don't suggest going backwards in patterns
-    # that expect weight increases (e.g., Pyramid Up)
-    if pattern_props.get("expects_weight_increase") and fatigue_detected:
-        last_weight = session_sets[-1].get("weight", current_weight)
-        # Use the progression target for the next set if available
-        next_target_weight = session_sets[-1].get("target_weight")
-        if next_target_weight and next_target_weight > 0:
-            suggested_weight = max(suggested_weight, next_target_weight)
+    # ------------------------------------------------------------------
+    # Bodyweight branch (edge case 57): no weight to drop → switch to a
+    # rep-target reduction instead. We still surface a reasoning string.
+    # ------------------------------------------------------------------
+    is_bodyweight = exercise_type == "bodyweight" or last_actual_weight_kg <= 0
+    if is_bodyweight and fatigue_detected:
+        # Reduce target reps by ~weight_reduction% (min 1 rep, never below 1).
+        anchor_reps = last_set.get("target_reps") or last_reps or 1
+        new_rep_target = max(1, int(round(anchor_reps * (1 - weight_reduction / 100))))
+        if reasoning_parts:
+            reasoning = ". ".join(reasoning_parts[:3]) + "."
         else:
-            suggested_weight = max(suggested_weight, last_weight)
+            reasoning = "Fatigue detected on a bodyweight exercise."
+        reasoning += f" Try {new_rep_target} reps next set instead of pushing to failure."
+        logger.info(
+            f"[Fatigue Detection] detect_fatigue bodyweight: "
+            f"detected=True, severity={severity}, rep_target={new_rep_target}, "
+            f"indicators={indicators}"
+        )
+        return FatigueAlert(
+            fatigue_detected=True,
+            severity=severity,
+            suggested_weight_reduction=weight_reduction,
+            suggested_weight=None,                     # no weight on bodyweight
+            weight_unit=weight_unit,
+            weight_increment=weight_increment_user,
+            rep_target_reduction=new_rep_target,
+            reasoning=reasoning,
+            indicators=indicators,
+            confidence=overall_confidence,
+            suggested_weight_kg=0.0,
+        )
+
+    # ------------------------------------------------------------------
+    # Weighted branch.
+    # SOURCE FIX (Bug B): suggestion anchors on LAST ACTUAL weight, not the
+    # progression model's target_weight (which produced the "I never did
+    # 45kg" complaint).
+    # ------------------------------------------------------------------
+    anchor_weight_kg = last_actual_weight_kg if last_actual_weight_kg > 0 else current_weight
+    suggested_kg = anchor_weight_kg * (1 - weight_reduction / 100)
+
+    # Edge case 59: already at minimum sane load — recommend rest-pause / stop
+    # rather than chasing a lower number that doesn't exist on the rack.
+    at_min_load = anchor_weight_kg <= _MIN_LOAD_KG
+    if fatigue_detected and at_min_load:
+        if reasoning_parts:
+            reasoning = ". ".join(reasoning_parts[:3]) + "."
+        else:
+            reasoning = "Fatigue detected at minimum load."
+        reasoning += " Consider rest-pause or ending the exercise."
+        return FatigueAlert(
+            fatigue_detected=True,
+            severity=severity,
+            suggested_weight_reduction=0,            # no further reduction possible
+            suggested_weight=round(_kg_to_unit(anchor_weight_kg, weight_unit), 2),
+            weight_unit=weight_unit,
+            weight_increment=weight_increment_user,
+            rep_target_reduction=None,
+            reasoning=reasoning,
+            indicators=indicators,
+            confidence=overall_confidence,
+            suggested_weight_kg=round(anchor_weight_kg, 2),
+        )
+
+    # Convert to user unit, then round to the user's increment in their unit
+    # so plate rounding matches what they actually see in the gym.
+    suggested_user_unit = _kg_to_unit(suggested_kg, weight_unit)
+    suggested_user_unit = _round_to_increment(suggested_user_unit, weight_increment_user)
+    # Round-trip back to kg for the back-compat field. We do NOT mutate
+    # the user-unit value after this point.
+    suggested_kg_rounded = _unit_to_kg(suggested_user_unit, weight_unit)
+
+    # CLAMP FIX (Bug C): only clamp UPWARD when this is actually a progression
+    # suggestion (weight_reduction <= 0). A fatigue reduction must NEVER
+    # produce a number ≥ the anchor weight — that's the inverted-clamp bug
+    # the user hit ("Adjusting weight: 30 → 45 lb").
+    if weight_reduction <= 0 and pattern_props.get("expects_weight_increase") and fatigue_detected:
+        # Pure progression suggestion — preserve old upward-clamp behavior.
+        next_target_weight = last_set.get("target_weight")
+        floor_kg = next_target_weight if (next_target_weight and next_target_weight > 0) else anchor_weight_kg
+        if suggested_kg_rounded < floor_kg:
+            suggested_kg_rounded = floor_kg
+            suggested_user_unit = _round_to_increment(
+                _kg_to_unit(floor_kg, weight_unit), weight_increment_user,
+            )
+    elif weight_reduction > 0:
+        # Belt-and-suspenders guard: a reduction must strictly decrease.
+        # If rounding flipped us above the anchor, force one increment down.
+        if suggested_user_unit >= _kg_to_unit(anchor_weight_kg, weight_unit):
+            suggested_user_unit = _kg_to_unit(anchor_weight_kg, weight_unit) - weight_increment_user
+            suggested_user_unit = max(
+                _kg_to_unit(_MIN_LOAD_KG, weight_unit),
+                _round_to_increment(suggested_user_unit, weight_increment_user),
+            )
+            suggested_kg_rounded = _unit_to_kg(suggested_user_unit, weight_unit)
 
     # Build reasoning message
     if reasoning_parts:
@@ -520,17 +729,22 @@ def detect_fatigue(
     logger.info(
         f"[Fatigue Detection] detect_fatigue result: "
         f"detected={fatigue_detected}, severity={severity}, "
-        f"reduction={weight_reduction}%, indicators={indicators}"
+        f"reduction={weight_reduction}%, suggested={suggested_user_unit}{weight_unit}, "
+        f"indicators={indicators}"
     )
 
     return FatigueAlert(
         fatigue_detected=fatigue_detected,
         severity=severity,
         suggested_weight_reduction=weight_reduction,
-        suggested_weight_kg=suggested_weight,
+        suggested_weight=round(suggested_user_unit, 2),
+        weight_unit=weight_unit,
+        weight_increment=weight_increment_user,
+        rep_target_reduction=None,
         reasoning=reasoning,
         indicators=indicators,
         confidence=overall_confidence,
+        suggested_weight_kg=round(suggested_kg_rounded, 2),
     )
 
 

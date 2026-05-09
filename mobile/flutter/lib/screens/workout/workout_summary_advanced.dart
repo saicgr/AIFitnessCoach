@@ -8,6 +8,7 @@ import 'package:flutter_body_atlas/flutter_body_atlas.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/utils/muscle_aliases.dart' as muscle_util;
 import '../../data/models/exercise.dart';
 import '../../data/models/workout.dart';
 import '../library/providers/library_providers.dart';
@@ -4405,7 +4406,7 @@ class _SessionTimeline extends StatelessWidget {
 /// its share of the session's total training volume, with muscles that
 /// received no work faded to a low-alpha grey so the whole silhouette still
 /// reads as a body rather than a scatter of colored dots.
-class _MuscleHeatmap extends ConsumerWidget {
+class _MuscleHeatmap extends ConsumerStatefulWidget {
   final WorkoutSummaryResponse? data;
   final Map<String, dynamic>? metadata;
   final bool isDark;
@@ -4415,6 +4416,24 @@ class _MuscleHeatmap extends ConsumerWidget {
     required this.metadata,
     required this.isDark,
   });
+
+  @override
+  ConsumerState<_MuscleHeatmap> createState() => _MuscleHeatmapState();
+}
+
+class _MuscleHeatmapState extends ConsumerState<_MuscleHeatmap> {
+  /// Which face of the body atlas is currently rendered. Defaults to
+  /// front (chest/quads/biceps/abs). Users can flip to back to see
+  /// lats/hams/glutes/calves/triceps highlighted from the same volume
+  /// data.
+  AtlasAsset _view = AtlasAsset.musclesFront;
+
+  // Convenience accessors so the existing logic (lifted from the old
+  // ConsumerWidget body) keeps reading `data` / `metadata` / `isDark`
+  // without churn.
+  WorkoutSummaryResponse? get data => widget.data;
+  Map<String, dynamic>? get metadata => widget.metadata;
+  bool get isDark => widget.isDark;
 
   /// True when the workout type is cardio-style (no muscle volume to render).
   bool get _isCardio {
@@ -4587,16 +4606,28 @@ class _MuscleHeatmap extends ConsumerWidget {
     return tokens;
   }
 
-  /// Build the `colorMapping` expected by [BodyAtlasView]. Uses loose
-  /// substring matching between MuscleInfo names and our lowercased volume
-  /// tokens — sufficient for the common muscles (chest, lats, triceps,
-  /// etc.) without requiring an exhaustive anatomical lookup table.
+  /// Build the `colorMapping` expected by [BodyAtlasView] using the
+  /// shared canonical alias util. Each volume-token is normalized to
+  /// a canonical bucket (Core / Back / Chest / etc.), then expanded
+  /// to the full list of atlas IDs that anatomically belong to that
+  /// bucket — so painting "Core" lights up rectus abdominis (7
+  /// segments) AND obliques (16 segments) instead of a hairline slice.
   Map<MuscleInfo, Color?> _buildColorMapping(
     Map<String, double> volumeByToken,
     bool isDark,
   ) {
     if (volumeByToken.isEmpty) return const {};
-    final maxVol = volumeByToken.values.fold<double>(0, math.max);
+
+    // 1. Collapse free-form tokens → canonical buckets, summing volume
+    //    when multiple tokens map to the same bucket (e.g.
+    //    "rectus abdominis" + "obliques" both → Core).
+    final Map<String, double> volumeByBucket = {};
+    volumeByToken.forEach((token, vol) {
+      final bucket = muscle_util.canonicalMuscle(token);
+      volumeByBucket[bucket] = (volumeByBucket[bucket] ?? 0) + vol;
+    });
+
+    final maxVol = volumeByBucket.values.fold<double>(0, math.max);
     if (maxVol <= 0) return const {};
 
     final cool = isDark
@@ -4616,18 +4647,21 @@ class _MuscleHeatmap extends ConsumerWidget {
           .withValues(alpha: (0.45 + 0.5 * t).clamp(0.0, 1.0));
     }
 
-    // For each MuscleInfo, check if any volume-token substring-matches its
-    // name (case-insensitive both ways), then shade by the accumulated share.
+    // 2. Build atlas-id → color map by expanding each bucket to its
+    //    full list of anatomical IDs, then attach to the matching
+    //    MuscleInfo for the BodyAtlasView API.
+    final Map<String, Color> idColors = {};
+    volumeByBucket.forEach((bucket, vol) {
+      final share = (vol / maxVol).clamp(0.0, 1.0);
+      final color = shadeFor(share);
+      for (final id in muscle_util.bodyAtlasIdsFor(bucket)) {
+        idColors[id] = color;
+      }
+    });
+
     final Map<MuscleInfo, Color?> mapping = {};
     for (final m in MuscleCatalog.all) {
-      final muscleName = m.displayName.toLowerCase();
-      double share = 0;
-      volumeByToken.forEach((token, vol) {
-        if (muscleName.contains(token) || token.contains(muscleName)) {
-          share += vol / maxVol;
-        }
-      });
-      mapping[m] = share > 0 ? shadeFor(share.clamp(0, 1)) : idleTint;
+      mapping[m] = idColors[m.id] ?? idleTint;
     }
     return mapping;
   }
@@ -4651,7 +4685,7 @@ class _MuscleHeatmap extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
     // Cardio session: hide the atlas entirely. The runner / cyclist isn't
@@ -4771,7 +4805,23 @@ class _MuscleHeatmap extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _buildHeader(context, textMuted),
-        const SizedBox(height: 10),
+        const SizedBox(height: 6),
+        // Front | Back toggle. Same color map applies to both faces;
+        // muscles that aren't visible on the active face (e.g. lats
+        // on Front) simply don't paint, but the chip list below still
+        // surfaces them so the user can see all worked muscles.
+        Center(
+          child: _FrontBackToggle(
+            isDark: isDark,
+            view: _view,
+            onChanged: (v) {
+              if (v != _view) {
+                setState(() => _view = v);
+              }
+            },
+          ),
+        ),
+        const SizedBox(height: 8),
         AspectRatio(
           aspectRatio: 0.516, // SVG native aspect
           child: ClipRRect(
@@ -4779,7 +4829,7 @@ class _MuscleHeatmap extends ConsumerWidget {
             child: Padding(
               padding: const EdgeInsets.all(4),
               child: BodyAtlasView<MuscleInfo>(
-                view: AtlasAsset.musclesFront,
+                view: _view,
                 resolver: const MuscleResolver(),
                 colorMapping: mapping,
               ),
@@ -4884,6 +4934,83 @@ class _MuscleHeatmap extends ConsumerWidget {
 
   static String _capitalise(String s) =>
       s.isEmpty ? s : '${s[0].toUpperCase()}${s.substring(1)}';
+}
+
+/// Compact pill-style segmented toggle for Front | Back atlas views.
+/// Sized to remain readable on iPhone SE (375pt) without overflowing
+/// the heatmap card — uses fixed icon + 11pt label.
+class _FrontBackToggle extends StatelessWidget {
+  final bool isDark;
+  final AtlasAsset view;
+  final ValueChanged<AtlasAsset> onChanged;
+
+  const _FrontBackToggle({
+    required this.isDark,
+    required this.view,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final bg = isDark
+        ? Colors.white.withValues(alpha: 0.05)
+        : Colors.grey.shade100;
+    final activeBg = isDark
+        ? Colors.white.withValues(alpha: 0.14)
+        : Colors.white;
+    final activeText = isDark ? Colors.white : Colors.black87;
+    final mutedText =
+        isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
+    Widget pill(String label, AtlasAsset target, IconData icon) {
+      final selected = view == target;
+      return GestureDetector(
+        onTap: () => onChanged(target),
+        behavior: HitTestBehavior.opaque,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 160),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: selected ? activeBg : Colors.transparent,
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon,
+                  size: 12,
+                  color: selected ? activeText : mutedText),
+              const SizedBox(width: 4),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: selected ? activeText : mutedText,
+                  letterSpacing: 0.4,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(2),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(22),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          pill('FRONT', AtlasAsset.musclesFront, Icons.person_rounded),
+          pill('BACK', AtlasAsset.musclesBack, Icons.accessibility_new_rounded),
+        ],
+      ),
+    );
+  }
 }
 
 // ────────────────────────────────────────────────────────────────────────────

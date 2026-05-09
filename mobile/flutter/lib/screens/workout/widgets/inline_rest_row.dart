@@ -366,25 +366,58 @@ class _InlineRestRowState extends State<InlineRestRow>
         ? absDelta.toStringAsFixed(0)
         : absDelta.toStringAsFixed(1);
 
+    // Variant pools (\u22654) per situation. Pick deterministically by hashing
+    // restDurationSeconds (proxy for set context) so the user sees stable copy
+    // for a given set but variety across sets/sessions. Keeps the table's
+    // next-set delta and the chip text in lockstep \u2014 both reading the same
+    // weightDelta from progressive_overload, so they cannot drift.
+    String pickVariant(List<String> pool) {
+      final seed = widget.restDurationSeconds + feedback.weightDelta.toInt() * 7;
+      return pool[seed.abs() % pool.length];
+    }
+
     switch (feedback.type) {
       case AdaptationFeedbackType.weightTooLight:
         chipColor = isDark ? AppColors.orange : Colors.orange.shade700;
         icon = '\u26A1'; // lightning
-        message = 'Weight too light \u2014 next set +$deltaStr $unit';
+        message = pickVariant([
+          'Weight too light \u2014 bump +$deltaStr $unit next',
+          'Plenty in the tank: +$deltaStr $unit next set',
+          'Step up: add $deltaStr $unit on the next set',
+          'Easy money \u2014 +$deltaStr $unit incoming',
+        ]);
       case AdaptationFeedbackType.weightIncreased:
         chipColor = AppColors.electricBlue;
-        icon = '\u2197'; // arrow upper-right
-        message = 'Increasing weight +$deltaStr $unit';
+        icon = '\u2197';
+        message = pickVariant([
+          'Adding +$deltaStr $unit next set',
+          'Stepping up \u2014 +$deltaStr $unit on the next one',
+          'Climbing +$deltaStr $unit \u2014 nice work',
+          'Next set +$deltaStr $unit \u2014 keep the form',
+        ]);
       case AdaptationFeedbackType.fatigueDetected:
         chipColor = isDark ? AppColors.coral : Colors.red.shade600;
-        icon = '\u26A0\uFE0F'; // warning
+        icon = '\u26A0\uFE0F';
         message = absDelta > 0
-            ? 'Fatigue detected \u2014 reducing $deltaStr $unit'
+            ? pickVariant([
+                'Fatigue detected \u2014 dropping $deltaStr $unit',
+                'Easing off $deltaStr $unit \u2014 keep quality high',
+                'Backing down $deltaStr $unit on the next set',
+                '\u2212$deltaStr $unit \u2014 protect the form, not the ego',
+              ])
             : 'Fatigue detected \u2014 reducing weight';
       case AdaptationFeedbackType.weightDecreased:
         chipColor = isDark ? AppColors.coral : Colors.red.shade600;
-        icon = '\u2198'; // arrow lower-right
-        message = 'Reducing weight \u2212$deltaStr $unit';
+        icon = '\u2198';
+        // Conflict tie-break: if RIR signaled "increase" but reps were below
+        // target, progressive_overload already chose the rep-based decrease.
+        // Chip text stays in agreement with the table's next target.
+        message = pickVariant([
+          'Reducing weight \u2212$deltaStr $unit',
+          'Backing off \u2212$deltaStr $unit \u2014 quality first',
+          'Lighten up: \u2212$deltaStr $unit next',
+          '\u2212$deltaStr $unit on the next set \u2014 preserve form',
+        ]);
       case AdaptationFeedbackType.none:
         return const SizedBox.shrink();
     }
@@ -491,49 +524,88 @@ class _InlineRestRowState extends State<InlineRestRow>
           ),
           const SizedBox(height: 6),
 
-          // Star rating row with emoji anchors
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Text('😌', style: TextStyle(fontSize: 15)),
-              const SizedBox(width: 2),
+          // 5-star rating row, no emoji bookends.
+          //
+          // Display ↔ stored RPE mapping (preserves analytics scale):
+          //   1★ = Easy           → stored RPE 2
+          //   2★ = A little tough → stored RPE 4
+          //   3★ = Solid effort   → stored RPE 6
+          //   4★ = Hard           → stored RPE 8
+          //   5★ = Max effort     → stored RPE 10
+          //
+          // The widget's `currentRpe` field is the stored 1–10 value. We
+          // round it to the nearest 5-star bucket for visual selection.
+          Builder(builder: (context) {
+            int? selectedStars;
+            if (widget.currentRpe != null && widget.currentRpe! > 0) {
+              selectedStars = ((widget.currentRpe! + 1) / 2).round().clamp(1, 5);
+            }
+            const labels = <String>['Easy', 'A little tough', 'Solid effort', 'Hard', 'Max effort'];
 
-              Flexible(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  mainAxisSize: MainAxisSize.min,
-                  children: List.generate(10, (index) {
-                    final rpeValue = index + 1;
-                    final isSelected =
-                        widget.currentRpe != null && rpeValue <= widget.currentRpe!;
-                    final isExactSelection = widget.currentRpe == rpeValue;
-                    return GestureDetector(
-                      onTap: () {
-                        HapticFeedback.selectionClick();
-                        if (isExactSelection) {
-                          widget.onRateSet(0);
-                        } else {
-                          widget.onRateSet(rpeValue);
-                        }
-                      },
+            return Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(5, (index) {
+                final starsValue = index + 1;
+                final isSelected = selectedStars != null && starsValue <= selectedStars;
+                final isExact = selectedStars == starsValue;
+                return Expanded(
+                  child: GestureDetector(
+                    onTap: () {
+                      HapticFeedback.selectionClick();
+                      if (isExact) {
+                        // Tap-again clears.
+                        widget.onRateSet(0);
+                      } else {
+                        // 5-star → 1-10 RPE: 1★=2, 2★=4, 3★=6, 4★=8, 5★=10
+                        widget.onRateSet(starsValue * 2);
+                      }
+                    },
+                    behavior: HitTestBehavior.opaque,
+                    child: Semantics(
+                      label: '${labels[index]}, $starsValue of 5',
+                      button: true,
+                      selected: isSelected,
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 0.5),
+                        padding: const EdgeInsets.symmetric(vertical: 4),
                         child: Icon(
                           isSelected ? Icons.star_rounded : Icons.star_outline_rounded,
-                          size: 20,
+                          size: 28,
                           color: isSelected
                               ? Colors.amber.shade600
                               : textMuted.withValues(alpha: 0.5),
                         ),
                       ),
-                    );
-                  }),
-                ),
-              ),
+                    ),
+                  ),
+                );
+              }),
+            );
+          }),
 
-              const SizedBox(width: 2),
-              const Text('😤', style: TextStyle(fontSize: 15)),
-            ],
+          // Inline label for the currently selected (or tappable) intensity.
+          // Reads off the same star count → matches what the user just tapped.
+          Padding(
+            padding: const EdgeInsets.only(top: 2),
+            child: Builder(builder: (context) {
+              int? selectedStars;
+              if (widget.currentRpe != null && widget.currentRpe! > 0) {
+                selectedStars = ((widget.currentRpe! + 1) / 2).round().clamp(1, 5);
+              }
+              const labels = <String>['Easy', 'A little tough', 'Solid effort', 'Hard', 'Max effort'];
+              final label = selectedStars == null
+                  ? 'Tap to rate (optional)'
+                  : labels[selectedStars - 1];
+              return Center(
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: textMuted,
+                    fontWeight: selectedStars == null ? FontWeight.w400 : FontWeight.w600,
+                  ),
+                ),
+              );
+            }),
           ),
         ],
       ),

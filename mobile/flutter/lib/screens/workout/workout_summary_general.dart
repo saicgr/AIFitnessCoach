@@ -13,6 +13,7 @@ import 'package:intl/intl.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/providers/heart_rate_provider.dart';
+import '../../core/utils/muscle_aliases.dart' as muscle_util;
 import '../../data/models/workout.dart';
 import '../../widgets/heart_rate_chart.dart';
 import '../library/providers/muscle_group_images_provider.dart';
@@ -1153,56 +1154,32 @@ class _MusclesWorkedSection extends StatelessWidget {
     return result;
   }
 
-  static String _normalizeMuscle(String name) {
-    final stripped = name.trim().replaceAll(RegExp(r'\s*\(.*\)\s*$'), '');
-    final lower = stripped.toLowerCase();
-    const aliases = {
-      'upper back': 'Back',
-      'middle back': 'Back',
-      'lats': 'Back',
-      'latissimus dorsi': 'Back',
-      'rear delts': 'Shoulders',
-      'front delts': 'Shoulders',
-      'side delts': 'Shoulders',
-      'deltoids': 'Shoulders',
-      'pecs': 'Chest',
-      'pectorals': 'Chest',
-      'abs': 'Core',
-      'abdominals': 'Core',
-      'obliques': 'Core',
-      'quads': 'Quadriceps',
-      'hamstrings': 'Hamstrings',
-      'glutes': 'Glutes',
-      'gluteus': 'Glutes',
-      'calves': 'Calves',
-      'biceps': 'Biceps',
-      'triceps': 'Triceps',
-      'forearms': 'Forearms',
-      'lower back': 'Lower Back',
-      'hip flexors': 'Hips',
-      'hips': 'Hips',
-      'chest': 'Chest',
-      'back': 'Back',
-      'shoulders': 'Shoulders',
-      'core': 'Core',
-      'arms': 'Arms',
-      'legs': 'Legs',
-      'quadriceps': 'Quadriceps',
-    };
-    return aliases[lower] ?? _titleCase(stripped);
-  }
-
-  static String _titleCase(String s) {
-    if (s.isEmpty) return s;
-    return s.split(' ').map((w) {
-      if (w.isEmpty) return w;
-      return w[0].toUpperCase() + w.substring(1).toLowerCase();
-    }).join(' ');
-  }
+  /// Delegates to the canonical alias util so chip names match the
+  /// Advanced tab's body atlas highlighting. See
+  /// `core/utils/muscle_aliases.dart` for the full alias table.
+  static String _normalizeMuscle(String name) =>
+      muscle_util.canonicalMuscle(name);
 
   static String? _findMuscleImage(String normalized) {
     if (muscleGroupAssets.containsKey(normalized)) {
       return muscleGroupAssets[normalized];
+    }
+    // Bridge canonical-bucket → asset-key for buckets where the asset
+    // file uses the long anatomical name (Quads → Quadriceps,
+    // Adductors → Legs, Cardio/Other → no asset).
+    const bucketToAsset = {
+      'Quads': 'Quadriceps',
+      'Adductors': 'Legs',
+      'Cardio': null,
+      'Full Body': null,
+      'Other': null,
+    };
+    if (bucketToAsset.containsKey(normalized)) {
+      final mapped = bucketToAsset[normalized];
+      if (mapped != null && muscleGroupAssets.containsKey(mapped)) {
+        return muscleGroupAssets[mapped];
+      }
+      return null;
     }
     for (final entry in muscleGroupAssets.entries) {
       if (entry.key.toLowerCase() == normalized.toLowerCase()) {

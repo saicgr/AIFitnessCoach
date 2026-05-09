@@ -129,6 +129,16 @@ class GlassSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
+    // Fix #10 (keyboard overlap): modal bottom sheets ignore
+    // Scaffold.resizeToAvoidBottomInset, so we manually shift content above
+    // the system keyboard using viewInsets.bottom. AnimatedPadding gives a
+    // smooth rise as the keyboard animates. Hardware-keyboard / no-keyboard
+    // cases naturally get viewInsets.bottom == 0 and don't shift.
+    final keyboardInset = MediaQuery.of(context).viewInsets.bottom;
+    // Replace (not add to) the safe-area bottom padding. Stacking both would
+    // double-pad and push content too far up when the keyboard is hidden.
+    final safeAreaBottom = MediaQuery.of(context).padding.bottom;
+
     final container = Container(
       constraints: BoxConstraints(
         maxHeight: MediaQuery.of(context).size.height * maxHeightFraction,
@@ -154,9 +164,17 @@ class GlassSheet extends StatelessWidget {
                 ? Padding(padding: padding!, child: child)
                 : child,
           ),
-          // Fill the bottom safe area (home indicator) with the sheet's
-          // background color so the system white doesn't bleed through.
-          SizedBox(height: MediaQuery.of(context).padding.bottom),
+          // When the keyboard is up, viewInsets.bottom > 0 — shift the entire
+          // sheet up by that amount via AnimatedPadding. When it's down,
+          // fall back to the safe-area bottom (home indicator). We don't add
+          // both — that would over-pad.
+          AnimatedPadding(
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeOut,
+            padding: EdgeInsets.only(
+              bottom: keyboardInset > 0 ? keyboardInset : safeAreaBottom,
+            ),
+          ),
         ],
       ),
     );
@@ -188,13 +206,18 @@ class GlassSheetHandle extends StatelessWidget {
       child: Stack(
         alignment: Alignment.center,
         children: [
-          // Centered drag handle
-          Container(
-            width: GlassSheetStyle.handleWidth,
-            height: GlassSheetStyle.handleHeight,
-            decoration: BoxDecoration(
-              color: GlassSheetStyle.handleColor(isDark),
-              borderRadius: BorderRadius.circular(2),
+          // Centered drag handle. Wrapped in Semantics so screen readers
+          // announce it as a resize/dismiss affordance (Fix #3 a11y).
+          Semantics(
+            label: 'Drag to resize',
+            container: true,
+            child: Container(
+              width: GlassSheetStyle.handleWidth,
+              height: GlassSheetStyle.handleHeight,
+              decoration: BoxDecoration(
+                color: GlassSheetStyle.handleColor(isDark),
+                borderRadius: BorderRadius.circular(2),
+              ),
             ),
           ),
           // Close button on the right

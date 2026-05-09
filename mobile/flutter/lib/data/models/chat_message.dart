@@ -168,6 +168,13 @@ class ChatMessage extends Equatable {
   @JsonKey(includeFromJson: false, includeToJson: false)
   final int? responseTimeMs;
 
+  /// Origin tag for the message (e.g. 'auto_coach_tip', 'user_input',
+  /// 'accountability_nudge'). Used by the dedup/prune migration in
+  /// chat_repository_part_chat_messages_notifier.dart so auto-generated
+  /// coach tips can be filtered without heuristic prefix matching.
+  /// Null for legacy messages (pre-tagging).
+  final String? source;
+
   const ChatMessage({
     this.id,
     this.userId,
@@ -189,6 +196,7 @@ class ChatMessage extends Equatable {
     this.uploadPhase,
     this.uploadProgress,
     this.responseTimeMs,
+    this.source,
   });
 
   factory ChatMessage.fromJson(Map<String, dynamic> json) =>
@@ -237,7 +245,7 @@ class ChatMessage extends Equatable {
       actionData?['form_check_result'] as Map<String, dynamic>?;
 
   @override
-  List<Object?> get props => [id, userId, role, content, agentType, createdAt, actionData, mediaUrl, mediaType, mediaRefs, localFilePath, status, isPinned, audioUrl, audioDurationMs, coachPersonaId, responseTimeMs];
+  List<Object?> get props => [id, userId, role, content, agentType, createdAt, actionData, mediaUrl, mediaType, mediaRefs, localFilePath, status, isPinned, audioUrl, audioDurationMs, coachPersonaId, responseTimeMs, source];
 
   /// Check if this is a voice message
   bool get isVoiceMessage => audioUrl != null && audioUrl!.isNotEmpty;
@@ -265,6 +273,7 @@ class ChatMessage extends Equatable {
       uploadPhase: phase,
       uploadProgress: progress,
       responseTimeMs: responseTimeMs,
+      source: source,
     );
   }
 
@@ -288,6 +297,7 @@ class ChatMessage extends Equatable {
     int? audioDurationMs,
     String? coachPersonaId,
     int? responseTimeMs,
+    String? source,
   }) {
     return ChatMessage(
       id: id ?? this.id,
@@ -308,6 +318,7 @@ class ChatMessage extends Equatable {
       audioDurationMs: audioDurationMs ?? this.audioDurationMs,
       coachPersonaId: coachPersonaId ?? this.coachPersonaId,
       responseTimeMs: responseTimeMs ?? this.responseTimeMs,
+      source: source ?? this.source,
     );
   }
 

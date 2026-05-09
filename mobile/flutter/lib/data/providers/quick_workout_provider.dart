@@ -15,6 +15,7 @@ import '../../services/weekly_volume_tracker.dart';
 import '../local/database.dart';
 import '../local/database_provider.dart';
 import '../models/workout.dart';
+import '../repositories/workout_repository.dart';
 import '../services/api_client.dart';
 import '../services/exercise_library_loader.dart';
 import '../../core/constants/api_constants.dart';
@@ -23,6 +24,7 @@ import '../../models/equipment_item.dart';
 import '../../services/equipment_context_resolver.dart';
 import '../../services/offline_workout_generator.dart';
 import '../../services/quick_workout_engine.dart';
+import 'today_workout_provider.dart';
 
 // ============================================
 // Quick Workout State
@@ -48,6 +50,13 @@ class QuickWorkoutState {
   /// Last used focus preference
   final String? lastFocus;
 
+  /// Fix #1: id of the currently-active quick workout. Used to atomically
+  /// supersede the previous one on regenerate so the carousel shows exactly
+  /// ONE quick card at a time. Survives reloads via the underlying workout
+  /// row's id (we don't persist this field directly — it's hydrated from
+  /// the latest is_quick==true workout in the today payload).
+  final String? currentQuickWorkoutId;
+
   const QuickWorkoutState({
     this.isGenerating = false,
     this.statusMessage,
@@ -55,6 +64,7 @@ class QuickWorkoutState {
     this.error,
     this.lastDuration,
     this.lastFocus,
+    this.currentQuickWorkoutId,
   });
 
   QuickWorkoutState copyWith({
@@ -64,9 +74,11 @@ class QuickWorkoutState {
     String? error,
     int? lastDuration,
     String? lastFocus,
+    String? currentQuickWorkoutId,
     bool clearError = false,
     bool clearWorkout = false,
     bool clearStatus = false,
+    bool clearQuickId = false,
   }) {
     return QuickWorkoutState(
       isGenerating: isGenerating ?? this.isGenerating,
@@ -75,6 +87,9 @@ class QuickWorkoutState {
       error: clearError ? null : (error ?? this.error),
       lastDuration: lastDuration ?? this.lastDuration,
       lastFocus: lastFocus ?? this.lastFocus,
+      currentQuickWorkoutId: clearQuickId
+          ? null
+          : (currentQuickWorkoutId ?? this.currentQuickWorkoutId),
     );
   }
 
@@ -401,14 +416,24 @@ class QuickWorkoutNotifier extends StateNotifier<QuickWorkoutState> {
       // 8d. Record DUP session goal
       await DupRotation.recordSession(effectiveGoal);
 
-      // 9. Update state immediately (instant UX)
+      // 9. Atomic swap of currentQuickWorkoutId. Fire-and-forget delete on
+      // any prior quick workout id so the carousel never shows two quick
+      // cards simultaneously. Race-safe: even if the prior delete is still
+      // in flight when the new id lands, the carousel's second-pass dedup
+      // (most-recent-wins) hides the stale one until the network call
+      // resolves. See hero_workout_carousel.dart `dedup quick workouts`.
+      final priorQuickId = state.currentQuickWorkoutId;
       state = state.copyWith(
         isGenerating: false,
         generatedWorkout: workout,
         lastDuration: duration,
         lastFocus: focus,
         statusMessage: 'Workout ready!',
+        currentQuickWorkoutId: workout.id,
       );
+      if (priorQuickId != null && priorQuickId != workout.id) {
+        _supersedePriorQuick(priorQuickId);
+      }
 
       // 10. Persist to backend async (fire-and-forget)
       _persistToBackend(workout);
@@ -469,17 +494,89 @@ class QuickWorkoutNotifier extends StateNotifier<QuickWorkoutState> {
       final workout = Workout.fromJson(workoutData);
 
       debugPrint('[QuickWorkout] Generated via API: ${workout.name}');
+      // Atomic swap: see notes in generateQuickWorkout.
+      final priorQuickId = state.currentQuickWorkoutId;
       state = state.copyWith(
         isGenerating: false,
         generatedWorkout: workout,
         lastDuration: duration,
         lastFocus: focus,
         statusMessage: 'Workout ready!',
+        currentQuickWorkoutId: workout.id,
       );
+      if (priorQuickId != null && priorQuickId != workout.id) {
+        _supersedePriorQuick(priorQuickId);
+      }
 
       return workout;
     } else {
       throw Exception('Failed to generate workout: ${response.statusCode}');
+    }
+  }
+
+  /// Fire-and-forget delete of a previous quick workout's id when a new one
+  /// supersedes it. Offline / network failures are swallowed: the carousel's
+  /// second-pass quick dedup (most-recent-wins by created_at) keeps the UI
+  /// correct even before the server acks the delete. The pending op will
+  /// reconcile on next pull-to-refresh once the network is back.
+  ///
+  /// Race-safe: if the user regenerates again while THIS delete is still in
+  /// flight, the new generation resets `currentQuickWorkoutId` and triggers
+  /// another supersede call — they're independent and idempotent on the
+  /// server (DELETE on a missing id is a no-op).
+  void _supersedePriorQuick(String priorId) {
+    try {
+      final repo = _ref.read(workoutRepositoryProvider);
+      // Synchronously evict from today provider so the carousel stops
+      // rendering it before the network round-trip completes.
+      try {
+        _ref.read(todayWorkoutProvider.notifier).evictWorkoutById(priorId);
+      } catch (_) {
+        // todayWorkoutProvider may not be initialized yet (cold start).
+      }
+      repo.deleteWorkout(priorId).then((ok) {
+        debugPrint('[QuickWorkout] Superseded prior quick $priorId (ok=$ok)');
+      }).catchError((e) {
+        debugPrint('[QuickWorkout] Supersede prior quick failed (will retry on sync): $e');
+      });
+    } catch (e) {
+      debugPrint('[QuickWorkout] Supersede prior quick threw: $e');
+    }
+  }
+
+  /// User-initiated dismiss (X button) on the current quick workout card.
+  ///
+  /// Optimistic: clears local state immediately, evicts from today provider,
+  /// then fires the backend DELETE. On offline/failure, the change persists
+  /// locally; the next online tick reconciles with backend (existing sync
+  /// engine queues the op). If the workout had partial completion, callers
+  /// are expected to confirm via dialog BEFORE invoking this method (see
+  /// hero_workout_card dismiss flow).
+  Future<bool> dismissCurrentQuickWorkout() async {
+    final id = state.currentQuickWorkoutId ?? state.generatedWorkout?.id;
+    if (id == null) {
+      debugPrint('[QuickWorkout] dismissCurrentQuickWorkout: no active id');
+      return false;
+    }
+    // Optimistic local clear so UI reacts immediately.
+    state = state.copyWith(clearWorkout: true, clearQuickId: true);
+    try {
+      _ref.read(todayWorkoutProvider.notifier).evictWorkoutById(id);
+    } catch (_) {}
+    try {
+      final repo = _ref.read(workoutRepositoryProvider);
+      final ok = await repo.deleteWorkout(id);
+      // Trigger a silent refresh so the dismissed workout doesn't reappear
+      // from a stale cache on the next render.
+      try {
+        await _ref.read(todayWorkoutProvider.notifier).invalidateAndRefresh();
+      } catch (_) {}
+      debugPrint('[QuickWorkout] Dismissed quick $id (ok=$ok)');
+      return ok;
+    } catch (e) {
+      debugPrint('[QuickWorkout] Dismiss network call failed (will reconcile on sync): $e');
+      // Local state already updated — intentional offline-first behavior.
+      return false;
     }
   }
 

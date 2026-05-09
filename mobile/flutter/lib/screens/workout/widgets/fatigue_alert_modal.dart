@@ -21,12 +21,26 @@ enum FatigueSeverity {
   critical,
 }
 
-/// Data class representing a fatigue alert from the backend
+/// Data class representing a fatigue alert from the backend.
+///
+/// Note: weight values are expressed in [weightUnit] (the user's
+/// `workout_weight_unit` snapshotted at alert creation — Bug A fix). A
+/// mid-session settings flip will NOT cause already-rendered alerts to
+/// mismatch labels with values.
 class FatigueAlertData {
   final bool fatigueDetected;
   final FatigueSeverity severity;
   final int suggestedWeightReduction;
-  final double suggestedWeight;
+  // Nullable for bodyweight exercises (use [repTargetReduction] instead).
+  final double? suggestedWeight;
+  // 'kg' or 'lb'. Snapshotted from the user's workout_weight_unit at the
+  // moment the alert was generated.
+  final String weightUnit;
+  // Increment (in [weightUnit]) used by the backend to round suggestedWeight.
+  // Surfaced so the UI can render "Reducing weight by N <unit>".
+  final double weightIncrement;
+  // For bodyweight exercises: the suggested next-set rep target.
+  final int? repTargetReduction;
   final String reasoning;
   final List<String> indicators;
   final double confidence;
@@ -36,17 +50,31 @@ class FatigueAlertData {
     required this.severity,
     required this.suggestedWeightReduction,
     required this.suggestedWeight,
+    required this.weightUnit,
+    required this.weightIncrement,
+    required this.repTargetReduction,
     required this.reasoning,
     required this.indicators,
     required this.confidence,
   });
 
   factory FatigueAlertData.fromJson(Map<String, dynamic> json) {
+    // Backend may send 'lb' or 'lbs'. Normalize to 'lb' for display.
+    final rawUnit = (json['weight_unit'] as String?)?.toLowerCase();
+    final unit = (rawUnit == 'lbs' || rawUnit == 'lb') ? 'lb' : 'kg';
+    final suggestedRaw = json['suggested_weight'];
     return FatigueAlertData(
       fatigueDetected: json['fatigue_detected'] as bool? ?? false,
       severity: _parseSeverity(json['severity'] as String?),
       suggestedWeightReduction: json['suggested_weight_reduction'] as int? ?? 0,
-      suggestedWeight: (json['suggested_weight'] as num?)?.toDouble() ?? 0.0,
+      // Null for bodyweight exercises; non-null otherwise.
+      suggestedWeight: suggestedRaw is num ? suggestedRaw.toDouble() : null,
+      weightUnit: unit,
+      weightIncrement:
+          (json['weight_increment'] as num?)?.toDouble() ?? (unit == 'lb' ? 5.0 : 2.5),
+      repTargetReduction: json['rep_target_reduction'] is num
+          ? (json['rep_target_reduction'] as num).toInt()
+          : null,
       reasoning: json['reasoning'] as String? ?? '',
       indicators: (json['indicators'] as List<dynamic>?)
               ?.map((e) => e.toString())
@@ -456,7 +484,16 @@ class FatigueAlertModal extends StatelessWidget {
     Color severityColor,
     bool isSmallScreen,
   ) {
-    final weightDiff = currentWeight - alertData.suggestedWeight;
+    // Bodyweight branch (edge case 57): no weight to display — render
+    // a rep-target reduction card instead so the modal stays useful.
+    if (alertData.suggestedWeight == null || alertData.repTargetReduction != null) {
+      return _buildRepTargetSuggestion(
+        isDark, textPrimary, textSecondary, textMuted, severityColor, isSmallScreen,
+      );
+    }
+    final unit = alertData.weightUnit; // already 'kg' or 'lb' — never hardcoded.
+    final suggested = alertData.suggestedWeight!;
+    final weightDiff = currentWeight - suggested;
 
     return Container(
       padding: EdgeInsets.all(isSmallScreen ? 16 : 20),
@@ -508,7 +545,7 @@ class FatigueAlertModal extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    'kg',
+                    unit,
                     style: TextStyle(
                       fontSize: isSmallScreen ? 12 : 13,
                       color: textMuted,
@@ -526,7 +563,7 @@ class FatigueAlertModal extends StatelessWidget {
                       size: isSmallScreen ? 24 : 28,
                     ),
                     Text(
-                      '-${weightDiff.toStringAsFixed(1)}',
+                      '-${weightDiff.toStringAsFixed(1)} $unit',
                       style: TextStyle(
                         fontSize: isSmallScreen ? 11 : 12,
                         fontWeight: FontWeight.w600,
@@ -540,7 +577,7 @@ class FatigueAlertModal extends StatelessWidget {
               Column(
                 children: [
                   Text(
-                    alertData.suggestedWeight.toStringAsFixed(1),
+                    suggested.toStringAsFixed(1),
                     style: TextStyle(
                       fontSize: isSmallScreen ? 28 : 32,
                       fontWeight: FontWeight.bold,
@@ -548,7 +585,7 @@ class FatigueAlertModal extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    'kg',
+                    unit,
                     style: TextStyle(
                       fontSize: isSmallScreen ? 12 : 13,
                       color: textSecondary,
@@ -576,6 +613,69 @@ class FatigueAlertModal extends StatelessWidget {
           duration: 1000.ms,
           color: AppColors.cyan.withValues(alpha: 0.2),
         );
+  }
+
+  /// Bodyweight variant of the suggestion card — recommends reducing the
+  /// rep target instead of the weight (edge case 57).
+  Widget _buildRepTargetSuggestion(
+    bool isDark,
+    Color textPrimary,
+    Color textSecondary,
+    Color textMuted,
+    Color severityColor,
+    bool isSmallScreen,
+  ) {
+    final newReps = alertData.repTargetReduction;
+    return Container(
+      padding: EdgeInsets.all(isSmallScreen ? 16 : 20),
+      decoration: BoxDecoration(
+        color: isDark
+            ? Colors.white.withValues(alpha: 0.05)
+            : Colors.black.withValues(alpha: 0.03),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppColors.cyan.withValues(alpha: 0.3),
+          width: 2,
+        ),
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Icon(Icons.repeat, color: AppColors.cyan, size: isSmallScreen ? 20 : 24),
+              const SizedBox(width: 10),
+              Text(
+                'SUGGESTED REP TARGET',
+                style: TextStyle(
+                  fontSize: isSmallScreen ? 10 : 11,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.cyan,
+                  letterSpacing: 1,
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: isSmallScreen ? 12 : 16),
+          Text(
+            newReps != null ? '$newReps reps' : '—',
+            style: TextStyle(
+              fontSize: isSmallScreen ? 28 : 32,
+              fontWeight: FontWeight.bold,
+              color: AppColors.cyan,
+            ),
+          ),
+          SizedBox(height: isSmallScreen ? 8 : 12),
+          Text(
+            'Bodyweight exercise — drop the rep target instead of the weight.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: isSmallScreen ? 12 : 13,
+              color: textSecondary,
+            ),
+          ),
+        ],
+      ),
+    ).animate().fadeIn(delay: 200.ms, duration: 300.ms);
   }
 
   Widget _buildActionButtons(BuildContext context, bool isDark, bool isSmallScreen) {

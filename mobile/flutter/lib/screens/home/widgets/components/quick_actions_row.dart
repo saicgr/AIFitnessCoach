@@ -15,6 +15,7 @@ import '../../../../widgets/quick_action_tile.dart';
 import '../../../../widgets/quick_actions_sheet.dart';
 import '../../../fasting/widgets/log_weight_sheet.dart';
 import '../../../nutrition/log_meal_sheet.dart';
+import '../../../workout/widgets/equipment_snap_flow.dart';
 import '../../../workout/widgets/quick_workout_sheet.dart';
 import '../../../../widgets/app_tour/app_tour_controller.dart';
 import '../../../../data/repositories/progress_photos_repository.dart';
@@ -135,6 +136,32 @@ Widget buildQuickActionWidget(String actionId, bool isDark, BuildContext context
               showLogMealSheet(context, ref, autoOpenMultiImage: true);
             }
           });
+        },
+        isDark: isDark,
+      );
+    case 'identify_equipment':
+      // Issue 2: opens EquipmentSnapFlow in identify mode (no active
+      // workout context — the flow returns null on success and the
+      // user navigates to chat with the snap result already showing).
+      // Lives only in the More sheet — never in the 2×5 grid.
+      final identify = quickActionRegistry['identify_equipment'];
+      return _GridActionItem(
+        icon: identify?.icon ?? Icons.camera_alt_outlined,
+        label: identify?.label ?? "What's this?",
+        iconColor: identify?.color ?? AppColors.accent,
+        onTap: () async {
+          HapticService.light();
+          await showEquipmentSnapFlow(
+            context,
+            ref,
+            mode: SnapMode.identify,
+          );
+          if (context.mounted) {
+            // After identification, drop user into chat so the
+            // identify_equipment result + EquipmentMatchCard renders
+            // there alongside the snapped photo.
+            context.push('/chat');
+          }
         },
         isDark: isDark,
       );

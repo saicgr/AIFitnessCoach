@@ -428,19 +428,34 @@ class WorkoutNamingMixin:
             ((12, 22), (1, 19),  "Capricorn season — mountain goat/discipline energy (e.g., 'Capricorn Grind Legs')"),
         ]
 
+        # Zodiac theming is OPT-IN with a low probability — validation harness
+        # 2026-05-08 found 60+ of 100 workouts had "Taurus Iron …" prefix because
+        # the Taurus-season suggestion was treated as mandatory by Gemini.
+        # Roll a die: only 15% of calls get the theming injected so it stays an
+        # occasional flavor, not a name lock-in.
+        import random as _rand
+        if _rand.random() > 0.15:
+            return None
+
         for (start_m, start_d), (end_m, end_d), suggestion in zodiac_themes:
             if start_m <= end_m:
-                # Normal range (e.g., Mar 21 - Apr 19)
                 if (month == start_m and day >= start_d) or \
                    (month == end_m and day <= end_d) or \
                    (start_m < month < end_m):
-                    return f"{suggestion}. This is a very subtle suggestion — only use if it fits naturally."
+                    return (
+                        f"{suggestion}. OPTIONAL flavor only — use ONLY if "
+                        f"it fits naturally; otherwise create a fresh, "
+                        f"unrelated name."
+                    )
             else:
-                # Wraps around year end (Capricorn: Dec 22 - Jan 19)
                 if (month == start_m and day >= start_d) or \
                    (month == end_m and day <= end_d) or \
                    (month > start_m or month < end_m):
-                    return f"{suggestion}. This is a very subtle suggestion — only use if it fits naturally."
+                    return (
+                        f"{suggestion}. OPTIONAL flavor only — use ONLY if "
+                        f"it fits naturally; otherwise create a fresh, "
+                        f"unrelated name."
+                    )
 
         return None
 

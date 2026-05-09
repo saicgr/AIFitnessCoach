@@ -367,7 +367,10 @@ class _ChatQuickActionsSheet extends ConsumerStatefulWidget {
 const _chatActionCategories = <String, List<String>>{
   'Form Analysis': ['check_form', 'compare_form'],
   'Nutrition': ['scan_food', 'analyze_menu', 'calorie_check', 'nutrition_advice', 'meal_prep'],
-  'Workout': ['quick_workout'],
+  // Issue 2: identify_equipment lives under Workout because the result
+  // routes into Swap/Add flows in the active workout (or quick-workout
+  // generation if no active workout).
+  'Workout': ['quick_workout', 'identify_equipment'],
   'Recovery': ['recovery_tips', 'injury_help'],
 };
 

@@ -448,12 +448,40 @@ extension SetLoggingMixinUI on SetLoggingMixin {
         increment: effectiveIncrement,
         totalSets: effectiveSetsForTargets,
       );
+      final originalTargetsRef = targets;
       targets = adaptResult.targets;
+
+      // The chip's weightDelta and the table's next-set weight MUST agree.
+      // adaptTargetsWithFeedback computes delta on PRE-snap values; the
+      // table later snaps to equipment-real increments via snapToRealIncrement,
+      // which can round 17.5 → 15. To prevent drift, recompute the feedback
+      // delta from POST-snap values so the chip matches the table.
+      AdaptationFeedback alignedFeedback = adaptResult.feedback;
+      if (alignedFeedback.type != AdaptationFeedbackType.none && completedCount < targets.length) {
+        final origPreSnap = completedCount < originalTargetsRef.length
+            ? originalTargetsRef[completedCount].weight : 0.0;
+        final newPreSnap = targets[completedCount].weight;
+        final origPostSnap = snapToRealIncrement(origPreSnap, exercise.equipment,
+            exerciseName: exercise.name, useKg: useKg);
+        final newPostSnap = snapToRealIncrement(newPreSnap, exercise.equipment,
+            exerciseName: exercise.name, useKg: useKg);
+        final alignedDelta = newPostSnap - origPostSnap;
+        // If snapping zeroed out the delta entirely, suppress the chip — the
+        // table won't show a change either.
+        if (alignedDelta.abs() < 0.01) {
+          alignedFeedback = AdaptationFeedback.none;
+        } else {
+          alignedFeedback = AdaptationFeedback(
+            type: alignedFeedback.type,
+            weightDelta: alignedDelta,
+          );
+        }
+      }
 
       // Store adaptation feedback for inline rest row display
       if (_mounted) {
         _setState(() {
-          (this as dynamic).inlineRestAdaptationFeedback = adaptResult.feedback;
+          (this as dynamic).inlineRestAdaptationFeedback = alignedFeedback;
         });
       }
 

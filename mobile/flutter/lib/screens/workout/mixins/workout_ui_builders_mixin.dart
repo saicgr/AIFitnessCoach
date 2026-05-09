@@ -45,6 +45,7 @@ import '../widgets/workout_stats_strip.dart';
 import '../widgets/workout_top_bar_v2.dart';
 import '../widgets/workout_top_overlay.dart';
 import '../../../core/providers/window_mode_provider.dart';
+import '../../../core/providers/workout_ui_mode_provider.dart';
 import '../../../core/models/set_progression.dart';
 
 part 'workout_ui_builders_mixin_part_drag_action_zone.dart';
@@ -405,6 +406,51 @@ mixin WorkoutUIBuildersMixin<T extends StatefulWidget> on State<T> {
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ),
+
+            // Floating "How to" pill — opens the full exercise info screen
+            // (muscle illustration, setup, tips, full video). Mirrored from the
+            // bottom-bar Instructions chip but discoverable directly on the
+            // video so users don't have to hunt for it during a set.
+            Positioned(
+              top: 8,
+              right: 8,
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(20),
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    showExerciseDetailsSheet(exercise);
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.55),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.25),
+                        width: 1,
+                      ),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.info_outline, color: Colors.white, size: 14),
+                        SizedBox(width: 4),
+                        Text(
+                          'How to',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ),

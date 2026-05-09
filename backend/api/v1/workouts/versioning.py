@@ -920,7 +920,14 @@ async def regenerate_workout_streaming(request: Request, body: RegenerateWorkout
                     if target_muscles:
                         focus_areas = list(target_muscles)[:2]
 
+            # Multi-focus expansion: previously this collapsed to focus_areas[0]
+            # which silently ignored every selection past the first — e.g. user
+            # picks "Chest + Full Body" and we'd only retrieve chest exercises.
+            # Now we fan out RAG retrieval across every selected area and merge
+            # dedup'd by exercise name, preserving per-area allocation. Single
+            # primary `focus_area` is kept for analytics / Gemini hint.
             focus_area = focus_areas[0] if focus_areas else "full_body"
+            focus_areas_for_rag = focus_areas if focus_areas else [focus_area]
 
             # Calculate target duration from min/max range or fallback. Fall
             # back to user preferences (via resolve_target_duration) so saved
@@ -955,20 +962,88 @@ async def regenerate_workout_streaming(request: Request, body: RegenerateWorkout
             if injuries and len(injuries) >= 4:
                 exercise_count = max(3, exercise_count - len(injuries) // 3)
 
-            rag_exercises = await exercise_rag.select_exercises_for_workout(
-                focus_area=focus_area,
-                equipment=equipment if isinstance(equipment, list) else [],
-                fitness_level=fitness_level,
-                goals=goals if isinstance(goals, list) else [],
-                count=exercise_count,
-                avoid_exercises=[],
-                injuries=injuries if injuries else None,
-                dumbbell_count=dumbbell_count,
-                kettlebell_count=kettlebell_count,
+            # Fan out per focus area and merge dedup'd. Allocate `count` so
+            # each area gets at least 1 slot, biasing the primary (first)
+            # area when the split is uneven. Single-area still goes through
+            # one call. Edge cases:
+            #   - empty focus_areas_for_rag → falls back to ["full_body"]
+            #   - duplicate area strings → de-dup pre-call
+            #   - one area returns empty → continue with others; only raise
+            #     the "no exercises found" error if ALL areas come back empty
+            seen_areas = []
+            for _a in focus_areas_for_rag:
+                _norm = (_a or "").strip().lower()
+                if _norm and _norm not in seen_areas:
+                    seen_areas.append(_norm)
+            if not seen_areas:
+                seen_areas = ["full_body"]
+
+            n_areas = len(seen_areas)
+            base_alloc = max(1, exercise_count // n_areas)
+            remainder = max(0, exercise_count - base_alloc * n_areas)
+            per_area_counts = [
+                base_alloc + (1 if i < remainder else 0) for i in range(n_areas)
+            ]
+            # Bias: ensure primary area gets at least the largest slice.
+            per_area_counts.sort(reverse=True)
+
+            merged: list = []
+            seen_names: set = set()
+            for area, area_count in zip(seen_areas, per_area_counts):
+                area_results = await exercise_rag.select_exercises_for_workout(
+                    focus_area=area,
+                    equipment=equipment if isinstance(equipment, list) else [],
+                    fitness_level=fitness_level,
+                    goals=goals if isinstance(goals, list) else [],
+                    count=area_count * 2,  # over-fetch so post-filter still hits target
+                    avoid_exercises=list(seen_names),
+                    injuries=injuries if injuries else None,
+                    dumbbell_count=dumbbell_count,
+                    kettlebell_count=kettlebell_count,
+                )
+                for ex in area_results or []:
+                    name = (ex.get("name") or "").strip().lower()
+                    if name and name not in seen_names:
+                        seen_names.add(name)
+                        merged.append(ex)
+
+            # Post-RAG hard filters — apply BEFORE truncating to exercise_count
+            # so we don't truncate then realize half the survivors were warmups.
+            #   1. Drop warmup-filler / stretch exercises from the main pool
+            #      (catches "Diagonal Punch" + "Back Pec Stretch" leakage).
+            #   2. Drop exercises that don't match the workout_type muscle
+            #      whitelist (catches "Dumbbell Single Leg Deadlift" in an
+            #      upper_body request).
+            from services.exercise_rag.filters import (
+                filter_main_exercises,
+                filter_by_workout_type_muscles,
             )
+            # User rule: stretches only in mobility/stretch/recovery sessions;
+            # combat moves only in cardio/HIIT/boxing sessions.
+            _focus_lc = [(f or "").lower() for f in (focus_areas or [])]
+            _is_mobility = any(
+                f in {"mobility", "stretch", "recovery"} for f in _focus_lc
+            ) or (workout_type_override or "").lower() in {
+                "mobility", "recovery", "stretch"
+            }
+            _is_combat = any(
+                f in {"cardio", "hiit", "conditioning", "boxing", "combat"}
+                for f in _focus_lc
+            ) or (workout_type_override or "").lower() in {
+                "cardio", "hiit", "boxing", "combat"
+            }
+            merged = filter_main_exercises(
+                merged,
+                is_mobility_workout=_is_mobility,
+                is_combat_workout=_is_combat,
+            )
+            merged = filter_by_workout_type_muscles(merged, workout_type_override)
+            rag_exercises = merged[:exercise_count]
 
             if not rag_exercises:
-                yield send_error(f"No exercises found for focus area: {focus_area}")
+                yield send_error(
+                    f"No exercises found for focus areas: {', '.join(seen_areas)}"
+                )
                 return
 
             # Step 3: Generate workout with AI
@@ -1021,6 +1096,15 @@ async def regenerate_workout_streaming(request: Request, body: RegenerateWorkout
             if len(deduplicated) < original_count:
                 logger.warning(f"⚠️ [Validation] Removed {original_count - len(deduplicated)} similar exercises to ensure variety")
                 exercises = deduplicated
+
+            # Canonical reorder for CNS-demand cascade (validation harness
+            # 2026-05-08). Mirrors /generate-stream + /generate.
+            from api.v1.workouts.validation_utils import reorder_exercises_canonically
+            exercises = reorder_exercises_canonically(
+                exercises,
+                focus_areas=focus_areas,
+                workout_type=workout_type_override,
+            )
 
             workout_name = body.workout_name or workout_data.get("name", "Regenerated Workout")
             workout_type = workout_type_override or workout_data.get("type", existing.get("type", "strength"))

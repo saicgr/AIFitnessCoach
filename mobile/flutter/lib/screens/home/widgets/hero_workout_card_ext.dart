@@ -3,6 +3,63 @@ part of 'hero_workout_card.dart';
 /// Methods extracted from _HeroWorkoutCardState
 extension __HeroWorkoutCardStateExt on _HeroWorkoutCardState {
 
+  /// Fix #1: dismiss flow for the active Quick workout. Confirms with the
+  /// user before dropping the workout, then routes through
+  /// QuickWorkoutNotifier so the atomic supersede + today provider
+  /// invalidation runs in one place. The Workout model on the home card
+  /// doesn't carry per-set log info (that lives on WorkoutSummaryResponse),
+  /// so we always confirm — the user can re-tap "Start" within seconds if
+  /// they tap the X by accident.
+  Future<void> _dismissQuickWorkout() async {
+    final keepGoing = await AppDialog.destructive(
+      context,
+      title: 'Dismiss Quick Workout?',
+      message:
+          "You'll lose this Quick. Any logged sets in it will be discarded. Continue?",
+      confirmText: 'Dismiss',
+      icon: Icons.delete_outline,
+    );
+    if (keepGoing != true) return;
+
+    setState(() => _isSkipping = true);
+    try {
+      final ok = await ref
+          .read(quickWorkoutProvider.notifier)
+          .dismissCurrentQuickWorkout();
+      if (!ok) {
+        // Network-failed dismiss: still removed locally; tell user it'll
+        // sync when back online (no resurrection of card).
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Dismissed offline — will sync when online'),
+              backgroundColor: AppColors.textMuted,
+            ),
+          );
+        }
+      } else if (mounted) {
+        // Best-effort: keep workouts list in sync as well.
+        ref.read(workoutsProvider.notifier).silentRefresh();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Quick workout dismissed'),
+            backgroundColor: AppColors.textMuted,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Could not dismiss workout'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
+    if (mounted) setState(() => _isSkipping = false);
+  }
+
   Future<void> _markAsDone() async {
     final dateLabel = _getScheduledDateLabel(widget.workout.scheduledDate);
     final isToday = dateLabel == 'TODAY';
@@ -188,6 +245,25 @@ extension __HeroWorkoutCardStateExt on _HeroWorkoutCardState {
               ),
               // Divider before destructive action
               const Divider(height: 1),
+              // Fix #1: Dismiss Quick — appears only for quick workouts.
+              // Uses the same backend DELETE path as Skip but routes
+              // through QuickWorkoutNotifier so currentQuickWorkoutId is
+              // cleared atomically and todayWorkoutProvider is invalidated.
+              if (_isQuickWorkout(widget.workout))
+                ListTile(
+                  leading: const Icon(
+                    Icons.close_rounded,
+                    color: AppColors.textMuted,
+                  ),
+                  title: const Text(
+                    'Dismiss Quick',
+                    style: TextStyle(color: AppColors.textMuted),
+                  ),
+                  onTap: () {
+                    Navigator.pop(sheetContext);
+                    _dismissQuickWorkout();
+                  },
+                ),
               // Skip Workout
               ListTile(
                 leading: const Icon(

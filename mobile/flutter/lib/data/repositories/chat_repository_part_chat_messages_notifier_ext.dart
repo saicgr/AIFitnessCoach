@@ -289,14 +289,23 @@ extension ChatMessagesNotifierExt on ChatMessagesNotifier {
         return m;
       }).toList();
 
-      final newMessages = isDuplicate
-          ? withUserDelivered
-          : [...withUserDelivered, assistantMessage];
+      // Fix #10 — content/source-level dedup gate (auto-coach-tip opt-out
+      // + Levenshtein near-duplicate suppression). Skipped when isDuplicate
+      // is already true since that path already drops the append.
+      final passesDedupGate = isDuplicate
+          ? false
+          : await _shouldAppendAssistantMessage(assistantMessage);
+      final shouldAppend = !isDuplicate && passesDedupGate;
+      final newMessages = shouldAppend
+          ? [...withUserDelivered, assistantMessage]
+          : withUserDelivered;
       state = AsyncValue.data(newMessages);
       await _saveToCache(userId, newMessages);
 
       if (isDuplicate) {
         debugPrint('⚠️ [Chat] Skipping duplicate assistant append — matching bubble already injected within this turn');
+      } else if (!passesDedupGate) {
+        debugPrint('⚠️ [Chat] Skipping assistant append — failed dedup gate');
       }
 
       // Debug logging for action_data (helps trace "Go to Workout" button issues)
@@ -535,9 +544,16 @@ extension ChatMessagesNotifierExt on ChatMessagesNotifier {
       // Dedup by server-issued message_id (Realtime/loadHistory race guard).
       final alreadyPresent = assistantMessageId != null &&
           finalMsgs.any((m) => m.id == assistantMessageId);
-      final newMessages = alreadyPresent ? finalMsgs : [...finalMsgs, assistantMessage];
+      // Fix #10 — content/source-level dedup gate.
+      final passesDedupGate =
+          alreadyPresent ? false : await _shouldAppendAssistantMessage(assistantMessage);
+      final newMessages = (alreadyPresent || !passesDedupGate)
+          ? finalMsgs
+          : [...finalMsgs, assistantMessage];
       if (alreadyPresent) {
         debugPrint('⚠️ [Chat] Media reply id=$assistantMessageId already present — skip append');
+      } else if (!passesDedupGate) {
+        debugPrint('⚠️ [Chat] Media reply skipped — failed dedup gate');
       }
       state = AsyncValue.data(newMessages);
 

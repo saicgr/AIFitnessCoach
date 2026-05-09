@@ -699,9 +699,62 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
                 if raw_eq and "_" in raw_eq:
                     ex["equipment"] = normalize_equipment_value(raw_eq, ex.get("name", ""))
 
+            # User rule (2026-05-08): stretches must NEVER appear in workouts —
+            # they belong only in dedicated mobility/stretch/recovery sessions.
+            # Mirror the filter applied in /generate-stream, /quick, /regenerate-stream.
+            from services.exercise_rag.filters import filter_main_exercises
+            _focus_lc = [(f or "").lower() for f in (body.focus_areas or [])]
+            _is_mobility = any(
+                f in {"mobility", "stretch", "recovery"} for f in _focus_lc
+            ) or (body.workout_type or "").lower() in {"mobility", "recovery", "stretch"}
+            _is_combat = any(
+                f in {"cardio", "hiit", "conditioning", "boxing", "combat"}
+                for f in _focus_lc
+            ) or (body.workout_type or "").lower() in {"cardio", "hiit", "boxing", "combat"}
+            exercises = filter_main_exercises(
+                exercises,
+                is_mobility_workout=_is_mobility,
+                is_combat_workout=_is_combat,
+            )
+
             workout_name = workout_data.get("name", "Generated Workout")
             difficulty = workout_data.get("difficulty", intensity_preference)
             workout_description = workout_data.get("description")
+
+            # Difficulty-ceiling enforcement — mirrors generation_streaming.py.
+            _fl = (fitness_level or "intermediate").lower()
+            _diff = (difficulty or "").lower()
+            if _fl == "beginner" and _diff in ("hard", "hell"):
+                logger.warning(
+                    f"⚠️ [DifficultyCeiling] Beginner returned '{difficulty}' — forcing 'medium'"
+                )
+                difficulty = "medium"
+                workout_data["difficulty"] = "medium"
+            elif _fl == "advanced" and _diff == "easy":
+                _focus = (body.focus_areas[0] if body.focus_areas else "").lower()
+                if "mobility" not in _focus and "stretch" not in _focus:
+                    logger.warning(
+                        f"⚠️ [DifficultyCeiling] Advanced non-mobility returned 'easy' — bumping to 'medium'"
+                    )
+                    difficulty = "medium"
+                    workout_data["difficulty"] = "medium"
+
+            # Apply density cap + canonical reorder.
+            from api.v1.workouts.validation_utils import (
+                cap_exercise_count_by_density,
+                reorder_exercises_canonically,
+            )
+            if exercises:
+                exercises = cap_exercise_count_by_density(
+                    exercises=exercises,
+                    duration_minutes=target_duration or 45,
+                    workout_type=(body.workout_type or "strength"),
+                )
+                exercises = reorder_exercises_canonically(
+                    exercises,
+                    focus_areas=body.focus_areas,
+                    workout_type=body.workout_type,
+                )
 
             # Infer workout type from focus area for PPL tracking
             # This ensures workout_type is set correctly even when Gemini doesn't specify it

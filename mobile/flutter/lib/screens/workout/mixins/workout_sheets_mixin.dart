@@ -81,6 +81,23 @@ mixin WorkoutSheetsMixin<T extends StatefulWidget> on State<T> {
   void breakSuperset(int groupId);
   void applyProgressionTargets(int exerciseIndex, SetProgressionPattern pattern, {double? overrideWeight});
 
+  // ── Fix #4 hooks (provided by ExerciseNavigationMixin on the same State) ──
+  /// Returns indices of every exercise in the given superset group.
+  /// Empty list when the group is not a real superset.
+  List<int> getSupersetIndices(int groupId);
+
+  /// Copies the anchor exercise's totalSets onto every partner in the group.
+  /// Idempotent.
+  void syncSupersetSetCountsFromAnchor(int groupId);
+
+  /// Prompts the user when they manually change one member's set count to
+  /// decide whether to apply across the linked group. Returns true (apply
+  /// to all), false (just this one), or null (cancel).
+  Future<bool?> confirmApplySetCountToSupersetGroup({
+    required int groupId,
+    required int newCount,
+  });
+
   /// Show the 1RM logging sheet
   void showLog1RMSheet(WorkoutExercise exercise) {
     showGlassSheet(
@@ -631,6 +648,69 @@ mixin WorkoutSheetsMixin<T extends StatefulWidget> on State<T> {
     } catch (e) {
       debugPrint('❌ [Progression] Error preloading patterns: $e');
     }
+  }
+
+  /// Apply a new set-count to a single exercise. If the exercise is in a
+  /// superset group, prompts the user (Yes / No, just this one / Cancel) and
+  /// either propagates the new count to all linked partners or applies only
+  /// to this exercise. Round-robin scheduling already handles uneven counts
+  /// gracefully when the user picks "No".
+  ///
+  /// Returns:
+  ///  - true  → set count was applied (single or group).
+  ///  - false → user cancelled; no mutation performed.
+  ///
+  /// This is the single integration point any set-count picker UI in this
+  /// mixin should call when a user manually changes the count, so the
+  /// superset-propagation prompt is consistent across all entry points.
+  Future<bool> applySetCountForExercise({
+    required int exerciseIndex,
+    required int newCount,
+  }) async {
+    if (exerciseIndex < 0 || exerciseIndex >= exercises.length) return false;
+    if (newCount < 1) return false;
+
+    final exercise = exercises[exerciseIndex];
+    final groupId = exercise.supersetGroup;
+    final inSuperset = groupId != null && getSupersetIndices(groupId).length >= 2;
+
+    if (!inSuperset) {
+      // Non-linked exercise — apply directly.
+      if (mounted) {
+        setState(() {
+          totalSetsPerExercise[exerciseIndex] = newCount;
+        });
+      } else {
+        totalSetsPerExercise[exerciseIndex] = newCount;
+      }
+      return true;
+    }
+
+    // Linked — ask user.
+    final decision = await confirmApplySetCountToSupersetGroup(
+      groupId: groupId,
+      newCount: newCount,
+    );
+    if (!mounted) return false;
+    if (decision == null) {
+      // Cancelled: no mutation at all.
+      return false;
+    }
+
+    if (decision == true) {
+      // Apply to anchor first, then sync to partners.
+      setState(() {
+        totalSetsPerExercise[exerciseIndex] = newCount;
+        syncSupersetSetCountsFromAnchor(groupId);
+      });
+    } else {
+      // Apply only to this exercise; round-robin handles uneven counts.
+      setState(() {
+        totalSetsPerExercise[exerciseIndex] = newCount;
+      });
+    }
+    HapticFeedback.lightImpact();
+    return true;
   }
 
   /// Apply a newly selected progression pattern to the current exercise.

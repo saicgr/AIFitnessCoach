@@ -32,7 +32,7 @@ class _ExerciseAddSheetState extends ConsumerState<_ExerciseAddSheet>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 4, vsync: this);
     _tabController.addListener(_onTabChanged);
     ref.read(customExercisesProvider.notifier).initialize();
     _loadLibraryExercises();
@@ -46,7 +46,8 @@ class _ExerciseAddSheetState extends ConsumerState<_ExerciseAddSheet>
   }
 
   void _onTabChanged() {
-    if (_tabController.index == 2 && !_aiSuggestionsLoaded) {
+    // AI Picks is now index 3 (Library, Snapped, Mine, AI Picks).
+    if (_tabController.index == 3 && !_aiSuggestionsLoaded) {
       _loadSuggestions();
     }
   }
@@ -310,6 +311,48 @@ class _ExerciseAddSheetState extends ConsumerState<_ExerciseAddSheet>
         isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
+    return Stack(
+      children: [
+        _buildAddSheetBody(
+          isDark: isDark,
+          textPrimary: textPrimary,
+          textSecondary: textSecondary,
+          textMuted: textMuted,
+        ),
+        Positioned(
+          right: 16,
+          bottom: 16,
+          child: FloatingActionButton.extended(
+            heroTag: 'add_snap_fab',
+            backgroundColor: AppColors.success,
+            icon: const Icon(Icons.camera_alt, color: Colors.black),
+            label: const Text(
+              'Snap equipment',
+              style: TextStyle(color: Colors.black, fontWeight: FontWeight.w700),
+            ),
+            onPressed: () async {
+              final updated = await showEquipmentSnapFlow(
+                context, ref,
+                mode: SnapMode.add,
+                workoutId: widget.workoutId,
+                previewId: widget.previewId,
+              );
+              if (updated != null && mounted) {
+                Navigator.of(context).pop(updated);
+              }
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAddSheetBody({
+    required bool isDark,
+    required Color textPrimary,
+    required Color textSecondary,
+    required Color textMuted,
+  }) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -353,6 +396,7 @@ class _ExerciseAddSheetState extends ConsumerState<_ExerciseAddSheet>
           showIcons: false,
           tabs: const [
             SegmentedTabItem(label: 'Library'),
+            SegmentedTabItem(label: 'Snapped'),
             SegmentedTabItem(label: 'Mine'),
             SegmentedTabItem(label: 'AI Picks'),
           ],
@@ -364,6 +408,31 @@ class _ExerciseAddSheetState extends ConsumerState<_ExerciseAddSheet>
             controller: _tabController,
             children: [
               _buildLibraryTab(isDark, textPrimary, textMuted),
+              // Snapped tab (Issue #1, Task #6) — re-rank prior snaps in add mode.
+              SnappedEquipmentSection(
+                mode: SnapMode.add,
+                workoutId: widget.workoutId,
+                previewId: widget.previewId,
+                onSwapOrAdd: (match) async {
+                  final name = (match['name'] as String?) ?? '';
+                  if (name.isEmpty) return null;
+                  final exerciseId = match['id'] as String?;
+                  final repo = ref.read(workoutRepositoryProvider);
+                  final workout = await repo.addExercise(
+                    workoutId: widget.workoutId,
+                    exerciseName: name,
+                    exerciseId: (exerciseId != null && exerciseId.isNotEmpty)
+                        ? exerciseId
+                        : null,
+                    previewId: widget.previewId,
+                  );
+                  if (!mounted) return null;
+                  if (workout != null) {
+                    Navigator.of(context).pop(workout);
+                  }
+                  return workout;
+                },
+              ),
               _buildMyExercisesTab(isDark, textPrimary, textMuted),
               _buildSuggestionsTab(textMuted, textPrimary),
             ],

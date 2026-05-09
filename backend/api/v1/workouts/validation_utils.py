@@ -446,6 +446,226 @@ def enforce_set_rep_limits(
     return enforced_exercises
 
 
+def cap_exercise_count_by_density(
+    exercises: List[Dict[str, Any]],
+    duration_minutes: int,
+    workout_type: str = "strength",
+) -> List[Dict[str, Any]]:
+    """Drop exercises beyond a sane density ceiling.
+
+    Validation harness (2026-05-08, render_generate_stream_full_20260508_111252)
+    found ~5% of workouts had densities like 8 exercises / 30 min (3.8 min each)
+    or 8 / 15 min (1.9 min each) — impossible to execute properly with sets+rest.
+
+    Rule: ~1 exercise per 7 min for strength; 1 per 4 min for circuit/cardio/HIIT.
+    For very short sessions (≤15 min), tighten the floor.
+    """
+    if not exercises or not duration_minutes or duration_minutes <= 0:
+        return exercises
+
+    is_circuit = (workout_type or "").lower() in (
+        "cardio", "hiit", "circuit", "metcon", "endurance",
+    )
+    if duration_minutes <= 15:
+        # Short sessions: 5min/exercise floor regardless of style. 15min → 3 ex.
+        min_per_ex = 5.0
+    elif duration_minutes <= 30:
+        # 30min strength → 5 ex (6min/ex). HIIT/circuit → 7 ex (4.3min/ex).
+        min_per_ex = 4.0 if is_circuit else 6.0
+    else:
+        min_per_ex = 4.0 if is_circuit else 7.0
+
+    max_count = max(2, int(duration_minutes / min_per_ex))
+    if len(exercises) <= max_count:
+        return exercises
+
+    logger.warning(
+        f"⚠️ [DensityCap] {len(exercises)} exercises in {duration_minutes}min "
+        f"(min/ex={duration_minutes / len(exercises):.1f}, type={workout_type}); "
+        f"capping to {max_count}"
+    )
+    return exercises[:max_count]
+
+
+def _classify_exercise_for_order(name: str) -> str:
+    """Classify an exercise by name for CNS-demand ordering.
+
+    Returns one of: 'plyo' | 'compound' | 'compound_secondary' | 'isolation' |
+    'core' | 'static_hold' | 'cardio' | 'stretch' | 'other'.
+    """
+    n = (name or "").lower()
+    # Plyometric / explosive
+    if any(k in n for k in [
+        "jump squat", "box jump", "plyo", "bound", "tuck jump",
+        "clap push", "depth jump", "broad jump", "jump lunge",
+        "burpee", "explosive",
+    ]):
+        return "plyo"
+    # Cardio (machine + locomotion)
+    if any(k in n for k in [
+        "treadmill", "rowing machine", "stationary bike", "elliptical",
+        "sprint", "jump rope", "jumping jack", "mountain climber",
+        "high knees", "stair climb",
+    ]):
+        return "cardio"
+    # Stretches / yoga (already filtered upstream for non-mobility, but
+    # defensive in case filter is bypassed).
+    if any(k in n for k in [
+        "stretch", " pose", "foam roll", "cobra pose", "child pose",
+        "downward dog", "warrior", "pigeon", "world's greatest",
+        "spinal twist", "thread the needle",
+    ]):
+        return "stretch"
+    # Static holds (plank-family) — placed at end of compound workouts.
+    if any(k in n for k in [
+        "plank", "hollow hold", "wall sit", "dead hang", "l-sit",
+        "side plank", "superman hold", "hollow body hold",
+    ]):
+        return "static_hold"
+    # Core (anti-rotation, anti-flexion, anti-extension)
+    if any(k in n for k in [
+        "crunch", "sit-up", "situp", "sit up", "bicycle", "leg raise",
+        "russian twist", "wood chop", "woodchop", "pallof",
+        "dead bug", "bird dog", "ab wheel", "hanging leg",
+        "v-up", "v up", "toe touch", "bicycle kick",
+    ]):
+        return "core"
+    # Heavy compound — big movements that should anchor the workout.
+    if any(k in n for k in [
+        "barbell back squat", "barbell front squat", "back squat",
+        "front squat", "deadlift", "barbell bench press",
+        "bench press", "overhead press", "standing overhead",
+        "barbell row", "pull-up", "pullup", "pull up",
+        "chin-up", "chinup", "chin up", "muscle-up", "snatch",
+        "clean and jerk", "clean and press", "power clean",
+    ]):
+        return "compound"
+    # Secondary compound — multi-joint but lighter / unilateral / machine.
+    if any(k in n for k in [
+        "split squat", "goblet squat", "sumo squat", "leg press",
+        "romanian deadlift", "stiff-leg deadlift", "lunge",
+        "step-up", "step up", "row", "dip", "incline press",
+        "decline press", "pulldown", "shoulder press", "kettlebell",
+        "thruster", "swing", "snatch", "clean", "press",
+        "dumbbell bench", "dumbbell press", "hip thrust",
+        "good morning", "deficit",
+    ]):
+        return "compound_secondary"
+    # Isolation
+    if any(k in n for k in [
+        " curl", "curl ", "extension", "raise", "fly", "lateral",
+        "rear delt", "front raise", "tricep", "bicep", "shrug",
+        "kickback", "preacher", "concentration", "pec deck",
+        "calf raise", "leg curl", "leg extension", "cable",
+    ]):
+        return "isolation"
+    return "other"
+
+
+def reorder_exercises_canonically(
+    exercises: List[Dict[str, Any]],
+    focus_areas: Optional[List[str]] = None,
+    workout_type: Optional[str] = None,
+) -> List[Dict[str, Any]]:
+    """Sort exercises by CNS-demand cascade.
+
+    Order: plyo → compound → secondary compound → isolation → core →
+    static_hold → cardio (if any in non-cardio session) → stretch (cooldown).
+
+    Preserves `superset_group` adjacency: exercises sharing a `superset_group`
+    stay contiguous and ordered by `superset_order`.
+
+    SKIPS reordering for:
+    - Mobility/recovery/stretch workouts (their order is intentional flow).
+    - Pure cardio/HIIT workouts (sequencing is the trainer's choice).
+    - Workouts ≤2 exercises (no reordering possible).
+
+    Validation harness 2026-05-08: 11 rows had compound-after-isolation,
+    1 started with static hold, 3 with 4+ consecutive isolations.
+    This reorder fixes those at the post-Gemini layer.
+    """
+    if not exercises or len(exercises) < 2:
+        return exercises
+
+    # Skip for mobility/recovery — sequencing is intentional flow.
+    fa_lower = {(f or "").lower() for f in (focus_areas or [])}
+    wt_lower = (workout_type or "").lower()
+    if fa_lower & {"mobility", "stretch", "recovery"}:
+        return exercises
+    if wt_lower in {"mobility", "recovery", "stretch"}:
+        return exercises
+    # For pure cardio/HIIT, also skip — sequencing is the workout's structure.
+    if fa_lower & {"cardio", "hiit"} or wt_lower in {"cardio", "hiit"}:
+        return exercises
+
+    # Priority ranks: lower = earlier in workout.
+    PRIORITY = {
+        "plyo": 1,
+        "compound": 2,
+        "compound_secondary": 3,
+        "isolation": 4,
+        "other": 4,           # treat unknowns same as isolation
+        "core": 5,
+        "static_hold": 6,
+        "cardio": 7,          # cardio in non-cardio workouts goes last
+        "stretch": 8,         # cooldown
+    }
+
+    def ex_priority(ex: Dict[str, Any]) -> int:
+        return PRIORITY.get(
+            _classify_exercise_for_order(ex.get("name", "")), 4
+        )
+
+    # Group by superset_group (None = standalone, treat each as its own group).
+    groups: List[Dict[str, Any]] = []
+    current_id = "__INIT__"
+    current_members: List[Dict[str, Any]] = []
+    for ex in exercises:
+        sg = ex.get("superset_group")
+        if sg is None or sg != current_id:
+            if current_members:
+                groups.append({"id": current_id, "members": current_members})
+            current_id = sg if sg is not None else f"_solo_{len(groups)}"
+            current_members = [ex]
+        else:
+            current_members.append(ex)
+    if current_members:
+        groups.append({"id": current_id, "members": current_members})
+
+    def group_priority(g: Dict[str, Any]) -> int:
+        # Group's priority = min priority of its members (most demanding wins).
+        return min(ex_priority(m) for m in g["members"])
+
+    # Stable sort: ties preserve original order (so original Gemini intent
+    # within a priority bucket is kept; we only re-sort across priorities).
+    sorted_groups = sorted(groups, key=group_priority)
+
+    out: List[Dict[str, Any]] = []
+    reordered = False
+    for g in sorted_groups:
+        members = g["members"]
+        # Preserve superset_order within a group; sort only if needed.
+        if len(members) > 1 and any(m.get("superset_order") is not None for m in members):
+            members = sorted(
+                members,
+                key=lambda x: (x.get("superset_order") or 0)
+            )
+        out.extend(members)
+
+    # Detect if reorder actually changed anything (for logging).
+    if [e.get("name") for e in out] != [e.get("name") for e in exercises]:
+        reordered = True
+        original_seq = [e.get("name", "")[:25] for e in exercises]
+        new_seq = [e.get("name", "")[:25] for e in out]
+        logger.info(
+            f"⚠️ [ReorderCanonical] Exercises reordered ({len(out)} ex):\n"
+            f"  before: {' → '.join(original_seq)}\n"
+            f"  after:  {' → '.join(new_seq)}"
+        )
+
+    return out
+
+
 def truncate_exercises_to_duration(
     exercises: List[Dict[str, Any]],
     max_duration_minutes: int,

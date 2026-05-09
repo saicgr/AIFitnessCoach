@@ -104,6 +104,17 @@ class _InlineWorkoutChatState extends ConsumerState<InlineWorkoutChat> {
           icon: Icons.format_list_numbered,
           color: AppColors.electricBlue,
         ),
+        // Issue 2: "What's this?" — open camera to identify a piece of
+        // gym equipment. Tapping the pill triggers `_pickImageFromCamera`
+        // and seeds the next message with the identify_equipment intent
+        // tag, which the chat repo strips and forwards as message
+        // metadata so the backend tool runs.
+        _QuickPrompt(
+          label: "What's this?",
+          prompt: "[intent:identify_equipment] What's this machine?",
+          icon: Icons.camera_alt_outlined,
+          color: AppColors.cyan,
+        ),
       ];
 
   @override
@@ -168,6 +179,16 @@ User question: $message
 
   void _sendQuickPrompt(_QuickPrompt prompt) {
     HapticFeedback.selectionClick();
+    // Issue 2: the "What's this?" pill is a media-picker shortcut, not a
+    // text-only prompt. Detect by the [intent:identify_equipment] marker
+    // we embed in the prompt string and route to the camera flow — the
+    // captured photo + intent tag will travel as a single chat message
+    // so the backend can identify_equipment from the s3_key.
+    if (prompt.prompt.startsWith('[intent:identify_equipment]')) {
+      _messageController.text = prompt.prompt;
+      _pickImageFromCamera();
+      return;
+    }
     _sendMessage(prompt.prompt);
   }
 
@@ -602,8 +623,19 @@ User question: $message
 
   Widget _buildInputField(bool isDark) {
     final canSend = _isTyping || _selectedMedia.isNotEmpty;
+    // Fix #10 (keyboard overlap): inline chat lives inside the foldable
+    // right-pane Scaffold (NOT a modal sheet), so we manually shift the
+    // input above the system keyboard via AnimatedPadding. Hardware-keyboard
+    // (viewInsets.bottom == 0) → no shift. Predictive-text bar is included
+    // in viewInsets on Android. iOS swipe-down-on-input dismisses keyboard
+    // and animates back smoothly via the same AnimatedPadding.
+    final keyboardInset = MediaQuery.of(context).viewInsets.bottom;
 
-    return Container(
+    return AnimatedPadding(
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.easeOut,
+      padding: EdgeInsets.only(bottom: keyboardInset),
+      child: Container(
       decoration: BoxDecoration(
         color: isDark ? AppColors.elevated : Colors.grey.shade50,
         border: Border(
@@ -741,6 +773,7 @@ User question: $message
             ),
           ),
         ],
+      ),
       ),
     );
   }

@@ -136,6 +136,24 @@ const chatQuickActionRegistry = <String, ChatQuickAction>{
     mediaMode: ChatMediaMode.camera,
     examplePrompt: 'How many calories are in this food?',
   ),
+  // === Issue 2: "What's this?" — gym-equipment ID via photo ===
+  // The examplePrompt carries an [intent:identify_equipment] tag that the
+  // chat-message pipeline strips out before sending and uses to flag the
+  // outgoing message metadata so the backend prioritizes the
+  // `identify_equipment` LangGraph tool over the default "describe what
+  // you see" coach reply. Frontend handler renders the result as an
+  // EquipmentMatchCard with up to 3 ranked matches + Swap/Add buttons.
+  'identify_equipment': ChatQuickAction(
+    id: 'identify_equipment',
+    label: "What's this?",
+    description: "Snap any gym machine — coach finds matching exercises",
+    category: 'Workout',
+    icon: Icons.camera_alt_outlined,
+    color: Color(0xFF06B6D4),
+    behavior: ChatActionBehavior.openMediaPicker,
+    mediaMode: ChatMediaMode.camera,
+    examplePrompt: "[intent:identify_equipment] What's this machine?",
+  ),
   // === APP CONTROL ===
   'toggle_dark_mode': ChatQuickAction(
     id: 'toggle_dark_mode',
@@ -304,6 +322,9 @@ const defaultChatQuickActionOrder = [
   'meal_prep',
   'injury_help',
   'calorie_check',
+  // Issue 2: surfaced near the top of the More-sheet so users discover it
+  // — falls below the always-pinned top-5 visible pills.
+  'identify_equipment',
   'toggle_dark_mode',
   'toggle_sounds',
   'toggle_tts',

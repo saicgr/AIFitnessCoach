@@ -129,6 +129,9 @@ async def generate_quick_workout_prompt(
     # behaves as before (no progression awareness, fixed rep defaults).
     progression_philosophy: Optional[str] = None,
     progression_pace: str = "medium",
+    # RAG-first refactor (2026-05-08): if provided, constrains Gemini to use
+    # ONLY these pre-filtered library exercises (no hallucinations).
+    library_exercises: Optional[List[dict]] = None,
 ) -> str:
     """Build a prompt specifically for quick workouts."""
 
@@ -206,11 +209,33 @@ FOCUS: BALANCED QUICK WORKOUT
             "OR move to a harder variant per the philosophy above\n"
         )
 
+    # RAG-first library block (2026-05-08).
+    library_block = ""
+    library_constraint = ""
+    if library_exercises:
+        _capped = library_exercises[:30]  # quick workouts have fewer exercises
+        exercise_list_str = "\n".join([
+            f"- {ex.get('name','Unknown')}: targets "
+            f"{ex.get('muscle_group','unknown')}, equipment: "
+            f"{ex.get('equipment','bodyweight')}"
+            for ex in _capped
+        ])
+        library_block = (
+            f"\n\n📚 AVAILABLE EXERCISES (pre-filtered from library — "
+            f"use EXACTLY these {len(_capped)} names, no inventions):\n"
+            f"{exercise_list_str}\n"
+        )
+        library_constraint = (
+            "\n\n🚨 CRITICAL: Every exercise's `name` MUST match EXACTLY one "
+            "of the names in the AVAILABLE EXERCISES list above. Do NOT "
+            "invent. Do NOT modify."
+        )
+
     prompt = f"""Generate a {duration}-minute quick workout for a {fitness_level} user.
 
 {focus_instruction}
 
-EQUIPMENT AVAILABLE: {equipment_str}{progression_block}
+EQUIPMENT AVAILABLE: {equipment_str}{progression_block}{library_block}{library_constraint}
 
 CRITICAL REQUIREMENTS for {duration}-minute workout:
 1. Total workout time MUST fit within {duration} minutes including rest
@@ -223,6 +248,16 @@ CRITICAL REQUIREMENTS for {duration}-minute workout:
 8. Include only exercises that can be done quickly
 9. Prioritize efficiency - compound movements over isolation
 10. Clear, actionable exercise names
+11. The "exercises" array MUST contain ONLY main working exercises. DO NOT include
+    warm-ups (jumping jacks, arm circles, shadow boxing, diagonal punches, high
+    knees, butt kicks, hip circles), stretches (any "stretch" / "opener" / pose),
+    or mobility flow as items in the exercises list. Warm-up and cool-down are
+    handled separately by the client.
+12. Target muscles must MATCH the requested focus. If focus = "upper_body", every
+    exercise's primary muscle MUST be one of: chest, back, shoulders, arms, biceps,
+    triceps, lats, traps, forearms. NEVER include single-leg deadlifts, squats,
+    lunges, swings, or any leg/glute/hamstring movements in an upper_body workout.
+    Same rule applies for lower_body, push, pull, legs, core.
 {avoided_instruction}{injuries_instruction}
 
 FIELD GUIDELINES:
@@ -346,6 +381,30 @@ async def generate_quick_workout(request: Request, body: QuickWorkoutRequest, ba
             progression_context=progression_context,
         )
 
+        # RAG-first: pre-fetch library exercises so Gemini can ONLY use
+        # library-backed names (no hallucinations).
+        _library_pool = []
+        try:
+            from services.exercise_library_service import get_exercise_library_service
+            _lib_svc = get_exercise_library_service()
+            _focus_for_lib = body.focus or "full_body"
+            _eq_for_lib = (
+                equipment if (isinstance(equipment, list) and equipment)
+                else ["body weight"]
+            )
+            _library_pool = _lib_svc.get_exercises_for_workout(
+                focus_area=_focus_for_lib,
+                equipment=_eq_for_lib,
+                count=20,  # quick workouts cap at ~6 exercises, give 20 to choose
+                fitness_level=fitness_level,
+            )
+            if _library_pool:
+                logger.info(
+                    f"[Quick RAG-first] Pre-fetched {len(_library_pool)} library exercises"
+                )
+        except Exception as _lib_err:
+            logger.warning(f"[Quick RAG-first] Library lookup failed: {_lib_err}")
+
         # Build the prompt
         prompt = await generate_quick_workout_prompt(
             duration=body.duration,
@@ -357,6 +416,7 @@ async def generate_quick_workout(request: Request, body: QuickWorkoutRequest, ba
             injuries=body.injuries,
             progression_philosophy=progression_philosophy,
             progression_pace=progression_pace,
+            library_exercises=_library_pool if _library_pool else None,
         )
 
         # Generate with Gemini (with retry + semaphore via utility)
@@ -437,6 +497,43 @@ async def generate_quick_workout(request: Request, body: QuickWorkoutRequest, ba
                 fitness_level=fitness_level,
                 difficulty=difficulty,
             )
+
+            # Hard filters mirroring /generate-stream and /regenerate-stream:
+            # drop warmup/stretch leakage from the main pool, and drop
+            # exercises whose primary muscles don't match the requested focus
+            # (catches the user's "Upper Body request → Barbell Squat /
+            # Kettlebell Swing" failure on Quick Workout). body.focus is
+            # documented as cardio/strength/stretch/full_body but in practice
+            # also receives body regions (upper_body, lower_body, legs);
+            # filter_by_workout_type_muscles is a no-op for unknown values
+            # so this is safe for the documented values too.
+            if exercises:
+                from services.exercise_rag.filters import (
+                    filter_main_exercises,
+                    filter_by_workout_type_muscles,
+                )
+                # User rule: stretches stay only in stretch/mobility sessions.
+                # Combat moves stay only in cardio/HIIT/boxing sessions.
+                _is_mobility = (body.focus or "").lower() in {
+                    "stretch", "mobility", "recovery"
+                }
+                _is_combat = (body.focus or "").lower() in {
+                    "cardio", "hiit", "boxing", "combat"
+                }
+                exercises = filter_main_exercises(
+                    exercises,
+                    is_mobility_workout=_is_mobility,
+                    is_combat_workout=_is_combat,
+                )
+                exercises = filter_by_workout_type_muscles(exercises, body.focus)
+
+                # Canonical reorder.
+                from api.v1.workouts.validation_utils import reorder_exercises_canonically
+                exercises = reorder_exercises_canonically(
+                    exercises,
+                    focus_areas=[body.focus] if body.focus else None,
+                    workout_type=body.focus,
+                )
 
             if not exercises:
                 raise safe_internal_error(ValueError("No valid exercises generated"), "workouts")

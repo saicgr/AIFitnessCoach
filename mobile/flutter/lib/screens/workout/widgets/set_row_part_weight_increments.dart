@@ -39,7 +39,7 @@ class ActiveSetData {
   double actualWeight;
   int actualReps;
   int? rpe; // Rate of Perceived Exertion (1-10)
-  int? rir; // Reps in Reserve (0-5)
+  int? rir; // Reps in Reserve (0-5) — legacy single field; prefer targetRir/actualRir.
   bool isCompleted;
   double? previousWeight;
   int? previousReps;
@@ -48,6 +48,37 @@ class ActiveSetData {
   String? equipmentType; // Equipment type for weight increment calculations
   double? oneRepMax; // User's 1RM for this exercise (if available)
   int? intensityPercent; // Target intensity as % of 1RM (e.g., 75)
+
+  // ── Fix #5 / #6 fields ─────────────────────────────────────────────
+  /// Planned RIR for this set (rendered as outline pill).
+  final int? targetRir;
+  /// Logged RIR — only set after the user picks a value (filled pill).
+  final int? actualRir;
+  /// AMRAP set — RIR pill renders "Target RIR · AMRAP" without a number.
+  final bool isAmrap;
+  /// Metric kind for trend pill formatting:
+  ///   'weight' (default) → "+5 lb"/"−5 lb"
+  ///   'reps' (bodyweight) → "+1 rep"
+  ///   'time' (cardio) → "+15s"
+  final String metric;
+  /// User manually overrode this set's target — render an "Edited" chip.
+  final bool isEdited;
+  /// Active training block is a deload week — colour the trend pill with
+  /// the deload theme rather than the default red on decreases.
+  final bool isDeload;
+  /// User has progressive overload enabled in prefs. When false the trend
+  /// pill is suppressed entirely.
+  final bool progressiveOverloadEnabled;
+  /// Previous set in the SAME exercise (used for trend delta). Null on the
+  /// first set of the exercise.
+  final double? previousSetTargetWeight;
+  final int? previousSetTargetReps;
+  final int? previousSetTargetSeconds;
+  /// Easy mode hides the RIR pill entirely (RPE only).
+  final bool isEasyMode;
+  /// True when there is no prior history for this exercise — render a
+  /// "Starter weight" muted hint instead of a trend pill.
+  final bool isFirstSetEver;
 
   ActiveSetData({
     required this.setNumber,
@@ -66,6 +97,18 @@ class ActiveSetData {
     this.equipmentType,
     this.oneRepMax,
     this.intensityPercent,
+    this.targetRir,
+    this.actualRir,
+    this.isAmrap = false,
+    this.metric = 'weight',
+    this.isEdited = false,
+    this.isDeload = false,
+    this.progressiveOverloadEnabled = true,
+    this.previousSetTargetWeight,
+    this.previousSetTargetReps,
+    this.previousSetTargetSeconds,
+    this.isEasyMode = false,
+    this.isFirstSetEver = false,
   })  : actualWeight = actualWeight ?? targetWeight,
         actualReps = actualReps ?? targetReps;
 
@@ -102,6 +145,18 @@ class ActiveSetData {
     String? equipmentType,
     double? oneRepMax,
     int? intensityPercent,
+    int? targetRir,
+    int? actualRir,
+    bool? isAmrap,
+    String? metric,
+    bool? isEdited,
+    bool? isDeload,
+    bool? progressiveOverloadEnabled,
+    double? previousSetTargetWeight,
+    int? previousSetTargetReps,
+    int? previousSetTargetSeconds,
+    bool? isEasyMode,
+    bool? isFirstSetEver,
   }) {
     return ActiveSetData(
       setNumber: setNumber ?? this.setNumber,
@@ -120,6 +175,22 @@ class ActiveSetData {
       equipmentType: equipmentType ?? this.equipmentType,
       oneRepMax: oneRepMax ?? this.oneRepMax,
       intensityPercent: intensityPercent ?? this.intensityPercent,
+      targetRir: targetRir ?? this.targetRir,
+      actualRir: actualRir ?? this.actualRir,
+      isAmrap: isAmrap ?? this.isAmrap,
+      metric: metric ?? this.metric,
+      isEdited: isEdited ?? this.isEdited,
+      isDeload: isDeload ?? this.isDeload,
+      progressiveOverloadEnabled:
+          progressiveOverloadEnabled ?? this.progressiveOverloadEnabled,
+      previousSetTargetWeight:
+          previousSetTargetWeight ?? this.previousSetTargetWeight,
+      previousSetTargetReps:
+          previousSetTargetReps ?? this.previousSetTargetReps,
+      previousSetTargetSeconds:
+          previousSetTargetSeconds ?? this.previousSetTargetSeconds,
+      isEasyMode: isEasyMode ?? this.isEasyMode,
+      isFirstSetEver: isFirstSetEver ?? this.isFirstSetEver,
     );
   }
 }

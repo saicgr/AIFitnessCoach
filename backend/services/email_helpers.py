@@ -248,17 +248,17 @@ def build_social_footer_html(
       </td>
     </tr>
     <tr>
-      <td align="center" style="padding:24px 40px 8px;">
-        <p style="margin:0 0 14px;font-size:13px;color:#a1a1aa;font-weight:600;">Hang out with us</p>
-        <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:0 auto;">
+      <td align="center" style="padding:24px 40px 8px;text-align:center;">
+        <p style="margin:0 0 14px;font-size:13px;color:#a1a1aa;font-weight:600;text-align:center;">Hang out with us</p>
+        <table role="presentation" align="center" cellspacing="0" cellpadding="0" border="0" style="margin:0 auto;width:auto;display:inline-table;">
           <tr>
-            <td style="padding:0 8px;">
+            <td align="center" style="padding:0 8px;">
               <a href="{DISCORD_URL}" style="display:inline-block;background:#5865F2;color:#ffffff;font-size:14px;font-weight:700;text-decoration:none;padding:10px 22px;border-radius:50px;line-height:20px;">
                 <img src="{DISCORD_ICON_URL}" alt="" width="16" height="16" style="display:inline-block;vertical-align:middle;margin-right:8px;border:0;" />
                 <span style="vertical-align:middle;">Discord</span>
               </a>
             </td>
-            <td style="padding:0 8px;">
+            <td align="center" style="padding:0 8px;">
               <a href="{INSTAGRAM_URL}" style="display:inline-block;background:linear-gradient(135deg,#833AB4,#FD1D1D,#FCB045);color:#ffffff;font-size:14px;font-weight:700;text-decoration:none;padding:10px 22px;border-radius:50px;line-height:20px;">
                 <img src="{INSTAGRAM_ICON_URL}" alt="" width="16" height="16" style="display:inline-block;vertical-align:middle;margin-right:8px;border:0;" />
                 <span style="vertical-align:middle;">Instagram</span>
@@ -441,6 +441,121 @@ def build_stats_grid_html(stats: UserStats) -> str:
         <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
           <tr>{_cell(workouts, "Workouts")}{_cell(streak, "Streak")}</tr>
           <tr>{_cell(meals, "Meals this wk")}{_cell(calories, "Avg cal/day")}</tr>
+        </table>
+      </td>
+    </tr>"""
+
+
+# ─── First-workout-done stats grid ──────────────────────────────────────────
+
+# MET (Metabolic Equivalent of Task) value for general resistance training.
+# Source: Compendium of Physical Activities (Ainsworth et al. 2011), code
+# 02050 — "resistance training, multiple exercises, 8-15 reps at varied
+# resistance" → MET 5.0. We use this as the fallback when an explicit
+# `calories_burned` is missing because most first-time workouts ARE general
+# strength sessions. Cardio/HIIT users will have calories_burned populated
+# upstream, so this fallback is genuinely a safety net not a default.
+DEFAULT_STRENGTH_MET: float = 5.0
+DEFAULT_USER_WEIGHT_KG: float = 70.0
+
+
+def estimate_workout_kcal_met(
+    duration_seconds: int,
+    weight_kg: Optional[float] = None,
+    met: float = DEFAULT_STRENGTH_MET,
+) -> int:
+    """Estimate workout calories from duration + body weight using MET formula.
+
+    kcal = MET × weight_kg × hours
+
+    Args:
+        duration_seconds: Workout duration in seconds. Returns 0 if non-positive.
+        weight_kg: User body weight. Falls back to 70 kg (≈ population median for
+            adults — explicit, NOT a silent fallback masking missing data; the
+            caller should pass a real value when available).
+        met: MET value. Defaults to 5.0 (general strength).
+
+    Returns:
+        Integer kcal, floor 0. Always non-negative.
+    """
+    if duration_seconds is None or duration_seconds <= 0:
+        return 0
+    w = float(weight_kg) if (weight_kg is not None and weight_kg > 0) else DEFAULT_USER_WEIGHT_KG
+    hours = duration_seconds / 3600.0
+    kcal = met * w * hours
+    return max(0, int(round(kcal)))
+
+
+def build_first_workout_stats_grid(
+    stats: UserStats,
+    *,
+    workout_calories_burned: Optional[int] = None,
+    duration_seconds: Optional[int] = None,
+    user_weight_kg: Optional[float] = None,
+) -> str:
+    """2×2 stats grid for the FIRST-workout-done celebration email.
+
+    Differs from `build_stats_grid_html` (weekly recap context) in TWO ways:
+      1. Bottom-right cell shows WORKOUT KCAL (calories burned in THIS specific
+         session), not nutrition AVG CAL/DAY — which on day-1 is dominated by a
+         single arbitrary food log and reads as nonsense (the "542 cal/day" bug
+         in the screenshot was the user's nutrition daily-average, not workout).
+      2. "Meals this wk" renders an em-dash "—" instead of "0/7" when zero —
+         a brand-new user has no logged meals and "0/7" reads as failure.
+
+    The weekly-recap `build_stats_grid_html` is intentionally untouched so its
+    nutrition-average semantics keep working for that caller.
+
+    Args:
+        stats: Same UserStats payload as the lifecycle helpers.
+        workout_calories_burned: kcal burned in the session that just completed.
+            If None or 0, falls back to MET-based estimate.
+        duration_seconds: Used only by the MET fallback when calories_burned is
+            unavailable. Required for the fallback to work.
+        user_weight_kg: User's current weight for MET formula. Optional — falls
+            back to 70 kg if missing (logged as a known approximation).
+    """
+    # Top row mirrors the weekly grid: workouts + streak.
+    workouts = str(stats.workouts_total) if stats.workouts_total else "—"
+    streak = f"{stats.current_streak_days} 🔥" if stats.current_streak_days else "—"
+
+    # Bottom-left: meals this week. EDGE CASE — a brand-new user almost
+    # certainly has 0 meals logged on day 1; "0/7" reads as "you failed at
+    # nutrition" before they've had a chance to try. Render em-dash instead.
+    meals = (
+        f"{stats.nutrition_days_logged_this_week}/7 d"
+        if stats.nutrition_days_logged_this_week
+        else "—"
+    )
+
+    # Bottom-right: WORKOUT kcal for the session just completed.
+    # Priority:
+    #   1. Explicit calories_burned from the completion endpoint (most accurate)
+    #   2. MET-based estimate (5.0 × weight × hours) as a documented fallback
+    #   3. "—" if both are missing — never lie with a hardcoded number.
+    if workout_calories_burned is not None and workout_calories_burned > 0:
+        kcal_value = int(workout_calories_burned)
+    elif duration_seconds and duration_seconds > 0:
+        kcal_value = estimate_workout_kcal_met(duration_seconds, user_weight_kg)
+    else:
+        kcal_value = 0
+    kcal_display = f"{kcal_value:,}" if kcal_value > 0 else "—"
+
+    def _cell(value: str, label: str) -> str:
+        return (
+            f'<td width="50%" style="padding:8px;">'
+            f'<div style="background:#0f2733;border-radius:12px;padding:18px 14px;text-align:center;border:1px solid #1e3a47;">'
+            f'<p style="margin:0 0 4px;font-size:22px;font-weight:800;color:#ffffff;line-height:1.1;">{value}</p>'
+            f'<p style="margin:0;font-size:11px;color:#71717a;letter-spacing:0.5px;text-transform:uppercase;">{label}</p>'
+            f"</div>"
+            f"</td>"
+        )
+
+    return f"""<tr>
+      <td style="padding:20px 32px 0;">
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+          <tr>{_cell(workouts, "Workouts")}{_cell(streak, "Streak")}</tr>
+          <tr>{_cell(meals, "Meals this wk")}{_cell(kcal_display, "Workout kcal")}</tr>
         </table>
       </td>
     </tr>"""

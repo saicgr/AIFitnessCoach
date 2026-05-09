@@ -530,133 +530,105 @@ def search_s3_for_image(exercise_name: str, gender: str = None) -> str:
 
 
 @router.get("/exercise-images/{exercise_name:path}")
-async def get_image_by_exercise_name(exercise_name: str, gender: str = None,
+async def get_image_by_exercise_name(
+    exercise_name: str,
+    gender: str = None,
+    exercise_id: str = None,
     current_user: dict = Depends(get_current_user),
 ):
     """
-    Get presigned image URL by exercise name.
+    Get presigned image URL by exercise name (or by explicit exercise UUID).
 
-    Looks up the exercise in exercise_library table and generates a presigned URL
-    for the associated S3 illustration image.
+    NEVER serves a sibling exercise's image. If the row's image_s3_path is NULL,
+    we return HTTP 404 with {"error": "no_image", ...} so the Flutter client
+    renders a placeholder. Cross-exercise fuzzy fallback (the lat-pulldown bug)
+    is intentionally removed.
 
-    If gender is specified ('male' or 'female'), tries to find gendered variant first.
-
-    Falls back to S3 fuzzy search if database lookup fails.
-
-    Args:
-        exercise_name: Name of the exercise to lookup
-        gender: Optional gender preference ('male' or 'female')
-
-    Returns:
-        Presigned URL and expiration time
+    Resolution order:
+      1. If `exercise_id` query param is supplied, look up by UUID — this is the
+         authoritative path the client should use whenever it has the row id.
+      2. Otherwise, exact case-insensitive match on `exercise_name`, optionally
+         with a gender suffix.
+      3. Anything else → 404. No partial / contains / S3-wide fuzzy matching.
     """
     try:
         db = get_supabase_db()
 
-        # Build list of exercise names to try
-        # Strip any existing gender suffix to get base name
-        base_name = exercise_name.replace('_male', '').replace('_female', '').replace('_Male', '').replace('_Female', '')
-
-        search_names = []
-        if gender in ('male', 'female'):
-            search_names.append(f"{base_name}_{gender}")
-        search_names.append(exercise_name)  # Original name as fallback
-        search_names.append(base_name)      # Base name as last resort
-
-        # Expand with name variants to handle format differences (Push-ups vs Push Up)
-        expanded_names = []
-        for name in search_names:
-            expanded_names.extend(generate_name_variants(name))
-        search_names = list(dict.fromkeys(expanded_names))  # Dedupe preserving order
-
-        # Collect ALL potential matches from ALL search variants, then pick best
-        found_result = None
-        all_candidates = []
-
-        for name in search_names:
-            # First try exact match (case-insensitive) - this is definitive
+        # ---- Path 1: explicit UUID lookup (per edge case 72) -----------------
+        if exercise_id:
             result = db.client.table("exercise_library").select(
-                "image_s3_path, exercise_name"
-            ).ilike("exercise_name", name).limit(1).execute()
-
-            if result.data and result.data[0].get("image_s3_path"):
-                # Exact match found - use it immediately
-                found_result = result.data[0]
-                break
-
-            # Try partial match with wildcards (handles gender suffixes like _female, _male)
-            result = db.client.table("exercise_library").select(
-                "image_s3_path, exercise_name"
-            ).ilike("exercise_name", f"{name}%").execute()
-
-            if result.data:
-                candidates = [r for r in result.data if r.get("image_s3_path")]
-                all_candidates.extend(candidates)
-
-            # Try contains match (exercise name contained anywhere)
-            result = db.client.table("exercise_library").select(
-                "image_s3_path, exercise_name"
-            ).ilike("exercise_name", f"%{name}%").execute()
-
-            if result.data:
-                candidates = [r for r in result.data if r.get("image_s3_path")]
-                all_candidates.extend(candidates)
-
-        # If no exact match found, pick the best from all candidates
-        if not found_result and all_candidates:
-            # Dedupe by exercise_name
-            seen = set()
-            unique_candidates = []
-            for c in all_candidates:
-                if c["exercise_name"] not in seen:
-                    seen.add(c["exercise_name"])
-                    unique_candidates.append(c)
-
-            # Score all unique matches and pick the best one
-            if unique_candidates:
-                best_match = max(unique_candidates, key=lambda r: score_exercise_match(exercise_name, r["exercise_name"]))
-                # Accept any match with a reasonable score (negative is OK for partial matches)
-                if score_exercise_match(exercise_name, best_match["exercise_name"]) >= -10:
-                    found_result = best_match
-
-        # If database lookup failed, try fuzzy S3 search
-        if not found_result:
-            s3_key = search_s3_for_image(exercise_name, gender)
-            if s3_key:
-                from api.v1.library.utils import resolve_image_url
-                s3_path = f"s3://{BUCKET_NAME}/{s3_key}"
-                url = resolve_image_url(s3_path)
-                return {
-                    "url": url,
-                    "expires_in": None,
-                    "exercise_name": exercise_name,
-                    "source": "s3_fuzzy_search"
-                }
-
-        if not found_result:
-            # Missing image isn't an error — it's a data state. Return 200
-            # with url=null so the client can render a placeholder silently
-            # instead of throwing DioException on every exercise the library
-            # hasn't been populated for. Also avoids filling Sentry/Discord
-            # with false-positive "Backend Error" alerts (404s aren't server
-            # errors, they're expected cache misses).
+                "id, exercise_name, image_s3_path"
+            ).eq("id", exercise_id).limit(1).execute()
+            if not result.data:
+                raise HTTPException(
+                    status_code=404,
+                    detail={"error": "exercise_not_found", "exercise_id": exercise_id},
+                )
+            row = result.data[0]
+            if not row.get("image_s3_path"):
+                raise HTTPException(
+                    status_code=404,
+                    detail={"error": "no_image", "exercise_id": row["id"]},
+                )
+            from api.v1.library.utils import resolve_image_url
             return {
-                "url": None,
+                "url": resolve_image_url(row["image_s3_path"]),
                 "expires_in": None,
-                "exercise_name": exercise_name,
-                "source": "not_found",
+                "exercise_name": row["exercise_name"],
             }
 
-        s3_path = found_result["image_s3_path"]
-        found_exercise_name = found_result["exercise_name"]
+        # ---- Path 2: name-based lookup --------------------------------------
+        base_name = exercise_name
+        for suffix in ("_male", "_female", "_Male", "_Female"):
+            base_name = base_name.replace(suffix, "")
+
+        search_names: List[str] = []
+        if gender in ("male", "female"):
+            search_names.append(f"{base_name}_{gender}")
+        search_names.append(exercise_name)
+        search_names.append(base_name)
+
+        # Expand with simple name variants (e.g. "Push-ups" vs "Push Up") so we
+        # tolerate punctuation/dash/space differences that would otherwise force
+        # a 404 on what is unambiguously the same exercise.
+        expanded: List[str] = []
+        for n in search_names:
+            expanded.extend(generate_name_variants(n))
+        search_names = list(dict.fromkeys(expanded))
+
+        found_row = None
+        for name in search_names:
+            # ONLY exact (case-insensitive) match. No `name%` or `%name%`
+            # substring queries — those are what served the wrong sibling row.
+            result = db.client.table("exercise_library").select(
+                "id, exercise_name, image_s3_path"
+            ).ilike("exercise_name", name).limit(1).execute()
+            if result.data:
+                found_row = result.data[0]
+                break
+
+        if not found_row:
+            # No exercise by that name. 404 — never fall back to S3 fuzzy search
+            # or another exercise's image.
+            raise HTTPException(
+                status_code=404,
+                detail={"error": "exercise_not_found", "exercise_name": exercise_name},
+            )
+
+        if not found_row.get("image_s3_path"):
+            # Row exists but image is missing. 404 with row id so the client can
+            # surface a "missing illustration" state cleanly. NEVER serve another
+            # row's image (this is the lat-pulldown bug we're locking down).
+            raise HTTPException(
+                status_code=404,
+                detail={"error": "no_image", "exercise_id": found_row["id"]},
+            )
 
         from api.v1.library.utils import resolve_image_url
-        url = resolve_image_url(s3_path)
-
         return {
-            "url": url,
+            "url": resolve_image_url(found_row["image_s3_path"]),
             "expires_in": None,
-            "exercise_name": found_exercise_name
+            "exercise_name": found_row["exercise_name"],
         }
 
     except HTTPException:

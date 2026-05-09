@@ -768,6 +768,31 @@ KEEP SEPARATE — these signal a separate dish alongside the composite:
   IMPORTANT: "side of [food]" WITHOUT a base composite (e.g., "side of chicken al pastor") is NOT a separate item — it means a SMALL SIDE PORTION (~30-35% of regular). See PORTION SIZE KEYWORDS above.
 - "also"/"also got": "Chipotle bowl also got a drink" → bowl ingredients + the drink
 - Multi-person: "Chipotle bowl for me, chicken tacos for my wife" → bowl ingredients + taco ingredients
+- "with [DISTINCT NAMED DISH]" — when the noun after "with" is itself a recognizable standalone dish
+  (not a sauce/topping/condiment/single ingredient), split into 2 items. The test is: would a person
+  order this item by itself at a restaurant? If yes, it is its own dish.
+  - "chicken biryani with chicken 65" → ["Chicken Biryani", "Chicken 65"]  (Chicken 65 is a fried-chicken
+    appetizer ordered on its own, NOT an ingredient of biryani)
+  - "rice with butter chicken" → ["Steamed Rice", "Butter Chicken"]  (butter chicken is its own curry)
+  - "pasta with meatballs" → ["Pasta", "Meatballs"]  (meatballs are a standalone dish here)
+  - "biryani with raita and salan" → ["Biryani", "Raita", "Mirchi Salan"]  (sides ordered alongside)
+  - "naan with paneer tikka masala" → ["Naan", "Paneer Tikka Masala"]
+  - "dosa with sambar and chutney" → ["Dosa", "Sambar", "Coconut Chutney"]
+  - "burger with onion rings" → ["Burger", "Onion Rings"]  (rings are their own side)
+  - "pizza with garlic knots" → ["Pizza", "Garlic Knots"]
+  - "ramen with gyoza" → ["Ramen", "Gyoza"]
+  COUNTER-EXAMPLES — these stay as 1 item because the "with X" describes an ingredient/topping/condiment:
+  - "rice with butter" → 1 item ("Buttered Rice" or "Rice with butter")  (butter is a condiment)
+  - "salad with dressing" → 1 item  (dressing is a condiment)
+  - "burrito with cheese" → 1 item  (cheese is an ingredient inside)
+  - "oatmeal with berries" → 1 item  (berries are toppings, not a standalone dish)
+  - "yogurt with honey" → 1 item  (honey is a topping)
+  - "toast with jam" → 1 item  (jam is a spread)
+  - "coffee with milk" → 1 item  (milk is a modifier)
+  When in doubt: if the second noun has its OWN distinct kcal/macro profile and would appear on a menu
+  by itself (e.g. Chicken 65, Butter Chicken, Meatballs, Onion Rings), SPLIT. If it is a flavor/sauce/
+  topping/cheese/spread/oil/butter/honey/jam/syrup/dressing/cream, KEEP TOGETHER.
+- "&" or "+" between two food names: always split. "biryani & 65" → 2 items. "burger + fries" → 2 items.
 
 NO COMPOSITE KEYWORD — list each item separately:
 - "chicken, rice, and beans" → 3 items (no bowl/burrito/plate keyword)

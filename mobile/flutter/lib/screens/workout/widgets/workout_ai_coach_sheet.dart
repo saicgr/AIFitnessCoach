@@ -37,7 +37,8 @@ Future<void> showWorkoutAICoachSheet({
   return showGlassSheet(
     context: context,
     builder: (ctx) => GlassSheet(
-      showHandle: false,
+      // Fix #3: drag handle visible for swipe-to-resize/dismiss affordance
+      showHandle: true,
       child: WorkoutAICoachSheet(
         currentExercise: currentExercise,
         completedSets: completedSets,
@@ -673,10 +674,11 @@ User question: $message
 
   Widget _buildInputField(bool isDark) {
     final canSend = _isTyping || _selectedMedia.isNotEmpty;
-    final bottomPadding = MediaQuery.of(context).padding.bottom;
-
+    // Fix #10 (keyboard overlap): rely on GlassSheet's viewInsets handling
+    // for keyboard rise; only add inner spacing here. Don't add safe-area
+    // bottom — GlassSheet already accounts for it (would double-pad).
     return Container(
-      padding: EdgeInsets.fromLTRB(16, 0, 16, bottomPadding + 12),
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
       decoration: BoxDecoration(
         color: isDark ? AppColors.nearBlack : Colors.white,
         border: Border(

@@ -667,4 +667,142 @@ extension WorkoutRepositoryExercises on WorkoutRepository {
       return null;
     }
   }
+
+  // ─────────────────────────────────────────────────────────────────────
+  // Issue 3: AI-coach in-workout mutations
+  //
+  // These mirror the backend tools in
+  // services/langgraph_agents/tools/workout_mutation_tools.py and are
+  // invoked when the user taps Apply on a ChatActionConfirmCard.
+  //
+  // Each method returns a (success, errorMessage) tuple so the card can
+  // surface the backend's human-readable failure (RLS, stale-list, etc.)
+  // instead of swallowing it. Per project rule: no silent fallbacks.
+  // ─────────────────────────────────────────────────────────────────────
+
+  /// Log a single completed set via POST /api/v1/workouts/{id}/log-set.
+  /// Backend converts ``weight`` from ``weight_unit`` to kg.
+  Future<(bool, String?)> logSet({
+    required String workoutId,
+    required String exerciseId,
+    required int setIndex,
+    double? weight,
+    int? reps,
+    int? rir,
+    String? side, // 'L' | 'R' | null
+    String weightUnit = 'lb',
+    bool override = false,
+  }) async {
+    try {
+      final response = await apiClient.post(
+        '${ApiConstants.workouts}/$workoutId/log-set',
+        data: {
+          'exercise_id': exerciseId,
+          'set_index': setIndex,
+          if (weight != null) 'weight': weight,
+          if (reps != null) 'reps': reps,
+          if (rir != null) 'rir': rir,
+          if (side != null) 'side': side,
+          'weight_unit': weightUnit,
+          'override': override,
+        },
+      );
+      if (response.statusCode == 200) {
+        return (true, null);
+      }
+      return (false, 'Server error (${response.statusCode}).');
+    } on DioException catch (e) {
+      final msg = (e.response?.data is Map)
+          ? ((e.response!.data as Map)['detail']?.toString())
+          : null;
+      debugPrint('❌ [Workout] logSet failed: ${e.message}');
+      return (false, msg ?? 'Failed to log set. Please try again.');
+    } catch (e) {
+      debugPrint('❌ [Workout] logSet unexpected: $e');
+      return (false, 'Failed to log set.');
+    }
+  }
+
+  /// Group 2+ exercises into a superset.
+  Future<(bool, String?)> createSuperset({
+    required String workoutId,
+    required List<String> exerciseIds,
+  }) async {
+    try {
+      final response = await apiClient.post(
+        '${ApiConstants.workouts}/$workoutId/superset',
+        data: {'exercise_ids': exerciseIds, 'op': 'create'},
+      );
+      if (response.statusCode == 200) {
+        return (true, null);
+      }
+      return (false, 'Server error (${response.statusCode}).');
+    } on DioException catch (e) {
+      final body = e.response?.data;
+      String? detail;
+      if (body is Map) {
+        detail = body['detail']?.toString() ?? body['summary_text']?.toString();
+        // Edge case 38: stale exercise list.
+        if (body['reason'] == 'exercise list changed') {
+          return (false, 'exercise list changed');
+        }
+      }
+      return (false, detail ?? 'Failed to create superset.');
+    } catch (e) {
+      return (false, 'Failed to create superset.');
+    }
+  }
+
+  /// Break an existing superset by group id.
+  Future<(bool, String?)> breakSuperset({
+    required String workoutId,
+    required String supersetGroupId,
+  }) async {
+    try {
+      final response = await apiClient.post(
+        '${ApiConstants.workouts}/$workoutId/superset',
+        data: {'superset_group_id': supersetGroupId, 'op': 'break'},
+      );
+      if (response.statusCode == 200) {
+        return (true, null);
+      }
+      return (false, 'Server error (${response.statusCode}).');
+    } on DioException catch (e) {
+      final body = e.response?.data;
+      final detail = (body is Map) ? body['detail']?.toString() : null;
+      return (false, detail ?? 'Failed to break superset.');
+    } catch (e) {
+      return (false, 'Failed to break superset.');
+    }
+  }
+
+  /// Reorder exercises in the workout. ``exerciseIds`` is the desired
+  /// order; the backend keeps any in-progress exercise pinned.
+  Future<(bool, String?)> reorderExercises({
+    required String workoutId,
+    required List<String> exerciseIds,
+  }) async {
+    try {
+      final response = await apiClient.post(
+        '${ApiConstants.workouts}/$workoutId/reorder',
+        data: {'exercise_ids': exerciseIds},
+      );
+      if (response.statusCode == 200) {
+        return (true, null);
+      }
+      return (false, 'Server error (${response.statusCode}).');
+    } on DioException catch (e) {
+      final body = e.response?.data;
+      String? detail;
+      if (body is Map) {
+        detail = body['detail']?.toString();
+        if (body['reason'] == 'exercise list changed') {
+          return (false, 'exercise list changed');
+        }
+      }
+      return (false, detail ?? 'Failed to reorder exercises.');
+    } catch (e) {
+      return (false, 'Failed to reorder exercises.');
+    }
+  }
 }

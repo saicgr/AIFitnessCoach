@@ -23,7 +23,7 @@ part 'exercise_thumbnail_strip_v2_part_gap_drop_target.dart';
 
 
 /// MacroFactor-style exercise thumbnail strip
-class ExerciseThumbnailStripV2 extends StatefulWidget {
+class ExerciseThumbnailStripV2 extends ConsumerStatefulWidget {
   /// All exercises in the workout
   final List<WorkoutExercise> exercises;
 
@@ -70,10 +70,10 @@ class ExerciseThumbnailStripV2 extends StatefulWidget {
   });
 
   @override
-  State<ExerciseThumbnailStripV2> createState() => _ExerciseThumbnailStripV2State();
+  ConsumerState<ExerciseThumbnailStripV2> createState() => _ExerciseThumbnailStripV2State();
 }
 
-class _ExerciseThumbnailStripV2State extends State<ExerciseThumbnailStripV2> {
+class _ExerciseThumbnailStripV2State extends ConsumerState<ExerciseThumbnailStripV2> {
   late ScrollController _scrollController;
 
   // Thumbnail dimensions - compact rectangular (taller than wide)
@@ -91,7 +91,55 @@ class _ExerciseThumbnailStripV2State extends State<ExerciseThumbnailStripV2> {
     _scrollController = ScrollController();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _scrollToCurrentExercise(animate: false);
+      _batchPrewarmImages();
     });
+  }
+
+  /// Prewarm the strip's image cache via the batch endpoint.
+  ///
+  /// User reported the strip "never loads thumbnails" — root cause was N
+  /// parallel per-thumbnail GETs racing on workout open, with some stuck in
+  /// loading state long enough that users saw the dumbbell-icon fallback.
+  /// One batch call to /exercise-images/batch returns all resolved S3 URLs
+  /// in a single request and pre-fills the static cache shared by every
+  /// thumbnail child, so the children's _loadImage() short-circuits on the
+  /// cache hit instead of firing its own request.
+  Future<void> _batchPrewarmImages() async {
+    if (widget.exercises.isEmpty) return;
+    // Skip names already cached (most common case after workout-detail load).
+    final namesToFetch = <String>[];
+    for (final ex in widget.exercises) {
+      final name = ex.name;
+      if (name.isEmpty || name == 'Exercise') continue;
+      // imageS3Path / gifUrl already on the model — children handle that.
+      if (ex.imageS3Path != null && ex.imageS3Path!.isNotEmpty) continue;
+      if (ex.gifUrl != null && ex.gifUrl!.isNotEmpty) continue;
+      final key = name.toLowerCase();
+      if (_DraggableThumbnailState._imageCache.containsKey(key)) continue;
+      namesToFetch.add(name);
+    }
+    if (namesToFetch.isEmpty) return;
+    try {
+      final apiClient = ref.read(apiClientProvider);
+      final response = await apiClient.post(
+        '/exercise-images/batch',
+        data: {'names': namesToFetch},
+      );
+      if (response.statusCode != 200 || response.data == null) return;
+      final urls = (response.data['urls'] as Map<String, dynamic>?) ?? {};
+      for (final entry in urls.entries) {
+        final url = entry.value as String?;
+        if (url == null || url.isEmpty) continue;
+        final key = entry.key.toLowerCase();
+        _DraggableThumbnailState._imageCache[key] = url;
+        _ExerciseThumbnailState._imageCache[key] = url;
+      }
+      if (mounted && urls.isNotEmpty) {
+        setState(() {/* trigger rebuild so cached thumbs render */});
+      }
+    } catch (_) {
+      // Silent — children's per-thumbnail GET will retry as fallback.
+    }
   }
 
   @override

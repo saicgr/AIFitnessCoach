@@ -36,7 +36,24 @@ extension QuickWorkoutEngineExt on QuickWorkoutEngine {
     // Phase 1: Preparation
     // =====================================================================
     final effectiveFocus = focus ?? 'full_body';
-    final diffMult = QuickWorkoutConstants.difficultyMultipliers[difficulty] ??
+
+    // Difficulty-ceiling clamp (validation harness 2026-05-08:
+    // 7 rows had beginner→hard/hell or advanced→easy escapes).
+    // Mirror backend `generation_streaming.py` post-Gemini ceiling.
+    String effectiveDifficulty = difficulty;
+    final fl = fitnessLevel.toLowerCase();
+    final lc = difficulty.toLowerCase();
+    final isMobilityFocus = effectiveFocus == 'mobility' ||
+        effectiveFocus == 'stretch' || effectiveFocus == 'recovery';
+    if (fl == 'beginner' && (lc == 'hard' || lc == 'hell')) {
+      effectiveDifficulty = 'medium';
+    } else if (fl == 'advanced' && lc == 'easy' && !isMobilityFocus) {
+      effectiveDifficulty = 'medium';
+    } else if (isMobilityFocus && (lc == 'hard' || lc == 'hell')) {
+      effectiveDifficulty = 'easy';
+    }
+
+    final diffMult = QuickWorkoutConstants.difficultyMultipliers[effectiveDifficulty] ??
         QuickWorkoutConstants.difficultyMultipliers['medium']!;
     final effectiveGoal = goal ?? 'hypertrophy';
     final effectiveFitnessLevel = fitnessLevel;
@@ -103,7 +120,7 @@ extension QuickWorkoutEngineExt on QuickWorkoutEngine {
     final format = strategy.getFormat(effectiveSupersets, durationMinutes);
 
     // Base sets for this duration + difficulty
-    final baseSets = QuickWorkoutConstants.getBaseSets(durationMinutes, difficulty);
+    final baseSets = QuickWorkoutConstants.getBaseSets(durationMinutes, effectiveDifficulty);
 
     // Adjust sets by volume multiplier
     final adjustedSets = (baseSets * volumeMultiplier).round().clamp(1, 5);
@@ -115,6 +132,54 @@ extension QuickWorkoutEngineExt on QuickWorkoutEngine {
     final selectedExercises = <_SelectedExercise>[];
     final alreadySelectedNames = <String>{};
     int runningTime = 0;
+
+    // Pre-filter the library to drop cross-discipline contamination.
+    // Validation harness 2026-05-08: 19 stretch leaks (e.g. "3 Leg Dog Pose"
+    // in full_body workouts) + 7 combat leaks (e.g. "Boxing Left Hook" in
+    // strength workouts). Mirror backend `filter_main_exercises` rules.
+    final isCombatFocus = effectiveFocus == 'cardio' ||
+        effectiveFocus == 'hiit' ||
+        effectiveFocus == 'boxing' ||
+        effectiveFocus == 'combat' ||
+        effectiveFocus == 'conditioning';
+
+    bool _isStretchExercise(OfflineExercise ex) {
+      final bp = (ex.bodyPart ?? '').toLowerCase();
+      if (bp == 'stretching' || bp == 'flexibility' || bp == 'yoga') return true;
+      final nm = (ex.name ?? '').toLowerCase();
+      const patterns = [
+        'stretch', ' pose', 'foam roll', 'release', ' flow',
+        'cobra pose', 'child pose', 'pigeon', 'warrior', 'downward dog',
+        'spinal twist', 'thread the needle', 'cat-cow', 'cat cow',
+        'sun salutation', 'hip opener', '90/90', "world's greatest",
+      ];
+      return patterns.any((p) => nm.contains(p));
+    }
+
+    bool _isCombatMovement(OfflineExercise ex) {
+      final nm = (ex.name ?? '').toLowerCase();
+      // False-positive guard: real posterior-chain exercises
+      const safeKick = ['kickback', 'donkey kick', 'glute kick', 'fire hydrant'];
+      if (safeKick.any((s) => nm.contains(s))) return false;
+      const patterns = [
+        ' punch', 'punch ', 'punches', 'jab cross', 'jab-cross',
+        'uppercut', 'hook punch', 'cross punch', 'jab punch',
+        'shadow box', 'bag work', 'heavy bag', 'speed bag',
+        'mitt work', 'pad work',
+        'front kick', 'side kick', 'back kick', 'round kick',
+        'roundhouse', 'high kick', 'low kick', 'axe kick',
+        'spinning kick', 'thai kick', 'muay thai',
+        'knee strike', 'elbow strike', 'spinning elbow',
+        'boxing', 'kickbox', 'krav maga', 'mma',
+      ];
+      return patterns.any((p) => nm.contains(p));
+    }
+
+    final filteredLibrary = exerciseLibrary.where((ex) {
+      if (!isMobilityFocus && _isStretchExercise(ex)) return false;
+      if (!isCombatFocus && _isCombatMovement(ex)) return false;
+      return true;
+    }).toList();
 
     // Equipment handling: empty = bodyweight only (not "all allowed")
     final effectiveEquipment = equipment.isEmpty
@@ -175,7 +240,7 @@ extension QuickWorkoutEngineExt on QuickWorkoutEngine {
 
     for (final slot in effectiveSlots) {
       // Calculate time cost for this exercise
-      final cost = strategy.timeCostPerExercise(difficulty, effectiveSupersets);
+      final cost = strategy.timeCostPerExercise(effectiveDifficulty, effectiveSupersets);
 
       // Budget check
       if (runningTime + cost > workingBudget) break;
@@ -183,7 +248,7 @@ extension QuickWorkoutEngineExt on QuickWorkoutEngine {
       // Select exercise for this slot
       final exercise = _selectExerciseForSlot(
         slot: slot,
-        library: exerciseLibrary,
+        library: filteredLibrary,
         effectiveEquipment: effectiveEquipment,
         avoidedExercises: avoidedExercises,
         avoidedMuscles: avoidedMuscles,
@@ -220,7 +285,7 @@ extension QuickWorkoutEngineExt on QuickWorkoutEngine {
         effectiveFocus,
         alreadySelectedNames,
         avoidedMuscles,
-        difficulty,
+        effectiveDifficulty,
       );
     }
 
@@ -237,7 +302,7 @@ extension QuickWorkoutEngineExt on QuickWorkoutEngine {
         final targetMuscle = patternToMuscle(missing.first);
         final replacement = _selectExerciseForSlot(
           slot: QuickMuscleSlot(targetMuscle, preferCompound: true),
-          library: exerciseLibrary,
+          library: filteredLibrary,
           effectiveEquipment: effectiveEquipment,
           avoidedExercises: avoidedExercises,
           avoidedMuscles: avoidedMuscles,
@@ -291,7 +356,7 @@ extension QuickWorkoutEngineExt on QuickWorkoutEngine {
 
       if (format == 'flow') {
         // Stretch: hold-based targets
-        final holdTime = difficulty == 'easy' ? 20 : (difficulty == 'hell' ? 45 : 30);
+        final holdTime = effectiveDifficulty == 'easy' ? 20 : (effectiveDifficulty == 'hell' ? 45 : 30);
         setTargets = List.generate(
           adjustedSets.clamp(1, 2),
           (s) => SetTarget(
@@ -792,7 +857,9 @@ extension QuickWorkoutEngineExt on QuickWorkoutEngine {
       userId: userId,
       name: workoutName,
       type: effectiveFocus,
-      difficulty: difficulty,
+      // Use clamped difficulty so beginner→hell + advanced→easy escapes
+      // don't leak into the output Workout's difficulty field.
+      difficulty: effectiveDifficulty,
       scheduledDate: scheduledDate,
       isCompleted: false,
       exercisesJson: exercisesJsonList,
