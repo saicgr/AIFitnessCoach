@@ -54,8 +54,29 @@ def list_user_workouts(min_count: int = 20) -> List[Dict[str, Any]]:
     return workouts
 
 
+# RegenerateWorkoutRequest schema fields. Anything else is silently dropped
+# at the boundary so test scenarios don't leak schema-extra fields into the
+# request body (Pydantic uses extra='ignore' by default — drops without 422,
+# making test intent invisible).
+_REGEN_SCHEMA_FIELDS = {
+    "workout_id", "user_id", "duration_minutes", "duration_minutes_min",
+    "duration_minutes_max", "fitness_level", "difficulty", "equipment",
+    "focus_areas", "injuries", "workout_type", "workout_name", "ai_prompt",
+    "dumbbell_count", "kettlebell_count", "new_scheduled_date",
+    "force_non_preferred_day",
+}
+
+
+def _filter_schema(body: Dict[str, Any]) -> Dict[str, Any]:
+    """Drop any keys not on RegenerateWorkoutRequest. The endpoint loads
+    fitness_level / equipment / focus_areas / etc. from reviewer@fitwiz.us's
+    user record + active gym_profile when not provided in the body, so noise
+    defaults can simply be removed (rely on user state)."""
+    return {k: v for k, v in body.items() if k in _REGEN_SCHEMA_FIELDS}
+
+
 def build_100(sources: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-    """100 scenarios. Cycles `sources` if fewer exist."""
+    """500 scenarios. Cycles `sources` if fewer exist."""
     s: List[Dict[str, Any]] = []
     src = lambda k: sources[k % len(sources)]  # noqa: E731
     i = 0
@@ -736,6 +757,12 @@ def build_100(sources: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
             "body": body,
         })
 
+    # Filter every body to schema-only keys. Noise defaults (hardcoded
+    # fitness_level=intermediate, etc.) stay through but unknown keys (goals,
+    # preserve_history, dumbbell_count when out of range, etc.) are dropped here
+    # rather than being silently ignored by the endpoint.
+    for sc in s:
+        sc["body"] = _filter_schema(sc["body"])
     return s[:500]
 
 

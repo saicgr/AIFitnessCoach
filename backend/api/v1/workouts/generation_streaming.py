@@ -228,58 +228,52 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
 
         try:
 
-            # Get user data
-            if body.fitness_level and body.goals and body.equipment:
-                fitness_level = body.fitness_level
-                goals = body.goals
-                equipment = body.equipment
-                # Derive intensity from fitness level - beginners get 'easy', not 'medium'
-                intensity_preference = get_intensity_from_fitness_level(fitness_level)
+            # ALWAYS load user record + active gym_profile from Supabase. Body fields
+            # act as OVERRIDES on top of persisted state — they don't bypass the user
+            # lookup. Mirrors the /generate endpoint refactor (2026-05-08).
+            user = db.get_user(body.user_id)
+            if not user:
+                yield f"event: error\ndata: {json.dumps({'error': 'User not found'})}\n\n"
+                return
+
+            fitness_level = body.fitness_level or user.get("fitness_level")
+            preferences = parse_json_field(user.get("preferences"), {})
+
+            gym_profile = None
+            if hasattr(body, 'gym_profile_id') and body.gym_profile_id:
+                try:
+                    profile_result = db.client.table("gym_profiles").select("*").eq("id", body.gym_profile_id).single().execute()
+                    gym_profile = profile_result.data if profile_result.data else None
+                    logger.info(f"[GymProfile] Using requested profile: {body.gym_profile_id}")
+                except Exception as e:
+                    logger.warning(f"Failed to fetch gym profile: {e}", exc_info=True)
             else:
-                user = db.get_user(body.user_id)
-                if not user:
-                    yield f"event: error\ndata: {json.dumps({'error': 'User not found'})}\n\n"
-                    return
+                try:
+                    active_result = db.client.table("gym_profiles").select("*").eq("user_id", body.user_id).eq("is_active", True).single().execute()
+                    gym_profile = active_result.data if active_result.data else None
+                    if gym_profile:
+                        logger.info(f"[GymProfile] Using active profile: {gym_profile.get('name')} ({gym_profile.get('id')})")
+                except Exception as e:
+                    logger.debug(f"No active gym profile found: {e}")
 
-                fitness_level = body.fitness_level or user.get("fitness_level")
-                preferences = parse_json_field(user.get("preferences"), {})
+            if gym_profile:
+                gym_profile_id = gym_profile.get("id")
+                equipment = body.equipment or gym_profile.get("equipment") or []
+                training_split = gym_profile.get("training_split")
+                workout_days = gym_profile.get("workout_days") or []
+                profile_goals = normalize_goals_list(gym_profile.get("goals"))
+                user_goals = normalize_goals_list(user.get("goals"))
+                goals = normalize_goals_list(body.goals) if body.goals else (profile_goals if profile_goals else user_goals)
+                logger.info(f"[GymProfile] Profile equipment: {len(equipment)} items")
+                if training_split:
+                    logger.info(f"[GymProfile-Stream] Training split: {training_split}")
+            else:
+                goals = normalize_goals_list(body.goals) if body.goals else normalize_goals_list(user.get("goals"))
+                equipment = body.equipment or parse_json_field(user.get("equipment"), [])
+                training_split = user.get("training_split")
+                workout_days = parse_json_field(user.get("workout_days"), [])
 
-                # Check for gym profile - load equipment/environment from profile if available
-                gym_profile = None
-                if hasattr(body, 'gym_profile_id') and body.gym_profile_id:
-                    try:
-                        profile_result = db.client.table("gym_profiles").select("*").eq("id", body.gym_profile_id).single().execute()
-                        gym_profile = profile_result.data if profile_result.data else None
-                        logger.info(f"[GymProfile] Using requested profile: {body.gym_profile_id}")
-                    except Exception as e:
-                        logger.warning(f"Failed to fetch gym profile: {e}", exc_info=True)
-                else:
-                    try:
-                        active_result = db.client.table("gym_profiles").select("*").eq("user_id", body.user_id).eq("is_active", True).single().execute()
-                        gym_profile = active_result.data if active_result.data else None
-                        if gym_profile:
-                            logger.info(f"[GymProfile] Using active profile: {gym_profile.get('name')} ({gym_profile.get('id')})")
-                    except Exception as e:
-                        logger.debug(f"No active gym profile found: {e}")
-
-                if gym_profile:
-                    gym_profile_id = gym_profile.get("id")
-                    equipment = body.equipment or gym_profile.get("equipment") or []
-                    training_split = gym_profile.get("training_split")
-                    workout_days = gym_profile.get("workout_days") or []
-                    profile_goals = normalize_goals_list(gym_profile.get("goals"))
-                    user_goals = normalize_goals_list(user.get("goals"))
-                    goals = normalize_goals_list(body.goals) if body.goals else (profile_goals if profile_goals else user_goals)
-                    logger.info(f"[GymProfile] Profile equipment: {len(equipment)} items")
-                    if training_split:
-                        logger.info(f"[GymProfile-Stream] Training split: {training_split}")
-                else:
-                    goals = normalize_goals_list(body.goals) if body.goals else normalize_goals_list(user.get("goals"))
-                    equipment = body.equipment or parse_json_field(user.get("equipment"), [])
-                    training_split = user.get("training_split")
-                    workout_days = parse_json_field(user.get("workout_days"), [])
-
-                intensity_preference = preferences.get("intensity_preference") or get_intensity_from_fitness_level(fitness_level)
+            intensity_preference = preferences.get("intensity_preference") or get_intensity_from_fitness_level(fitness_level)
 
             # Fetch user preferences in PARALLEL for faster response
             async def fetch_ai_coach_settings():

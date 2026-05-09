@@ -104,6 +104,55 @@ def _next_date(offset: int) -> str:
     return (date.today() + timedelta(days=offset + 1)).isoformat()
 
 
+# Reviewer QA user — premium tier in production, profile loaded from Supabase by
+# the endpoint (see /generate code path: it ALWAYS calls db.get_user(user_id)
+# + resolves active gym_profile, regardless of which body fields are present).
+# Scenarios should send ONLY the axes they're testing as overrides; everything
+# else (fitness_level, equipment, focus_areas, training_split, age, primary_goal,
+# muscle_focus_points, body_analyzer snapshot, custom_exercises, etc.) comes
+# from reviewer@fitwiz.us's persisted state.
+BASE_USER = "d54e6652-fdf1-4ca0-82d1-23d7c02df294"
+
+
+_GENERATE_SCHEMA_FIELDS = {
+    "user_id", "gym_profile_id", "workout_type", "duration_minutes",
+    "duration_minutes_min", "duration_minutes_max", "focus_areas",
+    "exclude_exercises", "fitness_level", "goals", "equipment",
+    "scheduled_date", "skip_comeback", "adjacent_day_exercises",
+    "batch_offset", "force_non_preferred_day",
+}
+
+
+def _make_body(idx: int, **overrides: Any) -> Dict[str, Any]:
+    """Build a minimal request body, schema-filtered.
+
+    Only `user_id`, `scheduled_date`, and `force_non_preferred_day` are constants;
+    everything else is loaded from reviewer's user record + active gym_profile by
+    the endpoint UNLESS explicitly passed via **overrides.
+
+    Pydantic on the `/generate` endpoint uses default `extra='ignore'` — unknown
+    fields like `injuries` or `ai_prompt` are silently dropped, NOT 422-rejected.
+    To prevent silent loss of test intent (e.g., an "injury sweep" scenario that
+    the endpoint ignores), we explicitly drop schema-incompatible keys here and
+    preserve them in the scenario `label` for harness-side bookkeeping.
+
+    Per-user injuries / AI prompts must be set on the reviewer's profile state
+    (`injuries`, `ai_settings`, `gym_profile.notes`) to actually steer generation.
+    """
+    body: Dict[str, Any] = {
+        "user_id": BASE_USER,
+        "scheduled_date": _next_date(idx % 60),
+        "force_non_preferred_day": True,
+    }
+    for k, v in overrides.items():
+        if k in _GENERATE_SCHEMA_FIELDS:
+            body[k] = v
+        # Silently drop fields not in the request schema. Caller's `label` should
+        # already reference these dropped axes so the test report still shows
+        # what was attempted.
+    return body
+
+
 def _scenario(idx: int, block: int, label: str, body: Dict[str, Any]) -> Dict[str, Any]:
     return {"idx": idx, "block": block, "label": label, "body": body}
 
@@ -116,22 +165,9 @@ def _build_block_axis_sweeps(start_idx: int) -> List[Dict[str, Any]]:
     """
     out = []
     i = start_idx
-    BASE_USER = "d54e6652-fdf1-4ca0-82d1-23d7c02df294"
-    BASE_PROFILE = "0890400c-6900-4cd0-b55a-353ea1655206"
 
     def make(body_kw):
-        body = {
-            "user_id": BASE_USER,
-            "gym_profile_id": BASE_PROFILE,
-            "fitness_level": "intermediate",
-            "duration_minutes": 45,
-            "focus_areas": ["full_body"],
-            "equipment": E1_FULL,
-            "scheduled_date": _next_date(i % 60),
-            "force_non_preferred_day": True,
-        }
-        body.update(body_kw)
-        return body
+        return _make_body(i, **body_kw)
 
     # 1.1 Duration sweep (8 each fitness level = 24)
     for fl in FITNESS:
@@ -206,30 +242,25 @@ def _build_block_combos_2(start_idx: int) -> List[Dict[str, Any]]:
     """
     out = []
     i = start_idx
-    BASE_USER = "d54e6652-fdf1-4ca0-82d1-23d7c02df294"
-    BASE_PROFILE = "0890400c-6900-4cd0-b55a-353ea1655206"
     eq_cycle = list(zip(EQUIP_POOL, EQUIP_NAMES))
     focus_cycle = FOCUSES
 
     n = 0
     for fl in FITNESS:
         for dur in DURATIONS:
-            for goal_offset in range(4):  # 4 goals per (fl,dur) cell = 96
+            for goal_offset in range(4):
                 eq, eq_name = eq_cycle[n % len(eq_cycle)]
                 f = focus_cycle[n % len(focus_cycle)]
                 goal = GOALS[(n + goal_offset) % len(GOALS)]
                 i += 1
                 n += 1
                 out.append(_scenario(i, 2, f"matrix {fl}/{dur}/{goal}/{f}/{eq_name}",
-                                     {"user_id": BASE_USER,
-                                      "gym_profile_id": BASE_PROFILE,
-                                      "fitness_level": fl,
-                                      "duration_minutes": dur,
-                                      "focus_areas": [f],
-                                      "goals": [goal],
-                                      "equipment": eq,
-                                      "scheduled_date": _next_date(i % 60),
-                                      "force_non_preferred_day": True}))
+                                     _make_body(i,
+                                                fitness_level=fl,
+                                                duration_minutes=dur,
+                                                focus_areas=[f],
+                                                goals=[goal],
+                                                equipment=eq)))
     return out
 
 
@@ -237,80 +268,46 @@ def _build_block_personalization(start_idx: int) -> List[Dict[str, Any]]:
     """Block 3 — comeback × custom_program × cycle_phase × adjacency permutations."""
     out = []
     i = start_idx
-    BASE_USER = "d54e6652-fdf1-4ca0-82d1-23d7c02df294"
-    BASE_PROFILE = "0890400c-6900-4cd0-b55a-353ea1655206"
 
-    # 3.1 Comeback × intensity (7 × 4 = 28, sample 25)
+    # 3.1 Comeback × intensity (axes: skip_comeback flag rotates)
     intensities_for_comeback = ["easy", "medium", "hard", "hell"]
     for offset in COMEBACK_OFFSETS:
-        for ix in intensities_for_comeback:
+        for _ix in intensities_for_comeback:
             i += 1
-            out.append(_scenario(i, 3,
-                f"comeback {offset}d + intensity {ix}",
-                {"user_id": BASE_USER,
-                 "gym_profile_id": BASE_PROFILE,
-                 "fitness_level": "intermediate",
-                 "duration_minutes": 45,
-                 "focus_areas": ["full_body"],
-                 "equipment": E1_FULL,
-                 "skip_comeback": offset == 0,
-                 "scheduled_date": _next_date(i % 60),
-                 "force_non_preferred_day": True,
-                 # No direct field for comeback_offset_days — set via user record
-                 # in real system; harness label-only.
-                 }))
+            out.append(_scenario(i, 3, f"comeback {offset}d + intensity {_ix}",
+                _make_body(i, skip_comeback=(offset == 0))))
 
-    # 3.2 Custom programs (10 entries, each at varied duration)
+    # 3.2 Custom programs — use varied durations to surface duration handling.
     durs_for_custom = [30, 45, 60, 75, 90]
     for j, cp in enumerate(CUSTOM_PROGRAMS):
         i += 1
-        out.append(_scenario(i, 3,
-            f"custom_program: {(cp or 'none')[:40]}",
-            {"user_id": BASE_USER,
-             "gym_profile_id": BASE_PROFILE,
-             "fitness_level": "intermediate",
-             "duration_minutes": durs_for_custom[j % len(durs_for_custom)],
-             "focus_areas": ["full_body"],
-             "equipment": E1_FULL,
-             "custom_program_description": cp,
-             "scheduled_date": _next_date(i % 60),
-             "force_non_preferred_day": True}))
+        # custom_program_description isn't on GenerateWorkoutRequest schema; thread
+        # via ai_prompt instead so the actual generator path uses it. Schema-level
+        # comeback fields can stay label-only since the user record drives them.
+        kw: Dict[str, Any] = {"duration_minutes": durs_for_custom[j % len(durs_for_custom)]}
+        if cp:
+            kw["ai_prompt"] = cp
+        out.append(_scenario(i, 3, f"custom_program: {(cp or 'none')[:40]}",
+                             _make_body(i, **kw)))
 
-    # 3.3 exclude_exercises sets
+    # 3.3 exclude_exercises sets — axis is the exclude list itself.
     for ex_list in EXCLUDE_SETS:
         i += 1
-        out.append(_scenario(i, 3,
-            f"exclude={(','.join(ex_list)[:30] or 'none')}",
-            {"user_id": BASE_USER, "gym_profile_id": BASE_PROFILE,
-             "fitness_level": "intermediate", "duration_minutes": 45,
-             "focus_areas": ["full_body"], "equipment": E1_FULL,
-             "exclude_exercises": ex_list,
-             "scheduled_date": _next_date(i % 60),
-             "force_non_preferred_day": True}))
+        out.append(_scenario(i, 3, f"exclude={(','.join(ex_list)[:30] or 'none')}",
+                             _make_body(i, exclude_exercises=ex_list)))
 
-    # 3.4 adjacent_day_exercises sets
+    # 3.4 adjacent_day_exercises sets.
     for ad_list in ADJACENT_DAY_SETS:
         i += 1
-        out.append(_scenario(i, 3,
-            f"adjacent={(','.join(ad_list)[:30] or 'none')}",
-            {"user_id": BASE_USER, "gym_profile_id": BASE_PROFILE,
-             "fitness_level": "intermediate", "duration_minutes": 45,
-             "focus_areas": ["upper"], "equipment": E1_FULL,
-             "adjacent_day_exercises": ad_list,
-             "scheduled_date": _next_date(i % 60),
-             "force_non_preferred_day": True}))
+        out.append(_scenario(i, 3, f"adjacent={(','.join(ad_list)[:30] or 'none')}",
+                             _make_body(i, adjacent_day_exercises=ad_list,
+                                            focus_areas=["upper"])))
 
-    # 3.5 batch_offset sweep (variety regression test)
+    # 3.5 batch_offset sweep (variety regression test).
     for off in [0, 1, 2, 3, 5, 7, 10]:
         i += 1
-        out.append(_scenario(i, 3,
-            f"batch_offset={off}",
-            {"user_id": BASE_USER, "gym_profile_id": BASE_PROFILE,
-             "fitness_level": "intermediate", "duration_minutes": 45,
-             "focus_areas": ["full_body"], "equipment": E1_FULL,
-             "batch_offset": off,
-             "scheduled_date": _next_date(i % 60),
-             "force_non_preferred_day": True}))
+        out.append(_scenario(i, 3, f"batch_offset={off}",
+                             _make_body(i, batch_offset=off)))
 
     return out
 
@@ -319,8 +316,6 @@ def _build_block_dates(start_idx: int) -> List[Dict[str, Any]]:
     """Block 4 — date variation + preferred-day gate stress (~25)."""
     out = []
     i = start_idx
-    BASE_USER = "d54e6652-fdf1-4ca0-82d1-23d7c02df294"
-    BASE_PROFILE = "0890400c-6900-4cd0-b55a-353ea1655206"
     today = date.today()
     targets = [
         (0, "today"),
@@ -332,13 +327,10 @@ def _build_block_dates(start_idx: int) -> List[Dict[str, Any]]:
     for offset, lab in targets:
         for force in [True, False]:
             i += 1
-            out.append(_scenario(i, 4,
-                f"date {lab} force={force}",
-                {"user_id": BASE_USER, "gym_profile_id": BASE_PROFILE,
-                 "fitness_level": "intermediate", "duration_minutes": 45,
-                 "focus_areas": ["full_body"], "equipment": E1_FULL,
-                 "scheduled_date": (today + timedelta(days=offset)).isoformat(),
-                 "force_non_preferred_day": force}))
+            body = _make_body(i)
+            body["scheduled_date"] = (today + timedelta(days=offset)).isoformat()
+            body["force_non_preferred_day"] = force
+            out.append(_scenario(i, 4, f"date {lab} force={force}", body))
     return out
 
 
@@ -346,22 +338,17 @@ def _build_block_workout_type_focus(start_idx: int) -> List[Dict[str, Any]]:
     """Block 5 — workout_type × focus matrix to validate type tagging (~50)."""
     out = []
     i = start_idx
-    BASE_USER = "d54e6652-fdf1-4ca0-82d1-23d7c02df294"
-    BASE_PROFILE = "0890400c-6900-4cd0-b55a-353ea1655206"
     pairs = []
     for wt in [None, "strength", "hypertrophy", "cardio", "hiit", "mobility", "recovery"]:
         for f in ["push", "pull", "legs", "full_body", "core", "cardio", "mobility"]:
             pairs.append((wt, f))
     for wt, f in pairs:
         i += 1
-        body = {"user_id": BASE_USER, "gym_profile_id": BASE_PROFILE,
-                "fitness_level": "intermediate", "duration_minutes": 45,
-                "focus_areas": [f], "equipment": E1_FULL,
-                "scheduled_date": _next_date(i % 60),
-                "force_non_preferred_day": True}
+        kw: Dict[str, Any] = {"focus_areas": [f]}
         if wt:
-            body["workout_type"] = wt
-        out.append(_scenario(i, 5, f"wt={wt or 'auto'}/focus={f}", body))
+            kw["workout_type"] = wt
+        out.append(_scenario(i, 5, f"wt={wt or 'auto'}/focus={f}",
+                             _make_body(i, **kw)))
     return out
 
 
@@ -369,8 +356,6 @@ def _build_block_edge_cases(start_idx: int) -> List[Dict[str, Any]]:
     """Block 6 — extreme + composite edge cases (~50)."""
     out = []
     i = start_idx
-    BASE_USER = "d54e6652-fdf1-4ca0-82d1-23d7c02df294"
-    BASE_PROFILE = "0890400c-6900-4cd0-b55a-353ea1655206"
 
     edges = [
         # Maximum constraint
@@ -593,11 +578,16 @@ def _build_block_edge_cases(start_idx: int) -> List[Dict[str, Any]]:
     ]
     for label, kw in edges:
         i += 1
-        body = {"user_id": BASE_USER, "gym_profile_id": BASE_PROFILE,
-                "scheduled_date": _next_date(i % 60),
-                "force_non_preferred_day": True}
-        body.update(kw)
-        out.append(_scenario(i, 6, label, body))
+        # Drop schema-incompatible fields that some edge entries still carry over
+        # from old WorkoutPlanRequest schema. The endpoint's body model rejects
+        # unknown fields with 422.
+        kw_clean = {k: v for k, v in kw.items()
+                    if k not in {"custom_program_description", "dumbbell_count",
+                                 "kettlebell_count"}}
+        # Surface free-text intent through ai_prompt where available.
+        if kw.get("custom_program_description"):
+            kw_clean["ai_prompt"] = kw["custom_program_description"]
+        out.append(_scenario(i, 6, label, _make_body(i, **kw_clean)))
     return out
 
 
@@ -617,8 +607,6 @@ def build_500() -> List[Dict[str, Any]]:
         out = out[:target]
     elif len(out) < target:
         # Pad with rotation through axis-sweep templates.
-        BASE_USER = "d54e6652-fdf1-4ca0-82d1-23d7c02df294"
-        BASE_PROFILE = "0890400c-6900-4cd0-b55a-353ea1655206"
         idx = len(out)
         n = 0
         # Pad with injury-positive scenarios only (skip the empty-injury entry from
@@ -634,12 +622,10 @@ def build_500() -> List[Dict[str, Any]]:
             idx += 1
             out.append(_scenario(idx, 7,
                 f"pad {fl}/{dur}/{goal}/{f}/{eq_name}/inj={'+'.join(inj)}",
-                {"user_id": BASE_USER, "gym_profile_id": BASE_PROFILE,
-                 "fitness_level": fl, "duration_minutes": dur,
-                 "focus_areas": [f], "goals": [goal], "equipment": eq,
-                 "injuries": inj,
-                 "scheduled_date": _next_date(idx % 60),
-                 "force_non_preferred_day": True}))
+                _make_body(idx,
+                           fitness_level=fl, duration_minutes=dur,
+                           focus_areas=[f], goals=[goal], equipment=eq,
+                           injuries=inj)))
             n += 1
     # Re-number 1..500 to ensure contiguity.
     for k, sc in enumerate(out, start=1):

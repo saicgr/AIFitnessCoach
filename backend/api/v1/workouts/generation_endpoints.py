@@ -197,150 +197,140 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
         gym_profile = None
         user = {}
 
-        if body.fitness_level and body.goals and body.equipment:
-            fitness_level = body.fitness_level
-            goals = body.goals
-            equipment = body.equipment
-            # Derive intensity from fitness level - beginners get 'easy', not 'medium'
-            intensity_preference = get_intensity_from_fitness_level(fitness_level)
-            workout_environment = None
-        else:
-            user = db.get_user(body.user_id)
-            if not user:
-                raise HTTPException(status_code=404, detail="User not found")
+        # ALWAYS load user record + active gym profile from Supabase. Body fields
+        # (fitness_level, goals, equipment) act as OVERRIDES on top of the persisted
+        # state — they don't bypass the user lookup. This guarantees focus_areas,
+        # training_split, workout_days, primary_goal, muscle_focus_points, etc. are
+        # always populated for downstream code.
+        user = db.get_user(body.user_id)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
 
-            fitness_level = body.fitness_level or user.get("fitness_level")
-            preferences = parse_json_field(user.get("preferences"), {})
+        fitness_level = body.fitness_level or user.get("fitness_level")
+        preferences = parse_json_field(user.get("preferences"), {})
 
-            # Check for gym profile - load equipment/environment from profile if available
-            gym_profile = None
-            if body.gym_profile_id:
-                # Specific profile requested — .single() raises PGRST116 on 0 rows
-                # (e.g. id doesn't exist or was deleted), so guard with try/except.
-                try:
-                    profile_result = db.client.table("gym_profiles").select("*").eq("id", body.gym_profile_id).single().execute()
-                    gym_profile = profile_result.data if profile_result and profile_result.data else None
-                except Exception as e:
-                    logger.warning(f"🏋️ [GymProfile] Requested profile {body.gym_profile_id} not found: {e}")
-                    gym_profile = None
-                if gym_profile:
-                    logger.info(f"🏋️ [GymProfile] Using requested profile: {body.gym_profile_id}")
-            else:
-                # Try to get active profile
-                try:
-                    active_result = db.client.table("gym_profiles").select("*").eq("user_id", body.user_id).eq("is_active", True).single().execute()
-                    gym_profile = active_result.data if active_result.data else None
-                    if gym_profile:
-                        logger.info(f"🏋️ [GymProfile] Using active profile: {gym_profile.get('name')} ({gym_profile.get('id')})")
-                except Exception as e:
-                    # No active profile found - will use user defaults
-                    logger.debug(f"No active gym profile found: {e}")
-
+        # Resolve gym profile: explicit ID → active → none.
+        gym_profile = None
+        if body.gym_profile_id:
+            try:
+                profile_result = db.client.table("gym_profiles").select("*").eq("id", body.gym_profile_id).single().execute()
+                gym_profile = profile_result.data if profile_result and profile_result.data else None
+            except Exception as e:
+                logger.warning(f"🏋️ [GymProfile] Requested profile {body.gym_profile_id} not found: {e}")
+                gym_profile = None
             if gym_profile:
-                # Load settings from gym profile
-                gym_profile_id = gym_profile.get("id")
-                equipment = body.equipment or gym_profile.get("equipment") or []
-                equipment_details = gym_profile.get("equipment_details") or []
-                workout_environment = gym_profile.get("workout_environment") or preferences.get("workout_environment")
-                training_split = gym_profile.get("training_split")
-                workout_days = gym_profile.get("workout_days") or []
-                profile_goals = normalize_goals_list(gym_profile.get("goals"))
-                # Parse user goals if it's a JSON string
-                user_goals = normalize_goals_list(user.get("goals"))
-                goals = normalize_goals_list(body.goals) if body.goals else (profile_goals if profile_goals else user_goals)
-                focus_areas = gym_profile.get("focus_areas") or []
-
-                logger.info(f"🏋️ [GymProfile] Profile equipment: {len(equipment)} items")
-                logger.info(f"📍 [GymProfile] Environment: {workout_environment}")
-                if training_split:
-                    logger.info(f"📅 [GymProfile] Training split: {training_split}")
-            else:
-                # Fall back to user settings (parse JSON strings)
-                goals = normalize_goals_list(body.goals) if body.goals else normalize_goals_list(user.get("goals"))
-                equipment = body.equipment or parse_json_field(user.get("equipment"), [])
-                equipment_details = parse_json_field(user.get("equipment_details"), [])
-                workout_environment = preferences.get("workout_environment")
-                focus_areas = []  # No focus areas when no gym profile
-                training_split = user.get("training_split")  # Fallback to user record
-                workout_days = parse_json_field(user.get("workout_days"), [])
-
-            # Use explicit intensity_preference if set, otherwise derive from fitness level
-            # This ensures beginners get 'easy' difficulty, not 'medium'
-            intensity_preference = preferences.get("intensity_preference") or get_intensity_from_fitness_level(fitness_level)
-
-            # Get primary training goal and muscle focus points for workout customization
-            primary_goal = user.get("primary_goal")
-            muscle_focus_points = user.get("muscle_focus_points")
-            if muscle_focus_points:
-                logger.info(f"🏋️ [Workout Generation] User has muscle focus points: {muscle_focus_points}")
-            if primary_goal:
-                logger.info(f"🎯 [Workout Generation] User has primary goal: {primary_goal}")
-
-            # Progression Pace + Weekly Variety — fetched here and threaded
-            # into `generate_workout_plan` so the user's Settings choices
-            # actually steer Gemini. Both helpers default to safe values
-            # when the user hasn't set them, so no None-handling needed
-            # downstream.
+                logger.info(f"🏋️ [GymProfile] Using requested profile: {body.gym_profile_id}")
+        else:
             try:
-                from .user_preference_utils import (
-                    get_user_progression_pace,
-                    get_user_weekly_variety,
-                )
-                user_progression_pace = await get_user_progression_pace(body.user_id)
-                user_weekly_variety = await get_user_weekly_variety(body.user_id)
-                logger.info(
-                    f"⚙️ [Workout Generation] progression_pace={user_progression_pace}, "
-                    f"weekly_variety={user_weekly_variety}%"
-                )
-            except Exception as _ppe:
-                logger.warning(f"⚠️ [Workout Generation] Could not load progression/variety prefs: {_ppe}")
-                user_progression_pace = "medium"
-                user_weekly_variety = 50
+                active_result = db.client.table("gym_profiles").select("*").eq("user_id", body.user_id).eq("is_active", True).single().execute()
+                gym_profile = active_result.data if active_result.data else None
+                if gym_profile:
+                    logger.info(f"🏋️ [GymProfile] Using active profile: {gym_profile.get('name')} ({gym_profile.get('id')})")
+            except Exception as e:
+                logger.debug(f"No active gym profile found: {e}")
 
-            # Body Analyzer context — pulls the latest snapshot (composition +
-            # posture findings) and renders a compact prompt block so the
-            # generator can tune rep ranges / accessory work to the user's
-            # current physique. Failure is non-blocking.
-            body_analyzer_context = None
-            try:
-                ba_row = db.client.table("body_analyzer_snapshots").select(
-                    "overall_rating, body_type, body_fat_percent, muscle_mass_percent, "
-                    "symmetry_score, posture_findings, improvement_tips, created_at"
-                ).eq("user_id", body.user_id).order(
-                    "created_at", desc=True
-                ).limit(1).execute()
-                if ba_row and ba_row.data:
-                    s = ba_row.data[0]
-                    posture_findings = s.get("posture_findings") or []
-                    posture_lines = "\n".join(
-                        f"  - {p.get('issue')}: severity {p.get('severity')}, corrective {p.get('corrective_exercise_tag')}"
-                        for p in posture_findings
-                    )
-                    body_analyzer_context = (
-                        "## USER BODY ANALYZER SNAPSHOT\n"
-                        f"- Overall rating: {s.get('overall_rating')}/100\n"
-                        f"- Body type: {s.get('body_type') or user.get('body_type')}\n"
-                        f"- Body fat: {s.get('body_fat_percent')}%\n"
-                        f"- Muscle mass: {s.get('muscle_mass_percent')}%\n"
-                        f"- Symmetry: {s.get('symmetry_score')}/100\n"
-                        + (f"- Posture findings:\n{posture_lines}\n" if posture_lines else "")
-                        + "Use this to bias accessory selection (e.g. unilateral work for low symmetry,"
-                        " corrective exercises matching the posture tags, rep ranges tuned to body-type response)."
-                    )
-                    logger.info("💪 [Workout Generation] Body Analyzer context attached")
-            except Exception as ba_err:
-                logger.debug(f"[Workout Generation] Body Analyzer context unavailable: {ba_err}")
+        if gym_profile:
+            gym_profile_id = gym_profile.get("id")
+            equipment = body.equipment or gym_profile.get("equipment") or []
+            equipment_details = gym_profile.get("equipment_details") or []
+            workout_environment = gym_profile.get("workout_environment") or preferences.get("workout_environment")
+            training_split = gym_profile.get("training_split")
+            workout_days = gym_profile.get("workout_days") or []
+            profile_goals = normalize_goals_list(gym_profile.get("goals"))
+            user_goals = normalize_goals_list(user.get("goals"))
+            goals = normalize_goals_list(body.goals) if body.goals else (profile_goals if profile_goals else user_goals)
+            focus_areas = body.focus_areas or gym_profile.get("focus_areas") or []
 
-            # Get fitness assessment data for smarter workout personalization
-            pushup_capacity = user.get("pushup_capacity")
-            pullup_capacity = user.get("pullup_capacity")
-            plank_capacity = user.get("plank_capacity")
-            squat_capacity = user.get("squat_capacity")
-            cardio_capacity = user.get("cardio_capacity")
-            training_experience = user.get("training_experience")
-            has_assessment = any([pushup_capacity, pullup_capacity, plank_capacity, squat_capacity, cardio_capacity, training_experience])
-            if has_assessment:
-                logger.info(f"💪 [Workout Generation] User has fitness assessment: pushups={pushup_capacity}, pullups={pullup_capacity}, plank={plank_capacity}, squats={squat_capacity}, cardio={cardio_capacity}, experience={training_experience}")
+            logger.info(f"🏋️ [GymProfile] Profile equipment: {len(equipment)} items")
+            logger.info(f"📍 [GymProfile] Environment: {workout_environment}")
+            if training_split:
+                logger.info(f"📅 [GymProfile] Training split: {training_split}")
+        else:
+            gym_profile_id = None
+            goals = normalize_goals_list(body.goals) if body.goals else normalize_goals_list(user.get("goals"))
+            equipment = body.equipment or parse_json_field(user.get("equipment"), [])
+            equipment_details = parse_json_field(user.get("equipment_details"), [])
+            workout_environment = preferences.get("workout_environment")
+            focus_areas = body.focus_areas or []
+            training_split = user.get("training_split")
+            workout_days = parse_json_field(user.get("workout_days"), [])
+
+        # Use explicit intensity_preference if set, otherwise derive from fitness level.
+        intensity_preference = preferences.get("intensity_preference") or get_intensity_from_fitness_level(fitness_level)
+
+        # Get primary training goal and muscle focus points for workout customization
+        primary_goal = user.get("primary_goal")
+        muscle_focus_points = user.get("muscle_focus_points")
+        if muscle_focus_points:
+            logger.info(f"🏋️ [Workout Generation] User has muscle focus points: {muscle_focus_points}")
+        if primary_goal:
+            logger.info(f"🎯 [Workout Generation] User has primary goal: {primary_goal}")
+
+        # Progression Pace + Weekly Variety — fetched here and threaded
+        # into `generate_workout_plan` so the user's Settings choices
+        # actually steer Gemini. Both helpers default to safe values
+        # when the user hasn't set them, so no None-handling needed
+        # downstream.
+        try:
+            from .user_preference_utils import (
+                get_user_progression_pace,
+                get_user_weekly_variety,
+            )
+            user_progression_pace = await get_user_progression_pace(body.user_id)
+            user_weekly_variety = await get_user_weekly_variety(body.user_id)
+            logger.info(
+                f"⚙️ [Workout Generation] progression_pace={user_progression_pace}, "
+                f"weekly_variety={user_weekly_variety}%"
+            )
+        except Exception as _ppe:
+            logger.warning(f"⚠️ [Workout Generation] Could not load progression/variety prefs: {_ppe}")
+            user_progression_pace = "medium"
+            user_weekly_variety = 50
+
+        # Body Analyzer context — pulls the latest snapshot (composition +
+        # posture findings) and renders a compact prompt block so the
+        # generator can tune rep ranges / accessory work to the user's
+        # current physique. Failure is non-blocking.
+        body_analyzer_context = None
+        try:
+            ba_row = db.client.table("body_analyzer_snapshots").select(
+                "overall_rating, body_type, body_fat_percent, muscle_mass_percent, "
+                "symmetry_score, posture_findings, improvement_tips, created_at"
+            ).eq("user_id", body.user_id).order(
+                "created_at", desc=True
+            ).limit(1).execute()
+            if ba_row and ba_row.data:
+                s = ba_row.data[0]
+                posture_findings = s.get("posture_findings") or []
+                posture_lines = "\n".join(
+                    f"  - {p.get('issue')}: severity {p.get('severity')}, corrective {p.get('corrective_exercise_tag')}"
+                    for p in posture_findings
+                )
+                body_analyzer_context = (
+                    "## USER BODY ANALYZER SNAPSHOT\n"
+                    f"- Overall rating: {s.get('overall_rating')}/100\n"
+                    f"- Body type: {s.get('body_type') or user.get('body_type')}\n"
+                    f"- Body fat: {s.get('body_fat_percent')}%\n"
+                    f"- Muscle mass: {s.get('muscle_mass_percent')}%\n"
+                    f"- Symmetry: {s.get('symmetry_score')}/100\n"
+                    + (f"- Posture findings:\n{posture_lines}\n" if posture_lines else "")
+                    + "Use this to bias accessory selection (e.g. unilateral work for low symmetry,"
+                    " corrective exercises matching the posture tags, rep ranges tuned to body-type response)."
+                )
+                logger.info("💪 [Workout Generation] Body Analyzer context attached")
+        except Exception as ba_err:
+            logger.debug(f"[Workout Generation] Body Analyzer context unavailable: {ba_err}")
+
+        # Get fitness assessment data for smarter workout personalization
+        pushup_capacity = user.get("pushup_capacity")
+        pullup_capacity = user.get("pullup_capacity")
+        plank_capacity = user.get("plank_capacity")
+        squat_capacity = user.get("squat_capacity")
+        cardio_capacity = user.get("cardio_capacity")
+        training_experience = user.get("training_experience")
+        has_assessment = any([pushup_capacity, pullup_capacity, plank_capacity, squat_capacity, cardio_capacity, training_experience])
+        if has_assessment:
+            logger.info(f"💪 [Workout Generation] User has fitness assessment: pushups={pushup_capacity}, pullups={pullup_capacity}, plank={plank_capacity}, squats={squat_capacity}, cardio={cardio_capacity}, experience={training_experience}")
 
         # Fetch user's custom exercises
         logger.info(f"🏋️ [Workout Generation] Fetching custom exercises for user: {body.user_id}")

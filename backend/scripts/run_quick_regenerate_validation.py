@@ -250,7 +250,8 @@ CSV_COLS = [
 def init_outputs() -> Path:
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
     out = BACKEND / "scripts" / "output" / f"render_quick_regenerate_{ts}"
-    (out / "json").mkdir(parents=True, exist_ok=True)
+    out.mkdir(parents=True, exist_ok=True)
+    # raw_response_json is in CSV_COLS — no separate json/ dir needed.
     with (out / "workouts.csv").open("w", newline="") as fh:
         csv.writer(fh).writerow(CSV_COLS)
     print(f"[harness] Output → {out}", flush=True)
@@ -258,13 +259,14 @@ def init_outputs() -> Path:
 
 
 def write_row(out_dir: Path, row: Dict[str, Any]) -> None:
-    """Append CSV row, write per-scenario JSON, print console line — all flushed."""
+    """Append CSV row with inline raw_response_json — no per-scenario JSON file written.
+    Survives kill -9; output dir stays clean (just workouts.csv)."""
     csv_path = out_dir / "workouts.csv"
+    # Ensure raw_response_json column has the full row payload.
+    if "raw_response_json" in CSV_COLS and not row.get("raw_response_json"):
+        row["raw_response_json"] = json.dumps(row, default=str, separators=(",", ":"))
     with csv_path.open("a", newline="") as fh:
         csv.writer(fh).writerow([row.get(c, "") for c in CSV_COLS])
-
-    jpath = out_dir / "json" / f"scenario_{row['idx']:03d}.json"
-    jpath.write_text(json.dumps(row, indent=2, default=str))
 
     print(
         f"[{row['idx']}/{row.get('_total','?')}] "
@@ -1178,7 +1180,7 @@ async def run_scenario(client: httpx.AsyncClient, jwt: str, sc: Scenario,
 
 async def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--n", type=int, default=200, help="Cap scenarios (smoke test = 5)")
+    parser.add_argument("--n", type=int, default=1000, help="Cap scenarios (smoke test = 5)")
     parser.add_argument("--blocks", default="", help="Comma list of blocks to include, e.g. '1,2'")
     parser.add_argument("--pacing", type=float, default=1.0, help="Seconds between calls")
     parser.add_argument("--no-cleanup", action="store_true", help="Skip end-of-run cleanup")
