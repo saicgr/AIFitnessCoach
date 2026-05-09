@@ -13,7 +13,7 @@ want to keep in every workout regardless of the weekly variation setting.
 
 Avoided exercises/muscles are excluded from AI-generated workouts entirely.
 """
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 from datetime import datetime, date
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel, Field
