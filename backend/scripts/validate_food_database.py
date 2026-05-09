@@ -160,7 +160,7 @@ def _is_alcohol(name: str, category: str) -> bool:
     return any(kw in text for kw in ALCOHOL_KEYWORDS)
 
 
-def detect_food_group(name: str, category: str) -> str | None:
+def detect_food_group(name: str, category: str) -> Optional[str]:
     """Classify a food into a group using keyword matching.
     Returns the food group name or None if unclassifiable."""
     text = f"{name} {category}".lower()
@@ -170,7 +170,7 @@ def detect_food_group(name: str, category: str) -> str | None:
     return None
 
 
-def get_category_calorie_range(food_group: str) -> tuple[float, float] | None:
+def get_category_calorie_range(food_group: str) -> Optional[tuple[float, float]]:
     """Get the plausible calorie range for a food group."""
     for _, group, min_cal, max_cal in FOOD_GROUP_RULES:
         if group == food_group:
@@ -182,7 +182,7 @@ def get_category_calorie_range(food_group: str) -> tuple[float, float] | None:
 # Verification level
 # ─────────────────────────────────────────────────────────────
 
-def classify_verification_level(source: str | None, data_type: str | None) -> str | None:
+def classify_verification_level(source: Optional[str], data_type: Optional[str]) -> Optional[str]:
     """Assign a verification tier based on source and data_type."""
     if not source:
         return None
@@ -498,7 +498,7 @@ def row_to_dict(raw: tuple) -> dict:
 # Main logic
 # ─────────────────────────────────────────────────────────────
 
-def run(dry_run: bool = False, limit: int | None = None) -> bool:
+def run(dry_run: bool = False, limit: Optional[int] = None) -> bool:
     logger.info("Connecting to %s@%s:%d/%s ...", DATABASE_USER, DATABASE_HOST, DATABASE_PORT, DATABASE_NAME)
     conn = psycopg2.connect(
         host=DATABASE_HOST, port=DATABASE_PORT, dbname=DATABASE_NAME,

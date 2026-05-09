@@ -5,7 +5,7 @@ Requesting a scope outside that list is rejected at /oauth/authorize.
 """
 from __future__ import annotations
 
-from typing import Iterable
+from typing import Iterable, Optional
 
 from fastapi import HTTPException, status
 
@@ -18,7 +18,7 @@ class InvalidScopeError(ValueError):
     """Raised when a client requests an unknown or malformed scope."""
 
 
-def parse_scope_string(raw: str | None) -> list[str]:
+def parse_scope_string(raw: Optional[str]) -> list[str]:
     """Parse a space-separated scope string into a validated list.
 
     Empty/None input returns the default scope set.

@@ -8,6 +8,7 @@ applied directly to existing workout exercises_json.
 Core principle: Parse JSON → find target → replace with library match → update row.
 """
 from __future__ import annotations
+from typing import Optional
 
 from datetime import datetime, timedelta, date
 import json
@@ -315,7 +316,7 @@ async def remove_muscle_from_workout(
 # Conflict Detection
 # =============================================================================
 
-def resolve_staple_avoid_conflict(db, user_id: str, exercise_name: str, action: str) -> str | None:
+def resolve_staple_avoid_conflict(db, user_id: str, exercise_name: str, action: str) -> Optional[str]:
     """
     Auto-resolve staple vs. avoided conflict.
 
@@ -351,7 +352,7 @@ def resolve_staple_avoid_conflict(db, user_id: str, exercise_name: str, action: 
 # High-Level Apply Functions (called from endpoints)
 # =============================================================================
 
-def _staple_matches_day(staple: dict, scheduled_date_str: str | None) -> bool:
+def _staple_matches_day(staple: dict, scheduled_date_str: Optional[str]) -> bool:
     """Check if a staple's target_days matches the workout's scheduled date."""
     target_days = staple.get("target_days")
     if target_days is None:
@@ -374,7 +375,7 @@ async def _create_staple_workout_for_date(
     target_date: date,
     staples_for_day: list[dict],
     context: dict,
-) -> dict | None:
+) -> Optional[dict]:
     """
     Create a lightweight staple-only workout on a non-workout day.
 

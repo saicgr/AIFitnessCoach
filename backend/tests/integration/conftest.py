@@ -7,7 +7,7 @@ without live credentials but still exercise the full pipeline code paths
 from __future__ import annotations
 
 import os
-from typing import Any
+from typing import Any, Optional
 from unittest.mock import MagicMock
 from uuid import uuid4
 
@@ -25,9 +25,9 @@ class _FakeTable:
 
     def __init__(self, store: dict):
         self._store = store
-        self._last_op: str | None = None
+        self._last_op: Optional[str] = None
         self._last_payload: Any = None
-        self._last_conflict: str | None = None
+        self._last_conflict: Optional[str] = None
         self._last_filters: list = []
 
     def insert(self, rows, **kwargs):
@@ -36,7 +36,7 @@ class _FakeTable:
         self._store.setdefault("inserts", []).extend(self._last_payload)
         return self
 
-    def upsert(self, rows, on_conflict: str | None = None,
+    def upsert(self, rows, on_conflict: Optional[str] = None,
                ignore_duplicates: bool = False, **kwargs):
         self._last_op = "upsert"
         self._last_payload = rows if isinstance(rows, list) else [rows]

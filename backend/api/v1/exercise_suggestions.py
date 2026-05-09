@@ -397,7 +397,7 @@ async def get_fast_exercise_suggestions(body: FastSuggestionRequest, current_use
 
         # Strip parenthetical details from muscle names to avoid breaking
         # PostgREST .or_() parser — e.g. "Chest (Pectoralis Major)" → "Chest"
-        def _strip_parens(value: str | None) -> str | None:
+        def _strip_parens(value: Optional[str]) -> Optional[str]:
             if not value:
                 return value
             return re.sub(r"\s*\(.*?\)", "", value).strip() or value

@@ -8,6 +8,7 @@ Keep this in sync with any SQL that reads/writes `food_name_normalized` —
 the read side and the write side MUST agree character-for-character, or
 overrides silently fail to apply.
 """
+from typing import Optional
 
 import re
 
@@ -16,7 +17,7 @@ _WHITESPACE_RE = re.compile(r"\s+")
 _NON_ALNUM_SPACE_RE = re.compile(r"[^a-z0-9\s]")
 
 
-def normalize_food_name(name: str | None) -> str:
+def normalize_food_name(name: Optional[str]) -> str:
     """Stable normalized form of a food description.
 
     Transformations (in order):

@@ -101,14 +101,14 @@ MUSCLE_ALIASES = {
 }
 
 
-def _strip_parens(value: str | None) -> str | None:
+def _strip_parens(value: Optional[str]) -> Optional[str]:
     """Strip parenthetical details from muscle names (e.g., 'Chest (Pectoralis Major)' → 'Chest')."""
     if not value:
         return value
     return re.sub(r"\s*\(.*?\)", "", value).strip() or value
 
 
-def _normalize_muscle(muscle: str | None) -> str | None:
+def _normalize_muscle(muscle: Optional[str]) -> Optional[str]:
     """Normalize muscle name to canonical form."""
     if not muscle:
         return None
@@ -116,7 +116,7 @@ def _normalize_muscle(muscle: str | None) -> str | None:
     return MUSCLE_ALIASES.get(clean, clean)
 
 
-def _is_timed_exercise(name: str, category: str | None = None) -> bool:
+def _is_timed_exercise(name: str, category: Optional[str] = None) -> bool:
     """Check if exercise is timed (hold/isometric)."""
     name_lower = name.lower()
     cat_lower = (category or "").lower()
@@ -126,7 +126,7 @@ def _is_timed_exercise(name: str, category: str | None = None) -> bool:
     )
 
 
-def _is_cardio_exercise(name: str, equipment: str | None = None, category: str | None = None) -> bool:
+def _is_cardio_exercise(name: str, equipment: Optional[str] = None, category: Optional[str] = None) -> bool:
     """Check if exercise is cardio."""
     cat_lower = (category or "").lower()
     eq_lower = (equipment or "").lower()
@@ -136,9 +136,9 @@ def _is_cardio_exercise(name: str, equipment: str | None = None, category: str |
 def get_exercise_params(
     exercise_name: str,
     library_data: dict,
-    user_overrides: dict | None = None,
-    exercise_history: dict | None = None,
-    user_profile: dict | None = None,
+    user_overrides: Optional[dict] = None,
+    exercise_history: Optional[dict] = None,
+    user_profile: Optional[dict] = None,
 ) -> dict:
     """
     Return smart exercise parameters using a priority chain.
@@ -245,11 +245,11 @@ def get_exercise_params(
 def _find_replacement_exercise(
     db,
     target_muscle: str,
-    equipment_pref: str | None,
+    equipment_pref: Optional[str],
     excluded_names: set[str],
     avoided_exercises: set[str],
     avoided_muscles: set[str],
-) -> dict | None:
+) -> Optional[dict]:
     """
     Find a replacement exercise from the library.
 
@@ -355,11 +355,11 @@ def _find_replacement_exercise(
 def _find_compatible_replacement(
     db,
     avoided_muscle: str,
-    equipment_pref: str | None,
+    equipment_pref: Optional[str],
     excluded_names: set[str],
     avoided_exercises: set[str],
     avoided_muscles: set[str],
-) -> dict | None:
+) -> Optional[dict]:
     """Find a replacement exercise from a compatible muscle group."""
     normalized = _normalize_muscle(avoided_muscle)
     compatible = MUSCLE_COMPATIBILITY.get(normalized, [])
@@ -520,7 +520,7 @@ def _log_workout_change(db, user_id: str, workout_id: str, change_type: str, det
         logger.warning(f"Could not log workout change: {e}", exc_info=True)
 
 
-def _validate_equipment(exercise_equipment: str | None, user_equipment: list | None) -> bool:
+def _validate_equipment(exercise_equipment: Optional[str], user_equipment: Optional[list]) -> bool:
     """Check if user has the required equipment for an exercise."""
     if not exercise_equipment or not user_equipment:
         return True  # No requirement or no profile = allow

@@ -688,7 +688,7 @@ async def get_checkout_status(session_id: str):
 
     Returns:
         status: 'pending' | 'active' | 'refunded' | 'disputed'
-        seat_number: int | None  (only present when active)
+        seat_number: Optional[int]  (only present when active)
         email: str (the email on the purchase, for "sign in with this email" copy)
     """
     supabase = get_supabase()

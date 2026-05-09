@@ -14,8 +14,8 @@ Strict envelope (matches the rest of the tool surface)::
       "action_data": {
         "action": "open_swap_or_add",
         "matches": [...],
-        "canonical_name": str | None,
-        "snapped_equipment_id": str | None,
+        "canonical_name": Optional[str],
+        "snapped_equipment_id": Optional[str],
         ...
       },
       "summary_text": str,

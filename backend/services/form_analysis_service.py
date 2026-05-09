@@ -728,8 +728,8 @@ class FormAnalysisService:
         s3_keys: list[str],
         mime_types: list[str],
         labels: list[str],
-        exercise_name: str | None = None,
-        user_context: str | None = None,
+        exercise_name: Optional[str] = None,
+        user_context: Optional[str] = None,
     ) -> dict:
         """
         Compare exercise form across multiple videos.
@@ -745,8 +745,8 @@ class FormAnalysisService:
         s3_keys: list[str],
         mime_types: list[str],
         labels: list[str],
-        exercise_name: str | None,
-        user_context: str | None,
+        exercise_name: Optional[str],
+        user_context: Optional[str],
     ) -> dict:
         """Internal comparison implementation with keyframe + cache support."""
         tmp_paths = []

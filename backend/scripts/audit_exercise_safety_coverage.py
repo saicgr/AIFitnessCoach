@@ -29,7 +29,7 @@ import argparse
 import json
 import sys
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 BACKEND_ROOT = Path(__file__).resolve().parents[1]
 
@@ -148,7 +148,7 @@ def emit_sql(out_path: str = "-") -> None:
                 f.write(f"-- === {name} ===\n{sql.strip()}\n\n")
 
 
-def main(argv: List[str] | None = None) -> int:
+def main(argv: Optional[List[str]] = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--emit-sql", action="store_true",
                     help="Print audit SQL to stdout or --out for MCP execution.")

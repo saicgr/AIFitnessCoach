@@ -10,7 +10,7 @@ S3 Bucket Structure:
         └── video3.mp4
 """
 from core.db import get_supabase_db
-from typing import List
+from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
 from core.auth import get_current_user
@@ -97,8 +97,8 @@ def _classify_exercise_for_substitute(name: str, body_part: str = "", muscle_gro
 async def _find_substitute_video(
     db,
     original_name: str,
-    user_id: str | None,
-) -> dict | None:
+    user_id: Optional[str],
+) -> Optional[dict]:
     """
     Fallback path when the canonical exercise_library has no video for
     `original_name`. Searches:

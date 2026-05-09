@@ -403,10 +403,10 @@ Guidelines:
 
     async def classify_media_content(
         self,
-        image_data: bytes | None = None,
-        image_base64: str | None = None,
+        image_data: Optional[bytes] = None,
+        image_base64: Optional[str] = None,
         mime_type: str = "image/jpeg",
-        s3_key: str | None = None,
+        s3_key: Optional[str] = None,
     ) -> str:
         """
         Classify what media content shows. Lightweight Gemini Vision call (~10 tokens output).
@@ -606,9 +606,9 @@ Guidelines:
         self,
         s3_keys: list[str],
         mime_types: list[str],
-        user_context: str | None = None,
+        user_context: Optional[str] = None,
         analysis_mode: str = "auto",
-        nutrition_context: dict | None = None,
+        nutrition_context: Optional[dict] = None,
     ) -> dict:
         """
         Analyze multiple food images from S3 for nutrition estimation.
@@ -1264,7 +1264,7 @@ Guidelines:
             mime_type: One of 'application/pdf', 'image/jpeg', 'image/png', 'image/webp'.
 
         Returns:
-            List of dicts: [{"raw_name": str, "quantity": int|None, "weight_range": str|None, "confidence": float}]
+            List of dicts: [{"raw_name": str, "quantity": Optional[int], "weight_range": Optional[str], "confidence": float}]
 
         Raises:
             ValueError: If mime_type unsupported, PDF page count > 10, or response is not valid JSON.
