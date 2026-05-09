@@ -526,3 +526,35 @@ _(populated per-call by harness when run with --live-status)_
 | 498 | 7 | pad beginner/20/mobility/glutes/E8_fw/none | duration_minutes, equipment, fitness_level, focus_areas, force_non_preferred_day, goals, gym_profile_id, injuries, +2 more |
 | 499 | 7 | pad intermediate/30/power/cardio/E9_db1/knee | duration_minutes, equipment, fitness_level, focus_areas, force_non_preferred_day, goals, gym_profile_id, injuries, +2 more |
 | 500 | 7 | pad advanced/40/athletic_performance/mobility/E10_home/shoulder | duration_minutes, equipment, fitness_level, focus_areas, force_non_preferred_day, goals, gym_profile_id, injuries, +2 more |
+
+<!-- LIVE-RUN-STATUS — auto-updated by harness; do not edit -->
+## 🔴 Live Run Status
+_Run started 2026-05-09T00:48:25._ Updated as each scenario completes.
+
+| # | Status | Label | Workout name | n_ex | latency_ms | error |
+|---|---|---|---|---|---|---|
+| 476 | ✅ | pad advanced/30/weight_loss/legs/E1_full/inj=knee | Steady Gentle Foundation | 3 | 1368 |  |
+| 477 | ✅ | pad beginner/40/muscle_tone/full_body/E2_bw/inj=shoulder | Gentle Arm Sculpt Flow | 3 | 820 |  |
+| 478 | ✅ | pad intermediate/45/strength/core/E3_db/inj=lower_back | Gentle Sculpt Shoulder Flow | 5 | 1011 |  |
+| 479 | ✅ | pad advanced/60/hypertrophy/upper/E4_kb/inj=wrist | Absolute Peak Upper Sculpt | 8 | 21483 |  |
+| 480 | ✅ | pad beginner/75/fat_loss/lower/E5_mach/inj=ankle | Gentle Motion Vitality Flow | 3 | 1005 |  |
+| 481 | ✅ | pad intermediate/90/endurance/arms/E6_bands/inj=hip | Steady Gentle Muscle Flow | 3 | 784 |  |
+| 482 | ✅ | pad advanced/15/general_fitness/shoulders/E7_no_bb/inj=elbow | Gentle Foundation Body Flow | 5 | 799 |  |
+| 483 | ✅ | pad beginner/20/mobility/glutes/E8_fw/inj=neck | Gentle Rising Sun Flow | 5 | 906 |  |
+| 484 | ✅ | pad intermediate/30/power/cardio/E9_db1/inj=knee+shoulder | Gentle Harmony Flow | 5 | 858 |  |
+| 485 | ✅ | pad advanced/40/athletic_performance/mobility/E10_home/inj=k | Gentle Peak Performance | 5 | 942 |  |
+| 486 | ✅ | pad beginner/45/weight_loss/push/E11_cardio/inj=shoulder+wri | Gentle Giant Muscle Flow | 5 | 1090 |  |
+| 487 | ✅ | pad intermediate/60/muscle_tone/pull/E12_bw_bands/inj=knee+s | Gentle Peak Performance | 5 | 951 |  |
+| 488 | ✅ | pad advanced/75/strength/legs/E13_TRX/inj=knee+shoulder+lowe | Ignite Explosive Peak Performance | 3 | 1077 |  |
+| 489 | ✅ | pad beginner/90/hypertrophy/full_body/E14_gym_60/inj=knee+sh | Titan Steel Body Sculpt | 3 | 875 |  |
+| 490 | ✅ | pad intermediate/15/fat_loss/core/E1_full/inj=knee | Titan Sculpting Blast | 5 | 969 |  |
+| 491 | ✅ | pad advanced/20/endurance/upper/E2_bw/inj=shoulder | Titan Sculpting Peak | 5 | 832 |  |
+| 492 | ✅ | pad beginner/30/general_fitness/lower/E3_db/inj=lower_back | Titan Sculpting Peak | 6 | 916 |  |
+| 493 | ✅ | pad intermediate/40/mobility/arms/E4_kb/inj=wrist | Titan Physique Sculpt | 7 | 1443 |  |
+| 494 | ✅ | pad advanced/45/power/shoulders/E5_mach/inj=ankle | Titan Sculpting Blast | 7 | 911 |  |
+| 495 | ✅ | pad beginner/60/athletic_performance/glutes/E6_bands/inj=hip | Titan Savage Blast | 7 | 848 |  |
+| 496 | ✅ | pad intermediate/75/weight_loss/cardio/E7_no_bb/inj=elbow | Titan Unleashed Peak Performance | 3 | 789 |  |
+| 497 | ✅ | pad advanced/90/muscle_tone/mobility/E8_fw/inj=neck | Titan Savage Blast | 3 | 778 |  |
+| 498 | ✅ | pad beginner/15/strength/push/E9_db1/inj=knee+shoulder | Savage Beast Body Blast | 5 | 923 |  |
+| 499 | ✅ | pad intermediate/20/hypertrophy/pull/E10_home/inj=knee+lower | Apex Predator Body Shock | 5 | 880 |  |
+| 500 | ✅ | pad advanced/30/fat_loss/legs/E11_cardio/inj=shoulder+wrist | Apex Warrior Full Blast | 6 | 1135 |  |

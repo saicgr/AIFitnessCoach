@@ -113,13 +113,35 @@ def resume_or_init_outputs(
               flush=True)
         return init_outputs(prefix, csv_cols), set(), []
 
-    # Ensure json/ exists (might have been consolidated already — bail out).
+    completed: set = set()
+
     if not json_dir.exists():
-        print(f"[harness] {out}/json missing (already consolidated?) — "
-              "starting fresh", flush=True)
+        # json/ already cleaned up after consolidation — fall back to the CSV
+        # to derive completed indices. Skip rows that hit 401 (auth-expired);
+        # those should be re-attempted with a fresh JWT. Everything else
+        # (200/422/409/500) is treated as completed.
+        if csv_path.exists():
+            print(
+                f"[harness] {out}/json missing — falling back to CSV "
+                f"({csv_path.name}); skipping non-401 completed rows.",
+                flush=True,
+            )
+            with csv_path.open() as fh:
+                reader = csv.DictReader(fh)
+                for r in reader:
+                    try:
+                        idx = int(r.get("idx", "0"))
+                    except Exception:
+                        continue
+                    status = (r.get("http_status") or "").strip()
+                    if status and status != "401":
+                        completed.add(idx)
+            # Reuse the existing dir so we keep appending to the same CSV.
+            return out, completed, []
+        print(f"[harness] {out}/json AND CSV missing — starting fresh",
+              flush=True)
         return init_outputs(prefix, csv_cols), set(), []
 
-    completed: set = set()
     for jf in json_dir.glob("scenario_*.json"):
         try:
             idx = int(jf.stem.split("_")[-1])

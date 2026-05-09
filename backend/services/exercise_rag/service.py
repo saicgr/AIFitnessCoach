@@ -956,8 +956,13 @@ class ExerciseRAGService:
                 else:
                     ex_equipment = raw_ex_equipment
 
-                # Filter by equipment
-                if not filter_by_equipment(ex_equipment, equipment, meta.get("name", "")):
+                # Filter by equipment. use_substitutions=True activates the
+                # alias chain in services.equipment_resolver (e.g. "TRX" →
+                # "Suspension Trainer", "trx_bands" → "Suspension Trainer"),
+                # which is loaded from the equipment_types taxonomy seeded by
+                # migration 1594. Without this flag a TRX user cannot match
+                # any of the 34 Suspension Trainer exercises in the library.
+                if not filter_by_equipment(ex_equipment, equipment, meta.get("name", ""), use_substitutions=True):
                     logger.debug(f"Filtered out '{meta.get('name')}' - equipment mismatch")
                     continue
 

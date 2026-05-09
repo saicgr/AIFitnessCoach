@@ -309,6 +309,21 @@ async def _init_cache_manager():
         logger.info("Gemini Context Caching disabled (GEMINI_CACHE_ENABLED=false)")
 
 
+async def _init_equipment_resolver():
+    """Pre-load the equipment alias/substitution resolver so the RAG filter
+    can use it synchronously. Without this, `EquipmentResolver._instance`
+    stays None and `filter_by_equipment(use_substitutions=True)` skips the
+    alias chain (e.g. TRX → Suspension Trainer doesn't resolve)."""
+    logger.info("Initializing EquipmentResolver (alias + substitution cache)...")
+    t = time.time()
+    try:
+        from services.equipment_resolver import EquipmentResolver
+        await EquipmentResolver.get_instance()
+        logger.info(f"EquipmentResolver ready in {time.time() - t:.2f}s")
+    except Exception as e:
+        logger.warning(f"EquipmentResolver init failed (alias path will no-op): {e}", exc_info=True)
+
+
 async def _check_exercise_rag_index():
     """Check and auto-index exercises for RAG (can run after server starts)."""
     logger.info("Checking Exercise RAG index (Chroma Cloud)...")
@@ -583,6 +598,7 @@ async def lifespan(app: FastAPI):
     logger.info("Starting Phase 3: background initialization tasks...")
     _create_safe_task(_redis_keepalive_loop(), name="redis-keepalive")
     _create_safe_task(_init_cache_manager(), name="init-cache-manager")
+    _create_safe_task(_init_equipment_resolver(), name="init-equipment-resolver")
     _create_safe_task(_check_exercise_rag_index(), name="check-exercise-rag-index")
     _create_safe_task(_check_chromadb_dimensions(), name="check-chromadb-dimensions")
     _create_safe_task(_resume_pending_jobs(), name="resume-pending-jobs")

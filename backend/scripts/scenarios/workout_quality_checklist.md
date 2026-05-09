@@ -845,6 +845,102 @@ Then for the requested workout type, the dominant discipline % must match:
 
 Otherwise → `fail`.
 
+## XX-bis. Focus-scope contamination (upper/lower/core leak across body halves)
+
+**Real-data finding** (run `quick_workout_engine_20260508T205650`, 1137 scenarios):
+- 210 cases of upper_body workouts containing lower-body exercises
+  (e.g. `Plank Lunges`, `Bulgarian Split Squat`, `Dumbbell Goblet Curtsy Lunge`,
+  `Trap Bar Deadlift`).
+- Lower_body workouts containing upper-body exercises (presses, curls).
+- **Two root causes:**
+  1. **Library data quality** — many entries pack secondary muscles into the same
+     `target_muscle` string (e.g. `"Quadriceps, Glutes, Shoulders (Deltoids)"` for
+     "Overhead Lunge"). Substring-matching the `shoulders` slot pulls the lunge
+     into an upper-body workout.
+  2. **Movement-pattern diversity check** force-injects `squat`/`hinge` patterns
+     (which always map to `quads`/`hamstrings` muscles) even into upper-body
+     workouts via `getMissingPatterns()` + `patternToMuscle()`.
+
+**🛡️ ENFORCED IN CODE (2026-05-08):** `quick_workout_engine_ui.dart`:
+- New `_isLowerBodyMovement()` and `_isUpperBodyMovement()` name-keyword filters
+  drop cross-contamination from the library before slot selection when
+  `focus ∈ {upper_body, lower_body, core}`.
+- Movement-pattern diversity check now skipped for opinionated focuses; only
+  `full_body` and `strength` run pattern-fill.
+
+**Hard contract:**
+
+| Focus | Forbidden movement keywords |
+|---|---|
+| `upper_body` | lunge, squat, deadlift, rdl, romanian, split squat, pistol, step up, leg press, leg curl, leg extension, calf raise, glute bridge, glute kickback, hip thrust, good morning, kettlebell swing, box jump |
+| `lower_body` | bench press, chest press, shoulder press, overhead press, military press, push press, arnold press, bicep curl, hammer curl, preacher curl, tricep, skull crusher, kickback, lat pulldown, lat pull, pull up, chin up, row, fly, flye, pec deck, lateral raise, front raise, rear delt, face pull, push up, dip |
+| `core` | both upper- AND lower-body movement keywords above |
+
+**Score:** `fail` per exercise that violates the focus-scope filter.
+
+**Re-run guarantee:** validation harness `quick_workout_engine_20260508T210700`
+showed 0 violations after the fix. If a violation reappears, it's a regression
+in the keyword filter or a new library entry whose name doesn't match any
+keyword (extend the keyword list).
+
+---
+
+## XX-ter. Minimum-exercise floor (no 2-exercise workouts)
+
+**Real-data finding** (run `quick_workout_engine_20260508T205650`):
+- 70 workouts shipped with `n_exercises < 3` (mostly `n=2`).
+- All concentrated in 5/10-min "easy" budgets.
+- Root cause: budget loop `if (runningTime + cost > workingBudget) break;` exits
+  at 2 exercises when supersets are on (cost ≈ 195s on easy-difficulty rest
+  multiplier × 1.3) and the budget is tight. The fallback only triggered below
+  2, and the Phase-5 prune-loop trimmed back to 2.
+
+**🛡️ ENFORCED IN CODE (2026-05-08):** `quick_workout_engine_ui.dart`:
+- Budget loop now keeps adding slots until ≥3 exercises (`if (... > workingBudget
+  && selectedExercises.length >= 3) break;`).
+- Fallback trigger raised from `< 2` to `< 3`.
+- Phase-5 over-budget prune-loop floor raised from `> 2` to `> 3` so the trim
+  step never undoes the minimum-exercise guarantee.
+
+**Hard contract:**
+
+| Workout type | Minimum exercises |
+|---|---|
+| Any (regardless of duration / difficulty / equipment / supersets) | ≥3 |
+| 5-min `cardio` (HIIT/Tabata) | ≥4 (per `CardioHiitStrategy._cardioExerciseCount`) |
+| 10+ min any focus | ≥4 typical, ≥3 hard floor |
+
+**Score:** `fail` per workout with `n_exercises < 3`.
+
+**Trade-off:** in a 5-min budget where 3 exercises naturally exceed the time
+window, the engine prefers shipping 3 short exercises (~6-7 min effective)
+over a 2-exercise "real workout" that fits exactly in 5 min. UX research
+showed users do not perceive a 2-exercise workout as a workout.
+
+---
+
+## XX-quad. Movement-pattern diversity scope (only for whole-body focuses)
+
+**Real-data finding** (run `quick_workout_engine_20260508T205650`):
+- The diversity-fill step in `quick_workout_engine_ui.dart` was the primary
+  source of cross-contamination (210 cases). It calls `getMissingPatterns()`
+  which prioritizes `squat`/`hinge` patterns and `patternToMuscle()` which maps
+  those to `quads`/`hamstrings`, then force-swaps the last exercise — injecting
+  lower-body work into upper-body sessions.
+
+**🛡️ ENFORCED IN CODE (2026-05-08):** Diversity check now gated to
+`effectiveFocus ∈ {full_body, strength}` only. Excluded: `upper_body`,
+`lower_body`, `core`, `cardio`, `stretch`, `emom`, `amrap`.
+
+**Hard contract:**
+- `requiredPatternCount(durationMinutes)` only applies to whole-body focuses.
+- For opinionated focuses, exercise selection is bounded by the strategy's
+  slot list — pattern coverage is whatever the strategy naturally provides.
+- `fail` if a non-whole-body focus invokes pattern-fill swap (regression
+  detection — should be impossible after the gate).
+
+---
+
 ## YY. Exercise sequencing & ordering (CNS-demand cascade)
 
 Order matters as much as exercise selection. The CNS is freshest at the
@@ -1033,6 +1129,9 @@ corresponding sections.
 | **Y** | workout_type ↔ focus override — mobility/cardio focus forces matching type when Gemini returns generic 'strength'. | `generation_streaming.py:570-585` |
 | **R** | Workout name de-templating — zodiac-season theming gated to 15% probability + softened to "OPTIONAL flavor". | `services/gemini/workout_naming.py:431-455` |
 | **AA** | workout_type derived from focus when Gemini omits it (was hardcoded "strength" default → 96% strength bug); content override on cardio/stretch heavy workouts. | `generation_streaming.py:528-580` |
+| **XX-bis** | Focus-scope contamination filter (210 cross-body leaks → 0). Library pre-filtered by name-keyword for `upper_body` / `lower_body` / `core` focuses. | `mobile/flutter/lib/services/quick_workout_engine_ui.dart` (`_isLowerBodyMovement` / `_isUpperBodyMovement`) |
+| **XX-ter** | Minimum 3-exercise floor enforced in slot loop, fallback trigger, and Phase-5 prune-loop (70 → 0 sub-3 workouts). | `mobile/flutter/lib/services/quick_workout_engine_ui.dart` |
+| **XX-quad** | Movement-pattern diversity gated to `full_body`/`strength` only — upper/lower/core no longer force-inject opposite-half patterns. | `mobile/flutter/lib/services/quick_workout_engine_ui.dart` |
 
 ## Still-broken (real bugs found in this run, fixes deferred)
 
@@ -1084,7 +1183,16 @@ Detect & flag:
 | Safety filtering | `avoid_if[]` array on each library row used for contraindication match (NOT name substring). Test: ask for substitute of "Squat" with `reason="knee injury"` — none of the returned rows have "knee" in their `avoid_if` |
 | Display-body-part mapping | The 15 logical muscle groups (quadriceps, hamstrings, glutes, calves, chest, back, shoulders, biceps, triceps, forearms, core, abs, cardio, lower_back, hips) all return ≥5 rows when queried directly |
 | Self-exclusion | Original exercise name never appears in substitutes list |
-| Equipment honored when provided | If request later includes `equipment[]` (future), substitutes only use that equipment (NOT in current schema, but checklist-ready for when it is) |
+| Equipment honored via reason | When `reason` contains "no equipment available" / "bodyweight only" / "at home", substitutes use only bodyweight/none equipment (see FFF). |
+| Reason-aware result variance | Same exercise + 14 different reasons produce ≤ 50% Jaccard overlap on the substitute set (see FFF). |
+| Media coverage | ≥85% of returned substitutes have a non-null `media_url` (gif → video → image COALESCE) — see FFF. |
+
+### BBB-bis. Detailed contracts → see FFF below
+
+The 2026-05-08 harness run (`render_suggest_substitutes_20260508_205357`,
+1000 scenarios) surfaced 6 distinct bugs which were fixed in the same commit
+that introduced section FFF. Use FFF for the hard contracts; BBB above is the
+short-form summary.
 
 ### CCC. /quick-regenerate specific (algorithmic, no AI — pure SQL delete + activity log)
 
@@ -1132,3 +1240,93 @@ single_kettlebell_friendly`.
 | Endpoint hardcodes safety as name-substring match | Use `avoid_if[]` array instead — authoritative metadata |
 | `display_body_part` value canonical list (current as of 2026-05-08) | Quadriceps, Triceps, Hamstrings, Core, Shoulders, Lower Back, Neck, Glutes, Hips, Chest, Back, Calves, Biceps, Full Body, Forearms, Rotator Cuff |
 | `category` value canonical list | plyometric, yoga, core, strength, cardio, stretching, power, conditioning, functional |
+
+### FFF. Reason-aware substitutes (post-2026-05-08 contract)
+
+**Real-data findings** (run `render_suggest_substitutes_20260508_205357`, 1000 scenarios):
+
+1. **Alphabetical concentration** — 86.6% of returned substitutes started with `0–9`/`A`/`B`; only 279 unique exercises across 7,596 result slots (root cause: `_query_library_by_muscle` had no `ORDER BY`).
+2. **`reason` had near-zero effect** — 61/79 multi-reason exercises returned >80% identical substitute sets regardless of reason.
+3. **Pregnancy safety leaks** — 10/50 pregnancy queries returned plyometric / jumping subs (`180 Jump Turns`).
+4. **Knee safety leaks** — 12/88 knee queries returned knee-loading subs (`Baithak (Hindu Squat)`, walking-lunge variants, Reverse Hack Squat). Root cause: `avoid_if[]` empty for those rows + name-keyword filter wasn't checked.
+5. **`gif_url` coverage 1.2%** — 978/990 success rows returned 0 `gif_url`s (MV column populated only for ~12 rows).
+6. **Edge-case fallbacks collapse** — token search required `len ≥ 4` so `Sq` / `Squ` → 0 results; typo `Squet` → 0; `Cat Cow` / `Thread the Needle` → 0.
+7. **No cold-start warmup** — first ~5 calls hit Render cold; max latency 7,420 ms.
+8. **Plyo contraindications missing for non-knee joints** — `Box Jump + ankle sprain → 180 Jump Turns` as top sub. `INJURY_EXERCISE_CONTRAINDICATIONS` only had jump/plyo guards for `knee` and `lower_back`; `ankle`/`hip`/`wrist`/`elbow`/`shoulder`/`neck` were missing them.
+9. **`all_safe_for_reason` aggregator was lying** — endpoint reported `True` for all 1000/1000 rows including the 22 (10 pregnancy + 12 knee) name-keyword violations.
+10. **Reason-overlap >50% was 75/79, not 61/79** — confirmed against the 2026-05-08 CSV.
+11. **Whitespace / punctuation normalization gap** — `Bench Press` → chest stretches, but `Bench  Press` (double space), `Bench-Press`, `Bench/Press`, `Bench (Press)` → completely different subs starting with `4 Corners Curtsy`.
+12. **Top-3 subs were CONSTANT across reasons** — `180 Jump Turns / 4 Corners Side Step / 4 Punches Side Squat` were top-3 for `ankle sprain`, `boring`, `elbow tendinitis`, `hip pain`, `lower back pain` simultaneously.
+13. **Strength queries returned stretches** — `Wall Push-Up` (strength) returned 8 stretches; no category-match scoring was in place.
+14. **`boring` reason verifiably inert** — `Goblet Squat boring vs none → IoU=1.00`. Seed didn't include reason; jitter range too narrow to flip rankings.
+15. **Walking-lunge variants leaked under knee data hole** — `Walking Lunges + knee → Sandbag Walking Lunge | Treadmill Walking Lunge`. Even with avoid_if backfill, the name-keyword guard didn't include those specific variants.
+16. **Mid-run latency outliers** — `Thread the Needle + wrist → 7139ms` mid-run. No in-process caching of `_query_library_by_muscle`.
+17. **Body-part outweighed target_muscle** — `Bicep Curl + elbow tendinitis → Archer Pull Up | Assisted Chin-Up` in top-3. Score weighted body_part match without considering the more-specific target_muscle.
+
+**🛡️ ENFORCED IN CODE (2026-05-09):**
+
+- `backend/api/v1/exercise_preferences_endpoints.py` — full refactor:
+  - `_classify_reason()` returns a `SubstituteContext` containing `injury_type`, `intent`, `desired_equipment`, `seed`, `family_keyword`. The seed is `md5(exercise_name + reason)` — same input → stable result, different reason → different ranking.
+  - `INTENT_KEYWORDS` covers 5 non-injury intents: `no_equipment`, `boring`, `pregnant`, `post_surgery`, `menstrual`.
+  - `_passes_intent_filter()` applies hard filters per intent.
+  - `_is_unsafe_by_name_keyword()` reuses `INJURY_EXERCISE_CONTRAINDICATIONS` + new `PREGNANCY_UNSAFE_KEYWORDS` as belt-and-suspenders.
+  - `_score_candidate()` uses weighted scoring: muscle match (+0.40), token overlap (+0.20), equipment match (+0.20), media-rich (+0.10), boring-family penalty (−0.50), seeded jitter (+0..0.05).
+  - Cascade: muscle search → token search (min len 3) → cross-muscle expansion (now also fires for pregnant/post-surgery, not only injury) → fuzzy RPC → generic Full Body / Core fallback.
+  - `_to_substitute_exercise()` populates `media_url = COALESCE(gif_url, video_url, image_url)`; `gif_url` is also populated with the COALESCE'd value for back-compat.
+  - `_build_injury_warning()` / `_build_safety_warning()` populate the previously-unused response fields.
+- `backend/migrations/2039_substitutes_fuzzy_pool.sql` — new RPC `substitutes_fuzzy_search(p_search_term, p_limit)` returning full MV rows via trigram similarity (reuses GIN index from mig 159).
+- `backend/migrations/2040_avoid_if_backfill.sql` — backfilled `avoid_if=['knee']` for Hindu Squat / Baithak / Hack Squat / Reverse Hack Squat / Walking Lunge variants in both `exercise_library` and `exercise_library_manual`. MV refreshed.
+- `backend/scripts/_smoke_lib.py` — new `warmup_endpoint()` helper.
+- `backend/scripts/run_suggest_substitutes_validation.py` — calls warmup before block 1.
+- **2026-05-09 ultrathink pass (findings #8–#17):**
+  - `INJURY_EXERCISE_CONTRAINDICATIONS` extended at module init: `_PLYO_KEYWORDS` (jump/plyo/clap/bound/box jump/tuck jump/broad jump/depth jump/burpee) added to **every** joint (`ankle`, `hip`, `wrist`, `elbow`, `shoulder`, `neck`, `knee`, `lower_back`). Walking-lunge variants (`sandbag walking lunge`, `treadmill walking lunge`, `weighted walking lunge`) added to `knee`.
+  - `_normalize_exercise_name()` / `_normalize_for_matching()` — strip + collapse whitespace, replace `_./()-\` with space, lowercase. Applied at endpoint entry, in `get_exercise_muscle_group` lookup, in `_token_search`, and in `_is_unsafe_by_name_keyword`. `Bench Press` ≡ `Bench-Press` ≡ `Bench  Press` ≡ `Bench (Press)` now.
+  - `SubstituteContext` carries `original_norm`, `original_category`, `original_target_muscle`. Populated lazily by `_lookup_original_metadata(db, ctx)` (TTL-cached).
+  - `_score_candidate()` extended:
+    - `+0.30` same `target_muscle` as original (most specific, outweighs body_part — finding #17)
+    - `+0.20` same `display_body_part` as detected muscle (down from 0.40)
+    - `+0.25` same `category` as original (strength→strength)
+    - `−0.25` different `category` from original AND intent ∉ {post_surgery}
+    - jitter widened from `[0, 0.05)` to `[0, 0.10)` so reason-driven seeds can flip rankings (finding #14)
+  - Seed for jitter built from normalized name + reason — `boring vs none` produces non-identical orderings (verified IoU=0.00 in live run).
+  - `cachetools.TTLCache(maxsize=512, ttl=300)` shared across `_cached_query_by_muscle`, `_token_search`, and `_lookup_original_metadata`. Live cold→warm: 110ms → 1ms.
+  - `_to_substitute_exercise()` now computes `is_safe_for_reason` from the actual safety filter chain (was hardcoded `True`).
+
+**Hard contracts:**
+
+| Check | Pass criterion |
+|---|---|
+| Alphabetical bias | < 30% of returned names start with `A` (was 58.5%); ≥ 800 unique substitutes across 1000 calls (was 279). |
+| Reason sensitivity | Same exercise + 14 different reasons produce ≤ 50% Jaccard overlap (was > 80% for 61/79). |
+| Pregnancy safety | 0 substitutes contain `jump`, `plyo`, `clap`, `bound`, `box jump`, `tuck jump`, `supine`, `sit-up`, `crunch`, `prone` for any pregnant request. |
+| Knee safety | 0 substitutes contain `squat`, `lunge`, `jump`, `pistol`, `bulgarian`, `hindu`, `baithak`, `hack squat` for any knee-injury request — even when `avoid_if[]` is empty (name keyword catches it). |
+| `n_substitutes ≥ 3` | True for any recognized input. Acceptable to return 0 only for non-Latin script or pure gibberish (response is `intent="unrecognized"` with empty substitutes + helpful message). |
+| Media coverage | ≥ 85% of returned substitutes have a non-null `media_url`. `media_url = COALESCE(gif_url, video_url, image_url)`. (Hard cap is 86.6% — that's the % of library rows with ANY media as of 2026-05-09; remaining 13.4% have no gif/video/image at all and need a follow-up backfill.) |
+| Latency | p95 < 800 ms after warmup (was 1,279 ms). Max < 2,000 ms after warmup (was 7,420 ms). |
+| `intent` echoed | Response always includes `intent` (one of `none|no_equipment|boring|pregnant|post_surgery|menstrual|unrecognized`). |
+| `injury_warning` populated | Non-null whenever `injury_type` is detected. |
+| `safety_warning` populated | Non-null for `pregnant` / `post_surgery` / `menstrual` intents. |
+| Per-substitute `reason` | Every returned substitute has a non-null `reason` field with a short human explanation ("Knee-friendly alternative", "Bodyweight, no equipment needed", "Different movement pattern", etc.). |
+| Pydantic schema lock | `SubstituteExercise` declares all fields explicitly — no extras passed via `**kwargs`. Adding new fields requires updating `exercise_preferences_models.py`. |
+| Self-exclusion | Original exercise name never appears in substitute list (case-insensitive). |
+| Library-row coverage | 100% of substitutes have non-null `library_id` (existing contract retained). |
+| Plyo blocking under any joint injury | `Box Jump` / `Burpee` / `Plyo Push-Up` + any joint injury → 0 substitutes whose name contains `jump`/`plyo`/`clap`/`bound`/`box jump`/`tuck jump`/`burpee`. |
+| `is_safe_for_reason` truthful | When violations exist, `is_safe_for_reason=False` MUST agree with violation count (finding #9 — was hardcoded `True`). |
+| Reason-overlap regression | `>50%` Jaccard overlap count drops from 75/79 (2026-05-08 baseline) to **<10/79**. |
+| Whitespace / punctuation normalization | `Bench Press`, `Bench  Press`, `Bench-Press`, `Bench/Press`, `Bench (Press)` produce **identical** top-8 (verified live 2026-05-09). |
+| Top-3 differs across reasons | For any single original exercise, top-3 substitutes across 4 different reasons share **≤1 element** in common (was: identical for ankle/boring/elbow/hip simultaneously). |
+| Strength→strength dominance | `Wall Push-Up` (strength) → top-3 contains **≥2 strength-category** rows (was: 8 stretches). |
+| Boring reason flips ranking | `Goblet Squat boring` vs `Goblet Squat` (no reason) → Jaccard IoU `<0.30` (was: 1.00). Verified live IoU=0.00. |
+| Walking-lunge guard | `Walking Lunges + knee injury` → 0 substitutes whose name contains `walking lunge` / `sandbag` / `treadmill` (verified live). |
+| Cache hot path | After warmup, repeated muscle queries < 50ms (TTL cache hit). Verified live: cold=110ms, warm=1ms. |
+| target_muscle outweighs body_part | Same `target_muscle` (+0.30) ranks higher than same `display_body_part` only (+0.20) — verified by `test_score_target_muscle_outweighs_body_part`. |
+
+**Verification commands:**
+
+```bash
+# Unit tests
+cd backend && .venv/bin/python -m pytest tests/test_substitutes_api.py -v
+
+# Validation harness against deployed Render
+.venv/bin/python scripts/run_suggest_substitutes_validation.py
+```

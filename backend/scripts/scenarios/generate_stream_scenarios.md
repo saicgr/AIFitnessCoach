@@ -527,3 +527,21 @@
 | 498 | 7 | pad beginner/20/mobility/glutes/E8_fw/none | beginner | 20 | glutes | mobility | barbell,dumbbells(+3) | - |  |
 | 499 | 7 | pad intermediate/30/power/cardio/E9_db1/knee | intermediate | 30 | cardio | power | dumbbells | knee |  |
 | 500 | 7 | pad advanced/40/athletic_performance/mobility/E10_home/shoulder | advanced | 40 | mobility | athletic_performance | dumbbells,resistance_bands(+1) | shoulder |  |
+
+<!-- LIVE-RUN-STATUS — auto-updated by harness; do not edit -->
+## 🔴 Live Run Status
+_Run started 2026-05-09T01:02:55._ Updated as each scenario completes.
+
+| # | Status | Label | Workout name | n_ex | latency_ms | error |
+|---|---|---|---|---|---|---|
+| 101 | ❌ | goal×focus general_fitness/full_body |  | 0 | 31474 | sse_error: name 'workout_type_override' is not defined |
+| 102 | ❌ | goal×focus general_fitness/core |  | 0 | 7910 | sse_error: name 'workout_type_override' is not defined |
+| 103 | ❌ | goal×focus strength/shoulders |  | 0 | 8565 | sse_error: name 'workout_type_override' is not defined |
+| 104 | ❌ | goal×focus hypertrophy/shoulders |  | 0 | 8581 | sse_error: name 'workout_type_override' is not defined |
+| 105 | ❌ | goal×focus hypertrophy/glutes |  | 0 | 7735 | sse_error: name 'workout_type_override' is not defined |
+| 106 | ❌ | goal×focus strength/core |  | 0 | 7419 | sse_error: name 'workout_type_override' is not defined |
+| 107 | ❌ | goal×focus endurance/full_body |  | 0 | 9830 | sse_error: name 'workout_type_override' is not defined |
+| 108 | ❌ | goal×focus power/upper |  | 0 | 9828 | sse_error: name 'workout_type_override' is not defined |
+| 109 | ❌ | goal×focus athletic_performance/shoulders |  | 0 | 7778 | sse_error: name 'workout_type_override' is not defined |
+| 110 | ❌ | goal×focus muscle_tone/core |  | 0 | 7749 | sse_error: name 'workout_type_override' is not defined |
+| 111 | ❌ | matrix beginner/15/strength/push/E1_full |  | 0 | 8627 | sse_error: name 'workout_type_override' is not defined |

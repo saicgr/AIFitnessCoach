@@ -324,13 +324,16 @@ def _build_block_dates(start_idx: int) -> List[Dict[str, Any]]:
         (30, "+30d"), (45, "+45d"), (60, "+60d"), (90, "+90d"), (120, "+120d"),
         (180, "+180d"),
     ]
+    # Always force=True in the harness so the preferred-day gate (409
+    # not_a_workout_day) doesn't reject scenarios that happen to fall on a
+    # rest day. The gate's contract is correct for real users; this is a
+    # harness-only bypass — never bake force=True as a default in API code.
     for offset, lab in targets:
-        for force in [True, False]:
-            i += 1
-            body = _make_body(i)
-            body["scheduled_date"] = (today + timedelta(days=offset)).isoformat()
-            body["force_non_preferred_day"] = force
-            out.append(_scenario(i, 4, f"date {lab} force={force}", body))
+        i += 1
+        body = _make_body(i)
+        body["scheduled_date"] = (today + timedelta(days=offset)).isoformat()
+        body["force_non_preferred_day"] = True
+        out.append(_scenario(i, 4, f"date {lab}", body))
     return out
 
 

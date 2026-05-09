@@ -167,6 +167,8 @@ async def generate_workout(request: Request, body: GenerateWorkoutRequest, backg
 
                 await set_cached_generation(cache_key, workout_data)
 
+            except HTTPException:
+                raise
             except Exception as ai_error:
                 logger.error(f"AI workout generation failed: {ai_error}", exc_info=True)
                 raise HTTPException(

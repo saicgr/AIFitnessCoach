@@ -9,9 +9,85 @@ import json
 import asyncio
 from typing import List, Dict, Any
 
+from fastapi import HTTPException
+
 from core.logger import get_logger
+from services.exercise_rag.filters import BODYWEIGHT_TOKENS
 
 logger = get_logger(__name__)
+
+
+# Strength-style focuses that require physical resistance — barbell/dumbbell/
+# bands/cables/machines/bodyweight — not cardio machines. If the user's
+# entire equipment list resolves to category=cardio_equipment AND focus is
+# strength-style, the candidate pool will be 0 and we should reject upfront
+# with a clear, actionable error rather than fail later at the pool gate.
+_STRENGTH_FOCUSES = frozenset({
+    "strength", "hypertrophy", "powerlifting",
+    "full_body", "full_body_push", "full_body_pull", "full_body_legs",
+    "full_body_core", "full_body_upper", "full_body_lower",
+    "full_body_power",
+    "upper", "lower", "push", "pull", "legs",
+    "upper_power", "lower_power", "upper_hypertrophy", "lower_hypertrophy",
+    "chest_back", "shoulders_arms",
+    "chest", "back", "shoulders", "arms", "core", "glutes",
+})
+
+
+def check_equipment_focus_compatibility(
+    focus_area: str,
+    equipment: List[str],
+) -> None:
+    """Reject cardio-only + strength-focus combos with a clean 422.
+
+    Without this gate, the request flows to the RAG and trips the pool gate
+    with a generic "Only N exercises selected" message. The cardio-only user
+    benefits from a directed message: switch focus or add equipment.
+
+    The check fails open: if the resolver isn't loaded or any equipment item
+    is unknown/non-cardio/bodyweight-token, we let the request proceed.
+    """
+    if not equipment:
+        return  # bw-only path; never trigger
+    if focus_area not in _STRENGTH_FOCUSES:
+        return  # cardio/endurance/mobility/flexibility focuses: cardio gear is fine
+
+    eq_norm = [(e or "").strip().lower() for e in equipment]
+    if any(e in BODYWEIGHT_TOKENS for e in eq_norm):
+        return  # explicit bodyweight token in user list → strength is doable
+
+    try:
+        from services.equipment_resolver import EquipmentResolver
+        resolver = EquipmentResolver._instance
+        if not resolver or not resolver._loaded:
+            return  # resolver not ready → fail open
+        categories = set()
+        for eq in equipment:
+            cat = resolver.get_category(eq)
+            if cat is None:
+                return  # unknown equipment → fail open (don't over-reject)
+            categories.add(cat)
+        if categories and categories <= {"cardio_equipment"}:
+            raise HTTPException(
+                status_code=422,
+                detail={
+                    "code": "INCOMPATIBLE_EQUIPMENT_FOCUS",
+                    "message": (
+                        "Your equipment is cardio-only — strength focus needs "
+                        "weights, bands, or bodyweight space. Switch focus to "
+                        "'cardio' / 'endurance' / 'hiit' or add strength "
+                        "equipment to your gym profile."
+                    ),
+                    "focus_area": focus_area,
+                    "equipment_categories": sorted(categories),
+                },
+            )
+    except HTTPException:
+        raise
+    except Exception as e:
+        # Any resolver hiccup → fail open. The pool gate will still catch
+        # genuinely-empty cases.
+        logger.warning(f"check_equipment_focus_compatibility skipped due to: {e}", exc_info=True)
 
 
 def _estimate_workout_met(exercises: list, workout_type: str = None, difficulty: str = None) -> float:

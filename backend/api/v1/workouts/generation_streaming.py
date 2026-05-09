@@ -146,6 +146,17 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
                         },
                     )
 
+    # Reject cardio-only equipment + strength focus upfront with a clean 422
+    # so the harness/client gets a directed message ("switch focus or add
+    # equipment") instead of a generic pool-too-small failure mid-stream.
+    # Uses body.equipment when provided (covers harness scenarios + clients
+    # that forward the saved profile equipment); otherwise skips and lets
+    # the downstream pool gate handle it.
+    if body.equipment:
+        from .generation_helpers import check_equipment_focus_compatibility
+        _preflight_focus = body.focus_areas[0] if body.focus_areas else "full_body"
+        check_equipment_focus_compatibility(_preflight_focus, body.equipment)
+
     # Resolve gym_profile_id early for dedup checks. None is a valid outcome:
     # legacy users or users mid-onboarding may not have an active profile yet,
     # and the generator handles profile_id=None downstream.
@@ -238,6 +249,13 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
 
             fitness_level = body.fitness_level or user.get("fitness_level")
             preferences = parse_json_field(user.get("preferences"), {})
+
+            # Caller-supplied workout type override (matches the pattern used
+            # in workouts_db_versioning.py:101). The 4 downstream references
+            # below (lines 595, 845, 851, 938) NameError'd in production
+            # without this binding — bug introduced by commit 71e4c804
+            # ("workout quality base").
+            workout_type_override = getattr(body, "workout_type", None)
 
             gym_profile = None
             if hasattr(body, 'gym_profile_id') and body.gym_profile_id:

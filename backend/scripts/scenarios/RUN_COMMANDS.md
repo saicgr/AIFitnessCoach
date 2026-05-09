@@ -6,7 +6,7 @@ All commands run from `/Users/saichetangrandhe/AIFitnessCoach/backend/` unless n
 
 | # | Endpoint / surface | Command | Scenarios | Injury cov. | Wall time | AI calls | Est. cost |
 |---|---|---|---|---|---|---|---|
-| 1 | Local Dart `QuickWorkoutEngine` | `cd ../mobile/flutter && flutter test test/services/quick_workout_engine_validation_test.dart` | 1,000 | **~25.5%** | ~18 sec | 0 | **$0.00** |
+| 1 | Local Dart `QuickWorkoutEngine` | `cd /Users/saichetangrandhe/AIFitnessCoach/mobile/flutter && flutter test test/services/quick_workout_engine_validation_test.dart` | 1,137 | **22.4%** | ~19 sec | 0 | **$0.00** |
 | 2 | `/quick-regenerate` (program reset) | `.venv/bin/python scripts/run_quick_regenerate_validation.py` | 1,000 | **~40%** (Block 16 reasons) | ~50 min | 0 | **$0.00** |
 | 3 | `/suggest-substitutes` (similar exercise) | `.venv/bin/python scripts/run_suggest_substitutes_validation.py` | 1,000 | **67.1%** | ~7 min | 0 | **$0.00** |
 | 4 | `/generate` (carousel bg-gen, RAG-first) | `.venv/bin/python scripts/run_generate_full.py` | 500 | **25.8%** | ~125 min | 500 Gemini | **~$0.75** |

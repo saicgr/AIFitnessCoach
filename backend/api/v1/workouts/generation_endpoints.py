@@ -490,6 +490,16 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
             # Determine focus area for RAG selection
             focus_area = body.focus_areas[0] if body.focus_areas else "full_body"
 
+            # Reject cardio-only equipment + strength focus upfront with a
+            # clean 422. Without this gate, the request flows to the RAG and
+            # trips the pool-too-small gate with a generic "Only N exercises"
+            # message. The cardio-only user benefits from a directed message
+            # ("switch focus or add equipment").
+            from .generation_helpers import check_equipment_focus_compatibility
+            check_equipment_focus_compatibility(
+                focus_area, equipment if isinstance(equipment, list) else []
+            )
+
             # Calculate exercise count based on duration and fitness level.
             # Resolve target from request body → gym profile → user preferences
             # so the user's saved workout_duration is honored when the client
@@ -1179,6 +1189,8 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
                         },
                     )
 
+        except HTTPException:
+            raise
         except Exception as ai_error:
             logger.error(f"AI workout generation failed: {ai_error}", exc_info=True)
             raise HTTPException(

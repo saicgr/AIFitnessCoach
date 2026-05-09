@@ -538,3 +538,176 @@ _(populated per-call by harness)_
 | 498 | 17 | inj=knee+hip+ankle foc=full_body diff=hard dur=45 | difficulty, duration_minutes, equipment, fitness_level, focus_areas, injuries, +2 more | ✓ |
 | 499 | 17 | inj=knee+hip+ankle foc=lower diff=easy dur=30 | ai_prompt, difficulty, duration_minutes, equipment, fitness_level, focus_areas, +3 more | ✓ |
 | 500 | 17 | inj=knee+hip+ankle foc=cardio diff=medium dur=45 | ai_prompt, difficulty, duration_minutes, equipment, fitness_level, focus_areas, +3 more | ✓ |
+
+<!-- LIVE-RUN-STATUS — auto-updated by harness; do not edit -->
+## 🔴 Live Run Status
+_Run started 2026-05-08T23:34:55._ Updated as each scenario completes.
+
+| # | Status | Label | Workout name | n_ex | latency_ms | error |
+|---|---|---|---|---|---|---|
+| 1 | ✅ | diff=easy | Gentle Mobility Session | 6 | 22664 |  |
+| 2 | ✅ | diff=medium | Titan Steel Foundation Flow | 6 | 11314 |  |
+| 3 | ✅ | diff=hard | Titan Steel Total Body | 10 | 13953 |  |
+| 4 | ✅ | diff=hell | Savage Beast Annihilation | 10 | 13458 |  |
+| 5 | ✅ | diff=easy | Gentle Iron Foundations | 3 | 6867 |  |
+| 6 | ✅ | diff=medium | Titan Steel Total Body | 6 | 10626 |  |
+| 7 | ✅ | diff=hard | Barbell Titan Total Body | 10 | 13321 |  |
+| 8 | ✅ | diff=hell | Savage Beast Annihilation Session | 10 | 13601 |  |
+| 9 | ✅ | diff=easy | Gentle Mobility Session | 6 | 9169 |  |
+| 10 | ✅ | diff=medium | Titan Steel Full Body | 6 | 10262 |  |
+| 11 | ✅ | diff=hard | Titan Steel Total Power | 10 | 13248 |  |
+| 12 | ✅ | diff=hell | Savage Beast Annihilation Protocol | 10 | 13605 |  |
+| 13 | ✅ | diff=easy | Gentle Mobility Session | 6 | 9906 |  |
+| 14 | ✅ | diff=medium | Titan Steel Foundation Build | 6 | 9316 |  |
+| 15 | ✅ | diff=hard | Titan Steel Power Surge | 10 | 14158 |  |
+| 16 | ✅ | diff=hell | Savage Beast Annihilation Protocol | 10 | 13194 |  |
+| 17 | ✅ | diff=easy | Gentle Mobility Session | 6 | 9727 |  |
+| 18 | ✅ | diff=medium | Titan Steel Total Body | 6 | 9203 |  |
+| 19 | ✅ | diff=hard | Titan Steel Power Circuit | 10 | 13745 |  |
+| 20 | ✅ | diff=hell | Savage Beast Annihilation Session | 10 | 14733 |  |
+| 21 | ✅ | duration=15 | Gentle Mobility Session | 6 | 8906 |  |
+| 22 | ✅ | duration=20 | Gentle Mobility Session | 6 | 9417 |  |
+| 23 | ✅ | duration=25 | Gentle Mobility Session | 6 | 9317 |  |
+| 24 | ✅ | duration=30 | Iron Titan Full Power | 4 | 7679 |  |
+| 25 | ✅ | duration=45 | Titan Steel Strength Forge | 6 | 10852 |  |
+| 26 | ✅ | duration=60 | Titanium Barbell Power Surge | 8 | 11991 |  |
+| 27 | ✅ | duration=75 | Barbell Titan Total Power | 8 | 11963 |  |
+| 28 | ✅ | duration=90 | Titan Steel Foundation Flow | 8 | 11875 |  |
+| 29 | ✅ | duration=75 | Titan Steel Total Power | 8 | 12075 |  |
+| 30 | ✅ | duration=90 | Titan Steel Foundation Power | 8 | 12394 |  |
+| 31 | ✅ | duration=15 | Gentle Mobility Session | 6 | 9049 |  |
+| 32 | ✅ | duration=90 | Titan Steel Foundation Power | 8 | 12052 |  |
+| 33 | ✅ | duration=30 | Iron Titan Full Body | 4 | 7971 |  |
+| 34 | ✅ | duration=60 | Iron Titan Full Body | 8 | 11775 |  |
+| 35 | ✅ | duration=45 | Titan Steel Total Power | 6 | 10645 |  |
+| 36 | ✅ | equip=bodyweight | Titan Barbell Power Surge | 6 | 10644 |  |
+| 37 | ✅ | equip=bodyweight | Titan Steel Total Power | 6 | 10980 |  |
+| 38 | ✅ | equip=dumbbells+bench | Titan Steel Full Body | 6 | 21270 |  |
+| 39 | ✅ | equip=dumbbells | Titan Steel Total Power | 6 | 21703 |  |
+| 40 | ✅ | equip=kettlebell | Titan Steel Total Body | 6 | 19185 |  |
+| 41 | ✅ | equip=kettlebell | Titan Explosive Full Power | 6 | 8970 |  |
+| 42 | ✅ | equip=cable_machine+leg_press_machine | Titan Steel Total Body | 6 | 21358 |  |
+| 43 | ✅ | equip=resistance_bands | Titan Steel Total Body | 6 | 24613 |  |
+| 44 | ✅ | equip=treadmill | Titan Steel Foundation Flow | 6 | 21708 |  |
+| 45 | ✅ | equip=dumbbells+pull_up_bar | Titan Steel Strength Foundation | 6 | 22833 |  |
+| 46 | ✅ | equip=barbell+dumbbells | Titan Steel Foundation | 6 | 20702 |  |
+| 47 | ✅ | equip=resistance_bands | Titan Steel Full Body | 6 | 10452 |  |
+| 48 | ✅ | equip=barbell+squat_rack+bench | Gentle Mobility Session | 6 | 25261 |  |
+| 49 | ✅ | equip=bodyweight | Iron Titan Full Body | 6 | 9324 |  |
+| 50 | ✅ | equip=dumbbells+kettlebell | Titan Steel Power Circuit | 6 | 20848 |  |
+| 51 | ✅ | focus=pull | Gentle Mobility Session | 6 | 25991 |  |
+| 52 | ✅ | focus=upper | Gentle Mobility Session | 6 | 23096 |  |
+| 53 | ✅ | focus=cardio | Gentle Mobility Session | 6 | 22628 |  |
+| 54 | ✅ | focus=mobility | Gentle Mobility Session | 6 | 23244 |  |
+| 55 | ✅ | focus=HIIT | Gentle Mobility Session | 6 | 24059 |  |
+| 56 | ✅ | focus=push | Titan Steel Shoulder Surge | 6 | 20897 |  |
+| 57 | ✅ | focus=legs | Titan Forge Leg Session | 6 | 21094 |  |
+| 58 | ✅ | focus=core | Titan Core Shredder | 6 | 21064 |  |
+| 59 | ✅ | focus=arms | Gentle Mobility Session | 6 | 23035 |  |
+| 60 | ✅ | focus=shoulders | Gentle Mobility Session | 6 | 23466 |  |
+| 61 | ✅ | focus=cardio | Gentle Mobility Session | 6 | 15264 |  |
+| 62 | ✅ | focus=core | Gentle Mobility Session | 6 | 12883 |  |
+| 63 | ✅ | focus=glutes | Titan Glute Forge | 6 | 18762 |  |
+| 64 | ✅ | focus=upper | Gentle Mobility Session | 6 | 13241 |  |
+| 65 | ✅ | focus=full_body | Titan Steel Total Body | 6 | 9445 |  |
+| 66 | ✅ | ai_prompt='make it more compound-focused, fewer iso...' | Gentle Mobility Session | 6 | 13764 |  |
+| 67 | ✅ | ai_prompt='no jumping or impact today, my knees hur...' | Gentle Mobility Session | 6 | 11309 |  |
+| 68 | ✅ | ai_prompt='more cardio please, I want to sweat...' | Gentle Mobility Session | 6 | 11646 |  |
+| 69 | ✅ | ai_prompt='shorter rest periods between sets, like ...' | Gentle Mobility Session | 6 | 11113 |  |
+| 70 | ✅ | ai_prompt='longer rest, 2-3 min, I'm trying to lift...' | Gentle Mobility Session | 6 | 11094 |  |
+| 71 | ✅ | ai_prompt='include 5 minutes of warmup specific to ...' | Gentle Mobility Session | 6 | 10840 |  |
+| 72 | ✅ | ai_prompt='no barbell exercises today...' | Gentle Mobility Session | 6 | 11923 |  |
+| 73 | ✅ | ai_prompt='make it a pyramid set structure (10-8-6-...' | Gentle Mobility Session | 6 | 11618 |  |
+| 74 | ✅ | ai_prompt='I want supersets and giant sets, push in...' | Gentle Mobility Session | 6 | 13294 |  |
+| 75 | ✅ | ai_prompt='easy day, foam rolling and stretching on...' | Gentle Mobility Session | 6 | 11310 |  |
+| 76 | ✅ | ai_prompt='I'm pregnant, second trimester — adjust ...' | Gentle Mobility Session | 6 | 11986 |  |
+| 77 | ✅ | ai_prompt='post-injury return-to-running phase 2...' | Gentle Mobility Session | 6 | 10936 |  |
+| 78 | ✅ | ai_prompt='12 weeks out from a powerlifting meet — ...' | Gentle Mobility Session | 6 | 11672 |  |
+| 79 | ✅ | ai_prompt='menstrual cycle day 2, please de-escalat...' | Gentle Mobility Session | 6 | 11429 |  |
+| 80 | ✅ | ai_prompt='fasted training, low energy, keep it und...' | Gentle Mobility Session | 6 | 9181 |  |
+| 81 | ✅ | today + force | Gentle Mobility Session | 6 | 10734 |  |
+| 82 | ✅ | today force #2 | Gentle Mobility Session | 6 | 10822 |  |
+| 83 | ✅ | today force #3 | Gentle Mobility Session | 6 | 13086 |  |
+| 84 | ✅ | +7d force | Gentle Mobility Session | 6 | 11257 |  |
+| 85 | ✅ | +14d force | Gentle Mobility Session | 6 | 12114 |  |
+| 86 | ✅ | +1d force | Gentle Mobility Session | 6 | 11188 |  |
+| 87 | ✅ | +3d force | Gentle Mobility Session | 6 | 11399 |  |
+| 88 | ✅ | +5d force | Gentle Mobility Session | 6 | 12819 |  |
+| 89 | ✅ | +30d force | Gentle Mobility Session | 6 | 12220 |  |
+| 90 | ✅ | +60d force | Gentle Mobility Session | 6 | 11775 |  |
+| 91 | ✅ | injuries=knee/focus=legs | Steady Iron Glute Forge | 1 | 4668 |  |
+| 92 | ❌ | injuries=shoulder/focus=push |  | 0 | 3057 | sse_error: No exercises found for focus areas: push |
+| 93 | ❌ | injuries=lower_back/focus=pull |  | 0 | 3168 | sse_error: No exercises found for focus areas: pull |
+| 94 | ✅ | injuries=knee,shoulder,wrist/focus=full_body | Gentle Mobility Session | 6 | 6608 |  |
+| 95 | ❌ | injuries=knee,shoulder,lower_back,wrist,ankle,hip,elbow/focu |  | 0 | 2994 | sse_error: No exercises found for focus areas: core |
+| 96 | ✅ | same source variety #1 | Titan Steel Barbell Domination | 6 | 9772 |  |
+| 97 | ✅ | same source variety #2 | Titan Steel Barbell Surge | 6 | 8611 |  |
+| 98 | ✅ | same source variety #3 | Titan Steel Total Power | 6 | 9937 |  |
+| 99 | ✅ | max payload | Gentle Mobility Session | 6 | 26206 |  |
+| 100 | ✅ | minimal payload | Gentle Mobility Session | 6 | 12479 |  |
+| 101 | ✅ | goal=strength/diff=easy/fl=beginner | Gentle Mobility Session | 6 | 18823 |  |
+| 102 | ✅ | goal=hypertrophy/diff=medium/fl=intermediate | Barbell Titan Total Power | 6 | 9940 |  |
+| 103 | ✅ | goal=endurance/diff=hard/fl=advanced | Elite Titan Power Gauntlet | 10 | 25534 |  |
+| 104 | ✅ | goal=power/diff=hell/fl=beginner | Savage Beast Inferno Session | 5 | 9593 |  |
+| 105 | ✅ | goal=fat_loss/diff=easy/fl=intermediate | Gentle Iron Flow | 4 | 7128 |  |
+| 106 | ✅ | goal=strength/diff=medium/fl=advanced | Titan Olympic Power Surge | 8 | 10392 |  |
+| 107 | ✅ | goal=hypertrophy/diff=hard/fl=beginner | Gentle Mobility Session | 6 | 13125 |  |
+| 108 | ✅ | goal=endurance/diff=hell/fl=intermediate | Barbell Annihilation Inferno Protocol | 7 | 10782 |  |
+| 109 | ✅ | goal=power/diff=easy/fl=advanced | Gentle Iron Flow | 5 | 7906 |  |
+| 110 | ✅ | goal=fat_loss/diff=medium/fl=beginner | Gentle Mobility Session | 6 | 9198 |  |
+| 111 | ✅ | goal=strength/diff=hard/fl=intermediate | Titan Steel Total Body | 7 | 11425 |  |
+| 112 | ✅ | goal=hypertrophy/diff=hell/fl=advanced | Savage Beast Annihilation Protocol | 10 | 15472 |  |
+| 113 | ✅ | goal=endurance/diff=easy/fl=beginner | Gentle Mobility Session | 6 | 8741 |  |
+| 114 | ✅ | goal=power/diff=medium/fl=intermediate | Titan Steel Foundation Build | 6 | 10165 |  |
+| 115 | ✅ | goal=fat_loss/diff=hard/fl=advanced | Titan Olympic Power Surge | 10 | 14907 |  |
+| 116 | ✅ | goal=strength/diff=hell/fl=beginner | Gentle Mobility Session | 6 | 11212 |  |
+| 117 | ✅ | goal=hypertrophy/diff=easy/fl=intermediate | Gentle Iron Flow | 4 | 6852 |  |
+| 118 | ✅ | goal=endurance/diff=medium/fl=advanced | Titan Olympic Power Surge | 8 | 11269 |  |
+| 119 | ✅ | goal=power/diff=hard/fl=beginner | Gentle Mobility Session | 6 | 11221 |  |
+| 120 | ✅ | goal=fat_loss/diff=hell/fl=intermediate | Savage Beast Annihilation Circuit | 7 | 10560 |  |
+| 121 | ✅ | goal=strength/diff=easy/fl=advanced | Gentle Olympic Flow | 5 | 7754 |  |
+| 122 | ✅ | goal=hypertrophy/diff=medium/fl=beginner | Gentle Mobility Session | 6 | 10386 |  |
+| 123 | ✅ | goal=endurance/diff=hard/fl=intermediate | Titan Steel Total Body | 7 | 10155 |  |
+| 124 | ✅ | goal=power/diff=hell/fl=advanced | Savage Beast Annihilation Protocol | 10 | 15106 |  |
+| 125 | ✅ | goal=fat_loss/diff=easy/fl=beginner | Gentle Mobility Session | 6 | 8499 |  |
+| 126 | ✅ | goal=strength/diff=medium/fl=intermediate | Titan Steel Foundation Flow | 6 | 8779 |  |
+| 127 | ✅ | goal=hypertrophy/diff=hard/fl=advanced | Titan Olympic Power Surge | 10 | 14860 |  |
+| 128 | ✅ | goal=endurance/diff=hell/fl=beginner | Savage Beast Annihilation Circuit | 5 | 9296 |  |
+| 129 | ✅ | goal=power/diff=easy/fl=intermediate | Gentle Iron Flow | 4 | 7628 |  |
+| 130 | ✅ | goal=fat_loss/diff=medium/fl=advanced | Titan Explosive Power Circuit | 8 | 12888 |  |
+| 131 | ✅ | goal=strength/diff=hard/fl=beginner | Iron Titan Full Body | 5 | 9764 |  |
+| 132 | ✅ | goal=hypertrophy/diff=hell/fl=intermediate | Savage Beast Annihilation Circuit | 7 | 10720 |  |
+| 133 | ✅ | goal=endurance/diff=easy/fl=advanced | Gentle Iron Flow | 5 | 8669 |  |
+| 134 | ✅ | goal=power/diff=medium/fl=beginner | Gentle Mobility Session | 6 | 8686 |  |
+| 135 | ✅ | goal=fat_loss/diff=hard/fl=intermediate | Titan Steel Strength Forge | 7 | 10790 |  |
+| 136 | ✅ | goal=strength/diff=hell/fl=advanced | Savage Beast Annihilation Circuit | 10 | 15273 |  |
+| 137 | ✅ | goal=hypertrophy/diff=easy/fl=beginner | Gentle Mobility Session | 6 | 8592 |  |
+| 138 | ✅ | goal=endurance/diff=medium/fl=intermediate | Titan Steel Foundation Flow | 6 | 9950 |  |
+| 139 | ✅ | goal=power/diff=hard/fl=advanced | Titan Olympic Power Surge | 10 | 15016 |  |
+| 140 | ✅ | goal=fat_loss/diff=hell/fl=beginner | Gentle Mobility Session | 6 | 11428 |  |
+| 141 | ❌ | goal=strength/diff=easy/fl=intermediate |  | 0 | 734 | HTTP 401: b'{"detail":"Session expired \xe2\x80\x94 please log in again."}' |
+| 142 | ❌ | goal=hypertrophy/diff=medium/fl=advanced |  | 0 | 469 | HTTP 401: b'{"detail":"Session expired \xe2\x80\x94 please log in again."}' |
+| 143 | ❌ | goal=endurance/diff=hard/fl=beginner |  | 0 | 360 | HTTP 401: b'{"detail":"Session expired \xe2\x80\x94 please log in again."}' |
+| 144 | ❌ | goal=power/diff=hell/fl=intermediate |  | 0 | 355 | HTTP 401: b'{"detail":"Session expired \xe2\x80\x94 please log in again."}' |
+| 145 | ❌ | goal=fat_loss/diff=easy/fl=advanced |  | 0 | 384 | HTTP 401: b'{"detail":"Session expired \xe2\x80\x94 please log in again."}' |
+| 146 | ❌ | goal=strength/diff=medium/fl=beginner |  | 0 | 479 | HTTP 401: b'{"detail":"Session expired \xe2\x80\x94 please log in again."}' |
+| 147 | ❌ | goal=hypertrophy/diff=hard/fl=intermediate |  | 0 | 503 | HTTP 401: b'{"detail":"Session expired \xe2\x80\x94 please log in again."}' |
+| 148 | ❌ | goal=endurance/diff=hell/fl=advanced |  | 0 | 382 | HTTP 401: b'{"detail":"Session expired \xe2\x80\x94 please log in again."}' |
+| 149 | ❌ | goal=power/diff=easy/fl=beginner |  | 0 | 352 | HTTP 401: b'{"detail":"Session expired \xe2\x80\x94 please log in again."}' |
+| 150 | ❌ | goal=fat_loss/diff=medium/fl=intermediate |  | 0 | 384 | HTTP 401: b'{"detail":"Session expired \xe2\x80\x94 please log in again."}' |
+| 151 | ❌ | equip: bodyweight only |  | 0 | 346 | HTTP 401: b'{"detail":"Session expired \xe2\x80\x94 please log in again."}' |
+| 152 | ❌ | equip: 1 dumbbell only |  | 0 | 493 | HTTP 401: b'{"detail":"Session expired \xe2\x80\x94 please log in again."}' |
+| 153 | ❌ | equip: 1 dumbbell pair |  | 0 | 387 | HTTP 401: b'{"detail":"Session expired \xe2\x80\x94 please log in again."}' |
+| 154 | ❌ | equip: 1 kettlebell |  | 0 | 439 | HTTP 401: b'{"detail":"Session expired \xe2\x80\x94 please log in again."}' |
+| 155 | ❌ | equip: 2 kettlebells |  | 0 | 385 | HTTP 401: b'{"detail":"Session expired \xe2\x80\x94 please log in again."}' |
+| 156 | ❌ | equip: machine-only |  | 0 | 438 | HTTP 401: b'{"detail":"Session expired \xe2\x80\x94 please log in again."}' |
+| 157 | ❌ | equip: smith machine only |  | 0 | 423 | HTTP 401: b'{"detail":"Session expired \xe2\x80\x94 please log in again."}' |
+| 158 | ❌ | equip: 2 machines |  | 0 | 482 | HTTP 401: b'{"detail":"Session expired \xe2\x80\x94 please log in again."}' |
+| 159 | ❌ | equip: bands only |  | 0 | 475 | HTTP 401: b'{"detail":"Session expired \xe2\x80\x94 please log in again."}' |
+| 160 | ❌ | equip: bands + pullup |  | 0 | 358 | HTTP 401: b'{"detail":"Session expired \xe2\x80\x94 please log in again."}' |
+| 161 | ❌ | equip: jump rope only |  | 0 | 468 | HTTP 401: b'{"detail":"Session expired \xe2\x80\x94 please log in again."}' |
+| 162 | ❌ | equip: yoga mat only |  | 0 | 634 | HTTP 401: b'{"detail":"Session expired \xe2\x80\x94 please log in again."}' |
+| 163 | ❌ | equip: treadmill only |  | 0 | 638 | HTTP 401: b'{"detail":"Session expired \xe2\x80\x94 please log in again."}' |
+| 164 | ❌ | equip: rower only |  | 0 | 522 | HTTP 401: b'{"detail":"Session expired \xe2\x80\x94 please log in again."}' |
+| 165 | ❌ | equip: assault bike only |  | 0 | 366 | HTTP 401: b'{"detail":"Session expired \xe2\x80\x94 please log in again."}' |
+| 166 | ❌ | equip: elliptical only |  | 0 | 361 | HTTP 401: b'{"detail":"Session expired \xe2\x80\x94 please log in again."}' |
