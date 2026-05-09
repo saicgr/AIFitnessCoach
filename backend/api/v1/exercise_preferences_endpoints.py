@@ -13,12 +13,33 @@ want to keep in every workout regardless of the weekly variation setting.
 
 Avoided exercises/muscles are excluded from AI-generated workouts entirely.
 """
+import re
 from typing import Any, Dict, List, Optional
 from datetime import datetime, date
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel, Field
+from cachetools import TTLCache
 import logging
 logger = logging.getLogger(__name__)
+
+# In-memory cache for hot library reads (finding #20).
+# 5-min TTL absorbs harness bursts; short enough that data backfills propagate.
+_LIBRARY_CACHE: "TTLCache[Any, Any]" = TTLCache(maxsize=512, ttl=300)
+
+# Whitespace + punctuation normalization (finding #15).
+_NAME_PUNCT = re.compile(r"[_./()\\\-]+")
+_NAME_WS = re.compile(r"\s+")
+
+
+def _normalize_exercise_name(s: Optional[str]) -> str:
+    """Collapse whitespace + replace punctuation with spaces. Preserves casing."""
+    s = _NAME_PUNCT.sub(" ", s or "")
+    s = _NAME_WS.sub(" ", s).strip()
+    return s
+
+
+def _normalize_for_matching(s: Optional[str]) -> str:
+    return _normalize_exercise_name(s).lower()
 from core.auth import get_current_user
 from core.db import get_supabase_db
 from core.exceptions import safe_internal_error
@@ -412,31 +433,8 @@ async def get_muscle_groups(current_user: dict = Depends(get_current_user)):
 
 # =============================================================================
 # Exercise Substitute Suggestions (for injuries/limitations)
+# Models live in exercise_preferences_models.py — imported at top of file.
 # =============================================================================
-
-class SubstituteRequest(BaseModel):
-    """Request for exercise substitutes."""
-    exercise_name: str = Field(..., min_length=1, max_length=200)
-    reason: Optional[str] = None  # e.g., "knee injury", "shoulder pain"
-
-
-class SubstituteExercise(BaseModel):
-    """A suggested substitute exercise."""
-    name: str
-    muscle_group: Optional[str] = None
-    equipment: Optional[str] = None
-    difficulty: Optional[str] = None
-    is_safe_for_reason: bool = True
-    library_id: Optional[str] = None
-    gif_url: Optional[str] = None
-
-
-class SubstituteResponse(BaseModel):
-    """Response with substitute suggestions."""
-    original_exercise: str
-    reason: Optional[str]
-    substitutes: List[SubstituteExercise]
-    message: str
 
 
 # Extended injury mappings for more comprehensive coverage
@@ -489,6 +487,27 @@ INJURY_EXERCISE_CONTRAINDICATIONS = {
         "shoulder shrug", "upright row", "behind neck press"
     ],
 }
+
+# Plyometric / ballistic keyword family — block under any joint injury (finding #12).
+# `knee` and `lower_back` already include `jump`/`box jump`; this widens coverage to
+# every joint that should not see ballistic loading during recovery.
+_PLYO_KEYWORDS = [
+    "jump", "plyo", "clap", "bound", "box jump", "tuck jump",
+    "broad jump", "depth jump", "burpee",
+]
+for _joint in ("ankle", "hip", "wrist", "elbow", "shoulder", "neck", "knee", "lower_back"):
+    _existing = INJURY_EXERCISE_CONTRAINDICATIONS.setdefault(_joint, [])
+    for _kw in _PLYO_KEYWORDS:
+        if _kw not in _existing:
+            _existing.append(_kw)
+del _joint, _existing, _kw
+
+# Walking-lunge variants are knee-loading even when avoid_if[] data is missing.
+# Belt-and-suspenders independent of migration 2040 backfill (finding #19).
+for _kw in ("sandbag walking lunge", "treadmill walking lunge", "weighted walking lunge"):
+    if _kw not in INJURY_EXERCISE_CONTRAINDICATIONS["knee"]:
+        INJURY_EXERCISE_CONTRAINDICATIONS["knee"].append(_kw)
+del _kw
 
 # Safe alternatives per muscle group (injury-friendly options)
 SAFE_ALTERNATIVES = {
@@ -675,18 +694,45 @@ INJURY_SAFE_MUSCLE_EXPANSION: Dict[str, List[str]] = {
 }
 
 
+# Full column list for substitutes — includes media + safety + difficulty fields.
+_SUBSTITUTE_COLS = (
+    "id, name, body_part, display_body_part, equipment, gif_url, video_url, "
+    "image_url, target_muscle, category, avoid_if, difficulty_level"
+)
+
+
+def _cached_query_by_muscle(db, muscle_group: str, limit: int) -> List[Dict[str, Any]]:
+    """TTL-cached wrapper for _query_library_by_muscle (finding #20).
+
+    Cache key is (muscle_group, limit). The same muscle search recurs across
+    every harness scenario; caching cuts mid-run latency from 5–7s to <50ms
+    after first hit.
+    """
+    key = ("muscle", muscle_group, limit)
+    cached = _LIBRARY_CACHE.get(key)
+    if cached is not None:
+        return cached
+    rows = _query_library_by_muscle(db, muscle_group, limit)
+    _LIBRARY_CACHE[key] = rows
+    return rows
+
+
 def _query_library_by_muscle(db, muscle_group: str, limit: int = 10) -> List[Dict[str, Any]]:
     """Query exercise_library_cleaned (materialized view) by canonical display_body_part
-    or category. All returned rows have id + name + gif_url + avoid_if + equipment.
+    or category. Pulls a wider pool than the cap so downstream scoring can rank.
+    Returns rows ordered by difficulty (asc) + id for deterministic-but-stable
+    ordering — the alphabetic-bias fix combines this with seeded jitter in scoring.
     """
     mapping = MUSCLE_TO_LIBRARY_QUERY.get(muscle_group, {})
-    cols = "id, name, body_part, display_body_part, equipment, gif_url, target_muscle, category, avoid_if"
 
     if mapping.get("display_body_part"):
         try:
-            res = db.client.table("exercise_library_cleaned").select(cols)\
-                .eq("display_body_part", mapping["display_body_part"])\
-                .limit(limit).execute()
+            res = (
+                db.client.table("exercise_library_cleaned").select(_SUBSTITUTE_COLS)
+                .eq("display_body_part", mapping["display_body_part"])
+                .order("difficulty_level", desc=False).order("id")
+                .limit(limit * 4).execute()
+            )
             if res.data:
                 return res.data
         except Exception as e:
@@ -694,9 +740,12 @@ def _query_library_by_muscle(db, muscle_group: str, limit: int = 10) -> List[Dic
 
     if mapping.get("category"):
         try:
-            res = db.client.table("exercise_library_cleaned").select(cols)\
-                .eq("category", mapping["category"])\
-                .limit(limit).execute()
+            res = (
+                db.client.table("exercise_library_cleaned").select(_SUBSTITUTE_COLS)
+                .eq("category", mapping["category"])
+                .order("difficulty_level", desc=False).order("id")
+                .limit(limit * 4).execute()
+            )
             if res.data:
                 return res.data
         except Exception as e:
@@ -735,117 +784,596 @@ def _is_unsafe_for_injury(row: Dict[str, Any], injury_type: Optional[str]) -> bo
     return any(k in blob for k in keywords)
 
 
+# =============================================================================
+# Reason-aware classification (intents beyond the 8 injury types)
+# =============================================================================
+
+# Non-injury reason keywords. Detected after detect_injury_type so an injury
+# always wins (e.g. "knee pain — bored of squats" classifies as injury_type=knee
+# AND intent=boring, but injury filtering is the harder constraint).
+INTENT_KEYWORDS: Dict[str, List[str]] = {
+    "no_equipment": ["no equipment", "without equipment", "bodyweight only",
+                     "no gym", "at home"],
+    "boring":       ["boring", "bored", "variety", "repetitive", "tired of",
+                     "different", "switch it up", "want variety"],
+    "pregnant":     ["pregnan", "trimester", "expecting", "first tri",
+                     "second tri", "third tri"],
+    "post_surgery": ["post-surgery", "post surgery", "rehab", "recovery from",
+                     "recovering from"],
+    "menstrual":    ["menstrual", "period", "luteal phase", "pms"],
+}
+
+# Belt-and-suspenders pregnancy filter — name keywords whose presence in an
+# exercise name makes it unsafe regardless of `avoid_if[]` data quality.
+PREGNANCY_UNSAFE_KEYWORDS: List[str] = [
+    "jump", "plyo", "clap", "bound", "box jump", "tuck jump",
+    "supine", "sit-up", "sit up", "crunch", "prone",
+]
+
+# Movement-family keywords — used to penalize same-family results when the user
+# says "boring". Pull from the original exercise name; drop candidates sharing
+# the keyword.
+_MOVEMENT_FAMILY_KEYWORDS: List[str] = [
+    "squat", "press", "curl", "row", "deadlift", "lunge",
+    "push-up", "push up", "pushup", "pull-up", "pull up", "pullup",
+    "dip", "fly", "extension", "raise", "shrug", "thrust",
+]
+
+
+class SubstituteContext:
+    """Bundle of decisions made from the request before retrieval starts.
+
+    Built once at endpoint entry by `_classify_reason`. Consumed by the
+    candidate filter / scorer so the same context flows through every stage
+    (muscle search → token search → cross-muscle → fuzzy → generic fallback).
+    """
+
+    __slots__ = (
+        "reason", "original_name", "original_lower", "original_norm",
+        "injury_type", "intent", "desired_equipment", "seed", "family_keyword",
+        "original_category", "original_target_muscle",
+    )
+
+    def __init__(
+        self,
+        reason: Optional[str],
+        original_name: str,
+        injury_type: Optional[str],
+        intent: str,
+        desired_equipment: Optional[List[str]],
+        seed: str,
+        family_keyword: Optional[str],
+    ):
+        self.reason = reason
+        self.original_name = original_name
+        # `original_norm` is the punctuation-collapsed lowercase form used for
+        # muscle keyword detection, token search, and fuzzy lookup (finding #15).
+        # `original_lower` is preserved for back-compat with existing helpers.
+        self.original_norm = _normalize_for_matching(original_name)
+        self.original_lower = self.original_norm
+        self.injury_type = injury_type
+        self.intent = intent
+        self.desired_equipment = desired_equipment
+        self.seed = seed
+        self.family_keyword = family_keyword
+        # Populated lazily by `_lookup_original_metadata` (findings #17, #21).
+        self.original_category: Optional[str] = None
+        self.original_target_muscle: Optional[str] = None
+
+
+def _detect_intent(reason: Optional[str]) -> str:
+    """Return one of: none / no_equipment / boring / pregnant / post_surgery / menstrual."""
+    if not reason:
+        return "none"
+    rl = reason.lower()
+    for key, kws in INTENT_KEYWORDS.items():
+        if any(kw in rl for kw in kws):
+            return key
+    return "none"
+
+
+def _detect_family_keyword(name: str) -> Optional[str]:
+    """Pick the dominant movement keyword from the original exercise name.
+
+    Used so that `intent=boring` requests can drop same-family candidates
+    (e.g. "Bench Press" + boring → don't return "Incline Bench Press").
+    """
+    nl = name.lower()
+    for kw in _MOVEMENT_FAMILY_KEYWORDS:
+        if kw in nl:
+            return kw
+    return None
+
+
+def _classify_reason(request: SubstituteRequest) -> SubstituteContext:
+    """Single-source decision step. injury_type wins over intent for safety."""
+    import hashlib
+    injury_type = detect_injury_type(request.reason)
+    intent = _detect_intent(request.reason)
+    desired_equipment: Optional[List[str]] = None
+    if intent == "no_equipment":
+        desired_equipment = ["bodyweight", "none", ""]
+    # Seed includes BOTH name AND reason so the same exercise + different reasons
+    # produces different jitter ordering (finding #18 — boring was inert because
+    # downstream scoring was identical across reasons).
+    norm_name = _normalize_for_matching(request.exercise_name)
+    seed_input = f"{norm_name}|{(request.reason or '').lower()}"
+    seed = hashlib.md5(seed_input.encode("utf-8")).hexdigest()
+    return SubstituteContext(
+        reason=request.reason,
+        original_name=request.exercise_name,
+        injury_type=injury_type,
+        intent=intent,
+        desired_equipment=desired_equipment,
+        seed=seed,
+        family_keyword=_detect_family_keyword(_normalize_exercise_name(request.exercise_name)),
+    )
+
+
+def _lookup_original_metadata(db, ctx: SubstituteContext) -> None:
+    """Populate ctx.original_category + original_target_muscle from the MV.
+
+    Used by scoring (#17 category-match, #21 target_muscle weight). Cached for
+    5 min via _LIBRARY_CACHE; misses are tolerated (scoring degrades gracefully).
+    """
+    if not ctx.original_norm:
+        return
+    cache_key = ("original_meta", ctx.original_norm)
+    cached = _LIBRARY_CACHE.get(cache_key)
+    if cached is not None:
+        ctx.original_category, ctx.original_target_muscle = cached
+        return
+    try:
+        res = (
+            db.client.table("exercise_library_cleaned")
+            .select("name, category, target_muscle")
+            .ilike("name", ctx.original_norm)
+            .limit(1).execute()
+        )
+        rows = res.data or []
+        if rows:
+            ctx.original_category = (rows[0].get("category") or "").lower() or None
+            ctx.original_target_muscle = (rows[0].get("target_muscle") or "").lower() or None
+        _LIBRARY_CACHE[cache_key] = (ctx.original_category, ctx.original_target_muscle)
+    except Exception as e:
+        logger.warning(f"original metadata lookup failed for {ctx.original_norm!r}: {e}")
+
+
+def _is_unsafe_by_name_keyword(name: str, ctx: SubstituteContext) -> bool:
+    """Belt-and-suspenders backstop for spotty `avoid_if[]` data.
+
+    Reuses the curated INJURY_EXERCISE_CONTRAINDICATIONS keyword lists for
+    injury queries, plus PREGNANCY_UNSAFE_KEYWORDS for pregnant queries.
+    Either match returns True so the candidate is dropped.
+
+    Name matching uses the normalized form (collapsed whitespace + punctuation
+    → space) so "Bench-Press" / "Bench  Press" / "Bench (Press)" all match the
+    same keywords (finding #15).
+    """
+    if not name:
+        return False
+    nl = _normalize_for_matching(name)
+    if ctx.injury_type:
+        for kw in INJURY_EXERCISE_CONTRAINDICATIONS.get(ctx.injury_type, []):
+            if kw.lower() in nl:
+                return True
+    if ctx.intent == "pregnant":
+        if any(kw in nl for kw in PREGNANCY_UNSAFE_KEYWORDS):
+            return True
+    return False
+
+
+def _passes_intent_filter(row: Dict[str, Any], ctx: SubstituteContext) -> bool:
+    """Hard filters applied to every retrieved candidate before scoring."""
+    name = (row.get("name") or "").lower()
+    equipment = (row.get("equipment") or "").lower()
+    category = (row.get("category") or "").lower()
+
+    if ctx.intent == "no_equipment":
+        # equipment must be bodyweight / none / empty
+        if equipment and equipment not in {"bodyweight", "body weight", "none"}:
+            return False
+
+    if ctx.intent == "pregnant":
+        # plyometric category OR pregnancy-keyword name → drop
+        if category == "plyometric":
+            return False
+        if any(kw in name for kw in PREGNANCY_UNSAFE_KEYWORDS):
+            return False
+
+    if ctx.intent == "post_surgery":
+        # cap difficulty at 4 (out of typical 1-7 scale)
+        diff = row.get("difficulty_level")
+        if isinstance(diff, int) and diff > 4:
+            return False
+
+    return True
+
+
+def _equipment_is_bodyweight(row: Dict[str, Any]) -> bool:
+    eq = (row.get("equipment") or "").lower()
+    return eq in {"", "bodyweight", "body weight", "none"}
+
+
+def _seeded_jitter(row_id: Any, seed: str) -> float:
+    """Deterministic ε ∈ [0, 0.10) keyed on (row_id, seed).
+
+    Same seed → same value. Different seed → different ranking. Seed is built
+    from (normalized exercise_name, reason) so the same exercise + different
+    reasons yield different orderings (finding #18 — boring vs none must
+    diverge). Range widened from 0.05 → 0.10 so reason-driven jitter can flip
+    rankings even when category/muscle scores tie.
+    """
+    import hashlib
+    h = hashlib.md5(f"{row_id}|{seed}".encode("utf-8")).hexdigest()
+    return (int(h[:8], 16) / 0xFFFFFFFF) * 0.10
+
+
+def _score_candidate(
+    row: Dict[str, Any],
+    detected_muscle: Optional[str],
+    ctx: SubstituteContext,
+) -> float:
+    """Rank a candidate row. Higher = better.
+
+    Weights:
+      +0.30 same target_muscle as original (most specific — finding #21)
+      +0.20 same display_body_part as detected muscle
+      +0.25 same category as original (strength→strength, finding #17)
+      −0.25 different category, intent ∉ {post_surgery} (finding #17)
+      +0.20 × Jaccard token overlap with original name
+      +0.20 if equipment matches ctx.desired_equipment
+      +0.15 if post_surgery + category in {stretching, mobility}
+      +0.10 if media-rich (gif_url OR video_url OR image_url)
+      −0.50 if boring + name shares ctx.family_keyword
+      + seeded jitter ∈ [0, 0.10)  — widened so reason flips ordering (#18)
+    """
+    score = 0.0
+
+    # target_muscle match — most specific, weighted higher than body_part (#21)
+    row_target = (row.get("target_muscle") or "").lower()
+    if ctx.original_target_muscle and row_target == ctx.original_target_muscle:
+        score += 0.30
+
+    if detected_muscle:
+        target_dbp = (MUSCLE_TO_LIBRARY_QUERY.get(detected_muscle, {})
+                      .get("display_body_part"))
+        row_dbp = row.get("display_body_part")
+        if target_dbp and row_dbp == target_dbp:
+            score += 0.20
+
+    # Category match — strength queries should not be dominated by stretches (#17)
+    row_category = (row.get("category") or "").lower()
+    if ctx.original_category and row_category:
+        if row_category == ctx.original_category:
+            score += 0.25
+        elif ctx.intent != "post_surgery":
+            score -= 0.25
+
+    # Jaccard token overlap
+    orig_tokens = {t for t in ctx.original_norm.replace("-", " ").split()
+                   if len(t) >= 3}
+    name_tokens = {t for t in _normalize_for_matching(row.get("name") or "").split()
+                   if len(t) >= 3}
+    if orig_tokens and name_tokens:
+        inter = len(orig_tokens & name_tokens)
+        union = len(orig_tokens | name_tokens)
+        if union > 0:
+            score += 0.20 * (inter / union)
+
+    if ctx.desired_equipment and _equipment_is_bodyweight(row):
+        score += 0.20
+
+    if ctx.intent == "post_surgery":
+        if row_category in {"stretching", "mobility", "yoga"}:
+            score += 0.15
+
+    if row.get("gif_url") or row.get("video_url") or row.get("image_url"):
+        score += 0.10
+
+    if ctx.intent == "boring" and ctx.family_keyword:
+        if ctx.family_keyword in _normalize_for_matching(row.get("name") or ""):
+            score -= 0.50
+
+    score += _seeded_jitter(row.get("id"), ctx.seed)
+    return score
+
+
+def _row_passes_all_filters(row: Dict[str, Any], ctx: SubstituteContext) -> bool:
+    """Single gate for every candidate at every retrieval stage."""
+    name = row.get("name") or ""
+    if not name:
+        return False
+    if name.lower() == ctx.original_lower:
+        return False  # self-exclusion
+    if _is_unsafe_for_injury(row, ctx.injury_type):
+        return False
+    if _is_unsafe_by_name_keyword(name, ctx):
+        return False
+    if not _passes_intent_filter(row, ctx):
+        return False
+    return True
+
+
+def _token_search(db, exercise_name: str, ctx: SubstituteContext) -> List[Dict[str, Any]]:
+    """ilike-based token search across exercise_library_cleaned.name."""
+    out: List[Dict[str, Any]] = []
+    try:
+        # Normalized form so 'Bench-Press' / 'Bench (Press)' / 'Bench  Press'
+        # all tokenize the same way (finding #15). Min length 3 catches
+        # 'cow', 'cat', 'sq...'.
+        norm = _normalize_for_matching(exercise_name)
+        tokens = [t for t in norm.split()
+                  if len(t) >= 3 and t not in {"with", "the", "and", "for"}]
+        for token in tokens[:3]:
+            cache_key = ("token", token)
+            cached = _LIBRARY_CACHE.get(cache_key)
+            if cached is not None:
+                out.extend(cached)
+                continue
+            res = (db.client.table("exercise_library_cleaned").select(_SUBSTITUTE_COLS)
+                   .ilike("name", f"%{token}%").limit(12).execute())
+            rows = res.data or []
+            _LIBRARY_CACHE[cache_key] = rows
+            out.extend(rows)
+    except Exception as e:
+        logger.warning(f"Token-based library search error: {e}", exc_info=True)
+    return out
+
+
+def _expand_to_safe_muscles(
+    db, ctx: SubstituteContext, detected_muscle: Optional[str]
+) -> List[Dict[str, Any]]:
+    """Cross-muscle expansion — fires for injury OR pregnancy OR post-surgery
+    when the same-muscle pool would force unsafe picks.
+    """
+    out: List[Dict[str, Any]] = []
+    expansion_key = ctx.injury_type
+    if not expansion_key and ctx.intent in {"pregnant", "post_surgery"}:
+        # Default to a generally-safe expansion: same as ankle (full upper body + core)
+        expansion_key = "ankle"
+    if not expansion_key or expansion_key not in INJURY_SAFE_MUSCLE_EXPANSION:
+        return out
+    for alt_muscle in INJURY_SAFE_MUSCLE_EXPANSION[expansion_key]:
+        if alt_muscle == detected_muscle:
+            continue
+        for row in _cached_query_by_muscle(db, alt_muscle, limit=6):
+            out.append(row)
+    return out
+
+
+def _fuzzy_search(db, exercise_name: str) -> List[Dict[str, Any]]:
+    """Typo-tolerant trigram search via the substitutes_fuzzy_search RPC
+    (migration 2039). Catches Squet → Squat, benchpres → Bench Press.
+    """
+    try:
+        res = db.client.rpc("substitutes_fuzzy_search", {
+            "p_search_term": exercise_name,
+            "p_limit": 12,
+        }).execute()
+        return res.data or []
+    except Exception as e:
+        logger.warning(f"Fuzzy search RPC error: {e}", exc_info=True)
+        return []
+
+
+def _generic_pool_fallback(db) -> List[Dict[str, Any]]:
+    """Final fallback when every other stage fails. Pulls from Full Body / Core
+    so we always have *something* to suggest for any recognized input.
+    """
+    out: List[Dict[str, Any]] = []
+    for dbp in ("Full Body", "Core"):
+        try:
+            res = (db.client.table("exercise_library_cleaned").select(_SUBSTITUTE_COLS)
+                   .eq("display_body_part", dbp)
+                   .order("difficulty_level", desc=False).order("id")
+                   .limit(8).execute())
+            for row in res.data or []:
+                out.append(row)
+        except Exception as e:
+            logger.warning(f"Generic pool fallback ({dbp}) error: {e}", exc_info=True)
+    return out
+
+
+def _explain_substitute(row: Dict[str, Any], ctx: SubstituteContext) -> str:
+    """Short per-substitute explanation rendered in the UI tile."""
+    if ctx.injury_type:
+        # e.g. "Knee-friendly alternative"
+        return f"{ctx.injury_type.replace('_', ' ').title()}-friendly alternative"
+    if ctx.intent == "no_equipment":
+        return "Bodyweight, no equipment needed"
+    if ctx.intent == "pregnant":
+        return "Pregnancy-safe alternative"
+    if ctx.intent == "post_surgery":
+        return "Lower-impact rehab option"
+    if ctx.intent == "menstrual":
+        return "Lower-intensity option"
+    if ctx.intent == "boring":
+        return "Different movement pattern"
+    return "Same muscle group"
+
+
+def _to_substitute_exercise(row: Dict[str, Any], ctx: SubstituteContext) -> SubstituteExercise:
+    """Build a SubstituteExercise from a library row.
+
+    `media_url` is the canonical media field; `gif_url` is populated with the
+    same coalesced value for back-compat with the Flutter substitute-tile UI
+    that already reads `gif_url`.
+    """
+    media = row.get("gif_url") or row.get("video_url") or row.get("image_url")
+    # Compute truthful is_safe_for_reason by re-running every safety filter
+    # (finding #13 — the old code lied with `True` even when name keywords
+    # matched). Anything the post-filter pipeline lets through *should* be
+    # safe; this is a belt-and-suspenders attestation that survives any future
+    # bug where unsafe rows slip through.
+    safe = (
+        not _is_unsafe_for_injury(row, ctx.injury_type)
+        and not _is_unsafe_by_name_keyword(row.get("name") or "", ctx)
+        and _passes_intent_filter(row, ctx)
+    )
+    return SubstituteExercise(
+        name=row.get("name") or "",
+        muscle_group=row.get("display_body_part") or row.get("body_part"),
+        target_muscle=row.get("target_muscle"),
+        body_part=row.get("body_part"),
+        equipment=row.get("equipment"),
+        library_id=row.get("id"),
+        gif_url=media,
+        video_url=row.get("video_url"),
+        image_url=row.get("image_url"),
+        media_url=media,
+        reason=_explain_substitute(row, ctx),
+        difficulty=str(row.get("difficulty_level")) if row.get("difficulty_level") is not None else None,
+        is_safe_for_reason=safe,
+    )
+
+
+def _build_injury_warning(ctx: SubstituteContext) -> Optional[str]:
+    if not ctx.injury_type:
+        return None
+    return f"Showing options that avoid {ctx.injury_type.replace('_', ' ')} stress."
+
+
+def _build_safety_warning(ctx: SubstituteContext) -> Optional[str]:
+    if ctx.intent == "pregnant":
+        return ("Pregnancy: avoiding plyometric, supine, and high-impact work. "
+                "Consult your OB-GYN before starting any new exercise.")
+    if ctx.intent == "post_surgery":
+        return ("Post-surgery: capped at moderate difficulty. Confirm clearance "
+                "with your physical therapist before progressing.")
+    if ctx.intent == "menstrual":
+        return ("Lower-intensity options shown. Listen to your body and reduce "
+                "load if needed.")
+    return None
+
+
+def _build_message(ctx: SubstituteContext, n: int) -> str:
+    if ctx.injury_type:
+        return f"Here are {n} safe alternatives that avoid {ctx.injury_type.replace('_', ' ')} stress"
+    if ctx.intent == "no_equipment":
+        return f"Found {n} bodyweight alternatives for {ctx.original_name}"
+    if ctx.intent == "boring":
+        return f"Found {n} fresh alternatives to {ctx.original_name}"
+    if ctx.intent == "pregnant":
+        return f"Here are {n} pregnancy-safe alternatives"
+    if ctx.intent == "post_surgery":
+        return f"Here are {n} lower-impact rehab alternatives"
+    if ctx.intent == "menstrual":
+        return f"Here are {n} lower-intensity alternatives"
+    if n > 0:
+        return f"Found {n} alternative exercises for {ctx.original_name}"
+    return "No specific substitutes found, but you can search the exercise library for alternatives"
+
+
 @router.post("/suggest-substitutes", response_model=SubstituteResponse)
 async def suggest_exercise_substitutes(request: SubstituteRequest, current_user: dict = Depends(get_current_user)):
     """
     Get safe substitute exercises when avoiding a specific exercise.
 
-    Takes an exercise name and optional reason (e.g., "knee injury")
-    and returns appropriate alternatives that work the same muscles
-    while avoiding the problematic movement.
+    Reason-aware: detects 8 injury types AND 5 non-injury intents
+    (no_equipment, boring, pregnant, post_surgery, menstrual). Returns ≥3
+    substitutes for any recognized input via cascading retrieval (muscle
+    search → token search → cross-muscle expansion → fuzzy/trigram → generic
+    pool). Belt-and-suspenders safety filter combines the library's
+    `avoid_if[]` metadata with curated name-keyword lists.
     """
     logger.info(f"Getting substitutes for: {request.exercise_name}, reason: {request.reason}")
 
     try:
         db = get_supabase_db()
-        substitutes = []
 
-        # Detect injury type from reason
-        injury_type = detect_injury_type(request.reason)
-        muscle_group = get_exercise_muscle_group(request.exercise_name)
+        ctx = _classify_reason(request)
+        # Muscle detection uses the punctuation-collapsed form (#15) so
+        # "Bench-Press", "Bench  Press", "Bench (Press)" all map to chest.
+        muscle_group = get_exercise_muscle_group(_normalize_exercise_name(request.exercise_name))
+        # Populate ctx.original_category + original_target_muscle for scoring (#17, #21)
+        _lookup_original_metadata(db, ctx)
 
-        # All substitutes MUST come from the exercise_library table so every result has
-        # a library_id + gif_url + verified safety metadata. No curated/synthetic names.
+        # Cascade retrieval: collect a large pool, filter, score, take top N.
+        pool: List[Dict[str, Any]] = []
 
-        # 1. (removed — no curated SAFE_ALTERNATIVES; library is the source of truth)
-        # 2. (removed — no curated EXERCISE_SUBSTITUTES; library is the source of truth)
-
-        # 3. Library search by muscle_group on exercise_library_cleaned MV.
+        # 1. Muscle search (primary signal)
         if muscle_group:
-            for row in _query_library_by_muscle(db, muscle_group, limit=12):
-                name_lib = row.get("name") or ""
-                if not name_lib or name_lib.lower() == request.exercise_name.lower():
+            pool.extend(_cached_query_by_muscle(db, muscle_group, limit=12))
+
+        # 2. Token search (catches names that fail muscle keyword detection)
+        pool.extend(_token_search(db, request.exercise_name, ctx))
+
+        # 3. Cross-muscle expansion (injury OR pregnant/post-surgery)
+        if ctx.injury_type or ctx.intent in {"pregnant", "post_surgery"}:
+            pool.extend(_expand_to_safe_muscles(db, ctx, muscle_group))
+
+        # Filter pool through every guard
+        seen_ids = set()
+        seen_names = set()
+        candidates: List[Dict[str, Any]] = []
+        for row in pool:
+            rid = row.get("id")
+            nlow = (row.get("name") or "").lower()
+            if rid in seen_ids or nlow in seen_names:
+                continue
+            if not _row_passes_all_filters(row, ctx):
+                continue
+            seen_ids.add(rid)
+            seen_names.add(nlow)
+            candidates.append(row)
+
+        # 4. Fuzzy search fallback if still thin
+        if len(candidates) < 3:
+            for row in _fuzzy_search(db, request.exercise_name):
+                rid = row.get("id")
+                nlow = (row.get("name") or "").lower()
+                if rid in seen_ids or nlow in seen_names:
                     continue
-                if _is_unsafe_for_injury(row, injury_type):
+                if not _row_passes_all_filters(row, ctx):
                     continue
-                if not any(s.name.lower() == name_lib.lower() for s in substitutes):
-                    substitutes.append(SubstituteExercise(
-                        name=name_lib,
-                        muscle_group=row.get("display_body_part") or row.get("body_part"),
-                        equipment=row.get("equipment"),
-                        library_id=row.get("id"),
-                        gif_url=row.get("gif_url"),
-                        is_safe_for_reason=True,
-                    ))
+                seen_ids.add(rid)
+                seen_names.add(nlow)
+                candidates.append(row)
 
-        # 4. Token-based library search on exercise_library_cleaned.name — when
-        # muscle_group detection missed OR same-muscle search was thin.
-        if len(substitutes) < 3:
-            try:
-                tokens = [t for t in request.exercise_name.lower().replace("-", " ").split()
-                          if len(t) >= 4 and t not in {"with", "the", "and", "for"}]
-                for token in tokens[:3]:
-                    if len(substitutes) >= 6:
-                        break
-                    res = db.client.table("exercise_library_cleaned").select(
-                        "id, name, body_part, display_body_part, equipment, gif_url, target_muscle, avoid_if"
-                    ).ilike("name", f"%{token}%").limit(8).execute()
-                    for row in res.data or []:
-                        name_lib = row.get("name") or ""
-                        if not name_lib or name_lib.lower() == request.exercise_name.lower():
-                            continue
-                        if _is_unsafe_for_injury(row, injury_type):
-                            continue
-                        if not any(s.name.lower() == name_lib.lower() for s in substitutes):
-                            substitutes.append(SubstituteExercise(
-                                name=name_lib,
-                                muscle_group=row.get("display_body_part") or row.get("body_part"),
-                                equipment=row.get("equipment"),
-                                library_id=row.get("id"),
-                                gif_url=row.get("gif_url"),
-                                is_safe_for_reason=True,
-                            ))
-            except Exception as e:
-                logger.warning(f"Token-based library search error: {e}", exc_info=True)
+        # 5. Generic Full Body / Core fallback if STILL thin
+        if len(candidates) < 3:
+            for row in _generic_pool_fallback(db):
+                rid = row.get("id")
+                nlow = (row.get("name") or "").lower()
+                if rid in seen_ids or nlow in seen_names:
+                    continue
+                if not _row_passes_all_filters(row, ctx):
+                    continue
+                seen_ids.add(rid)
+                seen_names.add(nlow)
+                candidates.append(row)
 
-        # 5. Cross-muscle library expansion — when injury restricts the original muscle,
-        # query OTHER muscle groups the user can safely train.
-        if injury_type and injury_type in INJURY_SAFE_MUSCLE_EXPANSION and len(substitutes) < 3:
-            for alt_muscle in INJURY_SAFE_MUSCLE_EXPANSION[injury_type]:
-                if len(substitutes) >= 6:
-                    break
-                for row in _query_library_by_muscle(db, alt_muscle, limit=6):
-                    name_lib = row.get("name") or ""
-                    if not name_lib or name_lib.lower() == request.exercise_name.lower():
-                        continue
-                    if _is_unsafe_for_injury(row, injury_type):
-                        continue
-                    if not any(s.name.lower() == name_lib.lower() for s in substitutes):
-                        substitutes.append(SubstituteExercise(
-                            name=name_lib,
-                            muscle_group=row.get("display_body_part") or row.get("body_part"),
-                            equipment=row.get("equipment"),
-                            library_id=row.get("id"),
-                            gif_url=row.get("gif_url"),
-                            is_safe_for_reason=True,
-                        ))
+        # Score and rank
+        candidates.sort(
+            key=lambda r: _score_candidate(r, muscle_group, ctx),
+            reverse=True,
+        )
+        top = candidates[:8]
 
-        # Limit to top 8 substitutes
-        substitutes = substitutes[:8]
+        # Build response
+        if not top:
+            # Truly unrecognized input (gibberish / non-Latin / pure typo with no
+            # near-match). Return 200 with empty substitutes + helpful message.
+            return SubstituteResponse(
+                original_exercise=request.exercise_name,
+                reason=request.reason,
+                substitutes=[],
+                intent="unrecognized",
+                injury_warning=None,
+                safety_warning=None,
+                message="Couldn't recognize that exercise — try the search bar or check the spelling.",
+            )
 
-        # Generate helpful message
-        if injury_type:
-            message = f"Here are {len(substitutes)} safe alternatives that avoid {injury_type} stress"
-        elif substitutes:
-            message = f"Found {len(substitutes)} alternative exercises for {request.exercise_name}"
-        else:
-            message = "No specific substitutes found, but you can search the exercise library for alternatives"
-
+        substitutes = [_to_substitute_exercise(r, ctx) for r in top]
         return SubstituteResponse(
             original_exercise=request.exercise_name,
             reason=request.reason,
             substitutes=substitutes,
-            message=message,
+            injury_warning=_build_injury_warning(ctx),
+            intent=ctx.intent,
+            safety_warning=_build_safety_warning(ctx),
+            message=_build_message(ctx, len(substitutes)),
         )
 
     except Exception as e:

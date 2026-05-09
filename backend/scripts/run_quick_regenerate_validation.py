@@ -250,8 +250,7 @@ CSV_COLS = [
 def init_outputs() -> Path:
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
     out = BACKEND / "scripts" / "output" / f"render_quick_regenerate_{ts}"
-    out.mkdir(parents=True, exist_ok=True)
-    # raw_response_json is in CSV_COLS — no separate json/ dir needed.
+    (out / "json").mkdir(parents=True, exist_ok=True)
     with (out / "workouts.csv").open("w", newline="") as fh:
         csv.writer(fh).writerow(CSV_COLS)
     print(f"[harness] Output → {out}", flush=True)
@@ -259,14 +258,31 @@ def init_outputs() -> Path:
 
 
 def write_row(out_dir: Path, row: Dict[str, Any]) -> None:
-    """Append CSV row with inline raw_response_json — no per-scenario JSON file written.
-    Survives kill -9; output dir stays clean (just workouts.csv)."""
+    """Append CSV row AND write per-scenario JSON dump.
+    End-of-run _consolidate_jsons_into_csv() folds JSONs into CSV's
+    raw_response_json column and removes the json/ dir."""
     csv_path = out_dir / "workouts.csv"
-    # Ensure raw_response_json column has the full row payload.
-    if "raw_response_json" in CSV_COLS and not row.get("raw_response_json"):
-        row["raw_response_json"] = json.dumps(row, default=str, separators=(",", ":"))
     with csv_path.open("a", newline="") as fh:
         csv.writer(fh).writerow([row.get(c, "") for c in CSV_COLS])
+
+    json_dir = out_dir / "json"
+    json_dir.mkdir(parents=True, exist_ok=True)
+    idx = int(row.get("idx", 0) or 0)
+    (json_dir / f"scenario_{idx:04d}.json").write_text(
+        json.dumps(row, indent=2, default=str)
+    )
+
+    print(
+        f"[{row['idx']}/{row.get('_total','?')}] "
+        f"block={row['scenario_block']} "
+        f"seed={row['pre_call_seeded_count']} "
+        f"deleted={row['response_workouts_deleted']} "
+        f"latency={row['latency_ms']}ms "
+        f"status={row['http_status']} "
+        f"match={row['deleted_match']}/{row['status_match']} "
+        f"| {row['label']}",
+        flush=True,
+    )
 
     print(
         f"[{row['idx']}/{row.get('_total','?')}] "

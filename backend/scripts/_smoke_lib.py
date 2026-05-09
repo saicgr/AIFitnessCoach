@@ -166,101 +166,74 @@ def resume_or_init_outputs(
 
 def write_row(out_dir: Path, row: Dict[str, Any], csv_cols: List[str],
               full_payload: Dict[str, Any]) -> None:
-    """Append CSV row (incl. raw_json_payload column inline) — no per-scenario JSON dump.
+    """Append CSV row AND write per-scenario JSON dump to json/scenario_NNN.json.
 
-    Previously this wrote a JSON file per scenario and consolidated at end of run.
-    Problem: if the harness was killed mid-flight, JSONs lingered + were never folded.
-    Now: payload is written DIRECTLY into the CSV's `raw_json_payload` column on each
-    scenario, eliminating the json/ directory entirely. Survives kill -9 cleanly.
+    End-of-run consolidate_and_cleanup() folds these JSONs into the CSV's
+    raw_json_payload column and removes the json/ dir.
     """
     csv_path = out_dir / "workouts.csv"
-    cols = list(csv_cols)
-    if "raw_json_payload" not in cols:
-        cols = cols + ["raw_json_payload"]
-        # Append column to header if needed (only if header was already written WITHOUT
-        # raw_json_payload).
-        try:
-            with csv_path.open() as fh:
-                first = fh.readline()
-            if first and "raw_json_payload" not in first:
-                # Re-read all, rewrite with extended header.
-                with csv_path.open() as fh:
-                    existing = list(csv.reader(fh))
-                if existing:
-                    existing[0] = existing[0] + ["raw_json_payload"]
-                    for r in existing[1:]:
-                        # Pad with empty payload — these are pre-fix rows.
-                        r.append("")
-                    with csv_path.open("w", newline="") as fh:
-                        w = csv.writer(fh)
-                        w.writerows(existing)
-        except FileNotFoundError:
-            pass
-
-    payload_str = json.dumps(full_payload, separators=(",", ":"), default=str)
-    row_with_payload = dict(row)
-    row_with_payload["raw_json_payload"] = payload_str
     with csv_path.open("a", newline="") as fh:
-        csv.writer(fh).writerow([row_with_payload.get(c, "") for c in cols])
+        csv.writer(fh).writerow([row.get(c, "") for c in csv_cols])
 
-    # Also remove any stale json/ subdir that older runs left behind.
+    idx = row.get("idx", 0)
     json_dir = out_dir / "json"
-    if json_dir.exists():
-        try:
-            shutil.rmtree(json_dir)
-        except Exception:
-            pass
+    json_dir.mkdir(parents=True, exist_ok=True)
+    payload = {"idx": idx, "csv_row": row, "response": full_payload}
+    (json_dir / f"scenario_{int(idx):04d}.json").write_text(
+        json.dumps(payload, indent=2, default=str)
+    )
 
 
 def consolidate_and_cleanup(out_dir: Path, csv_cols: List[str]) -> None:
-    """Compatibility shim. write_row() now writes payloads directly into the CSV's
-    raw_json_payload column, so there's nothing to fold. This function only exists to
-    clean up `json/` from prior-format runs (pre-2026-05-08) and as a no-op end-of-run hook.
-    """
+    """Fold per-scenario JSONs into CSV's raw_json_payload column, then rm json/."""
     json_dir = out_dir / "json"
     csv_path = out_dir / "workouts.csv"
-    if not csv_path.exists():
+    if not csv_path.exists() or not json_dir.exists():
         return
 
-    if json_dir.exists():
-        # Pre-2026-05-08 format: per-scenario JSONs that need folding into CSV.
-        try:
-            with csv_path.open() as fh:
-                rows = list(csv.reader(fh))
-            if not rows:
-                shutil.rmtree(json_dir)
-                return
-            header = rows[0]
-            body = rows[1:]
-            j_by_idx: Dict[int, Dict[str, Any]] = {}
-            for jf in sorted(json_dir.glob("scenario_*.json")):
-                try:
-                    payload = json.loads(jf.read_text())
-                    idx = payload.get("idx") or payload.get("csv_row", {}).get("idx") \
-                        or int(jf.stem.split("_")[-1])
-                    j_by_idx[int(idx)] = payload
-                except Exception as e:
-                    print(f"  ⚠️  parse {jf}: {e}", flush=True)
-            if "raw_json_payload" not in header:
-                header = header + ["raw_json_payload"]
-                new_body = []
-                for r in body:
-                    try:
-                        idx = int(r[0])
-                    except Exception:
-                        new_body.append(r + [""])
-                        continue
-                    new_body.append(r + [json.dumps(j_by_idx.get(idx, {}),
-                                                    separators=(",", ":"), default=str)])
-                with csv_path.open("w", newline="") as fh:
-                    w = csv.writer(fh)
-                    w.writerow(header)
-                    w.writerows(new_body)
+    try:
+        with csv_path.open() as fh:
+            rows = list(csv.reader(fh))
+        if not rows:
             shutil.rmtree(json_dir)
-            print(f"[harness] folded {len(j_by_idx)} legacy json files → csv; removed {json_dir}",
-                  flush=True)
-        except Exception as e:
-            print(f"[harness] cleanup error: {e}", flush=True)
+            return
+        header = rows[0]
+        body = rows[1:]
+        j_by_idx: Dict[int, Dict[str, Any]] = {}
+        for jf in sorted(json_dir.glob("scenario_*.json")):
+            try:
+                payload = json.loads(jf.read_text())
+                idx = payload.get("idx") or payload.get("csv_row", {}).get("idx") \
+                    or int(jf.stem.split("_")[-1])
+                j_by_idx[int(idx)] = payload
+            except Exception as e:
+                print(f"  ⚠️  parse {jf}: {e}", flush=True)
+        if "raw_json_payload" not in header:
+            header = header + ["raw_json_payload"]
+        new_body = []
+        for r in body:
+            try:
+                idx = int(r[0])
+            except Exception:
+                new_body.append(r + [""])
+                continue
+            payload_str = json.dumps(j_by_idx.get(idx, {}),
+                                     separators=(",", ":"), default=str)
+            # Replace existing raw_json_payload col if already present, else append
+            if len(r) == len(header):
+                r[-1] = payload_str
+                new_body.append(r)
+            else:
+                new_body.append(r + [payload_str])
+        with csv_path.open("w", newline="") as fh:
+            w = csv.writer(fh)
+            w.writerow(header)
+            w.writerows(new_body)
+        shutil.rmtree(json_dir)
+        print(f"[harness] folded {len(j_by_idx)} json files → csv; removed {json_dir}",
+              flush=True)
+    except Exception as e:
+        print(f"[harness] cleanup error: {e}", flush=True)
 
 
 async def call_sse_with_retry(
@@ -379,6 +352,46 @@ def update_md_live_status(
             f"{name} | {e.get('n_exercises', 0)} | {e.get('latency_ms', 0)} | {err} |"
         )
     md_path.write_text(head + "\n".join(body_lines) + "\n")
+
+
+async def warmup_endpoint(
+    client: httpx.AsyncClient,
+    base_url: str,
+    jwt: str,
+    path: str,
+    body: Dict[str, Any],
+    target_ms: int = 800,
+    max_attempts: int = 5,
+) -> int:
+    """Hit `path` until latency ≤ target_ms or attempts exhausted.
+
+    Used to wake Render before validation harnesses so block-1 indices don't
+    cluster cold-start outliers (we saw 7.4s max in the suggest-substitutes
+    run on 2026-05-08; first 5 calls all > 2s). Returns the last latency_ms.
+    """
+    last_ms = -1
+    for i in range(max_attempts):
+        t0 = time.time()
+        try:
+            r = await client.post(
+                f"{base_url}{path}",
+                json=body,
+                headers={"Authorization": f"Bearer {jwt}"},
+                timeout=30.0,
+            )
+            last_ms = int((time.time() - t0) * 1000)
+            ok = r.status_code == 200
+            print(f"[warmup] attempt {i+1}/{max_attempts} → {r.status_code} "
+                  f"in {last_ms}ms{' ✅' if ok and last_ms <= target_ms else ''}",
+                  flush=True)
+            if ok and last_ms <= target_ms:
+                return last_ms
+        except Exception as e:
+            last_ms = int((time.time() - t0) * 1000)
+            print(f"[warmup] attempt {i+1}/{max_attempts} error: {type(e).__name__}: {e}",
+                  flush=True)
+        await asyncio.sleep(0.5)
+    return last_ms
 
 
 def workout_summary(result: Dict[str, Any]) -> Dict[str, Any]:

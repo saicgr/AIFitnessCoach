@@ -29,8 +29,8 @@ import httpx
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from scripts._smoke_lib import (  # noqa: E402
-    BACKEND, RENDER, get_jwt, init_outputs, write_row,
-    consolidate_and_cleanup,
+    BACKEND, RENDER, USER_ID, get_jwt, init_outputs, write_row,
+    consolidate_and_cleanup, warmup_endpoint,
 )
 
 
@@ -334,6 +334,18 @@ async def main() -> None:
     out_dir = init_outputs("render_suggest_substitutes", CSV_COLS)
 
     async with httpx.AsyncClient() as client:
+        # Cold-start warmup — eliminates the ~7s outliers we saw on prior runs
+        # (idx 4/8/12/17/22 all > 2s on the 2026-05-08 run). Hits the real
+        # endpoint once before block-1 starts so subsequent calls are warm.
+        print("[harness] warming up Render...", flush=True)
+        last_warmup_ms = await warmup_endpoint(
+            client, RENDER, jwt,
+            "/api/v1/exercise-preferences/suggest-substitutes",
+            {"exercise_name": "Squat", "user_id": USER_ID},
+            target_ms=800,
+        )
+        print(f"[harness] warm — last call {last_warmup_ms}ms", flush=True)
+
         for sc in scenarios:
             body = {"exercise_name": sc["exercise_name"]}
             if sc["reason"]:

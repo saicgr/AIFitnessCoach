@@ -95,7 +95,7 @@ FOCUS_AREA_KEYWORDS = {
     "full_body_upper": "full body workout upper body focus chest back shoulders arms",
     "full_body_lower": "full body workout lower body focus legs glutes quads hamstrings calves",
     "full_body_power": "full body workout power explosive movements plyometrics jumps",
-    "full_body": "full body balanced workout compound exercises barbell dumbbell cable machine kettlebell strength training",
+    "full_body": "full body balanced workout compound movement patterns squat hinge push pull carry lunge total body strength training",
 
     # Upper/Lower split focus areas
     "upper": "upper body workout chest back shoulders arms biceps triceps pressing pulling rows",
@@ -259,11 +259,27 @@ def build_search_query(
     """
     focus_query = FOCUS_AREA_KEYWORDS.get(focus_area, f"Exercises for {focus_area} workout")
 
-    query_parts = [
-        focus_query,
-        f"Equipment: {', '.join(equipment) if equipment else 'bodyweight'}",
-        f"Fitness level: {fitness_level}",
-    ]
+    from .filters import BODYWEIGHT_TOKENS
+    eq_norm = [(e or "").strip().lower() for e in equipment]
+    is_bw_only = (not eq_norm) or all(e in BODYWEIGHT_TOKENS for e in eq_norm)
+
+    if is_bw_only:
+        bw_emphasis = (
+            "bodyweight calisthenics push-ups pull-ups squats lunges planks "
+            "burpees mountain climbers glute bridges no equipment"
+        )
+        query_parts = [
+            bw_emphasis,
+            focus_query,
+            "Equipment: bodyweight",
+            f"Fitness level: {fitness_level}",
+        ]
+    else:
+        query_parts = [
+            focus_query,
+            f"Equipment: {', '.join(equipment)}",
+            f"Fitness level: {fitness_level}",
+        ]
 
     # Add goal-specific terms
     training_program_keywords = get_training_program_keywords_sync()

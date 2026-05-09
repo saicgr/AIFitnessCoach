@@ -208,21 +208,32 @@ class SetsLimitsResponse(BaseModel):
 
 class SubstituteRequest(BaseModel):
     """Request for exercise substitutes."""
-    exercise_name: str
+    exercise_name: str = Field(..., min_length=1, max_length=200)
     user_id: str
-    reason: Optional[str] = None
+    reason: Optional[str] = Field(default=None, max_length=500)
 
 
 class SubstituteExercise(BaseModel):
-    """A substitute exercise suggestion."""
+    """A substitute exercise suggestion.
+
+    `media_url` is the canonical media field — populated as
+    COALESCE(gif_url, video_url, image_url) by the endpoint. `gif_url` is
+    populated with the same coalesced value for back-compat with existing
+    Flutter substitute-tile UI.
+    """
     name: str
     equipment: Optional[str] = None
     target_muscle: Optional[str] = None
     body_part: Optional[str] = None
+    muscle_group: Optional[str] = None
+    library_id: Optional[str] = None
     gif_url: Optional[str] = None
     video_url: Optional[str] = None
-    reason: str
+    image_url: Optional[str] = None
+    media_url: Optional[str] = None
+    reason: Optional[str] = None
     difficulty: Optional[str] = None
+    is_safe_for_reason: Optional[bool] = None
 
 
 class SubstituteResponse(BaseModel):
@@ -230,6 +241,10 @@ class SubstituteResponse(BaseModel):
     original_exercise: str
     substitutes: List[SubstituteExercise]
     injury_warning: Optional[str] = None
+    intent: Optional[str] = None
+    safety_warning: Optional[str] = None
+    message: Optional[str] = None
+    reason: Optional[str] = None
 
 
 class RecentSwapResponse(BaseModel):
