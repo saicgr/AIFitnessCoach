@@ -27,6 +27,7 @@ from services.gemini.utils import (
     _sanitize_for_prompt,
     _build_equipment_usage_rule,
     infer_set_type,
+    apply_goal_aware_rir_override,
 )
 from services.gemini.hormonal import HormonalHealthPrompts
 
@@ -44,6 +45,7 @@ __all__ = [
     "_log_token_usage",
     "validate_set_targets_strict",
     "ensure_set_targets",
+    "apply_goal_aware_rir_override",
     "safe_join_list",
     "_sanitize_for_prompt",
     "_build_equipment_usage_rule",

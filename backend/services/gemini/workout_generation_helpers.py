@@ -1095,46 +1095,8 @@ EXAMPLE GOOD LEG WORKOUT (VARIED SETS/REPS):
 EXAMPLE BAD WORKOUT (REJECTED - DO NOT DO THIS):
 ❌ Squat 3x10, RDL 3x10, Leg Press 3x10, Leg Curl 3x10, Calf Raise 3x10 (all same!)
 
-🎯 WORKOUT NAME - BE EXTREMELY CREATIVE:
-Create a name that makes users PUMPED to work out! Use diverse vocabulary:
-
-ACTION WORDS (pick creatively):
-- Power: Blitz, Surge, Blast, Strike, Rush, Bolt, Flash, Charge, Jolt, Spark
-- Intensity: Inferno, Blaze, Scorch, Burn, Fire, Flame, Heat, Ember, Torch, Ignite
-- Nature: Storm, Thunder, Lightning, Hurricane, Tornado, Avalanche, Earthquake, Tsunami, Cyclone, Tempest
-- Force: Crush, Smash, Shatter, Break, Demolish, Destroy, Wreck, Obliterate, Annihilate, Pulverize
-- Speed: Sprint, Dash, Zoom, Rocket, Jet, Turbo, Hyper, Sonic, Rapid, Swift
-- Combat: Warrior, Gladiator, Viking, Spartan, Samurai, Ninja, Knight, Conqueror, Champion, Fighter
-- Animal: Wolf, Lion, Tiger, Bear, Hawk, Eagle, Dragon, Phoenix, Panther, Cobra
-- Mythic: Titan, Atlas, Zeus, Thor, Hercules, Apollo, Odin, Valkyrie, Olympus, Valhalla
-
-⚠️ CRITICAL NAMING RULES:
-1. Name MUST be 3-4 words
-2. Name MUST end with the body part/muscle focus
-3. Be creative and motivating!
-
-EXAMPLES OF GOOD 3-4 WORD NAMES:
-- "Savage Wolf Legs" ✓ (3 words, ends with body part)
-- "Iron Phoenix Chest" ✓ (3 words, ends with body part)
-- "Thunder Strike Back" ✓ (3 words, ends with body part)
-- "Mighty Storm Core" ✓ (3 words, ends with body part)
-- "Ultimate Power Shoulders" ✓ (3 words, ends with body part)
-- "Blazing Beast Glutes" ✓ (3 words, ends with body part)
-
-BAD EXAMPLES:
-- "Thunder Legs" ✗ (only 2 words!)
-- "Blitz Panther Pounce" ✗ (no body part!)
-- "Wolf" ✗ (too short, no body part!)
-
-BODY PARTS TO END WITH:
-- Upper: Chest, Back, Shoulders, Arms, Biceps, Triceps
-- Core: Core, Abs, Obliques
-- Lower: Legs, Quads, Glutes, Hamstrings, Calves
-- Full: Full Body, Total Body
-
-FORMAT: [Adjective/Action] + [Animal/Mythic/Theme] + [Body Part]
-- "Raging Bull Legs", "Silent Ninja Back", "Golden Phoenix Chest"
-- "Explosive Tiger Core", "Relentless Warrior Arms", "Primal Beast Shoulders"
+🎯 WORKOUT NAME:
+"name": "ANY descriptive name (will be replaced post-generation by the workout namer)"
 {holiday_instruction}{avoid_instruction}
 
 Requirements:

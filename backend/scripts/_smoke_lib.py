@@ -115,39 +115,91 @@ def resume_or_init_outputs(
 
     completed: set = set()
 
+    # Build the set of "real successes" from CSV — rows that should NOT be
+    # re-run on resume. A row is a real success when:
+    #   - http_status is 2xx, OR is a deliberate 4xx contract response
+    #     (422 EXERCISE_POOL_TOO_SMALL / INCOMPATIBLE_EQUIPMENT_FOCUS,
+    #      409 not_a_workout_day) — those are correct rejections we don't
+    #     want to retry
+    #   - AND error_message does not contain sse_error / NameError / similar
+    #     server-side bugs that produced status=200 with an embedded SSE
+    #     error event.
+    # Anything else (401 auth-expired, 500 server crash, sse_error mid-stream)
+    # is re-run.
+    csv_real_success: set = set()
+    if csv_path.exists():
+        with csv_path.open() as fh:
+            for r in csv.DictReader(fh):
+                try:
+                    idx = int(r.get("idx", "0"))
+                except Exception:
+                    continue
+                status = (r.get("http_status") or "").strip()
+                err = (r.get("error_message") or "").lower()
+                # Status filter: 2xx, 422, 409 are accepted; 401/500/timeout etc. retry.
+                status_ok = (
+                    status.startswith("2")
+                    or status in {"422", "409"}
+                )
+                # Bug markers — these mean a server-side crash that we
+                # explicitly want to retry after a fix:
+                bug_markers = (
+                    "nameerror", "traceback", "internal server error",
+                    "name 'workout_type_override'",
+                )
+                # Legitimate contractual rejections that the harness should
+                # treat as "completed, don't retry" — the system correctly
+                # surfaced an empty candidate pool for an over-narrow combo
+                # (e.g. full_body + bodyweight + multiple injuries).
+                rejection_markers = (
+                    "no exercises found for focus areas",
+                    "exercise_pool_too_small",
+                    "incompatible_equipment_focus",
+                )
+                is_bug = any(m in err for m in bug_markers)
+                is_legit_rejection = any(m in err for m in rejection_markers)
+                if status_ok and not is_bug:
+                    # Either no error, or a legitimate rejection — count
+                    # as completed.
+                    if not err or is_legit_rejection:
+                        csv_real_success.add(idx)
+                    elif "sse_error" not in err:
+                        # Some other non-bug error message that didn't match
+                        # our markers — accept rather than re-run cost.
+                        csv_real_success.add(idx)
+
     if not json_dir.exists():
-        # json/ already cleaned up after consolidation — fall back to the CSV
-        # to derive completed indices. Skip rows that hit 401 (auth-expired);
-        # those should be re-attempted with a fresh JWT. Everything else
-        # (200/422/409/500) is treated as completed.
+        # json/ already cleaned up after consolidation — fall back to CSV.
         if csv_path.exists():
             print(
                 f"[harness] {out}/json missing — falling back to CSV "
-                f"({csv_path.name}); skipping non-401 completed rows.",
+                f"({csv_path.name}); {len(csv_real_success)} real successes "
+                f"will be skipped, others re-run.",
                 flush=True,
             )
-            with csv_path.open() as fh:
-                reader = csv.DictReader(fh)
-                for r in reader:
-                    try:
-                        idx = int(r.get("idx", "0"))
-                    except Exception:
-                        continue
-                    status = (r.get("http_status") or "").strip()
-                    if status and status != "401":
-                        completed.add(idx)
-            # Reuse the existing dir so we keep appending to the same CSV.
-            return out, completed, []
+            return out, csv_real_success, []
         print(f"[harness] {out}/json AND CSV missing — starting fresh",
               flush=True)
         return init_outputs(prefix, csv_cols), set(), []
 
+    # json/ exists. Treat an idx as completed only if it ALSO has a real-
+    # success row in CSV. This catches the case where a json file was
+    # written for a scenario that actually failed mid-stream (status=200
+    # with sse_error in error_message).
     for jf in json_dir.glob("scenario_*.json"):
         try:
             idx = int(jf.stem.split("_")[-1])
-            completed.add(idx)
         except Exception:
-            pass
+            continue
+        if not csv_path.exists() or idx in csv_real_success:
+            completed.add(idx)
+    if csv_path.exists() and len(completed) < len(list(json_dir.glob("scenario_*.json"))):
+        skipped = len(list(json_dir.glob("scenario_*.json"))) - len(completed)
+        print(
+            f"[harness] {skipped} json/ entries flagged for re-run "
+            f"(failed mid-stream / non-2xx / sse_error)",
+            flush=True,
+        )
 
     # Reconstruct md_entries from existing CSV so the live MD reflects state.
     entries = []
@@ -265,17 +317,62 @@ async def call_sse_with_retry(
     body: Dict[str, Any],
     max_retries: int = 2,
     backoff_s: float = 65.0,
+    jwt_holder: Optional[Dict[str, str]] = None,
 ) -> Dict[str, Any]:
-    """POST SSE, parse events, retry once on Vertex 429 with backoff."""
+    """POST SSE, parse events, retry once on Vertex 429 with backoff.
+
+    Phase E — also retries once on HTTP 401 (Session expired) by re-minting
+    the JWT via `scripts._render_auth.refresh_jwt`. Pass `jwt_holder={"jwt": jwt}`
+    when you want the caller's JWT updated in place across the run; the
+    refreshed token is written back into the dict so subsequent calls in
+    the loop reuse it.
+    """
+    current_jwt = jwt
+    # Phase E2 — proactive refresh at 80% of the Supabase access_token TTL.
+    # Validation harness 2026-05-09 found 40/540 rows mid-sweep returned
+    # HTTP 401 because the in-memory token aged out without anyone checking.
+    # The previous on-401 retry was correct but slow (one wasted call per
+    # expired token). Now we refresh BEFORE the row whenever the holder's
+    # `minted_at` timestamp is older than 50 minutes (Supabase default 1h TTL).
+    REFRESH_AFTER_S = 50 * 60
+    if jwt_holder is not None and isinstance(jwt_holder, dict):
+        minted_at = jwt_holder.get("minted_at")
+        if isinstance(minted_at, (int, float)) and (time.time() - minted_at) >= REFRESH_AFTER_S:
+            try:
+                from scripts._render_auth import refresh_jwt
+                new_jwt, _src = refresh_jwt()
+                current_jwt = new_jwt
+                jwt_holder["jwt"] = new_jwt
+                jwt_holder["minted_at"] = time.time()
+                print(f"  [proactive] JWT age >50min — refreshed before request", flush=True)
+            except Exception as _refresh_err:
+                print(f"  [proactive] JWT refresh failed: {_refresh_err}", flush=True)
     for attempt in range(max_retries + 1):
-        result = await _call_sse_once(client, jwt, url, body)
+        result = await _call_sse_once(client, current_jwt, url, body)
         err = result.get("error") or ""
+        status = result.get("status") or 0
+        # Vertex 429 — backoff + retry as before.
         if "RESOURCE_EXHAUSTED" in err or "429" in err:
             if attempt < max_retries:
                 print(f"  [retry] Vertex 429 — sleeping {backoff_s}s then retrying "
                       f"(attempt {attempt + 1}/{max_retries})", flush=True)
                 await asyncio.sleep(backoff_s)
                 continue
+        # 401 Session expired — refresh JWT once and retry.
+        if status == 401 or "Session expired" in err or "401" in err[:6]:
+            if attempt < max_retries:
+                try:
+                    from scripts._render_auth import refresh_jwt
+                    new_jwt, _src = refresh_jwt()
+                    current_jwt = new_jwt
+                    if jwt_holder is not None:
+                        jwt_holder["jwt"] = new_jwt
+                        jwt_holder["minted_at"] = time.time()
+                    print(f"  [retry] 401 — JWT refreshed, retrying "
+                          f"(attempt {attempt + 1}/{max_retries})", flush=True)
+                    continue
+                except Exception as _refresh_err:
+                    print(f"  [retry] 401 refresh failed: {_refresh_err}", flush=True)
         return result
     return result  # type: ignore
 

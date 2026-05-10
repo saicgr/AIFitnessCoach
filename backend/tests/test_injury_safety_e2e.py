@@ -164,7 +164,7 @@ def _canned_workout(exercises: List[Dict[str, Any]], name: str = "Canned Workout
     return {
         "name": name,
         "type": "strength",
-        "difficulty": "beginner",
+        "difficulty": "easy",
         "duration_minutes": 15,
         "exercises": exercises,
     }
@@ -181,7 +181,7 @@ def _make_fake_workout_row(
         "user_id": user_id,
         "name": "Test Workout",
         "type": "strength",
-        "difficulty": "beginner",
+        "difficulty": "easy",
         "scheduled_date": "2026-04-20T00:00:00+00:00",
         "exercises_json": json.dumps(exercises or _SAFE_EXERCISE_POOL[:3]),
         "duration_minutes": 15,
@@ -310,7 +310,7 @@ def _patch_safety_mode_build_plan(exercises: Optional[List[Dict[str, Any]]] = No
     """Stub safety_mode.build_plan to avoid a live DB call."""
     plan = {
         "name": "Gentle Mobility Session",
-        "difficulty": "beginner",
+        "difficulty": "easy",
         "duration_minutes": 15,
         "exercises": exercises or _SAFE_EXERCISE_POOL[:4],
         "safety_mode": True,

@@ -13,7 +13,11 @@ from typing import Dict, List, Optional, Any
 from core.logger import get_logger
 from core.weight_utils import get_starting_weight, detect_equipment_type
 
-from .utils import clean_exercise_name_for_display, infer_equipment_from_name
+from .utils import (
+    canonicalize_exercise_name,
+    clean_exercise_name_for_display,
+    infer_equipment_from_name,
+)
 from .difficulty import (
     validate_fitness_level,
     get_difficulty_numeric,
@@ -66,6 +70,7 @@ def format_exercise_for_workout(
     workout_params: Optional[Dict] = None,
     strength_history: Optional[Dict[str, Dict]] = None,
     progression_pace: str = "medium",
+    goals: Optional[List[str]] = None,
 ) -> Dict:
     """
     Format an exercise for inclusion in a workout.
@@ -78,7 +83,12 @@ def format_exercise_for_workout(
     - Progression pace (affects rep ranges and volume)
     """
     validated_level = validate_fitness_level(fitness_level)
-    exercise_name = exercise.get("name", "Unknown")
+    raw_name = exercise.get("name", "Unknown")
+    # Defense-in-depth: even after the DB cleanup migration, runtime
+    # canonicalization re-applies the style guide so any cached / re-indexed
+    # row that drifted gets normalized. Returns "" for blocklisted anatomy
+    # posters — caller must handle skip.
+    exercise_name = canonicalize_exercise_name(raw_name) or raw_name
 
     from core.exercise_data import get_exercise_type, REP_LIMITS
 
@@ -124,6 +134,30 @@ def format_exercise_for_workout(
     else:
         equipment = raw_equipment
 
+    # Name-vs-equipment override (Fix 11 / H8 from peppy-conjuring-valley.md).
+    # Pre-fix audit found 8 cases where the name implied a clear implement
+    # (e.g. "Barbell Squat") but the equipment field disagreed. The name is
+    # the authoritative signal — override the equipment string.
+    name_lower = exercise_name.lower()
+    _EQUIPMENT_FROM_NAME = (
+        ("barbell", "Barbell"),
+        ("dumbbell", "Dumbbells"),
+        ("kettlebell", "Kettlebell"),
+        ("cable", "Cable Machine"),
+        ("smith machine", "Smith Machine"),
+        ("trap bar", "Trap Bar"),
+        ("ez bar", "EZ Bar"),
+        ("landmine", "Landmine"),
+    )
+    for kw, canonical in _EQUIPMENT_FROM_NAME:
+        if kw in name_lower and kw not in equipment.lower():
+            logger.debug(
+                f"[NameVsEquip] '{exercise_name}' overriding equipment "
+                f"{equipment!r} → {canonical!r} based on name keyword"
+            )
+            equipment = canonical
+            break
+
     equipment_type = detect_equipment_type(exercise_name, [equipment] if equipment else None)
 
     starting_weight = 0.0
@@ -151,11 +185,30 @@ def format_exercise_for_workout(
             )
             weight_source = "generic"
 
+    # Goal-aware rep / rest overrides (Fix 7 / H4 from
+    # peppy-conjuring-valley.md). Without these the engine emits 12-rep
+    # working sets for strength goals (the audit found 9 strength workouts
+    # with all reps > 10).
+    primary_goal = (goals[0] if goals else "").strip().lower() if goals else ""
+    if primary_goal == "strength":
+        reps = max(3, min(reps, 6))           # 3-6 working reps
+        rest = max(rest, 180)                 # ≥ 180s
+    elif primary_goal == "power":
+        reps = max(1, min(reps, 5))
+        rest = max(rest, 180)
+    elif primary_goal == "hypertrophy":
+        reps = max(8, min(reps, 12))
+        rest = max(60, min(rest, 150))
+    elif primary_goal == "endurance":
+        reps = max(reps, 15)
+        rest = min(rest, 60)
+
     # Generate set_targets
     set_targets = _build_set_targets(
         sets=sets, reps=reps, starting_weight=starting_weight,
         exercise_type=exercise_type, equipment_type=equipment_type,
         equipment=equipment, exercise_name=exercise_name,
+        goals=goals,
     )
 
     is_unilateral = detect_unilateral(exercise_name, exercise)
@@ -176,7 +229,16 @@ def format_exercise_for_workout(
         "weight_source": weight_source,
         "muscle_group": exercise.get("target_muscle", exercise.get("body_part", "")),
         "body_part": exercise.get("body_part", ""),
-        "notes": exercise.get("instructions", "Focus on proper form"),
+        # H9: notes are derived from `instructions`. The library has many
+        # rows that share boilerplate first-step text (top note repeated 302×
+        # in pre-fix audit). When `instructions` is a list, join lines; when
+        # it starts with the boilerplate "1. " step-1 form and is short,
+        # keep it but the workout-level dedup post-pass will swap repeats.
+        "notes": (
+            "\n".join(exercise.get("instructions", []))
+            if isinstance(exercise.get("instructions"), list)
+            else (exercise.get("instructions") or "Focus on proper form")
+        ),
         "gif_url": exercise.get("gif_url", ""),
         "video_url": exercise.get("video_url", ""),
         "image_url": exercise.get("image_url", ""),
@@ -195,20 +257,46 @@ def _build_set_targets(
     sets: int, reps: int, starting_weight: float,
     exercise_type: str, equipment_type: str, equipment: str,
     exercise_name: str,
+    goals: Optional[List[str]] = None,
 ) -> List[Dict]:
-    """Build the set_targets array with warmup + working sets."""
+    """Build the set_targets array with warmup + working sets.
+
+    Goal-aware RIR (Fix 7 / D2): rather than the universal mechanical
+    2→1→0 ramp (which pushed every workout — including beginner isolation —
+    to failure on the last set), the working-set RIR pattern now varies by
+    primary goal:
+
+      strength / power : 3, 2, 1            (last set RIR 1, never failure)
+      hypertrophy      : 2, 1, 1            (no failure)
+      endurance        : 3, 3, 2            (sub-maximal)
+      mobility/recovery: skip RIR/RPE       (not a working-set construct)
+      default          : 2, 1, 0            (legacy)
+    """
     set_targets = []
     is_bodyweight = equipment_type == "bodyweight" or equipment.lower() in ["bodyweight", "body weight", "none", ""]
     is_compound = exercise_type in ["compound_upper", "compound_lower"]
+    primary_goal = ""
+    if goals:
+        primary_goal = (goals[0] or "").strip().lower()
+    is_mobility_or_recovery = primary_goal in {"mobility", "recovery"}
 
-    def _get_working_set_rir(set_number: int, total_sets: int, is_compound_ex: bool) -> int:
-        """Universal RIR progression: 2 -> 1 -> 0-1."""
-        if set_number == 1:
-            return 2
-        elif set_number == 2:
-            return 1
-        else:
-            return 1 if is_compound_ex else 0
+    # Goal → working-set RIR ramp. Index = working set ordinal (0-based).
+    _RIR_RAMP_BY_GOAL: Dict[str, List[int]] = {
+        "strength": [3, 2, 1, 1, 1],
+        "power":    [3, 2, 1, 1, 1],
+        "hypertrophy": [2, 1, 1, 1, 1],
+        "muscle_gain": [2, 1, 1, 1, 1],
+        "endurance": [3, 3, 2, 2, 2],
+        "fat_loss":  [3, 2, 1, 1, 1],
+    }
+    _DEFAULT_RAMP = [2, 1, 0, 0, 0]
+    rir_ramp = _RIR_RAMP_BY_GOAL.get(primary_goal, _DEFAULT_RAMP)
+
+    def _get_working_set_rir(working_index: int) -> int:
+        """working_index is 0-based for working-only sets (warmup excluded)."""
+        if working_index >= len(rir_ramp):
+            return rir_ramp[-1]
+        return rir_ramp[working_index]
 
     def _get_weight_for_rir(base_weight: float, target_rir: int, eq_type: str) -> float:
         """Calculate weight based on RIR target.
@@ -236,39 +324,105 @@ def _build_set_targets(
             rounded = base_rounded + increment
         return rounded
 
-    for set_num in range(1, sets + 1):
-        # WARMUP SET: First set for compound exercises with weights
-        if set_num == 1 and is_compound and not is_bodyweight and starting_weight > 0:
+    # Mobility / recovery: emit straight sets with no RIR/RPE construct.
+    if is_mobility_or_recovery:
+        for set_num in range(1, sets + 1):
             set_targets.append({
                 "set_number": set_num,
-                "set_type": "warmup",
-                "target_reps": min(reps + 2, 15),
-                "target_weight_kg": round(starting_weight * 0.5, 1),
-                "target_rpe": 5,
-                "target_rir": 5,
-            })
-        else:
-            adjusted_set_num = set_num - 1 if (is_compound and not is_bodyweight and starting_weight > 0) else set_num
-            target_rir = _get_working_set_rir(adjusted_set_num, sets, is_compound)
-            set_weight = _get_weight_for_rir(starting_weight, target_rir, equipment_type)
-            target_rpe = 10 - target_rir
-
-            if target_rir == 0:
-                set_type = "failure"
-            else:
-                set_type = "working"
-
-            set_targets.append({
-                "set_number": set_num,
-                "set_type": set_type,
+                "set_type": "working",
                 "target_reps": reps,
-                "target_weight_kg": set_weight if not is_bodyweight else 0,
-                "target_rpe": target_rpe,
-                "target_rir": target_rir,
+                "target_weight_kg": 0,
+                "target_rpe": None,
+                "target_rir": None,
             })
+        return set_targets
+
+    # Always prepend a warmup for compound non-bw lifts with ≥3 working
+    # sets. The pre-fix audit found 1499/2204 strength workouts had ZERO
+    # warmup. Strength compounds must warmup before the first working set.
+    add_warmup = (
+        is_compound
+        and not is_bodyweight
+        and starting_weight > 0
+        and sets >= 3
+    )
+    set_number = 1
+    if add_warmup:
+        set_targets.append({
+            "set_number": set_number,
+            "set_type": "warmup",
+            "target_reps": min(reps + 2, 15),
+            "target_weight_kg": round(starting_weight * 0.5, 1),
+            "target_rpe": 5,
+            "target_rir": 5,
+        })
+        set_number += 1
+        working_count = sets  # `sets` is now interpreted as working-set count
+    else:
+        working_count = sets
+
+    for working_index in range(working_count):
+        target_rir = _get_working_set_rir(working_index)
+        set_weight = _get_weight_for_rir(starting_weight, target_rir, equipment_type)
+        target_rpe = max(1, min(10 - target_rir, 10))
+        set_type = "failure" if target_rir == 0 else "working"
+        set_targets.append({
+            "set_number": set_number,
+            "set_type": set_type,
+            "target_reps": reps,
+            "target_weight_kg": set_weight if not is_bodyweight else 0,
+            "target_rpe": target_rpe,
+            "target_rir": target_rir,
+        })
+        set_number += 1
 
     logger.debug(f"Generated {len(set_targets)} set_targets for {exercise_name}")
     return set_targets
+
+
+def dedupe_workout_notes(exercises: List[Dict]) -> List[Dict]:
+    """Replace duplicate `notes` strings within a workout.
+
+    The library has boilerplate first-step instructions that repeat across
+    many distinct exercises ("1. Begin by standing..."). Pre-fix audit found
+    the top note string repeated 302× across the 462-workout sweep — within
+    a single workout this looks like copy-paste laziness.
+
+    Strategy: keep the first occurrence of each notes string; for repeats,
+    swap in a templated, exercise-specific cue using `muscle_group`.
+    """
+    if not exercises:
+        return exercises
+    seen: Dict[str, int] = {}
+    for ex in exercises:
+        notes = (ex.get("notes") or "").strip()
+        if not notes:
+            continue
+        # First sentence as the dedup key — boilerplate repeats are usually
+        # in the opening sentence; later sentences may differ legitimately.
+        first_sentence = notes.split(".", 1)[0][:80].lower()
+        seen[first_sentence] = seen.get(first_sentence, 0) + 1
+
+    rewritten = 0
+    used: Dict[str, int] = {}
+    for ex in exercises:
+        notes = (ex.get("notes") or "").strip()
+        if not notes:
+            continue
+        first_sentence = notes.split(".", 1)[0][:80].lower()
+        if seen.get(first_sentence, 0) > 1:
+            used[first_sentence] = used.get(first_sentence, 0) + 1
+            if used[first_sentence] > 1:
+                # Replace duplicate occurrences with a per-exercise cue.
+                muscle = (ex.get("muscle_group") or ex.get("body_part") or "the target muscle").strip()
+                ex["notes"] = (
+                    f"Focus on the eccentric and full range of motion for "
+                    f"{muscle.lower()}. Maintain neutral spine and steady breathing."
+                )
+                rewritten += 1
+    if rewritten:
+        logger.info(f"[NotesDedup] Rewrote {rewritten} duplicate notes within workout")
+    return exercises
 
 
 def is_progression_of(challenge_name: str, main_name: str) -> bool:

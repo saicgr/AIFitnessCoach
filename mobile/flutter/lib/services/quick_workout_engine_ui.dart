@@ -175,9 +175,50 @@ extension QuickWorkoutEngineExt on QuickWorkoutEngine {
       return patterns.any((p) => nm.contains(p));
     }
 
+    // Exercise-library data quality issue: many entries pack secondary
+    // muscles into the same `target_muscle` string (e.g. an "Overhead
+    // Lunge" reports "Quadriceps, Shoulders" so substring-matching the
+    // shoulders slot pulls it in to upper_body workouts). Validation
+    // harness 2026-05-08 caught 210 such cross-contamination cases.
+    // Defensive name-keyword filter for the dominant movement.
+    bool _isLowerBodyMovement(OfflineExercise ex) {
+      final nm = (ex.name ?? '').toLowerCase();
+      const patterns = [
+        'lunge', 'squat', 'deadlift', 'rdl', 'romanian',
+        'split squat', 'pistol', 'step up', 'step-up',
+        'leg press', 'leg curl', 'leg extension', 'calf raise',
+        'glute bridge', 'glute kickback', 'hip thrust',
+        'good morning', 'kettlebell swing', 'box jump',
+      ];
+      return patterns.any((p) => nm.contains(p));
+    }
+    bool _isUpperBodyMovement(OfflineExercise ex) {
+      final nm = (ex.name ?? '').toLowerCase();
+      const patterns = [
+        'bench press', 'chest press', 'shoulder press', 'overhead press',
+        'military press', 'push press', 'arnold press',
+        'bicep curl', 'biceps curl', 'hammer curl', 'preacher curl',
+        'tricep', 'triceps', 'skull crusher', 'kickback',
+        'lat pulldown', 'lat pull', 'pull up', 'pull-up', 'chin up', 'chin-up',
+        'row', 'fly', 'flye', 'pec deck',
+        'lateral raise', 'front raise', 'rear delt', 'face pull',
+        'push up', 'push-up', 'pushup', 'dip',
+      ];
+      return patterns.any((p) => nm.contains(p));
+    }
+    final isUpperFocus = effectiveFocus == 'upper_body';
+    final isLowerFocus = effectiveFocus == 'lower_body';
+    final isCoreFocus = effectiveFocus == 'core';
+
     final filteredLibrary = exerciseLibrary.where((ex) {
       if (!isMobilityFocus && _isStretchExercise(ex)) return false;
       if (!isCombatFocus && _isCombatMovement(ex)) return false;
+      if (isUpperFocus && _isLowerBodyMovement(ex)) return false;
+      if (isLowerFocus && _isUpperBodyMovement(ex)) return false;
+      if (isCoreFocus &&
+          (_isLowerBodyMovement(ex) || _isUpperBodyMovement(ex))) {
+        return false;
+      }
       return true;
     }).toList();
 
@@ -242,8 +283,10 @@ extension QuickWorkoutEngineExt on QuickWorkoutEngine {
       // Calculate time cost for this exercise
       final cost = strategy.timeCostPerExercise(effectiveDifficulty, effectiveSupersets);
 
-      // Budget check
-      if (runningTime + cost > workingBudget) break;
+      // Budget check — but always guarantee at least 3 exercises so we don't
+      // ship 2-exercise workouts when the budget gets tight on easy/short
+      // sessions (validation harness 2026-05-08: 70 such cases).
+      if (runningTime + cost > workingBudget && selectedExercises.length >= 3) break;
 
       // Select exercise for this slot
       final exercise = _selectExerciseForSlot(
@@ -277,8 +320,8 @@ extension QuickWorkoutEngineExt on QuickWorkoutEngine {
       runningTime += cost;
     }
 
-    // Minimum exercise check for severe injury scenarios
-    if (selectedExercises.length < 2) {
+    // Minimum exercise check for severe injury / extreme-budget scenarios
+    if (selectedExercises.length < 3) {
       // Try adding from fallback pools
       _addFallbackExercises(
         selectedExercises,
@@ -289,8 +332,14 @@ extension QuickWorkoutEngineExt on QuickWorkoutEngine {
       );
     }
 
-    // Movement pattern diversity check
-    if (effectiveFocus != 'cardio' && effectiveFocus != 'stretch' &&
+    // Movement pattern diversity check — only for whole-body focuses.
+    // upper_body / lower_body / core have an opinionated muscle scope; forcing
+    // a "squat"/"hinge" pattern into upper_body would inject lower-body
+    // exercises into an upper-body workout (validation harness 2026-05-08:
+    // 210 such cross-contamination cases).
+    final allowsPatternDiversity = effectiveFocus == 'full_body' ||
+        effectiveFocus == 'strength';
+    if (allowsPatternDiversity &&
         format != 'emom' && format != 'amrap') {
       final exerciseNames = selectedExercises
           .map((s) => s.exercise.name ?? '')
@@ -830,8 +879,9 @@ extension QuickWorkoutEngineExt on QuickWorkoutEngine {
     // Phase 5: Time Validation
     // =====================================================================
     var estimatedSeconds = warmupSeconds + runningTime;
-    // If way over budget, remove last exercise(s)
-    while (estimatedSeconds > totalBudgetSeconds + 60 && workoutExercises.length > 2) {
+    // If way over budget, remove last exercise(s) — but never below 3 so we
+    // don't undo the minimum-floor fallback logic above.
+    while (estimatedSeconds > totalBudgetSeconds + 60 && workoutExercises.length > 3) {
       workoutExercises.removeLast();
       // Recalculate
       estimatedSeconds = warmupSeconds + workoutExercises.length *

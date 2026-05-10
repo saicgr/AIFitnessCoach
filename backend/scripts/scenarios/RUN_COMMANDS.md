@@ -9,7 +9,7 @@ All commands run from `/Users/saichetangrandhe/AIFitnessCoach/backend/` unless n
 | 1 | Local Dart `QuickWorkoutEngine` | `cd /Users/saichetangrandhe/AIFitnessCoach/mobile/flutter && flutter test test/services/quick_workout_engine_validation_test.dart` | 1,137 | **22.4%** | ~19 sec | 0 | **$0.00** |
 | 2 | `/quick-regenerate` (program reset) | `.venv/bin/python scripts/run_quick_regenerate_validation.py` | 1,000 | **~40%** (Block 16 reasons) | ~50 min | 0 | **$0.00** |
 | 3 | `/suggest-substitutes` (similar exercise) | `.venv/bin/python scripts/run_suggest_substitutes_validation.py` | 1,000 | **67.1%** | ~7 min | 0 | **$0.00** |
-| 4 | `/generate` (carousel bg-gen, RAG-first) | `.venv/bin/python scripts/run_generate_full.py` | 500 | **25.8%** | ~125 min | 500 Gemini | **~$0.75** |
+| 4 | `/generate` (carousel bg-gen, RAG-first) | `.venv/bin/python scripts/run_generate_full.py` | 500 | **25.8%** | ~125 min | 500 Gemini | **~$0.75** | DONE
 | 5 | `/regenerate-stream` (regen sheet) | `.venv/bin/python scripts/run_regenerate_stream_full.py` | 500 | **28.0%** | ~120 min | 500 Gemini | **~$0.75** |
 | 6 | `/generate-stream` (carousel active) | `.venv/bin/python scripts/run_generate_stream_full.py` | 500 | **25.8%** | ~140 min | 500 Gemini | **~$0.75** |
 | **TOTAL** | All 6 surfaces, sequential | (chain with `&&`) | **4,500** | **≥25% all** ✓ | **~7.0 hrs** | **1,500 Gemini** | **~$2.25** |

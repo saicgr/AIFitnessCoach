@@ -245,6 +245,15 @@ def _build_block_combos_2(start_idx: int) -> List[Dict[str, Any]]:
     eq_cycle = list(zip(EQUIP_POOL, EQUIP_NAMES))
     focus_cycle = FOCUSES
 
+    # Cardio-only equipment is incompatible with strength focus areas
+    # (validation harness 2026-05-09 surfaced 14 hard 422 rejections via
+    # check_equipment_focus_compatibility). The 422 is the correct API
+    # contract — fix is harness-side: coerce focus/goal when the cycle
+    # lands on a cardio-only profile. See feedback_test_bypass_harness_only.
+    _CARDIO_ONLY_NAMES = {"E11_cardio"}
+    _CARDIO_FOCUSES = ["cardio", "endurance", "hiit"]
+    _CARDIO_GOALS = ["endurance", "fat_loss", "general_fitness"]
+
     n = 0
     for fl in FITNESS:
         for dur in DURATIONS:
@@ -252,6 +261,12 @@ def _build_block_combos_2(start_idx: int) -> List[Dict[str, Any]]:
                 eq, eq_name = eq_cycle[n % len(eq_cycle)]
                 f = focus_cycle[n % len(focus_cycle)]
                 goal = GOALS[(n + goal_offset) % len(GOALS)]
+                # Coerce to a cardio-compatible (focus, goal) when equipment
+                # is cardio-only.
+                if eq_name in _CARDIO_ONLY_NAMES:
+                    f = _CARDIO_FOCUSES[n % len(_CARDIO_FOCUSES)]
+                    if goal not in _CARDIO_GOALS:
+                        goal = _CARDIO_GOALS[n % len(_CARDIO_GOALS)]
                 i += 1
                 n += 1
                 out.append(_scenario(i, 2, f"matrix {fl}/{dur}/{goal}/{f}/{eq_name}",
@@ -615,12 +630,21 @@ def build_500() -> List[Dict[str, Any]]:
         # Pad with injury-positive scenarios only (skip the empty-injury entry from
         # INJURIES[0] in this padding loop). Ensures cross-surface injury coverage ≥25%.
         INJ_NONEMPTY = [x for x in INJURIES if x]
+        # Same cardio-only coercion as block 2 (avoid 422
+        # INCOMPATIBLE_EQUIPMENT_FOCUS in the pad rows).
+        _CARDIO_ONLY_NAMES_PAD = {"E11_cardio"}
+        _CARDIO_FOCUSES_PAD = ["cardio", "endurance", "hiit"]
+        _CARDIO_GOALS_PAD = ["endurance", "fat_loss", "general_fitness"]
         while len(out) < target:
             fl = FITNESS[n % 3]
             dur = DURATIONS[n % len(DURATIONS)]
             goal = GOALS[n % len(GOALS)]
             f = FOCUSES[n % len(FOCUSES)]
             eq, eq_name = EQUIP_POOL[n % len(EQUIP_POOL)], EQUIP_NAMES[n % len(EQUIP_NAMES)]
+            if eq_name in _CARDIO_ONLY_NAMES_PAD:
+                f = _CARDIO_FOCUSES_PAD[n % len(_CARDIO_FOCUSES_PAD)]
+                if goal not in _CARDIO_GOALS_PAD:
+                    goal = _CARDIO_GOALS_PAD[n % len(_CARDIO_GOALS_PAD)]
             inj = INJ_NONEMPTY[n % len(INJ_NONEMPTY)]
             idx += 1
             out.append(_scenario(idx, 7,

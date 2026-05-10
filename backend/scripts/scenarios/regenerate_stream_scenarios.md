@@ -541,7 +541,7 @@ _(populated per-call by harness)_
 
 <!-- LIVE-RUN-STATUS — auto-updated by harness; do not edit -->
 ## 🔴 Live Run Status
-_Run started 2026-05-08T23:34:55._ Updated as each scenario completes.
+_Run started 2026-05-09T03:01:56._ Updated as each scenario completes.
 
 | # | Status | Label | Workout name | n_ex | latency_ms | error |
 |---|---|---|---|---|---|---|
@@ -711,3 +711,382 @@ _Run started 2026-05-08T23:34:55._ Updated as each scenario completes.
 | 164 | ❌ | equip: rower only |  | 0 | 522 | HTTP 401: b'{"detail":"Session expired \xe2\x80\x94 please log in again."}' |
 | 165 | ❌ | equip: assault bike only |  | 0 | 366 | HTTP 401: b'{"detail":"Session expired \xe2\x80\x94 please log in again."}' |
 | 166 | ❌ | equip: elliptical only |  | 0 | 361 | HTTP 401: b'{"detail":"Session expired \xe2\x80\x94 please log in again."}' |
+| 92 | ❌ | injuries=shoulder/focus=push |  | 0 | 15773 | sse_error: No exercises found for focus areas: push |
+| 93 | ❌ | injuries=lower_back/focus=pull |  | 0 | 13383 | sse_error: No exercises found for focus areas: pull |
+| 95 | ❌ | injuries=knee,shoulder,lower_back,wrist,ankle,hip,elbow/focu |  | 0 | 13518 | sse_error: No exercises found for focus areas: core |
+| 141 | ✅ | goal=strength/diff=easy/fl=intermediate | Gentle Iron Flow | 4 | 18169 |  |
+| 142 | ✅ | goal=hypertrophy/diff=medium/fl=advanced | Titan Olympic Power Surge | 8 | 20947 |  |
+| 143 | ✅ | goal=endurance/diff=hard/fl=beginner | Gentle Mobility Session | 6 | 13921 |  |
+| 144 | ✅ | goal=power/diff=hell/fl=intermediate | Savage Beast Annihilation Protocol | 7 | 11784 |  |
+| 145 | ✅ | goal=fat_loss/diff=easy/fl=advanced | Gentle Power Flow Session | 5 | 10245 |  |
+| 146 | ✅ | goal=strength/diff=medium/fl=beginner | Gentle Mobility Session | 6 | 9908 |  |
+| 147 | ✅ | goal=hypertrophy/diff=hard/fl=intermediate | Titan Steel Total Power | 7 | 11165 |  |
+| 148 | ✅ | goal=endurance/diff=hell/fl=advanced | Savage Beast Annihilation Protocol | 10 | 16376 |  |
+| 149 | ✅ | goal=power/diff=easy/fl=beginner | Gentle Mobility Session | 6 | 9310 |  |
+| 150 | ✅ | goal=fat_loss/diff=medium/fl=intermediate | Titan Steel Total Power | 6 | 10648 |  |
+| 151 | ✅ | equip: bodyweight only | Titan Steel Total Power | 6 | 10339 |  |
+| 152 | ✅ | equip: 1 dumbbell only | Titan Steel Foundation Flow | 6 | 20653 |  |
+| 153 | ✅ | equip: 1 dumbbell pair | Titan Steel Power Session | 6 | 10651 |  |
+| 154 | ✅ | equip: 1 kettlebell | Titan Steel Power Circuit | 6 | 18869 |  |
+| 155 | ✅ | equip: 2 kettlebells | Titan Steel Foundation Power | 6 | 9764 |  |
+| 156 | ✅ | equip: machine-only | Gentle Mobility Session | 6 | 13707 |  |
+| 157 | ✅ | equip: smith machine only | Titan Steel Barbell Surge | 6 | 21695 |  |
+| 158 | ✅ | equip: 2 machines | Gentle Mobility Session | 6 | 23852 |  |
+| 159 | ✅ | equip: bands only | Titan Steel Total Body | 6 | 19546 |  |
+| 160 | ✅ | equip: bands + pullup | Titan Steel Total Body | 6 | 19772 |  |
+| 161 | ✅ | equip: jump rope only | Gentle Mobility Session | 6 | 23303 |  |
+| 162 | ✅ | equip: yoga mat only | Titan Steel Barbell Surge | 6 | 20980 |  |
+| 163 | ✅ | equip: treadmill only | Titan Steel Total Body | 6 | 21007 |  |
+| 164 | ✅ | equip: rower only | Gentle Mobility Session | 6 | 23169 |  |
+| 165 | ✅ | equip: assault bike only | Titan Steel Total Body | 6 | 19320 |  |
+| 166 | ✅ | equip: elliptical only | Barbell Titan Power Surge | 6 | 21132 |  |
+| 167 | ✅ | equip: park / pullup bar | Titan Steel Total Body | 6 | 21303 |  |
+| 168 | ✅ | equip: sandbag only | Titan Steel Total Power | 6 | 21602 |  |
+| 169 | ✅ | equip: medicine ball only | Titan Steel Power Session | 6 | 10939 |  |
+| 170 | ✅ | equip: sliders only | Titan Steel Full Power | 6 | 21602 |  |
+| 171 | ✅ | equip: TRX only | Gentle Mobility Session | 6 | 22556 |  |
+| 172 | ✅ | equip: bulgarian bag | Titan Steel Total Body | 6 | 21244 |  |
+| 173 | ✅ | equip: mace only | Titan Steel Foundation | 6 | 21165 |  |
+| 174 | ✅ | equip: home gym minimal | Titan Steel Full Body | 6 | 20814 |  |
+| 175 | ✅ | equip: home gym mid | Titan Steel Total Body | 6 | 22775 |  |
+| 176 | ✅ | equip: garage gym | Gentle Mobility Session | 6 | 23228 |  |
+| 177 | ✅ | equip: full commercial gym | Titan Steel Foundation Flow | 6 | 21921 |  |
+| 178 | ✅ | equip: bodyweight only | Titan Steel Total Power | 6 | 10677 |  |
+| 179 | ✅ | equip: 1 dumbbell only | Titan Steel Total Power | 6 | 11036 |  |
+| 180 | ✅ | equip: 1 dumbbell pair | Titan Steel Foundation | 6 | 10395 |  |
+| 181 | ✅ | equip: 1 kettlebell | Titan Forge Full Power | 6 | 9477 |  |
+| 182 | ✅ | equip: 2 kettlebells | Titan Steel Full Body | 6 | 9440 |  |
+| 183 | ✅ | equip: machine-only | Titan Forge Full Body | 6 | 10222 |  |
+| 184 | ✅ | equip: smith machine only | Iron Titan Full Body | 6 | 10457 |  |
+| 185 | ✅ | equip: 2 machines | Gentle Mobility Session | 6 | 12759 |  |
+| 186 | ✅ | equip: bands only | Titan Steel Full Force | 6 | 10837 |  |
+| 187 | ✅ | equip: bands + pullup | Titan Steel Foundation Flow | 6 | 9421 |  |
+| 188 | ✅ | equip: jump rope only | Gentle Mobility Session | 6 | 13410 |  |
+| 189 | ✅ | equip: yoga mat only | Titan Steel Foundation | 6 | 10773 |  |
+| 190 | ✅ | equip: treadmill only | Titan Steel Total Body | 6 | 10625 |  |
+| 191 | ✅ | equip: rower only | Gentle Mobility Session | 6 | 12508 |  |
+| 192 | ✅ | equip: assault bike only | Titan Steel Total Body | 6 | 9887 |  |
+| 193 | ✅ | equip: elliptical only | Titan Steel Foundation Flow | 6 | 9129 |  |
+| 194 | ✅ | equip: park / pullup bar | Titan Forge Total Power | 6 | 10566 |  |
+| 195 | ✅ | equip: sandbag only | Iron Titan Full Body | 6 | 10500 |  |
+| 196 | ✅ | equip: medicine ball only | Titan Steel Power Circuit | 6 | 11086 |  |
+| 197 | ✅ | equip: sliders only | Titan Steel Total Body | 6 | 10610 |  |
+| 198 | ✅ | equip: TRX only | Gentle Mobility Session | 6 | 12537 |  |
+| 199 | ✅ | equip: bulgarian bag | Titan Steel Total Body | 6 | 10447 |  |
+| 200 | ✅ | equip: mace only | Titan Steel Power Surge | 6 | 10562 |  |
+| 201 | ❌ | inj=knee eq=BW |  | 0 | 3256 | sse_error: No exercises found for focus areas: full_body |
+| 202 | ❌ | inj=knee eq=dumbbells |  | 0 | 3142 | sse_error: No exercises found for focus areas: full_body |
+| 203 | ✅ | inj=shoulder eq=BW | Titan Leg Foundation Session | 1 | 4803 |  |
+| 204 | ✅ | inj=shoulder eq=dumbbells | Titan Foundation Leg Day | 1 | 5855 |  |
+| 205 | ✅ | inj=lower_back eq=BW | Titan Leg Power Surge | 1 | 4862 |  |
+| 206 | ✅ | inj=lower_back eq=dumbbells | Titan Leg Forge | 1 | 5023 |  |
+| 207 | ✅ | inj=elbow eq=BW | Titan Strength Velocity | 5 | 8475 |  |
+| 208 | ✅ | inj=elbow eq=dumbbells | Ignite Peak Performance | 4 | 8834 |  |
+| 209 | ✅ | inj=wrist eq=BW | Titan Leg Power Foundation | 1 | 4581 |  |
+| 210 | ✅ | inj=wrist eq=dumbbells | Titan Leg Power Surge | 1 | 5226 |  |
+| 211 | ❌ | inj=hip eq=BW |  | 0 | 3175 | sse_error: No exercises found for focus areas: full_body |
+| 212 | ❌ | inj=hip eq=dumbbells |  | 0 | 3044 | sse_error: No exercises found for focus areas: full_body |
+| 213 | ❌ | inj=ankle eq=BW |  | 0 | 3092 | sse_error: No exercises found for focus areas: full_body |
+| 214 | ❌ | inj=ankle eq=dumbbells |  | 0 | 3221 | sse_error: No exercises found for focus areas: full_body |
+| 215 | ✅ | inj=neck eq=BW | Titan Leg Foundation | 1 | 4734 |  |
+| 216 | ✅ | inj=neck eq=dumbbells | Titan Foundation Squat Session | 1 | 4667 |  |
+| 217 | ❌ | inj=knee eq=barbell+bench |  | 0 | 13214 | sse_error: No exercises found for focus areas: full_body |
+| 218 | ✅ | inj=knee eq=kettlebell | Kettlebell Power Flow | 3 | 7164 |  |
+| 219 | ❌ | inj=knee eq=resistance_bands |  | 0 | 3218 | sse_error: No exercises found for focus areas: full_body |
+| 220 | ✅ | inj=shoulder eq=barbell+bench | Titan Leg Foundation Session | 1 | 4517 |  |
+| 221 | ✅ | inj=shoulder eq=kettlebell | Titan Force Total Body | 3 | 7505 |  |
+| 222 | ✅ | inj=shoulder eq=resistance_bands | Titan Leg Foundation | 1 | 4404 |  |
+| 223 | ✅ | inj=lower_back eq=barbell+bench | Titan Squat Power Surge | 1 | 4581 |  |
+| 224 | ✅ | inj=lower_back eq=kettlebell | Gentle Mobility Session | 6 | 7519 |  |
+| 225 | ✅ | inj=lower_back eq=resistance_bands | Titan Leg Foundation | 1 | 4795 |  |
+| 226 | ✅ | inj=elbow eq=barbell+bench | Titan Forge Full-Body | 5 | 8674 |  |
+| 227 | ✅ | inj=elbow eq=kettlebell | Titan Forge Full Body | 6 | 11720 |  |
+| 228 | ✅ | inj=elbow eq=resistance_bands | Titan Forge Full Body | 4 | 8024 |  |
+| 229 | ✅ | inj=wrist eq=barbell+bench | Titan Leg Power Surge | 1 | 4369 |  |
+| 230 | ✅ | inj=wrist eq=kettlebell | Titan Strength Foundation Flow | 4 | 7984 |  |
+| 231 | ✅ | inj=wrist eq=resistance_bands | Titan Leg Power Surge | 1 | 4434 |  |
+| 232 | ❌ | inj=hip eq=barbell+bench |  | 0 | 2958 | sse_error: No exercises found for focus areas: full_body |
+| 233 | ✅ | inj=hip eq=kettlebell | Gentle Mobility Session | 6 | 7379 |  |
+| 234 | ❌ | inj=hip eq=resistance_bands |  | 0 | 2828 | sse_error: No exercises found for focus areas: full_body |
+| 235 | ❌ | inj=ankle eq=barbell+bench |  | 0 | 2790 | sse_error: No exercises found for focus areas: full_body |
+| 236 | ✅ | inj=ankle eq=kettlebell | Iron Kettlebell Foundation Flow | 3 | 7612 |  |
+| 237 | ❌ | inj=ankle eq=resistance_bands |  | 0 | 2871 | sse_error: No exercises found for focus areas: full_body |
+| 238 | ✅ | inj=neck eq=barbell+bench | Titan Leg Foundation | 1 | 4681 |  |
+| 239 | ✅ | inj=neck eq=kettlebell | Titan Strength Foundation Flow | 3 | 7653 |  |
+| 240 | ✅ | inj=neck eq=resistance_bands | Titan Leg Foundation | 1 | 4094 |  |
+| 241 | ❌ | inj=knee+shoulder eq=BW |  | 0 | 3682 | sse_error: No exercises found for focus areas: full_body |
+| 242 | ❌ | inj=lower_back+knee eq=dumbbells |  | 0 | 4032 | sse_error: No exercises found for focus areas: full_body |
+| 243 | ✅ | inj=wrist+elbow+shoulder eq=barbell+bench | Steady Foundation Flow | 1 | 4286 |  |
+| 244 | ✅ | inj=hip+knee+ankle eq=kettlebell | Gentle Mobility Session | 6 | 7277 |  |
+| 245 | ❌ | inj=knee+shoulder eq=resistance_bands |  | 0 | 2743 | sse_error: No exercises found for focus areas: full_body |
+| 246 | ❌ | inj=lower_back+knee eq=cable_machine+leg_press_machine |  | 0 | 16241 | sse_error: No exercises found for focus areas: full_body |
+| 247 | ✅ | inj=wrist+elbow+shoulder eq=BW | Steady Foundation Flow | 1 | 4543 |  |
+| 248 | ❌ | inj=hip+knee+ankle eq=dumbbells |  | 0 | 2843 | sse_error: No exercises found for focus areas: full_body |
+| 249 | ❌ | inj=knee+shoulder eq=barbell+bench |  | 0 | 2777 | sse_error: No exercises found for focus areas: full_body |
+| 250 | ✅ | inj=lower_back+knee eq=kettlebell | Gentle Mobility Session | 6 | 6775 |  |
+| 251 | ✅ | ai='I want a workout that focuses on hypertr' | Gentle Mobility Session | 6 | 13044 |  |
+| 252 | ✅ | ai='Hazlo más difícil, por favor' | Gentle Mobility Session | 6 | 14101 |  |
+| 253 | ✅ | ai='もっとハードにしてください' | Gentle Mobility Session | 6 | 13480 |  |
+| 254 | ✅ | ai='更加挑战性的训练' | Gentle Mobility Session | 6 | 13672 |  |
+| 255 | ✅ | ai='Сделайте тренировку сложнее' | Gentle Mobility Session | 6 | 13453 |  |
+| 256 | ✅ | ai='एक चुनौतीपूर्ण कसरत बनाएं' | Gentle Mobility Session | 6 | 11208 |  |
+| 257 | ✅ | ai='make it harder but easier on my joints' | Gentle Mobility Session | 6 | 11760 |  |
+| 258 | ✅ | ai='more cardio but no impact' | Gentle Mobility Session | 6 | 11729 |  |
+| 259 | ✅ | ai='pure strength but high reps' | Gentle Mobility Session | 6 | 11325 |  |
+| 260 | ✅ | ai='shorter workout but more exercises' | Gentle Mobility Session | 6 | 15080 |  |
+| 261 | ✅ | ai="I'm fasted, last meal 18 hours ago" | Gentle Mobility Session | 6 | 13779 |  |
+| 262 | ✅ | ai='post-workout, I have a heavy meal in 30 ' | Gentle Mobility Session | 6 | 11994 |  |
+| 263 | ✅ | ai='keto for 6 months, glycogen low' | Gentle Mobility Session | 6 | 12150 |  |
+| 264 | ✅ | ai='DOMS in legs, day 2 after heavy squats' | Gentle Mobility Session | 6 | 11643 |  |
+| 265 | ✅ | ai='slept 4 hours last night' | Gentle Mobility Session | 6 | 12439 |  |
+| 266 | ✅ | ai='feeling great, want to push it' | Gentle Mobility Session | 6 | 12178 |  |
+| 267 | ✅ | ai='minor cold, congestion, low energy' | Gentle Mobility Session | 6 | 12868 |  |
+| 268 | ✅ | ai='back from 2-week vacation, deconditioned' | Gentle Mobility Session | 6 | 12640 |  |
+| 269 | ✅ | ai='only have 15 minutes before a meeting' | Gentle Mobility Session | 6 | 9323 |  |
+| 270 | ✅ | ai='have 90 minutes — go full intensity' | Gentle Mobility Session | 6 | 15589 |  |
+| 271 | ✅ | ai='double session, this is workout 2 of 2 t' | Gentle Mobility Session | 6 | 11373 |  |
+| 272 | ✅ | ai="I'm 65 years old, joint-friendly please" | Gentle Mobility Session | 6 | 11773 |  |
+| 273 | ✅ | ai="I'm 14, just started lifting, learn-the-" | Gentle Mobility Session | 6 | 11448 |  |
+| 274 | ✅ | ai="I'm 6 months post-partum, gentle progres" | Gentle Mobility Session | 6 | 11986 |  |
+| 275 | ✅ | ai="I'm pregnant first trimester, no supine " | Gentle Mobility Session | 6 | 13819 |  |
+| 276 | ✅ | ai='training for a 5K in 8 weeks' | Gentle Mobility Session | 6 | 13218 |  |
+| 277 | ✅ | ai='training for a powerlifting meet in 12 w' | Gentle Mobility Session | 6 | 11355 |  |
+| 278 | ✅ | ai='training for an obstacle course race' | Gentle Mobility Session | 6 | 14132 |  |
+| 279 | ✅ | ai='training for a marathon — long run is to' | Gentle Mobility Session | 6 | 17307 |  |
+| 280 | ✅ | ai='feeling stressed, want to release tensio' | Gentle Mobility Session | 6 | 11924 |  |
+| 281 | ✅ | pop: senior beginner | Gentle Mobility Session | 6 | 12804 |  |
+| 282 | ✅ | pop: senior intermediate | Titan Steel Strength Session | 6 | 11693 |  |
+| 283 | ✅ | pop: senior advanced | Elite Masters Power Surge | 6 | 9455 |  |
+| 284 | ✅ | pop: senior frail | Gentle Mobility Session | 6 | 9978 |  |
+| 285 | ✅ | pop: teen 14 | Gentle Mobility Session | 6 | 14567 |  |
+| 286 | ✅ | pop: teen 16 | Varsity Iron Power Surge | 6 | 12109 |  |
+| 287 | ❌ | pop: teen 17 |  | 0 | 536 | HTTP 401: b'{"detail":"Session expired \xe2\x80\x94 please log in again."}' |
+| 288 | ❌ | pop: pregnant T1 |  | 0 | 333 | HTTP 401: b'{"detail":"Session expired \xe2\x80\x94 please log in again."}' |
+| 92 | ❌ | injuries=shoulder/focus=push |  | 0 | 14088 | sse_error: No exercises found for focus areas: push |
+| 93 | ❌ | injuries=lower_back/focus=pull |  | 0 | 13589 | sse_error: No exercises found for focus areas: pull |
+| 95 | ❌ | injuries=knee,shoulder,lower_back,wrist,ankle,hip,elbow/focu |  | 0 | 13733 | sse_error: No exercises found for focus areas: core |
+| 201 | ❌ | inj=knee eq=BW |  | 0 | 13709 | sse_error: No exercises found for focus areas: full_body |
+| 202 | ❌ | inj=knee eq=dumbbells |  | 0 | 3518 | sse_error: No exercises found for focus areas: full_body |
+| 211 | ❌ | inj=hip eq=BW |  | 0 | 2938 | sse_error: No exercises found for focus areas: full_body |
+| 212 | ❌ | inj=hip eq=dumbbells |  | 0 | 3650 | sse_error: No exercises found for focus areas: full_body |
+| 213 | ❌ | inj=ankle eq=BW |  | 0 | 3110 | sse_error: No exercises found for focus areas: full_body |
+| 214 | ❌ | inj=ankle eq=dumbbells |  | 0 | 3266 | sse_error: No exercises found for focus areas: full_body |
+| 287 | ✅ | pop: teen 17 | Elite Recruit Power Surge | 6 | 20018 |  |
+| 288 | ✅ | pop: pregnant T1 | Radiant Strength Flow | 6 | 11090 |  |
+| 289 | ✅ | pop: pregnant T2 | Empowered Maternal Strength | 6 | 10633 |  |
+| 290 | ✅ | pop: pregnant T3 | Gentle Strength Flow | 4 | 7644 |  |
+| 291 | ✅ | pop: postpartum 6w | New Dawn Strength Forge | 6 | 10845 |  |
+| 292 | ✅ | pop: postpartum 12w | Resilient Motherhood Power | 6 | 10674 |  |
+| 293 | ✅ | pop: postpartum 6mo | Resilient Warrior Power Flow | 6 | 10544 |  |
+| 294 | ✅ | pop: seated wheelchair | Titan Steel Upper Power | 6 | 9416 |  |
+| 295 | ✅ | pop: amputee BK | Titan Steel Foundation | 6 | 11137 |  |
+| 296 | ✅ | pop: MS mild | Titan Steel Strength Flow | 6 | 9031 |  |
+| 297 | ✅ | pop: Parkinson's mild | Iron Resilience Full Body | 6 | 10553 |  |
+| 298 | ✅ | pop: Diabetes T2 | Metabolic Surge Power | 6 | 10573 |  |
+| 299 | ✅ | pop: hypertension | Titan Steel Total Power | 6 | 8697 |  |
+| 300 | ✅ | pop: RTS week 1 | Titan Return Power Circuit | 6 | 10578 |  |
+| 301 | ✅ | pop: RTS week 6 | Titan Strength Recovery Flow | 6 | 9107 |  |
+| 302 | ✅ | pop: post-COVID | Resilient Iron Foundation | 6 | 10576 |  |
+| 303 | ✅ | pop: luteal phase | Steady Iron Flow | 6 | 10878 |  |
+| 304 | ✅ | pop: ovulation peak | Titan Peak Power Session | 6 | 11405 |  |
+| 305 | ✅ | pop: menstrual day 1 | Flow State Iron Strength | 6 | 10402 |  |
+| 306 | ✅ | pop: bariatric postop | Barbell Transformation Power Surge | 6 | 11569 |  |
+| 307 | ✅ | pop: competitive cut | Peak Precision Power Session | 6 | 10603 |  |
+| 308 | ✅ | pop: offseason bulk | Titan Steel Foundation | 6 | 10599 |  |
+| 309 | ❌ | pop: phase 1 PT |  | 0 | 2996 | sse_error: No exercises found for focus areas: full_body |
+| 310 | ❌ | pop: phase 2 PT |  | 0 | 3344 | sse_error: No exercises found for focus areas: full_body |
+| 311 | ❌ | pop: phase 3 PT |  | 0 | 3482 | sse_error: No exercises found for focus areas: full_body |
+| 312 | ✅ | pop: night shift worker | Midnight Iron Titan Power | 6 | 9121 |  |
+| 313 | ✅ | pop: jet-lagged | Jet Lag Iron Crusher | 6 | 9568 |  |
+| 314 | ✅ | pop: masters 50+ | Titan Olympic Power Surge | 6 | 9031 |  |
+| 315 | ✅ | pop: masters 60+ | Explosive Olympic Peak Power | 6 | 8909 |  |
+| 316 | ✅ | pop: blind | Titan Steel Foundation Flow | 6 | 11830 |  |
+| 317 | ✅ | pop: hearing impaired | Titan Steel Power Circuit | 6 | 10896 |  |
+| 318 | ✅ | pop: fibromyalgia | Gentle Iron Resilience Flow | 6 | 9258 |  |
+| 319 | ✅ | pop: chronic LBP | Titan Steel Foundation Flow | 6 | 10129 |  |
+| 320 | ✅ | pop: RA mild | Iron Titan Full Body | 6 | 10743 |  |
+| 321 | ✅ | pop: post-MI 6mo | Heart Strong Iron Foundation | 6 | 10538 |  |
+| 322 | ✅ | pop: AFib controlled | Iron Heart Power Flow | 6 | 10973 |  |
+| 323 | ✅ | pop: depression | Resilient Iron Soul Flow | 6 | 13193 |  |
+| 324 | ✅ | pop: anxiety | Rhythmic Iron Grounding Flow | 6 | 11274 |  |
+| 325 | ✅ | pop: ED recovery | Titan Strength Foundation Flow | 6 | 10284 |  |
+| 326 | ✅ | pop: kid 8 | Family Strength Foundation Day | 3 | 7250 |  |
+| 327 | ✅ | pop: kid 11 | Gentle Mobility Session | 6 | 9582 |  |
+| 328 | ✅ | pop: stroke recovery | Gentle Mobility Session | 6 | 9922 |  |
+| 329 | ✅ | pop: prehab knee | Titan Prehab Power Surge | 6 | 10472 |  |
+| 330 | ✅ | pop: prehab back | Titan Steel Foundation Build | 6 | 8697 |  |
+| 331 | ✅ | resched=-1d force=True diff=easy | Gentle Iron Flow Strength | 4 | 8208 |  |
+| 332 | ✅ | resched=+0d force=False diff=medium | Titan Steel Total Body | 6 | 10105 |  |
+| 333 | ✅ | resched=+1d force=True diff=hard | Titan Steel Total Body | 7 | 10953 |  |
+| 334 | ❌ | resched=+2d force=False diff=hell |  | 0 | 1210 | sse_error: not_a_workout_day |
+| 335 | ✅ | resched=+3d force=True diff=easy | Gentle Iron Flow | 4 | 7832 |  |
+| 336 | ✅ | resched=+5d force=False diff=medium | Titan Steel Strength Circuit | 6 | 10751 |  |
+| 337 | ✅ | resched=+7d force=True diff=hard | Titan Steel Total Body | 7 | 11074 |  |
+| 338 | ❌ | resched=+10d force=False diff=hell |  | 0 | 798 | sse_error: not_a_workout_day |
+| 339 | ✅ | resched=+14d force=True diff=easy | Gentle Iron Flow | 4 | 7721 |  |
+| 340 | ✅ | resched=+21d force=False diff=medium | Barbell Titan Total Power | 6 | 10171 |  |
+| 341 | ✅ | resched=+30d force=True diff=hard | Titan Steel Total Power | 7 | 11109 |  |
+| 342 | ❌ | resched=+45d force=False diff=hell |  | 0 | 1141 | sse_error: not_a_workout_day |
+| 343 | ✅ | resched=+60d force=True diff=easy | Gentle Mobility Session | 6 | 9783 |  |
+| 344 | ❌ | resched=+90d force=False diff=medium |  | 0 | 899 | sse_error: not_a_workout_day |
+| 345 | ✅ | resched=+120d force=True diff=hard | Titan Steel Total Body | 7 | 11190 |  |
+| 346 | ❌ | resched=-1d force=False diff=hell |  | 0 | 1050 | sse_error: not_a_workout_day |
+| 334 | ❌ | resched=+2d force=False diff=hell |  | 0 | 1487 | sse_error: not_a_workout_day |
+| 338 | ❌ | resched=+10d force=False diff=hell |  | 0 | 1213 | sse_error: not_a_workout_day |
+| 342 | ❌ | resched=+45d force=False diff=hell |  | 0 | 1018 | sse_error: not_a_workout_day |
+| 344 | ❌ | resched=+90d force=False diff=medium |  | 0 | 1034 | sse_error: not_a_workout_day |
+| 346 | ❌ | resched=-1d force=False diff=hell |  | 0 | 1009 | sse_error: not_a_workout_day |
+| 347 | ✅ | resched=+0d force=True diff=easy | Gentle Iron Flow | 4 | 7946 |  |
+| 348 | ✅ | resched=+1d force=False diff=medium | Titan Steel Total Power | 6 | 10069 |  |
+| 349 | ✅ | resched=+2d force=True diff=hard | Titan Steel Foundation | 7 | 12040 |  |
+| 350 | ❌ | resched=+3d force=False diff=hell |  | 0 | 1222 | sse_error: not_a_workout_day |
+| 351 | ✅ | name='Phoenix Rising' preserve=True fl=beginner | Gentle Mobility Session | 6 | 26759 |  |
+| 352 | ✅ | name='Iron Forge' preserve=False fl=intermediate | Iron Forge | 6 | 11132 |  |
+| 353 | ✅ | name='Steel Resolve' preserve=False fl=advanced | Steel Resolve | 6 | 9588 |  |
+| 354 | ✅ | name='Apex Hunt' preserve=True fl=beginner | Gentle Mobility Session | 6 | 12903 |  |
+| 355 | ✅ | name='Quantum Lift' preserve=False fl=intermediate | Quantum Lift | 6 | 10299 |  |
+| 356 | ✅ | name='Solar Flare' preserve=False fl=advanced | Solar Flare | 6 | 9420 |  |
+| 357 | ✅ | name='Tidal Force' preserve=True fl=beginner | Gentle Mobility Session | 6 | 12834 |  |
+| 358 | ✅ | name='Granite Will' preserve=False fl=intermediate | Granite Will | 6 | 9007 |  |
+| 359 | ✅ | name='Velvet Hammer' preserve=False fl=advanced | Velvet Hammer | 6 | 9442 |  |
+| 360 | ✅ | name='Crimson Dawn' preserve=True fl=beginner | Gentle Mobility Session | 6 | 12562 |  |
+| 361 | ✅ | name='Eclipse Protocol' preserve=False fl=intermediate | Eclipse Protocol | 6 | 10648 |  |
+| 362 | ✅ | name='Zenith Push' preserve=False fl=advanced | Zenith Push | 6 | 8943 |  |
+| 363 | ✅ | name='Inferno Block' preserve=True fl=beginner | Gentle Mobility Session | 6 | 14088 |  |
+| 364 | ✅ | name='Avalanche Set' preserve=False fl=intermediate | Avalanche Set | 6 | 10398 |  |
+| 365 | ✅ | name='Tempest Surge' preserve=False fl=advanced | Tempest Surge | 6 | 9559 |  |
+| 366 | ✅ | name='Nebula Climb' preserve=True fl=beginner | Gentle Mobility Session | 6 | 12993 |  |
+| 367 | ✅ | name='Vortex Crush' preserve=False fl=intermediate | Vortex Crush | 6 | 9093 |  |
+| 368 | ✅ | name='Lightning Round' preserve=False fl=advanced | Lightning Round | 6 | 9250 |  |
+| 369 | ✅ | name='Glacier Mass' preserve=True fl=beginner | Gentle Mobility Session | 6 | 12755 |  |
+| 370 | ✅ | name='Ember Burn' preserve=False fl=intermediate | Ember Burn | 6 | 9039 |  |
+| 371 | ✅ | name='' preserve=False fl=advanced | Titan Explosive Power Flow | 6 | 9327 |  |
+| 372 | ✅ | name=' ' preserve=True fl=beginner | Gentle Mobility Session | 6 | 12691 |  |
+| 373 | ✅ | name='xxxxxxxxxxxxxxxxxxxx' preserve=False fl=intermediate | xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx | 6 | 11774 |  |
+| 374 | ✅ | name='Workout 🔥' preserve=False fl=advanced | Workout 🔥 | 6 | 11772 |  |
+| 375 | ✅ | name='Léger' preserve=True fl=beginner | Gentle Mobility Session | 6 | 14580 |  |
+| 376 | ✅ | name='ベンチデー' preserve=False fl=intermediate | ベンチデー | 6 | 11114 |  |
+| 377 | ✅ | name='VERY LONG NAME WITH ' preserve=False fl=advanced | VERY LONG NAME WITH MANY MANY WORDS THAT KEEPS GOING AND GOI | 6 | 9006 |  |
+| 378 | ✅ | name='name w/ sp3c!al ch@r' preserve=True fl=beginner | Gentle Mobility Session | 6 | 14429 |  |
+| 379 | ✅ | name='tabs\there' preserve=False fl=intermediate | tabs	here | 6 | 10620 |  |
+| 380 | ✅ | name='Phoenix Rising' preserve=False fl=advanced | Phoenix Rising | 6 | 9248 |  |
+| 381 | ✅ | name='Iron Forge' preserve=True fl=beginner | Gentle Mobility Session | 6 | 13816 |  |
+| 382 | ✅ | name='Steel Resolve' preserve=False fl=intermediate | Steel Resolve | 6 | 11778 |  |
+| 383 | ✅ | name='Apex Hunt' preserve=False fl=advanced | Apex Hunt | 6 | 9310 |  |
+| 384 | ✅ | name='Quantum Lift' preserve=True fl=beginner | Gentle Mobility Session | 6 | 12597 |  |
+| 385 | ✅ | name='Solar Flare' preserve=False fl=intermediate | Solar Flare | 6 | 10340 |  |
+| 386 | ✅ | name='Tidal Force' preserve=False fl=advanced | Tidal Force | 6 | 9110 |  |
+| 387 | ✅ | name='Granite Will' preserve=True fl=beginner | Gentle Mobility Session | 6 | 14320 |  |
+| 388 | ✅ | name='Velvet Hammer' preserve=False fl=intermediate | Velvet Hammer | 6 | 11543 |  |
+| 389 | ✅ | name='Crimson Dawn' preserve=False fl=advanced | Crimson Dawn | 6 | 9283 |  |
+| 390 | ✅ | name='Eclipse Protocol' preserve=True fl=beginner | Gentle Mobility Session | 6 | 12762 |  |
+| 391 | ✅ | name='Zenith Push' preserve=False fl=intermediate | Zenith Push | 6 | 9519 |  |
+| 392 | ✅ | name='Inferno Block' preserve=False fl=advanced | Inferno Block | 6 | 9373 |  |
+| 393 | ✅ | name='Avalanche Set' preserve=True fl=beginner | Gentle Mobility Session | 6 | 14991 |  |
+| 394 | ✅ | name='Tempest Surge' preserve=False fl=intermediate | Tempest Surge | 6 | 10578 |  |
+| 395 | ✅ | name='Nebula Climb' preserve=False fl=advanced | Nebula Climb | 6 | 9076 |  |
+| 396 | ✅ | name='Vortex Crush' preserve=True fl=beginner | Gentle Mobility Session | 6 | 12487 |  |
+| 397 | ✅ | name='Lightning Round' preserve=False fl=intermediate | Lightning Round | 6 | 10752 |  |
+| 398 | ✅ | name='Glacier Mass' preserve=False fl=advanced | Glacier Mass | 6 | 9205 |  |
+| 399 | ✅ | name='Ember Burn' preserve=True fl=beginner | Gentle Mobility Session | 6 | 12594 |  |
+| 400 | ✅ | name='' preserve=False fl=intermediate | Iron Titan Full Body | 6 | 10241 |  |
+| 401 | ✅ | variety #1/20 same source same body | Titan Steel Foundation Flow | 6 | 10826 |  |
+| 402 | ✅ | variety #2/20 same source same body | Iron Titan Full Strength | 6 | 9230 |  |
+| 403 | ✅ | variety #3/20 same source same body | Titan Steel Total Body | 6 | 10749 |  |
+| 404 | ✅ | variety #4/20 same source same body | Titan Steel Foundation Flow | 6 | 10251 |  |
+| 405 | ✅ | variety #5/20 same source same body | Titan Steel Total Body | 6 | 10413 |  |
+| 406 | ✅ | variety #6/20 same source same body | Titan Steel Total Power | 6 | 9419 |  |
+| 407 | ✅ | variety #7/20 same source same body | Titan Steel Total Body | 6 | 11072 |  |
+| 408 | ✅ | variety #8/20 same source same body | Titan Steel Foundation Forge | 6 | 8997 |  |
+| 409 | ✅ | variety #9/20 same source same body | Titan Steel Foundation Build | 6 | 8746 |  |
+| 410 | ✅ | variety #10/20 same source same body | Titan Steel Power Circuit | 6 | 10495 |  |
+| 411 | ✅ | variety #11/20 same source same body | Iron Titan Full Power | 6 | 8911 |  |
+| 412 | ✅ | variety #12/20 same source same body | Titan Steel Foundation Flow | 6 | 9150 |  |
+| 413 | ✅ | variety #13/20 same source same body | Titan Steel Total Body | 6 | 10256 |  |
+| 414 | ✅ | variety #14/20 same source same body | Titan Steel Foundation Flow | 6 | 10301 |  |
+| 415 | ✅ | variety #15/20 same source same body | Titan Steel Total Body | 6 | 10387 |  |
+| 416 | ✅ | variety #16/20 same source same body | Titan Steel Full Body | 6 | 10848 |  |
+| 417 | ✅ | variety #17/20 same source same body | Barbell Titan Total Power | 6 | 11224 |  |
+| 418 | ✅ | variety #18/20 same source same body | Iron Titan Full Body | 6 | 8976 |  |
+| 419 | ✅ | variety #19/20 same source same body | Iron Titan Full Power | 6 | 8898 |  |
+| 420 | ✅ | variety #20/20 same source same body | Iron Titan Full Power | 6 | 10952 |  |
+| 421 | ✅ | inj=knee foc=full_body diff=easy dur=30 | Gentle Mobility Session | 6 | 8097 |  |
+| 422 | ✅ | inj=knee foc=upper diff=medium dur=45 | Gentle Mobility Session | 6 | 23330 |  |
+| 423 | ❌ | inj=knee foc=lower diff=hard dur=45 |  | 0 | 14229 | sse_error: No exercises found for focus areas: lower |
+| 424 | ✅ | inj=knee foc=core diff=easy dur=30 | Steady Core Recovery Flow | 1 | 15359 |  |
+| 425 | ❌ | inj=knee foc=cardio diff=medium dur=45 |  | 0 | 13206 | sse_error: No exercises found for focus areas: cardio |
+| 426 | ❌ | inj=knee foc=mobility diff=hard dur=45 |  | 0 | 13820 | sse_error: No exercises found for focus areas: mobility |
+| 427 | ✅ | inj=shoulder foc=full_body diff=easy dur=30 | Steady Strength Foundation | 1 | 5045 |  |
+| 428 | ❌ | inj=shoulder foc=upper diff=medium dur=45 |  | 0 | 3724 | sse_error: No exercises found for focus areas: upper |
+| 429 | ❌ | inj=shoulder foc=lower diff=hard dur=45 |  | 0 | 2900 | sse_error: No exercises found for focus areas: lower |
+| 430 | ✅ | inj=shoulder foc=core diff=easy dur=30 | Gentle Mobility Session | 6 | 9893 |  |
+| 431 | ✅ | inj=shoulder foc=cardio diff=medium dur=45 | Steady Motion Flow | 2 | 4542 |  |
+| 432 | ❌ | inj=shoulder foc=mobility diff=hard dur=45 |  | 0 | 2860 | sse_error: No exercises found for focus areas: mobility |
+| 433 | ❌ | inj=lower_back foc=full_body diff=easy dur=30 |  | 0 | 3173 | sse_error: No exercises found for focus areas: full_body |
+| 434 | ✅ | inj=lower_back foc=upper diff=medium dur=45 | Gentle Mobility Session | 6 | 7343 |  |
+| 435 | ❌ | inj=lower_back foc=lower diff=hard dur=45 |  | 0 | 2819 | sse_error: No exercises found for focus areas: lower |
+| 436 | ❌ | inj=lower_back foc=core diff=easy dur=30 |  | 0 | 2764 | sse_error: No exercises found for focus areas: core |
+| 437 | ❌ | inj=lower_back foc=cardio diff=medium dur=45 |  | 0 | 2815 | sse_error: No exercises found for focus areas: cardio |
+| 438 | ❌ | inj=lower_back foc=mobility diff=hard dur=45 |  | 0 | 3022 | sse_error: No exercises found for focus areas: mobility |
+| 439 | ✅ | inj=elbow foc=full_body diff=easy dur=30 | Gentle Mobility Session | 6 | 9059 |  |
+| 440 | ✅ | inj=elbow foc=upper diff=medium dur=45 | Gentle Mobility Session | 6 | 11853 |  |
+| 441 | ❌ | inj=elbow foc=lower diff=hard dur=45 |  | 0 | 2797 | sse_error: No exercises found for focus areas: lower |
+| 442 | ✅ | inj=elbow foc=core diff=easy dur=30 | Gentle Mobility Session | 6 | 9422 |  |
+| 443 | ✅ | inj=elbow foc=cardio diff=medium dur=45 | Velocity Peak Pulse | 2 | 4808 |  |
+| 444 | ❌ | inj=elbow foc=mobility diff=hard dur=45 |  | 0 | 3287 | sse_error: No exercises found for focus areas: mobility |
+| 445 | ✅ | inj=wrist foc=full_body diff=easy dur=30 | Gentle Glute Flow Session | 1 | 4685 |  |
+| 446 | ✅ | inj=wrist foc=upper diff=medium dur=45 | Gentle Mobility Session | 6 | 9191 |  |
+| 447 | ❌ | inj=wrist foc=lower diff=hard dur=45 |  | 0 | 3096 | sse_error: No exercises found for focus areas: lower |
+| 448 | ✅ | inj=wrist foc=core diff=easy dur=30 | Gentle Mobility Session | 6 | 9035 |  |
+| 449 | ✅ | inj=wrist foc=cardio diff=medium dur=45 | Steady Heartbeat Stride | 2 | 5093 |  |
+| 450 | ❌ | inj=wrist foc=mobility diff=hard dur=45 |  | 0 | 3270 | sse_error: No exercises found for focus areas: mobility |
+| 451 | ✅ | inj=hip foc=full_body diff=easy dur=30 | Gentle Mobility Session | 6 | 6622 |  |
+| 452 | ✅ | inj=hip foc=upper diff=medium dur=45 | Gentle Mobility Session | 6 | 11472 |  |
+| 453 | ❌ | inj=hip foc=lower diff=hard dur=45 |  | 0 | 3093 | sse_error: No exercises found for focus areas: lower |
+| 454 | ✅ | inj=hip foc=core diff=easy dur=30 | Steady Core Foundation Flow | 1 | 4407 |  |
+| 455 | ❌ | inj=hip foc=cardio diff=medium dur=45 |  | 0 | 3214 | sse_error: No exercises found for focus areas: cardio |
+| 456 | ❌ | inj=hip foc=mobility diff=hard dur=45 |  | 0 | 4356 | sse_error: No exercises found for focus areas: mobility |
+| 457 | ✅ | inj=ankle foc=full_body diff=easy dur=30 | Gentle Mobility Session | 6 | 7578 |  |
+| 458 | ✅ | inj=ankle foc=upper diff=medium dur=45 | Gentle Mobility Session | 6 | 18077 |  |
+| 459 | ❌ | inj=ankle foc=lower diff=hard dur=45 |  | 0 | 4102 | sse_error: No exercises found for focus areas: lower |
+| 460 | ✅ | inj=ankle foc=core diff=easy dur=30 | Steady Core Foundation | 1 | 4642 |  |
+| 461 | ❌ | inj=ankle foc=cardio diff=medium dur=45 |  | 0 | 2962 | sse_error: No exercises found for focus areas: cardio |
+| 462 | ❌ | inj=ankle foc=mobility diff=hard dur=45 |  | 0 | 2708 | sse_error: No exercises found for focus areas: mobility |
+| 463 | ✅ | inj=neck foc=full_body diff=easy dur=30 | Steady Strength Foundation | 1 | 4237 |  |
+| 464 | ✅ | inj=neck foc=upper diff=medium dur=45 | Gentle Mobility Session | 6 | 6794 |  |
+| 465 | ❌ | inj=neck foc=lower diff=hard dur=45 |  | 0 | 2940 | sse_error: No exercises found for focus areas: lower |
+| 466 | ✅ | inj=neck foc=core diff=easy dur=30 | Steady Core Foundation Flow | 1 | 4385 |  |
+| 467 | ✅ | inj=neck foc=cardio diff=medium dur=45 | Gentle Motion Flow | 2 | 4762 |  |
+| 468 | ❌ | inj=neck foc=mobility diff=hard dur=45 |  | 0 | 3234 | sse_error: No exercises found for focus areas: mobility |
+| 469 | ✅ | inj=knee+shoulder foc=full_body diff=easy dur=30 | Steady Motion Glute Flow | 1 | 4192 |  |
+| 470 | ❌ | inj=knee+shoulder foc=lower diff=medium dur=45 |  | 0 | 13310 | sse_error: No exercises found for focus areas: lower |
+| 471 | ❌ | inj=knee+shoulder foc=cardio diff=hard dur=45 |  | 0 | 3280 | sse_error: No exercises found for focus areas: cardio |
+| 472 | ✅ | inj=knee+shoulder foc=full_body diff=easy dur=30 | Steady Swing Strength Flow | 1 | 5019 |  |
+| 473 | ❌ | inj=knee+lower_back foc=cardio diff=medium dur=45 |  | 0 | 2955 | sse_error: No exercises found for focus areas: cardio |
+| 474 | ✅ | inj=knee+lower_back foc=full_body diff=hard dur=45 | Gentle Mobility Session | 6 | 17415 |  |
+| 475 | ❌ | inj=knee+lower_back foc=lower diff=easy dur=30 |  | 0 | 13481 | sse_error: No exercises found for focus areas: lower |
+| 476 | ❌ | inj=knee+lower_back foc=cardio diff=medium dur=45 |  | 0 | 13515 | sse_error: No exercises found for focus areas: cardio |
+| 477 | ❌ | inj=shoulder+wrist foc=lower diff=hard dur=45 |  | 0 | 3192 | sse_error: No exercises found for focus areas: lower |
+| 478 | ✅ | inj=shoulder+wrist foc=cardio diff=easy dur=30 | Gentle Motion Flow | 2 | 15170 |  |
+| 479 | ✅ | inj=shoulder+wrist foc=full_body diff=medium dur=45 | Steady Foundation Recovery Flow | 1 | 15554 |  |
+| 480 | ❌ | inj=shoulder+wrist foc=lower diff=hard dur=45 |  | 0 | 13513 | sse_error: No exercises found for focus areas: lower |
+| 481 | ✅ | inj=shoulder+elbow foc=full_body diff=easy dur=30 | Steady Glute Foundation Flow | 1 | 4522 |  |
+| 482 | ❌ | inj=shoulder+elbow foc=lower diff=medium dur=45 |  | 0 | 3175 | sse_error: No exercises found for focus areas: lower |
+| 483 | ✅ | inj=shoulder+elbow foc=cardio diff=hard dur=45 | Endless Stride Velocity | 2 | 5420 |  |
+| 484 | ✅ | inj=shoulder+elbow foc=full_body diff=easy dur=30 | Steady Glute Revival Flow | 1 | 5310 |  |
+| 485 | ❌ | inj=lower_back+hip foc=cardio diff=medium dur=45 |  | 0 | 2873 | sse_error: No exercises found for focus areas: cardio |
+| 486 | ✅ | inj=lower_back+hip foc=full_body diff=hard dur=45 | Gentle Mobility Session | 6 | 7138 |  |
+| 487 | ❌ | inj=lower_back+hip foc=lower diff=easy dur=30 |  | 0 | 2963 | sse_error: No exercises found for focus areas: lower |
+| 488 | ❌ | inj=lower_back+hip foc=cardio diff=medium dur=45 |  | 0 | 2981 | sse_error: No exercises found for focus areas: cardio |
+| 489 | ❌ | inj=knee+ankle foc=lower diff=hard dur=45 |  | 0 | 2868 | sse_error: No exercises found for focus areas: lower |
+| 490 | ❌ | inj=knee+ankle foc=cardio diff=easy dur=30 |  | 0 | 2758 | sse_error: No exercises found for focus areas: cardio |
+| 491 | ❌ | inj=knee+ankle foc=full_body diff=medium dur=45 |  | 0 | 2964 | sse_error: No exercises found for focus areas: full_body |
+| 492 | ❌ | inj=knee+ankle foc=lower diff=hard dur=45 |  | 0 | 2966 | sse_error: No exercises found for focus areas: lower |
+| 493 | ✅ | inj=wrist+elbow+shoulder foc=full_body diff=easy dur=30 | Steady Glute Foundation Flow | 1 | 5730 |  |
+| 494 | ❌ | inj=wrist+elbow+shoulder foc=lower diff=medium dur=45 |  | 0 | 2968 | sse_error: No exercises found for focus areas: lower |
+| 495 | ✅ | inj=wrist+elbow+shoulder foc=cardio diff=hard dur=45 | Velocity Peak Endurance Flow | 2 | 5082 |  |
+| 496 | ✅ | inj=wrist+elbow+shoulder foc=full_body diff=easy dur=30 | Steady Gentle Glute Flow | 1 | 4435 |  |
+| 497 | ❌ | inj=knee+hip+ankle foc=cardio diff=medium dur=45 |  | 0 | 3687 | sse_error: No exercises found for focus areas: cardio |
+| 498 | ✅ | inj=knee+hip+ankle foc=full_body diff=hard dur=45 | Gentle Mobility Session | 6 | 8705 |  |
+| 499 | ❌ | inj=knee+hip+ankle foc=lower diff=easy dur=30 |  | 0 | 2919 | sse_error: No exercises found for focus areas: lower |
+| 500 | ❌ | inj=knee+hip+ankle foc=cardio diff=medium dur=45 |  | 0 | 3009 | sse_error: No exercises found for focus areas: cardio |

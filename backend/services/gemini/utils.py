@@ -5,7 +5,7 @@ set target validation, and equipment rules.
 import json
 import re
 import logging
-from typing import List, Dict
+from typing import List, Dict, Optional
 
 logger = logging.getLogger("gemini")
 
@@ -163,6 +163,77 @@ def infer_set_type(exercise: Dict, set_target: Dict, set_index: int, total_sets:
         return "warmup"
 
     return "working"
+
+
+def apply_goal_aware_rir_override(
+    exercises: List[Dict],
+    goals: Optional[List[str]] = None,
+) -> List[Dict]:
+    """Rewrite working-set RIR/RPE per goal (Fix 7 / D2 from
+    peppy-conjuring-valley.md).
+
+    Audit found Gemini emits a mechanical 2,1,0 RIR ramp on every workout
+    regardless of goal — that pushes every workout (including beginner
+    isolation) to failure on the last set. Override with goal-tuned ramps
+    so strength workouts cap at RIR 1, hypertrophy at RIR 1, mobility/
+    recovery skip RIR/RPE entirely.
+
+    Idempotent. Skips warmup sets. Preserves `target_weight_kg` and
+    `target_reps`.
+    """
+    if not exercises or not goals:
+        return exercises
+    primary_goal = (goals[0] or "").strip().lower() if goals else ""
+    if not primary_goal:
+        return exercises
+
+    _RIR_RAMP = {
+        "strength":    [3, 2, 1, 1, 1],
+        "power":       [3, 2, 1, 1, 1],
+        "hypertrophy": [2, 1, 1, 1, 1],
+        "muscle_gain": [2, 1, 1, 1, 1],
+        "endurance":   [3, 3, 2, 2, 2],
+        "fat_loss":    [3, 2, 1, 1, 1],
+    }
+    is_mobility = primary_goal in {"mobility", "recovery"}
+    ramp = _RIR_RAMP.get(primary_goal)
+    if ramp is None and not is_mobility:
+        return exercises
+
+    _effective_types = {"working", "drop", "failure", "amrap"}
+    for exercise in exercises:
+        if not isinstance(exercise, dict):
+            continue
+        targets = exercise.get("set_targets") or []
+        if not isinstance(targets, list):
+            continue
+        working_idx = 0
+        for st in targets:
+            if not isinstance(st, dict):
+                continue
+            set_type_lower = (st.get("set_type") or "working").lower()
+            if set_type_lower == "warmup":
+                continue
+            if is_mobility:
+                # Mobility / recovery don't use RIR/RPE.
+                st["target_rir"] = None
+                st["target_rpe"] = None
+                if set_type_lower in ("failure", "amrap"):
+                    st["set_type"] = "working"
+                continue
+            if set_type_lower not in _effective_types:
+                continue
+            target_rir = ramp[min(working_idx, len(ramp) - 1)]
+            st["target_rir"] = target_rir
+            st["target_rpe"] = max(1, min(10 - target_rir, 10))
+            # Strength / hypertrophy: never tag as failure on automatic
+            # post-process. Power may keep failure on the last set.
+            if target_rir == 0:
+                st["set_type"] = "failure"
+            elif set_type_lower == "failure":
+                st["set_type"] = "working"
+            working_idx += 1
+    return exercises
 
 
 def validate_set_targets_strict(exercises: List[Dict], user_context: Dict = None) -> List[Dict]:

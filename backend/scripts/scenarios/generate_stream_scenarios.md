@@ -530,18 +530,547 @@
 
 <!-- LIVE-RUN-STATUS — auto-updated by harness; do not edit -->
 ## 🔴 Live Run Status
-_Run started 2026-05-09T01:02:55._ Updated as each scenario completes.
+_Run started 2026-05-09T12:03:54._ Updated as each scenario completes.
 
 | # | Status | Label | Workout name | n_ex | latency_ms | error |
 |---|---|---|---|---|---|---|
-| 101 | ❌ | goal×focus general_fitness/full_body |  | 0 | 31474 | sse_error: name 'workout_type_override' is not defined |
-| 102 | ❌ | goal×focus general_fitness/core |  | 0 | 7910 | sse_error: name 'workout_type_override' is not defined |
-| 103 | ❌ | goal×focus strength/shoulders |  | 0 | 8565 | sse_error: name 'workout_type_override' is not defined |
-| 104 | ❌ | goal×focus hypertrophy/shoulders |  | 0 | 8581 | sse_error: name 'workout_type_override' is not defined |
-| 105 | ❌ | goal×focus hypertrophy/glutes |  | 0 | 7735 | sse_error: name 'workout_type_override' is not defined |
-| 106 | ❌ | goal×focus strength/core |  | 0 | 7419 | sse_error: name 'workout_type_override' is not defined |
-| 107 | ❌ | goal×focus endurance/full_body |  | 0 | 9830 | sse_error: name 'workout_type_override' is not defined |
-| 108 | ❌ | goal×focus power/upper |  | 0 | 9828 | sse_error: name 'workout_type_override' is not defined |
-| 109 | ❌ | goal×focus athletic_performance/shoulders |  | 0 | 7778 | sse_error: name 'workout_type_override' is not defined |
-| 110 | ❌ | goal×focus muscle_tone/core |  | 0 | 7749 | sse_error: name 'workout_type_override' is not defined |
-| 111 | ❌ | matrix beginner/15/strength/push/E1_full |  | 0 | 8627 | sse_error: name 'workout_type_override' is not defined |
+| 1 | ✅ | dur-sweep beginner/15min | Steady Gentle Muscle Flow | 3 | 26726 |  |
+| 2 | ✅ | dur-sweep beginner/20min | Gentle Foundation Body Flow | 5 | 10469 |  |
+| 3 | ✅ | dur-sweep beginner/30min | Gentle Rising Sun Flow | 5 | 9511 |  |
+| 4 | ✅ | dur-sweep beginner/40min | Gentle Harmony Flow | 5 | 9623 |  |
+| 5 | ✅ | dur-sweep beginner/45min | Gentle Peak Performance | 5 | 12676 |  |
+| 6 | ✅ | dur-sweep beginner/60min | Gentle Giant Muscle Flow | 5 | 9781 |  |
+| 7 | ✅ | dur-sweep beginner/75min | Gentle Peak Performance | 5 | 10508 |  |
+| 8 | ✅ | dur-sweep beginner/90min | Ignite Explosive Peak Performance | 3 | 9427 |  |
+| 9 | ✅ | dur-sweep intermediate/15min | Titan Steel Body Sculpt | 3 | 12212 |  |
+| 10 | ✅ | dur-sweep intermediate/20min | Titan Sculpting Blast | 5 | 11797 |  |
+| 11 | ✅ | dur-sweep intermediate/30min | Titan Sculpting Peak | 5 | 11696 |  |
+| 12 | ✅ | dur-sweep intermediate/40min | Titan Sculpting Peak | 6 | 12402 |  |
+| 13 | ✅ | dur-sweep intermediate/45min | Titan Physique Sculpt | 7 | 10973 |  |
+| 14 | ✅ | dur-sweep intermediate/60min | Titan Sculpting Blast | 7 | 12255 |  |
+| 15 | ✅ | dur-sweep intermediate/75min | Titan Savage Blast | 7 | 10408 |  |
+| 16 | ✅ | dur-sweep intermediate/90min | Titan Unleashed Peak Performance | 3 | 12435 |  |
+| 17 | ✅ | dur-sweep advanced/15min | Titan Savage Blast | 3 | 11959 |  |
+| 18 | ✅ | dur-sweep advanced/20min | Savage Beast Body Blast | 5 | 11615 |  |
+| 19 | ✅ | dur-sweep advanced/30min | Apex Predator Body Shock | 5 | 11421 |  |
+| 20 | ✅ | dur-sweep advanced/40min | Apex Warrior Full Blast | 6 | 12595 |  |
+| 21 | ✅ | dur-sweep advanced/45min | Apex Titan Full Body | 8 | 11496 |  |
+| 22 | ✅ | dur-sweep advanced/60min | Titan Unleashed Peak Performance | 8 | 11475 |  |
+| 23 | ✅ | dur-sweep advanced/75min | Apex Titan Full Burn | 8 | 12912 |  |
+| 24 | ✅ | dur-sweep advanced/90min | Titan Forge Full Intensity | 6 | 12194 |  |
+| 25 | ✅ | goal-sweep strength | Titan Full Body Core | 6 | 10197 |  |
+| 26 | ✅ | goal-sweep hypertrophy | Apex Full Body Burn | 6 | 12194 |  |
+| 27 | ✅ | goal-sweep fat_loss | Endurance Peak Flow | 6 | 11017 |  |
+| 28 | ✅ | goal-sweep endurance | Apex Full Body Surge | 6 | 10432 |  |
+| 29 | ✅ | goal-sweep general_fitness | Limitless Flow Full Body | 6 | 11014 |  |
+| 30 | ✅ | goal-sweep mobility | Explosive Peak Power | 6 | 10530 |  |
+| 31 | ✅ | goal-sweep power | Apex Performance Athletic Flow | 6 | 10655 |  |
+| 32 | ✅ | goal-sweep athletic_performance | Rapid Fire Total Burn | 6 | 12199 |  |
+| 33 | ✅ | goal-sweep weight_loss | Peak Performance Kinetic Flow | 6 | 10480 |  |
+| 34 | ✅ | goal-sweep muscle_tone | Titan Push Precision | 6 | 12153 |  |
+| 35 | ✅ | focus-sweep push | Athletic Peak Foundation | 5 | 10034 |  |
+| 36 | ✅ | focus-sweep pull | Titan Leg Furnace | 6 | 11328 |  |
+| 37 | ✅ | focus-sweep legs | Apex Beast Full Body | 6 | 11042 |  |
+| 38 | ✅ | focus-sweep full_body | Absolute Core Apex | 5 | 12299 |  |
+| 39 | ✅ | focus-sweep core | Apex Upper Body Fusion | 6 | 8611 |  |
+| 40 | ✅ | focus-sweep upper | Titan Lower Body Peak | 6 | 10822 |  |
+| 41 | ✅ | focus-sweep lower | Titan Sculpt Arm Blast | 3 | 12465 |  |
+| 42 | ✅ | focus-sweep arms | Titan Sculpt Shoulder Peak | 6 | 11664 |  |
+| 43 | ✅ | focus-sweep shoulders | Titan Glute Sculpting Session | 6 | 8918 |  |
+| 44 | ✅ | focus-sweep glutes | Rapid Pulse Peak Performance | 6 | 9225 |  |
+| 45 | ✅ | focus-sweep cardio | Apex Prime Body Flow | 6 | 11168 |  |
+| 46 | ✅ | focus-sweep mobility | Titan Full Body Blast | 6 | 11889 |  |
+| 47 | ✅ | equip-sweep E1_full | Total Body Kinetic Surge | 6 | 11122 |  |
+| 48 | ✅ | equip-sweep E2_bw | Titan Total Body | 6 | 11010 |  |
+| 49 | ✅ | equip-sweep E3_db | Kettlebell Titan Strength Circuit | 6 | 10973 |  |
+| 50 | ✅ | equip-sweep E4_kb | Gentle Push Strength Flow | 3 | 10963 |  |
+| 51 | ✅ | equip-sweep E5_mach | Gentle Flow Motion | 3 | 10252 |  |
+| 52 | ✅ | equip-sweep E6_bands | Titan Peak Kinetic Flow | 6 | 11945 |  |
+| 53 | ✅ | equip-sweep E7_no_bb | Titan Full Body Velocity | 6 | 11779 |  |
+| 54 | ✅ | equip-sweep E8_fw | Titan Sculpting Peak Performance | 6 | 13065 |  |
+| 55 | ✅ | equip-sweep E9_db1 | Titan Sculpting Session | 6 | 12338 |  |
+| 56 | ✅ | equip-sweep E10_home | Steady Gentle Foundation | 3 | 13036 |  |
+| 57 | ❌ | equip-sweep E11_cardio |  | 0 | 711 | HTTP 422: b'{"detail":{"code":"INCOMPATIBLE_EQUIPMENT_FOCUS","message":"Your equ |
+| 58 | ✅ | equip-sweep E12_bw_bands | Gentle Sculpt Shoulder Flow | 5 | 12658 |  |
+| 59 | ✅ | equip-sweep E13_TRX | Absolute Peak Upper Sculpt | 8 | 11326 |  |
+| 60 | ✅ | equip-sweep E14_gym_60 | Gentle Motion Vitality Flow | 3 | 11512 |  |
+| 61 | ✅ | injury-sweep no-injury | Steady Gentle Muscle Flow | 3 | 12006 |  |
+| 62 | ✅ | injury-sweep knee | Gentle Foundation Body Flow | 5 | 10623 |  |
+| 63 | ✅ | injury-sweep shoulder | Gentle Rising Sun Flow | 5 | 10108 |  |
+| 64 | ✅ | injury-sweep lower_back | Gentle Harmony Flow | 5 | 12784 |  |
+| 65 | ✅ | injury-sweep wrist | Gentle Peak Performance | 5 | 10758 |  |
+| 66 | ✅ | injury-sweep ankle | Gentle Giant Muscle Flow | 5 | 11162 |  |
+| 67 | ✅ | injury-sweep hip | Gentle Peak Performance | 5 | 11699 |  |
+| 68 | ✅ | injury-sweep elbow | Ignite Explosive Peak Performance | 3 | 10149 |  |
+| 69 | ✅ | injury-sweep neck | Titan Steel Body Sculpt | 3 | 11586 |  |
+| 70 | ✅ | injury-sweep knee+shoulder | Titan Sculpting Blast | 5 | 10651 |  |
+| 71 | ✅ | injury-sweep knee+lower_back | Titan Sculpting Peak | 5 | 11360 |  |
+| 72 | ✅ | injury-sweep shoulder+wrist | Titan Sculpting Peak | 6 | 11427 |  |
+| 73 | ✅ | injury-sweep knee+shoulder+lower_back | Titan Physique Sculpt | 7 | 9734 |  |
+| 74 | ✅ | injury-sweep knee+shoulder+lower_back+wrist+ankle | Titan Sculpting Blast | 7 | 10328 |  |
+| 75 | ✅ | injury-sweep knee+shoulder+lower_back+wrist+ankle+hip+elbow | Titan Savage Blast | 7 | 11816 |  |
+| 76 | ✅ | dur-range 15-30 | Titan Unleashed Peak Performance | 3 | 9893 |  |
+| 77 | ✅ | dur-range 20-40 | Titan Savage Blast | 3 | 10984 |  |
+| 78 | ✅ | dur-range 30-45 | Savage Beast Body Blast | 5 | 9621 |  |
+| 79 | ✅ | dur-range 45-60 | Apex Predator Body Shock | 5 | 10682 |  |
+| 80 | ✅ | dur-range 60-90 | Apex Warrior Full Blast | 6 | 12492 |  |
+| 81 | ✅ | goal×focus strength/push | Apex Titan Full Body | 8 | 12381 |  |
+| 82 | ✅ | goal×focus strength/pull | Titan Unleashed Peak Performance | 8 | 11428 |  |
+| 83 | ✅ | goal×focus strength/legs | Apex Titan Full Burn | 8 | 10899 |  |
+| 84 | ✅ | goal×focus hypertrophy/upper | Titan Forge Full Intensity | 6 | 11407 |  |
+| 85 | ✅ | goal×focus hypertrophy/lower | Titan Full Body Core | 6 | 11941 |  |
+| 86 | ✅ | goal×focus hypertrophy/arms | Apex Full Body Burn | 6 | 10893 |  |
+| 87 | ✅ | goal×focus fat_loss/cardio | Endurance Peak Flow | 6 | 11186 |  |
+| 88 | ✅ | goal×focus fat_loss/full_body | Apex Full Body Surge | 6 | 11378 |  |
+| 89 | ✅ | goal×focus endurance/cardio | Limitless Flow Full Body | 6 | 10899 |  |
+| 90 | ✅ | goal×focus endurance/lower | Explosive Peak Power | 6 | 10928 |  |
+| 91 | ✅ | goal×focus mobility/mobility | Apex Performance Athletic Flow | 6 | 10794 |  |
+| 92 | ✅ | goal×focus mobility/core | Rapid Fire Total Burn | 6 | 10524 |  |
+| 93 | ✅ | goal×focus power/legs | Peak Performance Kinetic Flow | 6 | 11378 |  |
+| 94 | ✅ | goal×focus power/full_body | Titan Push Precision | 6 | 11578 |  |
+| 95 | ✅ | goal×focus athletic_performance/full_body | Athletic Peak Foundation | 5 | 12576 |  |
+| 96 | ✅ | goal×focus athletic_performance/lower | Titan Leg Furnace | 6 | 10921 |  |
+| 97 | ✅ | goal×focus weight_loss/cardio | Apex Beast Full Body | 6 | 10221 |  |
+| 98 | ✅ | goal×focus weight_loss/upper | Absolute Core Apex | 5 | 9432 |  |
+| 99 | ✅ | goal×focus muscle_tone/arms | Apex Upper Body Fusion | 6 | 10813 |  |
+| 100 | ✅ | goal×focus muscle_tone/glutes | Titan Lower Body Peak | 6 | 8761 |  |
+| 101 | ✅ | goal×focus general_fitness/full_body | Titan Sculpt Arm Blast | 3 | 10147 |  |
+| 102 | ✅ | goal×focus general_fitness/core | Titan Sculpt Shoulder Peak | 6 | 8303 |  |
+| 103 | ✅ | goal×focus strength/shoulders | Titan Glute Sculpting Session | 6 | 9942 |  |
+| 104 | ✅ | goal×focus hypertrophy/shoulders | Rapid Pulse Peak Performance | 6 | 8775 |  |
+| 105 | ✅ | goal×focus hypertrophy/glutes | Apex Prime Body Flow | 6 | 8994 |  |
+| 106 | ✅ | goal×focus strength/core | Titan Full Body Blast | 6 | 8392 |  |
+| 107 | ✅ | goal×focus endurance/full_body | Total Body Kinetic Surge | 6 | 12866 |  |
+| 108 | ✅ | goal×focus power/upper | Titan Total Body | 6 | 9882 |  |
+| 109 | ✅ | goal×focus athletic_performance/shoulders | Kettlebell Titan Strength Circuit | 6 | 9629 |  |
+| 110 | ✅ | goal×focus muscle_tone/core | Gentle Push Strength Flow | 3 | 8375 |  |
+| 111 | ✅ | matrix beginner/15/strength/push/E1_full | Gentle Flow Motion | 3 | 10352 |  |
+| 112 | ✅ | matrix beginner/15/fat_loss/pull/E2_bw | Titan Peak Kinetic Flow | 6 | 9958 |  |
+| 113 | ✅ | matrix beginner/15/general_fitness/legs/E3_db | Titan Full Body Velocity | 6 | 10860 |  |
+| 114 | ✅ | matrix beginner/15/power/full_body/E4_kb | Titan Sculpting Peak Performance | 6 | 9851 |  |
+| 115 | ✅ | matrix beginner/20/general_fitness/core/E5_mach | Titan Sculpting Session | 6 | 8398 |  |
+| 116 | ✅ | matrix beginner/20/power/upper/E6_bands | Steady Gentle Foundation | 3 | 9620 |  |
+| 117 | ✅ | matrix beginner/20/weight_loss/lower/E7_no_bb | Gentle Arm Sculpt Flow | 3 | 10468 |  |
+| 118 | ✅ | matrix beginner/20/strength/arms/E8_fw | Gentle Sculpt Shoulder Flow | 5 | 9529 |  |
+| 119 | ✅ | matrix beginner/30/weight_loss/shoulders/E9_db1 | Absolute Peak Upper Sculpt | 8 | 12610 |  |
+| 120 | ✅ | matrix beginner/30/strength/glutes/E10_home | Gentle Motion Vitality Flow | 3 | 9892 |  |
+| 121 | ✅ | matrix beginner/30/fat_loss/cardio/E11_cardio | Steady Gentle Muscle Flow | 3 | 9861 |  |
+| 122 | ✅ | matrix beginner/30/general_fitness/mobility/E12_bw_bands | Gentle Foundation Body Flow | 5 | 10044 |  |
+| 123 | ✅ | matrix beginner/40/fat_loss/push/E13_TRX | Gentle Rising Sun Flow | 5 | 9973 |  |
+| 124 | ✅ | matrix beginner/40/general_fitness/pull/E14_gym_60 | Gentle Harmony Flow | 5 | 10149 |  |
+| 125 | ✅ | matrix beginner/40/power/legs/E1_full | Gentle Peak Performance | 5 | 9774 |  |
+| 126 | ✅ | matrix beginner/40/weight_loss/full_body/E2_bw | Gentle Giant Muscle Flow | 5 | 9811 |  |
+| 127 | ✅ | matrix beginner/45/power/core/E3_db | Gentle Peak Performance | 5 | 8815 |  |
+| 128 | ✅ | matrix beginner/45/weight_loss/upper/E4_kb | Ignite Explosive Peak Performance | 3 | 10345 |  |
+| 129 | ✅ | matrix beginner/45/strength/lower/E5_mach | Titan Steel Body Sculpt | 3 | 10183 |  |
+| 130 | ✅ | matrix beginner/45/fat_loss/arms/E6_bands | Titan Sculpting Blast | 5 | 8552 |  |
+| 131 | ✅ | matrix beginner/60/strength/shoulders/E7_no_bb | Titan Sculpting Peak | 5 | 9553 |  |
+| 132 | ✅ | matrix beginner/60/fat_loss/glutes/E8_fw | Titan Sculpting Peak | 6 | 9232 |  |
+| 133 | ✅ | matrix beginner/60/general_fitness/cardio/E9_db1 | Titan Physique Sculpt | 7 | 9537 |  |
+| 134 | ✅ | matrix beginner/60/power/mobility/E10_home | Titan Sculpting Blast | 7 | 10250 |  |
+| 135 | ❌ | matrix beginner/75/general_fitness/push/E11_cardio |  | 0 | 724 | HTTP 422: b'{"detail":{"code":"INCOMPATIBLE_EQUIPMENT_FOCUS","message":"Your equ |
+| 136 | ✅ | matrix beginner/75/power/pull/E12_bw_bands | Titan Unleashed Peak Performance | 3 | 9614 |  |
+| 137 | ✅ | matrix beginner/75/weight_loss/legs/E13_TRX | Titan Savage Blast | 3 | 9865 |  |
+| 138 | ✅ | matrix beginner/75/strength/full_body/E14_gym_60 | Savage Beast Body Blast | 5 | 10039 |  |
+| 139 | ✅ | matrix beginner/90/weight_loss/core/E1_full | Apex Predator Body Shock | 5 | 9950 |  |
+| 140 | ✅ | matrix beginner/90/strength/upper/E2_bw | Apex Warrior Full Blast | 6 | 10036 |  |
+| 141 | ✅ | matrix beginner/90/fat_loss/lower/E3_db | Apex Titan Full Body | 8 | 9851 |  |
+| 142 | ✅ | matrix beginner/90/general_fitness/arms/E4_kb | Titan Unleashed Peak Performance | 8 | 9604 |  |
+| 143 | ✅ | matrix intermediate/15/fat_loss/shoulders/E5_mach | Apex Titan Full Burn | 8 | 9048 |  |
+| 144 | ✅ | matrix intermediate/15/general_fitness/glutes/E6_bands | Titan Forge Full Intensity | 6 | 9084 |  |
+| 145 | ✅ | matrix intermediate/15/power/cardio/E7_no_bb | Titan Full Body Core | 6 | 9592 |  |
+| 146 | ✅ | matrix intermediate/15/weight_loss/mobility/E8_fw | Apex Full Body Burn | 6 | 10853 |  |
+| 147 | ✅ | matrix intermediate/20/power/push/E9_db1 | Endurance Peak Flow | 6 | 10487 |  |
+| 148 | ✅ | matrix intermediate/20/weight_loss/pull/E10_home | Apex Full Body Surge | 6 | 10607 |  |
+| 149 | ❌ | matrix intermediate/20/strength/legs/E11_cardio |  | 0 | 612 | HTTP 422: b'{"detail":{"code":"INCOMPATIBLE_EQUIPMENT_FOCUS","message":"Your equ |
+| 150 | ✅ | matrix intermediate/20/fat_loss/full_body/E12_bw_bands | Explosive Peak Power | 6 | 11538 |  |
+| 151 | ✅ | matrix intermediate/30/strength/core/E13_TRX | Apex Performance Athletic Flow | 6 | 8311 |  |
+| 152 | ✅ | matrix intermediate/30/fat_loss/upper/E14_gym_60 | Rapid Fire Total Burn | 6 | 10637 |  |
+| 153 | ✅ | matrix intermediate/30/general_fitness/lower/E1_full | Peak Performance Kinetic Flow | 6 | 11991 |  |
+| 154 | ✅ | matrix intermediate/30/power/arms/E2_bw | Titan Push Precision | 6 | 10560 |  |
+| 155 | ✅ | matrix intermediate/40/general_fitness/shoulders/E3_db | Athletic Peak Foundation | 5 | 10700 |  |
+| 156 | ✅ | matrix intermediate/40/power/glutes/E4_kb | Titan Leg Furnace | 6 | 8235 |  |
+| 157 | ✅ | matrix intermediate/40/weight_loss/cardio/E5_mach | Apex Beast Full Body | 6 | 10164 |  |
+| 158 | ✅ | matrix intermediate/40/strength/mobility/E6_bands | Absolute Core Apex | 5 | 11830 |  |
+| 159 | ✅ | matrix intermediate/45/weight_loss/push/E7_no_bb | Apex Upper Body Fusion | 6 | 11828 |  |
+| 160 | ✅ | matrix intermediate/45/strength/pull/E8_fw | Titan Lower Body Peak | 6 | 11214 |  |
+| 161 | ✅ | matrix intermediate/45/fat_loss/legs/E9_db1 | Titan Sculpt Arm Blast | 3 | 10656 |  |
+| 162 | ✅ | matrix intermediate/45/general_fitness/full_body/E10_home | Titan Sculpt Shoulder Peak | 6 | 10740 |  |
+| 163 | ❌ | matrix intermediate/60/fat_loss/core/E11_cardio |  | 0 | 589 | HTTP 422: b'{"detail":{"code":"INCOMPATIBLE_EQUIPMENT_FOCUS","message":"Your equ |
+| 164 | ✅ | matrix intermediate/60/general_fitness/upper/E12_bw_bands | Rapid Pulse Peak Performance | 6 | 10880 |  |
+| 165 | ✅ | matrix intermediate/60/power/lower/E13_TRX | Apex Prime Body Flow | 6 | 11555 |  |
+| 166 | ✅ | matrix intermediate/60/weight_loss/arms/E14_gym_60 | Titan Full Body Blast | 6 | 11226 |  |
+| 167 | ✅ | matrix intermediate/75/power/shoulders/E1_full | Total Body Kinetic Surge | 6 | 9667 |  |
+| 168 | ✅ | matrix intermediate/75/weight_loss/glutes/E2_bw | Titan Total Body | 6 | 9927 |  |
+| 169 | ✅ | matrix intermediate/75/strength/cardio/E3_db | Kettlebell Titan Strength Circuit | 6 | 10380 |  |
+| 170 | ✅ | matrix intermediate/75/fat_loss/mobility/E4_kb | Gentle Push Strength Flow | 3 | 11933 |  |
+| 171 | ✅ | matrix intermediate/90/strength/push/E5_mach | Gentle Flow Motion | 3 | 9451 |  |
+| 172 | ✅ | matrix intermediate/90/fat_loss/pull/E6_bands | Titan Peak Kinetic Flow | 6 | 11903 |  |
+| 173 | ✅ | matrix intermediate/90/general_fitness/legs/E7_no_bb | Titan Full Body Velocity | 6 | 11270 |  |
+| 174 | ✅ | matrix intermediate/90/power/full_body/E8_fw | Titan Sculpting Peak Performance | 6 | 12292 |  |
+| 175 | ✅ | matrix advanced/15/general_fitness/core/E9_db1 | Titan Sculpting Session | 6 | 8724 |  |
+| 176 | ✅ | matrix advanced/15/power/upper/E10_home | Steady Gentle Foundation | 3 | 11056 |  |
+| 177 | ❌ | matrix advanced/15/weight_loss/lower/E11_cardio |  | 0 | 536 | HTTP 422: b'{"detail":{"code":"INCOMPATIBLE_EQUIPMENT_FOCUS","message":"Your equ |
+| 178 | ✅ | matrix advanced/15/strength/arms/E12_bw_bands | Gentle Sculpt Shoulder Flow | 5 | 10970 |  |
+| 179 | ✅ | matrix advanced/20/weight_loss/shoulders/E13_TRX | Absolute Peak Upper Sculpt | 8 | 9664 |  |
+| 180 | ✅ | matrix advanced/20/strength/glutes/E14_gym_60 | Gentle Motion Vitality Flow | 3 | 9814 |  |
+| 181 | ✅ | matrix advanced/20/fat_loss/cardio/E1_full | Steady Gentle Muscle Flow | 3 | 11795 |  |
+| 182 | ✅ | matrix advanced/20/general_fitness/mobility/E2_bw | Gentle Foundation Body Flow | 5 | 12460 |  |
+| 183 | ✅ | matrix advanced/30/fat_loss/push/E3_db | Gentle Rising Sun Flow | 5 | 9046 |  |
+| 184 | ✅ | matrix advanced/30/general_fitness/pull/E4_kb | Gentle Harmony Flow | 5 | 11869 |  |
+| 185 | ✅ | matrix advanced/30/power/legs/E5_mach | Gentle Peak Performance | 5 | 10794 |  |
+| 186 | ✅ | matrix advanced/30/weight_loss/full_body/E6_bands | Gentle Giant Muscle Flow | 5 | 12871 |  |
+| 187 | ✅ | matrix advanced/40/power/core/E7_no_bb | Gentle Peak Performance | 5 | 8964 |  |
+| 188 | ✅ | matrix advanced/40/weight_loss/upper/E8_fw | Ignite Explosive Peak Performance | 3 | 11376 |  |
+| 189 | ✅ | matrix advanced/40/strength/lower/E9_db1 | Titan Steel Body Sculpt | 3 | 11492 |  |
+| 190 | ✅ | matrix advanced/40/fat_loss/arms/E10_home | Titan Sculpting Blast | 5 | 10727 |  |
+| 191 | ❌ | matrix advanced/45/strength/shoulders/E11_cardio |  | 0 | 748 | HTTP 422: b'{"detail":{"code":"INCOMPATIBLE_EQUIPMENT_FOCUS","message":"Your equ |
+| 192 | ✅ | matrix advanced/45/fat_loss/glutes/E12_bw_bands | Titan Sculpting Peak | 6 | 8304 |  |
+| 193 | ✅ | matrix advanced/45/general_fitness/cardio/E13_TRX | Titan Physique Sculpt | 7 | 10785 |  |
+| 194 | ✅ | matrix advanced/45/power/mobility/E14_gym_60 | Titan Sculpting Blast | 7 | 11452 |  |
+| 195 | ✅ | matrix advanced/60/general_fitness/push/E1_full | Titan Savage Blast | 7 | 10568 |  |
+| 196 | ✅ | matrix advanced/60/power/pull/E2_bw | Titan Unleashed Peak Performance | 3 | 7995 |  |
+| 197 | ✅ | matrix advanced/60/weight_loss/legs/E3_db | Titan Savage Blast | 3 | 11942 |  |
+| 198 | ✅ | matrix advanced/60/strength/full_body/E4_kb | Savage Beast Body Blast | 5 | 11945 |  |
+| 199 | ✅ | matrix advanced/75/weight_loss/core/E5_mach | Apex Predator Body Shock | 5 | 8843 |  |
+| 200 | ✅ | matrix advanced/75/strength/upper/E6_bands | Apex Warrior Full Blast | 6 | 12392 |  |
+| 201 | ✅ | matrix advanced/75/fat_loss/lower/E7_no_bb | Apex Titan Full Body | 8 | 10689 |  |
+| 202 | ✅ | matrix advanced/75/general_fitness/arms/E8_fw | Titan Unleashed Peak Performance | 8 | 13351 |  |
+| 203 | ✅ | matrix advanced/90/fat_loss/shoulders/E9_db1 | Apex Titan Full Burn | 8 | 10357 |  |
+| 204 | ✅ | matrix advanced/90/general_fitness/glutes/E10_home | Titan Forge Full Intensity | 6 | 9955 |  |
+| 205 | ✅ | matrix advanced/90/power/cardio/E11_cardio | Titan Full Body Core | 6 | 10515 |  |
+| 206 | ✅ | matrix advanced/90/weight_loss/mobility/E12_bw_bands | Apex Full Body Burn | 6 | 10815 |  |
+| 207 | ✅ | comeback 0d + intensity easy | Endurance Peak Flow | 6 | 9954 |  |
+| 208 | ✅ | comeback 0d + intensity medium | Apex Full Body Surge | 6 | 12655 |  |
+| 209 | ✅ | comeback 0d + intensity hard | Limitless Flow Full Body | 6 | 10252 |  |
+| 210 | ✅ | comeback 0d + intensity hell | Explosive Peak Power | 6 | 10340 |  |
+| 211 | ✅ | comeback 7d + intensity easy | Apex Performance Athletic Flow | 6 | 11606 |  |
+| 212 | ✅ | comeback 7d + intensity medium | Rapid Fire Total Burn | 6 | 11076 |  |
+| 213 | ✅ | comeback 7d + intensity hard | Peak Performance Kinetic Flow | 6 | 10743 |  |
+| 214 | ✅ | comeback 7d + intensity hell | Titan Push Precision | 6 | 11239 |  |
+| 215 | ✅ | comeback 14d + intensity easy | Athletic Peak Foundation | 5 | 10500 |  |
+| 216 | ✅ | comeback 14d + intensity medium | Titan Leg Furnace | 6 | 11937 |  |
+| 217 | ✅ | comeback 14d + intensity hard | Apex Beast Full Body | 6 | 10180 |  |
+| 218 | ✅ | comeback 14d + intensity hell | Absolute Core Apex | 5 | 11272 |  |
+| 219 | ✅ | comeback 30d + intensity easy | Apex Upper Body Fusion | 6 | 10759 |  |
+| 220 | ✅ | comeback 30d + intensity medium | Titan Lower Body Peak | 6 | 11439 |  |
+| 221 | ✅ | comeback 30d + intensity hard | Titan Sculpt Arm Blast | 3 | 12322 |  |
+| 222 | ✅ | comeback 30d + intensity hell | Titan Sculpt Shoulder Peak | 6 | 11229 |  |
+| 223 | ✅ | comeback 60d + intensity easy | Titan Glute Sculpting Session | 6 | 10404 |  |
+| 224 | ✅ | comeback 60d + intensity medium | Rapid Pulse Peak Performance | 6 | 11318 |  |
+| 225 | ✅ | comeback 60d + intensity hard | Apex Prime Body Flow | 6 | 11100 |  |
+| 226 | ✅ | comeback 60d + intensity hell | Titan Full Body Blast | 6 | 10564 |  |
+| 227 | ✅ | comeback 90d + intensity easy | Total Body Kinetic Surge | 6 | 10963 |  |
+| 228 | ✅ | comeback 90d + intensity medium | Titan Total Body | 6 | 11548 |  |
+| 229 | ✅ | comeback 90d + intensity hard | Kettlebell Titan Strength Circuit | 6 | 10495 |  |
+| 230 | ✅ | comeback 90d + intensity hell | Gentle Push Strength Flow | 3 | 10876 |  |
+| 231 | ✅ | comeback 180d + intensity easy | Gentle Flow Motion | 3 | 10708 |  |
+| 232 | ✅ | comeback 180d + intensity medium | Titan Peak Kinetic Flow | 6 | 11461 |  |
+| 233 | ❌ | comeback 180d + intensity hard |  | 0 | 377 | HTTP 401: b'{"detail":"Session expired \xe2\x80\x94 please log in again."}' |
+| 234 | ❌ | comeback 180d + intensity hell |  | 0 | 528 | HTTP 401: b'{"detail":"Session expired \xe2\x80\x94 please log in again."}' |
+| 235 | ❌ | custom_program: none |  | 0 | 457 | HTTP 401: b'{"detail":"Session expired \xe2\x80\x94 please log in again."}' |
+| 236 | ❌ | custom_program: Train for HYROX in 12 weeks — week 4 |  | 0 | 496 | HTTP 401: b'{"detail":"Session expired \xe2\x80\x94 please log in again."}' |
+| 237 | ❌ | custom_program: Marathon training, week 8 of 16, easy ru |  | 0 | 622 | HTTP 401: b'{"detail":"Session expired \xe2\x80\x94 please log in again."}' |
+| 238 | ❌ | custom_program: Bodybuilding show prep, 8 weeks out, pea |  | 0 | 505 | HTTP 401: b'{"detail":"Session expired \xe2\x80\x94 please log in again."}' |
+| 233 | ✅ | comeback 180d + intensity hard | Titan Full Body Velocity | 6 | 25244 |  |
+| 234 | ✅ | comeback 180d + intensity hell | Titan Sculpting Peak Performance | 6 | 13522 |  |
+| 235 | ✅ | custom_program: none | Titan Sculpting Session | 6 | 11654 |  |
+| 236 | ✅ | custom_program: Train for HYROX in 12 weeks — week 4 | Steady Gentle Foundation | 3 | 12004 |  |
+| 237 | ✅ | custom_program: Marathon training, week 8 of 16, easy ru | Gentle Arm Sculpt Flow | 3 | 12084 |  |
+| 238 | ✅ | custom_program: Bodybuilding show prep, 8 weeks out, pea | Gentle Sculpt Shoulder Flow | 5 | 10780 |  |
+| 239 | ✅ | custom_program: Powerlifting meet in 6 weeks — squat day | Absolute Peak Upper Sculpt | 8 | 10343 |  |
+| 240 | ✅ | custom_program: Calisthenics-only, working toward muscle | Gentle Motion Vitality Flow | 3 | 10552 |  |
+| 241 | ✅ | custom_program: Crossfit Open prep — varied modal domain | Steady Gentle Muscle Flow | 3 | 11692 |  |
+| 242 | ✅ | custom_program: Athlete return-to-sport rehab phase 2 | Gentle Foundation Body Flow | 5 | 11781 |  |
+| 243 | ✅ | custom_program: 12-week deload after marathon — rebuild  | Gentle Rising Sun Flow | 5 | 12154 |  |
+| 244 | ✅ | custom_program: Morning routine before work — quick ener | Gentle Harmony Flow | 5 | 12898 |  |
+| 245 | ✅ | exclude=none | Gentle Peak Performance | 5 | 13151 |  |
+| 246 | ✅ | exclude=bench press,barbell squat,dead | Gentle Giant Muscle Flow | 5 | 10864 |  |
+| 247 | ✅ | exclude=pull-up,chin-up,muscle-up | Gentle Peak Performance | 5 | 11384 |  |
+| 248 | ✅ | exclude=burpee,jump squat,box jump | Ignite Explosive Peak Performance | 3 | 11716 |  |
+| 249 | ✅ | exclude=plank,side plank,dead bug | Titan Steel Body Sculpt | 3 | 11000 |  |
+| 250 | ✅ | exclude=overhead press,snatch,clean an | Titan Sculpting Blast | 5 | 11095 |  |
+| 251 | ✅ | adjacent=none | Titan Sculpting Peak | 5 | 11735 |  |
+| 252 | ✅ | adjacent=bench press,squat,deadlift,pul | Titan Sculpting Peak | 6 | 11818 |  |
+| 253 | ✅ | adjacent=barbell row,pull-up,lat pulldo | Titan Physique Sculpt | 7 | 10885 |  |
+| 254 | ✅ | adjacent=overhead press,lateral raise,f | Titan Sculpting Blast | 7 | 11435 |  |
+| 255 | ✅ | adjacent=leg press,lunges,step-ups | Titan Savage Blast | 7 | 12140 |  |
+| 256 | ✅ | adjacent=bicep curl,hammer curl,preache | Titan Unleashed Peak Performance | 3 | 11517 |  |
+| 257 | ✅ | batch_offset=0 | Titan Savage Blast | 3 | 10881 |  |
+| 258 | ✅ | batch_offset=1 | Savage Beast Body Blast | 5 | 11074 |  |
+| 259 | ✅ | batch_offset=2 | Apex Predator Body Shock | 5 | 10939 |  |
+| 260 | ✅ | batch_offset=3 | Apex Warrior Full Blast | 6 | 11919 |  |
+| 261 | ✅ | batch_offset=5 | Apex Titan Full Body | 8 | 11345 |  |
+| 262 | ✅ | batch_offset=7 | Titan Unleashed Peak Performance | 8 | 11266 |  |
+| 263 | ✅ | batch_offset=10 | Apex Titan Full Burn | 8 | 11857 |  |
+| 264 | ✅ | date today | Titan Steel Kinetic Flow | 6 | 10403 |  |
+| 265 | ✅ | date +1d | Gentle Motion Vitality Flow | 3 | 10621 |  |
+| 266 | ✅ | date +2d | Steady Gentle Muscle Flow | 3 | 12839 |  |
+| 267 | ✅ | date +3d | Gentle Foundation Body Flow | 5 | 10926 |  |
+| 268 | ✅ | date +5d | Gentle Harmony Flow | 5 | 10320 |  |
+| 269 | ✅ | date +7d | Gentle Giant Muscle Flow | 5 | 11936 |  |
+| 270 | ✅ | date +10d | Titan Steel Body Sculpt | 3 | 11672 |  |
+| 271 | ✅ | date +14d | Titan Physique Sculpt | 7 | 12362 |  |
+| 272 | ✅ | date +21d | Apex Warrior Full Blast | 6 | 11095 |  |
+| 273 | ✅ | date +30d | Limitless Flow Full Body | 6 | 12769 |  |
+| 274 | ✅ | date +45d | Rapid Pulse Peak Performance | 6 | 10515 |  |
+| 275 | ✅ | date +60d | Absolute Peak Upper Sculpt | 8 | 10148 |  |
+| 276 | ✅ | date +90d | Apex Predator Full Body Surge | 6 | 11502 |  |
+| 277 | ✅ | date +120d | Titan Full Body Ascension | 6 | 12656 |  |
+| 278 | ✅ | date +180d | Titan Full Body Ignition | 6 | 14143 |  |
+| 279 | ✅ | wt=auto/focus=push | Apex Upper Body Fusion | 6 | 12613 |  |
+| 280 | ✅ | wt=auto/focus=pull | Titan Lower Body Peak | 6 | 10762 |  |
+| 281 | ✅ | wt=auto/focus=legs | Titan Sculpt Arm Blast | 3 | 10495 |  |
+| 282 | ✅ | wt=auto/focus=full_body | Titan Sculpt Shoulder Peak | 6 | 10739 |  |
+| 283 | ✅ | wt=auto/focus=core | Titan Glute Sculpting Session | 6 | 8510 |  |
+| 284 | ✅ | wt=auto/focus=cardio | Rapid Pulse Peak Performance | 6 | 10920 |  |
+| 285 | ✅ | wt=auto/focus=mobility | Apex Prime Body Flow | 6 | 12135 |  |
+| 286 | ✅ | wt=strength/focus=push | Titan Full Body Blast | 6 | 11251 |  |
+| 287 | ✅ | wt=strength/focus=pull | Total Body Kinetic Surge | 6 | 11768 |  |
+| 288 | ✅ | wt=strength/focus=legs | Titan Total Body | 6 | 11579 |  |
+| 289 | ✅ | wt=strength/focus=full_body | Kettlebell Titan Strength Circuit | 6 | 12215 |  |
+| 290 | ✅ | wt=strength/focus=core | Gentle Push Strength Flow | 3 | 8556 |  |
+| 291 | ✅ | wt=strength/focus=cardio | Gentle Flow Motion | 3 | 12303 |  |
+| 292 | ✅ | wt=strength/focus=mobility | Titan Peak Kinetic Flow | 6 | 12112 |  |
+| 293 | ✅ | wt=hypertrophy/focus=push | Titan Full Body Velocity | 6 | 11776 |  |
+| 294 | ✅ | wt=hypertrophy/focus=pull | Titan Sculpting Peak Performance | 6 | 10357 |  |
+| 295 | ✅ | wt=hypertrophy/focus=legs | Titan Sculpting Session | 6 | 10438 |  |
+| 296 | ✅ | wt=hypertrophy/focus=full_body | Steady Gentle Foundation | 3 | 16218 |  |
+| 297 | ✅ | wt=hypertrophy/focus=core | Gentle Arm Sculpt Flow | 3 | 9843 |  |
+| 298 | ✅ | wt=hypertrophy/focus=cardio | Gentle Sculpt Shoulder Flow | 5 | 11815 |  |
+| 299 | ✅ | wt=hypertrophy/focus=mobility | Absolute Peak Upper Sculpt | 8 | 11461 |  |
+| 300 | ✅ | wt=cardio/focus=push | Gentle Motion Vitality Flow | 3 | 11847 |  |
+| 301 | ✅ | wt=cardio/focus=pull | Steady Gentle Muscle Flow | 3 | 11049 |  |
+| 302 | ✅ | wt=cardio/focus=legs | Gentle Foundation Body Flow | 5 | 11587 |  |
+| 303 | ✅ | wt=cardio/focus=full_body | Gentle Rising Sun Flow | 5 | 13622 |  |
+| 304 | ✅ | wt=cardio/focus=core | Gentle Harmony Flow | 5 | 9089 |  |
+| 305 | ✅ | wt=cardio/focus=cardio | Gentle Peak Performance | 5 | 11314 |  |
+| 306 | ✅ | wt=cardio/focus=mobility | Gentle Giant Muscle Flow | 5 | 10911 |  |
+| 307 | ✅ | wt=hiit/focus=push | Gentle Peak Performance | 5 | 11830 |  |
+| 308 | ✅ | wt=hiit/focus=pull | Ignite Explosive Peak Performance | 3 | 11360 |  |
+| 309 | ✅ | wt=hiit/focus=legs | Titan Steel Body Sculpt | 3 | 10699 |  |
+| 310 | ✅ | wt=hiit/focus=full_body | Titan Sculpting Blast | 5 | 12269 |  |
+| 311 | ✅ | wt=hiit/focus=core | Titan Sculpting Peak | 5 | 9332 |  |
+| 312 | ✅ | wt=hiit/focus=cardio | Titan Sculpting Peak | 6 | 10945 |  |
+| 313 | ✅ | wt=hiit/focus=mobility | Titan Physique Sculpt | 7 | 10650 |  |
+| 314 | ✅ | wt=mobility/focus=push | Titan Sculpting Blast | 7 | 13123 |  |
+| 315 | ✅ | wt=mobility/focus=pull | Titan Savage Blast | 7 | 12530 |  |
+| 316 | ✅ | wt=mobility/focus=legs | Titan Unleashed Peak Performance | 3 | 10693 |  |
+| 317 | ✅ | wt=mobility/focus=full_body | Titan Savage Blast | 3 | 10748 |  |
+| 318 | ✅ | wt=mobility/focus=core | Savage Beast Body Blast | 5 | 9020 |  |
+| 319 | ✅ | wt=mobility/focus=cardio | Apex Predator Body Shock | 5 | 12083 |  |
+| 320 | ✅ | wt=mobility/focus=mobility | Apex Warrior Full Blast | 6 | 11544 |  |
+| 321 | ✅ | wt=recovery/focus=push | Apex Titan Full Body | 8 | 11177 |  |
+| 322 | ✅ | wt=recovery/focus=pull | Titan Unleashed Peak Performance | 8 | 11968 |  |
+| 323 | ✅ | wt=recovery/focus=legs | Apex Titan Full Burn | 8 | 9798 |  |
+| 324 | ✅ | wt=recovery/focus=full_body | Titan Forge Full Intensity | 6 | 11893 |  |
+| 325 | ✅ | wt=recovery/focus=core | Titan Full Body Core | 6 | 8476 |  |
+| 326 | ✅ | wt=recovery/focus=cardio | Apex Full Body Burn | 6 | 10899 |  |
+| 327 | ✅ | wt=recovery/focus=mobility | Endurance Peak Flow | 6 | 12187 |  |
+| 328 | ✅ | max constraint stress | Apex Full Body Surge | 6 | 9451 |  |
+| 329 | ✅ | lowest demand at top | Limitless Flow Full Body | 6 | 11952 |  |
+| 330 | ✅ | empty goals + bodyweight | Explosive Peak Power | 6 | 10462 |  |
+| 331 | ✅ | prompt bloat 12 focus areas | Apex Performance Athletic Flow | 6 | 11068 |  |
+| 332 | ✅ | composite real-world | Rapid Fire Total Burn | 6 | 11309 |  |
+| 333 | ✅ | beginner+hell+bodyweight | Peak Performance Kinetic Flow | 6 | 9606 |  |
+| 334 | ✅ | advanced+easy+15min | Titan Push Precision | 6 | 13017 |  |
+| 335 | ✅ | 90min beginner | Athletic Peak Foundation | 5 | 9367 |  |
+| 336 | ✅ | 5min express | Titan Leg Furnace | 6 | 11662 |  |
+| 337 | ✅ | all-7 injuries + bodyweight | Apex Beast Full Body | 6 | 9888 |  |
+| 338 | ✅ | powerlifting prep | Absolute Core Apex | 5 | 9388 |  |
+| 339 | ✅ | marathon training | Apex Upper Body Fusion | 6 | 10846 |  |
+| 340 | ✅ | calisthenics | Titan Lower Body Peak | 6 | 11635 |  |
+| 341 | ✅ | crossfit varied | Titan Sculpt Arm Blast | 3 | 15997 |  |
+| 342 | ✅ | senior with hell intent | Titan Sculpt Shoulder Peak | 6 | 10704 |  |
+| 343 | ✅ | multi-goal mobility+strength | Titan Glute Sculpting Session | 6 | 11881 |  |
+| 344 | ✅ | multi-focus push+pull+core | Rapid Pulse Peak Performance | 6 | 11098 |  |
+| 345 | ✅ | range 15-30 strength | Apex Prime Body Flow | 6 | 10907 |  |
+| 346 | ✅ | range 60-90 hypertrophy | Titan Full Body Blast | 6 | 13917 |  |
+| 347 | ✅ | single dumbbell only | Total Body Kinetic Surge | 6 | 11921 |  |
+| 348 | ❌ | cardio-machines + strength focus |  | 0 | 621 | HTTP 422: b'{"detail":{"code":"INCOMPATIBLE_EQUIPMENT_FOCUS","message":"Your equ |
+| 349 | ✅ | 60min bodyweight legs | Kettlebell Titan Strength Circuit | 6 | 10026 |  |
+| 350 | ✅ | bands only + powerlifting | Gentle Push Strength Flow | 3 | 12373 |  |
+| 351 | ✅ | 60-item gym + mobility | Gentle Flow Motion | 3 | 11160 |  |
+| 352 | ✅ | TRX + strength | Titan Peak Kinetic Flow | 6 | 11306 |  |
+| 353 | ✅ | excl + adj combined | Titan Full Body Velocity | 6 | 12422 |  |
+| 354 | ✅ | variety #1 | Titan Sculpting Peak Performance | 6 | 11205 |  |
+| 355 | ✅ | variety #2 | Titan Sculpting Session | 6 | 11034 |  |
+| 356 | ✅ | variety #3 | Steady Gentle Foundation | 3 | 11430 |  |
+| 357 | ✅ | KB power advanced | Gentle Arm Sculpt Flow | 3 | 11513 |  |
+| 358 | ✅ | rehab ankle + cardio focus | Gentle Sculpt Shoulder Flow | 5 | 9669 |  |
+| 359 | ✅ | athletic_perf + knee | Absolute Peak Upper Sculpt | 8 | 11654 |  |
+| 360 | ✅ | beginner KB only | Gentle Motion Vitality Flow | 3 | 11399 |  |
+| 361 | ✅ | senior 75+ proxy | Steady Gentle Muscle Flow | 3 | 10034 |  |
+| 362 | ✅ | adv + mobility + 90min | Gentle Foundation Body Flow | 5 | 10866 |  |
+| 363 | ✅ | multi-injury + cardio | Gentle Rising Sun Flow | 5 | 10353 |  |
+| 364 | ✅ | range 45-60 full body | Gentle Harmony Flow | 5 | 9852 |  |
+| 365 | ✅ | range 30-45 push | Gentle Peak Performance | 5 | 10452 |  |
+| 366 | ✅ | HIIT + cardio + KB | Gentle Giant Muscle Flow | 5 | 10693 |  |
+| 367 | ✅ | recovery + bands | Gentle Peak Performance | 5 | 10605 |  |
+| 368 | ✅ | advanced 90min strength | Ignite Explosive Peak Performance | 3 | 14829 |  |
+| 369 | ✅ | bodyweight cardio | Titan Steel Body Sculpt | 3 | 10705 |  |
+| 370 | ✅ | glutes focus intermediate | Titan Sculpting Blast | 5 | 9435 |  |
+| 371 | ✅ | arms + dumbbells | Titan Sculpting Peak | 5 | 11684 |  |
+| 372 | ✅ | shoulders + advanced | Titan Sculpting Peak | 6 | 10760 |  |
+| 373 | ✅ | progressive overload sanity | Titan Physique Sculpt | 7 | 9858 |  |
+| 374 | ✅ | 75min endurance run | Titan Sculpting Blast | 7 | 11178 |  |
+| 375 | ✅ | big-3 powerlift | Titan Savage Blast | 7 | 10942 |  |
+| 376 | ✅ | yoga style mobility | Titan Unleashed Peak Performance | 3 | 10157 |  |
+| 377 | ✅ | union all goals 60min | Titan Savage Blast | 3 | 10972 |  |
+| 378 | ✅ | pad beginner/15/strength/push/E1_full/inj=knee | Savage Beast Body Blast | 5 | 9460 |  |
+| 379 | ✅ | pad intermediate/20/hypertrophy/pull/E2_bw/inj=shoulder | Apex Predator Body Shock | 5 | 13356 |  |
+| 380 | ✅ | pad advanced/30/fat_loss/legs/E3_db/inj=lower_back | Apex Warrior Full Blast | 6 | 15500 |  |
+| 381 | ✅ | pad beginner/40/endurance/full_body/E4_kb/inj=wrist | Apex Titan Full Body | 8 | 10236 |  |
+| 382 | ✅ | pad intermediate/45/general_fitness/core/E5_mach/inj=ankle | Titan Unleashed Peak Performance | 8 | 8522 |  |
+| 383 | ✅ | pad advanced/60/mobility/upper/E6_bands/inj=hip | Apex Titan Full Burn | 8 | 12117 |  |
+| 384 | ✅ | pad beginner/75/power/lower/E7_no_bb/inj=elbow | Titan Forge Full Intensity | 6 | 10781 |  |
+| 385 | ✅ | pad intermediate/90/athletic_performance/arms/E8_fw/inj=neck | Titan Full Body Core | 6 | 11151 |  |
+| 386 | ✅ | pad advanced/15/weight_loss/shoulders/E9_db1/inj=knee+should | Apex Full Body Burn | 6 | 10572 |  |
+| 387 | ✅ | pad beginner/20/muscle_tone/glutes/E10_home/inj=knee+lower_b | Endurance Peak Flow | 6 | 11476 |  |
+| 388 | ✅ | pad intermediate/30/strength/cardio/E11_cardio/inj=shoulder+ | Apex Full Body Surge | 6 | 10306 |  |
+| 389 | ✅ | pad advanced/40/hypertrophy/mobility/E12_bw_bands/inj=knee+s | Limitless Flow Full Body | 6 | 11101 |  |
+| 390 | ✅ | pad beginner/45/fat_loss/push/E13_TRX/inj=knee+shoulder+lowe | Explosive Peak Power | 6 | 9576 |  |
+| 391 | ✅ | pad intermediate/60/endurance/pull/E14_gym_60/inj=knee+shoul | Apex Performance Athletic Flow | 6 | 10827 |  |
+| 392 | ✅ | pad advanced/75/general_fitness/legs/E1_full/inj=knee | Rapid Fire Total Burn | 6 | 9147 |  |
+| 393 | ✅ | pad beginner/90/mobility/full_body/E2_bw/inj=shoulder | Peak Performance Kinetic Flow | 6 | 9487 |  |
+| 394 | ✅ | pad intermediate/15/power/core/E3_db/inj=lower_back | Titan Push Precision | 6 | 11209 |  |
+| 395 | ✅ | pad advanced/20/athletic_performance/upper/E4_kb/inj=wrist | Athletic Peak Foundation | 5 | 12162 |  |
+| 396 | ✅ | pad beginner/30/weight_loss/lower/E5_mach/inj=ankle | Titan Leg Furnace | 6 | 9520 |  |
+| 397 | ✅ | pad intermediate/40/muscle_tone/arms/E6_bands/inj=hip | Apex Beast Full Body | 6 | 10289 |  |
+| 398 | ✅ | pad advanced/45/strength/shoulders/E7_no_bb/inj=elbow | Absolute Core Apex | 5 | 10752 |  |
+| 399 | ✅ | pad beginner/60/hypertrophy/glutes/E8_fw/inj=neck | Apex Upper Body Fusion | 6 | 9687 |  |
+| 400 | ✅ | pad intermediate/75/fat_loss/cardio/E9_db1/inj=knee+shoulder | Titan Lower Body Peak | 6 | 10631 |  |
+| 401 | ✅ | pad advanced/90/endurance/mobility/E10_home/inj=knee+lower_b | Titan Sculpt Arm Blast | 3 | 11748 |  |
+| 402 | ❌ | pad beginner/15/general_fitness/push/E11_cardio/inj=shoulder |  | 0 | 568 | HTTP 422: b'{"detail":{"code":"INCOMPATIBLE_EQUIPMENT_FOCUS","message":"Your equ |
+| 403 | ✅ | pad intermediate/20/mobility/pull/E12_bw_bands/inj=knee+shou | Titan Glute Sculpting Session | 6 | 11502 |  |
+| 404 | ✅ | pad advanced/30/power/legs/E13_TRX/inj=knee+shoulder+lower_b | Rapid Pulse Peak Performance | 6 | 11703 |  |
+| 405 | ✅ | pad beginner/40/athletic_performance/full_body/E14_gym_60/in | Apex Prime Body Flow | 6 | 10357 |  |
+| 406 | ✅ | pad intermediate/45/weight_loss/core/E1_full/inj=knee | Titan Full Body Blast | 6 | 10611 |  |
+| 407 | ✅ | pad advanced/60/muscle_tone/upper/E2_bw/inj=shoulder | Total Body Kinetic Surge | 6 | 10546 |  |
+| 408 | ✅ | pad beginner/75/strength/lower/E3_db/inj=lower_back | Titan Total Body | 6 | 9757 |  |
+| 409 | ✅ | pad intermediate/90/hypertrophy/arms/E4_kb/inj=wrist | Kettlebell Titan Strength Circuit | 6 | 11152 |  |
+| 410 | ✅ | pad advanced/15/fat_loss/shoulders/E5_mach/inj=ankle | Gentle Push Strength Flow | 3 | 8781 |  |
+| 411 | ✅ | pad beginner/20/endurance/glutes/E6_bands/inj=hip | Gentle Flow Motion | 3 | 9365 |  |
+| 412 | ✅ | pad intermediate/30/general_fitness/cardio/E7_no_bb/inj=elbo | Titan Peak Kinetic Flow | 6 | 11007 |  |
+| 413 | ✅ | pad advanced/40/mobility/mobility/E8_fw/inj=neck | Titan Full Body Velocity | 6 | 12043 |  |
+| 414 | ✅ | pad beginner/45/power/push/E9_db1/inj=knee+shoulder | Titan Sculpting Peak Performance | 6 | 9532 |  |
+| 415 | ✅ | pad intermediate/60/athletic_performance/pull/E10_home/inj=k | Titan Sculpting Session | 6 | 12261 |  |
+| 416 | ❌ | pad advanced/75/weight_loss/legs/E11_cardio/inj=shoulder+wri |  | 0 | 698 | HTTP 422: b'{"detail":{"code":"INCOMPATIBLE_EQUIPMENT_FOCUS","message":"Your equ |
+| 417 | ✅ | pad beginner/90/muscle_tone/full_body/E12_bw_bands/inj=knee+ | Gentle Arm Sculpt Flow | 3 | 12399 |  |
+| 418 | ✅ | pad intermediate/15/strength/core/E13_TRX/inj=knee+shoulder+ | Gentle Sculpt Shoulder Flow | 5 | 10139 |  |
+| 419 | ✅ | pad advanced/20/hypertrophy/upper/E14_gym_60/inj=knee+should | Absolute Peak Upper Sculpt | 8 | 12093 |  |
+| 420 | ✅ | pad beginner/30/fat_loss/lower/E1_full/inj=knee | Gentle Motion Vitality Flow | 3 | 10445 |  |
+| 421 | ✅ | pad intermediate/40/endurance/arms/E2_bw/inj=shoulder | Steady Gentle Muscle Flow | 3 | 12095 |  |
+| 422 | ✅ | pad advanced/45/general_fitness/shoulders/E3_db/inj=lower_ba | Gentle Foundation Body Flow | 5 | 14703 |  |
+| 423 | ✅ | pad beginner/60/mobility/glutes/E4_kb/inj=wrist | Gentle Rising Sun Flow | 5 | 9770 |  |
+| 424 | ✅ | pad intermediate/75/power/cardio/E5_mach/inj=ankle | Gentle Harmony Flow | 5 | 12562 |  |
+| 425 | ✅ | pad advanced/90/athletic_performance/mobility/E6_bands/inj=h | Gentle Peak Performance | 5 | 12928 |  |
+| 426 | ✅ | pad beginner/15/weight_loss/push/E7_no_bb/inj=elbow | Gentle Giant Muscle Flow | 5 | 11436 |  |
+| 427 | ✅ | pad intermediate/20/muscle_tone/pull/E8_fw/inj=neck | Gentle Peak Performance | 5 | 14090 |  |
+| 428 | ✅ | pad advanced/30/strength/legs/E9_db1/inj=knee+shoulder | Ignite Explosive Peak Performance | 3 | 12177 |  |
+| 429 | ✅ | pad beginner/40/hypertrophy/full_body/E10_home/inj=knee+lowe | Titan Steel Body Sculpt | 3 | 10643 |  |
+| 430 | ❌ | pad intermediate/45/fat_loss/core/E11_cardio/inj=shoulder+wr |  | 0 | 2301 | HTTP 422: b'{"detail":{"code":"INCOMPATIBLE_EQUIPMENT_FOCUS","message":"Your equ |
+| 431 | ✅ | pad advanced/60/endurance/upper/E12_bw_bands/inj=knee+should | Titan Sculpting Peak | 5 | 15952 |  |
+| 432 | ✅ | pad beginner/75/general_fitness/lower/E13_TRX/inj=knee+shoul | Titan Sculpting Peak | 6 | 10966 |  |
+| 433 | ✅ | pad intermediate/90/mobility/arms/E14_gym_60/inj=knee+should | Titan Physique Sculpt | 7 | 12934 |  |
+| 434 | ✅ | pad advanced/15/power/shoulders/E1_full/inj=knee | Titan Sculpting Blast | 7 | 12426 |  |
+| 435 | ✅ | pad beginner/20/athletic_performance/glutes/E2_bw/inj=should | Titan Savage Blast | 7 | 10290 |  |
+| 436 | ✅ | pad intermediate/30/weight_loss/cardio/E3_db/inj=lower_back | Titan Unleashed Peak Performance | 3 | 11134 |  |
+| 437 | ✅ | pad advanced/40/muscle_tone/mobility/E4_kb/inj=wrist | Titan Savage Blast | 3 | 11707 |  |
+| 438 | ✅ | pad beginner/45/strength/push/E5_mach/inj=ankle | Savage Beast Body Blast | 5 | 10831 |  |
+| 439 | ✅ | pad intermediate/60/hypertrophy/pull/E6_bands/inj=hip | Apex Predator Body Shock | 5 | 12286 |  |
+| 440 | ✅ | pad advanced/75/fat_loss/legs/E7_no_bb/inj=elbow | Apex Warrior Full Blast | 6 | 12779 |  |
+| 441 | ✅ | pad beginner/90/endurance/full_body/E8_fw/inj=neck | Apex Titan Full Body | 8 | 10870 |  |
+| 442 | ✅ | pad intermediate/15/general_fitness/core/E9_db1/inj=knee+sho | Titan Unleashed Peak Performance | 8 | 8744 |  |
+| 443 | ❌ | pad advanced/20/mobility/upper/E10_home/inj=knee+lower_back |  | 0 | 538 | HTTP 401: b'{"detail":"Session expired \xe2\x80\x94 please log in again."}' |
+| 444 | ❌ | pad beginner/30/power/lower/E11_cardio/inj=shoulder+wrist |  | 0 | 345 | HTTP 401: b'{"detail":"Session expired \xe2\x80\x94 please log in again."}' |
+| 445 | ❌ | pad intermediate/40/athletic_performance/arms/E12_bw_bands/i |  | 0 | 646 | HTTP 401: b'{"detail":"Session expired \xe2\x80\x94 please log in again."}' |
+| 446 | ❌ | pad advanced/45/weight_loss/shoulders/E13_TRX/inj=knee+shoul |  | 0 | 506 | HTTP 401: b'{"detail":"Session expired \xe2\x80\x94 please log in again."}' |
+| 447 | ❌ | pad beginner/60/muscle_tone/glutes/E14_gym_60/inj=knee+shoul |  | 0 | 418 | HTTP 401: b'{"detail":"Session expired \xe2\x80\x94 please log in again."}' |
+| 448 | ❌ | pad intermediate/75/strength/cardio/E1_full/inj=knee |  | 0 | 470 | HTTP 401: b'{"detail":"Session expired \xe2\x80\x94 please log in again."}' |
+| 449 | ❌ | pad advanced/90/hypertrophy/mobility/E2_bw/inj=shoulder |  | 0 | 504 | HTTP 401: b'{"detail":"Session expired \xe2\x80\x94 please log in again."}' |
+| 450 | ❌ | pad beginner/15/fat_loss/push/E3_db/inj=lower_back |  | 0 | 320 | HTTP 401: b'{"detail":"Session expired \xe2\x80\x94 please log in again."}' |
+| 451 | ❌ | pad intermediate/20/endurance/pull/E4_kb/inj=wrist |  | 0 | 479 | HTTP 401: b'{"detail":"Session expired \xe2\x80\x94 please log in again."}' |
+| 452 | ❌ | pad advanced/30/general_fitness/legs/E5_mach/inj=ankle |  | 0 | 584 | HTTP 401: b'{"detail":"Session expired \xe2\x80\x94 please log in again."}' |
+| 453 | ❌ | pad beginner/40/mobility/full_body/E6_bands/inj=hip |  | 0 | 352 | HTTP 401: b'{"detail":"Session expired \xe2\x80\x94 please log in again."}' |
+| 454 | ❌ | pad intermediate/45/power/core/E7_no_bb/inj=elbow |  | 0 | 338 | HTTP 401: b'{"detail":"Session expired \xe2\x80\x94 please log in again."}' |
+| 455 | ❌ | pad advanced/60/athletic_performance/upper/E8_fw/inj=neck |  | 0 | 415 | HTTP 401: b'{"detail":"Session expired \xe2\x80\x94 please log in again."}' |
+| 456 | ❌ | pad beginner/75/weight_loss/lower/E9_db1/inj=knee+shoulder |  | 0 | 367 | HTTP 401: b'{"detail":"Session expired \xe2\x80\x94 please log in again."}' |
+| 457 | ❌ | pad intermediate/90/muscle_tone/arms/E10_home/inj=knee+lower |  | 0 | 477 | HTTP 401: b'{"detail":"Session expired \xe2\x80\x94 please log in again."}' |
+| 458 | ❌ | pad advanced/15/strength/shoulders/E11_cardio/inj=shoulder+w |  | 0 | 567 | HTTP 401: b'{"detail":"Session expired \xe2\x80\x94 please log in again."}' |
+| 459 | ❌ | pad beginner/20/hypertrophy/glutes/E12_bw_bands/inj=knee+sho |  | 0 | 376 | HTTP 401: b'{"detail":"Session expired \xe2\x80\x94 please log in again."}' |
+| 460 | ❌ | pad intermediate/30/fat_loss/cardio/E13_TRX/inj=knee+shoulde |  | 0 | 363 | HTTP 401: b'{"detail":"Session expired \xe2\x80\x94 please log in again."}' |
+| 461 | ❌ | pad advanced/40/endurance/mobility/E14_gym_60/inj=knee+shoul |  | 0 | 421 | HTTP 401: b'{"detail":"Session expired \xe2\x80\x94 please log in again."}' |
+| 462 | ❌ | pad beginner/45/general_fitness/push/E1_full/inj=knee |  | 0 | 473 | HTTP 401: b'{"detail":"Session expired \xe2\x80\x94 please log in again."}' |
+| 463 | ❌ | pad intermediate/60/mobility/pull/E2_bw/inj=shoulder |  | 0 | 575 | HTTP 401: b'{"detail":"Session expired \xe2\x80\x94 please log in again."}' |
+| 464 | ❌ | pad advanced/75/power/legs/E3_db/inj=lower_back |  | 0 | 423 | HTTP 401: b'{"detail":"Session expired \xe2\x80\x94 please log in again."}' |
+| 465 | ❌ | pad beginner/90/athletic_performance/full_body/E4_kb/inj=wri |  | 0 | 525 | HTTP 401: b'{"detail":"Session expired \xe2\x80\x94 please log in again."}' |
+| 466 | ❌ | pad intermediate/15/weight_loss/core/E5_mach/inj=ankle |  | 0 | 418 | HTTP 401: b'{"detail":"Session expired \xe2\x80\x94 please log in again."}' |
+| 467 | ❌ | pad advanced/20/muscle_tone/upper/E6_bands/inj=hip |  | 0 | 344 | HTTP 401: b'{"detail":"Session expired \xe2\x80\x94 please log in again."}' |
+| 468 | ❌ | pad beginner/30/strength/lower/E7_no_bb/inj=elbow |  | 0 | 396 | HTTP 401: b'{"detail":"Session expired \xe2\x80\x94 please log in again."}' |
+| 469 | ❌ | pad intermediate/40/hypertrophy/arms/E8_fw/inj=neck |  | 0 | 422 | HTTP 401: b'{"detail":"Session expired \xe2\x80\x94 please log in again."}' |
+| 470 | ❌ | pad advanced/45/fat_loss/shoulders/E9_db1/inj=knee+shoulder |  | 0 | 332 | HTTP 401: b'{"detail":"Session expired \xe2\x80\x94 please log in again."}' |
+| 471 | ❌ | pad beginner/60/endurance/glutes/E10_home/inj=knee+lower_bac |  | 0 | 447 | HTTP 401: b'{"detail":"Session expired \xe2\x80\x94 please log in again."}' |
+| 472 | ❌ | pad intermediate/75/general_fitness/cardio/E11_cardio/inj=sh |  | 0 | 469 | HTTP 401: b'{"detail":"Session expired \xe2\x80\x94 please log in again."}' |
+| 473 | ❌ | pad advanced/90/mobility/mobility/E12_bw_bands/inj=knee+shou |  | 0 | 430 | HTTP 401: b'{"detail":"Session expired \xe2\x80\x94 please log in again."}' |
+| 474 | ❌ | pad beginner/15/power/push/E13_TRX/inj=knee+shoulder+lower_b |  | 0 | 513 | HTTP 401: b'{"detail":"Session expired \xe2\x80\x94 please log in again."}' |
+| 475 | ❌ | pad intermediate/20/athletic_performance/pull/E14_gym_60/inj |  | 0 | 343 | HTTP 401: b'{"detail":"Session expired \xe2\x80\x94 please log in again."}' |
+| 476 | ❌ | pad advanced/30/weight_loss/legs/E1_full/inj=knee |  | 0 | 334 | HTTP 401: b'{"detail":"Session expired \xe2\x80\x94 please log in again."}' |
+| 443 | ✅ | pad advanced/20/mobility/upper/E10_home/inj=knee+lower_back | Apex Titan Full Burn | 8 | 16728 |  |
+| 444 | ❌ | pad beginner/30/power/lower/E11_cardio/inj=shoulder+wrist |  | 0 | 660 | HTTP 422: b'{"detail":{"code":"INCOMPATIBLE_EQUIPMENT_FOCUS","message":"Your equ |
+| 445 | ✅ | pad intermediate/40/athletic_performance/arms/E12_bw_bands/i | Titan Full Body Core | 6 | 9740 |  |
+| 446 | ✅ | pad advanced/45/weight_loss/shoulders/E13_TRX/inj=knee+shoul | Apex Full Body Burn | 6 | 8881 |  |
+| 447 | ✅ | pad beginner/60/muscle_tone/glutes/E14_gym_60/inj=knee+shoul | Endurance Peak Flow | 6 | 11270 |  |
+| 448 | ✅ | pad intermediate/75/strength/cardio/E1_full/inj=knee | Apex Full Body Surge | 6 | 11137 |  |
+| 449 | ✅ | pad advanced/90/hypertrophy/mobility/E2_bw/inj=shoulder | Limitless Flow Full Body | 6 | 11083 |  |
+| 450 | ✅ | pad beginner/15/fat_loss/push/E3_db/inj=lower_back | Explosive Peak Power | 6 | 9889 |  |
+| 451 | ✅ | pad intermediate/20/endurance/pull/E4_kb/inj=wrist | Apex Performance Athletic Flow | 6 | 11584 |  |
+| 452 | ✅ | pad advanced/30/general_fitness/legs/E5_mach/inj=ankle | Rapid Fire Total Burn | 6 | 12661 |  |
+| 453 | ✅ | pad beginner/40/mobility/full_body/E6_bands/inj=hip | Peak Performance Kinetic Flow | 6 | 9942 |  |
+| 454 | ✅ | pad intermediate/45/power/core/E7_no_bb/inj=elbow | Titan Push Precision | 6 | 11934 |  |
+| 455 | ✅ | pad advanced/60/athletic_performance/upper/E8_fw/inj=neck | Athletic Peak Foundation | 5 | 11701 |  |
+| 456 | ✅ | pad beginner/75/weight_loss/lower/E9_db1/inj=knee+shoulder | Titan Leg Furnace | 6 | 9904 |  |
+| 457 | ✅ | pad intermediate/90/muscle_tone/arms/E10_home/inj=knee+lower | Apex Beast Full Body | 6 | 11384 |  |
+| 458 | ❌ | pad advanced/15/strength/shoulders/E11_cardio/inj=shoulder+w |  | 0 | 594 | HTTP 422: b'{"detail":{"code":"INCOMPATIBLE_EQUIPMENT_FOCUS","message":"Your equ |
+| 459 | ✅ | pad beginner/20/hypertrophy/glutes/E12_bw_bands/inj=knee+sho | Apex Upper Body Fusion | 6 | 9351 |  |
+| 460 | ✅ | pad intermediate/30/fat_loss/cardio/E13_TRX/inj=knee+shoulde | Titan Lower Body Peak | 6 | 11616 |  |
+| 461 | ✅ | pad advanced/40/endurance/mobility/E14_gym_60/inj=knee+shoul | Titan Sculpt Arm Blast | 3 | 12504 |  |
+| 462 | ✅ | pad beginner/45/general_fitness/push/E1_full/inj=knee | Titan Sculpt Shoulder Peak | 6 | 10522 |  |
+| 463 | ✅ | pad intermediate/60/mobility/pull/E2_bw/inj=shoulder | Titan Glute Sculpting Session | 6 | 13132 |  |
+| 464 | ✅ | pad advanced/75/power/legs/E3_db/inj=lower_back | Rapid Pulse Peak Performance | 6 | 12849 |  |
+| 465 | ✅ | pad beginner/90/athletic_performance/full_body/E4_kb/inj=wri | Apex Prime Body Flow | 6 | 9477 |  |
+| 466 | ✅ | pad intermediate/15/weight_loss/core/E5_mach/inj=ankle | Titan Full Body Blast | 6 | 11558 |  |
+| 467 | ✅ | pad advanced/20/muscle_tone/upper/E6_bands/inj=hip | Total Body Kinetic Surge | 6 | 11905 |  |
+| 468 | ✅ | pad beginner/30/strength/lower/E7_no_bb/inj=elbow | Titan Total Body | 6 | 9725 |  |
+| 469 | ✅ | pad intermediate/40/hypertrophy/arms/E8_fw/inj=neck | Kettlebell Titan Strength Circuit | 6 | 11623 |  |
+| 470 | ✅ | pad advanced/45/fat_loss/shoulders/E9_db1/inj=knee+shoulder | Gentle Push Strength Flow | 3 | 11607 |  |
+| 471 | ✅ | pad beginner/60/endurance/glutes/E10_home/inj=knee+lower_bac | Gentle Flow Motion | 3 | 13330 |  |
+| 472 | ✅ | pad intermediate/75/general_fitness/cardio/E11_cardio/inj=sh | Titan Peak Kinetic Flow | 6 | 12807 |  |
+| 473 | ✅ | pad advanced/90/mobility/mobility/E12_bw_bands/inj=knee+shou | Titan Full Body Velocity | 6 | 11777 |  |
+| 474 | ✅ | pad beginner/15/power/push/E13_TRX/inj=knee+shoulder+lower_b | Titan Sculpting Peak Performance | 6 | 11598 |  |
+| 475 | ✅ | pad intermediate/20/athletic_performance/pull/E14_gym_60/inj | Titan Sculpting Session | 6 | 11554 |  |
+| 476 | ✅ | pad advanced/30/weight_loss/legs/E1_full/inj=knee | Steady Gentle Foundation | 3 | 11960 |  |
+| 477 | ✅ | pad beginner/40/muscle_tone/full_body/E2_bw/inj=shoulder | Gentle Arm Sculpt Flow | 3 | 10211 |  |
+| 478 | ✅ | pad intermediate/45/strength/core/E3_db/inj=lower_back | Gentle Sculpt Shoulder Flow | 5 | 11036 |  |
+| 479 | ✅ | pad advanced/60/hypertrophy/upper/E4_kb/inj=wrist | Absolute Peak Upper Sculpt | 8 | 12131 |  |
+| 480 | ✅ | pad beginner/75/fat_loss/lower/E5_mach/inj=ankle | Gentle Motion Vitality Flow | 3 | 9110 |  |
+| 481 | ✅ | pad intermediate/90/endurance/arms/E6_bands/inj=hip | Steady Gentle Muscle Flow | 3 | 10667 |  |
+| 482 | ✅ | pad advanced/15/general_fitness/shoulders/E7_no_bb/inj=elbow | Gentle Foundation Body Flow | 5 | 12792 |  |
+| 483 | ✅ | pad beginner/20/mobility/glutes/E8_fw/inj=neck | Gentle Rising Sun Flow | 5 | 10040 |  |
+| 484 | ✅ | pad intermediate/30/power/cardio/E9_db1/inj=knee+shoulder | Gentle Harmony Flow | 5 | 11282 |  |
+| 485 | ✅ | pad advanced/40/athletic_performance/mobility/E10_home/inj=k | Gentle Peak Performance | 5 | 12211 |  |
+| 486 | ❌ | pad beginner/45/weight_loss/push/E11_cardio/inj=shoulder+wri |  | 0 | 680 | HTTP 422: b'{"detail":{"code":"INCOMPATIBLE_EQUIPMENT_FOCUS","message":"Your equ |
+| 487 | ✅ | pad intermediate/60/muscle_tone/pull/E12_bw_bands/inj=knee+s | Gentle Peak Performance | 5 | 11107 |  |
+| 488 | ✅ | pad advanced/75/strength/legs/E13_TRX/inj=knee+shoulder+lowe | Ignite Explosive Peak Performance | 3 | 12667 |  |
+| 489 | ✅ | pad beginner/90/hypertrophy/full_body/E14_gym_60/inj=knee+sh | Titan Steel Body Sculpt | 3 | 11077 |  |
+| 490 | ✅ | pad intermediate/15/fat_loss/core/E1_full/inj=knee | Titan Sculpting Blast | 5 | 11157 |  |
+| 491 | ✅ | pad advanced/20/endurance/upper/E2_bw/inj=shoulder | Titan Sculpting Peak | 5 | 11115 |  |
+| 492 | ✅ | pad beginner/30/general_fitness/lower/E3_db/inj=lower_back | Titan Sculpting Peak | 6 | 9232 |  |
+| 493 | ✅ | pad intermediate/40/mobility/arms/E4_kb/inj=wrist | Titan Physique Sculpt | 7 | 11162 |  |
+| 494 | ✅ | pad advanced/45/power/shoulders/E5_mach/inj=ankle | Titan Sculpting Blast | 7 | 9669 |  |
+| 495 | ✅ | pad beginner/60/athletic_performance/glutes/E6_bands/inj=hip | Titan Savage Blast | 7 | 10950 |  |
+| 496 | ✅ | pad intermediate/75/weight_loss/cardio/E7_no_bb/inj=elbow | Titan Unleashed Peak Performance | 3 | 12457 |  |
+| 497 | ✅ | pad advanced/90/muscle_tone/mobility/E8_fw/inj=neck | Titan Savage Blast | 3 | 13725 |  |
+| 498 | ✅ | pad beginner/15/strength/push/E9_db1/inj=knee+shoulder | Savage Beast Body Blast | 5 | 10011 |  |
+| 499 | ✅ | pad intermediate/20/hypertrophy/pull/E10_home/inj=knee+lower | Apex Predator Body Shock | 5 | 13842 |  |
+| 500 | ❌ | pad advanced/30/fat_loss/legs/E11_cardio/inj=shoulder+wrist |  | 0 | 564 | HTTP 422: b'{"detail":{"code":"INCOMPATIBLE_EQUIPMENT_FOCUS","message":"Your equ |

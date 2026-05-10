@@ -126,6 +126,34 @@ from datetime import datetime
 # Workout Models
 # ============================================
 
+# Workout difficulty namespace is strictly {easy, medium, hard, hell}.
+# `beginner/intermediate/advanced` belong on `User.fitness_level`. Conflating
+# the two namespaces caused 145/428 rows in the 2026-05-08 sweep to ship as
+# difficulty="beginner" (an invalid value the client cannot render). The
+# validator below normalizes legacy fitness-level values defensively and
+# rejects any other unknown value.
+ALLOWED_WORKOUT_DIFFICULTIES = {"easy", "medium", "hard", "hell"}
+_FITNESS_LEVEL_TO_DIFFICULTY = {
+    "beginner": "easy",
+    "intermediate": "medium",
+    "advanced": "hard",
+}
+
+
+def _coerce_workout_difficulty(value):
+    if value is None or value == "":
+        return value
+    v = str(value).strip().lower()
+    if v in ALLOWED_WORKOUT_DIFFICULTIES:
+        return v
+    if v in _FITNESS_LEVEL_TO_DIFFICULTY:
+        return _FITNESS_LEVEL_TO_DIFFICULTY[v]
+    raise ValueError(
+        f"workout difficulty must be one of {sorted(ALLOWED_WORKOUT_DIFFICULTIES)}; "
+        f"got {value!r}"
+    )
+
+
 class WorkoutCreate(BaseModel):
     user_id: str = Field(..., max_length=100)
     name: str = Field(..., max_length=200)
@@ -140,6 +168,11 @@ class WorkoutCreate(BaseModel):
     generation_source: str = Field(default="onboarding", max_length=50)
     generation_metadata: str = Field(default="{}", max_length=50000)
 
+    @field_validator("difficulty", mode="before")
+    @classmethod
+    def _normalize_difficulty(cls, v):
+        return _coerce_workout_difficulty(v)
+
 
 class WorkoutUpdate(BaseModel):
     name: Optional[str] = Field(default=None, max_length=200)
@@ -151,6 +184,11 @@ class WorkoutUpdate(BaseModel):
     last_modified_method: Optional[str] = Field(default=None, max_length=50)
     generation_metadata: Optional[str] = Field(default=None, max_length=50000)
 
+    @field_validator("difficulty", mode="before")
+    @classmethod
+    def _normalize_difficulty(cls, v):
+        return _coerce_workout_difficulty(v)
+
 
 class Workout(BaseModel):
     id: str = Field(..., max_length=100)
@@ -158,6 +196,12 @@ class Workout(BaseModel):
     name: str = Field(..., max_length=200)
     type: str = Field(..., max_length=50)
     difficulty: str = Field(..., max_length=50)
+
+    @field_validator("difficulty", mode="before")
+    @classmethod
+    def _normalize_difficulty(cls, v):
+        return _coerce_workout_difficulty(v)
+
     description: Optional[str] = Field(default=None, description="1-2 sentence explanation of the workout's training logic")
     scheduled_date: datetime
     is_completed: bool
@@ -326,6 +370,11 @@ class RegenerateWorkoutRequest(BaseModel):
     kettlebell_count: Optional[int] = Field(default=None, ge=1, le=10)  # Number of kettlebells available
     new_scheduled_date: Optional[str] = Field(default=None, max_length=20, description="If set (YYYY-MM-DD), move the regenerated workout to this date instead of keeping the original's date. Used by 'Do this today' in the Regenerate sheet.")
     force_non_preferred_day: bool = Field(default=False, description="Required to be True when new_scheduled_date falls outside the user's preferred workout days.")
+
+    @field_validator("difficulty", mode="before")
+    @classmethod
+    def _normalize_difficulty(cls, v):
+        return _coerce_workout_difficulty(v)
 
 
 class UpdateProgramRequest(BaseModel):

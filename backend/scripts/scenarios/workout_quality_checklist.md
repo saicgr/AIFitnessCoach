@@ -163,7 +163,20 @@ injury.
 - `reps` form (int vs `"8-12"` range): preserve original; collapsing silently → `warn`.
 - `set_targets[]` length must equal `sets` count → `fail` on mismatch
   (common Gemini hallucination).
-- Duplicate exercise NAME within the same workout → `fail`.
+- Duplicate exercise within the same workout → `fail`. Hardened contract:
+  a workout MUST NOT contain two exercises that satisfy ANY of:
+  1. Same exact `name` (case-insensitive).
+  2. Same `library_id` / `exercise_id` (when both populated).
+  3. Same canonicalized name after `canonicalize_exercise_name` (catches
+     `Pull Up` aliasing to `Pull-Up`).
+  4. Same `image_url` AND same primary `muscle_group` (image collisions
+     usually mean same movement).
+  5. Same `(movement_pattern, target_muscle, equipment)` triple
+     (catches `Dumbbell Curl` + `Dumbbell Alternating Curl`).
+  Server-side dedup runs in `generation_endpoints.py` immediately after
+  Gemini returns; an additional unit test at
+  `backend/tests/test_no_duplicate_exercises_in_workout.py` covers all
+  five collision modes.
 - Whitespace-only or empty `name` → `fail`.
 - Unicode bombs (emoji / RTL Arabic / 200-char Chinese) in name → `warn`
   (verify backend `max_length=200` enforced).

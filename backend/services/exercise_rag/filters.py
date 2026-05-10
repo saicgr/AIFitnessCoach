@@ -69,6 +69,84 @@ HOME_GYM_EQUIPMENT = HOME_EQUIPPED_EQUIPMENT
 BODYWEIGHT_TOKENS = {"bodyweight", "body weight", "none", ""}
 
 
+# ── Goal-aware bodyweight gating (Fix 2 from peppy-conjuring-valley.md) ──
+# Pre-fix audit found that 70% of exercises in weighted-equipment scenarios
+# were bodyweight (Burpee, Frog Jump, Mountain Climber Jump, etc.) because
+# any bw-tagged exercise was eligible for every user. For strength /
+# muscle-gain / hypertrophy / power goals on a user with weighted equipment,
+# bodyweight exercises are gated to a curated allow-set of strength-bias
+# calisthenics (loadable via vest, ring/TRX-supported, or skill-progressed).
+# Goals NOT in this set keep the previous permissive behavior (bw exercises
+# are always eligible) — endurance / mobility / general_fitness / cardio etc.
+STRENGTH_GOALS = {
+    "strength", "muscle_gain", "hypertrophy", "power",
+}
+
+# Allow-set of bodyweight movements that are appropriate strength-stimulus
+# for an equipped user. These are unilateral / weighted-vest-friendly /
+# ring-supported / advanced-skill movements that progress to RPE 8+.
+STRENGTH_BODYWEIGHT_ALLOW = {
+    "pistol squat", "shrimp squat", "single-leg squat",
+    "single-leg deadlift", "single-leg romanian deadlift",
+    "archer push-up", "archer pull-up", "archer chin-up",
+    "weighted dip", "weighted pull-up", "weighted chin-up",
+    "ring dip", "ring row", "ring pull-up", "ring muscle-up",
+    "trx row", "trx pull-up", "trx chest press",
+    "muscle-up", "front lever", "back lever",
+    "dragon flag", "ab wheel rollout",
+    "handstand push-up", "pike push-up", "decline push-up",
+    "nordic curl", "natural glute-ham raise",
+    "pistol", "skater squat", "rear-foot elevated split squat",
+    "pull-up", "chin-up", "weighted push-up",
+    "weighted carry", "loaded carry",
+}
+
+# Pure plyometric / explosive movements that should be blocked when goals
+# include mobility / recovery / injury_recovery (they're not low-intensity).
+PLYOMETRIC_NAME_TOKENS = {
+    "burpee", "mountain climber jump", "frog jump", "body throw",
+    "jump squat", "clap jack", "clap push-up", "tuck jump", "box jump",
+    "broad jump", "depth jump", "bound", "plyo", "plyometric",
+    "split jump", "scissor jump", "skater jump", "lateral bound",
+    "star jump", "jump lunge", "burpee broad jump",
+}
+
+# Cardio name tokens — used for the cardio-floor enforcement.
+CARDIO_NAME_TOKENS = {
+    "jog", "running", "treadmill", "stationary bike", "exercise bike",
+    "rowing", "rower", "elliptical", "assault bike", "air bike",
+    "stair climber", "jump rope", "skipping rope", "high knees",
+    "fast feet", "briskly walking", "sprint", "shuttle run",
+}
+
+
+def is_strength_appropriate_bodyweight(exercise_name: str) -> bool:
+    """Return True if a bw-tagged exercise is in STRENGTH_BODYWEIGHT_ALLOW.
+
+    Uses substring-match against the curated allow-set, so name variants
+    (e.g. "Single-Arm Archer Push-Up") still pass.
+    """
+    if not exercise_name:
+        return False
+    name_lower = exercise_name.lower()
+    return any(allowed in name_lower for allowed in STRENGTH_BODYWEIGHT_ALLOW)
+
+
+def is_plyometric(exercise_name: str) -> bool:
+    """Return True if exercise name implies a plyo/explosive movement."""
+    if not exercise_name:
+        return False
+    name_lower = exercise_name.lower()
+    return any(token in name_lower for token in PLYOMETRIC_NAME_TOKENS)
+
+
+def is_cardio_named(exercise_name: str) -> bool:
+    if not exercise_name:
+        return False
+    name_lower = exercise_name.lower()
+    return any(token in name_lower for token in CARDIO_NAME_TOKENS)
+
+
 def _singularise(word: str) -> str:
     """Naive plural → singular: strip trailing 's' on words longer than 4 chars.
 
@@ -578,6 +656,7 @@ def filter_by_equipment(
     user_equipment: List[str],
     exercise_name: str,
     use_substitutions: bool = False,
+    goals: Optional[List[str]] = None,
 ) -> bool:
     """
     Check if exercise equipment matches user's available equipment.
@@ -588,6 +667,12 @@ def filter_by_equipment(
         exercise_name: Exercise name (used as a tiebreaker word-match)
         use_substitutions: When True, fall back to equipment_resolver
             substitute mappings (e.g., "Smith machine" ≈ "barbell").
+        goals: User's fitness goals (e.g. ["strength"]). When provided, this
+            enables goal-aware gating: bodyweight-tagged exercises on a user
+            with weighted equipment are rejected for STRENGTH_GOALS unless
+            the exercise is in STRENGTH_BODYWEIGHT_ALLOW. Mobility / recovery
+            goals additionally block PLYOMETRIC_NAME_TOKENS regardless of
+            equipment fit. See peppy-conjuring-valley.md Fix 2.
 
     Returns:
         True if the exercise is compatible with the user's equipment.
@@ -645,10 +730,30 @@ def filter_by_equipment(
 
     ex_equipment_lower = (ex_equipment or "").strip().lower()
 
+    # Goal-aware gates run BEFORE the lenient bodyweight match — they only
+    # fire when `goals` is provided so older callers keep their behavior.
+    goals_lower = [(g or "").lower().strip() for g in (goals or []) if g]
+
+    # Plyo block: mobility / recovery goals shouldn't return Burpees / jumps.
+    if goals_lower and any(g in {"mobility", "recovery", "injury_recovery"} for g in goals_lower):
+        if is_plyometric(exercise_name):
+            return False
+
     # An exercise tagged with no equipment requirement is always allowed
     # — bodyweight users get it, equipped users get it. Matches the
     # "equipment=NULL or '' → needs nothing" edge case in the plan.
     if not ex_equipment_lower or ex_equipment_lower in BODYWEIGHT_TOKENS:
+        # Goal-aware gate: for strength goals on a user with weighted
+        # equipment, gate bodyweight exercises through the curated allow
+        # list. Without this we end up with Burpees / Frog Jumps in a
+        # full-gym strength session (the headline Fix 2 finding).
+        if goals_lower and any(g in STRENGTH_GOALS for g in goals_lower):
+            user_has_weighted = any(
+                eq not in BODYWEIGHT_TOKENS and eq not in {"full_gym", "full gym"}
+                for eq in equipment_lower
+            )
+            if user_has_weighted and not is_strength_appropriate_bodyweight(exercise_name):
+                return False
         # Bodyweight-only users always have these tokens in their set, so
         # this matches without any extra work. Equipped users without
         # explicit bodyweight still get the no-equipment exercise — most
@@ -665,7 +770,8 @@ def filter_by_equipment(
         # Recursive check: every component must independently pass.
         return all(
             filter_by_equipment(
-                comp, user_equipment, exercise_name, use_substitutions
+                comp, user_equipment, exercise_name, use_substitutions,
+                goals=goals,
             )
             for comp in ex_components
         )

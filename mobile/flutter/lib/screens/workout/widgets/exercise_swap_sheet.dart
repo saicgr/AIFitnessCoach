@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:speech_to_text/speech_to_text.dart';
@@ -39,6 +40,11 @@ Future<Workout?> showExerciseSwapSheet(
   required String workoutId,
   required WorkoutExercise exercise,
   String? previewId,
+  /// When non-null, the sheet jumps to the AI Picks tab on mount and
+  /// briefly highlights the row matching this id/name so the user can
+  /// confirm with one tap. Used by the chat-side equipment-match deeplink.
+  String? preselectedExerciseId,
+  String? preselectedExerciseName,
 }) async {
   return await showGlassSheet<Workout>(
     context: context,
@@ -52,6 +58,8 @@ Future<Workout?> showExerciseSwapSheet(
         workoutId: workoutId,
         exercise: exercise,
         previewId: previewId,
+        preselectedExerciseId: preselectedExerciseId,
+        preselectedExerciseName: preselectedExerciseName,
       ),
     ),
   );
@@ -63,11 +71,16 @@ class _ExerciseSwapSheet extends ConsumerStatefulWidget {
   /// When non-null, swaps are applied to the preview cache instead of the
   /// committed workout. Forwarded to [WorkoutRepository.swapExercise].
   final String? previewId;
+  /// Optional preselect target — see [showExerciseSwapSheet].
+  final String? preselectedExerciseId;
+  final String? preselectedExerciseName;
 
   const _ExerciseSwapSheet({
     required this.workoutId,
     required this.exercise,
     this.previewId,
+    this.preselectedExerciseId,
+    this.preselectedExerciseName,
   });
 
   @override

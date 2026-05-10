@@ -7,7 +7,8 @@ normalization.
 """
 import json
 import asyncio
-from typing import List, Dict, Any
+import re
+from typing import List, Dict, Any, Optional
 
 from fastapi import HTTPException
 
@@ -15,6 +16,97 @@ from core.logger import get_logger
 from services.exercise_rag.filters import BODYWEIGHT_TOKENS
 
 logger = get_logger(__name__)
+
+
+# ---------------------------------------------------------------------------
+# Phase G — workout-type inference from free-text ai_prompt.
+#
+# The 2026-05-08 sweep found 7 cases where the user explicitly asked for a
+# cardio / mobility / 5K / marathon session via `ai_prompt`, but the output
+# was strength because /regenerate-stream never inferred type from the
+# prompt — it inherited the source workout's type. This deterministic
+# keyword classifier (no LLM, per `feedback_no_llm_for_safety_classification`)
+# fixes that gap. Returns None when no signal is found, in which case the
+# caller falls back to the source workout type.
+# ---------------------------------------------------------------------------
+
+_TYPE_KEYWORDS: List[tuple] = [
+    # (workout_type, keyword_patterns) — first matching wins (order matters).
+    # Mobility is declared BEFORE cardio so prompts that explicitly say
+    # "mobility focus" don't get hijacked by an incidental "cycle" keyword
+    # (sweep idx 305: "cycle day 1, cramps, mobility focus" → must be mobility).
+    ("hiit", [
+        r"\bhiit\b", r"\bcircuit\b", r"\bmetcon\b", r"\bamrap\b",
+        r"\btabata\b", r"\bemom\b", r"\bcrossfit\b",
+    ]),
+    ("mobility", [
+        r"\bmobility\b", r"\bstretch(ing)?\b", r"\bfoam\s*roll\b",
+        r"\brecovery\b", r"\byoga\b", r"\bunwind\b",
+        r"\bcooldown\b", r"\bcool\s*down\b",
+    ]),
+    ("cardio", [
+        r"\bcardio\b", r"\b5\s*k\b", r"\b10\s*k\b", r"\bmarathon\b",
+        r"\brun(ning)?\b", r"\bjog(ging)?\b",
+        # `cycl(e|ing)` removed — collides with menstrual "cycle day". Use
+        # explicit "biking"/"cycling workout" terms instead.
+        r"\bcycling\s*(workout|session|ride)\b",
+        r"\bbike\b", r"\brow(ing)?\b", r"\bsweat\b",
+        r"\bzone\s*2\b", r"\bsteady\s*state\b",
+    ]),
+    ("strength", [
+        # hypertrophy/strength explicit
+        r"\bhypertrophy\b", r"\bpump\b", r"\bmuscle\s*mass\b", r"\bbodybuilding\b",
+        r"\bstrength\b", r"\bheavy\b", r"\bone\s*rep\s*max\b", r"\bORM\b",
+        r"\bharder\b",
+        # power/explosive
+        r"\bpower\b", r"\bexplosive\b", r"\bolympic\b", r"\bsnatch\b",
+        r"\bclean\s*(and|&)\s*jerk\b", r"\bplyo(metric)?\b",
+    ]),
+]
+
+
+def infer_workout_type_from_prompt(ai_prompt: Optional[str]) -> Optional[str]:
+    """Return a workout type ('cardio'|'mobility'|'strength'|'hiit') inferred
+    from free-text user prompt, or None if no signal is detected.
+
+    Deterministic keyword scan — no LLM. Multi-language: only English
+    keywords for v1 (the sweep showed Spanish/Japanese/Chinese/Russian/Hindi
+    prompts already collapse to safety mode for unrelated reasons; once the
+    safety_mode bug is fixed, those will inherit type from the source workout
+    until we add localized keyword tables).
+    """
+    if not ai_prompt:
+        return None
+    text = ai_prompt.lower()
+    for workout_type, patterns in _TYPE_KEYWORDS:
+        for pat in patterns:
+            if re.search(pat, text):
+                return workout_type
+    return None
+
+
+def normalize_request_equipment(
+    request_equipment: Optional[List[str]],
+    profile_equipment: List[str],
+) -> List[str]:
+    """Phase G — distinguish request-level None (inherit profile) from
+    request-level [] (explicit bodyweight-only).
+
+    The pre-fix code used `if body.equipment is not None` which technically
+    distinguishes the two, but downstream `if equipment:` checks treat the
+    empty list as "no preference" and fall back to the unfiltered pool.
+    Sweep idx 207: `equipment=[]` (BW) returned barbell + kettlebell exercises.
+
+    Returns:
+      - profile_equipment when request_equipment is None
+      - ["bodyweight"] when request_equipment is explicitly []
+      - request_equipment unchanged otherwise
+    """
+    if request_equipment is None:
+        return profile_equipment or []
+    if request_equipment == []:
+        return ["bodyweight"]
+    return request_equipment
 
 
 # Strength-style focuses that require physical resistance — barbell/dumbbell/
@@ -252,6 +344,135 @@ def ensure_exercises_are_dicts(exercises) -> List[Dict[str, Any]]:
         normalized.append(ex)
 
     return normalized
+
+
+def post_filter_equipment_violations(
+    exercises: List[Dict[str, Any]],
+    user_equipment: Optional[List[str]],
+    goals: Optional[List[str]] = None,
+) -> List[Dict[str, Any]]:
+    """Drop exercises whose equipment isn't compatible with the user's set.
+
+    Belt-and-suspenders for the RAG filter: validation harness 2026-05-09
+    found Gemini hallucinated 4 kettlebell exercises into a workout where
+    `equipment=['bench','dumbbells','resistance_bands']`, and 5 kettlebell
+    exercises into a request with `equipment=[]` (bodyweight-only). The
+    upstream RAG filter caught the candidates but Gemini still emitted these
+    in its prose. We re-run the same `filter_by_equipment` predicate against
+    each persisted exercise's `equipment` field as the last line of defense.
+
+    `user_equipment=None` (i.e. caller didn't pass equipment at all) skips
+    the filter — only an empty list `[]` triggers strict bodyweight gating.
+    """
+    if user_equipment is None or not exercises:
+        return exercises
+    from services.exercise_rag.filters import filter_by_equipment
+    keep: List[Dict[str, Any]] = []
+    dropped: List[str] = []
+    for ex in exercises:
+        ex_equipment = (ex.get("equipment") or "").strip()
+        ex_name = ex.get("name", "") or ""
+        # If exercise has no equipment field, infer from name as a best-effort
+        # backstop (Gemini sometimes omits `equipment` while the name says
+        # "Kettlebell …" or "Barbell …").
+        if not ex_equipment:
+            name_lc = ex_name.lower()
+            for needle in ("kettlebell", "barbell", "dumbbell", "cable",
+                           "machine", "smith", "trx", "medicine ball", "band"):
+                if needle in name_lc:
+                    ex_equipment = needle.replace(" ", "_")
+                    break
+        if filter_by_equipment(ex_equipment, user_equipment, ex_name, goals=goals):
+            keep.append(ex)
+        else:
+            dropped.append(ex_name)
+    if dropped:
+        logger.warning(
+            f"⚠️ [PostGenEquipment] Dropped {len(dropped)} equipment-incompatible "
+            f"exercises (user_equipment={user_equipment}): {dropped[:5]}"
+        )
+    return keep
+
+
+def post_filter_excluded_exercises(
+    exercises: List[Dict[str, Any]],
+    exclude_list: Optional[List[str]],
+    adjacent_list: Optional[List[str]] = None,
+) -> List[Dict[str, Any]]:
+    """Drop exercises whose canonicalized name matches the exclude/adjacent set.
+
+    Hardens the existing substring filter in /generate-stream. Validation
+    harness 2026-05-09 idx 248 requested `exclude_exercises=['burpee',
+    'jump squat','box jump']` and the workout still contained `Burpee`.
+    Substring match is correct in principle ("burpee" ⊂ "Burpee".lower()) but
+    fails on alias collapses; canonical comparison eliminates the alias gap.
+    """
+    forbidden_raw = list(exclude_list or []) + list(adjacent_list or [])
+    if not forbidden_raw or not exercises:
+        return exercises
+    try:
+        from services.exercise_rag.utils import canonicalize_exercise_name
+    except Exception:
+        canonicalize_exercise_name = lambda s: (s or "").strip().lower()  # type: ignore
+    forbidden_canon = {canonicalize_exercise_name(s).lower() for s in forbidden_raw if s}
+    forbidden_canon.discard("")
+    forbidden_substr = {(s or "").lower().strip() for s in forbidden_raw if s}
+    forbidden_substr.discard("")
+    keep: List[Dict[str, Any]] = []
+    dropped: List[str] = []
+    for ex in exercises:
+        name = ex.get("name", "") or ""
+        canon = canonicalize_exercise_name(name).lower()
+        name_lc = name.lower()
+        if canon in forbidden_canon or any(f in name_lc for f in forbidden_substr):
+            dropped.append(name)
+            continue
+        keep.append(ex)
+    if dropped:
+        logger.warning(
+            f"⚠️ [PostGenExclude] Dropped {len(dropped)} excluded exercises: {dropped[:5]}"
+        )
+    return keep
+
+
+def coerce_workout_type_from_focus(
+    workout_type: Optional[str],
+    focus_areas: Optional[List[str]],
+    goals: Optional[List[str]] = None,
+) -> Optional[str]:
+    """Last-mile type coercion based on focus_areas → expected workout_type.
+
+    Validation harness 2026-05-09 found 68 rows where focus∈{cardio, mobility,
+    endurance, hiit} but workout_type persisted as `strength`. Existing
+    overrides at line 700-711 only catch `mobility` and exact `cardio` —
+    `endurance` and `hiit` focus values escape. This is the final coercion
+    immediately before save.
+
+    Returns the (possibly coerced) workout_type. Pass-through for any focus
+    not in the table.
+    """
+    if not focus_areas:
+        return workout_type
+    primary = (focus_areas[0] or "").lower().strip()
+    expected_table = {
+        "cardio":     "cardio",
+        "endurance":  "cardio",
+        "hiit":       "cardio",
+        "mobility":   "mobility",
+        "stretching": "mobility",
+        "stretch":    "mobility",
+        "recovery":   "recovery",
+    }
+    expected = expected_table.get(primary)
+    wt_lc = (workout_type or "").lower()
+    # Only coerce if the existing type contradicts (don't downgrade hybrid/circuit).
+    if expected and wt_lc in {"strength", "hypertrophy", "power"}:
+        if expected != wt_lc:
+            logger.info(
+                f"🔧 [TypeCoerce] focus={primary!r} → type {workout_type!r} → {expected!r}"
+            )
+            return expected
+    return workout_type
 
 
 def normalize_exercise_numeric_fields(exercises: List[Dict[str, Any]]) -> List[Dict[str, Any]]:

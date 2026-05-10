@@ -32,6 +32,21 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
   bool _isSwapping = false;
   String? _selectedReason;
 
+  /// When non-null, the row whose name (case-insensitive) matches this
+  /// gets a brief cyan pulse highlight on first paint after the targeted
+  /// tab loads. Cleared by [_clearPreselectHighlight] after ~1.4s so a
+  /// later rebuild (e.g. user keeps scrolling) doesn't keep glowing.
+  String? _highlightedName;
+  Timer? _highlightTimer;
+
+  /// Case-insensitive match against [_highlightedName] — used by every
+  /// option-card builder to decide whether to render the cyan glow.
+  bool _isHighlighted(String name) {
+    final h = _highlightedName;
+    if (h == null || h.isEmpty) return false;
+    return name.toLowerCase().trim() == h.toLowerCase().trim();
+  }
+
   // AI input state (voice + text)
   final TextEditingController _aiInputController = TextEditingController();
   final SpeechToText _speechToText = SpeechToText();
@@ -65,6 +80,28 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
     _loadSimilarExercises();
     _loadRecentExercises();
     _initSpeech();
+
+    // Chat-deeplink preselect: jump to AI Picks tab (where the matched
+    // exercise is most likely to surface — Similar tab is name-matched
+    // against widget.exercise, NOT against the canonical match), seed
+    // _highlightedName so the row glows, and auto-clear after ~1.4s.
+    if (widget.preselectedExerciseName != null &&
+        widget.preselectedExerciseName!.trim().isNotEmpty) {
+      _highlightedName = widget.preselectedExerciseName!.trim();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        // Switch to AI Picks (index 4). AI Picks loads on demand; nudge it
+        // with a custom-message hint so the matched exercise rises to the
+        // top of suggestions.
+        _aiInputController.text = _highlightedName!;
+        _tabController.animateTo(4);
+        _loadAISuggestions();
+      });
+      _highlightTimer = Timer(const Duration(milliseconds: 1500), () {
+        if (!mounted) return;
+        setState(() => _highlightedName = null);
+      });
+    }
   }
 
   Future<void> _initSpeech() async {
@@ -95,6 +132,7 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
     _tabController.removeListener(_onTabChanged);
     _tabController.dispose();
     _aiInputController.dispose();
+    _highlightTimer?.cancel();
     if (_isListening) {
       _speechToText.stop();
     }
@@ -972,6 +1010,7 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
           onTap: () => _swapExercise(name, source: source),
           textPrimary: textPrimary,
           textMuted: textMuted,
+          highlighted: _isHighlighted(name),
         );
       },
     );
@@ -1062,6 +1101,7 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
           onTap: () => _swapExercise(name, source: 'recent_exercise'),
           textPrimary: textPrimary,
           textMuted: textMuted,
+          highlighted: _isHighlighted(name),
         );
       },
     );
@@ -1178,6 +1218,7 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
       ),
       textPrimary: textPrimary,
       textMuted: textMuted,
+      highlighted: _isHighlighted(exercise.name),
     );
   }
 

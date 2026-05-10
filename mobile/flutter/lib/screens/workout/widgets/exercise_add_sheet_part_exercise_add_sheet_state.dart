@@ -29,6 +29,16 @@ class _ExerciseAddSheetState extends ConsumerState<_ExerciseAddSheet>
   // Shared state
   bool _isAdding = false;
 
+  // Chat-deeplink preselect: row whose name matches gets a brief cyan glow.
+  String? _highlightedName;
+  Timer? _highlightTimer;
+
+  bool _isHighlighted(String name) {
+    final h = _highlightedName;
+    if (h == null || h.isEmpty) return false;
+    return name.toLowerCase().trim() == h.toLowerCase().trim();
+  }
+
   @override
   void initState() {
     super.initState();
@@ -36,12 +46,28 @@ class _ExerciseAddSheetState extends ConsumerState<_ExerciseAddSheet>
     _tabController.addListener(_onTabChanged);
     ref.read(customExercisesProvider.notifier).initialize();
     _loadLibraryExercises();
+
+    // Chat-deeplink preselect: jump to AI Suggestions (idx 3), seed glow.
+    if (widget.preselectedExerciseName != null &&
+        widget.preselectedExerciseName!.trim().isNotEmpty) {
+      _highlightedName = widget.preselectedExerciseName!.trim();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _tabController.animateTo(3);
+        if (!_aiSuggestionsLoaded) _loadSuggestions();
+      });
+      _highlightTimer = Timer(const Duration(milliseconds: 1500), () {
+        if (!mounted) return;
+        setState(() => _highlightedName = null);
+      });
+    }
   }
 
   @override
   void dispose() {
     _tabController.removeListener(_onTabChanged);
     _tabController.dispose();
+    _highlightTimer?.cancel();
     super.dispose();
   }
 
@@ -663,6 +689,7 @@ class _ExerciseAddSheetState extends ConsumerState<_ExerciseAddSheet>
       textMuted: textMuted,
       actionIcon: Icons.add_circle,
       actionColor: AppColors.success,
+      highlighted: _isHighlighted(ex.name ?? ''),
     );
   }
 
@@ -953,6 +980,7 @@ class _ExerciseAddSheetState extends ConsumerState<_ExerciseAddSheet>
           textMuted: textMuted,
           actionIcon: Icons.add_circle,
           actionColor: AppColors.success,
+          highlighted: _isHighlighted(name),
         );
       },
     );

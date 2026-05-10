@@ -386,6 +386,26 @@ class RegenerateProgress {
   /// Whether an error occurred
   final bool hasError;
 
+  /// Backend tier signal for *why* the safety-mode override fired. One of:
+  /// - "validator_repair_failed"      — too many violations to swap exercises
+  /// - "validator_exception_fallback" — validator raised; we shipped a safe plan
+  /// - "rag_underflow_or_validator_repair" — sent by safety_mode.build_plan
+  /// - null                           — no override fired
+  /// Surfaced by the backend at `data.safety_audit[0].safety_mode_reason`.
+  /// UI should map this to an explanatory chip so the user understands why
+  /// their hypertrophy request became a mobility session.
+  final String? safetyModeReason;
+
+  /// Backend signal: requested difficulty was capped because fitness_level
+  /// was beginner. e.g. "requested_hell_capped_to_medium_for_beginner_fitness_level".
+  /// Null when no cap fired.
+  final String? difficultyCappedReason;
+
+  /// Backend signal: requested duration was capped because difficulty=easy.
+  /// Carries the ORIGINAL requested minutes (capped value is on workout.durationMinutes).
+  /// Null when no cap fired.
+  final int? durationCappedFrom;
+
   RegenerateProgress({
     required this.step,
     required this.totalSteps,
@@ -397,6 +417,9 @@ class RegenerateProgress {
     this.totalTimeMs,
     this.isCompleted = false,
     this.hasError = false,
+    this.safetyModeReason,
+    this.difficultyCappedReason,
+    this.durationCappedFrom,
   });
 
   /// Progress as a percentage (0.0 to 1.0)

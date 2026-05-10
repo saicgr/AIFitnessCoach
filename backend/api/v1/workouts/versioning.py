@@ -300,6 +300,52 @@ def _apply_difficulty_scaling(exercises: list, difficulty: str) -> list:
     return scaled
 
 
+async def _apply_safety_mode_override(
+    safety_ctx: "UserSafetyContext",
+    target_duration: int,
+    focus_areas: list,
+    ai_prompt: Optional[str],
+    current_name: Optional[str],
+    reason: str,
+    violations_count: int = 0,
+) -> dict:
+    """Phase A4 — single source of truth for the four call sites that
+    swap a generated workout for a safety-mode mobility plan. Returns a
+    dict with `exercises`, `name`, `difficulty`, `safety_audit`,
+    `safety_mode_reason`, plus the raw `_sm_plan` for debugging.
+
+    Centralizing this:
+      • guarantees every call site emits `safety_mode_reason` (frontend
+        can show *why* the override fired);
+      • forwards `ai_prompt` so safety_mode.build_plan can keyword-bias
+        focus selection (Phase C);
+      • collapses 4 duplicate try/except blocks (the previous
+        `difficulty.get(..., "beginner")` regression hid here for a year).
+    """
+    sm_plan = await build_safety_mode_plan(
+        safety_ctx,
+        duration_minutes=target_duration,
+        focus_areas=focus_areas if focus_areas else None,
+        ai_prompt=ai_prompt,
+    )
+    audit_entry: dict = {
+        "safety_mode": True,
+        "notice": sm_plan.get("notice"),
+        "safety_mode_reason": sm_plan.get("safety_mode_reason") or reason,
+    }
+    if violations_count:
+        audit_entry["violations"] = violations_count
+    return {
+        "exercises": sm_plan.get("exercises", []),
+        "name": sm_plan.get("name", current_name or "Workout"),
+        # Default to "easy" (the new namespace) — never "beginner".
+        "difficulty": sm_plan.get("difficulty", "easy"),
+        "safety_audit": [audit_entry],
+        "safety_mode_reason": audit_entry["safety_mode_reason"],
+        "_sm_plan": sm_plan,
+    }
+
+
 def _serialize_preview_workout(payload: dict) -> dict:
     """Shape a preview payload for client consumption.
 
@@ -602,20 +648,20 @@ async def regenerate_workout(request: RegenerateWorkoutRequest,
                     request.user_id,
                     len(val_result.violations),
                 )
-                sm_plan = await build_safety_mode_plan(
-                    safety_ctx,
-                    duration_minutes=target_duration,
-                    focus_areas=focus_areas if focus_areas else None,
+                _sm = await _apply_safety_mode_override(
+                    safety_ctx=safety_ctx,
+                    target_duration=target_duration,
+                    focus_areas=focus_areas,
+                    ai_prompt=getattr(request, "ai_prompt", None),
+                    current_name=workout_name,
+                    reason="validator_repair_failed",
+                    violations_count=len(val_result.violations),
                 )
-                # Replace generated content with the safety-mode plan.
-                exercises = sm_plan.get("exercises", [])
-                workout_name = sm_plan.get("name", workout_name)
-                difficulty = sm_plan.get("difficulty", "beginner")
+                exercises = _sm["exercises"]
+                workout_name = _sm["name"]
+                difficulty = _sm["difficulty"]
                 safety_mode_active = True
-                safety_audit = [
-                    {"safety_mode": True, "notice": sm_plan.get("notice"),
-                     "violations": len(val_result.violations)}
-                ]
+                safety_audit = _sm["safety_audit"]
                 # Sync new_workout_data with the safe plan.
                 new_workout_data["exercises_json"] = exercises
                 new_workout_data["name"] = workout_name
@@ -641,16 +687,19 @@ async def regenerate_workout(request: RegenerateWorkoutRequest,
                 exc_info=True,
             )
             try:
-                sm_plan = await build_safety_mode_plan(
-                    safety_ctx,
-                    duration_minutes=target_duration,
-                    focus_areas=focus_areas if focus_areas else None,
+                _sm = await _apply_safety_mode_override(
+                    safety_ctx=safety_ctx,
+                    target_duration=target_duration,
+                    focus_areas=focus_areas,
+                    ai_prompt=getattr(request, "ai_prompt", None),
+                    current_name=workout_name,
+                    reason="validator_exception_fallback",
                 )
-                exercises = sm_plan.get("exercises", [])
-                workout_name = sm_plan.get("name", workout_name)
-                difficulty = sm_plan.get("difficulty", "beginner")
+                exercises = _sm["exercises"]
+                workout_name = _sm["name"]
+                difficulty = _sm["difficulty"]
                 safety_mode_active = True
-                safety_audit = [{"safety_mode": True, "error_fallback": True}]
+                safety_audit = _sm["safety_audit"]
                 new_workout_data["exercises_json"] = exercises
                 new_workout_data["name"] = workout_name
                 new_workout_data["difficulty"] = difficulty
@@ -876,9 +925,16 @@ async def regenerate_workout_streaming(request: Request, body: RegenerateWorkout
 
             # Parse user data
             fitness_level = body.fitness_level or user.get("fitness_level") or "intermediate"
-            equipment = body.equipment if body.equipment is not None else parse_json_field(user.get("equipment"), [])
+            # Phase G: distinguish None (inherit profile) from [] (BW only).
+            from api.v1.workouts.generation_helpers import (
+                normalize_request_equipment,
+                infer_workout_type_from_prompt,
+            )
+            _profile_equipment = parse_json_field(user.get("equipment"), [])
+            equipment = normalize_request_equipment(body.equipment, _profile_equipment)
             # Merge custom equipment from user profile (e.g., "TRX Bands", "Yoga Wheel")
-            if user and isinstance(equipment, list):
+            # ONLY when the request didn't explicitly send [] (bodyweight-only).
+            if user and isinstance(equipment, list) and body.equipment != []:
                 for item in get_all_equipment(user):
                     if item and item not in equipment:
                         equipment.append(item)
@@ -889,6 +945,17 @@ async def regenerate_workout_streaming(request: Request, body: RegenerateWorkout
             user_age = user.get("age")
             user_activity_level = user.get("activity_level")
             user_difficulty = body.difficulty
+            # Beginner ceiling: a user whose fitness_level is "beginner"
+            # cannot legitimately request a hard/hell workout. Force-downgrade
+            # to medium and surface the reason in the preview payload so the
+            # client can show "we softened this from hell to medium". Mirrors
+            # checklist C and was missed for 3 sweep rows (idx 104/128/131).
+            difficulty_capped_reason: Optional[str] = None
+            if (fitness_level or "").lower() == "beginner" and (user_difficulty or "").lower() in {"hard", "hell"}:
+                difficulty_capped_reason = (
+                    f"requested_{user_difficulty.lower()}_capped_to_medium_for_beginner_fitness_level"
+                )
+                user_difficulty = "medium"
 
             # Get injuries
             injuries = body.injuries or []
@@ -898,6 +965,17 @@ async def regenerate_workout_streaming(request: Request, body: RegenerateWorkout
                     injuries = user_injuries
 
             workout_type_override = body.workout_type
+            # Phase G: infer workout_type from ai_prompt when not explicitly set.
+            # Sweep idx 68/75/77/258/276/279/305: ai_prompt asked for cardio /
+            # mobility / 5K / marathon but output was strength because no
+            # inference happened. Body override > inferred > existing source type.
+            if not workout_type_override and body.ai_prompt:
+                _inferred = infer_workout_type_from_prompt(body.ai_prompt)
+                if _inferred:
+                    workout_type_override = _inferred
+                    logger.info(
+                        f"[STREAM] inferred workout_type={_inferred} from ai_prompt"
+                    )
             focus_areas = body.focus_areas or []
 
             # Step 2: Select exercises using RAG
@@ -950,9 +1028,15 @@ async def regenerate_workout_streaming(request: Request, body: RegenerateWorkout
             # Difficulty-aware exercise count: easy = fewer exercises with more rest,
             # hard/hell = more exercises packed tighter.
             diff_lower = (user_difficulty or "medium").lower()
+            duration_capped_from: Optional[int] = None
             if diff_lower == "easy":
                 exercise_count = max(3, min(5, target_duration // 10))
-                target_duration = min(target_duration, 40)  # cap easy at 40 min
+                if target_duration > 40:
+                    # Surface the cap so the client can show "we shortened
+                    # this from your requested 60 min to 40 min for easy".
+                    # Sweep idx 109/121/133/145 silently dropped 60 → 40.
+                    duration_capped_from = target_duration
+                    target_duration = 40
             elif diff_lower in ("hard", "hell"):
                 exercise_count = max(4, min(10, target_duration // 6))
             else:
@@ -989,18 +1073,25 @@ async def regenerate_workout_streaming(request: Request, body: RegenerateWorkout
 
             merged: list = []
             seen_names: set = set()
+            cascade_tier_per_area: dict = {}
             for area, area_count in zip(seen_areas, per_area_counts):
-                area_results = await exercise_rag.select_exercises_for_workout(
+                # Phase A: 5-tier cascade — never returns < min_floor and
+                # never raises. Replaces the old send_error path entirely.
+                area_results, tier_reason = await exercise_rag.select_exercises_with_fallback(
                     focus_area=area,
                     equipment=equipment if isinstance(equipment, list) else [],
                     fitness_level=fitness_level,
                     goals=goals if isinstance(goals, list) else [],
-                    count=area_count * 2,  # over-fetch so post-filter still hits target
-                    avoid_exercises=list(seen_names),
+                    count=max(area_count * 2, 4),
                     injuries=injuries if injuries else None,
+                    avoid_exercises=list(seen_names),
                     dumbbell_count=dumbbell_count,
                     kettlebell_count=kettlebell_count,
+                    user_id=str(body.user_id),
+                    workout_type_preference=(workout_type_override or "strength"),
+                    min_floor=4,
                 )
+                cascade_tier_per_area[area] = tier_reason
                 for ex in area_results or []:
                     name = (ex.get("name") or "").strip().lower()
                     if name and name not in seen_names:
@@ -1040,9 +1131,60 @@ async def regenerate_workout_streaming(request: Request, body: RegenerateWorkout
             merged = filter_by_workout_type_muscles(merged, workout_type_override)
             rag_exercises = merged[:exercise_count]
 
+            # Phase A + B: minimum-exercise floor. The cascade above
+            # guarantees ≥4 candidates, but post-filters
+            # (filter_main_exercises / workout_type whitelist) can drop
+            # rows. If we fall below 4 here, pad from the unfiltered
+            # candidate tail rather than emit an error. The previous
+            # `send_error` path (was: idx 1043) is intentionally deleted —
+            # per user feedback, every 200 must contain real exercises.
+            MIN_EXERCISES = 4 if not (
+                (user_difficulty or "").lower() == "easy" and target_duration <= 20
+            ) else 3
+            if len(rag_exercises) < MIN_EXERCISES:
+                # Pull from the unfiltered cascade tail.
+                tail_pool = [e for e in merged if e not in rag_exercises]
+                # As a last-resort backstop, also dip into the safety-mode
+                # mobility pool to guarantee the floor.
+                if not tail_pool:
+                    try:
+                        from services.exercise_rag.safety_mode import build_plan as _safety_plan
+                        from services.workout_safety_validator import UserSafetyContext as _Ctx
+                        sm = await _safety_plan(
+                            ctx=_Ctx(
+                                injuries=[i.strip().lower() for i in injuries if i],
+                                difficulty="easy",
+                                equipment=equipment if isinstance(equipment, list) else [],
+                                user_id=str(body.user_id),
+                            ),
+                            duration_minutes=20,
+                            focus_areas=seen_areas,
+                        )
+                        tail_pool = sm.get("exercises", []) or []
+                    except Exception as _safety_err:  # noqa: BLE001
+                        logger.error(f"⚠️ [STREAM] safety_mode pad failed: {_safety_err}")
+                        tail_pool = []
+                pad_seen = {(e.get("name") or "").strip().lower() for e in rag_exercises}
+                for ex in tail_pool:
+                    if len(rag_exercises) >= MIN_EXERCISES:
+                        break
+                    n = (ex.get("name") or "").strip().lower()
+                    if n and n not in pad_seen:
+                        pad_seen.add(n)
+                        rag_exercises.append(ex)
+
+            # If we still came up empty (DB outage / tier-5 also failed),
+            # fail closed with a structured error rather than ship 0
+            # exercises. The cascade path makes this branch nearly
+            # unreachable but we keep it as a defensive guard.
             if not rag_exercises:
+                logger.error(
+                    f"[STREAM] cascade exhausted ALL tiers for "
+                    f"areas={seen_areas} injuries={injuries}; "
+                    f"per-area tiers={cascade_tier_per_area}"
+                )
                 yield send_error(
-                    f"No exercises found for focus areas: {', '.join(seen_areas)}"
+                    "Could not assemble a workout right now — please try again."
                 )
                 return
 
@@ -1097,6 +1239,37 @@ async def regenerate_workout_streaming(request: Request, body: RegenerateWorkout
                 logger.warning(f"⚠️ [Validation] Removed {original_count - len(deduplicated)} similar exercises to ensure variety")
                 exercises = deduplicated
 
+            # Phase B (post-Gemini pad): if Gemini truncated below the floor
+            # (e.g. returned 1 exercise from a 5-candidate pool), pad from
+            # the unused RAG tail rather than ship a 1-exercise workout.
+            # MIN_EXERCISES is the same threshold as the pre-Gemini guard.
+            _post_min = MIN_EXERCISES
+            if len(exercises) < _post_min:
+                _seen_lower = {(e.get("name") or e.get("exercise_name") or "").strip().lower() for e in exercises}
+                for src_ex in rag_exercises:
+                    if len(exercises) >= _post_min:
+                        break
+                    nm = (src_ex.get("name") or "").strip().lower()
+                    if nm and nm not in _seen_lower:
+                        _seen_lower.add(nm)
+                        # Stamp Gemini-shape defaults so the schema validator passes.
+                        exercises.append({
+                            "name": src_ex.get("name"),
+                            "exercise_id": src_ex.get("exercise_id") or src_ex.get("id"),
+                            "sets": 3,
+                            "reps": "8-12",
+                            "rest_seconds": 60,
+                            "muscle_group": (src_ex.get("target_muscles") or [src_ex.get("body_part") or ""])[0] if isinstance(src_ex.get("target_muscles"), list) else (src_ex.get("body_part") or ""),
+                            "equipment": src_ex.get("equipment") or "bodyweight",
+                            "movement_pattern": src_ex.get("movement_pattern"),
+                            "set_targets": [{"weight_kg": 0, "reps": 10} for _ in range(3)],
+                            "_padded_from_rag_tail": True,
+                        })
+                logger.warning(
+                    f"[STREAM] Gemini returned {original_count} exercises, padded to "
+                    f"{len(exercises)} from RAG tail to meet floor={_post_min}"
+                )
+
             # Canonical reorder for CNS-demand cascade (validation harness
             # 2026-05-08). Mirrors /generate-stream + /generate.
             from api.v1.workouts.validation_utils import reorder_exercises_canonically
@@ -1106,9 +1279,33 @@ async def regenerate_workout_streaming(request: Request, body: RegenerateWorkout
                 workout_type=workout_type_override,
             )
 
-            workout_name = body.workout_name or workout_data.get("name", "Regenerated Workout")
             workout_type = workout_type_override or workout_data.get("type", existing.get("type", "strength"))
             difficulty = user_difficulty or workout_data.get("difficulty", "medium")
+
+            # Phase D: Algorithmic naming — replace Gemini's name field
+            # entirely (top-10 names covered 58% of recent sweep, "Titan"
+            # appeared 172/428 times). Honor an explicit body.workout_name
+            # override (user-renamed workouts) but otherwise generate.
+            if body.workout_name:
+                workout_name = body.workout_name
+            else:
+                try:
+                    from services.workout_naming import generate_workout_name
+                    _primary_goal = (goals[0] if isinstance(goals, list) and goals else None)
+                    _primary_focus = (focus_areas[0] if focus_areas else focus_area)
+                    workout_name = generate_workout_name(
+                        goal=_primary_goal,
+                        focus=_primary_focus,
+                        equipment=equipment if isinstance(equipment, list) else None,
+                        duration_minutes=target_duration,
+                        difficulty=difficulty,
+                        workout_type=workout_type,
+                        user_id=str(body.user_id),
+                        workout_id=str(body.workout_id) if getattr(body, "workout_id", None) else None,
+                    )
+                except Exception as _name_err:
+                    logger.warning(f"⚠️ [Naming] algorithmic namer failed: {_name_err}")
+                    workout_name = workout_data.get("name", "Regenerated Workout")
 
             # Apply difficulty scaling to exercises (non-medium only)
             if user_difficulty and user_difficulty.lower() != "medium":
@@ -1148,22 +1345,20 @@ async def regenerate_workout_streaming(request: Request, body: RegenerateWorkout
                         body.user_id,
                         len(stream_val.violations),
                     )
-                    sm_plan = await build_safety_mode_plan(
-                        stream_safety_ctx,
-                        duration_minutes=target_duration,
-                        focus_areas=focus_areas if focus_areas else None,
+                    _sm = await _apply_safety_mode_override(
+                        safety_ctx=stream_safety_ctx,
+                        target_duration=target_duration,
+                        focus_areas=focus_areas,
+                        ai_prompt=body.ai_prompt,
+                        current_name=workout_name,
+                        reason="validator_repair_failed",
+                        violations_count=len(stream_val.violations),
                     )
-                    exercises = sm_plan.get("exercises", [])
-                    workout_name = sm_plan.get("name", workout_name)
-                    difficulty = sm_plan.get("difficulty", "beginner")
+                    exercises = _sm["exercises"]
+                    workout_name = _sm["name"]
+                    difficulty = _sm["difficulty"]
                     stream_safety_mode_active = True
-                    stream_safety_audit = [
-                        {
-                            "safety_mode": True,
-                            "notice": sm_plan.get("notice"),
-                            "violations": len(stream_val.violations),
-                        }
-                    ]
+                    stream_safety_audit = _sm["safety_audit"]
                 else:
                     exercises = stream_val.final_exercises
                     stream_safety_audit = stream_val.audit
@@ -1200,16 +1395,19 @@ async def regenerate_workout_streaming(request: Request, body: RegenerateWorkout
                     exc_info=True,
                 )
                 try:
-                    sm_plan = await build_safety_mode_plan(
-                        stream_safety_ctx,
-                        duration_minutes=target_duration,
-                        focus_areas=focus_areas if focus_areas else None,
+                    _sm = await _apply_safety_mode_override(
+                        safety_ctx=stream_safety_ctx,
+                        target_duration=target_duration,
+                        focus_areas=focus_areas,
+                        ai_prompt=body.ai_prompt,
+                        current_name=workout_name,
+                        reason="validator_exception_fallback",
                     )
-                    exercises = sm_plan.get("exercises", [])
-                    workout_name = sm_plan.get("name", workout_name)
-                    difficulty = sm_plan.get("difficulty", "beginner")
+                    exercises = _sm["exercises"]
+                    workout_name = _sm["name"]
+                    difficulty = _sm["difficulty"]
                     stream_safety_mode_active = True
-                    stream_safety_audit = [{"safety_mode": True, "error_fallback": True}]
+                    stream_safety_audit = _sm["safety_audit"]
                     _sd_err_event = json.dumps({
                         "type": "safety_done",
                         "violations": 0,
@@ -1281,6 +1479,10 @@ async def regenerate_workout_streaming(request: Request, body: RegenerateWorkout
                 # Safety fields — Phase 3L.
                 "safety_audit": stream_safety_audit,
                 "safety_mode": stream_safety_mode_active,
+                # Soft-cap notices — surfaced so client can show "we softened
+                # your request" rather than silently dropping difficulty/duration.
+                "difficulty_capped_reason": difficulty_capped_reason,
+                "duration_capped_from": duration_capped_from,
                 "_commit_data": new_workout_data,
             }
 

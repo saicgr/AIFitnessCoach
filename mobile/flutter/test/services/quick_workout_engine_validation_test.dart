@@ -3,6 +3,9 @@
 ///
 /// NO AI. NO Render. Pure-Dart synchronous generation against the bundled
 /// `assets/data/exercise_library.json`.
+/// (As of 2026-05-08, per-scenario JSONs are folded inline into the CSV's
+/// `raw_payload` column on each write — no `json/` subdirectory is created.
+/// Survives kill -9 cleanly.)
 ///
 /// Run:
 ///   cd mobile/flutter
@@ -279,7 +282,6 @@ void main() {
         .substring(0, 15);
     outDir = Directory('test_output/quick_workout_engine_$ts');
     outDir.createSync(recursive: true);
-    Directory('${outDir.path}/json').createSync(recursive: true);
 
     csvFile = File('${outDir.path}/workouts.csv');
     csvFile.writeAsStringSync([
@@ -291,6 +293,7 @@ void main() {
       'per_exercise_sets', 'per_exercise_reps', 'per_exercise_weight_kg',
       'per_exercise_rest_seconds', 'per_exercise_muscle_group',
       'estimated_duration_min', 'total_volume_kg', 'latency_ms', 'error',
+      'raw_payload',
     ].join(',') + '\n');
 
     // ignore: avoid_print
@@ -376,8 +379,10 @@ void main() {
       final latencyMs =
           ((DateTime.now().microsecondsSinceEpoch - t0) / 1000).round();
 
-      // Per-scenario JSON file.
-      final jsonOut = {
+      // Build full payload — folded INLINE into CSV's raw_payload column.
+      // No per-scenario JSON file is written; this survives kill -9 + the
+      // output dir stays clean (just workouts.csv).
+      final payload = {
         'scenario': sc.toJson(),
         'workout': workoutJson,
         'extracted': {
@@ -397,8 +402,8 @@ void main() {
         'latency_ms': latencyMs,
         'error': error,
       };
-      File('${outDir.path}/json/scenario_${sc.idx.toString().padLeft(3, "0")}.json')
-          .writeAsStringSync(const JsonEncoder.withIndent('  ').convert(jsonOut));
+      // Compact JSON (no indentation) so it fits one CSV cell.
+      final payloadStr = jsonEncode(payload);
 
       // CSV row (escape for commas/newlines via JSON encoding strings that need it).
       String esc(String v) {
@@ -423,6 +428,7 @@ void main() {
         totalVolume.toStringAsFixed(1),
         latencyMs.toString(),
         esc(error ?? ''),
+        esc(payloadStr),
       ].join(',') + '\n';
       // Append + flush by writing in append mode.
       csvFile.writeAsStringSync(row, mode: FileMode.append, flush: true);
@@ -441,12 +447,10 @@ void main() {
     // ignore: avoid_print
     print('\n[harness] Done. ok=$ok failed=$failed total=${scenarios.length}');
     // ignore: avoid_print
-    print('[harness] CSV  → ${csvFile.path}');
-    // ignore: avoid_print
-    print('[harness] JSON → ${outDir.path}/json/');
+    print('[harness] CSV → ${csvFile.path} (raw_payload column has full per-scenario JSON)');
 
     expect(failed, 0,
-        reason: 'Some scenarios failed — check stdout + per-scenario JSON');
+        reason: 'Some scenarios failed — check stdout + raw_payload column in CSV');
     expect(ok, scenarios.length);
   });
 }

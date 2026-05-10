@@ -27,6 +27,8 @@ import '../../widgets/medical_disclaimer_banner.dart';
 import '../ai_settings/ai_settings_screen.dart';
 import '../exercises/import_exercise_screen.dart';
 import '../workout/widgets/quick_workout_sheet.dart';
+import '../../data/providers/equipment_match_pending_action_provider.dart';
+import '../../data/providers/today_workout_provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../data/repositories/nutrition_repository.dart';
 import 'widgets/food_analysis_inline_card.dart';
@@ -779,23 +781,132 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     return la.year == lb.year && la.month == lb.month && la.day == lb.day;
   }
 
-  // Issue 2 — route taps from EquipmentMatchCard.
-  // Pragmatic v1 binding: tapping a match navigates to /workout/active so the
-  // user can swap/add from the canonical sheet UI. A snackbar carries the
-  // match name as confirmation since chat is decoupled from the workout sheet.
+  // Issue 2 — real deeplink for EquipmentMatchCard match taps.
+  //
+  // Flow:
+  //   1. Resolve today's workout (cache-first, instant).
+  //   2. If a workout exists → drop a SWAP pending action and route to
+  //      /active-workout. The active workout entry consumes the provider
+  //      after first frame and opens the canonical swap sheet pre-targeted
+  //      at the matched exercise.
+  //   3. If no workout exists → surface a clear "Start a workout first"
+  //      CTA bottom sheet (per feedback_no_silent_fallbacks). Tapping
+  //      "Start" drops an ADD pending action and opens the quick-workout
+  //      sheet so the matched exercise lands in a fresh session.
   void _handleEquipmentMatchTap(
     Map<String, dynamic> match,
     Map<String, dynamic> actionData,
   ) {
-    final matchName = (match['name'] as String?) ?? 'Equipment match';
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Selected: $matchName — open your workout to apply')),
+    final exerciseId = (match['id'] as String?) ??
+        (match['exercise_id'] as String?) ??
+        '';
+    final matchName = (match['name'] as String?) ?? '';
+    final imageUrl = match['image_url'] as String?;
+    final primaryMuscle = match['primary_muscle'] as String?;
+    if (exerciseId.isEmpty || matchName.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("This match is missing an exercise id.")),
+      );
+      return;
+    }
+
+    // Read today's workout from cache. todayWorkoutProvider is cache-first,
+    // so this is synchronous and feels immediate (no network round-trip).
+    final todayAsync = ref.read(todayWorkoutProvider);
+    final today = todayAsync.valueOrNull;
+    final hasActiveWorkout = today?.todayWorkout != null &&
+        !(today!.todayWorkout!.isCompleted);
+
+    if (hasActiveWorkout) {
+      ref.read(equipmentMatchPendingActionProvider.notifier).state =
+          EquipmentMatchPendingAction(
+        mode: EquipmentMatchPendingMode.swap,
+        exerciseId: exerciseId,
+        exerciseName: matchName,
+        exerciseImageUrl: imageUrl,
+        primaryMuscle: primaryMuscle,
+      );
+      // Hand off to the canonical workout route. The summary->Workout
+      // bridge expects an extra payload, so pass the today summary's full
+      // Workout object — the route already handles both Workout and Map.
+      final workoutObj = today.todayWorkout!.toWorkout();
+      context.push('/active-workout', extra: workoutObj);
+      return;
+    }
+
+    // No active workout — never silently no-op. Surface a clear CTA.
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetCtx) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(Icons.fitness_center_rounded,
+                    color: AppColors.cyan, size: 32),
+                const SizedBox(height: 12),
+                Text(
+                  'Start a workout to use $matchName',
+                  style: Theme.of(sheetCtx).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  "You don't have a workout in progress yet. Start a quick "
+                  "workout and we'll drop $matchName right in.",
+                  style: Theme.of(sheetCtx).textTheme.bodyMedium,
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.of(sheetCtx).pop(),
+                        child: const Text('Not now'),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.cyan,
+                          foregroundColor: Colors.black,
+                        ),
+                        onPressed: () {
+                          // Seed an ADD action — the new quick workout will
+                          // not have an existing exercise to swap against.
+                          ref
+                              .read(equipmentMatchPendingActionProvider
+                                  .notifier)
+                              .state = EquipmentMatchPendingAction(
+                            mode: EquipmentMatchPendingMode.add,
+                            exerciseId: exerciseId,
+                            exerciseName: matchName,
+                            exerciseImageUrl: imageUrl,
+                            primaryMuscle: primaryMuscle,
+                          );
+                          Navigator.of(sheetCtx).pop();
+                          showQuickWorkoutSheet(context, ref);
+                        },
+                        child: const Text('Start workout'),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
-    // Best-effort: deeplink to active workout. If route doesn't exist on this
-    // tab, fall through silently — the snackbar is the confirmation.
-    try {
-      context.push('/workout/active');
-    } catch (_) {}
   }
 
   void _handleCreateCustomFromEquipment(Map<String, dynamic> actionData) {

@@ -29,9 +29,16 @@ from models.schemas import (
     AddExerciseRequest, ExtendWorkoutRequest,
 )
 from services.gemini_service import GeminiService, validate_set_targets_strict
+from services.gemini.utils import apply_goal_aware_rir_override
 from services.exercise_library_service import get_exercise_library_service
 from api.v1.workouts.utils import *  # Re-export hub for all workout sub-modules
-from api.v1.workouts.generation_helpers import normalize_exercise_numeric_fields, _estimate_workout_met
+from api.v1.workouts.generation_helpers import (
+    normalize_exercise_numeric_fields,
+    _estimate_workout_met,
+    post_filter_equipment_violations,
+    post_filter_excluded_exercises,
+    coerce_workout_type_from_focus,
+)
 from services.exercise_rag.service import get_exercise_rag_service
 from services.adaptive_workout_service_helpers_part2 import get_user_set_type_preferences, build_set_type_context
 
@@ -524,30 +531,35 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
             else:
                 effective_duration = target_duration
 
-            # Calculate base exercise count from duration
-            base_exercise_count = max(4, min(12, effective_duration // 6))
+            # Calculate base exercise count from duration. Pre-fix audit
+            # found duration scaling was too flat (60min=6.5, 90min=6.6).
+            # ACSM-recommended density is ≈ 1 exercise / 7 min for strength;
+            # cardio/mobility goals run lower density. New base: ≈ 1/6.
+            base_exercise_count = max(3, min(12, effective_duration // 6 + 1))
 
-            # Define exercise caps by fitness level AND duration
-            # Research: beginners benefit from 3-5 exercises, intermediate 5-7, advanced can handle more
+            # Define exercise caps by fitness level AND duration. Caps were
+            # raised across the board in Fix 7 (D4) so that 60/75/90 min
+            # workouts hit ACSM density (8/9/10) instead of the audited
+            # 6.5/6.7/6.6.
             EXERCISE_CAPS = {
                 "beginner": {
-                    30: 4,   # Short session: focus on fundamentals
-                    45: 5,   # Standard session: 5 exercises max
-                    60: 5,   # Longer session: still 5 to master form
-                    75: 6,   # Extended session: allow 1 more
-                    90: 6,   # Marathon session: cap at 6 to prevent overwhelm
-                },
-                "intermediate": {
                     30: 5,
                     45: 6,
                     60: 7,
-                    75: 8,
-                    90: 9,
+                    75: 7,
+                    90: 8,
                 },
-                "advanced": {
+                "intermediate": {
                     30: 5,
                     45: 7,
                     60: 8,
+                    75: 9,
+                    90: 10,
+                },
+                "advanced": {
+                    30: 6,
+                    45: 8,
+                    60: 9,
                     75: 10,
                     90: 11,
                 },
@@ -622,6 +634,33 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
                 batch_offset=body.batch_offset,
                 very_recently_used_exercises=very_recently_used_exercises,
             )
+            # Phase A: if primary RAG returns < 4, escalate to the broadening
+            # cascade so we never ship a 1-exercise workout. The cascade
+            # preserves injury safety while broadening focus/equipment scope.
+            if not rag_exercises or len(rag_exercises) < 4:
+                logger.warning(
+                    f"⚠️ [RAG] primary returned {len(rag_exercises or [])}, escalating to cascade"
+                )
+                cascade_exercises, _cascade_tier = await exercise_rag.select_exercises_with_fallback(
+                    focus_area=focus_area,
+                    equipment=equipment if isinstance(equipment, list) else [],
+                    fitness_level=fitness_level or "intermediate",
+                    goals=goals if isinstance(goals, list) else [],
+                    count=max(exercise_count, 4),
+                    injuries=injury_names,
+                    avoid_exercises=avoided_exercises if avoided_exercises else None,
+                    user_id=str(body.user_id) if hasattr(body, "user_id") else None,
+                    workout_type_preference=body.workout_type or "strength",
+                    min_floor=4,
+                )
+                # Merge with whatever the primary returned, dedup by name.
+                seen_n = {(e.get("name") or "").strip().lower() for e in (rag_exercises or [])}
+                rag_exercises = list(rag_exercises or [])
+                for ex in cascade_exercises:
+                    n = (ex.get("name") or "").strip().lower()
+                    if n and n not in seen_n:
+                        seen_n.add(n)
+                        rag_exercises.append(ex)
 
             if rag_exercises:
                 # Use RAG-selected exercises - these have correct names from DB
@@ -692,6 +731,35 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
             exercises = workout_data.get("exercises", [])
             exercises = normalize_exercise_numeric_fields(exercises)
 
+            # Goal-aware RIR/RPE override (Fix 7 / D2). Gemini emits a
+            # mechanical 2,1,0 RIR ramp for every workout regardless of
+            # goal — that pushes every set to failure on set 3 even for
+            # beginner isolation. Override per goal: strength caps at
+            # RIR 1, hypertrophy at RIR 1, mobility skips RIR/RPE.
+            exercises = apply_goal_aware_rir_override(exercises, goals=goals)
+
+            # is_timed name-pattern repair (Fix 11 / E6). Audit found 50
+            # static-hold exercises (Wall Sit, Plank, Dead Hang, etc.)
+            # tagged is_timed=False. The library `is_timed` flag is
+            # inconsistent — patch by name pattern.
+            _TIMED_NAME_TOKENS = (
+                "wall sit", "plank", "dead hang", "bar hang",
+                "hollow hold", "l-sit", "l sit", "iso hold",
+                "isometric", "static hold", "farmer carry", "farmers carry",
+            )
+            for ex in exercises:
+                _name_lower = (ex.get("name") or "").lower()
+                if any(t in _name_lower for t in _TIMED_NAME_TOKENS):
+                    if not ex.get("is_timed"):
+                        ex["is_timed"] = True
+                        if not ex.get("hold_seconds"):
+                            # Default by fitness level: 30/45/60s for
+                            # beginner/intermediate/advanced.
+                            _hold_default = {
+                                "beginner": 30, "intermediate": 45, "advanced": 60,
+                            }.get((fitness_level or "intermediate").lower(), 30)
+                            ex["hold_seconds"] = _hold_default
+
             # Normalize equipment values — Gemini may echo snake_case from user profile
             from services.exercise_rag.utils import normalize_equipment_value
             for ex in exercises:
@@ -755,6 +823,19 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
                     focus_areas=body.focus_areas,
                     workout_type=body.workout_type,
                 )
+                # Post-gen exclude + equipment compatibility (validation
+                # harness 2026-05-09: 1 row leaked an excluded exercise via
+                # alias collapse; 33 rows had equipment-incompatible exercises).
+                exercises = post_filter_excluded_exercises(
+                    exercises,
+                    body.exclude_exercises,
+                    body.adjacent_day_exercises,
+                )
+                exercises = post_filter_equipment_violations(
+                    exercises,
+                    user_equipment=(equipment if isinstance(equipment, list) else None),
+                    goals=goals if isinstance(goals, list) else None,
+                )
 
             # Infer workout type from focus area for PPL tracking
             # This ensures workout_type is set correctly even when Gemini doesn't specify it
@@ -766,6 +847,34 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
                 logger.info(f"🎯 [Type] Inferred workout type '{workout_type}' from focus '{body.focus_areas[0]}'")
             else:
                 workout_type = raw_type or "strength"
+
+            # Goal → workout_type override (Fix 11 / H3 from
+            # peppy-conjuring-valley.md). Pre-fix audit found 38 mismatches:
+            # mobility goals returned non-mobility types (18), endurance →
+            # non-endurance (16), hypertrophy → non-hypertrophy (4).
+            _GOAL_TO_TYPE = {
+                "mobility": "mobility",
+                "recovery": "recovery",
+                "endurance": "cardio",
+                "fat_loss": "hiit",
+                "strength": "strength",
+                "power": "power",
+                "hypertrophy": "hypertrophy",
+                "general_fitness": "hybrid",
+            }
+            if goals:
+                primary_goal_for_type = (goals[0] or "").strip().lower()
+                _override_type = _GOAL_TO_TYPE.get(primary_goal_for_type)
+                if _override_type and _override_type != workout_type:
+                    # Mobility / recovery / cardio goals override even an
+                    # explicit focus mapping — a "pull" focus + "mobility"
+                    # goal should still produce a mobility workout.
+                    if primary_goal_for_type in {"mobility", "recovery", "endurance", "fat_loss"}:
+                        logger.info(
+                            f"🔧 [GoalOverride] type {workout_type!r} → "
+                            f"{_override_type!r} (goal={primary_goal_for_type!r})"
+                        )
+                        workout_type = _override_type
 
             # POST-GENERATION VALIDATION: Filter out any exercises that violate user preferences
             # This is a safety net in case the AI still includes avoided exercises
@@ -1073,6 +1182,41 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
                 is_comeback = False
 
             if exercises:
+                # Notes-dedup pass (Fix 11 / H9): boilerplate "1. Begin by
+                # standing..." instructions repeat across many distinct
+                # library exercises. Within a workout, dedupe so the user
+                # doesn't see copy-paste cues.
+                from services.exercise_rag.formatting import dedupe_workout_notes
+                exercises = dedupe_workout_notes(exercises)
+
+                # Dedup within workout (Fix 13): even after canonicalization
+                # the AI selector can return two entries that map to the
+                # same canonical exercise. Drop later occurrences.
+                from services.exercise_rag.utils import canonicalize_exercise_name
+                _seen_canonical: set = set()
+                _seen_library: set = set()
+                deduped: list = []
+                for ex in exercises:
+                    nm = ex.get("name") or ""
+                    canon = canonicalize_exercise_name(nm) or nm.lower().strip()
+                    canon_key = canon.lower().strip()
+                    lib_id = (ex.get("library_id") or ex.get("exercise_id") or "").strip()
+                    if canon_key and canon_key in _seen_canonical:
+                        logger.warning(
+                            f"[ExerciseDedup] Dropped duplicate canonical name {canon!r}"
+                        )
+                        continue
+                    if lib_id and lib_id in _seen_library:
+                        logger.warning(
+                            f"[ExerciseDedup] Dropped duplicate library_id {lib_id}"
+                        )
+                        continue
+                    _seen_canonical.add(canon_key)
+                    if lib_id:
+                        _seen_library.add(lib_id)
+                    deduped.append(ex)
+                exercises = deduped
+
                 exercises = validate_and_cap_exercise_parameters(
                     exercises=exercises,
                     fitness_level=fitness_level or "intermediate",
@@ -1163,31 +1307,51 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
                 }
                 if len(distinct_exercise_names) < MIN_EXERCISES_REQUIRED:
                     _eq_for_log = equipment if isinstance(equipment, list) else []
-                    logger.error(
-                        f"❌ [Exercise Count] Workout '{workout_name}' has only "
-                        f"{len(distinct_exercise_names)} distinct exercises "
-                        f"(minimum required: {MIN_EXERCISES_REQUIRED}). "
-                        f"Equipment={_eq_for_log}, focus={focus_areas}. "
-                        f"Likely candidate pool too small — aborting insert."
-                    )
-                    # Return a structured 422 so the Flutter client can surface
-                    # a "your gym profile needs more equipment for this focus"
-                    # message instead of silently showing a 2-exercise workout.
-                    raise HTTPException(
-                        status_code=422,
-                        detail={
-                            "code": "EXERCISE_POOL_TOO_SMALL",
-                            "message": (
-                                f"Only {len(distinct_exercise_names)} exercises could be selected "
-                                f"for this focus/equipment combination (minimum {MIN_EXERCISES_REQUIRED}). "
-                                f"Add more equipment to your gym profile or pick a different focus."
-                            ),
-                            "distinct_exercise_count": len(distinct_exercise_names),
-                            "minimum_required": MIN_EXERCISES_REQUIRED,
-                            "focus_areas": focus_areas,
-                            "equipment_count": len(_eq_for_log),
-                        },
-                    )
+                    # Fix 9 graceful degradation: only hard-fail when pool
+                    # is < 2 (i.e. nothing meaningful to ship). When we have
+                    # exactly 2 unique exercises return them anyway with a
+                    # `notes` warning so the user still gets a workout.
+                    # Niche-equipment scenarios (machine-only, bands-only,
+                    # cardio-only, bw+bands) accounted for 6 hard-fails in
+                    # the pre-fix audit — most of those had 2 exercises.
+                    HARD_FAIL_FLOOR = 2
+                    if len(distinct_exercise_names) >= HARD_FAIL_FLOOR:
+                        _warning_note = (
+                            f"Limited equipment for {focus_areas[0] if focus_areas else 'this focus'} — "
+                            f"only {len(distinct_exercise_names)} exercises available. "
+                            f"Add more equipment to your gym profile to unlock more variety."
+                        )
+                        # Append warning to description (non-empty by Fix 8).
+                        if workout_description:
+                            workout_description = f"{workout_description.strip()} ({_warning_note})"
+                        else:
+                            workout_description = _warning_note
+                        logger.warning(
+                            f"⚠️ [Exercise Count] Pool degradation: {len(distinct_exercise_names)} "
+                            f"exercises for {focus_areas}/{_eq_for_log} — proceeding with notes warning."
+                        )
+                    else:
+                        logger.error(
+                            f"❌ [Exercise Count] Workout '{workout_name}' has only "
+                            f"{len(distinct_exercise_names)} distinct exercises "
+                            f"(below hard floor {HARD_FAIL_FLOOR}). "
+                            f"Equipment={_eq_for_log}, focus={focus_areas}."
+                        )
+                        raise HTTPException(
+                            status_code=422,
+                            detail={
+                                "code": "EXERCISE_POOL_TOO_SMALL",
+                                "message": (
+                                    f"Only {len(distinct_exercise_names)} exercises could be selected "
+                                    f"for this focus/equipment combination (minimum {HARD_FAIL_FLOOR}). "
+                                    f"Add more equipment to your gym profile or pick a different focus."
+                                ),
+                                "distinct_exercise_count": len(distinct_exercise_names),
+                                "minimum_required": HARD_FAIL_FLOOR,
+                                "focus_areas": focus_areas,
+                                "equipment_count": len(_eq_for_log),
+                            },
+                        )
 
         except HTTPException:
             raise
@@ -1206,6 +1370,68 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
         _estimated_calories = round(_met * _user_weight_kg * (_effective_duration / 60.0))
         logger.info(f"[Calories] MET={_met:.1f}, weight={_user_weight_kg}kg, duration={_effective_duration}min -> {_estimated_calories} cal")
 
+        # ── Server-authoritative field overrides (Fix 8 from
+        # peppy-conjuring-valley.md) ──
+        # The pre-fix audit found that 462/462 successful responses had a
+        # different scheduled_date than the request, 462/462 had empty
+        # description, 131 had a fitness_level / difficulty mismatch, and
+        # 184 had duration drift > 5 min. Root cause: the LLM's payload was
+        # being trusted for these fields. Each is now derived from the
+        # request, not the model.
+        _FITNESS_LEVEL_TO_DIFFICULTY = {
+            "beginner": "easy",
+            "intermediate": "medium",
+            "advanced": "hard",
+        }
+        _enforced_difficulty = _FITNESS_LEVEL_TO_DIFFICULTY.get(
+            (fitness_level or "").strip().lower(), difficulty
+        )
+        if _enforced_difficulty != difficulty:
+            logger.info(
+                f"🔧 [FieldOverride] difficulty {difficulty!r} → "
+                f"{_enforced_difficulty!r} (from fitness_level={fitness_level!r})"
+            )
+            difficulty = _enforced_difficulty
+
+        # Description: never empty. Fall back to a deterministic synthesis
+        # so analytics / list views always have something readable.
+        if not (workout_description or "").strip():
+            _focus_str = (body.focus_areas[0] if body.focus_areas else focus_area) or "general"
+            _goal_str = (goals[0] if goals else "general fitness")
+            workout_description = (
+                f"A {fitness_level or 'mixed'} {target_duration}-minute "
+                f"{_focus_str} session focused on {_goal_str}."
+            )
+            logger.info(
+                "🔧 [FieldOverride] description was empty — synthesized fallback"
+            )
+
+        # scheduled_date: keep the user's requested YYYY-MM-DD verbatim. The
+        # old `target_date_to_utc_iso` conversion shifted the date across
+        # timezone boundaries (a CST user requesting 2026-05-27 was getting
+        # 2026-05-26T05:00:00Z stored, which read back as the wrong day).
+        _request_date = (
+            body.scheduled_date
+            or get_user_today(resolve_timezone(request, db, body.user_id))
+        )
+
+        # Last-mile type coercion (mirror /generate-stream — see
+        # generation_streaming.py and generation_helpers.coerce_workout_type_from_focus).
+        workout_type = coerce_workout_type_from_focus(
+            workout_type, body.focus_areas, goals if isinstance(goals, list) else None,
+        )
+
+        # duration_minutes: enforce request value (not LLM math). Min/max
+        # remain LLM-provided but tightened to ±5 min around the request.
+        _enforced_duration = target_duration
+        _enforced_duration_min = target_duration_min if target_duration_min else max(5, _enforced_duration - 5)
+        _enforced_duration_max = target_duration_max if target_duration_max else _enforced_duration + 5
+
+        # generation_method: distinguish RAG-first from free-form for
+        # analytics. `rag_exercises` is truthy when the library path fired.
+        _generation_method = "rag_first" if rag_exercises else "ai"
+        _generation_source = "library" if rag_exercises else "gemini_generation"
+
         workout_db_data = {
             "user_id": body.user_id,
             "gym_profile_id": gym_profile_id,  # Link workout to gym profile
@@ -1213,17 +1439,14 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
             "type": workout_type,
             "difficulty": difficulty,
             "description": workout_description,
-            "scheduled_date": target_date_to_utc_iso(
-                body.scheduled_date or get_user_today(resolve_timezone(request, db, body.user_id)),
-                resolve_timezone(request, db, body.user_id),
-            ),
+            "scheduled_date": _request_date,
             "exercises_json": exercises,
-            "duration_minutes": target_duration,
-            "duration_minutes_min": target_duration_min,
-            "duration_minutes_max": target_duration_max,
+            "duration_minutes": _enforced_duration,
+            "duration_minutes_min": _enforced_duration_min,
+            "duration_minutes_max": _enforced_duration_max,
             "estimated_calories": _estimated_calories,
-            "generation_method": "ai",
-            "generation_source": "gemini_generation",
+            "generation_method": _generation_method,
+            "generation_source": _generation_source,
         }
 
         # If we reserved a placeholder up-front (lines 138-152), UPDATE it

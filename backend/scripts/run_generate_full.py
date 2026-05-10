@@ -71,19 +71,36 @@ CSV_COLS = [
 
 async def call_generate(
     client: httpx.AsyncClient,
-    jwt: str,
+    jwt_box: List[str],
     body: Dict[str, Any],
     max_retries: int = 2,
     backoff_s: float = 65.0,
 ) -> Dict[str, Any]:
-    """POST /generate, retry on 429/5xx with backoff."""
+    """POST /generate, retry on 429/5xx with backoff. On 401, refresh JWT once.
+
+    `jwt_box` is a one-element list so we can mutate the bearer in place when
+    a 401 is received, keeping the caller's reference up to date.
+    """
+    # Phase E2 — proactive refresh at 80% TTL to avoid 401 storms mid-sweep.
+    # Validation harness 2026-05-09 hit 40 spurious 401s. jwt_box may now be
+    # [jwt, minted_at_unix_ts]; len==1 paths still work (assumed fresh).
+    REFRESH_AFTER_S = 50 * 60
+    if len(jwt_box) >= 2:
+        try:
+            minted_at = float(jwt_box[1])
+            if (time.time() - minted_at) >= REFRESH_AFTER_S:
+                jwt_box[0] = get_jwt()
+                jwt_box[1] = time.time()
+                print(f"  [proactive] JWT age >50min — refreshed before request", flush=True)
+        except (ValueError, TypeError):
+            pass
     for attempt in range(max_retries + 1):
         t0 = time.time()
         try:
             r = await client.post(
                 f"{RENDER}/api/v1/workouts/generate",
                 json=body,
-                headers={"Authorization": f"Bearer {jwt}"},
+                headers={"Authorization": f"Bearer {jwt_box[0]}"},
                 timeout=120.0,
             )
             latency_ms = int((time.time() - t0) * 1000)
@@ -96,6 +113,14 @@ async def call_generate(
                 err = f"HTTP {r.status_code}: {str(payload)[:300]}"
             elif isinstance(payload, dict) and "error" in payload:
                 err = f"body_error: {payload.get('error')}"
+            # 401 → refresh JWT and retry once. Supabase JWT TTL ≈ 1h; long
+            # sweeps cross that boundary mid-run.
+            if r.status_code == 401 and attempt < max_retries:
+                print(f"  [retry] 401 — refreshing JWT and retrying", flush=True)
+                jwt_box[0] = get_jwt()
+                if len(jwt_box) >= 2:
+                    jwt_box[1] = time.time()
+                continue
             # Retry on transient failures
             if r.status_code in (429, 502, 503, 504) and attempt < max_retries:
                 print(f"  [retry] {r.status_code} — sleeping {backoff_s}s "
@@ -162,8 +187,11 @@ def extract_summary(result: Dict[str, Any]) -> Dict[str, Any]:
             m = ",".join(m)
         muscles.append(str(m))
 
-    # RAG-first provenance counts (the whole point of testing this endpoint)
-    n_with_id = sum(1 for e in exs if e.get("exercise_id"))
+    # RAG-first provenance counts (the whole point of testing this endpoint).
+    # API returns the binding as `library_id`; older code paths used `exercise_id`.
+    n_with_id = sum(
+        1 for e in exs if e.get("library_id") or e.get("exercise_id")
+    )
     n_with_video = sum(1 for e in exs if e.get("video_url"))
     n_with_image = sum(1 for e in exs
                        if e.get("image_s3_path") or e.get("image_url"))
@@ -209,7 +237,7 @@ async def main() -> None:
     args = parser.parse_args()
 
     print("[harness] auth...", flush=True)
-    jwt = get_jwt()
+    jwt_box = [get_jwt(), time.time()]
     print("[harness] JWT ok", flush=True)
 
     scenarios = build_500_for_generate()[: args.n]
@@ -220,15 +248,23 @@ async def main() -> None:
     )
     started = _dt.now().isoformat(timespec="seconds")
     url = f"{RENDER}/api/v1/workouts/generate"
+    # Proactive JWT refresh cadence — Supabase JWT TTL ≈ 1h; full sweeps run
+    # ~50 min so we refresh every 50 scenarios as a defense-in-depth alongside
+    # the inline 401 retry inside `call_generate`.
+    refresh_every = 50
 
     async with httpx.AsyncClient() as client:
-        for sc in scenarios:
+        for i, sc in enumerate(scenarios):
             if sc["idx"] in completed_idx:
                 print(f"[{sc['idx']}/{len(scenarios)}] SKIP (already done)",
                       flush=True)
                 continue
 
-            res = await call_generate(client, jwt, sc["body"])
+            if i > 0 and i % refresh_every == 0:
+                print(f"[harness] proactive JWT refresh at i={i}", flush=True)
+                jwt_box[0] = get_jwt()
+
+            res = await call_generate(client, jwt_box, sc["body"])
             ws = extract_summary(res)
             row = {
                 "idx": sc["idx"], "scenario_block": sc["block"],

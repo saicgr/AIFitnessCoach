@@ -453,12 +453,16 @@ def cap_exercise_count_by_density(
 ) -> List[Dict[str, Any]]:
     """Drop exercises beyond a sane density ceiling.
 
-    Validation harness (2026-05-08, render_generate_stream_full_20260508_111252)
-    found ~5% of workouts had densities like 8 exercises / 30 min (3.8 min each)
-    or 8 / 15 min (1.9 min each) — impossible to execute properly with sets+rest.
+    Validation harness (2026-05-09, render_generate_stream_full_20260509_095849)
+    surfaced 25 rows where 15-min sessions persisted 6 exercises (target=4 per
+    workout_quality_checklist §E). Root cause: when the user's gym profile
+    sets a wider duration_max but the body explicitly asks for 15 min, the
+    upstream count caller used the wider effective duration; this cap is the
+    last-line-of-defense. Hard-bracketed table now used regardless of
+    workout_type (circuit gets +1 in each bucket but never breaks the §E
+    "≤4 ex for ≤15 min" rule).
 
     Rule: ~1 exercise per 7 min for strength; 1 per 4 min for circuit/cardio/HIIT.
-    For very short sessions (≤15 min), tighten the floor.
     """
     if not exercises or not duration_minutes or duration_minutes <= 0:
         return exercises
@@ -466,25 +470,34 @@ def cap_exercise_count_by_density(
     is_circuit = (workout_type or "").lower() in (
         "cardio", "hiit", "circuit", "metcon", "endurance",
     )
-    if duration_minutes <= 15:
-        # Short sessions: 5min/exercise floor regardless of style. 15min → 3 ex.
-        min_per_ex = 5.0
-    elif duration_minutes <= 30:
-        # 30min strength → 5 ex (6min/ex). HIIT/circuit → 7 ex (4.3min/ex).
-        min_per_ex = 4.0 if is_circuit else 6.0
-    else:
-        min_per_ex = 4.0 if is_circuit else 7.0
 
-    max_count = max(2, int(duration_minutes / min_per_ex))
-    if len(exercises) <= max_count:
+    # Hard absolute brackets — these are the §E ceilings, not the
+    # exercise/min ratio. Ratio-based fallback applies only above 30 min.
+    # Short-session table (workout_quality_checklist §E "≤4 ex for ≤15 min").
+    if duration_minutes <= 5:
+        absolute_max = 2
+    elif duration_minutes <= 10:
+        absolute_max = 3
+    elif duration_minutes <= 15:
+        absolute_max = 4 if is_circuit else 3
+    elif duration_minutes <= 20:
+        absolute_max = 5 if is_circuit else 4
+    elif duration_minutes <= 30:
+        absolute_max = 7 if is_circuit else 5
+    else:
+        # Ratio fallback for longer sessions.
+        min_per_ex = 4.0 if is_circuit else 7.0
+        absolute_max = max(3, int(duration_minutes / min_per_ex))
+
+    if len(exercises) <= absolute_max:
         return exercises
 
     logger.warning(
         f"⚠️ [DensityCap] {len(exercises)} exercises in {duration_minutes}min "
         f"(min/ex={duration_minutes / len(exercises):.1f}, type={workout_type}); "
-        f"capping to {max_count}"
+        f"capping to {absolute_max}"
     )
-    return exercises[:max_count]
+    return exercises[:absolute_max]
 
 
 def _classify_exercise_for_order(name: str) -> str:

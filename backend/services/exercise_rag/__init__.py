@@ -10,9 +10,12 @@ This package contains the modular implementation of the Exercise RAG service:
 """
 
 from .utils import (
+    canonicalize_exercise_name,
     clean_exercise_name_for_display,
     infer_equipment_from_name,
 )
+
+from .formatting import dedupe_workout_notes
 
 from .filters import (
     FULL_GYM_EQUIPMENT,
@@ -30,6 +33,7 @@ from .service import ExerciseRAGService, get_exercise_rag_service
 
 __all__ = [
     # Utils
+    "canonicalize_exercise_name",
     "clean_exercise_name_for_display",
     "infer_equipment_from_name",
     # Filters

@@ -396,6 +396,7 @@ extension __ExerciseSwapSheetStateExt on _ExerciseSwapSheetState {
                   onTap: () => _swapExercise(name, source: source),
                   textPrimary: textPrimary,
                   textMuted: textMuted,
+                  highlighted: _isHighlighted(name),
                 );
               },
             ),

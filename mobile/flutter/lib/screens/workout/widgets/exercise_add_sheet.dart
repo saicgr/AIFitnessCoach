@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:drift/drift.dart' show Value;
 import 'package:flutter/foundation.dart';
@@ -73,6 +74,12 @@ Future<Workout?> showExerciseAddSheet(
   required String workoutType,
   List<String>? currentExerciseNames,
   String? previewId,
+  /// When non-null, the sheet jumps to AI Suggestions on mount and
+  /// briefly highlights the row matching this name so the user can
+  /// confirm with one tap. Used by the chat-side equipment-match
+  /// deeplink when there's no equivalent exercise to swap.
+  String? preselectedExerciseId,
+  String? preselectedExerciseName,
 }) async {
   return await showGlassSheet<Workout>(
     context: context,
@@ -83,6 +90,8 @@ Future<Workout?> showExerciseAddSheet(
         workoutType: workoutType,
         currentExerciseNames: currentExerciseNames ?? [],
         previewId: previewId,
+        preselectedExerciseId: preselectedExerciseId,
+        preselectedExerciseName: preselectedExerciseName,
       ),
     ),
   );
@@ -105,12 +114,17 @@ class _ExerciseAddSheet extends ConsumerStatefulWidget {
   /// When non-null, adds are applied to the preview cache instead of the
   /// committed workout. Forwarded to [WorkoutRepository.addExercise].
   final String? previewId;
+  /// Optional preselect target — see [showExerciseAddSheet].
+  final String? preselectedExerciseId;
+  final String? preselectedExerciseName;
 
   const _ExerciseAddSheet({
     required this.workoutId,
     required this.workoutType,
     required this.currentExerciseNames,
     this.previewId,
+    this.preselectedExerciseId,
+    this.preselectedExerciseName,
   });
 
   @override

@@ -130,6 +130,18 @@ def obtain_jwt(token_env: str = "QA_JWT") -> Tuple[str, str]:
     return token, "minted"
 
 
+def refresh_jwt() -> Tuple[str, str]:
+    """Phase E — re-mint a fresh JWT. Use when a long-running sweep starts
+    receiving 401s. The default Supabase access_token TTL is 1h; sweeps
+    longer than that (the 2026-05-08 545-row run hit 28 spurious 401s in
+    blocks 9/10/13) need a refresh hook. Always mints anew — does not
+    consult the env token, which by definition is the stale one.
+    """
+    _log.info("[render_auth] refreshing JWT (mint anew)")
+    token, _auth_id = _mint_jwt()
+    return token, "refreshed"
+
+
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     tok, src = obtain_jwt()

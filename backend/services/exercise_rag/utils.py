@@ -74,6 +74,119 @@ def clean_exercise_name_for_display(exercise_name: str) -> str:
     return cleaned
 
 
+# Hyphenation map applied at runtime by `canonicalize_exercise_name` as a
+# defense-in-depth — primary fix is the DB rename pass in migration
+# `exercise_library_name_cleanup_2026_05_09`. Listed in (regex, replacement)
+# pairs so order matters: longer phrases first.
+_HYPHENATION_FIXES: list[tuple[re.Pattern, str]] = [
+    (re.compile(r"(?i)\bsingle[ _]arm\b"), "Single-Arm"),
+    (re.compile(r"(?i)\bsingle[ _]leg\b"), "Single-Leg"),
+    (re.compile(r"(?i)\bone[ _]arm\b"), "Single-Arm"),
+    (re.compile(r"(?i)\bone[ _]leg\b"), "Single-Leg"),
+    (re.compile(r"(?i)\bhalf[ _]kneeling\b"), "Half-Kneeling"),
+    (re.compile(r"(?i)\bget[ _]up\b"), "Get-Up"),
+    (re.compile(r"(?i)\bpull[ _]up\b"), "Pull-Up"),
+    (re.compile(r"(?i)\bpush[ _]up\b"), "Push-Up"),
+    (re.compile(r"(?i)\bchin[ _]up\b"), "Chin-Up"),
+    (re.compile(r"(?i)\bsit[ _]up\b"), "Sit-Up"),
+    (re.compile(r"(?i)\bstep[ _]up\b"), "Step-Up"),
+    (re.compile(r"(?i)\bbent[ _]over\b"), "Bent-Over"),
+    (re.compile(r"(?i)\bwide[ _]grip\b"), "Wide-Grip"),
+    (re.compile(r"(?i)\bclose[ _]grip\b"), "Close-Grip"),
+]
+
+# Anatomy-poster / non-exercise rows the catalog still leaks. Returns ""
+# from canonicalization so the caller can drop the row.
+_BLOCKLIST_NAMES_LOWER = {
+    "major groups muscle body",
+    "muscle body",
+}
+
+# Manual rewrites for awkward names that survive style passes. These are
+# applied AFTER hyphenation + Title Case, on the lowercase form.
+_NAME_RENAME_MAP: dict[str, str] = {
+    "wall sit bodyweight": "Wall Sit",
+    "push ups bodyweight": "Push-Up",
+    "frog jumps": "Frog Jump",
+    "mountain climbers": "Mountain Climber",
+    "mountain climber jumps": "Mountain Climber Jump",
+    "flutter kicks": "Flutter Kick",
+    "half burpees": "Half Burpee",
+    "bodyweight forward lunge": "Forward Lunge",
+    "bodyweight knee thrust": "Knee Thrust",
+    "bodyweight squat": "Air Squat",
+    "body throw": "Medicine Ball Body Throw",
+    "body-up": "TRX Body-Up",
+    "climber a padded stool supported": "Stool-Supported Mountain Climber",
+    "bridge - mountain climber (cross body)": "Cross-Body Mountain Climber Bridge",
+    "kettlebell sumo deadlift with high pull": "Kettlebell Sumo Deadlift High Pull",
+    "dumbbell one arm snatch": "Single-Arm Dumbbell Snatch",
+}
+
+# Title-Case "small connectors" that should stay lowercase mid-name.
+_SMALL_CONNECTORS = {"With", "To", "And", "Of", "The", "On", "In", "At", "By"}
+
+
+def canonicalize_exercise_name(raw: str) -> str:
+    """Normalize exercise name to the project style guide.
+
+    Pipeline: trim → collapse whitespace → strip filename artifacts →
+    apply explicit rename map (lowercase key match) → hyphenation pass →
+    Title Case → small-connector lowering → strip blocklist.
+
+    Returns ``""`` for blocklisted names so caller can drop the row.
+    Idempotent; safe on empty input.
+
+    See `peppy-conjuring-valley.md` Fix 12 for the full style guide.
+    """
+    if not raw:
+        return ""
+    s = re.sub(r"\s+", " ", raw).strip()
+    # Strip trailing _female / _male / (VERSION 2) / camera-angle suffixes
+    # in case they leak through from a stale source row.
+    s = re.sub(r"[_\s](female|male)$", "", s, flags=re.IGNORECASE)
+    s = re.sub(r"\s*\((version|VERSION)\s*\d+\)\s*$", "", s, flags=re.IGNORECASE)
+    s = re.sub(r"\s*\((front|side|back)\s*POV\)\s*$", "", s, flags=re.IGNORECASE)
+
+    # Blocklist (anatomy posters, non-exercise rows).
+    if s.lower() in _BLOCKLIST_NAMES_LOWER:
+        return ""
+
+    # Explicit rename map.
+    if s.lower() in _NAME_RENAME_MAP:
+        return _NAME_RENAME_MAP[s.lower()]
+
+    # Hyphenation pass before Title Case so "Single-Arm" survives initcap.
+    for pat, repl in _HYPHENATION_FIXES:
+        s = pat.sub(repl, s)
+
+    # Title Case via initcap-equivalent: capitalize first letter of each word.
+    # We use a manual word-by-word loop to preserve hyphenation and small
+    # connectors. `str.title()` mangles "Cross-Body" → "Cross-Body" (OK) but
+    # also things like "PR-1" → "Pr-1" (OK enough). Keep it simple.
+    parts = s.split(" ")
+    out_parts: list[str] = []
+    for i, p in enumerate(parts):
+        if not p:
+            continue
+        # If the part has a hyphen, title-case each side.
+        if "-" in p:
+            sub = "-".join(seg[:1].upper() + seg[1:].lower() for seg in p.split("-"))
+        else:
+            sub = p[:1].upper() + p[1:].lower()
+        # Lowercase small connectors except when first or last word.
+        if 0 < i < len(parts) - 1 and sub in _SMALL_CONNECTORS:
+            sub = sub.lower()
+        out_parts.append(sub)
+    s = " ".join(out_parts)
+
+    # Re-apply rename map after Title Case in case it normalized the key.
+    if s.lower() in _NAME_RENAME_MAP:
+        return _NAME_RENAME_MAP[s.lower()]
+
+    return s
+
+
 def infer_equipment_from_name(exercise_name: str) -> str:
     """
     Infer equipment type from exercise name when equipment data is missing.

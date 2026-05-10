@@ -8,7 +8,7 @@ This service:
 4. Provides equipment-aware weight recommendations
 """
 
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Tuple
 import json
 
 from sqlalchemy import text
@@ -196,15 +196,77 @@ async def fetch_safe_candidates(
 
     # Focus-area / body-part clause.
     # The view exposes body_part and target_muscle (no muscle_group column).
+    #
+    # Fix 4 (peppy-conjuring-valley.md): the previous bare ILIKE `%pull%`
+    # matched "Full Body" rows because "ull" ⊂ "Full". The audit found 25
+    # pull-focus workouts containing zero pull exercises (full-body Burpees
+    # leaked through). Anchored synonym map fixes this — pull/push focuses
+    # now match a curated muscle-synonym set with `=` against body_part
+    # plus muscle wildcards against target_muscle, AND exclude generic
+    # "Full Body" rows when the focus is a specific body half.
+    _FOCUS_SYNONYMS: Dict[str, Tuple[Tuple[str, ...], Tuple[str, ...]]] = {
+        # focus -> (exact body_part values, target_muscle ILIKE patterns)
+        "pull":  (("back", "upper arms", "lower arms"),
+                  ("%lat%", "%biceps%", "%trap%", "%rear delt%", "%posterior delt%",
+                   "%rhomboid%", "%forearm%", "%back%")),
+        "push":  (("chest", "shoulders", "upper arms"),
+                  ("%pectoralis%", "%anterior delt%", "%lateral delt%",
+                   "%triceps%", "%chest%")),
+        "legs":  (("upper legs", "lower legs"),
+                  ("%quadriceps%", "%hamstring%", "%glute%", "%calf%",
+                   "%calves%", "%adductor%", "%abductor%")),
+        "lower_body": (("upper legs", "lower legs"),
+                       ("%quadriceps%", "%hamstring%", "%glute%", "%calf%")),
+        "upper_body": (("back", "chest", "shoulders", "upper arms", "lower arms"),
+                       ("%lat%", "%pectoralis%", "%delt%", "%biceps%",
+                        "%triceps%", "%trap%", "%rhomboid%", "%forearm%")),
+        "core":  (("waist", "abdominals"),
+                  ("%abdominis%", "%oblique%", "%core%", "%transverse%")),
+        "cardio": (("cardio",),
+                   ("%cardio%", "%cardiovascular%", "%aerobic%")),
+        "arms":  (("upper arms", "lower arms"),
+                  ("%biceps%", "%triceps%", "%forearm%")),
+        "back":  (("back",), ("%back%", "%lat%", "%trap%", "%rhomboid%")),
+        "chest": (("chest",), ("%pectoralis%", "%chest%")),
+        "shoulders": (("shoulders",), ("%delt%", "%shoulder%", "%rotator cuff%")),
+    }
     if focus_areas:
-        where_parts.append(
-            "(t.body_part ILIKE ANY(CAST(:focus_areas AS text[])) "
-            "OR t.target_muscle ILIKE ANY(CAST(:focus_areas_tm AS text[])))"
-        )
-        # Wrap each focus area in a wildcard so "chest" matches "Upper Chest" etc.
-        focus_patterns = [f"%{f}%" for f in focus_areas]
-        params["focus_areas"] = focus_patterns
-        params["focus_areas_tm"] = focus_patterns
+        # Lowercase + canonicalize so "Pull"/"PULL"/"pull_body" all hit the map.
+        normalized_focuses = [str(f).lower().strip().replace(" ", "_") for f in focus_areas]
+        # full_body / general / unknown focuses keep the original lenient
+        # ILIKE behavior — they're meant to be permissive.
+        is_full_body = any(f in ("full_body", "fullbody", "full body", "general", "")
+                           for f in normalized_focuses)
+        anchored = [f for f in normalized_focuses if f in _FOCUS_SYNONYMS]
+
+        if anchored and not is_full_body:
+            # Build OR clauses across each anchored focus.
+            exact_bp: List[str] = []
+            wildcard_tm: List[str] = []
+            for f in anchored:
+                bp_exact, tm_wildcards = _FOCUS_SYNONYMS[f]
+                exact_bp.extend(bp_exact)
+                wildcard_tm.extend(tm_wildcards)
+            where_parts.append(
+                "(lower(t.body_part) = ANY(CAST(:focus_bp_exact AS text[])) "
+                "OR t.target_muscle ILIKE ANY(CAST(:focus_tm_wild AS text[])))"
+            )
+            params["focus_bp_exact"] = list({b.lower() for b in exact_bp})
+            params["focus_tm_wild"] = wildcard_tm
+            # Exclude "full body" rows when caller asked for a specific half.
+            where_parts.append(
+                "(lower(t.body_part) NOT LIKE 'full body%')"
+            )
+        elif focus_areas:
+            # Unrecognized focus → fall back to old lenient behavior so we
+            # don't surprise callers asking for novel focuses.
+            where_parts.append(
+                "(t.body_part ILIKE ANY(CAST(:focus_areas AS text[])) "
+                "OR t.target_muscle ILIKE ANY(CAST(:focus_areas_tm AS text[])))"
+            )
+            focus_patterns = [f"%{f}%" for f in focus_areas]
+            params["focus_areas"] = focus_patterns
+            params["focus_areas_tm"] = focus_patterns
 
     where_sql = " AND ".join(where_parts)
 
@@ -962,7 +1024,11 @@ class ExerciseRAGService:
                 # which is loaded from the equipment_types taxonomy seeded by
                 # migration 1594. Without this flag a TRX user cannot match
                 # any of the 34 Suspension Trainer exercises in the library.
-                if not filter_by_equipment(ex_equipment, equipment, meta.get("name", ""), use_substitutions=True):
+                if not filter_by_equipment(
+                    ex_equipment, equipment, meta.get("name", ""),
+                    use_substitutions=True,
+                    goals=goals,
+                ):
                     logger.debug(f"Filtered out '{meta.get('name')}' - equipment mismatch")
                     continue
 
@@ -1180,11 +1246,80 @@ class ExerciseRAGService:
 
         if injuries:
             _stage_counts.append(("after_injury_filter", len(candidates)))
+
+        # ── Elite-skill blocklist (Fix 2 / C4) ──
+        # Even after the safety-difficulty filter ran, some elite-tier
+        # calisthenics (Full Planche Push-Up, Front Lever, Iron Cross) are
+        # mistagged as beginner-safe in the matview. The pre-fix audit
+        # found 9 cases of beginners getting "Full Planche Push-Up". DB
+        # re-tagging happened in migration exercise_library_name_cleanup_2026_05_09;
+        # this name-pattern post-filter is the in-flight defense for any
+        # row that slips through.
+        if (validated_fitness_level or "").lower() in {"beginner", "intermediate"}:
+            _ELITE_SKILL_NAMES = (
+                "full planche", "front lever", "back lever",
+                "muscle-up", "muscle up", "iron cross",
+                "pistol squat",  # OK at intermediate; block at beginner
+                "one arm pull", "one-arm pull",
+                "one arm push", "one-arm push",
+                "dragon flag", "human flag",
+                "skin the cat",
+            )
+            if (validated_fitness_level or "").lower() == "beginner":
+                _block_set = _ELITE_SKILL_NAMES
+            else:
+                _block_set = tuple(n for n in _ELITE_SKILL_NAMES if n != "pistol squat")
+            before_count = len(candidates)
+            candidates = [
+                c for c in candidates
+                if not any(skill in (c.get("name") or "").lower()
+                           for skill in _block_set)
+            ]
+            dropped = before_count - len(candidates)
+            if dropped > 0:
+                logger.info(
+                    "🛡️  [EliteBlocklist] %s: filtered %d elite-skill exercises",
+                    validated_fitness_level, dropped,
+                )
+
         candidates = apply_avoided_muscles_filter(candidates, avoided_muscles)
         _stage_counts.append(("after_avoided_muscles", len(candidates)))
         apply_workout_type_filter(candidates, workout_type_preference)
         apply_favorites_boost(candidates, favorite_exercises)
         apply_consistency_mode(candidates, recently_used_exercises, consistency_mode, variation_percentage)
+
+        # ── Deterministic per-(user, date) shuffle (Fix 6) ──
+        # Pre-fix audit found 6 head exercises covered 35% of all picks.
+        # Without a shuffle the AI selector saw the same candidate ordering
+        # for every scenario and tended to pick from the top. A
+        # deterministic shuffle keyed by `(user_id, scheduled_date)` makes
+        # different days get different head exercises while keeping the
+        # same day's candidate ordering stable across retries.
+        try:
+            import hashlib
+            import time as _time
+            import random as _random
+            # Salt the seed with a 5-second time bucket so that two
+            # regenerate clicks on the same (user, date) get DIFFERENT
+            # candidate orderings (validation harness 2026-05-09 found
+            # block 3 had 100% within-block exercise overlap because the
+            # old seed was stable per-day). Bucketed (not raw ms) so that
+            # SSE retries within a single click still hit the same shuffle.
+            time_bucket = int(_time.time()) // 5
+            today_key = (
+                f"{user_id or 'anon'}|"
+                f"{(workout_params or {}).get('scheduled_date') or ''}|"
+                f"{time_bucket}"
+            )
+            seed = int(hashlib.md5(today_key.encode()).hexdigest(), 16) & 0xFFFFFFFF
+            _rng = _random.Random(seed)
+            _rng.shuffle(candidates)
+            logger.info(
+                "🔀 [Diversity] Shuffled %d candidates with seed key=%s",
+                len(candidates), today_key,
+            )
+        except Exception as _exc:
+            logger.warning("Diversity shuffle skipped: %s", _exc)
 
         # Emit one-line pipeline summary so drop points are visible in prod
         # (DEBUG-level per-exercise filter logs are suppressed in prod).
@@ -1478,6 +1613,290 @@ class ExerciseRAGService:
 
         return final_selection
 
+    async def select_exercises_with_fallback(
+        self,
+        focus_area: str,
+        equipment: List[str],
+        fitness_level: str,
+        goals: List[str],
+        count: int = 6,
+        injuries: Optional[List[str]] = None,
+        avoid_exercises: Optional[List[str]] = None,
+        dumbbell_count: int = 2,
+        kettlebell_count: int = 1,
+        user_id: Optional[str] = None,
+        workout_type_preference: str = "strength",
+        min_floor: int = 4,
+    ) -> Tuple[List[Dict[str, Any]], str]:
+        """
+        Phase A — 5-tier broadening cascade. Always returns ≥``min_floor``
+        candidates (or, in the worst case, the safety-mode mobility pool).
+        NEVER raises and NEVER returns < min_floor (caller relies on this).
+
+        Returns: (candidates, tier_reason) where tier_reason is one of:
+            "rag_primary"          — tier 0 succeeded
+            "rag_overfetch"        — tier 1 (count*4 + no avoid)
+            "curated_alternatives" — tier 2 (injury-aware substring match)
+            "rag_no_focus"         — tier 3 (drop focus, keep injuries)
+            "safety_mode_fallback" — tier 5 (mobility pool from safety_mode)
+
+        Tier 4 ("relax NULL safety") is currently merged into tier 3 — if
+        the data backfill (Phase A3) lands, tier 4 can be split out as a
+        distinct relaxation step.
+        """
+        injuries = injuries or []
+        equipment = equipment or []
+
+        # ---- Tier 0: original RAG call --------------------------------------
+        try:
+            tier0 = await self.select_exercises_for_workout(
+                focus_area=focus_area,
+                equipment=equipment,
+                fitness_level=fitness_level,
+                goals=goals,
+                count=count,
+                avoid_exercises=avoid_exercises,
+                injuries=injuries if injuries else None,
+                dumbbell_count=dumbbell_count,
+                kettlebell_count=kettlebell_count,
+                user_id=user_id,
+                workout_type_preference=workout_type_preference,
+            )
+        except Exception as e:  # noqa: BLE001
+            logger.warning(f"⚠️ [Cascade] tier0 RAG raised: {e}")
+            tier0 = []
+
+        if len(tier0) >= min_floor:
+            return tier0, "rag_primary"
+
+        merged_names = {(e.get("name") or "").strip().lower() for e in tier0 if e.get("name")}
+        merged: List[Dict[str, Any]] = list(tier0)
+
+        # ---- Tier 1: over-fetch + drop avoid list --------------------------
+        try:
+            tier1 = await self.select_exercises_for_workout(
+                focus_area=focus_area,
+                equipment=equipment,
+                fitness_level=fitness_level,
+                goals=goals,
+                count=count * 4,
+                avoid_exercises=None,
+                injuries=injuries if injuries else None,
+                dumbbell_count=dumbbell_count,
+                kettlebell_count=kettlebell_count,
+                user_id=user_id,
+                workout_type_preference=workout_type_preference,
+            )
+        except Exception as e:  # noqa: BLE001
+            logger.warning(f"⚠️ [Cascade] tier1 RAG raised: {e}")
+            tier1 = []
+
+        for ex in tier1:
+            n = (ex.get("name") or "").strip().lower()
+            if n and n not in merged_names:
+                merged.append(ex)
+                merged_names.add(n)
+
+        if len(merged) >= min_floor:
+            return merged[: max(count, min_floor)], "rag_overfetch"
+
+        # ---- Tier 2: curated injury-aware alternatives ---------------------
+        if injuries:
+            from services.exercise_rag.injury_focus_alternatives import (
+                get_curated_alternatives,
+            )
+
+            substrings = get_curated_alternatives(injuries, focus_area)
+            if substrings:
+                try:
+                    tier2 = await self._fetch_by_name_substrings(
+                        substrings=substrings,
+                        equipment=equipment,
+                        injuries=injuries,
+                        limit=count * 4,
+                    )
+                except Exception as e:  # noqa: BLE001
+                    logger.warning(f"⚠️ [Cascade] tier2 raised: {e}")
+                    tier2 = []
+                for ex in tier2:
+                    n = (ex.get("name") or "").strip().lower()
+                    if n and n not in merged_names:
+                        merged.append(ex)
+                        merged_names.add(n)
+
+        if len(merged) >= min_floor:
+            return merged[: max(count, min_floor)], "curated_alternatives"
+
+        # ---- Tier 3: drop focus filter, keep injuries ----------------------
+        try:
+            tier3 = await self.select_exercises_for_workout(
+                focus_area="full_body",
+                equipment=equipment,
+                fitness_level=fitness_level,
+                goals=goals,
+                count=count * 4,
+                avoid_exercises=None,
+                injuries=injuries if injuries else None,
+                dumbbell_count=dumbbell_count,
+                kettlebell_count=kettlebell_count,
+                user_id=user_id,
+                workout_type_preference=workout_type_preference,
+            )
+        except Exception as e:  # noqa: BLE001
+            logger.warning(f"⚠️ [Cascade] tier3 RAG raised: {e}")
+            tier3 = []
+
+        for ex in tier3:
+            n = (ex.get("name") or "").strip().lower()
+            if n and n not in merged_names:
+                merged.append(ex)
+                merged_names.add(n)
+
+        if len(merged) >= min_floor:
+            return merged[: max(count, min_floor)], "rag_no_focus"
+
+        # ---- Tier 5: safety_mode mobility pool ------------------------------
+        # Last resort — never error. The mobility pool works for ANY injury.
+        try:
+            from services.exercise_rag.safety_mode import build_plan as _safety_plan
+            from services.workout_safety_validator import UserSafetyContext as _Ctx
+
+            sm_ctx = _Ctx(
+                injuries=[i.strip().lower() for i in injuries if i],
+                difficulty="easy",
+                equipment=equipment,
+                user_id=str(user_id or ""),
+            )
+            sm = await _safety_plan(
+                ctx=sm_ctx,
+                duration_minutes=20,
+                focus_areas=[focus_area] if focus_area else None,
+            )
+            for ex in sm.get("exercises", []):
+                n = (ex.get("name") or "").strip().lower()
+                if n and n not in merged_names:
+                    merged.append(ex)
+                    merged_names.add(n)
+        except Exception as e:  # noqa: BLE001
+            logger.error(f"❌ [Cascade] tier5 safety_mode raised: {e}")
+
+        # If even safety_mode failed (extremely rare — would mean DB outage),
+        # return whatever we have. Caller will pad with safe defaults.
+        return merged[: max(count, min_floor)], "safety_mode_fallback"
+
+    async def _fetch_by_name_substrings(
+        self,
+        substrings: List[str],
+        equipment: List[str],
+        injuries: List[str],
+        limit: int,
+    ) -> List[Dict[str, Any]]:
+        """
+        Phase A tier-2 helper: query `exercise_library_cleaned` for rows
+        whose name OR movement_pattern matches ANY of the curated substrings.
+        Re-applies the equipment filter and the fail-closed injury filter
+        for the *remaining* injuries (the curated alternative is pre-vetted
+        for the named injury, so we drop just that injury from the AND clause).
+
+        Uses parameterized SQL — substrings come from our own trusted dict,
+        never user input, but bound via ANY-unnest for safety regardless.
+        """
+        if not substrings:
+            return []
+        try:
+            engine = get_supabase().engine
+        except Exception:  # noqa: BLE001
+            return []
+
+        # Build injury filter — for tier 2 we trust the curated map for
+        # the *first* injury but still enforce the AND clause on additional
+        # injuries (multi-joint cases need every other joint protected).
+        injury_cols = _resolve_injury_columns(injuries[1:] if len(injuries) > 1 else [])
+        where_parts = ["x.name IS NOT NULL"]
+        params: Dict[str, Any] = {
+            "subs": [s.lower() for s in substrings],
+            "limit_n": int(limit),
+        }
+        # Substring match against name or movement_pattern.
+        where_parts.append(
+            "EXISTS ("
+            "  SELECT 1 FROM unnest(CAST(:subs AS text[])) AS s(val) "
+            "  WHERE LOWER(x.name) ILIKE '%' || s.val || '%' "
+            "     OR LOWER(COALESCE(x.movement_pattern, '')) ILIKE '%' || s.val || '%'"
+            ")"
+        )
+        # Equipment filter.
+        if equipment:
+            where_parts.append(
+                "(x.equipment IS NULL OR EXISTS ("
+                "  SELECT 1 FROM unnest(CAST(:eq AS text[])) AS e(val) "
+                "  WHERE LOWER(x.equipment) ILIKE '%' || e.val || '%'"
+                "     OR e.val ILIKE '%' || LOWER(COALESCE(x.equipment, '')) || '%'"
+                "))"
+            )
+            params["eq"] = [e.lower() for e in equipment]
+        # Re-apply injury safety for remaining injuries against safety_index.
+        if injury_cols:
+            join_clause = (
+                " LEFT JOIN public.exercise_safety_index s ON s.exercise_id = x.id "
+            )
+            for col in injury_cols:
+                where_parts.append(f"COALESCE(s.{col}, FALSE) IS TRUE")
+        else:
+            join_clause = ""
+
+        sql = f"""
+            SELECT
+              x.id AS exercise_id,
+              x.name,
+              x.body_part,
+              x.target,
+              x.equipment,
+              x.movement_pattern,
+              x.gif_url,
+              x.image_url,
+              x.video_url,
+              x.instructions,
+              x.difficulty
+            FROM public.exercise_library_cleaned x
+            {join_clause}
+            WHERE {' AND '.join(where_parts)}
+            ORDER BY random()
+            LIMIT :limit_n
+        """
+
+        try:
+            from sqlalchemy import text
+            async with engine.connect() as conn:
+                res = await conn.execute(text(sql), params)
+                rows = [
+                    {k: v for k, v in r._mapping.items()} for r in res.fetchall()
+                ]
+        except Exception as e:  # noqa: BLE001
+            logger.warning(f"⚠️ [Cascade] tier2 substring query failed: {e}")
+            rows = []
+
+        # Shape rows to look like select_exercises_for_workout output.
+        out: List[Dict[str, Any]] = []
+        for r in rows:
+            out.append({
+                "id": r.get("exercise_id"),
+                "exercise_id": r.get("exercise_id"),
+                "name": r.get("name"),
+                "body_part": r.get("body_part"),
+                "target": r.get("target"),
+                "target_muscles": [r.get("target")] if r.get("target") else [],
+                "equipment": r.get("equipment") or "bodyweight",
+                "movement_pattern": r.get("movement_pattern"),
+                "gif_url": r.get("gif_url"),
+                "image_url": r.get("image_url"),
+                "video_url": r.get("video_url"),
+                "instructions": r.get("instructions"),
+                "difficulty": r.get("difficulty"),
+                "_source": "curated_alternatives",
+            })
+        return out
+
     async def _ai_select_exercises(
         self,
         candidates: List[Dict],
@@ -1549,12 +1968,18 @@ Do NOT select any exercise from the above list. Pick different exercises for var
 
         recently_used_section = ""
         if recently_used_exercises:
-            recent_names = recently_used_exercises[:15]
+            recent_names = recently_used_exercises[:30]
+            # Hardened from "STRONGLY prefer" → "MUST NOT include" so the
+            # model treats this as a hard constraint, not a hint. Pre-fix
+            # audit found 99 unique exercises across 2487 instances (top 6
+            # = 35% of all picks); the recent-list was too soft to break
+            # the head-exercise loop.
             recently_used_section = f"""
-VARIETY RULE - RECENTLY USED EXERCISES:
-These exercises were used in the user's recent workouts: {', '.join(recent_names)}
-STRONGLY prefer different exercises for variety. Only pick a recently used exercise
-if there is absolutely no suitable alternative in the candidate list.
+VARIETY RULE — RECENTLY USED EXERCISES (HARD CONSTRAINT):
+These exercises appeared in the user's recent workouts: {', '.join(recent_names)}
+You MUST NOT include any exercise from the list above unless the candidate
+list contains FEWER than `count` alternatives, in which case select the
+least-recently-used recent exercise. The user explicitly prefers variety.
 """
 
         prompt = f"""You are an expert fitness coach selecting exercises for a workout.

@@ -470,6 +470,12 @@ def build_100(sources: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         "?????",
         "🔥💪🏋️",
     ]
+    # Phase E: explicitly send `injuries: []` so block 12 actually exercises
+    # the LLM path. Without this, the test user d54e6652's profile injuries
+    # (5–7 joints) leak in, the safety-mode override fires, and every
+    # prompt — Spanish, Japanese, English alike — collapses to the same
+    # "Gentle Mobility Session" output. Also send a representative
+    # focus_areas so the cascade has a sensible starting point.
     for k, p in enumerate(prompts12[:30]):
         i += 1
         s.append({
@@ -480,6 +486,8 @@ def build_100(sources: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
                 "user_id": USER_ID,
                 "duration_minutes": 15 if "15 minutes" in p else 90 if "90 minutes" in p else 45,
                 "ai_prompt": p,
+                "injuries": [],          # NEW (Phase E) — clear profile injuries
+                "focus_areas": ["full_body"],  # NEW (Phase E) — explicit anchor
             },
         })
 
@@ -794,6 +802,8 @@ async def main() -> None:
 
     print("[harness] auth...", flush=True)
     jwt = get_jwt()
+    import time as _t
+    jwt_holder = {"jwt": jwt, "minted_at": _t.time()}
     print("[harness] JWT ok", flush=True)
 
     print("[harness] listing source workouts...", flush=True)
@@ -818,7 +828,8 @@ async def main() -> None:
                 print(f"[{sc['idx']}/{len(scenarios)}] SKIP (already done in resume dir)",
                       flush=True)
                 continue
-            res = await call_sse_with_retry(client, jwt, url, sc["body"])
+            res = await call_sse_with_retry(client, jwt_holder["jwt"], url, sc["body"], jwt_holder=jwt_holder)
+            jwt = jwt_holder["jwt"]  # carry refreshed token forward
             ws = workout_summary(res)
             row = {
                 "idx": sc["idx"], "scenario_block": sc["block"], "label": sc["label"],

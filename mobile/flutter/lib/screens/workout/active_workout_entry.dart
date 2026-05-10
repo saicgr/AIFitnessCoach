@@ -13,8 +13,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/providers/active_workout_phase_provider.dart';
 import '../../core/providers/workout_ui_mode_provider.dart';
 import '../../data/models/workout.dart';
+import '../../data/providers/equipment_match_pending_action_provider.dart';
 import 'active_workout_screen_refactored.dart';
 import 'easy/easy_active_workout_screen.dart';
+import 'widgets/exercise_add_sheet.dart';
+import 'widgets/exercise_swap_sheet.dart';
 
 class ActiveWorkoutEntry extends ConsumerStatefulWidget {
   final Workout workout;
@@ -60,11 +63,75 @@ class _ActiveWorkoutEntryState extends ConsumerState<ActiveWorkoutEntry> {
     //     trade-off for avoiding the crash — and the underlying stale-true
     //     bug should be fixed at workout-end time, not here.
     final notifier = ref.read(activeWorkoutWarmupDoneProvider.notifier);
+    // Consume any chat-deeplink pending action AFTER first frame so the
+    // child tier has fully mounted and the user sees the workout shell
+    // first (avoids a sheet over a blank background). One-shot: we clear
+    // the provider before opening so a remount doesn't replay it.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _maybeConsumeEquipmentMatchPendingAction();
+    });
     if (!notifier.state) return;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       ref.read(activeWorkoutWarmupDoneProvider.notifier).state = false;
     });
+  }
+
+  /// Reads the pending action provider once and, if a non-stale payload is
+  /// present, opens the matching sheet (swap or add) with the matched
+  /// exercise pre-highlighted. Always clears the provider — even on a
+  /// no-op — so a later mount doesn't replay an old signal.
+  Future<void> _maybeConsumeEquipmentMatchPendingAction() async {
+    final pending = ref.read(equipmentMatchPendingActionProvider);
+    if (pending == null) return;
+    // Clear immediately to make this strictly one-shot.
+    ref.read(equipmentMatchPendingActionProvider.notifier).state = null;
+    if (pending.isStale()) return;
+
+    final workoutId = widget.workout.id;
+    if (workoutId == null) return;
+
+    if (pending.mode == EquipmentMatchPendingMode.swap) {
+      // Pick the first existing exercise as the swap target. The user can
+      // change which exercise to swap from the sheet's reason chips, but
+      // we need *some* exercise to seed `widget.exercise`. Prefer the
+      // earliest non-completed entry (proxy for "current"); fall back to
+      // index 0.
+      final exercises = widget.workout.exercises;
+      if (exercises.isEmpty) {
+        await showExerciseAddSheet(
+          context,
+          ref,
+          workoutId: workoutId,
+          workoutType: widget.workout.type ?? 'strength',
+          currentExerciseNames: const [],
+          preselectedExerciseId: pending.exerciseId,
+          preselectedExerciseName: pending.exerciseName,
+        );
+        return;
+      }
+      final target = exercises.first;
+      await showExerciseSwapSheet(
+        context,
+        ref,
+        workoutId: workoutId,
+        exercise: target,
+        preselectedExerciseId: pending.exerciseId,
+        preselectedExerciseName: pending.exerciseName,
+      );
+    } else {
+      await showExerciseAddSheet(
+        context,
+        ref,
+        workoutId: workoutId,
+        workoutType: widget.workout.type ?? 'strength',
+        currentExerciseNames:
+            widget.workout.exercises.map((e) => e.name).toList(),
+        preselectedExerciseId: pending.exerciseId,
+        preselectedExerciseName: pending.exerciseName,
+      );
+    }
   }
 
   @override

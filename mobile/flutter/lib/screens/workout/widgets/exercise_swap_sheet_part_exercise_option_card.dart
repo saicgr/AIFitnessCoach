@@ -11,6 +11,10 @@ class _ExerciseOptionCard extends ConsumerWidget {
   final VoidCallback? onSwap;
   final Color textPrimary;
   final Color textMuted;
+  /// When true, the card is wrapped in a soft cyan glow that fades out over
+  /// ~1.4s so the user's eye lands on the row the chat deeplink targeted.
+  /// Strictly visual — does NOT block taps or auto-confirm the swap.
+  final bool highlighted;
 
   const _ExerciseOptionCard({
     required this.name,
@@ -22,6 +26,7 @@ class _ExerciseOptionCard extends ConsumerWidget {
     this.onSwap,
     required this.textPrimary,
     required this.textMuted,
+    this.highlighted = false,
   });
 
   @override
@@ -32,8 +37,25 @@ class _ExerciseOptionCard extends ConsumerWidget {
     final glassSurface =
         isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
 
-    return Container(
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 1400),
+      curve: Curves.easeOut,
       margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: highlighted
+            ? [
+                BoxShadow(
+                  color: AppColors.cyan.withValues(alpha: 0.55),
+                  blurRadius: 18,
+                  spreadRadius: 1.5,
+                ),
+              ]
+            : const [],
+        border: highlighted
+            ? Border.all(color: AppColors.cyan, width: 2)
+            : Border.all(color: Colors.transparent, width: 0),
+      ),
       child: Material(
         color: cardBackground,
         borderRadius: BorderRadius.circular(12),

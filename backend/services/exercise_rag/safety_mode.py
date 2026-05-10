@@ -199,6 +199,7 @@ async def build_plan(
     duration_minutes: int,
     focus_areas: Optional[List[str]] = None,
     supabase_client=None,  # Unused; kept for signature parity with the plan.
+    ai_prompt: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     Build the gentle PT-friendly session.
@@ -206,7 +207,7 @@ async def build_plan(
     Returns a workout dict matching the schema used by regular generation:
       {
         "name": "Gentle Mobility Session",
-        "difficulty": "beginner",
+        "difficulty": "easy",
         "duration_minutes": <int, <= MAX_SAFETY_MODE_MINUTES>,
         "exercises": [ ... ],
         "safety_mode": True,
@@ -244,7 +245,24 @@ async def build_plan(
     # rest (which keeps the pool large enough for 4-6 picks).
     fa_score_expr = "0"
     params: Dict[str, Any] = {"safe_patterns": list(SAFE_PATTERNS)}
-    if fa:
+
+    # Phase C — light keyword bias from ai_prompt. Mine the prompt for body
+    # parts ("knee", "shoulder", "hip"), session intent ("post-op", "PT",
+    # "stretching"), and add those tokens to the focus-area score so a
+    # "phase 1 PT post-op knee" prompt biases picks toward knee-friendly
+    # mobility instead of returning the same generic 6-stretch combo.
+    fa_for_score: List[str] = list(fa)
+    if ai_prompt:
+        ap = ai_prompt.lower()
+        _BIAS_TOKENS = (
+            "knee", "shoulder", "hip", "ankle", "wrist", "elbow", "neck",
+            "back", "chest", "leg", "core", "abs",
+        )
+        for tok in _BIAS_TOKENS:
+            if tok in ap and tok not in fa_for_score:
+                fa_for_score.append(tok)
+
+    if fa_for_score:
         # Use CAST(... AS text[]) rather than `::text[]` — SQLAlchemy's named-
         # bindparam parser treats `:fa::text[]` as an ambiguous double-colon.
         fa_score_expr = (
@@ -253,7 +271,7 @@ async def build_plan(
             "  WHERE lower(body_part) = f.val OR body_part ILIKE '%' || f.val || '%'"
             ") THEN 1 ELSE 0 END"
         )
-        params["fa"] = fa
+        params["fa"] = fa_for_score
 
     sql = f"""
         SELECT
@@ -329,8 +347,17 @@ async def build_plan(
         if anti_rot:
             _add(anti_rot[0])
 
-        # Fill up to 6 total from the ranked pool (fa_score-first).
-        target_count = 6 if capped >= 15 else 4
+        # Density-aware exercise count — scales with capped duration so a
+        # 15-min mobility session doesn't get 6 exercises (density 2.5 < 4).
+        # Aim for ~5 minutes per exercise in mobility/recovery sessions.
+        if capped <= 10:
+            target_count = 3
+        elif capped <= 15:
+            target_count = 4
+        elif capped <= 20:
+            target_count = 5
+        else:
+            target_count = 6
         for r in rows:
             if len(picks) >= target_count:
                 break
@@ -341,9 +368,30 @@ async def build_plan(
         if not picks:
             picks = list(_LAST_RESORT_EXERCISES)
 
+    # Phase D: replace the hard-coded literal (145/428 sweep rows) with
+    # the algorithmic namer. We're in safety mode so we lock difficulty
+    # to "easy" and goal/workout_type to "mobility" — the namer will
+    # combine an easy-bucket adjective (Gentle/Calm/Restful/...) with a
+    # mobility noun (Flow/Reset/Unwind/...) and a mobility focus tail.
+    try:
+        from services.workout_naming import generate_workout_name
+        safety_name = generate_workout_name(
+            goal="mobility",
+            focus=fa[0] if fa else None,
+            equipment=ctx.equipment if isinstance(ctx.equipment, list) else None,
+            duration_minutes=capped,
+            difficulty="easy",
+            workout_type="mobility",
+            user_id=ctx.user_id,
+            workout_id=None,  # safety-mode build_plan has no workout_id
+        )
+    except Exception as _e:  # pragma: no cover — naming is best-effort
+        logger.warning("⚠️  [SafetyMode] namer failed, falling back: %s", _e)
+        safety_name = "Gentle Mobility Session"
+
     plan = {
-        "name": "Gentle Mobility Session",
-        "difficulty": "beginner",
+        "name": safety_name,
+        "difficulty": "easy",
         "duration_minutes": capped,
         "exercises": picks,
         "safety_mode": True,
@@ -354,6 +402,7 @@ async def build_plan(
             "session designed to be safe for your selected injuries."
         ),
         "injuries_applied": injuries,
+        "safety_mode_reason": "rag_underflow_or_validator_repair",
     }
 
     logger.info(

@@ -1,0 +1,717 @@
+{
+  "csv_path": "scripts/output/render_generate_stream_full_20260509_095849/workouts.csv",
+  "total_rows": 540,
+  "ok_rows": 486,
+  "err_rows": 54,
+  "section_counts": {
+    "A_schema": {
+      "pass": 486
+    },
+    "B_param_caps": {
+      "fail": 61,
+      "pass": 219,
+      "skip": 206
+    },
+    "C_difficulty": {
+      "pass": 250,
+      "skip": 206,
+      "fail": 13,
+      "warn": 17
+    },
+    "D_goal": {
+      "skip": 310,
+      "pass": 161,
+      "fail": 15
+    },
+    "E_density": {
+      "pass": 435,
+      "warn": 11,
+      "fail": 40
+    },
+    "F_pattern_diversity": {
+      "pass": 9,
+      "fail": 477
+    },
+    "G_compound_first": {
+      "pass": 291,
+      "fail": 68,
+      "skip": 127
+    },
+    "H_injury": {
+      "skip": 486
+    },
+    "I_integrity": {
+      "pass": 479,
+      "fail": 7
+    },
+    "J_physio": {
+      "skip": 486
+    },
+    "K_pattern_balance": {
+      "pass": 276,
+      "warn": 210
+    },
+    "L_structure": {
+      "skip": 61,
+      "warn": 425
+    },
+    "O_equipment": {
+      "skip": 217,
+      "pass": 236,
+      "fail": 33
+    },
+    "P_user_state": {
+      "skip": 486
+    },
+    "S_streaming": {
+      "pass": 486
+    },
+    "U_locale": {
+      "pass": 486
+    },
+    "W_excludes": {
+      "skip": 480,
+      "pass": 5,
+      "fail": 1
+    },
+    "X_duration_drift": {
+      "fail": 216,
+      "pass": 84,
+      "warn": 186
+    },
+    "Y_type_focus": {
+      "skip": 417,
+      "fail": 68,
+      "pass": 1
+    },
+    "R_personalization": {
+      "warn": 483,
+      "pass": 3
+    }
+  },
+  "section_failures_top5": {
+    "B_param_caps": [
+      {
+        "idx": "1",
+        "block": "1",
+        "label": "dur-sweep beginner/15min",
+        "status": "fail",
+        "detail": "#2 reps=15>12"
+      },
+      {
+        "idx": "2",
+        "block": "1",
+        "label": "dur-sweep beginner/20min",
+        "status": "fail",
+        "detail": "#4 reps=15>12"
+      },
+      {
+        "idx": "8",
+        "block": "1",
+        "label": "dur-sweep beginner/90min",
+        "status": "fail",
+        "detail": "#1 sets=4>3"
+      },
+      {
+        "idx": "16",
+        "block": "1",
+        "label": "dur-sweep intermediate/90min",
+        "status": "fail",
+        "detail": "#1 sets=5>4"
+      },
+      {
+        "idx": "118",
+        "block": "2",
+        "label": "matrix beginner/20/strength/arms/E8_fw",
+        "status": "fail",
+        "detail": "#2 reps=15>12"
+      }
+    ],
+    "X_duration_drift": [
+      {
+        "idx": "1",
+        "block": "1",
+        "label": "dur-sweep beginner/15min",
+        "status": "fail",
+        "detail": "requested=15 est=22 drift=49%"
+      },
+      {
+        "idx": "2",
+        "block": "1",
+        "label": "dur-sweep beginner/20min",
+        "status": "fail",
+        "detail": "requested=20 est=34 drift=72%"
+      },
+      {
+        "idx": "5",
+        "block": "1",
+        "label": "dur-sweep beginner/45min",
+        "status": "warn",
+        "detail": "requested=45 est=32 drift=28%"
+      },
+      {
+        "idx": "6",
+        "block": "1",
+        "label": "dur-sweep beginner/60min",
+        "status": "fail",
+        "detail": "requested=60 est=33 drift=44%"
+      },
+      {
+        "idx": "7",
+        "block": "1",
+        "label": "dur-sweep beginner/75min",
+        "status": "fail",
+        "detail": "requested=75 est=34 drift=55%"
+      }
+    ],
+    "R_personalization": [
+      {
+        "idx": "1",
+        "block": "1",
+        "label": "dur-sweep beginner/15min",
+        "status": "warn",
+        "detail": "empty notes"
+      },
+      {
+        "idx": "2",
+        "block": "1",
+        "label": "dur-sweep beginner/20min",
+        "status": "warn",
+        "detail": "empty notes"
+      },
+      {
+        "idx": "3",
+        "block": "1",
+        "label": "dur-sweep beginner/30min",
+        "status": "warn",
+        "detail": "empty notes"
+      },
+      {
+        "idx": "4",
+        "block": "1",
+        "label": "dur-sweep beginner/40min",
+        "status": "warn",
+        "detail": "empty notes"
+      },
+      {
+        "idx": "5",
+        "block": "1",
+        "label": "dur-sweep beginner/45min",
+        "status": "warn",
+        "detail": "empty notes"
+      }
+    ],
+    "E_density": [
+      {
+        "idx": "2",
+        "block": "1",
+        "label": "dur-sweep beginner/20min",
+        "status": "warn",
+        "detail": "20min/5ex ratio=4.0"
+      },
+      {
+        "idx": "10",
+        "block": "1",
+        "label": "dur-sweep intermediate/20min",
+        "status": "warn",
+        "detail": "20min/5ex ratio=4.0"
+      },
+      {
+        "idx": "18",
+        "block": "1",
+        "label": "dur-sweep advanced/20min",
+        "status": "warn",
+        "detail": "20min/5ex ratio=4.0"
+      },
+      {
+        "idx": "112",
+        "block": "2",
+        "label": "matrix beginner/15/fat_loss/pull/E2_bw",
+        "status": "fail",
+        "detail": "15min/6ex (cap=4)"
+      },
+      {
+        "idx": "113",
+        "block": "2",
+        "label": "matrix beginner/15/general_fitness/legs/E3_db",
+        "status": "fail",
+        "detail": "15min/6ex (cap=4)"
+      }
+    ],
+    "F_pattern_diversity": [
+      {
+        "idx": "2",
+        "block": "1",
+        "label": "dur-sweep beginner/20min",
+        "status": "fail",
+        "detail": "patterns=['hinge', 'squat'] n=2<5"
+      },
+      {
+        "idx": "3",
+        "block": "1",
+        "label": "dur-sweep beginner/30min",
+        "status": "fail",
+        "detail": "patterns=['cardio'] n=1<5"
+      },
+      {
+        "idx": "4",
+        "block": "1",
+        "label": "dur-sweep beginner/40min",
+        "status": "fail",
+        "detail": "patterns=['cardio', 'pull_horizontal'] n=2<5"
+      },
+      {
+        "idx": "5",
+        "block": "1",
+        "label": "dur-sweep beginner/45min",
+        "status": "fail",
+        "detail": "patterns=['cardio'] n=1<5"
+      },
+      {
+        "idx": "6",
+        "block": "1",
+        "label": "dur-sweep beginner/60min",
+        "status": "fail",
+        "detail": "patterns=['cardio', 'pull_horizontal'] n=2<5"
+      }
+    ],
+    "G_compound_first": [
+      {
+        "idx": "3",
+        "block": "1",
+        "label": "dur-sweep beginner/30min",
+        "status": "fail",
+        "detail": "first 2 are isolation: ['Burpee', 'Major Groups Muscle Body']"
+      },
+      {
+        "idx": "5",
+        "block": "1",
+        "label": "dur-sweep beginner/45min",
+        "status": "fail",
+        "detail": "first 2 are isolation: ['Burpee', 'Major Groups Muscle Body']"
+      },
+      {
+        "idx": "21",
+        "block": "1",
+        "label": "dur-sweep advanced/45min",
+        "status": "fail",
+        "detail": "first 2 are isolation: ['Burpee', 'Half Burpees']"
+      },
+      {
+        "idx": "22",
+        "block": "1",
+        "label": "dur-sweep advanced/60min",
+        "status": "fail",
+        "detail": "first 2 are isolation: ['Burpee', 'Half Burpees']"
+      },
+      {
+        "idx": "23",
+        "block": "1",
+        "label": "dur-sweep advanced/75min",
+        "status": "fail",
+        "detail": "first 2 are isolation: ['Burpee', 'Half Burpees']"
+      }
+    ],
+    "K_pattern_balance": [
+      {
+        "idx": "3",
+        "block": "1",
+        "label": "dur-sweep beginner/30min",
+        "status": "warn",
+        "detail": "cardio=1/1"
+      },
+      {
+        "idx": "5",
+        "block": "1",
+        "label": "dur-sweep beginner/45min",
+        "status": "warn",
+        "detail": "cardio=1/1"
+      },
+      {
+        "idx": "10",
+        "block": "1",
+        "label": "dur-sweep intermediate/20min",
+        "status": "warn",
+        "detail": "cardio=2/3"
+      },
+      {
+        "idx": "16",
+        "block": "1",
+        "label": "dur-sweep intermediate/90min",
+        "status": "warn",
+        "detail": "cardio=2/3"
+      },
+      {
+        "idx": "17",
+        "block": "1",
+        "label": "dur-sweep advanced/15min",
+        "status": "warn",
+        "detail": "cardio=2/3"
+      }
+    ],
+    "L_structure": [
+      {
+        "idx": "3",
+        "block": "1",
+        "label": "dur-sweep beginner/30min",
+        "status": "warn",
+        "detail": "no warmup/cooldown marker in notes"
+      },
+      {
+        "idx": "4",
+        "block": "1",
+        "label": "dur-sweep beginner/40min",
+        "status": "warn",
+        "detail": "no warmup/cooldown marker in notes"
+      },
+      {
+        "idx": "5",
+        "block": "1",
+        "label": "dur-sweep beginner/45min",
+        "status": "warn",
+        "detail": "no warmup/cooldown marker in notes"
+      },
+      {
+        "idx": "6",
+        "block": "1",
+        "label": "dur-sweep beginner/60min",
+        "status": "warn",
+        "detail": "no warmup/cooldown marker in notes"
+      },
+      {
+        "idx": "7",
+        "block": "1",
+        "label": "dur-sweep beginner/75min",
+        "status": "warn",
+        "detail": "no warmup/cooldown marker in notes"
+      }
+    ],
+    "Y_type_focus": [
+      {
+        "idx": "45",
+        "block": "1",
+        "label": "focus-sweep cardio",
+        "status": "fail",
+        "detail": "focus=cardio \u2192 expected type\u2208['cardio', 'hiit'], got strength"
+      },
+      {
+        "idx": "46",
+        "block": "1",
+        "label": "focus-sweep mobility",
+        "status": "fail",
+        "detail": "focus=mobility \u2192 expected type\u2208['mobility'], got strength"
+      },
+      {
+        "idx": "87",
+        "block": "1",
+        "label": "goal\u00d7focus fat_loss/cardio",
+        "status": "fail",
+        "detail": "focus=cardio \u2192 expected type\u2208['cardio', 'hiit'], got strength"
+      },
+      {
+        "idx": "89",
+        "block": "1",
+        "label": "goal\u00d7focus endurance/cardio",
+        "status": "fail",
+        "detail": "focus=cardio \u2192 expected type\u2208['cardio', 'hiit'], got strength"
+      },
+      {
+        "idx": "91",
+        "block": "1",
+        "label": "goal\u00d7focus mobility/mobility",
+        "status": "fail",
+        "detail": "focus=mobility \u2192 expected type\u2208['mobility'], got strength"
+      }
+    ],
+    "O_equipment": [
+      {
+        "idx": "48",
+        "block": "1",
+        "label": "equip-sweep E2_bw",
+        "status": "fail",
+        "detail": "BW-only req={'dumbbell'}: Dumbbell Kneeling Hold To Stand Clean Grip; BW-only req={'dumbbell'}: Dumbbell Swing; BW-only req={'dumbbell'}: Prone Bench Row Dumbbells"
+      },
+      {
+        "idx": "49",
+        "block": "1",
+        "label": "equip-sweep E3_db",
+        "status": "fail",
+        "detail": "need=kettlebell not in ['bench', 'dumbbells', 'resistance_bands']: Kettlebell Silverback Shrug; need=kettlebell not in ['bench', 'dumbbells', 'resistance_bands']: Kettlebell Strict Press; need=kettlebell not in ['bench', 'dumbbells', 'resistance_bands']: Kettlebell Windmill"
+      },
+      {
+        "idx": "50",
+        "block": "1",
+        "label": "equip-sweep E4_kb",
+        "status": "fail",
+        "detail": "need=dumbbell not in ['kettlebell']: Dumbbell Standing Overhead Press; need=dumbbell not in ['kettlebell']: Dumbbell Bench Seated Press"
+      },
+      {
+        "idx": "52",
+        "block": "1",
+        "label": "equip-sweep E6_bands",
+        "status": "fail",
+        "detail": "need=dumbbell not in ['resistance_bands']: Dumbbell Lunge To Overhead Press; need=kettlebell not in ['resistance_bands']: Kettlebell Snatch; need=kettlebell not in ['resistance_bands']: Kettlebell Sumo Deadlift With High Pull"
+      },
+      {
+        "idx": "53",
+        "block": "1",
+        "label": "equip-sweep E7_no_bb",
+        "status": "fail",
+        "detail": "need=barbell not in ['bench', 'cable_machine', 'dumbbells', 'kettlebell', 'lat_pulldown', 'pull_up_bar', 'resistance_bands']: Barbell Bench Squats"
+      }
+    ],
+    "I_integrity": [
+      {
+        "idx": "56",
+        "block": "1",
+        "label": "equip-sweep E10_home",
+        "status": "fail",
+        "detail": "dup triple: ('squat', 'quadriceps (quadriceps femoris)', 'dumbbell')"
+      },
+      {
+        "idx": "116",
+        "block": "2",
+        "label": "matrix beginner/20/power/upper/E6_bands",
+        "status": "fail",
+        "detail": "dup triple: ('squat', 'quadriceps (quadriceps femoris)', 'dumbbell')"
+      },
+      {
+        "idx": "176",
+        "block": "2",
+        "label": "matrix advanced/15/power/upper/E10_home",
+        "status": "fail",
+        "detail": "dup triple: ('squat', 'quadriceps (quadriceps femoris)', 'dumbbell')"
+      },
+      {
+        "idx": "236",
+        "block": "3",
+        "label": "custom_program: Train for HYROX in 12 weeks \u2014 week 4",
+        "status": "fail",
+        "detail": "dup triple: ('squat', 'quadriceps (quadriceps femoris)', 'dumbbell')"
+      },
+      {
+        "idx": "296",
+        "block": "5",
+        "label": "wt=hypertrophy/focus=full_body",
+        "status": "fail",
+        "detail": "dup triple: ('squat', 'quadriceps (quadriceps femoris)', 'dumbbell')"
+      }
+    ],
+    "D_goal": [
+      {
+        "idx": "111",
+        "block": "2",
+        "label": "matrix beginner/15/strength/push/E1_full",
+        "status": "fail",
+        "detail": "strength but all reps>10"
+      },
+      {
+        "idx": "118",
+        "block": "2",
+        "label": "matrix beginner/20/strength/arms/E8_fw",
+        "status": "fail",
+        "detail": "strength but all reps>10"
+      },
+      {
+        "idx": "120",
+        "block": "2",
+        "label": "matrix beginner/30/strength/glutes/E10_home",
+        "status": "fail",
+        "detail": "strength but all reps>10"
+      },
+      {
+        "idx": "158",
+        "block": "2",
+        "label": "matrix intermediate/40/strength/mobility/E6_bands",
+        "status": "fail",
+        "detail": "strength but all reps>10"
+      },
+      {
+        "idx": "171",
+        "block": "2",
+        "label": "matrix intermediate/90/strength/push/E5_mach",
+        "status": "fail",
+        "detail": "strength but all reps>10"
+      }
+    ],
+    "C_difficulty": [
+      {
+        "idx": "119",
+        "block": "2",
+        "label": "matrix beginner/30/weight_loss/shoulders/E9_db1",
+        "status": "fail",
+        "detail": "beginner\u2192hard"
+      },
+      {
+        "idx": "136",
+        "block": "2",
+        "label": "matrix beginner/75/power/pull/E12_bw_bands",
+        "status": "fail",
+        "detail": "beginner\u2192hard"
+      },
+      {
+        "idx": "137",
+        "block": "2",
+        "label": "matrix beginner/75/weight_loss/legs/E13_TRX",
+        "status": "fail",
+        "detail": "beginner\u2192hard"
+      },
+      {
+        "idx": "138",
+        "block": "2",
+        "label": "matrix beginner/75/strength/full_body/E14_gym_60",
+        "status": "fail",
+        "detail": "beginner\u2192hard"
+      },
+      {
+        "idx": "139",
+        "block": "2",
+        "label": "matrix beginner/90/weight_loss/core/E1_full",
+        "status": "fail",
+        "detail": "beginner\u2192hard"
+      }
+    ],
+    "W_excludes": [
+      {
+        "idx": "248",
+        "block": "3",
+        "label": "exclude=burpee,jump squat,box jump",
+        "status": "fail",
+        "detail": "excluded leak: Burpee"
+      }
+    ]
+  },
+  "section_failure_totals": {
+    "B_param_caps": 61,
+    "X_duration_drift": 402,
+    "R_personalization": 483,
+    "E_density": 51,
+    "F_pattern_diversity": 477,
+    "G_compound_first": 68,
+    "K_pattern_balance": 210,
+    "L_structure": 425,
+    "Y_type_focus": 68,
+    "O_equipment": 33,
+    "I_integrity": 7,
+    "D_goal": 15,
+    "C_difficulty": 30,
+    "W_excludes": 1
+  },
+  "cross_row": {
+    "M_name_recycling": {
+      "unique_names": 59,
+      "unique_share": 0.121,
+      "top10_share": 0.28,
+      "top10_target": 0.25,
+      "top10": [
+        [
+          "Gentle Peak Performance",
+          18
+        ],
+        [
+          "Titan Sculpting Blast",
+          17
+        ],
+        [
+          "Titan Sculpting Peak",
+          17
+        ],
+        [
+          "Titan Savage Blast",
+          17
+        ],
+        [
+          "Titan Unleashed Peak Performance",
+          17
+        ],
+        [
+          "Steady Gentle Muscle Flow",
+          10
+        ],
+        [
+          "Gentle Foundation Body Flow",
+          10
+        ],
+        [
+          "Gentle Harmony Flow",
+          10
+        ],
+        [
+          "Titan Steel Body Sculpt",
+          10
+        ],
+        [
+          "Titan Physique Sculpt",
+          10
+        ]
+      ],
+      "status": "WARN"
+    },
+    "T_within_block_overlap": {
+      "max_share": 1.0,
+      "target": 0.3,
+      "by_block": {
+        "1": 0.0,
+        "2": 0.0,
+        "3": 1.0,
+        "4": 0.0,
+        "5": 0.0,
+        "6": 0.714,
+        "7": 0.833
+      },
+      "status": "FAIL"
+    },
+    "N_volume_landmarks": {
+      "count": 33,
+      "samples": [
+        {
+          "idx": "20",
+          "muscle": "quadriceps",
+          "sets": 21,
+          "mrv": 20
+        },
+        {
+          "idx": "21",
+          "muscle": "quadriceps",
+          "sets": 27,
+          "mrv": 20
+        },
+        {
+          "idx": "22",
+          "muscle": "quadriceps",
+          "sets": 27,
+          "mrv": 20
+        },
+        {
+          "idx": "23",
+          "muscle": "quadriceps",
+          "sets": 27,
+          "mrv": 20
+        },
+        {
+          "idx": "80",
+          "muscle": "quadriceps",
+          "sets": 21,
+          "mrv": 20
+        }
+      ],
+      "target": 0,
+      "status": "WARN"
+    },
+    "Z_block1_outliers": {
+      "count": 1,
+      "p95_ms": 13017,
+      "samples": [
+        {
+          "idx": "1",
+          "latency_ms": 26726
+        }
+      ],
+      "status": "PASS"
+    },
+    "error_buckets": {
+      "INCOMPATIBLE_EQUIPMENT_FOCUS_422": 14,
+      "HTTP_401_session_expired": 40
+    }
+  }
+}

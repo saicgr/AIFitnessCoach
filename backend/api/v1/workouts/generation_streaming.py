@@ -59,6 +59,9 @@ from .utils import (
 from .generation_helpers import (
     _estimate_workout_met,
     normalize_exercise_numeric_fields,
+    post_filter_equipment_violations,
+    post_filter_excluded_exercises,
+    coerce_workout_type_from_focus,
 )
 
 router = APIRouter()
@@ -580,7 +583,13 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
                     if raw_eq and "_" in raw_eq:
                         ex["equipment"] = normalize_equipment_value(raw_eq, ex.get("name", ""))
 
-                workout_name = workout_data.get("name", "Generated Workout")
+                # Phase D: Algorithmic naming — replaces Gemini's name field
+                # entirely. Gemini collapsed onto ~5 words (Titan/Phoenix/
+                # Iron/Steel/Foundation = 58% of recent sweep). We compute
+                # workout_type/difficulty below and re-derive name then; for
+                # now use a temporary placeholder. The real assignment
+                # happens after _derived_type and difficulty are resolved.
+                workout_name = "Generated Workout"  # placeholder; replaced below
                 # Derive workout_type from focus + goal when Gemini omits it.
                 # Default-to-"strength" was making 96% of workouts labeled strength
                 # even when actual content was cardio/mobility (validation harness
@@ -704,24 +713,52 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
                     )
                     workout_type = "cardio"
 
-                # exclude_exercises + adjacent_day_exercises post-filter
-                # (idx 93/94: Gemini ignored these. Filter here as last line of defense.
-                # If too many drop, log warning but return what's left — user can regenerate.)
-                _excl = [s.lower() for s in (body.exclude_exercises or []) if s]
-                _adj = [s.lower() for s in (body.adjacent_day_exercises or []) if s]
-                _forbidden = list(set(_excl + _adj))
-                if _forbidden and exercises:
-                    pre_count = len(exercises)
-                    exercises = [
-                        ex for ex in exercises
-                        if not any(f in (ex.get("name", "") or "").lower() for f in _forbidden)
-                    ]
-                    dropped = pre_count - len(exercises)
-                    if dropped:
-                        logger.warning(
-                            f"⚠️ [ExcludeFilter] Dropped {dropped}/{pre_count} exercises "
-                            f"matching forbidden list (excl={_excl}, adj={_adj})"
+                # Phase D: Algorithmic naming — replace Gemini's name field
+                # entirely now that workout_type/difficulty are finalized.
+                # Top-10 Gemini names covered 58% of recent sweep ("Titan"
+                # alone appeared 172/428 times). Honor body.workout_name
+                # if the caller pre-set one (renames), else generate.
+                _explicit_name = getattr(body, "workout_name", None)
+                if _explicit_name:
+                    workout_name = _explicit_name
+                else:
+                    try:
+                        from services.workout_naming import generate_workout_name
+                        _primary_goal = (goals[0] if isinstance(goals, list) and goals else None)
+                        _primary_focus = (
+                            body.focus_areas[0] if body.focus_areas else None
                         )
+                        workout_name = generate_workout_name(
+                            goal=_primary_goal,
+                            focus=_primary_focus,
+                            equipment=equipment if isinstance(equipment, list) else None,
+                            duration_minutes=target_duration,
+                            difficulty=difficulty,
+                            workout_type=workout_type,
+                            user_id=str(body.user_id) if getattr(body, "user_id", None) else None,
+                            workout_id=None,  # streaming creates new workouts
+                        )
+                    except Exception as _name_err:
+                        logger.warning(f"⚠️ [Naming] algorithmic namer failed: {_name_err}")
+                        workout_name = workout_data.get("name", "Generated Workout")
+
+                # exclude_exercises + adjacent_day_exercises post-filter.
+                # Validation harness 2026-05-09 idx 248: substring filter let
+                # "Burpee" pass when exclude=['burpee']; canonical comparison
+                # plus the substring backstop catches both alias forms.
+                exercises = post_filter_excluded_exercises(
+                    exercises,
+                    body.exclude_exercises,
+                    body.adjacent_day_exercises,
+                )
+                # Equipment compatibility post-filter (validation harness
+                # 2026-05-09: 4 kettlebell exercises leaked into a workout
+                # whose request equipment list explicitly excluded kettlebell).
+                exercises = post_filter_equipment_violations(
+                    exercises,
+                    user_equipment=(equipment if isinstance(equipment, list) else None),
+                    goals=goals if isinstance(goals, list) else None,
+                )
 
                 workout_description = workout_data.get("description")
                 estimated_duration = workout_data.get("estimated_duration_minutes")
@@ -1045,6 +1082,16 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
                     scheduled_date_str = target_date_to_utc_iso(get_user_today(_stream_tz), _stream_tz)
             else:
                 scheduled_date_str = target_date_to_utc_iso(get_user_today(_stream_tz), _stream_tz)
+
+            # Last-mile type coercion against focus_areas (validation harness
+            # 2026-05-09 found 68 rows with focus∈{cardio,endurance,hiit,
+            # mobility} but type=strength persisted; existing overrides only
+            # caught exact "cardio"/"mobility" focus strings).
+            workout_type = coerce_workout_type_from_focus(
+                workout_type,
+                body.focus_areas,
+                goals if isinstance(goals, list) else None,
+            )
 
             # Compute estimated calories using MET-based formula
             _user_weight_kg = float(user.get("weight_kg") or user.get("weight") or 70) if user else 70.0

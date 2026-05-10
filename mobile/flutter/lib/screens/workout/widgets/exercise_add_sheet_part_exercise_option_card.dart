@@ -14,6 +14,9 @@ class _ExerciseOptionCard extends ConsumerWidget {
   final Color textMuted;
   final IconData actionIcon;
   final Color actionColor;
+  /// Cyan glow + border to draw the user's eye to the chat-deeplink target
+  /// row. Visual only; doesn't change tap behavior.
+  final bool highlighted;
 
   const _ExerciseOptionCard({
     required this.name,
@@ -28,6 +31,7 @@ class _ExerciseOptionCard extends ConsumerWidget {
     required this.textMuted,
     this.actionIcon = Icons.add_circle,
     this.actionColor = AppColors.success,
+    this.highlighted = false,
   });
 
   @override
@@ -38,19 +42,32 @@ class _ExerciseOptionCard extends ConsumerWidget {
     final glassSurface =
         isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
 
-    return Container(
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 1400),
+      curve: Curves.easeOut,
       margin: const EdgeInsets.only(bottom: 12),
-      decoration: isRecommended
-          ? BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              border: const Border(
-                left: BorderSide(
-                  color: Color(0xFFD4A017),
-                  width: 2.5,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: highlighted
+            ? [
+                BoxShadow(
+                  color: AppColors.cyan.withValues(alpha: 0.55),
+                  blurRadius: 18,
+                  spreadRadius: 1.5,
                 ),
-              ),
-            )
-          : null,
+              ]
+            : const [],
+        border: highlighted
+            ? Border.all(color: AppColors.cyan, width: 2)
+            : (isRecommended
+                ? const Border(
+                    left: BorderSide(
+                      color: Color(0xFFD4A017),
+                      width: 2.5,
+                    ),
+                  )
+                : Border.all(color: Colors.transparent, width: 0)),
+      ),
       child: Material(
         color: cardBackground,
         borderRadius: BorderRadius.circular(12),

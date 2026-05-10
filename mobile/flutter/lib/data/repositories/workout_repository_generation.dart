@@ -183,6 +183,18 @@ extension WorkoutRepositoryGeneration on WorkoutRepository {
                         'backend may be running a pre-preview-refactor build. '
                         'Commit/Discard will not be functional.');
                   }
+                  // Phase A4 / F / H — backend now surfaces three "soft cap"
+                  // signals. Pull them off the workout payload (they live
+                  // alongside `safety_audit`) so UI can show "we softened
+                  // your request because…" chips.
+                  String? safetyModeReason;
+                  final auditList = workoutJson['safety_audit'];
+                  if (auditList is List && auditList.isNotEmpty) {
+                    final first = auditList.first;
+                    if (first is Map && first['safety_mode_reason'] is String) {
+                      safetyModeReason = first['safety_mode_reason'] as String;
+                    }
+                  }
                   yield RegenerateProgress(
                     step: 4,
                     totalSteps: 4,
@@ -192,6 +204,11 @@ extension WorkoutRepositoryGeneration on WorkoutRepository {
                     previewId: previewId,
                     totalTimeMs: (data['total_time_ms'] as num?)?.toInt(),
                     isCompleted: true,
+                    safetyModeReason: safetyModeReason,
+                    difficultyCappedReason:
+                        workoutJson['difficulty_capped_reason'] as String?,
+                    durationCappedFrom:
+                        (workoutJson['duration_capped_from'] as num?)?.toInt(),
                   );
                 } else if (eventType == 'error') {
                   yield RegenerateProgress(

@@ -178,9 +178,28 @@ def detect_equipment_type(
         Equipment type string (e.g., 'dumbbell', 'barbell', 'machine')
     """
     if not exercise_name:
-        return "dumbbell"  # Default to most conservative
+        # Conservative default: bodyweight (no weight calc / increment).
+        # Previously this returned 'dumbbell' which forced bogus 2.5kg
+        # increments and starting-weight UI for movements that have no load.
+        return "bodyweight"
 
     name_lower = exercise_name.lower()
+
+    # Bodyweight movement keywords — checked FIRST so that calisthenics like
+    # "Burpee", "Frog Jump", "Walkout" don't fall through to the dumbbell
+    # default. These are the movements observed >7× in the 500-scenario
+    # sweep (run_generate_full_20260508_223104) misclassified as dumbbell.
+    bodyweight_keywords = (
+        "bodyweight", "body weight",
+        "burpee", "mountain climber", "jumping jack", "star jump",
+        "frog jump", "walkout", "bear crawl", "wall sit", "plank",
+        "air squat", "glute bridge", "clamshell", "superman", "body-up",
+        "flutter kick", "donkey kick", "pike jack", "clap jack",
+        "half burpee", "body throw", "pulse",
+    )
+    for kw in bodyweight_keywords:
+        if kw in name_lower:
+            return "bodyweight"
 
     # Check for specific equipment keywords in exercise name
     equipment_keywords = [
@@ -241,7 +260,14 @@ def detect_equipment_type(
 
     # Check user's available equipment as fallback
     if equipment_list:
-        eq_lower = [eq.lower() for eq in equipment_list]
+        eq_lower = [(eq or "").strip().lower() for eq in equipment_list]
+        eq_lower = [e for e in eq_lower if e]
+
+        # Recognize bodyweight tokens explicitly so a bw-only user doesn't
+        # get tagged as dumbbell.
+        if any(e in ("bodyweight", "body weight", "body_weight",
+                     "none", "no_equipment") for e in eq_lower):
+            return "bodyweight"
 
         if "dumbbells" in eq_lower or "dumbbell" in eq_lower:
             return "dumbbell"
@@ -250,8 +276,10 @@ def detect_equipment_type(
         elif "kettlebells" in eq_lower or "kettlebell" in eq_lower:
             return "kettlebell"
 
-    # Default to dumbbell (most conservative - 2.5 kg increments)
-    return "dumbbell"
+    # Conservative default: bodyweight. The old default ('dumbbell')
+    # cascaded into wrong starting-weight calc, wrong increment unit,
+    # and weight UI on the frontend for unknown movements.
+    return "bodyweight"
 
 
 def get_equipment_baseline(equipment_type: str) -> float:

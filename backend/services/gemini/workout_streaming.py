@@ -843,6 +843,24 @@ If user has gym equipment (full_gym, barbell, dumbbells, cable_machine, machines
         user_context_parts.append("## GENERATION REQUEST")
         user_context_parts.append(f"Generate exactly {exercise_count} exercises with complete set_targets.")
         user_context_parts.append(f"Workout name style: {naming_context}")
+
+        # Movement-pattern diversity + compound-first ordering (validation
+        # harness 2026-05-09 found 477 rows with <3 distinct patterns and 68
+        # rows where the first 2 strength exercises were both isolation, e.g.
+        # "Burpee + Half Burpees"). The 7 canonical patterns mirror
+        # mobile/flutter/lib/services/movement_patterns.dart.
+        user_context_parts.append(
+            "## MOVEMENT PATTERN DIVERSITY (MANDATORY for strength/full-body)\n"
+            "Cover at least N distinct patterns from {squat, hinge, push_horizontal, "
+            "pull_horizontal, push_vertical, pull_vertical, carry, core}, where:\n"
+            "- duration ≤ 5 min  → N = 2\n"
+            "- 5 < duration ≤ 15 → N = 3\n"
+            "- duration > 15 min → N = 4–5 (cap at 6)\n"
+            "Compound lifts (squat/hinge/push/pull pattern) MUST appear before isolation "
+            "exercises in the array. The first exercise MUST be a compound lift unless "
+            "this is a mobility/recovery/cardio session."
+        )
+
         user_context_parts.append("Return valid JSON only, no markdown.")
 
         return "\n".join(user_context_parts)
