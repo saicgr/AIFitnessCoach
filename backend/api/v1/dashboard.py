@@ -4,12 +4,16 @@ Dashboard API Endpoints
 Provides aggregated weekly dashboard data for the home screen.
 
 Endpoints:
-- GET /dashboard/weekly/{user_id} - Get this week's dashboard summary
+- GET /dashboard/weekly/{user_id}            - Full dashboard summary
+- GET /dashboard/weekly/{user_id}?quick=true - Quick subset (fast queries only)
+                                                for instant first paint;
+                                                client follows up with full
+                                                fetch for the rest of the page.
 """
 
 from datetime import datetime, date, timedelta
 from typing import Optional, List, Dict, Any
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 import asyncio
 import logging
@@ -54,6 +58,16 @@ class WeeklyDashboardResponse(BaseModel):
 @router.get("/weekly/{user_id}", response_model=WeeklyDashboardResponse)
 async def get_weekly_dashboard(
     user_id: str,
+    quick: bool = Query(
+        False,
+        description=(
+            "If true, only the fast subset (workout compliance, nutrition "
+            "adherence, today's mood) is computed. Heavier sections "
+            "(measurements, active goals, full readiness sparkline) are "
+            "returned empty so the client can paint instantly and follow up "
+            "with a full fetch."
+        ),
+    ),
     current_user: dict = Depends(get_current_user),
 ):
     """Get this week's dashboard data at a glance."""
@@ -69,33 +83,64 @@ async def get_weekly_dashboard(
     week_end_str = week_end.isoformat()
 
     try:
-        # Run all queries in parallel
-        (
-            workouts_resp,
-            user_resp,
-            food_logs_resp,
-            readiness_resp,
-            measurements_resp,
-            goals_resp,
-        ) = await asyncio.gather(
-            _query_async(
-                db, "workouts", "id, completed, workout_date",
-                user_id, week_start_str, week_end_str,
-            ),
-            _query_user(db, user_id),
-            _query_async(
-                db, "food_logs", "id, logged_at",
-                user_id, week_start_str, week_end_str,
-                date_column="logged_at",
-            ),
-            _query_async(
-                db, "readiness_scores", "*",
-                user_id, week_start_str, week_end_str,
-                date_column="score_date",
-            ),
-            _query_measurements(db, user_id),
-            _query_goals(db, user_id),
-        )
+        # Quick tier: only fire fast queries — compliance, nutrition, today's
+        # readiness/mood. Skip the heavier per-row scans (full readiness week,
+        # measurements, active goals) so first paint isn't gated on them.
+        if quick:
+            today_str = today.isoformat()
+            (
+                workouts_resp,
+                user_resp,
+                food_logs_resp,
+                today_readiness_resp,
+            ) = await asyncio.gather(
+                _query_async(
+                    db, "workouts", "id, completed, workout_date",
+                    user_id, week_start_str, week_end_str,
+                ),
+                _query_user(db, user_id),
+                _query_async(
+                    db, "food_logs", "id, logged_at",
+                    user_id, week_start_str, week_end_str,
+                    date_column="logged_at",
+                ),
+                _query_async(
+                    db, "readiness_scores", "mood_emoji, score_date",
+                    user_id, today_str, today_str,
+                    date_column="score_date",
+                ),
+            )
+            readiness_resp = today_readiness_resp or []
+            measurements_resp = []
+            goals_resp = []
+        else:
+            # Full tier — every section fetched in parallel.
+            (
+                workouts_resp,
+                user_resp,
+                food_logs_resp,
+                readiness_resp,
+                measurements_resp,
+                goals_resp,
+            ) = await asyncio.gather(
+                _query_async(
+                    db, "workouts", "id, completed, workout_date",
+                    user_id, week_start_str, week_end_str,
+                ),
+                _query_user(db, user_id),
+                _query_async(
+                    db, "food_logs", "id, logged_at",
+                    user_id, week_start_str, week_end_str,
+                    date_column="logged_at",
+                ),
+                _query_async(
+                    db, "readiness_scores", "*",
+                    user_id, week_start_str, week_end_str,
+                    date_column="score_date",
+                ),
+                _query_measurements(db, user_id),
+                _query_goals(db, user_id),
+            )
 
         # --- Workout compliance ---
         workouts = workouts_resp or []

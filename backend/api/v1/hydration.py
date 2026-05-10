@@ -114,6 +114,14 @@ async def log_hydration(
         if not result.data:
             raise safe_internal_error(ValueError("Failed to log hydration"), "hydration")
 
+        # Invalidate Timeline cache so the home Timeline picks up this water
+        # entry on the next fetch (added 2026-05-10 with the Timeline aggregator).
+        try:
+            from api.v1.timeline_cache import invalidate_timeline_cache
+            await invalidate_timeline_cache(data.user_id, str(local_date))
+        except Exception:
+            pass
+
         # Log hydration entry
         await log_user_activity(
             user_id=data.user_id,

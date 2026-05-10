@@ -66,4 +66,8 @@ class ApiConstants {
   static const String dailySchedule = '/daily-schedule';
   static const String supersets = '/supersets';
   static const String dashboard = '/dashboard';
+  // Generalized event log + Timeline aggregator (added 2026-05-10).
+  static const String events = '/events';
+  static const String timeline = '/timeline';
+  static const String wellnessMood = '/wellness/mood';
 }

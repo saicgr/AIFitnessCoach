@@ -149,7 +149,12 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
       top: 0,
       left: 0,
       right: 0,
-      child: Container(
+      // Three stacked BackdropFilter blurs in the header would otherwise
+      // re-rasterize on every scroll pixel of the content below. Isolating
+      // the header in its own painting layer pays the blur cost once per
+      // header change instead of once per scrolled pixel.
+      child: RepaintBoundary(
+        child: Container(
         padding: EdgeInsets.only(top: topPadding + 8, left: 16, right: 16, bottom: 8),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -297,6 +302,7 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
             // (1st option). Header stays focused on navigation only.
           ],
         ),
+      ),
       ),
     );
   }

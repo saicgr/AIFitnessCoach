@@ -94,13 +94,8 @@ class WorkoutsPrewarmer {
         );
       }
 
-      // workoutScreenSummaryProvider — FutureProvider, force evaluation.
-      futures.add(
-        ref.read(workoutScreenSummaryProvider.future).catchError((e) {
-          debugPrint('⚠️ [WorkoutsPrewarmer] screenSummary failed: $e');
-          return <String, dynamic>{};
-        }),
-      );
+      // workoutScreenSummaryProvider is now derived from workoutsProvider —
+      // no separate fetch needed. The workoutsProvider warm above hydrates it.
 
       await Future.wait(futures, eagerError: false);
 
@@ -117,7 +112,7 @@ class WorkoutsPrewarmer {
   static Future<void> invalidateAndRefresh(dynamic ref) async {
     _lastWarmedAt = null;
     _workoutsProviderLastWarmedAt = null;
-    ref.invalidate(workoutScreenSummaryProvider);
+    // screen summary is derived from workoutsProvider, no separate invalidate.
     await warm(ref, force: true);
   }
 }

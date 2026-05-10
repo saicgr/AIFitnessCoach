@@ -94,7 +94,8 @@ class StrainVolumeChart extends StatelessWidget {
           const SizedBox(height: 24),
           SizedBox(
             height: 200,
-            child: LineChart(
+            child: RepaintBoundary(
+              child: LineChart(
               LineChartData(
                 minY: 0,
                 maxY: yMax,
@@ -239,6 +240,7 @@ class StrainVolumeChart extends StatelessWidget {
                     ),
                   ),
                 ],
+              ),
               ),
             ),
           ),

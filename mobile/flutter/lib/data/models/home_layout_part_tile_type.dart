@@ -91,6 +91,11 @@ enum TileType {
   // Food-mood patterns hub — deep-links into Nutrition > Patterns.
   @JsonValue('nutritionPatterns')
   nutritionPatterns,
+  // Timeline / Journal — chronological feed of every logged event today
+  // (workouts, food, water, sleep, weight, mood, habits, achievements).
+  // Backend: GET /api/v1/timeline. Added 2026-05-10.
+  @JsonValue('timeline')
+  timeline,
 }
 
 
@@ -183,6 +188,8 @@ extension TileTypeExtension on TileType {
         return 'Steps';
       case TileType.nutritionPatterns:
         return 'Food Patterns';
+      case TileType.timeline:
+        return 'Today\'s Journal';
     }
   }
 
@@ -273,6 +280,8 @@ extension TileTypeExtension on TileType {
         return 'Today\'s step count and daily goal';
       case TileType.nutritionPatterns:
         return 'See which foods fuel you and which drag you down';
+      case TileType.timeline:
+        return 'Chronological feed of every workout, meal, water, habit, and sync — like a journal';
     }
   }
 
@@ -363,6 +372,8 @@ extension TileTypeExtension on TileType {
         return 'directions_walk';
       case TileType.nutritionPatterns:
         return 'insights';
+      case TileType.timeline:
+        return 'timeline';
     }
   }
 
@@ -429,6 +440,8 @@ extension TileTypeExtension on TileType {
         return TileCategory.wellness;
       case TileType.nutritionPatterns:
         return TileCategory.nutrition;
+      case TileType.timeline:
+        return TileCategory.wellness;
     }
   }
 
@@ -495,6 +508,8 @@ extension TileTypeExtension on TileType {
         return [TileSize.full, TileSize.half, TileSize.compact];
       case TileType.nutritionPatterns:
         return [TileSize.full, TileSize.half];
+      case TileType.timeline:
+        return [TileSize.full];
     }
   }
 

@@ -89,6 +89,9 @@ const List<TileType> defaultVisibleTiles = [
   TileType.quickActions, // Quick actions row (compact: Workout, Food, Water, Chat, +)
   TileType.todayStats, // Goals, calories, water pills
   TileType.habits, // Daily habits and goals tracker
+  // Timeline lands DIRECTLY below "Your Habits" by default — that's where
+  // the user explicitly asked it to live (2026-05-10 plan, section D4).
+  TileType.timeline, // Today's Journal (chronological feed)
 ];
 
 /// Hidden tiles available in the layout editor

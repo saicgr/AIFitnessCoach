@@ -432,13 +432,16 @@ async def coach_action_node(state: CoachAgentState) -> Dict[str, Any]:
     ai_settings = state.get("ai_settings")
     base_system_prompt = get_coach_system_prompt(ai_settings)
 
+    # NB: previous suffix said "Be friendly and helpful!" which silently
+    # overrode non-friendly personas (drill-sergeant, scientist, zen-master,
+    # professional). The persona prompt above already specifies tone — let it
+    # do its job. Suffix is intentionally persona-neutral.
     system_prompt = f"""{base_system_prompt}
 
 CONTEXT:
 {context}
 
-You just performed an app action for the user. Acknowledge it naturally and briefly.
-Be friendly and helpful!"""
+You just performed an app action for the user. Acknowledge it naturally and briefly. Stay in character — your persona is defined above."""
 
     conversation_history = [
         {"role": msg["role"], "content": msg["content"]}
@@ -494,13 +497,17 @@ async def coach_response_node(state: CoachAgentState) -> Dict[str, Any]:
     ai_settings = state.get("ai_settings")
     base_system_prompt = get_coach_system_prompt(ai_settings)
 
+    # NB: prior suffix said "friendly, helpful coaching advice. Be personable,
+    # encouraging…" — this flatly contradicted drill-sergeant/scientist/
+    # zen-master personas and was the last instruction the LLM saw, so it
+    # dominated. The persona prompt above already specifies voice + tone.
+    # Replacement suffix is persona-neutral and pins the persona once more.
     system_prompt = f"""{base_system_prompt}
 
 CONTEXT:
 {context}
 
-Respond to the user's message with friendly, helpful coaching advice.
-Be personable, encouraging, and adapt to their fitness level!"""
+Reply to the user's message in your own voice. Stay in character — your persona is defined above."""
 
     conversation_history = [
         {"role": msg["role"], "content": msg["content"]}

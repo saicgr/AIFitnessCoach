@@ -322,7 +322,17 @@ class TodayWorkoutNotifier extends StateNotifier<AsyncValue<TodayWorkoutResponse
       if (response?.needsGeneration == true && response?.nextWorkoutDate != null) {
         final hasAnyWorkout = response!.todayWorkout != null || response.nextWorkout != null;
 
-        if (!hasAnyWorkout && !_hasTriggeredGeneration && !_generationTimedOut) {
+        // Cooldown gate: if we recently failed (especially on 429), don't
+        // hammer the backend on every /today poll. Without this gate, the
+        // _hasTriggeredGeneration flag was the only block, but the backoff
+        // timer in _triggerAutoGeneration would still re-fire after 10s
+        // even though the rate window is 60s — producing the observed
+        // 429-every-10s cascade in production logs (2026-05-10T03:05Z).
+        final recentFailure = _lastGenerationFailure;
+        final inCooldown = recentFailure != null &&
+            DateTime.now().difference(recentFailure) < _generationCooldown;
+
+        if (!hasAnyWorkout && !_hasTriggeredGeneration && !_generationTimedOut && !inCooldown) {
           // No workouts at all - show generating UI and trigger streaming gen
           // Only trigger ONCE per cycle to prevent poll-triggered re-generation spam
           debugPrint('🚀 [Auto-Gen] No workouts exist, triggering generation for date=${response.nextWorkoutDate} (profile=${response.gymProfileId})');
@@ -368,6 +378,29 @@ class TodayWorkoutNotifier extends StateNotifier<AsyncValue<TodayWorkoutResponse
           debugPrint('⏰ [Auto-Gen] Generation timed out previously, showing manual generate button');
           // Let the response pass through as-is (needsGeneration=true, isGenerating=false)
           // The UI will show the GenerateWorkoutPlaceholder with "GENERATE WORKOUT" button
+        } else if (!hasAnyWorkout && inCooldown) {
+          // We're inside the post-failure cooldown — render the "Generating…"
+          // hero card so the user sees activity, but DO NOT trigger another
+          // request. The next /today poll outside the cooldown window will
+          // pick up generation.
+          final secsLeft = _generationCooldown.inSeconds -
+              DateTime.now().difference(recentFailure).inSeconds;
+          debugPrint('⏸️ [Auto-Gen] In cooldown, ${secsLeft}s remaining before next attempt');
+          response = TodayWorkoutResponse(
+            hasWorkoutToday: response.hasWorkoutToday,
+            todayWorkout: response.todayWorkout,
+            nextWorkout: response.nextWorkout,
+            daysUntilNext: response.daysUntilNext,
+            restDayMessage: response.restDayMessage,
+            completedToday: response.completedToday,
+            completedWorkout: response.completedWorkout,
+            extraTodayWorkouts: response.extraTodayWorkouts,
+            isGenerating: true,
+            generationMessage: 'Hold on a moment — retrying shortly…',
+            needsGeneration: false,
+            nextWorkoutDate: response.nextWorkoutDate,
+            gymProfileId: response.gymProfileId,
+          );
         } else {
           // Workouts exist - backend background tasks handle remaining dates silently
           debugPrint('✅ [Auto-Gen] Workouts already exist, letting backend handle remaining generation silently');
@@ -732,23 +765,43 @@ class TodayWorkoutNotifier extends StateNotifier<AsyncValue<TodayWorkoutResponse
           }
 
           if (progress.status == WorkoutGenerationStatus.error) {
-            debugPrint('❌ [Auto-Gen] Generation error (attempt $attempt): ${progress.message}');
+            debugPrint('❌ [Auto-Gen] Generation error (attempt $attempt): ${progress.message} (code=${progress.errorCode})');
             _lastGenerationFailure = DateTime.now();
+            // Reset _hasTriggeredGeneration so the cooldown gate (in _fetchFromApi)
+            // owns the retry decision instead of having two flags fight.
+            _hasTriggeredGeneration = false;
+
+            // RATE_LIMITED: backend tells us to wait ~60s. Don't even schedule
+            // the inner backoff timer — the next /today poll will respect
+            // _lastGenerationFailure + _generationCooldown and retry then.
+            if (progress.errorCode == 'RATE_LIMITED') {
+              debugPrint('⏸️ [Auto-Gen] RATE_LIMITED — stopping retry chain. Next /today poll outside cooldown will retry.');
+              completed = false;
+              _isAutoGenerating = false;
+              return; // skip backoff timer entirely
+            }
             break;
           }
         }
 
-        // If failed, auto-retry after backoff
+        // If failed (non-rate-limited), auto-retry after backoff
         if (!completed && !_disposed) {
           debugPrint('⚠️ [Auto-Gen] Attempt $attempt failed, scheduling retry');
           _isAutoGenerating = false;
           // Backoff: 10s, 20s, 30s
           final delaySec = min(30, 10 * attempt);
           Timer(Duration(seconds: delaySec), () {
-            if (!_disposed) {
-              _triggerAutoGeneration(scheduledDate,
-                  gymProfileId: gymProfileId, attempt: attempt + 1);
+            if (_disposed) return;
+            // Re-check cooldown before re-firing — the user might have logged
+            // a manual workout in the interim, or another auto-gen completed.
+            final lastFail = _lastGenerationFailure;
+            if (lastFail != null &&
+                DateTime.now().difference(lastFail) < _generationCooldown) {
+              debugPrint('⏸️ [Auto-Gen] Backoff timer fired but still in cooldown — skipping retry.');
+              return;
             }
+            _triggerAutoGeneration(scheduledDate,
+                gymProfileId: gymProfileId, attempt: attempt + 1);
           });
           return; // Skip the finally _isAutoGenerating=false (already reset above)
         }

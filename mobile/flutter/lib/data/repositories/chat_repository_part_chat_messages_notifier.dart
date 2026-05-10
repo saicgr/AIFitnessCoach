@@ -1117,6 +1117,14 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
           debugPrint('🍽️ [Chat] Failed to refresh nutrition: $e');
         }
         break;
+      case 'event_logged':
+        // Generalized wellness logging via the new log_event tool.
+        // Domain values: workout / food / water / sleep / weight / mood.
+        // Refresh whichever providers are visible on the home screen so
+        // the new entry appears in the Timeline + hero card without a
+        // pull-to-refresh.
+        await _handleEventLogged(actionData);
+        break;
       case 'export_data':
         // AI coach offered to export the user's data — navigate to the
         // export screen with the suggested format preselected. The screen
@@ -1387,6 +1395,61 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
     if (workoutId != null) {
       _router.push('/workout/$workoutId?autoStart=true');
       debugPrint('🏋️ [Chat] Navigated to workout detail with auto-start');
+    }
+  }
+
+  /// Handle generalized wellness event logged via the new log_event tool.
+  /// Refreshes the providers a freshly-logged event would change so the home
+  /// Timeline + hero card reflect it without requiring a manual pull-to-refresh.
+  Future<void> _handleEventLogged(Map<String, dynamic> actionData) async {
+    final domain = actionData['domain'] as String?;
+    final eventId = actionData['event_id'] as String?;
+    final undoToken = actionData['undo_token'] as String?;
+    debugPrint(
+      '📝 [Chat] Event logged: domain=$domain, id=$eventId, '
+      'undo_token=${undoToken != null ? "present" : "null"}',
+    );
+
+    // NB: the Timeline section refreshes on its own — backend write hooks
+    // call invalidate_timeline_cache (api/v1/timeline_cache.py), so the
+    // next Timeline fetch returns the fresh payload. Once D3 lands a
+    // Timeline provider here, we can wire an explicit invalidate for
+    // sub-second freshness instead of waiting on the next user-driven
+    // refresh.
+
+    // Domain-specific refreshes — match the existing pattern in this file.
+    switch (domain) {
+      case 'workout':
+      case 'sleep':
+        await _workoutsNotifier.refresh();
+        _refreshTodayWorkout();
+        break;
+      case 'food':
+        try {
+          final userId = await _apiClient.getUserId();
+          if (userId != null) {
+            await _nutritionNotifier.refreshAll(userId);
+          }
+        } catch (e) {
+          debugPrint('📝 [Chat] food refresh failed: $e');
+        }
+        break;
+      case 'water':
+        // Hydration provider is referenced indirectly via nutrition stats.
+        try {
+          final userId = await _apiClient.getUserId();
+          if (userId != null) {
+            await _nutritionNotifier.refreshAll(userId);
+          }
+        } catch (_) {}
+        break;
+      case 'weight':
+      case 'mood':
+        // No global provider invalidation needed beyond the timeline refresh
+        // — the home card for these domains pulls from the timeline payload.
+        break;
+      default:
+        debugPrint('📝 [Chat] Unknown event domain: $domain');
     }
   }
 

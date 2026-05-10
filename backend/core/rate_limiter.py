@@ -103,3 +103,45 @@ user_limiter = Limiter(
     default_limits=["100/minute"],
     swallow_errors=True,
 )
+
+
+def structured_rate_limit_handler(request: Request, exc):
+    """Custom 429 handler that returns a JSON body the Flutter client can
+    branch on (errorCode='RATE_LIMITED' + retry_after_seconds), instead of
+    slowapi's plain "Rate limit exceeded" string.
+
+    Also includes a Retry-After header so HTTP intermediaries can honor it.
+    """
+    from fastapi.responses import JSONResponse
+
+    # slowapi attaches the limit string (e.g. "30 per 1 minute") to exc.detail.
+    # Parse the window seconds from it; default to 60.
+    retry_after_seconds = 60
+    try:
+        detail_str = str(getattr(exc, "detail", "") or "")
+        # detail looks like "30 per 1 minute" / "10 per 5 second"
+        parts = detail_str.lower().split(" per ")
+        if len(parts) == 2:
+            window = parts[1].strip()
+            if "second" in window:
+                n = int(window.split()[0])
+                retry_after_seconds = max(1, n)
+            elif "minute" in window:
+                n = int(window.split()[0])
+                retry_after_seconds = max(1, n * 60)
+            elif "hour" in window:
+                n = int(window.split()[0])
+                retry_after_seconds = max(1, n * 3600)
+    except Exception:
+        pass
+
+    body = {
+        "code": "RATE_LIMITED",
+        "message": (
+            "Too many requests in a short window. Please wait before trying again."
+        ),
+        "retry_after_seconds": retry_after_seconds,
+        "detail": str(getattr(exc, "detail", "rate_limit_exceeded")),
+    }
+    headers = {"Retry-After": str(retry_after_seconds)}
+    return JSONResponse(status_code=429, content=body, headers=headers)

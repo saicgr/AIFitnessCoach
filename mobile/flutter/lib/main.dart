@@ -236,18 +236,21 @@ Future<void> _initNonCriticalServices(
     }),
   ]);
 
-  // Phase 2: Heavy platform SDK initializations -- staggered to avoid
-  // serializing too many platform channel calls on Android's main thread.
-  // These run sequentially so each SDK gets dedicated main-thread time
-  // without competing with the others.
+  // Phase 2: Heavy platform SDK initializations -- staggered with small
+  // delays so each SDK gets dedicated main-thread time without competing
+  // with the others, and so the user has a smooth 0–500ms window after first
+  // paint (the moment they're reaching to tap something) before any heavy
+  // platform work lands.
   await notificationService.initialize().then<void>((_) {}).catchError((e) {
     debugPrint('⚠️ Notification service initialization failed: $e');
   });
 
+  await Future<void>.delayed(const Duration(milliseconds: 100));
   await SubscriptionNotifier.configureRevenueCat().then<void>((_) {}).catchError((e) {
     debugPrint('⚠️ RevenueCat initialization failed: $e');
   });
 
+  await Future<void>.delayed(const Duration(milliseconds: 100));
   await BackgroundSyncService.initialize().then<void>((_) {}).catchError((e) {
     debugPrint('⚠️ BackgroundSyncService initialization failed: $e');
   });

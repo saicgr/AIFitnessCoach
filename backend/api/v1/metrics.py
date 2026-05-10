@@ -495,6 +495,16 @@ async def record_simple_metric(input: SimpleMetricInput,
             if refetch.data:
                 row = refetch.data
 
+        # Invalidate Timeline cache so the new measurement appears on the
+        # home Timeline immediately (added 2026-05-10).
+        try:
+            from api.v1.timeline_cache import invalidate_timeline_cache
+            from datetime import datetime, timezone
+            local_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+            await invalidate_timeline_cache(input.user_id, local_date)
+        except Exception:
+            pass
+
         return SimpleMetricResponse(
             id=str(row["id"]),
             user_id=row["user_id"],

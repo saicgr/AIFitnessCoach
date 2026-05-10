@@ -16,16 +16,27 @@ class DashboardRepository {
 
   /// Fetch the weekly dashboard summary for a given user.
   ///
-  /// Returns the raw JSON map from the backend endpoint
-  /// `GET /dashboard/weekly/{user_id}`.
-  Future<Map<String, dynamic>> getWeeklyDashboard(String userId) async {
+  /// When [quick] is true, only the fast subset (workout compliance, nutrition
+  /// adherence, today's mood) is returned — measurements, active goals, and
+  /// the full readiness sparkline come back empty. Use it to paint the top of
+  /// the dashboard immediately, then follow up with a non-quick fetch to
+  /// hydrate the rest.
+  ///
+  /// Returns the raw JSON map from `GET /dashboard/weekly/{user_id}`.
+  Future<Map<String, dynamic>> getWeeklyDashboard(
+    String userId, {
+    bool quick = false,
+  }) async {
     try {
       final response = await _client.get<Map<String, dynamic>>(
         '${ApiConstants.dashboard}/weekly/$userId',
+        queryParameters: quick ? {'quick': 'true'} : null,
       );
 
       if (response.statusCode == 200 && response.data != null) {
-        debugPrint('✅ [Dashboard] Fetched weekly dashboard for $userId');
+        debugPrint(
+          '✅ [Dashboard] Fetched ${quick ? "quick" : "full"} dashboard for $userId',
+        );
         return response.data!;
       }
 

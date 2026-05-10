@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -91,6 +92,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   _MediaSendStatus _sendStatus = _MediaSendStatus.idle;
   DateTime? _sendStartTime;
   Timer? _elapsedTimer;
+  // Drives the 1-Hz elapsed-seconds label inside the typing indicator without
+  // calling setState on the entire chat screen each tick.
+  final ValueNotifier<String> _elapsedNotifier = ValueNotifier<String>('');
   bool _initialMessageSent = false;
   bool _showScrollFAB = false;
   String? _highlightedMessageId;
@@ -110,7 +114,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     }
   }
 
-  String get _elapsedLabel {
+  String _computeElapsedLabel() {
     if (_sendStartTime == null) return '';
     final elapsed = DateTime.now().difference(_sendStartTime!).inSeconds;
     return '(${elapsed}s)';
@@ -121,9 +125,13 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
       _sendStatus = status;
       _sendStartTime = DateTime.now();
     });
+    _elapsedNotifier.value = _computeElapsedLabel();
     _elapsedTimer?.cancel();
     _elapsedTimer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (mounted && _isLoading) setState(() {});
+      if (!mounted || !_isLoading) return;
+      // Only the elapsed label rebuilds — message ListView, bubbles, scroll
+      // controller, and input bar stay still.
+      _elapsedNotifier.value = _computeElapsedLabel();
     });
   }
 
@@ -134,6 +142,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   void _stopSendStatus() {
     _elapsedTimer?.cancel();
     _elapsedTimer = null;
+    _elapsedNotifier.value = '';
     if (mounted) {
       setState(() {
         _sendStatus = _MediaSendStatus.idle;
@@ -171,21 +180,24 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
         ref.read(chatMessagesProvider.notifier).loadOlderMessages();
       }
     });
-    // Load chat history on screen load
+    // Load chat history on screen load. Do NOT await on the no-initial-message
+    // path — the chat scaffold paints immediately with cached/skeleton state
+    // and history hydrates in the background. The initialMessage path still
+    // awaits to avoid a race where loadHistory's server fetch overwrites
+    // sendMessage state.
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (widget.initialMessage != null &&
           widget.initialMessage!.isNotEmpty &&
           !_initialMessageSent) {
         _initialMessageSent = true;
-        // Await history so state is settled before sending — prevents race
-        // condition where loadHistory's server fetch overwrites sendMessage state
         await ref.read(chatMessagesProvider.notifier).loadHistory();
         if (mounted) {
           _textController.text = widget.initialMessage!;
           _sendMessage();
         }
       } else {
-        ref.read(chatMessagesProvider.notifier).loadHistory();
+        // Fire-and-forget so first paint is not blocked on a network round-trip.
+        unawaited(ref.read(chatMessagesProvider.notifier).loadHistory());
       }
     });
   }
@@ -193,6 +205,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   @override
   void dispose() {
     _elapsedTimer?.cancel();
+    _elapsedNotifier.dispose();
     _scrollController.dispose();
     _textController.dispose();
     _focusNode.dispose();
@@ -390,6 +403,10 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                     controller: _scrollController,
                     reverse: true,
                     padding: const EdgeInsets.all(16),
+                    // Bubbles vary in height so a hard `itemExtent` would clip,
+                    // but giving the framework a representative item lets it
+                    // skip the per-item measure pass on initial scroll.
+                    cacheExtent: 800,
                     itemCount: messages.length + extraItems,
                     itemBuilder: (context, index) {
                       // With reverse: true, index 0 = bottom (newest).
@@ -397,7 +414,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                       if (index == 0 && _isLoading) {
                         return _TypingIndicator(
                           statusText: _statusLabel,
-                          elapsed: _elapsedLabel,
+                          elapsedListenable: _elapsedNotifier,
                         );
                       }
 

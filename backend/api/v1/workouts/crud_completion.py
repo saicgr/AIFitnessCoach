@@ -610,10 +610,19 @@ async def complete_workout(
         else:
             message = "Workout completed successfully!"
 
-        # Invalidate /today cache so next poll reflects the completed state
+        # Invalidate /today cache so next poll reflects the completed state.
+        # Pushed into BackgroundTasks because Redis delete is fast but no
+        # reason to gate the HTTP response on it — the response contains all
+        # the data the client needs, and the next /today poll runs after the
+        # client navigates away.
         scheduled_date = str(existing.get("scheduled_date", ""))[:10] or None
         gym_profile_id = existing.get("gym_profile_id")
-        await invalidate_today_workout_cache(user_id, gym_profile_id, scheduled_date)
+        background_tasks.add_task(
+            invalidate_today_workout_cache,
+            user_id,
+            gym_profile_id,
+            scheduled_date,
+        )
 
         # N2 First-Workout-Done email — fire in background if this is the user's
         # first ever completed workout. Caller-side gate: count workout_logs,

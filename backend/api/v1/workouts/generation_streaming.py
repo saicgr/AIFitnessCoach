@@ -67,9 +67,22 @@ from .generation_helpers import (
 router = APIRouter()
 logger = get_logger(__name__)
 
+# Recent-call short-circuit cache (see /generate-stream entry). 30s TTL.
+# Keyed on user_id:scheduled_date:gym_profile_id so the SAME user can still
+# manually fire generation for a different date without being blocked.
+from core.redis_cache import RedisCache
+_genstream_recent_cache = RedisCache(prefix="genstream_recent", ttl_seconds=30, max_size=500)
+
 
 @router.post("/generate-stream")
-@user_limiter.limit("15/minute")
+# 30/min headroom: BG-GEN sequential top-up bursts up to 14 generations on
+# profile activation, plus user-initiated regenerations. The previous 15/min
+# tripped on a profile switch + a single manual retry, then cascaded with the
+# frontend auto-retry loop. Combined with the new client-side cooldown gate
+# (today_workout_provider._lastGenerationFailure) and server-side recent-call
+# short-circuit (Redis genstream_recent:{user_id}), 30/min still hard-stops
+# spam without breaking the legitimate burst.
+@user_limiter.limit("30/minute")
 async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequest,
     current_user: dict = Depends(get_current_user),
 ):
@@ -85,6 +98,33 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
     Time to first content is typically <500ms vs 3-8s for full generation.
     """
     logger.info(f"Streaming workout generation for user {body.user_id}")
+
+    # Recent-call short-circuit: if the same user fired /generate-stream within
+    # the last 30s for the same date, return event:already_generating SSE
+    # instead of letting slowapi reject with 429. This converts the auto-retry
+    # cascade into a graceful "still in flight" response that the frontend
+    # treats as progress, breaking the loop. Tracked separately from the
+    # status='generating' DB row because mid-stream failures (e.g. Vertex 429)
+    # can leave no DB row but still represent a recently-attempted generation.
+    _recent_key = f"{body.user_id}:{body.scheduled_date or 'today'}:{body.gym_profile_id or 'noprofile'}"
+    _recent = await _genstream_recent_cache.get(_recent_key)
+    if _recent:
+        logger.info(
+            f"[Streaming] Short-circuit: user {body.user_id} fired /generate-stream "
+            f"for {body.scheduled_date} within last 30s — returning already_generating"
+        )
+
+        async def _recent_already_sse():
+            yield (
+                f"event: already_generating\n"
+                f"data: {json.dumps({'status': 'already_generating', 'workout_id': _recent.get('workout_id'), 'message': 'Workout generation already in progress'})}\n\n"
+            )
+
+        return StreamingResponse(_recent_already_sse(), media_type="text/event-stream")
+
+    # Mark this user/date as recently attempted (cleared on completion or error
+    # via the finally block in generate_sse).
+    await _genstream_recent_cache.set(_recent_key, {"started_at": datetime.now().isoformat()})
 
     # Idempotency check: If a workout is already being generated for this user/date, return early
     db = get_supabase_db()
@@ -1253,6 +1293,14 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
         except Exception as e:
             logger.error(f"Streaming workout generation failed: {e}", exc_info=True)
             yield f"event: error\ndata: {json.dumps({'error': str(e)})}\n\n"
+        finally:
+            # Clear the recent-call short-circuit so a legitimate retry after
+            # success/failure can fire immediately, instead of being held off
+            # for the full 30s TTL.
+            try:
+                await _genstream_recent_cache.delete(_recent_key)
+            except Exception:
+                pass
 
     return StreamingResponse(
         generate_sse(),

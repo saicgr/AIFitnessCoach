@@ -712,13 +712,24 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
               final scale = isActive ? 1.0 : 0.92;
               final opacity = isActive ? 1.0 : 0.8;
 
-              return AnimatedScale(
-                scale: scale,
-                duration: const Duration(milliseconds: 200),
-                child: AnimatedOpacity(
-                  opacity: opacity,
-                  duration: const Duration(milliseconds: 200),
-                  child: _buildItemContent(item, isDark, accentColor, today),
+              // Stable key per item lets PageView reuse element trees across
+              // page swipes instead of rebuilding every neighbor's subtree.
+              // RepaintBoundary isolates each card's painting layer so a
+              // neighbor's AnimatedScale / AnimatedOpacity tween doesn't
+              // invalidate the active card's pixels.
+              return KeyedSubtree(
+                key: ValueKey(_keyForItem(item, index)),
+                child: RepaintBoundary(
+                  child: AnimatedScale(
+                    scale: scale,
+                    duration: const Duration(milliseconds: 200),
+                    child: AnimatedOpacity(
+                      opacity: opacity,
+                      duration: const Duration(milliseconds: 200),
+                      child:
+                          _buildItemContent(item, isDark, accentColor, today),
+                    ),
+                  ),
                 ),
               );
             },
@@ -727,6 +738,24 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
       },
     ),
     );
+  }
+
+  /// Stable key for a carousel slot so PageView preserves widget state.
+  /// Workouts key off id; placeholders + synced aggregates key off date so
+  /// the same slot reuses its element when adjacent items shift.
+  String _keyForItem(CarouselItem item, int index) {
+    if (item.isWorkout && item.workout?.id != null) {
+      return 'w_${item.workout!.id}';
+    }
+    if (item.isSyncedAggregate && item.syncedAggregateDate != null) {
+      final d = item.syncedAggregateDate!;
+      return 's_${d.year}_${d.month}_${d.day}';
+    }
+    if (item.placeholderDate != null) {
+      final d = item.placeholderDate!;
+      return 'p_${d.year}_${d.month}_${d.day}';
+    }
+    return 'i_$index';
   }
 
   /// Resolve carousel item → rendered widget. Centralised so the single-item

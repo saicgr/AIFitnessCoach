@@ -520,83 +520,89 @@ final scoresProvider =
   return ScoresNotifier(repository);
 });
 
+// Convenience providers — each uses `.select()` so a watcher only rebuilds
+// when its specific slice of `ScoresState` changes. Without `.select()`, every
+// derived provider rebuilds on any state mutation (e.g. setting `isLoading`
+// true would invalidate every score widget on the Scores tab).
+
 /// Readiness score for today (convenience provider)
 final todayReadinessProvider = Provider<ReadinessScore?>((ref) {
-  return ref.watch(scoresProvider).todayReadiness;
+  return ref.watch(scoresProvider.select((s) => s.todayReadiness));
 });
 
 /// Has checked in today (convenience provider)
 final hasCheckedInTodayProvider = Provider<bool>((ref) {
-  return ref.watch(scoresProvider).hasCheckedInToday;
+  return ref.watch(scoresProvider.select((s) => s.hasCheckedInToday));
 });
 
 /// Overall strength score (convenience provider)
 final overallStrengthScoreProvider = Provider<int>((ref) {
-  return ref.watch(scoresProvider).overallStrengthScore;
+  return ref.watch(scoresProvider.select((s) => s.overallStrengthScore));
 });
 
 /// Strength scores by muscle group (convenience provider)
 final muscleScoresProvider =
     Provider<Map<String, StrengthScoreData>>((ref) {
-  return ref.watch(scoresProvider).strengthScores?.muscleScores ?? {};
+  return ref.watch(scoresProvider
+      .select((s) => s.strengthScores?.muscleScores ?? const {}));
 });
 
 /// PR stats (convenience provider)
 final prStatsProvider = Provider<PRStats?>((ref) {
-  return ref.watch(scoresProvider).prStats;
+  return ref.watch(scoresProvider.select((s) => s.prStats));
 });
 
 /// Scores loading state (convenience provider)
 final scoresLoadingProvider = Provider<bool>((ref) {
-  return ref.watch(scoresProvider).isLoading;
+  return ref.watch(scoresProvider.select((s) => s.isLoading));
 });
 
 /// Scores error (convenience provider)
 final scoresErrorProvider = Provider<String?>((ref) {
-  return ref.watch(scoresProvider).error;
+  return ref.watch(scoresProvider.select((s) => s.error));
 });
 
 /// Nutrition score (convenience provider)
 final nutritionScoreProvider = Provider<int>((ref) {
-  return ref.watch(scoresProvider).nutritionScoreValue;
+  return ref.watch(scoresProvider.select((s) => s.nutritionScoreValue));
 });
 
 /// Nutrition level (convenience provider)
 final nutritionLevelProvider = Provider<NutritionLevel>((ref) {
-  return ref.watch(scoresProvider).nutritionLevel;
+  return ref.watch(scoresProvider.select((s) => s.nutritionLevel));
 });
 
 /// Nutrition score data (convenience provider)
 final nutritionScoreDataProvider = Provider<NutritionScoreData?>((ref) {
-  return ref.watch(scoresProvider).nutritionScore;
+  return ref.watch(scoresProvider.select((s) => s.nutritionScore));
 });
 
 /// Overall fitness score (convenience provider)
 final fitnessScoreProvider = Provider<int>((ref) {
-  return ref.watch(scoresProvider).overallFitnessScore;
+  return ref.watch(scoresProvider.select((s) => s.overallFitnessScore));
 });
 
 /// Fitness level (convenience provider)
 final fitnessLevelProvider = Provider<FitnessLevel>((ref) {
-  return ref.watch(scoresProvider).fitnessLevel;
+  return ref.watch(scoresProvider.select((s) => s.fitnessLevel));
 });
 
 /// Fitness score breakdown (convenience provider)
 final fitnessScoreBreakdownProvider = Provider<FitnessScoreBreakdown?>((ref) {
-  return ref.watch(scoresProvider).fitnessScore;
+  return ref.watch(scoresProvider.select((s) => s.fitnessScore));
 });
 
 /// Consistency score (convenience provider)
 final consistencyScoreProvider = Provider<int>((ref) {
-  return ref.watch(scoresProvider).consistencyScore;
+  return ref.watch(scoresProvider.select((s) => s.consistencyScore));
 });
 
 /// Whether nutrition score is being calculated (convenience provider)
 final isCalculatingNutritionProvider = Provider<bool>((ref) {
-  return ref.watch(scoresProvider).isCalculatingNutrition;
+  return ref.watch(scoresProvider.select((s) => s.isCalculatingNutrition));
 });
 
 /// Whether fitness score is being calculated (convenience provider)
 final isCalculatingFitnessProvider = Provider<bool>((ref) {
-  return ref.watch(scoresProvider).isCalculatingFitness;
+  return ref.watch(scoresProvider.select((s) => s.isCalculatingFitness));
 });

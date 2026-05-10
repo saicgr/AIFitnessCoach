@@ -245,7 +245,8 @@ class MuscleFrequencyBarChart extends StatelessWidget {
 
     return SizedBox(
       height: sortedFrequencies.length * 40.0,
-      child: BarChart(
+      child: RepaintBoundary(
+        child: BarChart(
         BarChartData(
           alignment: BarChartAlignment.spaceAround,
           maxY: (maxFreq * 1.2).clamp(4, 10),
@@ -312,6 +313,7 @@ class MuscleFrequencyBarChart extends StatelessWidget {
           ),
           borderData: FlBorderData(show: false),
         ),
+      ),
       ),
     );
   }

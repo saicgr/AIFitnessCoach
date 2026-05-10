@@ -511,8 +511,18 @@ extension WorkoutRepositoryGeneration on WorkoutRepository {
       String errorMessage;
       String? errorCode;
       if (e is DioException && e.response?.statusCode == 429) {
-        errorMessage = 'Rate limit reached. Please wait a moment before trying again.';
-        debugPrint('⚠️ [Workout] Rate limit (429) hit - user should wait before retrying');
+        // Backend returns structured body with code='RATE_LIMITED' and
+        // retry_after_seconds (see core/rate_limiter.py::structured_rate_limit_handler).
+        // Surface the code so today_workout_provider can apply a longer cooldown
+        // matching the backend window instead of the generic 10s exponential backoff.
+        errorCode = 'RATE_LIMITED';
+        final body = e.response?.data;
+        if (body is Map && body['message'] is String) {
+          errorMessage = body['message'] as String;
+        } else {
+          errorMessage = 'Rate limit reached. Please wait a moment before trying again.';
+        }
+        debugPrint('⚠️ [Workout] Rate limit (429) hit — errorCode=RATE_LIMITED, will trigger cooldown');
       } else if (e is DioException && e.response?.statusCode == 422) {
         // Structured backend rejection — e.g. EXERCISE_POOL_TOO_SMALL when
         // the user's gym profile doesn't have enough equipment for the

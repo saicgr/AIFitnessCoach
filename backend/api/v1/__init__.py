@@ -109,6 +109,8 @@ from api.v1 import ai_endpoints  # Lightweight AI helpers (exercise insights, et
 from api.v1 import x_webhook  # X (Twitter) build-in-public publisher + Telegram webhook
 from api.v1.users.mcp_integrations import router as mcp_integrations_router  # MCP connected-client management
 from api.v1 import equipment  # Snap-equipment flow (point camera at gym machine)
+from api.v1 import wellness  # Generalized event log + mood + Timeline aggregator
+from api.v1 import timeline  # GET /timeline aggregator (Zepp-style journal)
 
 # Create v1 router
 router = APIRouter(prefix="/v1")
@@ -155,6 +157,14 @@ router.include_router(feedback.router, prefix="/feedback", tags=["Feedback"])
 
 # Achievements and milestones endpoints
 router.include_router(achievements.router, prefix="/achievements", tags=["Achievements"])
+
+# Wellness — generalized event log + mood + Timeline (added 2026-05-10).
+# Mounts /events/log, /events/{id}, /events/undo, /wellness/mood/log,
+# /wellness/mood/today.
+router.include_router(wellness.router, tags=["Wellness"])
+
+# Timeline (Zepp/Fitbit Journal style chronological feed)
+router.include_router(timeline.router, tags=["Timeline"])
 
 # Share template preferences (favorites + custom order) and analytics
 router.include_router(share_preferences.router, tags=["Share Templates"])

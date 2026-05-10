@@ -66,6 +66,12 @@ from .workout_mutation_tools import (
 # the same `equipment_snap_core` powering POST /api/v1/equipment/snap.
 # Returns action_data with action='open_swap_or_add' so the frontend
 # can render the EquipmentMatchCard.
+from .wellness_tools import (
+    log_event,
+    set_agent_user_id,
+    WELLNESS_TOOLS,
+)
+
 from .equipment_tools import (
     identify_equipment,
     ISSUE_2_EQUIPMENT_TOOLS,
@@ -107,6 +113,8 @@ ALL_TOOLS = [
     *ISSUE_3_MUTATION_TOOLS,
     # === Issue 2: equipment identify ===
     *ISSUE_2_EQUIPMENT_TOOLS,
+    # === Wellness logging (2026-05-10): generalized log_event tool ===
+    *WELLNESS_TOOLS,
 ]
 
 # Tool name to function mapping

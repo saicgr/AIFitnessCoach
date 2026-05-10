@@ -56,8 +56,10 @@ async def bulk_sync(
     """
     Process multiple sync items in a single request.
 
-    Routes each item to the appropriate handler based on entity_type.
-    Returns per-item success/failure results.
+    Items with simple insert/upsert semantics are batched into a single
+    multi-row call per (entity_type, operation_type) bucket. Updates and
+    deletes still fall through to per-item handlers because they target
+    individual rows by id.
     """
     user_id = user["id"]
     results: List[SyncBulkResultItem] = []
@@ -66,44 +68,98 @@ async def bulk_sync(
 
     supabase = get_supabase()
 
+    # Bucket batchable upserts (workout_log create/insert + workout_completion +
+    # readiness) so we can collapse a 100-item drain into a handful of multi-row
+    # calls. Per-row updates and deletes go through the legacy path.
+    workout_log_upserts: List[dict] = []
+    workout_log_upsert_ids: List[str] = []
+    workout_completion_upserts: List[dict] = []
+    workout_completion_ids: List[str] = []
+    readiness_upserts: List[dict] = []
+    readiness_ids: List[str] = []
+    fallback_items: List[SyncBulkItem] = []
+
     for item in body.items:
+        if (
+            item.entity_type == "workout_log"
+            and item.operation_type in ("create", "insert")
+        ):
+            payload = {**item.payload, "user_id": user_id}
+            workout_log_upserts.append(payload)
+            workout_log_upsert_ids.append(item.entity_id)
+        elif item.entity_type == "workout_completion":
+            payload = {**item.payload, "user_id": user_id}
+            workout_completion_upserts.append(payload)
+            workout_completion_ids.append(item.entity_id)
+        elif item.entity_type == "readiness":
+            payload = {**item.payload, "user_id": user_id}
+            readiness_upserts.append(payload)
+            readiness_ids.append(item.entity_id)
+        else:
+            fallback_items.append(item)
+
+    def _flush_batch(table: str, rows: List[dict], ids: List[str], on_conflict: str):
+        nonlocal success_count, failure_count
+        if not rows:
+            return
         try:
-            # Route based on entity_type
+            supabase.client.table(table).upsert(
+                rows, on_conflict=on_conflict
+            ).execute()
+            for entity_id in ids:
+                results.append(SyncBulkResultItem(entity_id=entity_id, status="success"))
+                success_count += 1
+        except Exception as e:
+            logger.error(
+                f"Bulk sync batch upsert failed for {table} "
+                f"({len(rows)} rows): {e}",
+                exc_info=True,
+            )
+            for entity_id in ids:
+                results.append(
+                    SyncBulkResultItem(
+                        entity_id=entity_id,
+                        status="failed",
+                        error="Batch upsert failed",
+                    )
+                )
+                failure_count += 1
+
+    _flush_batch("workout_logs", workout_log_upserts, workout_log_upsert_ids, "id")
+    _flush_batch(
+        "workout_completions",
+        workout_completion_upserts,
+        workout_completion_ids,
+        "id",
+    )
+    _flush_batch(
+        "readiness_scores",
+        readiness_upserts,
+        readiness_ids,
+        "user_id,date",
+    )
+
+    for item in fallback_items:
+        try:
             if item.entity_type == "workout_log":
-                await _process_workout_log(
-                    supabase, user_id, item
-                )
-            elif item.entity_type == "workout_completion":
-                await _process_workout_completion(
-                    supabase, user_id, item
-                )
-            elif item.entity_type == "readiness":
-                await _process_readiness(
-                    supabase, user_id, item
-                )
+                await _process_workout_log(supabase, user_id, item)
             elif item.entity_type == "user_profile":
-                await _process_user_profile(
-                    supabase, user_id, item
-                )
+                await _process_user_profile(supabase, user_id, item)
             else:
-                # Generic pass-through: store the payload in a sync_log table
                 logger.warning(
                     f"Unknown entity_type '{item.entity_type}' for user {user_id}"
                 )
 
             results.append(
-                SyncBulkResultItem(
-                    entity_id=item.entity_id,
-                    status="success",
-                )
+                SyncBulkResultItem(entity_id=item.entity_id, status="success")
             )
             success_count += 1
-
         except Exception as e:
             logger.error(
                 f"Bulk sync failed for entity {item.entity_id} "
-                f"(type={item.entity_type}): {e}"
-            , exc_info=True)
+                f"(type={item.entity_type}): {e}",
+                exc_info=True,
+            )
             results.append(
                 SyncBulkResultItem(
                     entity_id=item.entity_id,

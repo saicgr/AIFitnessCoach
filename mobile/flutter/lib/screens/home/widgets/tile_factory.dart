@@ -12,6 +12,7 @@ import 'cards/cards.dart';
 // import 'daily_activity_card.dart'; // Coming soon
 import 'components/components.dart';
 import 'habits_section.dart';
+import 'timeline_section.dart';
 // import 'body_metrics_section.dart'; // Coming soon
 import 'achievements_section.dart';
 import 'today_stats_row.dart';
@@ -158,6 +159,11 @@ class TileFactory {
         });
       case TileType.nutritionPatterns:
         return const _NutritionPatternsTile();
+      case TileType.timeline:
+        // Today's Journal — chronological feed of every logged event
+        // (workouts, food, water, sleep, weight, mood, habits). Backend:
+        // GET /api/v1/timeline (added 2026-05-10).
+        return const TimelineSection();
     }
   }
 

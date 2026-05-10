@@ -249,10 +249,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       // refresh just no-ops, the next foreground will pick it up. This
       // mirrors the guard added to didChangeAppLifecycleState above.
       try {
-        // Refresh user data (picks up workout days, preferences changes)
-        ref.read(authStateProvider.notifier).refreshUser();
+        // User refresh + workouts refresh + health-connect refresh are
+        // independent — fire them in parallel so the resume path is
+        // bounded by the slowest single call instead of summing all three.
+        // refreshUser() and refreshConnectionStatus() return Futures that
+        // we await alongside the workouts refresh; nutrition stays
+        // fire-and-forget because it has its own silent-refresh contract.
         final workoutsNotifier = ref.read(workoutsProvider.notifier);
-        await workoutsNotifier.refresh();
+        final futures = <Future<dynamic>>[
+          Future.sync(() => ref.read(authStateProvider.notifier).refreshUser()),
+          workoutsNotifier.refresh(),
+          Future.sync(
+              () => ref.read(healthSyncProvider.notifier).refreshConnectionStatus()),
+        ];
+        await Future.wait(futures, eagerError: false);
 
         // Check mounted after async operation
         if (!mounted) return;
@@ -261,10 +271,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         // so we avoid a redundant ref.invalidate(workoutsProvider) which would
         // trigger an unnecessary full re-fetch.
 
-        // Refresh Health Connect status - user may have granted permissions externally
-        ref.read(healthSyncProvider.notifier).refreshConnectionStatus();
-
-        // Refresh nutrition & hydration data silently (no loading flash)
+        // Refresh nutrition & hydration data silently (no loading flash) —
+        // fire-and-forget so the resume path doesn't wait on it.
         _refreshNutritionSilent();
 
         // Check for new workout imports from Health Connect on resume

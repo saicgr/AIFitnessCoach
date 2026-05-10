@@ -16,8 +16,8 @@ from fastapi.responses import JSONResponse, HTMLResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.gzip import GZipMiddleware
 from starlette.types import ASGIApp, Receive, Scope, Send
-from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
+from core.rate_limiter import structured_rate_limit_handler
 from slowapi.middleware import SlowAPIMiddleware
 import asyncio
 import logging
@@ -671,7 +671,7 @@ app = FastAPI(
 app.state.limiter = limiter
 
 # Add rate limit exceeded exception handler
-app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+app.add_exception_handler(RateLimitExceeded, structured_rate_limit_handler)
 
 # Log validation errors with full details (helps diagnose 422s)
 from fastapi.exceptions import RequestValidationError

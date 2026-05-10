@@ -123,7 +123,10 @@ class StrengthChart extends StatelessWidget {
           const SizedBox(height: 24),
           SizedBox(
             height: 220,
-            child: LineChart(
+            // Isolate the chart's painting layer so it doesn't re-rasterize
+            // every time the surrounding scroll view paints a new pixel.
+            child: RepaintBoundary(
+              child: LineChart(
               LineChartData(
                 lineTouchData: LineTouchData(
                   enabled: true,
@@ -222,6 +225,7 @@ class StrengthChart extends StatelessWidget {
                 minY: 0,
                 maxY: yMax,
                 lineBarsData: lineBarsData,
+              ),
               ),
             ),
           ),

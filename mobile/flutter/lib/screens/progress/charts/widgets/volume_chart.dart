@@ -118,7 +118,8 @@ class VolumeChart extends StatelessWidget {
           const SizedBox(height: 24),
           SizedBox(
             height: 220,
-            child: BarChart(
+            child: RepaintBoundary(
+              child: BarChart(
               BarChartData(
                 alignment: BarChartAlignment.spaceAround,
                 maxY: yMax,
@@ -240,6 +241,7 @@ class VolumeChart extends StatelessWidget {
                     ],
                   );
                 }),
+              ),
               ),
             ),
           ),

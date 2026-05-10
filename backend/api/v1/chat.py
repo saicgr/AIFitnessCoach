@@ -319,15 +319,19 @@ async def send_coach_reply_push(
         except Exception as prefs_err:
             logger.debug(f"[CoachReplyPush] prefs lookup failed (non-fatal): {prefs_err}")
 
-        # ── presence skip ────────────────────────────────────────────────
-        # Skip when the user is currently foregrounded on this exact chat
-        # thread (they're already reading the reply in real time). 30s
-        # heartbeat threshold — anything older means the app is backgrounded.
-        if conversation_id:
+        # ── Presence + persona + first_name lookups in parallel ─────────
+        # These three queries are independent, so we fire them concurrently
+        # via asyncio.to_thread (supabase-py's sync client released the GIL
+        # on the network call). Was 3× sequential round-trips (~150–200ms),
+        # now bounded by the slowest single query.
+        from datetime import datetime as _dt, timedelta, timezone as _tz
+
+        def _presence_query():
+            if not conversation_id:
+                return None
             try:
-                from datetime import datetime as _dt, timedelta, timezone as _tz
                 threshold = _dt.now(_tz.utc) - timedelta(seconds=30)
-                presence_result = (
+                return (
                     db.client.table("live_chat_presence")
                     .select("active_conversation_id,last_active_at,is_online")
                     .eq("user_id", user_id)
@@ -336,47 +340,68 @@ async def send_coach_reply_push(
                     .limit(1)
                     .execute()
                 )
-                if presence_result.data:
-                    logger.info(
-                        f"[CoachReplyPush] user {user_id} foregrounded on conv "
-                        f"{conversation_id} — skipping push"
-                    )
-                    return
             except Exception as pres_err:
-                logger.debug(f"[CoachReplyPush] presence check failed (non-fatal): {pres_err}")
+                logger.debug(
+                    f"[CoachReplyPush] presence check failed (non-fatal): {pres_err}"
+                )
+                return None
+
+        def _persona_query():
+            try:
+                return (
+                    db.client.table("user_ai_settings")
+                    .select("coach_name")
+                    .eq("user_id", user_id)
+                    .limit(1)
+                    .execute()
+                )
+            except Exception as persona_err:
+                logger.debug(
+                    f"[CoachReplyPush] persona lookup failed: {persona_err}"
+                )
+                return None
+
+        def _user_row_query():
+            try:
+                return (
+                    db.client.table("users")
+                    .select("name, display_name, email")
+                    .eq("id", user_id)
+                    .limit(1)
+                    .execute()
+                )
+            except Exception as name_err:
+                logger.debug(
+                    f"[CoachReplyPush] first_name lookup failed: {name_err}"
+                )
+                return None
+
+        presence_result, persona_result, user_row_result = await asyncio.gather(
+            asyncio.to_thread(_presence_query),
+            asyncio.to_thread(_persona_query),
+            asyncio.to_thread(_user_row_query),
+        )
+
+        # ── presence skip ────────────────────────────────────────────────
+        if presence_result and getattr(presence_result, "data", None):
+            logger.info(
+                f"[CoachReplyPush] user {user_id} foregrounded on conv "
+                f"{conversation_id} — skipping push"
+            )
+            return
 
         # ── Resolve persona name ─────────────────────────────────────────
         persona_name = "Coach"
-        try:
-            persona_result = (
-                db.client.table("user_ai_settings")
-                .select("coach_name")
-                .eq("user_id", user_id)
-                .limit(1)
-                .execute()
-            )
-            if persona_result.data:
-                name_val = (persona_result.data[0].get("coach_name") or "").strip()
-                if name_val:
-                    persona_name = name_val
-        except Exception as persona_err:
-            logger.debug(f"[CoachReplyPush] persona lookup failed: {persona_err}")
+        if persona_result and getattr(persona_result, "data", None):
+            name_val = (persona_result.data[0].get("coach_name") or "").strip()
+            if name_val:
+                persona_name = name_val
 
         # ── Resolve user first name for body personalization ─────────────
         first_name_value = "there"
-        try:
-            user_row_result = (
-                db.client.table("users")
-                .select("name, display_name, email")
-                .eq("id", user_id)
-                .limit(1)
-                .execute()
-            )
-            if user_row_result.data:
-                from services.email_helpers import first_name as _first_name
-                first_name_value = _first_name(user_row_result.data[0])
-        except Exception as name_err:
-            logger.debug(f"[CoachReplyPush] first_name lookup failed: {name_err}")
+        if user_row_result and getattr(user_row_result, "data", None):
+            from services.email_helpers import first_name as _first_name
+            first_name_value = _first_name(user_row_result.data[0])
 
         # ── Build title + body ───────────────────────────────────────────
         title = f"{persona_name} replied"
@@ -400,7 +425,7 @@ async def send_coach_reply_push(
             "preview": preview,
         }
 
-        for tok in fcm_tokens:
+        async def _send_one(tok: str):
             try:
                 await notif_service.send_notification(
                     fcm_token=tok,
@@ -414,6 +439,10 @@ async def send_coach_reply_push(
                     f"[CoachReplyPush] send failed for token {tok[:12]}…: {send_err}",
                     exc_info=True,
                 )
+
+        # Multi-device users get notifications in parallel — sequential awaits
+        # were adding ~50–100ms per extra device.
+        await asyncio.gather(*[_send_one(tok) for tok in fcm_tokens])
 
         logger.info(
             f"[CoachReplyPush] sent to user={user_id} devices={len(fcm_tokens)} persona={persona_name}"

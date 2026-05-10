@@ -351,6 +351,33 @@ NUTRITION EXAMPLES:
 - "What did I eat today?" → Use get_nutrition_summary(user_id="{state['user_id']}", period="day", timezone_str="{_tz}")
 - "Show my recent meals" → Use get_recent_meals(user_id="{state['user_id']}")
 
+WELLNESS LOGGING TOOL (NEW — covers ALL post-hoc activity logging):
+- log_event(user_id="{state['user_id']}", domain="...", payload={{...}}, occurred_at_hint="...", source="chat")
+  * Use whenever the user reports they DID something — completed a workout, drank water, slept,
+    weighed themselves, or shared their mood. This is your single tool for post-hoc logging
+    across all wellness domains.
+  * domain values: 'workout' | 'food' | 'water' | 'sleep' | 'weight' | 'mood'
+  * For workouts: payload = {{'activity_type':'yoga|basketball|walk|run|swim|cycling|hike|hiit|strength|stretching|...', 'duration_minutes':30, 'intensity':'easy|medium|hard'(optional), 'metadata':{{'steps':10000(optional), 'distance_km':5(optional), 'notes':'...'}}}}
+  * For water: payload = {{'volume_ml':946}}  (oz × 29.5735, gallon × 3785)
+  * For sleep: payload = {{'duration_minutes':480, 'quality':'good'(optional)}}, occurred_at_hint='last night'
+  * For weight: payload = {{'weight_kg':79.4}}  (lbs × 0.453592)
+  * For mood: payload = {{'mood':'great|good|ok|low|bad', 'energy_level':1-5(optional)}}
+  * For food: payload = {{'name':'chicken burrito', 'meal_type':'lunch', 'calories':650(optional)}}
+  * occurred_at_hint examples: 'this morning', 'last night', 'yesterday', 'this evening', 'tonight'
+  * If a critical field is missing (e.g. duration), DO NOT call the tool — ask the user one
+    focused question first ("How long was the yoga?"), THEN call the tool with their answer.
+
+WELLNESS LOGGING EXAMPLES:
+- "I did 30 min yoga today" → log_event(user_id="{state['user_id']}", domain="workout", payload={{'activity_type':'yoga','duration_minutes':30}})
+- "Played basketball for 30 mins" → log_event(user_id="{state['user_id']}", domain="workout", payload={{'activity_type':'basketball','duration_minutes':30}})
+- "Went for a 10000 step walk this evening" → log_event(user_id="{state['user_id']}", domain="workout", payload={{'activity_type':'walk','metadata':{{'steps':10000}}}}, occurred_at_hint='this evening')
+- "Drank a gallon of water today" → log_event(user_id="{state['user_id']}", domain="water", payload={{'volume_ml':3785}})
+- "Slept 8 hours last night" → log_event(user_id="{state['user_id']}", domain="sleep", payload={{'duration_minutes':480}}, occurred_at_hint='last night')
+- "I weigh 175 today" → log_event(user_id="{state['user_id']}", domain="weight", payload={{'weight_kg':79.4}})
+- "Feeling great today" → log_event(user_id="{state['user_id']}", domain="mood", payload={{'mood':'great'}})
+- "Yoga" or "I did yoga" (NO duration) → ASK: "Nice — how long was the yoga?" (do NOT call log_event yet)
+- "Did 30 min yoga in morning and 20 min walk evening" → call log_event TWICE, once per activity
+
 You can call MULTIPLE tools in a single response if the user asks for multiple changes.
 
 Always be helpful, empathetic about injuries, provide encouraging nutrition feedback, and explain what you're doing.""")
@@ -778,6 +805,26 @@ async def build_action_data_node(state: FitnessCoachState) -> Dict[str, Any]:
                 "pain_level": result.get("pain_level"),
                 "success": result.get("success", False),
             }
+        # Wellness logging (covers ALL post-hoc logging via log_event tool —
+        # workouts, food, water, sleep, weight, mood). Frontend listens for
+        # 'event_logged' and refreshes todayWorkoutProvider + timelineProvider
+        # AND surfaces an inline Undo button using undo_token.
+        elif action == "event_logged":
+            action_data = {
+                "action": "event_logged",
+                "event_id": result.get("event_id"),
+                "domain": result.get("domain"),
+                "name": result.get("name"),
+                "calories": result.get("calories"),
+                "undo_token": result.get("undo_token"),
+                "warning": result.get("warning"),
+                "created": result.get("created", False),
+                "success": True,
+            }
+            logger.info(
+                f"[Action Data] Event logged: {result.get('event_id')} "
+                f"(domain={result.get('domain')}, calories={result.get('calories')})"
+            )
 
     # If no tool results, use intent (fallback to current workout if available)
     if not action_data and intent:

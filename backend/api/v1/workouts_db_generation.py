@@ -105,15 +105,16 @@ async def generate_workout(request: Request, body: GenerateWorkoutRequest, backg
         muscle_focus_points = None
         user_dob = None
 
+        # Single user lookup serves both branches — previously this fired
+        # `db.get_user` twice on the cold path.
+        user = db.get_user(body.user_id)
         if body.fitness_level and body.goals and body.equipment:
             fitness_level = body.fitness_level
             goals = body.goals
             equipment = body.equipment
-            user = db.get_user(body.user_id)
             if user:
                 user_dob = user.get("date_of_birth")
         else:
-            user = db.get_user(body.user_id)
             if not user:
                 raise HTTPException(status_code=404, detail="User not found")
 
@@ -252,15 +253,14 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
             db = get_supabase_db()
 
             user_dob = None
+            user = db.get_user(body.user_id)
             if body.fitness_level and body.goals and body.equipment:
                 fitness_level = body.fitness_level
                 goals = body.goals
                 equipment = body.equipment
-                user = db.get_user(body.user_id)
                 if user:
                     user_dob = user.get("date_of_birth")
             else:
-                user = db.get_user(body.user_id)
                 if not user:
                     yield f"event: error\ndata: {json.dumps({'error': 'User not found'})}\n\n"
                     return

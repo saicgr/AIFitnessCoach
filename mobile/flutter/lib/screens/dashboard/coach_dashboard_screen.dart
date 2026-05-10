@@ -23,23 +23,40 @@ class CoachDashboardScreen extends ConsumerStatefulWidget {
 }
 
 class _CoachDashboardScreenState extends ConsumerState<CoachDashboardScreen> {
-  late Future<Map<String, dynamic>> _dashboardFuture;
+  // Two-tier load: `_quickFuture` resolves first (compliance + nutrition +
+  // today's mood) so the top of the screen paints immediately. `_fullFuture`
+  // resolves a moment later with the heavier sections (measurements, goals,
+  // readiness sparkline) and we swap to its data when ready.
+  late Future<Map<String, dynamic>> _quickFuture;
+  late Future<Map<String, dynamic>> _fullFuture;
+  Map<String, dynamic>? _fullData;
 
   @override
   void initState() {
     super.initState();
-    _dashboardFuture = _fetchDashboard();
+    _kickOffFetches();
   }
 
-  Future<Map<String, dynamic>> _fetchDashboard() async {
+  void _kickOffFetches() {
+    _quickFuture = _fetchDashboard(quick: true);
+    _fullFuture = _fetchDashboard(quick: false)
+      ..then((data) {
+        if (mounted) setState(() => _fullData = data);
+      }).catchError((_) {});
+  }
+
+  Future<Map<String, dynamic>> _fetchDashboard({required bool quick}) async {
     final userId = await ref.read(apiClientProvider).getUserId();
     if (userId == null) throw Exception('User not authenticated');
-    return ref.read(dashboardRepositoryProvider).getWeeklyDashboard(userId);
+    return ref
+        .read(dashboardRepositoryProvider)
+        .getWeeklyDashboard(userId, quick: quick);
   }
 
   void _retry() {
     setState(() {
-      _dashboardFuture = _fetchDashboard();
+      _fullData = null;
+      _kickOffFetches();
     });
   }
 
@@ -52,7 +69,7 @@ class _CoachDashboardScreenState extends ConsumerState<CoachDashboardScreen> {
       backgroundColor: colorScheme.surface,
       appBar: PillAppBar(title: 'This Week'),
       body: FutureBuilder<Map<String, dynamic>>(
-        future: _dashboardFuture,
+        future: _quickFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return AppLoading.fullScreen();
@@ -62,12 +79,17 @@ class _CoachDashboardScreenState extends ConsumerState<CoachDashboardScreen> {
             return _buildError(snapshot.error.toString(), colorScheme);
           }
 
-          final data = snapshot.data!;
+          // Render off the full payload as soon as it lands; before then,
+          // hydrate any heavy sections from the quick payload (which leaves
+          // them empty — the cards self-skeleton when their slice is empty).
+          final data = _fullData ?? snapshot.data!;
           return RefreshIndicator(
             onRefresh: () async {
-              final future = _fetchDashboard();
-              setState(() => _dashboardFuture = future);
-              await future;
+              setState(() {
+                _fullData = null;
+                _kickOffFetches();
+              });
+              await _fullFuture;
             },
             child: SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),

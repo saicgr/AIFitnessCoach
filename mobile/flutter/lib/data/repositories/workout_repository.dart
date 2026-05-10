@@ -74,54 +74,83 @@ final hasCheckedRegenerationProvider = StateProvider<bool>((ref) => false);
 /// Survives provider invalidation and prevents loading flash
 List<Workout>? _workoutsInMemoryCache;
 
-/// In-memory cache for workout screen summary
-WorkoutScreenSummary? _screenSummaryInMemoryCache;
+/// No-op kept for backward compatibility. The screen summary is now derived
+/// from `workoutsProvider`, so there's nothing to clear.
+void clearScreenSummaryCache() {}
 
-/// Call this when switching gym profiles so stale summary data from the old
-/// profile doesn't show in the workouts tab for the new profile.
-void clearScreenSummaryCache() {
-  _screenSummaryInMemoryCache = null;
-}
-
-/// Lightweight workout screen summary provider
-/// Uses cache-first pattern: returns cached data instantly, refreshes in background
+/// Workout screen summary, derived from `workoutsProvider`.
+///
+/// Previously hit `GET /workouts/screen-summary` (~500ms extra round-trip on
+/// the Workouts tab). The aggregates (counts, top-N previous, top-N upcoming)
+/// are now computed client-side from the already-loaded workouts list, so the
+/// Workouts tab paints in lockstep with Home.
 final workoutScreenSummaryProvider =
-    FutureProvider<WorkoutScreenSummary?>((ref) async {
-  // Return cached data instantly if available
-  if (_screenSummaryInMemoryCache != null) {
-    // Still refresh in background
-    _refreshScreenSummaryInBackground(ref);
-    return _screenSummaryInMemoryCache;
-  }
-
-  final repository = ref.watch(workoutRepositoryProvider);
-  final authState = ref.watch(authStateProvider);
-  final userId = authState.user?.id;
-  if (userId == null) return null;
-
-  try {
-    final summary = await repository.getWorkoutScreenSummary(userId);
-    _screenSummaryInMemoryCache = summary;
-    return summary;
-  } catch (e) {
-    debugPrint('❌ [WorkoutScreenSummary] Error: $e');
-    return _screenSummaryInMemoryCache;
-  }
+    Provider<AsyncValue<WorkoutScreenSummary?>>((ref) {
+  final workoutsAsync = ref.watch(workoutsProvider);
+  return workoutsAsync.whenData((workouts) => _deriveScreenSummary(workouts));
 });
 
-void _refreshScreenSummaryInBackground(Ref ref) {
-  Future.microtask(() async {
-    try {
-      final repository = ref.read(workoutRepositoryProvider);
-      final authState = ref.read(authStateProvider);
-      final userId = authState.user?.id;
-      if (userId == null) return;
+WorkoutScreenSummary _deriveScreenSummary(List<Workout> workouts) {
+  final now = DateTime.now();
+  final startOfWeek = DateTime(now.year, now.month, now.day)
+      .subtract(Duration(days: now.weekday - 1));
+  final endOfWeek = startOfWeek.add(const Duration(days: 7));
+  final today = DateTime(now.year, now.month, now.day);
 
-      final summary = await repository.getWorkoutScreenSummary(userId);
-      _screenSummaryInMemoryCache = summary;
-    } catch (_) {}
-  });
+  int completedThisWeek = 0;
+  int plannedThisWeek = 0;
+  final previous = <_WorkoutDated>[];
+  final upcoming = <_WorkoutDated>[];
+
+  for (final w in workouts) {
+    if (w.scheduledDate == null) continue;
+    final scheduled = DateTime.tryParse(w.scheduledDate!);
+    if (scheduled == null) continue;
+    final local = DateTime(scheduled.year, scheduled.month, scheduled.day);
+
+    final inThisWeek =
+        !local.isBefore(startOfWeek) && local.isBefore(endOfWeek);
+    if (inThisWeek) {
+      plannedThisWeek++;
+      if (w.isCompleted == true) completedThisWeek++;
+    }
+
+    if (w.isCompleted == true) {
+      previous.add(_WorkoutDated(w, local));
+    } else if (!local.isBefore(today)) {
+      upcoming.add(_WorkoutDated(w, local));
+    }
+  }
+
+  previous.sort((a, b) => b.date.compareTo(a.date));
+  upcoming.sort((a, b) => a.date.compareTo(b.date));
+
+  return WorkoutScreenSummary(
+    completedThisWeek: completedThisWeek,
+    plannedThisWeek: plannedThisWeek,
+    previousSessions:
+        previous.take(10).map((e) => _toMini(e.workout)).toList(),
+    upcomingWorkouts:
+        upcoming.take(10).map((e) => _toMini(e.workout)).toList(),
+  );
 }
+
+class _WorkoutDated {
+  final Workout workout;
+  final DateTime date;
+  _WorkoutDated(this.workout, this.date);
+}
+
+WorkoutMiniSummary _toMini(Workout w) => WorkoutMiniSummary(
+      id: w.id ?? '',
+      name: w.name ?? 'Workout',
+      type: w.type ?? 'workout',
+      scheduledDate: w.scheduledDate ?? '',
+      isCompleted: w.isCompleted == true,
+      durationMinutes: w.durationMinutes ?? w.estimatedDurationMinutes ?? 45,
+      exerciseCount: w.exerciseCount,
+      primaryMuscles: w.primaryMuscles,
+    );
 
 /// Workouts state provider
 final workoutsProvider =
@@ -204,29 +233,6 @@ class WorkoutRepository {
       return [];
     } catch (e) {
       debugPrint('❌ [Workout] Error fetching workouts: $e');
-      rethrow;
-    }
-  }
-
-  /// Get lightweight workout screen summary
-  Future<WorkoutScreenSummary> getWorkoutScreenSummary(String userId) async {
-    try {
-      debugPrint('🔍 [Workout] Fetching screen summary for user: $userId');
-      final response = await _apiClient.get(
-        '${ApiConstants.workouts}/screen-summary',
-        queryParameters: {'user_id': userId},
-      );
-
-      if (response.statusCode == 200) {
-        final summary = WorkoutScreenSummary.fromJson(
-          response.data as Map<String, dynamic>,
-        );
-        debugPrint('✅ [Workout] Screen summary: ${summary.completedThisWeek}/${summary.plannedThisWeek} this week');
-        return summary;
-      }
-      throw Exception('Failed to fetch screen summary: ${response.statusCode}');
-    } catch (e) {
-      debugPrint('❌ [Workout] Error fetching screen summary: $e');
       rethrow;
     }
   }

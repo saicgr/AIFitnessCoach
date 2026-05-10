@@ -21,9 +21,13 @@ enum _MediaSendStatus {
 
 class _TypingIndicator extends StatelessWidget {
   final String? statusText;
-  final String? elapsed;
+  // Elapsed seconds tick on a 1-Hz timer. Passing a ValueListenable instead of
+  // a String lets only the elapsed `Text` rebuild each second — the rest of
+  // the chat screen (message ListView, bubbles, scroll controller, input bar)
+  // is no longer re-laid-out at 1 Hz.
+  final ValueListenable<String>? elapsedListenable;
 
-  const _TypingIndicator({this.statusText, this.elapsed});
+  const _TypingIndicator({this.statusText, this.elapsedListenable});
 
   @override
   Widget build(BuildContext context) {
@@ -61,13 +65,27 @@ class _TypingIndicator extends StatelessWidget {
             }),
             if (statusText != null && statusText!.isNotEmpty) ...[
               const SizedBox(width: 10),
-              Text(
-                '$statusText${elapsed != null && elapsed!.isNotEmpty ? ' $elapsed' : ''}',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: isDark ? AppColors.textMuted : Colors.grey.shade500,
-                ),
-              ),
+              elapsedListenable == null
+                  ? Text(
+                      statusText!,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color:
+                            isDark ? AppColors.textMuted : Colors.grey.shade500,
+                      ),
+                    )
+                  : ValueListenableBuilder<String>(
+                      valueListenable: elapsedListenable!,
+                      builder: (context, elapsed, _) => Text(
+                        elapsed.isEmpty ? statusText! : '$statusText $elapsed',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: isDark
+                              ? AppColors.textMuted
+                              : Colors.grey.shade500,
+                        ),
+                      ),
+                    ),
             ],
           ],
         ),

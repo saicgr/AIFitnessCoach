@@ -20,8 +20,15 @@ from core.db import get_supabase_db
 from .exercises_models import *  # noqa: F401, F403
 from .exercises_endpoints import router as _endpoints_router
 
-from fastapi import APIRouter, HTTPException, Query, Depends
+from fastapi import APIRouter, HTTPException, Query, Depends, Response
 from typing import List, Optional
+
+# Cache-Control header applied to read-only library endpoints. The exercise
+# library is rarely mutated, so a 1-hour public cache + day-long
+# stale-while-revalidate window lets the client paint instantly off cached
+# data and revalidate in the background instead of blocking on a network
+# round-trip every time the Library tab opens.
+_LIBRARY_CACHE_HEADER = "public, max-age=3600, stale-while-revalidate=86400"
 from pydantic import BaseModel, Field
 import uuid
 
@@ -118,6 +125,7 @@ async def create_exercise(exercise: ExerciseCreate, current_user: dict = Depends
 
 @router.get("/", response_model=List[Exercise])
 async def list_exercises(
+    response: Response,
     category: Optional[str] = None,
     body_part: Optional[str] = None,
     equipment: Optional[str] = None,
@@ -138,6 +146,7 @@ async def list_exercises(
             offset=offset,
         )
         logger.info(f"Listed {len(rows)} exercises")
+        response.headers["Cache-Control"] = _LIBRARY_CACHE_HEADER
         return [row_to_exercise(row) for row in rows]
 
     except Exception as e:
@@ -146,11 +155,16 @@ async def list_exercises(
 
 
 @router.get("/{exercise_id}", response_model=Exercise)
-async def get_exercise(exercise_id: int, current_user: dict = Depends(get_current_user)):
+async def get_exercise(
+    exercise_id: int,
+    response: Response,
+    current_user: dict = Depends(get_current_user),
+):
     """Get an exercise by ID."""
     try:
         db = get_supabase_db()
         row = db.get_exercise(exercise_id)
+        response.headers["Cache-Control"] = _LIBRARY_CACHE_HEADER
 
         if not row:
             raise HTTPException(status_code=404, detail="Exercise not found")
