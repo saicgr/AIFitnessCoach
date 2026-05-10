@@ -1559,6 +1559,18 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
         from core.premium_gate import track_premium_usage
         background_tasks.add_task(track_premium_usage, body.user_id, "ai_workout_generation", _gen_tz)
 
+        # Invalidate /today cache so the home screen surfaces the new workout
+        # immediately instead of returning the stale needs_generation=true
+        # response (which triggers the auto-gen loop on the home screen).
+        try:
+            from .today import invalidate_today_workout_cache
+            _sd = generated_workout.scheduled_date.isoformat()[:10] if generated_workout.scheduled_date else None
+            await invalidate_today_workout_cache(body.user_id, gym_profile_id, _sd)
+            if gym_profile_id:
+                await invalidate_today_workout_cache(body.user_id, None, _sd)
+        except Exception as cache_err:
+            logger.warning(f"[Generate] Today cache invalidation failed: {cache_err}", exc_info=True)
+
         return generated_workout
 
     except HTTPException:

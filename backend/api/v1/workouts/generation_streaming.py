@@ -1149,6 +1149,15 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
                         exc_info=True,
                     )
 
+            # Force is_current=True so the today endpoint's
+            # `is_current.eq.true` filter finds the new row even if the
+            # column default ever changes. Defensive — observed production
+            # case where /today returned needs_generation=true on every
+            # poll despite multiple successful generations (see Sentry
+            # 2026-05-10: 5 cycles of "Workout ready!" with zero rows
+            # appearing in the user's workouts table).
+            workout_db_data["is_current"] = True
+
             try:
                 created = db.create_workout(workout_db_data)
             except Exception as insert_err:
@@ -1157,10 +1166,37 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
                     workout_db_data.pop('estimated_calories', None)
                     created = db.create_workout(workout_db_data)
                 else:
+                    logger.error(f"[Streaming] create_workout INSERT FAILED: {insert_err}", exc_info=True)
                     raise
+
+            if not created or not created.get("id"):
+                logger.error(
+                    f"[Streaming] create_workout returned empty result for user "
+                    f"{body.user_id}, scheduled_date={scheduled_date_str}, "
+                    f"gym_profile_id={gym_profile_id}. Workout NOT persisted."
+                )
+                yield f"event: error\ndata: {json.dumps({'error': 'Workout could not be saved. Please try again.'})}\n\n"
+                return
+
             total_time_ms = (datetime.now() - start_time).total_seconds() * 1000
 
-            logger.info(f"Streaming workout complete: {len(exercises)} exercises in {total_time_ms:.0f}ms, gym_profile_id={gym_profile_id}")
+            logger.info(f"[Streaming] Workout {created.get('id')} INSERTED: {len(exercises)} exercises in {total_time_ms:.0f}ms, gym_profile_id={gym_profile_id}, scheduled_date={scheduled_date_str}")
+
+            # Invalidate the /today cache so the next poll surfaces the new
+            # workout instead of returning the stale needs_generation=true
+            # response that triggered this generation in the first place.
+            # Without this, the home screen loops: needs_generation→generate
+            # →cache-stale→needs_generation→…
+            try:
+                from .today import invalidate_today_workout_cache
+                _sd_for_invalidate = scheduled_date_str[:10] if scheduled_date_str else None
+                # Invalidate for both the active profile AND null profile so
+                # the cached key from any /today call permutation gets cleared.
+                await invalidate_today_workout_cache(body.user_id, gym_profile_id, _sd_for_invalidate)
+                if gym_profile_id:
+                    await invalidate_today_workout_cache(body.user_id, None, _sd_for_invalidate)
+            except Exception as cache_err:
+                logger.warning(f"[Streaming] Today cache invalidation failed: {cache_err}", exc_info=True)
 
             log_workout_change(
                 workout_id=created['id'],
