@@ -1,49 +1,49 @@
-The only AI coach for workouts AND nutrition -- in one app.
+The AI coach for workouts AND nutrition. One app, both sides talking to each other.
 
-Stop juggling a calorie tracker and a separate workout app. Zealova connects your training and your meals into one smart plan that knows what you ate, how you trained, and adjusts both. Snap a meal in seconds. Scan a restaurant menu before you order. Import any recipe with a URL or photo. Train with workouts built around your gym. Ask your AI coach anything, anytime.
+Stop juggling a calorie tracker and a separate workout app. Zealova builds your training program AND your daily nutrition targets, then keeps both in sync. Eat more carbs on leg day, hit a PR last Tuesday and earn a deload, log a burrito and watch tomorrow's plan adjust. That's the whole point.
 
-7-day free trial -- $7.99/mo or $59.99/yr (save 38%).
+WHAT YOU CAN DO IN 60 SECONDS
+- Snap a meal -- photo your plate, get calories + macros in 3 seconds
+- Scan a restaurant menu BEFORE you order -- every dish estimated
+- Import any recipe -- paste a URL, snap a cookbook page, or paste text
+- Scan a barcode for instant packaged-food macros
+- Type or talk it -- "2 eggs, toast, coffee" logs hands-free
+- Plus: 20+ micronutrients, health score per meal, weekly summaries
 
-LOG MEALS YOUR WAY
-However is fastest for you:
-- Snap it -- photo a meal and AI identifies food, calories, and macros in seconds
-- Scan a restaurant menu -- AI estimates calories and macros for every dish before you order
-- Import any recipe -- paste a URL, snap a cookbook page, or paste recipe text
-- Scan barcodes for instant packaged-food macros
-- Type it -- "2 eggs, toast, coffee" and it's logged in seconds
-- Voice it -- describe your meal hands-free and it logs automatically
-Calories, protein, carbs, fats, and 20+ micronutrients tracked automatically. Get a health score for every meal and personalized tips from your coach.
+YOUR GYM, NOT A TEMPLATE
+Workouts are generated for the equipment you actually own. Bodyweight only? Done. Half-rack at home, full gym at work, dumbbells when traveling? Three saved profiles, zero replanning.
+- Adapts around injuries automatically (tweaked your knee? plan reroutes same day)
+- Suggests heavier weight only when your last 4 sessions earned it
+- 5-15 min quick sessions when life gets in the way
+- Warm-ups, cool-downs, rest timers built in
+- Every exercise has a "why was this picked for me" explanation
 
-WORKOUTS BUILT AROUND YOUR GYM
-Every workout is generated for your equipment, fitness level, and schedule. Not a template -- a plan that's actually yours.
-- Adapts around injuries automatically
-- Suggests when to add weight based on your history
-- Warm-ups and cool-downs included
-- 5-15 minute quick sessions for busy days
-- Multiple gym profiles for home, work, or travel
-- AI explains why each exercise was chosen for you
+ASK YOUR COACH ANYTHING, ANY TIME
+Real questions Zealova users have asked:
+- "Why did you swap my Tuesday deadlift for a Romanian one?"
+- "I had pizza Friday -- am I still on track for Sunday's run?"
+- "Can I do this workout in 23 minutes if I skip accessories?"
+- "What's a cheaper protein source than what I usually log?"
 
-YOUR AI COACH, 24/7
-Ask anything. "Can I replace squats -- my knee hurts?" "How much protein have I had today?" "What should I eat before my workout?" Your coach knows your full workout history, your nutrition, and your goals. It gives answers that apply to YOU -- not generic advice from a blog.
+Your coach knows your full history -- workouts, meals, sleep, body weight. Answers apply to YOU, not the internet.
 
-TRACK YOUR PROGRESS
+PROGRESS YOU CAN SEE
 - Workout streaks and personal records
-- Weight and body composition trends
-- Progress photos with before-and-after comparisons
-- Weekly performance summaries
+- Weight + body composition trends
+- Progress photos with side-by-side comparisons
 - Health Connect sync (steps, heart rate, sleep, calories burned)
 
-GETS SMARTER OVER TIME
-Mark exercises you love, avoid the ones you hate, and queue up moves you want to try. Your workouts and meal suggestions get smarter every week.
+7-DAY FREE TRIAL -- FULL ACCESS
+Every feature unlocked. No credit card needed to start. After the trial: $7.99/mo or $59.99/yr (save 38%). Cancel from the Play Store anytime, no email required.
 
 DETAILS
-- Works with any equipment, including bodyweight-only
-- Nutrition targets that adjust to your goals
-- Personalized warm-up and cool-down routines
-- Water intake tracking
-- XP system and monthly achievements
+- Works with any equipment, including bodyweight only
+- Personalized warm-ups and cool-downs
+- Multiple gym profiles for home, work, travel
+- Water intake tracking, meal reminders, workout reminders
 - Dark mode
+- XP system and monthly achievements
 
-One app. Workouts and nutrition that talk to each other. No guesswork.
+One app. Workouts and nutrition that actually talk to each other.
 
-Start your 7-day free trial today.
+Try it free for 7 days.
