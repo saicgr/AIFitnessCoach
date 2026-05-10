@@ -9,7 +9,7 @@ from core.db import get_supabase_db
 import json
 import asyncio
 from datetime import datetime
-from typing import AsyncGenerator
+from typing import AsyncGenerator, Optional
 
 from fastapi import APIRouter, Depends, Request, HTTPException
 from core.auth import get_current_user
@@ -239,6 +239,10 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
         workout_days: List[str] = []
         gym_profile_id = None
         preferences: Dict[str, Any] = {}
+        # Bind workout_type_override before the try so the outer except handler
+        # and any post-try references (~L611, 889, 895, 982) don't NameError
+        # if user-lookup raises before the in-try assignment at L261.
+        workout_type_override: Optional[str] = getattr(body, "workout_type", None)
 
         try:
 

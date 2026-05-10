@@ -358,6 +358,32 @@ class ApiClient with WidgetsBindingObserver {
       ),
     );
 
+    // /exercise-images/ 404 swallow: AI-generated workouts occasionally
+    // contain hallucinated exercise names (e.g. "Major Groups Muscle Body")
+    // that aren't in the library, so the lookup 404s. That's an expected
+    // miss, not a bug — return an empty 200 response with `url=null` so
+    // callers fall back to the placeholder without throwing DioException
+    // (which otherwise floods Sentry with FITWIZ-FLUTTER-8W noise).
+    _dio.interceptors.add(
+      InterceptorsWrapper(
+        onError: (error, handler) {
+          final path = error.requestOptions.path;
+          if (error.response?.statusCode == 404 &&
+              path.startsWith('/exercise-images/') &&
+              !path.startsWith('/exercise-images/batch')) {
+            return handler.resolve(
+              Response(
+                requestOptions: error.requestOptions,
+                statusCode: 200,
+                data: const {'url': null, 'reason': 'not_in_library'},
+              ),
+            );
+          }
+          handler.next(error);
+        },
+      ),
+    );
+
     // Connect-timeout retry interceptor — only retries TCP connect failures
     // (cold iOS/Android network init, carrier handoff, Wi-Fi↔cellular switch).
     // Never retries receive-timeouts or 4xx/5xx — those are real errors.

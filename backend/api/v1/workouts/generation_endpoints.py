@@ -58,6 +58,16 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
     # raise UnboundLocalError, masking the real failure).
     placeholder_id = None
     db = None
+    # Bind locals that downstream + error-formatting code reads before they
+    # might get assigned in the body. Sentry has logged repeated
+    # UnboundLocalError for `focus_areas` here when an exception fires before
+    # the L249/L261 binding.
+    focus_areas: list = list(body.focus_areas) if getattr(body, "focus_areas", None) else []
+    equipment: list = []
+    workout_days: list = []
+    training_split = None
+    gym_profile_id = body.gym_profile_id if getattr(body, "gym_profile_id", None) else None
+    workout_type_override = getattr(body, "workout_type", None)
 
     try:
         db = get_supabase_db()
@@ -1307,14 +1317,14 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
                 }
                 if len(distinct_exercise_names) < MIN_EXERCISES_REQUIRED:
                     _eq_for_log = equipment if isinstance(equipment, list) else []
-                    # Fix 9 graceful degradation: only hard-fail when pool
-                    # is < 2 (i.e. nothing meaningful to ship). When we have
-                    # exactly 2 unique exercises return them anyway with a
-                    # `notes` warning so the user still gets a workout.
-                    # Niche-equipment scenarios (machine-only, bands-only,
-                    # cardio-only, bw+bands) accounted for 6 hard-fails in
-                    # the pre-fix audit — most of those had 2 exercises.
-                    HARD_FAIL_FLOOR = 2
+                    # Per feedback_no_preflight_rejection_for_injury_focus:
+                    # never 422 on focus/equipment combos — always return real
+                    # exercises with warning. HARD_FAIL_FLOOR=1 means we ship
+                    # whatever we have (with a clear notes warning) unless
+                    # the AI returned literally zero exercises. The previous
+                    # floor=2 still 422'd users with niche equipment where
+                    # the candidate pool legitimately yielded only 1 match.
+                    HARD_FAIL_FLOOR = 1
                     if len(distinct_exercise_names) >= HARD_FAIL_FLOOR:
                         _warning_note = (
                             f"Limited equipment for {focus_areas[0] if focus_areas else 'this focus'} — "

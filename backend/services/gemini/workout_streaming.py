@@ -201,6 +201,32 @@ STRENGTH HISTORY:
 
 Use this split information to guide exercise selection and workout structure."""
 
+            # Per-focus muscle whitelist injection. Production focus_validation
+            # repeatedly logs mismatches like "Hamstrings does not match glutes
+            # focus", "upper back does not match shoulders focus", etc. The
+            # post-hoc validator filters them out which then under-fills the
+            # workout. Inject the canonical muscle whitelist directly into the
+            # prompt so Gemini selects on-target exercises in the first place.
+            focus_muscle_constraint = ""
+            if focus_areas:
+                from api.v1.workouts.focus_validation_utils import FOCUS_AREA_MUSCLES
+                _whitelists = []
+                for _f in focus_areas:
+                    _key = (_f or "").strip().lower()
+                    _muscles = FOCUS_AREA_MUSCLES.get(_key)
+                    if _muscles:
+                        _whitelists.append(
+                            f"  - {_f}: ONLY exercises whose primary muscle is one of "
+                            f"[{', '.join(_muscles[:6])}]"
+                        )
+                if _whitelists:
+                    focus_muscle_constraint = (
+                        "\n\n🎯 FOCUS-MUSCLE WHITELIST (STRICT - validator will reject mismatches):\n"
+                        + "\n".join(_whitelists)
+                        + "\nDo NOT include exercises whose primary muscle falls outside the whitelist. "
+                        "Full-body workouts MUST include at least one Legs/Glutes exercise."
+                    )
+
             # RAG-first: if library_exercises provided, build the
             # "Available Exercises" block and add a hard constraint to use ONLY
             # those names. Mirrors generate_workout_from_library pattern in
@@ -234,7 +260,7 @@ Use this split information to guide exercise selection and workout structure."""
 - Fitness Level: {fitness_level}
 - Goals: {safe_join_list(goals, 'General fitness')}
 - Equipment: {safe_join_list(equipment, 'Bodyweight only')}
-- Focus: {safe_join_list(focus_areas, 'Full body')}{age_activity_context}{training_split_instruction}{preference_constraints}{library_block}{library_constraint}
+- Focus: {safe_join_list(focus_areas, 'Full body')}{focus_muscle_constraint}{age_activity_context}{training_split_instruction}{preference_constraints}{library_block}{library_constraint}
 
 Return ONLY valid JSON (no markdown):
 {{
@@ -379,27 +405,71 @@ If user has gym equipment (full_gym, barbell, dumbbells, cable_machine, machines
                     _idx += 1
                     yield _val
 
-            async for chunk in _with_chunk_timeout(stream, _FIRST_CHUNK_TIMEOUT_S, _SUBSEQUENT_CHUNK_TIMEOUT_S):
-                chunk_count += 1
-                logger.debug(f"[Streaming] Received chunk {chunk_count}, type={type(chunk).__name__}")
+            # Mid-stream 429 / RESOURCE_EXHAUSTED handling: Vertex regularly
+            # bounces a request after the stream handshake succeeds (logged as
+            # "Stream error after N chunks, M chars: 429 RESOURCE_EXHAUSTED").
+            # When this happens BEFORE we've yielded text downstream, restart
+            # the entire generation with backoff so the user sees a complete
+            # workout instead of a half-built one + 500.
+            _midstream_attempt = 0
+            _MAX_MIDSTREAM_RESTARTS = 2
+            while True:
+                try:
+                    async for chunk in _with_chunk_timeout(stream, _FIRST_CHUNK_TIMEOUT_S, _SUBSEQUENT_CHUNK_TIMEOUT_S):
+                        chunk_count += 1
+                        logger.debug(f"[Streaming] Received chunk {chunk_count}, type={type(chunk).__name__}")
 
-                # Check for blocked content or safety issues
-                if hasattr(chunk, 'candidates') and chunk.candidates:
-                    candidate = chunk.candidates[0]
-                    if hasattr(candidate, 'finish_reason') and candidate.finish_reason:
-                        finish_reason = str(candidate.finish_reason)
-                        if finish_reason in ['MAX_TOKENS', 'FinishReason.MAX_TOKENS', '2']:
-                            logger.warning(f"⚠️ [Streaming] Response truncated (MAX_TOKENS) at {total_chars} chars - increase max_output_tokens")
-                        elif finish_reason not in ['STOP', 'FinishReason.STOP', '1']:
-                            logger.warning(f"⚠️ [Streaming] Unexpected finish reason: {finish_reason}")
-                    if hasattr(candidate, 'safety_ratings') and candidate.safety_ratings:
-                        for rating in candidate.safety_ratings:
-                            if hasattr(rating, 'blocked') and rating.blocked:
-                                logger.error(f"🚫 [Streaming] Content blocked by safety filter: {rating}")
+                        # Check for blocked content or safety issues
+                        if hasattr(chunk, 'candidates') and chunk.candidates:
+                            candidate = chunk.candidates[0]
+                            if hasattr(candidate, 'finish_reason') and candidate.finish_reason:
+                                finish_reason = str(candidate.finish_reason)
+                                if finish_reason in ['MAX_TOKENS', 'FinishReason.MAX_TOKENS', '2']:
+                                    logger.warning(f"⚠️ [Streaming] Response truncated (MAX_TOKENS) at {total_chars} chars - increase max_output_tokens")
+                                elif finish_reason not in ['STOP', 'FinishReason.STOP', '1']:
+                                    logger.warning(f"⚠️ [Streaming] Unexpected finish reason: {finish_reason}")
+                            if hasattr(candidate, 'safety_ratings') and candidate.safety_ratings:
+                                for rating in candidate.safety_ratings:
+                                    if hasattr(rating, 'blocked') and rating.blocked:
+                                        logger.error(f"🚫 [Streaming] Content blocked by safety filter: {rating}")
 
-                if chunk.text:
-                    total_chars += len(chunk.text)
-                    yield chunk.text
+                        if chunk.text:
+                            total_chars += len(chunk.text)
+                            yield chunk.text
+                    break  # stream finished cleanly
+                except Exception as _midstream_err:
+                    _can_restart = (
+                        total_chars == 0
+                        and _midstream_attempt < _MAX_MIDSTREAM_RESTARTS
+                        and _is_transient_gemini_error(_midstream_err)
+                    )
+                    if not _can_restart:
+                        raise
+                    _midstream_attempt += 1
+                    import random as _rand
+                    _delay = _streaming_delays[min(_midstream_attempt - 1, len(_streaming_delays) - 1)] + _rand.uniform(0, 1)
+                    logger.warning(
+                        f"⚠️ [Streaming] Mid-stream transient error "
+                        f"(attempt {_midstream_attempt}/{_MAX_MIDSTREAM_RESTARTS}, "
+                        f"chunks={chunk_count}, chars={total_chars}): {_midstream_err}. "
+                        f"Restarting stream in {_delay:.1f}s."
+                    )
+                    await asyncio.sleep(_delay)
+                    chunk_count = 0
+                    async with _gemini_semaphore(user_id=user_id):
+                        stream = await asyncio.wait_for(
+                            client.aio.models.generate_content_stream(
+                                model=self.model,
+                                contents=prompt,
+                                config=types.GenerateContentConfig(
+                                    response_mime_type="application/json",
+                                    response_schema=GeneratedWorkoutResponse,
+                                    temperature=0.85,
+                                    max_output_tokens=16384,
+                                ),
+                            ),
+                            timeout=_STREAM_CREATE_TIMEOUT_S,
+                        )
 
             logger.info(f"✅ [Gemini Streaming] Complete: {chunk_count} chunks, {total_chars} chars")
             if total_chars < 500:

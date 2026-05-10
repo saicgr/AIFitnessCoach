@@ -13,7 +13,7 @@ belonging to the currently active gym profile.
 """
 from core.db import get_supabase_db
 from datetime import datetime, date, timedelta, timezone
-from typing import Optional, List, Set
+from typing import Any, Optional, List, Set
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
 import json

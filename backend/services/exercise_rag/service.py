@@ -1014,7 +1014,22 @@ class ExerciseRAGService:
                 raw_ex_equipment = (meta.get("equipment", "") or "").lower().strip()
                 exercise_name_for_inference = meta.get("name", "")
                 if not raw_ex_equipment or raw_ex_equipment in ["bodyweight", "body weight", "none"]:
-                    ex_equipment = infer_equipment_from_name(exercise_name_for_inference).lower()
+                    # Re-infer apparatus from the name when the library row is
+                    # under-tagged (lots of pull-up rows are mislabeled
+                    # "bodyweight"). HOWEVER for bodyweight-only users, trust
+                    # the original "bodyweight" tag — re-inferring to
+                    # "Pull-Up Bar" / "Dip Station" / etc. throws away the 600+
+                    # truly-bodyweight library rows and returns 0 candidates,
+                    # surfacing as "No compatible exercises found for
+                    # focus_area=full_body, equipment=['body weight','bodyweight','none']".
+                    user_is_bw_only = bool(equipment) and all(
+                        (eq or "").strip().lower() in {"bodyweight", "body weight", "none", ""}
+                        for eq in equipment
+                    )
+                    if user_is_bw_only and raw_ex_equipment in ("bodyweight", "body weight", "none"):
+                        ex_equipment = "bodyweight"
+                    else:
+                        ex_equipment = infer_equipment_from_name(exercise_name_for_inference).lower()
                 else:
                     ex_equipment = raw_ex_equipment
 

@@ -14,7 +14,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from core.auth import get_current_user
 from core.exceptions import safe_internal_error
 from core.timezone_utils import user_today_date
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 
 from core.logger import get_logger
 from models.schemas import UpdateProgramRequest, UpdateProgramResponse
@@ -29,6 +29,19 @@ class QuickRegenerateRequest(BaseModel):
     """Request model for quick workout regeneration."""
     user_id: str
     reason: Optional[str] = None  # Optional reason for analytics
+
+    @field_validator("user_id")
+    @classmethod
+    def _validate_user_id_uuid(cls, v: str) -> str:
+        # Reject non-UUID user_ids at the boundary so they don't reach the
+        # Postgres "invalid input syntax for type uuid" 22P02 deeper in the
+        # delete-by-user_id path (which then surfaces as opaque 500s).
+        import uuid as _uuid
+        try:
+            _uuid.UUID(str(v))
+        except (ValueError, AttributeError, TypeError):
+            raise ValueError("user_id must be a valid UUID")
+        return v
 
 
 class QuickRegenerateResponse(BaseModel):

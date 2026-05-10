@@ -137,6 +137,13 @@ _FITNESS_LEVEL_TO_DIFFICULTY = {
     "beginner": "easy",
     "intermediate": "medium",
     "advanced": "hard",
+    # AI-generated synonyms that drift in from Gemini outputs. Coerce instead
+    # of rejecting so /workouts/ list endpoints don't 500 on legacy rows.
+    "moderate": "medium",
+    "normal": "medium",
+    "intense": "hard",
+    "extreme": "hell",
+    "insane": "hell",
 }
 
 
