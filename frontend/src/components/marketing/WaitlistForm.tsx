@@ -152,7 +152,21 @@ export default function WaitlistForm({
         }
         const body = await res.json().catch(() => ({}));
         setStatus('error');
-        setErrorMsg(body?.detail || "Couldn't save that — try again in a sec?");
+        // FastAPI/Pydantic returns `detail` as either a string OR an array of
+        // `{type, loc, msg, ...}` validation objects. Rendering the array
+        // directly into JSX crashes React (#31), so flatten it to a string.
+        let msg: string = "Couldn't save that — try again in a sec?";
+        if (typeof body?.detail === 'string' && body.detail) {
+          msg = body.detail;
+        } else if (Array.isArray(body?.detail)) {
+          // 422 on email validation usually means the address looks off.
+          if (body.detail.some((e: { loc?: unknown[] }) => Array.isArray(e?.loc) && e.loc.includes('email'))) {
+            msg = "That email looks off — double-check the format?";
+          } else {
+            msg = "Couldn't save that — try again in a sec?";
+          }
+        }
+        setErrorMsg(msg);
         return;
       }
 
