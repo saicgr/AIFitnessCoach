@@ -13,7 +13,7 @@ FULL DESCRIPTION (paste into Play Console > Full description, 4000 char max)
 ==============================================
 Your AI fitness coach for workouts AND nutrition.
 
-Zealova is the AI personal trainer that connects your training and diet into one smart plan. It knows what you ate, how you trained, and adjusts both to keep you on track. No more juggling a workout app and a separate calorie tracker. Start with a free trial — plans from $4.99/mo.
+Zealova is the AI personal trainer that connects your training and diet into one smart plan. It knows what you ate, how you trained, and adjusts both to keep you on track. No more juggling a workout app and a separate calorie tracker. Start with a 7-day free trial — $7.99/mo or $59.99/yr (save 38%).
 
 HOW IT WORKS:
 Tell Zealova your goal — lose weight, build muscle, get healthier. Your AI coach builds a personalized workout plan and sets daily nutrition targets. As you train and eat, it learns your preferences and adapts. That's it.

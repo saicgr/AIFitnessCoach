@@ -32,7 +32,7 @@ AI coach that builds your workouts & tracks meals — type, snap, or scan.
 ```
 Your workouts and diet finally talk to each other.
 
-Zealova connects your training and nutrition into one AI-powered plan. It knows what you ate, how you trained, and adjusts both to keep you on track. No more juggling a workout app and a separate food tracker. Start with a 7-day free trial — $49.99/year (about $4.17/month).
+Zealova connects your training and nutrition into one AI-powered plan. It knows what you ate, how you trained, and adjusts both to keep you on track. No more juggling a workout app and a separate food tracker. Start with a 7-day free trial — $7.99/mo or $59.99/yr (save 38%).
 
 HOW IT WORKS
 Tell Zealova your goal — lose weight, build muscle, train for an event, or just feel better. It builds your workout program, sets daily nutrition targets, and updates both as you log sets and meals. As you train and eat, it learns your preferences and adapts. That's it.
