@@ -1,48 +1,49 @@
-Your workouts and diet finally talk to each other.
+The only AI coach for workouts AND nutrition -- in one app.
 
-Zealova connects your training and nutrition into a smart plan. It knows what you ate, how you trained, and adjusts both to keep you on track. No more juggling a workout app and a separate food tracker. Start with a 7-day free trial -- $7.99/mo or $59.99/yr (save 38%).
+Stop juggling a calorie tracker and a separate workout app. Zealova connects your training and your meals into one smart plan that knows what you ate, how you trained, and adjusts both. Snap a meal in seconds. Scan a restaurant menu before you order. Import any recipe with a URL or photo. Train with workouts built around your gym. Ask your AI coach anything, anytime.
 
-HOW IT WORKS
-Tell Zealova your goal -- lose weight, build muscle, get healthier. It builds your workout program and sets daily nutrition targets. As you train and eat, it learns your preferences and adapts. That's it.
-
-WORKOUTS BUILT FOR YOU
-Every workout is generated around your equipment, fitness level, and schedule. Not a template -- a plan that's actually yours.
-- Adapts around injuries automatically
-- Suggests when to increase weight based on your history
-- Warm-ups and cool-downs included
-- Quick sessions (5-15 min) for busy days
-- Multiple gym profiles for home, work, or travel
-- AI explains why each exercise was chosen for you
+7-day free trial -- $7.99/mo or $59.99/yr (save 38%).
 
 LOG MEALS YOUR WAY
 However is fastest for you:
+- Snap it -- photo a meal and AI identifies food, calories, and macros in seconds
+- Scan a restaurant menu -- AI estimates calories and macros for every dish before you order
+- Import any recipe -- paste a URL, snap a cookbook page, or paste recipe text
+- Scan barcodes for instant packaged-food macros
 - Type it -- "2 eggs, toast, coffee" and it's logged in seconds
-- Snap it -- take a photo and AI identifies your food
-- Scan a barcode -- instant macros for packaged foods
-- Scan a restaurant menu -- snap any menu and AI estimates calories, protein, and macros for every dish before you order
 - Voice it -- describe your meal hands-free and it logs automatically
 Calories, protein, carbs, fats, and 20+ micronutrients tracked automatically. Get a health score for every meal and personalized tips from your coach.
 
-YOUR COACH, ANYTIME
-Ask anything. "Can I replace squats -- my knee hurts?" "How much protein have I had today?" "What should I eat before my workout?" Your AI coach knows your full workout history, your nutrition, and your goals. It gives answers that actually apply to you -- not generic advice from a blog.
+WORKOUTS BUILT AROUND YOUR GYM
+Every workout is generated for your equipment, fitness level, and schedule. Not a template -- a plan that's actually yours.
+- Adapts around injuries automatically
+- Suggests when to add weight based on your history
+- Warm-ups and cool-downs included
+- 5-15 minute quick sessions for busy days
+- Multiple gym profiles for home, work, or travel
+- AI explains why each exercise was chosen for you
+
+YOUR AI COACH, 24/7
+Ask anything. "Can I replace squats -- my knee hurts?" "How much protein have I had today?" "What should I eat before my workout?" Your coach knows your full workout history, your nutrition, and your goals. It gives answers that apply to YOU -- not generic advice from a blog.
 
 TRACK YOUR PROGRESS
 - Workout streaks and personal records
 - Weight and body composition trends
-- Progress photos from multiple angles
-- Before and after comparisons
+- Progress photos with before-and-after comparisons
 - Weekly performance summaries
 - Health Connect sync (steps, heart rate, sleep, calories burned)
 
-EXERCISE PREFERENCES
-Zealova learns what you love. Mark your favorite exercises, avoid the ones you hate, and queue up moves you want to try. Your workouts get smarter over time.
+GETS SMARTER OVER TIME
+Mark exercises you love, avoid the ones you hate, and queue up moves you want to try. Your workouts and meal suggestions get smarter every week.
 
 DETAILS
-- Works with any equipment setup, including bodyweight only
+- Works with any equipment, including bodyweight-only
 - Nutrition targets that adjust to your goals
-- XP system and monthly achievements to keep you motivated
-- Water intake tracking
-- Dark mode
 - Personalized warm-up and cool-down routines
+- Water intake tracking
+- XP system and monthly achievements
+- Dark mode
 
-One app for training and nutrition. No guesswork. Start your free trial today.
+One app. Workouts and nutrition that talk to each other. No guesswork.
+
+Start your 7-day free trial today.
