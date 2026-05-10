@@ -8,8 +8,6 @@ unique-email constraint at the DB layer prevents duplicate inserts; we
 treat duplicates as success so the user doesn't feel rejected for a
 double-tap.
 """
-from __future__ import annotations
-
 import re
 from typing import Optional
 
