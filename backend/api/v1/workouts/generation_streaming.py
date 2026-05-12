@@ -772,6 +772,15 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
                         _primary_focus = (
                             body.focus_areas[0] if body.focus_areas else None
                         )
+                        # Seed differentiator: when a plan generates many
+                        # workouts for the same user on the same calendar day
+                        # (back-to-back streaming calls during plan creation),
+                        # workout_id=None + identical params collapse to the
+                        # same seed and yield the same name (e.g. Tue & Thu
+                        # both "Gentle Upper Flow" for the same user). Use
+                        # scheduled_date as the per-call salt so each day gets
+                        # a distinct RNG stream.
+                        _name_salt = scheduled_date or getattr(body, "scheduled_date", None)
                         workout_name = generate_workout_name(
                             goal=_primary_goal,
                             focus=_primary_focus,
@@ -780,7 +789,7 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
                             difficulty=difficulty,
                             workout_type=workout_type,
                             user_id=str(body.user_id) if getattr(body, "user_id", None) else None,
-                            workout_id=None,  # streaming creates new workouts
+                            workout_id=str(_name_salt) if _name_salt else None,
                         )
                     except Exception as _name_err:
                         logger.warning(f"⚠️ [Naming] algorithmic namer failed: {_name_err}")
