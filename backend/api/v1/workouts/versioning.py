@@ -308,6 +308,7 @@ async def _apply_safety_mode_override(
     current_name: Optional[str],
     reason: str,
     violations_count: int = 0,
+    workout_id_for_naming: Optional[str] = None,
 ) -> dict:
     """Phase A4 — single source of truth for the four call sites that
     swap a generated workout for a safety-mode mobility plan. Returns a
@@ -327,6 +328,7 @@ async def _apply_safety_mode_override(
         duration_minutes=target_duration,
         focus_areas=focus_areas if focus_areas else None,
         ai_prompt=ai_prompt,
+        workout_id_for_naming=workout_id_for_naming,
     )
     audit_entry: dict = {
         "safety_mode": True,
@@ -656,6 +658,7 @@ async def regenerate_workout(request: RegenerateWorkoutRequest,
                     current_name=workout_name,
                     reason="validator_repair_failed",
                     violations_count=len(val_result.violations),
+                    workout_id_for_naming=str(request.workout_id) if request.workout_id else None,
                 )
                 exercises = _sm["exercises"]
                 workout_name = _sm["name"]
@@ -694,6 +697,7 @@ async def regenerate_workout(request: RegenerateWorkoutRequest,
                     ai_prompt=getattr(request, "ai_prompt", None),
                     current_name=workout_name,
                     reason="validator_exception_fallback",
+                    workout_id_for_naming=str(request.workout_id) if request.workout_id else None,
                 )
                 exercises = _sm["exercises"]
                 workout_name = _sm["name"]
@@ -1353,6 +1357,7 @@ async def regenerate_workout_streaming(request: Request, body: RegenerateWorkout
                         current_name=workout_name,
                         reason="validator_repair_failed",
                         violations_count=len(stream_val.violations),
+                        workout_id_for_naming=str(body.workout_id) if body.workout_id else None,
                     )
                     exercises = _sm["exercises"]
                     workout_name = _sm["name"]
@@ -1402,6 +1407,7 @@ async def regenerate_workout_streaming(request: Request, body: RegenerateWorkout
                         ai_prompt=body.ai_prompt,
                         current_name=workout_name,
                         reason="validator_exception_fallback",
+                        workout_id_for_naming=str(body.workout_id) if body.workout_id else None,
                     )
                     exercises = _sm["exercises"]
                     workout_name = _sm["name"]

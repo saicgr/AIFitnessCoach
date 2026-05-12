@@ -200,6 +200,7 @@ async def build_plan(
     focus_areas: Optional[List[str]] = None,
     supabase_client=None,  # Unused; kept for signature parity with the plan.
     ai_prompt: Optional[str] = None,
+    workout_id_for_naming: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     Build the gentle PT-friendly session.
@@ -375,6 +376,12 @@ async def build_plan(
     # mobility noun (Flow/Reset/Unwind/...) and a mobility focus tail.
     try:
         from services.workout_naming import generate_workout_name
+        # Pass workout_id_for_naming as the seed salt — when a plan-level
+        # generation triggers safety_mode for multiple days in a single
+        # request (same user, same calendar day, same params), workout_id=None
+        # collapsed Tue+Thu onto identical names ("Gentle Upper Flow" twice).
+        # Callers supply the workout's persistent id (or scheduled_date
+        # fallback) so each day gets a distinct RNG stream.
         safety_name = generate_workout_name(
             goal="mobility",
             focus=fa[0] if fa else None,
@@ -383,7 +390,7 @@ async def build_plan(
             difficulty="easy",
             workout_type="mobility",
             user_id=ctx.user_id,
-            workout_id=None,  # safety-mode build_plan has no workout_id
+            workout_id=workout_id_for_naming,
         )
     except Exception as _e:  # pragma: no cover — naming is best-effort
         logger.warning("⚠️  [SafetyMode] namer failed, falling back: %s", _e)
