@@ -53,6 +53,8 @@ class FoodLog {
   final double? fiberG;
   @JsonKey(name: 'health_score')
   final int? healthScore;
+  @JsonKey(name: 'health_score_reasons')
+  final List<String>? healthScoreReasons;
   @JsonKey(name: 'ai_feedback')
   final String? aiFeedback;
   final String? notes;
@@ -121,6 +123,7 @@ class FoodLog {
     this.fatG = 0,
     this.fiberG,
     this.healthScore,
+    this.healthScoreReasons,
     this.aiFeedback,
     this.notes,
     this.moodBefore,
@@ -811,6 +814,10 @@ class LogFoodResponse {
   final int? overallMealScore;  // 1-10 weighted average
   @JsonKey(name: 'health_score')
   final int? healthScore;  // 1-10 general health score
+  // `health_score_reasons` — tags emitted by Gemini explaining WHY the meal
+  // earned its health score. Surfaced as chips in the ScoreExplainSheet.
+  @JsonKey(name: 'health_score_reasons')
+  final List<String>? healthScoreReasons;
   @JsonKey(name: 'goal_alignment_percentage')
   final int? goalAlignmentPercentage;  // 0-100%
   @JsonKey(name: 'ai_suggestion')
@@ -887,6 +894,7 @@ class LogFoodResponse {
     this.fiberG,
     this.overallMealScore,
     this.healthScore,
+    this.healthScoreReasons,
     this.goalAlignmentPercentage,
     this.aiSuggestion,
     this.encouragements,

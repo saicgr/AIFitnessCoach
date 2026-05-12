@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
+import 'score_explain_sheet.dart';
 
 /// Animated calorie chip with count-up and shimmer effect
 class AnimatedCalorieChip extends StatefulWidget {
@@ -209,57 +210,71 @@ class CompactGoalScore extends StatelessWidget {
 }
 
 /// Labeled pill for secondary meal scores (health, goal alignment).
+///
+/// When [showHelpIcon] is true a small "?" glyph is appended after the value
+/// to signal the pill is tappable (opens the ScoreExplainSheet).
 class _LabeledScorePill extends StatelessWidget {
   final IconData icon;
   final String label;
   final String value;
   final Color color;
+  final bool showHelpIcon;
+  /// When true the pill wraps itself in [Expanded]. Set to false when the
+  /// caller already provides flex (e.g. wraps the pill in a GestureDetector
+  /// that's itself inside an Expanded) to avoid nested-Expanded asserts.
+  final bool selfExpand;
 
   const _LabeledScorePill({
     required this.icon,
     required this.label,
     required this.value,
     required this.color,
+    this.showHelpIcon = false,
+    this.selfExpand = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.10),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: color.withValues(alpha: 0.30)),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 14, color: color),
-            const SizedBox(width: 6),
-            Flexible(
-              child: Text(
-                '$label ',
-                style: TextStyle(
-                  fontSize: 11,
-                  color: color.withValues(alpha: 0.85),
-                  fontWeight: FontWeight.w500,
-                ),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            Text(
-              value,
+    final inner = Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: color.withValues(alpha: 0.30)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, size: 14, color: color),
+          const SizedBox(width: 6),
+          Flexible(
+            child: Text(
+              '$label ',
               style: TextStyle(
-                fontSize: 13,
-                color: color,
-                fontWeight: FontWeight.w700,
+                fontSize: 11,
+                color: color.withValues(alpha: 0.85),
+                fontWeight: FontWeight.w500,
               ),
+              overflow: TextOverflow.ellipsis,
             ),
+          ),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 13,
+              color: color,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          if (showHelpIcon) ...[
+            const SizedBox(width: 4),
+            Icon(Icons.help_outline, size: 12, color: color.withValues(alpha: 0.7)),
           ],
-        ),
+        ],
       ),
     );
+    if (selfExpand) return Expanded(child: inner);
+    return inner;
   }
 }
 
@@ -268,11 +283,16 @@ class _LabeledScorePill extends StatelessWidget {
 class MealScoreBreakdownRow extends StatelessWidget {
   final int? healthScore;
   final int? goalAlignmentPercentage;
+  /// `health_score_reasons` chips shown by the ScoreExplainSheet when the
+  /// Health pill is tapped. Pass either Gemini-emitted tags or locally
+  /// derived ones via `healthReasonsFromSignals`.
+  final List<String>? healthScoreReasons;
 
   const MealScoreBreakdownRow({
     super.key,
     this.healthScore,
     this.goalAlignmentPercentage,
+    this.healthScoreReasons,
   });
 
   bool get _hasAnything =>
@@ -298,11 +318,25 @@ class MealScoreBreakdownRow extends StatelessWidget {
     return Row(
       children: [
         if (healthScore != null)
-          _LabeledScorePill(
-            icon: Icons.favorite,
-            label: 'Health',
-            value: '${healthScore!}/10',
-            color: _healthColor(healthScore!),
+          // Tap-to-explain — opens ScoreExplainSheet with reason chips.
+          // Wrap in Expanded so the GestureDetector inherits the pill's
+          // flex (the pill itself uses Expanded internally).
+          Expanded(
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () => ScoreExplainSheet.showHealth(
+                context,
+                score: healthScore,
+                reasons: healthScoreReasons ?? const ['ai_unavailable'],
+              ),
+              child: _LabeledScorePill(
+                icon: Icons.favorite,
+                label: 'Health',
+                value: '${healthScore!}/10',
+                color: _healthColor(healthScore!),
+                showHelpIcon: true,
+              ),
+            ),
           ),
         if (healthScore != null && goalAlignmentPercentage != null)
           const SizedBox(width: 8),
@@ -312,6 +346,7 @@ class MealScoreBreakdownRow extends StatelessWidget {
             label: 'Goal fit',
             value: '${goalAlignmentPercentage!}%',
             color: _alignmentColor(goalAlignmentPercentage!),
+            selfExpand: true,
           ),
       ],
     );

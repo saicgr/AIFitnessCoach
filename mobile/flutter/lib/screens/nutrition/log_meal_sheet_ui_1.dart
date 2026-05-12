@@ -398,6 +398,9 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
       fiberG: totalFiber,
       overallMealScore: base.overallMealScore,
       healthScore: base.healthScore,
+      // Preserve `health_score_reasons` across portion edits so the
+      // ScoreExplainSheet keeps its chips when the user nudges a portion.
+      healthScoreReasons: base.healthScoreReasons,
       goalAlignmentPercentage: base.goalAlignmentPercentage,
       aiSuggestion: base.aiSuggestion,
       encouragements: base.encouragements,

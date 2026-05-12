@@ -20,6 +20,7 @@ enum ScoreKind {
   fodmap, // low / medium / high
   ultraProcessed, // bool NOVA Group 4 flag
   addedSugar, // grams per serving, vs WHO 25g/day adult limit
+  health, // overall meal health score 1-10 with reason chips
 }
 
 class ScoreExplainSheet extends StatelessWidget {
@@ -69,6 +70,27 @@ class ScoreExplainSheet extends StatelessWidget {
           kind: kind, value: value, reason: reason, triggers: triggers,
         ),
       ),
+    );
+  }
+
+  /// Convenience launcher for the meal-level Health Score X/10 explainer.
+  /// Wraps [.show] with the right `kind` so callers at every Health pill
+  /// site (Today card, logged-meals list, barcode confirm, food browser
+  /// review card, etc.) can route taps with a single line.
+  ///
+  /// [reasons] are the `health_score_reasons` tags emitted by Gemini meal
+  /// analysis, OR locally derived from per-meal signals via
+  /// `healthReasonsFromSignals` for older logs.
+  static Future<void> showHealth(
+    BuildContext context, {
+    int? score,
+    required List<String> reasons,
+  }) {
+    return show(
+      context,
+      kind: ScoreKind.health,
+      value: score,
+      triggers: reasons,
     );
   }
 
@@ -129,7 +151,7 @@ class ScoreExplainSheet extends StatelessWidget {
             // structured triggers Gemini emitted. These are the ingredients /
             // properties of THIS dish that pushed the score — which is the
             // question users are actually asking when they tap the pill.
-            if (kind == ScoreKind.inflammation &&
+            if ((kind == ScoreKind.inflammation || kind == ScoreKind.health) &&
                 triggers != null &&
                 triggers!.isNotEmpty) ...[
               const SizedBox(height: 14),
@@ -460,6 +482,65 @@ class ScoreExplainSheet extends StatelessWidget {
             ),
           ],
           footer: footerText,
+        );
+
+      case ScoreKind.health:
+        // Overall meal health score 1-10. Triggers carry the
+        // `health_score_reasons` tags (high_protein, ultra_processed, …)
+        // which the shared _TriggersBox renders coloured by polarity.
+        final v = (value is int) ? value as int : int.tryParse('$value') ?? -1;
+        final idx = v < 0
+            ? -1
+            : v <= 3
+                ? 2
+                : v <= 6
+                    ? 1
+                    : 0;
+        final hasReasons = triggers != null && triggers!.isNotEmpty;
+        final onlyUnavailable =
+            hasReasons && triggers!.length == 1 && triggers!.first == 'ai_unavailable';
+        return _SheetContent(
+          icon: Icons.favorite_rounded,
+          title: v < 0 ? 'Health score' : 'Health score: $v / 10',
+          subtitle: onlyUnavailable
+              ? 'Score detail is unavailable for this meal. Newly logged meals will include a full reason breakdown.'
+              : "Each meal gets a 1–10 health score based on protein, fiber, processing level, added sugar, "
+                  "sodium, and inflammation. Tags below show WHY this meal landed where it did.",
+          accent: v >= 8
+              ? AppColors.success
+              : v >= 5
+                  ? AppColors.teal
+                  : v >= 3
+                      ? AppColors.yellow
+                      : AppColors.error,
+          currentLabel: v < 0
+              ? null
+              : v >= 8
+                  ? 'EXCELLENT'
+                  : v >= 5
+                      ? 'GOOD'
+                      : v >= 3
+                          ? 'AVERAGE'
+                          : 'POOR',
+          activeIndex: idx,
+          levels: const [
+            _Level(
+              color: AppColors.success,
+              label: '7 – 10  Good / Excellent',
+              body: 'High protein or fiber, whole foods, low added sugar, anti-inflammatory ingredients.',
+            ),
+            _Level(
+              color: AppColors.orange,
+              label: '4 – 6  Average',
+              body: 'Reasonable choice — could be improved on one or two axes (more fiber, less processing).',
+            ),
+            _Level(
+              color: AppColors.error,
+              label: '1 – 3  Poor',
+              body: 'Ultra-processed, deep-fried, low fiber, or very high added sugar / sodium.',
+            ),
+          ],
+          footer: 'Daily average above 6 means you\'re mostly eating to support your goals.',
         );
     }
   }

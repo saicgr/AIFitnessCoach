@@ -40,6 +40,8 @@ import 'widgets/inflammation_analysis_widget.dart';
 import 'widgets/inflammation_tags_section.dart';
 import 'widgets/log_meal_helpers.dart';
 import 'widgets/meal_score_widgets.dart';
+import 'widgets/health_reason_builder.dart';
+import 'widgets/score_explain_sheet.dart';
 import 'widgets/ai_suggestion_section.dart';
 import 'widgets/food_item_ranking_card.dart';
 import 'widgets/micronutrients_section.dart';
@@ -770,11 +772,30 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
                   Row(
                     children: [
                       if (healthScore != null) ...[
-                        _ScorePill(
-                          label: 'Health',
-                          score: healthScore,
-                          isDark: isDark,
-                          positiveIsHigh: true,
+                        GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onTap: () => ScoreExplainSheet.showHealth(
+                            context,
+                            score: healthScore,
+                            // OFF/Nutri-Score derived — no AI reasons. Use
+                            // locally derived tags so the chips still tell a
+                            // useful story about ultra-processing / sugar.
+                            reasons: healthReasonsFromSignals(
+                              calories: product.caloriesPer100g.round(),
+                              proteinG: product.proteinPer100g,
+                              fiberG: product.fiberPer100g,
+                              sugarG: product.sugarPer100g,
+                              isUltraProcessed: isUltraProcessed,
+                              inflammationScore: inflammationScore,
+                            ),
+                          ),
+                          child: _ScorePill(
+                            label: 'Health',
+                            score: healthScore,
+                            isDark: isDark,
+                            positiveIsHigh: true,
+                            showHelpIcon: true,
+                          ),
                         ),
                         const SizedBox(width: 8),
                       ],
@@ -1231,6 +1252,7 @@ class _ScorePill extends StatelessWidget {
   final bool isDark;
   final bool positiveIsHigh;
   final String? badge;
+  final bool showHelpIcon;
 
   const _ScorePill({
     required this.label,
@@ -1238,6 +1260,7 @@ class _ScorePill extends StatelessWidget {
     required this.isDark,
     required this.positiveIsHigh,
     this.badge,
+    this.showHelpIcon = false,
   });
 
   Color _color() {
@@ -1283,6 +1306,10 @@ class _ScorePill extends StatelessWidget {
               color: textPrimary,
             ),
           ),
+          if (showHelpIcon) ...[
+            const SizedBox(width: 4),
+            Icon(Icons.help_outline, size: 12, color: textMuted),
+          ],
           if (badge != null) ...[
             const SizedBox(width: 6),
             Container(

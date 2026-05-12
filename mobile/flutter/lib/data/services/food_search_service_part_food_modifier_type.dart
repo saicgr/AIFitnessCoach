@@ -198,6 +198,7 @@ class FoodReview {
   final String? aiSuggestion;
   final String? recommendedSwap;
   final int? healthScore;
+  final List<String>? healthScoreReasons;
 
   const FoodReview({
     this.encouragements = const [],
@@ -205,6 +206,7 @@ class FoodReview {
     this.aiSuggestion,
     this.recommendedSwap,
     this.healthScore,
+    this.healthScoreReasons,
   });
 
   factory FoodReview.fromJson(Map<String, dynamic> json) {
@@ -218,6 +220,9 @@ class FoodReview {
       aiSuggestion: json['ai_suggestion'] as String?,
       recommendedSwap: json['recommended_swap'] as String?,
       healthScore: (json['health_score'] as num?)?.toInt(),
+      healthScoreReasons: (json['health_score_reasons'] as List<dynamic>?)
+          ?.map((e) => e.toString())
+          .toList(),
     );
   }
 }
@@ -240,6 +245,7 @@ class FoodAnalysisResult {
   final String? aiSuggestion;
   final String? recommendedSwap;
   final int? healthScore;
+  final List<String>? healthScoreReasons;
 
   const FoodAnalysisResult({
     required this.foodItems,
@@ -256,6 +262,7 @@ class FoodAnalysisResult {
     this.aiSuggestion,
     this.recommendedSwap,
     this.healthScore,
+    this.healthScoreReasons,
   });
 
   factory FoodAnalysisResult.fromJson(Map<String, dynamic> json) {
@@ -281,6 +288,9 @@ class FoodAnalysisResult {
       aiSuggestion: json['ai_suggestion'] as String?,
       recommendedSwap: json['recommended_swap'] as String?,
       healthScore: (json['health_score'] as num?)?.toInt(),
+      healthScoreReasons: (json['health_score_reasons'] as List<dynamic>?)
+          ?.map((e) => e.toString())
+          .toList(),
     );
   }
 }

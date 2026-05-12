@@ -15,6 +15,7 @@ import '../food_history_screen.dart';
 import 'companion_picker_sheet.dart';
 import 'food_report_dialog.dart';
 import 'food_source_indicator.dart';
+import 'score_explain_sheet.dart';
 import '../../../data/models/companion_suggestion.dart';
 
 
@@ -960,6 +961,9 @@ class _FoodBrowserPanelState extends ConsumerState<FoodBrowserPanel> {
                 aiSuggestion: result.aiSuggestion,
                 recommendedSwap: result.recommendedSwap,
                 healthScore: result.healthScore,
+                // Forward Gemini-emitted reasons so the ScoreExplainSheet
+                // has the right chips when the user taps the Health pill.
+                healthScoreReasons: result.healthScoreReasons,
               ),
               isLoading: false,
               isDark: isDark,

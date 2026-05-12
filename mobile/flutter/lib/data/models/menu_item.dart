@@ -319,6 +319,22 @@ class InflammationTriggers {
     'whole_foods': 'Whole foods',
     'mixed_ingredients': 'Mixed ingredients',
     'processed_ingredients': 'Processed ingredients',
+    // Health-score reason tags emitted by Gemini meal-analysis
+    // (`health_score_reasons` field). Surfaced by ScoreExplainSheet when
+    // the user taps the "?" next to a meal's X/10 health score.
+    'high_protein': 'High protein',
+    'high_fiber': 'High fiber',
+    'anti_inflammatory': 'Anti-inflammatory',
+    'low_added_sugar': 'Low added sugar',
+    'balanced_macros': 'Balanced macros',
+    'ultra_processed': 'Ultra-processed',
+    'high_sodium': 'High sodium',
+    'high_glycemic': 'High glycemic',
+    'low_fiber': 'Low fiber',
+    'trans_fat': 'Trans fat',
+    'high_inflammation': 'High inflammation',
+    'calorie_dense': 'Calorie-dense',
+    'ai_unavailable': 'Detail unavailable',
   };
 
   static const Set<String> _positiveTags = {
@@ -331,6 +347,12 @@ class InflammationTriggers {
     'berries',
     'fatty_fish',
     'whole_foods',
+    // Positive health-score reason tags.
+    'high_protein',
+    'high_fiber',
+    'anti_inflammatory',
+    'low_added_sugar',
+    'balanced_macros',
   };
 
   /// Map a raw tag to its display label. Unknown tags are de-snake-cased

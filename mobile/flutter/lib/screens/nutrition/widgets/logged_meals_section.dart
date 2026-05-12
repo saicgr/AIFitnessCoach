@@ -14,6 +14,7 @@ import 'food_report_dialog.dart';
 import 'nutrition_goals_card.dart' show showNutritionCalculationSheet;
 import 'food_source_indicator.dart';
 import 'score_explain_sheet.dart';
+import 'health_reason_builder.dart';
 
 class LoggedMealsSection extends StatelessWidget {
   final List<FoodLog> meals;
@@ -717,10 +718,28 @@ class LoggedMealsSection extends StatelessWidget {
                   // back to the food_log row AND insert audit rows.
                   ..._buildEditableFoodItems(ctx, meal, textPrimary, textMuted, teal, cardBorder),
 
-                  // Health Score & AI Feedback
+                  // Health Score & AI Feedback. Tap-to-explain: opens the
+                  // shared ScoreExplainSheet (kind: health) with the meal's
+                  // `health_score_reasons` chips (AI-emitted or locally
+                  // derived from per-meal signals).
                   if (meal.healthScore != null) ...[
                     const SizedBox(height: 4),
-                    Container(
+                    InkWell(
+                      borderRadius: BorderRadius.circular(12),
+                      onTap: () => ScoreExplainSheet.showHealth(
+                        context,
+                        score: meal.healthScore,
+                        reasons: healthReasonsFromSignals(
+                          aiReasons: meal.healthScoreReasons,
+                          calories: meal.totalCalories,
+                          proteinG: meal.proteinG,
+                          fiberG: meal.fiberG,
+                          sugarG: meal.sugarG,
+                          isUltraProcessed: meal.isUltraProcessed,
+                          inflammationScore: meal.inflammationScore,
+                        ),
+                      ),
+                      child: Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
                         color: _scoreColor(meal.healthScore!).withValues(alpha: 0.1),
@@ -751,13 +770,23 @@ class LoggedMealsSection extends StatelessWidget {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
-                                  'Health Score',
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600,
-                                    color: textPrimary,
-                                  ),
+                                Row(
+                                  children: [
+                                    Text(
+                                      'Health Score',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600,
+                                        color: textPrimary,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Icon(
+                                      Icons.help_outline,
+                                      size: 12,
+                                      color: textMuted,
+                                    ),
+                                  ],
                                 ),
                                 Text(
                                   _scoreLabel(meal.healthScore!),
@@ -770,6 +799,7 @@ class LoggedMealsSection extends StatelessWidget {
                             ),
                           ),
                         ],
+                      ),
                       ),
                     ),
                   ],

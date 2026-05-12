@@ -58,6 +58,9 @@ FoodLog _$FoodLogFromJson(Map<String, dynamic> json) => FoodLog(
   fatG: (json['fat_g'] as num?)?.toDouble() ?? 0,
   fiberG: (json['fiber_g'] as num?)?.toDouble(),
   healthScore: (json['health_score'] as num?)?.toInt(),
+  healthScoreReasons: (json['health_score_reasons'] as List<dynamic>?)
+      ?.map((e) => e as String)
+      .toList(),
   aiFeedback: json['ai_feedback'] as String?,
   notes: json['notes'] as String?,
   moodBefore: json['mood_before'] as String?,
@@ -96,6 +99,7 @@ Map<String, dynamic> _$FoodLogToJson(FoodLog instance) => <String, dynamic>{
   'fat_g': instance.fatG,
   'fiber_g': instance.fiberG,
   'health_score': instance.healthScore,
+  'health_score_reasons': instance.healthScoreReasons,
   'ai_feedback': instance.aiFeedback,
   'notes': instance.notes,
   'mood_before': instance.moodBefore,
@@ -356,6 +360,9 @@ LogFoodResponse _$LogFoodResponseFromJson(Map<String, dynamic> json) =>
       fiberG: (json['fiber_g'] as num?)?.toDouble(),
       overallMealScore: (json['overall_meal_score'] as num?)?.toInt(),
       healthScore: (json['health_score'] as num?)?.toInt(),
+      healthScoreReasons: (json['health_score_reasons'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList(),
       goalAlignmentPercentage: (json['goal_alignment_percentage'] as num?)
           ?.toInt(),
       aiSuggestion: json['ai_suggestion'] as String?,
@@ -401,6 +408,7 @@ Map<String, dynamic> _$LogFoodResponseToJson(LogFoodResponse instance) =>
       'fiber_g': instance.fiberG,
       'overall_meal_score': instance.overallMealScore,
       'health_score': instance.healthScore,
+      'health_score_reasons': instance.healthScoreReasons,
       'goal_alignment_percentage': instance.goalAlignmentPercentage,
       'ai_suggestion': instance.aiSuggestion,
       'encouragements': instance.encouragements,

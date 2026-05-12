@@ -250,18 +250,37 @@ class _FoodReviewCardState extends State<_FoodReviewCard> {
                 ),
                 if (r.healthScore != null) ...[
                   const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: _scoreColor(r.healthScore!).withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(8),
+                  GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () => ScoreExplainSheet.showHealth(
+                      context,
+                      score: r.healthScore,
+                      reasons: r.healthScoreReasons ?? const ['ai_unavailable'],
                     ),
-                    child: Text(
-                      '${r.healthScore}/10',
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        color: _scoreColor(r.healthScore!),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: _scoreColor(r.healthScore!).withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            '${r.healthScore}/10',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: _scoreColor(r.healthScore!),
+                            ),
+                          ),
+                          const SizedBox(width: 3),
+                          Icon(
+                            Icons.help_outline,
+                            size: 11,
+                            color: _scoreColor(r.healthScore!).withValues(alpha: 0.7),
+                          ),
+                        ],
                       ),
                     ),
                   ),
@@ -389,18 +408,37 @@ class _FoodReviewCardState extends State<_FoodReviewCard> {
             ),
             if (!loading && r?.healthScore != null) ...[
               const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: _scoreColor(r!.healthScore!).withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(8),
+              GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () => ScoreExplainSheet.showHealth(
+                  context,
+                  score: r.healthScore,
+                  reasons: r.healthScoreReasons ?? const ['ai_unavailable'],
                 ),
-                child: Text(
-                  '${r.healthScore}/10',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    color: _scoreColor(r.healthScore!),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: _scoreColor(r!.healthScore!).withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        '${r.healthScore}/10',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: _scoreColor(r.healthScore!),
+                        ),
+                      ),
+                      const SizedBox(width: 3),
+                      Icon(
+                        Icons.help_outline,
+                        size: 11,
+                        color: _scoreColor(r.healthScore!).withValues(alpha: 0.7),
+                      ),
+                    ],
                   ),
                 ),
               ),

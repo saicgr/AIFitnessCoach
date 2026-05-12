@@ -622,6 +622,17 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
                   MealScoreBreakdownRow(
                     healthScore: response.healthScore,
                     goalAlignmentPercentage: response.goalAlignmentPercentage,
+                    // Pass AI-emitted reasons through, falling back to local
+                    // derivation if older response didn't include them.
+                    healthScoreReasons: healthReasonsFromSignals(
+                      aiReasons: response.healthScoreReasons,
+                      calories: response.totalCalories,
+                      proteinG: response.proteinG,
+                      fiberG: response.fiberG,
+                      sugarG: response.sugarG,
+                      isUltraProcessed: response.isUltraProcessed,
+                      inflammationScore: response.inflammationScore,
+                    ),
                   ),
                 ],
                 const SizedBox(height: 12),
