@@ -5,6 +5,7 @@ import '../services/api_client.dart';
 import '../../utils/tz.dart';
 import '../services/health_service.dart';
 import '../providers/xp_provider.dart';
+import '../providers/timeline_provider.dart';
 
 /// In-memory cache for instant display on provider recreation
 /// Survives provider invalidation and prevents loading flash
@@ -179,6 +180,14 @@ class HydrationNotifier extends StateNotifier<HydrationState> {
 
       // Refresh summary in background (no loading indicator)
       await loadTodaySummary(userId, showLoading: false);
+
+      // Home "Today's Journal" reads timelineProvider, which has its own
+      // cached state. Backend already invalidates its server-side cache on
+      // /hydration/log (see backend/api/v1/hydration.py invalidate_timeline_cache),
+      // but the Riverpod state needs an explicit refresh so the new water
+      // entry actually appears without pull-to-refresh.
+      // ignore: unawaited_futures
+      _ref.read(timelineProvider.notifier).refresh();
       return true;
     } catch (e) {
       state = state.copyWith(error: e.toString());
@@ -234,6 +243,10 @@ class HydrationNotifier extends StateNotifier<HydrationState> {
 
       // Refresh summary in background (no loading indicator)
       await loadTodaySummary(userId, showLoading: false);
+
+      // Refresh Today's Journal so the new entry appears immediately.
+      // ignore: unawaited_futures
+      _ref.read(timelineProvider.notifier).refresh();
       return true;
     } catch (e) {
       state = state.copyWith(error: e.toString());

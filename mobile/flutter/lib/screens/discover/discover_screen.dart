@@ -47,13 +47,34 @@ class DiscoverScreen extends ConsumerStatefulWidget {
 
 class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
     with WidgetsBindingObserver {
+  // Snapshot freshness window — within this we trust the cached snapshot
+  // and skip the invalidate. Tab-switching within a minute should feel
+  // instant. Past this, we silently refetch in the background while the
+  // cached snapshot stays painted. Resume from background uses a longer
+  // window so foreground hops don't keep slamming the leaderboard API.
+  static const Duration _staleAfterMount = Duration(seconds: 60);
+  static const Duration _staleAfterResume = Duration(minutes: 5);
+  static DateTime? _lastFetchedAt;
+
+  bool _isStale(Duration window) {
+    final last = _lastFetchedAt;
+    return last == null || DateTime.now().difference(last) > window;
+  }
+
+  void _maybeRefresh(Duration window) {
+    if (!_isStale(window)) return;
+    ref.invalidate(discoverSnapshotProvider);
+    _lastFetchedAt = DateTime.now();
+  }
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    // Kick a silent background refresh on every mount. The `isReloading`
-    // branch below keeps prior data on screen during the refetch — no
-    // blanking, no pull-to-refresh needed.
+    // Background refresh on mount, but only when the cached snapshot is
+    // stale. Previously this fired on every mount which made tab-switching
+    // feel laggy (and triggered the shared error path that bled "Claim
+    // failed" toasts onto the Discover screen).
     //
     // Also kick the XP provider to load — the hero card reads userXpProvider
     // for the "Lvl N · 956 XP lifetime" badge. If XP state hasn't been
@@ -63,7 +84,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
     // guarantees the hero gets real numbers.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      ref.invalidate(discoverSnapshotProvider);
+      _maybeRefresh(_staleAfterMount);
       final currentXp = ref.read(xpProvider).userXp;
       final looksEmpty = currentXp == null ||
           (currentXp.totalXp == 0 && currentXp.currentLevel <= 1);
@@ -82,12 +103,14 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
   }
 
   @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    super.didChangeAppLifecycleState(state);
+  void didChangeAppLifecycleState(AppLifecycleState appState) {
+    super.didChangeAppLifecycleState(appState);
     // Silent refresh when the app is brought back to the foreground while
-    // Discover is the active screen. Data updates on its own.
-    if (state == AppLifecycleState.resumed && mounted) {
-      ref.invalidate(discoverSnapshotProvider);
+    // Discover is the active screen — but only if the snapshot is older
+    // than the resume window so a quick tab-out / tab-in doesn't slam the
+    // leaderboard API.
+    if (appState == AppLifecycleState.resumed && mounted) {
+      _maybeRefresh(_staleAfterResume);
     }
   }
 
@@ -116,7 +139,10 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
         children: [
           RefreshIndicator(
         color: accent,
-        onRefresh: () async => ref.invalidate(discoverSnapshotProvider),
+        onRefresh: () async {
+          ref.invalidate(discoverSnapshotProvider);
+          _lastFetchedAt = DateTime.now();
+        },
         child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           slivers: [
@@ -191,7 +217,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
           Positioned(
             left: 0,
             right: 0,
-            bottom: MediaQuery.of(context).viewPadding.bottom + 60,
+            bottom: MediaQuery.of(context).viewPadding.bottom + 76,
             child: Center(
               child: Builder(builder: (context) {
               final board = ref.watch(discoverBoardProvider);

@@ -421,8 +421,25 @@ class _AppRootState extends ConsumerState<AppRoot> {
           router.push('/live-chat');
           break;
         default:
-          // Handle schedule_reminder:$itemId payload format
-          if (notificationType != null && notificationType.startsWith('schedule_reminder')) {
+          // Backend-provided deep_link wins over the legacy fallback so
+          // new nudge_types can ship from server alone (see
+          // `_deep_link_for_nudge` in notification_service_helpers.py).
+          final deepLink = NotificationService.pendingDeepLink;
+          NotificationService.pendingDeepLink = null;
+          if (deepLink != null && deepLink.isNotEmpty) {
+            // `go` for tab/root paths; `push` for sub-paths so the user
+            // can swipe back to the previous in-app screen.
+            if (deepLink.startsWith('/home') ||
+                deepLink.startsWith('/nutrition') ||
+                deepLink.startsWith('/workout') ||
+                deepLink.startsWith('/discover') ||
+                deepLink.startsWith('/profile')) {
+              router.go(deepLink);
+            } else {
+              router.push(deepLink);
+            }
+          } else if (notificationType != null &&
+              notificationType.startsWith('schedule_reminder')) {
             router.go('/home');
           } else {
             router.push('/notifications');

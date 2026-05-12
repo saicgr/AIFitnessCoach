@@ -608,8 +608,43 @@ async def get_image_by_exercise_name(
                 break
 
         if not found_row:
-            # No exercise by that name. 404 — never fall back to S3 fuzzy search
-            # or another exercise's image.
+            # ── Alias fallback ──────────────────────────────────────────
+            # Cross-exercise fuzzy matching stays disabled (lat-pulldown
+            # bug). But an explicit `exercise_image_aliases` row lets us
+            # resolve known generator-output → library mismatches like
+            # "Barbell Close Grip Press" → "Close-Grip Barbell Bench
+            # Press" without re-enabling the substring/ILIKE pattern that
+            # served the wrong sibling row.
+            try:
+                alias_result = (
+                    db.client.table("exercise_image_aliases")
+                    .select("library_exercise_id")
+                    .eq("display_name", exercise_name.lower())
+                    .limit(1)
+                    .execute()
+                )
+                if alias_result.data:
+                    alias_id = alias_result.data[0]["library_exercise_id"]
+                    lib_row = (
+                        db.client.table("exercise_library")
+                        .select("id, exercise_name, image_s3_path")
+                        .eq("id", alias_id)
+                        .limit(1)
+                        .execute()
+                    )
+                    if lib_row.data and lib_row.data[0].get("image_s3_path"):
+                        found_row = lib_row.data[0]
+            except Exception as alias_err:  # noqa: BLE001
+                # Alias table is optional — if the query fails (e.g. table
+                # missing pre-migration) fall through to 404 unchanged.
+                logger.debug(
+                    "exercise_image_aliases lookup failed for %s: %s",
+                    exercise_name, alias_err,
+                )
+
+        if not found_row:
+            # No exercise by that name (and no alias). 404 — never fall back
+            # to S3 fuzzy search or another exercise's image.
             raise HTTPException(
                 status_code=404,
                 detail={"error": "exercise_not_found", "exercise_name": exercise_name},

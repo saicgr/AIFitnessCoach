@@ -77,6 +77,27 @@ class TrainingSetupCard extends ConsumerWidget {
         .join(' ');
   }
 
+  /// Format workout day indices into "Mon, Wed, Fri" using 0=Mon..6=Sun
+  /// to match the User model convention. Used when reading from the
+  /// active gym profile (the new source of truth for this field).
+  String _formatWorkoutDays(List<int> days) {
+    const names = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    final sorted = [...days]..sort();
+    return sorted
+        .where((d) => d >= 0 && d < 7)
+        .map((d) => names[d])
+        .join(', ');
+  }
+
+  /// Title-case a single token (e.g. "upper_body" → "Upper body").
+  /// Used for focus-area display from the gym profile, which stores
+  /// snake_case values.
+  String _titleCase(String s) {
+    if (s.isEmpty) return s;
+    final spaced = s.replaceAll('_', ' ');
+    return '${spaced[0].toUpperCase()}${spaced.substring(1)}';
+  }
+
   /// Get simplified equipment display text
   String _getEquipmentDisplay(List<String> equipment) {
     if (equipment.isEmpty) return 'Not set';
@@ -104,10 +125,21 @@ class TrainingSetupCard extends ConsumerWidget {
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    // Get the active gym profile for equipment and environment
+    // Get the active gym profile for equipment and environment.
+    // After this edit the gym profile is also the source of truth for
+    // workout days, focus areas, and training split — the users table
+    // lagged behind My Gym edits because those fields live on
+    // gym_profiles, not users.
     final activeGymProfile = ref.watch(activeGymProfileProvider);
     final equipment = activeGymProfile?.equipment ?? user?.equipmentList ?? [];
     final environment = activeGymProfile?.environmentDisplayName ?? user?.workoutEnvironmentDisplay ?? 'Not set';
+    final gymWorkoutDays = activeGymProfile?.workoutDays ?? const <int>[];
+    final workoutDaysValue = gymWorkoutDays.isNotEmpty
+        ? _formatWorkoutDays(gymWorkoutDays)
+        : (user?.workoutDaysFormatted ?? 'Not set');
+    final focusAreasValue = (activeGymProfile?.focusAreas.isNotEmpty ?? false)
+        ? activeGymProfile!.focusAreas.map(_titleCase).join(', ')
+        : (user?.focusAreasDisplay ?? 'Full body');
 
     return Container(
       width: double.infinity,
@@ -192,23 +224,24 @@ class TrainingSetupCard extends ConsumerWidget {
           ),
           const SizedBox(height: 12),
 
-          // Focus Areas row
+          // Focus Areas row (reads from active gym profile first so
+          // My Gym edits surface here without a reload)
           _SetupRow(
             icon: Icons.center_focus_strong,
             iconColor: AppColors.cyan,
             label: 'Focus Areas',
-            value: user?.focusAreasDisplay ?? 'Full body',
+            value: focusAreasValue,
             textPrimary: textPrimary,
             textSecondary: textSecondary,
           ),
           const SizedBox(height: 12),
 
-          // Workout Days row
+          // Workout Days row (active gym profile is source of truth)
           _SetupRow(
             icon: Icons.calendar_today_outlined,
             iconColor: AppColors.info,
             label: 'Workout Days',
-            value: user?.workoutDaysFormatted ?? 'Not set',
+            value: workoutDaysValue,
             textPrimary: textPrimary,
             textSecondary: textSecondary,
           ),
@@ -395,8 +428,13 @@ class _TrainingSplitRow extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Active gym profile is source of truth for training_split — the
+    // legacy trainingPreferencesProvider held a separate cached value that
+    // lagged behind My Gym edits. Falling back to that provider only when
+    // the gym profile hasn't loaded yet.
+    final activeGymProfile = ref.watch(activeGymProfileProvider);
     final trainingPrefs = ref.watch(trainingPreferencesProvider);
-    final splitValue = trainingPrefs.trainingSplit;
+    final splitValue = activeGymProfile?.trainingSplit ?? trainingPrefs.trainingSplit;
     final displayName = _splitDisplayNames[splitValue] ?? splitValue.replaceAll('_', ' ');
 
     return _SetupRow(

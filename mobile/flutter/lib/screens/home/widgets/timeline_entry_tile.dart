@@ -30,66 +30,81 @@ class TimelineEntryTile extends StatelessWidget {
         isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final iconBg = _domainColor(entry.type);
 
+    // Samsung-Health-style 3-column layout (matches Image 19 reference):
+    //   ┌────────┬──────────────────────┬──────────┐
+    //   │ 16:58  │ Afternoon walk       │  ⊙ icon  │
+    //   │ Zepp   │ 0.49 mi · 24 min     │  (right) │
+    //   │        │ [PR chips]           │          │
+    //   └────────┴──────────────────────┴──────────┘
+    //
+    // The icon used to sit on the LEFT (in front of the title) which read
+    // as a Material list-tile rather than a journal feed. Moving it to the
+    // right rail mirrors the Samsung Health UX the user pointed at, and
+    // freeing the left rail makes time + source the primary anchor for
+    // scanning a long chronological feed.
     return InkWell(
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+        padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              width: 38,
-              height: 38,
-              decoration: BoxDecoration(
-                color: iconBg.withValues(alpha: 0.15),
-                shape: BoxShape.circle,
+            // ── Left rail: HH:MM + source label ──────────────────────────
+            SizedBox(
+              width: 56,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _hhmm(entry.occurredAt),
+                    style: TextStyle(
+                      color: textPrimary,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      fontFeatures: const [FontFeature.tabularFigures()],
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    entry.source.label,
+                    style: TextStyle(
+                      color: textSecondary,
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
               ),
-              child: Icon(_iconFor(entry.icon), color: iconBg, size: 20),
             ),
             const SizedBox(width: 12),
+            // ── Middle: title + subtitle + achievement chips ────────────
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          entry.title,
-                          style: TextStyle(
-                            color: textPrimary,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        _hhmm(entry.occurredAt),
-                        style:
-                            TextStyle(color: textSecondary, fontSize: 11),
-                      ),
-                    ],
+                  Text(
+                    entry.title,
+                    style: TextStyle(
+                      color: textPrimary,
+                      fontSize: 14.5,
+                      fontWeight: FontWeight.w600,
+                      height: 1.2,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
                   if (entry.subtitle != null && entry.subtitle!.isNotEmpty)
                     Padding(
-                      padding: const EdgeInsets.only(top: 2),
+                      padding: const EdgeInsets.only(top: 3),
                       child: Text(
                         entry.subtitle!,
                         style:
-                            TextStyle(color: textSecondary, fontSize: 12),
+                            TextStyle(color: textSecondary, fontSize: 12.5),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                  Padding(
-                    padding: const EdgeInsets.only(top: 4),
-                    child: _SourceChip(
-                      source: entry.source,
-                      isDark: isDark,
-                    ),
-                  ),
                   if ((entry.metadata['during'] is String) &&
                       (entry.metadata['during'] as String).isNotEmpty)
                     Padding(
@@ -128,12 +143,27 @@ class TimelineEntryTile extends StatelessWidget {
                 ],
               ),
             ),
+            const SizedBox(width: 10),
+            // ── Right: type-coloured circular icon badge ─────────────────
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: iconBg.withValues(alpha: 0.18),
+                shape: BoxShape.circle,
+              ),
+              alignment: Alignment.center,
+              child: Icon(_iconFor(entry.icon), color: iconBg, size: 20),
+            ),
+            // Attachment thumbnail (food photo, progress pic) — only shown
+            // when present, sits flush to the icon so the right rail stays
+            // visually balanced.
             if (entry.attachments.isNotEmpty &&
                 entry.attachments.first['url'] != null)
               Padding(
                 padding: const EdgeInsets.only(left: 8),
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(6),
+                  borderRadius: BorderRadius.circular(8),
                   child: Image.network(
                     entry.attachments.first['url'] as String,
                     width: 44,
@@ -256,36 +286,6 @@ class TimelineEntryTile extends StatelessWidget {
     } catch (_) {
       return '';
     }
-  }
-}
-
-class _SourceChip extends StatelessWidget {
-  final TimelineSource source;
-  final bool isDark;
-  const _SourceChip({required this.source, required this.isDark});
-
-  @override
-  Widget build(BuildContext context) {
-    final color = isDark
-        ? Colors.white.withValues(alpha: 0.6)
-        : Colors.black.withValues(alpha: 0.55);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(
-        color: isDark
-            ? Colors.white.withValues(alpha: 0.05)
-            : Colors.black.withValues(alpha: 0.04),
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: Text(
-        source.label,
-        style: TextStyle(
-          color: color,
-          fontSize: 10,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    );
   }
 }
 

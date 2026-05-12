@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -24,11 +25,21 @@ final aiSettingsProvider = StateNotifierProvider<AISettingsNotifier, AISettings>
   final apiClient = ref.watch(apiClientProvider);
   final notifier = AISettingsNotifier(apiClient);
 
-  // Auto-load settings when provider is first accessed
-  Future.microtask(() => notifier.loadSettings());
+  // Hydrate from local cache first so the chat header / coach picker reads
+  // the user's saved coach on the very first frame after a cold start —
+  // otherwise the header would flash the first predefined coach (Mike)
+  // for ~1 s while the API load resolved.
+  Future.microtask(() async {
+    await notifier.hydrateFromCache();
+    await notifier.loadSettings();
+  });
 
   return notifier;
 });
+
+/// SharedPreferences key for the local AI settings snapshot. Kept in sync
+/// with the server every time settings are loaded or persona is updated.
+const String _kAiSettingsCacheKey = 'ai_settings_v1';
 
 /// AI Settings model
 class AISettings {
@@ -68,6 +79,11 @@ class AISettings {
   final bool aiDataProcessingEnabled;
   // GDPR Art. 9 explicit consent for special-category health data.
   final bool healthDataConsent;
+  // Internal hydration flag. False until the notifier has loaded settings
+  // either from the local cache or the API; UI surfaces should branch on
+  // this to avoid flashing a default persona before the user's real
+  // choice is known.
+  final bool isHydrated;
 
   const AISettings({
     this.coachPersonaId,
@@ -97,6 +113,7 @@ class AISettings {
     this.useRAG = true,
     this.aiDataProcessingEnabled = true,
     this.healthDataConsent = false,
+    this.isHydrated = false,
   });
 
   AISettings copyWith({
@@ -121,6 +138,7 @@ class AISettings {
     bool? useRAG,
     bool? aiDataProcessingEnabled,
     bool? healthDataConsent,
+    bool? isHydrated,
   }) {
     return AISettings(
       coachPersonaId: coachPersonaId ?? this.coachPersonaId,
@@ -144,6 +162,7 @@ class AISettings {
       useRAG: useRAG ?? this.useRAG,
       aiDataProcessingEnabled: aiDataProcessingEnabled ?? this.aiDataProcessingEnabled,
       healthDataConsent: healthDataConsent ?? this.healthDataConsent,
+      isHydrated: isHydrated ?? this.isHydrated,
     );
   }
 
@@ -280,6 +299,38 @@ class AISettingsNotifier extends StateNotifier<AISettings> {
     super.dispose();
   }
 
+  /// Read the last-known settings snapshot from SharedPreferences and
+  /// apply it before the network call returns. Safe to call repeatedly:
+  /// if cache is empty / corrupt, state stays at defaults and we just
+  /// wait for `loadSettings` to fill it in.
+  Future<void> hydrateFromCache() async {
+    if (state.isHydrated) return;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString(_kAiSettingsCacheKey);
+      if (raw != null && raw.isNotEmpty) {
+        final json = jsonDecode(raw) as Map<String, dynamic>;
+        state = AISettings.fromJson(json).copyWith(isHydrated: true);
+        debugPrint('🤖 [AISettings] Hydrated from cache: persona=${state.coachPersonaId}');
+        return;
+      }
+    } catch (e) {
+      debugPrint('⚠️ [AISettings] Cache hydrate failed: $e');
+    }
+    // Empty / corrupt cache — mark hydrated so the UI stops waiting,
+    // but leave state at its defaults so loadSettings can fill it in.
+    state = state.copyWith(isHydrated: true);
+  }
+
+  Future<void> _persistCache() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_kAiSettingsCacheKey, jsonEncode(state.toJson()));
+    } catch (e) {
+      debugPrint('⚠️ [AISettings] Cache persist failed: $e');
+    }
+  }
+
   /// Load settings from API
   Future<void> loadSettings() async {
     if (_isLoaded) return;
@@ -288,6 +339,7 @@ class AISettingsNotifier extends StateNotifier<AISettings> {
       final userId = await _apiClient.getUserId();
       if (userId == null) {
         debugPrint('🤖 [AISettings] No user ID, using defaults');
+        state = state.copyWith(isHydrated: true);
         return;
       }
 
@@ -296,8 +348,9 @@ class AISettingsNotifier extends StateNotifier<AISettings> {
 
       if (response.statusCode == 200 && response.data != null) {
         final data = response.data as Map<String, dynamic>;
-        state = AISettings.fromJson(data);
+        state = AISettings.fromJson(data).copyWith(isHydrated: true);
         _isLoaded = true;
+        unawaited(_persistCache());
         // Apply the saved voice to the TTS engine so the next workout
         // announcement uses it. Safe to call even on 'default'.
         unawaited(TTSService().applyVoice(state.coachVoiceId));
@@ -313,6 +366,11 @@ class AISettingsNotifier extends StateNotifier<AISettings> {
   /// If a save is already in flight, a second save fires after it completes
   /// so the latest state always reaches the server.
   void _saveSettings() {
+    // Persist locally on every setter so cold-start hydration always
+    // reflects the user's latest choice, even if the server PUT below
+    // is slow or fails. Without this the chat header could still flash
+    // a stale persona after an in-app coach swap.
+    unawaited(_persistCache());
     _saveDebounce?.cancel();
     _saveDebounce = Timer(_saveDebounceDelay, () {
       _saveAttempt = 0;
@@ -485,6 +543,14 @@ class AISettingsNotifier extends StateNotifier<AISettings> {
   /// dedicated opt-in flow, not bundled with general ToS acceptance.
   Future<void> updateHealthDataConsent(bool value) async {
     state = state.copyWith(healthDataConsent: value);
+    if (value) {
+      // Re-enabling consent should clear the persisted "consent denied" gate
+      // in ActivityService so the next sync attempt actually hits the wire.
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.remove('activity_health_consent_denied');
+      } catch (_) {}
+    }
     _saveSettings();
   }
 

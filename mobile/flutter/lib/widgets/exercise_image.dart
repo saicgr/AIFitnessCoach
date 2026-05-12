@@ -57,6 +57,14 @@ class ExerciseImage extends ConsumerStatefulWidget {
   /// Box fit for the image
   final BoxFit fit;
 
+  /// Optional equipment hint used to pick a more specific fallback icon
+  /// when the backend returns no image. Pass the first item from the
+  /// exercise's equipment list (e.g. "barbell", "dumbbells", "cable",
+  /// "bodyweight", "kettlebell"). When omitted, the generic dumbbell
+  /// silhouette is used. Fix for the "Barbell Close Grip Press shows a
+  /// dumbbell" bug — placeholder now mirrors the exercise's actual gear.
+  final String? equipmentHint;
+
   const ExerciseImage({
     super.key,
     required this.exerciseName,
@@ -67,6 +75,7 @@ class ExerciseImage extends ConsumerStatefulWidget {
     this.backgroundColor,
     this.iconColor,
     this.fit = BoxFit.cover,
+    this.equipmentHint,
   });
 
   @override
@@ -207,7 +216,7 @@ class _ExerciseImageState extends ConsumerState<ExerciseImage> {
 
     if (_hasError || _imageUrl == null) {
       return Icon(
-        Icons.fitness_center,
+        _fallbackIconForEquipment(widget.equipmentHint, widget.exerciseName),
         color: fallbackIconColor,
         size: widget.width.isFinite ? widget.width * 0.5 : 40,
       );
@@ -234,10 +243,39 @@ class _ExerciseImageState extends ConsumerState<ExerciseImage> {
         ),
       ),
       errorWidget: (_, __, ___) => Icon(
-        Icons.fitness_center,
+        _fallbackIconForEquipment(widget.equipmentHint, widget.exerciseName),
         color: fallbackIconColor,
         size: widget.width.isFinite ? widget.width * 0.5 : 40,
       ),
     );
   }
+}
+
+/// Map an equipment hint (or exercise name keywords as fallback) to a
+/// Material icon that visually matches the gear. Used as the placeholder
+/// when `/exercise-images/{name}` 404s so we don't render a barbell
+/// movement as a dumbbell silhouette.
+IconData _fallbackIconForEquipment(String? equipmentHint, String exerciseName) {
+  final hint = (equipmentHint ?? '').toLowerCase();
+  final name = exerciseName.toLowerCase();
+  bool h(String token) => hint.contains(token) || name.contains(token);
+
+  if (h('barbell') || h('ez bar') || h('trap bar')) return Icons.straighten;
+  if (h('cable') || h('pulley') || h('lat pull')) return Icons.linear_scale;
+  if (h('kettlebell')) return Icons.sports_handball;
+  if (h('band') || h('resistance')) return Icons.adjust;
+  if (h('treadmill') || h('run')) return Icons.directions_run;
+  if (h('bike') || h('cycle')) return Icons.directions_bike;
+  if (h('row')) return Icons.rowing;
+  if (h('plate')) return Icons.album;
+  if (h('bodyweight') || h('push-up') || h('pushup') ||
+      h('pull-up') || h('pullup') || h('squat') || h('plank') ||
+      h('lunge') || h('burpee')) {
+    return Icons.accessibility_new;
+  }
+  if (h('dumbbell')) return Icons.fitness_center;
+  // Default — generic gym icon, never the dumbbell silhouette for
+  // ambiguous cases (avoids the original "every fallback is a dumbbell"
+  // problem).
+  return Icons.sports_gymnastics;
 }

@@ -559,19 +559,27 @@ async def auto_generate_workout(user_id: str, target_date: date, gym_profile_id:
             try:
                 training_split = None
                 profile_focus_areas = []
+                day_focus_override = {}
                 if gym_profile_id:
                     profile = db.client.table("gym_profiles").select(
-                        "training_split, focus_areas"
+                        "training_split, focus_areas, day_focus_override"
                     ).eq("id", gym_profile_id).single().execute()
                     if profile.data:
                         training_split = profile.data.get("training_split")
                         profile_focus_areas = profile.data.get("focus_areas") or []
+                        day_focus_override = profile.data.get("day_focus_override") or {}
                 else:
                     # Fallback: get split from user record
                     user_record = db.get_user(user_id)
                     training_split = user_record.get("training_split") if user_record else None
+                    day_focus_override = {}
                 resolved_split = resolve_training_split(training_split, len(selected_days))
                 focus_map = get_workout_focus(resolved_split, selected_days, profile_focus_areas)
+                # User-pinned per-day focus (only surfaced by the AI-Decide UI,
+                # but honoured for any split for robustness) wins over the
+                # heuristic. See `apply_day_focus_overrides` for validation.
+                from .schedule_utils import apply_day_focus_overrides
+                focus_map = apply_day_focus_overrides(focus_map, day_focus_override)
                 focus_for_day = focus_map.get(target_date.weekday())
                 if focus_for_day:
                     workout_type = infer_workout_type_from_focus(focus_for_day)

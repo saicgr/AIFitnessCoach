@@ -379,6 +379,20 @@ class ApiClient with WidgetsBindingObserver {
               ),
             );
           }
+          // /activity/sync 403 swallow: backend rejects sync when the user
+          // hasn't opted into health-data processing. ActivityService already
+          // gates retries; we just need to keep this out of Sentry.
+          if (error.response?.statusCode == 403 &&
+              (path.startsWith('/activity/sync') ||
+                  path.startsWith('/activity/sync-batch'))) {
+            return handler.resolve(
+              Response(
+                requestOptions: error.requestOptions,
+                statusCode: 200,
+                data: const {'skipped': true, 'reason': 'no_health_consent'},
+              ),
+            );
+          }
           handler.next(error);
         },
       ),

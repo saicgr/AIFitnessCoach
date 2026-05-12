@@ -19,28 +19,69 @@ import '../../../widgets/main_shell.dart' show floatingNavBarVisibleProvider;
 class RecipeFromFridgeScreen extends ConsumerStatefulWidget {
   final String userId;
   final bool isDark;
-  const RecipeFromFridgeScreen({super.key, required this.userId, required this.isDark});
+  /// Photos the user already picked on the entry sheet. Auto-scanned on
+  /// mount so the user lands on a screen already in "scanning…" state
+  /// instead of a blank input.
+  final List<String> initialImagesB64;
+  final List<String> initialImagePaths;
+  const RecipeFromFridgeScreen({
+    super.key,
+    required this.userId,
+    required this.isDark,
+    this.initialImagesB64 = const [],
+    this.initialImagePaths = const [],
+  });
   @override
   ConsumerState<RecipeFromFridgeScreen> createState() => _RecipeFromFridgeScreenState();
 }
 
+/// Max photos accepted per scan. Each Gemini Vision call is ~$0.0005 + a
+/// 1 MB JSON payload — beyond 5 the cost / latency tradeoff doesn't help
+/// recipe matching.
+const int _kMaxFridgePhotos = 5;
+
 class _RecipeFromFridgeScreenState extends ConsumerState<RecipeFromFridgeScreen> {
   final List<String> _items = [];
   final _addCtrl = TextEditingController();
-  String? _imageB64;
-  String? _imagePath; // local file path for thumbnail
+  // Parallel lists: index i refers to the same photo across all three.
+  final List<String> _imagesB64 = [];
+  final List<String> _imagePaths = [];
+  final List<bool> _photoDetecting = []; // per-photo scan state
+  final List<List<PantryDetectedItem>> _photoDetections = [];
 
   // Two-phase state
-  bool _detecting = false; // phase 1: detecting items from photo
-  bool _searching = false; // phase 2: finding recipes
-  List<PantryDetectedItem> _detectedFromPhoto = [];
+  bool _searching = false; // finding recipes
   PantryAnalyzeResponse? _result;
   String? _error;
+
+  bool get _anyDetecting => _photoDetecting.any((b) => b);
+  int get _totalDetected =>
+      _photoDetections.fold<int>(0, (acc, l) => acc + l.length);
 
   @override
   void initState() {
     super.initState();
     _hideNavBar();
+    if (widget.initialImagesB64.isNotEmpty) {
+      // Seed state from entry-sheet picks before the first frame so we
+      // never show an empty "type ingredients" prompt for a flow the
+      // user has already passed.
+      final count = widget.initialImagesB64.length.clamp(0, _kMaxFridgePhotos);
+      for (var i = 0; i < count; i++) {
+        _imagesB64.add(widget.initialImagesB64[i]);
+        _imagePaths.add(
+          i < widget.initialImagePaths.length ? widget.initialImagePaths[i] : '',
+        );
+        _photoDetecting.add(true);
+        _photoDetections.add(const []);
+      }
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        for (var i = 0; i < count; i++) {
+          _detectForPhoto(i);
+        }
+      });
+    }
   }
 
   @override
@@ -67,50 +108,84 @@ class _RecipeFromFridgeScreenState extends ConsumerState<RecipeFromFridgeScreen>
   }
 
   Future<void> _pickImage(ImageSource source) async {
-    final f = await ImagePicker().pickImage(source: source, imageQuality: 75);
-    if (f == null) return;
-    final bytes = await File(f.path).readAsBytes();
-    if (!mounted) return;
+    if (_imagesB64.length >= _kMaxFridgePhotos) {
+      setState(() => _error = 'Max $_kMaxFridgePhotos photos — remove one to add another');
+      return;
+    }
+    if (source == ImageSource.gallery) {
+      final remaining = _kMaxFridgePhotos - _imagesB64.length;
+      final files = await ImagePicker().pickMultiImage(imageQuality: 75);
+      if (files.isEmpty) return;
+      final accepted = files.take(remaining).toList();
+      for (final f in accepted) {
+        final bytes = await File(f.path).readAsBytes();
+        if (!mounted) return;
+        await _appendPhoto(base64Encode(bytes), f.path);
+      }
+      if (files.length > accepted.length) {
+        if (!mounted) return;
+        setState(() => _error =
+            'Added $remaining of ${files.length} — max $_kMaxFridgePhotos photos');
+      }
+    } else {
+      final f = await ImagePicker().pickImage(source: source, imageQuality: 75);
+      if (f == null) return;
+      final bytes = await File(f.path).readAsBytes();
+      if (!mounted) return;
+      await _appendPhoto(base64Encode(bytes), f.path);
+    }
+  }
+
+  Future<void> _appendPhoto(String b64, String path) async {
     setState(() {
-      _imageB64 = base64Encode(bytes);
-      _imagePath = f.path;
-      _detectedFromPhoto = [];
+      _imagesB64.add(b64);
+      _imagePaths.add(path);
+      _photoDetecting.add(true);
+      _photoDetections.add(const []);
       _result = null;
       _error = null;
     });
-    // Auto-detect ingredients from the photo
-    _detectFromPhoto();
+    await _detectForPhoto(_imagesB64.length - 1);
   }
 
-  Future<void> _detectFromPhoto() async {
-    if (_imageB64 == null) return;
-    setState(() { _detecting = true; _error = null; });
+  /// Detect ingredients for a single photo by index. Used for both the
+  /// initial seeded photos from the entry sheet and any photos the user
+  /// adds via the + button on this screen.
+  Future<void> _detectForPhoto(int index) async {
+    if (index < 0 || index >= _imagesB64.length) return;
+    final b64 = _imagesB64[index];
     try {
       final items = await ref.read(recipeRepositoryProvider).detectPantryItems(
-        widget.userId,
-        imageB64: _imageB64!,
-      );
+            widget.userId,
+            imageB64: b64,
+          );
       if (!mounted) return;
       setState(() {
-        _detecting = false;
-        _detectedFromPhoto = items;
-        // Auto-add detected items as chips
+        if (index < _photoDetecting.length) {
+          _photoDetecting[index] = false;
+          _photoDetections[index] = items;
+        }
+        // Dedup against existing chips (case-insensitive).
+        final existing = _items.map((s) => s.toLowerCase()).toSet();
         for (final d in items) {
-          if (!_items.contains(d.name)) _items.add(d.name);
+          if (!existing.contains(d.name.toLowerCase())) {
+            _items.add(d.name);
+            existing.add(d.name.toLowerCase());
+          }
         }
       });
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _detecting = false;
-        _error = 'Could not detect items: ${e.toString().replaceFirst('Exception: ', '')}';
+        if (index < _photoDetecting.length) _photoDetecting[index] = false;
+        _error = 'Photo ${index + 1}: ${e.toString().replaceFirst('Exception: ', '')}';
       });
     }
   }
 
   Future<void> _findRecipes() async {
-    if (_items.isEmpty && _imageB64 == null) {
-      setState(() => _error = 'Add items or take a fridge photo');
+    if (_items.isEmpty && _imagesB64.isEmpty) {
+      setState(() => _error = 'Add items or a fridge photo');
       return;
     }
     setState(() { _searching = true; _error = null; _result = null; });
@@ -118,17 +193,21 @@ class _RecipeFromFridgeScreenState extends ConsumerState<RecipeFromFridgeScreen>
       final res = await ref.read(recipeRepositoryProvider).fromPantry(
             widget.userId,
             itemsText: _items.isEmpty ? null : List<String>.from(_items),
-            // Don't re-send the image if we already detected items from it
-            imageB64: _detectedFromPhoto.isEmpty ? _imageB64 : null,
+            // Items already detected on this screen; no need to re-send
+            // images (would re-bill Vision for the same data).
+            imageB64: null,
             count: 4,
           );
       if (!mounted) return;
       setState(() {
         _result = res;
         _searching = false;
-        // Add any newly detected items from the full analysis
+        final existing = _items.map((s) => s.toLowerCase()).toSet();
         for (final d in res.detectedItems) {
-          if (!_items.contains(d.name)) _items.add(d.name);
+          if (!existing.contains(d.name.toLowerCase())) {
+            _items.add(d.name);
+            existing.add(d.name.toLowerCase());
+          }
         }
       });
     } catch (e) {
@@ -137,15 +216,18 @@ class _RecipeFromFridgeScreenState extends ConsumerState<RecipeFromFridgeScreen>
     }
   }
 
-  void _removePhoto() {
+  void _removePhotoAt(int index) {
+    if (index < 0 || index >= _imagesB64.length) return;
     setState(() {
-      // Remove photo-detected items from chips
-      for (final d in _detectedFromPhoto) {
-        _items.remove(d.name);
+      // Remove chips that originated from this photo.
+      final detected = _photoDetections[index];
+      for (final d in detected) {
+        _items.removeWhere((s) => s.toLowerCase() == d.name.toLowerCase());
       }
-      _imageB64 = null;
-      _imagePath = null;
-      _detectedFromPhoto = [];
+      _imagesB64.removeAt(index);
+      _imagePaths.removeAt(index);
+      _photoDetecting.removeAt(index);
+      _photoDetections.removeAt(index);
       _result = null;
     });
   }
@@ -159,7 +241,7 @@ class _RecipeFromFridgeScreenState extends ConsumerState<RecipeFromFridgeScreen>
     final muted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final surface = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final topPad = MediaQuery.of(context).padding.top;
-    final isLoading = _detecting || _searching;
+    final isLoading = _anyDetecting || _searching;
 
     return Scaffold(
       backgroundColor: bg,
@@ -223,24 +305,29 @@ class _RecipeFromFridgeScreenState extends ConsumerState<RecipeFromFridgeScreen>
             ),
           ]),
 
-          // Photo thumbnail preview
-          if (_imagePath != null) ...[
+          // Photo thumbnail strip — one tile per uploaded image with its
+          // own scan status. Replaces the single-photo card so users can
+          // batch-scan a fridge + pantry + freezer together.
+          if (_imagesB64.isNotEmpty) ...[
             const SizedBox(height: 12),
-            _PhotoPreview(
-              imagePath: _imagePath!,
+            _PhotoStrip(
+              imagePaths: _imagePaths,
+              detecting: _photoDetecting,
+              detectedCounts: _photoDetections.map((l) => l.length).toList(),
               isDark: isDark,
               accent: accent,
-              detecting: _detecting,
-              detectedCount: _detectedFromPhoto.length,
-              onRemove: _removePhoto,
+              onRemove: _removePhotoAt,
+              onAddMore: _imagesB64.length < _kMaxFridgePhotos
+                  ? () => _pickImage(ImageSource.gallery)
+                  : null,
             ),
           ],
 
-          // Detected items from photo
-          if (_detectedFromPhoto.isNotEmpty) ...[
+          // Aggregated detected items across all photos.
+          if (_totalDetected > 0) ...[
             const SizedBox(height: 12),
             _DetectedItemsSection(
-              items: _detectedFromPhoto,
+              items: _photoDetections.expand((l) => l).toList(),
               isDark: isDark,
               accent: accent,
             ),
@@ -301,9 +388,30 @@ class _RecipeFromFridgeScreenState extends ConsumerState<RecipeFromFridgeScreen>
                     ),
                     IconButton(
                       icon: Icon(Icons.refresh, color: AppColors.error, size: 18),
-                      onPressed: _detectedFromPhoto.isEmpty && _imageB64 != null
-                          ? _detectFromPhoto
-                          : _findRecipes,
+                      onPressed: () {
+                        // Retry any photos whose detection failed before
+                        // falling back to a full find-recipes retry.
+                        final pendingFailures = <int>[];
+                        for (var i = 0; i < _photoDetecting.length; i++) {
+                          if (!_photoDetecting[i] &&
+                              _photoDetections[i].isEmpty) {
+                            pendingFailures.add(i);
+                          }
+                        }
+                        if (pendingFailures.isNotEmpty) {
+                          setState(() {
+                            _error = null;
+                            for (final i in pendingFailures) {
+                              _photoDetecting[i] = true;
+                            }
+                          });
+                          for (final i in pendingFailures) {
+                            _detectForPhoto(i);
+                          }
+                        } else {
+                          _findRecipes();
+                        }
+                      },
                       tooltip: 'Retry',
                     ),
                   ],
@@ -331,24 +439,28 @@ class _RecipeFromFridgeScreenState extends ConsumerState<RecipeFromFridgeScreen>
 }
 
 // ---------------------------------------------------------------------------
-// Photo preview with detection status
+// Horizontal multi-photo strip with per-tile scanning state. Replaces the
+// single-photo card so users can batch-scan a fridge + pantry + freezer
+// in one round-trip.
 // ---------------------------------------------------------------------------
 
-class _PhotoPreview extends StatelessWidget {
-  final String imagePath;
+class _PhotoStrip extends StatelessWidget {
+  final List<String> imagePaths;
+  final List<bool> detecting;
+  final List<int> detectedCounts;
   final bool isDark;
   final Color accent;
-  final bool detecting;
-  final int detectedCount;
-  final VoidCallback onRemove;
+  final void Function(int index) onRemove;
+  final VoidCallback? onAddMore;
 
-  const _PhotoPreview({
-    required this.imagePath,
+  const _PhotoStrip({
+    required this.imagePaths,
+    required this.detecting,
+    required this.detectedCounts,
     required this.isDark,
     required this.accent,
-    required this.detecting,
-    required this.detectedCount,
     required this.onRemove,
+    required this.onAddMore,
   });
 
   @override
@@ -356,71 +468,210 @@ class _PhotoPreview extends StatelessWidget {
     final surface = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final text = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final muted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final scanning = detecting.where((b) => b).length;
+    final total = imagePaths.length;
+    final done = total - scanning;
 
     return Container(
-      padding: const EdgeInsets.all(10),
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
       decoration: BoxDecoration(
         color: surface,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: accent.withValues(alpha: 0.18)),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Thumbnail
-          ClipRRect(
-            borderRadius: BorderRadius.circular(10),
-            child: Image.file(
-              File(imagePath),
-              width: 72,
-              height: 72,
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Container(
-                width: 72, height: 72,
-                decoration: BoxDecoration(
+          Row(
+            children: [
+              Icon(Icons.collections_outlined, size: 16, color: accent),
+              const SizedBox(width: 6),
+              Text(
+                '$total photo${total == 1 ? '' : 's'}',
+                style: TextStyle(
+                    color: text, fontSize: 13, fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(width: 8),
+              if (scanning > 0)
+                Row(children: [
+                  SizedBox(
+                    width: 12,
+                    height: 12,
+                    child: CircularProgressIndicator(
+                        strokeWidth: 1.5, color: accent),
+                  ),
+                  const SizedBox(width: 6),
+                  Text('Scanning $done/$total\u2026',
+                      style: TextStyle(color: muted, fontSize: 11)),
+                ])
+              else
+                Text('Scan complete',
+                    style: TextStyle(
+                        color: accent,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600)),
+            ],
+          ),
+          const SizedBox(height: 10),
+          SizedBox(
+            height: 84,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: imagePaths.length + (onAddMore != null ? 1 : 0),
+              separatorBuilder: (_, __) => const SizedBox(width: 8),
+              itemBuilder: (context, index) {
+                if (index == imagePaths.length) {
+                  return _AddMoreTile(accent: accent, onTap: onAddMore!);
+                }
+                return _PhotoTile(
+                  imagePath: imagePaths[index],
+                  detecting: detecting[index],
+                  detectedCount: detectedCounts[index],
+                  accent: accent,
+                  isDark: isDark,
+                  onRemove: () => onRemove(index),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PhotoTile extends StatelessWidget {
+  final String imagePath;
+  final bool detecting;
+  final int detectedCount;
+  final Color accent;
+  final bool isDark;
+  final VoidCallback onRemove;
+  const _PhotoTile({
+    required this.imagePath,
+    required this.detecting,
+    required this.detectedCount,
+    required this.accent,
+    required this.isDark,
+    required this.onRemove,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(10),
+          child: imagePath.isEmpty
+              ? Container(
+                  width: 84,
+                  height: 84,
                   color: accent.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(10),
+                  child: Icon(Icons.image, color: accent, size: 28),
+                )
+              : Image.file(
+                  File(imagePath),
+                  width: 84,
+                  height: 84,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => Container(
+                    width: 84,
+                    height: 84,
+                    color: accent.withValues(alpha: 0.1),
+                    child: Icon(Icons.image, color: accent, size: 28),
+                  ),
                 ),
-                child: Icon(Icons.image, color: accent, size: 28),
+        ),
+        if (detecting)
+          Positioned.fill(
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.35),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Center(
+                child: SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(
+                      strokeWidth: 2, color: Colors.white),
+                ),
+              ),
+            ),
+          )
+        else if (detectedCount > 0)
+          Positioned(
+            left: 4,
+            bottom: 4,
+            child: Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.65),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                '$detectedCount',
+                style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700),
               ),
             ),
           ),
-          const SizedBox(width: 12),
-
-          // Status text
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Fridge photo',
-                  style: TextStyle(color: text, fontSize: 14, fontWeight: FontWeight.w600)),
-                const SizedBox(height: 4),
-                if (detecting)
-                  Row(children: [
-                    SizedBox(
-                      width: 14, height: 14,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: accent),
-                    ),
-                    const SizedBox(width: 8),
-                    Text('Scanning for ingredients\u2026',
-                      style: TextStyle(color: muted, fontSize: 12)),
-                  ])
-                else if (detectedCount > 0)
-                  Text('$detectedCount item${detectedCount == 1 ? '' : 's'} detected',
-                    style: TextStyle(color: accent, fontSize: 12, fontWeight: FontWeight.w600))
-                else
-                  Text('Ready to scan',
-                    style: TextStyle(color: muted, fontSize: 12)),
-              ],
+        Positioned(
+          top: -6,
+          right: -6,
+          child: Material(
+            color: Colors.black.withValues(alpha: 0.7),
+            shape: const CircleBorder(),
+            child: InkWell(
+              customBorder: const CircleBorder(),
+              onTap: onRemove,
+              child: const Padding(
+                padding: EdgeInsets.all(2),
+                child:
+                    Icon(Icons.close, size: 14, color: Colors.white),
+              ),
             ),
           ),
+        ),
+      ],
+    );
+  }
+}
 
-          // Remove button
-          IconButton(
-            icon: Icon(Icons.close, size: 18, color: muted),
-            onPressed: onRemove,
-            tooltip: 'Remove photo',
+class _AddMoreTile extends StatelessWidget {
+  final Color accent;
+  final VoidCallback onTap;
+  const _AddMoreTile({required this.accent, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(10),
+      onTap: onTap,
+      child: Container(
+        width: 84,
+        height: 84,
+        decoration: BoxDecoration(
+          color: accent.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: accent.withValues(alpha: 0.4),
+            style: BorderStyle.solid,
+            width: 1.2,
           ),
-        ],
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.add_a_photo_outlined, color: accent, size: 22),
+            const SizedBox(height: 4),
+            Text('Add', style: TextStyle(color: accent, fontSize: 11)),
+          ],
+        ),
       ),
     );
   }

@@ -371,9 +371,25 @@ extension NotificationServiceCore on NotificationService {
       return;
     }
 
+    // Stash any explicit deep-link string the backend included on the
+    // FCM data payload. app.dart reads this in the default switch case
+    // so a new nudge_type can land on the right screen without a
+    // matching client release.
+    final deepLink = message.data['deep_link'] as String?;
+    if (deepLink != null && deepLink.isNotEmpty) {
+      NotificationService.pendingDeepLink = deepLink;
+    }
+
     // Handle other notification types
     if (notificationType != null) {
       onNotificationTapped?.call(notificationType);
+      return;
+    }
+
+    // Last resort: the backend sent a deep_link but no type — still
+    // dispatch a tap so the router gets a chance to consume it.
+    if (deepLink != null && deepLink.isNotEmpty) {
+      onNotificationTapped?.call(null);
     }
   }
 

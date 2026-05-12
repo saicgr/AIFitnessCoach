@@ -193,6 +193,8 @@ GymProfileUpdate _$GymProfileUpdateFromJson(Map<String, dynamic> json) =>
       focusAreas: (json['focus_areas'] as List<dynamic>?)
           ?.map((e) => e as String)
           .toList(),
+      dayFocusOverride: (json['day_focus_override'] as Map<String, dynamic>?)
+          ?.map((k, v) => MapEntry(k, v as String)),
       currentProgramId: json['current_program_id'] as String?,
       programCustomName: json['program_custom_name'] as String?,
     );
@@ -229,6 +231,7 @@ Map<String, dynamic> _$GymProfileUpdateToJson(
     'duration_minutes_max': value,
   if (instance.goals case final value?) 'goals': value,
   if (instance.focusAreas case final value?) 'focus_areas': value,
+  if (instance.dayFocusOverride case final value?) 'day_focus_override': value,
   if (instance.currentProgramId case final value?) 'current_program_id': value,
   if (instance.programCustomName case final value?)
     'program_custom_name': value,

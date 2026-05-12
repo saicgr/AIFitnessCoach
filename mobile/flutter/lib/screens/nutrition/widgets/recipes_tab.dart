@@ -13,8 +13,12 @@
 ///      whatever advanced filters / sort the user picked in the sheet).
 library;
 
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/accent_color_provider.dart';
@@ -456,6 +460,106 @@ class _QuickActions extends ConsumerWidget {
     ref.read(floatingNavBarVisibleProvider.notifier).state = true;
   }
 
+  /// Bottom-sheet picker that asks Camera vs Gallery (multi-pick) before
+  /// pushing the fridge scan screen. Mirrors the Scan Menu pattern so the
+  /// two paths feel consistent. Cancelling the sheet (tap outside) is a
+  /// no-op — the user stays on Recipes. Up to 5 photos per scan.
+  Future<void> _openFridgePicker(
+      BuildContext context, WidgetRef ref, String userId, bool isDark) async {
+    final accent = ref.read(accentColorProvider).getColor(isDark);
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      backgroundColor:
+          isDark ? AppColors.elevated : AppColorsLight.elevated,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        final text = isDark
+            ? AppColors.textPrimary
+            : AppColorsLight.textPrimary;
+        final muted =
+            isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Scan your fridge',
+                    style: TextStyle(
+                        color: text,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700)),
+                const SizedBox(height: 4),
+                Text('Up to 5 photos — fridge, pantry, freezer',
+                    style: TextStyle(color: muted, fontSize: 13)),
+                const SizedBox(height: 16),
+                _SheetAction(
+                  icon: Icons.camera_alt_rounded,
+                  label: 'Take photo',
+                  accent: accent,
+                  onTap: () => Navigator.of(ctx).pop(ImageSource.camera),
+                ),
+                const SizedBox(height: 10),
+                _SheetAction(
+                  icon: Icons.photo_library_outlined,
+                  label: 'Choose from gallery',
+                  subtitle: 'Multi-select supported',
+                  accent: accent,
+                  onTap: () => Navigator.of(ctx).pop(ImageSource.gallery),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+    if (source == null || !context.mounted) return;
+
+    // Acquire bytes for whichever source the user picked.
+    final pickedPaths = <String>[];
+    final pickedB64 = <String>[];
+    try {
+      if (source == ImageSource.gallery) {
+        final files = await ImagePicker()
+            .pickMultiImage(imageQuality: 75);
+        if (files.isEmpty) return;
+        final accepted = files.take(5).toList();
+        for (final f in accepted) {
+          final bytes = await File(f.path).readAsBytes();
+          pickedPaths.add(f.path);
+          pickedB64.add(base64Encode(bytes));
+        }
+      } else {
+        final f = await ImagePicker()
+            .pickImage(source: ImageSource.camera, imageQuality: 75);
+        if (f == null) return;
+        final bytes = await File(f.path).readAsBytes();
+        pickedPaths.add(f.path);
+        pickedB64.add(base64Encode(bytes));
+      }
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not load photo: $e')),
+      );
+      return;
+    }
+    if (!context.mounted || pickedB64.isEmpty) return;
+    await _pushAndRestoreNavBar(
+      context,
+      ref,
+      RecipeFromFridgeScreen(
+        userId: userId,
+        isDark: isDark,
+        initialImagesB64: pickedB64,
+        initialImagePaths: pickedPaths,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     // Build is now a FloatingActionButton at the root of RecipesTab.
@@ -463,8 +567,10 @@ class _QuickActions extends ConsumerWidget {
       _QuickAction(
         icon: Icons.kitchen_outlined,
         label: 'Fridge',
-        onTap: () => _pushAndRestoreNavBar(context, ref,
-            RecipeFromFridgeScreen(userId: userId, isDark: isDark)),
+        // Open the photo picker first (matches Scan Menu) so the user
+        // lands on the scan screen with their photos already attached
+        // and detection in flight, instead of an empty input.
+        onTap: () => _openFridgePicker(context, ref, userId, isDark),
       ),
       _QuickAction(
         icon: Icons.download_rounded,
@@ -1365,6 +1471,76 @@ class _ErrorView extends StatelessWidget {
         'Couldn\'t load recipes: $message',
         style: TextStyle(
             color: isDark ? AppColors.error : AppColorsLight.error),
+      ),
+    );
+  }
+}
+
+/// Single row inside the Fridge picker bottom sheet — icon + label
+/// (+ optional subtitle) with an accent-tinted background. Kept private
+/// to this file since the sheet is a one-off entry-point UI.
+class _SheetAction extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String? subtitle;
+  final Color accent;
+  final VoidCallback onTap;
+  const _SheetAction({
+    required this.icon,
+    required this.label,
+    required this.accent,
+    required this.onTap,
+    this.subtitle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final text = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final muted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    return InkWell(
+      borderRadius: BorderRadius.circular(14),
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: accent.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: accent.withValues(alpha: 0.18)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: accent.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, color: accent, size: 22),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(label,
+                      style: TextStyle(
+                          color: text,
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600)),
+                  if (subtitle != null) ...[
+                    const SizedBox(height: 2),
+                    Text(subtitle!,
+                        style: TextStyle(color: muted, fontSize: 12)),
+                  ],
+                ],
+              ),
+            ),
+            Icon(Icons.chevron_right, color: muted),
+          ],
+        ),
       ),
     );
   }

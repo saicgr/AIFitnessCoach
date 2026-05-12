@@ -209,15 +209,17 @@ class _CaloriesBurnedSheetState extends ConsumerState<CaloriesBurnedSheet> {
           ),
           const SizedBox(height: 4),
           Text(
-            'Calories burned from workouts today',
+            'Calories burned today',
             style: TextStyle(fontSize: 13, color: textMuted),
           ),
           const SizedBox(height: 12),
 
           // Per-source breakdown so users can see how much came from in-app
-          // workouts vs HealthKit/wearable sync vs sauna. Without this users
-          // can't reconcile (e.g.) "I only did 1 set in the app but it says
-          // 526 kcal" — the 526 is from a synced wearable session.
+          // workouts vs HealthKit/wearable sync vs sauna vs ambient active
+          // energy. Without the Passive bucket the pill (260 kcal) didn't
+          // reconcile with the sheet body (0 in-app + 0 synced) — the gap
+          // was background active energy from steps/HR that doesn't show
+          // up as a discrete workout session.
           Builder(builder: (_) {
             final inApp = fitWizWorkouts.fold<double>(
               0.0,
@@ -232,6 +234,11 @@ class _CaloriesBurnedSheetState extends ConsumerState<CaloriesBurnedSheet> {
                   (acc, e) => acc + (e.estimatedCalories ?? 0).toDouble(),
                 ) ??
                 0.0;
+            // Passive = total pill kcal − everything we can attribute to
+            // a discrete source. Floored at 0 so a noisy HealthKit sample
+            // doesn't render a negative bucket.
+            final passive = (widget.totalBurned - inApp - synced - saunaTotal)
+                .clamp(0.0, double.infinity);
             return Wrap(
               spacing: 8,
               runSpacing: 8,
@@ -246,6 +253,12 @@ class _CaloriesBurnedSheetState extends ConsumerState<CaloriesBurnedSheet> {
                   value: synced.round(),
                   color: AppColors.green,
                 ),
+                if (passive >= 1)
+                  _BreakdownChip(
+                    label: 'Passive',
+                    value: passive.round(),
+                    color: AppColors.purple,
+                  ),
                 if (saunaTotal > 0)
                   _BreakdownChip(
                     label: 'Sauna',
@@ -331,8 +344,11 @@ class _CaloriesBurnedSheetState extends ConsumerState<CaloriesBurnedSheet> {
             const SizedBox(height: 12),
           ],
 
-          // Empty state
-          if (!_loadingHealth && !hasAnyWorkouts && (_saunaSummary == null || _saunaSummary!.entries.isEmpty))
+          // Empty state — only when no discrete activity at all AND no
+          // ambient active energy. If the pill total is non-zero we have
+          // background steps/HR contributing, so the "no workouts" copy
+          // would contradict the pill the user just tapped.
+          if (!_loadingHealth && !hasAnyWorkouts && widget.totalBurned < 1)
             Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 24),
@@ -341,7 +357,7 @@ class _CaloriesBurnedSheetState extends ConsumerState<CaloriesBurnedSheet> {
                   Icon(Icons.fitness_center, size: 36, color: textMuted),
                   const SizedBox(height: 8),
                   Text(
-                    'No workouts recorded today',
+                    'No activity recorded today',
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
@@ -352,6 +368,31 @@ class _CaloriesBurnedSheetState extends ConsumerState<CaloriesBurnedSheet> {
                   Text(
                     'Complete a workout or sync from your health app',
                     style: TextStyle(fontSize: 12, color: textMuted),
+                  ),
+                ],
+              ),
+            )
+          else if (!_loadingHealth && !hasAnyWorkouts && widget.totalBurned >= 1)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 20),
+              child: Column(
+                children: [
+                  Icon(Icons.directions_walk, size: 32, color: textMuted),
+                  const SizedBox(height: 8),
+                  Text(
+                    'All from background activity',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: textMuted,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Steps, heart rate, and movement throughout the day',
+                    style: TextStyle(fontSize: 12, color: textMuted),
+                    textAlign: TextAlign.center,
                   ),
                 ],
               ),

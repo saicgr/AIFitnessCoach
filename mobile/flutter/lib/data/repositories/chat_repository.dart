@@ -123,6 +123,13 @@ class ChatRepository {
           'media_type': mediaType,
           'expected_size_bytes': expectedSizeBytes,
         },
+        // Presign uses media-tier timeouts so a slow connect during the
+        // initial handshake doesn't surface as the user-visible "Request
+        // timed out" error before we even reach S3.
+        options: Options(
+          receiveTimeout: ApiConstants.mediaUploadTimeout,
+          sendTimeout: ApiConstants.mediaUploadConnectTimeout,
+        ),
       );
 
       if (response.statusCode == 200) {
@@ -136,8 +143,9 @@ class ChatRepository {
       if (e.response?.statusCode == 503) {
         throw Exception('Media upload is temporarily unavailable. Please try again later.');
       } else if (e.type == DioExceptionType.connectionTimeout ||
-                 e.type == DioExceptionType.receiveTimeout) {
-        throw Exception('Request timed out. Please check your connection.');
+                 e.type == DioExceptionType.receiveTimeout ||
+                 e.type == DioExceptionType.sendTimeout) {
+        throw Exception('Upload taking longer than usual on this network. Try again on stronger Wi-Fi or LTE.');
       } else if (e.type == DioExceptionType.connectionError) {
         throw Exception('Unable to connect. Please check your internet connection.');
       }
@@ -157,6 +165,10 @@ class ChatRepository {
       final response = await _apiClient.post(
         '${ApiConstants.chat}/media/presign-batch',
         data: {'files': files},
+        options: Options(
+          receiveTimeout: ApiConstants.mediaUploadTimeout,
+          sendTimeout: ApiConstants.mediaUploadConnectTimeout,
+        ),
       );
 
       if (response.statusCode == 200) {
@@ -171,8 +183,9 @@ class ChatRepository {
       if (e.response?.statusCode == 503) {
         throw Exception('Media upload is temporarily unavailable. Please try again later.');
       } else if (e.type == DioExceptionType.connectionTimeout ||
-                 e.type == DioExceptionType.receiveTimeout) {
-        throw Exception('Request timed out. Please check your connection.');
+                 e.type == DioExceptionType.receiveTimeout ||
+                 e.type == DioExceptionType.sendTimeout) {
+        throw Exception('Upload taking longer than usual on this network. Try again on stronger Wi-Fi or LTE.');
       } else if (e.type == DioExceptionType.connectionError) {
         throw Exception('Unable to connect. Please check your internet connection.');
       }

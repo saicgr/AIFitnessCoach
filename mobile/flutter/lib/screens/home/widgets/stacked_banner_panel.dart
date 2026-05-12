@@ -750,6 +750,20 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
     return 'daily';
   }
 
+  /// True only when the user is still viewing the Home tab. We use this to
+  /// gate claim-progress/error SnackBars so they don't bleed onto Discover
+  /// (or any other tab) when the user swipes away mid-claim — the
+  /// IndexedStack-based MainShell keeps this widget mounted regardless of
+  /// active tab, so `mounted` alone isn't enough.
+  bool _isHomeRouteActive() {
+    try {
+      final loc = GoRouter.of(context).routerDelegate.currentConfiguration.uri.path;
+      return loc == '/' || loc.startsWith('/home');
+    } catch (_) {
+      return false;
+    }
+  }
+
   Future<void> _autoClaimSingleCrate(String crateType, DateTime crateDate) async {
     final dateStr = '${crateDate.year}-${crateDate.month.toString().padLeft(2, '0')}-${crateDate.day.toString().padLeft(2, '0')}';
 
@@ -761,21 +775,25 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
 
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      if (_isHomeRouteActive()) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      }
 
       if (result.success) {
         HapticService.success();
         ref.invalidate(unclaimedCratesProvider);
 
-        final rewardName = result.reward?.displayName ?? 'a reward';
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('🎁 Crate opened! You got $rewardName'),
-            backgroundColor: const Color(0xFFFFB300),
-            behavior: SnackBarBehavior.floating,
-            duration: const Duration(seconds: 3),
-          ),
-        );
+        if (_isHomeRouteActive()) {
+          final rewardName = result.reward?.displayName ?? 'a reward';
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('🎁 Crate opened! You got $rewardName'),
+              backgroundColor: const Color(0xFFFFB300),
+              behavior: SnackBarBehavior.floating,
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        }
       } else {
         // "Already claimed" from another device — not really an error
         final msg = result.message ?? '';
@@ -785,28 +803,33 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
           // Real failure: re-show the banner so user can retry
           HapticService.error();
           ref.read(stackedBannerControllerProvider.notifier).undismiss('daily_crate');
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(result.message ?? 'Failed to claim crate'),
-              backgroundColor: Colors.red,
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
+          if (_isHomeRouteActive()) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(result.message ?? 'Failed to claim crate'),
+                backgroundColor: Colors.red,
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+          }
         }
       }
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).hideCurrentSnackBar();
       HapticService.error();
-      // Re-show banner for retry
+      // Re-show banner for retry — independent of which tab is active so
+      // the user finds the crate ready again when they return to Home.
       ref.read(stackedBannerControllerProvider.notifier).undismiss('daily_crate');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error: $e'),
-          backgroundColor: Colors.red,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      if (_isHomeRouteActive()) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
     } finally {
       _isClaimingCrate = false;
     }

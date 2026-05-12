@@ -105,6 +105,8 @@ class FounderNoteSheet extends ConsumerWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textSecondary =
+        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
 
     final firstName = _firstName(ref);
 
@@ -213,33 +215,45 @@ class FounderNoteSheet extends ConsumerWidget {
 
                         const SizedBox(height: 6),
 
-                        Text(
-                          firstName == 'there'
-                              ? "Welcome — let's build this together."
-                              : "Hey $firstName, welcome aboard.",
-                          style: TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.w900,
-                            color: textPrimary,
-                            letterSpacing: -0.5,
-                            height: 1.18,
-                          ),
+                        // Headline greeting — first-name accent matches
+                        // the orange used on the founder badge so the
+                        // name reads as part of the voice, not a token.
+                        RichText(
                           textAlign: TextAlign.center,
-                        ).animate().fadeIn(delay: 320.ms).slideY(
-                            begin: -0.05),
+                          text: TextSpan(
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.w900,
+                              color: textPrimary,
+                              letterSpacing: -0.5,
+                              height: 1.18,
+                            ),
+                            children: firstName == 'there'
+                                ? const [
+                                    TextSpan(text: 'Quick story before you start.'),
+                                  ]
+                                : [
+                                    const TextSpan(text: 'Hey '),
+                                    TextSpan(
+                                      text: firstName,
+                                      style: const TextStyle(color: AppColors.orange),
+                                    ),
+                                    const TextSpan(text: ' — quick story before you start.'),
+                                  ],
+                          ),
+                        ).animate().fadeIn(delay: 320.ms).slideY(begin: -0.05),
 
                         const SizedBox(height: 16),
 
-                        // ── Personal narrative compressed to 2
-                        //    paragraphs so the full note fits without
-                        //    scroll. Same arc (struggle + market gap →
-                        //    solution + invite) — paragraph 3's
-                        //    "real talk" line is folded into the
-                        //    closing of paragraph 2.
+                        // ── Four-paragraph continuous-voice rewrite.
+                        //    Greeting → struggle → realization →
+                        //    product → invitation, with $firstName
+                        //    woven mid-letter (orange accent) so it
+                        //    reads written *to* the user, not at them.
+                        //    Locked copy lives in
+                        //    /Users/saichetangrandhe/.claude/plans/1-image-17-i-logged-steady-backus.md
                         Text(
-                          firstName == 'there'
-                              ? "I struggled with consistency for years. Two weeks of perfect logging, then a restaurant I couldn't decode, and I'd quietly fall off. Every fitness app I tried just logged my data and ghosted. A real coach keeps you on track — but at \$200+ a month, most never get one."
-                              : "$firstName — I struggled with consistency for years. Two weeks of perfect logging, then a restaurant I couldn't decode, and I'd quietly fall off. Every fitness app I tried just logged my data and ghosted. A real coach keeps you on track — but at \$200+ a month, most never get one.",
+                          "I used to log every meal for two weeks straight, feel proud of myself, then walk into a Thai place I couldn't read, eat what looked safest, and quietly stop opening the app. Three weeks later I'd reinstall a different one, swear this was the time, and run the same loop again. Every app logged my data, none of them noticed when I went silent — they were ledgers, not coaches.",
                           style: TextStyle(
                             fontSize: 15,
                             color: textPrimary,
@@ -248,32 +262,87 @@ class FounderNoteSheet extends ConsumerWidget {
                         ).animate().fadeIn(delay: 480.ms),
                         const SizedBox(height: 10),
                         Text(
-                          "So I built both, for less than one PT session. Snap a menu, log in seconds, and when you slip, it pulls you back. If anything's off, tap below and message me — I read every one.",
+                          "The friends who actually got lean had a person texting them. Real accountability costs about two hundred dollars a month, which is exactly why most of us never have it, and exactly why the gap between \"tracking\" and \"changing\" stays open for years.",
                           style: TextStyle(
                             fontSize: 15,
                             color: textPrimary,
                             height: 1.45,
                           ),
                         ).animate().fadeIn(delay: 540.ms),
+                        const SizedBox(height: 10),
+                        Text(
+                          "So I built the person, not the ledger. Snap that menu in Bangkok and the coach reads it back to you in macros. Skip a Tuesday and it pulls you back Wednesday morning without the guilt trip. It learns your foods, your gym, your slip patterns — for less than one PT session a month.",
+                          style: TextStyle(
+                            fontSize: 15,
+                            color: textPrimary,
+                            height: 1.45,
+                          ),
+                        ).animate().fadeIn(delay: 600.ms),
+                        const SizedBox(height: 10),
+                        RichText(
+                          text: TextSpan(
+                            style: TextStyle(
+                              fontSize: 15,
+                              color: textPrimary,
+                              height: 1.45,
+                            ),
+                            children: firstName == 'there'
+                                ? const [
+                                    TextSpan(
+                                      text:
+                                          "I'm building this in public and I read every message that comes through the chat. If something feels off, half-baked, or wrong for the way you actually live — tap the coach icon and tell me. I'll either fix it or tell you why I won't.",
+                                    ),
+                                  ]
+                                : [
+                                    TextSpan(
+                                      text: firstName,
+                                      style: const TextStyle(
+                                        color: AppColors.orange,
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                    ),
+                                    const TextSpan(
+                                      text:
+                                          ", I'm building this in public and I read every message that comes through the chat. If something feels off, half-baked, or wrong for the way you actually live — tap the coach icon and tell me. I'll either fix it or tell you why I won't.",
+                                    ),
+                                  ],
+                          ),
+                        ).animate().fadeIn(delay: 660.ms),
 
                             const SizedBox(height: 12),
 
-                            // Quiet signature — italic + brand color,
-                            // no FOUNDER badge (the headline already
-                            // makes the role obvious).
+                            // Quiet signature — italic orange line,
+                            // plus a muted sub-line that signals "real
+                            // human, version one" (the research finding
+                            // that founder letters convert when readers
+                            // feel the person behind them).
                             Align(
                               alignment: Alignment.centerLeft,
-                              child: Text(
-                                '— $_founderName',
-                                style: const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w800,
-                                  color: AppColors.orange,
-                                  fontStyle: FontStyle.italic,
-                                  letterSpacing: -0.3,
-                                ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    '— $_founderName',
+                                    style: const TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w800,
+                                      color: AppColors.orange,
+                                      fontStyle: FontStyle.italic,
+                                      letterSpacing: -0.3,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    'Founder, solo, still on version one.',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: textSecondary,
+                                      fontStyle: FontStyle.italic,
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ).animate().fadeIn(delay: 660.ms),
+                            ).animate().fadeIn(delay: 720.ms),
                           ],
                         ),
                       ),

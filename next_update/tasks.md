@@ -10,7 +10,9 @@
 6. heart rate variablity graph to be shown after workout(sync to database)
 7. Food nutrition accuracy
 8. Intro screen feature showcase like a gif but for all features
-9.update for foldables
+9. update for foldables
+9. parsing doordash and uber eats and grubhub food ordered screenshots to log directly
+9. Recipe tikot or any video importer
 10. Create an LLC
 
 

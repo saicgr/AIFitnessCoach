@@ -192,6 +192,36 @@ def _ensure_no_consecutive_same_focus(focus_map: dict, available_focuses: List[s
     return result
 
 
+_VALID_FOCUS_OVERRIDES = {
+    "upper", "lower", "full_body", "push", "pull", "legs",
+    "chest", "back", "shoulders", "arms", "core",
+}
+
+
+def apply_day_focus_overrides(focus_map: dict, day_focus_override: dict | None) -> dict:
+    """Replace per-day entries in `focus_map` with valid user pins.
+
+    Called by today.py / generation_streaming.py AFTER `get_workout_focus`
+    returns the heuristic mapping, so the override applies regardless of
+    split. Surfaced only for the AI-Decide split via the gym profile sheet,
+    but honoured for any split for robustness — a forked client that pins
+    on PPL still gets its choice respected.
+    """
+    if not day_focus_override:
+        return focus_map
+    cleaned: dict = {}
+    for k, v in day_focus_override.items():
+        try:
+            day_int = int(k)
+        except (TypeError, ValueError):
+            continue
+        if isinstance(v, str) and v.lower() in _VALID_FOCUS_OVERRIDES:
+            cleaned[day_int] = v.lower()
+    if not cleaned:
+        return focus_map
+    return {day: cleaned.get(day, focus) for day, focus in focus_map.items()}
+
+
 def get_workout_focus(split: str, selected_days: List[int], focus_areas: List[str] = None) -> dict:
     """Return workout focus for each day based on training split.
 

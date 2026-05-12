@@ -95,6 +95,17 @@ extension __EditGymProfileSheetStateExt on _EditGymProfileSheetState {
         trainingSplit: _selectedTrainingSplit,
         workoutDays: _selectedWorkoutDays,
         durationMinutes: _selectedDuration,
+        // Per-day focus pins for the "Let AI Decide" split. Other splits
+        // ignore this server-side, but we still send the value so the
+        // user's pins survive a split change-back to AI Decide later
+        // (see `apply_day_focus_overrides` in schedule_utils.py). Only
+        // include when populated to keep the JSON payload tight.
+        dayFocusOverride: _dayFocusOverride.isEmpty
+            ? null
+            : {
+                for (final entry in _dayFocusOverride.entries)
+                  if (entry.value != null) entry.key.toString(): entry.value!,
+              },
       );
 
       await ref
@@ -582,6 +593,180 @@ extension __EditGymProfileSheetStateExt on _EditGymProfileSheetState {
     );
   }
 
+
+  /// Per-day focus picker shown under Workout Days when the user chose
+  /// "Let AI Decide". Renders one chip per SELECTED workout day; tapping
+  /// opens a bottom sheet of focus options. Pinned days display the focus
+  /// label (e.g. "Tue · Upper"); unpinned show "Auto".
+  Widget _buildPerDayFocusPicker({
+    required bool isDark,
+    required Color textPrimary,
+    required Color textSecondary,
+    required Color selectedColorObj,
+  }) {
+    final sortedDays = [..._selectedWorkoutDays]..sort();
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: sortedDays.map((dayIdx) {
+        final pinnedToken = _dayFocusOverride[dayIdx];
+        final pinned = pinnedToken != null;
+        final label = pinned
+            ? _EditGymProfileSheetState._focusOptions
+                .firstWhere(
+                  (o) => o['id'] == pinnedToken,
+                  orElse: () => {'id': pinnedToken, 'label': pinnedToken},
+                )['label']!
+            : 'Auto';
+        return InkWell(
+          onTap: () => _showFocusPicker(dayIdx),
+          borderRadius: BorderRadius.circular(20),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              color: pinned
+                  ? selectedColorObj.withValues(alpha: 0.18)
+                  : (isDark
+                      ? Colors.white.withValues(alpha: 0.05)
+                      : Colors.black.withValues(alpha: 0.04)),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: pinned
+                    ? selectedColorObj.withValues(alpha: 0.6)
+                    : (isDark
+                        ? Colors.white.withValues(alpha: 0.12)
+                        : Colors.black.withValues(alpha: 0.10)),
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  _EditGymProfileSheetState._dayNames[dayIdx],
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: pinned ? selectedColorObj : textPrimary,
+                  ),
+                ),
+                Text(
+                  '  ·  ',
+                  style: TextStyle(fontSize: 13, color: textSecondary),
+                ),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: pinned ? selectedColorObj : textSecondary,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Icon(
+                  Icons.keyboard_arrow_down_rounded,
+                  size: 16,
+                  color: pinned ? selectedColorObj : textSecondary,
+                ),
+              ],
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  void _showFocusPicker(int dayIdx) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final dayName = _EditGymProfileSheetState._dayNames[dayIdx];
+    showGlassSheet(
+      context: context,
+      builder: (ctx) => GlassSheet(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Pin focus for $dayName',
+                style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w700,
+                  color: textPrimary,
+                ),
+              ),
+              const SizedBox(height: 12),
+              _focusPickerOption(
+                ctx,
+                id: null,
+                label: 'Auto (AI decides)',
+                isDark: isDark,
+                dayIdx: dayIdx,
+              ),
+              ..._EditGymProfileSheetState._focusOptions.map(
+                (opt) => _focusPickerOption(
+                  ctx,
+                  id: opt['id'],
+                  label: opt['label']!,
+                  isDark: isDark,
+                  dayIdx: dayIdx,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _focusPickerOption(
+    BuildContext sheetCtx, {
+    required String? id,
+    required String label,
+    required bool isDark,
+    required int dayIdx,
+  }) {
+    final selected = _dayFocusOverride[dayIdx] == id;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    return InkWell(
+      onTap: () {
+        HapticService.light();
+        setState(() {
+          if (id == null) {
+            _dayFocusOverride.remove(dayIdx);
+          } else {
+            _dayFocusOverride[dayIdx] = id;
+          }
+          _hasChanges = true;
+        });
+        Navigator.of(sheetCtx).pop();
+      },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        child: Row(
+          children: [
+            Icon(
+              selected
+                  ? Icons.radio_button_checked_rounded
+                  : Icons.radio_button_unchecked_rounded,
+              size: 20,
+              color: selected ? AppColors.orange : textPrimary.withValues(alpha: 0.5),
+            ),
+            const SizedBox(width: 12),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+                color: textPrimary,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   Widget _buildDurationSelector({
     required bool isDark,

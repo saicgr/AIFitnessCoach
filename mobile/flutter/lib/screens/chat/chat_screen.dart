@@ -271,10 +271,20 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     final backgroundColor = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
     final offlineChatState = ref.watch(offlineChatStateProvider);
 
-    // Get coach persona from AI settings
+    // Get coach persona from AI settings.
+    //
+    // Important: while the notifier is still hydrating (cold start, no
+    // SharedPreferences snapshot, API call in flight) we DO NOT fall back
+    // to `CoachPersona.defaultCoach` — that's Coach Mike, and users with
+    // a different persona saw Mike flash in the header for ~1s before the
+    // real coach loaded. Per "no silent fallbacks", we render a neutral
+    // "Loading coach…" header instead, then swap to the real persona once
+    // hydration completes (either from cache or API).
     final aiSettings = ref.watch(aiSettingsProvider);
-    final coach = CoachPersona.findById(aiSettings.coachPersonaId) ?? CoachPersona.defaultCoach;
-    final coachName = coach.name;
+    final resolvedCoach = CoachPersona.findById(aiSettings.coachPersonaId);
+    final showLoadingCoach = !aiSettings.isHydrated && resolvedCoach == null;
+    final coach = resolvedCoach ?? CoachPersona.defaultCoach;
+    final coachName = showLoadingCoach ? 'Loading coach…' : coach.name;
 
     final topBarColor = isDark ? const Color(0xFF1C1C1E) : AppColorsLight.elevated;
     final topBarBorder = isDark
@@ -330,16 +340,26 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 error: (e, _) {
                   // Collapse noisy transport errors (DioException [connection
                   // timeout / connection error / receive timeout]) into a
-                  // single user-readable line. Show the raw error only as a
-                  // muted subtitle so we don't lose debug signal.
+                  // single user-readable line. Differentiate timeout (coach
+                  // is still working, server reachable) from true connection
+                  // failure so the user doesn't reflexively check Wi-Fi when
+                  // the LangGraph multi-agent run is just slow.
                   final errStr = e.toString();
-                  final isTransport = errStr.contains('DioException') ||
+                  final isReceiveTimeout = errStr.contains('receiveTimeout') ||
+                      errStr.contains('receive timeout');
+                  final isConnectionError = errStr.contains('SocketException') ||
+                      errStr.contains('connectionError') ||
+                      errStr.contains('Failed host lookup');
+                  final isOtherTransport = errStr.contains('DioException') ||
                       errStr.contains('connection') ||
-                      errStr.contains('timeout') ||
-                      errStr.contains('SocketException');
-                  final headline = isTransport
-                      ? "Couldn't reach the coach."
-                      : 'Something went wrong loading your chat.';
+                      errStr.contains('timeout');
+                  final headline = isReceiveTimeout
+                      ? 'Coach is thinking longer than usual.'
+                      : (isConnectionError
+                          ? "Can't reach the coach right now."
+                          : (isOtherTransport
+                              ? "Couldn't reach the coach."
+                              : 'Something went wrong loading your chat.'));
                   return Center(
                     key: const ValueKey('error'),
                     child: Padding(
@@ -363,7 +383,13 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                           ),
                           const SizedBox(height: 6),
                           Text(
-                            'Check your connection and try again.',
+                            // Subtitle tracks the headline so a slow
+                            // backend reads as "still working" rather than
+                            // suggesting the user's network is down.
+                            errStr.contains('receiveTimeout') ||
+                                    errStr.contains('receive timeout')
+                                ? 'Multi-agent answers can take up to two minutes — hang tight or retry.'
+                                : 'Check your connection and try again.',
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               fontSize: 13,
@@ -622,12 +648,32 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                 ),
                 child: Row(
                   children: [
-                    CoachAvatar(
-                      coach: coach,
-                      size: 30,
-                      showBorder: true,
-                      showShadow: false,
-                    ),
+                    if (showLoadingCoach)
+                      Container(
+                        width: 30,
+                        height: 30,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: (isDark
+                                  ? AppColors.cardBorder
+                                  : AppColorsLight.cardBorder)
+                              .withValues(alpha: 0.4),
+                        ),
+                        child: const Padding(
+                          padding: EdgeInsets.all(8),
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: AppColors.cyan,
+                          ),
+                        ),
+                      )
+                    else
+                      CoachAvatar(
+                        coach: coach,
+                        size: 30,
+                        showBorder: true,
+                        showShadow: false,
+                      ),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Column(

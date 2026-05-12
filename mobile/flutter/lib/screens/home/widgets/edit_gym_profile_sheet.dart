@@ -59,6 +59,25 @@ class _EditGymProfileSheetState extends ConsumerState<EditGymProfileSheet> {
   String? _selectedTrainingSplit;
   late List<int> _selectedWorkoutDays;
   late int _selectedDuration;
+  // Per-day focus pin for "Let AI Decide" split. Keys are weekday ints
+  // 0..6 (Mon=0), values are focus tokens or null (= AI picks). Persisted
+  // in `gym_profiles.day_focus_override` JSONB column.
+  Map<int, String?> _dayFocusOverride = {};
+  // Focus options shown in the per-day picker. Order matters — first
+  // entry is the default "Auto" sentinel rendered separately.
+  static const List<Map<String, String>> _focusOptions = [
+    {'id': 'upper', 'label': 'Upper Body'},
+    {'id': 'lower', 'label': 'Lower Body'},
+    {'id': 'full_body', 'label': 'Full Body'},
+    {'id': 'push', 'label': 'Push'},
+    {'id': 'pull', 'label': 'Pull'},
+    {'id': 'legs', 'label': 'Legs'},
+    {'id': 'chest', 'label': 'Chest'},
+    {'id': 'back', 'label': 'Back'},
+    {'id': 'shoulders', 'label': 'Shoulders'},
+    {'id': 'arms', 'label': 'Arms'},
+    {'id': 'core', 'label': 'Core'},
+  ];
   // User-level training preferences
   String? _selectedExperience;
   List<String> _selectedFocusAreas = [];
@@ -152,6 +171,12 @@ class _EditGymProfileSheetState extends ConsumerState<EditGymProfileSheet> {
     _selectedTrainingSplit = widget.profile.trainingSplit;
     _selectedWorkoutDays = List.from(widget.profile.workoutDays);
     _selectedDuration = widget.profile.durationMinutes;
+    // Per-day focus override lives on the gym profile but the GymProfile
+    // typed model doesn't carry it (avoids running build_runner — see
+    // memory `project_codegen_gotcha`). Fetch the raw value via a one-shot
+    // GET so the picker reflects previously-pinned days. If the field is
+    // missing (pre-migration row) we silently keep an empty map.
+    _loadDayFocusOverride();
     // Initialize user-level preferences (experience, focus areas, variety)
     final user = ref.read(authStateProvider).user;
     if (user != null) {
@@ -166,6 +191,36 @@ class _EditGymProfileSheetState extends ConsumerState<EditGymProfileSheet> {
     _nameController.dispose();
     super.dispose();
   }
+
+  Future<void> _loadDayFocusOverride() async {
+    try {
+      final apiClient = ref.read(apiClientProvider);
+      final response = await apiClient
+          .get('${ApiConstants.users}/me/gym-profiles/${widget.profile.id}');
+      if (!mounted) return;
+      final data = response.data;
+      if (data is Map<String, dynamic>) {
+        final raw = data['day_focus_override'];
+        if (raw is Map) {
+          setState(() {
+            _dayFocusOverride = {
+              for (final e in raw.entries)
+                if (e.key is String && e.value is String)
+                  int.tryParse(e.key as String) ?? -1:
+                      e.value as String,
+            }..removeWhere((k, _) => k < 0);
+          });
+        }
+      }
+    } catch (_) {
+      // Pre-migration row, network blip, or 404 — keep empty map.
+    }
+  }
+
+  bool get _isAiDecideSplit =>
+      _selectedTrainingSplit == null ||
+      _selectedTrainingSplit == 'nothing_structured' ||
+      _selectedTrainingSplit == 'dont_know';
 
   @override
   Widget build(BuildContext context) {
@@ -615,6 +670,34 @@ class _EditGymProfileSheetState extends ConsumerState<EditGymProfileSheet> {
                       textSecondary: textSecondary,
                       selectedColorObj: selectedColorObj,
                     ),
+
+                    // Per-day focus pin — only meaningful for AI-Decide
+                    // (other splits have deterministic mappings the user
+                    // explicitly opted into). Shows a chip per selected
+                    // weekday with "Auto" default and a tap-to-pick sheet.
+                    if (_isAiDecideSplit && _selectedWorkoutDays.isNotEmpty) ...[
+                      const SizedBox(height: 16),
+                      Text(
+                        'Pin focus per day (optional)',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          color: textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        "Leave on Auto for AI to decide, or pin a focus to a specific day (e.g. Tue → Upper).",
+                        style: TextStyle(fontSize: 12, color: textSecondary),
+                      ),
+                      const SizedBox(height: 8),
+                      _buildPerDayFocusPicker(
+                        isDark: isDark,
+                        textPrimary: textPrimary,
+                        textSecondary: textSecondary,
+                        selectedColorObj: selectedColorObj,
+                      ),
+                    ],
 
                     const SizedBox(height: 16),
 

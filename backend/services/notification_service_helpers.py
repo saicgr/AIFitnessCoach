@@ -9,6 +9,74 @@ from datetime import datetime
 import logging
 from services.notification_service_helpers_part2 import NotificationServicePart2
 logger = logging.getLogger(__name__)
+
+
+# ─── Nudge → Flutter routing map ─────────────────────────────────────────────
+#
+# `nudge_type` is the backend's internal categorisation (one per cron job).
+# The Flutter app routes on `data['type']` (notification_service_ext.dart:221)
+# and on `data['deep_link']` as a free-form override (app.dart fallback case).
+# Keep these two helpers in lockstep with the switch cases in
+# `_navigateToScreenForNotificationType` so a new nudge type lands on the
+# right screen without any frontend change.
+_NUDGE_TYPE_TO_FLUTTER_TYPE: Dict[str, str] = {
+    # Workout-track nudges → workout screens
+    "morning_workout": "workout_reminder",
+    "missed_workout": "workout_reminder",
+    "rest_day": "workout_reminder",
+    # Nutrition / meal nudges → nutrition tab
+    "meal_reminder": "nutrition_reminder",
+    "post_workout_meal": "nutrition_reminder",
+    "lunch_detail": "nutrition_reminder",
+    # Hydration nudges → Fuel/Water section
+    "hydration_reminder": "hydration_reminder",
+    "afternoon_patrol": "hydration_reminder",
+    # Streak + accountability nudges → achievements/streak screen
+    "streak_at_risk": "streak_alert",
+    "streak_saved": "streak_alert",
+    "streak_alert": "streak_alert",
+    "weekly_checkin": "weekly_summary",
+    "habit_reminder": "ai_coach_accountability",
+    # Merch / level / referral nudges → relevant surfaces
+    "merch_proximity": "achievement",
+    "level_milestone": "achievement",
+}
+
+
+def _flutter_type_for_nudge(nudge_type: str) -> str:
+    """Map an internal nudge_type to the Flutter app's `data['type']` token.
+
+    Guilt-tier nudges (guilt_dayN) all route to the AI coach so the user
+    lands on the chat where the proactive message is already persisted.
+    Unknown nudge types fall back to `ai_coach_accountability` for the
+    same reason — at minimum the user will see the message in chat.
+    """
+    if nudge_type.startswith("guilt_day"):
+        return "ai_coach_accountability"
+    return _NUDGE_TYPE_TO_FLUTTER_TYPE.get(nudge_type, "ai_coach_accountability")
+
+
+_FLUTTER_TYPE_TO_DEEP_LINK: Dict[str, str] = {
+    "workout_reminder": "/home",
+    "nutrition_reminder": "/nutrition",
+    "hydration_reminder": "/nutrition?tab=3&fuelSection=water",
+    "streak_alert": "/achievements",
+    "weekly_summary": "/summaries",
+    "ai_coach_accountability": "/chat",
+    "achievement": "/achievements",
+    "ai_coach": "/chat",
+}
+
+
+def _deep_link_for_nudge(nudge_type: str) -> str:
+    """Resolve a concrete go_router route for the nudge.
+
+    The Flutter side reads `data['deep_link']` before falling back to the
+    `type` switch (see app.dart fallback case added with this change), so
+    new nudge types can ship correct routing from the backend alone.
+    """
+    return _FLUTTER_TYPE_TO_DEEP_LINK.get(_flutter_type_for_nudge(nudge_type), "/home")
+
 class NotificationService(NotificationServicePart2):
     """Service for sending push notifications via FCM"""
 
@@ -1221,9 +1289,20 @@ class NotificationService(NotificationServicePart2):
                 logger.warning(f"⚠️ [Accountability] No template pool for ({nudge_type}, {accountability_intensity})")
 
         # Step 3: Send the push notification
+        #
+        # Map the internal `nudge_type` to the user-visible Flutter
+        # `type` token that `_navigateToScreenForNotificationType` in
+        # app.dart switches on, plus an explicit `deep_link` route
+        # string. Previously these nudges shipped with only
+        # `nudge_type` + `accountability=true`, which left the Flutter
+        # `data['type']` reader (notification_service_ext.dart:221)
+        # null — tapping any intraday nudge fell through to the
+        # default case and just opened the app to Home.
         data = {
             "nudge_type": nudge_type,
             "accountability": "true",
+            "type": _flutter_type_for_nudge(nudge_type),
+            "deep_link": _deep_link_for_nudge(nudge_type),
         }
         # Add chat_message_id if provided in context (set by cron after chat save)
         if context_dict.get("chat_message_id"):

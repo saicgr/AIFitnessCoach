@@ -87,11 +87,11 @@ class _ExerciseImageThumbnailState
 
   @override
   Widget build(BuildContext context) {
-    // Don't render anything if there's an error or no image (no fallback)
-    if (_hasError && !_isLoading) {
-      return const SizedBox.shrink();
-    }
-
+    // Always reserve the slot so callers (e.g. the workout thumbnail strip)
+    // can rely on N exercises producing N visible tiles. When we can't load
+    // an illustration we render a same-size placeholder rather than
+    // collapsing to SizedBox.shrink, which previously made a 4-exercise
+    // workout look like it only had 3.
     return Container(
       width: widget.size,
       height: widget.size,
@@ -101,7 +101,31 @@ class _ExerciseImageThumbnailState
         border: Border.all(color: AppColors.cardBorder),
       ),
       clipBehavior: Clip.hardEdge,
-      child: _buildContent(),
+      child: (_hasError && !_isLoading) ? _buildPlaceholder() : _buildContent(),
+    );
+  }
+
+  Widget _buildPlaceholder() {
+    final name = widget.exercise.name;
+    final initial = (name.isNotEmpty ? name[0] : '?').toUpperCase();
+    // Tile size scales; below ~32px the initial gets unreadable so fall back
+    // to the dumbbell icon alone.
+    if (widget.size < 32) {
+      return Icon(
+        Icons.fitness_center,
+        color: AppColors.cyan.withOpacity(0.7),
+        size: widget.size * 0.5,
+      );
+    }
+    return Center(
+      child: Text(
+        initial,
+        style: TextStyle(
+          fontSize: widget.size * 0.42,
+          fontWeight: FontWeight.w700,
+          color: AppColors.cyan.withOpacity(0.85),
+        ),
+      ),
     );
   }
 
@@ -141,8 +165,9 @@ class _ExerciseImageThumbnailState
           ),
         ),
       ),
-      // On network error loading the image, show empty instead of fallback icon
-      errorWidget: (_, __, ___) => const SizedBox.shrink(),
+      // On network error loading the image, show the lettered placeholder so
+      // the tile stays the same size as its siblings.
+      errorWidget: (_, __, ___) => _buildPlaceholder(),
     );
   }
 }

@@ -107,8 +107,16 @@ class _OpenAllCratesSheetState extends ConsumerState<OpenAllCratesSheet>
       );
       _buildOptions();
       if (widget.autoSelectAll) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) _selectAll();
+        // The "Open All" banner shortcut wants zero ceremony: no selection
+        // grid, no Collect button. Pre-select the best reward per date AND
+        // immediately fire the claim so the user sees the confetti / rewards
+        // reveal directly. The selection grid still briefly renders during
+        // the await, but the loader masks it (`_isCollecting=true`).
+        WidgetsBinding.instance.addPostFrameCallback((_) async {
+          if (!mounted) return;
+          _selectAll();
+          if (!mounted) return;
+          await _collectAll();
         });
       }
     } catch (e, st) {
@@ -286,6 +294,13 @@ class _OpenAllCratesSheetState extends ConsumerState<OpenAllCratesSheet>
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
 
+    // When the sheet was opened via the "Open All" banner shortcut, we
+    // claim immediately and skip the selection grid entirely \u2014 show a
+    // compact "Opening your crates\u2026" placeholder until the rewards
+    // reveal kicks in. Manual entry (single-crate tap from home banner)
+    // keeps the full grid + Collect flow.
+    final autoFlow = widget.autoSelectAll && !_showRewards;
+
     return SafeArea(
       top: false,
       child: Stack(
@@ -299,7 +314,11 @@ class _OpenAllCratesSheetState extends ConsumerState<OpenAllCratesSheet>
                 child: Column(
                   children: [
                     Text(
-                      _showRewards ? '\uD83C\uDF89 Rewards!' : '\uD83C\uDF81 Open Your Crates',
+                      _showRewards
+                          ? '\uD83C\uDF89 Rewards!'
+                          : (autoFlow
+                              ? '\uD83C\uDF81 Opening your crates\u2026'
+                              : '\uD83C\uDF81 Open Your Crates'),
                       style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
@@ -307,7 +326,7 @@ class _OpenAllCratesSheetState extends ConsumerState<OpenAllCratesSheet>
                       ),
                     ),
                     const SizedBox(height: 6),
-                    if (!_showRewards)
+                    if (!_showRewards && !autoFlow)
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -339,10 +358,35 @@ class _OpenAllCratesSheetState extends ConsumerState<OpenAllCratesSheet>
 
               if (_showRewards)
                 _buildRewardsSummary(textPrimary, textSecondary)
+              else if (autoFlow)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 56),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const SizedBox(
+                        width: 36,
+                        height: 36,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 3,
+                          color: Color(0xFFFFB300),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        '$_requiredSelections ${_requiredSelections == 1 ? 'crate' : 'crates'}',
+                        style: TextStyle(fontSize: 14, color: textSecondary),
+                      ),
+                    ],
+                  ),
+                )
               else
                 _buildCrateGrid(isDark, textPrimary, textSecondary),
 
-              // Action button
+              // Action button — hidden during the autoFlow loader since the
+              // user has nothing to confirm; Done shows up automatically
+              // once `_showRewards` flips on.
+              if (!autoFlow)
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
                 child: SizedBox(

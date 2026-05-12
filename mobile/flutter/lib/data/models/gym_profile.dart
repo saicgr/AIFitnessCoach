@@ -455,6 +455,12 @@ class GymProfileUpdate {
   final List<String>? goals;
   @JsonKey(name: 'focus_areas')
   final List<String>? focusAreas;
+  /// Per-weekday focus pin for "Let AI Decide". Keys are weekday ints
+  /// 0..6 (Mon=0) as strings; values are focus tokens (upper / lower /
+  /// full_body / push / pull / legs / chest / back / shoulders / arms /
+  /// core). See migration 2057_gym_profiles_day_focus_override.sql.
+  @JsonKey(name: 'day_focus_override')
+  final Map<String, String>? dayFocusOverride;
   @JsonKey(name: 'current_program_id')
   final String? currentProgramId;
   @JsonKey(name: 'program_custom_name')
@@ -486,6 +492,7 @@ class GymProfileUpdate {
     this.durationMinutesMax,
     this.goals,
     this.focusAreas,
+    this.dayFocusOverride,
     this.currentProgramId,
     this.programCustomName,
   });

@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'api_client.dart';
 import 'health_service.dart';
 
@@ -15,20 +17,56 @@ class ActivityService {
   final ApiClient _apiClient;
 
   // Cached "consent denied" flag — once the backend rejects sync with 403
-  // (no health-data consent), stop hammering the endpoint until the user
-  // restarts the app or toggles consent. Prevents the 403-spam we saw in
-  // production logs.
+  // (no health-data consent), stop hammering the endpoint. Persisted to
+  // SharedPreferences so it survives app restarts (without persistence the
+  // gate reset on every launch and we kept re-spamming production).
+  // Cleared by Settings → Privacy when the user toggles consent back on.
+  static const _kConsentDeniedKey = 'activity_health_consent_denied';
   bool _consentDenied = false;
+  bool _consentLoaded = false;
 
-  ActivityService(this._apiClient);
+  ActivityService(this._apiClient) {
+    _loadConsentFlag();
+  }
+
+  Future<void> _loadConsentFlag() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      _consentDenied = prefs.getBool(_kConsentDeniedKey) ?? false;
+    } catch (_) {
+      _consentDenied = false;
+    } finally {
+      _consentLoaded = true;
+    }
+  }
+
+  Future<void> _persistConsentDenied() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_kConsentDeniedKey, true);
+    } catch (_) {}
+  }
+
+  /// Call from Settings when the user re-enables health-data consent so the
+  /// next sync attempt actually hits the wire.
+  Future<void> resetConsentGate() async {
+    _consentDenied = false;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_kConsentDeniedKey);
+    } catch (_) {}
+  }
 
   /// Sync daily activity to backend
   Future<Map<String, dynamic>?> syncActivity({
     required String userId,
     required DailyActivity activity,
   }) async {
+    if (!_consentLoaded) {
+      await _loadConsentFlag();
+    }
     if (_consentDenied) {
-      debugPrint('⏭️ [Activity] Sync skipped — health consent denied for this session');
+      debugPrint('⏭️ [Activity] Sync skipped — health consent denied (persisted)');
       return null;
     }
     try {
@@ -74,7 +112,8 @@ class ActivityService {
       final msg = e.toString();
       if (msg.contains('403') || msg.contains('Forbidden')) {
         _consentDenied = true;
-        debugPrint('🚫 [Activity] Health consent missing — disabling sync for this session');
+        unawaited(_persistConsentDenied());
+        debugPrint('🚫 [Activity] Health consent missing — sync gated until user re-enables');
       } else {
         debugPrint('❌ [Activity] Error syncing activity: $e');
       }
@@ -157,6 +196,13 @@ class ActivityService {
     required String userId,
     required List<DailyActivity> activities,
   }) async {
+    if (!_consentLoaded) {
+      await _loadConsentFlag();
+    }
+    if (_consentDenied) {
+      debugPrint('⏭️ [Activity] Batch sync skipped — health consent denied (persisted)');
+      return null;
+    }
     try {
       debugPrint('🏃 [Activity] Batch syncing ${activities.length} days...');
 
@@ -190,7 +236,14 @@ class ActivityService {
       }
       return null;
     } catch (e) {
-      debugPrint('❌ [Activity] Error batch syncing: $e');
+      final msg = e.toString();
+      if (msg.contains('403') || msg.contains('Forbidden')) {
+        _consentDenied = true;
+        unawaited(_persistConsentDenied());
+        debugPrint('🚫 [Activity] Health consent missing — batch sync gated until user re-enables');
+      } else {
+        debugPrint('❌ [Activity] Error batch syncing: $e');
+      }
       return null;
     }
   }

@@ -467,7 +467,11 @@ class _NextWorkoutCardState extends ConsumerState<NextWorkoutCard> {
               ),
             ),
 
-            // Exercise preview strip at bottom - tappable to view workout detail
+            // Exercise preview strip at bottom - tappable to view workout
+            // detail. Tiles shrink-to-fit so the full count is always
+            // visible (no hidden off-screen tiles). Beyond 14 tiles we
+            // truncate to "12 + (+N more)" so individual tiles stay
+            // readable.
             if (exercises.isNotEmpty)
               GestureDetector(
                 onTap: () {
@@ -482,21 +486,57 @@ class _NextWorkoutCardState extends ConsumerState<NextWorkoutCard> {
                       bottom: Radius.circular(15),
                     ),
                   ),
-                  child: ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 8,
-                    ),
-                    itemCount: exercises.length,
-                    itemBuilder: (context, index) {
-                      final exercise = exercises[index];
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: ExerciseImageThumbnail(
-                          exercise: exercise,
-                          size: 44,
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      const hPad = 12.0;
+                      const gap = 8.0;
+                      const maxTile = 44.0;
+                      const minTile = 28.0;
+                      final available = constraints.maxWidth - hPad * 2;
+                      final total = exercises.length;
+                      // Reserve a slot for the "+N more" badge if we
+                      // would otherwise shrink below the readability floor.
+                      double tileFor(int n) =>
+                          (available - (n - 1) * gap) / n;
+                      var visible = total;
+                      var tileSize = tileFor(visible).clamp(minTile, maxTile);
+                      if (tileFor(total) < minTile) {
+                        // Find the largest `visible` count whose tile size
+                        // is >= minTile, leaving room for the +N badge.
+                        visible = ((available + gap) / (minTile + gap))
+                            .floor()
+                            .clamp(1, total - 1);
+                        tileSize =
+                            tileFor(visible + 1).clamp(minTile, maxTile);
+                      }
+                      final remaining = total - visible;
+                      return ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        physics: const NeverScrollableScrollPhysics(),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: hPad,
+                          vertical: 8,
                         ),
+                        itemCount: visible + (remaining > 0 ? 1 : 0),
+                        itemBuilder: (context, index) {
+                          if (index < visible) {
+                            return Padding(
+                              padding: EdgeInsets.only(
+                                right: index == visible - 1 && remaining == 0
+                                    ? 0
+                                    : gap,
+                              ),
+                              child: ExerciseImageThumbnail(
+                                exercise: exercises[index],
+                                size: tileSize.toDouble(),
+                              ),
+                            );
+                          }
+                          return _MoreBadge(
+                            count: remaining,
+                            size: tileSize.toDouble(),
+                          );
+                        },
                       );
                     },
                   ),
@@ -504,6 +544,34 @@ class _NextWorkoutCardState extends ConsumerState<NextWorkoutCard> {
               ),
           ],
         ),
+    );
+  }
+}
+
+class _MoreBadge extends StatelessWidget {
+  final int count;
+  final double size;
+  const _MoreBadge({required this.count, required this.size});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size,
+      height: size,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: AppColors.elevated,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppColors.cardBorder),
+      ),
+      child: Text(
+        '+$count',
+        style: TextStyle(
+          fontSize: size * 0.32,
+          fontWeight: FontWeight.w700,
+          color: AppColors.textSecondary,
+        ),
+      ),
     );
   }
 }

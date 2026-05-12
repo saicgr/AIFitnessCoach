@@ -381,6 +381,8 @@ extension __HomeScreenStateExt on _HomeScreenState {
         return Icons.directions_walk;
       case TileType.nutritionPatterns:
         return Icons.restaurant_menu;
+      case TileType.timeline:
+        return Icons.timeline;
     }
   }
 

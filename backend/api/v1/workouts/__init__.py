@@ -35,6 +35,7 @@ from .weight_suggestions import router as weight_suggestions_router
 from .smart_weights import router as smart_weights_router
 from .set_adjustments import router as set_adjustments_router
 from .today import router as today_router
+from .screen_summary import router as screen_summary_router
 from .quick import router as quick_router
 from .batch_generation import router as batch_generation_router
 from .modifications import router as modifications_router
@@ -53,6 +54,9 @@ router = APIRouter()
 # IMPORTANT: Static routes must be included BEFORE dynamic routes like /{workout_id}
 # Today's workout endpoint (quick start widget) - must come before CRUD
 router.include_router(today_router)
+
+# Workouts-screen aggregate summary - must come before /{workout_id} CRUD route
+router.include_router(screen_summary_router)
 
 # Quick workout endpoints (5-15 min workouts for busy users) - must come before CRUD
 router.include_router(quick_router)

@@ -31,6 +31,16 @@ class ApiConstants {
   /// AI-specific receive timeout (longer for AI responses)
   static const Duration aiReceiveTimeout = Duration(minutes: 2);
 
+  /// Chat media upload (presign + S3 PUT). Default 30s `receiveTimeout` was
+  /// being hit by phone-recorded videos on cellular and surfaced as
+  /// "Failed to send media: Request timed out". 3 minutes covers a 60s
+  /// video on throttled 3G with headroom.
+  static const Duration mediaUploadTimeout = Duration(minutes: 3);
+
+  /// Connect timeout for media uploads — separate from `connectTimeout`
+  /// because cellular handoff during a long upload can exceed 25s.
+  static const Duration mediaUploadConnectTimeout = Duration(seconds: 45);
+
   /// Google OAuth Web Client ID — driven by EnvironmentConfig
   static const String googleWebClientId = EnvironmentConfig.googleWebClientId;
 

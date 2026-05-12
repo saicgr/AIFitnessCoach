@@ -241,9 +241,44 @@ def row_to_workout(row: dict) -> Workout:
     )
 
 
-def get_workout_focus(split: str, selected_days: List[int]) -> dict:
-    """Return workout focus for each day based on training split."""
+_VALID_FOCUS_OVERRIDES = {
+    "upper", "lower", "full_body", "push", "pull", "legs",
+    "chest", "back", "shoulders", "arms", "core",
+}
+
+
+def get_workout_focus(
+    split: str,
+    selected_days: List[int],
+    day_focus_override: Optional[dict] = None,
+) -> dict:
+    """Return workout focus for each day based on training split.
+
+    `day_focus_override` is an optional dict from the active gym profile's
+    `day_focus_override` JSONB column. When the user pinned a specific focus
+    to a weekday (only meaningful for split=='dont_know' aka "Let AI Decide"),
+    that pin wins over the heuristic. Pinned values are validated against
+    `_VALID_FOCUS_OVERRIDES` so a malformed payload from an old/forked client
+    can't poison the generation prompt.
+    """
+    overrides: dict = {}
+    if day_focus_override:
+        for k, v in day_focus_override.items():
+            try:
+                day_int = int(k)
+            except (TypeError, ValueError):
+                continue
+            if isinstance(v, str) and v.lower() in _VALID_FOCUS_OVERRIDES:
+                overrides[day_int] = v.lower()
+
     num_days = len(selected_days)
+
+    # Apply overrides only for the AI-Decide split — other splits have
+    # deterministic mappings the user explicitly opted into.
+    apply_overrides = overrides and (split == "dont_know" or split is None)
+
+    def _maybe_override(day: int, default: str) -> str:
+        return overrides[day] if apply_overrides and day in overrides else default
 
     if split == "full_body":
         full_body_emphases = [
@@ -261,17 +296,30 @@ def get_workout_focus(split: str, selected_days: List[int]) -> dict:
         body_parts = ["chest", "back", "shoulders", "legs", "arms", "core"]
         return {day: body_parts[i % len(body_parts)] for i, day in enumerate(selected_days)}
     elif split == "dont_know" or split is None:
+        # AI-Decide split: respect per-day pins where present, fall back to
+        # the heuristic for unpinned days. This is the only split that
+        # honours `day_focus_override` (other splits have deterministic
+        # mappings the user explicitly opted into).
         if num_days <= 3:
             full_body_emphases = ["full_body_push", "full_body_pull", "full_body_legs"]
-            return {day: full_body_emphases[i % len(full_body_emphases)] for i, day in enumerate(selected_days)}
+            return {
+                day: _maybe_override(day, full_body_emphases[i % len(full_body_emphases)])
+                for i, day in enumerate(selected_days)
+            }
         elif num_days == 4:
             focuses = ["upper", "lower", "upper", "lower"]
-            return {day: focuses[i] for i, day in enumerate(selected_days)}
+            return {
+                day: _maybe_override(day, focuses[i])
+                for i, day in enumerate(selected_days)
+            }
         elif num_days <= 6:
             focuses = ["push", "pull", "legs"] * 2
-            return {day: focuses[i] for i, day in enumerate(selected_days)}
+            return {
+                day: _maybe_override(day, focuses[i])
+                for i, day in enumerate(selected_days)
+            }
         else:
-            return {day: "full_body" for day in selected_days}
+            return {day: _maybe_override(day, "full_body") for day in selected_days}
 
     return {day: "full_body" for day in selected_days}
 

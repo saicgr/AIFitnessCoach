@@ -366,17 +366,30 @@ class _EmptyStateTipTourState extends State<EmptyStateTipTour> {
             // the highlighted control, but if they instead tap the
             // dimmed region we treat that as "I get it, skip the
             // tour" and persist the seen flag immediately.
+            //
+            // `CustomPaint` defaults to `Size.zero` when given no child
+            // and no `size`, which is why the original implementation
+            // could draw the dim/cutout in some layouts and silently
+            // render nothing in others (the painter was running but on
+            // a zero-size canvas). Forcing `Size.infinite` via the
+            // builder makes the painter cover the entire
+            // Positioned.fill region so the spotlight always renders.
             Positioned.fill(
               child: GestureDetector(
                 behavior: HitTestBehavior.opaque,
                 onTap: _dismiss,
-                child: CustomPaint(
-                  painter: _SpotlightPainter(
-                    target: rect,
-                    padding: tip.targetPadding,
-                    radius: tip.targetRadius,
-                    accent: isDark ? AppColors.cyan : AppColorsLight.cyan,
-                  ),
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    return CustomPaint(
+                      size: Size(constraints.maxWidth, constraints.maxHeight),
+                      painter: _SpotlightPainter(
+                        target: rect,
+                        padding: tip.targetPadding,
+                        radius: tip.targetRadius,
+                        accent: isDark ? AppColors.cyan : AppColorsLight.cyan,
+                      ),
+                    );
+                  },
                 ),
               ),
             ),

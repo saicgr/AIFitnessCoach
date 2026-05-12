@@ -142,6 +142,13 @@ class NotificationService {
   /// Callback to handle notification taps (for navigation)
   OnNotificationTappedCallback? onNotificationTapped;
 
+  /// Backend-provided deep-link path stashed by `_handleMessageOpenedApp`
+  /// when a push notification's data payload includes `deep_link`. Consumed
+  /// by `_navigateToScreenForNotificationType` in app.dart as a fallback
+  /// when the type-based switch falls through, so new nudge types ship
+  /// from the backend without a matching client release.
+  static String? pendingDeepLink;
+
   /// Callback for FCM token refresh - set this to sync token to backend
   OnTokenRefreshCallback? onTokenRefresh;
 

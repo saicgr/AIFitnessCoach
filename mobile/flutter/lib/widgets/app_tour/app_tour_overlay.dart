@@ -254,10 +254,16 @@ class _AppTourOverlayState extends ConsumerState<AppTourOverlay>
                   final tabBarInset = 52.0 +
                       MediaQuery.of(context).padding.bottom +
                       8.0;
+                  // `Size.infinite` so the painter covers the full
+                  // Positioned.fill canvas. CustomPaint without an
+                  // explicit size or child renders at zero size — which
+                  // matched the user-reported "tooltip card with no
+                  // dim/cutout visible" symptom on Discover.
                   if (hasGradient) {
                     return AnimatedBuilder(
                       animation: _gradientController,
                       builder: (_, __) => CustomPaint(
+                        size: Size.infinite,
                         painter: AppTourSpotlightPainter(
                           spotlightRect: paintRect,
                           ringColor: accentColor,
@@ -271,6 +277,7 @@ class _AppTourOverlayState extends ConsumerState<AppTourOverlay>
                     );
                   }
                   return CustomPaint(
+                    size: Size.infinite,
                     painter: AppTourSpotlightPainter(
                       spotlightRect: paintRect,
                       ringColor: accentColor,

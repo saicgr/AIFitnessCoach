@@ -102,7 +102,20 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
       );
     } else {
       // Page 0 → bail out of the paywall entirely.
-      if (context.canPop()) {
+      //
+      // Bug fix: `context.pop()` (go_router) only pops a single
+      // sub-route inside the paywall's nested Navigator, which on
+      // soft-paywall trial screens landed the user on the NEXT paywall
+      // variant instead of dismissing back to the previous app screen.
+      // Use the ROOT Navigator so the entire paywall stack pops in one
+      // hop — pre-trial flows still pop normally; post-trial hard
+      // paywall keeps `PopScope(canPop: false)` so this is a no-op.
+      final rootNav = Navigator.of(context, rootNavigator: true);
+      if (rootNav.canPop()) {
+        rootNav.pop();
+      } else if (context.canPop()) {
+        // Fallback for edge cases where the paywall was pushed via
+        // go_router without a nested Navigator above it.
         context.pop();
       }
     }

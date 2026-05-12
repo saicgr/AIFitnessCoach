@@ -494,12 +494,46 @@ class XPRepository {
   /// Claim a daily crate (pick 1 of 3 available).
   /// [crateDate] is optional — pass an ISO date string (e.g. '2026-04-05')
   /// to claim a past unclaimed crate.
+  ///
+  /// The Supabase RPC backing this endpoint has been known to run long
+  /// (cold connection-pool wake, leaderboard recompute trigger). We
+  /// raise the per-call timeout well above the global 25 s connect /
+  /// 30 s receive defaults so a slow-but-eventually-successful claim
+  /// doesn't surface a misleading "claim failed" error to the user.
+  /// Idempotency note: the RPC is `INSERT … ON CONFLICT DO NOTHING`-shaped
+  /// so a single retry on transport timeout is safe — the second call
+  /// returns "already claimed" if the first actually landed.
   Future<CrateRewardResult> claimDailyCrate(String crateType, {String? crateDate}) async {
     final data = <String, dynamic>{'crate_type': crateType};
     if (crateDate != null) data['crate_date'] = crateDate;
     debugPrint('🔍 [Crate] POST /xp/claim-daily-crate body=$data');
+    final claimOptions = Options(
+      sendTimeout: const Duration(seconds: 45),
+      receiveTimeout: const Duration(seconds: 45),
+    );
     try {
-      final response = await _client.post('/xp/claim-daily-crate', data: data);
+      Response response;
+      try {
+        response = await _client.post(
+          '/xp/claim-daily-crate',
+          data: data,
+          options: claimOptions,
+        );
+      } on DioException catch (e) {
+        // Retry once on pure transport timeout. Real HTTP errors (4xx/5xx
+        // from the server) skip the retry — they don't get faster on
+        // another round-trip and we don't want to amplify load.
+        final isTimeout = e.type == DioExceptionType.connectionTimeout ||
+            e.type == DioExceptionType.receiveTimeout ||
+            e.type == DioExceptionType.sendTimeout;
+        if (!isTimeout) rethrow;
+        debugPrint('⏱️ [Crate] First claim timed out, retrying once...');
+        response = await _client.post(
+          '/xp/claim-daily-crate',
+          data: data,
+          options: claimOptions,
+        );
+      }
       debugPrint('✅ [Crate] Claim response: ${response.statusCode} body=${response.data}');
       return CrateRewardResult.fromJson(response.data);
     } on DioException catch (e, stack) {

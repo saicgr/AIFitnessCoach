@@ -21,6 +21,7 @@ import '../../data/repositories/auth_repository.dart';
 import '../../data/providers/beast_mode_provider.dart';
 import '../../data/services/haptic_service.dart';
 import '../../widgets/app_snackbar.dart';
+import '../../widgets/pill_search_bar.dart';
 import '../../widgets/delete_account_flow.dart';
 import '../../widgets/app_tour/app_tour_controller.dart';
 import '../../widgets/level_up_dialog.dart';
@@ -1139,7 +1140,19 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 );
               },
               child: _isSearchExpanded
-                  ? _buildExpandedSearchBar(isDark, textPrimary, textMuted)
+                  ? PillSearchBar(
+                      key: const ValueKey('settings_pill_search'),
+                      controller: _searchController,
+                      focusNode: _searchFocusNode,
+                      onChanged: _onSearchChanged,
+                      hintText: 'Search settings',
+                      autofocus: true,
+                      onClear: () {
+                        if (mounted) {
+                          setState(() => _isSearchExpanded = false);
+                        }
+                      },
+                    )
                   : _buildSearchFAB(isDark),
             ),
           ),

@@ -14,6 +14,8 @@ import '../../data/models/recipe.dart';
 import '../../data/providers/nutrition_preferences_provider.dart';
 import '../../data/repositories/nutrition_repository.dart';
 import '../../data/services/api_client.dart';
+import '../../data/services/data_cache_service.dart';
+import '../../data/services/haptic_service.dart';
 import '../../data/providers/xp_provider.dart';
 import '../../widgets/glass_sheet.dart';
 import 'widgets/glass_nutrition_tab_bar.dart';
@@ -128,6 +130,10 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
       initialIndex: widget.initialTab,
       animationDuration: const Duration(milliseconds: 260),
     );
+    // Hydrate disk-cached micros + recipes BEFORE kicking the network so
+    // the first paint shows real data instead of empty / skeleton. The
+    // network refresh that follows is stale-while-revalidate.
+    _hydrateFromDisk();
     _loadData();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(posthogServiceProvider).capture(eventName: 'nutrition_screen_viewed');
@@ -194,22 +200,27 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
             textColor: Colors.white,
             onPressed: () {
               if (!mounted) return;
-              showModalBottomSheet(
+              // Match the canonical glass-sheet pattern used by
+              // daily_tab.dart's `_showEditTargetsSheet`. Previously this
+              // entry-point used a raw `showModalBottomSheet` with a solid
+              // grey container — no blur, no drag handle, and the floating
+              // nav bar rendered on top because `useRootNavigator` defaulted
+              // to false. `showGlassSheet` handles both the glassmorphism
+              // and root-navigator placement.
+              ref.read(floatingNavBarVisibleProvider.notifier).state = false;
+              showGlassSheet(
                 context: context,
-                isScrollControlled: true,
-                backgroundColor: Colors.transparent,
-                builder: (_) => Container(
-                  decoration: BoxDecoration(
-                    color: isDark ? AppColors.surface : AppColorsLight.surface,
-                    borderRadius:
-                        const BorderRadius.vertical(top: Radius.circular(20)),
-                  ),
+                builder: (_) => GlassSheet(
                   child: EditTargetsSheet(
                     userId: _userId ?? '',
                     onSaved: () {},
                   ),
                 ),
-              );
+              ).whenComplete(() {
+                if (mounted) {
+                  ref.read(floatingNavBarVisibleProvider.notifier).state = true;
+                }
+              });
             },
           ),
         ),
@@ -414,10 +425,55 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
     }
   }
 
+  // SharedPreferences-backed cache keys (TTL handled inside DataCacheService).
+  // Per-date for micros (rolls over at midnight), global for recipes (recent
+  // list rarely changes).
+  static const String _diskRecipesKey = 'cache_nutrition_recent_recipes';
+  String _diskMicrosKey(String userId, String date) =>
+      'cache_nutrition_micros_${userId}_$date';
+
+  /// Pre-hydrate state from on-disk cache so the first frame paints real
+  /// data instead of an empty Daily/Fuel tab. Fire-and-forget — the
+  /// concurrent `_loadData` network call refreshes whatever lands here.
+  Future<void> _hydrateFromDisk() async {
+    try {
+      final cache = DataCacheService.instance;
+
+      // Recipes — used by Recipes tab + Daily tab quick suggestions.
+      final cachedRecipes = await cache.getCachedList(_diskRecipesKey);
+      if (cachedRecipes != null && cachedRecipes.isNotEmpty && mounted) {
+        final recipes = cachedRecipes
+            .map((j) => RecipeSummary.fromJson(j))
+            .toList(growable: false);
+        _cachedRecipes = recipes;
+        _cachedRecipesTime = DateTime.now();
+        setState(() => _recipes = recipes);
+      }
+
+      // Micros — needs userId, which we may not have yet. The userId
+      // resolves immediately from cached auth state on most paths, so
+      // try it; if absent we just skip and let the network call fill
+      // in (still no spinner since the Daily tab handles null gracefully).
+      final userId = await ref.read(apiClientProvider).getUserId();
+      if (userId == null) return;
+      final dateStr = DateFormat('yyyy-MM-dd').format(_selectedDate);
+      final cachedMicros = await cache.getCached(_diskMicrosKey(userId, dateStr));
+      if (cachedMicros != null && mounted) {
+        final summary = DailyMicronutrientSummary.fromJson(cachedMicros);
+        _cachedMicronutrients = summary;
+        _cachedMicronutrientsKey = '$userId:$dateStr';
+        _cachedMicronutrientsTime = DateTime.now();
+        setState(() => _micronutrientSummary = summary);
+      }
+    } catch (e) {
+      debugPrint('⚠️ [Nutrition] disk hydrate failed: $e');
+    }
+  }
+
   Future<void> _loadMicronutrients(String userId, String date) async {
     final cacheKey = '$userId:$date';
 
-    // Serve cached data instantly if available and fresh
+    // Serve in-memory cached data instantly if available and fresh
     if (_cachedMicronutrientsKey == cacheKey &&
         _cachedMicronutrients != null &&
         _cachedMicronutrientsTime != null &&
@@ -429,7 +485,7 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
       return;
     }
 
-    // Show stale cache while fetching (if same key)
+    // Show stale cache while fetching (if same key) so the UI never blanks.
     if (_cachedMicronutrientsKey == cacheKey && _cachedMicronutrients != null) {
       _micronutrientSummary = _cachedMicronutrients;
     }
@@ -441,10 +497,12 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
         userId: userId,
         date: date,
       );
-      // Update cache
+      // Update in-memory + persistent caches.
       _cachedMicronutrients = summary;
       _cachedMicronutrientsKey = cacheKey;
       _cachedMicronutrientsTime = DateTime.now();
+      unawaited(DataCacheService.instance
+          .cache(_diskMicrosKey(userId, date), summary.toJson()));
       if (mounted) {
         setState(() {
           _micronutrientSummary = summary;
@@ -460,7 +518,7 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
   }
 
   Future<void> _loadRecipes(String userId, {bool forceRefresh = false}) async {
-    // Use cached recipes if fresh enough
+    // Use in-memory cache if fresh enough
     if (!forceRefresh &&
         _cachedRecipes != null &&
         _cachedRecipesTime != null &&
@@ -481,6 +539,10 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
         setState(() => _recipes = response.items);
         _cachedRecipes = response.items;
         _cachedRecipesTime = DateTime.now();
+        unawaited(DataCacheService.instance.cacheList(
+          _diskRecipesKey,
+          response.items.map((r) => r.toJson()).toList(),
+        ));
       }
     } catch (e) {
       debugPrint('Error loading recipes: $e');
@@ -678,10 +740,8 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
       Positioned(
         left: 0,
         right: 0,
-        // Sit one 8px gap above the floating MainShell nav bar (52px tall).
-        // The previous +80 inset left a noticeable empty band between the
-        // pill row and the nav, breaking the "thumb zone" intent.
-        bottom: MediaQuery.of(context).viewPadding.bottom + 60,
+        // Sit a visible gap above the floating MainShell nav bar (52px tall).
+        bottom: MediaQuery.of(context).viewPadding.bottom + 76,
         child: Center(
           child: GlassNutritionTabBar(
             controller: _tabController,
@@ -710,16 +770,30 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
         children: [
           // Title — date controls moved to the NutritionDateStrip below this
           // row. Showing the current date label here keeps the header
-          // grounded with vertical-rhythm context.
+          // grounded with vertical-rhythm context. Tapping the label when
+          // viewing a non-today date snaps the selection back to today.
           Expanded(
-            child: Text(
-              _dateLabel,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-                color: textPrimary,
+            child: Semantics(
+              button: !_isToday,
+              label: _isToday ? _dateLabel : 'Jump to today',
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: _isToday
+                    ? null
+                    : () {
+                        HapticService.light();
+                        _jumpToDate(DateTime.now());
+                      },
+                child: Text(
+                  _dateLabel,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: textPrimary,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
-              overflow: TextOverflow.ellipsis,
             ),
           ),
           // History

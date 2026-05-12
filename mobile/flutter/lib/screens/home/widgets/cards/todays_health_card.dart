@@ -132,6 +132,8 @@ class _TodaysHealthCardState extends ConsumerState<TodaysHealthCard> {
     final avgHr = activity?.avgHeartRate;
     final minHr = activity?.minHeartRate;
     final maxHr = activity?.maxHeartRate;
+    final restingHr = activity?.restingHeartRate;
+    final hasHrRange = minHr != null && maxHr != null && maxHr > minHr;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -256,61 +258,64 @@ class _TodaysHealthCardState extends ConsumerState<TodaysHealthCard> {
 
               const SizedBox(height: 14),
 
-              // ─── Metric tiles. Use LayoutBuilder + Wrap so on narrow
-              // screens (iPhone SE, split-screen Android) tiles flow to a
-              // second row instead of overflowing. Each tile gets an
-              // identical horizontal slot so widths stay consistent —
-              // previously the tile widths drifted because Active Energy's
-              // value ("1,234") forced its column wider than Avg HR's
-              // ("78 bpm"), making the row look uneven.
-              LayoutBuilder(
-                builder: (context, constraints) {
-                  // 8px gap between tiles → halve when computing per-tile
-                  // width so two tiles fit exactly without overflowing.
-                  final tileWidth = (constraints.maxWidth - 8) / 2;
-                  final tiles = <Widget>[
-                    SizedBox(
-                      width: tileWidth,
-                      child: _MetricTile(
-                        icon: Icons.local_fire_department_rounded,
-                        iconColor: AppColors.orange,
-                        value: activeCal != null ? '$activeCal' : '—',
-                        unit: 'cal',
-                        label: 'Active Energy',
-                        isDark: isDark,
-                      ),
+              // ─── Metric tiles in a 2×2 grid (4 equal-width slots). Using
+              // `Expanded` inside two `Row`s guarantees every tile is the
+              // same width regardless of value length — previously the
+              // HR-Range full-width tile sat under two narrower tiles,
+              // which read as misaligned. The second row's right slot
+              // shows Resting HR when available, or a placeholder so the
+              // grid stays symmetric.
+              Row(
+                children: [
+                  Expanded(
+                    child: _MetricTile(
+                      icon: Icons.local_fire_department_rounded,
+                      iconColor: AppColors.orange,
+                      value: activeCal != null ? '$activeCal' : '—',
+                      unit: 'cal',
+                      label: 'Active Energy',
+                      isDark: isDark,
                     ),
-                    SizedBox(
-                      width: tileWidth,
-                      child: _MetricTile(
-                        icon: Icons.favorite_rounded,
-                        iconColor: AppColors.error,
-                        value: avgHr != null ? '$avgHr' : '—',
-                        unit: 'bpm',
-                        label: 'Avg HR',
-                        isDark: isDark,
-                      ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _MetricTile(
+                      icon: Icons.favorite_rounded,
+                      iconColor: AppColors.error,
+                      value: avgHr != null ? '$avgHr' : '—',
+                      unit: 'bpm',
+                      label: 'Avg HR',
+                      isDark: isDark,
                     ),
-                  ];
-                  return Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: tiles,
-                  );
-                },
+                  ),
+                ],
               ),
-              if (minHr != null && maxHr != null && maxHr > minHr) ...[
-                const SizedBox(height: 8),
-                _MetricTile(
-                  icon: Icons.show_chart_rounded,
-                  iconColor: AppColors.purple,
-                  value: '$minHr–$maxHr',
-                  unit: 'bpm',
-                  label: 'HR Range',
-                  isDark: isDark,
-                  fullWidth: true,
-                ),
-              ],
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    child: _MetricTile(
+                      icon: Icons.show_chart_rounded,
+                      iconColor: AppColors.purple,
+                      value: hasHrRange ? '$minHr–$maxHr' : '—',
+                      unit: 'bpm',
+                      label: 'HR Range',
+                      isDark: isDark,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _MetricTile(
+                      icon: Icons.bedtime_outlined,
+                      iconColor: AppColors.teal,
+                      value: restingHr != null ? '$restingHr' : '—',
+                      unit: 'bpm',
+                      label: 'Resting HR',
+                      isDark: isDark,
+                    ),
+                  ),
+                ],
+              ),
             ],
           ),
         ),
@@ -337,7 +342,6 @@ class _MetricTile extends StatelessWidget {
   final String unit;
   final String label;
   final bool isDark;
-  final bool fullWidth;
 
   const _MetricTile({
     required this.icon,
@@ -346,7 +350,6 @@ class _MetricTile extends StatelessWidget {
     required this.unit,
     required this.label,
     required this.isDark,
-    this.fullWidth = false,
   });
 
   @override
