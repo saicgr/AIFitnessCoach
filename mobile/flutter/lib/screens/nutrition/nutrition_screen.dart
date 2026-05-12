@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/services/rating_prompt_service.dart';
@@ -12,6 +13,8 @@ import '../../data/models/nutrition.dart';
 import '../../data/models/micronutrients.dart';
 import '../../data/models/recipe.dart';
 import '../../data/providers/nutrition_preferences_provider.dart';
+import '../../data/providers/recipe_save_jobs_provider.dart';
+import '../../data/providers/schedule_save_jobs_provider.dart';
 import '../../data/repositories/nutrition_repository.dart';
 import '../../data/services/api_client.dart';
 import '../../data/providers/xp_provider.dart';
@@ -28,6 +31,8 @@ import 'recipe_builder_sheet.dart';
 import 'weekly_checkin_sheet.dart';
 import 'widgets/daily_tab.dart';
 import 'widgets/edit_targets_sheet.dart';
+import 'widgets/schedule_meal_sheet.dart';
+import 'widgets/share_meal_sheet.dart';
 import 'widgets/nutrition_error_state.dart';
 import 'widgets/my_foods_sheet.dart';
 import 'widgets/nutrition_date_strip.dart';
@@ -629,6 +634,13 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
                             onUpdateMealNotes: (logId, notes) => _updateMealNotes(logId, notes),
                             onUpdateMealMood: (logId, {String? moodBefore, String? moodAfter, int? energyLevel}) => _updateMealMood(logId, moodBefore: moodBefore, moodAfter: moodAfter, energyLevel: energyLevel),
                             onSaveFoodToFavorites: (meal) => _saveFoodToFavorites(meal),
+                            onSaveMealAsRecipe: (meal, {int? itemIndex, bool createCookEvent = false}) =>
+                                _saveMealAsRecipe(meal, itemIndex: itemIndex, createCookEvent: createCookEvent),
+                            onScheduleMeal: (meal, {SchedulePreset initialPreset = SchedulePreset.tomorrowOnly, int? itemIndex}) =>
+                                _scheduleMealFromLog(meal, initialPreset: initialPreset, itemIndex: itemIndex),
+                            onAddToShoppingList: (meal, {int? itemIndex}) =>
+                                _addMealToShoppingList(meal, itemIndex: itemIndex),
+                            onShareMeal: (meal) => _shareMeal(meal),
                             onFetchItemEdits: _fetchItemEdits,
                             apiClient: ref.read(apiClientProvider),
                             // Fuel tab (index 3) now hosts both Nutrients and Water pill toggles
@@ -1078,10 +1090,25 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
         eventName: 'food_log_copied',
         properties: <String, Object>{'food_log_id': mealId, 'target_meal_type': targetMealType},
       );
+      final notifier = ref.read(nutritionProvider.notifier);
       final repository = ref.read(nutritionRepositoryProvider);
-      await repository.copyFoodLog(logId: mealId, mealType: targetMealType);
+      final response = await repository.copyFoodLog(logId: mealId, mealType: targetMealType);
       _cachedMicronutrientsTime = null;
-      await ref.read(nutritionProvider.notifier).refreshAll(_userId!);
+      // Splice the new log locally so the UI updates without a refreshAll
+      // round-trip. Backend response carries new_id + meal_type only; we
+      // clone the source FoodLog with those overrides + a fresh logged_at
+      // (server uses now() per copy_food_log endpoint).
+      final meals = ref.read(nutritionProvider).todaySummary?.meals ?? const <FoodLog>[];
+      final srcIdx = meals.indexWhere((m) => m.id == mealId);
+      final newId = response['new_id'] as String?;
+      if (srcIdx >= 0 && newId != null) {
+        final returnedType = (response['meal_type'] as String?) ?? targetMealType;
+        final json = meals[srcIdx].toJson()
+          ..['id'] = newId
+          ..['meal_type'] = returnedType
+          ..['logged_at'] = DateTime.now().toUtc().toIso8601String();
+        notifier.spliceRawLog(FoodLog.fromJson(json), _userId!);
+      }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -1095,9 +1122,10 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
       debugPrint('Error copying meal: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Failed to copy meal'),
+          SnackBar(
+            content: Text('Couldn’t copy meal: ${_friendlyApiError(e)}'),
             behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 5),
           ),
         );
       }
@@ -1154,7 +1182,11 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
       debugPrint('Error copying item as standalone: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to copy item'), behavior: SnackBarBehavior.floating),
+          SnackBar(
+            content: Text('Couldn’t copy item: ${_friendlyApiError(e)}'),
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 5),
+          ),
         );
       }
     }
@@ -1221,14 +1253,197 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
       debugPrint('Error moving item as standalone: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to move item'), behavior: SnackBarBehavior.floating),
+          SnackBar(
+            content: Text('Couldn’t move item: ${_friendlyApiError(e)}'),
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 5),
+          ),
         );
       }
     }
   }
 
+  /// Background Save-as-Recipe. Returns immediately so the user can keep
+  /// scrolling / switch tabs; the AI enrichment runs server-side and a
+  /// completion toast surfaces via `RecipeSaveJobsListener` mounted in
+  /// `app.dart`. The toast carries a **View** action that pushes
+  /// RecipeDetailScreen — so even users who navigate away mid-job get back
+  /// to the new recipe in one tap.
+  ///
+  /// `itemIndex` is non-null when the user invoked from a per-item long
+  /// press (e.g. "Save 'Prawns Curry' as recipe" from inside a multi-item
+  /// meal). The backend builds a single-ingredient recipe in that case.
+  void _saveMealAsRecipe(FoodLog meal, {int? itemIndex, bool createCookEvent = false}) {
+    if (_userId == null) return;
+    ref.read(posthogServiceProvider).capture(
+      eventName: 'food_log_save_as_recipe_invoked',
+      properties: <String, Object>{
+        'food_log_id': meal.id,
+        'item_index': itemIndex ?? -1,
+        'create_cook_event': createCookEvent,
+        'is_multi_item': meal.foodItems.length > 1,
+      },
+    );
+
+    // Resolve a friendly meal name for the toast. Per-item uses just that
+    // item's name; whole-meal uses user_query when present, falling back to
+    // joined item names so the user sees what's being saved.
+    final mealName = (itemIndex != null && itemIndex >= 0 && itemIndex < meal.foodItems.length)
+        ? meal.foodItems[itemIndex].name
+        : (meal.userQuery?.trim().isNotEmpty == true
+            ? meal.userQuery!
+            : meal.foodItems.map((f) => f.name).take(3).join(' + '));
+
+    final notifier = ref.read(recipeSaveJobsProvider.notifier);
+    if (notifier.isPending(meal.id, itemIndex)) {
+      // Double-tap protection — silently drop, no second toast.
+      return;
+    }
+    notifier.enqueue(
+      logId: meal.id,
+      itemIndex: itemIndex,
+      mealName: mealName,
+      createCookEvent: createCookEvent,
+    );
+
+    // Immediate feedback so the user knows their tap registered. Real
+    // success / error toast comes from the global listener.
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text("Cooking up your recipe in the background…"),
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 3),
+      ),
+    );
+  }
+
+  /// Open the single-meal share sheet (renders meal card, save / share via
+  /// share_plus). Reuses the same Instagram-Stories capture pipeline as the
+  /// 4-template `ShareNutritionSheet` — see share_meal_sheet.dart.
+  Future<void> _shareMeal(FoodLog meal) async {
+    ref.read(posthogServiceProvider).capture(
+      eventName: 'food_log_shared_invoked',
+      properties: <String, Object>{'food_log_id': meal.id},
+    );
+    await ShareSingleMealSheet.show(context, meal);
+  }
+
+  /// Add a logged meal (or one item from it) to the user's active grocery
+  /// list. Backend dedupes by ingredient_name_normalized — "Idli"+"idli"
+  /// collapse to one row. Surfaces a snackbar with the merge count + a
+  /// **View** action that pushes the existing grocery list screen.
+  Future<void> _addMealToShoppingList(FoodLog meal, {int? itemIndex}) async {
+    if (_userId == null) return;
+    try {
+      ref.read(posthogServiceProvider).capture(
+        eventName: 'food_log_added_to_shopping_list',
+        properties: <String, Object>{
+          'food_log_id': meal.id,
+          'item_index': itemIndex ?? -1,
+        },
+      );
+      final result = await ref
+          .read(nutritionRepositoryProvider)
+          .addLogToShoppingList(logId: meal.id, itemIndex: itemIndex);
+      if (!mounted) return;
+      final n = result.itemsAdded;
+      final m = result.itemsMerged;
+      final label = m > 0
+          ? 'Added $n + merged $m into ${result.listName}'
+          : 'Added $n items to ${result.listName}';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(label),
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 4),
+        ),
+      );
+    } catch (e) {
+      debugPrint('Error adding to shopping list: $e');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Couldn’t add to shopping list: ${_friendlyApiError(e)}"),
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 5),
+        ),
+      );
+    }
+  }
+
+  /// Open the cadence picker sheet and dispatch the schedule call as a
+  /// background job. Uses the same fire-and-forget toast pattern as
+  /// Save-as-Recipe — see `recipe_save_jobs_provider.dart` for the lifecycle.
+  /// Pre-selects the [initialPreset] (used by the "Log again tomorrow"
+  /// shortcut to skip straight to ScheduleSheetResult.tomorrowOnly).
+  Future<void> _scheduleMealFromLog(
+    FoodLog meal, {
+    SchedulePreset initialPreset = SchedulePreset.tomorrowOnly,
+    int? itemIndex,
+  }) async {
+    if (_userId == null) return;
+    // Use the device IANA timezone (matches feedback_user_local_time_only).
+    final timezone = DateTime.now().timeZoneName.isNotEmpty
+        ? DateTime.now().timeZoneName
+        : 'UTC';
+    // Resolve the IANA tz preferred by the backend; fall back to abbreviation
+    // when flutter_timezone hasn't been wired here. The backend tolerates both
+    // (zoneinfo accepts Olson IDs and falls back to UTC on parse failure).
+    final result = await showScheduleMealSheet(
+      context: context,
+      meal: meal,
+      timezone: timezone,
+      initialPreset: initialPreset,
+    );
+    if (result == null) return;
+
+    ref.read(posthogServiceProvider).capture(
+      eventName: 'food_log_scheduled_invoked',
+      properties: <String, Object>{
+        'food_log_id': meal.id,
+        'item_index': itemIndex ?? -1,
+        'cadence': result.spec.scheduleKind,
+        'is_temporary_week_only': result.spec.isTemporaryWeekOnly,
+        'interval_days': result.spec.intervalDays,
+        'has_until_date': result.spec.untilDate != null,
+      },
+    );
+
+    final mealName = (itemIndex != null && itemIndex >= 0 && itemIndex < meal.foodItems.length)
+        ? meal.foodItems[itemIndex].name
+        : (meal.userQuery?.trim().isNotEmpty == true
+            ? meal.userQuery!
+            : meal.foodItems.map((f) => f.name).take(3).join(' + '));
+
+    ref.read(scheduleSaveJobsProvider.notifier).enqueue(
+      logId: meal.id,
+      mealName: mealName,
+      cadenceLabel: result.cadenceLabel,
+      spec: result.spec,
+      itemIndex: itemIndex,
+      createCookEvent: meal.foodItems.length > 1,
+    );
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Scheduling…'),
+          behavior: SnackBarBehavior.floating,
+          duration: Duration(seconds: 3),
+        ),
+      );
+    }
+  }
+
   Future<void> _moveMeal(String mealId, String targetMealType) async {
     if (_userId == null) return;
+    final notifier = ref.read(nutritionProvider.notifier);
+    // Optimistically flip the meal_type locally so the UI updates instantly.
+    // Restored to its original meal_type if the network call fails.
+    final original = notifier.optimisticUpdateLog(mealId, (meal) {
+      final json = meal.toJson()..['meal_type'] = targetMealType;
+      return FoodLog.fromJson(json);
+    });
     try {
       ref.read(posthogServiceProvider).capture(
         eventName: 'food_log_moved',
@@ -1237,7 +1452,6 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
       final repository = ref.read(nutritionRepositoryProvider);
       await repository.moveFoodLog(logId: mealId, mealType: targetMealType);
       _cachedMicronutrientsTime = null;
-      await ref.read(nutritionProvider.notifier).refreshAll(_userId!);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -1248,12 +1462,17 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
         );
       }
     } catch (e) {
+      // Roll back the optimistic mutation on failure so the UI reflects truth.
+      if (original != null) {
+        notifier.optimisticUpdateLog(mealId, (_) => original);
+      }
       debugPrint('Error moving meal: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Failed to move meal'),
+          SnackBar(
+            content: Text('Couldn’t move meal: ${_friendlyApiError(e)}'),
             behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 5),
           ),
         );
       }
@@ -1314,7 +1533,11 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
       debugPrint('Error updating meal: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to update meal'), behavior: SnackBarBehavior.floating),
+          SnackBar(
+            content: Text('Couldn’t update meal: ${_friendlyApiError(e)}'),
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 5),
+          ),
         );
       }
     }
@@ -1336,7 +1559,11 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
       debugPrint('Error updating meal time: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to update time'), behavior: SnackBarBehavior.floating),
+          SnackBar(
+            content: Text('Couldn’t update time: ${_friendlyApiError(e)}'),
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 5),
+          ),
         );
       }
     }
@@ -1353,7 +1580,11 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
       debugPrint('Error updating notes: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to update notes'), behavior: SnackBarBehavior.floating),
+          SnackBar(
+            content: Text('Couldn’t update notes: ${_friendlyApiError(e)}'),
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 5),
+          ),
         );
       }
     }
@@ -1370,7 +1601,11 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
       debugPrint('Error updating mood: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Failed to update mood'), behavior: SnackBarBehavior.floating),
+          SnackBar(
+            content: Text('Couldn’t update mood: ${_friendlyApiError(e)}'),
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 5),
+          ),
         );
       }
     }
@@ -1395,5 +1630,34 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
         );
       }
     }
+  }
+
+  /// Convert any thrown error (DioException, generic Exception) into a short
+  /// human-readable string suitable for a SnackBar. For Dio errors, surfaces
+  /// the backend's `detail` field + status code so the user (and us) can
+  /// see what actually went wrong instead of a generic "Failed".
+  String _friendlyApiError(Object e) {
+    if (e is DioException) {
+      final status = e.response?.statusCode;
+      final data = e.response?.data;
+      String? detail;
+      if (data is Map && data['detail'] != null) {
+        detail = data['detail'].toString();
+      } else if (data is String && data.isNotEmpty) {
+        detail = data;
+      }
+      if (status != null && detail != null) return '$status — $detail';
+      if (status != null) return 'HTTP $status';
+      if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.sendTimeout ||
+          e.type == DioExceptionType.receiveTimeout) {
+        return 'Network timeout';
+      }
+      if (e.type == DioExceptionType.connectionError) {
+        return 'No connection';
+      }
+      return e.message ?? 'Network error';
+    }
+    return e.toString().replaceFirst('Exception: ', '');
   }
 }

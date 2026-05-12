@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'schedule_meal_sheet.dart' show SchedulePreset;
 import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/models/nutrition.dart';
@@ -31,6 +32,18 @@ class LoggedMealsSection extends StatelessWidget {
   final void Function(String logId, String notes) onUpdateMealNotes;
   final void Function(String logId, {String? moodBefore, String? moodAfter, int? energyLevel}) onUpdateMealMood;
   final void Function(FoodLog meal) onSaveFoodToFavorites;
+  /// Background Save-as-Recipe. itemIndex non-null = save just that item from
+  /// a multi-item meal as a single-ingredient recipe. createCookEvent=true
+  /// inserts a recipe_cook_events row with portions_remaining=servings-1
+  /// (batch-cook leftovers — see feedback_batch_cook_leftovers).
+  final void Function(FoodLog meal, {int? itemIndex, bool createCookEvent}) onSaveMealAsRecipe;
+  /// Open the cadence picker pre-selected on [initialPreset], schedule the
+  /// meal in the background, and surface a toast on completion. Mirrors
+  /// `onSaveMealAsRecipe` — both run via background-job providers so the
+  /// user can keep interacting while the AI enrichment runs server-side.
+  final void Function(FoodLog meal, {SchedulePreset initialPreset, int? itemIndex}) onScheduleMeal;
+  final void Function(FoodLog meal, {int? itemIndex}) onAddToShoppingList;
+  final void Function(FoodLog meal) onShareMeal;
   final void Function(String? mealType) onLogMeal;
   /// Fetch existing per-field edit history for a given log.
   final Future<List<FoodLogEditRecord>> Function(String logId)? onFetchItemEdits;
@@ -63,6 +76,10 @@ class LoggedMealsSection extends StatelessWidget {
     required this.onUpdateMealNotes,
     required this.onUpdateMealMood,
     required this.onSaveFoodToFavorites,
+    required this.onSaveMealAsRecipe,
+    required this.onScheduleMeal,
+    required this.onAddToShoppingList,
+    required this.onShareMeal,
     required this.onLogMeal,
     this.onFetchItemEdits,
     this.apiClient,
@@ -1235,6 +1252,62 @@ class LoggedMealsSection extends StatelessWidget {
                   onSaveFoodToFavorites(meal);
                 },
               ),
+              _ActionTile(
+                icon: Icons.menu_book_outlined,
+                label: 'Save as recipe',
+                iconColor: teal,
+                textColor: textPrimary,
+                onTap: () {
+                  Navigator.pop(ctx);
+                  // For multi-item meals, default to creating a cook event so
+                  // the user can re-log leftovers from the active list. Per
+                  // memory feedback_batch_cook_leftovers — first-class flow.
+                  final asLeftovers = meal.foodItems.length > 1;
+                  onSaveMealAsRecipe(meal, createCookEvent: asLeftovers);
+                },
+              ),
+              _ActionTile(
+                icon: Icons.event_available,
+                label: 'Log again tomorrow',
+                iconColor: teal,
+                textColor: textPrimary,
+                onTap: () {
+                  Navigator.pop(ctx);
+                  // One-tap shortcut — opens the cadence sheet pre-selected
+                  // on tomorrowOnly so the user can confirm time + send.
+                  onScheduleMeal(meal, initialPreset: SchedulePreset.tomorrowOnly);
+                },
+              ),
+              _ActionTile(
+                icon: Icons.event_repeat,
+                label: 'Schedule recurring…',
+                iconColor: teal,
+                textColor: textPrimary,
+                onTap: () {
+                  Navigator.pop(ctx);
+                  onScheduleMeal(meal, initialPreset: SchedulePreset.daily);
+                },
+              ),
+              _ActionTile(
+                icon: Icons.shopping_cart_outlined,
+                label: 'Add to shopping list',
+                iconColor: teal,
+                textColor: textPrimary,
+                onTap: () {
+                  Navigator.pop(ctx);
+                  onAddToShoppingList(meal);
+                },
+              ),
+              _ActionTile(
+                icon: Icons.ios_share,
+                label: 'Share meal',
+                iconColor: teal,
+                textColor: textPrimary,
+                onTap: () {
+                  Navigator.pop(ctx);
+                  onShareMeal(meal);
+                },
+              ),
 
               Divider(height: 16, color: cardBorder),
 
@@ -1373,6 +1446,48 @@ class LoggedMealsSection extends StatelessWidget {
                     });
                   },
                 ),
+              _ActionTile(
+                icon: Icons.menu_book_outlined,
+                label: 'Save as recipe',
+                iconColor: accent,
+                textColor: textPrimary,
+                onTap: () {
+                  Navigator.pop(ctx);
+                  // Per-item save → single-ingredient recipe; no leftovers
+                  // implied since we're scoping to one component.
+                  onSaveMealAsRecipe(parent, itemIndex: itemIdx, createCookEvent: false);
+                },
+              ),
+              _ActionTile(
+                icon: Icons.event_available,
+                label: 'Log this again tomorrow',
+                iconColor: accent,
+                textColor: textPrimary,
+                onTap: () {
+                  Navigator.pop(ctx);
+                  onScheduleMeal(parent, initialPreset: SchedulePreset.tomorrowOnly, itemIndex: itemIdx);
+                },
+              ),
+              _ActionTile(
+                icon: Icons.event_repeat,
+                label: 'Schedule recurring…',
+                iconColor: accent,
+                textColor: textPrimary,
+                onTap: () {
+                  Navigator.pop(ctx);
+                  onScheduleMeal(parent, initialPreset: SchedulePreset.daily, itemIndex: itemIdx);
+                },
+              ),
+              _ActionTile(
+                icon: Icons.shopping_cart_outlined,
+                label: 'Add this to shopping list',
+                iconColor: accent,
+                textColor: textPrimary,
+                onTap: () {
+                  Navigator.pop(ctx);
+                  onAddToShoppingList(parent, itemIndex: itemIdx);
+                },
+              ),
               const Divider(height: 16),
               _ActionTile(
                 icon: Icons.delete_outline,

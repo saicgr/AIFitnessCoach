@@ -34,7 +34,8 @@ enum RecipeSourceType {
   imported('imported', 'Imported from URL'),
   aiGenerated('ai_generated', 'AI Generated'),
   improvized('improvized', 'Improvized', '✨'),
-  curated('curated', 'Curated', '🌟');
+  curated('curated', 'Curated', '🌟'),
+  fromLoggedMeal('from_logged_meal', 'Saved from a logged meal', '📒');
 
   final String value;
   final String description;

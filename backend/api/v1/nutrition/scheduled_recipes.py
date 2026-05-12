@@ -1,15 +1,17 @@
 """Scheduled meal reminder endpoints (recurring + batch)."""
 import logging
 import uuid
-from datetime import date, datetime, timedelta, timezone
+from datetime import date, datetime, time, timedelta, timezone
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
+from pydantic import BaseModel, Field, model_validator
 
 from core.auth import get_current_user
 from core.db import get_supabase_db
 from core.exceptions import safe_internal_error
 from models.scheduled_recipe_log import (
+    MealType,
     ScheduleKind,
     ScheduleMode,
     ScheduledRecipeLog,
@@ -27,7 +29,14 @@ def _next_fire_recurring(req: ScheduledRecipeLogCreate) -> datetime:
     """Compute the next UTC fire timestamp for a recurring schedule.
 
     Reasons in user-local time per feedback_user_local_time_only.md.
-    Falls back to a naive UTC conversion if the timezone string is unknown.
+    Honors interval_days (skip ahead) + until_date (cap horizon) added in
+    migration 2057. Falls back to UTC if the timezone string is unknown.
+
+    Returns the next firing instant. If the cadence is exhausted (e.g. ONCE
+    already fired, until_date passed, no day in days_of_week matches within
+    the search horizon), returns a far-future sentinel that the worker will
+    treat as "disable on next pass" — we don't return None here because
+    next_fire_at is NOT NULL on the table.
     """
     try:
         from zoneinfo import ZoneInfo
@@ -38,17 +47,23 @@ def _next_fire_recurring(req: ScheduledRecipeLogCreate) -> datetime:
 
     now_local = datetime.now(tz)
     candidate_days = _expand_days(req.schedule_kind, req.days_of_week)
-    # Find the next day matching the kind, at the requested local_time.
-    # Sun=0..Sat=6 in our convention; Python's weekday() is Mon=0..Sun=6, so map.
-    for offset in range(0, 8):
+    # interval_days expands the search horizon — for "every 7 days" we may
+    # need to look up to a year ahead before finding the next match.
+    horizon = max(8, req.interval_days * 8)
+    for offset in range(0, horizon):
         d = now_local.date() + timedelta(days=offset)
         sun_idx = (d.weekday() + 1) % 7  # Mon=0..Sun=6 -> Sun=0..Sat=6
-        if sun_idx in candidate_days:
-            candidate = datetime.combine(d, req.local_time, tzinfo=tz)
-            if candidate > now_local:
-                return candidate.astimezone(timezone.utc)
-    # Should never happen, but fall back to tomorrow same time
-    return (now_local + timedelta(days=1)).astimezone(timezone.utc)
+        if sun_idx not in candidate_days:
+            continue
+        # Honor until_date — never schedule past the user's end-date.
+        if req.until_date and d > req.until_date:
+            break
+        candidate = datetime.combine(d, req.local_time, tzinfo=tz)
+        if candidate > now_local:
+            return candidate.astimezone(timezone.utc)
+    # No firing day found — return a far-future timestamp so the worker
+    # doesn't pick this up before it has a chance to disable the row.
+    return (now_local + timedelta(days=3650)).astimezone(timezone.utc)
 
 
 def _expand_days(kind: Optional[ScheduleKind], custom: Optional[List[int]]) -> set:
@@ -58,7 +73,16 @@ def _expand_days(kind: Optional[ScheduleKind], custom: Optional[List[int]]) -> s
         return {1, 2, 3, 4, 5}  # Mon..Fri (Sun=0)
     if kind == ScheduleKind.WEEKENDS:
         return {0, 6}
+    if kind == ScheduleKind.ONCE:
+        # ONCE without explicit days = "any day, just the next match" → all days
+        return set(custom or {0, 1, 2, 3, 4, 5, 6})
     return set(custom or [])
+
+
+def _week_end_date(d: date) -> date:
+    """Return the Sunday of the calendar week containing `d` (Mon=0..Sun=6)."""
+    days_to_sunday = 6 - d.weekday()
+    return d + timedelta(days=days_to_sunday)
 
 
 def _next_fire_batch(req: ScheduledRecipeLogCreate) -> datetime:
@@ -91,6 +115,17 @@ async def create_scheduled_recipe(
         else:
             next_fire = _next_fire_batch(request)
 
+        # week_end_date is derived server-side for is_temporary_week_only
+        # schedules — Sunday of the calendar week the next fire lands in.
+        week_end = None
+        if request.is_temporary_week_only:
+            try:
+                from zoneinfo import ZoneInfo
+                tz = ZoneInfo(request.timezone)
+            except Exception:
+                tz = timezone.utc
+            week_end = _week_end_date(next_fire.astimezone(tz).date())
+
         row = {
             "id": sched_id,
             "user_id": user_id,
@@ -108,6 +143,14 @@ async def create_scheduled_recipe(
             "next_slot_index": 0,
             "enabled": True,
             "silent_log": request.silent_log,
+            # Cadence extensions (migration 2057)
+            "until_date": request.until_date.isoformat() if request.until_date else None,
+            "interval_days": request.interval_days,
+            "is_temporary_week_only": request.is_temporary_week_only,
+            "week_end_date": week_end.isoformat() if week_end else None,
+            "occurrences_remaining": (
+                1 if request.schedule_kind == ScheduleKind.ONCE else request.occurrences_remaining
+            ),
             "created_at": now_iso,
             "updated_at": now_iso,
         }

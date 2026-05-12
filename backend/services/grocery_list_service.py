@@ -19,6 +19,7 @@ from datetime import datetime
 from typing import Dict, List, Optional
 
 from core.db import get_supabase_db
+from core.food_naming import normalize_food_name
 from models.grocery_list import (
     Aisle,
     GroceryList,
@@ -32,6 +33,53 @@ from services.food_analysis.parser import _weight_unit_to_grams
 from services.gemini_text_helper import gemini_text
 
 logger = logging.getLogger(__name__)
+
+
+def _coerce_quantity(food_item: dict) -> Optional[float]:
+    """Best-effort quantity extraction from a food_log food_item dict.
+
+    Prefer explicit `count`, then `weight_g`, then parse a leading number out
+    of `amount` ("4 pieces" → 4.0). Returns None when nothing usable is found
+    so the caller can leave the row's quantity NULL.
+    """
+    for key in ("count", "weight_g"):
+        v = food_item.get(key)
+        if isinstance(v, (int, float)) and v > 0:
+            return float(v)
+    amount = food_item.get("amount")
+    if isinstance(amount, str):
+        m = re.match(r"\s*(\d+(?:\.\d+)?)", amount)
+        if m:
+            try:
+                return float(m.group(1))
+            except ValueError:
+                pass
+    return None
+
+
+def _guess_unit(food_item: dict) -> Optional[str]:
+    """Pull unit from `unit` or trail of `amount` ('4 pieces', '0.5 cup')."""
+    if food_item.get("unit"):
+        return str(food_item["unit"])[:30]
+    amount = food_item.get("amount")
+    if isinstance(amount, str):
+        m = re.match(r"\s*\d+(?:\.\d+)?\s+(\w+)", amount)
+        if m:
+            return m.group(1)[:30]
+    if food_item.get("weight_g"):
+        return "g"
+    return None
+
+
+def _units_compatible(a: Optional[str], b: Optional[str]) -> bool:
+    """Loose unit check — same string or both NULL is mergeable. Conservative
+    by design: incompatible units get a fresh row + note rather than
+    silently summing apples and oranges."""
+    if a is None and b is None:
+        return True
+    if a is None or b is None:
+        return False
+    return a.strip().lower() == b.strip().lower()
 
 
 class GroceryListService:
@@ -206,6 +254,128 @@ class GroceryListService:
     async def delete_item(self, item_id: str) -> bool:
         self.db.client.table("grocery_list_items").delete().eq("id", item_id).execute()
         return True
+
+    # ------------------------------------------------------------------
+    # Add from food log (with normalized merge — Phase D)
+    # ------------------------------------------------------------------
+
+    async def add_from_food_log(
+        self,
+        *,
+        user_id: str,
+        food_log: dict,
+        item_index: Optional[int] = None,
+    ) -> Dict:
+        """Append the food_log's items to the user's most-recent active list.
+
+        Creates a "My Shopping List" if the user has none. Merges by reading
+        the GENERATED `ingredient_name_normalized` column from migration 2056
+        — same normalized form ("Idli" + "idli" + "Idlis") collapses to one
+        row, with quantities summed when units match.
+
+        When [item_index] is set, only that single food_item from the log is
+        added (mirrors the per-item long-press flow).
+
+        Returns a summary dict for the API response: list_id, items_added,
+        items_merged, list_name.
+        """
+        # Resolve / create the active list.
+        existing = (
+            self.db.client.table("grocery_lists")
+            .select("id,name")
+            .eq("user_id", user_id)
+            .order("created_at", desc=True)
+            .limit(1)
+            .execute()
+        )
+        if existing.data:
+            list_row = existing.data[0]
+            list_id = list_row["id"]
+            list_name = list_row.get("name") or "My Shopping List"
+        else:
+            list_id = str(uuid.uuid4())
+            now_iso = datetime.utcnow().isoformat()
+            self.db.client.table("grocery_lists").insert({
+                "id": list_id,
+                "user_id": user_id,
+                "name": "My Shopping List",
+                "created_at": now_iso,
+                "updated_at": now_iso,
+            }).execute()
+            list_name = "My Shopping List"
+
+        # Pre-fetch existing items so we can merge by normalized name.
+        existing_items_res = (
+            self.db.client.table("grocery_list_items")
+            .select("id,ingredient_name,ingredient_name_normalized,quantity,unit")
+            .eq("list_id", list_id)
+            .execute()
+        )
+        # Map: ingredient_name_normalized → row dict
+        by_norm: Dict[str, Dict] = {
+            (r.get("ingredient_name_normalized") or "").strip(): r
+            for r in (existing_items_res.data or [])
+            if r.get("ingredient_name_normalized")
+        }
+
+        food_items = food_log.get("food_items") or []
+        if item_index is not None:
+            if 0 <= item_index < len(food_items):
+                food_items = [food_items[item_index]]
+            else:
+                food_items = []
+
+        added = 0
+        merged = 0
+        for fi in food_items:
+            raw_name = (fi.get("name") or "").strip()
+            if not raw_name:
+                continue
+            norm = normalize_food_name(raw_name)
+            qty = _coerce_quantity(fi)
+            unit = (fi.get("unit") or _guess_unit(fi)) or None
+
+            existing_row = by_norm.get(norm)
+            if existing_row and _units_compatible(existing_row.get("unit"), unit):
+                # Merge: sum quantities into the existing row.
+                merged_qty = (existing_row.get("quantity") or 0) + (qty or 0)
+                self.db.client.table("grocery_list_items").update({
+                    "quantity": merged_qty,
+                    "updated_at": datetime.utcnow().isoformat(),
+                }).eq("id", existing_row["id"]).execute()
+                existing_row["quantity"] = merged_qty  # update local for follow-on merges
+                merged += 1
+                continue
+
+            # Fresh insert. Aisle classification is best-effort — `add_item`
+            # will fall back to LLM lookup if uncached.
+            try:
+                base_item = GroceryListItemBase(
+                    ingredient_name=raw_name,
+                    quantity=qty,
+                    unit=unit,
+                    notes=f"From logged meal" if not item_index else f"From '{raw_name}'",
+                )
+                row = await self.add_item(list_id, base_item)
+                # Track the new row in by_norm so later items in the same call
+                # merge into it instead of creating duplicates.
+                by_norm[norm] = {
+                    "id": row.id,
+                    "ingredient_name": row.ingredient_name,
+                    "ingredient_name_normalized": norm,
+                    "quantity": row.quantity,
+                    "unit": row.unit,
+                }
+                added += 1
+            except Exception as e:
+                logger.warning(f"[grocery] add_from_food_log: failed to insert {raw_name}: {e}")
+
+        return {
+            "list_id": list_id,
+            "list_name": list_name,
+            "items_added": added,
+            "items_merged": merged,
+        }
 
     # ------------------------------------------------------------------
     # Export

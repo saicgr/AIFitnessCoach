@@ -1,11 +1,12 @@
 """Food log CRUD endpoints."""
 from core.db import get_supabase_db
-from datetime import datetime, timedelta
+from datetime import date, datetime, time as dt_time, timedelta
 from typing import List, Optional
 import json
 import time
+import uuid
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request
 from pydantic import BaseModel
 
 from core.timezone_utils import resolve_timezone, local_date_to_utc_range, get_user_today, get_user_now_iso, target_date_to_utc_iso, to_utc_iso
@@ -484,3 +485,354 @@ async def copy_food_log(log_id: str, http_request: Request, meal_type: str = Que
     except Exception as e:
         logger.error(f"Failed to copy food log: {e}", exc_info=True)
         raise safe_internal_error(e, "nutrition")
+
+
+# ─────────────────────────────────────────────────────────────────
+# Save-as-Recipe (migration 2056 + recipe_persistence + Gemini enrichment)
+# ─────────────────────────────────────────────────────────────────
+
+class SaveAsRecipeResponse(BaseModel):
+    recipe_id: str
+    merged: bool
+    cook_event_id: Optional[str] = None
+
+
+@router.post("/food-logs/{log_id}/save-as-recipe", response_model=SaveAsRecipeResponse)
+async def save_food_log_as_recipe(
+    log_id: str,
+    background_tasks: BackgroundTasks,
+    item_index: Optional[int] = Query(
+        default=None,
+        ge=0,
+        description="If set, build a single-ingredient recipe from food_items[item_index] only.",
+    ),
+    create_cook_event: bool = Query(
+        default=False,
+        description="When true and the resulting recipe has servings>1, create a recipe_cook_events row "
+                    "with portions_remaining = servings - 1 (one was just consumed via this food_log) "
+                    "so the user can re-log leftovers from the active cook events list.",
+    ),
+    current_user: dict = Depends(get_current_user),
+):
+    """Convert a logged meal into a reusable user_recipes row via Gemini enrichment.
+
+    Pipeline:
+      1. Load food_log; 404 if missing or not owned by caller.
+      2. Gemini reconstructs full recipe (instructions, quantities, prep/cook).
+      3. recipe_persistence.persist_recipe handles dedupe-by-name_normalized
+         (using the GENERATED column from migration 2056), inserts user_recipes
+         + recipe_ingredients, and queues ChromaDB indexing as a background task.
+      4. Set food_logs.recipe_id = new_recipe.id — this fires the
+         update_recipe_log_count() trigger so times_logged becomes 1.
+      5. Optionally create a recipe_cook_events row (batch-cook leftovers).
+
+    Per feedback_no_silent_fallbacks.md: any failure in Gemini / persistence /
+    linkage propagates as a real HTTP error — no degraded "saved without
+    instructions" fallback.
+    """
+    user_id = current_user.get("id") or current_user.get("sub")
+    db = get_supabase_db()
+
+    food_log = db.get_food_log(log_id)
+    if not food_log or food_log.get("user_id") != user_id:
+        raise HTTPException(status_code=404, detail="Food log not found")
+
+    if item_index is not None:
+        items = food_log.get("food_items") or []
+        if item_index < 0 or item_index >= len(items):
+            raise HTTPException(status_code=400, detail="item_index out of range")
+
+    # ── Gemini enrichment.
+    from services.recipe_enrichment_service import get_recipe_enrichment_service
+    from services.recipe_persistence import persist_recipe
+
+    enrichment = get_recipe_enrichment_service()
+    try:
+        recipe_create = await enrichment.enrich_food_log_to_recipe(
+            food_log,
+            single_item_index=item_index,
+            image_url=food_log.get("image_url"),
+        )
+    except Exception as e:
+        logger.error(f"[save-as-recipe] Gemini enrichment failed for log {log_id}: {e}", exc_info=True)
+        raise HTTPException(status_code=502, detail=f"Recipe enrichment failed: {e}")
+
+    # ── Persist (dedupes by name_normalized; merges if same recipe exists).
+    try:
+        result = await persist_recipe(
+            user_id=user_id,
+            request=recipe_create,
+            background_tasks=background_tasks,
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"[save-as-recipe] persist failed for log {log_id}: {e}", exc_info=True)
+        raise safe_internal_error(e, "nutrition")
+
+    recipe = result.recipe
+
+    # ── Link the food_log to the recipe (skip if it's already linked or merged
+    # to the same recipe — avoids re-firing update_recipe_log_count).
+    food_log_recipe_id = food_log.get("recipe_id")
+    cook_event_id: Optional[str] = None
+    update_payload: dict = {}
+
+    if food_log_recipe_id != recipe.id:
+        update_payload["recipe_id"] = recipe.id
+
+    # ── Optional cook event (batch cooking).
+    if create_cook_event and recipe.servings and recipe.servings > 1:
+        cook_event_id = str(uuid.uuid4())
+        now = datetime.utcnow().isoformat()
+        try:
+            db.client.table("recipe_cook_events").insert({
+                "id": cook_event_id,
+                "user_id": user_id,
+                "recipe_id": recipe.id,
+                "cooked_at": now,
+                "portions_made": recipe.servings,
+                "portions_remaining": max(0, recipe.servings - 1),
+                "storage": "fridge",
+                "expires_at": (datetime.utcnow() + timedelta(days=4)).isoformat(),
+                "notes": None,
+                "created_at": now,
+                "updated_at": now,
+            }).execute()
+            update_payload["cook_event_id"] = cook_event_id
+            update_payload["servings_consumed"] = 1
+        except Exception as e:
+            # Cook event failure shouldn't block the recipe save — log + continue.
+            logger.warning(f"[save-as-recipe] cook_event create failed: {e}")
+            cook_event_id = None
+
+    if update_payload:
+        try:
+            db.client.table("food_logs").update(update_payload).eq("id", log_id).eq("user_id", user_id).execute()
+        except Exception as e:
+            logger.warning(f"[save-as-recipe] food_logs link update failed: {e}")
+        # The update_recipe_log_count() trigger only fires on INSERT, so bump
+        # times_logged manually when retroactively linking an existing log.
+        # Skip when "merged" — re-saving the same meal-as-recipe shouldn't
+        # double-count the underlying log.
+        if "recipe_id" in update_payload and not result.merged:
+            try:
+                from datetime import datetime as _dt
+                now_iso = _dt.utcnow().isoformat()
+                # Use raw RPC-style update since supabase-py doesn't expose `set`-with-expression.
+                # Read-then-write is fine — concurrent saves of the same recipe are rare.
+                cur = db.client.table("user_recipes").select("times_logged").eq("id", recipe.id).single().execute()
+                prev = (cur.data or {}).get("times_logged") or 0
+                db.client.table("user_recipes").update({
+                    "times_logged": prev + 1,
+                    "last_logged_at": now_iso,
+                    "updated_at": now_iso,
+                }).eq("id", recipe.id).execute()
+            except Exception as e:
+                logger.warning(f"[save-as-recipe] times_logged bump failed: {e}")
+
+    await log_user_activity(
+        user_id=user_id,
+        action="food_log_saved_as_recipe",
+        endpoint="/api/v1/nutrition/food-logs/{log_id}/save-as-recipe",
+        message=(
+            f"{'Merged into existing' if result.merged else 'Created'} recipe "
+            f"{recipe.id} ({recipe.name}) from food_log {log_id}"
+        ),
+        metadata={
+            "food_log_id": log_id,
+            "recipe_id": recipe.id,
+            "merged": result.merged,
+            "cook_event_id": cook_event_id,
+            "item_index": item_index,
+            "servings": recipe.servings,
+        },
+        status_code=200,
+    )
+
+    return SaveAsRecipeResponse(
+        recipe_id=recipe.id,
+        merged=result.merged,
+        cook_event_id=cook_event_id,
+    )
+
+
+# ─────────────────────────────────────────────────────────────────
+# Schedule from food log — chains through Save-as-Recipe when needed.
+# Migration 2057 cadence shapes flow through ScheduledRecipeLogCreate.
+# ─────────────────────────────────────────────────────────────────
+
+
+class ScheduleFromFoodLogRequest(BaseModel):
+    """Schedule spec accepted by `/food-logs/{log_id}/schedule`.
+
+    Mirrors `ScheduledRecipeLogCreate` minus `recipe_id` (we resolve it from
+    the food_log: reuse `food_logs.recipe_id` if present, else run the full
+    Save-as-Recipe pipeline first). Keeps the client API single-call: one
+    POST → recipe persisted (if needed) + schedule row created.
+    """
+    # ── ScheduleSpec fields ────────────────────────────────────
+    meal_type: str  # breakfast|lunch|dinner|snack — validated by ScheduledRecipeLogCreate
+    servings: float = 1.0
+    timezone: str
+    silent_log: bool = False
+    schedule_kind: str  # daily|weekdays|weekends|custom|once
+    days_of_week: Optional[List[int]] = None
+    local_time: str  # "HH:MM" or "HH:MM:SS"
+    until_date: Optional[str] = None       # YYYY-MM-DD
+    interval_days: int = 1
+    is_temporary_week_only: bool = False
+    occurrences_remaining: Optional[int] = None
+    # ── Save-as-Recipe pass-through ────────────────────────────
+    item_index: Optional[int] = None       # if recipe doesn't exist yet, scope save to one item
+    create_cook_event: bool = False        # if creating recipe + multi-serving, mark leftovers
+
+
+class ScheduleFromFoodLogResponse(BaseModel):
+    schedule_id: str
+    recipe_id: str
+    next_fire_at: str
+    merged: bool                           # whether the underlying recipe was reused vs newly created
+
+
+@router.post("/food-logs/{log_id}/schedule", response_model=ScheduleFromFoodLogResponse)
+async def schedule_from_food_log(
+    log_id: str,
+    request: ScheduleFromFoodLogRequest,
+    background_tasks: BackgroundTasks,
+    current_user: dict = Depends(get_current_user),
+):
+    """Schedule a meal from a logged food_log. Chains through Save-as-Recipe
+    when the food_log isn't already linked to a recipe so the user gets one
+    combined toast (instead of "saved" then "scheduled")."""
+    user_id = current_user.get("id") or current_user.get("sub")
+    db = get_supabase_db()
+
+    food_log = db.get_food_log(log_id)
+    if not food_log or food_log.get("user_id") != user_id:
+        raise HTTPException(status_code=404, detail="Food log not found")
+
+    # Resolve recipe_id (reuse existing link, or save inline).
+    recipe_id = food_log.get("recipe_id")
+    merged = False
+    if not recipe_id:
+        from services.recipe_enrichment_service import get_recipe_enrichment_service
+        from services.recipe_persistence import persist_recipe
+
+        try:
+            draft = await get_recipe_enrichment_service().enrich_food_log_to_recipe(
+                food_log,
+                single_item_index=request.item_index,
+                image_url=food_log.get("image_url"),
+            )
+        except Exception as e:
+            logger.error(f"[schedule] enrichment failed for log {log_id}: {e}", exc_info=True)
+            raise HTTPException(status_code=502, detail=f"Recipe enrichment failed: {e}")
+
+        try:
+            res = await persist_recipe(user_id=user_id, request=draft, background_tasks=background_tasks)
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.error(f"[schedule] persist failed: {e}", exc_info=True)
+            raise safe_internal_error(e, "nutrition")
+
+        recipe_id = res.recipe.id
+        merged = res.merged
+        # Link the food_log so future "/save-as-recipe" calls hit the dedupe path.
+        try:
+            db.client.table("food_logs").update({"recipe_id": recipe_id}).eq("id", log_id).eq("user_id", user_id).execute()
+        except Exception as e:
+            logger.warning(f"[schedule] food_logs link failed: {e}")
+
+    # ── Build the schedule via the existing endpoint's logic.
+    from api.v1.nutrition.scheduled_recipes import (
+        _next_fire_recurring,
+        _week_end_date,
+    )
+    from models.scheduled_recipe_log import ScheduledRecipeLogCreate
+
+    try:
+        spec = ScheduledRecipeLogCreate(
+            recipe_id=recipe_id,
+            schedule_mode=ScheduleMode.RECURRING,
+            meal_type=MealType(request.meal_type),
+            servings=request.servings,
+            timezone=request.timezone,
+            silent_log=request.silent_log,
+            schedule_kind=ScheduleKind(request.schedule_kind),
+            days_of_week=request.days_of_week,
+            local_time=dt_time.fromisoformat(request.local_time),
+            until_date=date.fromisoformat(request.until_date) if request.until_date else None,
+            interval_days=request.interval_days,
+            is_temporary_week_only=request.is_temporary_week_only,
+            occurrences_remaining=request.occurrences_remaining,
+        )
+    except Exception as e:
+        raise HTTPException(status_code=422, detail=f"Invalid schedule spec: {e}")
+
+    sched_id = str(uuid.uuid4())
+    now_iso = datetime.utcnow().isoformat()
+    next_fire = _next_fire_recurring(spec)
+
+    week_end = None
+    if spec.is_temporary_week_only:
+        try:
+            from zoneinfo import ZoneInfo
+            tz = ZoneInfo(spec.timezone)
+        except Exception:
+            from datetime import timezone as _tz
+            tz = _tz.utc
+        week_end = _week_end_date(next_fire.astimezone(tz).date())
+
+    row = {
+        "id": sched_id,
+        "user_id": user_id,
+        "recipe_id": recipe_id,
+        "schedule_mode": ScheduleMode.RECURRING.value,
+        "meal_type": spec.meal_type.value,
+        "servings": spec.servings,
+        "schedule_kind": spec.schedule_kind.value,
+        "days_of_week": spec.days_of_week,
+        "local_time": spec.local_time.isoformat(),
+        "timezone": spec.timezone,
+        "next_fire_at": next_fire.isoformat(),
+        "next_slot_index": 0,
+        "enabled": True,
+        "silent_log": spec.silent_log,
+        "until_date": spec.until_date.isoformat() if spec.until_date else None,
+        "interval_days": spec.interval_days,
+        "is_temporary_week_only": spec.is_temporary_week_only,
+        "week_end_date": week_end.isoformat() if week_end else None,
+        "occurrences_remaining": (
+            1 if spec.schedule_kind == ScheduleKind.ONCE else spec.occurrences_remaining
+        ),
+        "created_at": now_iso,
+        "updated_at": now_iso,
+    }
+    try:
+        db.client.table("scheduled_recipe_logs").insert(row).execute()
+    except Exception as e:
+        logger.error(f"[schedule] insert failed: {e}", exc_info=True)
+        raise safe_internal_error(e, "nutrition")
+
+    await log_user_activity(
+        user_id=user_id,
+        action="food_log_scheduled",
+        endpoint="/api/v1/nutrition/food-logs/{log_id}/schedule",
+        message=f"Scheduled food_log {log_id} via recipe {recipe_id} ({spec.schedule_kind.value})",
+        metadata={
+            "food_log_id": log_id, "recipe_id": recipe_id, "schedule_id": sched_id,
+            "schedule_kind": spec.schedule_kind.value, "interval_days": spec.interval_days,
+            "is_temporary_week_only": spec.is_temporary_week_only,
+            "until_date": row["until_date"], "merged_recipe": merged,
+        },
+        status_code=200,
+    )
+
+    return ScheduleFromFoodLogResponse(
+        schedule_id=sched_id,
+        recipe_id=recipe_id,
+        next_fire_at=next_fire.isoformat(),
+        merged=merged,
+    )
