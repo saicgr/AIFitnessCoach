@@ -14,12 +14,28 @@ from typing import Optional
 import asyncio
 import logging
 
+import httpx
 from supabase_auth.errors import AuthApiError, AuthRetryableError
 from postgrest.exceptions import APIError as PostgrestAPIError
 
 from core.supabase_client import get_supabase
 
 logger = logging.getLogger(__name__)
+
+# Transient httpx transport-layer errors that surface inside Supabase / PostgREST
+# client calls as the underlying connection blips. These must NEVER be 401'd —
+# the JWT is valid, the network is just glitching. Surface as 503 so the Flutter
+# Dio retry interceptor backs off instead of forcing a sign-out.
+_TRANSIENT_HTTPX_ERRORS = (
+    httpx.RemoteProtocolError,
+    httpx.ConnectError,
+    httpx.ConnectTimeout,
+    httpx.ReadTimeout,
+    httpx.WriteTimeout,
+    httpx.PoolTimeout,
+    httpx.ReadError,
+    httpx.WriteError,
+)
 
 # Substrings we consider "benign stale-JWT" — the user's client has a token
 # that Supabase no longer recognizes (logged out on another device, session
@@ -186,6 +202,14 @@ async def get_verified_auth_token(
             detail="Failed to validate token",
             headers={"WWW-Authenticate": "Bearer"},
         )
+    except _TRANSIENT_HTTPX_ERRORS as exc:
+        # Transport-layer blip — see get_current_user for full rationale.
+        # NEVER 401 on a transient transport error; surface 503 so the client retries.
+        logger.warning(f"Transient httpx error in auth: {exc}")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Auth service temporarily unavailable",
+        )
     except Exception as e:
         logger.error(f"Token verification error: {e}", exc_info=True)
         raise HTTPException(
@@ -229,6 +253,20 @@ async def get_current_user(
                     await asyncio.sleep(0.5)
                 else:
                     raise
+            except _TRANSIENT_HTTPX_ERRORS as transport_err:
+                if attempt == 0:
+                    logger.warning(
+                        f"Transient httpx error in Supabase auth.get_user: {transport_err} — retrying in 0.5s"
+                    )
+                    await asyncio.sleep(0.5)
+                else:
+                    logger.warning(
+                        f"Transient httpx error in Supabase auth.get_user persisted after retry: {transport_err}"
+                    )
+                    raise HTTPException(
+                        status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                        detail="Auth service temporarily unavailable",
+                    )
 
         if not user_response or not user_response.user:
             raise HTTPException(
@@ -257,6 +295,20 @@ async def get_current_user(
                     await asyncio.sleep(0.5)
                 else:
                     raise
+            except _TRANSIENT_HTTPX_ERRORS as transport_err:
+                if attempt == 0:
+                    logger.warning(
+                        f"Transient httpx error in PostgREST users lookup: {transport_err} — retrying in 0.5s"
+                    )
+                    await asyncio.sleep(0.5)
+                else:
+                    logger.warning(
+                        f"Transient httpx error in PostgREST users lookup persisted after retry: {transport_err}"
+                    )
+                    raise HTTPException(
+                        status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                        detail="Auth service temporarily unavailable",
+                    )
 
         if not result.data:
             # JWT is cryptographically valid and the auth row still exists,
@@ -354,6 +406,16 @@ async def get_current_user(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Failed to validate token",
             headers={"WWW-Authenticate": "Bearer"},
+        )
+    except _TRANSIENT_HTTPX_ERRORS as exc:
+        # Transport-layer blip (Supabase / PostgREST connection drop, DNS jitter,
+        # read timeout). The token is still valid — DO NOT 401 the client (would
+        # force a logout). Surface as 503 so the Dio retry interceptor backs off
+        # instead. Log at WARNING — we want visibility but not Sentry-error noise.
+        logger.warning(f"Transient httpx error in auth: {exc}")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Auth service temporarily unavailable",
         )
     except Exception as e:
         logger.error(f"Auth error: {e}", exc_info=True)

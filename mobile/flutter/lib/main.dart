@@ -306,6 +306,15 @@ Future<void> _initNonCriticalServices(
     debugPrint('⚠️ Widget action headless service initialization failed: $e');
   }
 
+  // Sentry breadcrumb marker — separates init crashes from post-init crashes.
+  // If we reach this line, all critical and non-critical startup paths have
+  // completed without a fatal exception; any subsequent Sentry event can be
+  // assumed to be runtime / user-flow related, not boot related.
+  SentryService.addBreadcrumb(
+    message: 'app.startup_complete',
+    category: 'app.lifecycle',
+  );
+
   // Meal-suggestion widget (one-tap "what should I eat?") — currently
   // listed under Settings → Coming Soon. Implementation is staged but not
   // live because the iOS widget needs an App Group entitlement added to

@@ -530,22 +530,31 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
     // sees the meal where it actually lives.
     final loggedAtIso = _buildLoggedAtForSelectedDate();
 
-    // Start the save — capture the food_log_id for post-meal review
+    // Start the save — capture the food_log_id for post-meal review.
+    // Wrapped in an unawaited async IIFE (instead of `.then().catchError(...)`)
+    // because catchError that returns void breaks the chained Future's type
+    // contract — Dart 3 surfaces this as `'Null' is not a subtype of
+    // 'LogFoodResponse'` when the chain rethrows. The IIFE pattern makes the
+    // result type unambiguous (`Future<void>`) and keeps the same fire-and-
+    // forget behaviour: errors are debugPrinted, not surfaced to the UI.
     String? savedLogId;
-    final saveFuture = repository.logFoodDirect(
-      userId: userId,
-      mealType: mealType,
-      analyzedFood: response,
-      sourceType: sourceType,
-      inputType: _inputType,
-      loggedAt: loggedAtIso,
-      itemEdits: pendingEdits,
-    ).then((savedResponse) {
-      savedLogId = savedResponse.foodLogId;
-      return savedResponse;
-    }).catchError((e) {
-      debugPrint('❌ [LogMeal] Background save failed: $e');
-    });
+    final Future<void> saveFuture = () async {
+      try {
+        final savedResponse = await repository.logFoodDirect(
+          userId: userId,
+          mealType: mealType,
+          analyzedFood: response,
+          sourceType: sourceType,
+          inputType: _inputType,
+          loggedAt: loggedAtIso,
+          itemEdits: pendingEdits,
+        );
+        savedLogId = savedResponse.foodLogId;
+      } catch (e) {
+        debugPrint('❌ [LogMeal] Background save failed: $e');
+      }
+    }();
+    unawaited(saveFuture);
 
     _logAnalyzedFood(response, saveFuture, () => savedLogId);
   }

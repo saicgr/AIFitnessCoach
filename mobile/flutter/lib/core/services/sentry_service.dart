@@ -31,6 +31,19 @@ class SentryService {
       return;
     }
 
+    // Android-release guard: SentryFlutter's screenshot + view-hierarchy +
+    // ANR (app-hang) capture all assume the app's top UI host is an Activity
+    // with a window. On AppWidget / RemoteViews hosts (OnePlus 8 Pro launcher
+    // saw FITWIZ-FLUTTER-95 SIGABRTs) those features dereference null and
+    // crash the process. Disable them in Android-release builds; keep them on
+    // for iOS, web, and debug where they're stable + diagnostic-valuable.
+    bool isAndroidRelease;
+    try {
+      isAndroidRelease = !kIsWeb && !kDebugMode && Platform.isAndroid;
+    } catch (_) {
+      isAndroidRelease = false;
+    }
+
     try {
       await SentryFlutter.init(
         (options) {
@@ -49,8 +62,11 @@ class SentryService {
           // UI diagnostics — without these, a RenderFlex overflow arrives in
           // Sentry as a terse exception with no screen context. Attaching
           // screenshot + view hierarchy is what makes frontend triage fast.
-          options.attachScreenshot = true;
-          options.attachViewHierarchy = true;
+          // Disabled on Android-release: see isAndroidRelease comment above —
+          // screenshot capture on a non-Activity host (AppWidget RemoteViews)
+          // SIGABRTs the process.
+          options.attachScreenshot = !isAndroidRelease;
+          options.attachViewHierarchy = !isAndroidRelease;
 
           // Attach a stack trace to EVERY event, including plain
           // `captureMessage` calls and FlutterError reports that arrive
@@ -88,7 +104,10 @@ class SentryService {
           options.maxBreadcrumbs = 150;
 
           // App-not-responding detection — iOS and Android both supported.
-          options.enableAppHangTracking = true;
+          // Disabled on Android-release for the same non-Activity-host reason:
+          // ANR detection touches the main looper / window callbacks which
+          // crash on AppWidget hosts.
+          options.enableAppHangTracking = !isAndroidRelease;
 
           // Dedupe: PostHog / Crashlytics already capture some noise. We keep
           // RenderFlex overflows (we explicitly WANT to see layout bugs) but
@@ -302,12 +321,19 @@ class SentryService {
     // session terminated server-side), not server bugs. Capturing them
     // produces a Sentry-storm every time a session expires while the home
     // screen has half a dozen providers in flight.
+    // Excluded:
+    //  - 401/403 → handled by auth interceptor (token refresh / forced sign-out).
+    //  - 404 → expected "not found" lookups (e.g. /exercise-images/{id} when an
+    //    illustration hasn't been uploaded yet); not a server bug.
+    //  - 422 → Pydantic validation errors are user-input issues, not server
+    //    bugs. Sentry would store one event per malformed payload.
     dio.addSentry(
       captureFailedRequests: true,
       failedRequestStatusCodes: [
         SentryStatusCode.range(400, 400),
         SentryStatusCode.range(402, 402),
-        SentryStatusCode.range(404, 499),
+        SentryStatusCode.range(405, 421),
+        SentryStatusCode.range(423, 499),
         SentryStatusCode.range(500, 599),
       ],
     );

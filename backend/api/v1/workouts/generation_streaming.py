@@ -1248,8 +1248,25 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
 
             generated_workout = row_to_workout(created)
 
-            # Index to RAG asynchronously (don't wait)
-            asyncio.create_task(index_workout_to_rag(generated_workout))
+            # Index to RAG asynchronously (don't wait). Attach a done-callback
+            # that swallows the result so an exception inside the coroutine
+            # doesn't bubble up to anyio's TaskGroup as an "unhandled errors"
+            # crash when the SSE client has already disconnected. CancelledError
+            # is silently absorbed (expected on disconnect); other errors are
+            # logged at WARNING — RAG indexing is a nice-to-have, not critical
+            # to the workout itself.
+            _rag_task = asyncio.create_task(index_workout_to_rag(generated_workout))
+
+            def _swallow_rag_error(t: asyncio.Task) -> None:
+                if t.cancelled():
+                    return
+                exc = t.exception()
+                if exc is not None:
+                    logger.warning(
+                        f"[generation_streaming] RAG indexing failed (non-fatal): {exc}"
+                    )
+
+            _rag_task.add_done_callback(_swallow_rag_error)
 
             exercises_list = json.loads(generated_workout.exercises_json) if generated_workout.exercises_json else []
 

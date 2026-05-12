@@ -3,10 +3,13 @@ import 'dart:math';
 
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
+import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:sqlcipher_flutter_libs/sqlcipher_flutter_libs.dart';
+// SqliteException is re-exported from drift/native.dart, so no separate
+// sqlite3 import needed (analyzer would flag it as unnecessary).
 import 'package:sqlite3/open.dart';
 
 import 'daos/embedding_dao.dart';
@@ -164,6 +167,37 @@ Future<String> _getOrCreateDbKey() async {
   return key;
 }
 
+/// Detect SQLCipher's "file is not a database" (NOTADB, code 26) error.
+///
+/// Triggered when the on-disk DB file was encrypted with key A but we're now
+/// opening with key B. Most common cause on this codebase: the
+/// flutter_secure_storage entry holding `db_encryption_key` got wiped (app
+/// data clear, keystore rotation, OS reinstall) while the .db file persisted.
+/// Recovery: delete the .db + sidecars and let Drift recreate from migrations.
+bool _isNotADbError(SqliteException e) {
+  if (e.extendedResultCode == 26 || e.resultCode == 26) return true;
+  final msg = e.message.toLowerCase();
+  return msg.contains('file is not a database');
+}
+
+Future<NativeDatabase> _openEncryptedNativeDatabase(
+  File file,
+  String encryptionKey,
+) async {
+  return NativeDatabase(
+    file,
+    setup: (rawDb) {
+      rawDb.execute("PRAGMA key = '$encryptionKey'");
+      // Fail fast on key mismatch: PRAGMA key won't error on a wrong key, but
+      // the first real read will. Touching `user_version` here surfaces the
+      // SqliteException(NOTADB, 26) inside the setup callback so the caller's
+      // try/catch path runs BEFORE Drift starts running migrations against a
+      // half-open connection.
+      rawDb.execute('PRAGMA user_version');
+    },
+  );
+}
+
 LazyDatabase _openConnection() {
   return LazyDatabase(() async {
     // Configure sqlite3 to use SQLCipher native library on Android
@@ -178,11 +212,35 @@ LazyDatabase _openConnection() {
     // createInBackground spawns a new isolate where the SQLCipher
     // override isn't set, causing "libsqlite3.so not found" errors
     // (especially in WorkManager background isolates).
-    return NativeDatabase(
-      file,
-      setup: (rawDb) {
-        rawDb.execute("PRAGMA key = '$encryptionKey'");
-      },
-    );
+    try {
+      return await _openEncryptedNativeDatabase(file, encryptionKey);
+    } on SqliteException catch (e) {
+      if (!_isNotADbError(e)) rethrow;
+
+      // NOTADB(26) recovery: the on-disk file was encrypted under a previous
+      // key that no longer exists in secure storage. Wipe the .db + journal
+      // sidecars (-journal/-wal/-shm) and recreate. The user loses cached
+      // offline data but the app boots instead of crashing on every launch.
+      debugPrint(
+        '⚠️ [DB] NOTADB(26) on open — secure-storage key mismatch. '
+        'Wiping ${file.path} and recreating.',
+      );
+      for (final suffix in const ['', '-journal', '-wal', '-shm']) {
+        final sidecar = File('${file.path}$suffix');
+        if (await sidecar.exists()) {
+          try {
+            await sidecar.delete();
+          } catch (delErr) {
+            debugPrint('⚠️ [DB] Could not delete ${sidecar.path}: $delErr');
+          }
+        }
+      }
+      // Small breath so the OS releases any lingering file handles before
+      // sqlite3 reopens the path.
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+      final db = await _openEncryptedNativeDatabase(file, encryptionKey);
+      debugPrint('🔧 [DB] Recovered from NOTADB(26) — recreated database file');
+      return db;
+    }
   });
 }
