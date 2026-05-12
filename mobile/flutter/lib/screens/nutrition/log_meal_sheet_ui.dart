@@ -509,6 +509,44 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
                     ),
                     const SizedBox(width: 16),
                     // Flag / report inaccuracy
+                    // Manual "Add" chip — open a tiny text-input sheet, run
+                    // text-analyze, append to current items. Avoids re-snapping.
+                    Builder(builder: (ctx) {
+                      final teal = isDark ? AppColors.teal : AppColorsLight.teal;
+                      return GestureDetector(
+                        onTap: _addingFoodItem
+                            ? null
+                            : () => _handleAddFoodItem(entryPoint: 'top_action_row'),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: teal.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: teal),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (_addingFoodItem)
+                                SizedBox(
+                                  width: 12, height: 12,
+                                  child: CircularProgressIndicator(
+                                      strokeWidth: 2, color: teal),
+                                )
+                              else
+                                Icon(Icons.add, size: 14, color: teal),
+                              const SizedBox(width: 4),
+                              Text('Add',
+                                  style: TextStyle(
+                                      fontSize: 12,
+                                      color: teal,
+                                      fontWeight: FontWeight.w600)),
+                            ],
+                          ),
+                        ),
+                      );
+                    }),
+                    const SizedBox(width: 16),
                     GestureDetector(
                       onTap: () {
                         final items = response.foodItemsRanked;
@@ -597,6 +635,9 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
                     onItemRemoved: _handleFoodItemRemoved,
                     onItemFieldEdited: _handleFoodItemFieldEdited,
                     editedIndices: _pendingItemEdits.keys.toSet(),
+                    onAddItem: _addingFoodItem
+                        ? null
+                        : () => _handleAddFoodItem(entryPoint: 'list_bottom'),
                   ),
                 if (response.foodItems.isNotEmpty) const SizedBox(height: 12),
 

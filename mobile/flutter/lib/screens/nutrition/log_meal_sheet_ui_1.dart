@@ -800,21 +800,29 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
     final picker = ImagePicker();
     List<XFile> files = [];
 
+    String snapPrompt = '';
     if (source == ImageSource.camera) {
-      files = await _captureMultipleFromCamera(maxCount: 5, noun: 'photo');
+      final result = await _captureMultipleFromCamera(maxCount: 5, noun: 'photo');
+      files = result.files;
+      snapPrompt = result.prompt;
     } else {
       files = await picker.pickMultiImage(imageQuality: 85);
       if (files.length > 5) files = files.take(5).toList();
     }
     if (files.isEmpty) return;
 
+    final description = _descriptionController.text.trim();
+    final merged = <String>[
+      if (description.isNotEmpty) description,
+      if (snapPrompt.isNotEmpty) snapPrompt,
+    ].join(' — ');
+    final userMessage = merged.isEmpty ? null : merged;
+
     await _analyzeMultiImages(
       files: files,
       analysisMode: 'auto',
       inputType: source == ImageSource.camera ? 'camera' : 'gallery',
-      userMessage: _descriptionController.text.trim().isEmpty
-          ? null
-          : _descriptionController.text.trim(),
+      userMessage: userMessage,
     );
   }
 
@@ -822,12 +830,13 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
   /// the user to add another or finish. Cancelling the camera mid-loop (system
   /// back / cancel button) exits the loop gracefully, preserving already-taken
   /// photos.
-  Future<List<XFile>> _captureMultipleFromCamera({
+  Future<({List<XFile> files, String prompt})> _captureMultipleFromCamera({
     required int maxCount,
     required String noun,
   }) async {
     final picker = ImagePicker();
     final files = <XFile>[];
+    String finalPrompt = '';
     while (files.length < maxCount) {
       final shot = await picker.pickImage(
         source: ImageSource.camera,
@@ -839,63 +848,123 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
       files.add(shot);
       if (files.length >= maxCount) break;
       if (!mounted) break;
-      final addAnother = await _showAddAnotherPrompt(noun: noun, count: files.length);
-      if (addAnother != true) break;
+      final result = await _showAddAnotherPrompt(noun: noun, count: files.length);
+      if (result == null) {
+        // Sheet dismissed via swipe — treat as Done with no prompt change.
+        break;
+      }
+      // Always remember the latest prompt the user typed; the FINAL sheet's
+      // prompt is what gets sent. (Earlier prompts are overwritten by design.)
+      finalPrompt = result.prompt;
+      if (!result.addAnother) break;
     }
-    return files;
+    return (files: files, prompt: finalPrompt);
   }
 
   /// Glass bottom sheet offering "Add another {noun}" or "Done — Analyze N".
-  /// Returns true if user wants to add another, false if done, null if dismissed.
-  Future<bool?> _showAddAnotherPrompt({required String noun, required int count}) async {
+  /// Also exposes a multiline TextField so the user can describe what's in
+  /// the photos (e.g. "this also has flax seeds + whey protein"); the typed
+  /// text is forwarded to Gemini alongside the image bytes.
+  ///
+  /// Returns null if the sheet is dismissed via swipe; otherwise returns
+  /// `_AddAnotherResult(addAnother, prompt)`.
+  Future<_AddAnotherResult?> _showAddAnotherPrompt({
+    required String noun,
+    required int count,
+  }) async {
     final amber = const Color(0xFFF59E0B);
-    return showGlassSheet<bool>(
-      context: context,
-      builder: (ctx) {
-        final colors = ThemeColors.of(ctx);
-        final isDark = colors.isDark;
-        return GlassSheet(
-          child: SafeArea(
-            top: false,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(4, 4, 4, 16),
-                    child: Text(
-                      '$count $noun${count == 1 ? '' : 's'} captured',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: colors.textPrimary,
+    final promptCtrl = TextEditingController();
+    try {
+      return await showGlassSheet<_AddAnotherResult>(
+        context: context,
+        builder: (ctx) {
+          final colors = ThemeColors.of(ctx);
+          final isDark = colors.isDark;
+          return GlassSheet(
+            child: SafeArea(
+              top: false,
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(
+                  20,
+                  8,
+                  20,
+                  16 + MediaQuery.of(ctx).viewInsets.bottom,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(4, 4, 4, 12),
+                      child: Text(
+                        '$count $noun${count == 1 ? '' : 's'} captured',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: colors.textPrimary,
+                        ),
                       ),
                     ),
-                  ),
-                  _GlassMenuOption(
-                    icon: Icons.add_a_photo_outlined,
-                    label: 'Add another $noun',
-                    color: amber,
-                    isDark: isDark,
-                    onTap: () => Navigator.pop(ctx, true),
-                  ),
-                  const SizedBox(height: 10),
-                  _GlassMenuOption(
-                    icon: Icons.check_circle_outline,
-                    label: 'Done — Analyze $count $noun${count == 1 ? '' : 's'}',
-                    color: const Color(0xFF16A34A),
-                    isDark: isDark,
-                    onTap: () => Navigator.pop(ctx, false),
-                  ),
-                ],
+                    // Optional free-text describing what else is in the photos
+                    // (ingredients hidden behind a sauce, brand of protein, etc).
+                    // Forwarded as `user_message` to the analyze endpoint.
+                    TextField(
+                      controller: promptCtrl,
+                      minLines: 2,
+                      maxLines: 4,
+                      textInputAction: TextInputAction.newline,
+                      style: TextStyle(color: colors.textPrimary, fontSize: 14),
+                      decoration: InputDecoration(
+                        hintText:
+                            'Anything else in the photos? (e.g. flax seeds, whey protein)',
+                        hintStyle:
+                            TextStyle(color: colors.textSecondary, fontSize: 13),
+                        isDense: true,
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 10),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    _GlassMenuOption(
+                      icon: Icons.add_a_photo_outlined,
+                      label: 'Add another $noun',
+                      color: amber,
+                      isDark: isDark,
+                      onTap: () => Navigator.pop(
+                        ctx,
+                        _AddAnotherResult(
+                          addAnother: true,
+                          prompt: promptCtrl.text.trim(),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    _GlassMenuOption(
+                      icon: Icons.check_circle_outline,
+                      label: 'Done — Analyze $count $noun${count == 1 ? '' : 's'}',
+                      color: const Color(0xFF16A34A),
+                      isDark: isDark,
+                      onTap: () => Navigator.pop(
+                        ctx,
+                        _AddAnotherResult(
+                          addAnother: false,
+                          prompt: promptCtrl.text.trim(),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-        );
-      },
-    );
+          );
+        },
+      );
+    } finally {
+      promptCtrl.dispose();
+    }
   }
 
   /// Scan Food entry — presents Camera vs Gallery picker (matching the
@@ -1047,18 +1116,29 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
     if (source == null) return;
 
     List<XFile> files = [];
+    String snapPrompt = '';
     if (source == ImageSource.camera) {
-      files = await _captureMultipleFromCamera(maxCount: 5, noun: 'page');
+      final result = await _captureMultipleFromCamera(maxCount: 5, noun: 'page');
+      files = result.files;
+      snapPrompt = result.prompt;
     } else {
       files = await picker.pickMultiImage(imageQuality: 90);
       if (files.length > 5) files = files.take(5).toList();
     }
     if (files.isEmpty) return;
 
+    final description = _descriptionController.text.trim();
+    final merged = <String>[
+      if (description.isNotEmpty) description,
+      if (snapPrompt.isNotEmpty) snapPrompt,
+    ].join(' — ');
+    final userMessage = merged.isEmpty ? null : merged;
+
     await _analyzeMultiImages(
       files: files,
       analysisMode: 'menu',
       inputType: 'menu_scan',
+      userMessage: userMessage,
     );
   }
 
@@ -1139,6 +1219,8 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
             analysisType: type,
             isDark: widget.isDark,
             streamingController: controller,
+            userId: widget.userId,
+            mealType: _selectedMealType.value,
             onLogItems: (selected) async {
               try {
                 await repository.logSelectedMealItems(
@@ -1401,6 +1483,8 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
           foodItems: foodItems,
           analysisType: analysisType,
           isDark: widget.isDark,
+          userId: widget.userId,
+          mealType: _selectedMealType.value,
           onLogItems: (selected) async {
             try {
               await repository.logSelectedMealItems(
@@ -1795,6 +1879,108 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
     });
   }
 
+  /// Manual "Add food" — opens a small text-input sheet, runs the existing
+  /// streaming text-analysis endpoint, then APPENDS the resulting items onto
+  /// the current preview (both `_analyzedResponse.foodItems` and
+  /// `_originalFoodItems` so swap/edit diffs still line up). Reused from the
+  /// preview action row, the bottom of the items list, and (via the shared
+  /// `showAddFoodSheet` helper) from the menu-analysis sheet.
+  Future<void> _handleAddFoodItem({required String entryPoint}) async {
+    if (_addingFoodItem) return;
+    if (_analyzedResponse == null) return;
+
+    // Guest gate — same usage limit text describe uses, since this is
+    // effectively a one-item text describe.
+    final isGuest = ref.read(isGuestModeProvider);
+    if (isGuest) {
+      final canDescribe =
+          await ref.read(guestUsageLimitsProvider.notifier).useTextDescribe();
+      if (!canDescribe) {
+        if (mounted) {
+          GuestUpgradeSheet.show(context, feature: GuestFeatureLimit.textDescribe);
+        }
+        return;
+      }
+    }
+
+    final description = await showAddFoodSheet(context);
+    if (description == null || description.trim().isEmpty) return;
+    if (!mounted) return;
+
+    setState(() => _addingFoodItem = true);
+    final messenger = ScaffoldMessenger.of(context);
+
+    try {
+      final repository = ref.read(nutritionRepositoryProvider);
+      LogFoodResponse? streamed;
+      await for (final progress in repository.analyzeFoodFromTextStreaming(
+        userId: widget.userId,
+        description: description.trim(),
+        mealType: _selectedMealType.value,
+        moodBefore: _moodBefore?.value,
+      )) {
+        if (!mounted) return;
+        if (progress.hasError) {
+          messenger.showSnackBar(
+            SnackBar(content: Text('Couldn\'t add food: ${progress.message}')),
+          );
+          return;
+        }
+        if (progress.isCompleted && progress.foodLog != null) {
+          streamed = progress.foodLog;
+          break;
+        }
+      }
+
+      if (!mounted) return;
+      if (streamed == null || streamed.foodItems.isEmpty) {
+        messenger.showSnackBar(
+          const SnackBar(
+            content: Text("Couldn't recognize any food in that description."),
+          ),
+        );
+        return;
+      }
+
+      final updatedItems =
+          List<FoodItemRanking>.from(_analyzedResponse!.foodItems)
+            ..addAll(streamed.foodItems);
+      _originalFoodItems ??=
+          List<FoodItemRanking>.from(_analyzedResponse!.foodItems);
+      _originalFoodItems!.addAll(streamed.foodItems);
+
+      setState(() {
+        _analyzedResponse = _rebuildResponseWithItems(updatedItems);
+      });
+
+      ref.read(posthogServiceProvider).capture(
+        eventName: 'food_item_added_manually',
+        properties: <String, Object>{
+          'entry_point': entryPoint,
+          'items_added': streamed.foodItems.length,
+        },
+      );
+    } catch (e) {
+      if (mounted) {
+        messenger.showSnackBar(
+          SnackBar(content: Text('Couldn\'t add food: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _addingFoodItem = false);
+    }
+  }
+
+}
+
+/// Result returned by [_LogMealSheetState._showAddAnotherPrompt] — bundles
+/// the user's "add another vs done" choice with whatever they typed in the
+/// per-photo prompt field, so the caller can forward the prompt to Gemini
+/// as `user_message`.
+class _AddAnotherResult {
+  final bool addAnother;
+  final String prompt;
+  const _AddAnotherResult({required this.addAnother, required this.prompt});
 }
 
 /// Glass-styled row used inside the Scan Menu GlassSheet.

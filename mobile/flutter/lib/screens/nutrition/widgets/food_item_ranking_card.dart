@@ -13,6 +13,9 @@ class CollapsibleFoodItemsSection extends StatefulWidget {
   final void Function(int index, String field, num newValue)? onItemFieldEdited;
   /// Set of indices that have already been edited (for the "edited" badge).
   final Set<int> editedIndices;
+  /// Optional "Add food" affordance rendered at the bottom of the expanded
+  /// list. When null, the row is hidden entirely.
+  final VoidCallback? onAddItem;
 
   const CollapsibleFoodItemsSection({
     super.key,
@@ -22,6 +25,7 @@ class CollapsibleFoodItemsSection extends StatefulWidget {
     this.onItemRemoved,
     this.onItemFieldEdited,
     this.editedIndices = const {},
+    this.onAddItem,
   });
 
   @override
@@ -106,6 +110,30 @@ class _CollapsibleFoodItemsSectionState extends State<CollapsibleFoodItemsSectio
                       ? (field, value) => widget.onItemFieldEdited!(entry.key, field, value)
                       : null,
                 )),
+                if (widget.onAddItem != null) ...[
+                  Divider(height: 1, color: cardBorder),
+                  InkWell(
+                    onTap: widget.onAddItem,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      child: Row(
+                        children: [
+                          Icon(Icons.add_circle_outline, color: teal, size: 18),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Add food',
+                            style: TextStyle(
+                              color: teal,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const Spacer(),
+                          Icon(Icons.chevron_right, color: textMuted),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ],
             ),
             crossFadeState: _isExpanded ? CrossFadeState.showSecond : CrossFadeState.showFirst,

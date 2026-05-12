@@ -20,8 +20,10 @@ import '../../data/models/allergen.dart';
 import '../../data/models/menu_item.dart';
 import '../../data/models/sort_spec.dart';
 import '../../data/providers/nutrition_preferences_provider.dart';
+import '../../data/models/nutrition.dart';
 import '../../data/repositories/nutrition_repository.dart';
 import '../../data/services/api_client.dart';
+import 'widgets/add_food_sheet.dart';
 import '../../services/menu_recommendation_service.dart';
 import '../../widgets/glass_sheet.dart';
 import 'widgets/menu_analysis/macro_budget_ring.dart';
@@ -97,6 +99,14 @@ class MenuAnalysisSheet extends ConsumerStatefulWidget {
   /// history as "Indian place near work".
   final String? restaurantName;
 
+  /// User ID + meal type for the manual "Add food" affordance — when both
+  /// are non-null, an "Add food" button is rendered above "Log N items"
+  /// that runs the streaming text-analysis endpoint and pre-selects the
+  /// resulting items so the Log count increments. When either is null, the
+  /// button is hidden (keeps existing chat-flow callers working).
+  final String? userId;
+  final String? mealType;
+
   const MenuAnalysisSheet({
     super.key,
     required this.foodItems,
@@ -107,6 +117,8 @@ class MenuAnalysisSheet extends ConsumerStatefulWidget {
     this.menuPhotoUrls = const [],
     this.elapsedSeconds,
     this.restaurantName,
+    this.userId,
+    this.mealType,
   });
 
   /// Preserve the v1 call pattern — used by log-meal + chat flows.
@@ -120,6 +132,8 @@ class MenuAnalysisSheet extends ConsumerStatefulWidget {
     List<String> menuPhotoUrls = const [],
     double? elapsedSeconds,
     String? restaurantName,
+    String? userId,
+    String? mealType,
   }) {
     return showGlassSheet<void>(
       context: context,
@@ -132,6 +146,8 @@ class MenuAnalysisSheet extends ConsumerStatefulWidget {
         menuPhotoUrls: menuPhotoUrls,
         elapsedSeconds: elapsedSeconds,
         restaurantName: restaurantName,
+        userId: userId,
+        mealType: mealType,
       ),
     );
   }
@@ -152,6 +168,8 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
   final Map<String, bool> _sectionExpanded = {};
   bool _logged = false;
   bool _bookmarking = false;
+  // Re-entrancy guard for the "Add food" button.
+  bool _addingFood = false;
 
   // Spotlight targets for the first-run tip tour. The tour rings each
   // anchored widget so the (otherwise unfamiliar) Menu Analysis controls
@@ -281,6 +299,80 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
       _refreshRecommendation();
     } else {
       setState(() {});
+    }
+  }
+
+  /// Manual "Add food" — opens a small description sheet, runs the existing
+  /// streaming text-analysis endpoint, converts each returned `FoodItemRanking`
+  /// into a `MenuItem`, appends to `_items`, and pre-selects the new ids so
+  /// the "Log N items" footer count increments. No-op when caller didn't pass
+  /// userId/mealType.
+  Future<void> _handleAddFood() async {
+    if (_addingFood) return;
+    if (widget.userId == null || widget.mealType == null) return;
+
+    final description = await showAddFoodSheet(context);
+    if (description == null || description.trim().isEmpty) return;
+    if (!mounted) return;
+
+    setState(() => _addingFood = true);
+    final messenger = ScaffoldMessenger.of(context);
+
+    try {
+      final repository = ref.read(nutritionRepositoryProvider);
+      LogFoodResponse? streamed;
+      await for (final progress in repository.analyzeFoodFromTextStreaming(
+        userId: widget.userId!,
+        description: description.trim(),
+        mealType: widget.mealType!,
+      )) {
+        if (!mounted) return;
+        if (progress.hasError) {
+          messenger.showSnackBar(
+            SnackBar(content: Text('Couldn\'t add food: ${progress.message}')),
+          );
+          return;
+        }
+        if (progress.isCompleted && progress.foodLog != null) {
+          streamed = progress.foodLog;
+          break;
+        }
+      }
+
+      if (!mounted) return;
+      if (streamed == null || streamed.foodItems.isEmpty) {
+        messenger.showSnackBar(
+          const SnackBar(
+            content: Text("Couldn't recognize any food in that description."),
+          ),
+        );
+        return;
+      }
+
+      final newItems = <MenuItem>[];
+      final newIds = <String>[];
+      final fallback =
+          widget.menuPhotoUrls.isNotEmpty ? widget.menuPhotoUrls.first : null;
+      for (final ranking in streamed.foodItems) {
+        final id = 'manual_${DateTime.now().microsecondsSinceEpoch}_${newIds.length}';
+        newIds.add(id);
+        newItems.add(
+          MenuItem.fromJson(ranking.toJson(), id: id, fallbackImageUrl: fallback),
+        );
+      }
+      setState(() {
+        _items = [..._items, ...newItems];
+        _selected.addAll(newIds);
+      });
+      _refreshRecommendation();
+    } catch (e) {
+      if (mounted) {
+        messenger.showSnackBar(
+          SnackBar(content: Text('Couldn\'t add food: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _addingFood = false);
     }
   }
 
@@ -1442,6 +1534,29 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
                   ),
                 ),
               ],
+            ),
+            const SizedBox(height: 6),
+          ],
+          // Manual "Add food" — only shown when caller passed userId+mealType.
+          // Pre-selects newly added items so the "Log N" count immediately
+          // reflects the additions.
+          if (widget.userId != null && widget.mealType != null) ...[
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: (_logged || _addingFood) ? null : _handleAddFood,
+                icon: _addingFood
+                    ? const SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.add),
+                label: Text(_addingFood ? 'Adding…' : 'Add food'),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                ),
+              ),
             ),
             const SizedBox(height: 6),
           ],

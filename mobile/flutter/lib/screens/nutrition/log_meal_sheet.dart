@@ -29,6 +29,7 @@ import '../../data/models/coach_persona.dart';
 import '../ai_settings/ai_settings_screen.dart';
 import '../../core/services/posthog_service.dart';
 import 'widgets/accuracy_feedback_snackbar.dart';
+import 'widgets/add_food_sheet.dart';
 import 'widgets/barcode_scanner_overlay.dart';
 import '../../services/post_meal_checkin_reminder.dart';
 import 'package:go_router/go_router.dart';
@@ -197,6 +198,9 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
   bool _isSaved = false;
   bool _hasLoggedThisSession = false;
   bool _isSaving = false;
+  // Re-entrancy guard for the manual "Add food" flow — protects against
+  // double-tapping the action chip while a stream is still in-flight.
+  bool _addingFoodItem = false;
   String _sourceType = 'text';
   /// Specific input method — sent to backend so food_logs.input_type is
   /// populated. Values match the migration-1960 CHECK allowlist: text, voice,
