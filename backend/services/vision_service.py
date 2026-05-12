@@ -28,6 +28,18 @@ from models.gemini_schemas import (
 )
 from services.gemini.constants import gemini_generate_with_retry
 from services.gemini.nutrition import compute_meal_inflammation
+from services.gemini.parsers import finalize_food_items
+
+
+def _safe_finalize(food_items, where: str):
+    """Wrap finalize_food_items so a tripwire failure never breaks the response."""
+    if not food_items:
+        return food_items
+    try:
+        return finalize_food_items(food_items, db_rows=None)
+    except Exception as e:
+        logger.warning(f"[vision:{where}] finalize_food_items failed: {e}", exc_info=True)
+        return food_items
 
 logger = get_logger(__name__)
 settings = get_settings()
@@ -375,6 +387,9 @@ Guidelines:
 
             if not result.get("food_items"):
                 logger.warning(f"⚠️ Gemini returned 0 food items. Raw response: {content[:500]}")
+
+            # L2+L3 portion validation (vision flow has no DB rows; only L3 fires).
+            result["food_items"] = _safe_finalize(result.get("food_items") or [], "single_image_plate")
 
             logger.info(
                 f"✅ Food analysis complete: {result['total_calories']} cal, "
@@ -986,6 +1001,15 @@ Guidelines:
                     _log_dish_if_missing_fields(dish, analysis_mode)
 
             result["analysis_type"] = analysis_mode
+            # L2+L3 portion validation across all entry shapes.
+            if analysis_mode == "plate":
+                result["food_items"] = _safe_finalize(result.get("food_items") or [], "multi_image_plate")
+            elif analysis_mode == "buffet":
+                result["dishes"] = _safe_finalize(result.get("dishes") or [], "multi_image_buffet")
+            elif analysis_mode == "menu":
+                for section in (result.get("sections") or []):
+                    if isinstance(section, dict):
+                        section["dishes"] = _safe_finalize(section.get("dishes") or [], "multi_image_menu")
             logger.info(f"Multi-image food analysis complete: mode={analysis_mode}")
             return result
 
@@ -1090,6 +1114,9 @@ Guidelines:
             result["carbs_g"] = result.get("total_carbs_g", 0.0)
             result["fat_g"] = result.get("total_fat_g", 0.0)
             result["fiber_g"] = result.get("total_fiber_g", 0.0)
+
+            # L2+L3 portion validation (no DB rows in OCR flow).
+            result["food_items"] = _safe_finalize(result.get("food_items") or [], "app_screenshot_ocr")
 
             logger.info(
                 f"App screenshot analysis complete: {result['total_calories']} cal, "
@@ -1204,6 +1231,9 @@ Guidelines:
             result["carbs_g"] = result.get("total_carbs_g", 0.0)
             result["fat_g"] = result.get("total_fat_g", 0.0)
             result["fiber_g"] = result.get("total_fiber_g", 0.0)
+
+            # L2+L3 portion validation (no DB rows in label OCR flow).
+            result["food_items"] = _safe_finalize(result.get("food_items") or [], "nutrition_label_ocr")
 
             logger.info(
                 f"Nutrition label analysis complete: {result['total_calories']} cal "

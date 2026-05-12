@@ -21,7 +21,7 @@ Usage:
 """
 
 from pydantic import BaseModel, Field
-from typing import Optional, List, Dict
+from typing import Optional, List, Dict, Literal
 from enum import Enum
 
 
@@ -177,18 +177,52 @@ class ExerciseReasoningResponse(BaseModel):
 # =============================================================================
 
 class FoodItemSchema(BaseModel):
-    """Schema for a single analyzed food item."""
+    """Schema for a single analyzed food item.
+
+    Layer 1 of the 3-layer portion-validation defense (added 2026-05-11
+    after the "blueberries 99 × 148g = 8316 kcal" incident, where Gemini
+    emitted the *per-cup* weight as the per-piece weight).
+
+    L1 (this schema) bounds plausible numeric ranges and forces the model
+    to declare `portion_basis` so downstream code can reject by_count
+    abuse for foods that should be by_weight (berries, nuts, seeds).
+    L2 = `parsers.reconcile_with_db()` (DB override fix-ups).
+    L3 = `parsers.apply_tripwires()` (kcal/g + size sanity windows).
+    """
     name: str = Field(..., description="Food name")
     amount: str = Field(..., description="Portion size description")
-    calories: int = Field(..., description="Calories")
+    calories: int = Field(..., ge=0, le=15000, description="Calories")
     protein_g: float = Field(..., description="Protein in grams")
     carbs_g: float = Field(..., description="Carbohydrates in grams")
     fat_g: float = Field(..., description="Fat in grams")
     fiber_g: float = Field(default=0, description="Fiber in grams")
-    weight_g: Optional[float] = Field(default=None, description="Weight in grams")
+    weight_g: Optional[float] = Field(default=None, ge=0.1, le=5000, description="Weight in grams (single item; nothing realistic exceeds 5kg)")
     unit: str = Field(default="g", description="Measurement unit")
-    count: Optional[int] = Field(default=None, description="Count for countable items")
-    weight_per_unit_g: Optional[float] = Field(default=None, description="Weight per unit for countable items")
+    count: Optional[int] = Field(default=None, ge=1, le=200, description="Count for countable items")
+    weight_per_unit_g: Optional[float] = Field(default=None, ge=0.1, le=2000, description="Weight per unit for countable items")
+    portion_basis: Literal["by_count", "by_weight"] = Field(
+        ...,
+        description=(
+            "How the portion was measured. 'by_count' ONLY for discrete "
+            "pickup-able pieces (egg, banana, apple, slice of bread, "
+            "chicken nugget). 'by_weight' for handful/cup/spoon foods, "
+            "loose grains/seeds, anything smaller than a fingernail, AND "
+            "small fruits/nuts/seeds (blueberries, cashews, chia, etc.) "
+            "where users measure by handful/cup not by individual piece."
+        ),
+    )
+    confidence: Optional[Literal["high", "medium", "low"]] = Field(
+        default=None,
+        description="Set to 'low' by L3 tripwire when the item fails a sanity check.",
+    )
+    requires_user_confirmation: Optional[bool] = Field(
+        default=False,
+        description="Set True by L3 tripwire when the user should review the portion before saving.",
+    )
+    sanity_clamped: Optional[bool] = Field(
+        default=False,
+        description="Set True by L2/L3 when the values were modified from the model's raw output.",
+    )
     goal_score: Optional[int] = Field(default=None, description="Score 1-10 based on user goals")
     inflammation_score: Optional[int] = Field(default=None, description="Inflammation score 1-10, 10 = most inflammatory")
     # Structured drivers of inflammation_score. 1-3 short tags like

@@ -20,6 +20,8 @@ FoodItem _$FoodItemFromJson(Map<String, dynamic> json) => FoodItem(
   weightPerUnitG: (json['weight_per_unit_g'] as num?)?.toDouble(),
   inflammationScore: (json['inflammation_score'] as num?)?.toInt(),
   isUltraProcessed: json['is_ultra_processed'] as bool?,
+  confidence: json['confidence'] as String?,
+  requiresUserConfirmation: json['requires_user_confirmation'] as bool?,
 );
 
 Map<String, dynamic> _$FoodItemToJson(FoodItem instance) => <String, dynamic>{
@@ -36,6 +38,8 @@ Map<String, dynamic> _$FoodItemToJson(FoodItem instance) => <String, dynamic>{
   'weight_per_unit_g': instance.weightPerUnitG,
   'inflammation_score': instance.inflammationScore,
   'is_ultra_processed': instance.isUltraProcessed,
+  'confidence': instance.confidence,
+  'requires_user_confirmation': instance.requiresUserConfirmation,
 };
 
 FoodLog _$FoodLogFromJson(Map<String, dynamic> json) => FoodLog(

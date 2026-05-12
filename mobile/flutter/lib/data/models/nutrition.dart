@@ -36,6 +36,12 @@ class FoodItem {
   final int? inflammationScore;
   @JsonKey(name: 'is_ultra_processed')
   final bool? isUltraProcessed;
+  // Layer-3 portion-validation tripwire flags. When the backend can't
+  // confidently size the portion (e.g. blueberries 99×148g) it sets these
+  // so the UI can prompt the user to confirm before persisting.
+  final String? confidence;
+  @JsonKey(name: 'requires_user_confirmation')
+  final bool? requiresUserConfirmation;
 
   const FoodItem({
     required this.name,
@@ -51,6 +57,8 @@ class FoodItem {
     this.weightPerUnitG,
     this.inflammationScore,
     this.isUltraProcessed,
+    this.confidence,
+    this.requiresUserConfirmation,
   });
 
   factory FoodItem.fromJson(Map<String, dynamic> json) =>

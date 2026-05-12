@@ -3485,6 +3485,11 @@ class _EditableFoodItemsListState extends State<_EditableFoodItemsList> {
           final protein = ((item['protein_g'] as num?) ?? 0).toDouble();
           final carbs = ((item['carbs_g'] as num?) ?? 0).toDouble();
           final fat = ((item['fat_g'] as num?) ?? 0).toDouble();
+          // L3 tripwire: backend flagged the portion as suspicious
+          // (e.g. "blueberries 99 × 148g = 8316 kcal"). Wrap row in an
+          // amber warning border + show a tap-to-confirm banner that
+          // reuses the existing swap/edit dialog.
+          final needsConfirm = item['requires_user_confirmation'] == true;
 
           return Container(
             margin: const EdgeInsets.only(bottom: 8),
@@ -3492,9 +3497,11 @@ class _EditableFoodItemsListState extends State<_EditableFoodItemsList> {
             decoration: BoxDecoration(
               color: widget.cardBorder.withValues(alpha: 0.3),
               borderRadius: BorderRadius.circular(12),
-              border: edited
-                  ? Border.all(color: widget.accent.withValues(alpha: 0.45), width: 1)
-                  : null,
+              border: needsConfirm
+                  ? Border.all(color: Colors.amber, width: 2)
+                  : (edited
+                      ? Border.all(color: widget.accent.withValues(alpha: 0.45), width: 1)
+                      : null),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -3601,6 +3608,38 @@ class _EditableFoodItemsListState extends State<_EditableFoodItemsList> {
                   const SizedBox(height: 4),
                   Text('Amount: $amount',
                       style: TextStyle(fontSize: 11, color: widget.textMuted)),
+                ],
+                if (needsConfirm) ...[
+                  const SizedBox(height: 8),
+                  InkWell(
+                    onTap: () => _showSwapOrAddDialog(replaceIndex: idx),
+                    borderRadius: BorderRadius.circular(8),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.amber.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.amber.withValues(alpha: 0.6), width: 1),
+                      ),
+                      child: Row(
+                        children: [
+                          const Text('⚠️', style: TextStyle(fontSize: 14)),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              'Looks off — tap to confirm',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.amber.shade900,
+                              ),
+                            ),
+                          ),
+                          Icon(Icons.chevron_right_rounded, size: 18, color: Colors.amber.shade900),
+                        ],
+                      ),
+                    ),
+                  ),
                 ],
               ],
             ),

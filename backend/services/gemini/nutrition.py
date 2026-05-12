@@ -149,6 +149,19 @@ WEIGHT/COUNT FIELDS (required for portion editing):
   - Indian "fry" dishes: chicken fry, fish fry, prawn fry, bhindi fry, aloo fry, gobi fry, egg fry — these are DRY PREPARATIONS served as a portion, NOT individual countable pieces
   - Other: soup, salad, pasta, noodles, stir-fry, mashed potatoes, scrambled eggs, oatmeal/porridge, yogurt, ice cream, halwa, kheer/payasam, chutney, sauce, gravy
 
+PORTION_BASIS (REQUIRED on every food_item — "by_count" | "by_weight"):
+- Use "by_count" ONLY for discrete pickup-able pieces (egg, banana, apple, slice of bread, chicken nugget, samosa, idli, donut, slice of pizza).
+- Use "by_weight" for everything else, ESPECIALLY:
+  - Small fruits — blueberries, strawberries, raspberries, blackberries, cherries, grapes, pomegranate seeds. portion_basis MUST be "by_weight".
+  - Nuts — cashews, almonds, walnuts, peanuts, pistachios, pecans, macadamias. portion_basis MUST be "by_weight".
+  - Seeds — chia, flax, sunflower, pumpkin, sesame. portion_basis MUST be "by_weight".
+  - Loose grains — oats, rice (loose), quinoa, granola.
+  - Spreads & oils — peanut butter, almond butter, hummus, olive oil. NEVER countable.
+  - Anything smaller than a fingernail → "by_weight".
+- 1 cup ≈ 148g blueberries refers to the WEIGHT OF THE CUP, NOT the weight of one berry. A single blueberry is ~1.5g. Default to ~80g (~½ cup) when the user doesn't specify.
+- 1 oz cashews ≈ 28g for the *handful*, NOT per cashew. A single cashew is ~1.5g. Default to 28g (1 oz) when unspecified.
+- For "by_weight" small fruits/nuts/seeds: leave count=null AND weight_per_unit_g=null; populate weight_g with the realistic handful/cup weight (e.g. blueberries ½ cup → 75g, cashews 1 oz → 28g, chia 1 tbsp → 12g).
+
 INFLAMMATION SCORE (1-10, 10 = most inflammatory):
 1-2: Strongly anti-inflammatory (wild salmon, turmeric, berries, leafy greens, ginger tea, olive oil)
 3-4: Mildly anti-inflammatory (most vegetables, whole grains, nuts, legumes, plain yogurt)
@@ -709,6 +722,18 @@ COUNTABLE ITEMS - Discrete pieces you pick up and eat individually (NOT by weigh
 - For "small fries"/"medium fries"/"large fries", estimate individual fry sticks (small≈40, medium≈55, large≈70) at ~8g each
 - NOT COUNTABLE (use count=null, weight_per_unit_g=null): curry, dal, rice, biryani, pulao, soup, salad, pasta, noodles, oatmeal, yogurt, ice cream, halwa, kheer, chutney, sauce
 - IMPORTANT "fry" dishes (chicken fry, fish fry, prawn fry, bhindi fry, aloo fry, gobi fry) are Indian DRY PREPARATIONS served as a portion — NOT countable individual pieces. Use count=null, weight_per_unit_g=null for these.
+
+PORTION_BASIS (REQUIRED — "by_count" | "by_weight"):
+- "by_count" ONLY for discrete pickup-able pieces (egg, banana, apple, bread slice, nugget, samosa).
+- "by_weight" for everything else, ESPECIALLY:
+  - Small fruits: blueberries, strawberries, raspberries, blackberries, cherries, grapes — portion_basis MUST be "by_weight".
+  - Nuts: cashews, almonds, walnuts, peanuts, pistachios — portion_basis MUST be "by_weight".
+  - Seeds: chia, flax, sunflower, pumpkin, sesame — portion_basis MUST be "by_weight".
+  - Spreads/oils: peanut butter, almond butter, hummus, olive oil — portion_basis MUST be "by_weight".
+  - Anything smaller than a fingernail → "by_weight".
+- 1 cup ≈ 148g blueberries refers to the WEIGHT OF THE CUP, NOT the weight of one berry. A single blueberry is ~1.5g. Default to ~80g (~½ cup) when unspecified.
+- 1 oz cashews ≈ 28g for the *handful*, NOT per cashew. Default to 28g when unspecified.
+- For by_weight small fruits/nuts/seeds: leave count=null AND weight_per_unit_g=null; populate weight_g with the realistic handful/cup weight.
 
 MEASUREMENT UNITS - Use "unit" field to specify the most natural unit:
 - "g" = grams (default for solid foods: chicken, rice, bread)

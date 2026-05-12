@@ -63,125 +63,305 @@ _FOREIGN_INDICATORS = frozenset({
 })
 
 
-# Per-piece weight caps (grams) for countable foods, keyed by lowercased
-# name fragment. The number is the realistic *upper bound* — if Gemini or the
-# DB suggest a per-piece weight above this, we clamp to it. This is the
-# deterministic safety net that runs after both prompt guidance (L1) and the
-# food-DB override lookup (L2). Below caps are the "biggest plausible"
-# variant: a giant Korean bone-in jumbo wing tops out around 80g, a hefty
-# meatball at 50g, etc. Per-piece kcal cap is a coarser sanity check derived
-# from realistic max kcal/g (≈4.0 for a deeply fried item) × the weight cap.
-_PER_PIECE_WEIGHT_CAPS_G = (
-    # (name_fragment, max_per_piece_g, max_per_piece_kcal)
-    ("boneless wing", 35, 110),       # breaded chicken-breast piece
-    ("boneless buffalo", 35, 110),
-    ("chicken bite", 35, 110),
-    ("chicken nugget", 30, 90),
-    ("popcorn chicken", 18, 60),
-    ("chicken popper", 18, 60),
-    ("wing", 80, 220),                # bone-in wing whole-with-bone (catches all other wing variants)
-    ("chicken tender", 60, 180),
-    ("chicken strip", 60, 180),
-    ("chicken finger", 60, 180),
-    ("meatball", 50, 130),
-    ("falafel", 30, 90),
-    ("mozzarella stick", 35, 110),
-    ("cheese stick", 35, 110),
-    ("french fry", 12, 35),
-    ("fry", 12, 35),
-    ("tater tot", 18, 50),
-    ("chip", 5, 25),
-)
-_TOTAL_KCAL_PER_GRAM_CAP = 6.0  # 9 = pure fat; no real food exceeds 6 kcal/g.
+# =============================================================================
+# 3-Layer portion validation (added 2026-05-11 after the blueberries 99×148g
+# = 8316 kcal incident — Gemini emitted the per-CUP weight as the per-piece
+# weight). See models/gemini_schemas.FoodItemSchema for L1; see
+# `reconcile_with_db()` for L2; see `apply_tripwires()` for L3.
+# =============================================================================
+
+# Realistic kcal/g windows by food_category. Used by L3 as the last-line
+# sanity gate — any item outside its category window gets flagged for user
+# confirmation rather than silently logged. Bounds are *generous* (real foods
+# can sit at the edges) and chosen so a bug like "99 berries × 148g = 12g/g"
+# is unmistakably outside the fruit window (0.2–1.0 kcal/g).
+KCAL_PER_G_CATEGORY_WINDOWS: Dict[str, tuple] = {
+    "fruit":     (0.2, 1.0),  # whole fresh fruit; dried fruit handled separately
+    "vegetable": (0.1, 1.0),
+    "nut":       (4.0, 7.5),  # 5–6.5 typical, 7+ for macadamias
+    "oil":       (7.5, 9.5),  # ~9 kcal/g, with safety margin
+    "grain":     (1.0, 4.5),  # cooked-rice low end, granola high end
+    "protein":   (1.0, 5.0),  # poached fish low, pepperoni high
+    "dairy":     (0.3, 4.5),  # skim milk low, hard aged cheese high
+    "dessert":   (1.5, 6.0),  # ice cream low, candy high
+    "beverage":  (0.0, 2.0),
+}
+
+# Foods that should NEVER carry portion_basis="by_count". If Gemini ships a
+# count for these (e.g. "1 oz cashews" → count=1 weight_per_unit=28), we
+# rewrite to by_weight. Maps lower-cased name fragment → typical serving (g).
+_NEVER_COUNTABLE_DEFAULT_G: Dict[str, float] = {
+    "blueberr": 80,    # ½ cup
+    "strawberr": 75,   # ½ cup sliced
+    "raspberr": 60,
+    "blackberr": 70,
+    "grape": 80,
+    "cherr": 70,
+    "pomegranate": 50,
+    "cashew": 28,      # 1 oz
+    "almond": 28,
+    "walnut": 28,
+    "peanut butter": 32,  # 2 tbsp
+    "almond butter": 32,
+    "hummus": 30,
+    "peanut": 28,      # whole peanuts (kept after "peanut butter" check below)
+    "pistachio": 28,
+    "pecan": 28,
+    "macadamia": 28,
+    "chia": 12,        # 1 tbsp
+    "flax": 7,         # 1 tbsp
+    "sunflower seed": 16,
+    "pumpkin seed": 16,
+    "sesame seed": 9,
+    "olive oil": 14,   # 1 tbsp
+    "oats": 40,        # ½ cup dry rolled
+    "granola": 30,
+}
 
 
-def _apply_portion_sanity_caps(item: dict, query_name: str) -> None:
-    """Final-stage clamp for absurd portion estimates.
+def _match_never_countable(name: str) -> Optional[tuple]:
+    """Returns (matched_fragment, default_g) or None.
 
-    Runs AFTER Gemini parsing + food-DB override. Catches the residual
-    failure modes that prompt rules and DB seeding can't fully prevent:
-      * Gemini guesses 85g/piece for a boneless wing.
-      * DB row matched but `default_weight_per_piece_g` is NULL.
-      * Vision pass conflates two stacked items into one weight.
-
-    Mutates `item` in place:
-      * If `weight_per_unit_g` exceeds the cap for the matched food
-        category, scales weight_g, calories, and macros down proportionally.
-      * If final calories / weight > 6 kcal/g (impossible for any food
-        short of pure fat), scales the calorie + macro values down to
-        4 kcal/g (a realistic max for fried items).
-
-    Idempotent — calling twice on already-clamped data is a no-op.
+    Longest-match wins so 'peanut butter' beats bare 'peanut'.
     """
-    if not isinstance(item, dict):
-        return
-    haystack = f"{(item.get('name') or '').lower()} {(query_name or '').lower()}"
+    if not name:
+        return None
+    nm = name.lower()
+    best: Optional[tuple] = None
+    for frag, default_g in _NEVER_COUNTABLE_DEFAULT_G.items():
+        if frag in nm and (best is None or len(frag) > len(best[0])):
+            best = (frag, default_g)
+    return best
 
-    weight_g = item.get("weight_g") or 0
-    count = item.get("count") or 0
-    weight_per_unit = item.get("weight_per_unit_g")
-    calories = item.get("calories") or 0
 
-    # Per-piece weight cap (longest matching fragment wins).
-    matched_cap = None
-    for fragment, max_w, max_kcal in _PER_PIECE_WEIGHT_CAPS_G:
-        if fragment in haystack:
-            if matched_cap is None or len(fragment) > len(matched_cap[0]):
-                matched_cap = (fragment, max_w, max_kcal)
-    if matched_cap and count and count > 0:
-        _, max_w, max_kcal = matched_cap
-        # Use whichever per-piece weight the item carries; fall back to
-        # weight_g / count when weight_per_unit_g wasn't populated.
-        effective_per_piece = weight_per_unit or (weight_g / count if count else None)
-        if effective_per_piece and effective_per_piece > max_w:
-            scale = max_w / effective_per_piece
-            new_weight_g = round(count * max_w, 1)
-            new_calories = round(calories * scale)
+def reconcile_with_db(items: List[dict], db_rows: Dict[str, dict]) -> List[dict]:
+    """L2: Reconcile Gemini items with food-DB override rows.
+
+    Args:
+        items: list of food-item dicts from Gemini
+        db_rows: lookup of {normalized_food_name: override_row}, where
+                 override_row has at minimum:
+                   default_weight_per_piece_g (Optional[float])
+                   default_serving_g          (Optional[float])
+
+    Three failure modes handled:
+
+    1. **Whole-unit food** (egg, banana, apple, etc.) — DB per_piece /
+       serving > 0.5: count is meaningful. Keep count, recompute
+       weight_g = count * piece_weight (from DB if Gemini's weight_g is
+       absent or wildly off). Set sanity_clamped=True if values change.
+
+    2. **Truly countable small piece** (blueberry, etc.) — DB per_piece /
+       serving < 0.5: count is suspect. If Gemini's weight_per_unit_g
+       exceeds the DB piece weight by >2x, switch portion_basis to
+       "by_weight" and use serving weight instead.
+
+    3. **Oz-as-piece anti-pattern** (cashews, peanut butter) — name matches
+       _NEVER_COUNTABLE_DEFAULT_G AND claimed weight_per_unit_g > 50g
+       (impossible per-cashew weight): rewrite to by_weight, drop count,
+       use serving weight.
+
+    Always sets sanity_clamped=True when any value changes.
+    Never silently rewrites without flagging.
+    """
+    if not items:
+        return items
+
+    for item in items:
+        if not isinstance(item, dict):
+            continue
+        name = (item.get("name") or "").strip()
+        # DB row lookup (caller-side normalization assumed already done).
+        db = None
+        if db_rows:
+            db = db_rows.get(name) or db_rows.get(name.lower())
+
+        portion_basis = item.get("portion_basis")
+        count = item.get("count")
+        wpu = item.get("weight_per_unit_g")
+
+        # ---- Failure mode 3: oz-as-piece anti-pattern ----
+        # This runs even WITHOUT a DB row, since the rule is name-based.
+        nc_match = _match_never_countable(name)
+        if nc_match and (portion_basis == "by_count" or count or (wpu and wpu > 50)):
+            frag, default_g = nc_match
+            new_weight = item.get("weight_g")
+            if not new_weight or (wpu and wpu > 50):
+                # Use Gemini's weight_g if it looks like a serving weight
+                # (small fruits/nuts/spreads ~10–200g); otherwise default.
+                if not new_weight or new_weight > 1000 or new_weight < 1:
+                    new_weight = default_g
             try:
-                from core.logger import get_logger
-                _l = get_logger(__name__)
-                _l.warning(
-                    f"[SanityGate] Clamped per-piece weight for '{item.get('name')}' "
-                    f"({matched_cap[0]}): {effective_per_piece:.0f}g → {max_w}g "
-                    f"(weight {weight_g}g → {new_weight_g}g, kcal {calories} → {new_calories})"
+                logger.warning(
+                    f"[L2-Reconcile] '{name}' matched never-countable '{frag}'; "
+                    f"forcing by_weight (was count={count}, wpu={wpu}, weight_g={item.get('weight_g')}); "
+                    f"new weight_g={new_weight}"
                 )
             except Exception:
                 pass
-            item["weight_g"] = new_weight_g
-            item["weight_per_unit_g"] = max_w
-            item["calories"] = new_calories
-            for macro in ("protein_g", "carbs_g", "fat_g", "fiber_g"):
-                if item.get(macro) is not None:
-                    item[macro] = round(item[macro] * scale, 1)
+            item["portion_basis"] = "by_weight"
+            item["count"] = None
+            item["weight_per_unit_g"] = None
+            item["weight_g"] = new_weight
             item["sanity_clamped"] = True
-            weight_g = new_weight_g
-            calories = new_calories
+            continue
 
-    # Calorie-density cap: no whole food exceeds 6 kcal/g. If we're above,
-    # scale the kcal + macros down to ~4 kcal/g — the realistic max for
-    # deeply-fried foods. Don't touch weight (the visual estimate is the
-    # most reliable signal here).
-    if weight_g and weight_g > 0 and calories and calories > 0:
-        density = calories / weight_g
-        if density > _TOTAL_KCAL_PER_GRAM_CAP:
-            target_density = 4.0
-            scale = target_density / density
-            new_calories = round(calories * scale)
-            try:
-                from core.logger import get_logger
-                _l = get_logger(__name__)
-                _l.warning(
-                    f"[SanityGate] Clamped calorie density for '{item.get('name')}': "
-                    f"{density:.1f} kcal/g → {target_density:.1f} kcal/g "
-                    f"(kcal {calories} → {new_calories} for {weight_g}g)"
+        if not db:
+            continue
+        piece_w = db.get("default_weight_per_piece_g")
+        serving_w = db.get("default_serving_g") or db.get("serving_size_g")
+
+        # ---- Failure modes 1 & 2: need both pieces of DB info ----
+        if portion_basis != "by_count" or not count or not piece_w or not serving_w:
+            continue
+
+        ratio = piece_w / serving_w if serving_w else 0
+        if ratio > 0.5:
+            # Whole-unit food (egg ≈ 50g, serving = 50g; banana ≈ 120g serving).
+            # Keep count; recompute weight_g if Gemini's value disagrees badly.
+            expected_weight = count * piece_w
+            current_weight = item.get("weight_g") or 0
+            if current_weight <= 0 or abs(current_weight - expected_weight) / expected_weight > 0.4:
+                try:
+                    logger.warning(
+                        f"[L2-Reconcile] Whole-unit '{name}' count={count}: "
+                        f"weight_g {current_weight}g → {expected_weight}g (DB piece={piece_w}g)"
+                    )
+                except Exception:
+                    pass
+                item["weight_g"] = expected_weight
+                item["weight_per_unit_g"] = piece_w
+                item["sanity_clamped"] = True
+        else:
+            # Truly countable small piece (berry, nugget). If Gemini's
+            # per-unit weight > 2x DB, the count almost certainly came from
+            # confusing the cup weight for a piece weight. Switch to by_weight.
+            if wpu and piece_w and wpu > piece_w * 2:
+                try:
+                    logger.warning(
+                        f"[L2-Reconcile] Small-piece '{name}': wpu={wpu}g >> DB piece={piece_w}g; "
+                        f"switching to by_weight at serving={serving_w}g"
+                    )
+                except Exception:
+                    pass
+                item["portion_basis"] = "by_weight"
+                item["count"] = None
+                item["weight_per_unit_g"] = None
+                item["weight_g"] = serving_w
+                item["sanity_clamped"] = True
+
+    return items
+
+
+def _categorize_for_window(name: str) -> Optional[str]:
+    """Best-effort category guess for the kcal/g window check.
+
+    Returns a key from KCAL_PER_G_CATEGORY_WINDOWS or None.
+    Conservative — when uncertain, returns None so we don't fire a false
+    tripwire. The item's own `category` field (when present) wins.
+    """
+    if not name:
+        return None
+    nm = name.lower()
+    if any(t in nm for t in ("oil",)):
+        return "oil"
+    if any(t in nm for t in ("cashew", "almond", "walnut", "peanut", "pistachio", "pecan", "macadamia", "nut")):
+        return "nut"
+    if any(t in nm for t in ("blueberr", "strawberr", "raspberr", "blackberr", "grape", "cherr", "apple", "banana", "orange", "mango", "fruit")):
+        return "fruit"
+    if any(t in nm for t in ("broccoli", "spinach", "kale", "lettuce", "vegetable", "carrot", "cucumber", "tomato")):
+        return "vegetable"
+    if any(t in nm for t in ("rice", "oat", "wheat", "bread", "pasta", "noodle", "quinoa", "granola", "cereal")):
+        return "grain"
+    if any(t in nm for t in ("chicken", "beef", "pork", "fish", "salmon", "tuna", "egg", "tofu", "lentil", "bean")):
+        return "protein"
+    if any(t in nm for t in ("milk", "yogurt", "cheese", "butter")):
+        return "dairy"
+    if any(t in nm for t in ("ice cream", "candy", "chocolate", "cake", "cookie", "donut")):
+        return "dessert"
+    if any(t in nm for t in ("juice", "soda", "coffee", "tea", "smoothie", "drink", "shake", "water")):
+        return "beverage"
+    return None
+
+
+def apply_tripwires(items: List[dict]) -> List[dict]:
+    """L3: Sanity tripwires that flag (don't silently rewrite) bad items.
+
+    For each item, checks:
+      1. kcal/g sits inside the category window (if category is known/guessable).
+      2. weight_g <= 5000 (no realistic single item is 5kg).
+      3. count * weight_per_unit_g ≈ weight_g within 20% (internal consistency).
+
+    On ANY tripwire: sets confidence='low', requires_user_confirmation=True,
+    and appends a human-readable reason to item['_tripwire_reasons'].
+    Never silently rewrites the values — that's L2's job.
+    """
+    if not items:
+        return items
+
+    for item in items:
+        if not isinstance(item, dict):
+            continue
+        reasons: List[str] = list(item.get("_tripwire_reasons") or [])
+
+        weight_g = item.get("weight_g") or 0
+        calories = item.get("calories") or 0
+        count = item.get("count")
+        wpu = item.get("weight_per_unit_g")
+        name = (item.get("name") or "").strip()
+
+        # 1. kcal/g window
+        category = item.get("category") or _categorize_for_window(name)
+        if category in KCAL_PER_G_CATEGORY_WINDOWS and weight_g > 0 and calories > 0:
+            lo, hi = KCAL_PER_G_CATEGORY_WINDOWS[category]
+            density = calories / weight_g
+            if density < lo or density > hi:
+                reasons.append(
+                    f"{calories} kcal / {weight_g:.0f}g = {density:.2f} kcal/g "
+                    f"is outside {category} window {lo}-{hi}"
                 )
+
+        # 2. absurd single-item weight
+        if weight_g and weight_g > 5000:
+            reasons.append(f"weight_g={weight_g:.0f} exceeds 5000g cap (no single item is 5kg)")
+
+        # 3. internal consistency
+        if count and wpu and weight_g:
+            expected = count * wpu
+            if expected > 0 and abs(expected - weight_g) / max(expected, weight_g) > 0.2:
+                reasons.append(
+                    f"count×weight_per_unit ({count}×{wpu:.1f}={expected:.0f}g) "
+                    f"disagrees with weight_g={weight_g:.0f}g by >20%"
+                )
+
+        if reasons:
+            item["confidence"] = "low"
+            item["requires_user_confirmation"] = True
+            item["_tripwire_reasons"] = reasons
+            try:
+                logger.warning(f"[L3-Tripwire] '{name}': {'; '.join(reasons)}")
             except Exception:
                 pass
-            item["calories"] = new_calories
-            for macro in ("protein_g", "carbs_g", "fat_g", "fiber_g"):
-                if item.get(macro) is not None:
-                    item[macro] = round(item[macro] * scale, 1)
-            item["sanity_clamped"] = True
+
+    return items
+
+
+def finalize_food_items(items: List[dict], db_rows: Optional[Dict[str, dict]] = None) -> List[dict]:
+    """Run the L2+L3 portion-validation pipeline.
+
+    Args:
+        items: list of food-item dicts (post-Gemini, post-USDA-enhance).
+        db_rows: optional {normalized_name: override_row} lookup. When None,
+                 only L3 tripwires fire (vision flow doesn't have DB rows).
+
+    Returns the same list (mutated in place + returned for chaining).
+    """
+    # Always run reconcile_with_db: even with no db_rows, the never-countable
+    # name-match path (oz-as-piece anti-pattern) catches cashews / blueberries
+    # / peanut butter without any DB dependency.
+    items = reconcile_with_db(items, db_rows or {})
+    items = apply_tripwires(items)
+    return items
 
 
 def _looks_foreign(name: str) -> bool:
@@ -672,13 +852,23 @@ class ParsersMixin:
             # query of "laughing cow cheese"), rewrite it to the user's wording.
             item['name'] = _sanitize_foreign_name(item.get('name', ''), original_query)
 
-            # L3 sanity gate (added 2026-05-07 after the buffalo-wings 2122-kcal
-            # incident): clamp impossibly-high portion estimates regardless of
-            # whether they came from Gemini's vision pass or the DB lookup.
-            # This is the deterministic floor — runs even when L1 (prompt) and
-            # L2 (food DB override) both miss.
-            _apply_portion_sanity_caps(item, food_names[i] if i < len(food_names) else item.get('name', ''))
-
             enhanced_items.append(item)
+
+        # L2 + L3 portion-validation pipeline (replaces the legacy
+        # _apply_portion_sanity_caps after the blueberries 99×148g incident).
+        # Build a {name: db_row} lookup from the per-item nutrition_data so
+        # reconcile_with_db can detect oz-as-piece + small-piece anti-patterns.
+        try:
+            db_rows: Dict[str, dict] = {}
+            for it, nd in zip(enhanced_items, nutrition_results):
+                if isinstance(nd, dict):
+                    nm = it.get("name") or ""
+                    db_rows[nm] = {
+                        "default_weight_per_piece_g": nd.get("override_weight_per_piece_g"),
+                        "default_serving_g": nd.get("default_serving_g") or nd.get("serving_size_g"),
+                    }
+            finalize_food_items(enhanced_items, db_rows=db_rows or None)
+        except Exception as _fe:
+            logger.warning(f"[finalize_food_items] non-fatal failure: {_fe}", exc_info=True)
 
         return enhanced_items
