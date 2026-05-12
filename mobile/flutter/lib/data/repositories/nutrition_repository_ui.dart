@@ -1,5 +1,108 @@
 part of 'nutrition_repository.dart';
 
+/// Result returned by the backend `/save-as-recipe` endpoint. Defined in this
+/// part file so the repository can reference it without an import (since
+/// `part of` files can't add their own imports).
+class SaveAsRecipeResult {
+  final String recipeId;
+  final bool merged;        // true when an existing recipe was returned instead of a fresh insert
+  final String? cookEventId;
+
+  const SaveAsRecipeResult({
+    required this.recipeId,
+    required this.merged,
+    this.cookEventId,
+  });
+}
+
+/// Result returned by `/food-logs/{log_id}/schedule`. The endpoint can be
+/// long-running (3-8s with implicit Save-as-Recipe), so callers should
+/// dispatch via the schedule_save_jobs_provider rather than awaiting inline.
+class ScheduleFromLogResult {
+  final String scheduleId;
+  final String recipeId;
+  final DateTime nextFireAt;
+  final bool merged;        // whether the underlying recipe was reused vs newly created
+
+  const ScheduleFromLogResult({
+    required this.scheduleId,
+    required this.recipeId,
+    required this.nextFireAt,
+    required this.merged,
+  });
+}
+
+/// Result returned by `/grocery-lists/active/add-from-food-log/{log_id}`.
+class AddToShoppingListResult {
+  final String listId;
+  final String listName;
+  final int itemsAdded;
+  final int itemsMerged;
+
+  const AddToShoppingListResult({
+    required this.listId,
+    required this.listName,
+    required this.itemsAdded,
+    required this.itemsMerged,
+  });
+}
+
+/// One cadence selection from the meal long-press "Schedule…" sheet. Mirrors
+/// the backend `ScheduleFromFoodLogRequest` Pydantic shape.
+class ScheduleSpec {
+  /// One of: 'daily' | 'weekdays' | 'weekends' | 'custom' | 'once'.
+  final String scheduleKind;
+  /// 0=Sun..6=Sat. Required when `scheduleKind=='custom'` or `'once'` with a
+  /// specific day chosen.
+  final List<int>? daysOfWeek;
+  /// "HH:MM" — the local clock time of each fire.
+  final String localTime;
+  /// IANA tz, e.g. "America/Chicago". Should match the user's device tz.
+  final String timezone;
+  /// Inclusive last calendar day this schedule may fire on. Null = no end.
+  final DateTime? untilDate;
+  /// Skip-ahead-by-N-days. 1 = match daysOfWeek as today; >1 = "every N days".
+  final int intervalDays;
+  /// Auto-disable after the last selected day in the current calendar week.
+  final bool isTemporaryWeekOnly;
+  /// Optional fire-count cap. 1 (with kind='once') = fire exactly once.
+  final int? occurrencesRemaining;
+  /// breakfast/lunch/dinner/snack — defaults to the source meal's mealType.
+  final String mealType;
+  final double servings;
+  final bool silentLog;
+
+  const ScheduleSpec({
+    required this.scheduleKind,
+    required this.localTime,
+    required this.timezone,
+    required this.mealType,
+    this.daysOfWeek,
+    this.untilDate,
+    this.intervalDays = 1,
+    this.isTemporaryWeekOnly = false,
+    this.occurrencesRemaining,
+    this.servings = 1.0,
+    this.silentLog = false,
+  });
+
+  Map<String, dynamic> toJson() => {
+        'schedule_kind': scheduleKind,
+        if (daysOfWeek != null) 'days_of_week': daysOfWeek,
+        'local_time': localTime,
+        'timezone': timezone,
+        if (untilDate != null)
+          'until_date':
+              '${untilDate!.year.toString().padLeft(4, '0')}-${untilDate!.month.toString().padLeft(2, '0')}-${untilDate!.day.toString().padLeft(2, '0')}',
+        'interval_days': intervalDays,
+        'is_temporary_week_only': isTemporaryWeekOnly,
+        if (occurrencesRemaining != null) 'occurrences_remaining': occurrencesRemaining,
+        'meal_type': mealType,
+        'servings': servings,
+        'silent_log': silentLog,
+      };
+}
+
 /// Methods extracted from NutritionRepository
 extension NutritionRepositoryExt on NutritionRepository {
 
@@ -260,6 +363,106 @@ extension NutritionRepositoryExt on NutritionRepository {
     }
   }
 
+
+  /// Append the food log's items to the user's most-recent active grocery
+  /// list (creating "My Shopping List" if none exists). Backend dedupes by
+  /// `ingredient_name_normalized` so "Idli" + "idli" + "Idlis" collapse to
+  /// one row with summed quantities (when units match).
+  Future<AddToShoppingListResult> addLogToShoppingList({
+    required String logId,
+    int? itemIndex,
+  }) async {
+    try {
+      final response = await _client.post(
+        '/nutrition/grocery-lists/active/add-from-food-log/$logId',
+        queryParameters: {
+          if (itemIndex != null) 'item_index': itemIndex,
+        },
+      );
+      final data = response.data as Map<String, dynamic>;
+      return AddToShoppingListResult(
+        listId: data['list_id'] as String,
+        listName: data['list_name'] as String,
+        itemsAdded: (data['items_added'] as int?) ?? 0,
+        itemsMerged: (data['items_merged'] as int?) ?? 0,
+      );
+    } catch (e) {
+      debugPrint('Error adding to shopping list: $e');
+      rethrow;
+    }
+  }
+
+  /// Schedule a meal from a logged food_log. Chains through Save-as-Recipe
+  /// when the food_log isn't already linked to a recipe (so the user gets
+  /// one combined toast instead of "saved" then "scheduled"). Cadence shape
+  /// is fully described by [spec] — see `ScheduleSpec` for the 11 supported
+  /// patterns.
+  ///
+  /// Pass [itemIndex] to scope the implicit Save-as-Recipe to a single item
+  /// from a multi-item meal (only used when the food_log isn't linked yet).
+  Future<ScheduleFromLogResult> scheduleMealFromLog({
+    required String logId,
+    required ScheduleSpec spec,
+    int? itemIndex,
+    bool createCookEvent = false,
+  }) async {
+    try {
+      final body = spec.toJson();
+      if (itemIndex != null) body['item_index'] = itemIndex;
+      body['create_cook_event'] = createCookEvent;
+      final response = await _client.post(
+        '/nutrition/food-logs/$logId/schedule',
+        data: body,
+      );
+      final data = response.data as Map<String, dynamic>;
+      return ScheduleFromLogResult(
+        scheduleId: data['schedule_id'] as String,
+        recipeId: data['recipe_id'] as String,
+        nextFireAt: DateTime.parse(data['next_fire_at'] as String),
+        merged: (data['merged'] as bool?) ?? false,
+      );
+    } catch (e) {
+      debugPrint('Error scheduling meal from log: $e');
+      rethrow;
+    }
+  }
+
+  /// Convert a logged meal into a reusable user_recipes row via Gemini
+  /// enrichment. Returns the new recipe + a `merged` flag indicating whether
+  /// the backend re-used an existing recipe with the same normalized name
+  /// rather than inserting a duplicate.
+  ///
+  /// Pass [itemIndex] to save a single ingredient from a multi-item meal as
+  /// its own one-ingredient recipe (e.g. just the "Prawns Curry" out of an
+  /// "Idli + Sambar + Prawns Curry" meal).
+  ///
+  /// Pass [createCookEvent]=true on multi-serving recipes to insert a
+  /// `recipe_cook_events` row with `portions_remaining = servings - 1` so
+  /// the user can re-log leftovers from the active cook events list.
+  Future<SaveAsRecipeResult> saveLogAsRecipe({
+    required String logId,
+    int? itemIndex,
+    bool createCookEvent = false,
+  }) async {
+    try {
+      final response = await _client.post(
+        '/nutrition/food-logs/$logId/save-as-recipe',
+        queryParameters: {
+          if (itemIndex != null) 'item_index': itemIndex,
+          'create_cook_event': createCookEvent,
+        },
+      );
+      final data = response.data as Map<String, dynamic>;
+      return SaveAsRecipeResult(
+        recipeId: data['recipe_id'] as String,
+        merged: (data['merged'] as bool?) ?? false,
+        cookEventId: data['cook_event_id'] as String?,
+      );
+    } catch (e) {
+      debugPrint('Error saving food log as recipe: $e');
+      rethrow;
+    }
+  }
 
   /// Copy a food log to a different meal type, optionally on a specific date
   Future<Map<String, dynamic>> copyFoodLog({

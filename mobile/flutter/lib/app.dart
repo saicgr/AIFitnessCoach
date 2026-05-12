@@ -8,6 +8,8 @@ import 'core/providers/workout_mini_player_provider.dart';
 import 'core/theme/accent_color_provider.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_provider.dart';
+import 'data/providers/root_messenger.dart';
+import 'widgets/recipe_save_jobs_listener.dart';
 import 'data/providers/admin_provider.dart';
 import 'data/providers/gym_profile_provider.dart';
 import 'core/accessibility/accessibility_provider.dart';
@@ -163,6 +165,10 @@ class _AppRootState extends ConsumerState<AppRoot> {
       // Use a key that changes with theme/accent/gym-profile to force a clean rebuild
       // This prevents GlobalKey conflicts when theme changes
       key: ValueKey('app_${themeMode.name}_${accent.name}_${gymOverride?.value ?? "none"}'),
+      // Root scaffold messenger so background-job providers can surface
+      // toasts (e.g. Save-as-Recipe completion) that are visible regardless
+      // of which sub-route is active.
+      scaffoldMessengerKey: rootScaffoldMessengerKey,
       title: '${Branding.appName}',
       debugShowCheckedModeBanner: false,
       theme: AppThemeLight.buildTheme(effectivePrimary),
@@ -209,7 +215,13 @@ class _AppRootState extends ConsumerState<AppRoot> {
               child: FloatingChatOverlay(
                 key: const ValueKey('floating_chat_overlay'),
                 child: _WorkoutMiniPlayerOverlay(
-                  child: child ?? const SizedBox.shrink(),
+                  // RecipeSaveJobsListener watches background Save-as-Recipe
+                  // jobs and surfaces toasts via rootScaffoldMessengerKey when
+                  // they complete — works regardless of which sub-route is
+                  // active when the AI enrichment finishes.
+                  child: RecipeSaveJobsListener(
+                    child: child ?? const SizedBox.shrink(),
+                  ),
                 ),
               ),
             ),

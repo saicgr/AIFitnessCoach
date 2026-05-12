@@ -29,6 +29,7 @@ class RecipeSourceType(str, Enum):
     CLONED_FROM_SHARE = "cloned_from_share"
     IMPROVIZED = "improvized"  # Forked from a curated / public recipe via the Improvize action
     CURATED = "curated"        # Editorially-seeded Discover recipes (is_curated=TRUE)
+    FROM_LOGGED_MEAL = "from_logged_meal"  # Save-as-Recipe from a food_log via Gemini enrichment
 
 
 class CookingMethod(str, Enum):

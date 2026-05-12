@@ -1,11 +1,13 @@
 """Grocery list endpoints — build from plan or recipe, manage items, export."""
 import logging
-from typing import List
+from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import PlainTextResponse
+from pydantic import BaseModel
 
 from core.auth import get_current_user
+from core.db import get_supabase_db
 from core.exceptions import safe_internal_error
 from models.grocery_list import (
     GroceryList,
@@ -89,3 +91,48 @@ async def export_grocery_list(
     if format == "csv":
         return await svc.export_csv(list_id)
     return await svc.export_text(list_id)
+
+
+# ─────────────────────────────────────────────────────────────────
+# Add from food log (Phase D — meal long-press → "Add to shopping list")
+# Aggregates by `ingredient_name_normalized` (generated column from
+# migration 2056) so "Idli" + "idli" + "Idlis" collapse to one row.
+# ─────────────────────────────────────────────────────────────────
+
+
+class AddFromFoodLogResponse(BaseModel):
+    list_id: str
+    list_name: str
+    items_added: int
+    items_merged: int
+
+
+@router.post("/grocery-lists/active/add-from-food-log/{log_id}",
+             response_model=AddFromFoodLogResponse)
+async def add_from_food_log(
+    log_id: str,
+    item_index: Optional[int] = Query(
+        default=None, ge=0,
+        description="If set, only add food_items[item_index] from the log. Mirrors the per-item long-press flow.",
+    ),
+    current_user: dict = Depends(get_current_user),
+):
+    """Append the food_log's items to the user's most-recent active grocery
+    list (creates "My Shopping List" if none exists). Quantities sum when
+    units match; incompatible units stay as separate rows with a note."""
+    user_id = current_user.get("id") or current_user.get("sub")
+    db = get_supabase_db()
+    food_log = db.get_food_log(log_id)
+    if not food_log or food_log.get("user_id") != user_id:
+        raise HTTPException(status_code=404, detail="Food log not found")
+    try:
+        result = await get_grocery_service().add_from_food_log(
+            user_id=user_id,
+            food_log=food_log,
+            item_index=item_index,
+        )
+        return AddFromFoodLogResponse(**result)
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise safe_internal_error(exc, "nutrition")

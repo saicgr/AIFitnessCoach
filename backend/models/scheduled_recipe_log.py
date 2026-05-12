@@ -17,6 +17,7 @@ class ScheduleKind(str, Enum):
     WEEKDAYS = "weekdays"
     WEEKENDS = "weekends"
     CUSTOM = "custom"
+    ONCE = "once"  # Fire one time at local_time on the next matching day, then auto-disable
 
 
 class MealType(str, Enum):
@@ -47,6 +48,24 @@ class ScheduledRecipeLogCreate(BaseModel):
     schedule_kind: Optional[ScheduleKind] = None
     days_of_week: Optional[List[int]] = Field(default=None, max_length=7)
     local_time: Optional[time] = None
+    # ── Cadence extensions (migration 2057). All optional / sensibly defaulted ──
+    until_date: Optional[date] = Field(
+        default=None,
+        description="Inclusive last calendar day this schedule may fire on. NULL = no end.",
+    )
+    interval_days: int = Field(
+        default=1, ge=1, le=365,
+        description="For 'every N days'. 1 = match days_of_week as today; >1 = skip ahead by N after each fire.",
+    )
+    is_temporary_week_only: bool = Field(
+        default=False,
+        description="When true, auto-disable after the last selected day in the CURRENT calendar week. "
+                    "Used for 'just this week' / 'alternate days this week'.",
+    )
+    occurrences_remaining: Optional[int] = Field(
+        default=None, ge=1,
+        description="Optional fire-count cap. Decrements on every fire; auto-disables at 0.",
+    )
 
     # Batch
     cook_event_id: Optional[str] = None
@@ -61,6 +80,19 @@ class ScheduledRecipeLogCreate(BaseModel):
                 raise ValueError("custom schedule_kind requires days_of_week")
             if self.days_of_week is not None and any(d < 0 or d > 6 for d in self.days_of_week):
                 raise ValueError("days_of_week must be 0..6 (Sun..Sat)")
+            if self.is_temporary_week_only and not self.days_of_week:
+                raise ValueError("is_temporary_week_only requires explicit days_of_week")
+            if self.interval_days > 1 and self.schedule_kind not in (ScheduleKind.CUSTOM, ScheduleKind.DAILY):
+                raise ValueError("interval_days > 1 requires schedule_kind=daily or custom")
+            if self.schedule_kind == ScheduleKind.ONCE:
+                # ONCE fires on a specific date (the one in days_of_week if set,
+                # else the very next matching day). until_date is implicit.
+                if self.is_temporary_week_only:
+                    raise ValueError("ScheduleKind.ONCE doesn't combine with is_temporary_week_only")
+                if self.interval_days != 1:
+                    raise ValueError("ScheduleKind.ONCE doesn't use interval_days")
+                if self.occurrences_remaining is not None and self.occurrences_remaining != 1:
+                    raise ValueError("ScheduleKind.ONCE always fires exactly once")
         else:  # BATCH
             if not self.batch_slots:
                 raise ValueError("batch schedules need at least one slot")
@@ -99,6 +131,12 @@ class ScheduledRecipeLog(BaseModel):
     paused_until: Optional[date] = None
     enabled: bool = True
     silent_log: bool = False
+    # Cadence extensions (migration 2057)
+    until_date: Optional[date] = None
+    interval_days: int = 1
+    is_temporary_week_only: bool = False
+    week_end_date: Optional[date] = None
+    occurrences_remaining: Optional[int] = None
     created_at: datetime
     updated_at: datetime
 

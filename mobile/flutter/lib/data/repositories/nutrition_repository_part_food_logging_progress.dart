@@ -569,6 +569,24 @@ class NutritionNotifier extends StateNotifier<NutritionState> {
     return removed;
   }
 
+  /// Replace the meal with the given id by applying [transform] to it.
+  /// Returns the original meal so callers can roll back on network failure.
+  /// No-op + null return when the id isn't in `todaySummary` (e.g. viewing
+  /// a different date than the meal lives on).
+  FoodLog? optimisticUpdateLog(String logId, FoodLog Function(FoodLog) transform) {
+    final summary = state.todaySummary;
+    if (summary == null) return null;
+    final idx = summary.meals.indexWhere((m) => m.id == logId);
+    if (idx < 0) return null;
+    final original = summary.meals[idx];
+    final updated = transform(original);
+    final next = [...summary.meals]..[idx] = updated;
+    state = state.copyWith(
+      todaySummary: _recomputeTotals(summary, next),
+    );
+    return original;
+  }
+
   /// Re-insert a meal previously removed via [optimisticRemoveLog]. Used by
   /// the Undo action on swipe-delete. Inserts at the position that keeps
   /// the list sorted by `loggedAt` ascending.

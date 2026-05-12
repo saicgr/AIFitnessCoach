@@ -13,6 +13,7 @@ import 'edit_targets_sheet.dart';
 import 'nutrition_streak_card.dart';
 import 'pinned_nutrients_card.dart';
 import 'logged_meals_section.dart';
+import 'schedule_meal_sheet.dart' show SchedulePreset;
 import 'goal_row.dart';
 
 class DailyTab extends ConsumerStatefulWidget {
@@ -34,6 +35,10 @@ class DailyTab extends ConsumerStatefulWidget {
   final void Function(String logId, String notes) onUpdateMealNotes;
   final void Function(String logId, {String? moodBefore, String? moodAfter, int? energyLevel}) onUpdateMealMood;
   final void Function(FoodLog meal) onSaveFoodToFavorites;
+  final void Function(FoodLog meal, {int? itemIndex, bool createCookEvent}) onSaveMealAsRecipe;
+  final void Function(FoodLog meal, {SchedulePreset initialPreset, int? itemIndex}) onScheduleMeal;
+  final void Function(FoodLog meal, {int? itemIndex}) onAddToShoppingList;
+  final void Function(FoodLog meal) onShareMeal;
   final Future<List<FoodLogEditRecord>> Function(String logId)? onFetchItemEdits;
   final ApiClient? apiClient;
   final VoidCallback? onSwitchToNutrientsTab;
@@ -64,6 +69,10 @@ class DailyTab extends ConsumerStatefulWidget {
     required this.onUpdateMealNotes,
     required this.onUpdateMealMood,
     required this.onSaveFoodToFavorites,
+    required this.onSaveMealAsRecipe,
+    required this.onScheduleMeal,
+    required this.onAddToShoppingList,
+    required this.onShareMeal,
     this.onFetchItemEdits,
     this.apiClient,
     this.onSwitchToNutrientsTab,
@@ -424,6 +433,10 @@ class _DailyTabState extends ConsumerState<DailyTab>
                     onUpdateMealNotes: widget.onUpdateMealNotes,
                     onUpdateMealMood: widget.onUpdateMealMood,
                     onSaveFoodToFavorites: widget.onSaveFoodToFavorites,
+                    onSaveMealAsRecipe: widget.onSaveMealAsRecipe,
+                    onScheduleMeal: widget.onScheduleMeal,
+                    onAddToShoppingList: widget.onAddToShoppingList,
+                    onShareMeal: widget.onShareMeal,
                     onLogMeal: widget.onLogMeal,
                     onFetchItemEdits: widget.onFetchItemEdits,
                     apiClient: widget.apiClient,

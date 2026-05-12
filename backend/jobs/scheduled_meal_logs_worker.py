@@ -56,17 +56,32 @@ def _expand_days(kind, custom):
         return {1, 2, 3, 4, 5}
     if kind == "weekends":
         return {0, 6}
+    if kind == "once":
+        # ONCE without explicit days = "any day" so the next-match search just
+        # picks the very next available day at the requested local_time.
+        return set(custom or {0, 1, 2, 3, 4, 5, 6})
     return set(custom or [])
 
 
 def _next_recurring_fire(schedule: dict) -> Optional[datetime]:
+    """Compute the next future fire instant for a recurring schedule.
+
+    Returns None when the cadence is exhausted (until_date passed,
+    is_temporary_week_only with no remaining matching days this week,
+    occurrences_remaining hit zero, or ScheduleKind.ONCE that already fired).
+    The worker treats None as "disable this schedule".
+
+    Honors columns added in migration 2057: until_date, interval_days,
+    is_temporary_week_only, week_end_date, occurrences_remaining.
+    """
     try:
         from zoneinfo import ZoneInfo
         tz = ZoneInfo(schedule["timezone"])
     except Exception:
         tz = timezone.utc
     now_local = datetime.now(tz)
-    days = _expand_days(schedule.get("schedule_kind"), schedule.get("days_of_week"))
+    kind = schedule.get("schedule_kind")
+    days = _expand_days(kind, schedule.get("days_of_week"))
     if not days:
         return None
     local_time = schedule.get("local_time")
@@ -79,13 +94,71 @@ def _next_recurring_fire(schedule: dict) -> Optional[datetime]:
         target = _time(int(h), int(m))
     except Exception:
         return None
-    for offset in range(1, 8):  # tomorrow onwards (next fire is FUTURE)
+
+    # Cadence-extension fields
+    interval_days = max(1, int(schedule.get("interval_days") or 1))
+    until_date = _safe_date(schedule.get("until_date"))
+    week_end_date = _safe_date(schedule.get("week_end_date"))
+    is_week_only = bool(schedule.get("is_temporary_week_only"))
+    occ_remaining = schedule.get("occurrences_remaining")
+
+    # ONCE: only ever fires once. After that fire (last_fired_at non-null), the
+    # cadence is exhausted regardless of until_date / days_of_week.
+    if kind == "once" and schedule.get("last_fired_at"):
+        return None
+    if occ_remaining is not None and int(occ_remaining) <= 0:
+        return None
+    if is_week_only and week_end_date and now_local.date() > week_end_date:
+        return None
+
+    horizon = max(8, interval_days * 8)
+    from datetime import datetime as _dt
+    for offset in range(1, horizon):  # tomorrow onwards (next fire is FUTURE)
         d = (now_local + timedelta(days=offset)).date()
         sun_idx = (d.weekday() + 1) % 7  # Sun=0..Sat=6
-        if sun_idx in days:
-            from datetime import datetime as _dt
-            return _dt.combine(d, target, tzinfo=tz).astimezone(timezone.utc)
+        if sun_idx not in days:
+            continue
+        if until_date and d > until_date:
+            return None
+        if is_week_only and week_end_date and d > week_end_date:
+            return None
+        if interval_days > 1:
+            # Skip days that don't satisfy the interval relative to the most
+            # recent fire (or creation time as a stable epoch).
+            anchor = _safe_date_part(schedule.get("last_fired_at")) \
+                or _safe_date_part(schedule.get("created_at")) \
+                or now_local.date()
+            if (d - anchor).days % interval_days != 0:
+                continue
+        return _dt.combine(d, target, tzinfo=tz).astimezone(timezone.utc)
     return None
+
+
+def _safe_date(s):
+    """Parse a YYYY-MM-DD string into a date, returning None on any failure."""
+    if s is None:
+        return None
+    if hasattr(s, "year"):  # already a date / datetime
+        from datetime import datetime as _dt
+        return s.date() if isinstance(s, _dt) else s
+    try:
+        from datetime import date as _date
+        return _date.fromisoformat(str(s)[:10])
+    except Exception:
+        return None
+
+
+def _safe_date_part(s):
+    """Extract just the date part from an ISO-8601 string or datetime, or None."""
+    if s is None:
+        return None
+    if hasattr(s, "date"):
+        return s.date()
+    try:
+        from datetime import date as _date
+        return _date.fromisoformat(str(s)[:10])
+    except Exception:
+        return None
 
 
 def _next_batch_fire(schedule: dict) -> Optional[datetime]:
@@ -413,11 +486,30 @@ def _advance_schedule(db, sched: dict, dry_run: bool, fired: bool) -> None:
             else:
                 update["enabled"] = False
     else:
-        nxt = _next_recurring_fire(sched)
-        if nxt:
-            update["next_fire_at"] = nxt.isoformat()
-        else:
+        # Decrement occurrences_remaining (cadence-extension column from
+        # migration 2057). Disable the schedule when it hits zero.
+        if fired and sched.get("occurrences_remaining") is not None:
+            remaining = max(0, int(sched["occurrences_remaining"]) - 1)
+            update["occurrences_remaining"] = remaining
+            if remaining == 0:
+                update["enabled"] = False
+        # ScheduleKind.ONCE: always disable after firing — single-shot.
+        if fired and sched.get("schedule_kind") == "once":
             update["enabled"] = False
+        # is_temporary_week_only: disable if today's fire was the LAST matching
+        # day in the current week (i.e. no next-fire exists within the week).
+        if fired and sched.get("is_temporary_week_only"):
+            we = _safe_date(sched.get("week_end_date"))
+            nxt = _next_recurring_fire(sched)
+            if nxt is None or (we and nxt.date() > we):
+                update["enabled"] = False
+        # Only compute next_fire_at if we're not disabling.
+        if not update.get("enabled") is False:  # not explicitly disabled above
+            nxt = _next_recurring_fire(sched)
+            if nxt:
+                update["next_fire_at"] = nxt.isoformat()
+            else:
+                update["enabled"] = False
 
     if dry_run:
         logger.info("[dry-run] would update schedule %s -> %s", sched["id"], update)
