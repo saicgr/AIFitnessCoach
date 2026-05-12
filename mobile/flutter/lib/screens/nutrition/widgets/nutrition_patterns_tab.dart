@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:fl_chart/fl_chart.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../widgets/liquid_glass_action_bar.dart';
 import '../../../data/models/food_patterns.dart';
 import '../../../data/providers/food_patterns_provider.dart';
 import '../../../data/repositories/nutrition_repository.dart';
@@ -128,7 +129,15 @@ class _NutritionPatternsTabState extends ConsumerState<NutritionPatternsTab>
               textMuted: textMuted,
             ),
           ),
-          const SliverToBoxAdapter(child: SizedBox(height: 80)),
+          // Clearance for the floating tab bar + MainShell nav stacked below.
+          SliverToBoxAdapter(
+            child: SizedBox(
+              height: MediaQuery.of(context).viewPadding.bottom +
+                  76 +
+                  kLiquidGlassActionBarHeight +
+                  16,
+            ),
+          ),
         ],
       ),
     );

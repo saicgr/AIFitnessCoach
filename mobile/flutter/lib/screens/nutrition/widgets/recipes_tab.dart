@@ -36,6 +36,7 @@ import '../recipes/widgets/recipe_filter_sort_sheet.dart';
 import '../grocery/grocery_lists_index_screen.dart';
 import '../meal_planner/meal_planner_screen.dart';
 import '../../../widgets/main_shell.dart' show floatingNavBarVisibleProvider;
+import '../../../widgets/liquid_glass_action_bar.dart';
 import 'recipe_search_bar.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -114,8 +115,16 @@ class _RecipesTabState extends ConsumerState<RecipesTab>
               // filter + sort so every control that affects results lives in
               // a single bar.
               SliverPadding(
-                // Extra bottom padding to keep FAB from covering last recipe
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 140),
+                // Clearance for the floating tab bar + MainShell nav + FAB.
+                padding: EdgeInsets.fromLTRB(
+                  16,
+                  12,
+                  16,
+                  MediaQuery.of(context).viewPadding.bottom +
+                      76 +
+                      kLiquidGlassActionBarHeight +
+                      16,
+                ),
                 sliver: SliverList.list(
                   children: [
                     _ComingUpCarousel(

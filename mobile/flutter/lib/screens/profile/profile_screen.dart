@@ -28,6 +28,7 @@ import '../../core/theme/accent_color_provider.dart';
 import '../../widgets/synced/kind_avatar.dart';
 import '../../widgets/synced/metric_chip.dart';
 import '../../widgets/main_shell.dart' show floatingNavBarVisibleProvider;
+import '../../widgets/liquid_glass_action_bar.dart';
 import 'synced_workout_detail_screen.dart';
 
 part 'profile_screen_part_account_row_data.dart';
@@ -605,7 +606,15 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       body: SafeArea(
         child: SingleChildScrollView(
           controller: _scrollController,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          padding: EdgeInsets.fromLTRB(
+            16,
+            16,
+            16,
+            MediaQuery.of(context).viewPadding.bottom +
+                76 +
+                kLiquidGlassActionBarHeight +
+                16,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [

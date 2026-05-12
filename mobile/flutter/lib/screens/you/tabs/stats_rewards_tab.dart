@@ -22,6 +22,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/providers/xp_provider.dart';
 import '../../../data/services/api_client.dart';
+import '../../../widgets/liquid_glass_action_bar.dart';
 import '../../../widgets/xp_hero_tile.dart';
 
 class YouStatsRewardsTab extends ConsumerStatefulWidget {
@@ -132,11 +133,20 @@ class _YouStatsRewardsTabState extends ConsumerState<YouStatsRewardsTab> {
       return Center(child: CircularProgressIndicator(color: accent));
     }
 
+    // Bottom padding must clear the floating Overview/Profile/Stats glass
+    // bar (positioned at `viewPadding.bottom + 76` with height
+    // `kLiquidGlassActionBarHeight`). Otherwise the last cards (Rewards /
+    // Social) sit under the bar and the user can't scroll them clear.
+    final bottomInset = MediaQuery.of(context).viewPadding.bottom +
+        76 +
+        kLiquidGlassActionBarHeight +
+        16;
+
     return RefreshIndicator(
       color: accent,
       onRefresh: _load,
       child: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+        padding: EdgeInsets.fromLTRB(16, 8, 16, bottomInset),
         children: [
           // PROGRESS — the "where am I on the journey" group
           _SectionLabel(label: 'PROGRESS', fg: fg),

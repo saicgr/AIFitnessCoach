@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../widgets/liquid_glass_action_bar.dart';
 import '../../../data/models/nutrition.dart';
 import '../../../data/models/micronutrients.dart';
 import '../../../data/services/api_client.dart';
@@ -456,7 +457,15 @@ class _DailyTabState extends ConsumerState<DailyTab>
                 }),
                 const SizedBox(height: 12),
 
-                const SizedBox(height: 80), // Nav bar clearance
+                // Clearance for the floating Daily/Recipes/Patterns/Fuel
+                // glass tab bar (sits at viewPadding.bottom + 76, height 56)
+                // plus the MainShell nav below it.
+                SizedBox(
+                  height: MediaQuery.of(context).viewPadding.bottom +
+                      76 +
+                      kLiquidGlassActionBarHeight +
+                      16,
+                ),
               ],
             ),
           ),

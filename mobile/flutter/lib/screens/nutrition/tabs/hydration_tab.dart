@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../widgets/liquid_glass_action_bar.dart';
 import '../../../core/services/posthog_service.dart';
 import '../../../data/models/hydration.dart';
 import '../../../data/repositories/hydration_repository.dart';
@@ -162,7 +163,13 @@ class _HydrationTabState extends ConsumerState<HydrationTab> {
               }),
             ],
 
-            const SizedBox(height: 100),
+            // Clearance for floating tab bar + MainShell nav.
+            SizedBox(
+              height: MediaQuery.of(context).viewPadding.bottom +
+                  76 +
+                  kLiquidGlassActionBarHeight +
+                  16,
+            ),
           ],
         ),
       ),

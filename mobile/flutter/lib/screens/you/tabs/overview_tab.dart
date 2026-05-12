@@ -30,6 +30,7 @@ import '../../../data/providers/xp_provider.dart';
 import '../../../data/services/api_client.dart';
 import '../../../data/services/health_service.dart';
 import '../../../data/services/you_overview_prewarmer.dart';
+import '../../../widgets/liquid_glass_action_bar.dart';
 import '../../../widgets/xp_hero_tile.dart';
 import '../../home/widgets/cards/last_night_sleep_card.dart';
 import '../../home/widgets/cards/todays_health_card.dart';
@@ -316,11 +317,18 @@ class _YouOverviewTabState extends ConsumerState<YouOverviewTab>
 
     final serious = ref.watch(seriousModeProvider);
 
+    // Bottom padding must clear the floating Overview/Profile/Stats glass
+    // bar so the last card isn't hidden under it.
+    final bottomInset = MediaQuery.of(context).viewPadding.bottom +
+        76 +
+        kLiquidGlassActionBarHeight +
+        16;
+
     return RefreshIndicator(
       color: accent,
       onRefresh: _manualRefresh,
       child: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.fromLTRB(16, 16, 16, bottomInset),
         children: [
           // HEALTH SNAPSHOT — first thing the user sees on the You tab.
           // Each card auto-hides via SizedBox.shrink when it has nothing
@@ -460,8 +468,13 @@ class _OverviewSkeleton extends StatelessWidget {
           ),
         );
 
+    final bottomInset = MediaQuery.of(context).viewPadding.bottom +
+        76 +
+        kLiquidGlassActionBarHeight +
+        16;
+
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.fromLTRB(16, 16, 16, bottomInset),
       children: [
         block(160), // Today's Health
         block(140), // Last night sleep

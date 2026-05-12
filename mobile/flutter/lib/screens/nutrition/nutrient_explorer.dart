@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
+import '../../widgets/liquid_glass_action_bar.dart';
 import '../../data/models/micronutrients.dart';
 import '../../data/repositories/nutrition_repository.dart';
 import '../../widgets/glass_sheet.dart';
@@ -122,7 +123,13 @@ class _NutrientExplorerTabState extends State<NutrientExplorerTab> {
                 onNutrientTap: (nutrient) => _showNutrientDetail(nutrient),
               ).animate().fadeIn(delay: 300.ms),
 
-            const SizedBox(height: 100),
+            // Clearance for floating tab bar + MainShell nav.
+            SizedBox(
+              height: MediaQuery.of(context).viewPadding.bottom +
+                  76 +
+                  kLiquidGlassActionBarHeight +
+                  16,
+            ),
           ],
         ),
       ),
