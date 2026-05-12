@@ -297,6 +297,7 @@ async def analyze_food_from_text_streaming(request: Request, body: LogTextReques
 
             overall_meal_score = food_analysis.get('overall_meal_score')
             health_score = food_analysis.get('health_score')
+            health_score_reasons = food_analysis.get('health_score_reasons')
             goal_alignment_percentage = food_analysis.get('goal_alignment_percentage')
             ai_suggestion = food_analysis.get('ai_suggestion') or food_analysis.get('feedback')
             encouragements = food_analysis.get('encouragements', [])
@@ -334,6 +335,7 @@ async def analyze_food_from_text_streaming(request: Request, body: LogTextReques
                 "fiber_g": fiber_g,
                 "overall_meal_score": overall_meal_score,
                 "health_score": health_score,
+                "health_score_reasons": health_score_reasons,
                 "goal_alignment_percentage": goal_alignment_percentage,
                 "ai_suggestion": ai_suggestion,
                 "encouragements": encouragements,
@@ -547,6 +549,7 @@ async def log_food_from_image_streaming(
             warnings = []
             recommended_swap = None
             health_score = None
+            health_score_reasons = food_analysis.get('health_score_reasons')
             try:
                 cache_service = get_food_analysis_cache_service()
                 tips = await cache_service.enrich_with_tips(
@@ -560,6 +563,7 @@ async def log_food_from_image_streaming(
                     ai_suggestion = tips.get("ai_suggestion") or ai_suggestion
                     recommended_swap = tips.get("recommended_swap")
                     health_score = tips.get("health_score")
+                    health_score_reasons = tips.get("health_score_reasons") or health_score_reasons
             except Exception as tip_err:
                 logger.warning(f"[STREAM] Tip enrichment failed for image log: {tip_err}", exc_info=True)
 
@@ -595,6 +599,7 @@ async def log_food_from_image_streaming(
                 fiber_g=fiber_g,
                 ai_feedback=ai_feedback,
                 health_score=health_score,
+                health_score_reasons=health_score_reasons,
                 logged_at=stream_logged_at,
                 image_url=image_url,
                 image_storage_key=storage_key,
@@ -629,6 +634,7 @@ async def log_food_from_image_streaming(
                 "fiber_g": fiber_g,
                 "ai_suggestion": ai_suggestion,
                 "health_score": health_score,
+                "health_score_reasons": health_score_reasons,
                 "total_time_ms": elapsed_ms(),
             }
             yield f"event: done\ndata: {json.dumps(response_data)}\n\n"
@@ -855,6 +861,7 @@ async def analyze_food_from_image_streaming(
             warnings = []
             recommended_swap = None
             health_score = None
+            health_score_reasons = food_analysis.get('health_score_reasons')
             try:
                 cache_service = get_food_analysis_cache_service()
                 tips = await cache_service.enrich_with_tips(
@@ -868,6 +875,7 @@ async def analyze_food_from_image_streaming(
                     ai_suggestion = tips.get("ai_suggestion") or ai_suggestion
                     recommended_swap = tips.get("recommended_swap")
                     health_score = tips.get("health_score")
+                    health_score_reasons = tips.get("health_score_reasons") or health_score_reasons
             except Exception as tip_err:
                 logger.warning(f"[ANALYZE-STREAM:{request_id}] Tip enrichment failed: {tip_err}", exc_info=True)
 
@@ -900,6 +908,7 @@ async def analyze_food_from_image_streaming(
                 "warnings": warnings,
                 "recommended_swap": recommended_swap,
                 "health_score": health_score,
+                "health_score_reasons": health_score_reasons,
                 "source_type": "image",
                 "total_time_ms": elapsed_ms(),
                 # Micronutrients
@@ -1271,6 +1280,7 @@ async def log_food_from_multi_image_streaming(
                 if not fiber_g:
                     fiber_g = round(_sum_item_field("fiber_g"), 1)
                 health_score = analysis_result.get("health_score")
+                health_score_reasons = analysis_result.get("health_score_reasons")
                 ai_feedback = analysis_result.get("feedback")
                 inflammation_score = analysis_result.get("inflammation_score")
                 is_ultra_processed = analysis_result.get("is_ultra_processed")
@@ -1302,6 +1312,7 @@ async def log_food_from_multi_image_streaming(
                         "ai_suggestion": ai_feedback,
                         "feedback": ai_feedback,
                         "health_score": health_score,
+                        "health_score_reasons": health_score_reasons,
                         "inflammation_score": inflammation_score,
                         "is_ultra_processed": is_ultra_processed,
                         "image_urls": image_urls,
@@ -1327,6 +1338,7 @@ async def log_food_from_multi_image_streaming(
                     glycemic_load=glycemic_load,
                     fodmap_rating=fodmap_rating,
                     fodmap_reason=fodmap_reason,
+                    health_score_reasons=health_score_reasons,
                 )
 
                 from api.v1.nutrition.summaries import invalidate_daily_summary_cache
@@ -1339,6 +1351,7 @@ async def log_food_from_multi_image_streaming(
                     "protein_g": protein_g, "carbs_g": carbs_g, "fat_g": fat_g,
                     "fiber_g": fiber_g, "ai_suggestion": ai_feedback,
                     "health_score": health_score,
+                    "health_score_reasons": health_score_reasons,
                     "inflammation_score": inflammation_score,
                     "is_ultra_processed": is_ultra_processed,
                     "image_urls": image_urls,

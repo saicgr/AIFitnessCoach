@@ -962,6 +962,8 @@ Guidelines:
                 result.setdefault("total_fat_g", 0.0)
                 result.setdefault("total_fiber_g", 0.0)
                 result.setdefault("health_score", 5)
+                if not result.get("health_score_reasons"):
+                    result["health_score_reasons"] = ["ai_unavailable"]
                 result.setdefault("feedback", "")
                 # Add non-prefixed versions
                 result["protein_g"] = result.get("total_protein_g", 0.0)
@@ -1063,6 +1065,7 @@ Return ONLY valid JSON with this exact structure:
     "total_fat_g": <float>,
     "total_fiber_g": <float>,
     "health_score": <integer 1-10>,
+    "health_score_reasons": ["1-5 tags from: high_protein, high_fiber, anti_inflammatory, low_added_sugar, balanced_macros (positives) | ultra_processed, deep_fried, refined_flour, added_sugar, high_sodium, high_glycemic, low_fiber, processed_meat, trans_fat (negatives)"],
     "feedback": "Brief coaching feedback about the logged meals (2-3 sentences)"
 }}
 
@@ -1070,6 +1073,7 @@ Guidelines:
 - Extract exact values shown in the app when visible
 - If macros are partially visible, estimate from calories and food type
 - Health score based on overall meal quality
+- health_score_reasons must contain 1-5 short tags explaining WHY the meal earned its score
 - Feedback should acknowledge the tracking effort and provide tips"""
 
         try:
@@ -1107,6 +1111,12 @@ Guidelines:
             result.setdefault("source_app", "unknown")
             result.setdefault("total_fiber_g", 0.0)
             result.setdefault("health_score", 5)
+            # Health-score reasons must always be present so the ScoreExplainSheet
+            # has something to render. If Gemini omitted them we tag the row as
+            # ai_unavailable rather than leaving an empty list — the frontend
+            # uses that sentinel to show a graceful fallback message.
+            if not result.get("health_score_reasons"):
+                result["health_score_reasons"] = ["ai_unavailable"]
             result.setdefault("feedback", "")
 
             # Add non-prefixed versions for consistency
@@ -1224,6 +1234,8 @@ Guidelines:
             result.setdefault("servings_per_container", None)
             result.setdefault("total_fiber_g", 0.0)
             result.setdefault("health_score", 5)
+            if not result.get("health_score_reasons"):
+                result["health_score_reasons"] = ["ai_unavailable"]
             result.setdefault("feedback", "")
 
             # Add non-prefixed versions for consistency

@@ -25,6 +25,7 @@ class FoodLogResponse(BaseModel):
     fat_g: float
     fiber_g: Optional[float] = None
     health_score: Optional[int] = None
+    health_score_reasons: Optional[List[str]] = None
     ai_feedback: Optional[str] = None
     notes: Optional[str] = None
     mood_before: Optional[str] = None
@@ -316,6 +317,7 @@ class LogDirectRequest(BaseModel):
     image_storage_key: Optional[str] = None
     # Scores from analysis
     health_score: Optional[int] = None
+    health_score_reasons: Optional[List[str]] = None
     overall_meal_score: Optional[int] = None
     # Inflammation / ultra-processed tracking
     inflammation_score: Optional[int] = None
@@ -368,6 +370,7 @@ class LogFoodResponse(BaseModel):
     fiber_g: Optional[float] = None
     overall_meal_score: Optional[int] = None
     health_score: Optional[int] = None
+    health_score_reasons: Optional[List[str]] = None
     goal_alignment_percentage: Optional[int] = None
     ai_suggestion: Optional[str] = None
     encouragements: Optional[List[str]] = None

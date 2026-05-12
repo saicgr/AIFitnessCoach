@@ -42,6 +42,7 @@ class FoodLog(BaseModel):
     fat_g: float = Field(..., ge=0, le=2000)
     fiber_g: Optional[float] = Field(default=None, ge=0, le=500)
     health_score: Optional[int] = Field(default=None, ge=1, le=10)
+    health_score_reasons: Optional[List[str]] = None
     ai_feedback: Optional[str] = Field(default=None, max_length=2000)
     created_at: datetime
 

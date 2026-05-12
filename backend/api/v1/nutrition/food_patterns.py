@@ -571,6 +571,7 @@ def _food_log_row_to_response(row: dict) -> FoodLogResponse:
         fat_g=float(row.get("fat_g") or 0),
         fiber_g=row.get("fiber_g"),
         health_score=row.get("health_score"),
+        health_score_reasons=row.get("health_score_reasons"),
         ai_feedback=row.get("ai_feedback"),
         notes=row.get("notes"),
         mood_before=row.get("mood_before"),

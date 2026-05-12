@@ -92,6 +92,9 @@ class NutritionDB(NutritionDBPart2, BaseDB):
         # ['deep_fried', 'refined_flour']; added_sugar_g is grams per serving.
         inflammation_triggers: Optional[List[str]] = None,
         added_sugar_g: Optional[float] = None,
+        # Health score reasons (migration 2061). Tags emitted by Gemini
+        # explaining WHY this meal earned its health_score.
+        health_score_reasons: Optional[List[str]] = None,
         # Passive mood inference (rules_v1). Null when no rule matched or
         # confidence was below the persistence threshold.
         mood_after_inferred: Optional[str] = None,
@@ -174,6 +177,8 @@ class NutritionDB(NutritionDBPart2, BaseDB):
             data["inflammation_triggers"] = inflammation_triggers
         if added_sugar_g is not None:
             data["added_sugar_g"] = added_sugar_g
+        if health_score_reasons is not None:
+            data["health_score_reasons"] = health_score_reasons
 
         # Passive mood inference columns
         if mood_after_inferred is not None:

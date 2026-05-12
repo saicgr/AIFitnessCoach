@@ -95,6 +95,7 @@ async def get_daily_summary(
                 fat_g=log.get("fat_g", 0),
                 fiber_g=log.get("fiber_g"),
                 health_score=log.get("health_score"),
+                health_score_reasons=log.get("health_score_reasons"),
                 ai_feedback=log.get("ai_feedback"),
                 notes=log.get("notes"),
                 mood_before=log.get("mood_before"),

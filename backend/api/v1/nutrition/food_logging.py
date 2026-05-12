@@ -465,6 +465,7 @@ async def log_food_from_text(body: LogTextRequest, background_tasks: BackgroundT
         # Extract enhanced analysis fields
         overall_meal_score = food_analysis.get('overall_meal_score')
         health_score = food_analysis.get('health_score')
+        health_score_reasons = food_analysis.get('health_score_reasons')
         goal_alignment_percentage = food_analysis.get('goal_alignment_percentage')
         ai_suggestion = food_analysis.get('ai_suggestion') or food_analysis.get('feedback')
         encouragements = food_analysis.get('encouragements', [])
@@ -537,6 +538,7 @@ async def log_food_from_text(body: LogTextRequest, background_tasks: BackgroundT
             fiber_g=fiber_g,
             ai_feedback=ai_suggestion,
             health_score=health_score,
+            health_score_reasons=health_score_reasons,
             logged_at=user_tz_logged_at,
             source_type="text",
             input_type=body.input_type or "text",
@@ -599,6 +601,7 @@ async def log_food_from_text(body: LogTextRequest, background_tasks: BackgroundT
             fiber_g=fiber_g,
             overall_meal_score=overall_meal_score,
             health_score=health_score,
+            health_score_reasons=health_score_reasons,
             goal_alignment_percentage=goal_alignment_percentage,
             ai_suggestion=ai_suggestion,
             encouragements=encouragements,
@@ -750,6 +753,7 @@ async def log_food_direct(
                 or f"Logged via {body.source_type}" + (f": {body.notes}" if body.notes else "")
             ),
             health_score=body.health_score or body.overall_meal_score,
+            health_score_reasons=body.health_score_reasons,
             logged_at=user_tz_logged_at,
             image_url=body.image_url,
             image_storage_key=body.image_storage_key,
@@ -852,6 +856,7 @@ async def log_food_direct(
             fiber_g=float(body.total_fiber) if body.total_fiber else 0.0,
             overall_meal_score=body.overall_meal_score,
             health_score=body.health_score or body.overall_meal_score,
+            health_score_reasons=body.health_score_reasons,
             ai_suggestion=None,
             confidence_score=confidence_score,
             confidence_level=confidence_level,
@@ -1021,6 +1026,7 @@ async def log_food_from_text_streaming(request: Request, body: LogTextRequest, c
             fiber_g = food_analysis.get('fiber_g', 0.0)
             overall_meal_score = food_analysis.get('overall_meal_score')
             health_score = food_analysis.get('health_score')
+            health_score_reasons = food_analysis.get('health_score_reasons')
             goal_alignment_percentage = food_analysis.get('goal_alignment_percentage')
             ai_suggestion = food_analysis.get('ai_suggestion') or food_analysis.get('feedback')
             encouragements = food_analysis.get('encouragements', [])
@@ -1064,6 +1070,7 @@ async def log_food_from_text_streaming(request: Request, body: LogTextRequest, c
                 fiber_g=fiber_g,
                 ai_feedback=ai_suggestion,
                 health_score=health_score,
+                health_score_reasons=health_score_reasons,
                 logged_at=stream_logged_at,
                 **micronutrients,
             )
@@ -1090,6 +1097,7 @@ async def log_food_from_text_streaming(request: Request, body: LogTextRequest, c
                 "fiber_g": fiber_g,
                 "overall_meal_score": overall_meal_score,
                 "health_score": health_score,
+                "health_score_reasons": health_score_reasons,
                 "goal_alignment_percentage": goal_alignment_percentage,
                 "ai_suggestion": ai_suggestion,
                 "encouragements": encouragements,

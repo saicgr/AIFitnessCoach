@@ -296,6 +296,11 @@ class FoodAnalysisResponse(BaseModel):
     glycemic_load: Optional[int] = Field(default=None, description="Sum of per-item glycemic_loads (treat null as 0).")
     fodmap_rating: Optional[str] = Field(default=None, description="Highest FODMAP rating across items (high > medium > low).")
     fodmap_reason: Optional[str] = Field(default=None, description="Concatenated trigger reasons across items.")
+    health_score: Optional[int] = Field(default=None, description="Overall health score 1-10 for this meal.")
+    health_score_reasons: Optional[List[str]] = Field(
+        default=None,
+        description="Why this meal earned its health_score. Use these tags: high_protein, high_fiber, anti_inflammatory, low_added_sugar, balanced_macros (positives) | ultra_processed, deep_fried, refined_flour, added_sugar, high_sodium, high_glycemic, low_fiber, processed_meat, trans_fat (negatives). 1-5 tags.",
+    )
 
 
 # =============================================================================
@@ -335,6 +340,11 @@ class MenuDishSchema(BaseModel):
     fodmap_reason: Optional[str] = Field(default=None, description="≤6 words naming the FODMAP trigger(s). Null ONLY when fodmap_rating == 'low'.")
     added_sugar_g: float = Field(..., description="Added sugar grams per serving (excludes whole-fruit / whole-dairy sugars). Use 0.0 when there is none; never null.")
     is_ultra_processed: bool = Field(..., description="True iff the dish is predominantly NOVA Group 4 (industrial emulsifiers, HFCS, isolates, etc.).")
+    health_score: Optional[int] = Field(default=None, description="Overall health score 1-10 for this dish.")
+    health_score_reasons: Optional[List[str]] = Field(
+        default=None,
+        description="Why this dish earned its health_score. Use these tags: high_protein, high_fiber, anti_inflammatory, low_added_sugar, balanced_macros (positives) | ultra_processed, deep_fried, refined_flour, added_sugar, high_sodium, high_glycemic, low_fiber, processed_meat, trans_fat (negatives). 1-5 tags.",
+    )
     coach_tip: Optional[str] = Field(default=None, description="≤18 words: pick-or-skip guidance tailored to the user's goals.")
 
 

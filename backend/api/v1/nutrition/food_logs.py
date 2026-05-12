@@ -95,6 +95,7 @@ async def list_food_logs(
                 fat_g=log.get("fat_g", 0),
                 fiber_g=log.get("fiber_g"),
                 health_score=log.get("health_score"),
+                health_score_reasons=log.get("health_score_reasons"),
                 ai_feedback=log.get("ai_feedback"),
                 notes=log.get("notes"),
                 mood_before=log.get("mood_before"),
@@ -154,6 +155,7 @@ async def get_food_log(user_id: str, log_id: str, current_user: dict = Depends(g
             fat_g=log.get("fat_g", 0),
             fiber_g=log.get("fiber_g"),
             health_score=log.get("health_score"),
+            health_score_reasons=log.get("health_score_reasons"),
             ai_feedback=log.get("ai_feedback"),
             notes=log.get("notes"),
             mood_before=log.get("mood_before"),
@@ -455,6 +457,7 @@ async def copy_food_log(log_id: str, http_request: Request, meal_type: str = Que
             input_type="copy",
             inflammation_score=source.get("inflammation_score"),
             is_ultra_processed=source.get("is_ultra_processed"),
+            health_score_reasons=source.get("health_score_reasons"),
         )
 
         food_log_id = created_log.get("id") if created_log else "unknown"
