@@ -243,6 +243,14 @@ def format_exercise_for_workout(
         "video_url": exercise.get("video_url", ""),
         "image_url": exercise.get("image_url", ""),
         "library_id": exercise.get("id", ""),
+        # Carry the exercise UUID through to downstream consumers
+        # (workout_safety_validator + Gemini's generate_workout_from_library)
+        # so they resolve by id, not fuzzy name lookup. Missing these caused
+        # validate_and_repair to flag >50% of rows as "not found in library"
+        # and trip safety_mode, replacing real upper-body plans with mobility
+        # stretches.
+        "exercise_id": exercise.get("id", ""),
+        "id": exercise.get("id", ""),
         "is_favorite": exercise.get("is_favorite", False),
         "is_staple": exercise.get("is_staple", False),
         "from_queue": exercise.get("from_queue", False),
