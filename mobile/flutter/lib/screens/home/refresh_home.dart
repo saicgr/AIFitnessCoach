@@ -13,7 +13,6 @@ import '../../data/providers/xp_provider.dart';
 import '../../data/repositories/hydration_repository.dart';
 import '../../data/repositories/nutrition_repository.dart';
 import '../../data/repositories/workout_repository.dart';
-import '../../data/services/bootstrap_prefetch_service.dart';
 import '../../data/services/home_prewarmer.dart';
 
 /// Consolidated pull-to-refresh helper for the Home tab.
@@ -52,13 +51,10 @@ Future<void> refreshAllHome(WidgetRef ref) async {
   // Family wholesale-invalidate — all (userId) instances refetch.
   ref.invalidate(habitsProvider);
 
-  // Run the prewarmer + bootstrap prefetch in parallel; both are
-  // fire-and-forget-safe but we wait so the RefreshIndicator spinner
-  // sticks around until at least the prewarmer cycle finishes.
-  await Future.wait<void>([
-    HomePrewarmer.invalidateAndRefresh(ref),
-    Future<void>.sync(() => BootstrapPrefetchService.prefetch(ref)),
-  ]);
+  // Run the prewarmer; bootstrap prefetch is omitted because its API takes
+  // a Riverpod `Ref` (not `WidgetRef`) and the per-provider invalidations
+  // above already trigger the same fresh fetches it would seed.
+  await HomePrewarmer.invalidateAndRefresh(ref);
 
   debugPrint('✅ [refreshAllHome] done');
 }
