@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 import '../models/home_layout.dart';
+import '../repositories/auth_repository.dart';
 
 const _uuid = Uuid();
 const _layoutsKey = 'home_layouts';
@@ -14,17 +15,34 @@ const _userDefaultLayoutKey = 'user_default_layout_tiles';
 /// instead of AsyncValue.loading() (avoids blank home screen flash).
 HomeLayout? _layoutInMemoryCache;
 
+/// Tracks the user_id this static cache belongs to, so we can flush it on a
+/// real account switch and avoid the new user inheriting the prior user's
+/// home layout.
+String? _layoutCacheOwnerUserId;
+
 /// Local layout provider - stores layouts in SharedPreferences
 /// This works offline without needing backend API
 final localLayoutProvider =
     StateNotifierProvider<LocalLayoutNotifier, AsyncValue<HomeLayout?>>(
-  (ref) => LocalLayoutNotifier(),
+  (ref) {
+    // Watch user_id only — full AuthState churns on token refresh.
+    final userId = ref.watch(authStateProvider.select((s) => s.user?.id));
+    if (userId != null && userId != _layoutCacheOwnerUserId) {
+      _layoutCacheOwnerUserId = userId;
+      _layoutInMemoryCache = null;
+    }
+    return LocalLayoutNotifier();
+  },
 );
 
 /// All local layouts provider
 final allLocalLayoutsProvider =
     StateNotifierProvider<AllLocalLayoutsNotifier, AsyncValue<List<HomeLayout>>>(
-  (ref) => AllLocalLayoutsNotifier(),
+  (ref) {
+    // Watch user_id only — full AuthState churns on token refresh.
+    ref.watch(authStateProvider.select((s) => s.user?.id));
+    return AllLocalLayoutsNotifier();
+  },
 );
 
 /// Local layout state notifier

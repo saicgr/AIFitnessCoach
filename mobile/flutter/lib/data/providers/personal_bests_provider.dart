@@ -104,7 +104,7 @@ class PersonalBests {
 /// after leaving the Badge Hub — refetch on next visit is cheap.
 final personalBestsProvider =
     FutureProvider.autoDispose<PersonalBests>((ref) async {
-  final userId = ref.watch(authStateProvider).user?.id;
+  final userId = ref.watch(authStateProvider.select((s) => s.user?.id));
   if (userId == null) return const PersonalBests();
 
   final api = ref.watch(apiClientProvider);

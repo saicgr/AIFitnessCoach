@@ -41,7 +41,18 @@ import 'package:sentry_flutter/sentry_flutter.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Startup timing — instrumentation for the "app loads again" symptom.
+  // Each blocking await stamps a duration so we can identify the long-pole
+  // across cold-opens. Stays in debug builds only (kDebugMode-gated).
+  final startupClock = Stopwatch()..start();
+  void logStartup(String label, int ms) {
+    if (kDebugMode) {
+      debugPrint('⏱️ [startup] +${startupClock.elapsedMilliseconds}ms · $label took ${ms}ms');
+    }
+  }
+
   if (kDebugMode) {
+    debugPrint('⏱️ [startup] +0ms · main() entered');
     debugPrint('🔧 [Environment] ENV=${EnvironmentConfig.isDev ? "dev" : "prod"}');
     debugPrint('🔧 [Environment] Backend URL: ${ApiConstants.baseUrl}');
   }
@@ -52,18 +63,28 @@ void main() async {
 
   late final SharedPreferences sharedPreferences;
   var firebaseReady = false;
+  final firebaseSw = Stopwatch()..start();
+  final spSw = Stopwatch()..start();
+  final prewarmSw = Stopwatch()..start();
+  final supabaseSw = Stopwatch()..start();
   await Future.wait([
     Firebase.initializeApp().then<void>((_) {
       firebaseReady = true;
+      logStartup('Firebase.initializeApp', firebaseSw.elapsedMilliseconds);
     }).catchError((e) {
       debugPrint('⚠️ Firebase initialization failed: $e');
     }),
-    SharedPreferences.getInstance().then((prefs) => sharedPreferences = prefs),
+    SharedPreferences.getInstance().then((prefs) {
+      sharedPreferences = prefs;
+      logStartup('SharedPreferences.getInstance', spSw.elapsedMilliseconds);
+    }),
     // Batched prewarmer disk hydration. Single SharedPreferences open shared
     // across all 5 tab prewarmers (You, Home, Nutrition, Workouts, Social) —
     // dispatches each blob to its respective in-memory cache so first taps
     // on any tab render from cache instead of waiting on a network round-trip.
-    PrewarmerBoot.hydrateAll(),
+    PrewarmerBoot.hydrateAll().then((_) {
+      logStartup('PrewarmerBoot.hydrateAll', prewarmSw.elapsedMilliseconds);
+    }),
     Supabase.initialize(
       url: ApiConstants.supabaseUrl,
       anonKey: ApiConstants.supabaseAnonKey,
@@ -79,8 +100,11 @@ void main() async {
           persistSessionKey: 'supabase.auth.token',
         ),
       ),
-    ),
+    ).then((_) {
+      logStartup('Supabase.initialize', supabaseSw.elapsedMilliseconds);
+    }),
   ]);
+  logStartup('parallel init wait', startupClock.elapsedMilliseconds);
 
   // Wire up Crashlytics + Sentry error handlers.
   // Only report truly fatal errors as fatal; rendering/layout errors are non-fatal.

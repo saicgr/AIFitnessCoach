@@ -1,4 +1,5 @@
 import 'dart:convert';
+import '../../core/providers/auth_provider.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -645,6 +646,9 @@ final quickWorkoutProvider =
     StateNotifierProvider<QuickWorkoutNotifier, QuickWorkoutState>((ref) {
   final apiClient = ref.watch(apiClientProvider);
   final db = ref.watch(appDatabaseProvider);
+  // Plan §6: recreate on user_id change so standalone-workout state doesn't
+  // leak across accounts.
+  ref.watch(authStateProvider.select((s) => s.user?.id));
   return QuickWorkoutNotifier(apiClient, db, ref);
 });
 

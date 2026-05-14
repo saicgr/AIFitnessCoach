@@ -188,10 +188,23 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen>
     try {
       final apiClient = ref.read(apiClientProvider);
 
-      // Load authoritative S3 illustration from API first
+      // Load authoritative S3 illustration from API first. Pass exercise_id
+      // so we hit the exact library row — without it, the backend ilike-on-name
+      // path is non-deterministic when multiple rows share a display name and
+      // the detail screen ends up rendering a different variant than the list
+      // tile. exerciseId is the library UUID; libraryId is the legacy alias.
       try {
+        final libraryUuid =
+            widget.exercise.exerciseId ?? widget.exercise.libraryId;
+        final queryParams = <String, dynamic>{};
+        if (libraryUuid != null) {
+          queryParams['exercise_id'] = libraryUuid;
+        }
         final imageResponse = await apiClient
-            .get('/exercise-images/${Uri.encodeComponent(exerciseName)}')
+            .get(
+              '/exercise-images/${Uri.encodeComponent(exerciseName)}',
+              queryParameters: queryParams.isEmpty ? null : queryParams,
+            )
             .timeout(const Duration(seconds: 10));
         if (imageResponse.statusCode == 200 && imageResponse.data != null) {
           _imageUrl = imageResponse.data['url'] as String?;

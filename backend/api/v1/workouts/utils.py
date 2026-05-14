@@ -504,12 +504,25 @@ def _get_exercise_library_url_map(db) -> Dict[str, Dict]:
     if result.data:
         for row in result.data:
             lib_name = (row.get("name") or "").lower().strip()
-            if lib_name:
-                url_map[lib_name] = {
-                    "gif_url": row.get("gif_url"),
-                    "video_url": row.get("video_url"),
-                    "image_s3_path": row.get("image_url"),
-                }
+            if not lib_name:
+                continue
+            new_entry = {
+                "gif_url": row.get("gif_url"),
+                "video_url": row.get("video_url"),
+                "image_s3_path": row.get("image_url"),
+            }
+            existing = url_map.get(lib_name)
+            if existing is None:
+                url_map[lib_name] = new_entry
+                continue
+            # Deterministic merge: keep the variant that has more media. A row
+            # with image_s3_path beats a row without one — kills the "tile vs
+            # detail screen disagree on which dupe to use" race when the
+            # library has multiple rows under the same display name.
+            existing_score = sum(1 for v in existing.values() if v)
+            new_score = sum(1 for v in new_entry.values() if v)
+            if new_score > existing_score:
+                url_map[lib_name] = new_entry
 
     _exercise_library_cache = url_map
     _exercise_library_cache_time = now

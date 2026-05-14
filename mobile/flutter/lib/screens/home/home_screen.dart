@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
@@ -15,6 +16,7 @@ import '../../core/providers/workout_mini_player_provider.dart';
 import '../../data/models/home_layout.dart';
 import '../../data/providers/home_layout_provider.dart';
 import '../../data/services/home_prewarmer.dart';
+import 'refresh_home.dart';
 import '../../data/providers/local_layout_provider.dart';
 import '../../data/services/haptic_service.dart';
 import '../../data/providers/branded_program_provider.dart';
@@ -903,13 +905,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
             HeroWorkoutCarousel.resetAutoGeneration();
             // Refresh user data (picks up workout days, preferences changes)
             await ref.read(authStateProvider.notifier).refreshUser();
-            // Silently refresh today's workout (stale-while-revalidate)
-            ref.read(todayWorkoutProvider.notifier).invalidateAndRefresh();
-            // Silently reload layout from SharedPreferences
+            // Silently reload layout from SharedPreferences (not a provider)
             ref.read(localLayoutProvider.notifier).reload();
-            // Invalidate the Home prewarmer cache + force-refresh so the next
-            // tab swap doesn't briefly show stale workouts/consistency data.
-            unawaited(HomePrewarmer.invalidateAndRefresh(ref));
+            // Single consolidated invalidation of every Home-tier provider
+            // (today workout, gym profiles, workouts, discover, nutrition,
+            // hydration, billing renewal, celebrations, xp, consistency,
+            // weekly plan, habits) + prewarmer + bootstrap prefetch.
+            await refreshAllHome(ref);
             debugPrint('✅ [Home] Pull-to-refresh complete');
           },
           color: AppColors.cyan,

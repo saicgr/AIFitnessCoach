@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
+import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Generic data cache service using SharedPreferences with TTL support
@@ -31,6 +32,22 @@ class DataCacheService {
   static const int _trophyTtlMs = 12 * 60 * 60 * 1000; // 12 hours
   static const int _gymProfilesTtlMs = 24 * 60 * 60 * 1000; // 24 hours — gyms rarely change; revalidate silently in background
 
+  /// Keys whose envelopes must also match the user's local wall-clock date.
+  /// Used to defend against timezone rollover (e.g. LAX → JFK flight) where
+  /// "today" changes per the user's clock but the TTL hasn't fired yet.
+  static const Set<String> _tzSensitiveKeys = {todayWorkoutKey};
+
+  /// Counter for unscoped writes — incremented every time `_scopedKey` falls
+  /// back to the legacy global slot (no userId provided). Surfaces regressions
+  /// where a new call site forgets to thread the user_id. Read via
+  /// [unscopedWriteCount]; consider wiring to Sentry as a tag/breadcrumb.
+  // TODO: wire [unscopedWriteCount] into Sentry as a tag or app-start breadcrumb
+  static int _unscopedWriteCount = 0;
+
+  /// How many times a fallback-to-global-key write/read has occurred this
+  /// process. Non-zero indicates at least one caller is missing user scoping.
+  static int get unscopedWriteCount => _unscopedWriteCount;
+
   /// Per-key TTL overrides
   static const Map<String, int> _ttlOverrides = {
     userProfileKey: _userProfileTtlMs,
@@ -49,10 +66,46 @@ class DataCacheService {
     return _instance!;
   }
 
-  /// Initialize the cache service
+  /// Initialize the cache service. Also runs a one-shot migration that deletes
+  /// the legacy unscoped global cache keys so cross-account residue from
+  /// before user-scoping was introduced is flushed exactly once per install.
+  /// Idempotent — re-running is a no-op (keys already gone).
   static Future<void> initialize() async {
     _prefs ??= await SharedPreferences.getInstance();
+    const migrationFlag = 'cache_v2_user_scoped_migration_complete';
+    if (_prefs!.getBool(migrationFlag) != true) {
+      const legacyKeys = [
+        todayWorkoutKey,
+        workoutListKey,
+        gymProfilesKey,
+        userProfileKey,
+        xpDataKey,
+        xpStreakKey,
+        trophySummaryKey,
+        bodyMeasurementsKey,
+      ];
+      for (final k in legacyKeys) {
+        await _prefs!.remove(k);
+      }
+      await _prefs!.setBool(migrationFlag, true);
+      debugPrint('💾 [Cache] One-shot migration: wiped ${legacyKeys.length} legacy global keys');
+    }
     debugPrint('💾 [Cache] DataCacheService initialized');
+  }
+
+  /// Build a user-scoped storage key. When [userId] is non-empty, returns
+  /// `<key>:<userId>` so two accounts on the same device never share a slot.
+  /// When null/empty, falls back to the legacy global key for backward
+  /// compatibility with call sites that haven't been migrated yet — those
+  /// emit a debug warning so they can be tracked down. NEVER silently lose
+  /// data: the unscoped global path still works, just with a louder log.
+  String _scopedKey(String key, String? userId) {
+    if (userId == null || userId.isEmpty) {
+      _unscopedWriteCount++;
+      debugPrint('⚠️ [Cache] $key called with no user_id — using legacy global slot (migrate caller) [unscoped_total=$_unscopedWriteCount]');
+      return key;
+    }
+    return '$key:$userId';
   }
 
   /// Get SharedPreferences instance
@@ -64,50 +117,85 @@ class DataCacheService {
   /// Get TTL for a given key
   int _getTtl(String key) => _ttlOverrides[key] ?? _defaultTtlMs;
 
-  /// Wrap data in a TTL envelope
+  /// Today's date in the user's wall-clock timezone, as 'yyyy-MM-dd'.
+  /// Stamped onto every envelope so TZ-sensitive keys can detect rollover
+  /// independent of the TTL clock.
+  String _todayLocalDate() => DateFormat('yyyy-MM-dd').format(DateTime.now().toLocal());
+
+  /// Wrap data in a TTL envelope. `localDate` records the user's wall-clock
+  /// date at write time so TZ-sensitive keys (see [_tzSensitiveKeys]) can
+  /// invalidate on calendar rollover even before TTL elapses.
   Map<String, dynamic> _wrapWithTtl(dynamic data) => {
         'data': data,
         'cachedAt': DateTime.now().millisecondsSinceEpoch,
+        'localDate': _todayLocalDate(),
       };
 
-  /// Check if cached data is still valid
+  /// Check if cached data is still valid. Rejects when:
+  /// - envelope missing `cachedAt`
+  /// - age is negative (clock skew / device clock moved backwards — defends
+  ///   against tampering and prevents future-dated entries from being
+  ///   considered fresh forever)
+  /// - age exceeds the per-key TTL
+  /// - key is TZ-sensitive AND envelope's `localDate` no longer matches the
+  ///   user's current wall-clock date (timezone rollover, e.g. LAX → JFK).
+  ///   Missing `localDate` on legacy envelopes is tolerated — new writes will
+  ///   populate it and natural turnover backfills the field.
   bool _isValid(Map<String, dynamic> envelope, String key) {
     final cachedAt = envelope['cachedAt'] as int?;
     if (cachedAt == null) return false;
     final age = DateTime.now().millisecondsSinceEpoch - cachedAt;
-    return age < _getTtl(key);
+    if (age < 0) return false; // clock went backwards — treat as invalid
+    if (age >= _getTtl(key)) return false;
+
+    // TZ-sensitive check: strip any `:userId` suffix to compare against the
+    // base key name in [_tzSensitiveKeys].
+    final baseKey = key.contains(':') ? key.substring(0, key.indexOf(':')) : key;
+    if (_tzSensitiveKeys.contains(baseKey)) {
+      final localDate = envelope['localDate'] as String?;
+      if (localDate != null && localDate != _todayLocalDate()) {
+        return false;
+      }
+    }
+    return true;
   }
 
-  /// Cache JSON data with a key
-  Future<void> cache(String key, Map<String, dynamic> data) async {
+  /// Cache JSON data with a key. Pass [userId] to user-scope the storage
+  /// slot — STRONGLY RECOMMENDED for any per-user data. When null, the legacy
+  /// global slot is used (logged as a warning).
+  Future<void> cache(String key, Map<String, dynamic> data, {String? userId}) async {
     try {
       final p = await prefs;
+      final scopedKey = _scopedKey(key, userId);
       final envelope = _wrapWithTtl(data);
       final jsonString = jsonEncode(envelope);
-      await p.setString(key, jsonString);
-      debugPrint('💾 [Cache] Saved: $key (${jsonString.length} chars)');
+      await p.setString(scopedKey, jsonString);
+      debugPrint('💾 [Cache] Saved: $scopedKey (${jsonString.length} chars)');
     } catch (e) {
       debugPrint('❌ [Cache] Error saving $key: $e');
     }
   }
 
-  /// Cache a list of JSON objects
-  Future<void> cacheList(String key, List<Map<String, dynamic>> data) async {
+  /// Cache a list of JSON objects. Same userId rules as [cache].
+  Future<void> cacheList(String key, List<Map<String, dynamic>> data, {String? userId}) async {
     try {
       final p = await prefs;
+      final scopedKey = _scopedKey(key, userId);
       final envelope = _wrapWithTtl(data);
       final jsonString = jsonEncode(envelope);
-      await p.setString(key, jsonString);
-      debugPrint('💾 [Cache] Saved list: $key (${data.length} items)');
+      await p.setString(scopedKey, jsonString);
+      debugPrint('💾 [Cache] Saved list: $scopedKey (${data.length} items)');
     } catch (e) {
       debugPrint('❌ [Cache] Error saving list $key: $e');
     }
   }
 
-  /// Get cached JSON data (returns null if expired or missing)
-  Future<Map<String, dynamic>?> getCached(String key) async {
+  /// Get cached JSON data (returns null if expired or missing). Same userId
+  /// rules as [cache].
+  Future<Map<String, dynamic>?> getCached(String key, {String? userId}) async {
     try {
       final p = await prefs;
+      key = _scopedKey(key, userId);
       final jsonString = p.getString(key);
       if (jsonString == null) {
         debugPrint('📭 [Cache] Miss: $key');
@@ -136,10 +224,12 @@ class DataCacheService {
     }
   }
 
-  /// Get cached list of JSON objects (returns null if expired or missing)
-  Future<List<Map<String, dynamic>>?> getCachedList(String key) async {
+  /// Get cached list of JSON objects (returns null if expired or missing).
+  /// Same userId rules as [cache].
+  Future<List<Map<String, dynamic>>?> getCachedList(String key, {String? userId}) async {
     try {
       final p = await prefs;
+      key = _scopedKey(key, userId);
       final jsonString = p.getString(key);
       if (jsonString == null) {
         debugPrint('📭 [Cache] Miss: $key');
@@ -171,38 +261,57 @@ class DataCacheService {
     }
   }
 
-  /// Invalidate (remove) cached data for a key
-  Future<void> invalidate(String key) async {
+  /// Invalidate (remove) cached data for a key. Same userId rules as [cache].
+  Future<void> invalidate(String key, {String? userId}) async {
     try {
       final p = await prefs;
-      await p.remove(key);
-      debugPrint('🗑️ [Cache] Invalidated: $key');
+      final scopedKey = _scopedKey(key, userId);
+      await p.remove(scopedKey);
+      debugPrint('🗑️ [Cache] Invalidated: $scopedKey');
     } catch (e) {
       debugPrint('❌ [Cache] Error invalidating $key: $e');
     }
   }
 
-  /// Clear all cached data (on logout)
+  /// Clear all cached data (on logout). Wipes BOTH the legacy global keys and
+  /// every user-scoped slot (`<key>:<anything>`) on this device, regardless of
+  /// which user owned them. Safe because logout means nobody owns the data
+  /// anymore. Caller doesn't need to know any user_ids.
   Future<void> clearAll() async {
     try {
       final p = await prefs;
-      await p.remove(todayWorkoutKey);
-      await p.remove(workoutListKey);
-      await p.remove(gymProfilesKey);
-      await p.remove(userProfileKey);
-      await p.remove(xpDataKey);
-      await p.remove(xpStreakKey);
-      await p.remove(trophySummaryKey);
-      await p.remove(bodyMeasurementsKey);
-      debugPrint('🧹 [Cache] Cleared all cached data');
+      const baseKeys = [
+        todayWorkoutKey,
+        workoutListKey,
+        gymProfilesKey,
+        userProfileKey,
+        xpDataKey,
+        xpStreakKey,
+        trophySummaryKey,
+        bodyMeasurementsKey,
+      ];
+      // Remove the legacy unscoped form, plus every `<base>:<userId>` slot.
+      final allKeys = p.getKeys();
+      var removed = 0;
+      for (final k in allKeys) {
+        for (final base in baseKeys) {
+          if (k == base || k.startsWith('$base:')) {
+            await p.remove(k);
+            removed++;
+            break;
+          }
+        }
+      }
+      debugPrint('🧹 [Cache] Cleared $removed cached entries (all users on this device)');
     } catch (e) {
       debugPrint('❌ [Cache] Error clearing cache: $e');
     }
   }
 
-  /// Check if a key has cached data (does not check TTL)
-  Future<bool> hasCached(String key) async {
+  /// Check if a key has cached data (does not check TTL). Same userId rules
+  /// as [cache].
+  Future<bool> hasCached(String key, {String? userId}) async {
     final p = await prefs;
-    return p.containsKey(key);
+    return p.containsKey(_scopedKey(key, userId));
   }
 }

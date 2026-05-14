@@ -40,4 +40,12 @@ class GymProfileDao extends DatabaseAccessor<AppDatabase>
       }
     });
   }
+
+  /// Wipe every cached gym-profile row owned by [userId]. Called from
+  /// sign-out so the outgoing user's equipment list cannot bias the next
+  /// account's workout generation.
+  Future<int> clearForUser(String userId) {
+    return (delete(cachedGymProfiles)..where((p) => p.userId.equals(userId)))
+        .go();
+  }
 }

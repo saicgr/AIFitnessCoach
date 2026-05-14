@@ -45,15 +45,19 @@ extension _HomeScreenStateUI2 on _HomeScreenState {
     // Show loading during initial app load, but only if provider has no data yet.
     // Skip this gate when provider has cached data (prevents flash on back-navigation).
     if (_isInitializing && !todayWorkoutState.hasValue) {
+      debugPrint('⏱️ [startup] HeroCard spinner: _isInitializing && !hasValue (cold cache)');
       return const GeneratingHeroCard(
         message: 'Loading your workout...',
       );
     }
 
     return todayWorkoutState.when(
-      loading: () => const GeneratingHeroCard(
-        message: 'Loading workout...',
-      ),
+      loading: () {
+        debugPrint('⏱️ [startup] HeroCard spinner: AsyncValue.loading (network in-flight, no cache)');
+        return const GeneratingHeroCard(
+          message: 'Loading workout...',
+        );
+      },
       error: (e, _) {
         debugPrint('⚠️ [Home] todayWorkoutProvider error: $e');
         return _buildFallbackHeroCard(context);
@@ -65,6 +69,60 @@ extension _HomeScreenStateUI2 on _HomeScreenState {
 
         // Get the workout to display (today's or next upcoming)
         final workoutSummary = response.todayWorkout ?? response.nextWorkout;
+
+        // PLAN §4: when polling capped out without producing a workout,
+        // surface a retry CTA instead of falling through to the silent
+        // "Loading your workout..." dead-end. Tap re-triggers generation.
+        if (response.lastGenerationError != null && workoutSummary == null) {
+          // §8b — one-shot connectivity check (no stream sub) so we can
+          // disable retry and surface an "offline" message when the device
+          // has no network. FutureBuilder runs the check on each rebuild.
+          return FutureBuilder<List<ConnectivityResult>>(
+            future: Connectivity().checkConnectivity(),
+            builder: (context, snap) {
+              final isOffline = snap.hasData &&
+                  (snap.data!.isEmpty ||
+                      snap.data!.every((r) => r == ConnectivityResult.none));
+              if (isOffline) {
+                return const GeneratingHeroCard(
+                  message: "You're offline — reconnect to retry",
+                  subtitle: 'We\'ll generate a fresh workout once you\'re back online',
+                  onRetry: null,
+                );
+              }
+              return GeneratingHeroCard(
+                message: response.lastGenerationError,
+                subtitle: 'We\'ll generate a fresh workout for you',
+                onRetry: () {
+                  // §8a — debounce double-taps: bail out if a retry was
+                  // already fired within the last 3 seconds. Without this,
+                  // tapping the CTA twice in quick succession would launch
+                  // two parallel generation jobs.
+                  if (TodayWorkoutNotifier.retryFiredRecently()) {
+                    debugPrint('⏸️ [Home] Retry debounced — fired <3s ago');
+                    return;
+                  }
+                  // §8c — if we're still inside the post-failure cooldown,
+                  // show a snackbar with seconds remaining instead of
+                  // silently swallowing the tap.
+                  final cooldownLeft =
+                      TodayWorkoutNotifier.generationCooldownSecondsLeft();
+                  if (cooldownLeft > 0) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Try again in $cooldownLeft s'),
+                        duration: const Duration(seconds: 2),
+                      ),
+                    );
+                    return;
+                  }
+                  TodayWorkoutNotifier.resetGenerationState();
+                  ref.invalidate(todayWorkoutProvider);
+                },
+              );
+            },
+          );
+        }
 
         // Only show generating card when no workout exists at all
         if (response.isGenerating && workoutSummary == null) {

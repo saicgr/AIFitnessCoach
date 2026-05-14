@@ -37,7 +37,28 @@ class ActiveWorkoutSessionState {
 
 class ActiveWorkoutSessionNotifier
     extends StateNotifier<ActiveWorkoutSessionState> {
-  ActiveWorkoutSessionNotifier() : super(const ActiveWorkoutSessionState());
+  ActiveWorkoutSessionNotifier() : super(const ActiveWorkoutSessionState()) {
+    _instances.add(this);
+  }
+
+  /// Track every live notifier so [clearCache] (a static, called from the
+  /// sign-out orchestration in AuthRepository) can reach the in-memory
+  /// session state without holding a Ref. There is normally only one
+  /// instance — the StateNotifierProvider is not autoDispose — but the
+  /// set keeps us safe across hot-reload / test rebuilds.
+  static final Set<ActiveWorkoutSessionNotifier> _instances = {};
+
+  /// Wipe in-memory active-workout state on sign-out. Without this, a
+  /// user who signs out mid-workout and signs in as a different account
+  /// would briefly see the prior user's completed-sets map / current
+  /// exercise index until the next `start()` call clobbered it.
+  static void clearCache() {
+    for (final n in _instances) {
+      if (n.mounted) {
+        n.state = const ActiveWorkoutSessionState();
+      }
+    }
+  }
 
   /// Begin (or continue) a session for [workoutId]. If the existing
   /// session is for a different workout, clear it. Otherwise leave it
@@ -94,6 +115,12 @@ class ActiveWorkoutSessionNotifier
   /// count old sets.
   void clear() {
     state = const ActiveWorkoutSessionState();
+  }
+
+  @override
+  void dispose() {
+    _instances.remove(this);
+    super.dispose();
   }
 }
 

@@ -8,6 +8,7 @@ import 'gym_profile_provider.dart';
 import 'location_permission_provider.dart';
 import 'time_slot_provider.dart';
 import '../repositories/workout_repository.dart';
+import '../repositories/auth_repository.dart';
 import 'today_workout_provider.dart';
 
 /// Key for storing auto-switch enabled preference
@@ -223,6 +224,10 @@ class AutoSwitchNotifier extends StateNotifier<AutoSwitchState> {
 final autoSwitchProvider =
     StateNotifierProvider<AutoSwitchNotifier, AutoSwitchState>((ref) {
   final service = ref.watch(autoSwitchServiceProvider);
+  // Watch user_id only — full AuthState churns on token refresh, but a real
+  // account switch must recreate the notifier so the new user gets fresh
+  // auto-switch state.
+  ref.watch(authStateProvider.select((s) => s.user?.id));
   return AutoSwitchNotifier(service, ref);
 });
 

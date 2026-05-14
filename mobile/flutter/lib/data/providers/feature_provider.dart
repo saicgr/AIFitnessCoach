@@ -9,8 +9,8 @@ final featuresProvider =
     StateNotifierProvider<FeaturesNotifier, AsyncValue<List<FeatureRequest>>>(
   (ref) {
     final repository = ref.watch(featureRepositoryProvider);
-    final authState = ref.watch(authStateProvider);
-    final userId = authState.user?.id;
+    // Watch user_id only — full AuthState churns on token refresh.
+    final userId = ref.watch(authStateProvider.select((s) => s.user?.id));
     return FeaturesNotifier(repository, userId);
   },
 );
@@ -23,8 +23,8 @@ final remainingSubmissionsProvider =
     FutureProvider.autoDispose<Map<String, dynamic>>(
   (ref) async {
     final repository = ref.watch(featureRepositoryProvider);
-    final authState = ref.watch(authStateProvider);
-    final userId = authState.user?.id;
+    // Watch user_id only — full AuthState churns on token refresh.
+    final userId = ref.watch(authStateProvider.select((s) => s.user?.id));
 
     if (userId == null) {
       return {'used': 0, 'remaining': 2, 'total_limit': 2};

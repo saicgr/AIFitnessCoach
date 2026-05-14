@@ -4,6 +4,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/nutrition_preferences.dart';
 import '../repositories/nutrition_preferences_repository.dart';
+import '../repositories/auth_repository.dart';
+
+/// Tracks the user_id this static cache belongs to, so we can flush it on a
+/// real account switch and avoid the new user inheriting the prior user's
+/// nutrition preferences.
+String? _nutritionPrefsCacheOwnerUserId;
 
 /// SharedPreferences key prefix for the one-time targets-recalc migration.
 /// We bumped the rate→deficit table on this date (the textbook
@@ -669,6 +675,13 @@ class NutritionPreferencesNotifier extends StateNotifier<NutritionPreferencesSta
 final nutritionPreferencesProvider =
     StateNotifierProvider<NutritionPreferencesNotifier, NutritionPreferencesState>(
         (ref) {
+  // Watch user_id only — full AuthState churns on token refresh. Flush the
+  // static in-memory cache on a real account switch.
+  final userId = ref.watch(authStateProvider.select((s) => s.user?.id));
+  if (userId != null && userId != _nutritionPrefsCacheOwnerUserId) {
+    _nutritionPrefsCacheOwnerUserId = userId;
+    _nutritionPrefsInMemoryCache = null;
+  }
   return NutritionPreferencesNotifier(
     ref.watch(nutritionPreferencesRepositoryProvider),
   );

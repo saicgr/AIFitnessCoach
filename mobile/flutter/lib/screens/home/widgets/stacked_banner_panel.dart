@@ -270,27 +270,77 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
     }
 
     // 3. Leaderboard percentile banner — "Top N% this week" for anyone on the
-    // board. Taps through to Discover. Dismiss is per-session via the
-    // shared stackedBannerController, re-appears each session since the
-    // rank shifts daily.
+    // board. Plan §5A: cohort guard. A 3-user dev cohort renders "Top 99% —
+    // #3 of 3 active users" which reads as catastrophic to a user who's
+    // actually been logging workouts. We need a meaningful cohort size
+    // before percentile copy is honest, and we tone down the framing for
+    // bottom-half users instead of inverting "Top N%".
     final discoverSnap = ref.watch(discoverSnapshotProvider).valueOrNull;
     if (discoverSnap != null && discoverSnap.yourRank > 0) {
+      const minMeaningfulCohort = 10;
+      // PercentileShown reflects how close to the top the user is:
+      //   yourPercentile=99 → top 1%
+      //   yourPercentile=1  → top 99% (i.e. bottom 1%)
       final percentileShown = (100 - discoverSnap.yourPercentile)
           .clamp(1, 99)
-          .toStringAsFixed(0);
-      banners.add(BannerCardData(
-        type: BannerType.rankPercentile,
-        id: 'rank_pct_${discoverSnap.weekStart}',
-        icon: Icons.bar_chart_rounded,
-        title: 'Top $percentileShown% this week',
-        subtitle:
-            '#${discoverSnap.yourRank} of ${discoverSnap.totalActive} active users · Tap to see Discover',
-        accentColor: AppColors.purple,
-        onTap: () {
-          HapticService.light();
-          context.go('/discover');
-        },
-      ));
+          .toInt();
+      final isBottomHalf = percentileShown >= 50;
+      final total = discoverSnap.totalActive;
+      final rank = discoverSnap.yourRank;
+
+      // Skip entirely for tiny cohorts — percentile is mathematically
+      // meaningless and the "Top 99%" framing reads as a failure state.
+      if (total >= minMeaningfulCohort) {
+        // Variant pools per [[feedback_dynamic_copy_not_robotic]] — same
+        // shape each week would feel robotic. Week-start seed keeps the
+        // variant stable within a single week (no flicker) while changing
+        // week-over-week.
+        final weekSeed = discoverSnap.weekStart.hashCode;
+        String title;
+        String subtitle;
+        if (isBottomHalf) {
+          const titles = [
+            'You\'re climbing the board',
+            'Steady progress this week',
+            'Keep stacking the reps',
+            'Every session counts',
+          ];
+          const subtitlePatterns = [
+            '#{rank} of {total} this week · See who\'s ahead',
+            'Currently #{rank} of {total} · Tap for Discover',
+            'Ranked #{rank} this week · Push for next tier',
+            '{total} active this week, you\'re at #{rank} · Discover',
+          ];
+          title = titles[weekSeed.abs() % titles.length];
+          subtitle = subtitlePatterns[weekSeed.abs() % subtitlePatterns.length]
+              .replaceAll('{rank}', '$rank')
+              .replaceAll('{total}', '$total');
+        } else {
+          // Top-half framing — the legitimate "Top N%" copy. Vary the
+          // accompanying sub-line.
+          const subtitlePatterns = [
+            '#{rank} of {total} active users · Tap to see Discover',
+            'Ranked #{rank} of {total} this week · Discover',
+            '#{rank} of {total} · See the full board',
+          ];
+          title = 'Top $percentileShown% this week';
+          subtitle = subtitlePatterns[weekSeed.abs() % subtitlePatterns.length]
+              .replaceAll('{rank}', '$rank')
+              .replaceAll('{total}', '$total');
+        }
+        banners.add(BannerCardData(
+          type: BannerType.rankPercentile,
+          id: 'rank_pct_${discoverSnap.weekStart}',
+          icon: Icons.bar_chart_rounded,
+          title: title,
+          subtitle: subtitle,
+          accentColor: AppColors.purple,
+          onTap: () {
+            HapticService.light();
+            context.go('/discover');
+          },
+        ));
+      }
     }
 
     // 4. Daily crate (includes accumulated unclaimed crates)

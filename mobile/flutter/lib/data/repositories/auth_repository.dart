@@ -4,13 +4,23 @@ import 'dart:io' show Platform;
 import 'dart:math';
 import 'package:crypto/crypto.dart';
 import 'package:dio/dio.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:home_widget/home_widget.dart';
+import 'package:posthog_flutter/posthog_flutter.dart';
+import 'package:purchases_flutter/purchases_flutter.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' as sb show AuthState;
 import '../../core/constants/api_constants.dart';
+import '../local/database.dart';
+import '../local/database_provider.dart';
 import '../models/ai_profile_payload.dart';
 import '../models/user.dart' as app_user;
 import '../providers/consistency_provider.dart';
@@ -22,9 +32,12 @@ import '../providers/scores_provider.dart';
 import '../providers/today_workout_provider.dart';
 import '../providers/xp_provider.dart';
 import '../../screens/onboarding/pre_auth_quiz_data.dart';
+import '../repositories/chat_repository.dart';
 import '../repositories/hydration_repository.dart';
 import '../repositories/measurements_repository.dart';
 import '../repositories/workout_repository.dart';
+import '../../screens/workout/providers/active_workout_session_provider.dart';
+import '../services/widget_service.dart';
 import '../services/api_client.dart';
 import '../services/data_cache_service.dart';
 import '../services/device_info_service.dart';
@@ -64,12 +77,61 @@ class AuthState {
       errorMessage: errorMessage,
     );
   }
+
+  // Equality is by (status, user.id, errorMessage). Without this override every
+  // `state = AuthState(...)` produces a fresh object reference, so every
+  // `ref.watch(authStateProvider)` consumer rebuilds — re-creating notifiers
+  // mid-fetch, disposing in-flight requests, and stranding the UI in the
+  // initial empty state. Comparing user by `id` only means partial profile
+  // hydration (`copyWith(user: …)` with the same id) no longer churns
+  // unrelated providers. See plan §2.
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is AuthState &&
+          other.status == status &&
+          other.user?.id == user?.id &&
+          other.errorMessage == errorMessage);
+
+  @override
+  int get hashCode => Object.hash(status, user?.id, errorMessage);
 }
 
 /// Auth repository provider
 final authRepositoryProvider = Provider<AuthRepository>((ref) {
   final apiClient = ref.watch(apiClientProvider);
-  return AuthRepository(apiClient);
+  final db = ref.watch(appDatabaseProvider);
+  final repo = AuthRepository(apiClient, db);
+
+  // Wire the 401 recovery callbacks on ApiClient so the Dio interceptor
+  // can route through AuthRepository (instead of calling Supabase
+  // directly). Avoids the circular import — auth_repository.dart already
+  // imports api_client.dart, so we expose hooks via callback fields on
+  // ApiClient and set them here.
+  apiClient.onTokenRefresh = () async {
+    try {
+      final user = await repo.restoreSession();
+      // restoreSession() returns null on 404 (orphan auth user) or when
+      // no Supabase session exists — both mean refresh effectively failed
+      // and the interceptor should fall through to forced sign-out.
+      return user != null;
+    } catch (e) {
+      debugPrint('❌ [Auth] onTokenRefresh hook failed: $e');
+      return false;
+    }
+  };
+  apiClient.onForceSignOut = () async {
+    try {
+      await repo.signOut();
+    } catch (e) {
+      debugPrint('❌ [Auth] onForceSignOut hook failed: $e');
+      // Best-effort fallback so the user is never stranded with a stale
+      // session — clear the local auth keys at minimum.
+      await apiClient.clearAuth();
+    }
+  };
+
+  return repo;
 });
 
 /// Auth state provider
@@ -82,10 +144,11 @@ final authStateProvider =
 /// Auth repository for handling authentication
 class AuthRepository {
   final ApiClient _apiClient;
+  final AppDatabase _db;
   final GoogleSignIn _googleSignIn;
   final SupabaseClient _supabase;
 
-  AuthRepository(this._apiClient)
+  AuthRepository(this._apiClient, this._db)
       : _googleSignIn = GoogleSignIn(
           scopes: ['email', 'profile'],
           serverClientId: ApiConstants.googleWebClientId,
@@ -430,29 +493,234 @@ class AuthRepository {
     }
   }
 
-  /// Sign out
-  Future<void> signOut() async {
-    // Cache wipes run in `finally` so a partial Supabase signOut failure
-    // (network blip, expired token) cannot leave the previous user's
-    // cached profile sitting in SharedPreferences. Without this, a flaky
-    // sign-out followed by a fresh sign-in would surface the OLD user
-    // on /home until the background restoreSession() completes.
-    Object? signOutError;
+  /// Time + log a single sign-out cleanup step. Each [body] is awaited
+  /// inside a guard so one failing teardown (e.g. flutter_local_notifications
+  /// not yet initialized on first launch) cannot halt the rest of the
+  /// orchestration. Emits a structured `🚪 [SignOut] step=X ok=… ms=N`
+  /// line in debug builds so we can audit the order from device logs.
+  Future<void> _runSignOutStep(String name, Future<void> Function() body) async {
+    final sw = Stopwatch()..start();
+    var ok = true;
     try {
-      await _googleSignIn.signOut();
-      await _supabase.auth.signOut();
-      await _apiClient.clearAuth();
+      await body();
     } catch (e) {
-      // Capture but don't rethrow yet — we still need to clear local
-      // caches so the next user doesn't see stale data. Surface the
-      // error after cleanup (matches the pre-fix behavior).
-      signOutError = e;
-      debugPrint('❌ [Auth] Sign-out (Supabase/Google) error: $e — continuing with local cleanup');
+      ok = false;
+      debugPrint('❌ [SignOut] step=$name failed: $e');
+    } finally {
+      sw.stop();
+      if (kDebugMode) {
+        debugPrint('🚪 [SignOut] step=$name ok=$ok ms=${sw.elapsedMilliseconds}');
+      }
     }
+  }
+
+  /// Reset every third-party identity that was set during sign-in. MUST run
+  /// BEFORE the local data wipe so the LAST event each SDK ships still
+  /// carries the correct user_id — that's the audit trail for "user X
+  /// signed out at T" on PostHog / Crashlytics / Sentry.
+  ///
+  /// Every individual call is wrapped in try/catch because some SDKs
+  /// (FCM, RevenueCat) raise if the user signs out before the SDK has
+  /// finished its first-launch handshake — that's a no-op for our
+  /// purposes, not a fatal failure.
+  Future<void> _clearThirdPartyIdentities() async {
+    await _runSignOutStep('posthog.reset', () async {
+      await Posthog().reset();
+    });
+    await _runSignOutStep('crashlytics.setUserIdentifier', () async {
+      await FirebaseCrashlytics.instance.setUserIdentifier('');
+    });
+    await _runSignOutStep('sentry.scope.clear', () async {
+      await Sentry.configureScope((s) => s.setUser(null));
+    });
+    await _runSignOutStep('fcm.deleteToken', () async {
+      // deleteToken can hang on a denied-permission device — bound it so
+      // sign-out never blocks longer than a couple of seconds on a flaky
+      // APNS handshake.
+      await FirebaseMessaging.instance.deleteToken().timeout(
+            const Duration(seconds: 3),
+            onTimeout: () {
+              if (kDebugMode) {
+                debugPrint('⚠️ [SignOut] FCM deleteToken timed out — continuing');
+              }
+            },
+          );
+    });
+    await _runSignOutStep('revenuecat.logOut', () async {
+      // Purchases.logOut() throws if no user is currently identified
+      // (e.g., the SDK was never configured because the user signed up
+      // and immediately signed out without hitting the paywall).
+      // Swallow that specific failure mode rather than aborting cleanup.
+      try {
+        await Purchases.logOut();
+      } catch (e) {
+        if (kDebugMode) {
+          debugPrint('⚠️ [SignOut] Purchases.logOut soft-failed: $e');
+        }
+      }
+    });
+    await _runSignOutStep('google.signOut', () async {
+      await _googleSignIn.signOut();
+    });
+  }
+
+  /// Tear down every local side-effect that was scheduled for the
+  /// outgoing user — local notifications and the iOS / Android home
+  /// widget surface. Without this, A's "time to work out!" notification
+  /// can fire on B's device, and the home widget will keep showing A's
+  /// next workout / streak until B opens the app and triggers a refresh.
+  Future<void> _clearLocalSideEffects() async {
+    await _runSignOutStep('localNotifications.cancelAll', () async {
+      await FlutterLocalNotificationsPlugin().cancelAll();
+    });
+    await _runSignOutStep('widget.clear', () async {
+      // Null every key the WidgetService writes to, then ping the
+      // platform widget so the home-screen tile redraws as empty.
+      // We deliberately call HomeWidget directly (not WidgetService)
+      // because WidgetService.update* methods all REQUIRE non-null
+      // data — there's no public "clear" method today.
+      const keys = <String>[
+        WidgetService.keyWorkout,
+        WidgetService.keyStreak,
+        WidgetService.keyWater,
+        WidgetService.keyFood,
+        WidgetService.keyStats,
+        WidgetService.keyChallenges,
+        WidgetService.keyAchievements,
+        WidgetService.keyGoals,
+        WidgetService.keyCalendar,
+        WidgetService.keyAICoach,
+      ];
+      for (final k in keys) {
+        try {
+          await HomeWidget.saveWidgetData<String>(k, null);
+        } catch (e) {
+          if (kDebugMode) {
+            debugPrint('⚠️ [SignOut] HomeWidget.saveWidgetData($k) failed: $e');
+          }
+        }
+      }
+      // Two updateWidget calls — one for iOS (name=iOS widget bundle),
+      // one for Android (qualifiedAndroidName / androidName). Either may
+      // throw on a platform where the widget isn't installed yet; we
+      // ignore those.
+      try {
+        await HomeWidget.updateWidget(
+          name: 'FitnessWidget',
+          androidName: 'FitnessWidgetReceiver',
+          iOSName: 'FitnessWidget',
+        );
+      } catch (e) {
+        if (kDebugMode) {
+          debugPrint('⚠️ [SignOut] HomeWidget.updateWidget failed: $e');
+        }
+      }
+    });
+    await _runSignOutStep('chat.closeStreams', () async {
+      ChatMessagesNotifier.closeAllStreams();
+    });
+    await _runSignOutStep('activeWorkout.clear', () async {
+      ActiveWorkoutSessionNotifier.clearCache();
+    });
+  }
+
+  /// Drop every Drift row owned by [outgoingUserId] so the next user
+  /// signing in on this device can't read it. The sync queue has no
+  /// userId column (it's a single-tenant outbox) so it's wiped wholesale.
+  /// Foods/embeddings/media-cache/exercise-library are shared reference
+  /// data — NOT user-scoped — and are left intact (re-downloading them
+  /// for every account switch would be wasteful and offline-hostile).
+  Future<void> _wipeDriftForUser(String? outgoingUserId) async {
+    if (outgoingUserId == null || outgoingUserId.isEmpty) {
+      if (kDebugMode) {
+        debugPrint('⚠️ [SignOut] _wipeDriftForUser called with null/empty id — skipping');
+      }
+      return;
+    }
+    await _runSignOutStep('drift.workouts', () async {
+      await _db.workoutDao.clearForUser(outgoingUserId);
+    });
+    await _runSignOutStep('drift.workoutLogs', () async {
+      await _db.workoutLogDao.clearForUser(outgoingUserId);
+    });
+    await _runSignOutStep('drift.userProfile', () async {
+      await _db.userProfileDao.clearForUser(outgoingUserId);
+    });
+    await _runSignOutStep('drift.gymProfiles', () async {
+      await _db.gymProfileDao.clearForUser(outgoingUserId);
+    });
+    await _runSignOutStep('drift.exercise1rm', () async {
+      await _db.exercise1rmDao.clearForUser(outgoingUserId);
+    });
+    await _runSignOutStep('drift.volumeResponses', () async {
+      await _db.volumeResponseDao.clearForUser(outgoingUserId);
+    });
+    await _runSignOutStep('drift.quickPresets', () async {
+      await _db.quickPresetDao.deleteAllForUser(outgoingUserId);
+    });
+    await _runSignOutStep('drift.syncQueue', () async {
+      await _db.syncQueueDao.clearForUser(outgoingUserId);
+    });
+  }
+
+  /// Sign out — transactional.
+  ///
+  /// Supabase signOut is awaited FIRST. If it fails (network blip,
+  /// expired token, server 5xx) we throw immediately WITHOUT touching
+  /// any local cache or third-party identity. The user-visible error is
+  /// "Couldn't sign out. Check your connection and try again." A
+  /// half-state — local data wiped while Supabase still holds a valid
+  /// session — would surface on the next cold start as the user
+  /// appearing to be signed back in (because restoreSession() finds the
+  /// still-live session) with all their data freshly empty.
+  ///
+  /// Once Supabase signOut succeeds, cleanup runs in a fixed order:
+  ///   1. Third-party identities (PostHog / Crashlytics / Sentry / FCM /
+  ///      RevenueCat / Google) — so the last event still carries the
+  ///      correct user_id.
+  ///   2. Local side-effects (notifications, widget, chat streams,
+  ///      active-workout state).
+  ///   3. Drift rows owned by the outgoing user.
+  ///   4. In-memory provider caches (existing).
+  ///   5. DataCacheService.clearAll() (existing — runs last so a crash
+  ///      mid-cleanup still leaves the disk cache stale-but-scoped, and
+  ///      the per-user keys means it can't be served to the next user
+  ///      anyway).
+  Future<void> signOut() async {
+    // Capture the outgoing user id BEFORE we tear down Supabase — once
+    // signOut() succeeds, _supabase.auth.currentUser becomes null and we
+    // can't scope the Drift wipe.
+    final outgoingAuthId = _supabase.auth.currentUser?.id;
+    final outgoingBackendId = await _apiClient.getUserId();
 
     try {
-      // Clear all cached data for next user
-      await DataCacheService.instance.clearAll();
+      await _supabase.auth.signOut();
+    } catch (e) {
+      debugPrint('❌ [Auth] Supabase signOut failed — aborting local cleanup: $e');
+      throw Exception(
+        "Couldn't sign out. Check your connection and try again.",
+      );
+    }
+
+    // From here, everything is best-effort. We deliberately do NOT
+    // rethrow individual step failures — once the Supabase session is
+    // gone, the user is signed out from the server's point of view and
+    // we must finish wiping local state regardless of which SDK errors.
+    await _clearThirdPartyIdentities();
+    await _clearLocalSideEffects();
+    // Wipe Drift rows for whichever id we managed to capture. The
+    // backend id (users.id) is what every user-scoped Drift table keys
+    // on, so prefer that; fall back to the Supabase auth id only if the
+    // user signed out before /by-auth ever resolved.
+    await _wipeDriftForUser(outgoingBackendId ?? outgoingAuthId);
+
+    // ----- existing cleanup (unchanged below this line) -----
+
+    await _runSignOutStep('apiClient.clearAuth', () async {
+      await _apiClient.clearAuth();
+    });
+
+    await _runSignOutStep('providers.clearCache', () async {
       // Clear ALL in-memory caches
       TodayWorkoutNotifier.clearCache();
       XPNotifier.clearCache();
@@ -464,12 +732,10 @@ class AuthRepository {
       HydrationNotifier.clearCache();
       FastingNotifier.clearCache();
       MeasurementsNotifier.clearCache();
+    });
 
-      // Wipe ALL tab prewarmer caches (in-memory + on-disk where applicable)
-      // so the next user signing in on this device doesn't briefly see the
-      // prior account's streaks / workouts / food / social state before the
-      // network refresh lands. Run in parallel — none of them block each
-      // other and clearAll on each is idempotent.
+    await _runSignOutStep('prewarmers.clearAll', () async {
+      // Wipe ALL tab prewarmer caches in parallel.
       await Future.wait([
         YouOverviewPrewarmer.clearAll(),
         HomePrewarmer.clearAll(),
@@ -478,35 +744,69 @@ class AuthRepository {
         SocialPrewarmer.clearAll(),
         WorkoutCompletionPrewarmer.clearAll(),
       ]);
+    });
 
-      // Clear local onboarding flags so next user gets fresh experience
+    await _runSignOutStep('dataCache.clearAll', () async {
+      // Per-user-scoped keys, but call clearAll() to drop legacy
+      // global-scoped entries written by older app versions.
+      await DataCacheService.instance.clearAll();
+    });
+
+    await _runSignOutStep('prefs.clearOnboardingFlags', () async {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove('onboarding_completed');
       await prefs.remove('paywall_completed');
+    });
 
-      // SECURITY: Clear watch credentials on logout
-      try {
-        await WearableService.instance.syncUserCredentials(
-          userId: '',
-          authToken: '',
-          refreshToken: '',
-        );
-        debugPrint('✅ [Auth] Watch credentials cleared');
-      } catch (_) {
-        // Non-critical — watch may not be connected
-      }
+    await _runSignOutStep('watch.clearCredentials', () async {
+      await WearableService.instance.syncUserCredentials(
+        userId: '',
+        authToken: '',
+        refreshToken: '',
+      );
+    });
 
-      debugPrint('✅ [Auth] Sign-out success (all caches cleared)');
-    } catch (e) {
-      debugPrint('❌ [Auth] Sign-out cleanup error: $e');
-      // If we already had a Supabase/Google error, prefer that one.
-      signOutError ??= e;
-    }
+    debugPrint('✅ [Auth] Sign-out success (all caches cleared)');
+  }
 
-    if (signOutError != null) {
-      // ignore: only_throw_errors
-      throw signOutError;
-    }
+  /// Run the post-Supabase-signOut cleanup pipeline for the case where
+  /// the Supabase session was revoked SERVER-SIDE (admin sign-out, JWT
+  /// user-deleted, password change from another device). Same sequence
+  /// as the user-initiated [signOut] except we don't call
+  /// `_supabase.auth.signOut()` again — the session is already gone.
+  Future<void> _cleanupAfterRemoteSignOut() async {
+    final outgoingBackendId = await _apiClient.getUserId();
+    await _clearThirdPartyIdentities();
+    await _clearLocalSideEffects();
+    await _wipeDriftForUser(outgoingBackendId);
+    await _runSignOutStep('apiClient.clearAuth', () async {
+      await _apiClient.clearAuth();
+    });
+    await _runSignOutStep('providers.clearCache', () async {
+      TodayWorkoutNotifier.clearCache();
+      XPNotifier.clearCache();
+      GymProfilesNotifier.clearCache();
+      WorkoutsNotifier.clearCache();
+      ScoresNotifier.clearCache();
+      ConsistencyNotifier.clearCache();
+      NutritionPreferencesNotifier.clearCache();
+      HydrationNotifier.clearCache();
+      FastingNotifier.clearCache();
+      MeasurementsNotifier.clearCache();
+    });
+    await _runSignOutStep('prewarmers.clearAll', () async {
+      await Future.wait([
+        YouOverviewPrewarmer.clearAll(),
+        HomePrewarmer.clearAll(),
+        NutritionPrewarmer.clearAll(),
+        WorkoutsPrewarmer.clearAll(),
+        SocialPrewarmer.clearAll(),
+        WorkoutCompletionPrewarmer.clearAll(),
+      ]);
+    });
+    await _runSignOutStep('dataCache.clearAll', () async {
+      await DataCacheService.instance.clearAll();
+    });
   }
 
   /// Check if user is authenticated
@@ -563,11 +863,15 @@ class AuthRepository {
     }
   }
 
-  /// Load cached user profile
+  /// Load cached user profile for the user currently authenticated with
+  /// Supabase. Scoped by Supabase auth_id so a prior install's cache for a
+  /// different account can't leak in.
   Future<app_user.User?> _getCachedUser() async {
     try {
+      final authId = _supabase.auth.currentUser?.id;
       final cached = await DataCacheService.instance.getCached(
         DataCacheService.userProfileKey,
+        userId: authId,
       );
       if (cached != null) {
         return app_user.User.fromJson(cached);
@@ -578,12 +882,13 @@ class AuthRepository {
     return null;
   }
 
-  /// Save user to cache
+  /// Save user to cache, scoped by the live Supabase auth_id.
   Future<void> _cacheUser(app_user.User user) async {
     try {
       await DataCacheService.instance.cache(
         DataCacheService.userProfileKey,
         user.toJson(),
+        userId: _supabase.auth.currentUser?.id,
       );
     } catch (e) {
       debugPrint('⚠️ [Auth] Cache save error: $e');
@@ -660,6 +965,29 @@ class AuthRepository {
             await _supabase.auth.signOut();
           } catch (_) {}
           await _apiClient.clearAuth();
+          // Account-deleted path. The backend `users` row is gone but
+          // local Drift rows, PostHog identity, FCM token, etc. all
+          // still point at the (now-orphaned) authId. Route through the
+          // same teardown the manual sign-out uses so the next user on
+          // this device starts from a clean slate. Wrapped because we
+          // must still return null even if cleanup partially fails —
+          // the caller (AuthNotifier._init) will route to the auth
+          // screen and the orphan auth row will be re-created on the
+          // next sign-in.
+          try {
+            await _clearThirdPartyIdentities();
+            await _clearLocalSideEffects();
+            // We never resolved a backend user id here — fall back to
+            // the Supabase auth id for the Drift wipe. Drift rows are
+            // keyed on users.id, so this is effectively a no-op for
+            // rows the deleted user owned (different id space), but
+            // running it keeps the orchestration identical to the
+            // manual path and surfaces any DAO regressions.
+            await _wipeDriftForUser(authId);
+            await DataCacheService.instance.clearAll();
+          } catch (e) {
+            debugPrint('⚠️ [Auth] Account-deleted cleanup partial-failure: $e');
+          }
           return null;
         }
 
@@ -698,7 +1026,10 @@ class AuthRepository {
     if (liveSession == null) {
       if (await _getCachedUser() != null) {
         debugPrint('🧹 [Auth] Cache rejected: no live Supabase session — clearing stale user cache');
-        await DataCacheService.instance.invalidate(DataCacheService.userProfileKey);
+        // No session → no auth_id to scope by. Wipe via clearAll's
+        // prefix-walk so EVERY user's profile cache on this device gets
+        // dropped (logout-equivalent).
+        await DataCacheService.instance.clearAll();
       }
       return (cached: null, fresh: restoreSession());
     }
@@ -715,7 +1046,13 @@ class AuthRepository {
       final cachedEmail = cachedUser.email?.toLowerCase().trim();
       if (sessionEmail != null && cachedEmail != null && sessionEmail != cachedEmail) {
         debugPrint('🧹 [Auth] Cache rejected: account switch detected ($cachedEmail → $sessionEmail)');
-        await DataCacheService.instance.invalidate(DataCacheService.userProfileKey);
+        // Drop both accounts' caches to be safe — the cached user is the
+        // outgoing account, the incoming account has its own slot scoped
+        // by liveSession.user.id.
+        await DataCacheService.instance.invalidate(
+          DataCacheService.userProfileKey,
+          userId: liveSession.user.id,
+        );
         return (cached: null, fresh: restoreSession());
       }
       debugPrint('⚡ [Auth] Loaded user from cache instantly: ${cachedUser.name}');
@@ -752,6 +1089,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   AuthNotifier(this._repository, this._ref) : super(const AuthState()) {
     _init();
+    _startSignedOutListener();
   }
 
   /// SharedPreferences key tracking the last user.id that signed in on this
@@ -759,6 +1097,57 @@ class AuthNotifier extends StateNotifier<AuthState> {
   /// the previous user's pre-auth quiz answers are stale and must be cleared
   /// before being applied to the new account.
   static const _lastAuthUserIdKey = 'lastAuthUserId';
+
+  /// Subscription to Supabase auth events. We separately watch for
+  /// `signedOut` so a server-side session revocation (admin sign-out, JWT
+  /// user-deleted, password change from another device) triggers the
+  /// same teardown as a user-initiated tap on the Sign Out button.
+  StreamSubscription<sb.AuthState>? _supabaseAuthSub;
+
+  /// Set to `true` for the duration of a user-initiated [signOut] so the
+  /// Supabase listener doesn't double-run the cleanup orchestration
+  /// (which is idempotent, but skipping it saves ~200ms of wasted work
+  /// and prevents the "signed out" debug log from printing twice).
+  bool _userInitiatedSignOutInFlight = false;
+
+  void _startSignedOutListener() {
+    try {
+      _supabaseAuthSub = Supabase.instance.client.auth.onAuthStateChange.listen(
+        (data) async {
+          if (data.event != AuthChangeEvent.signedOut) return;
+          if (_userInitiatedSignOutInFlight) {
+            debugPrint('🚪 [Auth] Ignoring signedOut event — user-initiated path already running');
+            return;
+          }
+          debugPrint('🚪 [Auth] Server-side signedOut detected — running full cleanup');
+          try {
+            // Reach into the repository's private helpers via the
+            // server-revocation path. We can't call `_repository.signOut`
+            // here — it would try to call Supabase.signOut again, which
+            // already happened (server side). Instead, run the same
+            // teardown directly.
+            await _repository._cleanupAfterRemoteSignOut();
+          } catch (e) {
+            debugPrint('⚠️ [Auth] Server-revocation cleanup error: $e');
+          }
+          if (mounted) {
+            state = const AuthState(status: AuthStatus.unauthenticated);
+          }
+        },
+        onError: (Object e) {
+          debugPrint('❌ [Auth] signedOut listener error: $e');
+        },
+      );
+    } catch (e) {
+      debugPrint('❌ [Auth] Failed to start signedOut listener: $e');
+    }
+  }
+
+  @override
+  void dispose() {
+    _supabaseAuthSub?.cancel();
+    super.dispose();
+  }
 
   /// Clear pre-auth quiz state. Only called on sign-out — quiz answers must
   /// persist through the entire onboarding flow (personal-info, coach-selection,
@@ -1128,6 +1517,11 @@ class AuthNotifier extends StateNotifier<AuthState> {
   /// Sign out
   Future<void> signOut() async {
     state = state.copyWith(status: AuthStatus.loading);
+    // Gate the Supabase signedOut listener — `_repository.signOut()`
+    // calls Supabase.signOut() internally, which fires the listener.
+    // Without this flag, the listener would re-run the full cleanup
+    // we already executed.
+    _userInitiatedSignOutInFlight = true;
     try {
       await _repository.signOut();
       await _clearPreAuthQuiz();
@@ -1148,6 +1542,14 @@ class AuthNotifier extends StateNotifier<AuthState> {
         status: AuthStatus.error,
         errorMessage: e.toString(),
       );
+    } finally {
+      // Release the gate after a short delay so any signedOut event
+      // queued by Supabase's stream is observed-and-ignored, not
+      // observed-and-re-cleaned. The stream is synchronous-ish but
+      // adds an extra microtask hop on iOS.
+      Future<void>.delayed(const Duration(milliseconds: 500), () {
+        _userInitiatedSignOutInFlight = false;
+      });
     }
   }
 

@@ -12,8 +12,8 @@ final activeLayoutProvider =
     StateNotifierProvider<ActiveLayoutNotifier, AsyncValue<HomeLayout?>>(
   (ref) {
     final repository = ref.watch(homeLayoutRepositoryProvider);
-    final authState = ref.watch(authStateProvider);
-    final userId = authState.user?.id;
+    // Watch user_id only — full AuthState churns on token refresh.
+    final userId = ref.watch(authStateProvider.select((s) => s.user?.id));
     return ActiveLayoutNotifier(repository, userId, ref);
   },
 );
@@ -23,8 +23,8 @@ final allLayoutsProvider =
     StateNotifierProvider<AllLayoutsNotifier, AsyncValue<List<HomeLayout>>>(
   (ref) {
     final repository = ref.watch(homeLayoutRepositoryProvider);
-    final authState = ref.watch(authStateProvider);
-    final userId = authState.user?.id;
+    // Watch user_id only — full AuthState churns on token refresh.
+    final userId = ref.watch(authStateProvider.select((s) => s.user?.id));
     return AllLayoutsNotifier(repository, userId);
   },
 );

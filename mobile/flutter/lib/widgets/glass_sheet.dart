@@ -8,8 +8,12 @@ class GlassSheetStyle {
 
   static const double borderRadius = 28.0;
   static const double blurSigma = 12.0;
-  static const double handleWidth = 40.0;
-  static const double handleHeight = 4.0;
+  // Handle dimensions bumped from 40×4 alpha-0.5 to 48×5 alpha-0.75 so the
+  // drag affordance reads as clearly grabbable on dark sheets. Users were
+  // missing it on the Swap Exercise sheet (low contrast vs the title row
+  // sitting directly below it).
+  static const double handleWidth = 48.0;
+  static const double handleHeight = 5.0;
   static const double handleTopPadding = 12.0;
 
   static Color barrierColor() => Colors.black.withValues(alpha: 0.2);
@@ -33,8 +37,8 @@ class GlassSheetStyle {
       : Colors.black.withValues(alpha: 0.08);
 
   static Color handleColor(bool isDark) => isDark
-      ? AppColors.textMuted.withValues(alpha: 0.5)
-      : AppColorsLight.textMuted.withValues(alpha: 0.5);
+      ? AppColors.textMuted.withValues(alpha: 0.75)
+      : AppColorsLight.textMuted.withValues(alpha: 0.65);
 }
 
 /// Shows a glassmorphic modal bottom sheet with standard styling.

@@ -101,7 +101,13 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
       return;
     }
 
-    final cacheKey = exerciseName.toLowerCase();
+    // Prefer the library UUID as the cache key (and as the API lookup key) so
+    // we never disagree with the detail screen when the library has multiple
+    // rows under the same display name. Fall back to lowercase name only when
+    // the workout exercise has no library link (rare — AI generations that
+    // didn't bind to a library row).
+    final libraryUuid = widget.exercise.exerciseId ?? widget.exercise.libraryId;
+    final cacheKey = libraryUuid ?? exerciseName.toLowerCase();
 
     // Check API-resolved cache first (populated only by the authoritative
     // /exercise-images/ endpoint, not by potentially wrong gif_url values)
@@ -116,8 +122,13 @@ class _ExpandedExerciseCardState extends ConsumerState<ExpandedExerciseCard> {
     // Fetch from the authoritative /exercise-images/ API (returns S3 illustration)
     try {
       final apiClient = ref.read(apiClientProvider);
+      final queryParams = <String, dynamic>{};
+      if (libraryUuid != null) {
+        queryParams['exercise_id'] = libraryUuid;
+      }
       final response = await apiClient.get(
         '/exercise-images/${Uri.encodeComponent(exerciseName)}',
+        queryParameters: queryParams.isEmpty ? null : queryParams,
       );
 
       if (response.statusCode == 200 && response.data != null) {

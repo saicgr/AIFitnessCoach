@@ -249,7 +249,39 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
 
   ChatMessagesNotifier(this._repository, this._apiClient, this._workoutsNotifier, this._workoutRepository, this._user, this._themeNotifier, this._router, this._hydrationNotifier, this._nutritionNotifier, this._getAISettings, this._setAIGenerating, this._getUnifiedContext, this._offlineCoach, this._isOnline, this._getSoundPrefs, this._getAudioPrefs, this._refreshTodayWorkout)
       : super(const AsyncValue.data([])) {
+    _instances.add(this);
     _restoreFromCache();
+  }
+
+  /// Live-instance registry so [closeAllStreams] (a static, called from
+  /// AuthRepository sign-out) can reach the running notifier and tear
+  /// down any in-flight chat streams + flush the message list. Today the
+  /// notifier doesn't hold a long-lived SSE / WebSocket subscription —
+  /// chat replies are short-lived `Dio.post` calls — but routing the
+  /// teardown through here gives us a single chokepoint for the day a
+  /// streaming reply is added so we don't have to re-thread sign-out
+  /// awareness through every call site.
+  static final Set<ChatMessagesNotifier> _instances = {};
+
+  /// Cancel any in-flight chat streams on sign-out and reset the local
+  /// message list so the previous user's last conversation can't briefly
+  /// flash before the next user's history loads. Safe to call even if no
+  /// notifier is currently constructed (no-op).
+  static void closeAllStreams() {
+    for (final n in _instances.toList()) {
+      if (!n.mounted) continue;
+      // Reset back to the same initial state the constructor uses so a
+      // future _restoreFromCache() (after sign-in) starts from a clean
+      // slate. We deliberately do NOT touch cache here — DataCacheService
+      // is wiped by the orchestrator immediately after this returns.
+      n.state = const AsyncValue.data([]);
+      n._loadHistoryFuture = null;
+      n._loadOlderFuture = null;
+      n._currentOffset = 0;
+      n._hasMoreMessages = true;
+      n._initialHistoryLoaded = false;
+      n._pendingOfflineMessages.clear();
+    }
   }
 
   /// Restore messages from cache on notifier recreation to prevent empty flash
@@ -1546,5 +1578,11 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
     // Refresh workouts to show the changes
     await _workoutsNotifier.refresh();
     debugPrint('🏋️ [Chat] Workouts refreshed after modification');
+  }
+
+  @override
+  void dispose() {
+    _instances.remove(this);
+    super.dispose();
   }
 }

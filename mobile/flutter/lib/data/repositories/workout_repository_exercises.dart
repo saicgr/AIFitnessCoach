@@ -117,6 +117,20 @@ extension WorkoutRepositoryExercises on WorkoutRepository {
       'Equipment unavailable': "I don't have the equipment for this exercise",
       'Injury concern': 'I have an injury and need a safer alternative',
       'Personal preference': 'I want a different exercise for variety',
+      // AI Picks chip strip (shown above the input on the AI Picks tab) —
+      // these phrases are tuned to make the suggestion graph return real,
+      // muscle-aware alternatives instead of the previous "no alternatives
+      // matched" empty state on a generic default message.
+      'Similar muscles':
+          'Suggest alternatives that target the same muscles with my available equipment',
+      'Easier': 'I need an easier alternative',
+      'Harder': 'I want something more challenging',
+      'No machine needed':
+          'Suggest alternatives that do not require gym machines',
+      'Bodyweight only':
+          'I only have my bodyweight — bodyweight-only alternatives please',
+      'Different angle':
+          'Suggest a different movement angle that hits the same muscles',
     };
 
     final freeform = customMessage?.trim();
@@ -129,7 +143,15 @@ extension WorkoutRepositoryExercises on WorkoutRepository {
       // Unknown reason value — assume the caller passed freeform text.
       message = reason.trim();
     } else {
-      message = 'I want an alternative exercise';
+      // Default auto-load message — context-rich enough that the suggestion
+      // graph returns muscle-similar alternatives, not the previous "I want
+      // an alternative exercise" that the agent occasionally treated as too
+      // vague and short-circuited to empty.
+      final muscle =
+          exercise.muscleGroup ?? exercise.primaryMuscle ?? exercise.bodyPart;
+      message = muscle != null && muscle.isNotEmpty
+          ? 'Suggest exercises that target $muscle similar to ${exercise.name} using my available equipment'
+          : 'Suggest exercises similar to ${exercise.name} using my available equipment';
     }
 
     debugPrint('🔍 [Workout] Getting suggestions for ${exercise.name} — message: "$message"');
@@ -544,9 +566,11 @@ extension WorkoutRepositoryExercises on WorkoutRepository {
     required String userId,
     List<String>? avoidedExercises,
     List<String>? userEquipment,
+    bool ignoreEquipment = false,
   }) async {
     try {
-      debugPrint('🔍 [Workout] Getting fast suggestions for: $exerciseName');
+      debugPrint(
+          '🔍 [Workout] Getting fast suggestions for: $exerciseName (ignoreEquipment=$ignoreEquipment)');
       final response = await apiClient.post(
         '/exercise-suggestions/suggest-fast',
         data: {
@@ -554,6 +578,7 @@ extension WorkoutRepositoryExercises on WorkoutRepository {
           'user_id': userId,
           'avoided_exercises': avoidedExercises ?? [],
           if (userEquipment != null) 'user_equipment': userEquipment,
+          if (ignoreEquipment) 'ignore_equipment': true,
         },
       );
       if (response.statusCode == 200 && response.data != null) {

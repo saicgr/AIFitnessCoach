@@ -1,4 +1,5 @@
 import 'dart:async';
+import '../../core/providers/auth_provider.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/email_preferences.dart';
@@ -256,6 +257,9 @@ class EmailPreferencesNotifier extends StateNotifier<EmailPreferencesState> {
 /// no longer needs an `initState` kicker.
 final emailPreferencesProvider = StateNotifierProvider.autoDispose<
     EmailPreferencesNotifier, EmailPreferencesState>((ref) {
+  // Plan §6: recreate on user_id change so a PUT for user A can't land on
+  // user B's preferences row.
+  ref.watch(authStateProvider.select((s) => s.user?.id));
   return EmailPreferencesNotifier(
     ref.watch(emailPreferencesRepositoryProvider),
     apiClient: ref.watch(apiClientProvider),

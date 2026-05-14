@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/today_workout.dart';
 import '../providers/today_workout_provider.dart';
 import '../repositories/nutrition_repository.dart';
@@ -44,11 +47,31 @@ class BootstrapPrefetchService {
 
   static Future<void> _doPrefetch(Ref ref) async {
     try {
+      // Auth gate: ensure Supabase session is resolved before prefetching.
+      // Without this, prefetch can fire before auth restore completes and
+      // poison user-scoped caches with null user_id → leaks to next sign-in.
+      final supabase = Supabase.instance.client;
+      if (supabase.auth.currentSession == null) {
+        try {
+          await supabase.auth.onAuthStateChange
+              .firstWhere((e) => e.session != null)
+              .timeout(const Duration(seconds: 2));
+        } on TimeoutException {
+          debugPrint('⏸️ [Bootstrap] Auth session did not resolve in 2s — skipping prefetch');
+          return;
+        }
+      }
+      final uid = supabase.auth.currentUser?.id;
+      if (uid == null || uid.isEmpty) {
+        debugPrint('⏸️ [Bootstrap] No user_id in session — skipping prefetch');
+        return;
+      }
+
       final apiClient = ref.read(apiClientProvider);
       final userId = await apiClient.getUserId();
       if (userId == null) return;
 
-      debugPrint('⚡ [Bootstrap] Prefetching home data...');
+      debugPrint('⚡ [Bootstrap] Prefetching home data for $uid...');
       final stopwatch = Stopwatch()..start();
 
       // Single API call for all home screen data

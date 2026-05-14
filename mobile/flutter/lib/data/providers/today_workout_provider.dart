@@ -6,6 +6,10 @@ import 'package:drift/drift.dart' show Value;
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sentry_flutter/sentry_flutter.dart'
+    show Sentry, Breadcrumb, SentryLevel;
+import 'package:supabase_flutter/supabase_flutter.dart' show Supabase;
+import '../repositories/auth_repository.dart' show authStateProvider;
 import '../../core/providers/wearable_provider.dart';
 import '../local/database.dart';
 import '../local/database_provider.dart';
@@ -31,6 +35,16 @@ int _getBackoffSeconds() {
 /// This survives provider invalidation and prevents loading flash
 TodayWorkoutResponse? _inMemoryCache;
 
+/// Tracks the most recent time the retry CTA fired. Used to debounce
+/// double-taps of the retry button so we don't launch two generation jobs
+/// back-to-back. Survives provider invalidation (top-level static).
+DateTime? _lastRetryFiredAt;
+
+/// Tracks when the current generation polling cycle started. Used by the
+/// 3-minute hard ceiling so a stuck `is_generating=true` on the backend
+/// can't keep the UI spinning forever even if the poll cap is misconfigured.
+DateTime? _generationStartedAt;
+
 /// Provider for today's workout data with cache-first pattern
 ///
 /// Features:
@@ -40,8 +54,30 @@ TodayWorkoutResponse? _inMemoryCache;
 /// - Auto-polls when is_generating is true (JIT generation in progress)
 /// - Exponential backoff to prevent excessive API calls
 /// - Auto-syncs to WearOS watch when workout is available (Android only)
+// Tracks which user_id the static `_inMemoryCache` and generation flags
+// belong to. On real user_id change we wipe them so the new user doesn't
+// inherit the previous user's "Generating workout…" state or workout data.
+String? _todayCacheOwnerUserId;
+
 final todayWorkoutProvider =
     StateNotifierProvider<TodayWorkoutNotifier, AsyncValue<TodayWorkoutResponse?>>((ref) {
+  // Watch the user_id specifically so the notifier is recreated cleanly on
+  // sign-out → sign-in (different account or same). Watching the whole
+  // AuthState would churn on every token refresh. The notifier itself reads
+  // user_id from the live Supabase session inside `_currentUserId()` — the
+  // .select here is what triggers the rebuild boundary on user change.
+  final userId = ref.watch(authStateProvider.select((s) => s.user?.id));
+  if (userId != null && userId != _todayCacheOwnerUserId) {
+    // PLAN §3C — real user-id change. Reset everything that survives
+    // notifier disposal, otherwise the new user inherits the prior user's
+    // generation flags and gets stuck polling forever.
+    _todayCacheOwnerUserId = userId;
+    _inMemoryCache = null;
+    TodayWorkoutNotifier._isAutoGenerating = false;
+    TodayWorkoutNotifier._hasTriggeredGeneration = false;
+    TodayWorkoutNotifier._generationTimedOut = false;
+    TodayWorkoutNotifier._lastGenerationFailure = null;
+  }
   return TodayWorkoutNotifier(ref);
 });
 
@@ -92,12 +128,57 @@ class TodayWorkoutNotifier extends StateNotifier<AsyncValue<TodayWorkoutResponse
       // where the Render backend may take 10-30s to warm up.
       _loadWithCacheFirst();
     }
+    _startStuckStateWatchdog();
+  }
+
+  Timer? _watchdog;
+
+  /// Watchdog (plan §3D): if after 5s we're still showing the cold-start
+  /// loading shimmer OR a stale response with everything null and we're
+  /// not currently fetching, force a fresh fetch. Catches edge cases where
+  /// `_fetchFromApi` gets disposed mid-request and the next provider
+  /// instance never re-fires its own fetch.
+  void _startStuckStateWatchdog() {
+    _watchdog?.cancel();
+    _watchdog = Timer(const Duration(seconds: 5), () {
+      if (_disposed || _isRefreshing) return;
+      final v = state.valueOrNull;
+      final stuck = state.isLoading ||
+          (v != null && v.todayWorkout == null && v.nextWorkout == null && !v.isGenerating);
+      if (stuck && _currentUserId() != null) {
+        debugPrint('🐶 [TodayWorkout] Watchdog fired — state stuck, forcing refresh');
+        // §12 — surface stuck-state events as a Sentry breadcrumb so we can
+        // correlate them in session replays without spamming exceptions.
+        try {
+          Sentry.addBreadcrumb(Breadcrumb(
+            category: 'state.stuck',
+            message: 'today_workout watchdog fired',
+            level: SentryLevel.warning,
+          ));
+        } catch (_) {
+          // Sentry may not be initialized in test/debug paths — ignore.
+        }
+        _fetchFromApi(showLoading: true);
+      }
+    });
   }
 
   /// Safely update state only if not disposed
   void _safeSetState(AsyncValue<TodayWorkoutResponse?> newState) {
     if (!_disposed && mounted) {
       state = newState;
+    }
+  }
+
+  /// Read the current user_id straight from Supabase's live auth session.
+  /// Used to scope SharedPreferences cache keys per-user — see DataCacheService.
+  /// Reads from `currentUser` (not a cached field) per the JWT-expiry rule in
+  /// project memory: stale captured ids silently lose data to the wrong slot.
+  String? _currentUserId() {
+    try {
+      return Supabase.instance.client.auth.currentUser?.id;
+    } catch (_) {
+      return null;
     }
   }
 
@@ -125,6 +206,7 @@ class TodayWorkoutNotifier extends StateNotifier<AsyncValue<TodayWorkoutResponse
     try {
       final cached = await DataCacheService.instance.getCached(
         DataCacheService.todayWorkoutKey,
+        userId: _currentUserId(),
       );
       if (cached != null) {
         final response = TodayWorkoutResponse.fromJson(cached);
@@ -202,6 +284,21 @@ class TodayWorkoutNotifier extends StateNotifier<AsyncValue<TodayWorkoutResponse
     // (placeholder-only transient state shouldn't be persisted)
     if (response.isGenerating && !response.hasDisplayableContent) return;
 
+    // PLAN §3E: refuse to overwrite a populated in-memory cache with a
+    // null-on-everything response. An empty "today" + empty "next" is "no
+    // data right now from this fetch" — keep the prior cached good data so
+    // the user doesn't fall back to "No workout yet" while the next fetch
+    // races to refill.
+    if (response.todayWorkout == null &&
+        response.nextWorkout == null &&
+        !response.isGenerating &&
+        _inMemoryCache != null &&
+        (_inMemoryCache!.todayWorkout != null ||
+            _inMemoryCache!.nextWorkout != null)) {
+      debugPrint('🛡️ [TodayWorkout] Refused to overwrite cached workout with empty response');
+      return;
+    }
+
     // Update in-memory cache FIRST (instant for next provider recreation)
     _inMemoryCache = response;
 
@@ -210,6 +307,7 @@ class TodayWorkoutNotifier extends StateNotifier<AsyncValue<TodayWorkoutResponse
       await DataCacheService.instance.cache(
         DataCacheService.todayWorkoutKey,
         response.toJson(),
+        userId: _currentUserId(),
       );
     } catch (e) {
       debugPrint('⚠️ [TodayWorkout] Cache save error: $e');
@@ -296,8 +394,10 @@ class TodayWorkoutNotifier extends StateNotifier<AsyncValue<TodayWorkoutResponse
     if (_isRefreshing || _disposed) return;
     _isRefreshing = true;
 
+    final apiSw = Stopwatch()..start();
     try {
       if (showLoading) {
+        debugPrint('⏱️ [startup] /today fetch showing spinner (cold cache miss)');
         _safeSetState(const AsyncValue.loading());
       }
 
@@ -306,6 +406,39 @@ class TodayWorkoutNotifier extends StateNotifier<AsyncValue<TodayWorkoutResponse
 
       final repository = _ref.read(workoutRepositoryProvider);
       var response = await repository.getTodayWorkout();
+      debugPrint('⏱️ [startup] /today fetch returned in ${apiSw.elapsedMilliseconds}ms (showLoading=$showLoading)');
+
+      // §8d — a fresh response carrying real content must clear any stale
+      // poll-cap sentinel set by a previous cycle. copyWith can't null the
+      // field (uses `??`), so rebuild explicitly when needed.
+      if (response != null &&
+          response.lastGenerationError != null &&
+          (response.todayWorkout != null || response.nextWorkout != null)) {
+        response = TodayWorkoutResponse(
+          hasWorkoutToday: response.hasWorkoutToday,
+          todayWorkout: response.todayWorkout,
+          nextWorkout: response.nextWorkout,
+          daysUntilNext: response.daysUntilNext,
+          restDayMessage: response.restDayMessage,
+          completedToday: response.completedToday,
+          completedWorkout: response.completedWorkout,
+          extraTodayWorkouts: response.extraTodayWorkouts,
+          isGenerating: response.isGenerating,
+          generationMessage: response.generationMessage,
+          needsGeneration: response.needsGeneration,
+          nextWorkoutDate: response.nextWorkoutDate,
+          gymProfileId: response.gymProfileId,
+          // lastGenerationError intentionally omitted — clears the sentinel.
+        );
+      }
+
+      // §17b — successful response with workout content means the generation
+      // cycle is over (either succeeded or we got cached content). Reset
+      // the hard-ceiling timer so a future cycle starts fresh.
+      if (response != null &&
+          (response.todayWorkout != null || response.nextWorkout != null)) {
+        _generationStartedAt = null;
+      }
 
       // Handle generation polling (skip if background gen poll is already active to avoid dual timers)
       if (response?.isGenerating == true && _backgroundGenPollTimer == null) {
@@ -316,6 +449,7 @@ class TodayWorkoutNotifier extends StateNotifier<AsyncValue<TodayWorkoutResponse
           debugPrint('✅ [Generation] Complete after $_generationPollCount polls');
         }
         _generationPollCount = 0;
+        _generationStartedAt = null;
       }
 
       // Handle auto-generation trigger
@@ -443,12 +577,45 @@ class TodayWorkoutNotifier extends StateNotifier<AsyncValue<TodayWorkoutResponse
       }
     } finally {
       _isRefreshing = false;
+      // §11 — re-arm the watchdog after every completed fetch (success or
+      // error) so subsequent stuck-state windows still get caught. The
+      // watchdog cancels its prior timer on each call so this is idempotent.
+      if (!_disposed) {
+        _startStuckStateWatchdog();
+      }
     }
   }
 
   /// Handle generation polling with exponential backoff
   void _handleGenerationPolling() {
     if (_disposed) return;
+
+    // §17b — stamp the start of this generation cycle the first time we
+    // enter polling so the 3-minute hard ceiling has a reference point.
+    _generationStartedAt ??= DateTime.now();
+
+    // §17b — hard ceiling: regardless of poll-cap state, if we've been
+    // polling for more than 3 minutes total, force the sentinel path so
+    // the user is never stranded by a misconfigured cap or a stuck
+    // backend `is_generating=true`.
+    final startedAt = _generationStartedAt;
+    if (startedAt != null &&
+        DateTime.now().difference(startedAt) > const Duration(minutes: 3)) {
+      debugPrint('⏰ [Generation] 3-minute hard ceiling reached, stopping polling');
+      _generationPollCount = 0;
+      _generationStartedAt = null;
+      final current = state.valueOrNull;
+      if (current != null && !_disposed) {
+        _safeSetState(AsyncValue.data(current.copyWith(
+          isGenerating: false,
+          lastGenerationError:
+              'Generation took longer than expected. Tap to retry.',
+        )));
+      }
+      _generationTimedOut = true;
+      _cancelPolling();
+      return;
+    }
 
     if (_generationPollCount < _maxGenerationPolls) {
       _generationPollCount++;
@@ -464,6 +631,19 @@ class TodayWorkoutNotifier extends StateNotifier<AsyncValue<TodayWorkoutResponse
     } else {
       debugPrint('❌ [Generation] Max polls ($_maxGenerationPolls) reached. Stopping auto-refresh.');
       _generationPollCount = 0;
+      _generationStartedAt = null;
+      // PLAN §4: surface the polling exhaustion as a retry sentinel on the
+      // current response so the hero card can render a tappable retry CTA
+      // instead of silently sliding to "No workout yet".
+      final current = state.valueOrNull;
+      if (current != null && !_disposed) {
+        _safeSetState(AsyncValue.data(current.copyWith(
+          isGenerating: false,
+          lastGenerationError:
+              'Generation took longer than expected. Tap to retry.',
+        )));
+      }
+      _generationTimedOut = true;
     }
   }
 
@@ -641,7 +821,10 @@ class TodayWorkoutNotifier extends StateNotifier<AsyncValue<TodayWorkoutResponse
     // Keep _inMemoryCache intact — show stale data while refreshing silently
     _hasTriggeredGeneration = false;
     _generationTimedOut = false;
-    await DataCacheService.instance.invalidate(DataCacheService.todayWorkoutKey);
+    await DataCacheService.instance.invalidate(
+      DataCacheService.todayWorkoutKey,
+      userId: _currentUserId(),
+    );
     await _fetchFromApi(showLoading: false); // silent refresh, no loading flash
   }
 
@@ -654,7 +837,28 @@ class TodayWorkoutNotifier extends StateNotifier<AsyncValue<TodayWorkoutResponse
     _lastGenerationFailure = null;
     _generationTimedOut = false;
     _inMemoryCache = null;
+    // §8a — stamp the retry-fired time so a double-tap of the retry CTA
+    // within the next 3s short-circuits before launching a second job.
+    _lastRetryFiredAt = DateTime.now();
     debugPrint('🔄 [TodayWorkout] Generation state reset (profile switch)');
+  }
+
+  /// §8a — exposed to the UI so the retry CTA can debounce double-taps.
+  /// Returns true if a retry fired within [window] (default 3s).
+  static bool retryFiredRecently({Duration window = const Duration(seconds: 3)}) {
+    final t = _lastRetryFiredAt;
+    if (t == null) return false;
+    return DateTime.now().difference(t) < window;
+  }
+
+  /// §8c — exposed to the UI so the retry CTA can show a cooldown countdown
+  /// instead of silently swallowing the tap. Returns 0 if not in cooldown.
+  static int generationCooldownSecondsLeft() {
+    final t = _lastGenerationFailure;
+    if (t == null) return 0;
+    final remaining =
+        _generationCooldown.inSeconds - DateTime.now().difference(t).inSeconds;
+    return remaining > 0 ? remaining : 0;
   }
 
   /// Clear all caches (called on logout)
@@ -676,6 +880,7 @@ class TodayWorkoutNotifier extends StateNotifier<AsyncValue<TodayWorkoutResponse
   @override
   void dispose() {
     _disposed = true;
+    _watchdog?.cancel();
     _cancelPolling();
     _stopBackgroundGenerationPolling();
     super.dispose();

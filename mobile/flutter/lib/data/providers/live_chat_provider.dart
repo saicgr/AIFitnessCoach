@@ -12,8 +12,8 @@ final liveChatProvider =
     StateNotifierProvider<LiveChatNotifier, AsyncValue<LiveChatSession?>>(
   (ref) {
     final repository = ref.watch(liveChatRepositoryProvider);
-    final authState = ref.watch(authStateProvider);
-    final userId = authState.user?.id;
+    // Watch user_id only — full AuthState churns on token refresh.
+    final userId = ref.watch(authStateProvider.select((s) => s.user?.id));
     return LiveChatNotifier(repository, userId);
   },
 );

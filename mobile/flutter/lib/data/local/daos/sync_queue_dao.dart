@@ -230,4 +230,16 @@ class SyncQueueDao extends DatabaseAccessor<AppDatabase>
       PendingSyncQueueCompanion(maxRetries: Value(newMax)),
     );
   }
+
+  /// Drop the entire pending sync queue. Called from sign-out — the queue
+  /// has no userId column because the device only ever syncs for the
+  /// currently-authenticated account, so on logout we wipe everything to
+  /// prevent the incoming user from inheriting (and replaying) the prior
+  /// user's pending writes against their own backend rows.
+  ///
+  /// [outgoingUserId] is accepted for API symmetry with the per-user DAOs
+  /// and is currently used only for debug logging.
+  Future<int> clearForUser(String outgoingUserId) {
+    return delete(pendingSyncQueue).go();
+  }
 }

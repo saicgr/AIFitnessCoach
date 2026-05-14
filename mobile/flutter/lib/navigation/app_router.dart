@@ -233,6 +233,16 @@ String? _handleLoadingState(GoRouterState state, AuthState authState, LanguageSt
     return null; // Not in loading state, skip
   }
 
+  // Startup instrumentation — record how long the router keeps the user on
+  // splash waiting for auth. This is the most likely culprit for the
+  // "loads again" perception on cold-open.
+  if (kDebugMode) {
+    debugPrint(
+      '⏱️ [startup] auth gate · status=${authState.status} '
+      'lang_loading=${languageState.isLoading} loc=${state.matchedLocation}',
+    );
+  }
+
   final loc = state.matchedLocation;
   if (loc == '/splash') return null; // Stay on splash
 

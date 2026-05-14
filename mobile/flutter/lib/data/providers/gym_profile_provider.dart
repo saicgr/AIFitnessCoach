@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/theme/accent_color_provider.dart';
@@ -31,12 +32,30 @@ final gymProfilesCacheCheckedProvider = StateProvider<bool>((ref) {
 /// - Cache-first: Shows cached profiles instantly on app open
 /// - Background refresh: Fetches fresh data silently
 /// - Auto-creates a default profile if none exist
+// Track the user_id this provider's static caches belong to so we can flush
+// them on a true user-id change (sign-out → sign-in different account) and
+// avoid one user's "cache checked, list empty" verdict locking the next
+// user into "+ Add gym".
+String? _gymProfilesCacheOwnerUserId;
+
 final gymProfilesProvider =
     StateNotifierProvider<GymProfilesNotifier, AsyncValue<List<GymProfile>>>(
         (ref) {
   final repository = ref.watch(gymProfileRepositoryProvider);
-  final authState = ref.watch(authStateProvider);
-  final userId = authState.user?.id;
+  // Watch by user_id only — the AuthState object is recreated on every
+  // emission (token refresh, profile copyWith, etc.) and a whole-object
+  // ref.watch caused the notifier to be disposed mid-fetch, stranding the
+  // UI in `data([])` → "+ Add gym" forever. `select` short-circuits when
+  // the actual id string doesn't change. See plan §3A.
+  final userId = ref.watch(authStateProvider.select((s) => s.user?.id));
+  if (userId != null && userId != _gymProfilesCacheOwnerUserId) {
+    // Real user-id change → flush the static "cache-checked" verdict and
+    // the static in-memory cache so the new user gets a fresh shimmer-then-
+    // fetch cycle, not the old user's empty-list residue.
+    _gymProfilesCacheOwnerUserId = userId;
+    _gymProfilesCacheChecked = false;
+    _gymProfilesInMemoryCache = null;
+  }
   return GymProfilesNotifier(repository, userId, ref);
 });
 
@@ -95,6 +114,7 @@ class GymProfilesNotifier extends StateNotifier<AsyncValue<List<GymProfile>>> {
   @override
   void dispose() {
     _disposed = true;
+    _watchdog?.cancel();
     super.dispose();
   }
 
@@ -119,8 +139,29 @@ class GymProfilesNotifier extends StateNotifier<AsyncValue<List<GymProfile>>> {
         // flipping into `loading`, then revalidate in background.
         _loadWithCacheFirst(showLoadingOnCacheMiss: false);
       }
+      _startStuckStateWatchdog();
     }
   }
+
+  Timer? _watchdog;
+
+  /// Watchdog (plan §3D): if state is still `data([])` after 5s with a real
+  /// user_id and no in-flight fetch, force a fresh fetch with the loading
+  /// flag set so the widget renders a spinner instead of stranding the user
+  /// at "+ Add gym" forever. Catches any race we didn't anticipate.
+  void _startStuckStateWatchdog() {
+    _watchdog?.cancel();
+    _watchdog = Timer(const Duration(seconds: 5), () {
+      if (_disposed) return;
+      final v = state.valueOrNull;
+      if (v != null && v.isEmpty && _userId != null && !_isFetchInFlight) {
+        debugPrint('🐶 [GymProfileProvider] Watchdog fired — state stuck at data([]), forcing refresh');
+        _fetchFromApi(showLoading: true);
+      }
+    });
+  }
+
+  bool _isFetchInFlight = false;
 
   /// Clear in-memory cache (called on logout)
   static void clearCache() {
@@ -158,6 +199,7 @@ class GymProfilesNotifier extends StateNotifier<AsyncValue<List<GymProfile>>> {
     try {
       final cached = await DataCacheService.instance.getCached(
         DataCacheService.gymProfilesKey,
+        userId: _userId,
       );
       if (cached != null && cached['profiles'] != null) {
         final profilesList = (cached['profiles'] as List)
@@ -185,6 +227,17 @@ class GymProfilesNotifier extends StateNotifier<AsyncValue<List<GymProfile>>> {
 
   /// Save profiles to cache (both in-memory and persistent)
   Future<void> _saveToCache(List<GymProfile> profiles) async {
+    // PLAN §3E: refuse to overwrite a non-empty in-memory cache with an
+    // empty list. An empty fetch result is "no data right now" — keep the
+    // prior non-empty cache so the next provider boot doesn't seed with
+    // a poisoned empty list and show "+ Add gym" forever. Only the FIRST
+    // cache write (cold install) is allowed to seed `[]`.
+    if (profiles.isEmpty &&
+        _gymProfilesInMemoryCache != null &&
+        _gymProfilesInMemoryCache!.isNotEmpty) {
+      debugPrint('🛡️ [GymProfileProvider] Refused to overwrite cached profiles with empty list');
+      return;
+    }
     // Update in-memory cache FIRST for instant access on provider recreation
     _gymProfilesInMemoryCache = profiles;
 
@@ -195,6 +248,7 @@ class GymProfilesNotifier extends StateNotifier<AsyncValue<List<GymProfile>>> {
           'profiles': profiles.map((p) => p.toJson()).toList(),
           'cached_at': Tz.timestamp(),
         },
+        userId: _userId,
       );
     } catch (e) {
       debugPrint('⚠️ [GymProfileProvider] Cache save error: $e');
@@ -204,10 +258,19 @@ class GymProfilesNotifier extends StateNotifier<AsyncValue<List<GymProfile>>> {
   /// Fetch fresh profiles from API
   Future<void> _fetchFromApi({bool showLoading = false}) async {
     if (_userId == null || _disposed) {
-      if (!_disposed) state = const AsyncValue.data([]);
+      // PLAN §3 tertiary-defect: do NOT wipe a populated state when user_id
+      // transitions briefly to null (e.g. token refresh emitting an
+      // intermediate unauthenticated AuthState). Only wipe if we're not
+      // currently showing real data — otherwise a stale-but-correct view is
+      // better than flashing "+ Add gym". On real sign-out, clearAll() in
+      // auth_repository handles the wipe.
+      if (!_disposed && !state.hasValue) {
+        state = const AsyncValue.data([]);
+      }
       return;
     }
 
+    _isFetchInFlight = true;
     try {
       if (showLoading) {
         state = const AsyncValue.loading();
@@ -239,8 +302,16 @@ class GymProfilesNotifier extends StateNotifier<AsyncValue<List<GymProfile>>> {
       // `state` after dispose throws "Tried to use GymProfilesNotifier after
       // dispose was called" → short-circuit before reading or writing state.
       if (_disposed) return;
-      // Only set error state if we don't have cached data
-      if (!state.hasValue) {
+      // PLAN §3E: previously, errors were silently swallowed when state was
+      // ALREADY `data([])` (state.hasValue=true with an empty list). That
+      // path stranded the user at "+ Add gym" with no UI signal. An empty
+      // list is not a valid known answer when we haven't successfully
+      // completed a fetch — surface the error so the widget shows a retry
+      // CTA.
+      final currentList = state.valueOrNull;
+      final stateIsEmptyButUnverified =
+          state.hasValue && (currentList == null || currentList.isEmpty);
+      if (!state.hasValue || stateIsEmptyButUnverified) {
         state = AsyncValue.error(e, stack);
         // Auto-retry once after 3 seconds (handles cold-start failures)
         if (!_hasAutoRetried) {
@@ -250,6 +321,8 @@ class GymProfilesNotifier extends StateNotifier<AsyncValue<List<GymProfile>>> {
           });
         }
       }
+    } finally {
+      _isFetchInFlight = false;
     }
   }
 

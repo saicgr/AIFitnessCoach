@@ -200,18 +200,20 @@ class AIInsightsNotifier extends StateNotifier<AIInsightsState> {
 // Providers
 // ============================================
 
-/// Main AI insights provider
+/// Main AI insights provider — recreated on user_id change so a new account
+/// doesn't inherit the prior user's insights. Plan §6.
 final aiInsightsProvider =
     StateNotifierProvider<AIInsightsNotifier, AIInsightsState>((ref) {
   final apiClient = ref.watch(apiClientProvider);
+  ref.watch(authStateProvider.select((s) => s.user?.id));
   return AIInsightsNotifier(apiClient);
 });
 
-/// Provider for daily tip (with user ID)
-/// Note: Removed autoDispose to prevent refetching on navigation
+/// Provider for daily tip (with user ID).
+/// Watches user_id only, not whole AuthState, so token refreshes don't
+/// re-fire the fetch.
 final dailyTipProvider = FutureProvider<String?>((ref) async {
-  final authState = ref.watch(authStateProvider);
-  final userId = authState.user?.id;
+  final userId = ref.watch(authStateProvider.select((s) => s.user?.id));
 
   if (userId == null) return null;
 
@@ -233,8 +235,7 @@ final dailyTipProvider = FutureProvider<String?>((ref) async {
 /// Provider for weight insight
 /// Note: Removed autoDispose to prevent refetching on navigation
 final weightInsightProvider = FutureProvider<String?>((ref) async {
-  final authState = ref.watch(authStateProvider);
-  final userId = authState.user?.id;
+  final userId = ref.watch(authStateProvider.select((s) => s.user?.id));
 
   if (userId == null) return null;
 

@@ -49,6 +49,7 @@ class WorkoutsNotifier extends StateNotifier<AsyncValue<List<Workout>>> {
     try {
       final cached = await DataCacheService.instance.getCachedList(
         DataCacheService.workoutListKey,
+        userId: _userId,
       );
       if (cached == null || cached.isEmpty) return null;
       return cached.map((m) => Workout.fromJson(m)).toList();
@@ -65,6 +66,7 @@ class WorkoutsNotifier extends StateNotifier<AsyncValue<List<Workout>>> {
       await DataCacheService.instance.cacheList(
         DataCacheService.workoutListKey,
         list,
+        userId: _userId,
       );
     } catch (e) {
       debugPrint('⚠️ [Workouts] Disk cache write error: $e');

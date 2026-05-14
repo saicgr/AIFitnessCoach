@@ -208,7 +208,9 @@ const List<_TipScheduleEntry> _tipSchedule = [
 ///    not yet been used (per [featureAdoptionProvider]).
 /// 4. Return null after day 14 or when all tips are used.
 final week1TipProvider = Provider<Week1Tip?>((ref) {
-  // Read auth state to get createdAt
+  // Read auth state to get createdAt. Also force recreation on user_id flip
+  // so a different account doesn't inherit the prior user's tip cadence.
+  ref.watch(authStateProvider.select((s) => s.user?.id));
   final authState = ref.watch(authStateProvider);
   final user = authState.user;
   if (user == null || user.createdAt == null) return null;

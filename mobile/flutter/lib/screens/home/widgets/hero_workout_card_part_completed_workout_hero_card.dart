@@ -197,12 +197,20 @@ class CompletedWorkoutHeroCard extends ConsumerWidget {
 }
 
 
-/// Card shown when generating/loading workouts
+/// Card shown when generating/loading workouts. When [onRetry] is non-null,
+/// the card renders a tappable "Tap to retry" CTA underneath the message
+/// (used after generation polling caps out — plan §4 retry sentinel).
 class GeneratingHeroCard extends ConsumerStatefulWidget {
   final String? message;
   final String? subtitle;
+  final VoidCallback? onRetry;
 
-  const GeneratingHeroCard({super.key, this.message, this.subtitle});
+  const GeneratingHeroCard({
+    super.key,
+    this.message,
+    this.subtitle,
+    this.onRetry,
+  });
 
   @override
   ConsumerState<GeneratingHeroCard> createState() => _GeneratingHeroCardState();
@@ -311,6 +319,19 @@ class _GeneratingHeroCardState extends ConsumerState<GeneratingHeroCard>
                   style: TextStyle(fontSize: 14, color: textSecondary),
                   textAlign: TextAlign.center,
                 ),
+                if (widget.onRetry != null) ...[
+                  const SizedBox(height: 16),
+                  FilledButton.icon(
+                    onPressed: widget.onRetry,
+                    icon: const Icon(Icons.refresh_rounded, size: 18),
+                    label: const Text('Tap to retry'),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: accentColor,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 16),
                 AnimatedBuilder(
                   animation: _shimmerController,

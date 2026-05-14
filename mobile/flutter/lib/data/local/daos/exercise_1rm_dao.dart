@@ -74,4 +74,13 @@ class Exercise1rmDao extends DatabaseAccessor<AppDatabase>
         .get();
     return results.isEmpty ? null : results.first;
   }
+
+  /// Wipe every cached 1RM history row owned by [userId]. Called from
+  /// sign-out so the outgoing user's PRs cannot be surfaced under the
+  /// next account's progress charts.
+  Future<int> clearForUser(String userId) {
+    return (delete(cachedExercise1rmHistory)
+          ..where((t) => t.userId.equals(userId)))
+        .go();
+  }
 }

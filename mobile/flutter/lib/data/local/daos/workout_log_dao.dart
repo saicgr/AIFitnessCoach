@@ -58,4 +58,12 @@ class WorkoutLogDao extends DatabaseAccessor<AppDatabase>
           ..limit(limit))
         .get();
   }
+
+  /// Wipe every cached workout-log row owned by [userId]. Called from
+  /// sign-out so a half-synced pending set log can't be re-attributed to
+  /// the next user who signs in on this device.
+  Future<int> clearForUser(String userId) {
+    return (delete(cachedWorkoutLogs)..where((l) => l.userId.equals(userId)))
+        .go();
+  }
 }

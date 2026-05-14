@@ -12,7 +12,7 @@ Updated: 2025-12-21 - Trigger Render redeploy for swap exercise feature
 from core.db import get_supabase_db
 import re
 from fastapi import APIRouter, HTTPException, Request, Depends
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Set
 from pydantic import BaseModel
 
 from core.auth import get_current_user
@@ -306,6 +306,12 @@ class FastSuggestionRequest(BaseModel):
     # from the users row server-side. When provided as an empty list, it
     # means "no equipment" → bodyweight-only filtering.
     user_equipment: Optional[List[str]] = None
+    # When True, skip the equipment-availability filter entirely so the
+    # caller gets muscle-similar alternatives across ALL equipment. Powers
+    # the swap-sheet "Any Equipment" tab — user explicitly asked to see
+    # what they could do at a different gym. Per [[feedback_no_silent_fallbacks]]
+    # we do NOT silently fall back to filtered if this returns empty.
+    ignore_equipment: Optional[bool] = False
 
 
 class FastExerciseSuggestion(BaseModel):
@@ -423,7 +429,24 @@ async def get_fast_exercise_suggestions(body: FastSuggestionRequest, current_use
         current_canonical = resolver.resolve(equipment) if equipment else None
         current_category = resolver.get_category(equipment) if equipment else None
         current_substitutes = dict(resolver.get_substitutes(equipment)) if equipment else {}
-        logger.info(f"Equipment resolved: canonical={current_canonical}, category={current_category}, substitutes={list(current_substitutes.keys())}")
+        # Pre-resolve the user's available equipment to canonical names so we
+        # can give a "you actually own this" bonus during scoring. Without
+        # this, an exercise that uses a SUBSTITUTE of the original (e.g.
+        # resistance_band as a substitute for cable_machine) outscores the
+        # exact same canonical that the user genuinely owns — the
+        # Cable Pull Through → Band Pullthrough bug.
+        user_canonicals: Set[str] = set()
+        if user_equipment_resolved:
+            for raw in user_equipment_resolved:
+                canon = resolver.resolve(raw)
+                if canon:
+                    user_canonicals.add(canon)
+        logger.info(
+            f"Equipment resolved: canonical={current_canonical}, "
+            f"category={current_category}, "
+            f"substitutes={list(current_substitutes.keys())}, "
+            f"user_canonicals={user_canonicals}"
+        )
 
         # Build query for similar exercises
         # Query by target muscle OR body part for better matches
@@ -479,7 +502,14 @@ async def get_fast_exercise_suggestions(body: FastSuggestionRequest, current_use
         # Empty list = "no equipment" → bodyweight-only (the hardened filter
         # handles that case).
         had_candidates_before_equipment_filter = len(candidates) > 0
-        if user_equipment_resolved is not None and candidates:
+        if body.ignore_equipment:
+            # Caller wants cross-equipment alternatives (e.g. "what else
+            # targets these muscles regardless of what I own?"). Skip the
+            # filter — user_canonicals still drives the "you own this"
+            # bonus during scoring so available-equipment candidates rise
+            # to the top within the unfiltered pool.
+            logger.info("[Suggest-Fast] ignore_equipment=true — skipping equipment filter")
+        elif user_equipment_resolved is not None and candidates:
             from services.exercise_rag.filters import filter_by_equipment
             candidates = [
                 ex for ex in candidates
@@ -550,16 +580,32 @@ async def get_fast_exercise_suggestions(body: FastSuggestionRequest, current_use
                     score += 3.0
                     reasons.append(f"Uses {ex_equipment}")
                 elif ex_canonical in current_substitutes:
+                    # Substitutes are demoted vs canonical — a "kind of like
+                    # cable" exercise should never outrank an actual cable
+                    # exercise just because the substitution table happens
+                    # to map them. (Cable Pull Through → Band Pullthrough
+                    # bug: bands were scored at 3.0 × compat_score and beat
+                    # every Cable alternative.)
                     compat_score = current_substitutes[ex_canonical]
-                    score += compat_score * 3.0
+                    score += compat_score * 1.5
                     reasons.append(f"Similar equipment ({ex_equipment})")
                 elif current_category and ex_category and current_category == ex_category:
-                    score += 1.5
+                    score += 1.0
                     reasons.append(f"Same equipment type ({ex_equipment})")
             elif equipment and ex_equipment and equipment.lower() == ex_equipment.lower():
                 # Exact string fallback for equipment not in resolver
                 score += 3.0
                 reasons.append(f"Uses {equipment}")
+
+            # "You actually own this" bonus. When the user's equipment list
+            # includes the canonical equipment for this candidate, prefer it
+            # over any substitute the resolver might also surface. This is
+            # what pushes Cable variants above Band variants for a user who
+            # has Cable Machine in their gym.
+            if ex_canonical and ex_canonical in user_canonicals:
+                score += 2.0
+                if not any("Uses " in r for r in reasons):
+                    reasons.append(f"In your gym ({ex_equipment})")
 
             # Small random factor for variety (kept small so equipment dominates)
             score += random.uniform(0, 0.3)

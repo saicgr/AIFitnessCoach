@@ -18,6 +18,18 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
   bool _aiLoaded = false;
   List<Map<String, dynamic>> _aiSuggestions = [];
   String? _aiError;
+  // Currently selected refinement chip in the AI Picks tab. Maps to a
+  // canned message in WorkoutRepository.getExerciseSuggestions chipMessages.
+  // Persists across re-renders so the user can see which angle they picked.
+  String? _aiPickChip;
+  static const List<String> _aiPickChipOptions = [
+    'Similar muscles',
+    'Easier',
+    'Harder',
+    'No machine needed',
+    'Bodyweight only',
+    'Different angle',
+  ];
 
   // Recent tab
   bool _isLoadingRecent = true;
@@ -27,6 +39,14 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
   bool _isLoadingLibrary = false;
   List<LibraryExerciseItem> _libraryExercises = [];
   String _searchQuery = '';
+
+  // Any Equipment tab — muscle-similar matches regardless of what the user
+  // owns. Drives the "what if I went to a different gym?" exploration the
+  // Similar tab can't surface because it filters to available equipment.
+  bool _isLoadingAnyEquipment = false;
+  bool _anyEquipmentLoaded = false;
+  List<Map<String, dynamic>> _anyEquipmentSuggestions = [];
+  String? _anyEquipmentEmptyReason;
 
   // Swap state
   bool _isSwapping = false;
@@ -67,7 +87,7 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 5, vsync: this);
+    _tabController = TabController(length: 6, vsync: this);
     _tabController.addListener(_onTabChanged);
     // Defer provider state mutation until after the first frame so we don't
     // trip Riverpod's "modify while building" guard. initialize() synchronously
@@ -90,11 +110,11 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
       _highlightedName = widget.preselectedExerciseName!.trim();
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        // Switch to AI Picks (index 4). AI Picks loads on demand; nudge it
-        // with a custom-message hint so the matched exercise rises to the
-        // top of suggestions.
+        // Switch to AI Picks (now index 5 after inserting Any Equipment at
+        // index 4). AI Picks loads on demand; nudge it with a custom-message
+        // hint so the matched exercise rises to the top of suggestions.
         _aiInputController.text = _highlightedName!;
-        _tabController.animateTo(4);
+        _tabController.animateTo(5);
         _loadAISuggestions();
       });
       _highlightTimer = Timer(const Duration(milliseconds: 1500), () {
@@ -140,13 +160,75 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
   }
 
   void _onTabChanged() {
-    // Load AI suggestions when user switches to AI Picks tab (index 3)
-    // Only auto-load if no custom input is provided
+    // Any Equipment tab (index 4): muscle-similar matches regardless of
+    // the user's owned equipment. Lazy-load on first visit so we don't
+    // pay the round trip for users who never open it.
     if (_tabController.index == 4 &&
+        !_anyEquipmentLoaded &&
+        !_isLoadingAnyEquipment) {
+      _loadAnyEquipmentExercises();
+    }
+
+    // AI Picks tab (now index 5 after inserting Any Equipment at 4).
+    // Auto-load only when the user hasn't typed a custom query yet —
+    // the freeform input takes precedence when present.
+    if (_tabController.index == 5 &&
         !_aiLoaded &&
         !_isLoadingAI &&
         _aiInputController.text.isEmpty) {
       _loadAISuggestions();
+    }
+  }
+
+  /// Load muscle-similar exercises ignoring the user's equipment filter so
+  /// they can see what targets the same muscles at any gym. Distinct from
+  /// the Similar tab in exactly one way: we pass `ignoreEquipment: true`
+  /// to the backend so the equipment-availability filter is bypassed.
+  Future<void> _loadAnyEquipmentExercises() async {
+    if (_isLoadingAnyEquipment) return;
+    setState(() => _isLoadingAnyEquipment = true);
+
+    try {
+      final userId = await ref.read(apiClientProvider).getUserId();
+      final repo = ref.read(workoutRepositoryProvider);
+
+      final userEquipment = ref.read(environmentEquipmentProvider).equipment;
+      final result = await repo.getExerciseSuggestionsFast(
+        exerciseName: widget.exercise.name,
+        userId: userId!,
+        avoidedExercises: _avoidedExerciseNames,
+        userEquipment: userEquipment,
+        ignoreEquipment: true,
+      );
+
+      if (mounted) {
+        setState(() {
+          _anyEquipmentSuggestions = result.suggestions;
+          _anyEquipmentEmptyReason =
+              result.suggestions.isEmpty ? result.emptyReason : null;
+          _isLoadingAnyEquipment = false;
+          _anyEquipmentLoaded = true;
+        });
+
+        final names = result.suggestions
+            .map((s) => s['name'] as String?)
+            .whereType<String>()
+            .toList();
+        if (names.isNotEmpty) {
+          final apiClient = ref.read(apiClientProvider);
+          ImageUrlCache.batchPreFetch(names, apiClient);
+        }
+      }
+    } catch (e) {
+      debugPrint('Error loading Any Equipment suggestions: $e');
+      if (mounted) {
+        setState(() {
+          _anyEquipmentSuggestions = [];
+          _anyEquipmentEmptyReason = 'no_match';
+          _isLoadingAnyEquipment = false;
+          _anyEquipmentLoaded = true;
+        });
+      }
     }
   }
 
@@ -382,11 +464,15 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
       // Backend will fall back to loading from the users row if we somehow
       // pass null (defensive, e.g. provider not yet hydrated).
       final userEquipment = ref.read(environmentEquipmentProvider).equipment;
+      // Reason precedence: AI-tab chip > sheet-level reason chip. Falls
+      // through to the repository's context-rich default when both null
+      // (auto-load on first tab visit).
+      final activeReason = _aiPickChip ?? _selectedReason;
       final suggestions = await repo.getExerciseSuggestions(
         workoutId: widget.workoutId,
         exercise: widget.exercise,
         userId: userId!,
-        reason: _selectedReason,
+        reason: activeReason,
         customMessage: userInput.isEmpty ? null : userInput,
         avoidedExercises: _avoidedExerciseNames,
         userEquipment: userEquipment,
@@ -659,7 +745,7 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
                               if (_searchQuery.isNotEmpty) {
                                 _searchLibrary(_searchQuery);
                               }
-                              if (_tabController.index == 4) {
+                              if (_tabController.index == 5) {
                                 // Let the user regenerate AI picks on demand —
                                 // don't silently burn tokens.
                                 setState(() => _aiLoaded = false);
@@ -786,7 +872,7 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
                 ),
               ),
 
-              // Tabs - 4 tabs now
+              // Tabs - 6 tabs (5th = Any Equipment for cross-gym discovery)
               SegmentedTabBar(
                 controller: _tabController,
                 showIcons: false,
@@ -795,6 +881,7 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
                   SegmentedTabItem(label: 'Recent'),
                   SegmentedTabItem(label: 'Snapped'),
                   SegmentedTabItem(label: 'Library'),
+                  SegmentedTabItem(label: 'Any Equipment'),
                   SegmentedTabItem(label: 'AI Picks'),
                 ],
               ),
@@ -845,6 +932,11 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
 
                     // Library search tab
                     _buildLibraryTab(cardBackground, textMuted, textPrimary),
+
+                    // Any Equipment tab — muscle-similar, equipment filter
+                    // bypassed (server-side flag). For "if I went somewhere
+                    // else, what could I do?" exploration.
+                    _buildAnyEquipmentTab(textMuted, textPrimary),
 
                     // AI Picks tab (slow, loads on demand)
                     _buildAITab(textMuted, textPrimary),
@@ -947,7 +1039,7 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
             ),
             const SizedBox(height: 8),
             TextButton(
-              onPressed: () => _tabController.animateTo(4),
+              onPressed: () => _tabController.animateTo(5),
               child: const Text('Try AI Suggestions', style: TextStyle(color: accentColor)),
             ),
           ],
@@ -1008,6 +1100,141 @@ class _ExerciseSwapSheetState extends ConsumerState<_ExerciseSwapSheet>
           badge: badge,
           badgeColor: badgeColor,
           onTap: () => _swapExercise(name, source: source),
+          textPrimary: textPrimary,
+          textMuted: textMuted,
+          highlighted: _isHighlighted(name),
+        );
+      },
+    );
+  }
+
+  /// "Any Equipment" tab — same muscle-similarity ranking as Similar, but the
+  /// equipment-availability filter is bypassed server-side via
+  /// `ignore_equipment=true`. This is the "what could I do at another gym?"
+  /// view. Each row shows the equipment chip so the user can tell at a
+  /// glance what they'd need.
+  Widget _buildAnyEquipmentTab(Color textMuted, Color textPrimary) {
+    if (_isLoadingAnyEquipment) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const CircularProgressIndicator(color: AppColors.cyan),
+            const SizedBox(height: 16),
+            Text(
+              'Finding muscle-matched alternatives...',
+              style: TextStyle(color: textMuted),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_anyEquipmentSuggestions.isEmpty) {
+      const accentColor = AppColors.cyan;
+      final body = _anyEquipmentEmptyReason == 'exercise_not_found'
+          ? "We couldn't find this exercise in our library. Try AI Picks for a creative substitute."
+          : "No muscle-similar alternatives in our library yet. Try AI Picks for a creative suggestion.";
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: accentColor.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: const Icon(Icons.fitness_center_rounded,
+                  size: 40, color: accentColor),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'No alternatives yet',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: textPrimary,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 6),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Text(
+                body,
+                style: TextStyle(fontSize: 13, color: textMuted),
+                textAlign: TextAlign.center,
+              ),
+            ),
+            const SizedBox(height: 20),
+            OutlinedButton.icon(
+              onPressed: _loadAnyEquipmentExercises,
+              icon: const Icon(Icons.refresh_rounded, size: 16),
+              label: const Text('Try Again'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: accentColor,
+                side: BorderSide(color: accentColor.withValues(alpha: 0.5)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Compute which equipment the user actually owns so each row can show
+    // an "In your gym" vs the equipment name. Cheap — runs once per build.
+    final ownedEquipment = ref
+        .read(environmentEquipmentProvider)
+        .equipment
+        .map((e) => e.toLowerCase())
+        .toSet();
+
+    return ListView.builder(
+      padding: EdgeInsets.fromLTRB(
+        16,
+        16,
+        16,
+        MediaQuery.viewPaddingOf(context).bottom + 16,
+      ),
+      itemCount: _anyEquipmentSuggestions.length,
+      itemBuilder: (context, index) {
+        final suggestion = _anyEquipmentSuggestions[index];
+        final name = (suggestion['name'] as String?) ?? 'Exercise';
+        final reason = (suggestion['reason'] as String?) ?? '';
+        final equipment = (suggestion['equipment'] as String?) ?? '';
+        final targetMuscle = (suggestion['target_muscle'] as String?) ??
+            (suggestion['body_part'] as String?) ??
+            '';
+
+        final subtitle = reason.isNotEmpty
+            ? reason
+            : [targetMuscle, equipment]
+                .where((s) => s.isNotEmpty)
+                .join(' • ');
+
+        // Badge: highlight rows whose equipment the user actually owns so
+        // the cross-equipment list still surfaces "you can do this right
+        // now" candidates near the top.
+        final equipLower = equipment.toLowerCase();
+        final owns = equipLower.isNotEmpty &&
+            ownedEquipment.any((e) =>
+                e == equipLower || equipLower.contains(e) || e.contains(equipLower));
+        final badge = owns
+            ? 'In your gym'
+            : (equipment.isNotEmpty ? equipment : 'Alternative');
+        final badgeColor = owns ? AppColors.success : AppColors.purple;
+
+        return _ExerciseOptionCard(
+          name: name,
+          subtitle: subtitle,
+          badge: badge,
+          badgeColor: badgeColor,
+          onTap: () =>
+              _swapExercise(name, source: 'any_equipment_exercise'),
           textPrimary: textPrimary,
           textMuted: textMuted,
           highlighted: _isHighlighted(name),

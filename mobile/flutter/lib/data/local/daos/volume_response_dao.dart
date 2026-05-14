@@ -61,4 +61,12 @@ class VolumeResponseDao extends DatabaseAccessor<AppDatabase>
               t.userId.equals(userId) & t.recordedAt.isSmallerThanValue(cutoff)))
         .go();
   }
+
+  /// Wipe every cached volume-response row owned by [userId]. Called from
+  /// sign-out so per-muscle overreaching history can't carry over into
+  /// the next account's auto-regulation calculations.
+  Future<int> clearForUser(String userId) {
+    return (delete(cachedVolumeResponses)..where((t) => t.userId.equals(userId)))
+        .go();
+  }
 }

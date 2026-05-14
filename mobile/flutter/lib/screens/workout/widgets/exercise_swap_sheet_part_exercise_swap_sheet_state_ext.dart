@@ -12,9 +12,68 @@ extension __ExerciseSwapSheetStateExt on _ExerciseSwapSheetState {
 
     return Column(
       children: [
+        // Reason-angle chip strip — taps re-fire the suggest call with the
+        // selected angle as `reason`. Lets the user explore "easier",
+        // "harder", "no machine", etc. without typing. Selected chip
+        // persists in _aiPickChip so the user can see which angle they
+        // chose; tapping the same chip again clears it (toggle).
+        SizedBox(
+          height: 38,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            itemCount: _ExerciseSwapSheetState._aiPickChipOptions.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 8),
+            itemBuilder: (context, index) {
+              final label = _ExerciseSwapSheetState._aiPickChipOptions[index];
+              final isSelected = _aiPickChip == label;
+              return GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _aiPickChip = isSelected ? null : label;
+                    _aiLoaded = false;
+                  });
+                  if (_aiPickChip != null) {
+                    _loadAISuggestions();
+                  }
+                },
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 180),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? AppColors.cyan
+                        : cardBackground,
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(
+                      color: isSelected
+                          ? AppColors.cyan
+                          : textMuted.withValues(alpha: 0.25),
+                      width: 1,
+                    ),
+                  ),
+                  child: Center(
+                    child: Text(
+                      label,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: isSelected ? Colors.white : textPrimary,
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+
         // Input field with mic and search buttons
         Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
           child: Row(
             children: [
               Expanded(

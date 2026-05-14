@@ -4,11 +4,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/consistency.dart';
 import '../models/workout_day_detail.dart';
 import '../repositories/consistency_repository.dart';
+import '../repositories/auth_repository.dart';
 import '../services/api_client.dart';
 
 /// In-memory cache for instant display on provider recreation
 /// Survives provider invalidation and prevents loading flash
 ConsistencyState? _consistencyInMemoryCache;
+
+/// Tracks the user_id this static cache belongs to, so we can flush it on a
+/// real account switch and avoid the new user inheriting the prior user's
+/// consistency state.
+String? _consistencyCacheOwnerUserId;
 
 // ============================================
 // Consistency State
@@ -291,6 +297,13 @@ class ConsistencyNotifier extends StateNotifier<ConsistencyState> {
 final consistencyProvider =
     StateNotifierProvider<ConsistencyNotifier, ConsistencyState>((ref) {
   final repository = ref.watch(consistencyRepositoryProvider);
+  // Watch user_id only — full AuthState churns on token refresh. Flush the
+  // static in-memory cache on a real account switch.
+  final userId = ref.watch(authStateProvider.select((s) => s.user?.id));
+  if (userId != null && userId != _consistencyCacheOwnerUserId) {
+    _consistencyCacheOwnerUserId = userId;
+    _consistencyInMemoryCache = null;
+  }
   return ConsistencyNotifier(repository);
 });
 

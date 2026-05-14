@@ -65,6 +65,12 @@ class ExerciseImage extends ConsumerStatefulWidget {
   /// dumbbell" bug — placeholder now mirrors the exercise's actual gear.
   final String? equipmentHint;
 
+  /// Optional library UUID. When supplied, the API call passes
+  /// `?exercise_id=` so the backend resolves the exact library row instead
+  /// of an ilike-on-name match — eliminates the "two exercises share a
+  /// display name, the wrong dupe wins" class of bugs.
+  final String? exerciseId;
+
   const ExerciseImage({
     super.key,
     required this.exerciseName,
@@ -76,6 +82,7 @@ class ExerciseImage extends ConsumerStatefulWidget {
     this.iconColor,
     this.fit = BoxFit.cover,
     this.equipmentHint,
+    this.exerciseId,
   });
 
   @override
@@ -137,8 +144,10 @@ class _ExerciseImageState extends ConsumerState<ExerciseImage> {
       return;
     }
 
-    // Check persistent cache first
-    final cachedUrl = ImageUrlCache.get(exerciseName);
+    // Check persistent cache first. Key by id when available so two exercises
+    // that happen to share a display name don't pollute each other's cache.
+    final cacheKey = widget.exerciseId ?? exerciseName;
+    final cachedUrl = ImageUrlCache.get(cacheKey);
     if (cachedUrl != null) {
       if (mounted) {
         setState(() {
@@ -151,15 +160,24 @@ class _ExerciseImageState extends ConsumerState<ExerciseImage> {
 
     try {
       final apiClient = ref.read(apiClientProvider);
+      final queryParams = <String, dynamic>{};
+      if (widget.exerciseId != null && widget.exerciseId!.isNotEmpty) {
+        queryParams['exercise_id'] = widget.exerciseId;
+      }
       final response = await apiClient.get(
         '/exercise-images/${Uri.encodeComponent(exerciseName)}',
+        queryParameters: queryParams.isEmpty ? null : queryParams,
       );
 
       if (response.statusCode == 200 && response.data != null) {
         final url = response.data['url'] as String?;
         if (url != null && mounted) {
-          // Store in persistent cache
-          await ImageUrlCache.set(exerciseName, url);
+          // Store in persistent cache under id-keyed slot when we have one,
+          // and always also under the name for the legacy lookup path.
+          await ImageUrlCache.set(cacheKey, url);
+          if (cacheKey != exerciseName) {
+            await ImageUrlCache.set(exerciseName, url);
+          }
           setState(() {
             _imageUrl = url;
             _isLoading = false;

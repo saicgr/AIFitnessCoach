@@ -69,8 +69,8 @@ class UpcomingRenewal {
 /// Provider for upcoming renewal information
 final upcomingRenewalProvider = FutureProvider<UpcomingRenewal>((ref) async {
   final apiClient = ref.watch(apiClientProvider);
-  final authState = ref.watch(authStateProvider);
-  final userId = authState.user?.id;
+  // Watch user_id only — full AuthState churns on token refresh.
+  final userId = ref.watch(authStateProvider.select((s) => s.user?.id));
 
   if (userId == null) {
     return const UpcomingRenewal();

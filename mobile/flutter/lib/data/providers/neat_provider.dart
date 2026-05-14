@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import '../../core/providers/auth_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/neat.dart';
 import '../repositories/neat_repository.dart';
@@ -470,6 +471,9 @@ class NeatNotifier extends StateNotifier<NeatState> {
 /// Main NEAT state provider
 final neatProvider = StateNotifierProvider<NeatNotifier, NeatState>((ref) {
   final repository = ref.watch(neatRepositoryProvider);
+  // Plan §6: recreate on user_id change so pedometer subscription rebinds
+  // to the new user.
+  ref.watch(authStateProvider.select((s) => s.user?.id));
   return NeatNotifier(repository);
 });
 

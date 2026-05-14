@@ -12,6 +12,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' hide MultipartFile;
+import 'package:sentry_flutter/sentry_flutter.dart' show SentryLevel;
 import '../../core/constants/api_constants.dart';
 import '../../core/services/sentry_service.dart';
 
@@ -168,6 +169,27 @@ class ApiClient with WidgetsBindingObserver {
   static const _tokenKey = 'auth_token';
   static const _userIdKey = 'user_id';
 
+  /// Optional hook to refresh the auth session. Returns `true` if a new
+  /// access token is now available on the Supabase client. Wired from the
+  /// `apiClientProvider` once `AuthRepository` is constructed — see
+  /// [authRepositoryProvider] in `auth_repository.dart`.
+  ///
+  /// Kept as a callback (not a direct AuthRepository reference) to avoid the
+  /// circular import: `auth_repository.dart` already imports this file.
+  Future<bool> Function()? onTokenRefresh;
+
+  /// Optional hook to force a full sign-out (clears Supabase session,
+  /// third-party identities, Drift rows, in-memory caches, disk cache).
+  /// Wired from `authRepositoryProvider`.
+  Future<void> Function()? onForceSignOut;
+
+  /// In-flight refresh coalescing — when several requests 401 in parallel,
+  /// only the first one actually calls `onTokenRefresh`; the others await
+  /// the same `Future<bool>` and then retry against the freshly-rotated
+  /// token. Cleared (set to `null`) once the refresh completes regardless
+  /// of outcome.
+  Future<bool>? _refreshInFlight;
+
   /// Set true once we've detected a JWT_USER_DELETED 401 in this session and
   /// kicked off the forced sign-out. Prevents the 401 storm: every subsequent
   /// in-flight request that returns the same 401 short-circuits instead of
@@ -271,6 +293,28 @@ class ApiClient with WidgetsBindingObserver {
     }
     // Fall back to stored token (may be stale, but better than nothing)
     return _storage.read(key: _tokenKey);
+  }
+
+  /// Single refresh attempt — prefers the wired [onTokenRefresh] hook
+  /// (which routes through `AuthRepository.restoreSession()` so the
+  /// `public.users` row, Sentry user tag, and cached profile all stay in
+  /// sync) and falls back to a raw Supabase `refreshSession()` call when
+  /// no hook is wired yet (e.g. earliest startup).
+  ///
+  /// Always returns a non-null bool; throws only on truly unexpected
+  /// errors. Storage write + proactive-refresh re-arm happen in the
+  /// onAuthStateChange listener so we don't duplicate them here.
+  Future<bool> _refreshOnce() async {
+    final hook = onTokenRefresh;
+    if (hook != null) {
+      return await hook();
+    }
+    final refreshed = await Supabase.instance.client.auth.refreshSession();
+    final session = refreshed.session;
+    if (session == null) return false;
+    await _storage.write(key: _tokenKey, value: session.accessToken);
+    _scheduleProactiveRefresh();
+    return true;
   }
 
   ApiClient(this._storage) {
@@ -501,28 +545,51 @@ class ApiClient with WidgetsBindingObserver {
             if (path.contains('/users/auth/') || path.contains('/auth/email') || path.contains('/auth/signup') || path.contains('/auth/password') || isFullReset) {
               return handler.next(error);
             }
-            final retryCount = error.requestOptions.extra['_retryCount'] as int? ?? 0;
+            // Loop-prevention tag: once a request has been retried after a
+            // successful refresh, a second 401 means the new JWT is ALSO
+            // invalid → fall straight through to forced sign-out instead
+            // of attempting to refresh again. Backwards-compatible with the
+            // older `_retryCount` integer.
+            final alreadyRetried =
+                error.requestOptions.extra['authRetried'] == true;
+            final retryCount =
+                error.requestOptions.extra['_retryCount'] as int? ?? 0;
             bool refreshFailedFatally = false;
-            if (retryCount < 2) {
+            if (!alreadyRetried && retryCount < 2) {
               try {
-                debugPrint('🔄 [API] 401 received (attempt ${retryCount + 1}/2), refreshing token...');
-                final refreshed = await Supabase.instance.client.auth.refreshSession();
-                final newToken = refreshed.session?.accessToken ?? await _getCurrentAccessToken();
-                if (newToken != null) {
-                  // Save new token to storage for consistency
-                  if (refreshed.session != null) {
-                    await _storage.write(key: _tokenKey, value: refreshed.session!.accessToken);
-                    // Re-schedule proactive refresh after successful token refresh
-                    _scheduleProactiveRefresh();
+                debugPrint(
+                    '🔄 [API] 401 received (attempt ${retryCount + 1}/2), refreshing token...');
+
+                // Coalesce parallel 401s onto a single in-flight refresh.
+                // Otherwise N concurrent failed requests would each call
+                // refreshSession() and burn rate-limit + race the storage
+                // write that the listener performs.
+                final refreshFuture = _refreshInFlight ??= _refreshOnce();
+                final ok = await refreshFuture;
+                _refreshInFlight = null;
+
+                if (ok) {
+                  final newToken = await _getCurrentAccessToken();
+                  if (newToken != null) {
+                    debugPrint(
+                        '✅ [API] Token refreshed, retrying request (attempt ${retryCount + 1})...');
+                    error.requestOptions.headers['Authorization'] =
+                        'Bearer $newToken';
+                    error.requestOptions.headers['X-Auth-Retry'] = '1';
+                    error.requestOptions.extra['authRetried'] = true;
+                    error.requestOptions.extra['_retryCount'] = retryCount + 1;
+                    final retryResponse =
+                        await _dio.fetch(error.requestOptions);
+                    return handler.resolve(retryResponse);
                   }
-                  debugPrint('✅ [API] Token refreshed, retrying request (attempt ${retryCount + 1})...');
-                  error.requestOptions.headers['Authorization'] = 'Bearer $newToken';
-                  error.requestOptions.extra['_retryCount'] = retryCount + 1;
-                  final retryResponse = await _dio.fetch(error.requestOptions);
-                  return handler.resolve(retryResponse);
                 }
+                // Refresh hook reported failure without throwing — treat as
+                // a dead session.
+                refreshFailedFatally = true;
               } catch (refreshError) {
-                debugPrint('❌ [API] Retry ${retryCount + 1} refresh failed: $refreshError');
+                _refreshInFlight = null;
+                debugPrint(
+                    '❌ [API] Retry ${retryCount + 1} refresh failed: $refreshError');
                 // Dead session — e.g. Supabase returns "Session from session_id
                 // claim in JWT does not exist" (403) when the session was
                 // terminated server-side (admin action, user signed out on
@@ -535,26 +602,56 @@ class ApiClient with WidgetsBindingObserver {
               }
             }
 
-            // Either (a) refresh threw fatally, or (b) we burned through 2
-            // retries and the server still says 401. Both mean the session
-            // is dead — force sign-out so the auth listener clears state and
-            // re-routes to /intro.
-            if (refreshFailedFatally || retryCount >= 2) {
-              debugPrint('🚪 [API] Session unrecoverable, signing out to reset auth state');
+            // Either (a) refresh threw / returned false, (b) the retried
+            // request still 401'd, or (c) we burned through 2 retries.
+            // All three mean the session is dead — force a full sign-out
+            // (clears third-party identities, Drift rows, in-memory caches
+            // via AuthRepository.signOut() if wired) and resolve this
+            // request with a synthetic 401 so the caller bails instead of
+            // hanging on a Future that never completes.
+            if (refreshFailedFatally || alreadyRetried || retryCount >= 2) {
+              debugPrint(
+                  '🚪 [API] Session unrecoverable, signing out to reset auth state');
               try {
-                await Supabase.instance.client.auth.signOut();
-                // The onAuthStateChange listener will handle clearing stored tokens
+                SentryService.addBreadcrumb(
+                  category: 'auth.401',
+                  level: SentryLevel.error,
+                  message: 'Forced sign-out — refresh failed',
+                  data: {
+                    'path': error.requestOptions.path,
+                    'method': error.requestOptions.method,
+                    'retryCount': retryCount,
+                    'alreadyRetried': alreadyRetried,
+                  },
+                );
+              } catch (_) {
+                // Sentry disabled or not initialised — never block sign-out.
+              }
+              try {
+                if (onForceSignOut != null) {
+                  await onForceSignOut!();
+                } else {
+                  // Fallback path used before AuthRepository wires the hook
+                  // (e.g. very early startup). The onAuthStateChange listener
+                  // will still clear stored tokens.
+                  await Supabase.instance.client.auth.signOut();
+                }
               } catch (signOutError) {
                 debugPrint('❌ [API] Force sign-out failed: $signOutError');
                 // Still clear local auth as last resort
                 await clearAuth();
               }
-            } else {
-              // Only clear auth if we didn't even get to retry (no token at
-              // all in storage). Shouldn't normally land here; keep as a
-              // defensive fallback.
-              debugPrint('🚪 [API] Clearing auth after failed refresh');
-              await clearAuth();
+              // Replace the bad-response with a synthetic, terminal 401 so
+              // the caller's catch-handler runs exactly once instead of
+              // re-triggering this branch.
+              return handler.reject(
+                DioException(
+                  requestOptions: error.requestOptions,
+                  response: error.response,
+                  type: DioExceptionType.badResponse,
+                  error: 'Session expired — signed out',
+                ),
+              );
             }
           }
           return handler.next(error);

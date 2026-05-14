@@ -559,12 +559,30 @@ async def get_image_by_exercise_name(
             result = db.client.table("exercise_library").select(
                 "id, exercise_name, image_s3_path"
             ).eq("id", exercise_id).limit(1).execute()
-            if not result.data:
+            row = result.data[0] if result.data else None
+            # Fall through to the cleaned MV when the id isn't in the base
+            # table — manual-table-only exercises (e.g. Leg Press) carry MV
+            # ids that don't resolve against exercise_library directly.
+            if not row:
+                mv_result = (
+                    db.client.table("exercise_library_cleaned")
+                    .select("id, name, image_url")
+                    .eq("id", exercise_id)
+                    .limit(1)
+                    .execute()
+                )
+                if mv_result.data:
+                    mv_row = mv_result.data[0]
+                    row = {
+                        "id": mv_row.get("id"),
+                        "exercise_name": mv_row.get("name"),
+                        "image_s3_path": mv_row.get("image_url"),
+                    }
+            if not row:
                 raise HTTPException(
                     status_code=404,
                     detail={"error": "exercise_not_found", "exercise_id": exercise_id},
                 )
-            row = result.data[0]
             if not row.get("image_s3_path"):
                 raise HTTPException(
                     status_code=404,
@@ -600,9 +618,19 @@ async def get_image_by_exercise_name(
         for name in search_names:
             # ONLY exact (case-insensitive) match. No `name%` or `%name%`
             # substring queries — those are what served the wrong sibling row.
-            result = db.client.table("exercise_library").select(
-                "id, exercise_name, image_s3_path"
-            ).ilike("exercise_name", name).limit(1).execute()
+            # When multiple rows share a name (gendered variants, dupes from
+            # different sources), prefer the one that actually has an image,
+            # then deterministic by id — kills the "tile shows A, detail
+            # shows B" race.
+            result = (
+                db.client.table("exercise_library")
+                .select("id, exercise_name, image_s3_path")
+                .ilike("exercise_name", name)
+                .order("image_s3_path", desc=True, nullsfirst=False)
+                .order("id", desc=False)
+                .limit(1)
+                .execute()
+            )
             if result.data:
                 found_row = result.data[0]
                 break
@@ -641,6 +669,36 @@ async def get_image_by_exercise_name(
                     "exercise_image_aliases lookup failed for %s: %s",
                     exercise_name, alias_err,
                 )
+
+        if not found_row:
+            # ── exercise_library_cleaned MV fallback ───────────────────────
+            # The MV unions `exercise_library` with `exercise_library_manual`
+            # and dedupes by canonical name. Many manual-table exercises
+            # (Leg Press, Leg Extension, Leg Press Wide/Narrow Stance, …)
+            # have no row in the base table at all — they only exist in the
+            # MV under their cleaned name. Without this fallback, the swap
+            # Library tab renders the dumbbell placeholder for every
+            # manual-only exercise. The MV's `name` is post-dedup and the
+            # `image_url` is `image_s3_path` aliased, so we still avoid
+            # the lat-pulldown sibling-image bug.
+            for name in search_names:
+                mv_result = (
+                    db.client.table("exercise_library_cleaned")
+                    .select("id, name, image_url")
+                    .ilike("name", name)
+                    .order("image_url", desc=True, nullsfirst=False)
+                    .order("id", desc=False)
+                    .limit(1)
+                    .execute()
+                )
+                if mv_result.data:
+                    mv_row = mv_result.data[0]
+                    found_row = {
+                        "id": mv_row.get("id"),
+                        "exercise_name": mv_row.get("name"),
+                        "image_s3_path": mv_row.get("image_url"),
+                    }
+                    break
 
         if not found_row:
             # No exercise by that name (and no alias). 404 — never fall back

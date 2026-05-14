@@ -137,6 +137,9 @@ final challengesServiceProvider = Provider<ChallengesService>((ref) {
 /// Unified notifications provider combining local + challenge notifications
 final unifiedNotificationsProvider =
     StateNotifierProvider<UnifiedNotificationsNotifier, AsyncValue<List<UnifiedNotification>>>((ref) {
+  // Plan §6: recreate on user_id change so push subscriptions and feed
+  // contents don't bleed across accounts.
+  ref.watch(authStateProvider.select((s) => s.user?.id));
   return UnifiedNotificationsNotifier(ref);
 });
 

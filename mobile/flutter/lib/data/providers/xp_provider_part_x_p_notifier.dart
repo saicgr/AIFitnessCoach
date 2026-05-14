@@ -43,6 +43,7 @@ class XPNotifier extends StateNotifier<XPState> {
     try {
       final cached = await DataCacheService.instance.getCached(
         DataCacheService.xpDataKey,
+        userId: _currentUserId,
       );
       if (cached != null) {
         final userXp = UserXP.fromJson(cached);
@@ -65,6 +66,7 @@ class XPNotifier extends StateNotifier<XPState> {
       await DataCacheService.instance.cache(
         DataCacheService.xpDataKey,
         userXp.toJson(),
+        userId: _currentUserId,
       );
     } catch (e) {
       debugPrint('⚠️ [XPProvider] Cache save error: $e');

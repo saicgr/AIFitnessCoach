@@ -3,10 +3,16 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/fasting.dart';
 import '../repositories/fasting_repository.dart';
+import '../repositories/auth_repository.dart';
 
 /// In-memory cache for instant display on provider recreation
 /// Survives provider invalidation and prevents loading flash
 FastingState? _fastingInMemoryCache;
+
+/// Tracks the user_id this static cache belongs to, so we can flush it on a
+/// real account switch and avoid the new user inheriting the prior user's
+/// fasting state.
+String? _fastingCacheOwnerUserId;
 
 // ============================================
 // Fasting State
@@ -474,6 +480,13 @@ class FastingNotifier extends StateNotifier<FastingState> {
 
 /// Fasting state provider
 final fastingProvider = StateNotifierProvider<FastingNotifier, FastingState>((ref) {
+  // Watch user_id only — full AuthState churns on token refresh. Flush the
+  // static in-memory cache on a real account switch.
+  final userId = ref.watch(authStateProvider.select((s) => s.user?.id));
+  if (userId != null && userId != _fastingCacheOwnerUserId) {
+    _fastingCacheOwnerUserId = userId;
+    _fastingInMemoryCache = null;
+  }
   return FastingNotifier(
     ref.watch(fastingRepositoryProvider),
   );

@@ -22,4 +22,12 @@ class UserProfileDao extends DatabaseAccessor<AppDatabase>
   Future<void> clearProfile() {
     return delete(cachedUserProfiles).go();
   }
+
+  /// Wipe the cached profile row whose primary key matches [userId]. Called
+  /// from sign-out so the outgoing user's profile JSON cannot be re-read
+  /// by an early-bootstrap path on the next sign-in.
+  Future<int> clearForUser(String userId) {
+    return (delete(cachedUserProfiles)..where((p) => p.id.equals(userId)))
+        .go();
+  }
 }

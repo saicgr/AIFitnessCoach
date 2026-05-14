@@ -136,6 +136,12 @@ class TodayWorkoutResponse {
   final String? nextWorkoutDate;  // YYYY-MM-DD format for frontend to generate
   // Gym profile context
   final String? gymProfileId;  // Active gym profile ID used for filtering
+  // Set when auto-generation polling caps out OR the backend returns a
+  // terminal "no workout, no next, not generating" state for the user's
+  // selected day. Hero card renders a "tap to retry" CTA when this is
+  // populated instead of falling through to a silent "No workout yet"
+  // dead-end. Frontend-only field, not persisted in the API contract.
+  final String? lastGenerationError;
 
   /// Whether there's any displayable content for the home screen.
   /// Used by provider normalization and loading screen to make display decisions.
@@ -157,6 +163,7 @@ class TodayWorkoutResponse {
     this.needsGeneration = false,
     this.nextWorkoutDate,
     this.gymProfileId,
+    this.lastGenerationError,
   });
 
   factory TodayWorkoutResponse.fromJson(Map<String, dynamic> json) {
@@ -187,6 +194,7 @@ class TodayWorkoutResponse {
       needsGeneration: json['needs_generation'] as bool? ?? false,
       nextWorkoutDate: json['next_workout_date'] as String?,
       gymProfileId: json['gym_profile_id'] as String?,
+      lastGenerationError: json['last_generation_error'] as String?,
     );
   }
 
@@ -205,5 +213,40 @@ class TodayWorkoutResponse {
         'needs_generation': needsGeneration,
         'next_workout_date': nextWorkoutDate,
         'gym_profile_id': gymProfileId,
+        if (lastGenerationError != null)
+          'last_generation_error': lastGenerationError,
       };
+
+  TodayWorkoutResponse copyWith({
+    bool? hasWorkoutToday,
+    TodayWorkoutSummary? todayWorkout,
+    TodayWorkoutSummary? nextWorkout,
+    int? daysUntilNext,
+    String? restDayMessage,
+    bool? completedToday,
+    TodayWorkoutSummary? completedWorkout,
+    List<TodayWorkoutSummary>? extraTodayWorkouts,
+    bool? isGenerating,
+    String? generationMessage,
+    bool? needsGeneration,
+    String? nextWorkoutDate,
+    String? gymProfileId,
+    String? lastGenerationError,
+  }) =>
+      TodayWorkoutResponse(
+        hasWorkoutToday: hasWorkoutToday ?? this.hasWorkoutToday,
+        todayWorkout: todayWorkout ?? this.todayWorkout,
+        nextWorkout: nextWorkout ?? this.nextWorkout,
+        daysUntilNext: daysUntilNext ?? this.daysUntilNext,
+        restDayMessage: restDayMessage ?? this.restDayMessage,
+        completedToday: completedToday ?? this.completedToday,
+        completedWorkout: completedWorkout ?? this.completedWorkout,
+        extraTodayWorkouts: extraTodayWorkouts ?? this.extraTodayWorkouts,
+        isGenerating: isGenerating ?? this.isGenerating,
+        generationMessage: generationMessage ?? this.generationMessage,
+        needsGeneration: needsGeneration ?? this.needsGeneration,
+        nextWorkoutDate: nextWorkoutDate ?? this.nextWorkoutDate,
+        gymProfileId: gymProfileId ?? this.gymProfileId,
+        lastGenerationError: lastGenerationError ?? this.lastGenerationError,
+      );
 }

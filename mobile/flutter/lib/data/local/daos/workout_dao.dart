@@ -63,4 +63,12 @@ class WorkoutDao extends DatabaseAccessor<AppDatabase>
     return (select(cachedWorkouts)..where((w) => w.id.equals(workoutId)))
         .getSingleOrNull();
   }
+
+  /// Wipe every cached workout row owned by [userId]. Called from the
+  /// sign-out orchestration so the outgoing account's plan cannot leak
+  /// into the next user's session on the same device. Other users' rows
+  /// are untouched (multi-account device support).
+  Future<int> clearForUser(String userId) {
+    return (delete(cachedWorkouts)..where((w) => w.userId.equals(userId))).go();
+  }
 }

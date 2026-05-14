@@ -316,6 +316,9 @@ class WeeklyPlanNotifier extends StateNotifier<WeeklyPlanState> {
 /// Weekly plan state provider
 final weeklyPlanProvider =
     StateNotifierProvider<WeeklyPlanNotifier, WeeklyPlanState>((ref) {
+  // Plan §6: recreate on user_id change so one user's plan isn't shown to
+  // another.
+  ref.watch(authStateProvider.select((s) => s.user?.id));
   return WeeklyPlanNotifier(
     ref.watch(weeklyPlanRepositoryProvider),
     ref,
