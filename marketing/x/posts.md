@@ -1123,3 +1123,74 @@ Stack: FastAPI on Render, Pydantic v2, Flutter, Supabase. Play Store resubmissio
 update: 1.2.67 queued. normalizer live. old gym profiles generating workouts again.
 
 ### 📝 END POST CONTENT
+
+---
+
+## 2026-05-15 — "empty-state regression at 11:42 PM — missing equality operator"
+
+**Status:** Drafted, not yet posted
+
+<details>
+<summary>🔬 Research log + plan (click to expand)</summary>
+
+**Research log (2026-05-15):**
+- Algo finding: Replies worth 150× likes; bookmarks carry 5× multiplier (weighted +10 vs +0.5 for likes). Threads get 3× total engagement vs single tweets. External links now severely suppressed — non-Premium accounts posting links get near-zero engagement since March 2026. Drop zealova.com in self-reply only. First-hour author replies are top individual ranking signal.
+- Hashtag finding: 1 tag — `#buildinpublic` woven into tweet 5 body sentence. Top evergreen tag for indie-hacker X lane, confirmed via AutoTweet + SocialBee May 2026 guides. 3+ tags = −17%; 5+ = −40% penalty. No second tag.
+- Trend hook hijack: Google launches $9.99/mo AI fitness coach (Gemini-powered via Fitbit rebrand to Google Health) on May 19, 2026 — 4 days away. Context woven into tweet 4 as David vs Goliath framing without hijacking the hook. The hook stays anchored to the human story: 11:42 PM commit, empty home screen, missing equality operator.
+- Anchored commits: `8f50dc5` (2026-05-13 23:42:08 -0500) "fix(home,auth,cache): empty-state regression on cold cold-open" + `1ef534c` (2026-05-13 23:44:13 -0500) "fix(refresh_home): drop bootstrap prefetch call". Narrative keywords: "regression", "cold cold-open".
+- Source links:
+  - https://opentweet.io/blog/how-twitter-x-algorithm-works-2026
+  - https://socialbee.com/blog/twitter-algorithm/
+  - https://www.autotweet.io/blog/best-hashtags-for-x-twitter-2026
+  - https://techcrunch.com/2026/05/07/googles-9-99-per-month-ai-health-coach-launches-may-19/
+  - https://adlibrary.com/guides/x-twitter-algorithm-explained
+
+**Plan:**
+- Day/time: Fri May 15, 2026 — 9–11am ET or 2–4pm ET
+- Hashtags: 1 tag — `#buildinpublic` woven into tweet 5 body
+- Stagger: 3+ days from any LinkedIn post on same topic
+- Pre-post warmup: 15 min commenting on #buildinpublic / #flutterdev threads before posting
+- Self-reply immediately after tweet 5 with zealova.com link
+- Quote-tweet tweet 1 ~2h later (fresh session): "update: home screen loads immediately now. users who got empty state last week — this is the commit that fixed it."
+- First-hour: reply to every comment within 5 min; tweet 2 (the AuthState churn chain) is bookmark-bait for Flutter/Riverpod devs; tweet 4 (Google in 4 days) is discussion-bait for founders
+
+</details>
+
+### 📝 POST CONTENT BELOW — copy-paste this
+
+**1/** (104 chars)
+My app showed users an empty home screen for 10+ min after login. Backend was fine. Fixed at 11:42 PM. 🧵
+
+---
+
+**2/** (183 chars)
+Root cause: AuthState in Flutter/Riverpod had no == or hashCode. Every login event emitted a new object. Providers saw 'state changed' and disposed mid-fetch. Home landed on data([]).
+
+---
+
+**3/** (197 chars)
+The fix: add == and hashCode to AuthState (by user.id, status, errorMessage). Providers stop churning. Home loads instantly.
+
+One missing operator. 10 minutes of blank screen for every cold launch.
+
+---
+
+**4/** (171 chars)
+4 days from now Google launches a $9.99/mo AI fitness coach. I'm a solo dev. The product I shipped last night: users can actually see their workout when they open the app.
+
+---
+
+**5/** (176 chars)
+Building Zealova — AI fitness coach on Play Store. Flutter + Riverpod devs: audit your state classes for == and hashCode. Reply with your hardest cold-start bug. #buildinpublic
+
+---
+
+**Self-reply (post immediately after tweet 5):**
+Stack: Flutter/Riverpod, FastAPI on Render, Supabase, Gemini. Try Zealova: https://zealova.com
+
+---
+
+**Quote-tweet tweet 1 ~2h later (fresh session):**
+update: home screen loads immediately now. users who got empty state — this is the commit that fixed it.
+
+### 📝 END POST CONTENT
