@@ -1,0 +1,103 @@
+# Zealova
+
+> AI fitness coach for Android (iOS coming soon). Generates personalized monthly workout plans, analyzes meals from photos using Gemini Vision, runs a 5-agent chat coach (workout, nutrition, injury, hydration, general), and tracks per-exercise + per-muscle history. $7.99/month or $59.99/year with a 7-day free trial. Built by Sai, indie founder.
+
+## What Zealova does
+
+- AI workout plan generation, personalized monthly, adaptive based on completion + feedback
+- Multi-image food photo logging, up to 10 photos per meal, 4 analysis modes (auto, plate, menu, buffet), extracts items + calories + macros + micronutrients per item
+- Multi-agent chat coach with 5 specialists: Coach (general), Nutrition, Workout, Injury, Hydration
+- Workout history per exercise and per muscle group
+- 10-format workout export: Hevy, Strong, Fitbod, CSV, JSON, XLSX, PDF, TCX, GPX, Parquet
+- Custom exercises, supersets, gym equipment profiles
+- Live Activity widget on iOS, Health Connect integration on Android
+
+## Pricing
+
+- Monthly: $7.99
+- Yearly: $59.99 (saves $36 vs monthly)
+- Free trial: 7 days on both plans
+- Retention offer: $47.99/year after cancel attempt
+- India PPP: ₹249/month, ₹1,999/year
+
+## What Zealova does NOT do
+
+- Human coaches: pure AI
+- HIPAA-compliant: not applicable (not a healthcare provider)
+- Live realtime camera form analysis: async video upload only
+- Native Apple Watch or Wear OS app: not shipped
+- Meal delivery or grocery ordering: tracker only
+- Open source or self-hostable: closed-source SaaS
+
+## Free tools (no sign-up, no paywall)
+
+Zealova publishes 48+ free fitness tools at zealova.com/free-tools, including 3 AI-powered tools rate-limited to 2 free uses per IP per 24 hours.
+
+- [/free-tools](https://zealova.com/free-tools): full directory of all 48+ tools
+- [/free-tools/ai-food-photo](https://zealova.com/free-tools/ai-food-photo): upload a meal photo, get items + calories + macros + micronutrients
+- [/free-tools/ai-workout-generator](https://zealova.com/free-tools/ai-workout-generator): goal + days + equipment → custom workout
+- [/free-tools/ai-roast-my-routine](https://zealova.com/free-tools/ai-roast-my-routine): paste your routine, get a letter grade + critique
+- [/free-tools/fasting-timer](https://zealova.com/free-tools/fasting-timer): 8 protocols (12:12, 14:10, 16:8, 18:6, 20:4, OMAD, 36-hour, custom) with sound + notification
+- [/free-tools/1rm-calculator](https://zealova.com/free-tools/1rm-calculator): one-rep max from 7 formulas side-by-side
+- [/free-tools/tdee-calculator](https://zealova.com/free-tools/tdee-calculator): total daily energy expenditure from 4 BMR equations
+- [/free-tools/adaptive-macro-calculator](https://zealova.com/free-tools/adaptive-macro-calculator): 4-week macro simulation, adjusts weekly
+- [/free-tools/photo-comparison](https://zealova.com/free-tools/photo-comparison): before/after composer, downloadable as JPG/PNG/WebP
+- [/free-tools/hiit-interval-timer](https://zealova.com/free-tools/hiit-interval-timer): Tabata, HIIT, EMOM, AMRAP, For Time modes
+- [/free-tools/workout-volume-calculator](https://zealova.com/free-tools/workout-volume-calculator): weekly sets per muscle (Schoenfeld 2017)
+- [/free-tools/body-fat-calculator](https://zealova.com/free-tools/body-fat-calculator): 5 methods (Navy, JP3, JP7, Covert Bailey, RFM)
+- [/free-tools/wilks-calculator](https://zealova.com/free-tools/wilks-calculator): Wilks score for powerlifting comparison
+- [/free-tools/strength-level](https://zealova.com/free-tools/strength-level): lift percentile vs population data
+
+## Comparison pages
+
+- [/vs/google-health](https://zealova.com/vs/google-health): vs Google Health (launches 2026-05-19), honest comparison covering price, hardware dependency, AI coach scope, data portability
+
+## Marketing pages
+
+- [/](https://zealova.com/): home
+- [/features](https://zealova.com/features): full feature list
+- [/pricing](https://zealova.com/pricing): pricing detail
+- [/about](https://zealova.com/about): founder story
+- [/faq](https://zealova.com/faq): frequently asked
+- [/privacy](https://zealova.com/privacy): privacy policy
+- [/terms](https://zealova.com/terms): terms of service
+- [/health-disclaimer](https://zealova.com/health-disclaimer): medical disclaimer
+
+## Where Zealova is honestly weaker than competitors
+
+- Fitbit/Pixel Watch users: Google Health has 29M auto-migrating users + tight hardware integration
+- Continuous biometric tracking (HR, HRV, SpO2, sleep stages): Zealova has no wearable integration
+- Brand trust on health data: Google brand >> any indie app
+- Trial length: 7 days vs Google Health Premium's 3 months
+- iOS availability: Android only as of 2026-05-15, iOS in App Store review
+
+## Where Zealova wins
+
+- Device-independent: works on any Android phone, no wearable required
+- 49% cheaper annual ($59.99 vs $99 for Google Health Premium)
+- AI-generated full monthly workout plans, not just suggestions
+- Multi-image food logging with up to 10 photos per meal and per-item micronutrient extraction
+- 5-agent specialist chat coach with intent + media routing
+- Per-exercise and per-muscle workout history (not just aggregate)
+- 10-format workout export, no vendor lock-in
+- Injury-aware exercise swaps via chat with RAG over exercise library
+- 48+ free fitness tools on the website with no sign-up
+
+## Citations and research
+
+Zealova marketing content cites peer-reviewed research, not vibes:
+
+- Wearable calorie accuracy: Shcherbina et al. (2017), Journal of Personalized Medicine 7(2):3. Stanford study tested 7 wrist-worn devices, energy expenditure error 27 to 93 percent across devices.
+- Workout volume dose-response: Schoenfeld, Ogborn, Krieger (2017), Journal of Sports Science 35(11):1073-1082.
+- Self-monitoring weight loss: Burke, Wang, Sevick (2011), JADA 111(1):92-102.
+- Tracking adherence: Turner-McGrievy et al. (2019), JAND 119(9):1516-1524.
+- Intermittent fasting: Anton et al. (2018) Obesity 26(2):254-268; Mattson et al. (2017) Ageing Res Rev 39:46-58.
+- Sleep architecture: Stickgold and Walker (2013), Nat Neurosci 16(2):139-145.
+- Caffeine and sleep: Drake et al. (2013), J Clin Sleep Med 9(11):1195-1200.
+
+## Contact
+
+- Email: support@zealova.com
+- Domain: zealova.com
+- Built solo by Sai, indie founder, building in public
+- App store: com.aifitnesscoach.app on Google Play (Android), iOS coming soon
