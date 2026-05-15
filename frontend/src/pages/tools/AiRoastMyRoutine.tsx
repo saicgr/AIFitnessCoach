@@ -8,8 +8,8 @@
 
 import { useMemo, useState } from 'react';
 import CalculatorShell from '../../components/tools/CalculatorShell';
+import RateLimitModal from '../../components/tools/RateLimitModal';
 import EmailCapture from '../../components/tools/EmailCapture';
-import InstallCta from '../../components/tools/InstallCta';
 import MethodologyFooter from '../../components/tools/MethodologyFooter';
 import { callAiTool, isRateLimitError, type RateLimitError } from '../../lib/aiToolsClient';
 
@@ -87,6 +87,8 @@ export default function AiRoastMyRoutine() {
       title="Roast My Workout Routine"
       metaDescription="Free AI roast for your workout routine. Paste your weekly split, pick spicy or constructive, get a letter-grade verdict and brutally honest feedback. No sign-up."
       intro="Paste your weekly routine below. We'll grade it, list what's working, what's not, and either roast it or coach it. Your call."
+      installPrimary="Get a routine Zealova actually generated."
+      installSecondary="No roast required. Personalized, progressive, and updated weekly based on what you actually do."
       emailCaptureResult={
         result
           ? {
@@ -190,6 +192,13 @@ export default function AiRoastMyRoutine() {
       )}
 
       {rateLimit && <RateLimitCard err={rateLimit} />}
+      <RateLimitModal
+        open={!!rateLimit}
+        onClose={() => setRateLimit(null)}
+        slug="ai-roast-my-routine"
+        toolName="routine roast"
+        resetWindow="24 hours"
+      />
 
       {error && (
         <div className="rounded-xl border border-red-500/30 bg-red-500/5 px-4 py-3 text-sm text-red-300">
@@ -231,12 +240,6 @@ export default function AiRoastMyRoutine() {
           </p>
         </section>
       )}
-
-      <InstallCta
-        slug="ai-roast-my-routine"
-        primary="Get a routine Zealova actually generated."
-        secondary="No roast required. Personalized, progressive, and updated weekly based on what you actually do."
-      />
 
       <MethodologyFooter
         citations={[

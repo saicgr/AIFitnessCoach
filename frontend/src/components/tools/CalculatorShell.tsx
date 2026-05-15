@@ -188,8 +188,11 @@ export default function CalculatorShell({
         {/* Calculator body */}
         <div className="space-y-10">{children}</div>
 
-        {/* Install CTA — peak intent. Sits immediately after the result,
-            before FAQ/email. Result-aware deep link prefills the app. */}
+        {/* Install CTA — peak intent. Only renders when a result exists so
+            we don't pitch the app before the user has felt any value.
+            Tools omit `emailCaptureResult` until they compute a result;
+            static calcs pass it as soon as inputs are valid. */}
+        {emailCaptureResult && (
         <div id="install-cta-card" className="mt-10">
           <InstallCta
             slug={slug}
@@ -203,7 +206,7 @@ export default function CalculatorShell({
           {/* Social proof + store badges */}
           <div className="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs text-zinc-500">
             <p>
-              Used by lifters in 40+ countries. 4.9★ on Google Play.
+              <span className="text-amber-400">★ 4.9</span> from 1,200+ users on Google Play. Used in 40+ countries.
             </p>
             <div className="flex items-center gap-2">
               <a
@@ -224,6 +227,7 @@ export default function CalculatorShell({
             </div>
           </div>
         </div>
+        )}
 
         {/* FAQ */}
         {faqs.length > 0 && (

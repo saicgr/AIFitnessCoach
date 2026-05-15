@@ -7,8 +7,8 @@
 
 import { useState } from 'react';
 import CalculatorShell from '../../components/tools/CalculatorShell';
+import RateLimitModal from '../../components/tools/RateLimitModal';
 import EmailCapture from '../../components/tools/EmailCapture';
-import InstallCta from '../../components/tools/InstallCta';
 import MethodologyFooter from '../../components/tools/MethodologyFooter';
 import { callAiTool, isRateLimitError, type RateLimitError } from '../../lib/aiToolsClient';
 
@@ -110,6 +110,8 @@ export default function AiWorkoutGenerator() {
       title="Free AI Workout Generator"
       metaDescription="Free AI-powered workout generator. Pick your goal, days per week, equipment, and get a structured session with warm-up, working sets, and cooldown. No sign-up."
       intro="Tell us your goal, how long you have, and what equipment you can reach. We'll build a complete session with warm-up, working sets, and cooldown. No account needed."
+      installPrimary="Zealova generates this every day."
+      installSecondary="Auto-progression. Adaptive to your training history. Built around what you have and how you recovered last week."
       emailCaptureResult={
         result
           ? {
@@ -290,6 +292,13 @@ export default function AiWorkoutGenerator() {
       )}
 
       {rateLimit && <RateLimitCard err={rateLimit} />}
+      <RateLimitModal
+        open={!!rateLimit}
+        onClose={() => setRateLimit(null)}
+        slug="ai-workout-generator"
+        toolName="workout generation"
+        resetWindow="24 hours"
+      />
 
       {error && (
         <div className="rounded-xl border border-red-500/30 bg-red-500/5 px-4 py-3 text-sm text-red-300">
@@ -344,12 +353,6 @@ export default function AiWorkoutGenerator() {
           </p>
         </section>
       )}
-
-      <InstallCta
-        slug="ai-workout-generator"
-        primary="Zealova generates this every day."
-        secondary="Auto-progression. Adaptive to your training history. Built around what you have and how you recovered last week."
-      />
 
       <MethodologyFooter
         citations={[

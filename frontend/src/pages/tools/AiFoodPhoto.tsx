@@ -11,8 +11,8 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import CalculatorShell from '../../components/tools/CalculatorShell';
+import RateLimitModal from '../../components/tools/RateLimitModal';
 import EmailCapture from '../../components/tools/EmailCapture';
-import InstallCta from '../../components/tools/InstallCta';
 import MethodologyFooter from '../../components/tools/MethodologyFooter';
 import { callAiTool, isRateLimitError, type RateLimitError } from '../../lib/aiToolsClient';
 
@@ -156,6 +156,8 @@ export default function AiFoodPhoto() {
       title="AI Food Photo Analyzer"
       metaDescription="Free AI food photo analyzer. Snap any meal, get calories, macros, micros, glycemic load, and a health grade in seconds. Powered by Google Gemini. No sign-up. 2 free scans per day."
       intro="Snap a photo of any meal. Our AI identifies the foods, estimates portions, and breaks down calories, macros, micros, glycemic load, and a health grade. No sign-up, no email. Just answers."
+      installPrimary="This is your daily Zealova. Photo every meal."
+      installSecondary="Zealova logs every scan to your nutrition history, learns your portion patterns, and adjusts your daily targets automatically."
       emailCaptureResult={
         result
           ? {
@@ -262,6 +264,13 @@ export default function AiFoodPhoto() {
 
       {/* Rate limit */}
       {rateLimit && <RateLimitCard err={rateLimit} />}
+      <RateLimitModal
+        open={!!rateLimit}
+        onClose={() => setRateLimit(null)}
+        slug="ai-food-photo"
+        toolName="food photo"
+        resetWindow="24 hours"
+      />
 
       {/* Error */}
       {error && (
@@ -272,12 +281,6 @@ export default function AiFoodPhoto() {
 
       {/* Results */}
       {result && <ResultsView result={result} preview={preview} />}
-
-      <InstallCta
-        slug="ai-food-photo"
-        primary="This is your daily Zealova. Photo every meal."
-        secondary="Zealova logs every scan to your nutrition history, learns your portion patterns, and adjusts your daily targets automatically."
-      />
 
       <MethodologyFooter
         citations={[

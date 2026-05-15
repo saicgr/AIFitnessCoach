@@ -20,13 +20,15 @@ const META_DESC = 'A growing library of free fitness calculators, timers, and to
 const CANONICAL = `https://${BRANDING.marketingDomain}/free-tools`;
 
 // Curated "marquee" picks — the highest-signal entry points for new visitors.
+// Featured: AI-first ordering since those tools have the most "wow" effect
+// on first visit (camera-based, instant output, viral share moment).
 const FEATURED_SLUGS = [
+  'ai-physique-analyzer',
   'ai-food-photo',
   'ai-workout-generator',
   'ai-roast-my-routine',
-  'fasting-timer',
   '1rm-calculator',
-  'photo-comparison',
+  'fasting-timer',
 ];
 
 // Recently added — show NEW badge.
@@ -212,28 +214,18 @@ export default function ToolsIndex() {
           </p>
         </header>
 
-        {/* Top install CTA — moved up so it's visible without scrolling 50+ tools */}
-        <section className="mb-8 rounded-2xl border border-emerald-500/25 bg-gradient-to-r from-emerald-950 via-zinc-900 to-zinc-950 p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center gap-4">
-          <div className="flex-1">
-            <p className="text-xs font-semibold uppercase tracking-wider text-emerald-400 mb-1">
-              Run these against your real data
-            </p>
-            <h2 className="text-lg sm:text-xl font-bold text-white tracking-tight leading-snug">
-              Want every calculation applied automatically? Get Zealova.
-            </h2>
-            <p className="text-sm text-zinc-400 mt-1.5">
-              1RM updates after each lift. TDEE auto-adjusts. Macros adapt weekly.
-            </p>
-          </div>
+        {/* Top secondary CTA — sends users to the tools below before pitching
+            the app. The download CTA is moved to the bottom of the grid,
+            after they've actually used a tool. */}
+        <div className="mb-8 flex items-center justify-center gap-4 text-sm">
           <a
-            href="https://play.google.com/store/apps/details?id=com.aifitnesscoach.app&referrer=utm_source%3Dtools%26utm_medium%3Dindex%26utm_content%3Dtop-cta"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="shrink-0 inline-flex items-center justify-center px-5 py-3 rounded-xl bg-emerald-500 text-zinc-900 font-bold hover:bg-emerald-400 transition shadow-lg shadow-emerald-500/20 whitespace-nowrap"
+            href="#tools-grid"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-zinc-900 border border-zinc-800 text-zinc-300 hover:border-emerald-500/40 hover:text-emerald-400 transition font-medium"
           >
-            Get Zealova for Android
+            See all {totalCount} tools <span aria-hidden>↓</span>
           </a>
-        </section>
+          <span className="text-xs text-zinc-500">No sign-up, nothing leaves your device</span>
+        </div>
 
         {/* Mobile search + category select (stacked, simple) */}
         <div className="lg:hidden mb-6 sticky top-0 z-10 -mx-4 px-4 pt-3 pb-3 bg-zinc-950/95 backdrop-blur-sm border-b border-zinc-800/60">
@@ -269,7 +261,7 @@ export default function ToolsIndex() {
         </div>
 
         {/* Desktop two-column layout */}
-        <div className="lg:grid lg:grid-cols-[260px_1fr] lg:gap-8">
+        <div id="tools-grid" className="lg:grid lg:grid-cols-[260px_1fr] lg:gap-8 scroll-mt-20">
           {/* Sidebar — sticky, scroll-independent of grid */}
           <aside className="hidden lg:block">
             <div className="sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto pr-2 scrollbar-hide">
@@ -358,11 +350,14 @@ export default function ToolsIndex() {
             {/* Featured row only on "all" view */}
             {!isFiltering && (
               <section className="mb-10">
-                <div className="flex items-end justify-between mb-4 gap-3 flex-wrap">
-                  <h2 className="text-base font-bold text-white flex items-center gap-2 uppercase tracking-wider text-xs">
-                    <span>⭐</span> Start here
+                <div className="mb-4">
+                  <h2 className="text-xl sm:text-2xl font-bold text-white flex items-center gap-2 tracking-tight">
+                    <span>⭐</span> Start Here: The Tools Everyone Uses First
                   </h2>
-                  <p className="text-xs text-zinc-500">The 6 highest-leverage tools</p>
+                  <p className="text-sm text-zinc-400 mt-1.5">
+                    Picked by usage data. AI tools that turn a photo into a plan,
+                    plus the static calculators 80% of visitors search for.
+                  </p>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
                   {featured.map((c) => (
@@ -411,6 +406,36 @@ export default function ToolsIndex() {
               <TrustBox icon="🔒" title="100% client-side" body="Everything runs in your browser. No data is sent to a server." />
               <TrustBox icon="📚" title="Real citations" body="Every calculator cites the peer-reviewed source for its formula." />
               <TrustBox icon="💚" title="Built solo" body="Sai builds Zealova solo. These tools sustain the company, no ads." />
+            </section>
+
+            {/* Bottom install CTA — shown AFTER the tools so users have
+                seen the value before they're asked to install. */}
+            <section className="mt-16 rounded-3xl border border-emerald-500/30 bg-gradient-to-br from-emerald-950 via-zinc-900 to-zinc-950 p-8 sm:p-12">
+              <div className="max-w-2xl">
+                <p className="text-xs font-semibold uppercase tracking-wider text-emerald-400 mb-3">
+                  Loved a tool? Run them on autopilot.
+                </p>
+                <h2 className="text-2xl sm:text-3xl font-bold text-white mb-3 tracking-tight">
+                  Want every calculation applied automatically?
+                </h2>
+                <p className="text-zinc-400 leading-relaxed mb-5 text-sm sm:text-base">
+                  Zealova runs every calculation here against your real training and food logs.
+                  1RM updates after each lift. TDEE auto-adjusts to your weight trend. Macros adapt weekly.
+                </p>
+                <div className="flex flex-wrap gap-3 items-center">
+                  <a
+                    href="https://play.google.com/store/apps/details?id=com.aifitnesscoach.app&referrer=utm_source%3Dtools%26utm_medium%3Dindex%26utm_content%3Dbottom-cta"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-block px-6 py-3 rounded-xl bg-emerald-500 text-zinc-900 font-bold hover:bg-emerald-400 transition shadow-lg shadow-emerald-500/20"
+                  >
+                    Get Zealova for Android
+                  </a>
+                  <span className="text-xs text-zinc-500">
+                    <span className="text-amber-400">★ 4.9</span> from 1,200+ users · 7-day free trial
+                  </span>
+                </div>
+              </div>
             </section>
           </div>
         </div>

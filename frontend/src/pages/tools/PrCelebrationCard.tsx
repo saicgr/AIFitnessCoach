@@ -5,6 +5,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import CalculatorShell from '../../components/tools/CalculatorShell';
+import TagUsNudge from '../../components/tools/TagUsNudge';
 import InstallCta from '../../components/tools/InstallCta';
 import MethodologyFooter from '../../components/tools/MethodologyFooter';
 
@@ -273,6 +274,7 @@ export default function PrCelebrationCard() {
         ]}
         lastUpdated="2026-05-14"
       />
+    <TagUsNudge />
     </CalculatorShell>
   );
 }

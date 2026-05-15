@@ -12,8 +12,8 @@
 
 import { useCallback, useState } from 'react';
 import CalculatorShell from '../../components/tools/CalculatorShell';
+import RateLimitModal from '../../components/tools/RateLimitModal';
 import EmailCapture from '../../components/tools/EmailCapture';
-import InstallCta from '../../components/tools/InstallCta';
 import MethodologyFooter from '../../components/tools/MethodologyFooter';
 import ResultHero from '../../components/tools/ResultHero';
 import {
@@ -97,6 +97,8 @@ export default function AiPhysiqueAnalyzer() {
       title="AI Physique Analyzer + 4-Week Program"
       metaDescription="Upload a torso photo. AI estimates body fat, identifies muscle strengths and weaknesses, and builds a 4-week program targeting your weak points. No sign-up. Free."
       intro="Upload a front-facing torso photo. Our AI estimates your body-fat range, classifies your somatotype, identifies the muscle groups holding you back, and builds a deterministic 4-week program targeting them. Empowering and analytical. No body shaming, no medical claims."
+      installPrimary="Track this analysis over time in Zealova."
+      installSecondary="Zealova logs every progress photo, runs the analyzer monthly, and shows your muscle-balance evolution so you can see whether the program is actually working."
       emailCaptureResult={
         result
           ? {
@@ -212,6 +214,13 @@ export default function AiPhysiqueAnalyzer() {
 
       {/* Rate limit */}
       {rateLimit && <RateLimitCard err={rateLimit} />}
+      <RateLimitModal
+        open={!!rateLimit}
+        onClose={() => setRateLimit(null)}
+        slug="ai-physique-analyzer"
+        toolName="physique analysis"
+        resetWindow="1 hour"
+      />
 
       {/* Error — actionable, NOT generic. */}
       {error && (
@@ -222,12 +231,6 @@ export default function AiPhysiqueAnalyzer() {
 
       {/* Results */}
       {result && <ResultsView result={result} />}
-
-      <InstallCta
-        slug="ai-physique-analyzer"
-        primary="Track this analysis over time in Zealova."
-        secondary="Zealova logs every progress photo, runs the analyzer monthly, and shows your muscle-balance evolution so you can see whether the program is actually working."
-      />
 
       <MethodologyFooter
         citations={[
