@@ -26,6 +26,7 @@ from services.email_cancel_ladder import EmailCancelLadderMixin
 from services.email_engagement import EmailEngagementMixin
 from services.email_security import EmailSecurityMixin
 from services.email_lifetime import EmailLifetimeMixin
+from services.email_free_tools import EmailFreeToolsMixin
 
 logger = get_logger(__name__)
 
@@ -37,6 +38,7 @@ class EmailService(
     EmailEngagementMixin,
     EmailSecurityMixin,
     EmailLifetimeMixin,
+    EmailFreeToolsMixin,
 ):
     """Service for sending emails via Resend.
 

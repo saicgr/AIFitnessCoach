@@ -95,6 +95,10 @@ import HowToGetJacked from './pages/tools/HowToGetJacked';
 import HowToGetRipped from './pages/tools/HowToGetRipped';
 import HowToCutWithoutLosingMuscle from './pages/tools/HowToCutWithoutLosingMuscle';
 import AlcoholImpactCalculator from './pages/tools/AlcoholImpactCalculator';
+import WorkoutLogExporter from './pages/tools/WorkoutLogExporter';
+import WorkoutPlanBuilder from './pages/tools/WorkoutPlanBuilder';
+import CalorieDeficitTracker from './pages/tools/CalorieDeficitTracker';
+import SupplementStackAnalyzer from './pages/tools/SupplementStackAnalyzer';
 import GlossaryIndex from './pages/glossary';
 import GlossaryOneRm from './pages/glossary/OneRm';
 import GlossaryTdee from './pages/glossary/Tdee';
@@ -245,6 +249,10 @@ function App() {
         <Route path="/free-tools/how-to-get-ripped" element={<HowToGetRipped />} />
         <Route path="/free-tools/how-to-cut-without-losing-muscle" element={<HowToCutWithoutLosingMuscle />} />
         <Route path="/free-tools/alcohol-impact-calculator" element={<AlcoholImpactCalculator />} />
+        <Route path="/free-tools/workout-log-exporter" element={<WorkoutLogExporter />} />
+        <Route path="/free-tools/workout-plan-builder" element={<WorkoutPlanBuilder />} />
+        <Route path="/free-tools/calorie-deficit-tracker" element={<CalorieDeficitTracker />} />
+        <Route path="/free-tools/supplement-stack-analyzer" element={<SupplementStackAnalyzer />} />
         {/* Glossary pages — definition-style content, ranks for "what is X" + AI Overviews */}
         <Route path="/glossary" element={<GlossaryIndex />} />
         <Route path="/glossary/1rm" element={<GlossaryOneRm />} />

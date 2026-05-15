@@ -270,6 +270,43 @@ export const CALC_REGISTRY: CalcEntry[] = [
     competitor: 'Helms-style coaching ($150-400/mo), MASS Research Review',
     keywords: ['cut without losing muscle', 'muscle preservation diet', 'lift floor cut', 'protein floor cutting'],
   },
+  // New utility tools
+  {
+    slug: 'workout-log-exporter',
+    name: 'Workout Log Exporter',
+    description: 'Log workouts in a clean multi-row form. Export as CSV or print to PDF. Fully local, nothing uploaded. Built for lifters who want their own data.',
+    category: 'programs',
+    paidElsewhere: true,
+    competitor: 'Strong ($4.99/mo), Hevy Pro ($4.99/mo)',
+    keywords: ['workout log export', 'workout csv export', 'workout pdf', 'training log exporter', 'gym log to csv'],
+  },
+  {
+    slug: 'workout-plan-builder',
+    name: 'Workout Plan Builder',
+    description: '5-step wizard generates a 4-week training plan based on your goal, experience, equipment, and schedule. Volume calibrated to Schoenfeld hypertrophy research.',
+    category: 'programs',
+    paidElsewhere: true,
+    competitor: 'Jeff Nippard programs ($30-90), Boostcamp Premium ($9.99/mo)',
+    keywords: ['workout plan builder', 'free workout plan', 'training plan generator', '4 week program builder', 'gym plan generator'],
+  },
+  {
+    slug: 'calorie-deficit-tracker',
+    name: '7-Day Calorie Deficit Tracker',
+    description: 'Log daily intake and weight for a week. Auto-computes total deficit, average daily deficit, projected fat loss. Saves to your browser.',
+    category: 'nutrition',
+    paidElsewhere: true,
+    competitor: 'MyFitnessPal Premium ($19.99/mo), MacroFactor ($11.99/mo)',
+    keywords: ['calorie deficit tracker', 'deficit calculator', 'weekly deficit tracker', 'fat loss tracker', 'calorie diary'],
+  },
+  {
+    slug: 'supplement-stack-analyzer',
+    name: 'Supplement Stack Analyzer',
+    description: 'Paste your supplements. Get evidence tier, optimal timing, optimal dose, and PubMed citations per item. Flags redundancies, missing high-value supplements, and poor timing.',
+    category: 'nutrition',
+    paidElsewhere: true,
+    competitor: 'Examine.com+ ($29/mo), supplement coaching ($75-200)',
+    keywords: ['supplement stack analyzer', 'supplement review', 'supplement evidence tier', 'supplement timing', 'examine supplement guide'],
+  },
   // Protocol / programming-nutrition hybrid
   {
     slug: 'fat-loss-protocol-calculator',

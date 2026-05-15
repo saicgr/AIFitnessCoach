@@ -117,6 +117,10 @@ async function buildRouteList() {
     '/free-tools/how-to-cut-without-losing-muscle',
     '/free-tools/alcohol-impact-calculator',
     '/free-tools/ai-physique-analyzer',
+    '/free-tools/workout-log-exporter',
+    '/free-tools/workout-plan-builder',
+    '/free-tools/calorie-deficit-tracker',
+    '/free-tools/supplement-stack-analyzer',
   ];
   const toolRoutes = tools.map((s) => `/free-tools/${s}`);
   return [...staticRoutes, ...toolRoutes];
