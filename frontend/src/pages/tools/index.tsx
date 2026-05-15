@@ -380,9 +380,16 @@ function CalcCard({ calc, featured = false }: { calc: CalcEntry; featured?: bool
               New
             </span>
           )}
-          {calc.paidElsewhere && (
-            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-semibold uppercase tracking-wide">
+          {/* Every Zealova tool is free. Highlight the ones paid elsewhere
+              with the bolder "Free here" pill; show a quieter "Free" pill on
+              the rest so no tile reads as "maybe not free". */}
+          {calc.paidElsewhere ? (
+            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-semibold uppercase tracking-wide">
               Free here
+            </span>
+          ) : (
+            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-zinc-800 text-zinc-400 border border-zinc-700 font-semibold uppercase tracking-wide">
+              Free
             </span>
           )}
         </div>

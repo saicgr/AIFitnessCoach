@@ -13,6 +13,28 @@
     <meta property="og:title" content="%BRAND_FULL_TITLE%" />
     <meta property="og:site_name" content="%BRAND_NAME%" />
     <meta property="og:url" content="%BRAND_WEBSITE%/" />
+    <script>
+      // Pre-React theme + dark-only-route bootstrap. Avoids the light-flash
+      // when a user with theme=dark lands on a prerendered page that was
+      // built with theme=light, and forces dark-mode on tool/glossary/best/vs
+      // routes regardless of stored preference.
+      (function () {
+        try {
+          var path = window.location.pathname;
+          var darkOnly = /^(\/free-tools|\/glossary|\/best-|\/vs\/)/.test(path);
+          var stored = null;
+          try {
+            var raw = localStorage.getItem('fitness-coach-storage');
+            if (raw) {
+              var parsed = JSON.parse(raw);
+              stored = (parsed && parsed.state && parsed.state.theme) || null;
+            }
+          } catch (_) {}
+          var theme = darkOnly ? 'dark' : (stored || 'light');
+          if (theme === 'dark') document.documentElement.classList.add('dark-mode');
+        } catch (_) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

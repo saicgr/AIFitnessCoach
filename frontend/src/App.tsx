@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
+import ScrollToTop from './components/ScrollToTop';
 import { useAppStore } from './store';
 import { useAdminStore } from './store/adminStore';
 import { supabase } from './lib/supabase';
@@ -164,6 +165,7 @@ function App() {
 
   return (
     <>
+      <ScrollToTop />
       <Routes>
         {/* Marketing pages - public */}
         <Route path="/" element={<MarketingLanding />} />
