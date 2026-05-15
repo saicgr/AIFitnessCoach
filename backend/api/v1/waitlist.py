@@ -26,6 +26,7 @@ EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 ALLOWED_SOURCES = {
     "marketing_landing",
     "waitlist_page",
+    "free_tool",
     "twitter",
     "linkedin",
     "tiktok",

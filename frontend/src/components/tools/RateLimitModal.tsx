@@ -126,7 +126,7 @@ export default function RateLimitModal({
         </div>
 
         <p className="mt-5 text-[11px] text-zinc-600 text-center">
-          <span className="text-amber-400">★ 4.9</span> from 1,200+ users on Google Play
+          Live on Google Play. 7-day free trial, cancel anytime.
         </p>
       </div>
     </div>

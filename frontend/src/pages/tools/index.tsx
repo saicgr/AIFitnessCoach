@@ -451,7 +451,7 @@ export default function ToolsIndex() {
                     Get Zealova for Android
                   </a>
                   <span className="text-xs text-zinc-500">
-                    <span className="text-amber-400">★ 4.9</span> from 1,200+ users · 7-day free trial
+                    Live on Google Play · 7-day free trial · cancel anytime
                   </span>
                 </div>
               </div>

@@ -5,10 +5,12 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build && node scripts/prerender-if-local.mjs",
-    "build:spa": "tsc -b && vite build",
-    "build:ssg": "tsc -b && vite build && npm run prerender",
+    "build": "node scripts/generate-seo.mjs && node scripts/generate-og.mjs && tsc -b && vite build && node scripts/prerender-if-local.mjs",
+    "build:spa": "node scripts/generate-seo.mjs && node scripts/generate-og.mjs && tsc -b && vite build",
+    "build:ssg": "node scripts/generate-seo.mjs && node scripts/generate-og.mjs && tsc -b && vite build && npm run prerender",
     "prerender": "node scripts/prerender.mjs",
+    "seo": "node scripts/generate-seo.mjs",
+    "og": "node scripts/generate-og.mjs",
     "lint": "eslint .",
     "preview": "vite preview"
   },

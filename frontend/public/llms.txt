@@ -31,22 +31,71 @@
 
 ## Free tools (no sign-up, no paywall)
 
-Zealova publishes 48+ free fitness tools at zealova.com/free-tools, including 3 AI-powered tools rate-limited to 2 free uses per IP per 24 hours.
+Zealova publishes 62 free fitness tools and calculators at zealova.com/free-tools. Several are AI-powered (form check, food photo, physique analyzer, workout generator) and rate-limited per IP.
 
-- [/free-tools](https://zealova.com/free-tools): full directory of all 48+ tools
-- [/free-tools/ai-food-photo](https://zealova.com/free-tools/ai-food-photo): upload a meal photo, get items + calories + macros + micronutrients
-- [/free-tools/ai-workout-generator](https://zealova.com/free-tools/ai-workout-generator): goal + days + equipment → custom workout
-- [/free-tools/ai-roast-my-routine](https://zealova.com/free-tools/ai-roast-my-routine): paste your routine, get a letter grade + critique
-- [/free-tools/fasting-timer](https://zealova.com/free-tools/fasting-timer): 8 protocols (12:12, 14:10, 16:8, 18:6, 20:4, OMAD, 36-hour, custom) with sound + notification
-- [/free-tools/1rm-calculator](https://zealova.com/free-tools/1rm-calculator): one-rep max from 7 formulas side-by-side
-- [/free-tools/tdee-calculator](https://zealova.com/free-tools/tdee-calculator): total daily energy expenditure from 4 BMR equations
-- [/free-tools/adaptive-macro-calculator](https://zealova.com/free-tools/adaptive-macro-calculator): 4-week macro simulation, adjusts weekly
-- [/free-tools/photo-comparison](https://zealova.com/free-tools/photo-comparison): before/after composer, downloadable as JPG/PNG/WebP
-- [/free-tools/hiit-interval-timer](https://zealova.com/free-tools/hiit-interval-timer): Tabata, HIIT, EMOM, AMRAP, For Time modes
-- [/free-tools/workout-volume-calculator](https://zealova.com/free-tools/workout-volume-calculator): weekly sets per muscle (Schoenfeld 2017)
-- [/free-tools/body-fat-calculator](https://zealova.com/free-tools/body-fat-calculator): 5 methods (Navy, JP3, JP7, Covert Bailey, RFM)
-- [/free-tools/wilks-calculator](https://zealova.com/free-tools/wilks-calculator): Wilks score for powerlifting comparison
-- [/free-tools/strength-level](https://zealova.com/free-tools/strength-level): lift percentile vs population data
+- [/free-tools](https://zealova.com/free-tools): full directory of all 62 tools
+- [/free-tools/ai-form-check](https://zealova.com/free-tools/ai-form-check): Upload a video of your squat, bench, or deadlift. AI extracts keyframes and returns rep-by-rep form analysis: overall score, fault detection with severity, rep count, and concrete fix cues scored against NSCA and Starting Strength standards. 3 free checks per day.
+- [/free-tools/ai-food-photo](https://zealova.com/free-tools/ai-food-photo): Photograph any meal. Gemini Vision identifies foods and estimates calories, macros, and micronutrients per item. 2 free scans per day.
+- [/free-tools/ai-workout-generator](https://zealova.com/free-tools/ai-workout-generator): Pick a goal, days, and equipment. Get a custom-generated workout with warm-up, main work, and cooldown. 2 free workouts per day.
+- [/free-tools/ai-physique-analyzer](https://zealova.com/free-tools/ai-physique-analyzer): Upload a torso photo. Gemini Vision estimates body fat, classifies somatotype, identifies muscle strengths and weaknesses, and builds a 4-week NSCA-guided program targeting your weak points. 10 free analyses per hour.
+- [/free-tools/ai-roast-my-routine](https://zealova.com/free-tools/ai-roast-my-routine): Paste your training routine. AI critiques volume balance, frequency, gaps, and gives a letter grade. Spicy or constructive tone. 2 free roasts per day.
+- [/free-tools/photo-comparison](https://zealova.com/free-tools/photo-comparison): Side-by-side before/after composer with date, weight, and Zealova watermark. Download as JPG, PNG, or WebP. Nothing uploaded.
+- [/free-tools/pr-celebration-card](https://zealova.com/free-tools/pr-celebration-card): Drop your lift, weight, reps, and bodyweight. Download a share-ready PR card with confetti, gradient burst, and bodyweight ratio.
+- [/free-tools/streak-certificate](https://zealova.com/free-tools/streak-certificate): Diploma-style certificate for any fitness streak. Workouts, cutting, bulking, cardio. Print-friendly 1200×900 landscape.
+- [/free-tools/workout-summary-card](https://zealova.com/free-tools/workout-summary-card): TikTok and Reels ready 9:16 card with total volume, duration, and top 3 lifts. Hero volume number, gradient background.
+- [/free-tools/year-in-fitness-wrapped](https://zealova.com/free-tools/year-in-fitness-wrapped): Spotify-Wrapped style annual stats card with top 3 lifts, total volume, and body weight change. 1080×1920.
+- [/free-tools/lifter-personality-quiz](https://zealova.com/free-tools/lifter-personality-quiz): 10 questions, 8 archetypes. Power Princess, Volume Goblin, Form Nerd, more. Download a shareable result card with your split.
+- [/free-tools/fasting-timer](https://zealova.com/free-tools/fasting-timer): 8 protocols (12:12, 14:10, 16:8, 18:6, 20:4, OMAD, 36-hour, custom) with sound and notification when complete. Metabolic phase tracking. Resumes after tab close.
+- [/free-tools/1rm-calculator](https://zealova.com/free-tools/1rm-calculator): Estimate your one-rep max from any submaximal set. 7 formulas side-by-side.
+- [/free-tools/rir-rpe-converter](https://zealova.com/free-tools/rir-rpe-converter): Convert between Reps in Reserve, Rate of Perceived Exertion, and percentage of 1RM.
+- [/free-tools/plate-loader](https://zealova.com/free-tools/plate-loader): See exactly which plates to load on the bar to hit a target weight. Supports 45/35/25/15/10/5/2.5 lb and 25/20/15/10/5/2.5/1.25 kg plates.
+- [/free-tools/strength-level](https://zealova.com/free-tools/strength-level): See where your lifts rank against millions of others, by bodyweight and sex.
+- [/free-tools/wilks-calculator](https://zealova.com/free-tools/wilks-calculator): Calculate your Wilks score for comparing powerlifters across bodyweights.
+- [/free-tools/dots-calculator](https://zealova.com/free-tools/dots-calculator): Calculate DOTS score, the modern alternative to Wilks used outside the IPF.
+- [/free-tools/ipf-gl-calculator](https://zealova.com/free-tools/ipf-gl-calculator): Calculate IPF GL (Goodlift) points, the official IPF scoring system since 2020.
+- [/free-tools/schwartz-malone-calculator](https://zealova.com/free-tools/schwartz-malone-calculator): Calculate Schwartz-Malone score, the older sex-adjusted powerlifting formula.
+- [/free-tools/bmr-calculator](https://zealova.com/free-tools/bmr-calculator): Basal Metabolic Rate using all 4 major equations: Mifflin-St Jeor, Harris-Benedict, Katch-McArdle, Cunningham.
+- [/free-tools/tdee-calculator](https://zealova.com/free-tools/tdee-calculator): Total Daily Energy Expenditure. 4 BMR equations × 5 activity multipliers, all compared.
+- [/free-tools/body-fat-calculator](https://zealova.com/free-tools/body-fat-calculator): Estimate body fat using 5 methods: Navy, JP3, JP7, Covert Bailey, RFM.
+- [/free-tools/lean-body-mass-calculator](https://zealova.com/free-tools/lean-body-mass-calculator): Estimate your fat-free mass using Boer, James, and Hume formulas.
+- [/free-tools/bmi-calculator](https://zealova.com/free-tools/bmi-calculator): Body Mass Index with category, plus key caveats for muscular and athletic populations.
+- [/free-tools/ideal-weight-calculator](https://zealova.com/free-tools/ideal-weight-calculator): Estimate ideal body weight using Robinson, Miller, Devine, Hamwi, and BMI-range methods.
+- [/free-tools/healthy-weight-calculator](https://zealova.com/free-tools/healthy-weight-calculator): Find your healthy weight range based on BMI, age, and frame size.
+- [/free-tools/how-to-get-jacked](https://zealova.com/free-tools/how-to-get-jacked): Realistic 16-week hypertrophy plan with per-muscle weekly volume targets (Schoenfeld 2017), 1.6 to 2.2 g/kg protein, lean surplus, and Lyle McDonald natural gain curve.
+- [/free-tools/how-to-get-ripped](https://zealova.com/free-tools/how-to-get-ripped): Cut from your current body fat to your target with a science-based deficit, 1.1 g per pound protein, cardio dose, refeed schedule, and week-by-week loss curve.
+- [/free-tools/how-to-cut-without-losing-muscle](https://zealova.com/free-tools/how-to-cut-without-losing-muscle): Muscle preservation cutting protocol. Caps deficit at 500 cal, holds bench/squat/deadlift within 5%, cuts accessory volume first, schedules diet breaks every 7 weeks.
+- [/free-tools/workout-log-exporter](https://zealova.com/free-tools/workout-log-exporter): Log workouts in a clean multi-row form. Export as CSV or print to PDF. Fully local, nothing uploaded. Built for lifters who want their own data.
+- [/free-tools/workout-plan-builder](https://zealova.com/free-tools/workout-plan-builder): 5-step wizard generates a 4-week training plan based on your goal, experience, equipment, and schedule. Volume calibrated to Schoenfeld hypertrophy research.
+- [/free-tools/calorie-deficit-tracker](https://zealova.com/free-tools/calorie-deficit-tracker): Log daily intake and weight for a week. Auto-computes total deficit, average daily deficit, projected fat loss. Saves to your browser.
+- [/free-tools/supplement-stack-analyzer](https://zealova.com/free-tools/supplement-stack-analyzer): Paste your supplements. Get evidence tier, optimal timing, optimal dose, and PubMed citations per item. Flags redundancies, missing high-value supplements, and poor timing.
+- [/free-tools/fat-loss-protocol-calculator](https://zealova.com/free-tools/fat-loss-protocol-calculator): Variable-duration cut: maintenance × 15 minus 500, LBM-based protein, walking + alcohol bonuses, weekly weight projection. 4 to 26 weeks.
+- [/free-tools/macro-calculator](https://zealova.com/free-tools/macro-calculator): Calculate daily protein / carbs / fat targets based on goal, body weight, and activity.
+- [/free-tools/adaptive-macro-calculator](https://zealova.com/free-tools/adaptive-macro-calculator): 4-week macro simulation that adjusts weekly based on weight trend. Like MacroFactor, but free.
+- [/free-tools/adaptive-calorie-calculator](https://zealova.com/free-tools/adaptive-calorie-calculator): Recalculate your TDEE from 7 days of actual intake and weight change. Break diet plateaus.
+- [/free-tools/protein-per-meal-calculator](https://zealova.com/free-tools/protein-per-meal-calculator): Optimal protein split per meal based on 0.4-0.55 g/kg per meal research (Schoenfeld, Aragon).
+- [/free-tools/carb-cycling-calculator](https://zealova.com/free-tools/carb-cycling-calculator): High / medium / low carb day macros based on training schedule.
+- [/free-tools/alcohol-impact-calculator](https://zealova.com/free-tools/alcohol-impact-calculator): Translates drinks per week into MPS suppression, testosterone window, cortisol elevation, REM loss, and days delayed to next PR. Built on Parr 2014, Vingren 2013, Ebrahim 2013.
+- [/free-tools/calories-burned-calculator](https://zealova.com/free-tools/calories-burned-calculator): Estimate calories burned during exercise using MET values from the Compendium of Physical Activities.
+- [/free-tools/vo2-max-calculator](https://zealova.com/free-tools/vo2-max-calculator): Estimate VO2 max from 5 protocols: Cooper, 1.5-mile run, 12-min run, Bruce, Queens College step.
+- [/free-tools/pace-calculator](https://zealova.com/free-tools/pace-calculator): Convert between pace, speed, distance, and time for runs and rides.
+- [/free-tools/target-heart-rate-calculator](https://zealova.com/free-tools/target-heart-rate-calculator): Find your training heart rate zones using Karvonen, Tanaka, and Fox formulas.
+- [/free-tools/sweat-rate-calculator](https://zealova.com/free-tools/sweat-rate-calculator): Calculate hourly sweat rate and per-workout fluid needs from pre/post weight.
+- [/free-tools/workout-volume-calculator](https://zealova.com/free-tools/workout-volume-calculator): Recommended weekly sets per muscle group based on Schoenfeld 2017 dose-response research.
+- [/free-tools/mesocycle-volume-calculator](https://zealova.com/free-tools/mesocycle-volume-calculator): Plan a 4-6 week volume ramp for each muscle group, MEV to MAV to MRV.
+- [/free-tools/deload-week-calculator](https://zealova.com/free-tools/deload-week-calculator): Recommends deload timing and intensity based on accumulated weekly volume and training fatigue.
+- [/free-tools/cut-bulk-duration-calculator](https://zealova.com/free-tools/cut-bulk-duration-calculator): Estimate weeks needed for your cut or bulk given start/end body fat % and weekly deficit/surplus.
+- [/free-tools/tapering-calculator](https://zealova.com/free-tools/tapering-calculator): Powerlifting peak week tapering plan. Volume reduction schedule for meet day.
+- [/free-tools/workout-rest-timer](https://zealova.com/free-tools/workout-rest-timer): Between-sets countdown with audible beep, browser notification, vibration, and presets for strength, hypertrophy, endurance, and powerlifting.
+- [/free-tools/hiit-interval-timer](https://zealova.com/free-tools/hiit-interval-timer): Five modes in one: Tabata, custom HIIT, EMOM, AMRAP, For Time. Phase cues, vibration, browser notification.
+- [/free-tools/sleep-cycle-calculator](https://zealova.com/free-tools/sleep-cycle-calculator): Bedtime and wake time planner based on 90-minute sleep cycles, with a 15-minute fall-asleep buffer.
+- [/free-tools/workout-vibe-generator](https://zealova.com/free-tools/workout-vibe-generator): Pick a vibe, get a real workout. Ten vibes, ten complete training sessions, no signup.
+- [/free-tools/aesthetic-body-type-matcher](https://zealova.com/free-tools/aesthetic-body-type-matcher): Pick the physique you want, get the training principles, sample split, and timeline.
+- [/free-tools/cost-of-skipping-calculator](https://zealova.com/free-tools/cost-of-skipping-calculator): Lifetime cost of skipping the gym. Money, hours, muscle, VO2. Plus the motivational flip.
+- [/free-tools/caffeine-cutoff-calculator](https://zealova.com/free-tools/caffeine-cutoff-calculator): See how much caffeine is still in your system at bedtime, and the latest you can drink coffee for clean sleep. Pharmacokinetic decay model.
+- [/free-tools/recipe-scaler](https://zealova.com/free-tools/recipe-scaler): Scale any recipe up or down by servings. Paste an ingredient list, get scaled quantities. Includes a cooking-measurement converter.
+- [/free-tools/should-i-train-today](https://zealova.com/free-tools/should-i-train-today): Five-question decision tool that tells you whether to train, modify, or rest today. Scores sleep, soreness, stress, frequency, and fueling.
+- [/free-tools/workout-buddy-compatibility](https://zealova.com/free-tools/workout-buddy-compatibility): Eight questions, one shareable compatibility code. Compare codes with a friend to see if you would survive lifting together.
+- [/free-tools/marathon-plan-generator](https://zealova.com/free-tools/marathon-plan-generator): Free week-by-week marathon training plan tailored to your race date, goal time, mileage, and experience. Base, build, peak, taper.
 
 ## Comparison pages
 

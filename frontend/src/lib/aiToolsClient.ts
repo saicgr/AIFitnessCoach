@@ -309,3 +309,65 @@ export async function fetchToolUsageCounts(): Promise<Record<string, number>> {
     return {};
   }
 }
+
+// ---------------------------------------------------------------------------
+// iOS waitlist — wired from InstallCta + ExitIntentCapture iOS path.
+// ---------------------------------------------------------------------------
+
+export interface WaitlistResponse {
+  success: boolean;
+  already_joined: boolean;
+  message: string;
+}
+
+/**
+ * Join the iOS launch waitlist. Posts to the real /api/v1/waitlist endpoint
+ * (Supabase row + Resend confirmation email). source 'free_tool' so waitlist
+ * analytics can separate tool-driven iOS demand from the landing page.
+ */
+export async function submitWaitlist(
+  email: string,
+  toolSlug?: string,
+): Promise<WaitlistResponse> {
+  const res = await fetch(`${ROOT}/api/v1/waitlist/`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      email,
+      source: 'free_tool',
+      platform_interest: 'ios',
+      ...(toolSlug ? { referrer_detail: toolSlug } : {}),
+    }),
+  });
+
+  if (!res.ok && res.status !== 409) {
+    let detail = '';
+    try {
+      const d = await res.json();
+      detail = typeof d?.detail === 'string' ? d.detail : '';
+    } catch {
+      /* ignore */
+    }
+    throw new Error(detail || `Could not join the waitlist (${res.status}).`);
+  }
+
+  // 409 = already on the list; the endpoint also returns a 200 already_joined
+  // shape. Normalize both to a friendly success.
+  try {
+    const data = await res.json();
+    return {
+      success: true,
+      already_joined: Boolean(data?.already_joined) || res.status === 409,
+      message:
+        typeof data?.message === 'string'
+          ? data.message
+          : "You're on the iOS waitlist. We'll email you at launch.",
+    };
+  } catch {
+    return {
+      success: true,
+      already_joined: res.status === 409,
+      message: "You're on the iOS waitlist. We'll email you at launch.",
+    };
+  }
+}

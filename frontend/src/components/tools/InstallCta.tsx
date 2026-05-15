@@ -8,6 +8,7 @@
 // result on the workout-edit screen.
 
 import { useState } from 'react';
+import { submitWaitlist } from '../../lib/aiToolsClient';
 
 interface InstallCtaProps {
   slug: string;
@@ -28,6 +29,9 @@ export default function InstallCta({
 }: InstallCtaProps) {
   const [iosEmail, setIosEmail] = useState('');
   const [iosSubmitted, setIosSubmitted] = useState(false);
+  const [iosSubmitting, setIosSubmitting] = useState(false);
+  const [iosMessage, setIosMessage] = useState<string | null>(null);
+  const [iosError, setIosError] = useState<string | null>(null);
   const isIos =
     typeof navigator !== 'undefined' &&
     /iPad|iPhone|iPod/.test(navigator.userAgent);
@@ -60,10 +64,21 @@ export default function InstallCta({
     }
   };
 
-  const handleIosSubmit = (e: React.FormEvent) => {
+  const handleIosSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIosSubmitted(true);
-    // TODO: wire to /api/waitlist endpoint when backend supports it.
+    setIosSubmitting(true);
+    setIosError(null);
+    try {
+      const res = await submitWaitlist(iosEmail.trim(), slug);
+      setIosMessage(res.message);
+      setIosSubmitted(true);
+    } catch (err) {
+      setIosError(
+        err instanceof Error ? err.message : 'Could not join. Try again.',
+      );
+    } finally {
+      setIosSubmitting(false);
+    }
   };
 
   if (isIos) {
@@ -73,7 +88,9 @@ export default function InstallCta({
         <p className="text-base text-white font-bold mb-2">{primary}</p>
         {secondary && <p className="text-sm text-zinc-400 mb-4">{secondary}</p>}
         {iosSubmitted ? (
-          <p className="text-sm text-emerald-400">You're on the iOS waitlist. We'll email you at launch.</p>
+          <p className="text-sm text-emerald-400">
+            {iosMessage || "You're on the iOS waitlist. We'll email you at launch."}
+          </p>
         ) : (
           <form onSubmit={handleIosSubmit} className="flex gap-2 flex-col sm:flex-row">
             <input
@@ -86,12 +103,14 @@ export default function InstallCta({
             />
             <button
               type="submit"
-              className="px-4 py-2 rounded-lg bg-emerald-500 text-zinc-900 text-sm font-semibold hover:bg-emerald-400 transition"
+              disabled={iosSubmitting}
+              className="px-4 py-2 rounded-lg bg-emerald-500 text-zinc-900 text-sm font-semibold hover:bg-emerald-400 disabled:opacity-60 transition"
             >
-              Notify me
+              {iosSubmitting ? 'Joining...' : 'Notify me'}
             </button>
           </form>
         )}
+        {iosError && <p className="text-xs text-red-400 mt-2">{iosError}</p>}
       </div>
     );
   }

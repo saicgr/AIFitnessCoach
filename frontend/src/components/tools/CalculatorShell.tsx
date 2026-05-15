@@ -63,12 +63,14 @@ export default function CalculatorShell({
 }: CalculatorShellProps) {
   const calc = findCalc(slug);
   const canonical = `https://${BRANDING.marketingDomain}/free-tools/${slug}`;
-  // Static brand OG image. Dynamic per-result share images are queued for
-  // a future Sprint once Vercel's edge bundler ships in our local CLI; the
-  // package vs. bundler dance was eating more time than its virality lift.
+  // Per-tool OG image. scripts/generate-og.mjs renders a branded 1200x630
+  // card per tool at build time into public/og/tools/<slug>.png, so a
+  // shared tool link shows the right preview (not the old hardcoded Google
+  // Health card). Per-RESULT dynamic images would need an edge function;
+  // the per-tool card is the reliable, bundler-free fix.
   void ogHeadline;
   void ogResult;
-  const ogImage = `https://${BRANDING.marketingDomain}/screenshots/og-google-health-vs.png`;
+  const ogImage = `https://${BRANDING.marketingDomain}/og/tools/${slug}.png`;
 
   useEffect(() => {
     document.title = `${title} | Zealova`;
@@ -222,7 +224,7 @@ export default function CalculatorShell({
           {/* Social proof + store badges */}
           <div className="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs text-zinc-500">
             <p>
-              <span className="text-amber-400">★ 4.9</span> from 1,200+ users on Google Play. Used in 40+ countries.
+              Free. No sign-up. Live on Google Play, with a 7-day free trial.
             </p>
             <div className="flex items-center gap-2">
               <a
