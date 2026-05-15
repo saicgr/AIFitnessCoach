@@ -2,7 +2,7 @@
 // Hero, live search, category nav, featured row, paid-elsewhere badges,
 // trust signals, bottom CTA. The single highest-traffic page in /free-tools/.
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import MarketingNav from '../../components/marketing/MarketingNav';
 import MarketingFooter from '../../components/marketing/MarketingFooter';
@@ -82,6 +82,20 @@ function iconFor(cat: string): string {
 export default function ToolsIndex() {
   const [query, setQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
+  const resultsRef = useRef<HTMLDivElement>(null);
+
+  // When the user changes filters from a long-scrolled position, the right
+  // column suddenly shrinks (57 tools → 3 for "Goal-Based Plans"). The
+  // browser preserves scrollTop, which lands the user looking at blank
+  // space below the new shorter grid. Scroll the viewport up to the top
+  // of the results column so the filter feels responsive.
+  useEffect(() => {
+    if (!resultsRef.current) return;
+    const top = resultsRef.current.getBoundingClientRect().top + window.scrollY - 80;
+    if (window.scrollY > top + 40) {
+      window.scrollTo({ top, behavior: 'smooth' });
+    }
+  }, [categoryFilter, query]);
 
   useEffect(() => {
     document.title = `${TITLE} | Zealova`;
@@ -321,7 +335,7 @@ export default function ToolsIndex() {
           </aside>
 
           {/* Right column — results */}
-          <div className="min-w-0">
+          <div ref={resultsRef} className="min-w-0 scroll-mt-20">
             {/* Results summary */}
             <div className="mb-4 flex items-center justify-between gap-3 flex-wrap">
               <p className="text-sm text-zinc-400">
