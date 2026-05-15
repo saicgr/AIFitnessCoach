@@ -92,6 +92,8 @@ build/
 !gradle/wrapper/gradle-wrapper.jar
 
 google*
+!frontend/src/pages/vs/GoogleHealth.tsx
+!frontend/src/pages/vs/google-health.preview.html
 gen-lang-client-*.json
 aifitnesscoach-5e5d3-firebase-adminsdk-fbsvc-5e932acb66.json
 
@@ -101,3 +103,4 @@ guide/*.pdf
 # Trademark evidence — dated captures of competitor's listing kept locally,
 # not in version control (private legal artifact, may include account context).
 trademark_evidence_*/
+.vercel

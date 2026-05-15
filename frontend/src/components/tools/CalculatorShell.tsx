@@ -13,6 +13,8 @@ import MarketingNav from '../marketing/MarketingNav';
 import MarketingFooter from '../marketing/MarketingFooter';
 import RelatedCalcs from './RelatedCalcs';
 import EmailCapture from './EmailCapture';
+import InstallCta from './InstallCta';
+import StickyMobileInstallBar from './StickyMobileInstallBar';
 import { BRANDING } from '../../lib/branding';
 import { findCalc } from './calcRegistry';
 
@@ -31,6 +33,10 @@ interface CalculatorShellProps {
   // (e.g. 1RM, AI food photo) pass it so the email-capture row carries
   // context. Plain calculators omit it.
   emailCaptureResult?: Record<string, unknown>;
+  // Result-aware install CTA copy. Tools pass these when they have a
+  // computed result to phrase the CTA in user-specific terms.
+  installPrimary?: string;
+  installSecondary?: string;
   children: ReactNode;
 }
 
@@ -41,6 +47,8 @@ export default function CalculatorShell({
   intro,
   faqs = [],
   emailCaptureResult,
+  installPrimary,
+  installSecondary,
   children,
 }: CalculatorShellProps) {
   const calc = findCalc(slug);
@@ -66,6 +74,10 @@ export default function CalculatorShell({
     setMeta('twitter:card', 'summary_large_image');
     setMeta('twitter:title', title);
     setMeta('twitter:description', metaDescription);
+    // iOS smart banner. Apple's native one-tap "Open in App / View" banner
+    // for mobile Safari. app-argument carries the slug so the app can
+    // route on first open.
+    setMeta('apple-itunes-app', `app-id=6745218419, app-argument=zealova://tools/${slug}`);
 
     let canonicalLink = document.head.querySelector<HTMLLinkElement>('link[rel="canonical"]');
     if (!canonicalLink) {
@@ -157,6 +169,43 @@ export default function CalculatorShell({
         {/* Calculator body */}
         <div className="space-y-10">{children}</div>
 
+        {/* Install CTA — peak intent. Sits immediately after the result,
+            before FAQ/email. Result-aware deep link prefills the app. */}
+        <div id="install-cta-card" className="mt-10">
+          <InstallCta
+            slug={slug}
+            result={emailCaptureResult}
+            primary={installPrimary || `Save this in the Zealova app`}
+            secondary={
+              installSecondary ||
+              'One tap to open. Your result carries over so you can track it for free.'
+            }
+          />
+          {/* Social proof + store badges */}
+          <div className="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs text-zinc-500">
+            <p>
+              Used by lifters in 40+ countries. 4.9★ on Google Play.
+            </p>
+            <div className="flex items-center gap-2">
+              <a
+                href={`https://play.google.com/store/apps/details?id=com.aifitnesscoach.app&referrer=utm_source%3Dtools%26utm_medium%3D${slug}%26utm_content%3Dbadge`}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Get it on Google Play"
+                className="opacity-80 hover:opacity-100 transition"
+              >
+                <img
+                  src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg"
+                  alt="Get it on Google Play"
+                  className="h-9"
+                  loading="lazy"
+                />
+              </a>
+              <span className="text-[10px] uppercase tracking-wider text-zinc-600">iOS soon</span>
+            </div>
+          </div>
+        </div>
+
         {/* FAQ */}
         {faqs.length > 0 && (
           <section className="mt-16 border-t border-zinc-800 pt-12">
@@ -192,6 +241,12 @@ export default function CalculatorShell({
       </main>
 
       <MarketingFooter />
+
+      <StickyMobileInstallBar
+        slug={slug}
+        result={emailCaptureResult}
+        primary={installPrimary}
+      />
     </div>
   );
 }
