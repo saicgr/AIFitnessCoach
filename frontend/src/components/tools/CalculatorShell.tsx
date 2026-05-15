@@ -62,14 +62,12 @@ export default function CalculatorShell({
 }: CalculatorShellProps) {
   const calc = findCalc(slug);
   const canonical = `https://${BRANDING.marketingDomain}/free-tools/${slug}`;
-  // Dynamic OG image per tool, optionally per result.
-  // Edge function at /api/og renders a 1200x630 PNG that drives share virality.
-  const ogImage = (() => {
-    const params = new URLSearchParams({ slug });
-    params.set('title', ogHeadline || title);
-    if (ogResult) params.set('result', ogResult);
-    return `https://${BRANDING.marketingDomain}/api/og?${params.toString()}`;
-  })();
+  // Static brand OG image. Dynamic per-result share images are queued for
+  // a future Sprint once Vercel's edge bundler ships in our local CLI; the
+  // package vs. bundler dance was eating more time than its virality lift.
+  void ogHeadline;
+  void ogResult;
+  const ogImage = `https://${BRANDING.marketingDomain}/screenshots/og-google-health-vs.png`;
 
   useEffect(() => {
     document.title = `${title} | Zealova`;
