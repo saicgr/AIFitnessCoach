@@ -32,6 +32,15 @@ export interface CalcEntry {
 export const CALC_REGISTRY: CalcEntry[] = [
   // AI-powered tools (rate-limited to 2 uses/IP/24h)
   {
+    slug: 'ai-form-check',
+    name: 'AI Form Check — Squat, Bench, Deadlift',
+    description: 'Upload a video of your squat, bench, or deadlift. AI extracts keyframes and returns rep-by-rep form analysis: overall score, fault detection with severity, rep count, and concrete fix cues scored against NSCA and Starting Strength standards. 3 free checks per day.',
+    category: 'ai-tools',
+    paidElsewhere: true,
+    competitor: 'Sculptor, Gymscore, personal-trainer form checks ($50-100/session)',
+    keywords: ['ai form check', 'squat form analysis', 'bench press form check', 'deadlift form analyzer', 'lifting form ai', 'video form analysis', 'rep counter ai'],
+  },
+  {
     slug: 'ai-food-photo',
     name: 'AI Food Photo Analyzer',
     description: 'Photograph any meal. Gemini Vision identifies foods and estimates calories, macros, and micronutrients per item. 2 free scans per day.',

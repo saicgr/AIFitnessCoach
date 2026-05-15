@@ -113,6 +113,7 @@ from api.v1 import wellness  # Generalized event log + mood + Timeline aggregato
 from api.v1 import timeline  # GET /timeline aggregator (Zepp-style journal)
 from api.v1 import free_tools  # Public unauthenticated AI sampler endpoints (IP-rate-limited)
 from api.v1.ai_tools import physique_analyzer as ai_tools_physique  # Public physique analyzer + 4-week program
+from api.v1.ai_tools import form_check as ai_tools_form_check  # Public AI form check — video lift analysis
 
 # Create v1 router
 router = APIRouter(prefix="/v1")
@@ -515,3 +516,6 @@ router.include_router(free_tools.router, tags=["Free Tools"])
 # analysis + deterministic program synth). Same public unauthenticated stance
 # as free_tools but separate prefix + own per-IP rate limit (10/hr).
 router.include_router(ai_tools_physique.router, tags=["AI Tools"])
+# AI Form Check — public unauthenticated video lift analysis (keyframe
+# extraction + Gemini Vision). Own per-IP rate limit (3 / 24h).
+router.include_router(ai_tools_form_check.router, tags=["AI Tools"])

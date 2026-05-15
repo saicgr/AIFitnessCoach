@@ -13,6 +13,9 @@ const BASE = `${ROOT}/api/v1/free-tools`;
 
 export interface RateLimitError {
   type: 'rate-limit';
+  // 'limit'    = the caller hit their own per-IP cap.
+  // 'capacity' = the tool is globally budget-locked for everyone.
+  kind: 'limit' | 'capacity';
   usesRemaining: 0;
   resetsAtIso: string;
   message: string;
@@ -20,6 +23,27 @@ export interface RateLimitError {
 
 export function isRateLimitError(e: unknown): e is RateLimitError {
   return typeof e === 'object' && e !== null && (e as { type?: string }).type === 'rate-limit';
+}
+
+// FastAPI wraps an HTTPException dict detail as { detail: {...} }. Unwrap one
+// level so message / resets_at_iso / error actually populate.
+function unwrap429(data: unknown): {
+  error?: string;
+  resets_at_iso?: string;
+  message?: string;
+} {
+  if (typeof data !== 'object' || data === null) return {};
+  const obj = data as Record<string, unknown>;
+  const inner =
+    typeof obj.detail === 'object' && obj.detail !== null
+      ? (obj.detail as Record<string, unknown>)
+      : obj;
+  return {
+    error: typeof inner.error === 'string' ? inner.error : undefined,
+    resets_at_iso:
+      typeof inner.resets_at_iso === 'string' ? inner.resets_at_iso : undefined,
+    message: typeof inner.message === 'string' ? inner.message : undefined,
+  };
 }
 
 export async function callAiTool<T>(path: string, body: FormData | object): Promise<T> {
@@ -31,17 +55,19 @@ export async function callAiTool<T>(path: string, body: FormData | object): Prom
   });
 
   if (res.status === 429) {
-    let data: { resets_at_iso?: string; message?: string } = {};
+    let raw: unknown = {};
     try {
-      data = await res.json();
+      raw = await res.json();
     } catch {
       // ignore parse failure, use defaults
     }
+    const d = unwrap429(raw);
     const err: RateLimitError = {
       type: 'rate-limit',
+      kind: d.error === 'capacity_reached' ? 'capacity' : 'limit',
       usesRemaining: 0,
-      resetsAtIso: data.resets_at_iso || '',
-      message: data.message || 'Daily free-tool limit reached.',
+      resetsAtIso: d.resets_at_iso || '',
+      message: d.message || 'Daily free-tool limit reached.',
     };
     throw err;
   }
@@ -105,16 +131,17 @@ export async function analyzePhysique(file: File): Promise<PhysiqueAnalyzeRespon
   });
 
   if (res.status === 429) {
-    let data: { resets_at_iso?: string; message?: string } = {};
+    let raw: unknown = {};
     try {
-      const body = await res.json();
-      data = body?.detail || body;
+      raw = await res.json();
     } catch { /* ignore */ }
+    const d = unwrap429(raw);
     const err: RateLimitError = {
       type: 'rate-limit',
+      kind: d.error === 'capacity_reached' ? 'capacity' : 'limit',
       usesRemaining: 0,
-      resetsAtIso: data.resets_at_iso || '',
-      message: data.message || 'Hourly limit reached. Try again in an hour.',
+      resetsAtIso: d.resets_at_iso || '',
+      message: d.message || 'Hourly limit reached. Try again in an hour.',
     };
     throw err;
   }
@@ -131,6 +158,80 @@ export async function analyzePhysique(file: File): Promise<PhysiqueAnalyzeRespon
   }
 
   return (await res.json()) as PhysiqueAnalyzeResponse;
+}
+
+// ---------------------------------------------------------------------------
+// AI Form Check — upload a lift video, get rep-by-rep form analysis.
+// ---------------------------------------------------------------------------
+
+export type FormCheckExercise = 'squat' | 'bench' | 'deadlift';
+
+export interface FormFault {
+  name: string;
+  severity: 'minor' | 'moderate' | 'major';
+  detected_at: string;
+  explanation: string;
+}
+
+export interface FormCheckResponse {
+  analysis: {
+    overall_score: number;
+    rep_count: number;
+    exercise: string;
+    faults: FormFault[];
+    top_cues: string[];
+    confidence: 'low' | 'medium' | 'high';
+  };
+  disclaimer: string;
+}
+
+/**
+ * Posts a short lift video to the public AI form check. Throws a
+ * RateLimitError on 429, an Error with a user-friendly message on other
+ * failures (the backend surfaces actionable "we couldn't see the lift"
+ * detail strings). Caller unwraps with `isRateLimitError`.
+ */
+export async function analyzeFormCheck(
+  video: File,
+  exercise: FormCheckExercise,
+): Promise<FormCheckResponse> {
+  const form = new FormData();
+  form.append('video', video);
+  form.append('exercise', exercise);
+
+  const res = await fetch(`${AI_TOOLS_BASE}/form-check`, {
+    method: 'POST',
+    body: form,
+  });
+
+  if (res.status === 429) {
+    let raw: unknown = {};
+    try {
+      raw = await res.json();
+    } catch { /* ignore */ }
+    const d = unwrap429(raw);
+    const err: RateLimitError = {
+      type: 'rate-limit',
+      kind: d.error === 'capacity_reached' ? 'capacity' : 'limit',
+      usesRemaining: 0,
+      resetsAtIso: d.resets_at_iso || '',
+      message: d.message || 'Daily limit reached. Try again in 24 hours.',
+    };
+    throw err;
+  }
+
+  if (!res.ok) {
+    // Surface server-provided detail — important for the "we couldn't see a
+    // clear lift" rejects, which are user-actionable filming guidance.
+    let detail = '';
+    try {
+      const body = await res.json();
+      detail = typeof body?.detail === 'string' ? body.detail : '';
+    } catch { /* ignore */ }
+    throw new Error(detail || `Form check error ${res.status}`);
+  }
+
+  return (await res.json()) as FormCheckResponse;
 }
 
 // ---------------------------------------------------------------------------

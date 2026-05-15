@@ -91,6 +91,7 @@ import AiFoodPhoto from './pages/tools/AiFoodPhoto';
 import AiWorkoutGenerator from './pages/tools/AiWorkoutGenerator';
 import AiRoastMyRoutine from './pages/tools/AiRoastMyRoutine';
 import AiPhysiqueAnalyzer from './pages/tools/AiPhysiqueAnalyzer';
+import AiFormCheck from './pages/tools/AiFormCheck';
 import FatLossProtocolCalculator from './pages/tools/FatLossProtocolCalculator';
 import HowToGetJacked from './pages/tools/HowToGetJacked';
 import HowToGetRipped from './pages/tools/HowToGetRipped';
@@ -246,6 +247,7 @@ function App() {
         <Route path="/free-tools/ai-workout-generator" element={<AiWorkoutGenerator />} />
         <Route path="/free-tools/ai-roast-my-routine" element={<AiRoastMyRoutine />} />
         <Route path="/free-tools/ai-physique-analyzer" element={<AiPhysiqueAnalyzer />} />
+        <Route path="/free-tools/ai-form-check" element={<AiFormCheck />} />
         <Route path="/free-tools/fat-loss-protocol-calculator" element={<FatLossProtocolCalculator />} />
         <Route path="/free-tools/how-to-get-jacked" element={<HowToGetJacked />} />
         <Route path="/free-tools/how-to-get-ripped" element={<HowToGetRipped />} />

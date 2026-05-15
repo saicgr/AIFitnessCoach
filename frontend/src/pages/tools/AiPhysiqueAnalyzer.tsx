@@ -217,6 +217,7 @@ export default function AiPhysiqueAnalyzer() {
       <RateLimitModal
         open={!!rateLimit}
         onClose={() => setRateLimit(null)}
+        kind={rateLimit?.kind}
         slug="ai-physique-analyzer"
         toolName="physique analysis"
         resetWindow="1 hour"

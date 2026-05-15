@@ -295,6 +295,7 @@ export default function AiWorkoutGenerator() {
       <RateLimitModal
         open={!!rateLimit}
         onClose={() => setRateLimit(null)}
+        kind={rateLimit?.kind}
         slug="ai-workout-generator"
         toolName="workout generation"
         resetWindow="24 hours"

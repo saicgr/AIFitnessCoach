@@ -267,6 +267,7 @@ export default function AiFoodPhoto() {
       <RateLimitModal
         open={!!rateLimit}
         onClose={() => setRateLimit(null)}
+        kind={rateLimit?.kind}
         slug="ai-food-photo"
         toolName="food photo"
         resetWindow="24 hours"

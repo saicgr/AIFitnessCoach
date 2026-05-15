@@ -12,6 +12,9 @@ interface Props {
   slug: string;
   toolName: string;
   resetWindow?: string; // e.g. "24 hours", "1 hour"
+  // 'limit'    = caller hit their own per-IP cap.
+  // 'capacity' = tool is globally budget-locked for everyone right now.
+  kind?: 'limit' | 'capacity';
 }
 
 const PLAY_STORE_ID = 'com.aifitnesscoach.app';
@@ -22,6 +25,7 @@ export default function RateLimitModal({
   slug,
   toolName,
   resetWindow = '24 hours',
+  kind = 'limit',
 }: Props) {
   useEffect(() => {
     if (!open) return;
@@ -67,14 +71,17 @@ export default function RateLimitModal({
         </button>
 
         <p className="text-xs font-bold uppercase tracking-widest text-emerald-400 mb-3">
-          Daily limit reached
+          {kind === 'capacity' ? 'Tool at capacity' : 'Daily limit reached'}
         </p>
         <h3 className="text-2xl sm:text-3xl font-bold text-white tracking-tight leading-tight">
-          You hit your free {toolName} limit.
+          {kind === 'capacity'
+            ? `The free ${toolName} is busy right now.`
+            : `You hit your free ${toolName} limit.`}
         </h3>
         <p className="mt-3 text-sm text-zinc-400 leading-relaxed">
-          To keep this tool free for everyone, web access resets every {resetWindow}.
-          Get unlimited use in the Zealova app, plus auto-tracking and weekly adaptation.
+          {kind === 'capacity'
+            ? `So many people are using this free tool that we've hit today's shared limit. The Zealova app has no shared cap, so you can run it now.`
+            : `To keep this tool free for everyone, web access resets every ${resetWindow}. Get unlimited use in the Zealova app, plus auto-tracking and weekly adaptation.`}
         </p>
 
         <div className="mt-6 grid grid-cols-1 gap-2 text-sm">

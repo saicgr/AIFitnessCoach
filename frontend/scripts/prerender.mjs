@@ -118,6 +118,7 @@ async function buildRouteList() {
     '/free-tools/how-to-cut-without-losing-muscle',
     '/free-tools/alcohol-impact-calculator',
     '/free-tools/ai-physique-analyzer',
+    '/free-tools/ai-form-check',
     '/free-tools/workout-log-exporter',
     '/free-tools/workout-plan-builder',
     '/free-tools/calorie-deficit-tracker',

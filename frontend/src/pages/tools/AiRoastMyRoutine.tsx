@@ -195,6 +195,7 @@ export default function AiRoastMyRoutine() {
       <RateLimitModal
         open={!!rateLimit}
         onClose={() => setRateLimit(null)}
+        kind={rateLimit?.kind}
         slug="ai-roast-my-routine"
         toolName="routine roast"
         resetWindow="24 hours"

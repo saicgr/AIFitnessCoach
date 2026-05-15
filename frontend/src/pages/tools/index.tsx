@@ -24,6 +24,7 @@ const CANONICAL = `https://${BRANDING.marketingDomain}/free-tools`;
 // Featured: AI-first ordering since those tools have the most "wow" effect
 // on first visit (camera-based, instant output, viral share moment).
 const FEATURED_SLUGS = [
+  'ai-form-check',
   'ai-physique-analyzer',
   'ai-food-photo',
   'ai-workout-generator',
@@ -34,6 +35,7 @@ const FEATURED_SLUGS = [
 
 // Recently added — show NEW badge.
 const NEW_SLUGS = new Set([
+  'ai-form-check',
   'ai-food-photo',
   'ai-workout-generator',
   'ai-roast-my-routine',
