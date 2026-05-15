@@ -29,8 +29,10 @@ from services.gemini.constants import gemini_generate_with_retry
 from services.vision_service import get_vision_service
 from utils.free_tool_rate_limit import (
     FreeToolLimitExceeded,
+    GlobalCapExceeded,
     _client_ip,
     check_and_consume,
+    check_global_cap,
 )
 
 logger = get_logger(__name__)
@@ -76,6 +78,26 @@ def _raise_429(exc: FreeToolLimitExceeded, message: str) -> None:
     )
 
 
+def _raise_global_429(exc: GlobalCapExceeded) -> None:
+    """Translate a GlobalCapExceeded into the same 429 envelope shape.
+
+    `error: capacity_reached` lets the client distinguish a site-wide lock
+    ("everyone is busy") from the user's own per-IP limit.
+    """
+    raise HTTPException(
+        status_code=429,
+        detail={
+            "error": "capacity_reached",
+            "uses_remaining_today": 0,
+            "resets_at_iso": exc.resets_at.isoformat(),
+            "message": (
+                "This free tool is at capacity right now. "
+                "Get unlimited, instant access in the Zealova app."
+            ),
+        },
+    )
+
+
 # ---------------------------------------------------------------------------
 # 1. AI Food Photo
 # ---------------------------------------------------------------------------
@@ -89,6 +111,11 @@ async def ai_food_photo(request: Request, image: UploadFile = File(...)):
     analyzer used by the authenticated nutrition flow. No fallbacks.
     """
     ip = _client_ip(request)
+
+    try:
+        await check_global_cap("ai-food-photo")
+    except GlobalCapExceeded as e:
+        _raise_global_429(e)
 
     try:
         remaining = await check_and_consume(
@@ -279,6 +306,10 @@ Rules (these are non-negotiable):
 async def ai_workout_generator(payload: WorkoutGeneratorRequest, request: Request):
     ip = _client_ip(request)
     try:
+        await check_global_cap("ai-workout-generator")
+    except GlobalCapExceeded as e:
+        _raise_global_429(e)
+    try:
         remaining = await check_and_consume(
             ip=ip,
             tool="ai-workout-generator",
@@ -406,6 +437,10 @@ _ROAST_CONSTRUCTIVE = """Tone for the "roast" field: constructive. Straight-face
 @router.post("/ai-roast-routine")
 async def ai_roast_routine(payload: RoastRoutineRequest, request: Request):
     ip = _client_ip(request)
+    try:
+        await check_global_cap("ai-roast-routine")
+    except GlobalCapExceeded as e:
+        _raise_global_429(e)
     try:
         remaining = await check_and_consume(
             ip=ip,

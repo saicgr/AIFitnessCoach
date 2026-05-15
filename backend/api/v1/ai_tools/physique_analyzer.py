@@ -23,8 +23,6 @@ limiter is reused so we don't introduce a parallel store; slowapi is also a
 dep but mixing two limiters across the same surface is operational noise.
 """
 
-from __future__ import annotations
-
 import base64
 import json
 import time
@@ -40,8 +38,10 @@ from services.gemini.constants import gemini_generate_with_retry
 from services.vision_service import get_vision_service
 from utils.free_tool_rate_limit import (
     FreeToolLimitExceeded,
+    GlobalCapExceeded,
     _client_ip,
     check_and_consume,
+    check_global_cap,
 )
 
 logger = get_logger(__name__)
@@ -418,6 +418,20 @@ async def _is_adult(image_bytes: bytes, mime_type: str) -> bool:
 async def physique_analyze(request: Request, image: UploadFile = File(...)):
     """Public unauthenticated physique analyzer. 10 req / IP / hour."""
     ip = _client_ip(request)
+    try:
+        await check_global_cap("ai-physique-analyzer")
+    except GlobalCapExceeded as e:
+        raise HTTPException(
+            status_code=429,
+            detail={
+                "error": "capacity_reached",
+                "resets_at_iso": e.resets_at.isoformat(),
+                "message": (
+                    "The physique analyzer is at capacity right now. "
+                    "Get unlimited, instant access in the Zealova app."
+                ),
+            },
+        )
     try:
         await check_and_consume(
             ip=ip,
