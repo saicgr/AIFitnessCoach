@@ -62,11 +62,14 @@ export default function CalculatorShell({
 }: CalculatorShellProps) {
   const calc = findCalc(slug);
   const canonical = `https://${BRANDING.marketingDomain}/free-tools/${slug}`;
-  // Static fallback OG image while the dynamic /api/og endpoint is being
-  // re-enabled. Pre-result share previews use the marketing logo card.
-  void ogHeadline;
-  void ogResult;
-  const ogImage = `https://${BRANDING.marketingDomain}/zealova-logo.png`;
+  // Dynamic OG image per tool, optionally per result.
+  // Edge function at /api/og renders a 1200x630 PNG that drives share virality.
+  const ogImage = (() => {
+    const params = new URLSearchParams({ slug });
+    params.set('title', ogHeadline || title);
+    if (ogResult) params.set('result', ogResult);
+    return `https://${BRANDING.marketingDomain}/api/og?${params.toString()}`;
+  })();
 
   useEffect(() => {
     document.title = `${title} | Zealova`;
