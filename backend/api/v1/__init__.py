@@ -111,6 +111,8 @@ from api.v1.users.mcp_integrations import router as mcp_integrations_router  # M
 from api.v1 import equipment  # Snap-equipment flow (point camera at gym machine)
 from api.v1 import wellness  # Generalized event log + mood + Timeline aggregator
 from api.v1 import timeline  # GET /timeline aggregator (Zepp-style journal)
+from api.v1 import free_tools  # Public unauthenticated AI sampler endpoints (IP-rate-limited)
+from api.v1.ai_tools import physique_analyzer as ai_tools_physique  # Public physique analyzer + 4-week program
 
 # Create v1 router
 router = APIRouter(prefix="/v1")
@@ -504,3 +506,12 @@ router.include_router(ai_endpoints.router, tags=["AI Utilities"])
 
 # X (Twitter) build-in-public publisher — Telegram-driven daily posting flow
 router.include_router(x_webhook.router, tags=["X Publisher"])
+
+# Public unauthenticated AI sampler endpoints — IP-rate-limited (2/IP/24h each).
+# Marketing funnel: try the AI without an account. See utils/free_tool_rate_limit.py.
+router.include_router(free_tools.router, tags=["Free Tools"])
+
+# AI Tools — richer multi-step AI workflows (vision classifier + structured
+# analysis + deterministic program synth). Same public unauthenticated stance
+# as free_tools but separate prefix + own per-IP rate limit (10/hr).
+router.include_router(ai_tools_physique.router, tags=["AI Tools"])

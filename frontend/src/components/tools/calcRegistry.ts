@@ -14,6 +14,7 @@ export type CalcCategory =
   | 'nutrition'
   | 'cardio'
   | 'programming'
+  | 'programs'
   | 'lifestyle'
   | 'wellness'
   | 'general';
@@ -47,6 +48,15 @@ export const CALC_REGISTRY: CalcEntry[] = [
     paidElsewhere: true,
     competitor: 'JuggernautAI, Fitbod ($15.99/mo)',
     keywords: ['ai workout generator', 'free workout plan ai', 'custom workout generator'],
+  },
+  {
+    slug: 'ai-physique-analyzer',
+    name: 'AI Physique Analyzer + 4-Week Program',
+    description: 'Upload a torso photo. Gemini Vision estimates body fat, classifies somatotype, identifies muscle strengths and weaknesses, and builds a 4-week NSCA-guided program targeting your weak points. 10 free analyses per hour.',
+    category: 'ai-tools',
+    paidElsewhere: true,
+    competitor: 'Bodbot, DEXA scans ($50-150), Macrofactor body audits',
+    keywords: ['ai physique analyzer', 'ai body fat estimator', 'photo body fat', 'physique scan', 'ai program generator', 'weak muscle finder'],
   },
   {
     slug: 'ai-roast-my-routine',
@@ -232,6 +242,34 @@ export const CALC_REGISTRY: CalcEntry[] = [
     keywords: ['healthy weight range', 'normal weight', 'weight chart'],
   },
 
+  // Goal-oriented program guides (free hub for "how to" queries)
+  {
+    slug: 'how-to-get-jacked',
+    name: 'How to Get Jacked, 16-Week Plan',
+    description: 'Realistic 16-week hypertrophy plan with per-muscle weekly volume targets (Schoenfeld 2017), 1.6 to 2.2 g/kg protein, lean surplus, and Lyle McDonald natural gain curve.',
+    category: 'programs',
+    paidElsewhere: true,
+    competitor: 'Jeff Nippard programs ($30-90), RP Hypertrophy app ($24.99/mo)',
+    keywords: ['how to get jacked', 'hypertrophy plan', 'muscle gain calculator', 'lean bulk calculator'],
+  },
+  {
+    slug: 'how-to-get-ripped',
+    name: 'How to Get Ripped, Cutting Calculator',
+    description: 'Cut from your current body fat to your target with a science-based deficit, 1.1 g per pound protein, cardio dose, refeed schedule, and week-by-week loss curve.',
+    category: 'programs',
+    paidElsewhere: true,
+    competitor: 'Carbon Diet Coach, Stronger U, Renaissance Diet App',
+    keywords: ['how to get ripped', 'cutting calculator', 'fat loss calculator', 'shredding plan'],
+  },
+  {
+    slug: 'how-to-cut-without-losing-muscle',
+    name: 'How to Cut Without Losing Muscle',
+    description: 'Muscle preservation cutting protocol. Caps deficit at 500 cal, holds bench/squat/deadlift within 5%, cuts accessory volume first, schedules diet breaks every 7 weeks.',
+    category: 'programs',
+    paidElsewhere: true,
+    competitor: 'Helms-style coaching ($150-400/mo), MASS Research Review',
+    keywords: ['cut without losing muscle', 'muscle preservation diet', 'lift floor cut', 'protein floor cutting'],
+  },
   // Protocol / programming-nutrition hybrid
   {
     slug: 'fat-loss-protocol-calculator',
@@ -281,6 +319,14 @@ export const CALC_REGISTRY: CalcEntry[] = [
     description: 'High / medium / low carb day macros based on training schedule.',
     category: 'nutrition',
     keywords: ['carb cycling', 'high low carb days', 'training day macros'],
+  },
+  {
+    slug: 'alcohol-impact-calculator',
+    name: 'Alcohol Impact on Muscle Gain',
+    description: 'Translates drinks per week into MPS suppression, testosterone window, cortisol elevation, REM loss, and days delayed to next PR. Built on Parr 2014, Vingren 2013, Ebrahim 2013.',
+    category: 'nutrition',
+    paidElsewhere: false,
+    keywords: ['alcohol and muscle', 'alcohol hypertrophy calculator', 'drinking and gains', 'alcohol testosterone', 'alcohol sleep impact'],
   },
   {
     slug: 'calories-burned-calculator',
@@ -469,6 +515,7 @@ export const CATEGORIES: { key: CalcCategory; name: string; description: string 
   { key: 'nutrition', name: 'Nutrition', description: 'Macros, calorie adjustment, protein timing' },
   { key: 'cardio', name: 'Cardio + Hydration', description: 'VO2 max, pace, heart rate, sweat rate' },
   { key: 'programming', name: 'Programming', description: 'Volume, mesocycles, deload, tapering' },
+  { key: 'programs', name: 'Goal-Based Plans', description: 'How to get jacked, how to get ripped, how to cut without losing muscle' },
   { key: 'lifestyle', name: 'Lifestyle + Generators', description: 'Vibe-based workouts, aesthetics, cost-of-skipping' },
   { key: 'wellness', name: 'Wellness + Recovery', description: 'Caffeine, recipes, readiness, training partners, marathon plans' },
 ];

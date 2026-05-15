@@ -86,10 +86,12 @@ export default function MarketingNav() {
   const communityRef = useRef<HTMLDivElement>(null);
   const legalRef = useRef<HTMLDivElement>(null);
   const contactRef = useRef<HTMLDivElement>(null);
+  const compareRef = useRef<HTMLDivElement>(null);
 
   useClickOutside(communityRef, () => { if (openDropdown === 'community') setOpenDropdown(null); });
   useClickOutside(legalRef, () => { if (openDropdown === 'legal') setOpenDropdown(null); });
   useClickOutside(contactRef, () => { if (openDropdown === 'contact') setOpenDropdown(null); });
+  useClickOutside(compareRef, () => { if (openDropdown === 'compare') setOpenDropdown(null); });
 
   // Apple-style transparent-at-rest nav: stay transparent over the hero,
   // only become a frosted glass bar once the user scrolls past it.
@@ -147,11 +149,22 @@ export default function MarketingNav() {
     </motion.div>
   );
 
-  // Top-level links (minimal)
+  // Top-level links — Free Tools and Glossary are surfaced here so organic
+  // visitors can find them. Roadmap demoted to Resources dropdown below.
   const navLinks = [
+    { label: 'Free Tools', to: '/free-tools' },
+    { label: 'Glossary', to: '/glossary' },
     { label: 'Features', to: '/features' },
-    { label: 'Roadmap', to: '/roadmap' },
     { label: 'FAQ', to: '/faq' },
+  ];
+
+  const compareLinks = [
+    { label: 'vs Google Health', to: '/vs/google-health' },
+    { label: 'Best AI Fitness Apps 2026', to: '/best-ai-fitness-apps-2026' },
+    { label: 'Best Calorie Trackers 2026', to: '/best-calorie-tracker-apps-2026' },
+    { label: 'Best Workout Generators 2026', to: '/best-workout-generator-apps-2026' },
+    { label: 'Best Fitbit Alternatives', to: '/best-fitbit-alternatives-2026' },
+    { label: 'Best MyFitnessPal Alternatives', to: '/best-myfitnesspal-alternatives-2026' },
   ];
 
   return (
@@ -190,6 +203,31 @@ export default function MarketingNav() {
                 {link.label}
               </Link>
             ))}
+
+            {/* Compare Dropdown — /vs/* and /best-* roundup pages */}
+            <div ref={compareRef} className="relative">
+              <button onClick={() => toggle('compare')} className={dropdownBtnClass('compare')}>
+                Compare {chevron('compare')}
+              </button>
+              <AnimatePresence>
+                {openDropdown === 'compare' && dropdownPanel(
+                  compareLinks.map((link) => (
+                    <Link
+                      key={link.to}
+                      to={link.to}
+                      onClick={() => setOpenDropdown(null)}
+                      className={dropdownItemClass}
+                    >
+                      <svg className="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 7.5L7.5 3m0 0L12 7.5M7.5 3v13.5m13.5 0L16.5 21m0 0L12 16.5m4.5 4.5V7.5" />
+                      </svg>
+                      {link.label}
+                    </Link>
+                  )),
+                  "w-72"
+                )}
+              </AnimatePresence>
+            </div>
 
             {/* Legal Dropdown (Privacy, Terms, Refunds) */}
             <div ref={legalRef} className="relative">
@@ -349,6 +387,19 @@ export default function MarketingNav() {
                       ? 'text-emerald-500 bg-emerald-50/50'
                       : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-muted)]'
                   }`}
+                >
+                  {link.label}
+                </Link>
+              ))}
+
+              {/* Compare links */}
+              <p className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider px-4 pt-3 pb-1">Compare</p>
+              {compareLinks.map((link) => (
+                <Link
+                  key={link.to}
+                  to={link.to}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="text-sm font-medium py-2.5 px-4 rounded-lg text-[var(--color-text-secondary)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-muted)] transition-colors"
                 >
                   {link.label}
                 </Link>

@@ -53,6 +53,87 @@ export async function callAiTool<T>(path: string, body: FormData | object): Prom
 }
 
 // ---------------------------------------------------------------------------
+// AI Tools — richer multi-step endpoints under /api/v1/ai-tools.
+// Separate base because the prefix differs from /free-tools.
+// ---------------------------------------------------------------------------
+
+const AI_TOOLS_BASE = `${ROOT}/api/v1/ai-tools`;
+
+export interface PhysiqueAnalyzeResponse {
+  analysis: {
+    bodyFatEstimate: { low: number; mid: number; high: number };
+    somatotype: 'ecto' | 'meso' | 'endo' | 'hybrid';
+    muscleStrengths: string[];
+    muscleWeaknesses: string[];
+    proportionNotes: string[];
+    primaryGoalCandidate: 'cut' | 'recomp' | 'bulk';
+    confidence: 'low' | 'medium' | 'high';
+  };
+  program: {
+    week1: ProgramDay[];
+    week2: ProgramDay[];
+    week3: ProgramDay[];
+    week4: ProgramDay[];
+    notes: string;
+  };
+  disclaimer: string;
+}
+
+export interface ProgramDay {
+  day: string;
+  exercises: Array<{
+    exercise: string;
+    muscle: string;
+    sets: number;
+    reps: string | number;
+    rest_s: number;
+  }>;
+}
+
+/**
+ * Posts a single torso image to the public physique analyzer. Throws a
+ * RateLimitError on 429, an Error with a user-friendly message on other
+ * failures. Caller is responsible for unwrapping with `isRateLimitError`.
+ */
+export async function analyzePhysique(file: File): Promise<PhysiqueAnalyzeResponse> {
+  const form = new FormData();
+  form.append('image', file);
+
+  const res = await fetch(`${AI_TOOLS_BASE}/physique-analyze`, {
+    method: 'POST',
+    body: form,
+  });
+
+  if (res.status === 429) {
+    let data: { resets_at_iso?: string; message?: string } = {};
+    try {
+      const body = await res.json();
+      data = body?.detail || body;
+    } catch { /* ignore */ }
+    const err: RateLimitError = {
+      type: 'rate-limit',
+      usesRemaining: 0,
+      resetsAtIso: data.resets_at_iso || '',
+      message: data.message || 'Hourly limit reached. Try again in an hour.',
+    };
+    throw err;
+  }
+
+  if (!res.ok) {
+    // Surface server-provided detail when available — important for the
+    // adult-gate and torso-validation rejects, which are user-actionable.
+    let detail = '';
+    try {
+      const body = await res.json();
+      detail = typeof body?.detail === 'string' ? body.detail : '';
+    } catch { /* ignore */ }
+    throw new Error(detail || `Analyzer error ${res.status}`);
+  }
+
+  return (await res.json()) as PhysiqueAnalyzeResponse;
+}
+
+// ---------------------------------------------------------------------------
 // Email signup (shared across every free-tool page via EmailCapture component)
 // ---------------------------------------------------------------------------
 

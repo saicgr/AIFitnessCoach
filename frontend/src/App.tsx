@@ -88,7 +88,12 @@ import SleepCycleCalculator from './pages/tools/SleepCycleCalculator';
 import AiFoodPhoto from './pages/tools/AiFoodPhoto';
 import AiWorkoutGenerator from './pages/tools/AiWorkoutGenerator';
 import AiRoastMyRoutine from './pages/tools/AiRoastMyRoutine';
+import AiPhysiqueAnalyzer from './pages/tools/AiPhysiqueAnalyzer';
 import FatLossProtocolCalculator from './pages/tools/FatLossProtocolCalculator';
+import HowToGetJacked from './pages/tools/HowToGetJacked';
+import HowToGetRipped from './pages/tools/HowToGetRipped';
+import HowToCutWithoutLosingMuscle from './pages/tools/HowToCutWithoutLosingMuscle';
+import AlcoholImpactCalculator from './pages/tools/AlcoholImpactCalculator';
 import GlossaryIndex from './pages/glossary';
 import GlossaryOneRm from './pages/glossary/OneRm';
 import GlossaryTdee from './pages/glossary/Tdee';
@@ -232,7 +237,12 @@ function App() {
         <Route path="/free-tools/ai-food-photo" element={<AiFoodPhoto />} />
         <Route path="/free-tools/ai-workout-generator" element={<AiWorkoutGenerator />} />
         <Route path="/free-tools/ai-roast-my-routine" element={<AiRoastMyRoutine />} />
+        <Route path="/free-tools/ai-physique-analyzer" element={<AiPhysiqueAnalyzer />} />
         <Route path="/free-tools/fat-loss-protocol-calculator" element={<FatLossProtocolCalculator />} />
+        <Route path="/free-tools/how-to-get-jacked" element={<HowToGetJacked />} />
+        <Route path="/free-tools/how-to-get-ripped" element={<HowToGetRipped />} />
+        <Route path="/free-tools/how-to-cut-without-losing-muscle" element={<HowToCutWithoutLosingMuscle />} />
+        <Route path="/free-tools/alcohol-impact-calculator" element={<AlcoholImpactCalculator />} />
         {/* Glossary pages — definition-style content, ranks for "what is X" + AI Overviews */}
         <Route path="/glossary" element={<GlossaryIndex />} />
         <Route path="/glossary/1rm" element={<GlossaryOneRm />} />

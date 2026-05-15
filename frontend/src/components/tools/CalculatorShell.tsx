@@ -15,6 +15,7 @@ import RelatedCalcs from './RelatedCalcs';
 import EmailCapture from './EmailCapture';
 import InstallCta from './InstallCta';
 import StickyMobileInstallBar from './StickyMobileInstallBar';
+import ExitIntentCapture from './ExitIntentCapture';
 import { BRANDING } from '../../lib/branding';
 import { findCalc } from './calcRegistry';
 
@@ -37,6 +38,12 @@ interface CalculatorShellProps {
   // computed result to phrase the CTA in user-specific terms.
   installPrimary?: string;
   installSecondary?: string;
+  // Short headline used for the OG share image and result-aware copy.
+  // e.g. "My TDEE", "My 1RM Bench". Falls back to the tool title.
+  ogHeadline?: string;
+  // Short result string shown big on the OG share card.
+  // e.g. "2,450 cal/day" or "235 lb bench".
+  ogResult?: string;
   children: ReactNode;
 }
 
@@ -49,10 +56,17 @@ export default function CalculatorShell({
   emailCaptureResult,
   installPrimary,
   installSecondary,
+  ogHeadline,
+  ogResult,
   children,
 }: CalculatorShellProps) {
   const calc = findCalc(slug);
   const canonical = `https://${BRANDING.marketingDomain}/free-tools/${slug}`;
+  // Static fallback OG image while the dynamic /api/og endpoint is being
+  // re-enabled. Pre-result share previews use the marketing logo card.
+  void ogHeadline;
+  void ogResult;
+  const ogImage = `https://${BRANDING.marketingDomain}/zealova-logo.png`;
 
   useEffect(() => {
     document.title = `${title} | Zealova`;
@@ -71,9 +85,13 @@ export default function CalculatorShell({
     setMeta('og:description', metaDescription, true);
     setMeta('og:url', canonical, true);
     setMeta('og:type', 'website', true);
+    setMeta('og:image', ogImage, true);
+    setMeta('og:image:width', '1200', true);
+    setMeta('og:image:height', '630', true);
     setMeta('twitter:card', 'summary_large_image');
     setMeta('twitter:title', title);
     setMeta('twitter:description', metaDescription);
+    setMeta('twitter:image', ogImage);
     // iOS smart banner. Apple's native one-tap "Open in App / View" banner
     // for mobile Safari. app-argument carries the slug so the app can
     // route on first open.
@@ -86,7 +104,7 @@ export default function CalculatorShell({
       document.head.appendChild(canonicalLink);
     }
     canonicalLink.href = canonical;
-  }, [slug, title, metaDescription, canonical]);
+  }, [slug, title, metaDescription, canonical, ogImage]);
 
   const breadcrumbJsonLd = {
     '@context': 'https://schema.org',
@@ -247,6 +265,8 @@ export default function CalculatorShell({
         result={emailCaptureResult}
         primary={installPrimary}
       />
+
+      <ExitIntentCapture toolSlug={slug} resultSummary={emailCaptureResult} />
     </div>
   );
 }

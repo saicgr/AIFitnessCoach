@@ -91,6 +91,11 @@ async function buildRouteList() {
     '/best-workout-generator-apps-2026',
     '/best-fitbit-alternatives-2026',
     '/best-myfitnesspal-alternatives-2026',
+    '/free-tools/how-to-get-jacked',
+    '/free-tools/how-to-get-ripped',
+    '/free-tools/how-to-cut-without-losing-muscle',
+    '/free-tools/alcohol-impact-calculator',
+    '/free-tools/ai-physique-analyzer',
   ];
   const toolRoutes = tools.map((s) => `/free-tools/${s}`);
   return [...staticRoutes, ...toolRoutes];

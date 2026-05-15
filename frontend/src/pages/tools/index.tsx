@@ -64,6 +64,7 @@ const CATEGORY_ICONS: Record<CalcCategory, string> = {
   nutrition: '🥗',
   cardio: '🏃',
   programming: '📅',
+  programs: '🎯',
   general: '🛠️',
   lifestyle: '✨',
   wellness: '💚',
