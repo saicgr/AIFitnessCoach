@@ -83,15 +83,13 @@ export default function MarketingNav() {
   const location = useLocation();
   const { theme, toggleTheme } = useAppStore();
 
-  const communityRef = useRef<HTMLDivElement>(null);
-  const legalRef = useRef<HTMLDivElement>(null);
-  const contactRef = useRef<HTMLDivElement>(null);
+  const toolsRef = useRef<HTMLDivElement>(null);
   const compareRef = useRef<HTMLDivElement>(null);
+  const resourcesRef = useRef<HTMLDivElement>(null);
 
-  useClickOutside(communityRef, () => { if (openDropdown === 'community') setOpenDropdown(null); });
-  useClickOutside(legalRef, () => { if (openDropdown === 'legal') setOpenDropdown(null); });
-  useClickOutside(contactRef, () => { if (openDropdown === 'contact') setOpenDropdown(null); });
+  useClickOutside(toolsRef, () => { if (openDropdown === 'tools') setOpenDropdown(null); });
   useClickOutside(compareRef, () => { if (openDropdown === 'compare') setOpenDropdown(null); });
+  useClickOutside(resourcesRef, () => { if (openDropdown === 'resources') setOpenDropdown(null); });
 
   // Apple-style transparent-at-rest nav: stay transparent over the hero,
   // only become a frosted glass bar once the user scrolls past it.
@@ -149,13 +147,15 @@ export default function MarketingNav() {
     </motion.div>
   );
 
-  // Top-level links — Free Tools and Glossary are surfaced here so organic
-  // visitors can find them. Roadmap demoted to Resources dropdown below.
+  // Single top-level link kept simple. Everything else lives in 3
+  // organized dropdowns: Tools, Compare, Resources.
   const navLinks = [
-    { label: 'Free Tools', to: '/free-tools' },
-    { label: 'Glossary', to: '/glossary' },
     { label: 'Features', to: '/features' },
-    { label: 'FAQ', to: '/faq' },
+  ];
+
+  const toolsLinks = [
+    { label: 'All Free Tools', to: '/free-tools', desc: '52 calculators and AI tools' },
+    { label: 'Glossary', to: '/glossary', desc: '15 fitness concepts explained' },
   ];
 
   const compareLinks = [
@@ -165,6 +165,15 @@ export default function MarketingNav() {
     { label: 'Best Workout Generators 2026', to: '/best-workout-generator-apps-2026' },
     { label: 'Best Fitbit Alternatives', to: '/best-fitbit-alternatives-2026' },
     { label: 'Best MyFitnessPal Alternatives', to: '/best-myfitnesspal-alternatives-2026' },
+  ];
+
+  const resourceLinks = [
+    { label: 'FAQ', to: '/faq' },
+    { label: 'Roadmap', to: '/roadmap' },
+    { label: 'Contact', to: '/contact' },
+    { label: 'Privacy Policy', to: '/privacy' },
+    { label: 'Terms of Service', to: '/terms' },
+    { label: 'Refund Policy', to: '/refunds' },
   ];
 
   return (
@@ -188,8 +197,54 @@ export default function MarketingNav() {
             {BRANDING.appName}
           </Link>
 
-          {/* Desktop Nav */}
+          {/* Desktop Nav — 4 top-level items: Tools · Compare · Features · Resources */}
           <div className="hidden md:flex items-center gap-6">
+            {/* Tools Dropdown */}
+            <div ref={toolsRef} className="relative">
+              <button onClick={() => toggle('tools')} className={dropdownBtnClass('tools')}>
+                Tools {chevron('tools')}
+              </button>
+              <AnimatePresence>
+                {openDropdown === 'tools' && dropdownPanel(
+                  toolsLinks.map((link) => (
+                    <Link
+                      key={link.to}
+                      to={link.to}
+                      onClick={() => setOpenDropdown(null)}
+                      className="flex flex-col gap-0.5 px-4 py-2.5 text-sm hover:bg-[var(--color-surface-muted)] rounded-lg transition-colors"
+                    >
+                      <span className="text-[var(--color-text)] font-medium">{link.label}</span>
+                      <span className="text-[11px] text-[var(--color-text-muted)]">{link.desc}</span>
+                    </Link>
+                  )),
+                  "w-64"
+                )}
+              </AnimatePresence>
+            </div>
+
+            {/* Compare Dropdown */}
+            <div ref={compareRef} className="relative">
+              <button onClick={() => toggle('compare')} className={dropdownBtnClass('compare')}>
+                Compare {chevron('compare')}
+              </button>
+              <AnimatePresence>
+                {openDropdown === 'compare' && dropdownPanel(
+                  compareLinks.map((link) => (
+                    <Link
+                      key={link.to}
+                      to={link.to}
+                      onClick={() => setOpenDropdown(null)}
+                      className={dropdownItemClass}
+                    >
+                      {link.label}
+                    </Link>
+                  )),
+                  "w-72"
+                )}
+              </AnimatePresence>
+            </div>
+
+            {/* Features (top-level) */}
             {navLinks.map((link) => (
               <Link
                 key={link.to}
@@ -204,101 +259,47 @@ export default function MarketingNav() {
               </Link>
             ))}
 
-            {/* Compare Dropdown — /vs/* and /best-* roundup pages */}
-            <div ref={compareRef} className="relative">
-              <button onClick={() => toggle('compare')} className={dropdownBtnClass('compare')}>
-                Compare {chevron('compare')}
+            {/* Resources Dropdown — FAQ, Roadmap, Contact, Legal, Community */}
+            <div ref={resourcesRef} className="relative">
+              <button onClick={() => toggle('resources')} className={dropdownBtnClass('resources')}>
+                Resources {chevron('resources')}
               </button>
               <AnimatePresence>
-                {openDropdown === 'compare' && dropdownPanel(
-                  compareLinks.map((link) => (
-                    <Link
-                      key={link.to}
-                      to={link.to}
-                      onClick={() => setOpenDropdown(null)}
-                      className={dropdownItemClass}
-                    >
-                      <svg className="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 7.5L7.5 3m0 0L12 7.5M7.5 3v13.5m13.5 0L16.5 21m0 0L12 16.5m4.5 4.5V7.5" />
-                      </svg>
-                      {link.label}
-                    </Link>
-                  )),
-                  "w-72"
-                )}
-              </AnimatePresence>
-            </div>
-
-            {/* Legal Dropdown (Privacy, Terms, Refunds) */}
-            <div ref={legalRef} className="relative">
-              <button onClick={() => toggle('legal')} className={dropdownBtnClass('legal')}>
-                Legal {chevron('legal')}
-              </button>
-              <AnimatePresence>
-                {openDropdown === 'legal' && dropdownPanel(
+                {openDropdown === 'resources' && dropdownPanel(
                   <>
-                    <Link to="/privacy" onClick={() => setOpenDropdown(null)} className={dropdownItemClass}>
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" /></svg>
-                      Privacy Policy
-                    </Link>
-                    <Link to="/terms" onClick={() => setOpenDropdown(null)} className={dropdownItemClass}>
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" /></svg>
-                      Terms of Service
-                    </Link>
-                    <Link to="/refunds" onClick={() => setOpenDropdown(null)} className={dropdownItemClass}>
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z" /></svg>
-                      Refund Policy
-                    </Link>
-                  </>
-                )}
-              </AnimatePresence>
-            </div>
-
-            {/* Community Dropdown */}
-            <div ref={communityRef} className="relative">
-              <button onClick={() => toggle('community')} className={dropdownBtnClass('community')}>
-                Community {chevron('community')}
-              </button>
-              <AnimatePresence>
-                {openDropdown === 'community' && dropdownPanel(
-                  socialLinks.map((social) => (
-                    <a
-                      key={social.label}
-                      href={social.href}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={dropdownItemClass}
-                      onClick={() => setOpenDropdown(null)}
-                    >
-                      {social.icon}
-                      {social.label}
-                    </a>
-                  ))
-                )}
-              </AnimatePresence>
-            </div>
-
-            {/* Contact Dropdown */}
-            <div ref={contactRef} className="relative">
-              <button onClick={() => toggle('contact')} className={dropdownBtnClass('contact')}>
-                Contact {chevron('contact')}
-              </button>
-              <AnimatePresence>
-                {openDropdown === 'contact' && dropdownPanel(
-                  <>
-                    <a href={`mailto:${BRANDING.supportEmail}`} className={dropdownItemClass} onClick={() => setOpenDropdown(null)}>
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" /></svg>
-                      {BRANDING.supportEmail}
-                    </a>
-                    <Link to="/contact" className={dropdownItemClass} onClick={() => setOpenDropdown(null)}>
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" /></svg>
-                      Contact Page
-                    </Link>
+                    {resourceLinks.map((link) => (
+                      <Link
+                        key={link.to}
+                        to={link.to}
+                        onClick={() => setOpenDropdown(null)}
+                        className={dropdownItemClass}
+                      >
+                        {link.label}
+                      </Link>
+                    ))}
+                    <div className="h-px bg-[var(--color-border)] my-1.5 mx-2" />
+                    <p className="px-4 py-1 text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] font-semibold">Community</p>
+                    <div className="grid grid-cols-3 gap-1 px-2 pb-2 pt-1">
+                      {socialLinks.map((social) => (
+                        <a
+                          key={social.label}
+                          href={social.href}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          aria-label={social.label}
+                          onClick={() => setOpenDropdown(null)}
+                          className="flex items-center justify-center py-2 text-[var(--color-text-secondary)] hover:text-emerald-500 hover:bg-[var(--color-surface-muted)] rounded-lg transition-colors"
+                        >
+                          {social.icon}
+                        </a>
+                      ))}
+                    </div>
                   </>,
-                  "w-64"
+                  "w-60"
                 )}
               </AnimatePresence>
             </div>
+
           </div>
 
           {/* Right side: Theme toggle + Pricing CTA */}
@@ -376,23 +377,21 @@ export default function MarketingNav() {
             transition={{ duration: 0.2 }}
           >
             <div className="max-w-[1200px] mx-auto px-6 py-4 flex flex-col gap-1">
-              {/* Main links */}
-              {navLinks.map((link) => (
+              {/* Tools group */}
+              <p className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider px-4 pt-1 pb-1">Tools</p>
+              {toolsLinks.map((link) => (
                 <Link
                   key={link.to}
                   to={link.to}
                   onClick={() => setMobileMenuOpen(false)}
-                  className={`text-sm font-medium py-3 px-4 rounded-lg transition-colors ${
-                    isActive(link.to)
-                      ? 'text-emerald-500 bg-emerald-50/50'
-                      : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-muted)]'
-                  }`}
+                  className="flex flex-col py-2.5 px-4 rounded-lg text-[var(--color-text-secondary)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-muted)] transition-colors"
                 >
-                  {link.label}
+                  <span className="text-sm font-medium">{link.label}</span>
+                  <span className="text-[11px] text-[var(--color-text-muted)]">{link.desc}</span>
                 </Link>
               ))}
 
-              {/* Compare links */}
+              {/* Compare group */}
               <p className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider px-4 pt-3 pb-1">Compare</p>
               {compareLinks.map((link) => (
                 <Link
@@ -405,13 +404,26 @@ export default function MarketingNav() {
                 </Link>
               ))}
 
-              {/* Legal links */}
-              <p className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider px-4 pt-3 pb-1">Legal</p>
-              {[
-                { label: 'Privacy Policy', to: '/privacy' },
-                { label: 'Terms of Service', to: '/terms' },
-                { label: 'Refund Policy', to: '/refunds' },
-              ].map((link) => (
+              {/* Product group */}
+              <p className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider px-4 pt-3 pb-1">Product</p>
+              {navLinks.map((link) => (
+                <Link
+                  key={link.to}
+                  to={link.to}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={`text-sm font-medium py-2.5 px-4 rounded-lg transition-colors ${
+                    isActive(link.to)
+                      ? 'text-emerald-500 bg-emerald-50/50'
+                      : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-muted)]'
+                  }`}
+                >
+                  {link.label}
+                </Link>
+              ))}
+
+              {/* Resources group */}
+              <p className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider px-4 pt-3 pb-1">Resources</p>
+              {resourceLinks.map((link) => (
                 <Link
                   key={link.to}
                   to={link.to}

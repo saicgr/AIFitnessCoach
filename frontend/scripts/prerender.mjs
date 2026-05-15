@@ -26,7 +26,28 @@ import http from 'node:http';
 
 const require = createRequire(import.meta.url);
 const sirv = require('sirv');
-const puppeteer = require('puppeteer');
+
+// Vercel's build container is missing system libs that Puppeteer's bundled
+// Chrome needs (libnspr4.so etc). On CI we use @sparticuz/chromium, which
+// ships a statically-linked Chrome compatible with Amazon Linux 2 / Vercel
+// Fluid Compute. Local runs use the regular puppeteer install (faster,
+// full-feature). The split is driven by the presence of /vercel in cwd.
+// Only flip to sparticuz on the actual Vercel CI build container (path
+// /vercel/path0/...). Running `vercel build` locally on macOS also sets
+// VERCEL=1 but sparticuz ships a Linux-only binary that ENOEXECs on Darwin.
+const isVercelBuild = process.cwd().startsWith('/vercel');
+
+let puppeteer;
+let chromiumExecutablePath = null;
+let chromiumArgs = ['--no-sandbox', '--disable-setuid-sandbox'];
+if (isVercelBuild) {
+  puppeteer = require('puppeteer-core');
+  const chromium = require('@sparticuz/chromium').default || require('@sparticuz/chromium');
+  chromiumExecutablePath = await chromium.executablePath();
+  chromiumArgs = chromium.args;
+} else {
+  puppeteer = require('puppeteer');
+}
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
@@ -141,7 +162,8 @@ async function main() {
 
   const browser = await puppeteer.launch({
     headless: 'new',
-    args: ['--no-sandbox', '--disable-setuid-sandbox'],
+    args: chromiumArgs,
+    ...(chromiumExecutablePath ? { executablePath: chromiumExecutablePath } : {}),
   });
 
   let ok = 0;
