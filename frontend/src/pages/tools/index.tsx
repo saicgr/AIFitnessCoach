@@ -14,6 +14,7 @@ import {
   type CalcEntry,
   type CalcCategory,
 } from '../../components/tools/calcRegistry';
+import { fetchToolUsageCounts } from '../../lib/aiToolsClient';
 
 const TITLE = 'Free Fitness Tools, Calculators, and Timers';
 const META_DESC = 'A growing library of free fitness calculators, timers, and tools. 1RM, TDEE, macros, body fat, fasting timer, HIIT timer, sleep cycle, photo composer, and more. No sign-up, no paywall.';
@@ -81,10 +82,26 @@ function iconFor(cat: string): string {
   return '🛠️';
 }
 
+// A card only shows its usage count once it crosses this floor, so a
+// brand-new tool never displays an embarrassingly small number.
+const USAGE_DISPLAY_THRESHOLD = 100;
+
 export default function ToolsIndex() {
   const [query, setQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
+  const [usageCounts, setUsageCounts] = useState<Record<string, number>>({});
   const resultsRef = useRef<HTMLDivElement>(null);
+
+  // Load usage counts once. Soft-fails to an empty map (no counts render).
+  useEffect(() => {
+    let cancelled = false;
+    fetchToolUsageCounts().then((counts) => {
+      if (!cancelled) setUsageCounts(counts);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // When the user changes filters from a long-scrolled position, the right
   // column suddenly shrinks (57 tools → 3 for "Goal-Based Plans"). The
@@ -361,7 +378,7 @@ export default function ToolsIndex() {
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
                   {featured.map((c) => (
-                    <CalcCard key={c.slug} calc={c} featured />
+                    <CalcCard key={c.slug} calc={c} featured usageCount={usageCounts[c.slug]} />
                   ))}
                 </div>
               </section>
@@ -376,7 +393,7 @@ export default function ToolsIndex() {
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
                   {visibleCalcs.map((c) => (
-                    <CalcCard key={c.slug} calc={c} />
+                    <CalcCard key={c.slug} calc={c} usageCount={usageCounts[c.slug]} />
                   ))}
                 </div>
               )
@@ -393,7 +410,7 @@ export default function ToolsIndex() {
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
                       {calcs.map((c) => (
-                        <CalcCard key={c.slug} calc={c} />
+                        <CalcCard key={c.slug} calc={c} usageCount={usageCounts[c.slug]} />
                       ))}
                     </div>
                   </section>
@@ -464,8 +481,18 @@ function CategoryPill({ active, icon, label, onClick }: { active: boolean; icon:
 
 // ─── Sub-components ──────────────────────────────────────────────────
 
-function CalcCard({ calc, featured = false }: { calc: CalcEntry; featured?: boolean }) {
+function CalcCard({
+  calc,
+  featured = false,
+  usageCount,
+}: {
+  calc: CalcEntry;
+  featured?: boolean;
+  usageCount?: number;
+}) {
   const isNew = NEW_SLUGS.has(calc.slug);
+  const showUsage =
+    typeof usageCount === 'number' && usageCount >= USAGE_DISPLAY_THRESHOLD;
   return (
     <Link
       to={`/free-tools/${calc.slug}`}
@@ -501,6 +528,17 @@ function CalcCard({ calc, featured = false }: { calc: CalcEntry; featured?: bool
       {calc.competitor && (
         <p className="text-xs text-zinc-600 mt-2.5">
           Paid in: <span className="text-zinc-500">{calc.competitor}</span>
+        </p>
+      )}
+      {showUsage && (
+        <p className="text-xs text-emerald-400/80 mt-2.5 flex items-center gap-1.5">
+          <span aria-hidden>🔢</span>
+          <span>
+            <span className="font-semibold tabular-nums">
+              {usageCount!.toLocaleString()}
+            </span>{' '}
+            calculations run
+          </span>
         </p>
       )}
     </Link>

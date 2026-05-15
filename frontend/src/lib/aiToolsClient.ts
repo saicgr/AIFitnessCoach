@@ -176,3 +176,35 @@ export async function submitEmailSignup(
 
   return (await res.json()) as EmailSignupResponse;
 }
+
+// ---------------------------------------------------------------------------
+// Tool usage counters — "N calculations run" social proof on the tools index.
+// ---------------------------------------------------------------------------
+
+/**
+ * Fire-and-forget increment when a tool produces a result. Deduped per
+ * (tool, browser session) by the caller so a single visit counts once.
+ * Never throws — a dropped ping is acceptable for an approximate counter.
+ */
+export async function pingToolUsage(slug: string): Promise<void> {
+  try {
+    await fetch(`${BASE}/usage/${encodeURIComponent(slug)}`, {
+      method: 'POST',
+      keepalive: true,
+    });
+  } catch {
+    /* non-critical */
+  }
+}
+
+/** Fetch the {slug: count} usage map for the tools index. */
+export async function fetchToolUsageCounts(): Promise<Record<string, number>> {
+  try {
+    const res = await fetch(`${BASE}/usage`);
+    if (!res.ok) return {};
+    const data = (await res.json()) as { counts?: Record<string, number> };
+    return data.counts ?? {};
+  } catch {
+    return {};
+  }
+}

@@ -641,3 +641,77 @@ async def email_signup(
         "already_subscribed": False,
         "message": "Check your inbox. Your result is on its way.",
     }
+
+
+# ───────────────────────────── Usage counters ────────────────────────────
+# Each tool fires a fire-and-forget increment when it produces a result.
+# The /free-tools index reads the aggregate to show "N calculations run"
+# social proof per card. Counts are coarse and never joined to a user.
+
+_USAGE_SLUG_RE = re.compile(r"^[a-z0-9\-]{1,100}$")
+
+# Per-IP throttle so a single visitor refreshing a tool can't inflate a
+# counter. Generous because legitimate users do recompute repeatedly.
+USAGE_PING_LIMIT = 60
+USAGE_PING_WINDOW_HOURS = 1
+
+
+@router.get("/usage")
+async def get_usage_counts():
+    """Return every tool's usage count as a {slug: count} map.
+
+    Read by the /free-tools index page. Public, unauthenticated, cacheable.
+    """
+    db = get_supabase_db()
+    try:
+        res = (
+            db.client.table("free_tool_usage_counts")
+            .select("slug, count")
+            .execute()
+        )
+    except Exception as e:
+        logger.error(f"[free-tools/usage] read failed: {e}", exc_info=True)
+        # Soft-fail: an empty map just means no counts render. Never 500
+        # the index page over social-proof chrome.
+        return {"counts": {}}
+
+    counts = {row["slug"]: row["count"] for row in (res.data or [])}
+    return {"counts": counts}
+
+
+@router.post("/usage/{slug}")
+async def increment_usage(slug: str, request: Request):
+    """Increment a tool's usage counter. Fire-and-forget from the client.
+
+    Lightly IP-throttled to stop a single visitor inflating a number.
+    Always returns 200 with the (best-effort) new count so the client
+    never has to handle an error path for a non-critical ping.
+    """
+    slug = slug.strip().lower()
+    if not _USAGE_SLUG_RE.match(slug):
+        raise HTTPException(status_code=400, detail="Invalid tool slug.")
+
+    ip = _client_ip(request)
+    try:
+        await check_and_consume(
+            ip=ip,
+            tool=f"usage-ping",
+            limit=USAGE_PING_LIMIT,
+            window_hours=USAGE_PING_WINDOW_HOURS,
+        )
+    except FreeToolLimitExceeded:
+        # Over the throttle: silently no-op. The counter is approximate by
+        # design, so a dropped ping is fine. Return current value if known.
+        return {"slug": slug, "counted": False}
+
+    db = get_supabase_db()
+    try:
+        res = db.client.rpc(
+            "increment_free_tool_usage", {"p_slug": slug}
+        ).execute()
+        new_count = res.data if isinstance(res.data, int) else None
+        return {"slug": slug, "counted": True, "count": new_count}
+    except Exception as e:
+        logger.error(f"[free-tools/usage] increment failed slug={slug}: {e}")
+        # Non-critical: never surface to the user.
+        return {"slug": slug, "counted": False}

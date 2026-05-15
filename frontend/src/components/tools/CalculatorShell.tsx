@@ -16,6 +16,7 @@ import EmailCapture from './EmailCapture';
 import InstallCta from './InstallCta';
 import StickyMobileInstallBar from './StickyMobileInstallBar';
 import ExitIntentCapture from './ExitIntentCapture';
+import { pingToolUsage } from '../../lib/aiToolsClient';
 import { BRANDING } from '../../lib/branding';
 import { findCalc } from './calcRegistry';
 
@@ -106,6 +107,21 @@ export default function CalculatorShell({
     }
     canonicalLink.href = canonical;
   }, [slug, title, metaDescription, canonical, ogImage]);
+
+  // Usage counter ping — fires once per (tool, browser session) the first
+  // time the tool produces a result. sessionStorage dedup so recomputes
+  // and refreshes within one visit don't multi-count.
+  useEffect(() => {
+    if (!emailCaptureResult) return;
+    const key = `zealova-usage-pinged-${slug}`;
+    try {
+      if (sessionStorage.getItem(key) === '1') return;
+      sessionStorage.setItem(key, '1');
+    } catch {
+      return;
+    }
+    void pingToolUsage(slug);
+  }, [slug, emailCaptureResult]);
 
   const breadcrumbJsonLd = {
     '@context': 'https://schema.org',
