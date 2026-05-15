@@ -10,7 +10,7 @@ import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useAppStore } from '../store';
 
-const TOOL_ROUTE_PREFIXES = ['/free-tools', '/glossary', '/best-', '/vs/'];
+const TOOL_ROUTE_PREFIXES = ['/free-tools', '/glossary', '/best-', '/vs/', '/blog'];
 
 function isToolRoute(pathname: string): boolean {
   return TOOL_ROUTE_PREFIXES.some((prefix) => pathname.startsWith(prefix));

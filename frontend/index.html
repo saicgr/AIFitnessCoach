@@ -21,7 +21,7 @@
       (function () {
         try {
           var path = window.location.pathname;
-          var isToolRoute = /^(\/free-tools|\/glossary|\/best-|\/vs\/)/.test(path);
+          var isToolRoute = /^(\/free-tools|\/glossary|\/best-|\/vs\/|\/blog)/.test(path);
           var stored = null;
           try {
             var raw = localStorage.getItem('fitness-coach-storage');

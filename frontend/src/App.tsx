@@ -46,6 +46,7 @@ import BestWorkoutGeneratorApps2026 from './pages/best/WorkoutGeneratorApps2026'
 import BestFitbitAlternatives2026 from './pages/best/FitbitAlternatives2026';
 import BestMyFitnessPalAlternatives2026 from './pages/best/MyFitnessPalAlternatives2026';
 import ToolsIndex from './pages/tools';
+import Blog from './pages/Blog';
 import OneRmCalculator from './pages/tools/OneRmCalculator';
 import TdeeCalculator from './pages/tools/TdeeCalculator';
 import BmrCalculator from './pages/tools/BmrCalculator';
@@ -200,6 +201,7 @@ function App() {
         <Route path="/best-myfitnesspal-alternatives-2026" element={<BestMyFitnessPalAlternatives2026 />} />
         {/* Free calculator tools — SEO + acquisition funnel */}
         <Route path="/free-tools" element={<ToolsIndex />} />
+        <Route path="/blog" element={<Blog />} />
         <Route path="/free-tools/1rm-calculator" element={<OneRmCalculator />} />
         <Route path="/free-tools/tdee-calculator" element={<TdeeCalculator />} />
         <Route path="/free-tools/bmr-calculator" element={<BmrCalculator />} />

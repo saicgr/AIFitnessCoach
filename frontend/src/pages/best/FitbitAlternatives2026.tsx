@@ -24,6 +24,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import MarketingNav from '../../components/marketing/MarketingNav';
+import ScrollSpyToc from '../../components/marketing/ScrollSpyToc';
 import MarketingFooter from '../../components/marketing/MarketingFooter';
 import { BRANDING } from '../../lib/branding';
 
@@ -250,6 +251,7 @@ export default function BestFitbitAlternatives2026() {
 
       <div className="min-h-screen bg-zinc-950 text-zinc-100">
         <MarketingNav />
+        <ScrollSpyToc />
         <main className="max-w-4xl mx-auto px-4 sm:px-6 py-16 sm:py-24">
 
           <nav className="text-sm text-zinc-500 mb-10" aria-label="Breadcrumb">

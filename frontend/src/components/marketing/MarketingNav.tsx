@@ -159,6 +159,7 @@ export default function MarketingNav() {
   ];
 
   const compareLinks = [
+    { label: 'All comparisons & guides', to: '/blog' },
     { label: 'vs Google Health', to: '/vs/google-health' },
     { label: 'Best AI Fitness Apps 2026', to: '/best-ai-fitness-apps-2026' },
     { label: 'Best Calorie Trackers 2026', to: '/best-calorie-tracker-apps-2026' },
