@@ -14,14 +14,14 @@
     <meta property="og:site_name" content="%BRAND_NAME%" />
     <meta property="og:url" content="%BRAND_WEBSITE%/" />
     <script>
-      // Pre-React theme + dark-only-route bootstrap. Avoids the light-flash
-      // when a user with theme=dark lands on a prerendered page that was
-      // built with theme=light, and forces dark-mode on tool/glossary/best/vs
-      // routes regardless of stored preference.
+      // Pre-React theme bootstrap. Applies the stored theme before hydration
+      // to avoid a light-flash, and tags tool/glossary/best/vs routes with
+      // `tool-route` so the light-mode zinc-palette remap in index.css can
+      // scope to them before first paint.
       (function () {
         try {
           var path = window.location.pathname;
-          var darkOnly = /^(\/free-tools|\/glossary|\/best-|\/vs\/)/.test(path);
+          var isToolRoute = /^(\/free-tools|\/glossary|\/best-|\/vs\/)/.test(path);
           var stored = null;
           try {
             var raw = localStorage.getItem('fitness-coach-storage');
@@ -30,8 +30,9 @@
               stored = (parsed && parsed.state && parsed.state.theme) || null;
             }
           } catch (_) {}
-          var theme = darkOnly ? 'dark' : (stored || 'light');
+          var theme = stored || 'light';
           if (theme === 'dark') document.documentElement.classList.add('dark-mode');
+          if (isToolRoute) document.documentElement.classList.add('tool-route');
         } catch (_) {}
       })();
     </script>

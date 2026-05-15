@@ -1,17 +1,19 @@
-// Route-level concerns that need to happen on every navigation:
+// Route-level concerns that run on every navigation:
 //   1. Scroll back to top (React Router preserves position by default).
-//   2. Lock the dark-mode class while on dark-only marketing surfaces so
-//      the shared nav stays legible. The user's stored theme is restored
-//      whenever they leave those routes.
+//   2. Apply the user's theme everywhere (no route now force-locks dark).
+//   3. Tag tool/glossary/comparison routes with a `tool-route` class so the
+//      light-mode zinc-palette remap in index.css can scope to them. Those
+//      pages are built with hardcoded zinc-* utilities; the remap flips the
+//      palette in light mode without editing 60 page files.
 
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useAppStore } from '../store';
 
-const DARK_ONLY_PREFIXES = ['/free-tools', '/glossary', '/best-', '/vs/'];
+const TOOL_ROUTE_PREFIXES = ['/free-tools', '/glossary', '/best-', '/vs/'];
 
-function isDarkOnlyRoute(pathname: string): boolean {
-  return DARK_ONLY_PREFIXES.some((prefix) => pathname.startsWith(prefix));
+function isToolRoute(pathname: string): boolean {
+  return TOOL_ROUTE_PREFIXES.some((prefix) => pathname.startsWith(prefix));
 }
 
 export default function ScrollToTop() {
@@ -27,13 +29,14 @@ export default function ScrollToTop() {
   useEffect(() => {
     if (typeof document === 'undefined') return;
     const html = document.documentElement;
-    if (isDarkOnlyRoute(pathname)) {
-      html.classList.add('dark-mode');
-    } else if (userTheme === 'light') {
-      html.classList.remove('dark-mode');
-    } else {
-      html.classList.add('dark-mode');
-    }
+
+    // Theme follows the user's stored preference on every route.
+    if (userTheme === 'dark') html.classList.add('dark-mode');
+    else html.classList.remove('dark-mode');
+
+    // Tool routes get the palette-remap hook class.
+    if (isToolRoute(pathname)) html.classList.add('tool-route');
+    else html.classList.remove('tool-route');
   }, [pathname, userTheme]);
 
   return null;

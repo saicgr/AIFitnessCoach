@@ -97,6 +97,33 @@ html.dark-mode {
   --color-muted-foreground: var(--color-text-secondary);
 }
 
+/* === TOOL-ROUTE LIGHT-MODE PALETTE REMAP ===
+ *
+ * The free-tool / glossary / comparison pages are built with hardcoded
+ * Tailwind zinc-* + white utilities (bg-zinc-950, text-white, etc.) and
+ * were originally dark-only. Tailwind v4 compiles those utilities to
+ * `var(--color-zinc-950)` / `var(--color-white)`, so we can flip the whole
+ * surface to a light theme by overriding just those variables, scoped to
+ * `html.tool-route` when NOT in dark mode. Zero edits to ~60 page files.
+ *
+ * The mapping inverts the zinc scale: page bg (zinc-950) becomes white,
+ * surfaces lighten, text colors darken. Emerald / amber / red accent
+ * variables are deliberately untouched so accents read on both themes.
+ */
+html.tool-route:not(.dark-mode) {
+  --color-zinc-950: #ffffff;   /* page background        */
+  --color-zinc-900: #f4f4f5;   /* cards / surfaces       */
+  --color-zinc-800: #e4e4e7;   /* borders                */
+  --color-zinc-700: #d4d4d8;   /* stronger borders       */
+  --color-white:    #18181b;   /* primary text           */
+  --color-zinc-100: #18181b;   /* primary text alt       */
+  --color-zinc-200: #27272a;   /* near-primary text      */
+  --color-zinc-300: #3f3f46;   /* strong secondary text  */
+  --color-zinc-400: #52525b;   /* secondary text         */
+  --color-zinc-500: #71717a;   /* muted text (unchanged) */
+  --color-zinc-600: #a1a1aa;   /* most-muted text        */
+}
+
 /* === BASE STYLES === */
 * {
   box-sizing: border-box;
