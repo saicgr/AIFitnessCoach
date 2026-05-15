@@ -163,186 +163,243 @@ export default function ToolsIndex() {
     return order;
   }, []);
 
+  const categoryCounts = useMemo(() => {
+    const m: Record<string, number> = {};
+    for (const c of CALC_REGISTRY) m[c.category] = (m[c.category] ?? 0) + 1;
+    return m;
+  }, []);
+
+  const visibleCalcs: CalcEntry[] = useMemo(() => {
+    if (filtered !== null) return filtered;
+    if (categoryFilter !== 'all') {
+      return CALC_REGISTRY.filter((c) => c.category === categoryFilter);
+    }
+    return CALC_REGISTRY;
+  }, [filtered, categoryFilter]);
+
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100">
       <MarketingNav />
 
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 pt-10 sm:pt-16 pb-20">
-        {/* Hero */}
-        <header className="mb-10 text-center max-w-3xl mx-auto">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 pt-10 sm:pt-14 pb-20">
+        {/* Compact hero */}
+        <header className="mb-6 text-center max-w-3xl mx-auto">
           <p className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
             Free forever · No sign-up
           </p>
-          <h1 className="mt-5 text-4xl sm:text-6xl font-bold text-white tracking-tight leading-tight">
+          <h1 className="mt-4 text-3xl sm:text-5xl font-bold text-white tracking-tight leading-tight">
             Every fitness tool you need.{' '}
             <span className="text-emerald-400">Free.</span>
           </h1>
-          <p className="mt-5 text-lg text-zinc-400 leading-relaxed max-w-2xl mx-auto">
-            {totalCount} calculators, timers, and share-ready cards. Built by Sai, founder of Zealova.
-            Nothing leaves your device. {paidElsewhereCount} of these cost money on competitor apps.
+          <p className="mt-3 text-base text-zinc-400 leading-relaxed max-w-2xl mx-auto">
+            {totalCount} calculators, timers, and AI tools. Nothing leaves your device.
+            {' '}{paidElsewhereCount} cost money on competitor apps.
           </p>
-
-          {/* Stat strip */}
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-xs">
-            <Stat label="Tools" value={String(totalCount)} />
-            <Stat label="Paid elsewhere" value={String(paidElsewhereCount)} />
-            <Stat label="Sign-up required" value="Zero" />
-            <Stat label="Data uploaded" value="Zero" />
-          </div>
         </header>
 
-        {/* Search + category filter */}
-        <div className="mb-10 sticky top-0 z-10 -mx-4 sm:mx-0 px-4 sm:px-0 pt-4 pb-4 bg-zinc-950/85 backdrop-blur-sm">
-          <div className="max-w-3xl mx-auto flex flex-col sm:flex-row gap-2">
-            <div className="relative flex-1">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none">
-                🔍
-              </span>
+        {/* Top install CTA — moved up so it's visible without scrolling 50+ tools */}
+        <section className="mb-8 rounded-2xl border border-emerald-500/25 bg-gradient-to-r from-emerald-950 via-zinc-900 to-zinc-950 p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center gap-4">
+          <div className="flex-1">
+            <p className="text-xs font-semibold uppercase tracking-wider text-emerald-400 mb-1">
+              Run these against your real data
+            </p>
+            <h2 className="text-lg sm:text-xl font-bold text-white tracking-tight leading-snug">
+              Want every calculation applied automatically? Get Zealova.
+            </h2>
+            <p className="text-sm text-zinc-400 mt-1.5">
+              1RM updates after each lift. TDEE auto-adjusts. Macros adapt weekly.
+            </p>
+          </div>
+          <a
+            href="https://play.google.com/store/apps/details?id=com.aifitnesscoach.app&referrer=utm_source%3Dtools%26utm_medium%3Dindex%26utm_content%3Dtop-cta"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="shrink-0 inline-flex items-center justify-center px-5 py-3 rounded-xl bg-emerald-500 text-zinc-900 font-bold hover:bg-emerald-400 transition shadow-lg shadow-emerald-500/20 whitespace-nowrap"
+          >
+            Get Zealova for Android
+          </a>
+        </section>
+
+        {/* Mobile search + category select (stacked, simple) */}
+        <div className="lg:hidden mb-6 sticky top-0 z-10 -mx-4 px-4 pt-3 pb-3 bg-zinc-950/95 backdrop-blur-sm border-b border-zinc-800/60">
+          <div className="flex flex-col gap-2">
+            <div className="relative">
+              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none">🔍</span>
               <input
                 type="search"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder={`Search ${totalCount} tools (try "1rm", "macro", "fasting")`}
-                className="w-full pl-11 pr-4 py-3.5 rounded-xl bg-zinc-900 border border-zinc-800 text-white placeholder-zinc-500 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                placeholder={`Search ${totalCount} tools`}
+                className="w-full pl-10 pr-3 py-3 rounded-xl bg-zinc-900 border border-zinc-800 text-white placeholder-zinc-500 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
               />
             </div>
-            <div className="relative sm:w-56">
-              <select
-                value={categoryFilter}
-                onChange={(e) => setCategoryFilter(e.target.value)}
-                className="appearance-none w-full pl-4 pr-10 py-3.5 rounded-xl bg-zinc-900 border border-zinc-800 text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 cursor-pointer"
-                aria-label="Filter by category"
-              >
-                <option value="all">All categories</option>
-                {allCategories.map((cat) => (
-                  <option key={cat.key} value={cat.key}>
-                    {iconFor(cat.key)} {cat.name}
-                  </option>
-                ))}
-              </select>
-              <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 text-xs">
-                ▼
-              </span>
+            <div className="flex gap-2 overflow-x-auto -mx-1 px-1 pb-1 scrollbar-hide">
+              <CategoryPill
+                active={categoryFilter === 'all' && !query.trim()}
+                icon="✨"
+                label={`All ${totalCount}`}
+                onClick={() => { setCategoryFilter('all'); setQuery(''); }}
+              />
+              {allCategories.map((cat) => (
+                <CategoryPill
+                  key={cat.key}
+                  active={categoryFilter === cat.key}
+                  icon={iconFor(cat.key)}
+                  label={`${cat.name} · ${categoryCounts[cat.key] ?? 0}`}
+                  onClick={() => setCategoryFilter(cat.key)}
+                />
+              ))}
             </div>
           </div>
-          {isFiltering && (
-            <div className="max-w-3xl mx-auto mt-2 flex items-center justify-between gap-3">
-              <p className="text-xs text-zinc-500">
-                {filtered?.length ?? 0} matching {(filtered?.length ?? 0) === 1 ? 'tool' : 'tools'}
-                {categoryFilter !== 'all' && ` in ${categoryNameFor(categoryFilter, allCategories)}`}
-                {query.trim() && ` for "${query.trim()}"`}
-              </p>
-              <button
-                type="button"
-                onClick={() => {
-                  setQuery('');
-                  setCategoryFilter('all');
-                }}
-                className="text-xs text-emerald-400 hover:text-emerald-300 underline"
-              >
-                Clear filters
-              </button>
-            </div>
-          )}
         </div>
 
-        {/* Search results OR category sections */}
-        {filtered !== null ? (
-          <SearchResults results={filtered} />
-        ) : (
-          <>
-            {/* Featured row */}
-            <section className="mb-14">
-              <div className="flex items-end justify-between mb-5 gap-3 flex-wrap">
-                <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-                  <span>⭐</span> Most useful, start here
-                </h2>
-                <p className="text-xs text-zinc-500">The 6 tools 80% of visitors actually need</p>
+        {/* Desktop two-column layout */}
+        <div className="lg:grid lg:grid-cols-[260px_1fr] lg:gap-8">
+          {/* Sidebar — sticky, scroll-independent of grid */}
+          <aside className="hidden lg:block">
+            <div className="sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto pr-2 scrollbar-hide">
+              <div className="relative mb-4">
+                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none">🔍</span>
+                <input
+                  type="search"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Search tools"
+                  className="w-full pl-10 pr-3 py-2.5 rounded-xl bg-zinc-900 border border-zinc-800 text-white placeholder-zinc-500 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                {featured.map((c) => (
-                  <CalcCard key={c.slug} calc={c} featured />
-                ))}
-              </div>
-            </section>
 
-            {/* Category quick-nav */}
-            <nav className="mb-10 -mx-4 sm:mx-0 px-4 sm:px-0">
-              <div className="flex gap-2 overflow-x-auto pb-2 -mb-2 scrollbar-hide">
-                {allCategories.map((cat) => (
-                  <a
-                    key={cat.key}
-                    href={`#cat-${cat.key}`}
-                    className="shrink-0 inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full bg-zinc-900 border border-zinc-800 text-zinc-300 hover:border-emerald-500/40 hover:text-emerald-400 transition"
-                  >
-                    <span>{iconFor(cat.key)}</span>
-                    <span>{cat.name}</span>
-                  </a>
-                ))}
-              </div>
-            </nav>
-
-            {/* Categories */}
-            {allCategories.map((cat) => {
-              const calcs = calcsByCategory(cat.key as CalcCategory);
-              if (calcs.length === 0) return null;
-              return (
-                <section key={cat.key} id={`cat-${cat.key}`} className="mb-14 scroll-mt-24">
-                  <div className="border-b border-zinc-800 pb-3 mb-5 flex items-start gap-3">
-                    <span className="text-2xl shrink-0 mt-0.5">{iconFor(cat.key)}</span>
-                    <div>
-                      <h2 className="text-xl font-bold text-white">{cat.name}</h2>
-                      {cat.description && (
-                        <p className="text-sm text-zinc-500 mt-0.5">{cat.description}</p>
-                      )}
-                    </div>
-                    <span className="ml-auto text-xs text-zinc-500 shrink-0">{calcs.length} tools</span>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                    {calcs.map((c) => (
-                      <CalcCard key={c.slug} calc={c} />
-                    ))}
-                  </div>
-                </section>
-              );
-            })}
-          </>
-        )}
-
-        {/* Trust section */}
-        <section className="mt-16 grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-4xl mx-auto">
-          <TrustBox icon="🔒" title="100% client-side" body="Everything runs in your browser. No photos, weights, or data are ever sent to a server." />
-          <TrustBox icon="📚" title="Real research, real citations" body="Every calculator cites the peer-reviewed source for its formula. No vibes-based math." />
-          <TrustBox icon="💚" title="Built by an indie founder" body="Sai builds Zealova solo. These tools sustain the company without ads or paywalls." />
-        </section>
-
-        {/* Bottom CTA */}
-        <section className="mt-16 rounded-3xl border border-emerald-500/30 bg-gradient-to-br from-emerald-950 via-zinc-900 to-zinc-950 p-8 sm:p-12">
-          <div className="max-w-2xl">
-            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-3 tracking-tight">
-              Want every calculation applied automatically?
-            </h2>
-            <p className="text-zinc-400 leading-relaxed mb-6 text-base sm:text-lg">
-              Zealova runs every calculation here against your real training and food logs.
-              Your 1RM updates after each lift. Your TDEE auto-adjusts to your weight trend.
-              Your macros adapt weekly.
-            </p>
-            <div className="flex flex-wrap gap-3">
-              <a
-                href="https://play.google.com/store/apps/details?id=com.aifitnesscoach.app"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-block px-6 py-3.5 rounded-xl bg-emerald-500 text-zinc-900 font-bold hover:bg-emerald-400 transition shadow-lg shadow-emerald-500/20"
+              <button
+                onClick={() => { setCategoryFilter('all'); setQuery(''); }}
+                className={`w-full flex items-center justify-between text-left px-3 py-2.5 rounded-lg text-sm font-medium transition ${
+                  categoryFilter === 'all' && !query.trim()
+                    ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
+                    : 'text-zinc-300 hover:bg-zinc-900 border border-transparent'
+                }`}
               >
-                Get Zealova for Android
-              </a>
-              <span className="self-center text-xs text-zinc-500">
-                iOS coming soon · 7-day free trial · $7.99/mo or $59.99/yr
-              </span>
+                <span className="flex items-center gap-2">
+                  <span>✨</span> All tools
+                </span>
+                <span className="text-xs text-zinc-500 tabular-nums">{totalCount}</span>
+              </button>
+
+              <div className="mt-1 space-y-0.5">
+                {allCategories.map((cat) => {
+                  const count = categoryCounts[cat.key] ?? 0;
+                  if (count === 0) return null;
+                  const active = categoryFilter === cat.key;
+                  return (
+                    <button
+                      key={cat.key}
+                      onClick={() => setCategoryFilter(cat.key)}
+                      className={`w-full flex items-center justify-between text-left px-3 py-2 rounded-lg text-sm transition ${
+                        active
+                          ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30'
+                          : 'text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200 border border-transparent'
+                      }`}
+                    >
+                      <span className="flex items-center gap-2">
+                        <span className="text-base">{iconFor(cat.key)}</span>
+                        <span className="truncate">{cat.name}</span>
+                      </span>
+                      <span className="text-xs text-zinc-500 tabular-nums shrink-0 ml-2">{count}</span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {isFiltering && (
+                <button
+                  onClick={() => { setQuery(''); setCategoryFilter('all'); }}
+                  className="mt-3 w-full text-xs text-emerald-400 hover:text-emerald-300 underline text-left px-3"
+                >
+                  Clear filters
+                </button>
+              )}
             </div>
+          </aside>
+
+          {/* Right column — results */}
+          <div className="min-w-0">
+            {/* Results summary */}
+            <div className="mb-4 flex items-center justify-between gap-3 flex-wrap">
+              <p className="text-sm text-zinc-400">
+                <span className="font-semibold text-white">{visibleCalcs.length}</span>{' '}
+                {visibleCalcs.length === 1 ? 'tool' : 'tools'}
+                {categoryFilter !== 'all' && ` in ${categoryNameFor(categoryFilter, allCategories)}`}
+                {query.trim() && ` matching "${query.trim()}"`}
+              </p>
+              {isFiltering && (
+                <button
+                  type="button"
+                  onClick={() => { setQuery(''); setCategoryFilter('all'); }}
+                  className="text-xs text-emerald-400 hover:text-emerald-300 underline"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+
+            {/* Featured row only on "all" view */}
+            {!isFiltering && (
+              <section className="mb-10">
+                <div className="flex items-end justify-between mb-4 gap-3 flex-wrap">
+                  <h2 className="text-base font-bold text-white flex items-center gap-2 uppercase tracking-wider text-xs">
+                    <span>⭐</span> Start here
+                  </h2>
+                  <p className="text-xs text-zinc-500">The 6 highest-leverage tools</p>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+                  {featured.map((c) => (
+                    <CalcCard key={c.slug} calc={c} featured />
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* Grid — filtered list OR all-by-category sections */}
+            {isFiltering || categoryFilter !== 'all' ? (
+              visibleCalcs.length === 0 ? (
+                <div className="text-center py-16">
+                  <p className="text-zinc-500">No tools match those filters.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+                  {visibleCalcs.map((c) => (
+                    <CalcCard key={c.slug} calc={c} />
+                  ))}
+                </div>
+              )
+            ) : (
+              allCategories.map((cat) => {
+                const calcs = calcsByCategory(cat.key as CalcCategory);
+                if (calcs.length === 0) return null;
+                return (
+                  <section key={cat.key} id={`cat-${cat.key}`} className="mb-10 scroll-mt-24">
+                    <div className="border-b border-zinc-800 pb-2.5 mb-4 flex items-center gap-2.5">
+                      <span className="text-xl shrink-0">{iconFor(cat.key)}</span>
+                      <h2 className="text-lg font-bold text-white">{cat.name}</h2>
+                      <span className="ml-auto text-xs text-zinc-500 shrink-0">{calcs.length} tools</span>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+                      {calcs.map((c) => (
+                        <CalcCard key={c.slug} calc={c} />
+                      ))}
+                    </div>
+                  </section>
+                );
+              })
+            )}
+
+            {/* Trust signals */}
+            <section className="mt-12 grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <TrustBox icon="🔒" title="100% client-side" body="Everything runs in your browser. No data is sent to a server." />
+              <TrustBox icon="📚" title="Real citations" body="Every calculator cites the peer-reviewed source for its formula." />
+              <TrustBox icon="💚" title="Built solo" body="Sai builds Zealova solo. These tools sustain the company, no ads." />
+            </section>
           </div>
-        </section>
+        </div>
       </main>
 
       <MarketingFooter />
@@ -350,16 +407,23 @@ export default function ToolsIndex() {
   );
 }
 
-// ─── Sub-components ──────────────────────────────────────────────────
-
-function Stat({ label, value }: { label: string; value: string }) {
+function CategoryPill({ active, icon, label, onClick }: { active: boolean; icon: string; label: string; onClick: () => void }) {
   return (
-    <div>
-      <p className="text-2xl font-bold text-white tabular-nums">{value}</p>
-      <p className="text-zinc-500 mt-0.5 uppercase tracking-wider">{label}</p>
-    </div>
+    <button
+      onClick={onClick}
+      className={`shrink-0 inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full border transition whitespace-nowrap ${
+        active
+          ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/40'
+          : 'bg-zinc-900 text-zinc-300 border-zinc-800 hover:border-emerald-500/40 hover:text-emerald-400'
+      }`}
+    >
+      <span>{icon}</span>
+      <span>{label}</span>
+    </button>
   );
 }
+
+// ─── Sub-components ──────────────────────────────────────────────────
 
 function CalcCard({ calc, featured = false }: { calc: CalcEntry; featured?: boolean }) {
   const isNew = NEW_SLUGS.has(calc.slug);
@@ -401,26 +465,6 @@ function CalcCard({ calc, featured = false }: { calc: CalcEntry; featured?: bool
         </p>
       )}
     </Link>
-  );
-}
-
-function SearchResults({ results }: { results: CalcEntry[] }) {
-  if (results.length === 0) {
-    return (
-      <p className="text-center text-zinc-500 py-16">
-        No tools matched. Try a different keyword.
-      </p>
-    );
-  }
-  return (
-    <section className="mb-14">
-      <p className="text-sm text-zinc-500 mb-4">{results.length} matches</p>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-        {results.map((c) => (
-          <CalcCard key={c.slug} calc={c} />
-        ))}
-      </div>
-    </section>
   );
 }
 
