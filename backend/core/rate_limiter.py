@@ -56,8 +56,11 @@ def get_real_client_ip(request: Request) -> str:
 
 # Single shared limiter instance (IP-based)
 # Uses custom key function for reverse proxy compatibility (e.g., Render)
-# Default global limit: 100 requests per minute
-# swallow_errors=True prevents 500 errors if rate limiting fails
+# Default IP limit: 1000 requests/minute. Deliberately high — many users
+# share one IP behind carrier-grade NAT / corporate networks, so a tight
+# per-IP cap punishes legitimate traffic. The real abuse guard is the tight
+# per-ENDPOINT decorators on expensive routes (e.g. @limiter.limit("5/minute")
+# on /generate-stream). swallow_errors=True prevents 500s if limiting fails.
 import os as _os
 # BENCH_BYPASS_RATELIMIT=1 disables the limiter entirely so the Phase-2
 # full-sweep bench script can fire 500+ scans through one local instance
@@ -65,7 +68,7 @@ import os as _os
 _BENCH_BYPASS = _os.environ.get("BENCH_BYPASS_RATELIMIT") == "1"
 limiter = Limiter(
     key_func=get_real_client_ip,
-    default_limits=[] if _BENCH_BYPASS else ["100/minute"],
+    default_limits=[] if _BENCH_BYPASS else ["1000/minute"],
     swallow_errors=True,
     enabled=not _BENCH_BYPASS,
 )
@@ -103,10 +106,13 @@ def get_user_id_from_request(request: Request) -> str:
 
 
 # User-based limiter instance for authenticated endpoints
-# More reliable than IP-based limiting behind proxies
+# More reliable than IP-based limiting behind proxies.
+# Default 600/minute: the app legitimately fires ~40 calls on launch plus
+# steady polling (/workouts/today every ~5s etc.), so 100/min tripped real
+# users. Expensive routes still carry their own tight per-endpoint limits.
 user_limiter = Limiter(
     key_func=get_user_id_from_request,
-    default_limits=[] if _BENCH_BYPASS else ["100/minute"],
+    default_limits=[] if _BENCH_BYPASS else ["600/minute"],
     swallow_errors=True,
     enabled=not _BENCH_BYPASS,
 )

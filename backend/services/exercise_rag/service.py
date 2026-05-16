@@ -489,11 +489,11 @@ class ExerciseRAGService:
             if ids and embeddings:
                 try:
                     try:
-                        self.collection.delete(ids=ids)
+                        await self.collection.adelete(ids=ids)
                     except Exception as e:
                         logger.debug(f"ChromaDB batch delete: {e}")
 
-                    self.collection.add(
+                    await self.collection.aadd(
                         ids=ids,
                         embeddings=embeddings,
                         documents=documents,
@@ -652,11 +652,11 @@ class ExerciseRAGService:
 
             # Upsert: try delete-then-add to keep semantics consistent with library ingest.
             try:
-                self.custom_collection.delete(ids=[doc_id])
+                await self.custom_collection.adelete(ids=[doc_id])
             except Exception as e:
                 logger.debug(f"[ExerciseRAG] delete-before-add noop for {doc_id}: {e}")
 
-            self.custom_collection.add(
+            await self.custom_collection.aadd(
                 ids=[doc_id],
                 embeddings=[embedding],
                 documents=[document],
@@ -684,7 +684,7 @@ class ExerciseRAGService:
             return False
         try:
             doc_id = f"custom_{exercise_id}"
-            self.custom_collection.delete(ids=[doc_id])
+            await self.custom_collection.adelete(ids=[doc_id])
             logger.info(f"✅ [ExerciseRAG] Deleted custom exercise {exercise_id} from index")
             return True
         except Exception as e:
@@ -971,7 +971,7 @@ class ExerciseRAGService:
         else:
             candidate_count = min(count * 10, 60)
 
-        results = self.collection.query(
+        results = await self.collection.aquery(
             query_embeddings=[query_embedding],
             n_results=candidate_count,
             include=["documents", "metadatas", "distances"],
@@ -2228,7 +2228,7 @@ Select exactly {count} UNIQUE exercises that are SAFE for this user."""
 
         try:
             search_query = f"advanced {focus_area} exercise progression challenge"
-            results = self.collection.query(
+            results = await self.collection.aquery(
                 query_texts=[search_query], n_results=50,
                 include=["metadatas", "distances"],
             )

@@ -222,8 +222,8 @@ async def search_exercises_node(state: ExerciseSuggestionState) -> Dict[str, Any
         # Get embedding for the search query (use async version)
         query_embedding = await gemini_service.get_embedding_async(search_query)
 
-        # Search ChromaDB for similar exercises
-        results = rag_service.collection.query(
+        # Search ChromaDB for similar exercises (off the event loop)
+        results = await rag_service.collection.aquery(
             query_embeddings=[query_embedding],
             n_results=50,  # Get more to filter
             include=["documents", "metadatas", "distances"],

@@ -11,11 +11,16 @@ services:
     name: fitwiz-backend
     env: python
     region: ohio
-    plan: starter
+    # Standard = 2 GB / 1 CPU (set in the Render dashboard). Pinned here so a
+    # blueprint sync never silently downgrades the service back to starter.
+    plan: standard
     branch: main
     rootDir: backend
     buildCommand: chmod +x build.sh && ./build.sh
-    startCommand: gunicorn main:app -w 1 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT --timeout 180
+    # 2 workers → 2 event loops. A single 20s workout-generation request can
+    # no longer freeze the whole service (2026-05-16 incident). Standard's
+    # 2 GB comfortably holds 2 app copies. --timeout 180 covers SSE generation.
+    startCommand: gunicorn main:app -w 2 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT --timeout 180
     healthCheckPath: /
     envVars:
       - key: PYTHON_VERSION

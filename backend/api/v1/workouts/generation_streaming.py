@@ -149,18 +149,18 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
             _gate_profile_id = body.gym_profile_id
             if not _gate_profile_id:
                 try:
-                    _active_resp = db.client.table("gym_profiles").select(
+                    _active_resp = await asyncio.to_thread(db.client.table("gym_profiles").select(
                         "id, workout_days"
-                    ).eq("user_id", body.user_id).eq("is_active", True).maybe_single().execute()
+                    ).eq("user_id", body.user_id).eq("is_active", True).maybe_single().execute)
                     if _active_resp and _active_resp.data:
                         _gate_profile = _active_resp.data
                 except Exception:
                     pass
             else:
                 try:
-                    _profile_resp = db.client.table("gym_profiles").select(
+                    _profile_resp = await asyncio.to_thread(db.client.table("gym_profiles").select(
                         "id, workout_days"
-                    ).eq("id", _gate_profile_id).maybe_single().execute()
+                    ).eq("id", _gate_profile_id).maybe_single().execute)
                     if _profile_resp and _profile_resp.data:
                         _gate_profile = _profile_resp.data
                 except Exception:
@@ -210,13 +210,13 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
         # *current* AI workout per day; gym profile is contextual, not part of the
         # natural key. Filtering by profile lets a parallel writer with profile=NULL
         # (or a different profile) sneak past, producing duplicate today rows.
-        existing_generating = db.client.table("workouts").select("id").eq(
+        existing_generating = await asyncio.to_thread(db.client.table("workouts").select("id").eq(
             "user_id", body.user_id
         ).eq(
             "scheduled_date", scheduled_date
         ).eq(
             "status", "generating"
-        ).execute()
+        ).execute)
 
         if existing_generating.data:
             workout_id = existing_generating.data[0]["id"]
@@ -229,7 +229,7 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
 
         # Duplicate check: if a current, non-cancelled workout already exists for
         # this user+date, return it — regardless of gym_profile_id (see comment above).
-        existing_workout = db.client.table("workouts").select("id,name,status").eq(
+        existing_workout = await asyncio.to_thread(db.client.table("workouts").select("id,name,status").eq(
             "user_id", body.user_id
         ).eq(
             "scheduled_date", scheduled_date
@@ -239,13 +239,13 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
             "status", "generating"
         ).neq(
             "status", "cancelled"
-        ).limit(1).execute()
+        ).limit(1).execute)
 
         if existing_workout.data:
             workout_id = existing_workout.data[0]["id"]
             logger.info(f"[Duplicate] Workout already exists for {body.user_id} on {scheduled_date}: {workout_id}")
             try:
-                full_workout = db.client.table("workouts").select("*").eq("id", workout_id).single().execute()
+                full_workout = await asyncio.to_thread(db.client.table("workouts").select("*").eq("id", workout_id).single().execute)
             except Exception as e:
                 # Row was deleted between the duplicate-check and the refetch, or RLS
                 # blocked the read. Skip the shortcut and fall through to regenerate.
@@ -307,14 +307,14 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
             gym_profile = None
             if hasattr(body, 'gym_profile_id') and body.gym_profile_id:
                 try:
-                    profile_result = db.client.table("gym_profiles").select("*").eq("id", body.gym_profile_id).single().execute()
+                    profile_result = await asyncio.to_thread(db.client.table("gym_profiles").select("*").eq("id", body.gym_profile_id).single().execute)
                     gym_profile = profile_result.data if profile_result.data else None
                     logger.info(f"[GymProfile] Using requested profile: {body.gym_profile_id}")
                 except Exception as e:
                     logger.warning(f"Failed to fetch gym profile: {e}", exc_info=True)
             else:
                 try:
-                    active_result = db.client.table("gym_profiles").select("*").eq("user_id", body.user_id).eq("is_active", True).single().execute()
+                    active_result = await asyncio.to_thread(db.client.table("gym_profiles").select("*").eq("user_id", body.user_id).eq("is_active", True).single().execute)
                     gym_profile = active_result.data if active_result.data else None
                     if gym_profile:
                         logger.info(f"[GymProfile] Using active profile: {gym_profile.get('name')} ({gym_profile.get('id')})")
@@ -344,9 +344,9 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
             async def fetch_ai_coach_settings():
                 """Helper to fetch AI coach settings with error handling."""
                 try:
-                    ai_result = db.client.table("user_ai_settings").select(
+                    ai_result = await asyncio.to_thread(db.client.table("user_ai_settings").select(
                         "coaching_style", "communication_tone", "coach_name", "coach_persona_id"
-                    ).eq("user_id", body.user_id).single().execute()
+                    ).eq("user_id", body.user_id).single().execute)
                     return ai_result.data if ai_result.data else None
                 except Exception as e:
                     logger.debug(f"[Streaming] No AI coach settings found, using defaults: {e}")
@@ -1183,14 +1183,14 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
             if sd_str:
                 try:
                     now_iso = datetime.utcnow().isoformat()
-                    db.client.table("workouts").update({
+                    await asyncio.to_thread(db.client.table("workouts").update({
                         "is_current": False,
                         "valid_to": now_iso,
                     }).eq("user_id", body.user_id).gte(
                         "scheduled_date", f"{sd_str}T00:00:00+00:00"
                     ).lte(
                         "scheduled_date", f"{sd_str}T23:59:59+00:00"
-                    ).eq("is_current", True).neq("status", "cancelled").execute()
+                    ).eq("is_current", True).neq("status", "cancelled").execute)
                 except Exception as supersede_err:
                     logger.warning(
                         f"[Streaming] supersede prior canonical failed for user "

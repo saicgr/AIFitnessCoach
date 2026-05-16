@@ -489,10 +489,23 @@ async def auto_generate_workout(user_id: str, target_date: date, gym_profile_id:
     """
     generation_key = f"{user_id}:{target_date.isoformat()}:{gym_profile_id or 'default'}"
 
-    # Prevent duplicate in-flight generation for same user+date+profile
+    # Per-worker fast-path: skip an obvious same-worker duplicate without a
+    # Redis round-trip.
     if generation_key in _active_background_generations:
         logger.info(f"[BG-GEN] Already generating for {generation_key}, skipping")
         return
+
+    # Cross-worker / cross-instance guard. With -w 2 (and any future
+    # autoscaling) the in-process set above is not shared, so two workers
+    # could otherwise generate the same slot in parallel. The Redis lock makes
+    # generation idempotent across processes. TTL 300s >> ~20s generation, so
+    # a crashed worker's lock auto-releases. Fails open if Redis is down.
+    from core.redis_cache import acquire_lock, release_lock
+    _gen_lock_key = f"bggen:{generation_key}"
+    if not await acquire_lock(_gen_lock_key, ttl_seconds=300):
+        logger.info(f"[BG-GEN] Another process is generating {generation_key}, skipping")
+        return
+    _lock_held = True  # this call owns the lock; cleared if handed to a retry
 
     _active_background_generations.add(generation_key)
     logger.info(f"[BG-GEN] Starting background generation for user={user_id}, date={target_date.isoformat()}")
@@ -652,6 +665,10 @@ async def auto_generate_workout(user_id: str, target_date: date, gym_profile_id:
         if _retry_count < 1 and _is_transient_error_str(str(e)):
             logger.warning(f"[BG-GEN] Transient error for {generation_key}, retrying in 10s: {e}")
             _active_background_generations.discard(generation_key)
+            # Hand the lock to the retry: release it now and mark it not-held
+            # so this call's finally won't release a lock the retry re-acquired.
+            await release_lock(_gen_lock_key)
+            _lock_held = False
             await asyncio.sleep(10)
             return await auto_generate_workout(
                 user_id, target_date, gym_profile_id, selected_days,
@@ -661,6 +678,8 @@ async def auto_generate_workout(user_id: str, target_date: date, gym_profile_id:
         logger.error(f"[BG-GEN] Failed to generate workout for {generation_key}: {e}", exc_info=True)
     finally:
         _active_background_generations.discard(generation_key)
+        if _lock_held:
+            await release_lock(_gen_lock_key)
 
 
 async def _sequential_generate_workouts(
@@ -976,7 +995,9 @@ async def get_today_workout(
                 gen_check = gen_check.or_(
                     f"gym_profile_id.eq.{active_profile_id},gym_profile_id.is.null"
                 )
-            gen_result = gen_check.execute()
+            # supabase-py .execute() is a blocking HTTP call — run it off the
+            # event loop so it can't freeze the worker on a slow round-trip.
+            gen_result = await asyncio.to_thread(gen_check.execute)
             generating_for_today = bool(gen_result.data)
             if generating_for_today:
                 logger.debug(f"[TODAY DEBUG] Generation placeholder found for today ({today_str})")

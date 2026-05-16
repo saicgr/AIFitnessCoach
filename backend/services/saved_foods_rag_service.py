@@ -77,7 +77,7 @@ class SavedFoodsRAGService:
         embedding = await self.gemini_service.get_embedding_async(document)
 
         # Store in ChromaDB
-        self.collection.add(
+        await self.collection.aadd(
             ids=[saved_food_id],
             embeddings=[embedding],
             documents=[document],
@@ -92,7 +92,7 @@ class SavedFoodsRAGService:
         )
 
         try:
-            _count = self.collection.count()
+            _count = await self.collection.acount()
         except Exception as e:
             logger.warning(f"Failed to get collection count: {e}", exc_info=True)
             _count = "unknown"
@@ -127,7 +127,7 @@ class SavedFoodsRAGService:
         where_filter = {"user_id": user_id}
 
         # Query ChromaDB
-        results = self.collection.query(
+        results = await self.collection.aquery(
             query_embeddings=[query_embedding],
             n_results=n_results * 2,  # Get more to filter by calories
             where=where_filter,
@@ -176,7 +176,7 @@ class SavedFoodsRAGService:
             True if deleted, False if not found
         """
         try:
-            self.collection.delete(ids=[saved_food_id])
+            await self.collection.adelete(ids=[saved_food_id])
             logger.info(f"Deleted saved food from ChromaDB: {saved_food_id[:8]}...")
             return True
         except Exception as e:
@@ -273,11 +273,11 @@ class SavedFoodsRAGService:
         # Use a `recipe:{uuid}` doc id so it never collides with saved-food UUIDs.
         doc_id = f"recipe:{recipe_id}"
         try:
-            self.collection.delete(ids=[doc_id])
+            await self.collection.adelete(ids=[doc_id])
         except Exception:
             pass
 
-        self.collection.add(
+        await self.collection.aadd(
             ids=[doc_id],
             embeddings=[embedding],
             documents=[document],
@@ -296,7 +296,7 @@ class SavedFoodsRAGService:
 
     async def delete_recipe(self, recipe_id: str) -> bool:
         try:
-            self.collection.delete(ids=[f"recipe:{recipe_id}"])
+            await self.collection.adelete(ids=[f"recipe:{recipe_id}"])
             return True
         except Exception as e:
             logger.warning(f"delete_recipe failed: {e}", exc_info=True)
@@ -334,7 +334,7 @@ class SavedFoodsRAGService:
             where_filter = {"$and": clauses}
 
         try:
-            results = self.collection.query(
+            results = await self.collection.aquery(
                 query_embeddings=[embedding],
                 n_results=max(limit, 1),
                 where=where_filter,

@@ -325,6 +325,30 @@ async def _init_equipment_resolver():
         logger.warning(f"EquipmentResolver init failed (alias path will no-op): {e}", exc_info=True)
 
 
+async def _warm_workout_rag():
+    """Instantiate the WorkoutRAGService singletons at startup.
+
+    Their __init__ does blocking Chroma `count()` calls — in the 2026-05-16
+    incident 'Workout RAG initialized: 361 workouts' fired *inside* a
+    /workouts/today request, adding ~1s of blocking work to the response.
+    Warming them here (off the event loop) keeps that out of the hot path.
+    Non-fatal: a warm failure just means the first request pays the cost.
+    """
+    logger.info("Warming Workout RAG singletons...")
+    t = time.time()
+    for label, importer in (
+        ("workouts.utils", "api.v1.workouts.utils"),
+        ("workouts_db_helpers", "api.v1.workouts_db_helpers"),
+    ):
+        try:
+            import importlib
+            factory = getattr(importlib.import_module(importer), "get_workout_rag_service")
+            await asyncio.to_thread(factory)
+        except Exception as e:
+            logger.warning(f"Workout RAG warm ({label}) failed: {e}", exc_info=True)
+    logger.info(f"Workout RAG warmed in {time.time() - t:.2f}s")
+
+
 async def _check_exercise_rag_index():
     """Check and auto-index exercises for RAG (can run after server starts)."""
     logger.info("Checking Exercise RAG index (Chroma Cloud)...")
@@ -587,6 +611,18 @@ async def lifespan(app: FastAPI):
         if not any(isinstance(f, _HealthCheckAccessFilter) for f in _logger.filters):
             _logger.addFilter(_hc_filter)
 
+    # ── Sized thread-pool for asyncio.to_thread offloading ──
+    # Every blocking ChromaDB / DB call is now offloaded via asyncio.to_thread.
+    # The default executor is min(32, cpu+4) = 5 threads on a 1-CPU box — far
+    # too few. 40 I/O-bound threads is safe: they spend ~all their time
+    # awaiting a network socket, not burning CPU.
+    import concurrent.futures
+    _blocking_executor = concurrent.futures.ThreadPoolExecutor(
+        max_workers=40, thread_name_prefix="blocking-io"
+    )
+    asyncio.get_running_loop().set_default_executor(_blocking_executor)
+    logger.info("Installed 40-thread executor for blocking-call offload")
+
     # ── Phase 1: Critical initialization (must complete before serving) ──
     phase1_start = time.time()
     logger.info("Initializing Redis cache and Gemini service (Phase 1: critical)...")
@@ -619,6 +655,7 @@ async def lifespan(app: FastAPI):
     _create_safe_task(_redis_keepalive_loop(), name="redis-keepalive")
     _create_safe_task(_init_cache_manager(), name="init-cache-manager")
     _create_safe_task(_init_equipment_resolver(), name="init-equipment-resolver")
+    _create_safe_task(_warm_workout_rag(), name="warm-workout-rag")
     _create_safe_task(_check_exercise_rag_index(), name="check-exercise-rag-index")
     _create_safe_task(_check_chromadb_dimensions(), name="check-chromadb-dimensions")
     _create_safe_task(_resume_pending_jobs(), name="resume-pending-jobs")

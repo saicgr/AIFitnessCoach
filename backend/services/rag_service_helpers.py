@@ -107,11 +107,11 @@ class NutritionRAGService:
 
         # Upsert to collection (update if exists)
         try:
-            self.food_collection.delete(ids=[doc_id])
+            await self.food_collection.adelete(ids=[doc_id])
         except Exception as e:
             _rag_logger.debug(f"ChromaDB delete before upsert: {e}")
 
-        self.food_collection.add(
+        await self.food_collection.aadd(
             ids=[doc_id],
             embeddings=[embedding],
             documents=[food_text],
@@ -176,7 +176,7 @@ class NutritionRAGService:
             where_filter["meal_type"] = meal_type
 
         # Query
-        results = self.food_collection.query(
+        results = await self.food_collection.aquery(
             query_embeddings=[query_embedding],
             n_results=n_results,
             where=where_filter if where_filter else None,
@@ -223,7 +223,7 @@ class NutritionRAGService:
             List of food logs
         """
         # Get all matching logs for user
-        results = self.food_collection.get(
+        results = await self.food_collection.aget(
             where={"user_id": user_id},
             include=["documents", "metadatas"],
             limit=n_results,

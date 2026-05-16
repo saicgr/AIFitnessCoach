@@ -15,6 +15,7 @@ from .rag_service_helpers import (  # noqa: F401
 )
 from typing import List, Dict, Any, Optional, Union
 from datetime import datetime, timedelta
+import asyncio
 import json as json_module
 import uuid
 import time
@@ -113,8 +114,11 @@ class RAGService:
         # Get embedding from Gemini
         embedding = await self.gemini_service.get_embedding_async(combined_text)
 
-        # Store in ChromaDB
-        self.collection.add(
+        # Store in ChromaDB. ChromaHTTPCollection.add() is a blocking httpx
+        # call — run it off the event loop so a slow Chroma round-trip never
+        # freezes the worker (the 2026-05-16 incident root cause).
+        await asyncio.to_thread(
+            self.collection.add,
             ids=[doc_id],
             embeddings=[embedding],
             documents=[combined_text],
@@ -128,7 +132,7 @@ class RAGService:
         )
 
         try:
-            _count = self.collection.count()
+            _count = await asyncio.to_thread(self.collection.count)
         except Exception as e:
             _rag_logger.warning(f"Failed to get collection count: {e}", exc_info=True)
             _count = "unknown"
@@ -179,8 +183,9 @@ class RAGService:
         if intent_filter is not None:
             where_filter["intent"] = intent_filter
 
-        # Query ChromaDB
-        results = self.collection.query(
+        # Query ChromaDB off the event loop (blocking httpx call).
+        results = await asyncio.to_thread(
+            self.collection.query,
             query_embeddings=[query_embedding],
             n_results=n_results,
             where=where_filter if where_filter else None,
@@ -344,13 +349,15 @@ class WorkoutRAGService:
         # Get embedding
         embedding = await self.gemini_service.get_embedding_async(workout_text)
 
-        # Upsert to collection (update if exists)
+        # Upsert to collection (update if exists). Both calls are blocking
+        # httpx round-trips — run them off the event loop.
         try:
-            self.workout_collection.delete(ids=[doc_id])
+            await asyncio.to_thread(self.workout_collection.delete, ids=[doc_id])
         except Exception as e:
             _rag_logger.debug(f"ChromaDB delete before upsert: {e}")
 
-        self.workout_collection.add(
+        await asyncio.to_thread(
+            self.workout_collection.add,
             ids=[doc_id],
             embeddings=[embedding],
             documents=[workout_text],
@@ -405,7 +412,8 @@ class WorkoutRAGService:
         # Get embedding
         embedding = await self.gemini_service.get_embedding_async(change_text)
 
-        self.changes_collection.add(
+        await asyncio.to_thread(
+            self.changes_collection.add,
             ids=[doc_id],
             embeddings=[embedding],
             documents=[change_text],
@@ -465,8 +473,9 @@ class WorkoutRAGService:
         if workout_type is not None:
             where_filter["type"] = workout_type
 
-        # Query
-        results = self.workout_collection.query(
+        # Query off the event loop (blocking httpx call).
+        results = await asyncio.to_thread(
+            self.workout_collection.query,
             query_embeddings=[query_embedding],
             n_results=n_results,
             where=where_filter if where_filter else None,
@@ -521,8 +530,9 @@ class WorkoutRAGService:
         if user_id is not None:
             where_filter["user_id"] = user_id
 
-        # Get all matching changes
-        results = self.changes_collection.get(
+        # Get all matching changes off the event loop (blocking httpx call).
+        results = await asyncio.to_thread(
+            self.changes_collection.get,
             where=where_filter if where_filter else None,
             include=["documents", "metadatas"],
             limit=n_results,
@@ -665,7 +675,8 @@ class WorkoutRAGService:
             embedding = await self.gemini_service.get_embedding_async(pref_text)
 
             # Add to changes collection (reusing existing collection for preference changes)
-            self.changes_collection.add(
+            await asyncio.to_thread(
+                self.changes_collection.add,
                 ids=[doc_id],
                 embeddings=[embedding],
                 documents=[pref_text],
@@ -824,7 +835,8 @@ class WorkoutRAGService:
             if variation_percentage is not None:
                 metadata["variation_percentage"] = variation_percentage
 
-            self.changes_collection.add(
+            await asyncio.to_thread(
+                self.changes_collection.add,
                 ids=[doc_id],
                 embeddings=[embedding],
                 documents=[settings_text],

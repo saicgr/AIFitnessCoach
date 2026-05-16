@@ -12,15 +12,123 @@ Two dependency levels:
 from fastapi import Header, HTTPException, status, Depends
 from typing import Optional
 import asyncio
+import hashlib
 import logging
+import time as _time
 
 import httpx
+import jwt as _pyjwt
 from supabase_auth.errors import AuthApiError, AuthRetryableError
 from postgrest.exceptions import APIError as PostgrestAPIError
 
+from core.config import get_settings
+from core.redis_cache import RedisCache
 from core.supabase_client import get_supabase
 
 logger = logging.getLogger(__name__)
+
+# Redis-backed cache of verified identities, keyed by a SHA-256 of the access
+# token. A client polling /workouts/today every ~5s reuses the same JWT, so
+# this collapses ~720 verifications/hour into one. Shared across workers via
+# Redis; per-worker in-memory fallback if Redis is down. TTL is additionally
+# capped at the token's own `exp` so a cached entry never outlives the token.
+_auth_user_cache = RedisCache(prefix="auth_user", ttl_seconds=300, max_size=2000)
+_AUTH_CACHE_MAX_TTL = 300  # seconds
+
+
+def _decode_exp_unverified(token: str) -> Optional[int]:
+    """Read the `exp` claim without signature verification — used only to cap
+    the auth-cache TTL so a cached identity never outlives its token."""
+    try:
+        return _pyjwt.decode(token, options={"verify_signature": False}).get("exp")
+    except Exception:
+        return None
+
+
+def _verify_jwt_local(token: str) -> Optional[dict]:
+    """Verify a Supabase HS256 access token LOCALLY (no network call).
+
+    Returns a normalized identity dict when SUPABASE_JWT_SECRET is configured
+    and the signature is valid. Returns None when no secret is set OR the
+    signature does not match (caller then falls back to a network verify — the
+    latter keeps clients logged in across a JWT-secret rotation). Raises
+    HTTPException(401) only for a definitively expired token.
+    """
+    secret = get_settings().supabase_jwt_secret
+    if not secret:
+        return None
+    try:
+        claims = _pyjwt.decode(
+            token,
+            secret,
+            algorithms=["HS256"],
+            audience="authenticated",
+            leeway=30,  # tolerate minor client/server clock skew
+        )
+    except _pyjwt.ExpiredSignatureError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Session expired — please log in again.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    except _pyjwt.InvalidTokenError as e:
+        logger.warning(f"Local JWT verify failed ({e}) — falling back to network verify")
+        return None
+    return {
+        "auth_id": str(claims.get("sub")),
+        "email": claims.get("email"),
+        "user_metadata": claims.get("user_metadata") or {},
+        "app_metadata": claims.get("app_metadata") or {},
+    }
+
+
+async def _network_verify_token(token: str) -> dict:
+    """Verify a token via Supabase Auth's /user endpoint, OFF the event loop.
+
+    The supabase-py client is synchronous — calling it directly on the event
+    loop blocks the whole worker for the network round-trip (the 2026-05-16
+    serialization bug). asyncio.to_thread moves it to the blocking-io pool.
+    Retries once on transient errors. Returns the same shape as
+    _verify_jwt_local. AuthApiError (stale/deleted) propagates to the caller.
+    """
+    supabase = get_supabase()
+    user_response = None
+    for attempt in range(2):
+        try:
+            user_response = await asyncio.to_thread(
+                supabase.auth_client.auth.get_user, token
+            )
+            break
+        except AuthRetryableError:
+            if attempt == 0:
+                logger.warning("Supabase auth transient error, retrying in 0.5s")
+                await asyncio.sleep(0.5)
+            else:
+                raise
+        except _TRANSIENT_HTTPX_ERRORS as transport_err:
+            if attempt == 0:
+                logger.warning(
+                    f"Transient httpx error in auth.get_user: {transport_err} — retrying in 0.5s"
+                )
+                await asyncio.sleep(0.5)
+            else:
+                raise HTTPException(
+                    status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                    detail="Auth service temporarily unavailable",
+                )
+    if not user_response or not user_response.user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    u = user_response.user
+    return {
+        "auth_id": str(u.id),
+        "email": u.email,
+        "user_metadata": u.user_metadata or {},
+        "app_metadata": u.app_metadata or {},
+    }
 
 # Transient httpx transport-layer errors that surface inside Supabase / PostgREST
 # client calls as the underlying connection blips. These must NEVER be 401'd —
@@ -160,20 +268,17 @@ async def get_verified_auth_token(
     token = _extract_bearer_token(authorization)
 
     try:
-        supabase = get_supabase()
-        user_response = supabase.auth_client.auth.get_user(token)
-
-        if not user_response or not user_response.user:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid or expired token",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
+        # Local HS256 verify when SUPABASE_JWT_SECRET is set; otherwise an
+        # off-event-loop network verify. Either way, no blocking call on the
+        # event loop.
+        identity = _verify_jwt_local(token)
+        if identity is None:
+            identity = await _network_verify_token(token)
 
         return {
-            "auth_id": str(user_response.user.id),
-            "email": user_response.user.email,
-            "user_metadata": user_response.user.user_metadata,
+            "auth_id": identity["auth_id"],
+            "email": identity["email"],
+            "user_metadata": identity["user_metadata"],
         }
 
     except HTTPException:
@@ -238,56 +343,44 @@ async def get_current_user(
         HTTPException: If no valid auth token is provided or user not in DB
     """
     token = _extract_bearer_token(authorization)
+    token_hash = hashlib.sha256(token.encode()).hexdigest()
+
+    # Fast path: identity verified within the cache window — no network, no DB.
+    cached_user = await _auth_user_cache.get(token_hash)
+    if cached_user is not None:
+        try:
+            from core.sentry import set_user as _sentry_set_user
+            _sentry_set_user(str(cached_user.get("id")))
+        except Exception:
+            pass
+        return cached_user
 
     try:
-        # Verify token with Supabase (retry once on transient 5xx errors)
         supabase = get_supabase()
-        user_response = None
-        for attempt in range(2):
-            try:
-                user_response = supabase.auth_client.auth.get_user(token)
-                break
-            except AuthRetryableError:
-                if attempt == 0:
-                    logger.warning("Supabase auth returned transient error, retrying in 0.5s")
-                    await asyncio.sleep(0.5)
-                else:
-                    raise
-            except _TRANSIENT_HTTPX_ERRORS as transport_err:
-                if attempt == 0:
-                    logger.warning(
-                        f"Transient httpx error in Supabase auth.get_user: {transport_err} — retrying in 0.5s"
-                    )
-                    await asyncio.sleep(0.5)
-                else:
-                    logger.warning(
-                        f"Transient httpx error in Supabase auth.get_user persisted after retry: {transport_err}"
-                    )
-                    raise HTTPException(
-                        status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                        detail="Auth service temporarily unavailable",
-                    )
 
-        if not user_response or not user_response.user:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid or expired token",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
+        # Verify the token: local HS256 signature check when SUPABASE_JWT_SECRET
+        # is set (no network); otherwise an off-event-loop network verify.
+        identity = _verify_jwt_local(token)
+        if identity is None:
+            identity = await _network_verify_token(token)
 
         # Look up backend user ID using Supabase Auth ID
         # The database uses backend user ID (users.id) for foreign keys,
         # not Supabase Auth ID (users.auth_id)
-        supabase_auth_id = str(user_response.user.id)
+        supabase_auth_id = identity["auth_id"]
 
         # Use .execute() without .single() to avoid PostgREST PGRST116 error
         # when 0 rows are returned. The .single() call throws an exception
         # instead of returning empty data.
         # Retry once on transient upstream 5xx (e.g., Cloudflare 502 in front of Supabase).
+        # asyncio.to_thread keeps the blocking supabase-py call off the event loop.
         result = None
         for attempt in range(2):
             try:
-                result = supabase.client.table("users").select("id, email").eq("auth_id", supabase_auth_id).execute()
+                result = await asyncio.to_thread(
+                    lambda: supabase.client.table("users")
+                    .select("id, email").eq("auth_id", supabase_auth_id).execute()
+                )
                 break
             except PostgrestAPIError as pg_err:
                 if attempt == 0 and _is_transient_postgrest_error(pg_err):
@@ -338,13 +431,22 @@ async def get_current_user(
             _sentry_set_user(str(user_row["id"]))
         except Exception:
             pass
-        return {
+        user = {
             "id": user_row["id"],  # Backend user ID for foreign keys
             "email": user_row["email"],
             "auth_id": supabase_auth_id,  # Supabase Auth ID if needed
-            "user_metadata": user_response.user.user_metadata,
-            "app_metadata": user_response.user.app_metadata or {},
+            "user_metadata": identity["user_metadata"],
+            "app_metadata": identity["app_metadata"],
         }
+        # Cache the verified identity, TTL-capped so it never outlives the
+        # token's own `exp`. Subsequent requests with this token skip both
+        # the verify and the DB lookup entirely.
+        exp = _decode_exp_unverified(token)
+        ttl = _AUTH_CACHE_MAX_TTL
+        if exp:
+            ttl = max(1, min(_AUTH_CACHE_MAX_TTL, int(exp - _time.time())))
+        await _auth_user_cache.set(token_hash, user, ttl_override=ttl)
+        return user
 
     except HTTPException:
         raise

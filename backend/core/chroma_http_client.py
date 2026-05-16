@@ -2,6 +2,7 @@
 Thin synchronous HTTP client for Chroma Cloud REST API v2.
 Replaces the heavy chromadb Python package (~150MB) with direct HTTP calls via httpx.
 """
+import asyncio
 import logging
 import httpx
 from typing import List, Dict, Optional, Any
@@ -125,6 +126,41 @@ class ChromaHTTPCollection:
             logger.debug(f"Chroma count probe failed: {e}")
 
         return -1
+
+    def upsert(
+        self,
+        ids: List[str],
+        documents: Optional[List[str]] = None,
+        metadatas: Optional[List[Dict]] = None,
+        embeddings: Optional[List[List[float]]] = None,
+    ) -> None:
+        """Upsert = delete-then-add. Chroma Cloud v2 'add' is already an
+        upsert by id, so this just forwards to add()."""
+        self.add(ids=ids, documents=documents, metadatas=metadatas, embeddings=embeddings)
+
+    # ── async variants ────────────────────────────────────────────────────
+    # The methods above are blocking httpx calls. Invoked from an `async def`
+    # request handler they MUST run off the event loop, or a slow Chroma
+    # round-trip freezes the whole worker (the 2026-05-16 incident). Always
+    # prefer these `a*` variants from async code.
+
+    async def aadd(self, *args, **kwargs) -> None:
+        return await asyncio.to_thread(self.add, *args, **kwargs)
+
+    async def aquery(self, *args, **kwargs) -> Dict[str, Any]:
+        return await asyncio.to_thread(self.query, *args, **kwargs)
+
+    async def aget(self, *args, **kwargs) -> Dict[str, Any]:
+        return await asyncio.to_thread(self.get, *args, **kwargs)
+
+    async def adelete(self, *args, **kwargs) -> None:
+        return await asyncio.to_thread(self.delete, *args, **kwargs)
+
+    async def aupsert(self, *args, **kwargs) -> None:
+        return await asyncio.to_thread(self.upsert, *args, **kwargs)
+
+    async def acount(self) -> int:
+        return await asyncio.to_thread(self.count)
 
 
 class ChromaHTTPClient:

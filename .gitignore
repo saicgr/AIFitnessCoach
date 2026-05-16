@@ -104,3 +104,7 @@ guide/*.pdf
 # not in version control (private legal artifact, may include account context).
 trademark_evidence_*/
 .vercel
+
+# Load-test harness — generated artifacts
+backend/scripts/loadtest/tokens.json
+backend/scripts/loadtest/results/

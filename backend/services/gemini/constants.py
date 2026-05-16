@@ -16,7 +16,13 @@ from core.redis_cache import RedisCache
 # Keep ResponseCache as an alias for backwards compatibility (used by smart_search.py)
 ResponseCache = RedisCache
 
-# Concurrency limiter for Gemini API calls - per-user fairness + global cap
+# Concurrency limiter for Gemini API calls - per-user fairness + global cap.
+# NOTE: this semaphore is PER GUNICORN WORKER (per process). With -w 2 the
+# real global cap is 2 × global_limit = 20 concurrent Gemini calls — fine for
+# a single instance and well within the account quota. If Render autoscaling
+# is ever enabled (N instances × 2 workers), this no longer bounds the true
+# account-wide concurrency; switch to a Redis-backed distributed semaphore at
+# that point to keep Gemini RPM under quota.
 from services.fair_semaphore import FairGeminiSemaphore
 _gemini_semaphore = FairGeminiSemaphore(global_limit=10, per_user_limit=3)
 

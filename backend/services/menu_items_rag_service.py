@@ -176,7 +176,7 @@ class MenuItemsRAGService:
             # Upsert semantics: `add` with duplicate ids would raise; use
             # `upsert` if the client exposes it, else delete-then-add.
             if hasattr(self.collection, "upsert"):
-                self.collection.upsert(
+                await self.collection.aupsert(
                     ids=ids,
                     embeddings=embeddings,
                     documents=documents,
@@ -184,10 +184,10 @@ class MenuItemsRAGService:
                 )
             else:
                 try:
-                    self.collection.delete(ids=ids)
+                    await self.collection.adelete(ids=ids)
                 except Exception:
                     pass
-                self.collection.add(
+                await self.collection.aadd(
                     ids=ids,
                     embeddings=embeddings,
                     documents=documents,
@@ -215,7 +215,7 @@ class MenuItemsRAGService:
         try:
             # Chroma where filter — approximate name match via $eq.
             # A more fuzzy approach would need a separate lookup step.
-            hits = self.collection.get(
+            hits = await self.collection.aget(
                 where={"$and": [
                     {"user_id": {"$eq": user_id}},
                     {"dish_name": {"$eq": dish_name}},
@@ -269,7 +269,7 @@ class MenuItemsRAGService:
             where = {"$and": [where, {"liked": {"$eq": True}}]}
 
         try:
-            results = self.collection.query(
+            results = await self.collection.aquery(
                 query_embeddings=[embedding],
                 n_results=k,
                 where=where,

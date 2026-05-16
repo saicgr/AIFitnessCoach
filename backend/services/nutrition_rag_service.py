@@ -86,7 +86,7 @@ class NutritionRAGService:
         embedding = await self.gemini_service.get_embedding_async(content)
 
         # Store in ChromaDB
-        self.collection.add(
+        await self.collection.aadd(
             ids=[doc_id],
             embeddings=[embedding],
             documents=[content],
@@ -98,7 +98,7 @@ class NutritionRAGService:
         )
 
         try:
-            _count = self.collection.count()
+            _count = await self.collection.acount()
         except Exception as e:
             logger.warning(f"Failed to get collection count: {e}", exc_info=True)
             _count = "unknown"
@@ -155,7 +155,7 @@ class NutritionRAGService:
         query_embedding = await self.gemini_service.get_embedding_async(query)
 
         # Query ChromaDB
-        results = self.collection.query(
+        results = await self.collection.aquery(
             query_embeddings=[query_embedding],
             n_results=n_results * 2,  # Get more to filter
             include=["documents", "metadatas", "distances"]

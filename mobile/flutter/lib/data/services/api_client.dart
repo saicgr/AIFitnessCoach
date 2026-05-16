@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:math';
 import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
 // dio_http2_adapter intentionally NOT imported — see comment block where the
@@ -442,25 +443,42 @@ class ApiClient with WidgetsBindingObserver {
       ),
     );
 
-    // Connect-timeout retry interceptor — only retries TCP connect failures
-    // (cold iOS/Android network init, carrier handoff, Wi-Fi↔cellular switch).
-    // Never retries receive-timeouts or 4xx/5xx — those are real errors.
+    // Transient-failure retry interceptor. Retries only failures that are
+    // SAFE to repeat, up to 2 times, with exponential backoff + jitter:
+    //   • connectionTimeout — the TCP connect never completed, so the request
+    //     never reached the server. Safe to retry for any HTTP method.
+    //   • HTTP 503 — server overloaded / restarting. Retried for idempotent
+    //     methods (GET) ONLY, so a write is never double-submitted.
+    // receive-timeouts and 4xx / other-5xx are NOT retried — those are real
+    // errors, and a receive-timeout may mean a write already landed.
+    // Jitter prevents a fleet of clients from resynchronising into a retry
+    // storm against a briefly-degraded backend.
     _dio.interceptors.add(
       InterceptorsWrapper(
         onError: (error, handler) async {
-          if (error.type == DioExceptionType.connectionTimeout) {
-            final retried = error.requestOptions.extra['_connectRetried'] == true;
-            if (!retried) {
-              error.requestOptions.extra['_connectRetried'] = true;
-              debugPrint('🔄 [API] Connect timeout, retrying once after 1s...');
-              await Future.delayed(const Duration(seconds: 1));
-              try {
-                final retryResponse = await _dio.fetch(error.requestOptions);
-                return handler.resolve(retryResponse);
-              } catch (retryError) {
-                debugPrint('❌ [API] Connect retry failed: $retryError');
-                // fall through to reporting the original error
-              }
+          final opts = error.requestOptions;
+          final attempt = (opts.extra['_transientRetry'] as int?) ?? 0;
+          final isConnectTimeout =
+              error.type == DioExceptionType.connectionTimeout;
+          final isOverloaded = error.response?.statusCode == 503;
+          final isIdempotent = opts.method.toUpperCase() == 'GET';
+          final retryable =
+              isConnectTimeout || (isOverloaded && isIdempotent);
+          if (retryable && attempt < 2) {
+            opts.extra['_transientRetry'] = attempt + 1;
+            // Exponential backoff (~0.5s, ~1s) + up to 400ms random jitter.
+            final baseMs = 500 * (1 << attempt);
+            final delay = Duration(milliseconds: baseMs + Random().nextInt(400));
+            debugPrint(
+                '🔄 [API] Transient failure (${error.type}/${error.response?.statusCode}), '
+                'retry ${attempt + 1}/2 in ${delay.inMilliseconds}ms...');
+            await Future.delayed(delay);
+            try {
+              final retryResponse = await _dio.fetch(opts);
+              return handler.resolve(retryResponse);
+            } catch (retryError) {
+              debugPrint('❌ [API] Transient retry failed: $retryError');
+              // fall through to reporting the original error
             }
           }
           return handler.next(error);

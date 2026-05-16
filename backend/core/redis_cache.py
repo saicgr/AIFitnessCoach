@@ -67,6 +67,37 @@ async def close_redis():
         _redis_available = False
 
 
+async def acquire_lock(key: str, ttl_seconds: int) -> bool:
+    """Atomically acquire a short-lived distributed lock (Redis SET NX EX).
+
+    Returns True if the lock was acquired (caller owns it), False if another
+    worker/instance already holds it. The TTL auto-releases the lock if the
+    owner crashes mid-task.
+
+    Fails OPEN: if Redis is unavailable, returns True. A rare duplicate is far
+    better than a task that never runs because the lock store is down.
+    """
+    if _redis_available and _redis_client:
+        try:
+            got = await _redis_client.set(
+                f"zealova:lock:{key}", "1", nx=True, ex=ttl_seconds
+            )
+            return bool(got)
+        except Exception as e:
+            logger.debug(f"Redis lock acquire error ({key}): {e}")
+    return True
+
+
+async def release_lock(key: str) -> None:
+    """Release a lock acquired via acquire_lock(). Safe to call if Redis is
+    down or the lock already expired."""
+    if _redis_available and _redis_client:
+        try:
+            await _redis_client.delete(f"zealova:lock:{key}")
+        except Exception as e:
+            logger.debug(f"Redis lock release error ({key}): {e}")
+
+
 class RedisCache:
     """
     TTL cache backed by Redis (shared across workers) with in-memory fallback.

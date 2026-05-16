@@ -83,11 +83,11 @@ class CustomInputsRAGService:
 
             # Upsert to collection
             try:
-                self.collection.delete(ids=[doc_id])
+                await self.collection.adelete(ids=[doc_id])
             except Exception as e:
                 logger.debug(f"ChromaDB delete before upsert: {e}")
 
-            self.collection.add(
+            await self.collection.aadd(
                 ids=[doc_id],
                 embeddings=[embedding],
                 documents=[text],
@@ -170,11 +170,11 @@ class CustomInputsRAGService:
                 try:
                     # Delete existing to avoid duplicates
                     try:
-                        self.collection.delete(ids=ids)
+                        await self.collection.adelete(ids=ids)
                     except Exception as e:
                         logger.debug(f"ChromaDB batch delete: {e}")
 
-                    self.collection.add(
+                    await self.collection.aadd(
                         ids=ids,
                         embeddings=embeddings,
                         documents=documents,
@@ -247,7 +247,7 @@ class CustomInputsRAGService:
                 where_filter = {"input_type": input_type}
 
             # Query collection
-            results = self.collection.query(
+            results = await self.collection.aquery(
                 query_embeddings=[query_embedding],
                 n_results=limit,
                 where=where_filter,

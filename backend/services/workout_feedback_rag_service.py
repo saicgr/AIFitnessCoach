@@ -138,11 +138,11 @@ class WorkoutFeedbackRAGService:
 
         # Upsert to collection
         try:
-            self.collection.delete(ids=[doc_id])
+            await self.collection.adelete(ids=[doc_id])
         except Exception as e:
             logger.debug(f"ChromaDB delete before upsert: {e}")
 
-        self.collection.add(
+        await self.collection.aadd(
             ids=[doc_id],
             embeddings=[embedding],
             documents=[session_text],
@@ -195,7 +195,7 @@ class WorkoutFeedbackRAGService:
             where_filter["workout_type"] = workout_type
 
         # Get all matching sessions
-        results = self.collection.get(
+        results = await self.collection.aget(
             where=where_filter,
             include=["documents", "metadatas"],
             limit=n_results,
@@ -241,7 +241,7 @@ class WorkoutFeedbackRAGService:
         query = f"Exercise: {exercise_name}"
         query_embedding = await self.gemini_service.get_embedding_async(query)
 
-        results = self.collection.query(
+        results = await self.collection.aquery(
             query_embeddings=[query_embedding],
             n_results=n_results,
             where={"user_id": user_id},
@@ -544,12 +544,12 @@ WORKOUT COMPLETION ANALYSIS:
 
         # Delete existing feedback for this workout
         try:
-            self.collection.delete(ids=[doc_id])
+            await self.collection.adelete(ids=[doc_id])
         except Exception as e:
             logger.debug(f"ChromaDB delete before upsert: {e}")
 
         # Store in ChromaDB
-        self.collection.add(
+        await self.collection.aadd(
             ids=[doc_id],
             embeddings=[embedding],
             documents=[feedback_text],
@@ -595,7 +595,7 @@ WORKOUT COMPLETION ANALYSIS:
         query = f"Exercise feedback: {exercise_name}"
         query_embedding = await self.gemini_service.get_embedding_async(query)
 
-        results = self.collection.query(
+        results = await self.collection.aquery(
             query_embeddings=[query_embedding],
             n_results=n_results * 2,  # Get more to filter
             where={"$and": [
@@ -651,7 +651,7 @@ WORKOUT COMPLETION ANALYSIS:
             Dict with difficulty preference analysis
         """
         # Get recent feedback
-        results = self.collection.get(
+        results = await self.collection.aget(
             where={"$and": [
                 {"user_id": user_id},
                 {"doc_type": "workout_feedback"}

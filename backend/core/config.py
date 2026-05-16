@@ -67,6 +67,15 @@ class Settings(BaseSettings):
     # If not set, the consent page falls back to the manual paste-token UI.
     supabase_anon_key: Optional[str] = None
     supabase_db_password: Optional[str] = None
+    # HS256 JWT secret (Dashboard → Project Settings → API → JWT Secret).
+    # When set, API requests verify the access token's signature LOCALLY
+    # (microseconds, no network) instead of calling Supabase Auth's /user
+    # endpoint on every request. Strongly recommended in production — the
+    # per-request network round-trip otherwise serializes the event loop.
+    # If unset, auth falls back to a Redis-cached, off-event-loop network
+    # verify, which is still correct but does one network call per token
+    # per cache window.
+    supabase_jwt_secret: Optional[str] = None
 
     # Database
     database_url: str = "postgresql+asyncpg://postgres:password@localhost:5432/postgres"
@@ -74,9 +83,13 @@ class Settings(BaseSettings):
 
     # Database Connection Pool (only applies to PostgreSQL, ignored for SQLite)
     # Sized for Supavisor transaction-mode pooler (port 6543), which multiplexes
-    # ~200 client connections onto the small server-side pool.
-    db_pool_size: int = 20           # Base number of persistent connections
-    db_max_overflow: int = 40        # Extra connections allowed under load
+    # client connections onto the small server-side pool.
+    # NOTE: this pool is PER GUNICORN WORKER. With -w 2 the effective ceiling is
+    # 2 × (pool_size + max_overflow). Kept deliberately modest — transaction-mode
+    # pooling means a large per-worker pool buys nothing and just risks Supavisor
+    # rejecting connections. 2 × (10 + 15) = 50 total, comfortably within limits.
+    db_pool_size: int = 10           # Base persistent connections per worker
+    db_max_overflow: int = 15        # Extra connections per worker under load
     db_pool_timeout: int = 30        # Seconds to wait for a connection
     db_pool_recycle: int = 1800      # Recycle connections every 30 minutes
 
