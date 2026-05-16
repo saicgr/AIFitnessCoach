@@ -12,8 +12,6 @@ Cost guardrails:
   - Transient Gemini failures serve the last cached payload marked `stale=True`
     instead of erroring the widget.
 """
-from __future__ import annotations
-
 import asyncio
 import time
 from datetime import datetime

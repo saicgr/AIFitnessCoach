@@ -97,12 +97,15 @@ class _QuickLogWeightCardState extends ConsumerState<QuickLogWeightCard> {
     HapticService.medium();
 
     try {
-      await ref.read(measurementsProvider.notifier).recordMeasurement(
+      final ok = await ref.read(measurementsProvider.notifier).recordMeasurement(
         userId: userId,
         type: MeasurementType.weight,
         value: weightKg,
         unit: 'kg',
       );
+      if (!ok) {
+        throw StateError('Weight save returned false');
+      }
 
       // recordMeasurement already updated local state; just invalidate
       // nutrition prefs so calorie targets refresh on the next open.

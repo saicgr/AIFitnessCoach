@@ -25,7 +25,14 @@ from models.gemini_schemas import (
     BuffetAnalysisResponse,
     FoodAnalysisResponse,
     MenuAnalysisResponse,
+    Stage1CompoundComponent,
+    Stage1CompoundDecompose,
+    Stage1Dish,
+    Stage1DishIdentification,
+    Stage1MenuIdentification,
+    Stage1MenuItem,
 )
+from typing import List, Literal
 from services.gemini.constants import gemini_generate_with_retry
 from services.gemini.nutrition import compute_meal_inflammation
 from services.gemini.parsers import finalize_food_items
@@ -189,7 +196,9 @@ class VisionService:
     """Service for analyzing images using Gemini Vision."""
 
     def __init__(self):
-        self.model = settings.gemini_model
+        # Food-scan vision is all perception (dish ID, OCR, classification) —
+        # Flash Lite is faster + cheaper + thinking-minimal. See config.py.
+        self.model = settings.gemini_vision_model
         # Initialize S3 client for multi-image analysis
         if settings.aws_access_key_id and settings.s3_bucket_name:
             self._s3_client = boto3.client(
@@ -214,6 +223,388 @@ class VisionService:
             return "snack"
         else:
             return "dinner"
+
+    # =====================================================================
+    # PHASE-2 Stage-1 thin classifiers (replaces analyze_food_image flow)
+    # =====================================================================
+    #
+    # These return ONLY identification + portion (no macros, no enrichment,
+    # no micronutrients). The downstream cache_service.analyze_dishes_from_vision
+    # then resolves all 6+9+29 fields from food_nutrition_overrides_canonical
+    # → user_contributed → USDA → Gemini fallback.
+    #
+    # Total Vision wall time: ~1.5-2s per call (vs 30-60s for the old
+    # analyze_food_image with its 16-field schema). Output token budget:
+    # ~150 tok/dish × ≤10 dishes = ≤1500 output tokens vs 4000 in legacy.
+
+    async def identify_dishes_from_image(
+        self,
+        image_bytes: bytes,
+        mime_type: str = "image/jpeg",
+        mode: Literal['plate', 'buffet'] = 'plate',
+        user_context: Optional[str] = None,
+        request_id: str = "",
+    ) -> Stage1DishIdentification:
+        """Stage-1: identify dishes + portion estimate from a single image.
+
+        Returns Stage1DishIdentification with 1-N dishes, cuisine_tag,
+        plate_layout, meal_type_guess. NO macros, NO enrichment — those come
+        from the cache_service lookup downstream.
+
+        `mode='buffet'` bumps max_output_tokens to handle ≤20 dishes per
+        photo (hotel breakfast spreads, food court samples). Plate mode
+        targets ≤6 dishes (typical meal photo).
+        """
+        max_dishes = 20 if mode == 'buffet' else 6
+        # Plate budget bumped 500→800: 6 dishes × ~80 tokens each (name +
+        # weight + serving + confidence + cuisine_tag + plate_layout +
+        # meal_type_guess) leaves headroom for verbose serving descriptions.
+        # Buffet stays at 1200 (20 dishes).
+        max_tokens = 1200 if mode == 'buffet' else 800
+        suggested_meal = self._get_suggested_meal_type()
+        ctx_line = f'\nUser says: "{user_context}"' if user_context else ''
+
+        prompt = f"""Identify the dishes visible in this food/beverage image.
+
+Time-of-day suggests: {suggested_meal} (override if the food clearly indicates otherwise).{ctx_line}
+
+For EACH distinct dish (up to {max_dishes}):
+- name: SPECIFIC normalized dish name. Examples:
+    * "hyderabadi chicken biryani" not "biryani" (when regional cues visible)
+    * "grilled chicken breast" not "chicken"
+    * "ihop original buttermilk pancakes" if a chain logo is visible
+    * "scrambled eggs" not just "eggs"
+  Use lowercase, plain words separated by spaces. Backend re-normalizes.
+- weight_g_estimate: realistic single-serving weight in grams. Don't guess
+  the WHOLE PLATE's weight when there are multiple dishes — estimate each.
+- serving_description: human-readable like "1 cup heaping", "2 strips",
+  "1 piece, ~12oz". Surfaces in UI under the dish name.
+- confidence: 0.0-1.0 your confidence in the identification.
+
+ALSO return:
+- cuisine_tag: ONE of indian|chinese|italian|mexican|french|japanese|thai|
+  american|mediterranean|greek|vietnamese|korean|spanish|middle_eastern|
+  african — drives region-aware downstream lookup. Null if ambiguous.
+- plate_layout: 'single' (one dish) | 'mixed' (several dishes side-by-side)
+  | 'composed' (combo plate / thali / bento / bowl with intermingled items)
+- meal_type_guess: breakfast|lunch|dinner|snack|drink
+
+CRITICAL: do NOT include macros, calories, micronutrients, vitamins, or
+health ratings — that data comes from a separate database lookup. Just
+identify and portion-estimate.
+
+Top-level response is a JSON OBJECT with keys: dishes (array), cuisine_tag,
+plate_layout, meal_type_guess.
+"""
+
+        image_part = types.Part.from_bytes(data=image_bytes, mime_type=mime_type)
+
+        # Use list[Stage1Dish] schema (top-level array) — Phase-1 lesson:
+        # Gemini structured-output rejects $ref/$defs from wrapper models.
+        # We get the dish list as an array and assemble Stage1DishIdentification
+        # from the rest of the JSON object via a follow-on parse.
+        config = types.GenerateContentConfig(
+            response_mime_type="application/json",
+            temperature=0.1,
+            max_output_tokens=max_tokens,
+            # thinking_budget=0 — gemini-3.x is a thinking model; with thinking
+            # ON it consumed the whole output budget and the JSON truncated
+            # at ~char 36 (the 50% NO_FOOD_DETECTED bug). Dish ID is pure
+            # perception, no reasoning needed.
+            thinking_config=types.ThinkingConfig(thinking_budget=0),
+        )
+
+        logger.info(
+            f"[stage1_identify_dishes:{request_id}] mode={mode} max_dishes={max_dishes}"
+        )
+
+        response = await gemini_generate_with_retry(
+            model=self.model,
+            contents=[prompt, image_part],
+            config=config,
+            method_name="vision_identify_dishes_stage1",
+        )
+        # Surface truncation explicitly — a non-STOP finish_reason means the
+        # model was cut off (token cap / safety) and the JSON is likely
+        # partial. Logged so a future thinking/budget regression is visible.
+        try:
+            fr = response.candidates[0].finish_reason
+            if fr and str(fr).upper() not in ("STOP", "FINISHREASON.STOP"):
+                logger.warning(
+                    f"[stage1_identify_dishes:{request_id}] finish_reason={fr} "
+                    "— response may be truncated"
+                )
+        except (AttributeError, IndexError, TypeError):
+            pass
+        raw = (response.text or "").strip()
+        if not raw:
+            raise RuntimeError("Empty Stage-1 response from Gemini Vision")
+
+        # The model returns a JSON object with `dishes` array + metadata.
+        # Tolerate the model wrapping with markdown fences.
+        if raw.startswith("```"):
+            raw = raw.strip("`").lstrip("json").strip()
+        try:
+            parsed = json.loads(raw)
+        except json.JSONDecodeError as e:
+            # Try to salvage a truncated response — Gemini sometimes terminates
+            # mid-token even well under the budget (safety filter or model
+            # variance). The same helper we use for menu salvage works for
+            # plate too (both wrap a `dishes` array inside a JSON object).
+            salvaged = _salvage_truncated_menu_json(raw, analysis_mode=mode)
+            if salvaged and salvaged.get("dishes"):
+                logger.warning(
+                    f"[stage1_identify_dishes:{request_id}] salvaged "
+                    f"{len(salvaged.get('dishes', []))} dishes from truncated "
+                    f"response (raw_len={len(raw)})"
+                )
+                parsed = salvaged
+            else:
+                logger.error(
+                    f"[stage1_identify_dishes:{request_id}] JSON parse failure: {e} — raw[:300]={raw[:300]!r}"
+                )
+                raise RuntimeError(f"Stage-1 JSON parse failure: {e}")
+
+        # Construct Stage1DishIdentification from the parsed object. If the
+        # model returned a bare array (sometimes it does), wrap it.
+        if isinstance(parsed, list):
+            parsed = {"dishes": parsed}
+
+        # Normalize: drop dishes with empty name, cap at max_dishes
+        raw_dishes = parsed.get("dishes", [])[:max_dishes]
+        dishes: List[Stage1Dish] = []
+        for d in raw_dishes:
+            try:
+                dish = Stage1Dish.model_validate(d)
+                if dish.name.strip():
+                    dishes.append(dish)
+            except Exception as e:  # noqa: BLE001
+                logger.warning(
+                    f"[stage1_identify_dishes:{request_id}] skipping bad dish entry: {e}"
+                )
+
+        if not dishes:
+            raise RuntimeError("Stage-1 returned no valid dishes (NO_FOOD_DETECTED)")
+
+        return Stage1DishIdentification(
+            dishes=dishes,
+            cuisine_tag=parsed.get("cuisine_tag"),
+            plate_layout=parsed.get("plate_layout", 'composed' if mode == 'buffet' else 'single'),
+            meal_type_guess=parsed.get("meal_type_guess"),
+        )
+
+    async def identify_dishes_from_multi_image(
+        self,
+        image_bytes_list: List[bytes],
+        mime_types: List[str],
+        mode: Literal['plate', 'buffet'] = 'plate',
+        user_context: Optional[str] = None,
+        request_id: str = "",
+    ) -> Stage1DishIdentification:
+        """Stage-1 across N images (the 2-5 angles UX). Returns the UNION of
+        dishes seen across all photos, deduplicated by normalized name.
+
+        Drops the legacy `_classify_food_images` auto-classify hop — caller
+        passes mode explicitly. Default to 'plate'; menu/buffet routed via
+        dedicated paths.
+        """
+        if not image_bytes_list:
+            raise RuntimeError("identify_dishes_from_multi_image called with no images")
+
+        max_dishes = 25 if mode == 'buffet' else 12  # bigger across N photos
+        max_tokens = 1500 if mode == 'buffet' else 800
+        suggested_meal = self._get_suggested_meal_type()
+        ctx_line = f'\nUser says: "{user_context}"' if user_context else ''
+
+        prompt = f"""Identify ALL distinct dishes visible across these {len(image_bytes_list)} food/beverage images.
+
+The user took multiple photos of the same meal (different angles or different plates). Return the UNION of dishes seen across photos, deduplicated by name — if the same dish appears in 2+ photos, list it ONCE with the best portion estimate.
+
+Time-of-day suggests: {suggested_meal} (override based on the food).{ctx_line}
+
+For EACH distinct dish (up to {max_dishes}):
+- name: SPECIFIC normalized dish name (e.g. "grilled salmon", "miso soup", "chipotle chicken bowl")
+- weight_g_estimate: realistic single-serving weight in grams
+- serving_description: "1 cup heaping" / "2 strips" / "1 bowl, ~12oz"
+- confidence: 0.0-1.0 in the identification
+
+Plus:
+- cuisine_tag (ONE of indian|chinese|italian|mexican|french|japanese|thai|american|mediterranean|greek|vietnamese|korean|spanish|middle_eastern|african, or null)
+- plate_layout: 'mixed' (separate dishes) | 'composed' (combo / bowl) | 'single' (rare for multi-photo)
+- meal_type_guess: breakfast|lunch|dinner|snack|drink
+
+CRITICAL: NO macros, NO calories, NO micronutrients. JSON object with keys: dishes (array), cuisine_tag, plate_layout, meal_type_guess.
+"""
+
+        image_parts = [
+            types.Part.from_bytes(data=b, mime_type=m)
+            for b, m in zip(image_bytes_list, mime_types)
+        ]
+
+        config = types.GenerateContentConfig(
+            response_mime_type="application/json",
+            temperature=0.1,
+            max_output_tokens=max_tokens,
+            thinking_config=types.ThinkingConfig(thinking_budget=0),  # see L306
+        )
+
+        logger.info(
+            f"[stage1_identify_multi:{request_id}] mode={mode} n_images={len(image_bytes_list)} max_dishes={max_dishes}"
+        )
+
+        response = await gemini_generate_with_retry(
+            model=self.model,
+            contents=[prompt] + image_parts,
+            config=config,
+            method_name="vision_identify_multi_stage1",
+        )
+        raw = (response.text or "").strip()
+        if not raw:
+            raise RuntimeError("Empty multi-image Stage-1 response from Gemini Vision")
+        if raw.startswith("```"):
+            raw = raw.strip("`").lstrip("json").strip()
+
+        try:
+            parsed = json.loads(raw)
+        except json.JSONDecodeError as e:
+            # Same salvage path as the single-image Stage-1 — see L324.
+            salvaged = _salvage_truncated_menu_json(raw, analysis_mode=mode)
+            if salvaged and salvaged.get("dishes"):
+                logger.warning(
+                    f"[stage1_identify_multi:{request_id}] salvaged "
+                    f"{len(salvaged.get('dishes', []))} dishes from truncated "
+                    f"response (raw_len={len(raw)})"
+                )
+                parsed = salvaged
+            else:
+                logger.error(
+                    f"[stage1_identify_multi:{request_id}] JSON parse failure: {e}"
+                )
+                raise RuntimeError(f"Multi-image Stage-1 JSON parse failure: {e}")
+
+        if isinstance(parsed, list):
+            parsed = {"dishes": parsed}
+
+        # Dedup by normalized name (Python-side defense in case the model
+        # didn't fully dedupe per the prompt)
+        seen_names: set = set()
+        dishes: List[Stage1Dish] = []
+        for d in parsed.get("dishes", [])[:max_dishes]:
+            try:
+                dish = Stage1Dish.model_validate(d)
+                key = dish.name.strip().lower()
+                if not key or key in seen_names:
+                    continue
+                seen_names.add(key)
+                dishes.append(dish)
+            except Exception as e:  # noqa: BLE001
+                logger.warning(
+                    f"[stage1_identify_multi:{request_id}] skipping bad dish: {e}"
+                )
+
+        if not dishes:
+            raise RuntimeError(
+                "Multi-image Stage-1 returned no valid dishes (NO_FOOD_DETECTED across all photos)"
+            )
+
+        return Stage1DishIdentification(
+            dishes=dishes,
+            cuisine_tag=parsed.get("cuisine_tag"),
+            plate_layout=parsed.get("plate_layout", 'composed' if len(dishes) > 3 else 'mixed'),
+            meal_type_guess=parsed.get("meal_type_guess"),
+        )
+
+    async def identify_menu_from_image(
+        self,
+        image_bytes_list: List[bytes],
+        mime_types: List[str],
+        request_id: str = "",
+    ) -> Stage1MenuIdentification:
+        """Stage-1 for restaurant menu OCR. Returns restaurant_name + items
+        grouped by section (Appetizers/Mains/Desserts/etc.). NO macros — the
+        downstream menu_scan_cache + canonical lookup fills nutrition.
+        """
+        prompt = """OCR this restaurant menu (or menus, if multiple photos).
+
+Return:
+- restaurant_name: the restaurant name extracted from header / logo / footer if visible. NULL if not visible.
+- items: array of menu items. Up to 80 items total across all photos.
+
+For each item:
+- name: dish name as it appears on the menu (preserve as-is, the backend normalizes for lookup)
+- section: 'Appetizers' | 'Mains' | 'Entrees' | 'Desserts' | 'Drinks' | 'Sides' | 'Soups' | 'Salads' | 'Breakfast' | 'Brunch' | 'Lunch' | 'Dinner' | null
+
+CRITICAL:
+- Do NOT include prices.
+- Do NOT include menu descriptions, ingredients, or marketing copy — just the dish NAME.
+- Do NOT include macros, calories, or nutrition info — that comes from database lookup.
+- Skip non-food items (drinks specials banner, hours, contact info).
+
+Top-level JSON object with keys: restaurant_name, items.
+"""
+
+        image_parts = [
+            types.Part.from_bytes(data=b, mime_type=m)
+            for b, m in zip(image_bytes_list, mime_types)
+        ]
+
+        config = types.GenerateContentConfig(
+            response_mime_type="application/json",
+            temperature=0.1,
+            max_output_tokens=4000,  # menus can have lots of items
+            thinking_config=types.ThinkingConfig(thinking_budget=0),  # see L306
+        )
+
+        logger.info(
+            f"[stage1_identify_menu:{request_id}] n_images={len(image_bytes_list)}"
+        )
+
+        response = await gemini_generate_with_retry(
+            model=self.model,
+            contents=[prompt] + image_parts,
+            config=config,
+            method_name="vision_identify_menu_stage1",
+        )
+        raw = (response.text or "").strip()
+        if not raw:
+            raise RuntimeError("Empty menu Stage-1 response from Gemini Vision")
+        if raw.startswith("```"):
+            raw = raw.strip("`").lstrip("json").strip()
+
+        try:
+            parsed = json.loads(raw)
+        except json.JSONDecodeError as e:
+            # Best-effort salvage of truncated menu JSON (existing helper)
+            salvaged = _salvage_truncated_menu_json(raw, "menu")
+            if salvaged is not None:
+                parsed = salvaged
+            else:
+                raise RuntimeError(f"Menu Stage-1 JSON parse failure: {e}")
+
+        items: List[Stage1MenuItem] = []
+        for item in parsed.get("items", [])[:80]:
+            try:
+                m = Stage1MenuItem.model_validate(item)
+                if m.name.strip():
+                    items.append(m)
+            except Exception as e:  # noqa: BLE001
+                logger.warning(
+                    f"[stage1_identify_menu:{request_id}] skipping bad item: {e}"
+                )
+
+        if not items:
+            raise RuntimeError(
+                "Menu Stage-1 returned no valid items (NO_MENU_DETECTED)"
+            )
+
+        return Stage1MenuIdentification(
+            restaurant_name=parsed.get("restaurant_name"),
+            items=items,
+        )
+
+    # =====================================================================
+    # Legacy heavyweight path — kept for rollback safety until Phase 2 ships
+    # =====================================================================
 
     async def analyze_food_image(
         self,
@@ -309,6 +700,7 @@ Guidelines:
                 response_mime_type="application/json",
                 response_schema=FoodAnalysisResponse,
                 max_output_tokens=4000,
+                thinking_config=types.ThinkingConfig(thinking_budget=0),  # thinking off — see L306
                 temperature=0.3,
             )
             if cache_name:
@@ -473,6 +865,7 @@ Guidelines:
                 config=types.GenerateContentConfig(
                     temperature=0.1,
                     max_output_tokens=15,
+                    thinking_config=types.ThinkingConfig(thinking_budget=0),  # thinking off — see L306
                 ),
                 method_name="vision_classify_media",
             )
@@ -518,6 +911,7 @@ Guidelines:
                 contents=[prompt, image_part],
                 config=types.GenerateContentConfig(
                     temperature=0.2, max_output_tokens=800,
+                    thinking_config=types.ThinkingConfig(thinking_budget=0),  # see L306
                 ),
                 method_name="vision_pantry",
             )
@@ -562,6 +956,7 @@ Guidelines:
                 contents=[prompt, image_part],
                 config=types.GenerateContentConfig(
                     temperature=0.1, max_output_tokens=2000,
+                    thinking_config=types.ThinkingConfig(thinking_budget=0),  # see L306
                 ),
                 method_name="vision_handwritten_recipe",
             )
@@ -607,6 +1002,7 @@ Guidelines:
             config=types.GenerateContentConfig(
                 temperature=0.1,
                 max_output_tokens=10,
+                thinking_config=types.ThinkingConfig(thinking_budget=0),  # thinking off — see L306
             ),
             method_name="vision_classify_food_images",
         )
@@ -915,6 +1311,7 @@ Guidelines:
                 temperature=0.2,
                 response_mime_type="application/json",
                 max_output_tokens=max_tokens,
+                thinking_config=types.ThinkingConfig(thinking_budget=0),  # thinking off — see L306
                 **({"response_schema": response_schema} if response_schema else {}),
             )
             if cache_name:
@@ -1095,6 +1492,7 @@ Guidelines:
                 config=types.GenerateContentConfig(
                     response_mime_type="application/json",
                     max_output_tokens=4000,
+                    thinking_config=types.ThinkingConfig(thinking_budget=0),  # thinking off — see L306
                     temperature=0.2,
                 ),
                 method_name="vision_analyze_app_screenshot",
@@ -1216,6 +1614,7 @@ Guidelines:
                 config=types.GenerateContentConfig(
                     response_mime_type="application/json",
                     max_output_tokens=3000,
+                    thinking_config=types.ThinkingConfig(thinking_budget=0),  # thinking off — see L306
                     temperature=0.2,
                 ),
                 method_name="vision_analyze_nutrition_label",
@@ -1355,6 +1754,7 @@ Guidelines:
                     temperature=0.1,
                     # Large enough for ~100 items at ~40 tokens each plus JSON overhead.
                     max_output_tokens=8000,
+                    thinking_config=types.ThinkingConfig(thinking_budget=0),  # thinking off — see L306
                     response_mime_type="application/json",
                 ),
                 method_name="vision_extract_equipment_document",

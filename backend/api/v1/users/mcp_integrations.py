@@ -25,8 +25,6 @@ ENDPOINTS:
 All require authentication via get_current_user. The POST endpoint also
 enforces the yearly-subscription gate at token creation time.
 """
-from __future__ import annotations
-
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Request

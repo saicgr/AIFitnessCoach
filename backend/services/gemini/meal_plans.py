@@ -699,12 +699,16 @@ Rules:
 
         try:
             response = await gemini_generate_with_retry(
-                model=self.model,
+                # Flash Lite + thinking off. With thinking ON, the 500-token
+                # budget was consumed by reasoning before any JSON — this is
+                # the coaching-tips call, generation not reasoning.
+                model=settings.gemini_vision_model,
                 contents=[types.Content(role="user", parts=[types.Part.from_text(text=prompt)])],
                 config=types.GenerateContentConfig(
                     system_instruction="You are a nutrition expert AI. Return only valid JSON.",
-                    max_output_tokens=500,
+                    max_output_tokens=1200,
                     temperature=0.1,
+                    thinking_config=types.ThinkingConfig(thinking_budget=0),
                 ),
                 timeout=15,
                 method_name="review_food",

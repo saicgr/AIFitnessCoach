@@ -588,7 +588,14 @@ class _EditWeightsSheetState extends State<EditWeightsSheet> {
       weightUnit: _weightUnit,
     );
     widget.onSave(updated);
-    Navigator.pop(context);
+    // Pop only this modal sheet — never the route under it. If for any
+    // reason this widget's context is no longer the current modal (eg the
+    // sheet was dismissed by drag while save was in-flight) we leave the
+    // navigator alone instead of risking a pop of the active workout.
+    final route = ModalRoute.of(context);
+    if (route != null && route.isCurrent && Navigator.canPop(context)) {
+      Navigator.pop(context);
+    }
   }
 }
 

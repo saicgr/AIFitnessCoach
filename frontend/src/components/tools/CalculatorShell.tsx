@@ -179,7 +179,7 @@ export default function CalculatorShell({
         />
       )}
 
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 pt-8 sm:pt-12 pb-16">
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 pt-24 sm:pt-28 pb-16">
         {/* Breadcrumbs */}
         <nav className="text-xs text-zinc-500 mb-6">
           <Link to="/" className="hover:text-zinc-300">Home</Link>
@@ -193,8 +193,8 @@ export default function CalculatorShell({
         <header className="mb-10">
           <h1 className="text-3xl sm:text-4xl font-bold text-white tracking-tight">{title}</h1>
           {calc?.paidElsewhere && (
-            <p className="mt-3 inline-flex items-center gap-2 text-xs px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-medium">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+            <p className="mt-3 inline-flex items-center gap-2 text-xs px-3 py-1 rounded-full bg-emerald-500 text-[#06281a] font-semibold">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#06281a]" />
               Free here • Paid in {calc.competitor}
             </p>
           )}

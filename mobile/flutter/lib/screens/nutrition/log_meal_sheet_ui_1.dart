@@ -800,19 +800,45 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
   /// pickMultiImage. Both route through /log-multi-image-stream with
   /// analysis_mode="auto" so the backend classifier decides plate vs menu vs buffet.
   Future<void> _pickImages(ImageSource source) async {
-    final picker = ImagePicker();
     List<XFile> files = [];
+    List<Uint8List>? thumbBytesList;
 
     String snapPrompt = '';
     if (source == ImageSource.camera) {
+      // Camera path retains its custom multi-shot flow (capture loop +
+      // "Add another?" prompt). Thumb compression happens inline below
+      // so we still get the Phase-2 paired-multipart benefit.
       final result = await _captureMultipleFromCamera(maxCount: 5, noun: 'photo');
       files = result.files;
       snapPrompt = result.prompt;
     } else {
-      files = await picker.pickMultiImage(imageQuality: 85);
-      if (files.length > 5) files = files.take(5).toList();
+      // Gallery path: use Phase-2 paired pick (returns originals + 768px thumbs)
+      final artifacts = await pickFoodScanArtifactsBatch();
+      if (artifacts.isEmpty) return;
+      files = artifacts.map((a) => XFile(a.original.path)).toList();
+      thumbBytesList = artifacts.map((a) => a.thumbBytes).toList();
     }
     if (files.isEmpty) return;
+
+    // Camera path didn't produce thumbs above — compress in-memory now so
+    // all paths benefit from the cheap Vision tile.
+    if (thumbBytesList == null && files.isNotEmpty) {
+      try {
+        final List<Uint8List> thumbs = [];
+        for (final xf in files) {
+          final compressed = await FlutterImageCompress.compressWithFile(
+            xf.path,
+            minWidth: 768, minHeight: 768,
+            quality: 85, format: CompressFormat.jpeg,
+            autoCorrectionAngle: true,
+          );
+          if (compressed != null) thumbs.add(compressed);
+        }
+        if (thumbs.length == files.length) thumbBytesList = thumbs;
+      } catch (e) {
+        debugPrint('[food-scan] camera-path thumb compression failed: $e');
+      }
+    }
 
     final description = _descriptionController.text.trim();
     final merged = <String>[
@@ -823,6 +849,7 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
 
     await _analyzeMultiImages(
       files: files,
+      thumbBytesList: thumbBytesList,
       analysisMode: 'auto',
       inputType: source == ImageSource.camera ? 'camera' : 'gallery',
       userMessage: userMessage,
@@ -1155,6 +1182,11 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
     required String analysisMode,
     required String inputType,
     String? userMessage,
+    /// Phase-2 §2.0: 768px-resized JPEG bytes per image (parallel-indexed
+    /// with `files`). When provided, sent as multipart `images[]` for
+    /// Vision; the originals from `files` go to S3 archive via
+    /// `images_original[]`.
+    List<Uint8List>? thumbBytesList,
   }) async {
     final isGuest = ref.read(isGuestModeProvider);
     if (isGuest) {
@@ -1257,6 +1289,7 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
         userId: widget.userId,
         mealType: _selectedMealType.value,
         imageFiles: files.map((x) => File(x.path)).toList(),
+        thumbBytesList: thumbBytesList, // Phase-2: 768px Vision thumbs
         analysisMode: analysisMode,
         userMessage: userMessage,
         inputType: inputType,
@@ -1544,9 +1577,11 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
     }
 
     try {
-      final picker = ImagePicker();
-      final image = await picker.pickImage(source: source, maxWidth: 1024, maxHeight: 1024, imageQuality: 85);
-      if (image == null) return;
+      // Phase-2 §2.0: pick paired artifacts (full-res original + 768px Vision thumb).
+      // Falls back to legacy single-artifact path if compression fails.
+      final artifacts = await pickFoodScanArtifacts(source);
+      if (artifacts == null) return;
+      final image = artifacts.original;
 
       ref.read(posthogServiceProvider).capture(
         eventName: 'food_photo_taken',
@@ -1578,7 +1613,8 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
       await for (final progress in repository.analyzeFoodFromImageStreaming(
         userId: widget.userId,
         mealType: _selectedMealType.value,
-        imageFile: File(image.path),
+        imageFile: image,
+        thumbBytes: artifacts.thumbBytes, // 768px JPEG → Vision (single tile)
       )) {
         if (!mounted) return;
 
@@ -1589,9 +1625,31 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
         }
 
         if (progress.isCompleted && progress.foodLog != null) {
+          // The `done` event renders the card immediately (~3s). The late
+          // `coach_tips` event (progress.coachTips != null) arrives a few
+          // seconds later carrying a foodLog with tips merged in — when it
+          // does, re-render the preview so tips appear. We do NOT break on
+          // `done`; we keep listening so the tips event isn't dropped.
           response = progress.foodLog;
-          setState(() => _analysisElapsedMs = progress.elapsedMs);
-          break;
+          final isTips = progress.hasCoachTips;
+          setState(() {
+            _analysisElapsedMs = progress.elapsedMs;
+            _isLoading = false;
+            _showLoadingIndicator = false;
+            if (response!.foodItems.isNotEmpty || response.totalCalories > 0) {
+              _analyzedResponse = response;
+              _sourceType = 'image';
+              if (!isTips) {
+                // Only reset edits on the first (done) render — a late tips
+                // re-render must not wipe portion edits the user made.
+                _originalFoodItems = List<FoodItemRanking>.from(response.foodItems);
+                _pendingItemEdits.clear();
+              }
+            }
+          });
+          _loadingDelayTimer?.cancel();
+          if (isTips) break;  // tips arrived — stream is done
+          continue;            // keep listening for coach_tips
         }
 
         setState(() {
@@ -1610,17 +1668,8 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
           setState(() { _error = 'Could not identify food in the image. Please try a clearer photo.'; });
           return;
         }
-
-        // Use the rich preview (same as text search) instead of the bare dialog
-        final finalResponse = response;
-        setState(() {
-          _analyzedResponse = finalResponse;
-          _sourceType = 'image';
-          _originalFoodItems = List<FoodItemRanking>.from(finalResponse.foodItems);
-          _pendingItemEdits.clear();
-        });
-        // _buildNutritionPreview renders with food items, AI tips, editing.
-        // "Log This Meal" button calls _handleLog() which saves.
+        // _analyzedResponse already set inside the loop on the `done` event.
+        // _buildNutritionPreview renders food items, AI tips, editing.
       } else if (mounted && response == null) {
         // Stream completed but no response - show error
         debugPrint('❌ [LogMeal] Stream completed but response is null');

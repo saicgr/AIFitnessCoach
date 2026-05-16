@@ -352,6 +352,12 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
   @override
   void dispose() {
     _confettiController.dispose();
+    // A4: clear the completion cache on dispose so a stale entry can't
+    // trigger an unexpected re-push to /workout-complete after the user has
+    // moved on (e.g. while browsing the share-workout sheet). The cache is
+    // a UX optimization for the upcoming completion — once we've shown
+    // it, it's served its purpose for this cycle.
+    workoutCompletionCache.clear();
     super.dispose();
   }
 

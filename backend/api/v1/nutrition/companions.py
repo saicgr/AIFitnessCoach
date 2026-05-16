@@ -12,7 +12,10 @@ POST /api/v1/nutrition/companions/reject
 See services/companion_resolver.py for the merge / cache logic and
 migrations/1919_food_companion_cache.sql for the two persistence tables.
 """
-from __future__ import annotations
+# NOTE: deliberately NOT using `from __future__ import annotations`.
+# It causes FastAPI's OpenAPI schema generator (Pydantic 2.12) to crash
+# on the ForwardRef in the endpoint signature — see quick_adjust.py for
+# the full explanation.
 
 from typing import List, Optional
 

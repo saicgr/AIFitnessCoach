@@ -17,8 +17,6 @@ Endpoints:
 All endpoints require auth + ownership. Deltas are cap-enforced before
 persistence via strain_prevention.muscle_volume_caps.
 """
-from __future__ import annotations
-
 import logging
 from datetime import date, datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional

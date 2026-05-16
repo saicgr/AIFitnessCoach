@@ -15,8 +15,6 @@ All endpoints authenticate via JWT, enforce user-id ownership, and are
 cached per-user with a 5-minute TTL (busted on food-log write).
 """
 
-from __future__ import annotations
-
 import asyncio
 from datetime import datetime, timedelta, timezone
 from typing import Optional

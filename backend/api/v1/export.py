@@ -23,8 +23,6 @@ Rate limit: 1 successful export/hour/user. Exports are relatively expensive
 (dozens of DB queries) and users almost never need two per hour legitimately.
 Abuse would be replaying exports to scrape data.
 """
-from __future__ import annotations
-
 import hashlib
 import io
 import secrets

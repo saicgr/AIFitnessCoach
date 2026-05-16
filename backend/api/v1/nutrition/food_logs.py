@@ -839,3 +839,166 @@ async def schedule_from_food_log(
         next_fire_at=next_fire.isoformat(),
         merged=merged,
     )
+
+
+# =============================================================================
+# Phase-2 §2.9: Regional dish variants (powers per-item edit Region dropdown)
+# =============================================================================
+
+class DishVariant(BaseModel):
+    id: int
+    food_name_normalized: str
+    display_name: str
+    region: Optional[str] = None
+    restaurant_name: Optional[str] = None
+    calories_per_100g: Optional[float] = None
+    protein_per_100g: Optional[float] = None
+    carbs_per_100g: Optional[float] = None
+    fat_per_100g: Optional[float] = None
+
+
+class DishVariantsResponse(BaseModel):
+    name: str
+    variants: List[DishVariant]
+
+
+@router.get("/dish-variants", response_model=DishVariantsResponse)
+async def get_dish_variants(
+    name: str = Query(..., min_length=2, max_length=100),
+    current_user: dict = Depends(get_current_user),
+):
+    """Return regional/restaurant variants of a dish via fuzzy match.
+    Used by the per-item edit sheet's Region dropdown."""
+    from services.food_analysis.cache_service_phase2 import _normalize_food_name
+    norm = _normalize_food_name(name)
+    if not norm:
+        return DishVariantsResponse(name=name, variants=[])
+
+    db = get_supabase_db()
+    rows = []
+    try:
+        res = (
+            db.client.table("food_nutrition_overrides")
+            .select(
+                "id,food_name_normalized,display_name,region,country_name,"
+                "restaurant_name,calories_per_100g,protein_per_100g,"
+                "carbs_per_100g,fat_per_100g"
+            )
+            .ilike("food_name_normalized", f"%{norm}%")
+            .limit(10)
+            .execute()
+        )
+        rows = res.data or []
+    except Exception as e:
+        logger.warning(f"[dish_variants] query failed for {name!r}: {e}")
+        return DishVariantsResponse(name=name, variants=[])
+
+    variants: List[DishVariant] = []
+    for r in rows:
+        variants.append(DishVariant(
+            id=r.get("id"),
+            food_name_normalized=r.get("food_name_normalized") or "",
+            display_name=r.get("display_name") or "",
+            region=r.get("region") or r.get("country_name"),
+            restaurant_name=r.get("restaurant_name"),
+            calories_per_100g=r.get("calories_per_100g"),
+            protein_per_100g=r.get("protein_per_100g"),
+            carbs_per_100g=r.get("carbs_per_100g"),
+            fat_per_100g=r.get("fat_per_100g"),
+        ))
+
+    return DishVariantsResponse(name=name, variants=variants)
+
+
+class DishVariantSwapRequest(BaseModel):
+    food_log_id: str
+    food_item_index: int = 0
+    new_override_id: int
+
+
+class DishVariantSwapResponse(BaseModel):
+    success: bool
+    new_calories: Optional[int] = None
+    new_protein_g: Optional[float] = None
+    new_carbs_g: Optional[float] = None
+    new_fat_g: Optional[float] = None
+
+
+@router.post("/dish-variants/swap", response_model=DishVariantSwapResponse)
+async def swap_dish_variant(
+    body: DishVariantSwapRequest,
+    current_user: dict = Depends(get_current_user),
+):
+    """Swap a logged food_item to a different regional/restaurant variant."""
+    db = get_supabase_db()
+    user_id = current_user.get("id") or current_user.get("user_id")
+
+    try:
+        log_res = (
+            db.client.table("food_logs")
+            .select("*")
+            .eq("id", body.food_log_id)
+            .eq("user_id", user_id)
+            .maybe_single()
+            .execute()
+        )
+        food_log = log_res.data
+    except Exception as e:
+        raise HTTPException(status_code=404, detail=f"food_log not found: {e}")
+    if not food_log:
+        raise HTTPException(status_code=404, detail="food_log not found")
+
+    try:
+        ov_res = (
+            db.client.table("food_nutrition_overrides")
+            .select("*")
+            .eq("id", body.new_override_id)
+            .maybe_single()
+            .execute()
+        )
+        override = ov_res.data
+    except Exception as e:
+        raise HTTPException(status_code=404, detail=f"override not found: {e}")
+    if not override:
+        raise HTTPException(status_code=404, detail="override not found")
+
+    items = food_log.get("food_items") or []
+    if body.food_item_index >= len(items):
+        raise HTTPException(status_code=400, detail="food_item_index out of range")
+
+    weight_g = float(items[body.food_item_index].get("weight_g") or 100)
+    ratio = weight_g / 100.0
+    items[body.food_item_index].update({
+        "name": override.get("display_name"),
+        "calories": int(round((override.get("calories_per_100g") or 0) * ratio)),
+        "protein_g": round((override.get("protein_per_100g") or 0) * ratio, 1),
+        "carbs_g": round((override.get("carbs_per_100g") or 0) * ratio, 1),
+        "fat_g": round((override.get("fat_per_100g") or 0) * ratio, 1),
+        "fiber_g": round((override.get("fiber_per_100g") or 0) * ratio, 1),
+        "override_id": body.new_override_id,
+    })
+
+    total_cal = sum(int(it.get("calories", 0)) for it in items)
+    total_p = sum(float(it.get("protein_g", 0)) for it in items)
+    total_c = sum(float(it.get("carbs_g", 0)) for it in items)
+    total_f = sum(float(it.get("fat_g", 0)) for it in items)
+
+    update_payload = {
+        "food_items": items,
+        "total_calories": total_cal,
+        "total_protein_g": round(total_p, 1),
+        "total_carbs_g": round(total_c, 1),
+        "total_fat_g": round(total_f, 1),
+    }
+    try:
+        db.client.table("food_logs").update(update_payload).eq("id", body.food_log_id).execute()
+    except Exception as e:
+        raise safe_internal_error(e, "nutrition")
+
+    return DishVariantSwapResponse(
+        success=True,
+        new_calories=int(round((override.get("calories_per_100g") or 0) * ratio)),
+        new_protein_g=round((override.get("protein_per_100g") or 0) * ratio, 1),
+        new_carbs_g=round((override.get("carbs_per_100g") or 0) * ratio, 1),
+        new_fat_g=round((override.get("fat_per_100g") or 0) * ratio, 1),
+    )

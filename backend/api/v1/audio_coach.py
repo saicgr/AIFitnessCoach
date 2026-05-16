@@ -5,8 +5,6 @@ Endpoints:
 - GET  /daily-brief        Returns today's personalised script + signed audio URL
 - POST /mark-listened      Marks the current brief as listened (analytics)
 """
-from __future__ import annotations
-
 import logging
 from datetime import date, datetime, timezone
 from typing import Any, Dict, Optional

@@ -577,6 +577,7 @@ class NutritionRepository {
     required String userId,
     required String mealType,
     required File imageFile,
+    Uint8List? thumbBytes, // Phase-2: 768px-resized JPEG for Vision API
   }) async* {
     debugPrint('📸 [Nutrition] Starting streaming image ANALYSIS for $userId');
     final startTime = DateTime.now();
@@ -609,13 +610,29 @@ class NutritionRepository {
       final authHeaders = await _client.getAuthHeaders();
       streamingDio.options.headers.addAll(authHeaders);
 
+      // Phase-2 §2.0: two-artifact upload when thumbBytes provided.
+      //   `image`           = 768px thumb (used by Vision API; ~120KB)
+      //   `image_original`  = full-res original (archived to S3 for view-later)
+      // Legacy callers (no thumbBytes) keep working — backend treats it as
+      // the single-artifact path and uses `image` for both purposes.
       final formData = FormData.fromMap({
         'user_id': userId,
         'meal_type': mealType,
-        'image': await MultipartFile.fromFile(
-          imageFile.path,
-          filename: 'food_image.jpg',
-        ),
+        if (thumbBytes != null)
+          'image': MultipartFile.fromBytes(
+            thumbBytes,
+            filename: 'food_thumb.jpg',
+          )
+        else
+          'image': await MultipartFile.fromFile(
+            imageFile.path,
+            filename: 'food_image.jpg',
+          ),
+        if (thumbBytes != null)
+          'image_original': await MultipartFile.fromFile(
+            imageFile.path,
+            filename: 'food_original.jpg',
+          ),
       });
 
       final response = await streamingDio.post(
@@ -632,6 +649,9 @@ class NutritionRepository {
       String eventType = '';
       String eventData = '';
       String buffer = '';
+      // Hold the `done` payload so the late `coach_tips` event can be merged
+      // into it and re-emitted as a complete foodLog (tips included).
+      Map<String, dynamic>? doneData;
 
       await for (final bytes in responseBody.stream) {
         // Decode bytes to string and add to buffer
@@ -659,6 +679,7 @@ class NutritionRepository {
                     isAnalysisOnly: true,
                   );
                 } else if (eventType == 'done') {
+                  doneData = data;
                   final foodLog = LogFoodResponse.fromJson(data);
                   yield FoodLoggingProgress(
                     step: 3,
@@ -668,6 +689,30 @@ class NutritionRepository {
                     foodLog: foodLog,
                     isCompleted: true,
                     isAnalysisOnly: true,
+                  );
+                } else if (eventType == 'coach_tips') {
+                  // Late-arriving coaching tips — streamed AFTER `done` so the
+                  // card already rendered fast. Merge the tip fields into the
+                  // stored `done` payload and re-emit a COMPLETE foodLog; the
+                  // UI re-renders the card with tips. Missing event = no tips.
+                  final merged = <String, dynamic>{...?doneData};
+                  for (final k in const [
+                    'ai_suggestion', 'encouragements', 'warnings',
+                    'recommended_swap', 'health_score', 'health_score_reasons',
+                  ]) {
+                    if (data[k] != null) merged[k] = data[k];
+                  }
+                  yield FoodLoggingProgress(
+                    step: 3,
+                    totalSteps: 3,
+                    message: 'Coach tips ready',
+                    elapsedMs: elapsedMs,
+                    foodLog: merged.isNotEmpty
+                        ? LogFoodResponse.fromJson(merged)
+                        : null,
+                    isCompleted: true,
+                    isAnalysisOnly: true,
+                    coachTips: data,
                   );
                 } else if (eventType == 'error') {
                   yield FoodLoggingProgress(
@@ -718,6 +763,10 @@ class NutritionRepository {
     required String userId,
     required String mealType,
     required List<File> imageFiles,
+    /// Phase-2: 768px-resized JPEG bytes per image (parallel-indexed with
+    /// imageFiles). When provided, backend uses these for Vision and
+    /// archives the originals to S3.
+    List<Uint8List>? thumbBytesList,
     String analysisMode = 'auto',
     String? userMessage,
     String? inputType,
@@ -745,12 +794,30 @@ class NutritionRepository {
       final authHeaders = await _client.getAuthHeaders();
       streamingDio.options.headers.addAll(authHeaders);
 
+      // Phase-2: paired multipart when thumbBytesList provided.
+      //   `images[]`           = 768px thumbs (Vision API)
+      //   `images_original[]`  = full-res originals (S3 archive)
+      // Backend's analyze_food_from_s3_keys path falls back to images[] for
+      // both purposes when images_original[] absent (legacy path).
+      final useTwoArtifact = thumbBytesList != null
+          && thumbBytesList.length == imageFiles.length;
       final multipart = <MapEntry<String, MultipartFile>>[];
       for (var i = 0; i < imageFiles.length; i++) {
-        multipart.add(MapEntry(
-          'images',
-          await MultipartFile.fromFile(imageFiles[i].path, filename: 'food_$i.jpg'),
-        ));
+        if (useTwoArtifact) {
+          multipart.add(MapEntry(
+            'images',
+            MultipartFile.fromBytes(thumbBytesList![i], filename: 'food_thumb_$i.jpg'),
+          ));
+          multipart.add(MapEntry(
+            'images_original',
+            await MultipartFile.fromFile(imageFiles[i].path, filename: 'food_original_$i.jpg'),
+          ));
+        } else {
+          multipart.add(MapEntry(
+            'images',
+            await MultipartFile.fromFile(imageFiles[i].path, filename: 'food_$i.jpg'),
+          ));
+        }
       }
       final formData = FormData();
       formData.fields.addAll([
@@ -1274,4 +1341,131 @@ class NutritionRepository {
       data: {'action': confirm ? 'confirm' : 'dismiss'},
     );
   }
+
+  // =========================================================================
+  // Phase-2 §2.9: Dish variants (powers per-item edit Region dropdown)
+  // =========================================================================
+
+  /// Fetch regional/restaurant variants of a dish via trigram fuzzy match
+  /// against food_nutrition_overrides_canonical. Returns up to 10 alternates.
+  ///
+  /// Used by the per-item edit sheet in [LogMealSheet] — when the user taps
+  /// to edit "Chicken Biryani", show Indian / Pakistani / Hyderabadi / etc.
+  /// as options.
+  Future<List<DishVariant>> fetchDishVariants(String dishName) async {
+    if (dishName.trim().isEmpty) return const [];
+    try {
+      final resp = await _client.get(
+        '/nutrition/dish-variants',
+        queryParameters: {'name': dishName},
+      );
+      final data = resp.data as Map<String, dynamic>;
+      final variants = (data['variants'] as List?) ?? const [];
+      return variants
+          .map((v) => DishVariant.fromJson(Map<String, dynamic>.from(v as Map)))
+          .toList();
+    } catch (e) {
+      debugPrint('[Nutrition] fetchDishVariants($dishName) failed: $e');
+      return const [];
+    }
+  }
+
+  /// Swap a logged food_item to a different regional/restaurant variant.
+  /// Returns the new macros (calories, protein, carbs, fat) for the item
+  /// after the swap.
+  Future<DishVariantSwapResult?> swapDishVariant({
+    required String foodLogId,
+    required int foodItemIndex,
+    required int newOverrideId,
+  }) async {
+    try {
+      final resp = await _client.post(
+        '/nutrition/dish-variants/swap',
+        data: {
+          'food_log_id': foodLogId,
+          'food_item_index': foodItemIndex,
+          'new_override_id': newOverrideId,
+        },
+      );
+      final data = resp.data as Map<String, dynamic>;
+      return DishVariantSwapResult.fromJson(data);
+    } catch (e) {
+      debugPrint('[Nutrition] swapDishVariant failed: $e');
+      return null;
+    }
+  }
+}
+
+/// Phase-2 §2.9 — one regional/restaurant variant of a dish.
+class DishVariant {
+  final int id;
+  final String foodNameNormalized;
+  final String displayName;
+  final String? region;
+  final String? restaurantName;
+  final double? caloriesPer100g;
+  final double? proteinPer100g;
+  final double? carbsPer100g;
+  final double? fatPer100g;
+
+  const DishVariant({
+    required this.id,
+    required this.foodNameNormalized,
+    required this.displayName,
+    this.region,
+    this.restaurantName,
+    this.caloriesPer100g,
+    this.proteinPer100g,
+    this.carbsPer100g,
+    this.fatPer100g,
+  });
+
+  factory DishVariant.fromJson(Map<String, dynamic> j) => DishVariant(
+        id: (j['id'] as num).toInt(),
+        foodNameNormalized: j['food_name_normalized'] as String? ?? '',
+        displayName: j['display_name'] as String? ?? '',
+        region: j['region'] as String?,
+        restaurantName: j['restaurant_name'] as String?,
+        caloriesPer100g: (j['calories_per_100g'] as num?)?.toDouble(),
+        proteinPer100g: (j['protein_per_100g'] as num?)?.toDouble(),
+        carbsPer100g: (j['carbs_per_100g'] as num?)?.toDouble(),
+        fatPer100g: (j['fat_per_100g'] as num?)?.toDouble(),
+      );
+
+  /// Display label for the dropdown — prefers restaurant > region > display.
+  String get dropdownLabel {
+    if (restaurantName != null && restaurantName!.isNotEmpty) {
+      return '$restaurantName · $displayName';
+    }
+    if (region != null && region!.isNotEmpty) {
+      return '$region · $displayName';
+    }
+    return displayName;
+  }
+}
+
+/// Phase-2 §2.9 — response from POST /dish-variants/swap.
+class DishVariantSwapResult {
+  final bool success;
+  final int? newCalories;
+  final double? newProteinG;
+  final double? newCarbsG;
+  final double? newFatG;
+
+  const DishVariantSwapResult({
+    required this.success,
+    this.newCalories,
+    this.newProteinG,
+    this.newCarbsG,
+    this.newFatG,
+  });
+
+  factory DishVariantSwapResult.fromJson(Map<String, dynamic> j) =>
+      DishVariantSwapResult(
+        success: j['success'] as bool? ?? false,
+        newCalories: (j['new_calories'] as num?)?.toInt(),
+        newProteinG: (j['new_protein_g'] as num?)?.toDouble(),
+        newCarbsG: (j['new_carbs_g'] as num?)?.toDouble(),
+        newFatG: (j['new_fat_g'] as num?)?.toDouble(),
+      );
 }

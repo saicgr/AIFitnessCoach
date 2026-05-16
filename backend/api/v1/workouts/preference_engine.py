@@ -7,8 +7,6 @@ applied directly to existing workout exercises_json.
 
 Core principle: Parse JSON → find target → replace with library match → update row.
 """
-from __future__ import annotations
-
 from .preference_engine_helpers import (  # noqa: F401
     _inject_into_section,
     remove_exercise_from_workout,

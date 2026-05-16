@@ -21,8 +21,6 @@ Security model:
       and the verification link click doesn't time out on large exports.
     * Download URLs are S3 presigned, expire in 7 days.
 """
-from __future__ import annotations
-
 import hashlib
 import hmac
 import io

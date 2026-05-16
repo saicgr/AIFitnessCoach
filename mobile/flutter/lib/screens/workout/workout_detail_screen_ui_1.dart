@@ -134,38 +134,32 @@ extension __WorkoutDetailScreenStateExt1 on _WorkoutDetailScreenState {
       _startSecondaryLoads();
     } catch (e) {
       debugPrint('❌ [WorkoutDetail] Failed to load workout ${widget.workoutId}: $e');
-      // 404 means the workout was deleted or the plan was regenerated since
-      // the cached ID was captured (deep link, push notification, stale
-      // navigation). Instead of showing a red error screen that makes the
-      // app feel broken, silently swap to today's current workout and show
-      // a one-line snackbar. Eliminates user-perceived breakage from the
-      // most common stale-id paths (hero carousel race, multi-device
-      // regenerate, calendar deep link to superseded workout).
+      // Hard rule: NEVER auto-pop from inside an active workout. If the user
+      // has any in-progress state (completed sets, started timer), popping
+      // them out destroys their session. Surface the error inline; the user
+      // chooses when to leave.
       final is404 = e is DioException && e.response?.statusCode == 404;
-      if (is404 && mounted) {
-        // Stale id — most common after a regenerate/quick-workout, push
-        // notification deep link, or multi-device session. Invalidate the
-        // today cache so the home screen pulls the fresh plan, then pop
-        // back. A snackbar tells the user the workout was updated rather
-        // than showing a red error screen that feels broken.
+      if (is404) {
+        // Refresh today cache so home picks up the new plan, but keep this
+        // screen mounted with whatever workout state we already had.
         try {
           ref.read(todayWorkoutProvider.notifier).invalidateAndRefresh();
         } catch (_) {/* best effort — notifier may not be available */}
-        if (Navigator.of(context).canPop()) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Workout updated — showing latest plan.'),
-              duration: Duration(seconds: 2),
-            ),
-          );
-          Navigator.of(context).pop();
-          return;
-        }
       }
+      if (!mounted) return;
       setState(() {
-        _error = is404
-            ? 'Workout updated — head back to home for the latest plan.'
-            : e.toString();
+        // If we already have a workout loaded, preserve it (cached state is
+        // far better than yanking the user out). Only show the full red
+        // error screen on the very first load.
+        if (_workout == null) {
+          _error = is404
+              ? 'This workout was updated. Head back to home for the latest plan.'
+              : e.toString();
+        } else {
+          _refreshError = is404
+              ? 'Could not refresh — keeping your current view.'
+              : 'Refresh failed: $e';
+        }
         _isLoading = false;
       });
     }
@@ -380,7 +374,13 @@ extension __WorkoutDetailScreenStateExt1 on _WorkoutDetailScreenState {
   }
 
 
-  /// Apply equipment changes and update workout
+  /// Apply equipment changes and update workout.
+  ///
+  /// CRITICAL: mid-workout this path used to silently call
+  /// `_quickReplaceExercises` (server-side exercise swap + workout reload),
+  /// which could close the active workout screen and lose the user's
+  /// in-progress session. Now we ALWAYS ask first with a no-default
+  /// 3-button dialog so the user picks their consequence explicitly.
   Future<void> _applyEquipmentChanges(
     Workout workout,
     List<EquipmentItem> selectedEquipment,
@@ -392,6 +392,33 @@ extension __WorkoutDetailScreenStateExt1 on _WorkoutDetailScreenState {
       // No changes needed
       _showSnackBar('No changes needed');
       return;
+    }
+
+    // Always confirm before swapping exercises out of an unfinished
+    // workout. We don't have a precise "mid-workout" signal on the
+    // Workout model (startedAt lives on SetLogInfo, not here), but the
+    // dialog is cheap and the consequence of swapping silently is
+    // session loss, so we err on the side of always asking when there
+    // are real exercises to replace and the workout isn't already
+    // marked complete.
+    if (analysis.exercisesToReplace.isNotEmpty &&
+        (workout.isCompleted != true)) {
+      final choice = await _showEquipmentApplyChoiceDialog(
+        replaceCount: analysis.exercisesToReplace.length,
+      );
+      if (choice == null || choice == _EquipmentApplyChoice.cancel) {
+        // Discard the equipment change — workout and profile untouched.
+        return;
+      }
+      if (choice == _EquipmentApplyChoice.saveForNext) {
+        // Equipment was already persisted to the gym profile by the
+        // caller in change_equipment_helper. Tell the user and bail
+        // without touching this session.
+        _showSnackBar('Saved — applies to your next workout.');
+        return;
+      }
+      // Otherwise: replaceNow — fall through to the destructive path,
+      // but the user has explicitly opted in.
     }
 
     // Store snapshot BEFORE first modification (for revert functionality)
@@ -409,12 +436,76 @@ extension __WorkoutDetailScreenStateExt1 on _WorkoutDetailScreenState {
     }
 
     // Mark as modified (enables revert button)
-    setState(() => _hasEquipmentModifications = true);
+    if (mounted) setState(() => _hasEquipmentModifications = true);
 
     // Ask if user wants to save to profile
     if (mounted) {
       _showSaveToProfileDialog(selectedEquipment);
     }
+  }
+
+  /// 3-button no-default confirmation shown ONLY when equipment changes
+  /// would swap exercises in the user's currently active session. None
+  /// of the buttons are styled as primary — explicit choice required.
+  Future<_EquipmentApplyChoice?> _showEquipmentApplyChoiceDialog({
+    required int replaceCount,
+  }) async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final fg = isDark ? Colors.white : Colors.black;
+    return showDialog<_EquipmentApplyChoice>(
+      context: context,
+      barrierDismissible: false,
+      useRootNavigator: true,
+      builder: (ctx) => Dialog(
+        backgroundColor: isDark ? const Color(0xFF1C1C1E) : Colors.white,
+        shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20)),
+        insetPadding:
+            const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 22, 20, 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text('Equipment updated',
+                  style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w700,
+                      color: fg)),
+              const SizedBox(height: 8),
+              Text(
+                '$replaceCount exercise${replaceCount == 1 ? '' : 's'} '
+                "in your active workout use${replaceCount == 1 ? 's' : ''} equipment "
+                "you just removed. How do you want to handle it?",
+                style: TextStyle(
+                    fontSize: 14,
+                    height: 1.4,
+                    color: fg.withValues(alpha: 0.75)),
+              ),
+              const SizedBox(height: 18),
+              _EquipmentChoiceButton(
+                label: 'Replace now',
+                subtitle: 'Swap those exercises in this session. Your completed sets stay logged.',
+                onTap: () => Navigator.of(ctx).pop(_EquipmentApplyChoice.replaceNow),
+              ),
+              const SizedBox(height: 8),
+              _EquipmentChoiceButton(
+                label: 'Save for next workout',
+                subtitle: 'Keep this session unchanged. New equipment applies to future workouts.',
+                onTap: () => Navigator.of(ctx).pop(_EquipmentApplyChoice.saveForNext),
+              ),
+              const SizedBox(height: 8),
+              _EquipmentChoiceButton(
+                label: 'Cancel',
+                subtitle: 'Discard the equipment change entirely.',
+                onTap: () => Navigator.of(ctx).pop(_EquipmentApplyChoice.cancel),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
 
@@ -532,14 +623,26 @@ extension __WorkoutDetailScreenStateExt1 on _WorkoutDetailScreenState {
       return;
     }
 
-    // Show loading dialog
+    // Show loading dialog. Capture its own Navigator context so we can
+    // dismiss ONLY this dialog later — never the active workout screen.
+    // Prior bug: `Navigator.of(context).pop()` at the end of this method
+    // could pop the workout route if the dialog hadn't pushed yet (race
+    // during fast async loops). Now we hold the dialog's BuildContext and
+    // only pop if that context is still mounted as a current modal.
+    BuildContext? dialogContext;
     if (mounted) {
+      // Don't await — we want it to be on top while the loop runs.
+      // ignore: unawaited_futures
       showDialog(
         context: context,
         barrierDismissible: false,
-        builder: (context) => QuickReplaceProgressDialog(
-          total: exercisesToReplace.length,
-        ),
+        useRootNavigator: true,
+        builder: (ctx) {
+          dialogContext = ctx;
+          return QuickReplaceProgressDialog(
+            total: exercisesToReplace.length,
+          );
+        },
       );
     }
 
@@ -570,7 +673,15 @@ extension __WorkoutDetailScreenStateExt1 on _WorkoutDetailScreenState {
       }
     }
 
-    if (mounted) Navigator.of(context).pop(); // Close progress dialog
+    // Close progress dialog using its own captured context. Guards:
+    //   - dialogContext is non-null only if showDialog actually pushed.
+    //   - Navigator.canPop() ensures the modal route is still on top.
+    // Without these, an early Navigator.of(context).pop() can pop the
+    // active workout screen and destroy the user's in-progress session.
+    final dctx = dialogContext;
+    if (dctx != null && dctx.mounted && Navigator.canPop(dctx)) {
+      Navigator.of(dctx).pop();
+    }
 
     // Reload the workout with new data
     await _loadWorkout();
@@ -1003,4 +1114,68 @@ extension __WorkoutDetailScreenStateExt1 on _WorkoutDetailScreenState {
     );
   }
 
+}
+
+/// User's explicit choice when equipment changes mid-workout would
+/// require swapping exercises in the active session. No default — the
+/// user must pick one. See `_showEquipmentApplyChoiceDialog`.
+enum _EquipmentApplyChoice {
+  /// Run the destructive swap now. Completed sets stay logged server-side.
+  replaceNow,
+
+  /// Keep this session's plan intact; new equipment applies next workout.
+  saveForNext,
+
+  /// Discard the equipment change.
+  cancel,
+}
+
+/// Equal-weight option row used in `_showEquipmentApplyChoiceDialog`. No
+/// option is highlighted as primary — same visual treatment so the user
+/// makes an explicit choice rather than tapping the "default" reflexively.
+class _EquipmentChoiceButton extends StatelessWidget {
+  final String label;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  const _EquipmentChoiceButton({
+    required this.label,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final fg = isDark ? Colors.white : Colors.black;
+    return Material(
+      color: isDark
+          ? Colors.white.withValues(alpha: 0.05)
+          : Colors.black.withValues(alpha: 0.04),
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label,
+                  style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: fg)),
+              const SizedBox(height: 2),
+              Text(subtitle,
+                  style: TextStyle(
+                      fontSize: 12,
+                      height: 1.3,
+                      color: fg.withValues(alpha: 0.65))),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }

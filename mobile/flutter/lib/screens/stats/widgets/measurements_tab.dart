@@ -343,11 +343,26 @@ class _MeasurementsTabState extends ConsumerState<MeasurementsTab> {
                         final val = double.tryParse(valueController.text.trim());
                         if (val == null || val <= 0) return;
                         setSheetState(() => isSubmitting = true);
-                        final success = await ref.read(measurementsProvider.notifier).recordMeasurement(
-                          userId: userId, type: selectedType, value: val, unit: unitFor(selectedType),
-                        );
-                        if (success && sheetContext.mounted) {
-                          Navigator.pop(sheetContext);
+                        try {
+                          final success = await ref.read(measurementsProvider.notifier).recordMeasurement(
+                            userId: userId, type: selectedType, value: val, unit: unitFor(selectedType),
+                          );
+                          if (!success) {
+                            throw StateError('${selectedType.displayName} save returned false');
+                          }
+                          if (sheetContext.mounted) {
+                            Navigator.pop(sheetContext);
+                          }
+                        } catch (e) {
+                          debugPrint('[MeasurementsTab] save failed: $e');
+                          if (sheetContext.mounted) {
+                            ScaffoldMessenger.of(sheetContext).showSnackBar(
+                              SnackBar(
+                                content: Text("Couldn't save ${selectedType.displayName.toLowerCase()}. Try again."),
+                                backgroundColor: AppColors.error,
+                              ),
+                            );
+                          }
                         }
                         setSheetState(() => isSubmitting = false);
                       },

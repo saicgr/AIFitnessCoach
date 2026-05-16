@@ -15,8 +15,6 @@ Also exposes:
 Idempotency: every write computes a content-hash key. Duplicate POSTs
 within ±15min return the existing event with `created=false`.
 """
-from __future__ import annotations
-
 import hashlib
 import hmac
 import json

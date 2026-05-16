@@ -9,8 +9,15 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/providers/user_provider.dart';
+
+// Conversion factor: 1 kg = 2.20462 lb. Used to reconcile a backend payload
+// that ships in kg when the user's `workout_weight_unit` is lbs (B1 fix).
+const double _kKgToLb = 2.20462;
+const double _kLbToKg = 1 / _kKgToLb;
 
 /// Severity level of fatigue detection
 enum FatigueSeverity {
@@ -149,7 +156,7 @@ class FatigueAlertData {
 }
 
 /// Modal widget for displaying fatigue alerts during active workouts
-class FatigueAlertModal extends StatelessWidget {
+class FatigueAlertModal extends ConsumerWidget {
   /// The fatigue alert data to display
   final FatigueAlertData alertData;
 
@@ -179,7 +186,7 @@ class FatigueAlertModal extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     // Heavy haptic feedback when modal appears
     HapticFeedback.heavyImpact();
     Future.delayed(const Duration(milliseconds: 100), () {
@@ -207,7 +214,7 @@ class FatigueAlertModal extends StatelessWidget {
                 maxHeight: screenHeight * 0.85,
               ),
               child: SingleChildScrollView(
-                child: _buildAlertCard(context, isDark, isSmallScreen),
+                child: _buildAlertCard(context, ref, isDark, isSmallScreen),
               ),
             ),
           ),
@@ -216,7 +223,7 @@ class FatigueAlertModal extends StatelessWidget {
     );
   }
 
-  Widget _buildAlertCard(BuildContext context, bool isDark, bool isSmallScreen) {
+  Widget _buildAlertCard(BuildContext context, WidgetRef ref, bool isDark, bool isSmallScreen) {
     final severityColor = alertData.severityColor;
     final cardBg = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
@@ -273,6 +280,7 @@ class FatigueAlertModal extends StatelessWidget {
 
                 // Weight suggestion
                 _buildWeightSuggestion(
+                  ref,
                   isDark,
                   textPrimary,
                   textSecondary,
@@ -477,6 +485,7 @@ class FatigueAlertModal extends StatelessWidget {
   }
 
   Widget _buildWeightSuggestion(
+    WidgetRef ref,
     bool isDark,
     Color textPrimary,
     Color textSecondary,
@@ -484,16 +493,40 @@ class FatigueAlertModal extends StatelessWidget {
     Color severityColor,
     bool isSmallScreen,
   ) {
-    // Bodyweight branch (edge case 57): no weight to display — render
-    // a rep-target reduction card instead so the modal stays useful.
+    // Bodyweight branch (edge case 30/edge case 57): no weight to display —
+    // render a rep-target reduction card instead so the modal stays useful.
     if (alertData.suggestedWeight == null || alertData.repTargetReduction != null) {
       return _buildRepTargetSuggestion(
         isDark, textPrimary, textSecondary, textMuted, severityColor, isSmallScreen,
       );
     }
-    final unit = alertData.weightUnit; // already 'kg' or 'lb' — never hardcoded.
-    final suggested = alertData.suggestedWeight!;
+
+    // B1 fix: respect the user's `workout_weight_unit` even if the backend
+    // payload was generated in kg. The `currentWeight` prop comes from the
+    // active-workout weight input which already renders in the user's
+    // preferred unit; the alert payload may or may not. We treat the
+    // input field as the source of truth for the user's *display* unit
+    // and convert the backend `suggested` value if the units disagree.
+    final userUnitRaw = (ref.watch(workoutWeightUnitProvider)).toLowerCase();
+    final displayUnit = (userUnitRaw == 'lbs' || userUnitRaw == 'lb') ? 'lb' : 'kg';
+    final backendUnit = alertData.weightUnit; // 'kg' or 'lb'
+    double suggested = alertData.suggestedWeight!;
+    if (backendUnit != displayUnit) {
+      if (backendUnit == 'kg' && displayUnit == 'lb') {
+        suggested = suggested * _kKgToLb;
+      } else if (backendUnit == 'lb' && displayUnit == 'kg') {
+        suggested = suggested * _kLbToKg;
+      }
+    }
+    final unit = displayUnit;
     final weightDiff = currentWeight - suggested;
+
+    // B2 fix: compute true percentage from the actual values shown rather
+    // than trusting `alertData.suggestedWeightReduction` (which is a
+    // magnitude code, not a percentage). Guard div-by-zero just in case.
+    final int truePercent = currentWeight > 0.0001
+        ? (weightDiff / currentWeight * 100).round()
+        : 0;
 
     return Container(
       padding: EdgeInsets.all(isSmallScreen ? 16 : 20),
@@ -597,7 +630,11 @@ class FatigueAlertModal extends StatelessWidget {
           ),
           SizedBox(height: isSmallScreen ? 8 : 12),
           Text(
-            '${alertData.suggestedWeightReduction}% reduction',
+            truePercent > 0
+                ? '$truePercent% lighter'
+                : truePercent < 0
+                    ? '${truePercent.abs()}% heavier'
+                    : 'Hold weight',
             style: TextStyle(
               fontSize: isSmallScreen ? 12 : 13,
               color: textSecondary,

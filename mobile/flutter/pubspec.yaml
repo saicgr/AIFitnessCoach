@@ -120,6 +120,9 @@ dependencies:
   image_cropper: ^8.0.2
   # Pixel-level image manipulation (flip/rotate in progress photo editor)
   image: ^4.3.0
+  # Phase-2 food-scan: in-memory resize to 768px for Vision API thumb (single
+  # Gemini tile = 4× cheaper + faster). Original full-res still uploaded to S3.
+  flutter_image_compress: ^2.3.0
   # In-app live camera preview (Snapchat-style capture in recipe import)
   camera: ^0.11.0
   speech_to_text: ^7.3.0

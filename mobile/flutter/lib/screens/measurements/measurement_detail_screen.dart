@@ -728,11 +728,16 @@ class _MeasurementDetailScreenState
 
   /// Returns the start date for the currently selected period.
   /// Used by both filtering and chart X-axis range.
+  ///
+  /// "1D" means *today in the user's local timezone* — anchored to midnight,
+  /// not "rolling 24h." Otherwise an entry from this morning falls outside
+  /// the filter once the user opens the screen later in the day (caught
+  /// 2026-05-12). See [[feedback_user_local_time_only]].
   DateTime _periodStartDate() {
     final now = DateTime.now();
     switch (_selectedPeriod) {
       case '1d':
-        return now.subtract(const Duration(days: 1));
+        return DateTime(now.year, now.month, now.day);
       case '3d':
         return now.subtract(const Duration(days: 3));
       case '7d':
@@ -917,23 +922,42 @@ class _MeasurementDetailScreenState
 
                             final auth = ref.read(authStateProvider);
                             if (auth.user != null) {
-                              final success = await ref
-                                  .read(measurementsProvider.notifier)
-                                  .recordMeasurement(
-                                    userId: auth.user!.id,
-                                    type: _type,
-                                    value: valueToStore,
-                                    unit: unitToStore,
-                                    notes: notes.isNotEmpty ? notes : null,
+                              try {
+                                final success = await ref
+                                    .read(measurementsProvider.notifier)
+                                    .recordMeasurement(
+                                      userId: auth.user!.id,
+                                      type: _type,
+                                      value: valueToStore,
+                                      unit: unitToStore,
+                                      notes: notes.isNotEmpty ? notes : null,
+                                    );
+                                if (!success) {
+                                  throw StateError(
+                                      '${_type.displayName} save returned false');
+                                }
+                                if (context.mounted) {
+                                  Navigator.pop(context);
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content:
+                                          Text('${_type.displayName} recorded'),
+                                      backgroundColor: AppColors.success,
+                                    ),
                                   );
-                              if (success && context.mounted) {
-                                Navigator.pop(context);
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text('${_type.displayName} recorded'),
-                                    backgroundColor: AppColors.success,
-                                  ),
-                                );
+                                }
+                              } catch (e) {
+                                debugPrint(
+                                    '[MeasurementDetail] record failed: $e');
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                          "Couldn't save ${_type.displayName.toLowerCase()}. Try again."),
+                                      backgroundColor: AppColors.error,
+                                    ),
+                                  );
+                                }
                               }
                             }
 

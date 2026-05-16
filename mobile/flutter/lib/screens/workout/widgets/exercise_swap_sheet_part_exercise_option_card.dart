@@ -84,7 +84,7 @@ class _ExerciseOptionCard extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        name,
+                        toExerciseTitleCase(name),
                         style: TextStyle(
                           fontWeight: FontWeight.w600,
                           color: textPrimary,

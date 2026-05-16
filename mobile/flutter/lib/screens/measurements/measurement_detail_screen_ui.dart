@@ -17,8 +17,8 @@ extension _MeasurementDetailScreenStateUI on _MeasurementDetailScreenState {
     // Use time-based X coordinates (milliseconds since epoch) so the chart
     // correctly represents the time range of the selected period.
     final now = DateTime.now();
-    final double maxX = now.millisecondsSinceEpoch.toDouble();
-    final double minX;
+    double maxX = now.millisecondsSinceEpoch.toDouble();
+    double minX;
     if (_selectedPeriod == 'all' && reversedHistory.isNotEmpty) {
       // For "All", start from the oldest entry (with a small left padding)
       final oldest = reversedHistory.first.recordedAt;
@@ -26,6 +26,12 @@ extension _MeasurementDetailScreenStateUI on _MeasurementDetailScreenState {
       minX = oldest.millisecondsSinceEpoch.toDouble() - rangePadding;
     } else {
       minX = _periodStartDate().millisecondsSinceEpoch.toDouble();
+    }
+    // Floor the visible range to 1 hour so the 1D pill doesn't collapse
+    // when opened in the first few seconds after midnight (minX == maxX).
+    const minRangeMs = 60 * 60 * 1000.0;
+    if (maxX - minX < minRangeMs) {
+      maxX = minX + minRangeMs;
     }
 
     final spots = reversedHistory.map((entry) {
@@ -208,21 +214,25 @@ extension _MeasurementDetailScreenStateUI on _MeasurementDetailScreenState {
           bottomTitles: AxisTitles(
             sideTitles: SideTitles(
               showTitles: true,
-              reservedSize: 30,
+              reservedSize: 40,
               interval: intervalMs,
               getTitlesWidget: (value, meta) {
                 // Skip labels outside range, and suppress labels that land too
                 // close to the min/max edges — fl_chart anchors interval ticks
-                // to the epoch, which can place a tick a day or two away from
-                // minX/maxX and visually overlap the edge label.
+                // to the epoch, which can place a tick a hour or two away
+                // from maxX and visually overlap the edge label (caught
+                // 2026-05-12 on the 3D range: "5/12 1 AM" collided with
+                // "5/12 10 AM"). The threshold is intentionally wide
+                // (0.9 * intervalMs) and inclusive (<=) to stop adjacent
+                // ticks from rendering on top of the right edge label.
                 if (value < minX || value > maxX) {
                   return const SizedBox.shrink();
                 }
-                final edgeThreshold = intervalMs * 0.5;
-                if ((value - minX).abs() < edgeThreshold ||
-                    (maxX - value).abs() < edgeThreshold) {
-                  // Only keep the label if it IS the exact edge (maxX).
-                  if (value != maxX && value != minX) {
+                final edgeThreshold = intervalMs * 0.9;
+                final isEdge = value == maxX || value == minX;
+                if (!isEdge) {
+                  if ((value - minX).abs() <= edgeThreshold ||
+                      (maxX - value).abs() <= edgeThreshold) {
                     return const SizedBox.shrink();
                   }
                 }

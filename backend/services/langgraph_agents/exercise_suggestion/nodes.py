@@ -4,7 +4,7 @@ Node implementations for the Exercise Suggestion LangGraph agent.
 Uses ChromaDB (via ExerciseRAGService) for semantic search of exercises.
 """
 import json
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 
 from langchain_core.messages import HumanMessage, SystemMessage
 
@@ -488,11 +488,28 @@ IMPORTANT: Only suggest exercises from the provided list. Match names exactly.""
         def _norm(s: str) -> str:
             return "".join(ch for ch in s.lower() if ch.isalnum())
 
+        def _words(s: str) -> set:
+            # Singular/plural normalization: strip trailing 's' from each token
+            # so "push up" and "push ups" share the same word set. Avoids
+            # over-stripping (e.g., "press" -> "pres") by requiring length>=4.
+            toks = []
+            for w in s.lower().replace("-", " ").split():
+                w = "".join(ch for ch in w if ch.isalnum())
+                if not w:
+                    continue
+                if len(w) >= 4 and w.endswith("s"):
+                    w = w[:-1]
+                toks.append(w)
+            return set(toks)
+
         candidate_index: Dict[str, dict] = {}
+        candidate_word_index: Dict[str, set] = {}
         for c in candidates:
-            key = _norm(c.get("name", ""))
+            name = c.get("name", "")
+            key = _norm(name)
             if key and key not in candidate_index:
                 candidate_index[key] = c
+                candidate_word_index[key] = _words(name)
 
         enriched_suggestions = []
         used_keys: set = set()
@@ -502,15 +519,41 @@ IMPORTANT: Only suggest exercises from the provided list. Match names exactly.""
             key = _norm(raw_name)
             candidate = candidate_index.get(key)
             if not candidate:
-                # Fall back to a substring match on the normalized key, which
-                # handles cases like "Push Down" vs "Cable Push Down".
-                for ck, cv in candidate_index.items():
-                    if ck in used_keys:
-                        continue
-                    if key and (key in ck or ck in key):
-                        candidate = cv
-                        key = ck
-                        break
+                # C6 fix: replaced greedy `key in ck or ck in key` substring
+                # match with Jaccard-style word-overlap. The old check let
+                # "Push Up" (pushup) match "Wide Push Ups Bodyweight"
+                # (widepushupsbodyweight) because the former is a substring
+                # of the latter — wrong exercise was selected. We now
+                # require ≥0.66 word overlap and tiebreak by shortest
+                # candidate name (prefers exact concepts over variants).
+                query_words = _words(raw_name)
+                if query_words:
+                    best_score = 0.0
+                    best_ck: Optional[str] = None
+                    best_cv: Optional[dict] = None
+                    best_name_len = 10_000
+                    for ck, cv in candidate_index.items():
+                        if ck in used_keys:
+                            continue
+                        cand_words = candidate_word_index.get(ck, set())
+                        if not cand_words:
+                            continue
+                        overlap = len(query_words & cand_words)
+                        denom = max(len(query_words), len(cand_words))
+                        score = overlap / denom if denom else 0.0
+                        cand_name_len = len(cv.get("name", ""))
+                        # Prefer higher score; tiebreak shorter name.
+                        if score > best_score or (
+                            abs(score - best_score) < 1e-6
+                            and cand_name_len < best_name_len
+                        ):
+                            best_score = score
+                            best_ck = ck
+                            best_cv = cv
+                            best_name_len = cand_name_len
+                    if best_score >= 0.66 and best_cv is not None and best_ck is not None:
+                        candidate = best_cv
+                        key = best_ck
             if not candidate:
                 unmatched_names.append(raw_name)
                 continue

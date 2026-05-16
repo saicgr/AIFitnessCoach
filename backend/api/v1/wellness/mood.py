@@ -6,8 +6,6 @@ Backed by the `mood_log` table created in migration
 - LangGraph wellness agent's `log_event(domain='mood', ...)` flow
 - Timeline aggregator (reads /wellness/mood/today via service helper)
 """
-from __future__ import annotations
-
 from datetime import datetime, timezone
 from typing import Optional
 

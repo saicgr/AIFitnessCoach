@@ -644,7 +644,12 @@ class _GymEquipmentSheetState extends State<GymEquipmentSheet> {
     }).toList();
 
     widget.onSave(equipment, equipmentDetails);
-    Navigator.pop(context);
+    // Pop only this modal sheet, never the underlying workout route. The
+    // active workout screen used to be unmounted by an unguarded pop here.
+    final route = ModalRoute.of(context);
+    if (route != null && route.isCurrent && Navigator.canPop(context)) {
+      Navigator.pop(context);
+    }
   }
 
   /// Open the AI import sheet. Requires [widget.gymProfileId] to be non-null

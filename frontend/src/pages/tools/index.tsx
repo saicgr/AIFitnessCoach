@@ -216,7 +216,7 @@ export default function ToolsIndex() {
     <div className="min-h-screen bg-zinc-950 text-zinc-100">
       <MarketingNav />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 pt-10 sm:pt-14 pb-20">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 pt-24 sm:pt-28 pb-20">
         {/* Compact hero */}
         <header className="mb-6 text-center max-w-3xl mx-auto">
           <p className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
@@ -507,8 +507,11 @@ function CalcCard({
           {calc.name}
         </h3>
         <div className="flex flex-col gap-1 items-end shrink-0">
+          {/* Solid-fill badges with literal text colors so they stay
+              high-contrast in both light and dark mode (the zinc/white
+              palette remap does not touch literal [#hex] values). */}
           {isNew && (
-            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/25 font-semibold uppercase tracking-wide">
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-400 text-[#3a2606] font-bold uppercase tracking-wide">
               New
             </span>
           )}
@@ -516,11 +519,11 @@ function CalcCard({
               with the bolder "Free here" pill; show a quieter "Free" pill on
               the rest so no tile reads as "maybe not free". */}
           {calc.paidElsewhere ? (
-            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-semibold uppercase tracking-wide">
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500 text-[#06281a] font-bold uppercase tracking-wide">
               Free here
             </span>
           ) : (
-            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-zinc-800 text-zinc-400 border border-zinc-700 font-semibold uppercase tracking-wide">
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-zinc-500 text-[#ffffff] font-bold uppercase tracking-wide">
               Free
             </span>
           )}

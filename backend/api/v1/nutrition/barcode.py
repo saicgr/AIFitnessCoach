@@ -78,6 +78,17 @@ async def lookup_barcode(barcode: str, current_user: dict = Depends(get_current_
         raise
     except Exception as e:
         logger.error(f"Failed to lookup barcode {barcode}: {e}", exc_info=True)
+        # Open Food Facts being down (502/503/timeout) is an UPSTREAM outage,
+        # not our bug — surface 503 so clients can show "try again shortly"
+        # instead of a generic 500 crash banner.
+        msg = str(e).lower()
+        if any(s in msg for s in ("502", "503", "504", "timeout", "timed out",
+                                  "bad gateway", "connecterror", "connection")):
+            raise HTTPException(
+                status_code=503,
+                detail="Barcode lookup is temporarily unavailable (upstream "
+                       "food database). Please try again shortly.",
+            )
         raise safe_internal_error(e, "nutrition")
 
 

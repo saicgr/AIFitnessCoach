@@ -5,6 +5,7 @@ import 'package:speech_to_text/speech_to_text.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/providers/custom_exercises_provider.dart';
 import '../../../core/providers/environment_equipment_provider.dart';
+import '../../../core/utils/exercise_name_format.dart';
 import '../../../data/models/custom_exercise.dart';
 import '../../../data/models/workout.dart';
 import '../../../data/models/exercise.dart';

@@ -14,8 +14,6 @@ home screen and under the MySpace edit-tile picker.
 Cache: 60s TTL keyed on (user_id, date, days). Invalidated by every
 write site via api/v1/timeline_cache.invalidate_timeline_cache.
 """
-from __future__ import annotations
-
 import asyncio
 from collections import defaultdict
 from datetime import datetime, timedelta, timezone

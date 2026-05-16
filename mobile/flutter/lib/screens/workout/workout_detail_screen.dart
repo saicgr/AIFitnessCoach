@@ -100,6 +100,10 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen>
   Workout? _workout;
   bool _isLoading = true;
   String? _error;
+  // Surfaced inline (banner) when a refresh fails but we still have a
+  // cached workout to show. Lets the user keep working without being
+  // popped off the screen. See _loadWorkout 404 path.
+  String? _refreshError;
   String? _workoutSummary;
   bool _isLoadingSummary = true;  // Start as true to show loading immediately
   bool _isWarmupExpanded = false;  // For warmup section
@@ -310,6 +314,67 @@ class _WorkoutDetailScreenState extends ConsumerState<WorkoutDetailScreen>
               SliverToBoxAdapter(
                 child: SizedBox(height: safePadding.top + 60),
               ),
+
+              // Inline refresh-error banner: rendered only when a background
+              // reload failed but we still have a cached workout. Lets the
+              // user keep their in-progress session instead of being popped.
+              if (_refreshError != null)
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                    child: Material(
+                      color: Colors.amber.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(12),
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(12),
+                        onTap: () {
+                          setState(() => _refreshError = null);
+                          _loadWorkout();
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 10),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.warning_amber_rounded,
+                                  size: 18, color: Colors.amber),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  _refreshError!,
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: isDark
+                                        ? Colors.white
+                                        : AppColorsLight.textPrimary,
+                                  ),
+                                ),
+                              ),
+                              Text(
+                                'Retry',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: accentColor,
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              IconButton(
+                                visualDensity: VisualDensity.compact,
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(
+                                    minHeight: 28, minWidth: 28),
+                                icon: const Icon(Icons.close, size: 16),
+                                onPressed: () =>
+                                    setState(() => _refreshError = null),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
 
               // Type badges row - single line horizontal scroll
               SliverToBoxAdapter(

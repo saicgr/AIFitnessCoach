@@ -7,7 +7,7 @@ with full analytics tracking for every setting change.
 from typing import Optional, List
 from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator, ConfigDict
 
 from core.supabase_client import get_supabase
 from core.logger import get_logger
@@ -19,9 +19,36 @@ logger = get_logger(__name__)
 router = APIRouter(prefix="/ai-settings", tags=["AI Settings"])
 
 
+# Curated training-split values the AI prompt knows how to interpret.
+# Keep in sync with `lib/screens/ai_settings/ai_settings_screen.dart`
+# (TrainingSplit class). `auto` / null means "let Gemini choose".
+ALLOWED_TRAINING_SPLITS = {
+    "auto",
+    "full_body",
+    "upper_lower",
+    "push_pull_legs",
+    "bro_split",
+    "arnold_split",
+    "custom",
+}
+
+
 # =====================================================
 # Pydantic Models
 # =====================================================
+
+class FocusArea(BaseModel):
+    """A single user-defined AI focus point with 1–5 priority weight.
+
+    Stored as one element in the `focus_areas` jsonb column. Surfaces
+    verbatim in the workout-generation Gemini prompt sorted by priority
+    desc, so the model can bias exercise selection and load prescription.
+    """
+    model_config = ConfigDict(extra="ignore")
+
+    area: str = Field(..., min_length=1, max_length=120, description="What the user wants the AI to focus on (free text or curated suggestion)")
+    priority: int = Field(..., ge=1, le=5, description="1 (nice-to-have) … 5 (override other goals)")
+
 
 class AISettingsBase(BaseModel):
     """Base AI settings model."""
@@ -64,6 +91,51 @@ class AISettingsBase(BaseModel):
         default={"coach": True, "nutrition": True, "workout": True, "injury": True, "hydration": True},
         description="Which agents are enabled"
     )
+    # User-defined focus points + training split. Both are surfaced to
+    # Gemini in the workout-generation system prompt; the split also
+    # influences weekly day-to-day muscle distribution.
+    focus_areas: Optional[List[FocusArea]] = Field(
+        default_factory=list,
+        description="Up to 5 user-defined focus points with 1–5 priorities. Sorted desc by priority before being injected into the prompt.",
+    )
+    training_split: Optional[str] = Field(
+        default=None,
+        description="Chosen weekly training split (full_body | upper_lower | push_pull_legs | bro_split | arnold_split | custom). null/auto = AI picks.",
+    )
+
+    # Explicit validators: no `max_length=N` clamp on the list (per the
+    # no-arbitrary-backend-caps rule) — instead we enforce len <= 5 here
+    # so the client gets a clear error rather than a silent truncation.
+    @field_validator("focus_areas")
+    @classmethod
+    def _validate_focus_areas(cls, v: Optional[List[FocusArea]]) -> List[FocusArea]:
+        v = v or []
+        if len(v) > 5:
+            raise ValueError("focus_areas accepts at most 5 entries — remove one before adding another.")
+        # Dedup by (area lowercased) so duplicates from the suggestion
+        # picker don't pile up.
+        seen: set[str] = set()
+        out: List[FocusArea] = []
+        for f in v:
+            key = f.area.strip().lower()
+            if not key or key in seen:
+                continue
+            seen.add(key)
+            out.append(FocusArea(area=f.area.strip(), priority=int(f.priority)))
+        return out
+
+    @field_validator("training_split")
+    @classmethod
+    def _validate_training_split(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return None
+        v = v.strip()
+        if not v:
+            return None
+        if v not in ALLOWED_TRAINING_SPLITS:
+            raise ValueError(f"training_split must be one of {sorted(ALLOWED_TRAINING_SPLITS)} (got '{v}')")
+        # Treat "auto" same as null on the wire to keep downstream code simple.
+        return None if v == "auto" else v
 
 
 class AISettingsUpdate(AISettingsBase):
@@ -191,6 +263,20 @@ async def update_ai_settings(user_id: str, settings: AISettingsUpdate, current_u
 
         for key, value in settings_dict.items():
             update_data[key] = value
+
+        # focus_areas and training_split need special handling. Both can be
+        # legitimately cleared (empty list / null), but `exclude_none=True`
+        # would drop a None training_split — meaning the user couldn't switch
+        # back from a chosen split to "auto". Use exclude_unset=False just
+        # for these fields so we honor the explicit clear.
+        full_dict = settings.model_dump(exclude={"change_source", "device_platform", "app_version"})
+        if "focus_areas" in full_dict:
+            # Always persist (empty list = user explicitly cleared their focus).
+            update_data["focus_areas"] = full_dict["focus_areas"]
+        if "training_split" in full_dict:
+            # Persist None too (user picked Auto); validator already
+            # converts the string "auto" -> None on the way in.
+            update_data["training_split"] = full_dict["training_split"]
 
         update_data["updated_at"] = datetime.utcnow().isoformat()
 

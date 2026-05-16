@@ -1,3 +1,4 @@
+import 'package:audio_session/audio_session.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -262,8 +263,29 @@ mixin AIFeaturesMixin<T extends StatefulWidget> on State<T> {
         ? getBarWeight(exercise.equipment, useKg: true)
         : equipmentIncrementKg;
 
-    final adjustedWeightKg = (currentWeightKg - (equipmentIncrementKg * incrementsToDrop))
-        .clamp(minWeightKg, 999.0);
+    // B3 cap: autoregulation literature (ACSM, NSCA) suggests no more than
+    // ~20-25% load reduction on a single underperformed event. A 2-increment
+    // drop on light dumbbells (e.g., 25 lb → 15 lb at 5 lb increments) is
+    // 40% — too aggressive. Clamp the floor at 75% of current for the
+    // "weight too heavy" case (incrementsToDrop=2) and 85% for the milder
+    // case (incrementsToDrop=1). The min-equipment-weight floor still
+    // applies as a hard physical bound.
+    final autoregFloorKg = incrementsToDrop >= 2
+        ? currentWeightKg * 0.75
+        : currentWeightKg * 0.85;
+    final effectiveFloorKg = minWeightKg > autoregFloorKg
+        ? minWeightKg
+        : autoregFloorKg;
+    double adjustedWeightKg =
+        (currentWeightKg - (equipmentIncrementKg * incrementsToDrop));
+    if (adjustedWeightKg < effectiveFloorKg) {
+      debugPrint('🔧 [AutoAdjust] CAP HIT — raw drop '
+          '${(currentWeightKg - adjustedWeightKg).toStringAsFixed(1)}kg '
+          'clamped to floor ${effectiveFloorKg.toStringAsFixed(1)}kg '
+          '(${(autoregFloorKg / currentWeightKg * 100).round()}% rule)');
+      adjustedWeightKg = effectiveFloorKg;
+    }
+    adjustedWeightKg = adjustedWeightKg.clamp(minWeightKg, 999.0);
 
     if ((adjustedWeightKg - currentWeightKg).abs() < 0.01) {
       debugPrint('🔧 [AutoAdjust] SKIP — no real change after clamp');
@@ -292,6 +314,43 @@ mixin AIFeaturesMixin<T extends StatefulWidget> on State<T> {
         'display=${snappedDisplay.toStringAsFixed(1)} ${useKg ? "kg" : "lb"}');
 
     weightController.text = snappedDisplay.toStringAsFixed(snappedDisplay % 1 == 0 ? 0 : 1);
+
+    // B4 fix: also persist the adapted weight to set N+1's target in the
+    // in-memory model so the next-set pre-fill in set_logging_mixin_ui
+    // (which reads from exercise.setTargets[nextSetIdx].targetWeightKg)
+    // doesn't immediately overwrite our weightController.text with the
+    // original target on the next render. Without this, the chip says
+    // "−6 lb" but the input field still shows 25 lb on the next set.
+    final setTargets = exercise.setTargets;
+    if (setTargets != null) {
+      // Find the next pending (uncompleted, non-warmup) set index.
+      final completedCount =
+          completedSets[currentExerciseIndex]?.length ?? 0;
+      final nextIdx = completedCount; // logs are appended in completion order
+      if (nextIdx < setTargets.length) {
+        final nextTarget = setTargets[nextIdx];
+        if (nextTarget.setType.toLowerCase() != 'warmup') {
+          try {
+            // SetTarget has no copyWith — construct a fresh one.
+            setTargets[nextIdx] = SetTarget(
+              setNumber: nextTarget.setNumber,
+              setType: nextTarget.setType,
+              targetReps: nextTarget.targetReps,
+              targetWeightKg: adjustedWeightKg,
+              targetHoldSeconds: nextTarget.targetHoldSeconds,
+              targetRpe: nextTarget.targetRpe,
+              targetRir: nextTarget.targetRir,
+            );
+            debugPrint('🔧 [AutoAdjust] persisted adapted weight '
+                '${adjustedWeightKg.toStringAsFixed(1)}kg to setTargets[$nextIdx] '
+                '(was ${nextTarget.targetWeightKg?.toStringAsFixed(1) ?? "null"}kg)');
+          } catch (e) {
+            // List may be immutable — log and fall back to controller-only.
+            debugPrint('⚠️ [AutoAdjust] could not persist adapted weight: $e');
+          }
+        }
+      }
+    }
 
     if (mounted && message != null) {
       final unit = useKg ? 'kg' : 'lb';
@@ -434,6 +493,42 @@ mixin AIFeaturesMixin<T extends StatefulWidget> on State<T> {
     });
   }
 
+  /// Configure the iOS / Android audio session so exercise video playback
+  /// uses `.ambient` + `mixWithOthers` — i.e. it does NOT seize exclusive
+  /// audio focus from Spotify/YouTube/Apple Podcasts running in the
+  /// background. C4 fix: user explicitly wants to keep YouTube playing
+  /// while watching exercise demonstrations.
+  ///
+  /// Best-effort — failures degrade to whatever the default video_player
+  /// session is (which on iOS is `.playback` exclusive). Per-call rather
+  /// than app-startup so the TTS coach voice session (.playback + duck)
+  /// in `audio_session_service.dart` stays intact when we're not watching
+  /// videos.
+  Future<void> _configureVideoAudioSession() async {
+    try {
+      final session = await AudioSession.instance;
+      await session.configure(const AudioSessionConfiguration(
+        avAudioSessionCategory: AVAudioSessionCategory.ambient,
+        avAudioSessionCategoryOptions:
+            AVAudioSessionCategoryOptions.mixWithOthers,
+        avAudioSessionMode: AVAudioSessionMode.defaultMode,
+        avAudioSessionRouteSharingPolicy:
+            AVAudioSessionRouteSharingPolicy.defaultPolicy,
+        avAudioSessionSetActiveOptions: AVAudioSessionSetActiveOptions.none,
+        androidAudioAttributes: AndroidAudioAttributes(
+          contentType: AndroidAudioContentType.movie,
+          usage: AndroidAudioUsage.media,
+          flags: AndroidAudioFlags.none,
+        ),
+        androidAudioFocusGainType:
+            AndroidAudioFocusGainType.gainTransientMayDuck,
+        androidWillPauseWhenDucked: false,
+      ));
+    } catch (e) {
+      debugPrint('⚠️ [Media] AudioSession config failed (non-fatal): $e');
+    }
+  }
+
   /// Fetch media (video/image) for an exercise
   Future<void> fetchMediaForExercise(WorkoutExercise exercise) async {
     setState(() => isLoadingMedia = true);
@@ -458,10 +553,12 @@ mixin AIFeaturesMixin<T extends StatefulWidget> on State<T> {
 
     if (modelVideoUrl != null && modelVideoUrl.isNotEmpty && !modelVideoUrl.startsWith('s3://')) {
       try {
+        await _configureVideoAudioSession();
         videoController = VideoPlayerController.networkUrl(Uri.parse(modelVideoUrl));
         await videoController!.initialize();
         videoController!.setLooping(true);
-        videoController!.setVolume(0);
+        // C4 fix: removed setVolume(0). Audio plays if the clip has a
+        // track; ambient session category lets other apps' audio coexist.
         videoController!.play();
 
         if (mounted) {
@@ -477,9 +574,18 @@ mixin AIFeaturesMixin<T extends StatefulWidget> on State<T> {
     }
 
     try {
-      final imageResponse = await apiClient.dio.get(
-        '/exercise-images/${Uri.encodeComponent(exerciseName)}',
-      );
+      // C8 fix: prefer exercise_id when present — bypasses name-based MV
+      // lookup entirely and avoids the "/exercise-images/Push Ups Bodyweight"
+      // 404s when AI suggestions return non-canonical names.
+      final exerciseId = exercise.exerciseId;
+      final imageResponse = (exerciseId != null && exerciseId.isNotEmpty)
+          ? await apiClient.dio.get(
+              '/exercise-images/${Uri.encodeComponent(exerciseName)}',
+              queryParameters: {'exercise_id': exerciseId},
+            )
+          : await apiClient.dio.get(
+              '/exercise-images/${Uri.encodeComponent(exerciseName)}',
+            );
       if (imageResponse.data?['url'] != null && mounted) {
         setState(() {
           imageUrl = imageResponse.data['url'];
@@ -497,10 +603,11 @@ mixin AIFeaturesMixin<T extends StatefulWidget> on State<T> {
       );
       if (videoResponse.data?['url'] != null) {
         final videoUrl = videoResponse.data['url'];
+        await _configureVideoAudioSession();
         videoController = VideoPlayerController.networkUrl(Uri.parse(videoUrl));
         await videoController!.initialize();
         videoController!.setLooping(true);
-        videoController!.setVolume(0);
+        // C4 fix: removed setVolume(0). See _configureVideoAudioSession.
         videoController!.play();
 
         if (mounted) {

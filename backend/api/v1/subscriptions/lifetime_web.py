@@ -25,8 +25,6 @@ Apple/Google compliance:
 - The mobile app's `/subscriptions/status` aggregator silently mirrors the
   lifetime entitlement onto user_subscriptions — same surface as IAP.
 """
-from __future__ import annotations
-
 import hashlib
 import hmac
 import json

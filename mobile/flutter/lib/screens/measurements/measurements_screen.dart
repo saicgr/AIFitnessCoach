@@ -918,7 +918,8 @@ class _MeasurementsScreenState extends ConsumerState<MeasurementsScreen> {
           lockedType: prefilledType,
           onSubmit: (type, value, unit, notes) async {
             final auth = ref.read(authStateProvider);
-            if (auth.user != null) {
+            if (auth.user == null) return;
+            try {
               final success = await ref.read(measurementsProvider.notifier).recordMeasurement(
                 userId: auth.user!.id,
                 type: type,
@@ -926,12 +927,26 @@ class _MeasurementsScreenState extends ConsumerState<MeasurementsScreen> {
                 unit: unit,
                 notes: notes,
               );
-              if (success && mounted) {
+              if (!success) {
+                throw StateError('${type.displayName} save returned false');
+              }
+              if (mounted) {
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text('${type.displayName} recorded'),
                     backgroundColor: AppColors.success,
+                  ),
+                );
+              }
+            } catch (e) {
+              debugPrint('[Measurements] record failed: $e');
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                        "Couldn't save ${type.displayName.toLowerCase()}. Try again."),
+                    backgroundColor: AppColors.error,
                   ),
                 );
               }

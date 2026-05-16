@@ -132,12 +132,18 @@ class _MeasurementValuePillState extends ConsumerState<MeasurementValuePill> {
 
     setState(() => _saving = true);
     final converted = convertToMetric(parsed, widget.type, !_editIsMetric);
-    final success = await ref.read(measurementsProvider.notifier).recordMeasurement(
-          userId: user.id,
-          type: widget.type,
-          value: converted.value,
-          unit: converted.unit,
-        );
+    bool success = false;
+    try {
+      success = await ref.read(measurementsProvider.notifier).recordMeasurement(
+            userId: user.id,
+            type: widget.type,
+            value: converted.value,
+            unit: converted.unit,
+          );
+    } catch (e) {
+      debugPrint('[MeasurementPill] save failed: $e');
+      success = false;
+    }
 
     if (!mounted) return;
     setState(() {

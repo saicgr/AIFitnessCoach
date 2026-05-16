@@ -1,0 +1,548 @@
+- generic [ref=e3]:
+  - navigation [ref=e4]:
+    - generic [ref=e6]:
+      - link "Zealova Zealova" [ref=e7] [cursor=pointer]:
+        - /url: /
+        - img "Zealova" [ref=e8]
+        - text: Zealova
+      - generic [ref=e9]:
+        - button "Tools" [ref=e11]:
+          - text: Tools
+          - img [ref=e12]
+        - button "Compare" [ref=e15]:
+          - text: Compare
+          - img [ref=e16]
+        - link "Features" [ref=e18] [cursor=pointer]:
+          - /url: /features
+        - button "Resources" [ref=e20]:
+          - text: Resources
+          - img [ref=e21]
+      - generic [ref=e23]:
+        - button "Switch to dark mode" [ref=e24]:
+          - img [ref=e25]
+        - link "Join Waitlist" [ref=e27] [cursor=pointer]:
+          - /url: /waitlist
+          - text: Join Waitlist
+  - main [ref=e31]:
+    - navigation "Breadcrumb" [ref=e32]:
+      - link "Home" [ref=e33] [cursor=pointer]:
+        - /url: /
+      - text: /Zealova vs Google Health
+    - generic [ref=e34]:
+      - generic [ref=e35]:
+        - paragraph [ref=e36]: Published 2026-05-14 · Updated for Google Health launch May 19, 2026
+        - 'heading "Google Health vs Zealova (2026): Honest Comparison" [level=1] [ref=e37]'
+      - generic [ref=e38]:
+        - paragraph [ref=e39]: The clearest difference between these two apps is hardware. Google Health is built around Fitbit and Pixel Watch. Its AI Coach delivers continuous biometrics, sleep stages, HRV, and readiness scores through those devices. Without a compatible wearable, you get a fraction of what you're paying for. Zealova runs full-featured on any Android phone. No tracker purchase required, ever.
+        - paragraph [ref=e40]: Google Health launched May 19, 2026 as the permanent replacement for Fitbit. It costs $9.99/month or $99/year. It connects to Apple Health, MyFitnessPal, and Peloton, and supports meal photo logging and workout suggestions via natural language. Zealova is $7.99/month or $59.99/year, live on Android. It generates full personalized monthly workout plans, supports food photo logging with up to 10 photos per meal and 4 analysis modes, and tracks history per exercise and per muscle group.
+        - paragraph [ref=e41]: "Google Health wins on ecosystem: wearable biometrics, sleep tracking, Apple Health, Peloton, medical records, and Google-brand data trust. Zealova wins on workout depth: full AI-generated monthly plans, multi-image food logging, granular exercise history, and 10-format workout export at 40% cheaper per year than Google Health annual."
+        - generic [ref=e42]:
+          - generic [ref=e43]:
+            - paragraph [ref=e44]: Pick Zealova if
+            - paragraph [ref=e45]: you don't own a Fitbit or Pixel Watch and don't plan to buy one. Zealova gives you AI workout plans and food photo logging on the phone you already own.
+          - generic [ref=e46]:
+            - paragraph [ref=e47]: Pick Google Health if
+            - paragraph [ref=e48]: you own a Fitbit or Pixel Watch and want continuous biometrics, sleep analysis, and a single app connecting your existing health ecosystem.
+    - generic [ref=e49]:
+      - heading "TL;DR" [level=2] [ref=e50]
+      - table [ref=e52]:
+        - rowgroup [ref=e53]:
+          - row "Zealova Google Health" [ref=e54]:
+            - columnheader [ref=e55]
+            - columnheader "Zealova" [ref=e56]
+            - columnheader "Google Health" [ref=e57]
+        - rowgroup [ref=e58]:
+          - row "Monthly price $7.99/mo $9.99/mo" [ref=e59]:
+            - cell "Monthly price" [ref=e60]
+            - cell "$7.99/mo" [ref=e61]
+            - cell "$9.99/mo" [ref=e62]
+          - row "Annual price $59.99/yr ($5/mo) $99/yr ($8.25/mo)" [ref=e63]:
+            - cell "Annual price" [ref=e64]
+            - cell "$59.99/yr ($5/mo)" [ref=e65]
+            - cell "$99/yr ($8.25/mo)" [ref=e66]
+          - row "Free trial 7 days 3 months (new users)" [ref=e67]:
+            - cell "Free trial" [ref=e68]
+            - cell "7 days" [ref=e69]
+            - cell "3 months (new users)" [ref=e70]
+          - row "Platforms Android (iOS coming soon) Android + iOS" [ref=e71]:
+            - cell "Platforms" [ref=e72]
+            - cell "Android (iOS coming soon)" [ref=e73]
+            - cell "Android + iOS" [ref=e74]
+          - row "Hardware required None Fitbit / Pixel Watch for full AI coach" [ref=e75]:
+            - cell "Hardware required" [ref=e76]
+            - cell "None" [ref=e77]
+            - cell "Fitbit / Pixel Watch for full AI coach" [ref=e78]
+          - row "Workout plans Full monthly AI-generated plans Suggestions + custom workouts" [ref=e79]:
+            - cell "Workout plans" [ref=e80]
+            - cell "Full monthly AI-generated plans" [ref=e81]
+            - cell "Suggestions + custom workouts" [ref=e82]
+          - row "Food logging Multi-image (up to 10 photos, 4 modes) Single meal photo" [ref=e83]:
+            - cell "Food logging" [ref=e84]
+            - cell "Multi-image (up to 10 photos, 4 modes)" [ref=e85]
+            - cell "Single meal photo" [ref=e86]
+          - row "Primary differentiator AI workout plans + multi-image food logging Wearable biometrics + sleep tracking" [ref=e87]:
+            - cell "Primary differentiator" [ref=e88]
+            - cell "AI workout plans + multi-image food logging" [ref=e89]
+            - cell "Wearable biometrics + sleep tracking" [ref=e90]
+      - paragraph [ref=e91]: "Pricing verified: Zealova as of 2026-05-14. Google Health at store.google.com, 2026-05-14."
+    - generic [ref=e93]:
+      - paragraph [ref=e94]: How this comparison was made
+      - paragraph [ref=e95]: "Google Health pricing was verified at store.google.com on 2026-05-14. Feature claims are sourced from the Google Health launch blog (blog.google, published 2026-05-07), the Google Health Coach post (blog.google, 2026-05), TechCrunch (published 2026-05-07), and the Fitbit Help Center (support.google.com/fitbit, checked 2026-05-14). Zealova features and pricing are sourced from internal app router audit and _ZEALOVA_FACTS.md v1.3 (audited 2026-05-14). Research citations: Shcherbina A et al. (2017, J Pers Med, doi:10.3390/jpm7020003) for wearable energy expenditure accuracy; Schoenfeld BJ, Ogborn D, Krieger JW (2017, J Sports Sci 35:11) for training volume dose-response; Burke LE, Wang J, Sevick MA (2011, J Am Diet Assoc 111:1) and Turner-McGrievy GM et al. (2019, J Acad Nutr Diet 119:9) for dietary self-monitoring adherence. I am the founder of Zealova. I am not a neutral third party. I have tried to concede every honest Google Health advantage. If something looks wrong, email me: sai@zealova.com."
+    - generic [ref=e97]:
+      - paragraph [ref=e98]: Who this comparison is for
+      - paragraph [ref=e99]: "This page is most useful if you don't already own a Fitbit or Pixel Watch. If you do, Google Health's automatic upgrade path and integrated biometrics make it the obvious choice. Switching apps isn't worth losing your data continuity. This comparison exists for everyone else: people evaluating their first fitness app, former Fitbit users who don't want to pay $99.99 for the Fitbit Air, or anyone who just wants a gym coach on the phone they already own."
+    - generic [ref=e100]:
+      - heading "Feature comparison" [level=2] [ref=e101]
+      - table [ref=e103]:
+        - rowgroup [ref=e104]:
+          - row "Feature Zealova Google Health" [ref=e105]:
+            - columnheader "Feature" [ref=e106]
+            - columnheader "Zealova" [ref=e107]
+            - columnheader "Google Health" [ref=e108]
+        - rowgroup [ref=e109]:
+          - row "Hardware required for full AI coach None (any Android phone) Fitbit Air / compatible wearable" [ref=e110]:
+            - cell "Hardware required for full AI coach" [ref=e111]
+            - cell "None (any Android phone)" [ref=e112]
+            - cell "Fitbit Air / compatible wearable" [ref=e113]
+          - row "AI workout plan generation (full monthly plan) ✓ ✗" [ref=e114]:
+            - cell "AI workout plan generation (full monthly plan)" [ref=e115]
+            - cell "✓" [ref=e116]
+            - cell "✗" [ref=e117]
+          - row "Workout suggestions / natural language workouts ✓ ✓" [ref=e118]:
+            - cell "Workout suggestions / natural language workouts" [ref=e119]
+            - cell "✓" [ref=e120]
+            - cell "✓" [ref=e121]
+          - row "Food photo logging (AI calorie estimate) ✓ ✓" [ref=e122]:
+            - cell "Food photo logging (AI calorie estimate)" [ref=e123]
+            - cell "✓" [ref=e124]
+            - cell "✓" [ref=e125]
+          - row "Multi-image meal input (up to 10 photos, 4 modes) ✓ ✗" [ref=e126]:
+            - cell "Multi-image meal input (up to 10 photos, 4 modes)" [ref=e127]
+            - cell "✓" [ref=e128]
+            - cell "✗" [ref=e129]
+          - row "Chat coach between workouts ✓ ✓" [ref=e130]:
+            - cell "Chat coach between workouts" [ref=e131]
+            - cell "✓" [ref=e132]
+            - cell "✓" [ref=e133]
+          - row "Workout modification via chat (RAG exercise swap) ✓ partial" [ref=e134]:
+            - cell "Workout modification via chat (RAG exercise swap)" [ref=e135]
+            - cell "✓" [ref=e136]
+            - cell "partial" [ref=e137]
+          - row "Multi-agent chat (5 specialist sub-agents) ✓ ✗" [ref=e138]:
+            - cell "Multi-agent chat (5 specialist sub-agents)" [ref=e139]
+            - cell "✓" [ref=e140]
+            - cell "✗" [ref=e141]
+          - row "Injury-aware exercise swaps via chat ✓ ✗" [ref=e142]:
+            - cell "Injury-aware exercise swaps via chat" [ref=e143]
+            - cell "✓" [ref=e144]
+            - cell "✗" [ref=e145]
+          - row "Per-exercise + per-muscle workout history ✓ ✗" [ref=e146]:
+            - cell "Per-exercise + per-muscle workout history" [ref=e147]
+            - cell "✓" [ref=e148]
+            - cell "✗" [ref=e149]
+          - row "3rd-party workout export (10 formats) ✓ ✗" [ref=e150]:
+            - cell "3rd-party workout export (10 formats)" [ref=e151]
+            - cell "✓" [ref=e152]
+            - cell "✗" [ref=e153]
+          - row "Custom exercises + AI-assisted import ✓ ✗" [ref=e154]:
+            - cell "Custom exercises + AI-assisted import" [ref=e155]
+            - cell "✓" [ref=e156]
+            - cell "✗" [ref=e157]
+          - row "Supersets ✓ ✗" [ref=e158]:
+            - cell "Supersets" [ref=e159]
+            - cell "✓" [ref=e160]
+            - cell "✗" [ref=e161]
+          - row "Gym equipment profiles (home / commercial / hotel) ✓ ✗" [ref=e162]:
+            - cell "Gym equipment profiles (home / commercial / hotel)" [ref=e163]
+            - cell "✓" [ref=e164]
+            - cell "✗" [ref=e165]
+          - row "Easy-to-read active workout layout ✓ ✓" [ref=e166]:
+            - cell "Easy-to-read active workout layout" [ref=e167]
+            - cell "✓" [ref=e168]
+            - cell "✓" [ref=e169]
+          - row "MFP integration (Connected Apps) ✗ ✓" [ref=e170]:
+            - cell "MFP integration (Connected Apps)" [ref=e171]
+            - cell "✗" [ref=e172]
+            - cell "✓" [ref=e173]
+          - row "Peloton integration ✗ ✓" [ref=e174]:
+            - cell "Peloton integration" [ref=e175]
+            - cell "✗" [ref=e176]
+            - cell "✓" [ref=e177]
+          - row "Apple Health integration ✗ ✓" [ref=e178]:
+            - cell "Apple Health integration" [ref=e179]
+            - cell "✗" [ref=e180]
+            - cell "✓" [ref=e181]
+          - row "Health Connect (Android) ✓ ✓" [ref=e182]:
+            - cell "Health Connect (Android)" [ref=e183]
+            - cell "✓" [ref=e184]
+            - cell "✓" [ref=e185]
+          - row "Continuous biometric tracking (HR, SpO2, HRV) ✗ yes (with Fitbit/Pixel Watch)" [ref=e186]:
+            - cell "Continuous biometric tracking (HR, SpO2, HRV)" [ref=e187]
+            - cell "✗" [ref=e188]
+            - cell "yes (with Fitbit/Pixel Watch)" [ref=e189]
+          - row "Sleep tracking ✗ ✓" [ref=e190]:
+            - cell "Sleep tracking" [ref=e191]
+            - cell "✗" [ref=e192]
+            - cell "✓" [ref=e193]
+          - row "Medical record summaries (US) ✗ ✓" [ref=e194]:
+            - cell "Medical record summaries (US)" [ref=e195]
+            - cell "✗" [ref=e196]
+            - cell "✓" [ref=e197]
+          - row "Readiness / recovery score ✗ yes (with hardware)" [ref=e198]:
+            - cell "Readiness / recovery score" [ref=e199]
+            - cell "✗" [ref=e200]
+            - cell "yes (with hardware)" [ref=e201]
+      - paragraph [ref=e202]: "Partial = feature exists with meaningful limitations. Sources: Google Health launch blog (blog.google, 2026-05-07), Google Health Coach post (blog.google, 2026-05), TechCrunch (2026-05-07), Fitbit Help Center (2026-05-14)."
+    - generic [ref=e203]:
+      - heading "Pricing breakdown" [level=2] [ref=e204]
+      - generic [ref=e205]:
+        - generic [ref=e206]:
+          - paragraph [ref=e207]: Zealova
+          - paragraph [ref=e208]: $7.99/mo
+          - paragraph [ref=e209]: or $59.99/year ($5/mo, save $36/yr vs monthly)
+          - list [ref=e210]:
+            - listitem [ref=e211]: 7-day free trial, all features included
+            - listitem [ref=e212]: No hardware required
+            - listitem [ref=e213]: Android live, iOS coming soon
+          - paragraph [ref=e214]: Pricing as of 2026-05-14. Rolling out on Play Store.
+        - generic [ref=e215]:
+          - paragraph [ref=e216]: Google Health Premium
+          - paragraph [ref=e217]: $9.99/mo
+          - paragraph [ref=e218]: or $99/year ($8.25/mo)
+          - list [ref=e219]:
+            - listitem [ref=e220]: 3-month free trial (new users)
+            - listitem [ref=e221]: Included with Google AI Pro and AI Ultra
+            - listitem [ref=e222]: "Fitbit Air bundle: $99.99 tracker + 3-month trial"
+            - listitem [ref=e223]: Android + iOS available
+          - paragraph [ref=e224]: Verified at store.google.com, 2026-05-14. Annual price increased from Fitbit Premium's $79.99/yr.
+    - generic [ref=e225]:
+      - generic [ref=e226]:
+        - paragraph [ref=e227]: The hidden cost of full Google Health functionality
+        - paragraph [ref=e228]: Google Health Premium is $99/yr. But the AI Coach is built around the Fitbit Air ecosystem. If you don't already own a compatible wearable, you need one to get full biometric coaching. The Fitbit Air is $99.99. That's $198.99 in year one for the complete Google Health experience. Zealova is $59.99/yr on the phone you already own. That's a $139 gap in year one alone.
+        - generic [ref=e229]:
+          - generic [ref=e230]:
+            - paragraph [ref=e231]: Google Health year one
+            - paragraph [ref=e232]: $198.99
+            - paragraph [ref=e233]: $99/yr + $99.99 Fitbit Air
+          - generic [ref=e234]:
+            - paragraph [ref=e235]: Zealova year one
+            - paragraph [ref=e236]: $59.99
+            - paragraph [ref=e237]: No hardware needed
+          - generic [ref=e238]:
+            - paragraph [ref=e239]: Year-one gap
+            - paragraph [ref=e240]: $139.00
+            - paragraph [ref=e241]: in Zealova's favor
+      - generic [ref=e242]:
+        - paragraph [ref=e243]: 5-year cost comparison (annual plans, no hardware upgrade)
+        - generic [ref=e244]:
+          - generic [ref=e245]:
+            - paragraph [ref=e246]: Zealova (5 years)
+            - paragraph [ref=e247]: $299.95
+            - paragraph [ref=e248]: $59.99 x 5
+          - generic [ref=e249]:
+            - paragraph [ref=e250]: Google Health Premium (5 years)
+            - paragraph [ref=e251]: $495.00
+            - paragraph [ref=e252]: $99 x 5
+          - generic [ref=e253]:
+            - paragraph [ref=e254]: Subscription savings
+            - paragraph [ref=e255]: $195.05
+            - paragraph [ref=e256]: + $99.99 if no Fitbit owned
+        - paragraph [ref=e257]: Assumes no price changes over 5 years. Fitbit Air hardware not included in the 5-year Google Health figure above. If you buy one, add $99.99 to that total.
+    - generic [ref=e258]:
+      - heading "Why gym-focused users pick Zealova over Google Health" [level=2] [ref=e259]
+      - generic [ref=e260]:
+        - generic [ref=e261]:
+          - heading "Food photo logging built for real meals" [level=3] [ref=e262]
+          - paragraph [ref=e263]: "Photograph a single plate or a 10-dish buffet spread. Zealova accepts up to 10 photos per meal and runs 4 analysis modes: auto, plate, menu, and buffet. The AI extracts individual items, calories, macros, and micronutrients per item, then auto-logs everything to your diary. Google Health Coach also supports meal photo logging, but with a single-image flow."
+          - img "Zealova food photo logging with multi-image input on Android phone" [ref=e264]
+        - generic [ref=e265]:
+          - heading "No hardware required" [level=3] [ref=e266]
+          - paragraph [ref=e267]: "Google Health's AI Coach is optimized for the Fitbit Air ecosystem. Continuous biometrics like HR, HRV, and sleep stages require a paired compatible wearable. And here's the research context: a 2017 Stanford study found that across 7 wrist-worn devices, energy expenditure error ranged from 27% to 93%. No device came close to accurate calorie burn (Shcherbina et al., 2017, Journal of Personalized Medicine). Heart rate was fine. Calories were not. Zealova runs full-featured on any Android phone and doesn't rely on wearable calorie estimates."
+        - generic [ref=e268]:
+          - heading "Full monthly workout plans, not just suggestions" [level=3] [ref=e269]
+          - paragraph [ref=e270]: Google Health Coach lets you create custom workouts and get workout suggestions. Zealova generates a complete personalized monthly workout plan based on your goals, equipment, injury history, and schedule. The plan adapts as you complete sessions and log feedback.
+          - img "Zealova AI-generated monthly workout plan on Android phone" [ref=e271]
+        - generic [ref=e272]:
+          - heading "5 specialist sub-agents in one chat" [level=3] [ref=e273]
+          - paragraph [ref=e274]: "Zealova routes your message to the right specialist automatically: Workout, Nutrition, Injury, Hydration, or General Coach. Ask about a knee injury and the Injury agent finds safe alternatives from the exercise library. Ask about your macros and Nutrition handles it. Google Health's announced AI Coach supports natural-language workout creation, but the launch spec does not mention injury-aware exercise alternatives."
+          - img "Zealova multi-agent chat coach with 5 specialist sub-agents on Android" [ref=e275]
+        - generic [ref=e276]:
+          - heading "History per exercise and per muscle" [level=3] [ref=e277]
+          - paragraph [ref=e278]: Zealova tracks every lift's full history and each muscle group's volume separately. Not just weekly aggregate stats. You can see bench press history, squat history, chest volume, back volume, all individually. Google Health shows workout summaries.
+          - img "Zealova per-exercise and per-muscle workout history tracking on Android" [ref=e279]
+        - generic [ref=e280]:
+          - heading "Take your data anywhere (10 export formats)" [level=3] [ref=e281]
+          - paragraph [ref=e282]: Zealova exports completed workouts to Hevy, Strong, Fitbod, CSV, JSON, XLSX, PDF, TCX, GPX, and Parquet. Google Health doesn't offer third-party workout export. If you ever switch apps, your lifting history goes with you.
+          - img "Zealova workout export options showing 10 formats including Hevy and Fitbod" [ref=e283]
+    - generic [ref=e284]:
+      - heading "Where Zealova wins" [level=2] [ref=e285]
+      - list [ref=e286]:
+        - listitem [ref=e287]:
+          - generic [ref=e288]: +
+          - generic [ref=e289]:
+            - paragraph [ref=e290]: No hardware required, and wearable calorie data is less reliable than it looks
+            - paragraph [ref=e291]: "Full AI coaching from day one on any Android phone. No tracker purchase needed. Google Health's AI Coach is optimized for the Fitbit Air ecosystem and needs a paired wearable for continuous biometrics. The broader problem: a 2017 Stanford study (Shcherbina et al., Journal of Personalized Medicine) tested 7 wrist-worn devices including the Fitbit Surge and found no device achieved energy expenditure error below 20%. The best was off by 27%. The worst by 93%. Heart rate was accurate. Calorie burn was not. Zealova doesn't use wearable calorie estimates in its coaching. It uses what you log."
+        - listitem [ref=e292]:
+          - generic [ref=e293]: +
+          - generic [ref=e294]:
+            - paragraph [ref=e295]: Multi-image food logging, and adherence is the real bottleneck
+            - paragraph [ref=e296]: "Photograph a single plate, a multi-dish buffet, or anything in between. Zealova accepts up to 10 photos, runs 4 analysis modes, and extracts items, calories, macros, and micronutrients per item. The research case for faster logging: Burke, Wang & Sevick (2011, Journal of the American Dietetic Association) found more frequent self-monitoring was consistently and significantly associated with weight loss. Turner-McGrievy et al. (2019, Journal of the Academy of Nutrition and Dietetics) found tracking frequency explained the most variance in weight loss outcomes (R²=0.27). The point: the app that makes it easier to log daily wins on outcomes, not the one with the most precise algorithm."
+        - listitem [ref=e297]:
+          - generic [ref=e298]: +
+          - generic [ref=e299]:
+            - paragraph [ref=e300]: Full AI-generated workout plans, not just suggestions
+            - paragraph [ref=e301]: "Zealova generates a complete personalized monthly plan based on your goals, equipment, injury history, and schedule. Google Health Coach creates workout suggestions and custom workouts via natural language. Those are different things. Structured progressive programming matters: Schoenfeld, Ogborn & Krieger (2017, Journal of Sports Science) found a clear dose-response between weekly training volume and muscle growth. Plans that track and progress your volume per muscle group outperform ad-hoc suggestions over time."
+        - listitem [ref=e302]:
+          - generic [ref=e303]: +
+          - generic [ref=e304]:
+            - paragraph [ref=e305]: Injury-aware exercise swaps
+            - paragraph [ref=e306]: Ask the chat coach about a knee or shoulder issue and it finds safe alternatives from the exercise library. Google Health's announced AI Coach supports natural-language workout creation, but the launch spec does not mention injury-aware exercise alternatives.
+        - listitem [ref=e307]:
+          - generic [ref=e308]: +
+          - generic [ref=e309]:
+            - paragraph [ref=e310]: Per-exercise and per-muscle workout history
+            - paragraph [ref=e311]: Every lift's full history and each muscle group's volume tracked separately. Not just aggregate weekly stats. Google Health shows workout summaries.
+        - listitem [ref=e312]:
+          - generic [ref=e313]: +
+          - generic [ref=e314]:
+            - paragraph [ref=e315]: 40% cheaper annual plan
+            - paragraph [ref=e316]: $59.99/yr vs $99/yr. That's $39 less per year. Both apps use LLM-based coaches. The difference is the product layer built on top.
+        - listitem [ref=e317]:
+          - generic [ref=e318]: +
+          - generic [ref=e319]:
+            - paragraph [ref=e320]: Open data portability (10 export formats)
+            - paragraph [ref=e321]: Hevy, Strong, Fitbod, CSV, JSON, XLSX, PDF, TCX, GPX, Parquet. Google Health doesn't offer third-party workout export. Your lifting history is yours.
+    - generic [ref=e322]:
+      - heading "Where Google Health wins" [level=2] [ref=e323]
+      - list [ref=e324]:
+        - listitem [ref=e325]:
+          - generic [ref=e326]: +
+          - generic [ref=e327]:
+            - paragraph [ref=e328]: Continuous biometrics with Fitbit and Pixel Watch
+            - paragraph [ref=e329]: Heart rate, HRV, SpO2, sleep stages, readiness score, all day. Zealova has no wearable integration. If biometrics matter, Google Health plus a tracker is the stronger option.
+        - listitem [ref=e330]:
+          - generic [ref=e331]: +
+          - generic [ref=e332]:
+            - paragraph [ref=e333]: Sleep tracking built in
+            - paragraph [ref=e334]: Sleep stages, duration, sleep score, and readiness are core to Google Health if you wear a compatible device. Zealova doesn't track sleep.
+        - listitem [ref=e335]:
+          - generic [ref=e336]: +
+          - generic [ref=e337]:
+            - paragraph [ref=e338]: 3-month free trial vs Zealova's 7 days
+            - paragraph [ref=e339]: Google Health Premium's 3-month trial is significantly longer. You have more time to evaluate before paying. Zealova's trial is 7 days.
+        - listitem [ref=e340]:
+          - generic [ref=e341]: +
+          - generic [ref=e342]:
+            - paragraph [ref=e343]: Apple Health, Peloton, MFP, and Strava integrations
+            - paragraph [ref=e344]: Google Health connects to the apps and devices most fitness users already use. Zealova doesn't offer these third-party integrations currently.
+        - listitem [ref=e345]:
+          - generic [ref=e346]: +
+          - generic [ref=e347]:
+            - paragraph [ref=e348]: Available on iOS now
+            - paragraph [ref=e349]: Google Health is live on iOS. Zealova is Android only right now. iOS is in progress but not yet available in the App Store.
+        - listitem [ref=e350]:
+          - generic [ref=e351]: +
+          - generic [ref=e352]:
+            - paragraph [ref=e353]: 29 million Fitbit users get an automatic upgrade
+            - paragraph [ref=e354]: If you're already in the Fitbit ecosystem, the transition is automatic. No new account, no data migration. Your existing history carries over.
+        - listitem [ref=e355]:
+          - generic [ref=e356]: +
+          - generic [ref=e357]:
+            - paragraph [ref=e358]: Medical records and cycle tracking
+            - paragraph [ref=e359]: Google Health pulls US medical records into the app and includes menstrual cycle tracking with phase-aware insights. Zealova doesn't have either of these.
+    - generic [ref=e360]:
+      - heading "What Fitbit users are frustrated about right now" [level=2] [ref=e361]
+      - generic [ref=e362]:
+        - paragraph [ref=e363]: "Google Health launched with a feature removal list that surprised a lot of Fitbit users. Gone from the new app: badges, Sleep Profile animals, the community feed, group challenges, direct messages between users, snore detection, and unique usernames. These were core to why many people stuck with Fitbit over other wearable platforms."
+        - paragraph [ref=e364]: The price also went up. Fitbit Premium was $79.99/year. Google Health Premium is $99/year. That's a 24% increase at renewal, without new features for users who just wanted the existing app to work the same way it always had.
+        - paragraph [ref=e365]: Users under 18 and those in unsupported regions are losing Fitbit Premium access entirely in the transition. Enterprise Fitbit accounts had to migrate by May 16, 2026 or lose data access.
+        - paragraph [ref=e366]: If you're frustrated about these changes and you primarily used Fitbit to track your workouts and stay accountable to a plan, Zealova is worth a 7-day free trial. It won't replace continuous biometric tracking or sleep stages. For that, you still need a wearable. But it will generate your gym plan, let you log meals by photo, and give you a chat coach that routes to the right specialist automatically.
+    - generic [ref=e367]:
+      - heading "Which one should you pick?" [level=2] [ref=e368]
+      - paragraph [ref=e369]: "Start here: do you already own a Fitbit or Pixel Watch?"
+      - generic [ref=e370]:
+        - generic [ref=e371]:
+          - paragraph [ref=e372]: Pick Zealova if you
+          - list [ref=e373]:
+            - listitem [ref=e374]:
+              - generic [ref=e375]: "-"
+              - text: Don't own a Fitbit or Pixel Watch and don't want to buy one
+            - listitem [ref=e376]:
+              - generic [ref=e377]: "-"
+              - text: Lift weights and want a full AI-generated monthly workout plan
+            - listitem [ref=e378]:
+              - generic [ref=e379]: "-"
+              - text: Log food by photographing meals, including multi-dish spreads
+            - listitem [ref=e380]:
+              - generic [ref=e381]: "-"
+              - text: Care about tracking each lift and each muscle group separately
+            - listitem [ref=e382]:
+              - generic [ref=e383]: "-"
+              - text: Want to export your workouts to Hevy, Fitbod, or PDF
+            - listitem [ref=e384]:
+              - generic [ref=e385]: "-"
+              - text: Are budget-conscious and want the $59.99/yr plan (40% cheaper than Google Health annual)
+            - listitem [ref=e386]:
+              - generic [ref=e387]: "-"
+              - text: Are leaving the Fitbit ecosystem and want workout-first coaching
+        - generic [ref=e388]:
+          - paragraph [ref=e389]: Pick Google Health if you
+          - list [ref=e390]:
+            - listitem [ref=e391]:
+              - generic [ref=e392]: "-"
+              - text: Already own a Fitbit or Pixel Watch and want continuous biometrics + sleep tracking
+            - listitem [ref=e393]:
+              - generic [ref=e394]: "-"
+              - text: Care about HRV, readiness scores, or sleep stage analysis
+            - listitem [ref=e395]:
+              - generic [ref=e396]: "-"
+              - text: Want Apple Health, Peloton, MFP, or Strava data in one place
+            - listitem [ref=e397]:
+              - generic [ref=e398]: "-"
+              - text: Are in the Fitbit ecosystem and want the path of least friction
+            - listitem [ref=e399]:
+              - generic [ref=e400]: "-"
+              - text: Trust a Google-branded product with your health data
+            - listitem [ref=e401]:
+              - generic [ref=e402]: "-"
+              - text: Are a US user who wants medical record summaries in-app
+            - listitem [ref=e403]:
+              - generic [ref=e404]: "-"
+              - text: Want iOS support right now
+      - generic [ref=e405]:
+        - paragraph [ref=e406]: Want both?
+        - paragraph [ref=e407]: If you want continuous biometrics AND a structured workout plan, run them in parallel during the free trials. Google Health covers sleep and wearable data. Zealova covers gym programming and food logging. They don't overlap much. Try both and cancel whichever doesn't earn its keep by day 7.
+    - generic [ref=e408]:
+      - heading "FAQ" [level=2] [ref=e409]
+      - generic [ref=e410]:
+        - button "Do I need a Fitbit or Pixel Watch to use Google Health? +" [ref=e412]:
+          - generic [ref=e413]: Do I need a Fitbit or Pixel Watch to use Google Health?
+          - generic [ref=e414]: +
+        - button "Does Google Health offer a free trial? +" [ref=e416]:
+          - generic [ref=e417]: Does Google Health offer a free trial?
+          - generic [ref=e418]: +
+        - button "What happened to the Fitbit app? +" [ref=e420]:
+          - generic [ref=e421]: What happened to the Fitbit app?
+          - generic [ref=e422]: +
+        - button "Does Google Health support food photo logging? +" [ref=e424]:
+          - generic [ref=e425]: Does Google Health support food photo logging?
+          - generic [ref=e426]: +
+        - button "Does Google Health generate full workout plans? +" [ref=e428]:
+          - generic [ref=e429]: Does Google Health generate full workout plans?
+          - generic [ref=e430]: +
+        - button "Can I chat with the Google Health coach during a workout? +" [ref=e432]:
+          - generic [ref=e433]: Can I chat with the Google Health coach during a workout?
+          - generic [ref=e434]: +
+        - button "Can Google Health read my MyFitnessPal data? +" [ref=e436]:
+          - generic [ref=e437]: Can Google Health read my MyFitnessPal data?
+          - generic [ref=e438]: +
+        - button "I was a Fitbit user. Does Zealova let me take my workout data with me? +" [ref=e440]:
+          - generic [ref=e441]: I was a Fitbit user. Does Zealova let me take my workout data with me?
+          - generic [ref=e442]: +
+        - button "Is Google Health available on iPhone? +" [ref=e444]:
+          - generic [ref=e445]: Is Google Health available on iPhone?
+          - generic [ref=e446]: +
+        - button "How much does Google Health Premium cost vs Zealova? +" [ref=e448]:
+          - generic [ref=e449]: How much does Google Health Premium cost vs Zealova?
+          - generic [ref=e450]: +
+        - button "Does Zealova work with Health Connect? +" [ref=e452]:
+          - generic [ref=e453]: Does Zealova work with Health Connect?
+          - generic [ref=e454]: +
+        - button "Does Zealova have workout export? +" [ref=e456]:
+          - generic [ref=e457]: Does Zealova have workout export?
+          - generic [ref=e458]: +
+        - button "What can Google Health do without a Fitbit or Pixel Watch? +" [ref=e460]:
+          - generic [ref=e461]: What can Google Health do without a Fitbit or Pixel Watch?
+          - generic [ref=e462]: +
+        - button "I want to migrate from Fitbit to a workout-focused app. What do I need to know? +" [ref=e464]:
+          - generic [ref=e465]: I want to migrate from Fitbit to a workout-focused app. What do I need to know?
+          - generic [ref=e466]: +
+    - generic [ref=e467]:
+      - generic [ref=e468]:
+        - heading "Try Zealova free for 7 days" [level=2] [ref=e469]
+        - paragraph [ref=e470]: No hardware required. Cancel anytime. Android live now, iOS coming soon.
+        - paragraph [ref=e471]: Yes, Google Health gives you 3 months free. They need 3 months because biometric coaching requires weeks of baseline wearable data before it's useful. Zealova generates your first workout plan the night you sign up. You'll know within one workout whether the plan fits your schedule and your gym. 7 days is enough.
+        - img "Zealova AI fitness coach app running on Android phone" [ref=e472]
+        - generic [ref=e473]:
+          - link "Download on Android" [ref=e474] [cursor=pointer]:
+            - /url: https://play.google.com/store/apps/details?id=com.aifitnesscoach.app
+          - link "See pricing" [ref=e475] [cursor=pointer]:
+            - /url: /pricing
+      - paragraph [ref=e476]: "Last updated 2026-05-14 by Sai (v6). Google Health pricing verified at store.google.com on 2026-05-14. Feature claims sourced from the Google Health launch blog (blog.google, published 2026-05-07), Google Health Coach post (blog.google, 2026-05), TechCrunch (published 2026-05-07), Fitbit Help Center (support.google.com/fitbit, checked 2026-05-14), 9to5Google (published 2026-05-07), ghacks.net (published 2026-05-10), and piunikaweb.com (published 2026-05-14). Zealova pricing and features current as of 2026-05-14 per internal product documentation and app router audit (_ZEALOVA_FACTS.md v1.3). Research citations: Shcherbina A et al. (2017, Journal of Personalized Medicine, doi:10.3390/jpm7020003); Schoenfeld BJ, Ogborn D, Krieger JW (2017, Journal of Sports Science 35:11, doi:10.1080/02640414.2016.1210197); Burke LE, Wang J, Sevick MA (2011, Journal of the American Dietetic Association 111:1); Turner-McGrievy GM et al. (2019, Journal of the Academy of Nutrition and Dietetics 119:9, doi:10.1016/j.jand.2019.01.004)."
+  - contentinfo [ref=e477]:
+    - generic [ref=e478]:
+      - generic [ref=e479]:
+        - generic [ref=e480]:
+          - link "Zealova" [ref=e481] [cursor=pointer]:
+            - /url: /
+          - paragraph [ref=e482]: Your AI-powered fitness coach. Personalized workouts, nutrition tracking, and real-time guidance.
+        - generic [ref=e483]:
+          - heading "Product" [level=4] [ref=e484]
+          - list [ref=e485]:
+            - listitem [ref=e486]:
+              - link "Features" [ref=e487] [cursor=pointer]:
+                - /url: /features
+            - listitem [ref=e488]:
+              - link "Pricing" [ref=e489] [cursor=pointer]:
+                - /url: /pricing
+            - listitem [ref=e490]:
+              - link "Get Started" [ref=e491] [cursor=pointer]:
+                - /url: https://play.google.com/store/apps/details?id=com.aifitnesscoach.app
+        - generic [ref=e492]:
+          - heading "Company" [level=4] [ref=e493]
+          - list [ref=e494]:
+            - listitem [ref=e495]:
+              - link "About" [ref=e496] [cursor=pointer]:
+                - /url: /about
+            - listitem [ref=e497]:
+              - link "Architecture" [ref=e498] [cursor=pointer]:
+                - /url: /architecture
+            - listitem [ref=e499]:
+              - link "FAQ" [ref=e500] [cursor=pointer]:
+                - /url: /faq
+            - listitem [ref=e501]:
+              - link "Contact" [ref=e502] [cursor=pointer]:
+                - /url: /contact
+            - listitem [ref=e503]:
+              - link "Changelog" [ref=e504] [cursor=pointer]:
+                - /url: /changelog
+            - listitem [ref=e505]:
+              - link "Roadmap" [ref=e506] [cursor=pointer]:
+                - /url: /roadmap
+            - listitem [ref=e507]:
+              - link "Discord" [ref=e508] [cursor=pointer]:
+                - /url: https://discord.gg/WAYNZpVgsK
+            - listitem [ref=e509]:
+              - link "Instagram" [ref=e510] [cursor=pointer]:
+                - /url: https://instagram.com/getzealova
+        - generic [ref=e511]:
+          - heading "Legal" [level=4] [ref=e512]
+          - list [ref=e513]:
+            - listitem [ref=e514]:
+              - link "Terms of Service" [ref=e515] [cursor=pointer]:
+                - /url: /terms
+            - listitem [ref=e516]:
+              - link "Privacy Policy" [ref=e517] [cursor=pointer]:
+                - /url: /privacy
+            - listitem [ref=e518]:
+              - link "Health Disclaimer" [ref=e519] [cursor=pointer]:
+                - /url: /health-disclaimer
+            - listitem [ref=e520]:
+              - link "Refund Policy" [ref=e521] [cursor=pointer]:
+                - /url: /refunds
+            - listitem [ref=e522]:
+              - link "Delete Account" [ref=e523] [cursor=pointer]:
+                - /url: /delete-account
+      - generic [ref=e525]:
+        - paragraph [ref=e526]: Copyright 2026 Zealova. All rights reserved.
+        - generic [ref=e527]:
+          - link "Discord" [ref=e528] [cursor=pointer]:
+            - /url: https://discord.gg/WAYNZpVgsK
+            - img [ref=e529]
+          - link "Instagram" [ref=e531] [cursor=pointer]:
+            - /url: https://instagram.com/getzealova
+            - img [ref=e532]
+          - link "Terms" [ref=e534] [cursor=pointer]:
+            - /url: /terms
+          - link "Privacy" [ref=e535] [cursor=pointer]:
+            - /url: /privacy

@@ -14,8 +14,6 @@ Auth + error patterns mirror `api/v1/workout_history.py`: `get_current_user`
 dependency, `safe_internal_error` for 500s, detailed logging prefixed with
 `[WorkoutExport]`.
 """
-from __future__ import annotations
-
 import io
 import logging
 from datetime import date

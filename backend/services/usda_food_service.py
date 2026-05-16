@@ -46,6 +46,28 @@ NUTRIENT_IDS = {
     "trans_fat": 1257,          # Fatty acids, total trans
     "monounsaturated_fat": 1292,  # Fatty acids, total monounsaturated
     "polyunsaturated_fat": 1293,  # Fatty acids, total polyunsaturated
+    # Extended micronutrient IDs (added 2026-05-14 for the food_nutrition_overrides
+    # backfill — see backend/scripts/backfill_override_micronutrients.py).
+    # Pure addition — existing callers ignore unknown fields.
+    "phosphorus": 1091,         # Phosphorus, P
+    "selenium": 1103,           # Selenium, Se
+    "copper": 1098,             # Copper, Cu
+    "manganese": 1101,          # Manganese, Mn
+    "vitamin_e": 1109,          # Vitamin E (alpha-tocopherol)
+    "vitamin_k": 1185,          # Vitamin K (phylloquinone)
+    "vitamin_b1": 1165,         # Thiamin
+    "vitamin_b2": 1166,         # Riboflavin
+    "vitamin_b3": 1167,         # Niacin
+    "vitamin_b5": 1170,         # Pantothenic acid
+    "vitamin_b6": 1175,         # Vitamin B-6
+    "vitamin_b7": 1176,         # Biotin (rarely populated in USDA)
+    "choline": 1180,            # Choline, total
+    "omega3_ala": 1404,         # PUFA 18:3 n-3 c,c,c (ALA) — main plant omega-3
+    "omega3_epa": 1278,         # PUFA 20:5 n-3 (EPA)
+    "omega3_dha": 1272,         # PUFA 22:6 n-3 (DHA)
+    "omega3_dpa": 1280,         # PUFA 22:5 n-3 (DPA)
+    "omega6_la":  1316,         # PUFA 18:2 n-6 c,c (linoleic) — main omega-6
+    "omega6_ara": 1408,         # PUFA 20:4 n-6 (arachidonic)
 }
 
 
@@ -90,6 +112,35 @@ class USDANutrients:
     vitamin_d_mcg_per_100g: float = 0.0
     vitamin_b12_mcg_per_100g: float = 0.0
     folate_mcg_per_100g: float = 0.0
+
+    # Extended micronutrients (added 2026-05-14 for food_nutrition_overrides
+    # backfill — pure addition, default 0.0 for all existing callers).
+    phosphorus_mg_per_100g: float = 0.0
+    selenium_ug_per_100g: float = 0.0
+    copper_mg_per_100g: float = 0.0
+    manganese_mg_per_100g: float = 0.0
+    vitamin_e_mg_per_100g: float = 0.0
+    vitamin_k_ug_per_100g: float = 0.0
+    vitamin_b1_mg_per_100g: float = 0.0
+    vitamin_b2_mg_per_100g: float = 0.0
+    vitamin_b3_mg_per_100g: float = 0.0
+    vitamin_b5_mg_per_100g: float = 0.0
+    vitamin_b6_mg_per_100g: float = 0.0
+    vitamin_b7_ug_per_100g: float = 0.0
+    choline_mg_per_100g: float = 0.0
+    # Total omega-3 = sum of ALA + EPA + DHA + DPA from USDA fatty-acid breakdown.
+    omega3_g_per_100g: float = 0.0
+    # Total omega-6 = sum of linoleic + arachidonic.
+    omega6_g_per_100g: float = 0.0
+
+    # Set of nutrient IDs (per NUTRIENT_IDS values) that were ACTUALLY present
+    # in the USDA response for this food. Lets callers distinguish "USDA
+    # measured this as 0" from "USDA didn't have this nutrient at all" —
+    # the float fields default to 0.0 either way, but a missing ID means
+    # the value is unknown, not zero. Used by the food_nutrition_overrides
+    # micronutrient backfill (added 2026-05-14) to write NULL instead of
+    # false-zero data.
+    present_nutrient_ids: set = field(default_factory=set)
 
     # Serving info
     serving_size: Optional[str] = None
@@ -300,6 +351,9 @@ class USDAFoodService:
             nutrient_id = fn.get("nutrientId") or (fn.get("nutrient", {}).get("id"))
             if nutrient_id:
                 nutrient_map[nutrient_id] = self._parse_float(fn.get("value") or fn.get("amount"))
+        # Track which nutrient IDs were actually present so callers can tell
+        # "USDA-measured-zero" from "USDA-didn't-have-this".
+        nutrients.present_nutrient_ids = set(nutrient_map.keys())
 
         # Map USDA nutrient IDs to our fields
         nutrients.calories_per_100g = nutrient_map.get(NUTRIENT_IDS["energy_kcal"], 0.0)
@@ -327,6 +381,33 @@ class USDAFoodService:
         nutrients.vitamin_d_mcg_per_100g = nutrient_map.get(NUTRIENT_IDS["vitamin_d"], 0.0)
         nutrients.vitamin_b12_mcg_per_100g = nutrient_map.get(NUTRIENT_IDS["vitamin_b12"], 0.0)
         nutrients.folate_mcg_per_100g = nutrient_map.get(NUTRIENT_IDS["folate"], 0.0)
+
+        # Extended micronutrients (mig 2073). Pure addition; defaults to 0.0
+        # so existing callers see no change.
+        nutrients.phosphorus_mg_per_100g = nutrient_map.get(NUTRIENT_IDS["phosphorus"], 0.0)
+        nutrients.selenium_ug_per_100g = nutrient_map.get(NUTRIENT_IDS["selenium"], 0.0)
+        nutrients.copper_mg_per_100g = nutrient_map.get(NUTRIENT_IDS["copper"], 0.0)
+        nutrients.manganese_mg_per_100g = nutrient_map.get(NUTRIENT_IDS["manganese"], 0.0)
+        nutrients.vitamin_e_mg_per_100g = nutrient_map.get(NUTRIENT_IDS["vitamin_e"], 0.0)
+        nutrients.vitamin_k_ug_per_100g = nutrient_map.get(NUTRIENT_IDS["vitamin_k"], 0.0)
+        nutrients.vitamin_b1_mg_per_100g = nutrient_map.get(NUTRIENT_IDS["vitamin_b1"], 0.0)
+        nutrients.vitamin_b2_mg_per_100g = nutrient_map.get(NUTRIENT_IDS["vitamin_b2"], 0.0)
+        nutrients.vitamin_b3_mg_per_100g = nutrient_map.get(NUTRIENT_IDS["vitamin_b3"], 0.0)
+        nutrients.vitamin_b5_mg_per_100g = nutrient_map.get(NUTRIENT_IDS["vitamin_b5"], 0.0)
+        nutrients.vitamin_b6_mg_per_100g = nutrient_map.get(NUTRIENT_IDS["vitamin_b6"], 0.0)
+        nutrients.vitamin_b7_ug_per_100g = nutrient_map.get(NUTRIENT_IDS["vitamin_b7"], 0.0)
+        nutrients.choline_mg_per_100g = nutrient_map.get(NUTRIENT_IDS["choline"], 0.0)
+        # Sum the omega-3 fatty acid components USDA tracks individually.
+        nutrients.omega3_g_per_100g = (
+            nutrient_map.get(NUTRIENT_IDS["omega3_ala"], 0.0)
+            + nutrient_map.get(NUTRIENT_IDS["omega3_epa"], 0.0)
+            + nutrient_map.get(NUTRIENT_IDS["omega3_dha"], 0.0)
+            + nutrient_map.get(NUTRIENT_IDS["omega3_dpa"], 0.0)
+        )
+        nutrients.omega6_g_per_100g = (
+            nutrient_map.get(NUTRIENT_IDS["omega6_la"], 0.0)
+            + nutrient_map.get(NUTRIENT_IDS["omega6_ara"], 0.0)
+        )
 
         return nutrients
 

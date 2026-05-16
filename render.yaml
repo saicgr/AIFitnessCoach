@@ -77,3 +77,32 @@ services:
       - key: PELOTON_PASSWORD
         sync: false
 
+  # Phase-2 §2.10: Cross-user dish-promotion job. Daily at 03:00 UTC (low-traffic
+  # window). Finds dishes ≥5 distinct users have logged with calorie CV<20%,
+  # excludes user_edited rows, promotes them into food_nutrition_overrides
+  # with source='auto_promoted'. Idempotent — re-running won't double-promote.
+  #
+  # Knobs (env, set via Render dashboard if you want to override defaults):
+  #   PROMOTION_MIN_USERS  (default 5)  — min distinct users for promotion
+  #   PROMOTION_MAX_CV     (default 0.20) — max coefficient of variation on cal
+  #   PROMOTION_DRY_RUN    (default 0)  — set to 1 to log without writing
+  #
+  # Backout for accidentally-promoted bad data:
+  #   UPDATE food_nutrition_overrides SET nutrient_source='gemini_estimate'
+  #   WHERE auto_promoted_at IS NOT NULL;
+  - type: cron
+    name: fitwiz-promote-user-contributed
+    schedule: "0 3 * * *"
+    env: python
+    region: ohio
+    plan: starter
+    branch: main
+    rootDir: backend
+    buildCommand: chmod +x build.sh && ./build.sh
+    startCommand: python -m scripts.promote_user_contributed
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11"
+      - key: DATABASE_URL
+        sync: false
+

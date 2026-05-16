@@ -231,14 +231,26 @@ class _OpenAllCratesSheetState extends ConsumerState<OpenAllCratesSheet>
 
     final results = <CrateRewardResult>[];
 
-    // Claim all selected crates in parallel (skip per-claim reloads)
+    // Claim all selected crates in parallel (skip per-claim reloads).
+    // Per-claim 8s timeout so one hung network call can't strand the
+    // "Opening your crates…" loader indefinitely.
     final futures = _selectedByDate.values.map((option) {
       final dateStr = _dateKey(option.crateDate);
-      return ref.read(xpProvider.notifier).claimDailyCrate(
-        option.crateType,
-        crateDate: dateStr,
-        skipReload: true,
-      );
+      return ref
+          .read(xpProvider.notifier)
+          .claimDailyCrate(
+            option.crateType,
+            crateDate: dateStr,
+            skipReload: true,
+          )
+          .timeout(
+            const Duration(seconds: 8),
+            onTimeout: () => CrateRewardResult(
+              success: false,
+              crateType: option.crateType,
+              message: 'Timed out — try again',
+            ),
+          );
     }).toList();
 
     final settled = await Future.wait<CrateRewardResult>(futures);
@@ -252,16 +264,18 @@ class _OpenAllCratesSheetState extends ConsumerState<OpenAllCratesSheet>
     // unclaimed-crates list so the home banner doesn't keep showing the
     // count from the pre-claim cache (the FutureProvider doesn't refetch
     // on its own, only when invalidated or when nothing watches it).
-    if (anySuccess) {
-      ref.invalidate(unclaimedCratesProvider);
-      await ref.read(xpProvider.notifier).reloadAfterClaims();
-    }
-
     if (!anySuccess) {
-      // All failed — show error, don't show rewards screen
+      // All failed — show error, don't show rewards screen.
+      // In autoSelectAll mode the sheet otherwise has no visible action
+      // (no grid, no Collect button) so we'd strand the user on a dead
+      // loader. Pop the sheet AND show the error so they can re-tap the
+      // home banner to retry.
       setState(() => _isCollecting = false);
       HapticService.error();
       if (mounted) {
+        if (widget.autoSelectAll) {
+          Navigator.of(context).maybePop();
+        }
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Failed to open crates. Please try again.'),
@@ -271,6 +285,17 @@ class _OpenAllCratesSheetState extends ConsumerState<OpenAllCratesSheet>
       }
       return;
     }
+
+    // Fire-and-forget the heavy XP reload. Previously this was awaited
+    // BEFORE flipping `_showRewards`, which made the "Opening your
+    // crates…" loader sit visible for an extra second or two while the
+    // reload network call ran — long enough that a user reported the
+    // sheet feeling stuck (2026-05-12). The reveal animation is what the
+    // user is here for; the XP totals can refresh in the background and
+    // the home banner already invalidates separately below.
+    ref.invalidate(unclaimedCratesProvider);
+    // ignore: discarded_futures — intentional fire-and-forget
+    ref.read(xpProvider.notifier).reloadAfterClaims();
 
     setState(() {
       _results = results;

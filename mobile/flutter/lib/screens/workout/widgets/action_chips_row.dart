@@ -370,15 +370,17 @@ class WorkoutActionChips {
       );
 
   /// Get default chips list
-  /// Order: Superset, Reorder, Info, then others
-  /// Note is now in the bottom quick actions row
+  /// Order: Swap, Adjust first (user-requested quick access — C1), then
+  /// Superset, Reorder, Info, etc. Swap also remains available via the
+  /// 3-dot overflow menu so users see it in both places.
   static List<ActionChipData> defaultChips({bool showLR = false}) => [
+        swap,
+        adjustToday,
         superset,
         reorder,
         info,
         warmUp,
         targets,
-        swap,
         history,
         increments,
         if (showLR) leftRight(),

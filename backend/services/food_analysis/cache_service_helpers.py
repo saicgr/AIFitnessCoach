@@ -38,7 +38,14 @@ from services.food_analysis.modifiers_helpers import _build_default_modifiers
 logger = logging.getLogger(__name__)
 
 
-class FoodAnalysisCacheService(FoodAnalysisCacheServicePart2):
+from services.food_analysis.cache_service_phase2 import (
+    FoodAnalysisCacheServicePhase2,
+    _normalize_food_name,
+    _row_to_food_item,
+)
+
+
+class FoodAnalysisCacheService(FoodAnalysisCacheServicePart2, FoodAnalysisCacheServicePhase2):
     """
     Caching layer for food analysis to speed up repeated queries.
 
@@ -307,7 +314,24 @@ class FoodAnalysisCacheService(FoodAnalysisCacheServicePart2):
                 await self._enrich_cache_hit_with_tips(result, meal_type, mood_before, user_id)
                 return result
 
-        # Step 0b: Try food nutrition overrides (3,785 curated items)
+        # Step 0b: Phase-2 user_contributed cache (per-user dishes from past
+        # Gemini fallbacks — instant on repeat for THIS user). Mixed in via
+        # FoodAnalysisCacheServicePhase2.
+        if use_cache and user_id:
+            uc_name = _normalize_food_name(description)
+            uc_row = await self._try_user_contributed(uc_name, user_id)
+            if uc_row:
+                logger.info(f"🎯 user_contributed HIT: {description}")
+                # Convert DB row → analysis dict using existing override mapper
+                # (uc rows mirror override schema)
+                analysis = self._override_to_analysis(uc_row)
+                result.update(analysis)
+                result["cache_hit"] = True
+                result["cache_source"] = "user_contributed"
+                await self._enrich_cache_hit_with_tips(result, meal_type, mood_before, user_id)
+                return result
+
+        # Step 0c: Try food nutrition overrides (canonical 198k rows)
         if use_cache:
             override = await self._try_override(description)
             if override:
@@ -362,6 +386,63 @@ class FoodAnalysisCacheService(FoodAnalysisCacheServicePart2):
                 await self._enrich_cache_hit_with_tips(result, meal_type, mood_before, user_id)
                 return result
 
+        # Step 2.5: Phase-2 compound-decompose for multi-dish text inputs
+        # ("2 eggs over easy with toast and bacon and orange juice"). Runs
+        # ONLY when cheaper layers all missed AND the input looks compound.
+        # Falls through to Gemini fallback if decompose returns nothing.
+        if use_cache and self._is_compound_query(description):
+            logger.info(f"🔀 Compound query — trying Stage-1 decompose: {description[:60]}...")
+            components = await self._decompose_compound_text(description)
+            if components:
+                # Build per-component descriptions and run each through cache stack
+                component_results = []
+                gemini_components: List[str] = []
+                for c in components:
+                    qty_prefix = f"{c.quantity_text} " if c.quantity_text else ""
+                    comp_desc = f"{qty_prefix}{c.name}".strip()
+                    # Try canonical exact match
+                    norm = _normalize_food_name(c.name)
+                    canonical_rows = await self._batch_canonical_lookup([norm])
+                    if canonical_rows.get(norm):
+                        component_results.append(_row_to_food_item(
+                            canonical_rows[norm],
+                            weight_g=canonical_rows[norm].get("default_serving_g") or 100,
+                            name_override=c.name,
+                        ))
+                    else:
+                        gemini_components.append(comp_desc)
+
+                # Aggregate if EVERY component resolved via cache
+                if component_results and not gemini_components:
+                    total_cal = sum(it.get("calories", 0) for it in component_results)
+                    total_p = sum(float(it.get("protein_g", 0)) for it in component_results)
+                    total_c = sum(float(it.get("carbs_g", 0)) for it in component_results)
+                    total_f = sum(float(it.get("fat_g", 0)) for it in component_results)
+                    total_fib = sum(float(it.get("fiber_g", 0)) for it in component_results)
+                    aggregated = {
+                        "meal_type": meal_type or "snack",
+                        "food_items": component_results,
+                        "total_calories": total_cal,
+                        "total_protein_g": round(total_p, 1),
+                        "total_carbs_g": round(total_c, 1),
+                        "total_fat_g": round(total_f, 1),
+                        "total_fiber_g": round(total_fib, 1),
+                        "health_score": self._compute_health_score(total_cal, total_p, total_fib),
+                        "feedback": "",
+                    }
+                    result.update(aggregated)
+                    result["cache_hit"] = True
+                    result["cache_source"] = "compound_decompose"
+                    await self._enrich_cache_hit_with_tips(result, meal_type, mood_before, user_id)
+                    logger.info(
+                        f"🎯 Compound HIT: {len(component_results)} components from cache stack"
+                    )
+                    return result
+                logger.info(
+                    f"  Compound partial: {len(component_results)} cached, "
+                    f"{len(gemini_components)} need Gemini — falling through"
+                )
+
         # Step 3: Fresh Gemini analysis
         logger.info(f"🔄 Cache MISS - calling Gemini for: {description[:50]}...")
 
@@ -375,6 +456,23 @@ class FoodAnalysisCacheService(FoodAnalysisCacheServicePart2):
             user_id=user_id,
             personal_history=personal_history,
         )
+
+        # Phase-2: auto-upsert novel Gemini results to user_contributed
+        # so the next time THIS user logs the same dish, it hits cache.
+        # Gated by users.contribute_food_data flag inside _upsert_user_contributed.
+        if user_id and analysis and analysis.get("food_items"):
+            try:
+                primary = analysis["food_items"][0]
+                norm = _normalize_food_name(description)
+                if norm:
+                    await self._upsert_user_contributed(
+                        user_id=user_id,
+                        food_name_normalized=norm,
+                        display_name=primary.get("name") or description,
+                        analysis_item=primary,
+                    )
+            except Exception as e:  # noqa: BLE001
+                logger.warning(f"[user_contributed] auto-upsert failed: {e}")
 
         if analysis and analysis.get('food_items'):
             # Cache the successful result — only when there's NO personal history.

@@ -483,10 +483,21 @@ async def record_simple_metric(input: SimpleMetricInput,
     try:
         result = db.client.table("body_measurements").insert(data).execute()
 
-        if not result.data:
-            raise safe_internal_error(ValueError("Failed to record measurement"), "metrics")
+        # Belt-and-suspenders: a Supabase insert that returns an empty list
+        # OR a row without an id means the row never actually landed. Both
+        # were previously treated as "success" by the frontend (which had its
+        # own silent-fallback bugs). Surface both as 500 so the client error
+        # path fires (caught 2026-05-12 — weight log silently failed).
+        if not result.data or len(result.data) == 0:
+            raise safe_internal_error(
+                ValueError("body_measurements insert returned empty data"), "metrics"
+            )
 
         row = result.data[0]
+        if not row.get("id"):
+            raise safe_internal_error(
+                ValueError("body_measurements insert returned row without id"), "metrics"
+            )
 
         # For weight measurements, fasting context is auto-populated by database trigger
         # We need to re-fetch the row to get the trigger-populated fasting fields

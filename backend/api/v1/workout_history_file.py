@@ -11,8 +11,6 @@ Endpoints:
   • POST  /workout-history/remap/{id}/undo — revert a remap batch
   • GET   /workout-history/unresolved/{user_id} — groups of unmatched names
 """
-from __future__ import annotations
-
 import asyncio
 import logging
 from datetime import datetime

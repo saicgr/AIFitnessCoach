@@ -231,7 +231,7 @@ class MeasurementsNotifier extends StateNotifier<MeasurementsState> {
     }
 
     // Case 3: Try persistent cache (SharedPreferences) -> show instantly + background refresh
-    final persistedState = await _loadFromPersistentCache();
+    final persistedState = await _loadFromPersistentCache(userId);
     if (persistedState != null && persistedState.historyByType.isNotEmpty) {
       debugPrint('💾 [Measurements] Loaded from persistent cache');
       state = persistedState;
@@ -291,7 +291,7 @@ class MeasurementsNotifier extends StateNotifier<MeasurementsState> {
       );
       _cache = newState;
       state = newState;
-      _saveToPersistentCache(newState);
+      _saveToPersistentCache(newState, userId);
     } catch (e) {
       debugPrint('❌ Error loading measurements: $e');
       if (state.historyByType.isEmpty) {
@@ -304,11 +304,13 @@ class MeasurementsNotifier extends StateNotifier<MeasurementsState> {
     }
   }
 
-  /// Load from SharedPreferences persistent cache
-  Future<MeasurementsState?> _loadFromPersistentCache() async {
+  /// Load from SharedPreferences persistent cache. Scoped by userId so two
+  /// accounts on the same device don't share a slot.
+  Future<MeasurementsState?> _loadFromPersistentCache(String? userId) async {
     try {
       final cached = await DataCacheService.instance.getCached(
         DataCacheService.bodyMeasurementsKey,
+        userId: userId,
       );
       if (cached == null) return null;
 
@@ -367,8 +369,8 @@ class MeasurementsNotifier extends StateNotifier<MeasurementsState> {
     }
   }
 
-  /// Save state to SharedPreferences persistent cache
-  Future<void> _saveToPersistentCache(MeasurementsState state) async {
+  /// Save state to SharedPreferences persistent cache, scoped by userId.
+  Future<void> _saveToPersistentCache(MeasurementsState state, String? userId) async {
     try {
       final data = <String, dynamic>{};
       for (final entry in state.historyByType.entries) {
@@ -377,6 +379,7 @@ class MeasurementsNotifier extends StateNotifier<MeasurementsState> {
       await DataCacheService.instance.cache(
         DataCacheService.bodyMeasurementsKey,
         data,
+        userId: userId,
       );
     } catch (e) {
       debugPrint('⚠️ [Measurements] Persistent cache save error: $e');
@@ -423,13 +426,18 @@ class MeasurementsNotifier extends StateNotifier<MeasurementsState> {
       );
       _cache = newState;
       state = newState;
-      _saveToPersistentCache(newState);
+      _saveToPersistentCache(newState, userId);
     } catch (e) {
       debugPrint('❌ Error loading measurement history: $e');
     }
   }
 
-  /// Record a new measurement
+  /// Record a new measurement.
+  ///
+  /// Throws on any failure (network, non-2xx, parsing). The previous version
+  /// swallowed everything and returned `false`, which let the UI render a
+  /// fake "Weight Logged!" success state even when nothing reached Supabase
+  /// (caught 2026-05-12 — see [[feedback_no_silent_fallbacks]]).
   Future<bool> recordMeasurement({
     required String userId,
     required MeasurementType type,
@@ -437,55 +445,53 @@ class MeasurementsNotifier extends StateNotifier<MeasurementsState> {
     required String unit,
     String? notes,
   }) async {
-    try {
-      final entry = await _repository.recordMeasurement(
-        userId: userId,
-        type: type,
-        value: value,
-        unit: unit,
-        notes: notes,
-      );
+    final entry = await _repository.recordMeasurement(
+      userId: userId,
+      type: type,
+      value: value,
+      unit: unit,
+      notes: notes,
+    );
 
-      if (entry != null) {
-        // Add to history
-        final newHistoryByType = Map<MeasurementType, List<MeasurementEntry>>.from(state.historyByType);
-        final currentHistory = newHistoryByType[type] ?? [];
-        newHistoryByType[type] = [entry, ...currentHistory];
-
-        // Update summary
-        final latestByType = Map<MeasurementType, MeasurementEntry>.from(
-          state.summary?.latestByType ?? {},
-        );
-        final changeFromPrevious = Map<MeasurementType, double>.from(
-          state.summary?.changeFromPrevious ?? {},
-        );
-
-        final previousValue = latestByType[type]?.value;
-        latestByType[type] = entry;
-        if (previousValue != null) {
-          changeFromPrevious[type] = entry.value - previousValue;
-        }
-
-        final newState = state.copyWith(
-          historyByType: newHistoryByType,
-          summary: MeasurementsSummary(
-            latestByType: latestByType,
-            changeFromPrevious: changeFromPrevious,
-            latestBmi: state.summary?.latestBmi,
-            latestWaistToHipRatio: state.summary?.latestWaistToHipRatio,
-            latestWaistToHeightRatio: state.summary?.latestWaistToHeightRatio,
-          ),
-        );
-        _cache = newState;
-        state = newState;
-        _saveToPersistentCache(newState);
-        return true;
-      }
-      return false;
-    } catch (e) {
-      debugPrint('❌ Error recording measurement: $e');
-      return false;
+    if (entry == null) {
+      // Repository contract: non-null on success, throws on failure. A null
+      // here means the backend 2xx'd with an unparseable body — still a bug.
+      throw StateError('recordMeasurement returned null entry for ${type.apiValue}');
     }
+
+    // Add to history
+    final newHistoryByType = Map<MeasurementType, List<MeasurementEntry>>.from(state.historyByType);
+    final currentHistory = newHistoryByType[type] ?? [];
+    newHistoryByType[type] = [entry, ...currentHistory];
+
+    // Update summary
+    final latestByType = Map<MeasurementType, MeasurementEntry>.from(
+      state.summary?.latestByType ?? {},
+    );
+    final changeFromPrevious = Map<MeasurementType, double>.from(
+      state.summary?.changeFromPrevious ?? {},
+    );
+
+    final previousValue = latestByType[type]?.value;
+    latestByType[type] = entry;
+    if (previousValue != null) {
+      changeFromPrevious[type] = entry.value - previousValue;
+    }
+
+    final newState = state.copyWith(
+      historyByType: newHistoryByType,
+      summary: MeasurementsSummary(
+        latestByType: latestByType,
+        changeFromPrevious: changeFromPrevious,
+        latestBmi: state.summary?.latestBmi,
+        latestWaistToHipRatio: state.summary?.latestWaistToHipRatio,
+        latestWaistToHeightRatio: state.summary?.latestWaistToHeightRatio,
+      ),
+    );
+    _cache = newState;
+    state = newState;
+    _saveToPersistentCache(newState, userId);
+    return true;
   }
 
   /// Delete a measurement entry
@@ -636,7 +642,11 @@ class MeasurementsRepository {
     }
   }
 
-  /// Record a new measurement (through backend API — triggers need it)
+  /// Record a new measurement (through backend API — triggers need it).
+  ///
+  /// Returns a hydrated [MeasurementEntry] on success. Throws on any failure
+  /// — never returns null silently. The Notifier wrapper relies on this
+  /// contract to surface real errors to the user.
   Future<MeasurementEntry?> recordMeasurement({
     required String userId,
     required MeasurementType type,
@@ -644,26 +654,29 @@ class MeasurementsRepository {
     required String unit,
     String? notes,
   }) async {
-    try {
-      final response = await _client.post(
-        '${ApiConstants.metrics}/body/record',
-        data: {
-          'user_id': userId,
-          'metric_type': type.apiValue,
-          'value': value,
-          'unit': unit,
-          if (notes != null && notes.isNotEmpty) 'notes': notes,
-        },
-      );
+    final response = await _client.post(
+      '${ApiConstants.metrics}/body/record',
+      data: {
+        'user_id': userId,
+        'metric_type': type.apiValue,
+        'value': value,
+        'unit': unit,
+        if (notes != null && notes.isNotEmpty) 'notes': notes,
+      },
+    );
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        return MeasurementEntry.fromJson(response.data);
-      }
-      return null;
-    } catch (e) {
-      debugPrint('❌ Error recording measurement: $e');
-      rethrow;
+    final status = response.statusCode ?? 0;
+    if (status < 200 || status >= 300) {
+      throw StateError(
+        'recordMeasurement non-2xx for ${type.apiValue}: status=$status body=${response.data}',
+      );
     }
+    if (response.data == null) {
+      throw StateError(
+        'recordMeasurement 2xx with null body for ${type.apiValue}',
+      );
+    }
+    return MeasurementEntry.fromJson(response.data);
   }
 
   /// Delete a measurement entry (through backend API)

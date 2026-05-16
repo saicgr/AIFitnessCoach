@@ -20,6 +20,10 @@ class Settings(BaseSettings):
     # Gemini Configuration
     gemini_api_key: str = ""
     gemini_model: str = "gemini-3-flash-preview"  # Can be overridden by GEMINI_MODEL env var
+    # Food-scan path (Vision Stage-1, food-text parse, coaching tips, recipe
+    # import) uses Flash Lite — cheaper + faster, and thinking-minimal. The
+    # full reasoning model (gemini_model) is kept for workout gen + chat.
+    gemini_vision_model: str = "gemini-3.1-flash-lite"  # override via GEMINI_VISION_MODEL
     gemini_embedding_model: str = "gemini-embedding-001"
     # Vertex AI (set GCP_PROJECT_ID and GCP_LOCATION env vars to enable)
     # Production deployments MUST configure Vertex AI — the developer Gemini

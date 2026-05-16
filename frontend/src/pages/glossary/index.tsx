@@ -103,7 +103,7 @@ export default function GlossaryIndex() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
       />
 
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 pt-8 sm:pt-12 pb-20">
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 pt-24 sm:pt-28 pb-20">
         <nav className="text-xs text-zinc-500 mb-6">
           <Link to="/" className="hover:text-zinc-300">Home</Link>
           <span className="mx-2">/</span>

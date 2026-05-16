@@ -25,6 +25,13 @@ class ActivityService {
   bool _consentDenied = false;
   bool _consentLoaded = false;
 
+  // Serializes the FIRST sync attempt after cold start so syncActivity +
+  // syncActivityBatch don't both fire 403s before the consent gate has had
+  // a chance to set itself. After the first response we never await here
+  // again. Caught 2026-05-12 — Render logs showed paired 403s every cold
+  // launch for users who hadn't enabled health-data consent.
+  Future<void>? _firstAttemptInFlight;
+
   ActivityService(this._apiClient) {
     _loadConsentFlag();
   }
@@ -65,9 +72,18 @@ class ActivityService {
     if (!_consentLoaded) {
       await _loadConsentFlag();
     }
+    // If another sync is the first-out-of-the-gate, wait for it to come
+    // back before deciding — saves a paired 403 on cold start.
+    if (_firstAttemptInFlight != null) {
+      try { await _firstAttemptInFlight; } catch (_) {}
+    }
     if (_consentDenied) {
       debugPrint('⏭️ [Activity] Sync skipped — health consent denied (persisted)');
       return null;
+    }
+    final attemptCompleter = _firstAttemptInFlight == null ? Completer<void>() : null;
+    if (attemptCompleter != null) {
+      _firstAttemptInFlight = attemptCompleter.future;
     }
     try {
       debugPrint('🏃 [Activity] Syncing activity for ${activity.date}...');
@@ -118,6 +134,8 @@ class ActivityService {
         debugPrint('❌ [Activity] Error syncing activity: $e');
       }
       return null;
+    } finally {
+      attemptCompleter?.complete();
     }
   }
 
@@ -199,9 +217,16 @@ class ActivityService {
     if (!_consentLoaded) {
       await _loadConsentFlag();
     }
+    if (_firstAttemptInFlight != null) {
+      try { await _firstAttemptInFlight; } catch (_) {}
+    }
     if (_consentDenied) {
       debugPrint('⏭️ [Activity] Batch sync skipped — health consent denied (persisted)');
       return null;
+    }
+    final attemptCompleter = _firstAttemptInFlight == null ? Completer<void>() : null;
+    if (attemptCompleter != null) {
+      _firstAttemptInFlight = attemptCompleter.future;
     }
     try {
       debugPrint('🏃 [Activity] Batch syncing ${activities.length} days...');
@@ -245,6 +270,8 @@ class ActivityService {
         debugPrint('❌ [Activity] Error batch syncing: $e');
       }
       return null;
+    } finally {
+      attemptCompleter?.complete();
     }
   }
 

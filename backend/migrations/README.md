@@ -295,6 +295,48 @@ DROP TABLE IF EXISTS users CASCADE;
 4. **Password Policy**: Enforce strong passwords via Supabase Auth settings
 5. **HTTPS Only**: Always use HTTPS for production
 
+## New `public` table template (REQUIRED after migration 2063)
+
+As of `2063_optin_data_api_grants.sql`, new tables in `public` are **not**
+auto-exposed to PostgREST. Every new client-facing table must include the
+GRANT + RLS block below, or `supabase-js` calls will fail with `42501`.
+Service-role-only tables can skip the GRANT block (service_role bypasses).
+
+```sql
+-- 1. Table
+CREATE TABLE public.X (
+    id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id     uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    -- ...
+    created_at  timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX X_user_id_idx ON public.X (user_id);
+
+-- 2. Data API access (skip both lines if backend-only via service_role)
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.X TO authenticated;
+-- Add anon GRANT only for truly-public-read tables (rare):
+-- GRANT SELECT ON public.X TO anon;
+
+-- 3. RLS — always on, even when only service_role uses the table
+ALTER TABLE public.X ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "users read own X" ON public.X
+    FOR SELECT TO authenticated USING (auth.uid() = user_id);
+CREATE POLICY "users write own X" ON public.X
+    FOR ALL TO authenticated
+    USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+```
+
+**Quick decision tree:**
+- Client reads/writes via supabase-js → GRANT to `authenticated` + RLS policy keyed on `auth.uid()`.
+- Public read (e.g. exercise library) → GRANT SELECT to `anon, authenticated`, RLS policy `FOR SELECT USING (true)`.
+- Backend-only (service-role) → no GRANT block, RLS enabled, **no policies** (deny-all to client roles is the goal).
+
+**Anti-patterns to avoid:**
+- `GRANT ALL ... TO anon` — almost never correct; use `authenticated`.
+- `ENABLE ROW LEVEL SECURITY` without any policy on a client-facing table — looks safe but is actually deny-all (advisor flags as INFO, but the table won't work).
+- `USING (true)` on `INSERT/UPDATE/DELETE` policies — advisor flags as WARN; scope to `auth.uid() = user_id`.
+
 ## Next Steps
 
 After migration:

@@ -130,12 +130,19 @@ class SoundService {
       _workoutCompletePlayer = AudioPlayer();
       _restEndPlayer = AudioPlayer();
 
-      // Set audio context to mix with other apps (don't pause background music)
+      // Audio context: workout cues are non-essential sonification — we
+      // want them to MIX with the user's background music (YouTube,
+      // Spotify, Apple Music) rather than interrupt it.
+      //   iOS: ambient + mixWithOthers → overlays background audio,
+      //        respects the silent switch, never pauses other apps.
+      //   Android: gainTransientMayDuck → other audio briefly ducks
+      //        for the beep then auto-restores. Without this the
+      //        OEM may grab focus and leave the user's music paused.
       await AudioPlayer.global.setAudioContext(
         AudioContext(
           iOS: AudioContextIOS(
             category: AVAudioSessionCategory.ambient,
-            options: {},
+            options: const {AVAudioSessionOptions.mixWithOthers},
           ),
           android: AudioContextAndroid(
             isSpeakerphoneOn: false,
@@ -143,7 +150,7 @@ class SoundService {
             stayAwake: false,
             contentType: AndroidContentType.sonification,
             usageType: AndroidUsageType.assistanceSonification,
-            audioFocus: AndroidAudioFocus.none,
+            audioFocus: AndroidAudioFocus.gainTransientMayDuck,
           ),
         ),
       );

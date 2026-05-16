@@ -352,8 +352,14 @@ class _EditWorkoutEquipmentSheetState extends State<EditWorkoutEquipmentSheet> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
+                // Renamed from "Apply Changes" — that label was being
+                // confused with "apply weight to this set" mid-workout
+                // (this is the equipment-roster editor, not a per-set
+                // weight editor). The new label + the no-default
+                // confirmation dialog downstream make the consequence
+                // explicit.
                 child: const Text(
-                  'Apply Changes',
+                  'Update Workout Equipment',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                 ),
               ),
@@ -546,6 +552,12 @@ class _EditWorkoutEquipmentSheetState extends State<EditWorkoutEquipmentSheet> {
     }).toList();
 
     widget.onApply(selectedItems);
-    Navigator.pop(context);
+    // Pop only this modal sheet, never the route under it. The previous
+    // unguarded Navigator.pop(context) was implicated in closing the
+    // active workout screen mid-session — see workout_detail_screen_ui_1.
+    final route = ModalRoute.of(context);
+    if (route != null && route.isCurrent && Navigator.canPop(context)) {
+      Navigator.pop(context);
+    }
   }
 }

@@ -148,6 +148,24 @@ async def generate_workout(request: Request, body: GenerateWorkoutRequest, backg
             gemini_service = GeminiService()
 
             try:
+                # Pull the user's persistent AI preferences so the generator
+                # can honour their focus points + training-split choice
+                # without each caller having to read the table themselves.
+                ai_training_split = None
+                try:
+                    db_sb = get_supabase_db()
+                    ai_row = (
+                        db_sb.client.table("user_ai_settings")
+                        .select("training_split")
+                        .eq("user_id", body.user_id)
+                        .limit(1)
+                        .execute()
+                    )
+                    if ai_row.data:
+                        ai_training_split = (ai_row.data[0] or {}).get("training_split")
+                except Exception as ai_pref_err:
+                    logger.debug(f"AI settings lookup failed: {ai_pref_err}")
+
                 workout_data = await gemini_service.generate_workout_plan(
                     fitness_level=fitness_level or "intermediate",
                     goals=goals if isinstance(goals, list) else [],
@@ -157,6 +175,8 @@ async def generate_workout(request: Request, body: GenerateWorkoutRequest, backg
                     primary_goal=primary_goal,
                     muscle_focus_points=muscle_focus_points,
                     user_dob=user_dob,
+                    user_id=body.user_id,
+                    training_split=ai_training_split,
                 )
 
                 workout_data = ensure_workout_data_dict(workout_data, context="generate")

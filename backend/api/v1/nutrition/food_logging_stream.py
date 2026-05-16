@@ -661,24 +661,23 @@ async def analyze_food_from_image_streaming(
     user_id: str = Form(...),
     meal_type: str = Form(...),
     image: UploadFile = File(...),
+    image_original: Optional[UploadFile] = File(default=None),  # P2.0 — full-res for S3 archive
     current_user: dict = Depends(get_current_user),
 ):
     """
     Analyze food from an image with streaming progress updates via SSE.
 
-    DOES NOT save to database - returns analysis only for user review.
-    Use /log-direct to save after user confirmation.
-
-    Provides real-time feedback during food image analysis:
-    - Step 1: Processing image
-    - Step 2: AI analyzing food
-    - Step 3: Calculating nutrition (analysis complete)
-
-    Returns SSE events with progress updates and final analysis (no save).
+    Phase-2 two-artifact upload (per plan §2.0):
+    - `image`: REQUIRED. 768px-resized JPEG used for Gemini Vision (1 tile,
+       fast). Frontend resizes via flutter_image_compress before upload.
+    - `image_original`: OPTIONAL. Full-resolution original used for S3 archive
+       so the user sees a crisp image in the nutrition tab. When omitted
+       (legacy clients pre-Phase-2), `image` is used for both purposes.
     """
     # SECURITY: Validate file type and size before processing
     ALLOWED_IMAGE_TYPES = {'image/jpeg', 'image/png', 'image/webp', 'image/heic'}
     MAX_IMAGE_SIZE = 10 * 1024 * 1024  # 10MB
+    MAX_ORIGINAL_SIZE = 25 * 1024 * 1024  # 25MB allowance for full-res originals
 
     if image.content_type and image.content_type not in ALLOWED_IMAGE_TYPES:
         raise HTTPException(status_code=400, detail=f"Invalid image type. Allowed: {', '.join(ALLOWED_IMAGE_TYPES)}")
@@ -688,19 +687,35 @@ async def analyze_food_from_image_streaming(
     import uuid
     request_id = f"req_{uuid.uuid4().hex[:12]}"
 
-    # Read image upfront (before generator)
+    # Read thumb (used for Vision)
     image_bytes = await image.read()
     if len(image_bytes) > MAX_IMAGE_SIZE:
         raise HTTPException(status_code=400, detail="Image too large (max 10MB)")
     content_type = image.content_type or 'image/jpeg'
     image_size_kb = len(image_bytes) // 1024
 
+    # Read original if provided (used for S3 archive). Falls back to the thumb
+    # bytes for legacy clients that don't send image_original yet.
+    archive_bytes = image_bytes
+    archive_content_type = content_type
+    if image_original is not None:
+        if image_original.content_type and image_original.content_type not in ALLOWED_IMAGE_TYPES:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid image_original type. Allowed: {', '.join(ALLOWED_IMAGE_TYPES)}",
+            )
+        archive_bytes = await image_original.read()
+        if len(archive_bytes) > MAX_ORIGINAL_SIZE:
+            raise HTTPException(status_code=400, detail="Original image too large (max 25MB)")
+        archive_content_type = image_original.content_type or 'image/jpeg'
+
     logger.info(
         f"[ANALYZE-STREAM:{request_id}] START | "
         f"user={user_id} | "
         f"meal_type={meal_type} | "
-        f"content_type={content_type} | "
-        f"image_size_kb={image_size_kb}"
+        f"thumb_kb={image_size_kb} | "
+        f"original_kb={len(archive_bytes) // 1024} | "
+        f"two_artifact={image_original is not None}"
     )
 
     async def generate_sse() -> AsyncGenerator[str, None]:
@@ -762,26 +777,69 @@ async def analyze_food_from_image_streaming(
 
             # Run Gemini analysis and S3 upload in parallel with keep-alive pings
             async def safe_s3_upload():
-                """Upload to S3 with graceful failure — don't block analysis."""
+                """Upload the ORIGINAL (full-res) to S3 with graceful failure
+                — don't block analysis. food_log.image_url ends up pointing
+                to the high-quality archive."""
                 try:
                     return await upload_food_image_to_s3(
-                        file_bytes=image_bytes,
+                        file_bytes=archive_bytes,
                         user_id=user_id,
-                        content_type=content_type,
+                        content_type=archive_content_type,
                     )
                 except Exception as s3_err:
                     logger.warning(f"[ANALYZE-STREAM:{request_id}] S3 upload failed (non-blocking): {s3_err}", exc_info=True)
                     return (None, None)
 
-            analysis_future = asyncio.ensure_future(asyncio.gather(
-                gemini_service.analyze_food_image(
-                    image_base64=image_base64,
-                    mime_type=content_type,
-                    request_id=request_id,
-                    user_id=user_id,
-                ),
-                safe_s3_upload(),
-            ))
+            # Phase 2 pipeline: Stage-1 thin Vision → cache_service.analyze_dishes_from_vision
+            # Kill-switch via env: set PHASE2_VISION_PIPELINE=0 to revert to legacy heavyweight path.
+            import os as _os
+            use_phase2 = _os.environ.get("PHASE2_VISION_PIPELINE", "1") != "0"
+
+            if use_phase2:
+                from services.vision_service import get_vision_service
+                from services.food_analysis.cache_service import get_food_analysis_cache_service
+                vision = get_vision_service()
+                cache_svc = get_food_analysis_cache_service()
+
+                async def phase2_analyze() -> dict:
+                    """Stage-1 (Vision thin classifier) + Stage-1.5 (cache-stack lookup)."""
+                    identification = await vision.identify_dishes_from_image(
+                        image_bytes=image_bytes,
+                        mime_type=content_type,
+                        mode='plate',
+                        request_id=request_id,
+                    )
+                    logger.info(
+                        f"[ANALYZE-STREAM:{request_id}] Stage-1 done: "
+                        f"{len(identification.dishes)} dishes, "
+                        f"cuisine={identification.cuisine_tag}, "
+                        f"layout={identification.plate_layout}"
+                    )
+                    return await cache_svc.analyze_dishes_from_vision(
+                        dishes=identification.dishes,
+                        user_context={
+                            "user_id": user_id,
+                            "meal_type": meal_type,
+                            "cuisine_tag": identification.cuisine_tag,
+                        },
+                    )
+
+                analysis_future = asyncio.ensure_future(asyncio.gather(
+                    phase2_analyze(),
+                    safe_s3_upload(),
+                ))
+            else:
+                # Legacy heavyweight path — preserved for rollback safety.
+                analysis_future = asyncio.ensure_future(asyncio.gather(
+                    gemini_service.analyze_food_image(
+                        image_base64=image_base64,
+                        mime_type=content_type,
+                        request_id=request_id,
+                        user_id=user_id,
+                    ),
+                    safe_s3_upload(),
+                ))
+
             while not analysis_future.done():
                 try:
                     await asyncio.wait_for(asyncio.shield(analysis_future), timeout=10.0)
@@ -855,29 +913,18 @@ async def analyze_food_from_image_streaming(
             analyze_inflammation_score = food_analysis.get('inflammation_score')
             analyze_is_ultra_processed = food_analysis.get('is_ultra_processed')
 
-            # Enrich image analysis with contextual coach tips
-            ai_suggestion = food_analysis.get('feedback')
+            # Coaching tips are generated AFTER the `done` event (see below) —
+            # the 5-8s Gemini call must NOT block the food card from rendering.
+            # The `done` event ships macros + a locally-computed health_score
+            # immediately; tips arrive via a follow-up `coach_tips` event.
+            ai_suggestion = None
             encouragements = []
             warnings = []
             recommended_swap = None
-            health_score = None
+            # health_score: use the value analyze_dishes_from_vision already
+            # computed locally (_compute_health_score — no Gemini).
+            health_score = food_analysis.get('health_score')
             health_score_reasons = food_analysis.get('health_score_reasons')
-            try:
-                cache_service = get_food_analysis_cache_service()
-                tips = await cache_service.enrich_with_tips(
-                    food_items=food_items,
-                    meal_type=meal_type,
-                    user_id=user_id,
-                )
-                if tips:
-                    encouragements = tips.get("encouragements", [])
-                    warnings = tips.get("warnings", [])
-                    ai_suggestion = tips.get("ai_suggestion") or ai_suggestion
-                    recommended_swap = tips.get("recommended_swap")
-                    health_score = tips.get("health_score")
-                    health_score_reasons = tips.get("health_score_reasons") or health_score_reasons
-            except Exception as tip_err:
-                logger.warning(f"[ANALYZE-STREAM:{request_id}] Tip enrichment failed: {tip_err}", exc_info=True)
 
             # Log success with full details
             logger.info(
@@ -933,13 +980,64 @@ async def analyze_food_from_image_streaming(
             }
             yield f"event: done\ndata: {json.dumps(response_data)}\n\n"
 
+            # ── Coaching tips — streamed AFTER `done` ──────────────────────
+            # The card already rendered. Now generate the 5-8s coach tips and
+            # ship them as a `coach_tips` event. A client that doesn't handle
+            # the event just shows no tips — fully graceful.
+            try:
+                cache_service = get_food_analysis_cache_service()
+                tips = await cache_service.enrich_with_tips(
+                    food_items=food_items,
+                    meal_type=meal_type,
+                    user_id=user_id,
+                )
+                if tips:
+                    coach_tips_data = {
+                        "request_id": request_id,
+                        "ai_suggestion": tips.get("ai_suggestion"),
+                        "encouragements": tips.get("encouragements", []),
+                        "warnings": tips.get("warnings", []),
+                        "recommended_swap": tips.get("recommended_swap"),
+                        "health_score": tips.get("health_score") or health_score,
+                        "health_score_reasons": tips.get("health_score_reasons") or health_score_reasons,
+                    }
+                    yield f"event: coach_tips\ndata: {json.dumps(coach_tips_data)}\n\n"
+            except Exception as tip_err:
+                logger.warning(
+                    f"[ANALYZE-STREAM:{request_id}] coach_tips enrichment failed: {tip_err}"
+                )
+
         except Exception as e:
             logger.exception(f"[ANALYZE-STREAM:{request_id}] EXCEPTION | user={user_id} | error={e}")
-            yield send_error(
-                "An unexpected error occurred. Please try again.",
-                "UNEXPECTED_EXCEPTION",
-                f"{type(e).__name__}: {str(e)}"
-            )
+            # Translate known Stage-1 "no food in image" outcomes into the
+            # user-recoverable NO_FOOD_DETECTED code so the frontend can show
+            # "Try another photo" instead of a generic crash banner. The
+            # Phase-2 Stage-1 path raises RuntimeError with NO_FOOD_DETECTED
+            # in the message; older paths raised it via the explicit
+            # send_error(..., "NO_FOOD_DETECTED", ...) at line 865.
+            err_msg = str(e)
+            # NO_FOOD_DETECTED — Stage-1 succeeded but identified no dishes
+            # (intentional fail-fast on cat photos / blurry shots / etc).
+            # Stage-1 parse failures fall here too — Gemini Vision returned
+            # truncated/malformed JSON. Either way the user-correct UX is
+            # "couldn't read this photo, try another" not "internal error".
+            if (
+                "NO_FOOD_DETECTED" in err_msg
+                or "Stage-1 JSON parse failure" in err_msg
+                or "Stage-1 returned no valid dishes" in err_msg
+                or "Empty Stage-1 response" in err_msg
+            ):
+                yield send_error(
+                    "Couldn't read this photo. Try a clearer shot with the plate in frame.",
+                    "NO_FOOD_DETECTED",
+                    f"{type(e).__name__}: {err_msg}",
+                )
+            else:
+                yield send_error(
+                    "An unexpected error occurred. Please try again.",
+                    "UNEXPECTED_EXCEPTION",
+                    f"{type(e).__name__}: {err_msg}",
+                )
 
     return StreamingResponse(
         generate_sse(),

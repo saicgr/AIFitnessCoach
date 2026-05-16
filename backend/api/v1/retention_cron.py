@@ -21,8 +21,6 @@ Invocation: external scheduler POSTs daily to `/api/v1/retention/cron`
     service — the same Render web service receives the ping.
 Security: X-Cron-Secret header (HMAC compare_digest).
 """
-from __future__ import annotations
-
 import hmac
 from datetime import datetime, timedelta, timezone
 from typing import Dict, Optional

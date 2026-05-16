@@ -3,182 +3,270 @@
 ## Setup
 - **Tool**: [theapplaunchpad.com](https://theapplaunchpad.com)
 - **Play Store size**: 1080x1920px (portrait, 9:16), PNG/JPEG, max 8 MB
-- **App Store size**: 1320x2868px (6.9" iPhone 16 Pro Max — 2026 required size), PNG/JPEG, no alpha, 72 DPI
+- **App Store size**: 1320x2868px (6.9" iPhone 16 Pro Max — 2026 required), PNG/JPEG, no alpha, 72 DPI
 - **Counts**: Play allows **8 phone screenshots max** per Console docs (some apps like Mob ship 14 via API/custom listings — try uploading >8 in Console; if it caps you, use the 8 below). App Store allows **up to 10**.
 - **Template style**: Mob-inspired — cream/off-white background, single phone tilted, prop objects bleeding off the edges, caption stacked top with one accent word
 - **App mode**: Dark mode ON for in-phone screen capture; light cream backgrounds for the frame around the phone
 
-## ASO Research Notes (2026)
-
-These findings come from [Apptweak ASO research](https://www.apptweak.com/en/aso-blog/how-to-optimize-your-app-screenshots), [ASO Mobile](https://asomobile.net/en/blog/screenshots-for-app-store-and-google-play-in-2025-a-complete-guide/), and [AppScreenshotStudio](https://medium.com/@AppScreenshotStudio/app-store-screenshots-that-convert-the-2026-design-guide-4438994689d6) and dictate the deck below:
-
-- **~90% of users don't scroll past frame 3** — first 3 frames must each stand alone as install reasons, not be a setup-payoff arc.
-- **Social proof on frame 1 → up to +90% conversion** (rating stars, install count, media logos, "as seen in"). Brand-only frame 1 leaves money on the table for an unknown app.
-- **Benefit-focused hero shot beats generic UI by +45%** — show a result, not a screen tour.
-- **Top-left of each frame** is where the eye lands first. Put the value prop there, not centered.
-- **Apple OCR indexes screenshot text** — high-contrast, readable captions also feed search ranking.
-- **Plain honest captions outperform marketing speak** — `"1,700+ exercises with form videos"` beats `"Crush your goals 💪"`.
-- **Video preview** especially strong for fitness — first 3 seconds must show value, not an animated logo.
-- **Concrete numbers convert** — `1,700+ exercises`, `parsed in 2 seconds`, `4.8 ★`.
-
 ---
 
-## Feature Inventory (14 features total — 8 frames)
+## ASO Research Notes (2026)
 
-Zealova ships these 14 marketable features. The deck consolidates them into **8 screenshot frames** by combining related features into multi-feature captions where the visual still reads cleanly:
+These rules drive the deck below. Sources: [Apptweak](https://www.apptweak.com/en/aso-blog/how-to-optimize-your-app-screenshots), [ASO Mobile](https://asomobile.net/en/blog/screenshots-for-app-store-and-google-play-in-2025-a-complete-guide/), [AppScreenshotStudio](https://medium.com/@AppScreenshotStudio/app-store-screenshots-that-convert-the-2026-design-guide-4438994689d6), [Sensor Tower](https://sensortower.com/blog/top-10-health-and-fitness-apps-what-their-screenshots-teach-us-about-optimization), [SnapMonk](https://www.snapmonk.com/screenshot-templates/fitness), [Promodo](https://www.promodo.com/blog/aso-trends), [SplitMetrics](https://splitmetrics.com/blog/master-the-official-splitmetrics-a-b-testing-validation-framework-to-win-on-the-app-store/).
 
-| Feature | Surfaced in Frame # |
-|---|---|
-| Brand / aspirational hero | 1 |
-| Log meals via coach chat | 2 |
-| Coach for general fitness Q&A | 2 (secondary mention) |
-| Snap meal photo → auto-logged | 3 |
-| Scan restaurant menus | 3 (combined visual) |
-| Scan your fridge → recipe ideas | 3 (combined visual) |
-| Recipe importer (paste IG/TikTok/blog link) | 4 |
-| Batch cook flow | 4 (secondary mention) |
-| AI-generated workouts personalized weekly | 5 |
-| 1,700+ exercise library | 5 (caption number) |
-| Form video AI analysis | 6 |
-| Active workout tracking (sets/weight/rest) | 7 |
-| Progress dashboard (heatmap, PRs, weight trend) | 7 (secondary mention) |
-| Macros, vitamins, hydration (Fuel tab) | 8 |
-| Streaks, trophies, Wrapped | 8 (secondary mention) |
+- **~90% of users don't scroll past frame 3** — first 3 frames must each stand alone as install reasons.
+- **Main caption: 2-6 words** — longer becomes an unread text block at thumbnail.
+- **Sub-caption: 8-12 words** with concrete details (numbers, timeframes, specific use cases).
+- **Apple OCRs caption text into search keyword index** — captions need keyword density.
+- **Outcome > feature**: *"Never forget a deadline again"* beats *"Advanced Task Management"*.
+- **Specific numbers convert** — *"1,700+ exercises"* beats *"Tons of exercises"*.
+- **Time-bounded outcomes work** — *"7-day yoga challenge starts today"* got +12% conversion.
+- **Social proof on frame 1 → up to +90% conversion** (rating, install count, media logos, "as seen in").
+- **Top-left of each frame** is where the eye lands first.
+- **High-contrast text** Apple OCR can read.
+- **Plain honest captions** outperform marketing speak.
+- **Video preview** especially strong for fitness — first 3 sec must show value, not animated logo.
 
 ---
 
 ## The 8 Frames
 
-| # | Caption | Background | Screen | Features Surfaced |
-|---|---------|-----------|--------|-------------------|
-| 1 | **Train smarter, eat better with Zealova** *(top-left badge: ★ 4.8 · 10,000+ workouts logged)* | Cream `#F5F1EA` | Home dashboard, phone tilted ~12°, dumbbell + meal bowl bleeding off edges, social-proof badge top-left | Brand hero + social proof (Mob treatment + ASO uplift) |
-| 2 | **Log meals just by chatting** *(sub: + full coaching, anytime)* | Soft pink `#F4D5DA` | Coach chat — user types `"two slices of cheese pizza and a coke"`, coach replies with parsed macros | Log-via-coach + general chat coach |
-| 3 | **Snap meals, menus, even your fridge** | Warm peach `#FBE2C8` | Triptych mini-mockups: meal photo log on left, menu scan center, fridge scan with recipe suggestions on right | Meal photo log + menu scanner + fridge scanner |
-| 4 | **Import any recipe, batch cook for the week** | Olive cream `#E8E5D2` | Recipe import sheet (IG/blog URL → parsed recipe) with a smaller batch-cook plan card overlaid | Recipe importer + batch cook |
-| 5 | **Workouts built for you — from 1,700+ exercises** | Sky `#D6E9F5` | AI workout detail with "Why this exercise" expanded; library grid peeking from the right edge | AI workout generation + exercise library depth |
-| 6 | **Film your set, get AI form feedback** | Steel `#D8DCE3` | Form video result — squat scored with bullet feedback ("hips break first ✓", "knee tracking ⚠") | Form video analysis |
-| 7 | **Log every rep. Watch your strength climb.** | Soft green `#D4ECD7` | Active workout mid-session (set checked, timer running) with a small Progress heatmap card overlaid corner | Active workout + progress dashboard |
-| 8 | **Track macros, vitamins & water — earn streaks** | Lavender `#E2DCEF` | Fuel tab (macros ring + micro pills + water glasses) with a small trophy / Wrapped card overlaid | Fuel tab + trophies/streaks/Wrapped |
+| # | Main caption (orange in **bold**) | Sub-caption | Screen | Chars |
+|---|---|---|---|---|
+| 1 | Your fitness coach in **chat.** | *1,700+ exercises. Workouts + macros. Adapts to you.* | Home dashboard + props (dumbbell, meal bowl) — single phone, brand composition, capability pill top-left | 27 |
+| 2 | Always know **what to lift** next | *Adapts to your last session, every time* | Exercise detail (Bench Press) — warmup sets + effective sets w/ green/blue progression bars + Start Workout button | 29 |
+| 3 | Menu picks. **Fridge recipes.** | *Scored, ranked, logged — in seconds.* | 2-mockup composite — menu scan w/ TOP PICK badge + scores (left) + fridge scan w/ recipe suggestions (right) | 28 |
+| 4 | Don't feel like it? **Swap it.** | *Coach swaps any exercise — by chat* | Chat: user *"swap deadlifts for trap bar"* → coach reply with updated workout card inline | 27 |
+| 5 | Just **say what you ate.** | *Or what you trained — yoga, runs, anything* | Chat showing voice log of meal + yoga + cardio | 22 |
+| 6 | Watch your **strength climb** | *Every PR, charted automatically* | Progress dashboard — heatmap, 1RM line chart, recent PR callout, streak counter | 25 |
+| 7 | Photos & pounds, **side by side** | *See the change you can't feel* | Body tracking — weight trend line + before/after photo split-screen | 30 |
+| 8 | Brag worthy. **Built-in.** | *15 ways to share your wins — Wrapped, receipt, trading card, more* | Shareable gallery — grid of 15+ viral format thumbnails | 22 |
+
+---
+
+## Story arc
+
+```
+1. WHAT IT IS (fitness coach in chat) →
+2. WORKOUT INTELLIGENCE (knows what you should lift) →
+3. NUTRITION INTELLIGENCE (picks + recipes from scans) →
+4. WORKOUT FLEXIBILITY (chat-swap any exercise) →
+5. MULTI-INPUT (voice log meals + yoga) →
+6. WORKOUT PAYOFF (strength climbs) →
+7. BODY PAYOFF (photos + pounds) →
+8. SHARE/RETENTION (brag worthy)
+```
+
+Frame 1 = setup. Frames 2-5 = unfair advantages spread across workout (2, 4) and nutrition (3, 5). Frames 6-7 = payoffs. Frame 8 = retention/viral.
+
+**Top 3 carry ~90% of the install decision** — each must stand alone as an install reason:
+- Frame 1: chat-coach claim establishes category positioning
+- Frame 2: exercise intelligence (proof on workout side)
+- Frame 3: menu picks + fridge recipes (proof on nutrition side, output > input)
 
 ---
 
 ## Frame-by-Frame Capture Details
 
-### Frame 1 — Brand Hero + Social Proof (Mob-style)
+### Frame 1 — Brand Hero + Capability Pill (Mob-style)
 
-**Caption layout** (stacked top, last word oversized):
+**Main caption** (stacked top, last word oversized + orange):
 ```
-Train smarter,
-eat better with
-Zealova       ← 2× size, brand green
+Your fitness
+coach in chat.    ← "chat" 1.5× size, brand green
 ```
 
-**Social-proof badge** (top-left corner, small pill, brand green on cream):
-```
-★ 4.8 · 10,000+ workouts logged
-```
-Update the number to whatever's accurate at submission time. If install/workout counts are too small at launch, swap for a media logo strip (`As seen in: Product Hunt · TechCrunch · …`) — research shows either format drives the +90% uplift.
+**Sub-caption** (smaller, below main):
+*1,700+ exercises. Workouts + macros. Adapts to you.*
 
-**What to capture (in-phone screen)**: Home dashboard — clean state, today's workout card visible, no error banners.
+**Capability pill** (top-left corner, small pill, brand green on cream):
+```
+1,700+ exercises · Workouts + macros · Adapts to you
+```
+
+This pre-launch pill substitutes for social proof. **Swap to real social proof badge as soon as you have it** — see Post-Launch Badge Progression below.
+
+**What to capture (in-phone screen)**: Home dashboard — clean state, today's workout card visible, no error banners, no debug overlays.
 
 **Frame composition**:
 - Phone tilted ~12° clockwise, centered slightly low
 - Bottom-left: half a meal bowl (oats + berries) bleeding off
 - Bottom-right: dumbbell head bleeding off
 - Top-right: optional sprig of herbs or water glass
-- Top-left: the social-proof badge (do not bury it — eye lands top-left first)
+- Top-left: the capability pill (do not bury it — eye lands top-left first)
 
 ---
 
-### Frame 2 — Log via Coach Chat
+### Frame 2 — Workout Intelligence (Progressive Overload Bars)
 
-**Caption**: `Log meals just by chatting`
-**Sub-caption** (smaller, below): `+ full coaching, anytime`
+**Main caption**: `Always know what to lift next`
+**Sub-caption**: *Adapts to your last session, every time*
+**Background**: Soft sky `#D6E9F5`
 
-**What to capture**:
-- User message bubble: `"two slices of cheese pizza and a coke"`
-- Coach reply: parsed macros card (calories, P/C/F per item) inline in the chat
+**What to capture**: Exercise detail screen (Barbell Bench Press) showing:
+- Warmup sets table (e.g. Set 1: 10 reps @ 20 kg, Set 2: 5 reps @ 37.5 kg)
+- Effective sets table with green/blue progression bars (green = matched last session, blue = PR target)
+- Start Workout button visible at bottom
+- Clean state — no notes, no errors
+
+**How to get this state**: Open today's workout → tap any exercise (must have prior bench sessions logged so progression bars have data) → screenshot the detail view.
+
+**Pre-condition**: At least 2 prior bench sessions logged so progression bars render meaningfully.
+
+---
+
+### Frame 3 — Nutrition Intelligence (Menu Picks + Fridge Recipes)
+
+**Main caption**: `Menu picks. Fridge recipes.`
+**Sub-caption**: *Scored, ranked, logged — in seconds.*
+**Background**: Warm peach `#FBE2C8`
+
+**What to capture**: 2-mockup composite (composited in launchpad tool):
+
+**Left mini phone — Menu scan result**:
+- Restaurant menu photo at top (small)
+- Parsed dish list below with health scores (e.g. "85", "72", "55")
+- "TOP PICK" badge on the highest-scoring item
+- Per-item cal + protein
+- "Best macro fit" subtext on the top pick
+
+**Right mini phone — Fridge scan result**:
+- Fridge photo at top (small)
+- Detected ingredients chips ("chicken breast", "broccoli", "rice", "eggs")
+- 3 recipe cards below: "Chicken Stir-Fry · 32g protein · 25 min", "Veggie Bowl · 18g protein · 15 min", "Egg Scramble · 24g protein · 10 min"
+
+**Why two phones, not three**: Showing OUTPUT (picks/recipes) is more compelling than input (camera viewfinder). Two clean output screens > three small ones.
+
+---
+
+### Frame 4 — Chat-Modify Workouts
+
+**Main caption**: `Don't feel like it? Swap it.`
+**Sub-caption**: *Coach swaps any exercise — by chat*
+**Background**: Soft pink `#F4D5DA`
+
+**What to capture**: Coach chat screen showing:
+- User message: *"swap deadlifts for trap bar deadlifts"*
+- Coach reply: confirmation message + updated workout card preview inline ("Tomorrow's workout: Trap bar deadlifts 4×5, …")
 - Quick-action pills visible at bottom
 - Coach avatar visible
 
-**How to get this state**: Open chat → type the message → wait for the structured macro reply → screenshot.
+**How to get this state**: Open chat with coach → request an exercise swap on a real generated workout → wait for the coach to confirm + display the updated plan card → screenshot.
 
 ---
 
-### Frame 3 — Vision Triptych (Meal / Menu / Fridge)
+### Frame 5 — Voice/Chat Multi-Input Logging
 
-**Caption**: `Snap meals, menus, even your fridge`
+**Main caption**: `Just say what you ate.`
+**Sub-caption**: *Or what you trained — yoga, runs, anything*
+**Background**: Soft green `#D4ECD7`
 
-**What to capture**: Three mini phone mockups in a row inside the frame, each showing one vision use case:
-1. **Left mini**: Meal photo log — plate photo at top, 4 parsed food cards with macros
-2. **Center mini**: Menu scanner — restaurant menu photo with overlay highlighting dishes + calorie ranges
-3. **Right mini**: Fridge scanner — fridge photo with detected ingredients pills, recipe suggestion card below
+**What to capture**: Coach chat screen showing 3 stacked example messages:
+1. *"two slices of pizza and a coke"* → parsed macro card reply
+2. *"did 30 min yoga at home"* → ✓ workout logged confirmation
+3. *"30 min run, easy pace"* → ✓ cardio logged confirmation
 
-**How to get each state**:
-- Meal: Nutrition → "+" → camera → snap meal → screenshot result
-- Menu: Coach chat → camera → snap any menu page → screenshot Vision result
-- Fridge: Coach chat → camera → snap fridge interior → screenshot the recipe-suggestion reply
+This frame proves the chat coach handles meals AND non-strength workouts (yoga, runs) which is uniquely Zealova — Strong/Hevy/Fitbod can't log yoga via chat.
 
----
-
-### Frame 4 — Recipe Importer + Batch Cook
-
-**Caption**: `Import any recipe, batch cook for the week`
-
-**What to capture**:
-- Foreground: Recipe import sheet — URL field showing an Instagram/TikTok/blog link, parsed recipe below (title, ingredients, steps)
-- Smaller overlay (corner): batch-cook plan card showing "Cook once → 4 portions across the week"
-
-**How to get this state**: Recipes tab → Import → paste a real recipe URL → screenshot the parsed result. Composite the batch-cook card on top in the launchpad tool.
+**How to get this state**: Send each test message in sequence in a clean chat thread → screenshot the resulting chat with all 3 exchanges visible.
 
 ---
 
-### Frame 5 — AI Workouts + Library Depth
+### Frame 6 — Workout Payoff (Progress Dashboard)
 
-**Caption**: `Workouts built for you — from 1,700+ exercises`
+**Main caption**: `Watch your strength climb`
+**Sub-caption**: *Every PR, charted automatically*
+**Background**: Steel blue `#2563EB`
 
-**What to capture**:
-- Foreground: Generated workout detail — exercise list with sets/reps, "Why this exercise?" reasoning expanded for at least one exercise
-- Right edge: thin slice of the exercise library grid peeking in (4-5 thumbnail tiles visible) to imply depth
+**What to capture**: Progress dashboard with:
+- GitHub-style activity heatmap (green squares filling)
+- 1RM line chart trending upward
+- Recent PR callout ("+15 lbs Bench")
+- Streak counter (current streak prominent)
 
-**How to get this state**: Generate a workout → open detail → expand "Why these exercises?" → screenshot. Composite the library grid sliver on the right in launchpad.
-
----
-
-### Frame 6 — Form Video Analysis
-
-**Caption**: `Film your set, get AI form feedback`
-
-**What to capture**:
-- Video frame thumbnail at top (squat or bench)
-- Score / verdict card (e.g. "Form: 8/10")
-- Bullet feedback list: ✓ checks for what's good, ⚠ for what to fix
-
-**How to get this state**: Coach chat → camera → record a short form video of any exercise → wait for analysis → screenshot the structured feedback.
+**Pre-condition**: 20+ workouts logged for a good-looking heatmap; at least one PR detected.
 
 ---
 
-### Frame 7 — Active Workout + Progress
+### Frame 7 — Body Payoff (Photos + Pounds)
 
-**Caption**: `Log every rep. Watch your strength climb.`
+**Main caption**: `Photos & pounds, side by side`
+**Sub-caption**: *See the change you can't feel*
+**Background**: Lavender purple `#B39DDB`
 
-**What to capture**:
-- Foreground: Active workout screen mid-session — current exercise visible, at least 1 set logged with weight + reps + checkmark, rest timer running
-- Corner overlay: small Progress heatmap card (GitHub-style green squares) + a "+15 lbs PR" callout
+**What to capture**: Body tracking screen with:
+- Weight trend line chart at top (real downward or upward trend)
+- Before/after photo comparison below — split-screen with week labels (e.g. "Week 1" left, "Week 12" right)
+- Visible composition change
 
-**How to get this state**: Start a workout → log 1-2 sets → screenshot during a live set with the timer visible. Composite the heatmap + PR callout in launchpad.
+**Pre-condition**: Weight entries + 2 progress photos at different timepoints.
 
 ---
 
-### Frame 8 — Fuel + Streaks/Trophies/Wrapped
+### Frame 8 — Share/Retention (Shareable Gallery)
 
-**Caption**: `Track macros, vitamins & water — earn streaks`
+**Main caption**: `Brag worthy. Built-in.`
+**Sub-caption**: *15 ways to share your wins — Wrapped, receipt, trading card, more*
+**Background**: Muted gold `#B45309`
 
-**What to capture**:
-- Foreground: Fuel tab — macros ring (P/C/F filled), micro pills row (vitamins/minerals), water glasses tracker
-- Corner overlay: small trophy / Wrapped recap card (streak count + trophy badge)
+**What to capture**: Shareable gallery view with grid of 15+ format thumbnails:
+- Wrapped card (center, largest if hierarchy)
+- Receipt format
+- Trading card format
+- Newspaper format
+- X.com card
+- IG story
+- Polaroid
+- Stat sheet
+- (etc — all 15+ visible in grid layout)
 
-**How to get this state**: Nutrition → Fuel tab → screenshot full state with macros + micros + water visible. Composite the trophy/Wrapped card in launchpad.
+**How to get this state**: Navigate to share gallery from any logged workout → screenshot the full gallery view.
+
+---
+
+## Post-Launch Badge Progression (Frame 1)
+
+The capability pill on frame 1 is a pre-launch placeholder. Swap it for real social proof as soon as you have data — research shows up to **+90% conversion** lift from frame 1 social proof.
+
+| Stage | Top-left badge on frame 1 | When to switch |
+|---|---|---|
+| **Pre-launch (now)** | `1,700+ exercises · Workouts + macros · Adapts to you` | Ship state |
+| **First 50 reviews** | `★ 4.7 · Trusted by early users` | Around Week 2-4 post-launch |
+| **500+ reviews** | `★ 4.7 · 500+ five-star reviews` | Once you cross 500 |
+| **5k+ installs** | `★ 4.7 · 10,000+ workouts logged this month` | Once active usage hits |
+| **Press hits** | `As seen in: Product Hunt · TechCrunch` | After PR coverage |
+| **Combined (peak)** | `★ 4.7 · 10,000+ users · Featured in TechCrunch` | Stack what's most credible |
+
+Update the pill in `theapplaunchpad.com` and re-export frame 1 each time you cross a threshold. No need to redo other frames.
+
+---
+
+## Bottom-Testimonial Slots (Frames 2, 3, 6)
+
+Once you have real reviews, add ★★★★★ + a short testimonial below the phone on the **install-decision frames**. Frame 1 = badge (broad trust). Frames 2/3/6 = testimonials (deepen trust on specific features).
+
+| Frame | Testimonial slot pattern (post-launch only) |
+|---|---|
+| **2** (what to lift) | ★★★★★ *"Finally know what to lift each session"* — @username |
+| **3** (menu picks) | ★★★★★ *"Used it at 4 restaurants this week"* — @username |
+| **6** (strength climb) | ★★★★★ *"Up 25 lbs on bench in 8 weeks"* — @username |
+
+**Pre-launch**: leave the bottom area blank. Do NOT use fake testimonials — Apple/Play can reject for fabricated social proof.
+
+---
+
+## Extended Deck (Slots 9-12)
+
+For when Play Console accepts >8 (Mob ships 14 via API/custom listings — try uploading more in Console as a stretch), or for App Store's 10 slots:
+
+| # | Main caption (orange in **bold**) | Sub-caption | Screen |
+|---|---|---|---|
+| 9 | **Import any recipe**, batch cook | *Paste any URL — IG, blog, TikTok. Cook once, eat 4 days.* | Recipe import sheet showing parsed recipe + batch-cook plan card |
+| 10 | Hit your macros **without thinking** | *Macros, vitamins, water — auto-tracked from your logs* | Fuel tab — macros ring + micro pills + water glasses |
+| 11 | Pick your **coach. Pick your vibe.** | *Voice, tone, style — all customizable* | Coach persona picker w/ avatar grid + voice samples |
+| 12 | See **where you rank** — worldwide | *Weekly XP leaderboards, near-you boards, friend boards* | Discover screen — percentile hero card + Top 10 list |
+
+Order on Play (when uncapped): 1-8 stays. Then 9 (recipes), 10 (Fuel), 11 (persona), 12 (Discover) — fans out from "the app does X" → "the app makes you better" → "the app is uniquely yours" → "and there's a community."
 
 ---
 
@@ -198,6 +286,32 @@ A single caption spans all three — the row of foldable mockups reads as one "F
 
 ---
 
+## App Preview Video (recommended for fitness)
+
+Fitness apps see disproportionate lift from a 15-30s app preview video.
+
+- **First 3 seconds**: a real-world scene (person snapping a meal, recording a set) — NO logo intro.
+- **Order to demo** (mirrors the screenshot deck): chat-log meal → fridge scan → workout generation → active set → progress chart. Reinforcement compounds.
+- **Captions burned into video** (not voiceover) — most users watch muted.
+- **End frame**: app icon + "Zealova — your fitness coach in chat".
+
+---
+
+## Adding New Features Later
+
+When a new feature ships, evaluate against three rules before changing the deck:
+
+1. **Does it deserve its own frame, or is it a secondary mention on an existing one?**
+   - Standalone if it's a category differentiator (form video analysis, fridge scan).
+   - Secondary mention if it deepens an existing frame.
+2. **Does it bump anything out of the top 8?**
+   - Only if it ranks higher on **Visual wow × Differentiation × Daily-use** than the current frame it would replace.
+   - Most new features land in the extended deck (slots 9-12), not the core 8.
+3. **Does it change the frame-1 badge?**
+   - Big partnerships, awards, or milestone numbers (10k users, App Store featuring) go into the social-proof badge.
+
+---
+
 ## In-App Intro Screen
 
 The app intro screen mirrors the first 7 of these screenshots — same captions, same background colors, one phone per page. Screenshot assets go in `assets/images/`:
@@ -205,42 +319,28 @@ The app intro screen mirrors the first 7 of these screenshots — same captions,
 | Page | Asset filename | Matches Frame # |
 |------|---------------|-----------------|
 | 1 | `intro_brand.png` | #1 |
-| 2 | `intro_chat_log.png` | #2 |
-| 3 | `intro_vision.png` | #3 |
-| 4 | `intro_recipes.png` | #4 |
-| 5 | `intro_workouts.png` | #5 |
-| 6 | `intro_form_video.png` | #6 |
-| 7 | `intro_active_workout.png` | #7 |
+| 2 | `intro_what_to_lift.png` | #2 |
+| 3 | `intro_menu_fridge.png` | #3 |
+| 4 | `intro_swap_exercise.png` | #4 |
+| 5 | `intro_voice_log.png` | #5 |
+| 6 | `intro_strength_climb.png` | #6 |
+| 7 | `intro_body_track.png` | #7 |
 
-(Frame 8 — Fuel + Trophies — is not in the intro; gamification is a retention scaffold, not a first-run hook.)
+(Frame 8 — Shareable gallery — is not in the intro; sharing/gamification is a retention scaffold, not a first-run hook.)
 
 ---
-
-## Why This Order (research-backed)
-
-Frames 1-3 carry ~90% of the install decision (users rarely scroll further), so each must stand alone:
-
-- **Frame 1 = Trust** — brand identity + social proof badge ("★ 4.8 · 10,000+ workouts logged"). Establishes legitimacy in 1 second.
-- **Frame 2 = Unique Value** — log meals just by chatting. Demonstrates the AI hook with a concrete use case no competitor has.
-- **Frame 3 = Breadth** — vision triptych (meal/menu/fridge) shows three more wow-factor scans in one frame, packing the maximum "this app does a lot" signal before the scroll cliff.
-
-Frames 4-8 then deepen the story for users who keep scrolling: recipes (4), workout intelligence (5), form coaching (6), tracking depth (7), nutrition + retention (8).
-
-## App Preview Video (recommended)
-
-Fitness apps see disproportionate lift from a 15-30s app preview video. Spec:
-- **First 3 seconds**: a real-world scene (person snapping a meal, recording a set) — NO logo intro.
-- **Order to demo**: chat-log meal → fridge scan → workout generation → active set → progress chart. Mirrors the screenshot deck so reinforcement compounds.
-- **Captions burned into video** (not voiceover) — most users watch muted.
-- **End frame**: app icon + "Zealova — train smarter".
 
 ## Pre-Capture Checklist
 
 - [ ] Dark mode enabled (in-phone screen)
-- [ ] 20+ workouts logged (for heatmap/stats in frame 7)
-- [ ] At least one form-video analysis run (for frame 6)
-- [ ] At least one recipe imported (for frame 4)
-- [ ] At least one menu scan + fridge scan completed (for frame 3)
-- [ ] No sensitive personal data visible
+- [ ] 20+ workouts logged (heatmap/stats — frame 6)
+- [ ] At least one PR detected (frame 6)
+- [ ] At least 2 progress photos at different dates (frame 7)
+- [ ] At least 2 prior bench sessions logged so progression bars render (frame 2)
+- [ ] At least one menu scan + fridge scan + 3 recipe outputs available (frame 3)
+- [ ] Test chat messages drafted: pizza+coke, yoga 30min, easy run (frame 5)
+- [ ] Test exercise-swap conversation drafted (frame 4)
+- [ ] Shareable gallery has 15+ formats visible (frame 8)
+- [ ] No sensitive personal data visible in any screenshot
 - [ ] Status bar clean (good signal, battery, time)
 - [ ] No debug banners showing

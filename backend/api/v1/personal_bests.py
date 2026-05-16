@@ -17,8 +17,6 @@ Source tables (verified against live schema):
 
 Weights returned in lbs (user preference per feedback_weight_units.md).
 """
-from __future__ import annotations
-
 import json
 from typing import Any, Optional
 

@@ -210,6 +210,11 @@ class TodayWorkoutResponse(BaseModel):
     next_workout_date: Optional[str] = None  # YYYY-MM-DD format for frontend to generate
     # Gym profile context
     gym_profile_id: Optional[str] = None  # Active gym profile ID used for filtering
+    # A2 fix: when the DB layer times out we return a degraded, has-no-workout
+    # response so the frontend can show "Tap to retry" instead of looping
+    # 25-second timeouts. Old clients (< 1.2.68) ignore this field — safe to
+    # add as optional.
+    degraded_reason: Optional[str] = None
 
 
 def _extract_primary_muscles(exercises: list) -> List[str]:
@@ -892,21 +897,64 @@ async def get_today_workout(
         # Today query uses allow_multiple_per_date=True and limit=5 to capture
         # quick workouts that coexist with the scheduled workout.
         loop = asyncio.get_event_loop()
-        today_rows, future_rows, completed_today_rows = await asyncio.gather(
-            loop.run_in_executor(_db_executor, lambda: db.list_workouts(
-                user_id=user_id, from_date=today_utc_start, to_date=today_utc_end,
-                is_completed=False, limit=5, gym_profile_id=active_profile_id,
-                allow_multiple_per_date=True,
-            )),
-            loop.run_in_executor(_db_executor, lambda: db.list_workouts(
-                user_id=user_id, from_date=tomorrow_utc_start, to_date=future_utc_end,
-                is_completed=False, limit=1, order_asc=True, gym_profile_id=active_profile_id,
-            )),
-            loop.run_in_executor(_db_executor, lambda: db.list_workouts(
-                user_id=user_id, from_date=today_utc_start, to_date=today_utc_end,
-                is_completed=True, limit=1, gym_profile_id=active_profile_id,
-            )),
-        )
+
+        async def _run_with_timeout(coro, label: str, per_task_timeout: float = 4.0):
+            try:
+                return await asyncio.wait_for(coro, timeout=per_task_timeout)
+            except asyncio.TimeoutError:
+                logger.warning(
+                    f"[TodayWorkout] {label} query exceeded {per_task_timeout}s "
+                    f"for user {user_id}; returning empty result"
+                )
+                return []
+
+        # A2 hardening: wrap the gather in a hard 8s ceiling, and wrap each
+        # individual list_workouts in a 4s per-task timeout. If the Supabase
+        # client stalls (gym_profile join contention, network blip, MV
+        # refresh), we return a degraded response instead of holding the
+        # request open for 25s+ which produces the iOS app-hang loop in
+        # Sentry FITWIZ-FLUTTER-97.
+        try:
+            today_rows, future_rows, completed_today_rows = await asyncio.wait_for(
+                asyncio.gather(
+                    _run_with_timeout(
+                        loop.run_in_executor(_db_executor, lambda: db.list_workouts(
+                            user_id=user_id, from_date=today_utc_start, to_date=today_utc_end,
+                            is_completed=False, limit=5, gym_profile_id=active_profile_id,
+                            allow_multiple_per_date=True,
+                        )),
+                        label="today_rows",
+                    ),
+                    _run_with_timeout(
+                        loop.run_in_executor(_db_executor, lambda: db.list_workouts(
+                            user_id=user_id, from_date=tomorrow_utc_start, to_date=future_utc_end,
+                            is_completed=False, limit=1, order_asc=True, gym_profile_id=active_profile_id,
+                        )),
+                        label="future_rows",
+                    ),
+                    _run_with_timeout(
+                        loop.run_in_executor(_db_executor, lambda: db.list_workouts(
+                            user_id=user_id, from_date=today_utc_start, to_date=today_utc_end,
+                            is_completed=True, limit=1, gym_profile_id=active_profile_id,
+                        )),
+                        label="completed_today_rows",
+                    ),
+                ),
+                timeout=8.0,
+            )
+        except asyncio.TimeoutError:
+            logger.warning(
+                f"[TodayWorkout] gather exceeded 8s for user {user_id}; "
+                f"returning degraded has_workout_today=False response"
+            )
+            return TodayWorkoutResponse(
+                has_workout_today=False,
+                today_workout=None,
+                next_workout=None,
+                is_generating=False,
+                gym_profile_id=active_profile_id,
+                degraded_reason="db_timeout",
+            )
 
         if not today_rows:
             logger.debug(f"[TODAY DEBUG] No workout found for today ({today_str}), profile={active_profile_id}")

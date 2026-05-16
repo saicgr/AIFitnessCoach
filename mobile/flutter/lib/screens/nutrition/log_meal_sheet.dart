@@ -3,6 +3,8 @@ import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'dart:typed_data';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 import '../../core/constants/app_colors.dart';
@@ -51,6 +53,8 @@ import 'widgets/ai_coach_meal_suggestion_sheet.dart';
 import '../../widgets/floating_chat/floating_chat_overlay.dart';
 import '../../widgets/fullscreen_image_viewer.dart';
 import 'menu_analysis_sheet.dart';
+import '../chat/widgets/media_picker_helper.dart' show
+  pickFoodScanArtifacts, pickFoodScanArtifactsBatch, FoodScanArtifacts;
 
 part 'log_meal_sheet_ui.dart';
 

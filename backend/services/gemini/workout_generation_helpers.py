@@ -734,6 +734,64 @@ REQUIREMENTS:
 
 Use this split information to guide exercise selection and workout structure."""
 
+        # User-defined AI focus points (priority 1-5, 5 = highest). Loaded
+        # from user_ai_settings.focus_areas (added in migration 2074) when
+        # we have a user_id and the caller didn't override. The block is
+        # sorted by priority desc and surfaced verbatim so Gemini can
+        # weight exercise selection / accessory work / RIR caps against
+        # what the user actually cares about this block.
+        ai_user_focus_instruction = ""
+        try:
+            ai_focus_rows = []
+            if user_id:
+                from core.supabase_client import get_supabase
+                sb = get_supabase()
+                resp = (
+                    sb.table("user_ai_settings")
+                    .select("focus_areas")
+                    .eq("user_id", user_id)
+                    .limit(1)
+                    .execute()
+                )
+                if resp.data:
+                    raw = (resp.data[0] or {}).get("focus_areas") or []
+                    if isinstance(raw, list):
+                        for item in raw:
+                            if not isinstance(item, dict):
+                                continue
+                            area = str(item.get("area", "")).strip()
+                            if not area:
+                                continue
+                            try:
+                                prio = int(item.get("priority", 3))
+                            except Exception:
+                                prio = 3
+                            prio = max(1, min(5, prio))
+                            ai_focus_rows.append((prio, area))
+            if ai_focus_rows:
+                ai_focus_rows.sort(key=lambda r: -r[0])
+                bullet_lines = "\n".join(
+                    f"  - [P{prio}] {area}" for prio, area in ai_focus_rows
+                )
+                ai_user_focus_instruction = f"""
+
+🎯 USER-DEFINED FOCUS (Priority 1-5, 5 = highest):
+The user has explicitly told you to focus on these things. Priority 5
+items override conflicting preferences (e.g. "no overhead pressing"
+beats a hypertrophy goal). Priority 1-2 items are nice-to-haves.
+
+{bullet_lines}
+
+How to use it:
+  • For each prescribed exercise, check whether any P4/P5 focus would
+    be violated. If yes, swap to a safer alternative.
+  • Bias accessory work toward higher-priority focuses (e.g. P5
+    "shoulder mobility" → include band pull-aparts / face-pulls).
+  • If two focuses conflict, favour the higher priority and add a
+    one-line note in the workout description explaining the trade-off."""
+        except Exception as exc:  # pragma: no cover — best-effort enrichment
+            logger.warning(f"[Gemini] Could not load AI focus areas for user {user_id}: {exc}")
+
         # Build fitness assessment instruction for smarter workout personalization
         fitness_assessment_instruction = ""
         assessment_fields = []
@@ -876,7 +934,7 @@ This assessment data reflects the user's ACTUAL capabilities - use it to create 
 - Goals: {safe_join_list(goals, 'General fitness')}
 - Available Equipment: {safe_join_list(equipment, 'Bodyweight only')}
 - Focus Areas: {safe_join_list(focus_areas, 'Full body')}
-- Workout Type: {workout_type}{environment_instruction}{age_activity_context}{training_split_instruction}{fitness_assessment_instruction}{safety_instruction}{workout_type_instruction}{custom_program_instruction}{custom_exercises_instruction}{equipment_details_instruction}{preference_constraints_instruction}{comeback_instruction}{progression_philosophy_instruction}{progression_pace_instruction}{weekly_variety_instruction}{workout_patterns_instruction}{favorite_workouts_instruction}{primary_goal_instruction}{muscle_focus_instruction}{body_analyzer_instruction}
+- Workout Type: {workout_type}{environment_instruction}{age_activity_context}{training_split_instruction}{ai_user_focus_instruction}{fitness_assessment_instruction}{safety_instruction}{workout_type_instruction}{custom_program_instruction}{custom_exercises_instruction}{equipment_details_instruction}{preference_constraints_instruction}{comeback_instruction}{progression_philosophy_instruction}{progression_pace_instruction}{weekly_variety_instruction}{workout_patterns_instruction}{favorite_workouts_instruction}{primary_goal_instruction}{muscle_focus_instruction}{body_analyzer_instruction}
 
 ⚠️ CRITICAL - MUSCLE GROUP TARGETING:
 {focus_instruction if focus_instruction else 'Select a balanced mix of exercises.'}

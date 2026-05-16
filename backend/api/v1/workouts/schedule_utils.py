@@ -7,6 +7,14 @@ Handles:
 - Workout type inference from focus areas
 - Workout name deduplication
 """
+# `from __future__ import annotations` defers all type-hint evaluation to
+# string form, making the `dict | None` syntax (PEP 604) compatible with
+# Python 3.9. Production runs on 3.11 where this is moot, but local-dev
+# .venv is 3.9 and `dict | None` at function-signature time chokes without
+# this. Safe to keep here because this module has no FastAPI route handlers
+# (which is what triggers the Pydantic 2.12 ForwardRef OpenAPI bug).
+from __future__ import annotations
+
 from typing import List, Optional
 
 from core.logger import get_logger

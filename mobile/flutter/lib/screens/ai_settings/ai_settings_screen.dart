@@ -9,6 +9,7 @@ import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/constants/api_constants.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/theme/accent_color_provider.dart';
 import '../../data/models/chat_message.dart';
 import '../../data/models/coach_persona.dart';
 import '../../data/repositories/chat_repository.dart';
@@ -18,6 +19,80 @@ import '../../data/services/tts_service.dart';
 import '../../widgets/pill_app_bar.dart';
 
 part 'ai_settings_screen_part_a_i_header_card.dart';
+
+/// Single user-defined AI focus point with a 1–5 priority weight.
+/// Persisted as the `focus_areas` jsonb column on user_ai_settings.
+class FocusArea {
+  /// The user's words for the focus (free text or selected suggestion).
+  /// Examples: "explosive hip drive", "shoulder mobility for OHP".
+  final String area;
+
+  /// 1 (nice-to-have) … 5 (override other goals). Surfaced verbatim to
+  /// Gemini under a "User-defined focus" block in the workout prompt.
+  final int priority;
+
+  const FocusArea({required this.area, required this.priority});
+
+  FocusArea copyWith({String? area, int? priority}) =>
+      FocusArea(area: area ?? this.area, priority: priority ?? this.priority);
+
+  Map<String, dynamic> toJson() => {'area': area, 'priority': priority};
+
+  factory FocusArea.fromJson(Map<String, dynamic> j) => FocusArea(
+        area: (j['area'] ?? '').toString(),
+        priority: (j['priority'] as num?)?.toInt().clamp(1, 5) ?? 3,
+      );
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is FocusArea && other.area == area && other.priority == priority);
+
+  @override
+  int get hashCode => Object.hash(area, priority);
+}
+
+/// Curated training split options surfaced as chips. `auto` lets Gemini
+/// pick based on the user's goals + injuries + recent workouts.
+class TrainingSplit {
+  static const String auto = 'auto';
+  static const String fullBody = 'full_body';
+  static const String upperLower = 'upper_lower';
+  static const String pushPullLegs = 'push_pull_legs';
+  static const String broSplit = 'bro_split';
+  static const String arnoldSplit = 'arnold_split';
+  static const String custom = 'custom';
+
+  static const List<String> all = [
+    auto,
+    fullBody,
+    upperLower,
+    pushPullLegs,
+    broSplit,
+    arnoldSplit,
+    custom,
+  ];
+
+  static String displayName(String value) {
+    switch (value) {
+      case fullBody:
+        return 'Full Body';
+      case upperLower:
+        return 'Upper / Lower';
+      case pushPullLegs:
+        return 'Push / Pull / Legs';
+      case broSplit:
+        return 'Bro Split';
+      case arnoldSplit:
+        return 'Arnold Split';
+      case custom:
+        return 'Custom';
+      case auto:
+      default:
+        return 'Auto';
+    }
+  }
+}
 
 
 /// AI Settings storage provider - loads from API when user is authenticated
@@ -79,6 +154,15 @@ class AISettings {
   final bool aiDataProcessingEnabled;
   // GDPR Art. 9 explicit consent for special-category health data.
   final bool healthDataConsent;
+  // Up-to-5 user-defined focus points with 1–5 priorities. Sorted by
+  // priority desc when injected into the Gemini workout prompt. Empty
+  // list means no focus block is sent.
+  final List<FocusArea> focusAreas;
+
+  // Chosen training split (TrainingSplit constants). Null / "auto" =
+  // Gemini chooses based on goals + injuries + history.
+  final String? trainingSplit;
+
   // Internal hydration flag. False until the notifier has loaded settings
   // either from the local cache or the API; UI surfaces should branch on
   // this to avoid flashing a default persona before the user's real
@@ -113,6 +197,8 @@ class AISettings {
     this.useRAG = true,
     this.aiDataProcessingEnabled = true,
     this.healthDataConsent = false,
+    this.focusAreas = const [],
+    this.trainingSplit,
     this.isHydrated = false,
   });
 
@@ -138,6 +224,9 @@ class AISettings {
     bool? useRAG,
     bool? aiDataProcessingEnabled,
     bool? healthDataConsent,
+    List<FocusArea>? focusAreas,
+    String? trainingSplit,
+    bool clearTrainingSplit = false,
     bool? isHydrated,
   }) {
     return AISettings(
@@ -162,6 +251,9 @@ class AISettings {
       useRAG: useRAG ?? this.useRAG,
       aiDataProcessingEnabled: aiDataProcessingEnabled ?? this.aiDataProcessingEnabled,
       healthDataConsent: healthDataConsent ?? this.healthDataConsent,
+      focusAreas: focusAreas ?? this.focusAreas,
+      trainingSplit:
+          clearTrainingSplit ? null : (trainingSplit ?? this.trainingSplit),
       isHydrated: isHydrated ?? this.isHydrated,
     );
   }
@@ -190,6 +282,8 @@ class AISettings {
       'health_data_consent': healthDataConsent,
       'default_agent': defaultAgent.name,
       'enabled_agents': enabledAgents.map((k, v) => MapEntry(k.name, v)),
+      'focus_areas': focusAreas.map((f) => f.toJson()).toList(),
+      'training_split': trainingSplit,
     };
   }
 
@@ -248,6 +342,21 @@ class AISettings {
       healthDataConsent: json['health_data_consent'] as bool? ?? false,
       defaultAgent: parseDefaultAgent(json['default_agent']),
       enabledAgents: parseEnabledAgents(json['enabled_agents']),
+      focusAreas: () {
+        final raw = json['focus_areas'];
+        if (raw is List) {
+          return raw
+              .whereType<Map>()
+              .map((m) => FocusArea.fromJson(m.cast<String, dynamic>()))
+              .where((f) => f.area.trim().isNotEmpty)
+              .take(5)
+              .toList();
+        }
+        return const <FocusArea>[];
+      }(),
+      trainingSplit: (json['training_split'] as String?)?.trim().isEmpty == true
+          ? null
+          : json['training_split'] as String?,
     );
   }
 
@@ -512,6 +621,33 @@ class AISettingsNotifier extends StateNotifier<AISettings> {
     _saveSettings();
   }
 
+  /// Replace the full focus-areas list. Clamps to 5 entries and filters
+  /// out empty strings; priority is clamped 1–5 server-side too, but we
+  /// belt-and-suspender it here so a buggy widget can't push garbage.
+  void setFocusAreas(List<FocusArea> areas) {
+    final cleaned = areas
+        .where((f) => f.area.trim().isNotEmpty)
+        .map((f) => FocusArea(
+              area: f.area.trim(),
+              priority: f.priority.clamp(1, 5),
+            ))
+        .take(5)
+        .toList();
+    state = state.copyWith(focusAreas: cleaned);
+    _saveSettings();
+  }
+
+  /// Set the chosen training split. Pass null (or "auto") to clear it
+  /// and let the backend AI pick.
+  void setTrainingSplit(String? split) {
+    if (split == null || split == TrainingSplit.auto) {
+      state = state.copyWith(clearTrainingSplit: true);
+    } else {
+      state = state.copyWith(trainingSplit: split);
+    }
+    _saveSettings();
+  }
+
   void toggleSaveChatHistory() {
     state = state.copyWith(saveChatHistory: !state.saveChatHistory);
     _saveSettings();
@@ -660,6 +796,8 @@ class _AISettingsScreenState extends ConsumerState<AISettingsScreen> {
   final Map<String, bool> _expanded = {
     'coach': true,
     'personality': true,
+    'focus': true,
+    'split': true,
     'response': false,
     'agents': false,
     'coaching': false,
@@ -744,6 +882,18 @@ class _AISettingsScreenState extends ConsumerState<AISettingsScreen> {
                 expanded: _expanded['personality']!,
                 onChanged: (v) => _setExpanded('personality', v),
                 child: _PersonalitySection(settings: settings, ref: ref),
+              ),
+              _CollapsibleSection(
+                title: 'WHAT TO FOCUS ON',
+                expanded: _expanded['focus']!,
+                onChanged: (v) => _setExpanded('focus', v),
+                child: _FocusAreasSection(settings: settings, ref: ref),
+              ),
+              _CollapsibleSection(
+                title: 'TRAINING SPLIT',
+                expanded: _expanded['split']!,
+                onChanged: (v) => _setExpanded('split', v),
+                child: _TrainingSplitSection(settings: settings, ref: ref),
               ),
               _CollapsibleSection(
                 title: 'RESPONSE PREFERENCES',
@@ -888,6 +1038,543 @@ class _AdvancedToggleRow extends StatelessWidget {
           ),
           Switch.adaptive(value: value, onChanged: onChanged),
         ],
+      ),
+    );
+  }
+}
+
+/// Up-to-5 user-defined AI focus points, each with a 1-5 priority dial.
+/// Persisted to user_ai_settings.focus_areas (jsonb). Surfaces verbatim
+/// in the Gemini workout-generation system prompt, ordered by priority
+/// desc. Pre-filled, mid-block.
+class _FocusAreasSection extends StatefulWidget {
+  final AISettings settings;
+  final WidgetRef ref;
+
+  const _FocusAreasSection({required this.settings, required this.ref});
+
+  @override
+  State<_FocusAreasSection> createState() => _FocusAreasSectionState();
+}
+
+class _FocusAreasSectionState extends State<_FocusAreasSection> {
+  /// Static curated suggestions. We avoid an LLM round-trip here for v1 —
+  /// the user can still type anything. A future improvement is a backend
+  /// `suggest_focus_areas` call that personalises these to the user's
+  /// goals/injuries; for now we ship a deterministic list per
+  /// `feedback_no_llm_for_safety_classification` (this isn't safety, but
+  /// the same "no LLM for trivial vocabulary" sentiment applies).
+  static const List<String> _suggestions = [
+    'Lower-back caution after deadlift days',
+    'Shoulder mobility for overhead press',
+    'Explosive hip drive on squats',
+    'No heavy overhead pressing this block',
+    'RPE 7-8 ceiling, never grind',
+    'Hypertrophy bias on quads',
+    'Tempo control on eccentrics',
+    'Glute activation before lower-body work',
+    'Grip endurance for pulling days',
+    'Knee-friendly leg work',
+  ];
+
+  late List<FocusArea> _draft;
+
+  @override
+  void initState() {
+    super.initState();
+    _draft = List<FocusArea>.from(widget.settings.focusAreas);
+  }
+
+  @override
+  void didUpdateWidget(covariant _FocusAreasSection old) {
+    super.didUpdateWidget(old);
+    // Re-sync if the underlying provider state changes externally
+    // (e.g. cache hydrate completes mid-render).
+    if (old.settings.focusAreas != widget.settings.focusAreas &&
+        _draft.length != widget.settings.focusAreas.length) {
+      _draft = List<FocusArea>.from(widget.settings.focusAreas);
+    }
+  }
+
+  void _commit() {
+    widget.ref.read(aiSettingsProvider.notifier).setFocusAreas(_draft);
+  }
+
+  void _updateRow(int index, FocusArea next) {
+    setState(() {
+      _draft[index] = next;
+    });
+    _commit();
+  }
+
+  void _removeRow(int index) {
+    setState(() => _draft.removeAt(index));
+    _commit();
+  }
+
+  void _addEmptyOrSuggestion(String? suggestion) {
+    if (_draft.length >= 5) return;
+    setState(() {
+      _draft.add(FocusArea(area: suggestion ?? '', priority: 3));
+    });
+    if (suggestion != null) _commit();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textPrimary =
+        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textSecondary =
+        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+
+    final available =
+        _suggestions.where((s) => !_draft.any((d) => d.area == s)).toList();
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: elevated,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Tell the AI what matters most this block. Up to 5 things, each weighted 1–5.',
+            style: TextStyle(fontSize: 13, color: textSecondary, height: 1.4),
+          ),
+          const SizedBox(height: 14),
+
+          // Filled rows
+          for (int i = 0; i < _draft.length; i++) ...[
+            _FocusRow(
+              key: ValueKey('focus_row_$i'),
+              initial: _draft[i],
+              onChanged: (next) => _updateRow(i, next),
+              onRemove: () => _removeRow(i),
+            ),
+            const SizedBox(height: 8),
+          ],
+
+          // Add-another slot
+          if (_draft.length < 5)
+            InkWell(
+              onTap: () => _addEmptyOrSuggestion(null),
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                width: double.infinity,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                decoration: BoxDecoration(
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.04)
+                      : Colors.black.withValues(alpha: 0.03),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: textSecondary.withValues(alpha: 0.3),
+                    style: BorderStyle.solid,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.add_rounded, size: 18, color: textSecondary),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Add focus  (${_draft.length}/5)',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+          // Suggestions
+          if (available.isNotEmpty && _draft.length < 5) ...[
+            const SizedBox(height: 14),
+            Text(
+              'Suggestions',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: textSecondary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final s in available.take(6))
+                  InkWell(
+                    onTap: () => _addEmptyOrSuggestion(s),
+                    borderRadius: BorderRadius.circular(18),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 7),
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? Colors.white.withValues(alpha: 0.06)
+                            : Colors.black.withValues(alpha: 0.05),
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.add_circle_outline,
+                              size: 14, color: textSecondary),
+                          const SizedBox(width: 6),
+                          Text(s,
+                              style: TextStyle(
+                                  fontSize: 12,
+                                  color: textPrimary,
+                                  fontWeight: FontWeight.w500)),
+                        ],
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// One row in the Focus Panel: text input + priority dial (1-5) + delete.
+/// Wraps on small screens (iPhone SE etc.) so the dial drops below the
+/// input rather than overflowing.
+class _FocusRow extends StatefulWidget {
+  final FocusArea initial;
+  final ValueChanged<FocusArea> onChanged;
+  final VoidCallback onRemove;
+
+  const _FocusRow({
+    super.key,
+    required this.initial,
+    required this.onChanged,
+    required this.onRemove,
+  });
+
+  @override
+  State<_FocusRow> createState() => _FocusRowState();
+}
+
+class _FocusRowState extends State<_FocusRow> {
+  late TextEditingController _controller;
+  late int _priority;
+  Timer? _debounce;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.initial.area);
+    _priority = widget.initial.priority;
+  }
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _emit() {
+    widget.onChanged(FocusArea(
+      area: _controller.text.trim(),
+      priority: _priority,
+    ));
+  }
+
+  void _onTextChanged(String _) {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 350), _emit);
+  }
+
+  void _setPriority(int p) {
+    setState(() => _priority = p);
+    _emit();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textPrimary =
+        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textSecondary =
+        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final fieldBg = isDark
+        ? Colors.white.withValues(alpha: 0.06)
+        : Colors.black.withValues(alpha: 0.04);
+
+    final field = TextField(
+      controller: _controller,
+      maxLength: 80,
+      onChanged: _onTextChanged,
+      onSubmitted: (_) => _emit(),
+      onEditingComplete: _emit,
+      style: TextStyle(fontSize: 14, color: textPrimary),
+      decoration: InputDecoration(
+        hintText: 'Focus on…',
+        hintStyle: TextStyle(color: textSecondary, fontSize: 14),
+        counterText: '',
+        isDense: true,
+        filled: true,
+        fillColor: fieldBg,
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide.none,
+        ),
+      ),
+    );
+
+    final dial = _PriorityDial(
+      value: _priority,
+      onChanged: _setPriority,
+    );
+
+    final remove = IconButton(
+      icon: Icon(Icons.close_rounded, size: 18, color: textSecondary),
+      onPressed: widget.onRemove,
+      visualDensity: VisualDensity.compact,
+      tooltip: 'Remove',
+    );
+
+    // Wrap on small screens so the dial flows below the input instead
+    // of pushing it off-screen on iPhone SE.
+    return LayoutBuilder(builder: (ctx, c) {
+      final isNarrow = c.maxWidth < 360;
+      if (isNarrow) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(children: [Expanded(child: field), remove]),
+            const SizedBox(height: 8),
+            Align(alignment: Alignment.centerLeft, child: dial),
+          ],
+        );
+      }
+      return Row(
+        children: [
+          Expanded(child: field),
+          const SizedBox(width: 8),
+          dial,
+          remove,
+        ],
+      );
+    });
+  }
+}
+
+/// 1–5 segmented priority control. Accent intensifies with value so the
+/// dial visually communicates weight, not just a number.
+class _PriorityDial extends StatelessWidget {
+  final int value;
+  final ValueChanged<int> onChanged;
+
+  const _PriorityDial({required this.value, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final accent = AccentColorScope.of(context).getColor(isDark);
+    final textPrimary =
+        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+
+    return Semantics(
+      label: 'Priority $value of 5',
+      child: Container(
+        padding: const EdgeInsets.all(2),
+        decoration: BoxDecoration(
+          color: isDark
+              ? Colors.white.withValues(alpha: 0.05)
+              : Colors.black.withValues(alpha: 0.04),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (int i = 1; i <= 5; i++)
+              _DialCell(
+                value: i,
+                isSelected: i == value,
+                accent: accent,
+                textPrimary: textPrimary,
+                onTap: () => onChanged(i),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DialCell extends StatelessWidget {
+  final int value;
+  final bool isSelected;
+  final Color accent;
+  final Color textPrimary;
+  final VoidCallback onTap;
+
+  const _DialCell({
+    required this.value,
+    required this.isSelected,
+    required this.accent,
+    required this.textPrimary,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    // Intensity proportional to value so "5" pops harder than "1".
+    final t = (value - 1) / 4; // 0..1
+    final fill = isSelected
+        ? Color.lerp(accent.withValues(alpha: 0.35), accent, t)!
+        : Colors.transparent;
+    final fg = isSelected
+        ? (ThemeData.estimateBrightnessForColor(fill) == Brightness.dark
+            ? Colors.white
+            : Colors.black)
+        : textPrimary.withValues(alpha: 0.7);
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        width: 28,
+        height: 28,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: fill,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Text(
+          '$value',
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            color: fg,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Training-split chip picker. Tap a chip to select; tapping the active
+/// chip clears back to "Auto". Wraps on small screens.
+class _TrainingSplitSection extends StatelessWidget {
+  final AISettings settings;
+  final WidgetRef ref;
+
+  const _TrainingSplitSection(
+      {required this.settings, required this.ref});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final accent = AccentColorScope.of(context).getColor(isDark);
+    final textPrimary =
+        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textSecondary =
+        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final current = settings.trainingSplit ?? TrainingSplit.auto;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: elevated,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Pick the weekly structure the AI should plan around. Changes apply to your next generation — your current week is left alone.',
+            style: TextStyle(fontSize: 13, color: textSecondary, height: 1.4),
+          ),
+          const SizedBox(height: 14),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final s in TrainingSplit.all)
+                _SplitChip(
+                  label: TrainingSplit.displayName(s),
+                  isSelected: s == current,
+                  accent: accent,
+                  textPrimary: textPrimary,
+                  isDark: isDark,
+                  onTap: () => ref
+                      .read(aiSettingsProvider.notifier)
+                      .setTrainingSplit(s == current && s != TrainingSplit.auto
+                          ? TrainingSplit.auto
+                          : s),
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SplitChip extends StatelessWidget {
+  final String label;
+  final bool isSelected;
+  final Color accent;
+  final Color textPrimary;
+  final bool isDark;
+  final VoidCallback onTap;
+
+  const _SplitChip({
+    required this.label,
+    required this.isSelected,
+    required this.accent,
+    required this.textPrimary,
+    required this.isDark,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(18),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? accent.withValues(alpha: 0.18)
+              : (isDark
+                  ? Colors.white.withValues(alpha: 0.06)
+                  : Colors.black.withValues(alpha: 0.05)),
+          border: Border.all(
+            color: isSelected
+                ? accent.withValues(alpha: 0.7)
+                : Colors.transparent,
+            width: 1.2,
+          ),
+          borderRadius: BorderRadius.circular(18),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: isSelected ? accent : textPrimary,
+          ),
+        ),
       ),
     );
   }

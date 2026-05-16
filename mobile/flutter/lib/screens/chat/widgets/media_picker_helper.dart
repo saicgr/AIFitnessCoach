@@ -6,9 +6,11 @@ library;
 
 import 'dart:async';
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:video_compress/video_compress.dart';
@@ -40,6 +42,152 @@ class PickedMedia {
     if (sizeBytes < 1024) return '$sizeBytes B';
     if (sizeBytes < 1024 * 1024) return '${(sizeBytes / 1024).toStringAsFixed(1)} KB';
     return '${(sizeBytes / (1024 * 1024)).toStringAsFixed(1)} MB';
+  }
+}
+
+/// Phase-2 §2.0: paired image artifact for the food-scan path.
+///
+/// Carries BOTH the original full-resolution image (for S3 archive so the
+/// user sees a crisp picture later in the nutrition tab) AND a 768px-resized
+/// JPEG byte buffer (for Gemini Vision API — single tile, ~258 input tokens
+/// vs ~4000 for a 1920px image).
+///
+/// Built by [pickFoodScanArtifacts] / [pickFoodScanArtifactsBatch] before
+/// calling [analyzeFoodFromImageStreaming] / [analyzeFoodFromImagesStreaming].
+class FoodScanArtifacts {
+  /// Full-resolution original. Sent to backend as `image_original` multipart
+  /// field; ends up in S3 as the food_log.image_url archive.
+  final File original;
+
+  /// 768px-resized JPEG bytes. Sent to backend as `image` multipart field;
+  /// used for Vision API. Smaller upload, single Gemini tile.
+  final Uint8List thumbBytes;
+
+  /// MIME type of the original.
+  final String originalMimeType;
+
+  /// Original file size in bytes (for logging / debug).
+  final int originalSizeBytes;
+
+  const FoodScanArtifacts({
+    required this.original,
+    required this.thumbBytes,
+    required this.originalMimeType,
+    required this.originalSizeBytes,
+  });
+}
+
+/// Pick ONE food image and return the paired (original + 768px thumb)
+/// artifacts for the Phase-2 two-artifact upload path.
+///
+/// Returns null if the user cancels or the picker fails. On compression
+/// failure (e.g. corrupted image, out-of-memory), falls back to using the
+/// original bytes for both artifacts so the upload still succeeds (legacy
+/// single-artifact behavior).
+Future<FoodScanArtifacts?> pickFoodScanArtifacts(ImageSource source) async {
+  try {
+    // Pick original (NO maxWidth — we want full res for S3 archive)
+    final picker = ImagePicker();
+    final XFile? picked = await picker.pickImage(
+      source: source,
+      // imageQuality kept conservative to keep the original under ~25MB
+      imageQuality: 90,
+    );
+    if (picked == null) return null;
+
+    final originalFile = File(picked.path);
+    final originalBytes = await originalFile.length();
+
+    // Compress to 768px max-edge JPEG for Vision (single Gemini tile).
+    // autoCorrectionAngle handles iPhone EXIF rotation.
+    final Uint8List? thumb = await FlutterImageCompress.compressWithFile(
+      picked.path,
+      minWidth: 768,
+      minHeight: 768,
+      quality: 85,
+      format: CompressFormat.jpeg,
+      autoCorrectionAngle: true,
+    );
+
+    if (thumb == null) {
+      // Compression failed — fall back to using the original for both fields.
+      // Backend handles missing image_original via legacy single-artifact path.
+      debugPrint('[food-scan] thumb compression returned null — using original for both');
+      final origBytes = await originalFile.readAsBytes();
+      return FoodScanArtifacts(
+        original: originalFile,
+        thumbBytes: origBytes,
+        originalMimeType: 'image/jpeg',
+        originalSizeBytes: originalBytes,
+      );
+    }
+
+    debugPrint(
+      '[food-scan] artifacts: original=${(originalBytes / 1024).toStringAsFixed(0)}KB '
+      'thumb=${(thumb.lengthInBytes / 1024).toStringAsFixed(0)}KB',
+    );
+
+    return FoodScanArtifacts(
+      original: originalFile,
+      thumbBytes: thumb,
+      originalMimeType: 'image/jpeg',
+      originalSizeBytes: originalBytes,
+    );
+  } catch (e, st) {
+    debugPrint('[food-scan] pickFoodScanArtifacts failed: $e\n$st');
+    return null;
+  }
+}
+
+/// Pick MULTIPLE food images (the 2-5 angles UX). Returns paired artifacts
+/// for each. Capped at 5 photos. On per-photo failure, that photo is skipped
+/// (others succeed).
+Future<List<FoodScanArtifacts>> pickFoodScanArtifactsBatch() async {
+  try {
+    final picker = ImagePicker();
+    final List<XFile> picked = await picker.pickMultiImage(
+      imageQuality: 90,
+      limit: 5,
+    );
+    if (picked.isEmpty) return const [];
+
+    final List<FoodScanArtifacts> out = [];
+    for (final xf in picked.take(5)) {
+      try {
+        final originalFile = File(xf.path);
+        final originalBytes = await originalFile.length();
+        final Uint8List? thumb = await FlutterImageCompress.compressWithFile(
+          xf.path,
+          minWidth: 768,
+          minHeight: 768,
+          quality: 85,
+          format: CompressFormat.jpeg,
+          autoCorrectionAngle: true,
+        );
+        if (thumb == null) {
+          final origBytes = await originalFile.readAsBytes();
+          out.add(FoodScanArtifacts(
+            original: originalFile,
+            thumbBytes: origBytes,
+            originalMimeType: 'image/jpeg',
+            originalSizeBytes: originalBytes,
+          ));
+        } else {
+          out.add(FoodScanArtifacts(
+            original: originalFile,
+            thumbBytes: thumb,
+            originalMimeType: 'image/jpeg',
+            originalSizeBytes: originalBytes,
+          ));
+        }
+      } catch (e) {
+        debugPrint('[food-scan] batch pick: skipping bad image ${xf.path}: $e');
+      }
+    }
+    return out;
+  } catch (e, st) {
+    debugPrint('[food-scan] pickFoodScanArtifactsBatch failed: $e\n$st');
+    return const [];
   }
 }
 

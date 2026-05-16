@@ -94,6 +94,12 @@ class FoodLoggingProgress {
   /// Whether this is an analysis-only result (not yet saved to database)
   final bool isAnalysisOnly;
 
+  /// Coaching tips delivered via the late `coach_tips` SSE event (streamed
+  /// AFTER `done` so the card renders fast). Keys: ai_suggestion,
+  /// encouragements, warnings, recommended_swap, health_score. Null on the
+  /// normal `done` / `progress` events; set only on the coach_tips event.
+  final Map<String, dynamic>? coachTips;
+
   FoodLoggingProgress({
     required this.step,
     required this.totalSteps,
@@ -104,7 +110,11 @@ class FoodLoggingProgress {
     this.isCompleted = false,
     this.hasError = false,
     this.isAnalysisOnly = false,
+    this.coachTips,
   });
+
+  /// True when this event carries late-arriving coaching tips.
+  bool get hasCoachTips => coachTips != null;
 
   /// Progress as a percentage (0.0 to 1.0)
   double get progress => totalSteps > 0 ? step / totalSteps : 0;

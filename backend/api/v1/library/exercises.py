@@ -10,7 +10,6 @@ This module handles exercise library operations:
 - GET /exercises/types - Get all exercise types
 - GET /exercises/filter-options - Get all filter options
 """
-from __future__ import annotations
 import time
 from typing import List, Dict, Any, Optional
 from core.db import get_supabase_db
@@ -254,7 +253,7 @@ async def get_body_parts():
         raise safe_internal_error(e, "exercises")
 
 
-def _extract_best_correction(search_term: str, top_rows: list) -> str | None:
+def _extract_best_correction(search_term: str, top_rows: list) -> Optional[str]:
     """Find the best spelling correction from top search results."""
     best_match = None
     best_ratio = 0.0

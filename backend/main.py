@@ -423,10 +423,22 @@ async def _resume_pending_media_jobs():
 
 
 async def _prewarm_inflammation_cache():
-    """Pre-warm the ingredient inflammation food_database cache on startup."""
+    """Pre-warm the ingredient inflammation food_database cache on startup.
+
+    Calls _ensure_food_db_cache() which does a paginated Supabase scan over
+    the full food_database table — synchronous network calls inside an async
+    coroutine that block the event loop, preventing uvicorn from completing
+    its socket bind in local dev (Render Pro is OK because gunicorn pre-binds).
+    Set SKIP_INFLAMMATION_PREWARM=1 in local-dev .env to skip.
+    """
+    if os.environ.get("SKIP_INFLAMMATION_PREWARM") == "1":
+        logger.info("Skipping inflammation cache pre-warm (SKIP_INFLAMMATION_PREWARM=1)")
+        return
     try:
         from services.ingredient_inflammation.lookup import _ensure_food_db_cache
-        cache = await _ensure_food_db_cache()
+        # Wrap the sync-DB-heavy loader in to_thread so it doesn't block the
+        # event loop while uvicorn is trying to finish lifespan + bind socket.
+        cache = await asyncio.to_thread(asyncio.run, _ensure_food_db_cache())
         logger.info(f"Pre-warmed inflammation cache with {len(cache)} entries")
     except Exception as e:
         logger.error(f"Failed to pre-warm inflammation cache: {e}", exc_info=True)
@@ -439,12 +451,19 @@ async def _refresh_exercise_library_mv_if_dirty():
     queue is empty, otherwise CONCURRENTLY refreshes both MVs (cleaned + safety).
     Also drops the cached filter-options payload so the next request rebuilds
     against fresh data.
+
+    The Supabase Python client's `.execute()` is a SYNCHRONOUS network call.
+    We wrap it in asyncio.to_thread() so it doesn't block the event loop —
+    without this, uvicorn's socket bind hangs on local dev (Render Pro is
+    fine because gunicorn's UvicornWorker pre-binds before lifespan).
     """
     try:
         from core.db import get_supabase_db
         from api.v1.library.exercises import invalidate_library_filter_options_cache
         db = get_supabase_db()
-        result = db.client.rpc("refresh_exercise_library_cleaned", {"force": False}).execute()
+        result = await asyncio.to_thread(
+            lambda: db.client.rpc("refresh_exercise_library_cleaned", {"force": False}).execute()
+        )
         if result.data:
             await invalidate_library_filter_options_cache()
             logger.info(f"Refreshed exercise_library_cleaned MV at startup (queued_at={result.data})")
@@ -749,8 +768,26 @@ async def unhandled_exception_handler(request: Request, exc: Exception):
         pass
     return JSONResponse(status_code=500, content={"detail": "Internal server error"})
 
-# Add GZip compression for responses >= 500 bytes
-app.add_middleware(GZipMiddleware, minimum_size=500)
+# Add GZip compression for responses >= 500 bytes.
+# IMPORTANT: GZipMiddleware buffers the response body to compress it, which
+# breaks SSE — a streamed `event: done` never reaches the client until the
+# whole stream ends. We wrap it so streaming endpoints (SSE) bypass gzip and
+# flush each event immediately. SSE routes: paths ending in `-stream` or
+# containing `/import-` (recipe imports also stream).
+class _SSEAwareGZipMiddleware:
+    def __init__(self, app, **kwargs):
+        self._plain_app = app
+        self._gzip_app = GZipMiddleware(app, **kwargs)
+
+    async def __call__(self, scope, receive, send):
+        if scope.get("type") == "http":
+            path = scope.get("path", "")
+            if path.endswith("-stream") or "/import-" in path:
+                # SSE / streaming — skip gzip so each event flushes live
+                return await self._plain_app(scope, receive, send)
+        return await self._gzip_app(scope, receive, send)
+
+app.add_middleware(_SSEAwareGZipMiddleware, minimum_size=500)
 
 # SECURITY: Reject oversized request bodies to prevent OOM on 512MB Render tier.
 # Implemented as pure ASGI (see BodySizeLimitMiddleware) so streaming endpoints

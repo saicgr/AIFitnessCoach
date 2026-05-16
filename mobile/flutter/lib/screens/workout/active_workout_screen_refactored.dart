@@ -1675,6 +1675,9 @@ class _ActiveWorkoutScreenState
     final incrementLabel = '±${incrementValue % 1 == 0 ? incrementValue.toInt() : incrementValue} $incrementUnit';
 
     return [
+      // C1: Swap added as the first chip per user request (kept in More
+      // menu too — see WorkoutActionChips.more handler — for discoverability).
+      WorkoutActionChips.swap,
       WorkoutActionChips.adjustToday,
       WorkoutActionChips.progression(label: pattern.chipLabel, icon: pattern.icon),
       WorkoutActionChips.superset,

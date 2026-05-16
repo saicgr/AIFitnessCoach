@@ -7,7 +7,6 @@ applied directly to existing workout exercises_json.
 
 Core principle: Parse JSON → find target → replace with library match → update row.
 """
-from __future__ import annotations
 from typing import Optional
 
 from datetime import datetime, timedelta, date

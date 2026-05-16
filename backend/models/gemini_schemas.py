@@ -959,3 +959,246 @@ class AudioCoachScriptResponse(BaseModel):
         default="encouraging",
         description="One of: encouraging, celebratory, gentle_nudge, informational",
     )
+
+
+# =============================================================================
+# PHASE-1 ENRICHMENT BACKFILL SCHEMAS (food_nutrition_overrides)
+# =============================================================================
+#
+# Used by `backend/scripts/backfill_override_enrichment.py` to fill the 9
+# enrichment columns added in migration 2064 across the 198,818-row override
+# table. The script batches 50 dish rows per Gemini Flash Lite call and
+# expects exactly 50 enrichment items back in the same order.
+
+class EnrichmentItem(BaseModel):
+    """Per-dish enrichment fields produced by the backfill Gemini call.
+
+    Field semantics mirror the column comments in migration 2064. The
+    backfill script writes these straight into food_nutrition_overrides
+    via a bulk UPDATE FROM VALUES.
+    """
+    row_id: int = Field(
+        ...,
+        description="The food_nutrition_overrides.id this enrichment is for. MUST match the input id exactly so the script can map the response back without ordering bugs.",
+    )
+    inflammation_score: int = Field(
+        ..., ge=0, le=10,
+        description="0-10. 0-3 anti-inflammatory, 4-6 neutral/mild, 7-10 highly inflammatory. Never null.",
+    )
+    inflammation_triggers: List[str] = Field(
+        ..., min_length=0, max_length=4,
+        description="0-4 short tags driving the score. Return [] when the food has no real inflammation drivers (plain water, almond milk unsweetened, plain coffee). Otherwise pick from: deep_fried, seed_oil, refined_flour, added_sugar, processed_meat, saturated_fat, omega6_high, artificial_additives, omega3_rich, leafy_greens, olive_oil, turmeric, whole_grains, fermented, berries, fatty_fish.",
+    )
+    # Sentinel: -1 means "N/A" (carbs < 2 g, GL not meaningful). The backfill
+    # script converts -1 → NULL when writing to the DB. Required (not
+    # Optional) because Gemini's structured-output rejects anyOf: [int, null].
+    glycemic_load: int = Field(
+        ..., ge=-1, le=100,
+        description="Glycemic load per 100g. GL = GI × carbs_per_100g / 100. Use -1 (sentinel for N/A) ONLY when carbs < 2 g per 100 g (zero-carb foods like meat, fish, oil). Otherwise return the integer estimate.",
+    )
+    fodmap_rating: Literal["low", "medium", "high"] = Field(
+        ...,
+        description="Monash classification. Every cooked dish classifies; never null.",
+    )
+    # Sentinel: empty string means "no reason — only valid when rating='low'".
+    # The backfill script converts "" → NULL when writing to the DB.
+    fodmap_reason: str = Field(
+        ..., max_length=80,
+        description="≤ 6 words naming trigger ingredient(s). Use empty string ONLY when fodmap_rating = 'low'. Otherwise REQUIRED (e.g. 'contains onion, garlic').",
+    )
+    added_sugar_g: float = Field(
+        ..., ge=0,
+        description="Per 100 g. Excludes naturally-occurring whole-fruit/whole-dairy sugar. Use 0.0 when none. Never null.",
+    )
+    is_ultra_processed: bool = Field(
+        ...,
+        description="True iff NOVA Group 4. Single-ingredient whole foods are false. Never null.",
+    )
+    rating: Literal["green", "yellow", "red"] = Field(
+        ...,
+        description="Traffic-light health rating used in scan-result UI badges.",
+    )
+    rating_reason: str = Field(
+        ..., max_length=80,
+        description="≤ 8 words explaining the rating. Surfaced as the badge tooltip.",
+    )
+
+
+class BackfillEnrichmentBatch(BaseModel):
+    """Top-level response schema for one 50-row backfill Gemini call."""
+    items: List[EnrichmentItem] = Field(
+        ..., min_length=1, max_length=50,
+        description="Enrichment for each input dish, returned in the same order as the input list. row_id MUST echo the input id.",
+    )
+
+
+# =============================================================================
+# PHASE-1 MICRONUTRIENT BACKFILL SCHEMA (food_nutrition_overrides)
+# =============================================================================
+#
+# Used by `backend/scripts/backfill_override_micronutrients.py` for the
+# GEMINI FALLBACK path only — when USDA FoodData Central has no match for
+# a dish. Mirrors the 15 micronutrient columns that exist on the
+# food_nutrition_overrides table (per migration 324).
+#
+# Sentinel: -1 represents "no meaningful value" / "trace" for fields where
+# 0 would be a valid measurement (e.g. trans_fat_g = 0 means real-zero, but
+# trans_fat_g = -1 means "didn't measure"). The script's writer translates
+# -1 → NULL when writing to DB. NEVER use -1 for sodium/potassium/calcium —
+# those have meaningful 0 values.
+#
+# All fields are per 100g of the food. Validator enforces strict ranges.
+
+class MicronutrientItem(BaseModel):
+    """Per-dish micronutrient estimates from Gemini.
+
+    Use realistic values based on USDA-style nutrition data for the dish.
+    For dishes where a nutrient is genuinely zero (e.g. cholesterol in
+    plant foods), return 0.0. For dishes where the nutrient is unknown or
+    not meaningfully measurable, return 0.0 (better to underspecify than
+    fabricate). Hard upper bounds enforced by validator — anything above
+    physiological possibility per 100g is rejected.
+    """
+    row_id: int = Field(..., description="MUST echo the input id exactly.")
+    saturated_fat_g: float = Field(..., ge=0, le=100,
+        description="Per 100g. Subset of total fat — must not exceed it.")
+    trans_fat_g: float = Field(..., ge=0, le=10,
+        description="Per 100g. 0 for whole foods.")
+    cholesterol_mg: float = Field(..., ge=0, le=3500,
+        description="Per 100g. 0 for plant foods. Egg yolk ~1085, organ meats up to 3000.")
+    sodium_mg: float = Field(..., ge=0, le=40000,
+        description="Per 100g. Salt itself ~38758. Most foods <2000.")
+    potassium_mg: float = Field(..., ge=0, le=5000,
+        description="Per 100g. Dried herbs up to 3700. Most foods <500.")
+    calcium_mg: float = Field(..., ge=0, le=2500,
+        description="Per 100g. Hard cheeses up to 1200. Dairy ~120.")
+    iron_mg: float = Field(..., ge=0, le=130,
+        description="Per 100g. Dried thyme up to 123, organ meats up to 25, leafy greens 2-7.")
+    magnesium_mg: float = Field(..., ge=0, le=800,
+        description="Per 100g. Cocoa powder ~500. Most foods <100.")
+    zinc_mg: float = Field(..., ge=0, le=100,
+        description="Per 100g. Oysters ~78. Most foods <10.")
+    phosphorus_mg: float = Field(..., ge=0, le=2000,
+        description="Per 100g. Parmesan ~700. Most foods <500.")
+    selenium_ug: float = Field(..., ge=0, le=2000,
+        description="Per 100g. Brazil nuts ~1900. Most foods <50.")
+    vitamin_a_ug: float = Field(..., ge=0, le=50000,
+        description="Per 100g, RAE μg. Beef liver ~9442. Most foods <500.")
+    vitamin_c_mg: float = Field(..., ge=0, le=3000,
+        description="Per 100g. Acerola ~1677. Citrus ~50, peppers ~100.")
+    vitamin_d_iu: float = Field(..., ge=0, le=2000,
+        description="Per 100g. Fortified milk ~40, fatty fish 200-1000.")
+    omega3_g: float = Field(..., ge=0, le=50,
+        description="Per 100g. Flaxseed oil ~53, salmon ~2.5, walnuts ~9.")
+    # Extended micronutrients (mig 2073)
+    omega6_g: float = Field(..., ge=0, le=80,
+        description="Per 100g. Safflower oil ~75, sunflower oil ~66, walnuts ~38, animal fats <5.")
+    vitamin_e_mg: float = Field(..., ge=0, le=200,
+        description="Per 100g. Wheat germ oil ~149, sunflower oil ~41, almonds ~25, leafy greens 1-2.")
+    vitamin_k_ug: float = Field(..., ge=0, le=5000,
+        description="Per 100g. Natto ~1100, kale ~705, spinach ~482, broccoli ~141. Animal foods <50.")
+    vitamin_b1_mg: float = Field(..., ge=0, le=50,
+        description="Per 100g, thiamin. Nutritional yeast ~31, pork 0.5-1.0, whole grains 0.3-0.5, legumes 0.4-0.9.")
+    vitamin_b2_mg: float = Field(..., ge=0, le=50,
+        description="Per 100g, riboflavin. Liver ~3, fortified yeast ~17, dairy 0.2-0.5, almonds ~1.1.")
+    vitamin_b3_mg: float = Field(..., ge=0, le=200,
+        description="Per 100g, niacin. Nutritional yeast ~120, liver ~17, chicken breast ~14, peanuts ~12.")
+    vitamin_b5_mg: float = Field(..., ge=0, le=50,
+        description="Per 100g, pantothenic acid. Liver ~7, sunflower seeds ~7, mushrooms ~1.5.")
+    vitamin_b6_mg: float = Field(..., ge=0, le=30,
+        description="Per 100g. Nutritional yeast ~20, liver ~1, salmon ~0.6, banana ~0.4.")
+    vitamin_b7_ug: float = Field(..., ge=0, le=1000,
+        description="Per 100g, biotin. Liver ~42, egg yolk ~33, salmon ~5, nuts/legumes ~10-30.")
+    vitamin_b9_ug: float = Field(..., ge=0, le=5000,
+        description="Per 100g, folate. Baker's yeast ~3912, liver ~290, leafy greens 100-300, legumes 100-200.")
+    vitamin_b12_ug: float = Field(..., ge=0, le=200,
+        description="Per 100g. Liver ~83, clams ~98, beef ~2-6, fish 1-10, eggs ~1.1, fortified plants 0-2. 0 for unfortified plant foods.")
+    copper_mg: float = Field(..., ge=0, le=50,
+        description="Per 100g. Beef liver ~9.8, oysters ~4.5, cashews ~2.2, chocolate ~1.8, leafy greens 0.1-0.3.")
+    manganese_mg: float = Field(..., ge=0, le=50,
+        description="Per 100g. Cloves ~30, ginger ~33, oats ~3.6, whole grains 1-3, leafy greens 0.5-1.")
+    choline_mg: float = Field(..., ge=0, le=1000,
+        description="Per 100g. Egg yolk ~820, beef liver ~333, salmon ~91, chicken ~66, soy beans ~116, plant foods 10-50.")
+
+
+# =============================================================================
+# PHASE-2 RUNTIME SCHEMAS — Stage-1 thin Vision/text classifiers
+# =============================================================================
+#
+# These drive the photo-scan + multi-image + menu-scan + text-compound paths.
+# Vision/text Stage-1 returns ONLY identification + portion (no macros, no
+# enrichment) so output tokens stay tiny (~150 tok/dish vs ~400 in the old
+# 16-field schema). Macros + 9 enrichment + 29 micros come from cache lookup
+# in Stage-1.5 (cache_service.analyze_dishes_from_vision et al.).
+#
+# Per Phase-1 lesson: Gemini's structured-output rejects $ref/$defs. So all
+# top-level callers pass `response_schema=list[Stage1Dish]` (top-level array)
+# rather than the wrapper Stage1DishIdentification. The wrappers exist only
+# for Python-side ergonomics.
+
+class Stage1Dish(BaseModel):
+    """One dish identified by Stage-1 Vision (or text decompose)."""
+    name: str = Field(
+        ...,
+        description="Specific normalized dish name. Prefer 'hyderabadi chicken biryani' over 'biryani' when regional cues are visible. Use lowercase, underscore-separated for multi-word; the backend re-normalizes anyway.",
+    )
+    weight_g_estimate: float = Field(
+        ..., gt=0, le=2000,
+        description="Estimated weight of this single dish in grams (per single-serving portion as shown). 100-500g typical for a plate item.",
+    )
+    serving_description: str = Field(
+        ..., max_length=80,
+        description="Human-readable serving description (e.g. '1 cup heaping', '2 strips', '1 piece'). Surfaces in the UI under the dish name.",
+    )
+    confidence: float = Field(
+        ..., ge=0.0, le=1.0,
+        description="Stage-1 confidence in the identification. <0.5 surfaces a 'low confidence — tap to edit' affordance in the UI.",
+    )
+
+
+class Stage1DishIdentification(BaseModel):
+    """Wrapper around the dish list — used Python-side. Vision callers pass
+    `response_schema=list[Stage1Dish]` (top-level array) due to Gemini's
+    $ref limitation, then construct this wrapper from the parsed list."""
+    dishes: List[Stage1Dish] = Field(..., min_length=1, max_length=20)
+    cuisine_tag: Optional[str] = Field(
+        default=None,
+        description="One of: 'indian','chinese','italian','mexican','french','japanese','thai','american','mediterranean','greek','vietnamese','korean','spanish','middle_eastern','african'. Drives region-aware lookup.",
+    )
+    plate_layout: Literal['single', 'mixed', 'composed'] = Field(
+        default='single',
+        description="single = one dish, mixed = several distinct dishes side-by-side, composed = combo plate (thali, bento, bowl) where dishes are intermingled.",
+    )
+    meal_type_guess: Optional[Literal['breakfast', 'lunch', 'dinner', 'snack', 'drink']] = None
+
+
+class Stage1MenuItem(BaseModel):
+    """One menu item from a restaurant-menu OCR Stage-1 call."""
+    name: str = Field(..., description="Dish name as it appears on the menu.")
+    section: Optional[str] = Field(
+        default=None,
+        description="Menu section if visible: 'Appetizers' | 'Mains' | 'Desserts' | 'Drinks' | 'Sides' | 'Soups' | 'Salads'.",
+    )
+
+
+class Stage1MenuIdentification(BaseModel):
+    """Wrapper around menu items + restaurant identification."""
+    restaurant_name: Optional[str] = Field(
+        default=None,
+        description="Restaurant name extracted from menu header / logo if visible. Drives the menu_scan_cache lookup key + restaurant_filter on canonical lookup.",
+    )
+    items: List[Stage1MenuItem] = Field(..., min_length=1, max_length=80)
+
+
+class Stage1CompoundComponent(BaseModel):
+    """One component of a compound text input ('eggs and toast and bacon')."""
+    name: str = Field(..., description="Normalized component dish name.")
+    quantity_text: Optional[str] = Field(
+        default=None,
+        description="Quantity hint from input: '2 eggs' → '2', '1 slice' → '1 slice', '8 oz' → '8 oz'.",
+    )
+
+
+class Stage1CompoundDecompose(BaseModel):
+    """Wrapper around the decomposed components of a compound text query."""
+    components: List[Stage1CompoundComponent] = Field(..., min_length=1, max_length=15)

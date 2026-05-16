@@ -16,8 +16,6 @@ Auth model:
     set when registering the webhook with Telegram. Telegram echoes the
     secret on every callback so we can authenticate the source.
 """
-from __future__ import annotations
-
 import json
 import logging
 import os

@@ -484,27 +484,36 @@ class _LogWeightSheetState extends ConsumerState<_LogWeightSheet>
       // compare against the prior state.
       _isNewLow = _detectNewLow();
 
-      // Log weight through the consolidated measurements endpoint
-      await ref.read(measurementsProvider.notifier).recordMeasurement(
+      // Log weight through the consolidated measurements endpoint.
+      // The notifier throws on any failure now ([[feedback_no_silent_fallbacks]]);
+      // a `false` return would also indicate a contract violation — surface
+      // both as a real error instead of pretending the save worked.
+      final ok = await ref.read(measurementsProvider.notifier).recordMeasurement(
         userId: userId,
         type: MeasurementType.weight,
         value: _weightKg,
         unit: 'kg',
         notes: combinedNotes,
       );
+      if (!ok) {
+        throw StateError('Weight save returned false');
+      }
 
       // Optional body fat % — second measurement with same timestamp.
       final bodyFatText = _bodyFatController.text.trim();
       final bodyFatValue = double.tryParse(bodyFatText);
       if (bodyFatValue != null && bodyFatValue > 0 && bodyFatValue < 60) {
         try {
-          await ref.read(measurementsProvider.notifier).recordMeasurement(
+          final bfOk = await ref.read(measurementsProvider.notifier).recordMeasurement(
             userId: userId,
             type: MeasurementType.bodyFat,
             value: bodyFatValue,
             unit: 'percent',
             notes: combinedNotes,
           );
+          if (!bfOk) {
+            throw StateError('Body fat save returned false');
+          }
         } catch (e) {
           debugPrint('[LogWeight] body fat record failed: $e');
           if (mounted) {

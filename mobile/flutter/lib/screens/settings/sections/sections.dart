@@ -8,6 +8,7 @@ export 'advanced_audio_section.dart';
 export 'ble_heart_rate_section.dart';
 export 'ai_privacy_section.dart';
 export 'audio_settings_section.dart';
+export 'contribute_food_data_section.dart';
 export 'custom_content_section.dart';
 export 'danger_zone_section.dart';
 export 'data_management_section.dart';

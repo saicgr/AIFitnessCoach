@@ -51,8 +51,6 @@ Response (unmatched)::
       "raw_name": "weird machine in corner"
     }
 """
-from __future__ import annotations
-
 import io
 import uuid
 from datetime import datetime, timedelta, timezone

@@ -139,7 +139,7 @@ export default function Blog() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListJsonLd) }}
       />
 
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 pt-12 sm:pt-16 pb-20">
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 pt-24 sm:pt-28 pb-20">
         <header className="mb-12 max-w-2xl">
           <p className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
             Zealova Blog

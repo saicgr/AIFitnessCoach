@@ -145,6 +145,27 @@ extension WorkoutUIBuildersMixinUI1 on WorkoutUIBuildersMixin {
                 ),
               ),
 
+            // Floating rest pill: shown when the user is between-sets-resting
+            // AND peeking another exercise (viewing != current). Without
+            // this, peeking hides the inline rest UI and the user
+            // perceives the rest as "reset" — actually still ticking, but
+            // invisible. Tap returns to the current exercise.
+            if (isResting &&
+                !isRestingBetweenExercises &&
+                viewingExerciseIndex != currentExerciseIndex)
+              Positioned(
+                top: MediaQuery.of(_ctx).padding.top + 64,
+                left: 16,
+                right: 16,
+                child: RepaintBoundary(
+                  child: _FloatingRestPeekPill(
+                    secondsRemaining: timerController.restSecondsRemaining,
+                    onReturn: () => _setState(() =>
+                        viewingExerciseIndex = currentExerciseIndex),
+                  ),
+                ),
+              ),
+
             // Top overlay (show during active workout OR between-sets rest)
             // Wrapped in RepaintBoundary to isolate per-second timer repaints
             if (!isResting || (isResting && !isRestingBetweenExercises))
@@ -338,4 +359,106 @@ extension WorkoutUIBuildersMixinUI1 on WorkoutUIBuildersMixin {
     );
   }
 
+}
+
+/// Slim pill anchored under the workout top bar that surfaces the
+/// still-ticking between-sets rest timer whenever the user is peeking a
+/// different exercise. Solves the perceived "rest reset" — the timer
+/// state itself is fine, the inline UI just hides while peeking. Tap
+/// the pill (or label) to snap back to the current exercise.
+///
+/// One sentence per visual element so it stays scannable without a
+/// magnifying glass: clock icon · `mm:ss` countdown · "tap to return".
+class _FloatingRestPeekPill extends StatelessWidget {
+  final int secondsRemaining;
+  final VoidCallback onReturn;
+
+  const _FloatingRestPeekPill({
+    required this.secondsRemaining,
+    required this.onReturn,
+  });
+
+  String _fmt(int s) {
+    if (s < 0) s = 0;
+    final m = s ~/ 60;
+    final r = s % 60;
+    return '$m:${r.toString().padLeft(2, '0')}';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final accent = AccentColorScope.of(context).getColor(isDark);
+    final fg = isDark ? Colors.white : Colors.black;
+    final bg = isDark
+        ? Colors.black.withValues(alpha: 0.55)
+        : Colors.white.withValues(alpha: 0.92);
+    return Semantics(
+      button: true,
+      label:
+          'Rest ${_fmt(secondsRemaining)} remaining. Tap to return to current exercise.',
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(22),
+          onTap: onReturn,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            decoration: BoxDecoration(
+              color: bg,
+              borderRadius: BorderRadius.circular(22),
+              border: Border.all(
+                color: accent.withValues(alpha: 0.45),
+                width: 1.2,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: isDark ? 0.4 : 0.12),
+                  blurRadius: 14,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.timer_rounded, size: 16, color: accent),
+                const SizedBox(width: 8),
+                Text(
+                  _fmt(secondsRemaining),
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w700,
+                    color: fg,
+                    fontFeatures: const [FontFeature.tabularFigures()],
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Container(
+                  width: 1,
+                  height: 14,
+                  color: fg.withValues(alpha: 0.18),
+                ),
+                const SizedBox(width: 10),
+                Text(
+                  'Tap to return',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: fg.withValues(alpha: 0.78),
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Icon(
+                  Icons.arrow_forward_rounded,
+                  size: 14,
+                  color: fg.withValues(alpha: 0.6),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }

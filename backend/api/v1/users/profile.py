@@ -15,6 +15,7 @@ from core.rate_limiter import limiter
 from core.activity_logger import log_user_activity, log_user_error
 from models.schemas import User, UserCreate, UserUpdate
 
+from pydantic import BaseModel
 from api.v1.users.models import (
     DestructiveActionRequest,
     ProgramPreferences,
@@ -1672,5 +1673,64 @@ async def take_my_fitness_snapshot(
         }, on_conflict="user_id,snapshot_date").execute()
 
         return {"ok": True, "date": today}
+    except Exception as e:
+        raise safe_internal_error(e, "users")
+
+
+# =============================================================================
+# Phase-2 §2.11: Contribute-food-data opt-out toggle
+# =============================================================================
+
+class ContributeFoodDataPayload(BaseModel):
+    contribute_food_data: bool
+
+
+@router.patch("/me/contribute-food-data")
+async def update_contribute_food_data(
+    body: ContributeFoodDataPayload,
+    current_user: dict = Depends(get_current_user),
+):
+    """Phase-2 §2.11: toggle the user's "Help improve nutrition data" setting.
+    When TRUE (default): novel-dish Gemini fallback results auto-upsert into
+    food_overrides_user_contributed for THIS user, AND aggregate into the
+    cross-user promotion job.
+    When FALSE: their existing rows still serve their lookups; new novel
+    dishes don't write; cross-user promotion job excludes them.
+    To delete existing rows: use DELETE /me/contributed-foods."""
+    user_id = current_user.get("id") or current_user.get("user_id")
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Auth missing")
+    db = get_supabase_db()
+    try:
+        db.client.table("users").update(
+            {"contribute_food_data": body.contribute_food_data}
+        ).eq("id", user_id).execute()
+        return {"ok": True, "contribute_food_data": body.contribute_food_data}
+    except Exception as e:
+        raise safe_internal_error(e, "users")
+
+
+@router.delete("/me/contributed-foods")
+async def delete_contributed_foods(current_user: dict = Depends(get_current_user)):
+    """Phase-2 §D1 (privacy): permanently delete this user's contributed
+    food rows from food_overrides_user_contributed. Returns count of rows
+    deleted. Does NOT change the contribute_food_data flag."""
+    user_id = current_user.get("id") or current_user.get("user_id")
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Auth missing")
+    db = get_supabase_db()
+    try:
+        count_res = (
+            db.client.table("food_overrides_user_contributed")
+            .select("food_name_normalized", count="exact")
+            .eq("user_id", user_id)
+            .limit(1)
+            .execute()
+        )
+        n = count_res.count or 0
+        db.client.table("food_overrides_user_contributed").delete().eq(
+            "user_id", user_id
+        ).execute()
+        return {"ok": True, "deleted_rows": n}
     except Exception as e:
         raise safe_internal_error(e, "users")

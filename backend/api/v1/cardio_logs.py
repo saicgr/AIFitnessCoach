@@ -15,8 +15,6 @@ Endpoints:
 
 All endpoints require auth and verify user ownership.
 """
-from __future__ import annotations
-
 from datetime import datetime, date, timedelta, timezone
 from typing import List, Optional, Dict, Any
 

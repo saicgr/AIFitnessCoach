@@ -3,16 +3,16 @@
 # Zealova — Pricing Reference
 
 > **Source of truth:** `docs/pricing/PRICING_ANALYSIS_2026.md` — this file is a quick-reference summary.
-> **Last Updated:** 2026-04-21
+> **Last Updated:** 2026-05-14
 
 ---
 
-## Current Live Pricing (as of 2026-04-21)
+## Current Live Pricing (as of 2026-05-14)
 
 | Plan | Price | Billing | Trial | Status |
 |------|-------|---------|-------|--------|
-| **Premium Monthly** | $4.99/mo | Monthly | ❌ None | ✅ **Live** |
-| **Premium Yearly** | $49.99/yr (~$4.17/mo) | Yearly | ✅ 7 days | ✅ **Live** |
+| **Premium Monthly** | $7.99/mo | Monthly | ✅ 7 days | ✅ **Live** |
+| **Premium Yearly** | $59.99/yr (~$5.00/mo, 37% off monthly) | Yearly | ✅ 7 days | ✅ **Live** |
 
 **Not currently sold:** Premium Plus (Ultra), Lifetime, Family, Duo, Free-with-limits — all deferred. See PRICING_ANALYSIS_2026.md for detailed rationale.
 
@@ -25,13 +25,15 @@ All pricing below is set **per country in App Store Connect + Google Play Consol
 ### Tier 1 — Full Price (high disposable income)
 Countries: US, UK, Canada, Australia, NZ, Ireland, Nordics, Switzerland, Germany, Netherlands, France, Austria, Belgium, Luxembourg
 
+> ⚠️ **PPP regional pricing needs review.** The values below were set when US was $4.99/$49.99. After the price increase to $7.99/$59.99 (2026-04-30 rollout), regional pricing should be re-set proportionally in App Store Connect + Google Play Console. Until then, treat these numbers as stale.
+
 | Market | Monthly | Yearly |
 |---|---|---|
-| 🇺🇸 US | $4.99 | $49.99 |
-| 🇬🇧 UK | £3.99 | £37.99 |
-| 🇨🇦 Canada | C$6.99 | C$64.99 |
-| 🇦🇺 Australia | A$7.99 | A$74.99 |
-| 🇪🇺 EU (Germany/France/NL/etc.) | €4.99 | €49.99 |
+| 🇺🇸 US | **$7.99** | **$59.99** |
+| 🇬🇧 UK | £3.99 (stale, needs review) | £37.99 (stale) |
+| 🇨🇦 Canada | C$6.99 (stale) | C$64.99 (stale) |
+| 🇦🇺 Australia | A$7.99 (stale) | A$74.99 (stale) |
+| 🇪🇺 EU (Germany/France/NL/etc.) | €4.99 (stale) | €49.99 (stale) |
 
 ### Tier 2 — Southern Europe + Higher APAC
 Countries: Italy, Spain, Portugal, Greece, Japan, South Korea, Singapore, Hong Kong, Taiwan, UAE, Saudi Arabia, Israel
@@ -93,18 +95,18 @@ Apple Fitness+ launched in India Dec 15, 2025 at ₹149/mo · ₹999/yr. Zealova
 | Heavy | $1.50 |
 | Max (abuse ceiling) | $4.00 |
 
-### Net profit per user per month (moderate Gemini)
+### Net profit per user per month (moderate Gemini, $0.70/mo)
 | Price | After 15% store | Net profit |
 |---|---|---|
-| $4.99 (US monthly) | $4.24 | **$3.54** |
-| $49.99/12 (US yearly) | $3.54 | **$2.84** |
-| ₹249 (India monthly) | ₹212 ($2.53) | **₹154 ($1.83)** |
-| ₹1,999/12 (India yearly) | ₹141 ($1.69) | **₹83 ($0.99)** |
+| $7.99 (US monthly) | $6.79 | **$6.09** |
+| $59.99/12 (US yearly) | $4.25 | **$3.55** |
+| ₹249 (India monthly, stale) | ₹212 ($2.53) | **₹154 ($1.83)** |
+| ₹1,999/12 (India yearly, stale) | ₹141 ($1.69) | **₹83 ($0.99)** |
 
 ### Breakeven subs to cover $70/mo fixed infra
-- **US @ $4.99 (moderate):** ~20 subs
-- **India @ ₹249 (moderate):** ~38 subs
-- **India @ ₹199 (moderate):** ~53 subs
+- **US @ $7.99 monthly (moderate):** ~12 subs
+- **US @ $59.99 yearly (moderate):** ~20 subs
+- **India @ ₹249 (moderate, stale):** ~38 subs
 
 ---
 
@@ -132,7 +134,7 @@ All documented in detail in `docs/pricing/PRICING_ANALYSIS_2026.md`. Summary:
 | Competitor | Monthly | Annual | AI coach? |
 |---|---|---|---|
 | **Hevy Pro** | $2.99 | $23.99 | ❌ tracker only |
-| **Zealova (current)** | **$4.99** | **$49.99** | ✅ Gemini + 5-agent swarm |
+| **Zealova (current)** | **$7.99** | **$59.99** | ✅ Gemini + 5-agent swarm |
 | **Apple Fitness+** | $9.99 (India: ₹149) | $79.99 (India: ₹999) | ❌ pre-recorded classes |
 | **Strong** | $8.33 | $99.99 | ❌ |
 | **MacroFactor** | $11.99 | $71.99 | Rule-based nutrition |
@@ -195,6 +197,8 @@ Ranked by ROI (per PRICING_ANALYSIS_2026.md):
 
 - **Dec 2024:** Original PRICING.md wrote $5.99/$9.99/$79.99 + $99.99 lifetime — never shipped at those prices.
 - **Apr 16, 2026:** Launch decision — Premium-only at $4.99/$49.99. No Ultra, no Lifetime, no Family, no Free tier.
-- **Apr 21, 2026:** This refresh — added India PPP (₹249), Apple Fitness+ India competitive context, Family Plan deferral rationale.
+- **Apr 21, 2026:** Added India PPP (₹249), Apple Fitness+ India competitive context, Family Plan deferral rationale.
+- **Apr 30, 2026:** Price increase shipped in code — $7.99/mo and $59.99/yr (US). 7-day trial extended to BOTH SKUs (was yearly only). Retention popup at $47.99/yr added for cancel attempts.
+- **2026-05-14:** This refresh — confirmed live store rollout of the $7.99/$59.99 pricing. Regional PPP values flagged as stale and need proportional re-set in App Store Connect / Play Console.
 
 *Source of truth for all rationale: `docs/pricing/PRICING_ANALYSIS_2026.md`*

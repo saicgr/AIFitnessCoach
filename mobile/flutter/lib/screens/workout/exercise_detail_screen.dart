@@ -8,6 +8,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/services/posthog_service.dart';
 import '../../core/theme/theme_colors.dart';
+import '../../core/utils/exercise_name_format.dart';
 import '../../core/providers/favorites_provider.dart';
 import '../../core/providers/staples_provider.dart';
 import '../../core/providers/exercise_queue_provider.dart';
@@ -353,9 +354,9 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Exercise name
+                  // Exercise name (C5: title-cased for display).
                   Text(
-                    exercise.name,
+                    exercise.name.titleCaseExercise,
                     style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),

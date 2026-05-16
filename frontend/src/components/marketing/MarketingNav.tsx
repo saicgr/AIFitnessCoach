@@ -91,16 +91,20 @@ export default function MarketingNav() {
   useClickOutside(compareRef, () => { if (openDropdown === 'compare') setOpenDropdown(null); });
   useClickOutside(resourcesRef, () => { if (openDropdown === 'resources') setOpenDropdown(null); });
 
-  // Apple-style transparent-at-rest nav: stay transparent over the hero,
-  // only become a frosted glass bar once the user scrolls past it.
-  // Landing page pins the cinematic hero for ~vh × 4 of scroll, so the
-  // threshold there is much higher than on other pages where one viewport
-  // of scroll = past the hero.
+  // The landing page has a cinematic hero the nav floats transparently over
+  // until the user scrolls past it. Every other page has content starting
+  // right under the nav, so the nav must be frosted-glass from the start —
+  // otherwise page content scrolls *under* a transparent bar and overlaps it.
   useEffect(() => {
     const isLanding = location.pathname === '/';
-    const computeThreshold = () =>
-      isLanding ? Math.max(2400, window.innerHeight * 4) : window.innerHeight * 0.6;
 
+    if (!isLanding) {
+      // Non-landing: always frosted, no scroll listener needed.
+      setIsScrolled(true);
+      return;
+    }
+
+    const computeThreshold = () => Math.max(2400, window.innerHeight * 4);
     let threshold = computeThreshold();
     const handleScroll = () => setIsScrolled(window.scrollY > threshold);
     const handleResize = () => {
@@ -323,11 +327,11 @@ export default function MarketingNav() {
 
             <Link
               to="/waitlist"
-              className="flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-white rounded-full transition-all text-sm font-medium shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/40"
+              className="flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-[#ffffff] rounded-full transition-all text-sm font-medium shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/40"
             >
               <span className="relative flex w-2 h-2">
-                <span className="absolute inline-flex w-full h-full rounded-full bg-white opacity-75 animate-ping" />
-                <span className="relative inline-flex w-2 h-2 rounded-full bg-white" />
+                <span className="absolute inline-flex w-full h-full rounded-full bg-[#ffffff] opacity-75 animate-ping" />
+                <span className="relative inline-flex w-2 h-2 rounded-full bg-[#ffffff]" />
               </span>
               Join Waitlist
             </Link>
@@ -475,11 +479,11 @@ export default function MarketingNav() {
               <Link
                 to="/waitlist"
                 onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center justify-center gap-2 text-sm font-medium py-3 px-4 bg-emerald-500 text-white rounded-full mt-1 shadow-lg shadow-emerald-500/20"
+                className="flex items-center justify-center gap-2 text-sm font-medium py-3 px-4 bg-emerald-500 text-[#ffffff] rounded-full mt-1 shadow-lg shadow-emerald-500/20"
               >
                 <span className="relative flex w-2 h-2">
-                  <span className="absolute inline-flex w-full h-full rounded-full bg-white opacity-75 animate-ping" />
-                  <span className="relative inline-flex w-2 h-2 rounded-full bg-white" />
+                  <span className="absolute inline-flex w-full h-full rounded-full bg-[#ffffff] opacity-75 animate-ping" />
+                  <span className="relative inline-flex w-2 h-2 rounded-full bg-[#ffffff]" />
                 </span>
                 Join Waitlist — iOS + Android
               </Link>

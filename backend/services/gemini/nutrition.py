@@ -905,12 +905,16 @@ RESTAURANT/LOCATION QUALIFIERS — DO NOT create food items from restaurant name
             # USDA/per-item enhancement below still computes accurate
             # macros from the food names.
             response = await gemini_generate_with_retry(
-                model=self.model,
+                # Flash Lite + thinking off: food-text parsing is extraction,
+                # not reasoning. Thinking tokens were silently eating the
+                # output budget and slowing every text scan. See config.py.
+                model=settings.gemini_vision_model,
                 contents=prompt,
                 config=types.GenerateContentConfig(
                     response_mime_type="application/json",
                     max_output_tokens=8192,
                     temperature=0.2,
+                    thinking_config=types.ThinkingConfig(thinking_budget=0),
                 ),
                 user_id=user_id,
                 max_retries=2,
@@ -984,12 +988,13 @@ RESTAURANT/LOCATION QUALIFIERS — DO NOT create food items from restaurant name
         # parsing (truncated JSON, repair failed) — give it more room.
         try:
             fallback_response = await gemini_generate_with_retry(
-                model=self.model,
+                model=settings.gemini_vision_model,
                 contents=prompt,
                 config=types.GenerateContentConfig(
                     response_mime_type="application/json",
                     max_output_tokens=8192,
                     temperature=0.2,
+                    thinking_config=types.ThinkingConfig(thinking_budget=0),
                 ),
                 user_id=user_id,
                 timeout=FOOD_ANALYSIS_TIMEOUT + 15,

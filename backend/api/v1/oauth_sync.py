@@ -35,8 +35,6 @@ Endpoints:
     POST   /sync/apple-health/push           → HealthKit bridge (Flutter) data in
     POST   /sync/{id}/manual-sync            → force pull-now
 """
-from __future__ import annotations
-
 import json
 import logging
 import os

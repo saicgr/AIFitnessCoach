@@ -3,6 +3,7 @@
 0. Social
 0. Empty Carousel don't like at all
 1. Check why no demo when a new user clikcs sign in and not scountinue with Google/email
+1. Adjust workout plan based on weekly body image check in (need to also save images along with phto grid based on filtered time range)
 2. Fasting reenable
 3. Food recommendation from fridge and more (also on home screen)
 4. Receipes(photo) to list and proper instructions

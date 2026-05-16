@@ -615,24 +615,40 @@ async def get_image_by_exercise_name(
         search_names = list(dict.fromkeys(expanded))
 
         found_row = None
+        # C7 fix: when multiple rows share a name (gendered variants, dupes
+        # from manual imports), fetch top 5 and prefer (a) row with a valid
+        # `ILLUSTRATIONS ALL/` path (per project_s3_prefix memory the
+        # bucket uses the trailing-space ALL suffix; the legacy
+        # `ILLUSTRATIONS/` prefix doesn't exist), then (b) any
+        # non-null image, then (c) lowest id. This kills the
+        # "Barbell Deadlift renders a clean / front-squat illustration"
+        # bug reported in production.
+        def _pick_best(rows: list) -> Optional[dict]:
+            if not rows:
+                return None
+            def score(r: dict) -> tuple:
+                p = (r.get("image_s3_path") or "")
+                has_image = 1 if p else 0
+                # 2 = canonical prefix, 1 = some image, 0 = no image.
+                prefix_score = 2 if p.startswith("ILLUSTRATIONS ALL/") else (1 if has_image else 0)
+                # Lower id wins on tiebreak; negate so larger score sorts first.
+                return (prefix_score, has_image, -((r.get("id") or 0) if isinstance(r.get("id"), int) else 0))
+            return max(rows, key=score)
+
         for name in search_names:
             # ONLY exact (case-insensitive) match. No `name%` or `%name%`
             # substring queries — those are what served the wrong sibling row.
-            # When multiple rows share a name (gendered variants, dupes from
-            # different sources), prefer the one that actually has an image,
-            # then deterministic by id — kills the "tile shows A, detail
-            # shows B" race.
             result = (
                 db.client.table("exercise_library")
                 .select("id, exercise_name, image_s3_path")
                 .ilike("exercise_name", name)
                 .order("image_s3_path", desc=True, nullsfirst=False)
                 .order("id", desc=False)
-                .limit(1)
+                .limit(5)
                 .execute()
             )
             if result.data:
-                found_row = result.data[0]
+                found_row = _pick_best(result.data) or result.data[0]
                 break
 
         if not found_row:
@@ -688,16 +704,21 @@ async def get_image_by_exercise_name(
                     .ilike("name", name)
                     .order("image_url", desc=True, nullsfirst=False)
                     .order("id", desc=False)
-                    .limit(1)
+                    .limit(5)
                     .execute()
                 )
                 if mv_result.data:
-                    mv_row = mv_result.data[0]
-                    found_row = {
-                        "id": mv_row.get("id"),
-                        "exercise_name": mv_row.get("name"),
-                        "image_s3_path": mv_row.get("image_url"),
-                    }
+                    # Same C7 tiebreak as the base-table branch — map MV's
+                    # `image_url` to `image_s3_path` for the picker.
+                    mapped = [
+                        {
+                            "id": r.get("id"),
+                            "exercise_name": r.get("name"),
+                            "image_s3_path": r.get("image_url"),
+                        }
+                        for r in mv_result.data
+                    ]
+                    found_row = _pick_best(mapped) or mapped[0]
                     break
 
         if not found_row:

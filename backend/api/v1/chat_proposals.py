@@ -14,8 +14,6 @@ Security model:
   client. Compared constant-time.
 - Expired rows return 410; already-consumed rows return 409.
 """
-from __future__ import annotations
-
 import asyncio
 import hmac
 from datetime import datetime, timezone

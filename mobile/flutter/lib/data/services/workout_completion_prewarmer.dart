@@ -176,7 +176,17 @@ class WorkoutCompletionPrewarmer {
 
     debugPrint('🏁 [WorkoutCompletionPrewarmer] warming for $userId');
 
-    final workoutRepo = ref.read(workoutRepositoryProvider);
+    // IMPORTANT: must be statically typed as WorkoutRepository so the
+    // extension method getUserAchievements (defined in
+    // workout_repository_performance.dart as part of the same library) is
+    // resolvable. The outer `ref` parameter is intentionally typed `dynamic`
+    // to accept both WidgetRef and Ref, but that makes
+    // `ref.read(...)` itself dynamic — so we re-bind the result to the
+    // concrete type to restore static dispatch. Otherwise the call falls
+    // through noSuchMethod → NoSuchMethodError at runtime even though the
+    // method clearly exists at compile time.
+    final WorkoutRepository workoutRepo =
+        ref.read(workoutRepositoryProvider) as WorkoutRepository;
 
     // Fire both fetches in parallel. Each per-call try/catch isolates
     // failures so one slow endpoint doesn't drag the other.

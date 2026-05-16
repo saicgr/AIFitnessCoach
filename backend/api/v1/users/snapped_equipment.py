@@ -10,8 +10,6 @@ Cursor format: ISO-8601 timestamp of the last item (classified_at). Caller
 passes ?cursor=<ts> on subsequent pages; rows older than the cursor are
 returned.
 """
-from __future__ import annotations
-
 from datetime import datetime, timezone
 from typing import Optional
 

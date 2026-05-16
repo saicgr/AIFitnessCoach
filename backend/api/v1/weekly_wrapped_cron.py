@@ -23,8 +23,6 @@ Hard requirements per memory feedback:
   the "schedule-aware" concern is: if the user literally did zero workouts
   AND zero logs this week, skip the push entirely (nothing to recap).
 """
-from __future__ import annotations
-
 from datetime import date, datetime, timedelta
 from typing import List, Optional
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError

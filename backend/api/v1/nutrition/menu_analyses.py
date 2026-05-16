@@ -13,8 +13,6 @@ Kept in one file because they share helpers (normalization, auth,
 error wrappers). The CRUD endpoints + `similar` endpoint all live
 under the `/nutrition` prefix mounted by `api/v1/nutrition/__init__.py`.
 """
-from __future__ import annotations
-
 import re
 import uuid
 from collections import Counter

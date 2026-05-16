@@ -394,26 +394,51 @@ class _EffortTile extends StatelessWidget {
                     ]
                   : null,
             ),
+            // C3 fix: emojis have different intrinsic heights in the system
+            // font (😌 sits lower than 🔥) which makes the row look
+            // misaligned. Lock the emoji and label rows to fixed heights so
+            // each tile's content shares the same vertical rhythm.
             child: Column(
               mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Text(emoji, style: const TextStyle(fontSize: 22)),
-                const SizedBox(height: 6),
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w800,
-                    color: selected ? color : textPrimary,
+                SizedBox(
+                  height: 28,
+                  child: Center(
+                    child: Text(
+                      emoji,
+                      style: const TextStyle(fontSize: 22, height: 1.0),
+                    ),
                   ),
                 ),
-                const SizedBox(height: 1),
-                Text(
-                  subLabel,
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: textMuted,
-                    fontWeight: FontWeight.w500,
+                const SizedBox(height: 6),
+                SizedBox(
+                  height: 16,
+                  child: Center(
+                    child: Text(
+                      label,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                        color: selected ? color : textPrimary,
+                        height: 1.0,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 2),
+                SizedBox(
+                  height: 14,
+                  child: Center(
+                    child: Text(
+                      subLabel,
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: textMuted,
+                        fontWeight: FontWeight.w500,
+                        height: 1.0,
+                      ),
+                    ),
                   ),
                 ),
               ],

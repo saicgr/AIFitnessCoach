@@ -16,13 +16,18 @@ Downstream calls into existing infrastructure:
 - Writes mid-workout readiness row to readiness_scores with source flag
 - Writes audit row to workout_changes (via _log_workout_change already in modifier)
 """
-from __future__ import annotations
+# NOTE: deliberately NOT using `from __future__ import annotations` here.
+# When enabled, FastAPI's OpenAPI schema generator (Pydantic 2.12 path)
+# can't resolve the ForwardRef to QuickAdjustRequest in the endpoint
+# signature → /openapi.json crashes with PydanticUserError. Using runtime
+# annotations + explicit typing.List/Tuple/Dict everywhere keeps OpenAPI
+# generation working on Python 3.9.
 
 import json
 from datetime import datetime
-from typing import List, Optional
+from typing import Dict, List, Optional, Tuple
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Body, Depends, HTTPException, Request
 from pydantic import BaseModel, Field
 
 from core.auth import get_current_user
@@ -63,6 +68,16 @@ class QuickAdjustResponse(BaseModel):
     updated_exercises: Optional[List[dict]] = None
 
 
+# Force-resolve string-form annotations introduced by `from __future__ import
+# annotations` at the top of this file. Without this, FastAPI's OpenAPI
+# generator (under Pydantic 2.12) crashes with PydanticUserError because the
+# ForwardRef('QuickAdjustRequest') in the endpoint signature can't be
+# resolved when building the schema. .model_rebuild() materializes the
+# fields so TypeAdapter can introspect them.
+QuickAdjustRequest.model_rebuild()
+QuickAdjustResponse.model_rebuild()
+
+
 # ── Time estimation ────────────────────────────────────────────────────────
 
 # Rough per-exercise time estimate when we don't have per-exercise durations
@@ -72,7 +87,7 @@ _AVG_SECONDS_PER_SET = 90  # 30s work + 60s rest
 _TRANSITION_SECONDS_PER_EXERCISE = 30
 
 
-def _estimate_minutes(exercises: list[dict]) -> int:
+def _estimate_minutes(exercises: List[Dict]) -> int:
     """Rough total time in minutes for the given exercise list."""
     total_seconds = 0
     for ex in exercises:
@@ -134,11 +149,11 @@ def _is_compound(exercise_name: str) -> bool:
 
 
 def _picks_to_remove(
-    exercises: list[dict],
-    indices_remaining: list[int],
+    exercises: List[Dict],
+    indices_remaining: List[int],
     target_minutes: int,
     sore_muscle: Optional[str],
-) -> list[int]:
+) -> List[int]:
     """Return indices to remove, in removal order, so total time fits budget.
 
     Strategy:
@@ -158,7 +173,7 @@ def _picks_to_remove(
         return []
 
     # Score each remaining index by removal priority (higher = remove first).
-    scored: list[tuple[int, int]] = []
+    scored: List[Tuple[int, int]] = []
     sore_lower = (sore_muscle or "").lower().strip()
     for idx in indices_remaining:
         if idx >= len(exercises):
@@ -178,7 +193,7 @@ def _picks_to_remove(
 
     # Budget: don't remove more than 60% of remaining.
     max_removals = max(1, int(len(indices_remaining) * 0.6))
-    to_remove: list[int] = []
+    to_remove: List[int] = []
 
     # Greedy — add until we fit or hit the cap.
     working = list(remaining_ex)
@@ -203,11 +218,12 @@ def _picks_to_remove(
 @limiter.limit("20/minute")
 async def quick_adjust_workout(
     workout_id: int,
-    request_body: QuickAdjustRequest,
-    *,
-    # `request` is picked up by the rate limiter via the Request object
-    # dependency; FastAPI will inject it when we declare it.
-    request,  # type: ignore[no-redef]
+    # Explicit `Body(...)` so FastAPI's OpenAPI schema generation under
+    # `from __future__ import annotations` doesn't fall back to treating
+    # this ForwardRef as a Query parameter (which crashes /openapi.json
+    # with PydanticUserError class-not-fully-defined).
+    request_body: QuickAdjustRequest = Body(...),
+    request: Request = None,  # injected by slowapi rate limiter
     current_user: dict = Depends(get_current_user),
 ):
     """Adjust the remaining workout in place based on soreness/energy/time.
@@ -259,7 +275,7 @@ async def quick_adjust_workout(
         # Don't block adjustment on analytics insert. Logs are enough for debug.
         logger.warning(f"[QuickAdjust] readiness insert failed (non-fatal): {e}")
 
-    # Normalize exercises into a list[dict] we can mutate.
+    # Normalize exercises into a List[Dict] we can mutate.
     exercises_data = workout.get("exercises")
     if isinstance(exercises_data, str):
         exercises = json.loads(exercises_data) if exercises_data else []
@@ -295,8 +311,8 @@ async def quick_adjust_workout(
         )
 
     # Branch 2 — time pressure. Trim first.
-    exercises_removed: list[str] = []
-    removed_indices: list[int] = []
+    exercises_removed: List[str] = []
+    removed_indices: List[int] = []
     if request_body.minutes_available * 1.15 < current_min:
         removed_indices = _picks_to_remove(
             exercises, indices, request_body.minutes_available,

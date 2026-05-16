@@ -10,8 +10,6 @@ Lives in its own module to avoid a circular import: write sites in
 in the full `timeline.py` aggregator (which imports those write sites for
 schema reuse).
 """
-from __future__ import annotations
-
 from typing import Optional
 
 from core.logger import get_logger

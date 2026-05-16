@@ -58,10 +58,16 @@ def get_real_client_ip(request: Request) -> str:
 # Uses custom key function for reverse proxy compatibility (e.g., Render)
 # Default global limit: 100 requests per minute
 # swallow_errors=True prevents 500 errors if rate limiting fails
+import os as _os
+# BENCH_BYPASS_RATELIMIT=1 disables the limiter entirely so the Phase-2
+# full-sweep bench script can fire 500+ scans through one local instance
+# without hitting the 10/min per-endpoint cap. NEVER set this in prod.
+_BENCH_BYPASS = _os.environ.get("BENCH_BYPASS_RATELIMIT") == "1"
 limiter = Limiter(
     key_func=get_real_client_ip,
-    default_limits=["100/minute"],
-    swallow_errors=True,  # Log errors but don't crash the request
+    default_limits=[] if _BENCH_BYPASS else ["100/minute"],
+    swallow_errors=True,
+    enabled=not _BENCH_BYPASS,
 )
 
 
@@ -100,8 +106,9 @@ def get_user_id_from_request(request: Request) -> str:
 # More reliable than IP-based limiting behind proxies
 user_limiter = Limiter(
     key_func=get_user_id_from_request,
-    default_limits=["100/minute"],
+    default_limits=[] if _BENCH_BYPASS else ["100/minute"],
     swallow_errors=True,
+    enabled=not _BENCH_BYPASS,
 )
 
 

@@ -107,6 +107,15 @@ class TodayWorkoutNotifier extends StateNotifier<AsyncValue<TodayWorkoutResponse
   /// When true, the "Generate Workout" button is shown instead of auto-triggering
   static bool _generationTimedOut = false;
 
+  /// A2 circuit breaker: count consecutive timeout-class failures. Resets on
+  /// any successful response. When the count exceeds _circuitOpenThreshold
+  /// we stop auto-retrying and surface a "Tap to retry" empty state — this
+  /// prevents the 100-request 25 s loop seen in Sentry FITWIZ-FLUTTER-97
+  /// when the backend or connectivity layer is degraded.
+  int _consecutiveTimeoutFailures = 0;
+  bool _circuitOpen = false;
+  static const int _circuitOpenThreshold = 3;
+
   TodayWorkoutNotifier(this._ref)
       : super(
           // Start with in-memory cache if available (instant, no loading flash)
@@ -392,6 +401,12 @@ class TodayWorkoutNotifier extends StateNotifier<AsyncValue<TodayWorkoutResponse
   /// Fetch fresh data from API
   Future<void> _fetchFromApi({bool showLoading = false}) async {
     if (_isRefreshing || _disposed) return;
+    // A2 circuit breaker — refuse to fetch if too many consecutive timeouts.
+    // Reset only on explicit user refresh (see refresh() / forceRefresh()).
+    if (_circuitOpen) {
+      debugPrint('🔌 [TodayWorkout] circuit open — refusing auto-retry');
+      return;
+    }
     _isRefreshing = true;
 
     final apiSw = Stopwatch()..start();
@@ -569,8 +584,33 @@ class TodayWorkoutNotifier extends StateNotifier<AsyncValue<TodayWorkoutResponse
       if (response != null) {
         await _saveToCache(response);
       }
+      // A2: any successful response resets the timeout counter.
+      _consecutiveTimeoutFailures = 0;
     } catch (e, stack) {
       debugPrint('❌ [TodayWorkout] API error: $e');
+      // A2 — classify timeout-ish failures so we can short-circuit. Dio's
+      // DioException with type connectionTimeout/receiveTimeout/sendTimeout
+      // is the common shape; we also bucket the connectivity-flap pattern
+      // (SocketException, HandshakeException) as "timeout-like" since
+      // they cascade into the same 25s wait + retry loop in production.
+      final eStr = e.toString();
+      final isTimeoutLike = eStr.contains('TimeoutException') ||
+          eStr.contains('Timeout') ||
+          eStr.contains('SocketException') ||
+          eStr.contains('Connection closed') ||
+          eStr.contains('Connection reset') ||
+          eStr.contains('connectionTimeout') ||
+          eStr.contains('receiveTimeout') ||
+          eStr.contains('sendTimeout');
+      if (isTimeoutLike) {
+        _consecutiveTimeoutFailures += 1;
+        if (_consecutiveTimeoutFailures >= _circuitOpenThreshold) {
+          _circuitOpen = true;
+          debugPrint('🔌 [TodayWorkout] circuit open — '
+              '$_consecutiveTimeoutFailures consecutive timeouts. Auto-retry stopped.');
+          _cancelPolling();
+        }
+      }
       // Only set error state if we don't have cached data and not disposed
       if (!_disposed && !state.hasValue) {
         _safeSetState(AsyncValue.error(e, stack));
@@ -756,7 +796,16 @@ class TodayWorkoutNotifier extends StateNotifier<AsyncValue<TodayWorkoutResponse
   }
 
   /// Public method to force refresh from API
+  ///
+  /// A2: user-initiated refresh ALWAYS resets the circuit breaker so a
+  /// degraded connection can recover on user pull-to-refresh / connectivity
+  /// recovery without requiring an app restart.
   Future<void> refresh() async {
+    if (_circuitOpen) {
+      debugPrint('🔌 [TodayWorkout] closing circuit (user refresh)');
+      _circuitOpen = false;
+      _consecutiveTimeoutFailures = 0;
+    }
     await _fetchFromApi(showLoading: false);
   }
 
