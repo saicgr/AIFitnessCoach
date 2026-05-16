@@ -14,6 +14,7 @@ import '../../widgets/pill_app_bar.dart';
 import '../../widgets/glass_sheet.dart';
 import 'widgets/edit_targets_sheet.dart';
 import 'food_library_screen.dart';
+import 'food_logging_rules_screen.dart';
 import 'weekly_checkin_sheet.dart';
 
 part 'nutrition_settings_screen_ui_1.dart';
@@ -439,6 +440,32 @@ class _NutritionSettingsScreenState
                         context,
                         AppPageRoute(
                           builder: (context) => const FoodLibraryScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  // L3 — "It remembers you". Standing food-logging rules that
+                  // are auto-applied to every food photo + text analysis.
+                  _buildNavigationCard(
+                    context,
+                    isDark,
+                    elevated,
+                    cardBorder,
+                    textPrimary,
+                    textMuted,
+                    title: 'Always-Rules',
+                    subtitle:
+                        'Standing rules Zealova applies to every food analysis',
+                    icon: Icons.auto_awesome_rounded,
+                    iconColor: AppColors.purple,
+                    onTap: () {
+                      HapticService.light();
+                      Navigator.push(
+                        context,
+                        AppPageRoute(
+                          builder: (context) =>
+                              const FoodLoggingRulesScreen(),
                         ),
                       );
                     },

@@ -15,6 +15,7 @@ import '../../widgets/glass_sheet.dart';
 import '../../core/services/posthog_service.dart';
 import '../../widgets/segmented_tab_bar.dart';
 import 'recipe_builder_sheet.dart';
+import 'custom_food_builder_sheet.dart';
 
 part 'food_library_screen_part_food_library_card.dart';
 
@@ -45,6 +46,10 @@ sealed class FoodLibraryItem {
   double? get protein;
   DateTime get createdAt;
   int get timesUsed;
+  /// Display emoji icon — null for items without one (recipes, legacy foods).
+  String? get emoji;
+  /// Branded-food name — null when not a branded food.
+  String? get brand;
 }
 
 /// Saved food item wrapper
@@ -65,6 +70,10 @@ class SavedFoodLibraryItem implements FoodLibraryItem {
   DateTime get createdAt => savedFood.createdAt;
   @override
   int get timesUsed => savedFood.timesLogged;
+  @override
+  String? get emoji => savedFood.emoji;
+  @override
+  String? get brand => savedFood.brand;
 }
 
 /// Recipe item wrapper
@@ -85,6 +94,10 @@ class RecipeLibraryItem implements FoodLibraryItem {
   DateTime get createdAt => recipe.createdAt;
   @override
   int get timesUsed => recipe.timesLogged;
+  @override
+  String? get emoji => null;
+  @override
+  String? get brand => null;
 }
 
 /// State for the food library
@@ -754,16 +767,114 @@ class _FoodLibraryScreenState extends ConsumerState<FoodLibraryScreen>
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: _createNewRecipe,
+        onPressed: _showCreateChooser,
         backgroundColor: accentColor,
         foregroundColor: Colors.white,
         icon: const Icon(Icons.add_rounded),
         label: const Text(
-          'New Recipe',
+          'Add',
           style: TextStyle(fontWeight: FontWeight.w600),
         ),
       ),
     );
+  }
+
+  /// Lets the user pick between a multi-ingredient recipe and a single
+  /// custom food (A4 — the custom food path supports AI-assisted fill).
+  Future<void> _showCreateChooser() async {
+    if (_userId == null) return;
+    HapticService.light();
+
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textPrimary =
+        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+
+    final choice = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: elevated,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 8),
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: textMuted.withValues(alpha: 0.4),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 8),
+            ListTile(
+              leading: Icon(Icons.restaurant_menu_rounded, color: textPrimary),
+              title: Text('Custom food',
+                  style: TextStyle(
+                      color: textPrimary, fontWeight: FontWeight.w600)),
+              subtitle: Text('A single food — type it or let AI fill it in',
+                  style: TextStyle(color: textMuted, fontSize: 12)),
+              onTap: () => Navigator.pop(ctx, 'food'),
+            ),
+            ListTile(
+              leading: Icon(Icons.menu_book_rounded, color: textPrimary),
+              title: Text('Recipe',
+                  style: TextStyle(
+                      color: textPrimary, fontWeight: FontWeight.w600)),
+              subtitle: Text('A homemade meal with multiple ingredients',
+                  style: TextStyle(color: textMuted, fontSize: 12)),
+              onTap: () => Navigator.pop(ctx, 'recipe'),
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+
+    if (!mounted) return;
+    if (choice == 'recipe') {
+      await _createNewRecipe();
+    } else if (choice == 'food') {
+      await _createCustomFood();
+    }
+  }
+
+  /// A4 — open the AI-assisted custom-food builder.
+  Future<void> _createCustomFood() async {
+    if (_userId == null) return;
+    HapticService.medium();
+
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+
+    final result = await showModalBottomSheet<CustomFoodResult>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: elevated,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => CustomFoodBuilderSheet(userId: _userId!),
+    );
+
+    if (result == null || !mounted) return;
+    // Whether the user created a new food or chose to reuse an existing one,
+    // refresh the library so it surfaces.
+    ref.read(foodLibraryProvider(_userId!).notifier).loadData();
+
+    if (result.created != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('"${result.created!.name}" added')),
+      );
+    } else if (result.useExistingId != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Using your existing custom food')),
+      );
+    }
   }
 
   Widget _buildShimmerLoading(bool isDark, Color elevated, Color cardBorder) {

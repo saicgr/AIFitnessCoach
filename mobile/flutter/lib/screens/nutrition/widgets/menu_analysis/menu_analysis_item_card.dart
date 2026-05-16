@@ -27,6 +27,16 @@ class MenuAnalysisItemCard extends StatelessWidget {
   final ValueChanged<bool?> onToggle;
   final ValueChanged<double> onPortionChanged;
 
+  /// L5 per-dish logging adjustment. When non-null AND the item is
+  /// selected, an "Adjust" pill is rendered so the user can correct the
+  /// "as served" menu macros (how-much-eaten chips + free-text refine).
+  /// Null = hidden (keeps chat-flow / non-logging callers unchanged).
+  final VoidCallback? onAdjust;
+
+  /// Short summary of the adjustment already applied to this dish, e.g.
+  /// "Applied: Ate ½". Shown as a hint under the Adjust pill.
+  final String? adjustmentSummary;
+
   const MenuAnalysisItemCard({
     super.key,
     required this.item,
@@ -34,6 +44,8 @@ class MenuAnalysisItemCard extends StatelessWidget {
     required this.allergenProfile,
     required this.onToggle,
     required this.onPortionChanged,
+    this.onAdjust,
+    this.adjustmentSummary,
   });
 
   @override
@@ -162,6 +174,17 @@ class MenuAnalysisItemCard extends StatelessWidget {
                         item: item,
                         onChanged: onPortionChanged,
                       ),
+                      // L5 — per-dish "as eaten" adjustment. Only when the
+                      // dish is selected for logging and the caller wired
+                      // up onAdjust (the log-meal / nutrition flows do; the
+                      // chat flow leaves it null).
+                      if (onAdjust != null && isSelected) ...[
+                        const SizedBox(height: 6),
+                        _AdjustPill(
+                          summary: adjustmentSummary,
+                          onTap: onAdjust!,
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -186,6 +209,71 @@ class MenuAnalysisItemCard extends StatelessWidget {
     return parts.join(' · ');
   }
 
+}
+
+/// L5 — compact "Adjust" affordance shown on a selected menu dish. Tapping
+/// it opens the per-dish adjustment sheet (how-much-eaten chips + free-text
+/// refine). When an adjustment is already applied, the chip turns accent-
+/// colored and shows a one-line summary beneath it ("Applied: Ate ½").
+class _AdjustPill extends StatelessWidget {
+  final String? summary;
+  final VoidCallback onTap;
+
+  const _AdjustPill({required this.summary, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final accent = isDark ? AppColors.orange : AppColorsLight.orange;
+    final textMuted =
+        isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final adjusted = summary != null && summary!.isNotEmpty;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Material(
+          color: accent.withValues(alpha: adjusted ? 0.18 : 0.10),
+          borderRadius: BorderRadius.circular(8),
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(8),
+            child: Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(adjusted ? Icons.check_circle : Icons.tune_rounded,
+                      size: 13, color: accent),
+                  const SizedBox(width: 5),
+                  Text(
+                    adjusted ? 'Adjusted' : 'Adjust what you ate',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: accent,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        if (adjusted)
+          Padding(
+            padding: const EdgeInsets.only(top: 3, left: 2),
+            child: Text(
+              summary!,
+              style: TextStyle(
+                fontSize: 10,
+                color: textMuted,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ),
+      ],
+    );
+  }
 }
 
 /// Horizontally-scrollable row of labeled health-signal pills.

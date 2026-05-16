@@ -7,7 +7,9 @@ import '../core/theme/accent_color_provider.dart';
 import '../core/utils/leaderboard_tier_color.dart';
 import '../data/models/weekly_recap.dart';
 import '../data/providers/weekly_recap_provider.dart';
+import '../data/providers/xp_provider.dart';
 import '../data/services/haptic_service.dart';
+import 'minigame/nutrient_rush_game.dart';
 
 /// Monday-morning celebration modal. Shown on first foreground open after
 /// Monday 06:00 device-local time, if the user has a meaningful recap from
@@ -77,11 +79,38 @@ class _WeeklyRecapDialogState extends ConsumerState<_WeeklyRecapDialog>
     });
   }
 
+  // Anti-farm: award mini-game XP at most ONCE per celebration, even if the
+  // user replays the bonus round in this same dialog.
+  bool _minigameXpAwarded = false;
+
   @override
   void dispose() {
     _confetti.dispose();
     _xpCounter.dispose();
     super.dispose();
+  }
+
+  /// Launches the optional Nutrient Rush bonus mini-game. Celebration launch,
+  /// so it's reward-eligible: a score > 0 awards real XP once via the
+  /// `bonus_minigame` goal type. Never blocks the dismiss/CTA flow.
+  Future<void> _playBonusGame() async {
+    HapticService.light();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final accentColor = ref.read(accentColorProvider).getColor(isDark);
+    final score = await showNutrientRushGame(
+      context,
+      accentColor,
+      rewardEligible: true,
+    );
+    if (!mounted) return;
+    if (score > 0) {
+      HapticService.success();
+      _confetti.play();
+      if (!_minigameXpAwarded) {
+        _minigameXpAwarded = true;
+        await ref.read(xpProvider.notifier).awardMinigameXP();
+      }
+    }
   }
 
   @override
@@ -228,6 +257,28 @@ class _WeeklyRecapDialogState extends ConsumerState<_WeeklyRecapDialog>
                           Navigator.of(context).pop();
                         },
                         accent: accent,
+                      ),
+                      const SizedBox(height: 8),
+                      // Optional bonus mini-game — never blocks the CTA above.
+                      Center(
+                        child: TextButton.icon(
+                          onPressed: _playBonusGame,
+                          icon: const Text('🚀',
+                              style: TextStyle(fontSize: 14)),
+                          label: const Text(
+                            'PLAY BONUS ROUND',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 1.2,
+                            ),
+                          ),
+                          style: TextButton.styleFrom(
+                            foregroundColor: accent,
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 8),
+                          ),
+                        ),
                       ),
                     ],
                   ),

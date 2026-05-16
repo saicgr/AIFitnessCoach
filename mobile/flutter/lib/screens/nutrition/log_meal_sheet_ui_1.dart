@@ -296,6 +296,18 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
     setState(() => _analyzedResponse = _rebuildResponseWithItems(currentItems));
   }
 
+  /// L4 — "accuracy you can trust". User tapped the 1-tap "Looks right"
+  /// confirm on a low-confidence item. Clears the low-confidence flag
+  /// without changing any nutrition values (the user vouched for it as-is).
+  void _confirmFoodItem(int index) {
+    if (_analyzedResponse == null) return;
+    final currentItems = List<FoodItemRanking>.from(_analyzedResponse!.foodItems);
+    if (index < 0 || index >= currentItems.length) return;
+    if (!currentItems[index].isLowConfidence) return;
+    currentItems[index] = currentItems[index].confirmedByUser();
+    setState(() => _analyzedResponse = _rebuildResponseWithItems(currentItems));
+  }
+
   /// User tapped the inline kcal/macro pill on a food item and saved a new
   /// value. Commit the edit locally and diff against the AI's original
   /// analysis to produce audit rows flushed at save time.
@@ -462,6 +474,14 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
       // user nudges any food's portion size.
       inflammationScore: base.inflammationScore,
       isUltraProcessed: base.isUltraProcessed,
+      // Preserve the A3 "Applied:" note and the L1 coaching extras across
+      // portion edits / item confirms — they describe the analysis, not the
+      // portion, so a local edit must not wipe them.
+      appliedInstructionNote: base.appliedInstructionNote,
+      // L3 — preserve the "Zealova remembered…" affirmation across edits.
+      rememberedMessage: base.rememberedMessage,
+      nextMealSuggestion: base.nextMealSuggestion,
+      overBudgetFork: base.overBudgetFork,
     );
   }
 
@@ -1204,6 +1224,480 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
     );
   }
 
+  // ─── Import Scan — Nutrition Label / App Screenshot (Parity A2) ──────
+
+  /// Opens the chooser sheet that surfaces the two OCR-import flows that
+  /// previously lived only inside the AI-Coach chat: scanning a physical
+  /// nutrition-facts label and importing a screenshot from another tracking
+  /// app (MyFitnessPal / Cronometer / etc.). Each option picks an image and
+  /// routes through the direct `/nutrition/scan-*` endpoint into THIS sheet's
+  /// standard result card for review/edit before logging.
+  Future<void> _openImportScanSheet() async {
+    final cyan = const Color(0xFF06B6D4);
+    final choice = await showGlassSheet<String>(
+      context: context,
+      builder: (ctx) {
+        final colors = ThemeColors.of(ctx);
+        final isDark = colors.isDark;
+        return GlassSheet(
+          child: SafeArea(
+            top: false,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(4, 4, 4, 16),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            color: cyan.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Icon(Icons.document_scanner_outlined,
+                              size: 20, color: cyan),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            'Scan & Import',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                              color: colors.textPrimary,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  _GlassMenuOption(
+                    icon: Icons.qr_code_2_outlined,
+                    label: 'Scan nutrition label',
+                    subtitle: 'Read macros off a packaged food label',
+                    color: cyan,
+                    isDark: isDark,
+                    onTap: () => Navigator.pop(ctx, 'label'),
+                  ),
+                  const SizedBox(height: 10),
+                  _GlassMenuOption(
+                    icon: Icons.screenshot_outlined,
+                    label: 'Scan app screenshot',
+                    subtitle: 'Import a log from MyFitnessPal, Cronometer…',
+                    color: cyan,
+                    isDark: isDark,
+                    onTap: () => Navigator.pop(ctx, 'screenshot'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+    if (choice == null || !mounted) return;
+    if (choice == 'label') {
+      await _scanNutritionLabel();
+    } else {
+      await _scanAppScreenshot();
+    }
+  }
+
+  /// Lets the user pick Camera vs Gallery for a scan flow. Returns null if
+  /// dismissed. Mirrors the `_scanMenu` / `_pickFoodImagesWithSourceChoice`
+  /// chooser so the scan flows feel native to this sheet.
+  Future<ImageSource?> _pickScanImageSource(String title, Color color) {
+    return showGlassSheet<ImageSource>(
+      context: context,
+      builder: (ctx) {
+        final colors = ThemeColors.of(ctx);
+        final isDark = colors.isDark;
+        return GlassSheet(
+          child: SafeArea(
+            top: false,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(4, 4, 4, 16),
+                    child: Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: colors.textPrimary,
+                      ),
+                    ),
+                  ),
+                  _GlassMenuOption(
+                    icon: Icons.camera_alt_outlined,
+                    label: 'Take a photo',
+                    color: color,
+                    isDark: isDark,
+                    onTap: () => Navigator.pop(ctx, ImageSource.camera),
+                  ),
+                  const SizedBox(height: 10),
+                  _GlassMenuOption(
+                    icon: Icons.collections_outlined,
+                    label: 'Choose from library',
+                    color: color,
+                    isDark: isDark,
+                    onTap: () => Navigator.pop(ctx, ImageSource.gallery),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  /// C4 — nutrition-label scan. After picking the label photo we ask "how
+  /// many servings did you eat?" (label serving size ≠ amount eaten), then
+  /// call the direct endpoint. The result lands in the standard result card
+  /// where the user can still edit any macro before logging.
+  Future<void> _scanNutritionLabel() async {
+    // Guest gate — a label scan is an AI photo analysis.
+    final isGuest = ref.read(isGuestModeProvider);
+    if (isGuest) {
+      final canScan =
+          await ref.read(guestUsageLimitsProvider.notifier).usePhotoScan();
+      if (!canScan) {
+        if (mounted) {
+          Navigator.pop(context);
+          GuestUpgradeSheet.show(context, feature: GuestFeatureLimit.photoScan);
+        }
+        return;
+      }
+    }
+
+    final source =
+        await _pickScanImageSource('Scan Nutrition Label', const Color(0xFF06B6D4));
+    if (source == null || !mounted) return;
+
+    final picker = ImagePicker();
+    final shot = await picker.pickImage(
+      source: source,
+      maxWidth: 1600,
+      maxHeight: 1600,
+      imageQuality: 90,
+    );
+    if (shot == null || !mounted) return;
+
+    // C4: ask how many servings BEFORE the scan so Gemini multiplies macros
+    // by the real amount eaten (default 1.0 — most foods are single-serving).
+    final servings = await _askServingsConsumed();
+    if (servings == null || !mounted) return; // user cancelled
+
+    await _runScanImport(
+      kind: 'label',
+      imageFile: File(shot.path),
+      servingsConsumed: servings,
+      inputType: 'label_scan',
+    );
+  }
+
+  /// C4 — app-screenshot scan. A screenshot that turns out to be a recipe or
+  /// a non-nutrition page is caught by the backend (422) and surfaces here as
+  /// a `ScanImportException.routeTo` — we then offer to send the user to the
+  /// recipe importer instead of logging garbage.
+  Future<void> _scanAppScreenshot() async {
+    final isGuest = ref.read(isGuestModeProvider);
+    if (isGuest) {
+      final canScan =
+          await ref.read(guestUsageLimitsProvider.notifier).usePhotoScan();
+      if (!canScan) {
+        if (mounted) {
+          Navigator.pop(context);
+          GuestUpgradeSheet.show(context, feature: GuestFeatureLimit.photoScan);
+        }
+        return;
+      }
+    }
+
+    final source = await _pickScanImageSource(
+        'Scan App Screenshot', const Color(0xFF06B6D4));
+    if (source == null || !mounted) return;
+
+    final picker = ImagePicker();
+    final shot = await picker.pickImage(
+      source: source,
+      maxWidth: 2000,
+      maxHeight: 2000,
+      imageQuality: 95, // screenshots are text — keep them crisp for OCR
+    );
+    if (shot == null || !mounted) return;
+
+    await _runScanImport(
+      kind: 'screenshot',
+      imageFile: File(shot.path),
+      inputType: 'screenshot_scan',
+    );
+  }
+
+  /// Asks the user how many servings of a packaged food they ate. Returns the
+  /// chosen count, or null if the dialog was dismissed (treated as cancel).
+  Future<double?> _askServingsConsumed() async {
+    final colors = ThemeColors.of(context);
+    final isDark = colors.isDark;
+    final cyan = const Color(0xFF06B6D4);
+    final customCtrl = TextEditingController();
+    try {
+      return await showGlassSheet<double>(
+        context: context,
+        builder: (ctx) {
+          return GlassSheet(
+            child: SafeArea(
+              top: false,
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(
+                    20, 8, 20, 16 + MediaQuery.of(ctx).viewInsets.bottom),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(4, 4, 4, 4),
+                      child: Text(
+                        'How many servings did you eat?',
+                        style: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w700,
+                          color: colors.textPrimary,
+                        ),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(4, 2, 4, 14),
+                      child: Text(
+                        'The label lists nutrition per serving — pick how '
+                        'much of it you actually had.',
+                        style: TextStyle(
+                            fontSize: 12.5, color: colors.textMuted),
+                      ),
+                    ),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        for (final s in const [0.5, 1.0, 1.5, 2.0, 3.0])
+                          _ServingChip(
+                            label: s == s.roundToDouble()
+                                ? '${s.toInt()}'
+                                : s.toString(),
+                            color: cyan,
+                            isDark: isDark,
+                            onTap: () => Navigator.pop(ctx, s),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: customCtrl,
+                            keyboardType: const TextInputType.numberWithOptions(
+                                decimal: true),
+                            style: TextStyle(
+                                color: colors.textPrimary, fontSize: 14),
+                            decoration: InputDecoration(
+                              hintText: 'Custom (e.g. 1.25)',
+                              hintStyle: TextStyle(
+                                  color: colors.textSecondary, fontSize: 13),
+                              isDense: true,
+                              contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 10),
+                              border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12)),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        ElevatedButton(
+                          onPressed: () {
+                            final v = double.tryParse(customCtrl.text.trim());
+                            if (v != null && v > 0) Navigator.pop(ctx, v);
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: cyan,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12)),
+                          ),
+                          child: const Text('Use'),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      );
+    } finally {
+      customCtrl.dispose();
+    }
+  }
+
+  /// Runs a scan-import: calls the repository, then hands the result to the
+  /// standard result card by setting `_analyzedResponse`. Surfaces C4
+  /// edge-case metadata (glare / unit-conversion / multi-serving / low
+  /// confidence) as a snackbar so the user knows what to double-check, and
+  /// handles the recipe-routing exception.
+  Future<void> _runScanImport({
+    required String kind,
+    required File imageFile,
+    required String inputType,
+    double servingsConsumed = 1.0,
+  }) async {
+    setState(() {
+      _isLoading = true;
+      _showLoadingIndicator = false;
+      _error = null;
+      _sourceType = 'image';
+      _inputType = inputType;
+      _capturedImagePath = imageFile.path;
+      _currentStep = 0;
+      _progressMessage = kind == 'label'
+          ? 'Reading nutrition label…'
+          : 'Importing screenshot…';
+      _progressDetail = null;
+    });
+    _loadingDelayTimer?.cancel();
+    _loadingDelayTimer = Timer(const Duration(milliseconds: 500), () {
+      if (mounted && _isLoading) setState(() => _showLoadingIndicator = true);
+    });
+
+    ref.read(posthogServiceProvider).capture(
+      eventName: 'food_scan_import',
+      properties: <String, Object>{'kind': kind},
+    );
+
+    try {
+      final repository = ref.read(nutritionRepositoryProvider);
+      final ScanImportResult result;
+      if (kind == 'label') {
+        result = await repository.scanNutritionLabel(
+          userId: widget.userId,
+          imageFile: imageFile,
+          servingsConsumed: servingsConsumed,
+          caption: _descriptionController.text.trim().isEmpty
+              ? null
+              : _descriptionController.text.trim(),
+        );
+      } else {
+        result = await repository.scanAppScreenshot(
+          userId: widget.userId,
+          imageFile: imageFile,
+          caption: _descriptionController.text.trim().isEmpty
+              ? null
+              : _descriptionController.text.trim(),
+        );
+      }
+      if (!mounted) return;
+
+      _loadingDelayTimer?.cancel();
+      final response = result.response;
+      if (response.foodItems.isEmpty && response.totalCalories == 0) {
+        setState(() {
+          _isLoading = false;
+          _showLoadingIndicator = false;
+          _error = kind == 'label'
+              ? 'Could not read this label. Try a clearer, well-lit photo.'
+              : 'Could not read this screenshot. Try a clearer image.';
+        });
+        return;
+      }
+
+      setState(() {
+        _isLoading = false;
+        _showLoadingIndicator = false;
+        _analyzedResponse = response;
+        _sourceType = 'image';
+        _originalFoodItems = List<FoodItemRanking>.from(response.foodItems);
+        _pendingItemEdits.clear();
+        _awaitingCoachTip = false;
+      });
+
+      // C4: tell the user what to verify. The result card already shows the
+      // editable macros — these are advisory notes, not blockers.
+      _showScanAdvisoryNotes(result);
+    } on ScanImportException catch (e) {
+      _loadingDelayTimer?.cancel();
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _showLoadingIndicator = false;
+      });
+      if (e.routeTo == 'recipe') {
+        // C4: screenshot is actually a recipe — offer the recipe importer.
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text(
+                'That looks like a recipe — paste it into the recipe importer.'),
+            action: SnackBarAction(
+              label: 'OK',
+              onPressed: () {},
+            ),
+          ),
+        );
+        setState(() => _error = e.message);
+      } else {
+        setState(() => _error = e.message);
+      }
+    } catch (e) {
+      _loadingDelayTimer?.cancel();
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _showLoadingIndicator = false;
+        _error = 'Scan failed: $e';
+      });
+    }
+  }
+
+  /// Surfaces the C4 advisory notes from a scan (glare, unit conversion,
+  /// multi-serving, low confidence) as one combined snackbar.
+  void _showScanAdvisoryNotes(ScanImportResult result) {
+    final notes = <String>[];
+    if (result.unreadableFields.isNotEmpty) {
+      notes.add(
+          'Some fields were glared/cut off (${result.unreadableFields.join(', ')}) — check those.');
+    }
+    if (result.unitNotes.contains('kj_converted')) {
+      notes.add('Energy was in kJ — converted to kcal.');
+    }
+    if (result.unitNotes.contains('per_100g_normalized')) {
+      notes.add('Label was per-100g — normalized to the serving size.');
+    }
+    final spc = result.servingsPerContainer;
+    if (result.kind == 'label' && spc != null && spc > 1) {
+      notes.add(
+          'This package has ${spc == spc.roundToDouble() ? spc.toInt() : spc} servings — confirm your portion.');
+    }
+    if (result.lowConfidence && notes.isEmpty) {
+      notes.add('Low confidence on this scan — double-check the macros.');
+    }
+    if (notes.isEmpty || !mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(notes.join('  •  ')),
+        duration: const Duration(seconds: 6),
+      ),
+    );
+  }
+
   /// Shared core that runs the /log-multi-image-stream pipeline and dispatches
   /// on the returned analysis_type:
   ///   - "plate"  → close sheet (log already persisted), show snackbar
@@ -1478,6 +1972,8 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
             'health_score': payload['health_score'],
             'inflammation_score': payload['inflammation_score'],
             'is_ultra_processed': payload['is_ultra_processed'],
+            // A3 — carry the instruction-applied note into the review sheet.
+            'applied_instruction_note': payload['applied_instruction_note'],
             'image_url': firstImageUrl,
             'image_storage_key': firstStorageKey,
             'source_type': 'image',
@@ -2301,6 +2797,48 @@ class _AddAnotherResult {
 }
 
 /// Glass-styled row used inside the Scan Menu GlassSheet.
+/// A compact tappable chip used by the "how many servings?" prompt (A2 / C4).
+class _ServingChip extends StatelessWidget {
+  final String label;
+  final Color color;
+  final bool isDark;
+  final VoidCallback onTap;
+
+  const _ServingChip({
+    required this.label,
+    required this.color,
+    required this.isDark,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: isDark ? 0.18 : 0.12),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: color.withValues(alpha: 0.4)),
+          ),
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+              color: color,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _GlassMenuOption extends StatelessWidget {
   final IconData icon;
   final String label;

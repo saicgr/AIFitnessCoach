@@ -66,6 +66,7 @@ class _MenuAnalysisHistoryScreenState
       final elapsed = (data['elapsed_seconds'] as num?)?.toDouble();
       final type = data['analysis_type'] as String? ?? 'menu';
       final restaurant = data['restaurant_name'] as String?;
+      final address = data['address'] as String?;
       if (!mounted) return;
       MenuAnalysisSheet.show(
         context,
@@ -80,6 +81,7 @@ class _MenuAnalysisHistoryScreenState
         menuPhotoUrls: photos,
         elapsedSeconds: elapsed,
         restaurantName: restaurant,
+        restaurantAddress: address,
       );
     } catch (e) {
       if (mounted) {
@@ -97,6 +99,52 @@ class _MenuAnalysisHistoryScreenState
           data: {'is_pinned': !(row['is_pinned'] ?? false)});
       _load();
     } catch (_) {/* silent */}
+  }
+
+  /// Edit the restaurant address on an already-saved menu (C11: address is
+  /// editable later). Free-text, optional — clearing it is allowed.
+  Future<void> _editAddress(Map<String, dynamic> row) async {
+    final controller =
+        TextEditingController(text: (row['address'] as String?) ?? '');
+    final result = await showDialog<String?>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Restaurant address'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          maxLines: 2,
+          textCapitalization: TextCapitalization.words,
+          decoration: const InputDecoration(
+            hintText: 'e.g. 123 Main St, or just "downtown"',
+          ),
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancel')),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, controller.text.trim()),
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+    if (result == null) return;
+    try {
+      final api = ref.read(apiClientProvider);
+      // Send empty string (not null) so the user can clear the address —
+      // the endpoint only skips the field when it's None.
+      await api.patch('/nutrition/menu-analyses/${row['id']}',
+          data: {'address': result});
+      _load();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not update address: $e')),
+        );
+      }
+    }
   }
 
   Future<void> _delete(Map<String, dynamic> row) async {
@@ -133,9 +181,11 @@ class _MenuAnalysisHistoryScreenState
                   ? const Center(child: _EmptyState())
                   : GridView.builder(
                       padding: const EdgeInsets.all(12),
+                      // Slightly taller cards than v1 — the richer footer
+                      // now carries name + restaurant + address + date.
                       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                         crossAxisCount: 2,
-                        childAspectRatio: 0.78,
+                        childAspectRatio: 0.66,
                         mainAxisSpacing: 12,
                         crossAxisSpacing: 12,
                       ),
@@ -145,6 +195,7 @@ class _MenuAnalysisHistoryScreenState
                         onTap: () => _openSaved(_rows![i]),
                         onPin: () => _togglePin(_rows![i]),
                         onDelete: () => _delete(_rows![i]),
+                        onEditAddress: () => _editAddress(_rows![i]),
                       ),
                     ),
     );
@@ -156,18 +207,21 @@ class _Card extends StatelessWidget {
   final VoidCallback onTap;
   final VoidCallback onPin;
   final VoidCallback onDelete;
+  final VoidCallback onEditAddress;
 
   const _Card({
     required this.row,
     required this.onTap,
     required this.onPin,
     required this.onDelete,
+    required this.onEditAddress,
   });
 
   @override
   Widget build(BuildContext context) {
     final title = (row['title'] as String?)?.trim();
     final restaurant = (row['restaurant_name'] as String?)?.trim();
+    final address = (row['address'] as String?)?.trim();
     final photos = List<String>.from(row['menu_photo_urls'] ?? const []);
     final foodItems = List<Map<String, dynamic>>.from(row['food_items'] ?? const []);
     final isPinned = row['is_pinned'] == true;
@@ -184,6 +238,12 @@ class _Card extends StatelessWidget {
               leading: Icon(isPinned ? Icons.push_pin : Icons.push_pin_outlined),
               title: Text(isPinned ? 'Unpin' : 'Pin'),
               onTap: () { Navigator.pop(context); onPin(); },
+            ),
+            ListTile(
+              leading: const Icon(Icons.edit_location_alt_outlined),
+              title: Text(
+                  (address?.isNotEmpty ?? false) ? 'Edit address' : 'Add address'),
+              onTap: () { Navigator.pop(context); onEditAddress(); },
             ),
             ListTile(
               leading: Icon(Icons.delete_outline, color: AppColors.error),
@@ -247,6 +307,8 @@ class _Card extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Primary label — user title, else restaurant name, else
+                  // a fallback (C11: a name-less menu still gets a label).
                   Text(
                     title?.isNotEmpty == true
                         ? title!
@@ -256,6 +318,62 @@ class _Card extends StatelessWidget {
                     maxLines: 1, overflow: TextOverflow.ellipsis,
                     style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
                   ),
+                  // Restaurant name as a secondary line when the title is a
+                  // distinct user label.
+                  if (restaurant?.isNotEmpty == true &&
+                      title?.isNotEmpty == true &&
+                      title != restaurant) ...[
+                    const SizedBox(height: 1),
+                    Text(
+                      restaurant!,
+                      maxLines: 1, overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                          fontSize: 10.5, color: AppColors.textSecondary),
+                    ),
+                  ],
+                  // Free-text address with a location icon. Tap to edit.
+                  if (address?.isNotEmpty == true) ...[
+                    const SizedBox(height: 3),
+                    GestureDetector(
+                      onTap: onEditAddress,
+                      child: Row(
+                        children: [
+                          Icon(Icons.place_outlined,
+                              size: 11, color: AppColors.textMuted),
+                          const SizedBox(width: 2),
+                          Expanded(
+                            child: Text(
+                              address!,
+                              maxLines: 1, overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                  fontSize: 10, color: AppColors.textMuted),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ] else
+                    // No address yet — offer a one-tap "Add address".
+                    GestureDetector(
+                      onTap: onEditAddress,
+                      child: Padding(
+                        padding: const EdgeInsets.only(top: 3),
+                        child: Row(
+                          children: [
+                            Icon(Icons.add_location_alt_outlined,
+                                size: 11, color: AppColors.textMuted),
+                            const SizedBox(width: 2),
+                            Text(
+                              'Add address',
+                              style: TextStyle(
+                                  fontSize: 10,
+                                  color: AppColors.textMuted,
+                                  fontStyle: FontStyle.italic),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   const SizedBox(height: 2),
                   Text(
                     createdAt == null ? '' : DateFormat.MMMd().format(createdAt),

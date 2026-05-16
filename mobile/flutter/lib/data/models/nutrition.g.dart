@@ -325,6 +325,10 @@ FoodItemRanking _$FoodItemRankingFromJson(Map<String, dynamic> json) =>
       count: (json['count'] as num?)?.toInt(),
       weightPerUnitG: (json['weight_per_unit_g'] as num?)?.toDouble(),
       unit: json['unit'] as String?,
+      confidence: json['confidence'] as String?,
+      estimateReasoning: json['estimate_reasoning'] as String?,
+      requiresUserConfirmation: json['requires_user_confirmation'] as bool?,
+      verifiedSource: json['verified_source'] as String?,
     );
 
 Map<String, dynamic> _$FoodItemRankingToJson(FoodItemRanking instance) =>
@@ -346,6 +350,10 @@ Map<String, dynamic> _$FoodItemRankingToJson(FoodItemRanking instance) =>
       'count': instance.count,
       'weight_per_unit_g': instance.weightPerUnitG,
       'unit': instance.unit,
+      'confidence': instance.confidence,
+      'estimate_reasoning': instance.estimateReasoning,
+      'requires_user_confirmation': instance.requiresUserConfirmation,
+      'verified_source': instance.verifiedSource,
     };
 
 LogFoodResponse _$LogFoodResponseFromJson(Map<String, dynamic> json) =>
@@ -394,6 +402,14 @@ LogFoodResponse _$LogFoodResponseFromJson(Map<String, dynamic> json) =>
       plateDescription: json['plate_description'] as String?,
       inflammationScore: (json['inflammation_score'] as num?)?.toInt(),
       isUltraProcessed: json['is_ultra_processed'] as bool?,
+      appliedInstructionNote: json['applied_instruction_note'] as String?,
+      rememberedMessage: json['remembered_message'] as String?,
+      nextMealSuggestion: json['next_meal_suggestion'] as String?,
+      overBudgetFork: json['over_budget_fork'] == null
+          ? null
+          : OverBudgetFork.fromJson(
+              json['over_budget_fork'] as Map<String, dynamic>,
+            ),
     );
 
 Map<String, dynamic> _$LogFoodResponseToJson(LogFoodResponse instance) =>
@@ -435,6 +451,22 @@ Map<String, dynamic> _$LogFoodResponseToJson(LogFoodResponse instance) =>
       'plate_description': instance.plateDescription,
       'inflammation_score': instance.inflammationScore,
       'is_ultra_processed': instance.isUltraProcessed,
+      'applied_instruction_note': instance.appliedInstructionNote,
+      'remembered_message': instance.rememberedMessage,
+      'next_meal_suggestion': instance.nextMealSuggestion,
+      'over_budget_fork': instance.overBudgetFork?.toJson(),
+    };
+
+OverBudgetFork _$OverBudgetForkFromJson(Map<String, dynamic> json) =>
+    OverBudgetFork(
+      lighterNextMeal: json['lighter_next_meal'] as String,
+      workoutTweak: json['workout_tweak'] as String,
+    );
+
+Map<String, dynamic> _$OverBudgetForkToJson(OverBudgetFork instance) =>
+    <String, dynamic>{
+      'lighter_next_meal': instance.lighterNextMeal,
+      'workout_tweak': instance.workoutTweak,
     };
 
 SavedFoodItem _$SavedFoodItemFromJson(Map<String, dynamic> json) =>
@@ -485,6 +517,8 @@ SavedFood _$SavedFoodFromJson(Map<String, dynamic> json) => SavedFood(
   name: json['name'] as String,
   description: json['description'] as String?,
   sourceType: json['source_type'] as String? ?? 'text',
+  brand: json['brand'] as String?,
+  emoji: json['emoji'] as String?,
   barcode: json['barcode'] as String?,
   imageUrl: json['image_url'] as String?,
   totalCalories: (json['total_calories'] as num?)?.toInt(),
@@ -511,6 +545,8 @@ Map<String, dynamic> _$SavedFoodToJson(SavedFood instance) => <String, dynamic>{
   'name': instance.name,
   'description': instance.description,
   'source_type': instance.sourceType,
+  'brand': instance.brand,
+  'emoji': instance.emoji,
   'barcode': instance.barcode,
   'image_url': instance.imageUrl,
   'total_calories': instance.totalCalories,

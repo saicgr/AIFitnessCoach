@@ -84,13 +84,22 @@ class _FoodLibraryCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Center(
-                      child: Icon(
-                        isRecipe
-                            ? Icons.menu_book_rounded
-                            : Icons.bookmark_rounded,
-                        color: typeColor,
-                        size: 24,
-                      ),
+                      // A4 — render the saved-food emoji as the card icon when
+                      // present; fall back to the generic type glyph otherwise.
+                      child: (!isRecipe &&
+                              item.emoji != null &&
+                              item.emoji!.trim().isNotEmpty)
+                          ? Text(
+                              item.emoji!,
+                              style: const TextStyle(fontSize: 24),
+                            )
+                          : Icon(
+                              isRecipe
+                                  ? Icons.menu_book_rounded
+                                  : Icons.bookmark_rounded,
+                              color: typeColor,
+                              size: 24,
+                            ),
                     ),
                   ),
                   const SizedBox(width: 14),
@@ -110,6 +119,21 @@ class _FoodLibraryCard extends StatelessWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
+                        // A4 — branded-food name under the title when present.
+                        if (item.brand != null &&
+                            item.brand!.trim().isNotEmpty) ...[
+                          const SizedBox(height: 2),
+                          Text(
+                            item.brand!,
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: accentColor,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
                         const SizedBox(height: 4),
                         Row(
                           children: [
@@ -456,12 +480,22 @@ class _FoodDetailSheet extends StatelessWidget {
                       color: typeColor.withValues(alpha:0.15),
                       borderRadius: BorderRadius.circular(14),
                     ),
-                    child: Icon(
-                      isRecipe
-                          ? Icons.menu_book_rounded
-                          : Icons.bookmark_rounded,
-                      color: typeColor,
-                      size: 28,
+                    child: Center(
+                      // A4 — emoji icon in the detail header when present.
+                      child: (!isRecipe &&
+                              item.emoji != null &&
+                              item.emoji!.trim().isNotEmpty)
+                          ? Text(
+                              item.emoji!,
+                              style: const TextStyle(fontSize: 28),
+                            )
+                          : Icon(
+                              isRecipe
+                                  ? Icons.menu_book_rounded
+                                  : Icons.bookmark_rounded,
+                              color: typeColor,
+                              size: 28,
+                            ),
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -479,6 +513,20 @@ class _FoodDetailSheet extends StatelessWidget {
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
+                        if (item.brand != null &&
+                            item.brand!.trim().isNotEmpty) ...[
+                          const SizedBox(height: 2),
+                          Text(
+                            item.brand!,
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                              color: accentColor,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
                         const SizedBox(height: 4),
                         Row(
                           children: [

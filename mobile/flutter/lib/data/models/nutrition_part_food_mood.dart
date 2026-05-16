@@ -567,6 +567,24 @@ class FoodItemRanking {
   // Measurement unit (g, ml, oz, cups, tsp, tbsp)
   final String? unit;  // Default is 'g' for grams
 
+  // L4 — "accuracy you can trust". Per-item trust signals.
+  // confidence: 'high' | 'medium' | 'low' — the AI's honest confidence in
+  //   THIS item's identification + portion. 'low' surfaces a 1-tap confirm.
+  final String? confidence;
+  // estimateReasoning: a short grounded phrase explaining the portion
+  //   estimate, e.g. "~220g; plate reads ~10in". Null when no real basis.
+  @JsonKey(name: 'estimate_reasoning')
+  final String? estimateReasoning;
+  // requiresUserConfirmation: set by the backend L3 tripwire when the
+  //   portion should be reviewed before saving.
+  @JsonKey(name: 'requires_user_confirmation')
+  final bool? requiresUserConfirmation;
+  // verifiedSource: 'override_db' when this item's estimate was
+  //   cross-checked against verified food-override data. Surfaces a
+  //   'verified' badge and suppresses the low-confidence flag.
+  @JsonKey(name: 'verified_source')
+  final String? verifiedSource;
+
   const FoodItemRanking({
     required this.name,
     this.amount,
@@ -585,7 +603,21 @@ class FoodItemRanking {
     this.count,
     this.weightPerUnitG,
     this.unit,
+    this.confidence,
+    this.estimateReasoning,
+    this.requiresUserConfirmation,
+    this.verifiedSource,
   });
+
+  /// L4 — true when this item is shaky enough to ask the user to confirm.
+  /// Verified-DB items are never flagged (the cross-check trumps a low AI
+  /// confidence — C10 "DB is a cross-check").
+  bool get isLowConfidence =>
+      verifiedSource == null &&
+      (confidence == 'low' || requiresUserConfirmation == true);
+
+  /// L4 — item was cross-checked against verified food-override data.
+  bool get isVerified => verifiedSource != null;
 
   factory FoodItemRanking.fromJson(Map<String, dynamic> json) =>
       _$FoodItemRankingFromJson(json);
@@ -669,6 +701,12 @@ class FoodItemRanking {
       count: newCount ?? count,
       weightPerUnitG: weightPerUnitG,
       unit: effectiveUnit,
+      // A user-set weight is now exact — confidence/reasoning carry over but
+      // the confirm flag is cleared (the user just reviewed the portion).
+      confidence: confidence,
+      estimateReasoning: estimateReasoning,
+      requiresUserConfirmation: false,
+      verifiedSource: verifiedSource,
     );
   }
 
@@ -707,6 +745,40 @@ class FoodItemRanking {
       count: count,
       weightPerUnitG: weightPerUnitG,
       unit: unit,
+      // A direct field edit means the user reviewed the value — clear the
+      // confirm flag (C10 "user who always overrides a field → stop asking").
+      confidence: confidence,
+      estimateReasoning: estimateReasoning,
+      requiresUserConfirmation: false,
+      verifiedSource: verifiedSource,
+    );
+  }
+
+  /// L4 — mark this item confirmed by the user (1-tap confirm). Clears the
+  /// low-confidence flag without changing any nutrition values.
+  FoodItemRanking confirmedByUser() {
+    return FoodItemRanking(
+      name: name,
+      amount: amount,
+      calories: calories,
+      proteinG: proteinG,
+      carbsG: carbsG,
+      fatG: fatG,
+      fiberG: fiberG,
+      goalScore: goalScore,
+      goalAlignment: goalAlignment,
+      reason: reason,
+      weightG: weightG,
+      weightSource: weightSource,
+      usdaData: usdaData,
+      aiPerGram: aiPerGram,
+      count: count,
+      weightPerUnitG: weightPerUnitG,
+      unit: unit,
+      confidence: 'high',
+      estimateReasoning: estimateReasoning,
+      requiresUserConfirmation: false,
+      verifiedSource: verifiedSource,
     );
   }
 }
@@ -883,6 +955,30 @@ class LogFoodResponse {
   @JsonKey(name: 'is_ultra_processed')
   final bool? isUltraProcessed;
 
+  // A3 — short note of WHAT the analysis changed because of a user
+  // instruction (e.g. "Halved all portions; removed the bread."). Null when
+  // the user gave no instruction or it had no effect. Surfaced as an
+  // "Applied:" chip in the result sheet.
+  @JsonKey(name: 'applied_instruction_note')
+  final String? appliedInstructionNote;
+
+  // L3 — "it remembers you". When a learned per-user correction (>= 2
+  // consistent edits to the same food) was auto-applied to this analysis,
+  // the backend returns a short affirmation ("Zealova remembered your protein
+  // shake"). Null when nothing was auto-remembered. Surfaced as a chip in the
+  // result sheet.
+  @JsonKey(name: 'remembered_message')
+  final String? rememberedMessage;
+
+  // L1 — "every log is coaching". One concrete next-meal idea that helps the
+  // user hit their remaining budget. Empty/null when not relevant.
+  @JsonKey(name: 'next_meal_suggestion')
+  final String? nextMealSuggestion;
+  // L1 — the over-budget coach fork (lighter next meal OR a tomorrow-workout
+  // tweak). Null unless the day is well over budget.
+  @JsonKey(name: 'over_budget_fork')
+  final OverBudgetFork? overBudgetFork;
+
   const LogFoodResponse({
     required this.success,
     this.foodLogId,  // Optional for analyze-only responses
@@ -921,6 +1017,10 @@ class LogFoodResponse {
     this.plateDescription,
     this.inflammationScore,
     this.isUltraProcessed,
+    this.appliedInstructionNote,
+    this.rememberedMessage,
+    this.nextMealSuggestion,
+    this.overBudgetFork,
   });
 
   factory LogFoodResponse.fromJson(Map<String, dynamic> json) =>
@@ -984,6 +1084,10 @@ class LogFoodResponse {
         count: item.count,
         weightPerUnitG: item.weightPerUnitG,
         unit: item.unit,
+        confidence: item.confidence,
+        estimateReasoning: item.estimateReasoning,
+        requiresUserConfirmation: item.requiresUserConfirmation,
+        verifiedSource: item.verifiedSource,
       );
     }).toList();
 
@@ -1023,8 +1127,91 @@ class LogFoodResponse {
       plateDescription: plateDescription,
       inflammationScore: inflammationScore,
       isUltraProcessed: isUltraProcessed,
+      appliedInstructionNote: appliedInstructionNote,
+      rememberedMessage: rememberedMessage,
+      nextMealSuggestion: nextMealSuggestion,
+      overBudgetFork: overBudgetFork,
     );
   }
+
+  /// L1 — copy that swaps in late-arriving coach-tip fields (from the
+  /// `coach_tips` SSE event) without disturbing the rest of the analysis.
+  LogFoodResponse copyWithCoachTips({
+    String? aiSuggestion,
+    List<String>? encouragements,
+    List<String>? warnings,
+    String? recommendedSwap,
+    int? healthScore,
+    List<String>? healthScoreReasons,
+    String? nextMealSuggestion,
+    OverBudgetFork? overBudgetFork,
+  }) {
+    return LogFoodResponse(
+      success: success,
+      foodLogId: foodLogId,
+      foodItems: foodItems,
+      totalCalories: totalCalories,
+      proteinG: proteinG,
+      carbsG: carbsG,
+      fatG: fatG,
+      fiberG: fiberG,
+      overallMealScore: overallMealScore,
+      healthScore: healthScore ?? this.healthScore,
+      healthScoreReasons: healthScoreReasons ?? this.healthScoreReasons,
+      goalAlignmentPercentage: goalAlignmentPercentage,
+      aiSuggestion: aiSuggestion ?? this.aiSuggestion,
+      encouragements: encouragements ?? this.encouragements,
+      warnings: warnings ?? this.warnings,
+      recommendedSwap: recommendedSwap ?? this.recommendedSwap,
+      personalHistoryNote: personalHistoryNote,
+      confidenceScore: confidenceScore,
+      confidenceLevel: confidenceLevel,
+      sourceType: sourceType,
+      correctedQuery: correctedQuery,
+      sodiumMg: sodiumMg,
+      sugarG: sugarG,
+      saturatedFatG: saturatedFatG,
+      cholesterolMg: cholesterolMg,
+      potassiumMg: potassiumMg,
+      vitaminAIu: vitaminAIu,
+      vitaminCMg: vitaminCMg,
+      vitaminDIu: vitaminDIu,
+      calciumMg: calciumMg,
+      ironMg: ironMg,
+      sourceLabel: sourceLabel,
+      imageUrl: imageUrl,
+      imageStorageKey: imageStorageKey,
+      plateDescription: plateDescription,
+      inflammationScore: inflammationScore,
+      isUltraProcessed: isUltraProcessed,
+      appliedInstructionNote: appliedInstructionNote,
+      rememberedMessage: rememberedMessage,
+      nextMealSuggestion: nextMealSuggestion ?? this.nextMealSuggestion,
+      overBudgetFork: overBudgetFork ?? this.overBudgetFork,
+    );
+  }
+}
+
+/// L1 — the over-budget coach fork: a genuine two-option choice the user
+/// can take when a meal pushes the day well over budget.
+@JsonSerializable(explicitToJson: true)
+class OverBudgetFork {
+  /// One short sentence — a specific lighter meal for the rest of today.
+  @JsonKey(name: 'lighter_next_meal')
+  final String lighterNextMeal;
+
+  /// One short sentence — a specific tomorrow-workout adjustment.
+  @JsonKey(name: 'workout_tweak')
+  final String workoutTweak;
+
+  const OverBudgetFork({
+    required this.lighterNextMeal,
+    required this.workoutTweak,
+  });
+
+  factory OverBudgetFork.fromJson(Map<String, dynamic> json) =>
+      _$OverBudgetForkFromJson(json);
+  Map<String, dynamic> toJson() => _$OverBudgetForkToJson(this);
 }
 
 
@@ -1113,6 +1300,12 @@ class SavedFood {
   final String? description;
   @JsonKey(name: 'source_type')
   final String sourceType;
+  /// Branded-food name captured by the AI-suggest flow — never invented;
+  /// null when the model did not actually read a brand.
+  final String? brand;
+  /// Display emoji icon (AI-suggest keyword match or user-chosen). Rendered
+  /// as the saved-food card icon when present.
+  final String? emoji;
   final String? barcode;
   @JsonKey(name: 'image_url')
   final String? imageUrl;
@@ -1149,6 +1342,8 @@ class SavedFood {
     required this.name,
     this.description,
     this.sourceType = 'text',
+    this.brand,
+    this.emoji,
     this.barcode,
     this.imageUrl,
     this.totalCalories,

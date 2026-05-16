@@ -1020,5 +1020,38 @@ class XPNotifier extends StateNotifier<XPState> {
     if (crates == null) return false;
     return crates.hasAvailableCrate;
   }
+
+  /// Award XP for completing a reward-eligible bonus mini-game round.
+  ///
+  /// Goal type is exactly `bonus_minigame` (registered backend-side). The
+  /// backend enforces idempotency (once-per-day), but the *caller* must also
+  /// guard against double-awarding within a single celebration — see the
+  /// `_minigameXpAwarded` flags in level_up / trophy / weekly-recap dialogs.
+  ///
+  /// Only celebration launches (level-up, trophy, recap) call this; freeplay
+  /// launches never do, so the unlocked permanent entry point can't be farmed.
+  /// Returns the XP awarded (0 if already claimed today or on error).
+  Future<int> awardMinigameXP() async {
+    final xpAwarded = await _repository.awardGoalXP('bonus_minigame');
+    if (xpAwarded > 0) {
+      state = state.copyWith(
+        lastXPEarnedEvent: XPEarnedAnimationEvent(
+          xpAmount: xpAwarded,
+          goalType: XPGoalType.dailyLogin,
+        ),
+      );
+      _posthog.capture(
+        eventName: 'xp_earned',
+        properties: <String, Object>{
+          'xp_amount': xpAwarded,
+          'goal_type': 'bonus_minigame',
+        },
+      );
+      // Keep the progress bar / level in sync (mini-game XP can trigger a
+      // level-up just like any other goal).
+      await loadUserXP(userId: _currentUserId, showLoading: false);
+    }
+    return xpAwarded;
+  }
 }
 

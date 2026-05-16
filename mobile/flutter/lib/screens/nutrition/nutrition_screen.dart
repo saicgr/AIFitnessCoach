@@ -997,6 +997,8 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
             _logRecipe(recipe, isDark);
           },
           onRefreshRecipes: () => _loadRecipes(_userId!),
+          // L5 — Saved menus discoverable from the Nutrition tab.
+          onOpenSavedMenus: () => context.push('/menu-history'),
         ),
       ),
     ).whenComplete(() {

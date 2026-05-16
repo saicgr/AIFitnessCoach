@@ -37,6 +37,7 @@ import '../../widgets/tooltips/tooltips.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import 'widgets/menu_analysis/recommendation_explain_sheet.dart';
+import 'widgets/menu_analysis/menu_dish_adjust_sheet.dart';
 
 /// Streaming controller retained from v1 so existing callers don't break.
 class MenuAnalysisStreamingController extends ChangeNotifier {
@@ -100,6 +101,11 @@ class MenuAnalysisSheet extends ConsumerStatefulWidget {
   /// history as "Indian place near work".
   final String? restaurantName;
 
+  /// Optional restaurant address — only populated when reopening a saved
+  /// menu that already has one. Pre-fills the address field in the
+  /// save-menu dialog. Free-text; never geocoded.
+  final String? restaurantAddress;
+
   /// User ID + meal type for the manual "Add food" affordance — when both
   /// are non-null, an "Add food" button is rendered above "Log N items"
   /// that runs the streaming text-analysis endpoint and pre-selects the
@@ -118,6 +124,7 @@ class MenuAnalysisSheet extends ConsumerStatefulWidget {
     this.menuPhotoUrls = const [],
     this.elapsedSeconds,
     this.restaurantName,
+    this.restaurantAddress,
     this.userId,
     this.mealType,
   });
@@ -133,6 +140,7 @@ class MenuAnalysisSheet extends ConsumerStatefulWidget {
     List<String> menuPhotoUrls = const [],
     double? elapsedSeconds,
     String? restaurantName,
+    String? restaurantAddress,
     String? userId,
     String? mealType,
   }) {
@@ -147,6 +155,7 @@ class MenuAnalysisSheet extends ConsumerStatefulWidget {
         menuPhotoUrls: menuPhotoUrls,
         elapsedSeconds: elapsedSeconds,
         restaurantName: restaurantName,
+        restaurantAddress: restaurantAddress,
         userId: userId,
         mealType: mealType,
       ),
@@ -171,6 +180,13 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
   bool _bookmarking = false;
   // Re-entrancy guard for the "Add food" button.
   bool _addingFood = false;
+
+  // L5 — per-dish "as eaten" adjustments, keyed by MenuItem.id. Restaurant
+  // menu macros are "as served"; the user can correct each dish before it
+  // hits food_logs. Stored per-dish (C11: never one blanket setting when
+  // logging several dishes). Extra items spun off by "+ Bread/sides" /
+  // free-text refine ride along here and are logged as SEPARATE items.
+  final Map<String, MenuDishAdjustResult> _dishAdjustments = {};
 
   // Spotlight targets for the first-run tip tour. The tour rings each
   // anchored widget so the (otherwise unfamiliar) Menu Analysis controls
@@ -493,10 +509,22 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
     bool anyPrice = false;
     for (final item in _items) {
       if (!_selected.contains(item.id)) continue;
-      cal += item.scaledCalories;
-      p += item.scaledProteinG;
-      c += item.scaledCarbsG;
-      f += item.scaledFatG;
+      // Reflect any per-dish "as eaten" adjustment so the budget rings +
+      // footer preview match exactly what _handleLog will persist.
+      final m = _payloadForItem(item);
+      cal += (m['calories'] as num?)?.toDouble() ?? 0;
+      p += (m['protein_g'] as num?)?.toDouble() ?? 0;
+      c += (m['carbs_g'] as num?)?.toDouble() ?? 0;
+      f += (m['fat_g'] as num?)?.toDouble() ?? 0;
+      final adj = _dishAdjustments[item.id];
+      if (adj != null) {
+        for (final extra in adj.extraItems) {
+          cal += (extra['calories'] as num?)?.toDouble() ?? 0;
+          p += (extra['protein_g'] as num?)?.toDouble() ?? 0;
+          c += (extra['carbs_g'] as num?)?.toDouble() ?? 0;
+          f += (extra['fat_g'] as num?)?.toDouble() ?? 0;
+        }
+      }
       if (item.price != null) {
         price += item.price!;
         anyPrice = true;
@@ -522,6 +550,139 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
       final idx = _items.indexWhere((i) => i.id == item.id);
       if (idx >= 0) _items[idx] = _items[idx].copyWith(portionMultiplier: multiplier);
     });
+  }
+
+  // ───────────────────────── per-dish adjust (L5) ─────────────────────────
+
+  /// True only when the caller wired a real logging context — the adjust
+  /// step needs userId + mealType to run the streaming correction engine.
+  /// The chat flow passes neither, so it gets the plain (unadjusted) flow.
+  bool get _canAdjustDishes =>
+      widget.userId != null && widget.mealType != null;
+
+  /// Open the per-dish adjustment sheet for [item]. The result is stored in
+  /// [_dishAdjustments] and applied at log time. The free-text path reuses
+  /// the SAME streaming text-analysis "correction" engine as the plate
+  /// Refine flow ([NutritionRepository.analyzeFoodFromTextStreaming]).
+  Future<void> _handleAdjustDish(MenuItem item) async {
+    if (!_canAdjustDishes) return;
+    final result = await showMenuDishAdjustSheet(
+      context,
+      item: item,
+      onRefine: (note) => _refineDish(item, note),
+    );
+    if (result == null || !mounted) return;
+    setState(() {
+      _dishAdjustments[item.id] = result;
+      // A free-text refine re-estimates the dish "as eaten"; clear any
+      // stale portion multiplier so we don't double-scale.
+      if (result.refinedDishOverride != null) {
+        final idx = _items.indexWhere((i) => i.id == item.id);
+        if (idx >= 0) {
+          _items[idx] = _items[idx].copyWith(portionMultiplier: 1.0);
+        }
+      }
+    });
+  }
+
+  /// Run the streaming text-analysis endpoint framed as a CORRECTION of a
+  /// single restaurant dish. Returns the corrected item list (first entry =
+  /// the dish, any remainder = sides the engine split out) or null on
+  /// failure / no usable result.
+  Future<List<Map<String, dynamic>>?> _refineDish(
+      MenuItem item, String note) async {
+    if (widget.userId == null || widget.mealType == null) return null;
+    final repository = ref.read(nutritionRepositoryProvider);
+
+    // Bias up: restaurant portions usually run larger than menu-stated
+    // (C11) — tell the engine so unless the user's note says otherwise.
+    final description = 'Correcting a restaurant dish a user is logging.\n'
+        'Dish: ${item.name}\n'
+        'Menu macros (as served): ${item.calories.round()}kcal, '
+        '${item.proteinG.round()}g protein, ${item.carbsG.round()}g carbs, '
+        '${item.fatG.round()}g fat.\n'
+        'Restaurant portions often run larger than menu-stated — keep that '
+        'in mind unless the correction says otherwise.\n'
+        'User correction: "$note".\n'
+        'Apply the correction and return the corrected item list with '
+        'accurate macros. If the user added a separate side (bread, fries, '
+        'rice), return it as its OWN list entry — do not fold it into the '
+        'dish.';
+    try {
+      LogFoodResponse? streamed;
+      await for (final progress in repository.analyzeFoodFromTextStreaming(
+        userId: widget.userId!,
+        description: description,
+        mealType: widget.mealType!,
+      )) {
+        if (!mounted) return null;
+        if (progress.hasError) return null;
+        if (progress.isCompleted && progress.foodLog != null) {
+          streamed = progress.foodLog;
+          break;
+        }
+      }
+      if (streamed == null || streamed.foodItems.isEmpty) return null;
+      return [for (final r in streamed.foodItems) r.toJson()];
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Build the food_logs payload map for a dish, applying any per-dish
+  /// adjustment. A free-text refine override replaces the macros wholesale;
+  /// otherwise the menu macros are scaled by the chip multiplier.
+  Map<String, dynamic> _payloadForItem(MenuItem item) {
+    final adj = _dishAdjustments[item.id];
+    if (adj?.refinedDishOverride != null) {
+      // Engine-corrected dish — trust its macros verbatim.
+      final o = Map<String, dynamic>.from(adj!.refinedDishOverride!);
+      return {
+        'name': o['name'] ?? item.name,
+        'calories': (o['calories'] as num?)?.round() ?? 0,
+        'protein_g': (o['protein_g'] as num?)?.toDouble() ?? 0.0,
+        'carbs_g': (o['carbs_g'] as num?)?.toDouble() ?? 0.0,
+        'fat_g': (o['fat_g'] as num?)?.toDouble() ?? 0.0,
+        if (o['fiber_g'] != null)
+          'fiber_g': (o['fiber_g'] as num).toDouble(),
+        if (item.inflammationScore != null)
+          'inflammation_score': item.inflammationScore,
+        if (item.isUltraProcessed != null)
+          'is_ultra_processed': item.isUltraProcessed,
+        if (item.glycemicLoad != null) 'glycemic_load': item.glycemicLoad,
+        if (item.fodmapRating != null) 'fodmap_rating': item.fodmapRating,
+        if (item.fodmapReason != null) 'fodmap_reason': item.fodmapReason,
+        if (item.rating != null) 'rating': item.rating,
+        if (item.ratingReason != null) 'rating_reason': item.ratingReason,
+        if (item.coachTip != null) 'coach_tip': item.coachTip,
+      };
+    }
+    // Chip multiplier path — fold the how-much-eaten fraction into the
+    // existing portion multiplier so the menu scoring fields ride along.
+    final mult = (adj?.portionMultiplier ?? 1.0) * item.portionMultiplier;
+    return {
+      'name': item.name,
+      'calories': (item.calories * mult).round(),
+      'protein_g': double.parse((item.proteinG * mult).toStringAsFixed(1)),
+      'carbs_g': double.parse((item.carbsG * mult).toStringAsFixed(1)),
+      'fat_g': double.parse((item.fatG * mult).toStringAsFixed(1)),
+      if (item.fiberG != null)
+        'fiber_g': double.parse((item.fiberG! * mult).toStringAsFixed(1)),
+      if (item.weightG != null)
+        'weight_g': (item.weightG! * mult).round(),
+      if (mult != 1.0) 'portion_multiplier': mult,
+      if (item.amount != null) 'amount': item.amount,
+      if (item.inflammationScore != null)
+        'inflammation_score': item.inflammationScore,
+      if (item.isUltraProcessed != null)
+        'is_ultra_processed': item.isUltraProcessed,
+      if (item.glycemicLoad != null) 'glycemic_load': item.glycemicLoad,
+      if (item.fodmapRating != null) 'fodmap_rating': item.fodmapRating,
+      if (item.fodmapReason != null) 'fodmap_reason': item.fodmapReason,
+      if (item.rating != null) 'rating': item.rating,
+      if (item.ratingReason != null) 'rating_reason': item.ratingReason,
+      if (item.coachTip != null) 'coach_tip': item.coachTip,
+    };
   }
 
   Future<void> _openFilterSheet() async {
@@ -551,25 +712,24 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
       // ride along into food_logs — otherwise the user logs the meal and
       // loses the inflammation / diabetes / FODMAP context they just saw.
       // See migration 1908 (inflammation) + 1977 (diabetes + FODMAP).
-      payload.add({
-        'name': item.name,
-        'calories': item.scaledCalories.round(),
-        'protein_g': double.parse(item.scaledProteinG.toStringAsFixed(1)),
-        'carbs_g': double.parse(item.scaledCarbsG.toStringAsFixed(1)),
-        'fat_g': double.parse(item.scaledFatG.toStringAsFixed(1)),
-        if (item.fiberG != null) 'fiber_g': double.parse((item.fiberG! * item.portionMultiplier).toStringAsFixed(1)),
-        if (item.weightG != null) 'weight_g': item.scaledWeightG!.round(),
-        if (item.portionMultiplier != 1.0) 'portion_multiplier': item.portionMultiplier,
-        if (item.amount != null) 'amount': item.amount,
-        if (item.inflammationScore != null) 'inflammation_score': item.inflammationScore,
-        if (item.isUltraProcessed != null) 'is_ultra_processed': item.isUltraProcessed,
-        if (item.glycemicLoad != null) 'glycemic_load': item.glycemicLoad,
-        if (item.fodmapRating != null) 'fodmap_rating': item.fodmapRating,
-        if (item.fodmapReason != null) 'fodmap_reason': item.fodmapReason,
-        if (item.rating != null) 'rating': item.rating,
-        if (item.ratingReason != null) 'rating_reason': item.ratingReason,
-        if (item.coachTip != null) 'coach_tip': item.coachTip,
-      });
+      // _payloadForItem also folds in any per-dish "as eaten" adjustment.
+      payload.add(_payloadForItem(item));
+      // L5/C11 — "+ Bread/sides" and free-text-split sides are logged as
+      // SEPARATE items, never folded into the dish's macros.
+      final adj = _dishAdjustments[item.id];
+      if (adj != null) {
+        for (final extra in adj.extraItems) {
+          payload.add({
+            'name': extra['name'] ?? 'Side',
+            'calories': (extra['calories'] as num?)?.round() ?? 0,
+            'protein_g': (extra['protein_g'] as num?)?.toDouble() ?? 0.0,
+            'carbs_g': (extra['carbs_g'] as num?)?.toDouble() ?? 0.0,
+            'fat_g': (extra['fat_g'] as num?)?.toDouble() ?? 0.0,
+            if (extra['fiber_g'] != null)
+              'fiber_g': (extra['fiber_g'] as num).toDouble(),
+          });
+        }
+      }
     }
     widget.onLogItems(payload);
     setState(() => _logged = true);
@@ -577,34 +737,122 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
 
   Future<void> _bookmarkAnalysis() async {
     if (_bookmarking) return;
-    final controller = TextEditingController(text: widget.restaurantName ?? '');
-    final title = await showDialog<String>(
+    // Title + restaurant name + an optional free-text address. All three
+    // are optional (C11): never block the save on a missing name/address.
+    final titleController =
+        TextEditingController(text: widget.restaurantName ?? '');
+    final addressController =
+        TextEditingController(text: widget.restaurantAddress ?? '');
+    final saved = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Save this menu'),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          maxLength: 60,
-          decoration: const InputDecoration(hintText: 'e.g. Indian place near work'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: titleController,
+              autofocus: true,
+              maxLength: 60,
+              decoration: const InputDecoration(
+                labelText: 'Name (optional)',
+                hintText: 'e.g. Indian place near work',
+              ),
+            ),
+            TextField(
+              controller: addressController,
+              // Plain free-text — any country, any format. No geocoding,
+              // no format enforcement (C11).
+              maxLines: 2,
+              textCapitalization: TextCapitalization.words,
+              decoration: const InputDecoration(
+                labelText: 'Address (optional)',
+                hintText: 'e.g. 123 Main St, or just "downtown"',
+              ),
+            ),
+          ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancel')),
           FilledButton(
-            onPressed: () => Navigator.pop(ctx, controller.text.trim()),
+            onPressed: () => Navigator.pop(ctx, true),
             child: const Text('Save'),
           ),
         ],
       ),
     );
-    if (title == null || !mounted) return;
+    if (saved != true || !mounted) return;
+
+    final title = titleController.text.trim();
+    final address = addressController.text.trim();
+    final restaurantName = widget.restaurantName?.trim();
 
     setState(() => _bookmarking = true);
     try {
       final api = ref.read(apiClientProvider);
+
+      // C11 — same restaurant menu saved twice: detect a near-duplicate
+      // (matching restaurant name + address) and offer to UPDATE the
+      // existing entry instead of inserting a twin.
+      if (restaurantName != null && restaurantName.isNotEmpty) {
+        try {
+          final dupResp = await api.dio.get(
+            '/nutrition/menu-analyses-duplicate-check',
+            queryParameters: {
+              'restaurant_name': restaurantName,
+              if (address.isNotEmpty) 'address': address,
+            },
+          );
+          final dup = dupResp.data;
+          if (dup is Map && dup['id'] != null && mounted) {
+            final useExisting = await showDialog<bool>(
+              context: context,
+              builder: (ctx) => AlertDialog(
+                title: const Text('Already saved'),
+                content: Text(
+                  'You already saved a menu for "$restaurantName"'
+                  '${address.isNotEmpty ? ' at this address' : ''}. '
+                  'Update that entry instead of creating a duplicate?',
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(ctx, false),
+                    child: const Text('Save as new'),
+                  ),
+                  FilledButton(
+                    onPressed: () => Navigator.pop(ctx, true),
+                    child: const Text('Update existing'),
+                  ),
+                ],
+              ),
+            );
+            if (useExisting == true) {
+              await api.patch(
+                '/nutrition/menu-analyses/${dup['id']}',
+                data: {
+                  if (title.isNotEmpty) 'title': title,
+                  if (address.isNotEmpty) 'address': address,
+                },
+              );
+              if (!mounted) return;
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                content: Text('Updated your saved menu'),
+              ));
+              return;
+            }
+            // useExisting == false (or null) → fall through to insert.
+          }
+        } catch (_) {
+          // Duplicate check is best-effort — never block the save on it.
+        }
+      }
+
       await api.post('/nutrition/menu-analyses', data: {
         'title': title.isEmpty ? null : title,
-        'restaurant_name': widget.restaurantName,
+        'restaurant_name': restaurantName,
+        'address': address.isEmpty ? null : address,
         'analysis_type': widget.analysisType,
         'sections': <Map<String, dynamic>>[],
         'food_items': widget.foodItems,
@@ -1341,6 +1589,10 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
           allergenProfile: _allergenProfile(),
           onToggle: (v) => _toggleItem(pick.item, v),
           onPortionChanged: (m) => _updatePortion(pick.item, m),
+          onAdjust: _canAdjustDishes
+              ? () => _handleAdjustDish(pick.item)
+              : null,
+          adjustmentSummary: _dishAdjustments[pick.item.id]?.summary,
         ),
       ],
     );
@@ -1370,6 +1622,9 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
             allergenProfile: _allergenProfile(),
             onToggle: (v) => _toggleItem(item, v),
             onPortionChanged: (m) => _updatePortion(item, m),
+            onAdjust:
+                _canAdjustDishes ? () => _handleAdjustDish(item) : null,
+            adjustmentSummary: _dishAdjustments[item.id]?.summary,
           ),
       ],
       colors: colors,
@@ -1442,6 +1697,9 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
             allergenProfile: _allergenProfile(),
             onToggle: (v) => _toggleItem(item, v),
             onPortionChanged: (m) => _updatePortion(item, m),
+            onAdjust:
+                _canAdjustDishes ? () => _handleAdjustDish(item) : null,
+            adjustmentSummary: _dishAdjustments[item.id]?.summary,
           ),
       ],
       colors: colors,

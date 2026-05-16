@@ -13,6 +13,7 @@ import '../models/micronutrients.dart';
 import '../models/nutrition_preferences.dart';
 import '../models/companion_suggestion.dart';
 import '../models/recipe.dart';
+import '../models/ai_suggested_food.dart';
 import '../services/api_client.dart';
 import '../../utils/tz.dart';
 import '../services/health_service.dart';
@@ -536,6 +537,8 @@ class NutritionRepository {
                   for (final k in const [
                     'ai_suggestion', 'encouragements', 'warnings',
                     'recommended_swap', 'health_score', 'health_score_reasons',
+                    // L1 — coaching extras delivered with the late tips.
+                    'next_meal_suggestion', 'over_budget_fork',
                   ]) {
                     if (data[k] != null) merged[k] = data[k];
                   }
@@ -734,6 +737,8 @@ class NutritionRepository {
                   for (final k in const [
                     'ai_suggestion', 'encouragements', 'warnings',
                     'recommended_swap', 'health_score', 'health_score_reasons',
+                    // L1 — coaching extras delivered with the late tips.
+                    'next_meal_suggestion', 'over_budget_fork',
                   ]) {
                     if (data[k] != null) merged[k] = data[k];
                   }
@@ -786,6 +791,105 @@ class NutritionRepository {
         isAnalysisOnly: true,
       );
     }
+  }
+
+  /// Parity A2 — scan a physical nutrition-facts label (analyze-only).
+  ///
+  /// Hits `POST /nutrition/scan-label`, which reuses the same Gemini-OCR logic
+  /// as the AI-Coach chat tool `parse_nutrition_label`. Returns a
+  /// [ScanImportResult] (a [LogFoodResponse] + edge-case metadata) that the
+  /// food-log result sheet reviews/edits before the user commits the log.
+  ///
+  /// [servingsConsumed] handles C4 "label serving size ≠ amount eaten": the
+  /// caller can re-call with the user's chosen serving count.
+  Future<ScanImportResult> scanNutritionLabel({
+    required String userId,
+    required File imageFile,
+    double servingsConsumed = 1.0,
+    String? caption,
+  }) async {
+    final formData = FormData.fromMap({
+      'user_id': userId,
+      'servings_consumed': servingsConsumed,
+      if (caption != null && caption.trim().isNotEmpty) 'caption': caption.trim(),
+      'image': await MultipartFile.fromFile(
+        imageFile.path,
+        filename: 'nutrition_label.jpg',
+      ),
+    });
+    try {
+      final response = await _client.post(
+        '/nutrition/scan-label',
+        data: formData,
+        options: Options(receiveTimeout: const Duration(seconds: 75)),
+      );
+      return ScanImportResult.fromJson(
+        Map<String, dynamic>.from(response.data as Map),
+      );
+    } on DioException catch (e) {
+      throw _mapScanError(e, 'label');
+    }
+  }
+
+  /// Parity A2 — scan a screenshot from another nutrition app (analyze-only).
+  ///
+  /// Hits `POST /nutrition/scan-app-screenshot`, reusing the chat tool
+  /// `parse_app_screenshot` OCR logic. If the screenshot is actually a recipe
+  /// or a non-nutrition page, the backend returns 422 and this throws a
+  /// [ScanImportException] with [ScanImportException.routeTo] set so the
+  /// caller can route to recipe/text analysis (C4).
+  Future<ScanImportResult> scanAppScreenshot({
+    required String userId,
+    required File imageFile,
+    String? caption,
+  }) async {
+    final formData = FormData.fromMap({
+      'user_id': userId,
+      if (caption != null && caption.trim().isNotEmpty) 'caption': caption.trim(),
+      'image': await MultipartFile.fromFile(
+        imageFile.path,
+        filename: 'app_screenshot.jpg',
+      ),
+    });
+    try {
+      final response = await _client.post(
+        '/nutrition/scan-app-screenshot',
+        data: formData,
+        options: Options(receiveTimeout: const Duration(seconds: 75)),
+      );
+      return ScanImportResult.fromJson(
+        Map<String, dynamic>.from(response.data as Map),
+      );
+    } on DioException catch (e) {
+      throw _mapScanError(e, 'screenshot');
+    }
+  }
+
+  /// Convert a Dio error from a scan endpoint into a [ScanImportException].
+  /// A 422 whose `detail` carries a `reason` (recipe / not_nutrition) becomes
+  /// a routable exception; everything else becomes a plain user-facing message.
+  ScanImportException _mapScanError(DioException e, String kind) {
+    final data = e.response?.data;
+    if (e.response?.statusCode == 422 && data is Map) {
+      final detail = data['detail'];
+      if (detail is Map && detail['reason'] != null) {
+        return ScanImportException(
+          (detail['message'] as String?) ?? 'Could not read this image.',
+          routeTo: detail['reason'] as String?,
+        );
+      }
+      if (detail is String) return ScanImportException(detail);
+    }
+    if (e.type == DioExceptionType.receiveTimeout ||
+        e.type == DioExceptionType.connectionTimeout) {
+      return ScanImportException(
+        'The $kind scan timed out. Check your connection and retry.',
+      );
+    }
+    if (data is Map && data['detail'] is String) {
+      return ScanImportException(data['detail'] as String);
+    }
+    return ScanImportException('Could not scan the $kind. Please try again.');
   }
 
   /// Stream progress while analyzing 1..N food photos. Backend decides the
@@ -1503,4 +1607,90 @@ class DishVariantSwapResult {
         newCarbsG: (j['new_carbs_g'] as num?)?.toDouble(),
         newFatG: (j['new_fat_g'] as num?)?.toDouble(),
       );
+}
+
+/// Parity A2 — result of a label / app-screenshot OCR scan.
+///
+/// Wraps the standard [LogFoodResponse] (so the existing result sheet renders
+/// it unchanged) plus the C4 edge-case metadata from the `scan_meta` block.
+class ScanImportResult {
+  final LogFoodResponse response;
+
+  /// "label" or "screenshot".
+  final String kind;
+
+  /// Label: servings printed on the package (multi-serving confirm).
+  final double? servingsPerContainer;
+
+  /// Label: servings the user told us they ate (echoed back).
+  final double? servingsConsumed;
+
+  /// Label: kcal for ONE serving — used to recompute when the user changes
+  /// the serving count locally without a re-scan round trip.
+  final int? perServingCalories;
+
+  /// Fields Gemini could not read (glare / cut off).
+  final List<String> unreadableFields;
+
+  /// Unit conversions applied (e.g. "kj_converted", "per_100g_normalized").
+  final List<String> unitNotes;
+
+  /// True when the scan layout was unknown or values are shaky.
+  final bool lowConfidence;
+
+  /// Screenshot: source app name, if detected.
+  final String? sourceApp;
+
+  /// Screenshot: "nutrition_panel" (recipe/not_nutrition are 422'd earlier).
+  final String? contentKind;
+
+  const ScanImportResult({
+    required this.response,
+    required this.kind,
+    this.servingsPerContainer,
+    this.servingsConsumed,
+    this.perServingCalories,
+    this.unreadableFields = const [],
+    this.unitNotes = const [],
+    this.lowConfidence = false,
+    this.sourceApp,
+    this.contentKind,
+  });
+
+  factory ScanImportResult.fromJson(Map<String, dynamic> json) {
+    final meta = (json['scan_meta'] as Map?)?.cast<String, dynamic>() ??
+        const <String, dynamic>{};
+    return ScanImportResult(
+      response: LogFoodResponse.fromJson(json),
+      kind: meta['kind'] as String? ?? 'label',
+      servingsPerContainer:
+          (meta['servings_per_container'] as num?)?.toDouble(),
+      servingsConsumed: (meta['servings_consumed'] as num?)?.toDouble(),
+      perServingCalories: (meta['per_serving_calories'] as num?)?.toInt(),
+      unreadableFields: (meta['unreadable_fields'] as List?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          const [],
+      unitNotes: (meta['unit_notes'] as List?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          const [],
+      lowConfidence: meta['low_confidence'] as bool? ?? false,
+      sourceApp: meta['source_app'] as String?,
+      contentKind: meta['content_kind'] as String?,
+    );
+  }
+}
+
+/// Thrown by the A2 scan endpoints. When [routeTo] is non-null the screenshot
+/// was actually a recipe ("recipe") or a non-nutrition page ("not_nutrition")
+/// and the caller should route the user elsewhere instead of showing an error.
+class ScanImportException implements Exception {
+  final String message;
+  final String? routeTo;
+
+  const ScanImportException(this.message, {this.routeTo});
+
+  @override
+  String toString() => message;
 }

@@ -3,10 +3,12 @@ import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/theme/accent_color_provider.dart';
+import '../data/providers/xp_provider.dart';
 import '../data/models/level_reward.dart';
 import '../data/models/user_xp.dart';
 import '../data/services/haptic_service.dart';
 import 'fitness_crate_dialog.dart';
+import 'minigame/nutrient_rush_game.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
 part 'level_up_dialog_part_accomplishment.dart';
@@ -112,6 +114,13 @@ class _LevelUpDialogState extends ConsumerState<LevelUpDialog>
   // Particles
   late List<_Particle> _particles;
   final _random = math.Random();
+
+  // Optional bonus mini-game (L6) — never blocks the Continue flow.
+  bool _bonusGamePlayed = false;
+  int _bonusGameScore = 0;
+  // Anti-farm: award mini-game XP at most ONCE per celebration, even if the
+  // user replays the bonus round in this same dialog.
+  bool _minigameXpAwarded = false;
 
   @override
   void initState() {
@@ -299,6 +308,38 @@ class _LevelUpDialogState extends ConsumerState<LevelUpDialog>
       tier,
       widget.onDismiss,
     );
+  }
+
+  /// Launches the optional Nutrient Rush bonus mini-game (L6).
+  ///
+  /// 100% optional — the level-up dialog stays mounted underneath, so when the
+  /// game closes the user is back at the Continue screen unchanged. This is a
+  /// celebration launch, so it's reward-eligible: a score > 0 awards real XP
+  /// via the `bonus_minigame` goal type. The `_minigameXpAwarded` flag ensures
+  /// replaying the bonus round in this same dialog can't double-award.
+  Future<void> _playBonusGame() async {
+    HapticService.light();
+    final accentColor = ref.read(accentColorProvider).getColor(true);
+    final score = await showNutrientRushGame(
+      context,
+      accentColor,
+      rewardEligible: true,
+    );
+    if (!mounted) return;
+    setState(() {
+      _bonusGamePlayed = true;
+      _bonusGameScore = score;
+    });
+    if (score > 0) {
+      // Celebratory confetti + haptic burst.
+      HapticService.success();
+      _confettiController.play();
+      // Award real XP once per celebration.
+      if (!_minigameXpAwarded) {
+        _minigameXpAwarded = true;
+        await ref.read(xpProvider.notifier).awardMinigameXP();
+      }
+    }
   }
 
   @override
@@ -561,8 +602,52 @@ class _LevelUpDialogState extends ConsumerState<LevelUpDialog>
                           : const SizedBox.shrink(),
                     ),
 
-                    // ── Continue button (appears after carousel finishes) ──
+                    // ── Bonus mini-game CTA (optional, appears after carousel) ──
                     SizedBox(height: vGap * 0.5),
+                    AnimatedOpacity(
+                      duration: const Duration(milliseconds: 400),
+                      opacity: _carouselDone ? 1.0 : 0.0,
+                      child: AnimatedSlide(
+                        duration: const Duration(milliseconds: 400),
+                        offset:
+                            _carouselDone ? Offset.zero : const Offset(0, 0.3),
+                        curve: Curves.easeOut,
+                        child: SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton.icon(
+                            onPressed: _carouselDone ? _playBonusGame : null,
+                            icon: const Text('🚀',
+                                style: TextStyle(fontSize: 14)),
+                            label: Text(
+                              _bonusGamePlayed
+                                  ? (_bonusGameScore > 0
+                                      ? 'PLAY AGAIN · BEST $_bonusGameScore'
+                                      : 'PLAY BONUS ROUND')
+                                  : 'PLAY BONUS ROUND',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 1.5,
+                              ),
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: Colors.amber,
+                              side: BorderSide(
+                                  color:
+                                      Colors.amber.withValues(alpha: 0.5)),
+                              padding:
+                                  EdgeInsets.symmetric(vertical: compact ? 8 : 10),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    // ── Continue button (appears after carousel finishes) ──
+                    SizedBox(height: vGap * 0.4),
                     AnimatedOpacity(
                       duration: const Duration(milliseconds: 400),
                       opacity: _carouselDone ? 1.0 : 0.0,

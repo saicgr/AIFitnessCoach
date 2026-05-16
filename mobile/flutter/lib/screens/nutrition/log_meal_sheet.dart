@@ -60,9 +60,17 @@ part 'log_meal_sheet_ui.dart';
 
 part 'log_meal_sheet_ui_1.dart';
 part 'log_meal_sheet_ui_2.dart';
+part 'log_meal_sheet_l2.dart';
 
 const String _kMealTypeLastUsedKey = 'meal_type';
 const String _kFoodBrowserLastUsedKey = 'food_browser_filter';
+
+/// A1 + L2 — the AI-logging modes. `snap` is the one-tap instant
+/// single-photo path; `describe` is the multi-photo + prominent-
+/// instruction form; `voice` (L2) is the hands-free dictation path
+/// with a confirm-the-transcript step; `search` keeps the existing
+/// typed food-search / browser experience reachable.
+enum _AiLogMode { snap, describe, voice, search }
 
 
 /// Shows the log meal bottom sheet from anywhere in the app
@@ -186,6 +194,22 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
   final _descriptionController = TextEditingController();
   bool _hasScanned = false;
 
+  // ─── A1 Snap / Describe mode state ─────────────────────────────
+  /// Active AI-logging mode. Defaults to Describe (the richest path);
+  /// Snap is the one-tap instant-camera path.
+  _AiLogMode _aiMode = _AiLogMode.describe;
+  /// Photos staged in the Describe form before the single Analyze round
+  /// trip. Capped at 5 (the existing multi-image limit).
+  final List<XFile> _describePhotos = [];
+  /// Prominent pre-analysis instruction for the Describe form. Sent as
+  /// `user_message` alongside the photos / text. Separate from
+  /// `_descriptionController` so a food name and an instruction can both
+  /// be supplied.
+  final _describeInstructionController = TextEditingController();
+  /// Re-entrancy guard so a second Analyze can't interleave with a
+  /// Describe analysis already streaming (edge case C3).
+  bool _describeAnalyzing = false;
+
   // Time picker state
   TimeOfDay _selectedTime = TimeOfDay.now();
 
@@ -227,6 +251,32 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
   bool _isListening = false;
   bool _speechAvailable = false;
 
+  // ─── L2 near-zero-friction state ───────────────────────────────
+  /// Editable transcript captured in Voice mode. Held separately from
+  /// `_descriptionController` so the user can review/fix a possible
+  /// mis-transcription (C6) before it routes through analysis.
+  final _voiceTranscriptController = TextEditingController();
+  /// True while Voice mode's mic is actively capturing. Distinct from
+  /// `_isListening` (which the Search-panel mic also uses) so the two
+  /// surfaces never fight over UI state.
+  bool _voiceCapturing = false;
+  /// Set when the OS denied mic permission or speech is unavailable —
+  /// drives Voice mode's graceful fallback message (C6).
+  bool _voiceUnavailable = false;
+  /// L2 "frequent meals" — the user's most-logged recent full meals,
+  /// derived client-side from recent food_logs. Empty until loaded.
+  List<_FrequentMeal> _frequentMeals = const [];
+  /// True while the frequent-meals window is being fetched. Drives the
+  /// strip's skeleton; a brand-new user resolves to an empty list (C8).
+  bool _frequentMealsLoading = false;
+  /// True once the frequent-meals fetch has completed at least once
+  /// (so the empty state only shows after a real load, not before).
+  bool _frequentMealsLoaded = false;
+  /// The meal slot the sheet auto-predicted from time-of-day on open
+  /// (L2). Null when the slot came from an explicit deep link or the
+  /// user's last-used choice — used only to show the "predicted" hint.
+  MealType? _predictedMealSlot;
+
   // Mood tracking state
   FoodMood? _moodBefore;
   FoodMood? _moodAfter;
@@ -252,9 +302,19 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
     //   2. last-used meal type the user picked in this sheet
     //   3. time-of-day heuristic (_getDefaultMealType)
     final lastUsed = ref.read(lastUsedServiceProvider);
-    _selectedMealType = widget.initialMealType ??
-        _resolveMealTypeFromKey(lastUsed.get(_kMealTypeLastUsedKey)) ??
-        _getDefaultMealType();
+    // L2 meal-slot prediction: the time-of-day default is the
+    // *predicted* slot. We still honour an explicit deep link or the
+    // user's last-used choice first — but when neither is set, the
+    // prediction wins AND we remember it so the UI can show a
+    // dismissible "predicted" hint (the selector stays overridable —
+    // C8 "prediction wrong → easy to override").
+    final predicted = _getDefaultMealType();
+    final lastUsedSlot = _resolveMealTypeFromKey(lastUsed.get(_kMealTypeLastUsedKey));
+    _selectedMealType = widget.initialMealType ?? lastUsedSlot ?? predicted;
+    if (widget.initialMealType == null && lastUsedSlot == null) {
+      // Slot was filled purely by the time-of-day prediction.
+      _predictedMealSlot = predicted;
+    }
     final lastBrowserKey = lastUsed.get(_kFoodBrowserLastUsedKey);
     if (lastBrowserKey != null) {
       _browserFilter = FoodBrowserFilter.values.firstWhere(
@@ -269,6 +329,8 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
     debugPrint('🍽️ [LogMeal] Sheet initialized | userId=${widget.userId} | initialMealType=${widget.initialMealType?.value ?? "auto"} | selectedMealType=${_selectedMealType.value} | autoOpenCamera=${widget.autoOpenCamera}');
 
     if (widget.autoOpenCamera) {
+      // Snap shortcut — one-tap instant single-photo path.
+      _aiMode = _AiLogMode.snap;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) _pickImage(ImageSource.camera);
       });
@@ -289,6 +351,13 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
         if (mounted) _scanMenu();
       });
     }
+
+    // L2 — load the user's frequent meals in the background so the
+    // one-tap re-log strip is ready by the time they look at it. Never
+    // blocks sheet open; a brand-new user just resolves to empty (C8).
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _loadFrequentMeals();
+    });
   }
 
   @override
@@ -297,6 +366,8 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
     _loadingDelayTimer?.cancel();
     _descriptionController.removeListener(_onDescriptionChanged);
     _descriptionController.dispose();
+    _describeInstructionController.dispose();
+    _voiceTranscriptController.dispose();
     _textFieldFocusNode.removeListener(_onFocusChange);
     _textFieldFocusNode.dispose();
     _scrollController.dispose();
@@ -1105,8 +1176,12 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
                 else
                   Expanded(child: _buildInputView(isDark)),
 
-                // Bottom bar: only in input state
-                if (!_isLoading && !_isAnalyzing && _analyzedResponse == null)
+                // Bottom bar: only in the Search input state — Snap and
+                // Describe modes have their own in-panel actions.
+                if (!_isLoading &&
+                    !_isAnalyzing &&
+                    _analyzedResponse == null &&
+                    _aiMode == _AiLogMode.search)
                   _buildBottomBar(isDark),
               ],
             ),

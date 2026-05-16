@@ -148,57 +148,82 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
           // Action buttons row: icon buttons left, analyze pill right.
           // Mic moved into the "What did you eat?" TextField as a suffix icon
           // so this row can host a dedicated Menu scan button instead.
+          // The icon group is wrapped in a horizontal scroller so adding the
+          // Import-scan button (6 icons) never overflows on an iPhone SE —
+          // the Analyze pill stays pinned to the right.
           Row(
             children: [
-              // Camera button — multi-photo capable scan.
-              ActionIconButton(
-                icon: Icons.camera_alt,
-                onTap: () => _pickImages(ImageSource.camera),
-                isDark: isDark,
-                color: const Color(0xFF3B82F6), // blue
-              ),
-              const SizedBox(width: 2),
+              Flexible(
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      // Camera button — multi-photo capable scan.
+                      ActionIconButton(
+                        icon: Icons.camera_alt,
+                        onTap: () => _pickImages(ImageSource.camera),
+                        isDark: isDark,
+                        color: const Color(0xFF3B82F6), // blue
+                      ),
+                      const SizedBox(width: 2),
 
-              // Gallery button — multi-photo capable scan.
-              ActionIconButton(
-                icon: Icons.photo_library_outlined,
-                onTap: () => _pickImages(ImageSource.gallery),
-                isDark: isDark,
-                color: const Color(0xFF8B5CF6), // purple
-              ),
-              const SizedBox(width: 2),
+                      // Gallery button — multi-photo capable scan.
+                      ActionIconButton(
+                        icon: Icons.photo_library_outlined,
+                        onTap: () => _pickImages(ImageSource.gallery),
+                        isDark: isDark,
+                        color: const Color(0xFF8B5CF6), // purple
+                      ),
+                      const SizedBox(width: 2),
 
-              // Menu scan — takes one or more menu photos, routes to
-              // analyze_multi_food_images with analysis_mode="menu" and
-              // opens the MenuAnalysisSheet checklist on success.
-              ActionIconButton(
-                icon: Icons.menu_book_outlined,
-                onTap: _scanMenu,
-                isDark: isDark,
-                color: const Color(0xFFF59E0B), // amber
-              ),
-              const SizedBox(width: 2),
+                      // Menu scan — takes one or more menu photos, routes to
+                      // analyze_multi_food_images with analysis_mode="menu"
+                      // and opens the MenuAnalysisSheet checklist on success.
+                      ActionIconButton(
+                        icon: Icons.menu_book_outlined,
+                        onTap: _scanMenu,
+                        isDark: isDark,
+                        color: const Color(0xFFF59E0B), // amber
+                      ),
+                      const SizedBox(width: 2),
 
-              // Barcode button
-              ActionIconButton(
-                icon: Icons.qr_code_scanner,
-                onTap: _openBarcodeScanner,
-                isDark: isDark,
-                color: const Color(0xFF10B981), // green
-              ),
-              const SizedBox(width: 2),
+                      // Barcode button
+                      ActionIconButton(
+                        icon: Icons.qr_code_scanner,
+                        onTap: _openBarcodeScanner,
+                        isDark: isDark,
+                        color: const Color(0xFF10B981), // green
+                      ),
+                      const SizedBox(width: 2),
 
-              // AI Coach button — opens a context-aware popup with preset
-              // questions informed by today's logged meals, workout, and
-              // favorites. Does NOT replace the Analyze pill.
-              ActionIconButton(
-                icon: Icons.chat_bubble_outline_rounded,
-                onTap: _openAiCoachSheet,
-                isDark: isDark,
-                color: AccentColorScope.of(context).getColor(isDark),
+                      // Import scan — first-class entry for nutrition-label
+                      // OCR and app-screenshot OCR (Parity A2). Opens a
+                      // chooser sheet; each option picks an image and routes
+                      // through the direct scan endpoint into this same
+                      // result sheet for review/edit.
+                      ActionIconButton(
+                        icon: Icons.document_scanner_outlined,
+                        onTap: _openImportScanSheet,
+                        isDark: isDark,
+                        color: const Color(0xFF06B6D4), // cyan
+                      ),
+                      const SizedBox(width: 2),
+
+                      // AI Coach button — opens a context-aware popup with
+                      // preset questions informed by today's logged meals,
+                      // workout, and favorites. Does NOT replace Analyze.
+                      ActionIconButton(
+                        icon: Icons.chat_bubble_outline_rounded,
+                        onTap: _openAiCoachSheet,
+                        isDark: isDark,
+                        color: AccentColorScope.of(context).getColor(isDark),
+                      ),
+                    ],
+                  ),
+                ),
               ),
 
-              const Spacer(),
+              const SizedBox(width: 8),
 
               // Analyze pill button
               ElevatedButton.icon(
@@ -382,6 +407,92 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
                                 fontSize: 13,
                                 fontWeight: FontWeight.w500,
                                 color: isDark ? AppColors.teal : AppColorsLight.teal,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                // A3 — "Applied: …" note. When the user supplied an
+                // instruction and it changed the analysis, the backend
+                // returns a short past-tense summary of WHAT changed.
+                if (response.appliedInstructionNote != null &&
+                    response.appliedInstructionNote!.trim().isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: orange.withValues(alpha: 0.10),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: orange.withValues(alpha: 0.25)),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(Icons.auto_fix_high, size: 16, color: orange),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: RichText(
+                              text: TextSpan(
+                                style: TextStyle(
+                                  fontSize: 12.5,
+                                  height: 1.35,
+                                  color: textPrimary,
+                                ),
+                                children: [
+                                  TextSpan(
+                                    text: 'Applied: ',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                      color: orange,
+                                    ),
+                                  ),
+                                  TextSpan(
+                                    text: response.appliedInstructionNote!.trim(),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                // L3 — "It remembers you". When a learned per-user correction
+                // (>= 2 consistent edits) was auto-applied, the backend
+                // returns a short affirmation. Surfaced as a "Remembered" chip.
+                if (response.rememberedMessage != null &&
+                    response.rememberedMessage!.trim().isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: AppColors.purple.withValues(alpha: 0.10),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                            color:
+                                AppColors.purple.withValues(alpha: 0.25)),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(Icons.auto_awesome_rounded,
+                              size: 16, color: AppColors.purple),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              response.rememberedMessage!.trim(),
+                              style: TextStyle(
+                                fontSize: 12.5,
+                                height: 1.35,
+                                fontWeight: FontWeight.w600,
+                                color: textPrimary,
                               ),
                             ),
                           ),
@@ -695,6 +806,10 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
                 ],
                 const SizedBox(height: 12),
 
+                // L4 — "accuracy you can trust". Flag low-confidence items
+                // and offer a single 1-tap confirm before the item list.
+                _buildLowConfidenceReview(isDark, response),
+
                 // Food items — always visible (primary content)
                 if (response.foodItems.isNotEmpty)
                   CollapsibleFoodItemsSection(
@@ -753,6 +868,12 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
                       },
                     );
                   }),
+
+                // L1 — "every log is coaching". A live "fits your day" line,
+                // one concrete next-meal suggestion, and (when well over
+                // budget) a coach fork. Rendered right under the Coach's-take
+                // so the two read as one coaching surface.
+                _buildCoachingExtras(isDark, response),
 
                 // Inflammation score + ultra-processed tags (before macros deep-dive)
                 if (response.inflammationScore != null ||
@@ -827,6 +948,421 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
       localPath: localPath,
       networkUrl: networkUrl,
       heroTag: 'food_image_preview',
+    );
+  }
+
+  // ─── L1 — "every log is coaching" ─────────────────────────────
+
+  /// Renders the coaching extras under the Coach's-take:
+  /// • a live "fits your day" line (calories + protein remaining vs targets,
+  ///   scoped to the logged date — C7),
+  /// • one concrete next-meal suggestion,
+  /// • the over-budget coach fork (lighter next meal OR a tomorrow-workout
+  ///   tweak) when the day is well over budget.
+  /// Returns an empty box when there is nothing coach-worthy to show.
+  Widget _buildCoachingExtras(bool isDark, LogFoodResponse response) {
+    final fits = _computeFitsYourDay();
+    final nextMeal = response.nextMealSuggestion?.trim() ?? '';
+    final fork = response.overBudgetFork;
+
+    // C7 — only show the fork when the day is genuinely over budget AND it
+    // is not a planned refeed / high-output day (don't guilt a planned day).
+    final overBudget = fits != null && fits.caloriesRemaining < 0;
+    final showFork =
+        fork != null && overBudget && !fits.isPlannedHighDay;
+
+    // Nothing to render — skip entirely (e.g. no targets set, no suggestion).
+    if (fits == null && nextMeal.isEmpty) return const SizedBox.shrink();
+
+    final accent = AccentColorScope.of(context).getColor(isDark);
+    final teal = isDark ? AppColors.teal : AppColorsLight.teal;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final purple = isDark ? AppColors.macroProtein : AppColorsLight.macroProtein;
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 12),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              teal.withValues(alpha: 0.10),
+              teal.withValues(alpha: 0.04),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: teal.withValues(alpha: 0.20)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ── "Fits your day" line (C7 — skipped when no targets) ──
+            if (fits != null) ...[
+              Row(
+                children: [
+                  Icon(
+                      overBudget
+                          ? Icons.warning_amber_rounded
+                          : Icons.track_changes_rounded,
+                      size: 16,
+                      color: overBudget ? AppColors.coral : teal),
+                  const SizedBox(width: 7),
+                  Expanded(
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Row(
+                        children: [
+                          Text('${fits.dateLabel}: ',
+                              style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: textMuted)),
+                          Text(
+                            overBudget
+                                ? '${(-fits.caloriesRemaining)} kcal over'
+                                : '${fits.caloriesRemaining} kcal left',
+                            style: TextStyle(
+                                fontSize: 13.5,
+                                fontWeight: FontWeight.w700,
+                                color: overBudget
+                                    ? AppColors.coral
+                                    : textPrimary),
+                          ),
+                          if (fits.proteinRemaining != null) ...[
+                            Text(' · ',
+                                style: TextStyle(
+                                    fontSize: 13.5, color: textMuted)),
+                            Text(
+                              '${fits.proteinRemaining! < 0 ? 0 : fits.proteinRemaining}g protein left',
+                              style: TextStyle(
+                                  fontSize: 13.5,
+                                  fontWeight: FontWeight.w700,
+                                  color: purple),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              if (fits.isPlannedHighDay && overBudget) ...[
+                const SizedBox(height: 4),
+                Text(
+                  'Planned high-output day — this is by design.',
+                  style: TextStyle(
+                      fontSize: 11.5,
+                      fontStyle: FontStyle.italic,
+                      color: textMuted),
+                ),
+              ],
+            ],
+
+            // ── Concrete next-meal suggestion ────────────────────────
+            if (nextMeal.isNotEmpty) ...[
+              if (fits != null) const SizedBox(height: 10),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(Icons.restaurant_rounded, size: 16, color: accent),
+                  const SizedBox(width: 7),
+                  Expanded(
+                    child: RichText(
+                      text: TextSpan(
+                        style: TextStyle(
+                            fontSize: 13, height: 1.4, color: textPrimary),
+                        children: [
+                          TextSpan(
+                            text: 'Next meal: ',
+                            style: TextStyle(
+                                fontWeight: FontWeight.w700, color: accent),
+                          ),
+                          TextSpan(text: nextMeal),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+
+            // ── Over-budget coach fork (C7 — suppressed on planned days) ──
+            if (showFork) ...[
+              const SizedBox(height: 12),
+              Text(
+                'Over budget — pick one:',
+                style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: textMuted),
+              ),
+              const SizedBox(height: 8),
+              _coachForkOption(
+                isDark,
+                Icons.local_dining_outlined,
+                'Lighter next meal',
+                fork.lighterNextMeal,
+                accent,
+              ),
+              const SizedBox(height: 8),
+              _coachForkOption(
+                isDark,
+                Icons.fitness_center_rounded,
+                'Tomorrow workout tweak',
+                fork.workoutTweak,
+                purple,
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _coachForkOption(bool isDark, IconData icon, String title,
+      String body, Color color) {
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: color.withValues(alpha: 0.25)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 15, color: color),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title,
+                    style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: color)),
+                const SizedBox(height: 2),
+                Text(body,
+                    style: TextStyle(
+                        fontSize: 12.5,
+                        height: 1.35,
+                        color: textPrimary.withValues(alpha: 0.9))),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ─── L4 — "accuracy you can trust" ────────────────────────────
+
+  /// Flags low-confidence food items with a single 1-tap "Looks right"
+  /// confirm. C10 — when EVERY item is low-confidence (bad photo) we ask the
+  /// user to re-photo instead of firing N separate confirmations. Verified
+  /// (override-DB cross-checked) items are never flagged.
+  Widget _buildLowConfidenceReview(bool isDark, LogFoodResponse response) {
+    final items = response.foodItemsRanked;
+    if (items.isEmpty) return const SizedBox.shrink();
+
+    final lowIdx = <int>[];
+    var verifiedCount = 0;
+    for (var i = 0; i < items.length; i++) {
+      if (items[i].isLowConfidence) lowIdx.add(i);
+      if (items[i].isVerified) verifiedCount++;
+    }
+
+    // L4 — when nothing is shaky but some items were cross-checked against
+    // verified food-DB data, surface that as a small trust signal so the
+    // user knows the numbers aren't a pure guess.
+    if (lowIdx.isEmpty) {
+      if (verifiedCount == 0) return const SizedBox.shrink();
+      final teal = isDark ? AppColors.teal : AppColorsLight.teal;
+      final tMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: Row(
+          children: [
+            Icon(Icons.verified_rounded, size: 14, color: teal),
+            const SizedBox(width: 6),
+            Expanded(
+              child: Text(
+                verifiedCount == items.length
+                    ? 'All items matched verified nutrition data'
+                    : '$verifiedCount of ${items.length} items matched verified nutrition data',
+                style: TextStyle(
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w500,
+                    color: tMuted),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    const amber = Color(0xFFF59E0B);
+
+    // C10 — every item shaky → one re-photo prompt, not a confirm storm.
+    final allLow = lowIdx.length == items.length && items.length > 1;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: amber.withValues(alpha: 0.10),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: amber.withValues(alpha: 0.30)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.help_outline_rounded, size: 16, color: amber),
+                const SizedBox(width: 7),
+                Expanded(
+                  child: Text(
+                    allLow
+                        ? 'This photo was hard to read'
+                        : 'Quick check — ${lowIdx.length == 1 ? 'one item is' : '${lowIdx.length} items are'} a rough estimate',
+                    style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: textPrimary),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            if (allLow) ...[
+              Text(
+                'I couldn’t estimate these confidently. Re-take a clearer, '
+                'well-lit photo for a better result — or edit the values below.',
+                style: TextStyle(
+                    fontSize: 12, height: 1.4, color: textMuted),
+              ),
+              const SizedBox(height: 10),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: _isLoading
+                      ? null
+                      : () => _pickImage(ImageSource.camera),
+                  icon: const Icon(Icons.camera_alt_rounded, size: 16),
+                  label: const Text('Re-take photo',
+                      style: TextStyle(
+                          fontSize: 13, fontWeight: FontWeight.w600)),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: amber,
+                    side: const BorderSide(color: amber),
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10)),
+                  ),
+                ),
+              ),
+            ] else ...[
+              Text(
+                'Tap to confirm each — or edit the values in the list below.',
+                style: TextStyle(
+                    fontSize: 12, height: 1.35, color: textMuted),
+              ),
+              const SizedBox(height: 8),
+              for (final idx in lowIdx)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: _lowConfidenceRow(isDark, idx, items[idx], amber),
+                ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _lowConfidenceRow(
+      bool isDark, int index, FoodItemRanking item, Color amber) {
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final glassSurface = isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
+    final reasoning = item.estimateReasoning?.trim() ?? '';
+    return Container(
+      padding: const EdgeInsets.fromLTRB(10, 8, 8, 8),
+      decoration: BoxDecoration(
+        color: glassSurface,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${item.name}${item.amount != null && item.amount!.isNotEmpty ? ' · ${item.amount}' : ''}',
+                  style: TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w600,
+                      color: textPrimary),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                // L4 — grounded reasoning ("~220g; plate reads ~10in"),
+                // shown only when the backend supplied a real basis.
+                if (reasoning.isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    reasoning,
+                    style: TextStyle(
+                        fontSize: 11,
+                        fontStyle: FontStyle.italic,
+                        color: textMuted),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () => _confirmFoodItem(index),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
+              decoration: BoxDecoration(
+                color: amber,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.check_rounded, size: 14, color: Colors.white),
+                  SizedBox(width: 4),
+                  Text('Looks right',
+                      style: TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white)),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 

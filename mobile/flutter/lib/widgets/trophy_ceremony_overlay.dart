@@ -4,9 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../core/theme/accent_color_provider.dart';
 import '../data/models/pending_celebration.dart';
 import '../data/providers/pending_celebrations_provider.dart';
+import '../data/providers/xp_provider.dart';
 import '../data/services/haptic_service.dart';
+import 'minigame/nutrient_rush_game.dart';
 
 /// Full-screen celebration ceremony matching the Garmin/Amazfit reference
 /// (sunburst backdrop + metallic badge + gradient caption + swipeable
@@ -82,6 +85,31 @@ class _TrophyCeremonyScreenState
   late final PageController _controller;
   late final AnimationController _sunburstPulse;
   int _index = 0;
+
+  // Optional bonus mini-game — never blocks the close/dismiss flow.
+  // Anti-farm: award mini-game XP at most ONCE per celebration.
+  bool _minigameXpAwarded = false;
+
+  /// Launches the optional Nutrient Rush bonus mini-game. This is a
+  /// celebration launch, so it's reward-eligible: a score > 0 awards real XP
+  /// once via the `bonus_minigame` goal type. Replaying can't double-award.
+  Future<void> _playBonusGame() async {
+    HapticService.light();
+    final accentColor = ref.read(accentColorProvider).getColor(true);
+    final score = await showNutrientRushGame(
+      context,
+      accentColor,
+      rewardEligible: true,
+    );
+    if (!mounted) return;
+    if (score > 0) {
+      HapticService.success();
+      if (!_minigameXpAwarded) {
+        _minigameXpAwarded = true;
+        await ref.read(xpProvider.notifier).awardMinigameXP();
+      }
+    }
+  }
 
   @override
   void initState() {
@@ -187,6 +215,33 @@ class _TrophyCeremonyScreenState
                   activeIndex: _index,
                 ),
               ),
+
+            // Optional "Play bonus round" CTA — never blocks dismissal.
+            // Sits above the page dots when present so nothing overlaps.
+            Positioned(
+              left: 24,
+              right: 24,
+              bottom: trophies.length > 1 ? 56 : 28,
+              child: Center(
+                child: TextButton.icon(
+                  onPressed: _playBonusGame,
+                  icon: const Text('🚀', style: TextStyle(fontSize: 14)),
+                  label: const Text(
+                    'PLAY BONUS ROUND',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 1.5,
+                    ),
+                  ),
+                  style: TextButton.styleFrom(
+                    foregroundColor: Colors.amber,
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 8),
+                  ),
+                ),
+              ),
+            ),
           ],
         ),
       ),

@@ -980,6 +980,52 @@ extension NutritionRepositoryExt on NutritionRepository {
   }
 
 
+  /// A4 — Ask the backend to AI-suggest fields for a NEW custom food.
+  ///
+  /// Provide EITHER [name] (typed → text food analysis) OR [imageBase64]
+  /// (nutrition-label photo → OCR). Nothing is created or logged — the result
+  /// is advisory and the UI renders every field as editable (C5).
+  Future<AiSuggestedFood> aiSuggestCustomFood({
+    String? name,
+    String? imageBase64,
+    String mimeType = 'image/jpeg',
+  }) async {
+    if ((name == null || name.trim().isEmpty) &&
+        (imageBase64 == null || imageBase64.isEmpty)) {
+      throw ArgumentError(
+          'aiSuggestCustomFood requires either a name or an image.');
+    }
+    try {
+      final data = <String, dynamic>{};
+      if (name != null && name.trim().isNotEmpty) {
+        data['name'] = name.trim();
+      }
+      if (imageBase64 != null && imageBase64.isNotEmpty) {
+        data['image_base64'] = imageBase64;
+        data['mime_type'] = mimeType;
+      }
+      final response = await _client.post(
+        '/nutrition/saved-foods/ai-suggest',
+        data: data,
+        options: Options(receiveTimeout: ApiConstants.aiReceiveTimeout),
+      );
+      return AiSuggestedFood.fromJson(response.data as Map<String, dynamic>);
+    } on DioException catch (e) {
+      debugPrint('❌ [NutritionRepo] ai-suggest failed: ${e.message}');
+      if (e.response?.statusCode == 504) {
+        throw Exception('AI took too long. Please try again.');
+      }
+      final detail = e.response?.data is Map
+          ? (e.response?.data as Map)['detail']
+          : null;
+      throw Exception(detail ?? 'Could not get AI suggestions. Please try again.');
+    } catch (e) {
+      debugPrint('❌ [NutritionRepo] ai-suggest error: $e');
+      rethrow;
+    }
+  }
+
+
   /// Get list of saved foods
   Future<SavedFoodsResponse> getSavedFoods({
     required String userId,

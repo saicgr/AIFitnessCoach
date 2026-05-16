@@ -26,6 +26,11 @@ class MyFoodsSheet extends StatefulWidget {
   final void Function(RecipeSummary) onLogRecipe;
   final VoidCallback onRefreshRecipes;
 
+  /// L5 — opens the Saved Menus history screen (`/menu-history`). Makes
+  /// saved restaurant menus discoverable from the Nutrition tab without
+  /// having a menu scan open.
+  final VoidCallback onOpenSavedMenus;
+
   const MyFoodsSheet({
     super.key,
     required this.userId,
@@ -37,6 +42,7 @@ class MyFoodsSheet extends StatefulWidget {
     required this.onCreateRecipe,
     required this.onLogRecipe,
     required this.onRefreshRecipes,
+    required this.onOpenSavedMenus,
   });
 
   @override
@@ -120,7 +126,58 @@ class _MyFoodsSheetState extends State<MyFoodsSheet>
             ],
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 10),
+        // L5 — discoverable "Saved menus" entry point. Reachable from the
+        // Nutrition tab without a menu scan open; routes to /menu-history.
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Material(
+            color: teal.withValues(alpha: 0.10),
+            borderRadius: BorderRadius.circular(12),
+            child: InkWell(
+              onTap: () {
+                Navigator.of(context).pop();
+                widget.onOpenSavedMenus();
+              },
+              borderRadius: BorderRadius.circular(12),
+              child: Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                child: Row(
+                  children: [
+                    Icon(Icons.restaurant_menu, color: teal, size: 20),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Saved menus',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color: textColor,
+                            ),
+                          ),
+                          Text(
+                            'Reopen a restaurant menu you scanned before',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: textColor.withValues(alpha: 0.55),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Icon(Icons.chevron_right,
+                        color: textColor.withValues(alpha: 0.4), size: 20),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 10),
         // Tab content
         Expanded(
           child: TabBarView(
