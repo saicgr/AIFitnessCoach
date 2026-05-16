@@ -149,6 +149,9 @@ class FoodAnalysisCacheService(FoodAnalysisCacheServicePart2, FoodAnalysisCacheS
         nutrition_targets = {}
         calories_consumed_today = None
         calories_remaining = None
+        # L1 — protein budget mirrors the calorie budget so the coach tip can
+        # name a protein-relevant next meal.
+        protein_remaining_g = None
 
         daily_target = None
         if user_id:
@@ -216,6 +219,13 @@ class FoodAnalysisCacheService(FoodAnalysisCacheServicePart2, FoodAnalysisCacheS
                     target_cal = nutrition_targets.get("calories") or (daily_target if user_row else None)
                     if target_cal:
                         calories_remaining = max(0, int(target_cal) - calories_consumed_today)
+                    # L1 — protein remaining (only when a protein target exists).
+                    target_protein = nutrition_targets.get("protein_g")
+                    if target_protein:
+                        protein_consumed = daily_summary.get("total_protein_g", 0) or 0
+                        protein_remaining_g = max(
+                            0, int(round(float(target_protein) - float(protein_consumed)))
+                        )
                 except Exception as e:
                     logger.warning(f"[EnrichTips] Failed to get daily summary: {e}", exc_info=True)
 
@@ -237,6 +247,7 @@ class FoodAnalysisCacheService(FoodAnalysisCacheServicePart2, FoodAnalysisCacheS
                 coach_name=coach_name,
                 coaching_style=coaching_style,
                 communication_tone=communication_tone,
+                protein_remaining_g=protein_remaining_g,
             )
             if review:
                 # Use the Gemini-returned health_score if we didn't have one from items
@@ -248,6 +259,12 @@ class FoodAnalysisCacheService(FoodAnalysisCacheServicePart2, FoodAnalysisCacheS
                     "ai_suggestion": review.get("ai_suggestion", ""),
                     "recommended_swap": review.get("recommended_swap", ""),
                     "health_score": health_score,
+                    # L1 — "every log is coaching" extras. The frontend renders
+                    # the live "fits your day" line itself (it owns targets +
+                    # date scope), but the concrete next-meal idea and the
+                    # over-budget fork are model-generated here.
+                    "next_meal_suggestion": review.get("next_meal_suggestion", ""),
+                    "over_budget_fork": review.get("over_budget_fork"),
                 }
         except Exception as e:
             logger.error(f"[EnrichTips] Gemini call failed: {e}", exc_info=True)
@@ -259,6 +276,8 @@ class FoodAnalysisCacheService(FoodAnalysisCacheServicePart2, FoodAnalysisCacheS
             "ai_suggestion": "",
             "recommended_swap": "",
             "health_score": health_score,
+            "next_meal_suggestion": "",
+            "over_budget_fork": None,
         }
 
     async def analyze_food(
@@ -272,6 +291,7 @@ class FoodAnalysisCacheService(FoodAnalysisCacheServicePart2, FoodAnalysisCacheS
         mood_before: Optional[str] = None,
         meal_type: Optional[str] = None,
         personal_history: Optional[List[Dict]] = None,
+        standing_rules_block: str = "",
     ) -> Dict[str, Any]:
         """
         Analyze food with intelligent caching.
@@ -461,6 +481,8 @@ class FoodAnalysisCacheService(FoodAnalysisCacheServicePart2, FoodAnalysisCacheS
             meal_type=meal_type,
             user_id=user_id,
             personal_history=personal_history,
+            # L3 — standing food-logging rules injected into the Gemini prompt.
+            standing_rules_block=standing_rules_block,
         )
 
         # Phase-2: auto-upsert novel Gemini results to user_contributed
@@ -579,6 +601,9 @@ class FoodAnalysisCacheService(FoodAnalysisCacheServicePart2, FoodAnalysisCacheS
                 result["warnings"] = tips.get("warnings", [])
                 result["ai_suggestion"] = tips.get("ai_suggestion", "")
                 result["recommended_swap"] = tips.get("recommended_swap", "")
+                # L1 — carry the coaching extras onto the cache-hit result.
+                result["next_meal_suggestion"] = tips.get("next_meal_suggestion", "")
+                result["over_budget_fork"] = tips.get("over_budget_fork")
                 if tips.get("health_score") and not result.get("health_score"):
                     result["health_score"] = tips["health_score"]
                 logger.info(f"[EnrichTips] Enriched cache hit with tips for {len(food_items)} items")

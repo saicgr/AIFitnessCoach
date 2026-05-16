@@ -549,6 +549,22 @@ RESPONSE FORMAT:
 
 Remember: You're a supportive coach, not a robot. Be human, be helpful, be motivating!'''
 
+    @staticmethod
+    def _sanitize_fork(raw) -> Optional[dict]:
+        """L1 — normalize the model's `over_budget_fork`.
+
+        Returns a {'lighter_next_meal', 'workout_tweak'} dict only when BOTH
+        options are non-empty strings; otherwise None so the client renders
+        nothing instead of a half-empty fork.
+        """
+        if not isinstance(raw, dict):
+            return None
+        lighter = str(raw.get("lighter_next_meal", "") or "").strip()
+        workout = str(raw.get("workout_tweak", "") or "").strip()
+        if lighter and workout:
+            return {"lighter_next_meal": lighter, "workout_tweak": workout}
+        return None
+
     async def generate_food_review(
         self,
         food_name: str,
@@ -563,6 +579,9 @@ Remember: You're a supportive coach, not a robot. Be human, be helpful, be motiv
         coach_name: Optional[str] = None,
         coaching_style: Optional[str] = None,
         communication_tone: Optional[str] = None,
+        protein_remaining_g: Optional[int] = None,
+        is_planned_indulgence: bool = False,
+        has_workout_tomorrow: bool = True,
     ) -> dict:
         """
         Generate an AI-powered food review based on user goals and nutrition targets.
@@ -602,9 +621,45 @@ Remember: You're a supportive coach, not a robot. Be human, be helpful, be motiv
             meal_type_section = f"\nThis is the user's {meal_type}. Tailor tip to meal timing (e.g., breakfast = energy for the day, dinner = avoid heavy foods before sleep, snack = portion awareness).\n"
 
         calorie_budget_section = ""
+        # L1 — "every log is coaching". When we know the user's remaining
+        # budget we ask Gemini for a concrete next-meal suggestion and, if the
+        # day is well over budget, a two-option coach fork.
+        over_budget = False
         if calories_consumed_today is not None and calories_remaining is not None:
             target = (calories_consumed_today or 0) + (calories_remaining or 0)
-            calorie_budget_section = f"\nUser has consumed {calories_consumed_today} calories today out of a {target} calorie target ({calories_remaining} remaining). If this meal would put them significantly over budget, mention it tactfully. If they have plenty of room, note that this fits within their plan.\n"
+            # "Well over budget" = consumed >110% of target. calories_remaining
+            # is floored at 0 by the caller, so derive the real overage.
+            over_budget = target > 0 and calories_consumed_today > target * 1.10
+            protein_line = (
+                f" Protein remaining: {protein_remaining_g}g."
+                if protein_remaining_g is not None
+                else ""
+            )
+            calorie_budget_section = (
+                f"\nUser has consumed {calories_consumed_today} calories today out of a "
+                f"{target} calorie target ({calories_remaining} remaining).{protein_line} "
+                "If this meal would put them significantly over budget, mention it "
+                "tactfully. If they have plenty of room, note that this fits within "
+                "their plan.\n"
+            )
+            if is_planned_indulgence:
+                calorie_budget_section += (
+                    "\nIMPORTANT: today is a PLANNED refeed / cheat / high-output day. "
+                    "Do NOT guilt-trip the user for being over budget — acknowledge it "
+                    "was intentional and keep the tone supportive.\n"
+                )
+            elif over_budget:
+                workout_clause = (
+                    "edit tomorrow's already-scheduled workout to burn a little more"
+                    if has_workout_tomorrow
+                    else "add a short workout tomorrow (none is scheduled yet)"
+                )
+                calorie_budget_section += (
+                    "\nThe day is now well over budget. In `over_budget_fork`, give the "
+                    "user a genuine two-option choice: a 'lighter_next_meal' option (a "
+                    f"specific lighter meal idea) and a 'workout_tweak' option ({workout_clause}). "
+                    "Keep each option to one short sentence.\n"
+                )
 
         # Coach persona section
         coach_section = ""
@@ -678,8 +733,15 @@ Return ONLY valid JSON (no markdown) with this exact structure:
   "warnings": ["list of concerns — mention EACH food item by name if applicable"],
   "ai_suggestion": "a detailed, actionable suggestion covering the overall meal composition and how to improve it",
   "recommended_swap": "specific healthier alternatives for the weakest items, or empty string if the meal is already great",
-  "health_score": 7
+  "health_score": 7,
+  "next_meal_suggestion": "ONE concrete next-meal idea that helps the user hit their remaining calorie/protein budget for the day — name a specific dish, not a category. Empty string if not relevant (e.g. no budget known, or it is the last meal of the day).",
+  "over_budget_fork": {{
+    "lighter_next_meal": "one short sentence — a specific lighter meal for the rest of today",
+    "workout_tweak": "one short sentence — a specific tomorrow-workout adjustment"
+  }}
 }}
+- next_meal_suggestion: ONLY fill when daily budget context is provided AND there is meaningful budget left; otherwise empty string.
+- over_budget_fork: ONLY fill BOTH options when the prompt explicitly says the day is well over budget; otherwise set both to empty strings.
 
 Rules:
 - health_score is an integer from 1 to 10 (1=very unhealthy for goals, 10=perfect for goals)
@@ -729,6 +791,8 @@ Rules:
                     "ai_suggestion": data.get("ai_suggestion", ""),
                     "recommended_swap": data.get("recommended_swap", ""),
                     "health_score": max(1, min(10, int(data.get("health_score", 5)))),
+                    "next_meal_suggestion": str(data.get("next_meal_suggestion", "") or "").strip(),
+                    "over_budget_fork": self._sanitize_fork(data.get("over_budget_fork")),
                 }
 
             # Fallback: manual markdown strip
@@ -746,6 +810,8 @@ Rules:
                 "ai_suggestion": data.get("ai_suggestion", ""),
                 "recommended_swap": data.get("recommended_swap", ""),
                 "health_score": max(1, min(10, int(data.get("health_score", 5)))),
+                "next_meal_suggestion": str(data.get("next_meal_suggestion", "") or "").strip(),
+                "over_budget_fork": self._sanitize_fork(data.get("over_budget_fork")),
             }
 
         except asyncio.TimeoutError:

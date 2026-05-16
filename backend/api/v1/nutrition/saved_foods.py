@@ -1,8 +1,11 @@
 """Saved foods CRUD endpoints."""
-from core.db import get_supabase_db
+import asyncio
+import uuid
 from datetime import datetime
 from typing import List, Optional
-import uuid
+
+from core.db import get_supabase_db
+from services.food_analysis_cache_service import get_food_analysis_cache_service
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Form, Request
 
@@ -25,6 +28,9 @@ from models.saved_food import (
     SearchSavedFoodsRequest,
     SimilarFoodsResponse,
     FoodSourceType,
+    AiSuggestFoodRequest,
+    AiSuggestFoodResponse,
+    AiSuggestedDuplicate,
 )
 from api.v1.nutrition.models import LogFoodResponse
 
@@ -65,6 +71,8 @@ async def save_food(user_id: str = Form(...), request: SaveFoodFromLogRequest = 
                 "fiber_g": item.fiber_g,
                 "goal_score": item.goal_score,
                 "goal_alignment": item.goal_alignment,
+                "brand": item.brand,
+                "emoji": item.emoji,
             }
             for item in request.food_items
         ] if request.food_items else []
@@ -185,6 +193,8 @@ async def save_food_json(request: SaveFoodFromLogRequest, user_id: str = Query(.
                 "fiber_g": item.fiber_g,
                 "goal_score": item.goal_score,
                 "goal_alignment": item.goal_alignment,
+                "brand": item.brand,
+                "emoji": item.emoji,
             }
             for item in request.food_items
         ] if request.food_items else []
@@ -626,5 +636,315 @@ async def search_saved_foods(
     except Exception as e:
         logger.error(f"Failed to search saved foods: {e}", exc_info=True)
         raise safe_internal_error(e, "nutrition")
+
+
+# ============================================
+# A4 — AI-Assisted Custom Food Creation
+# ============================================
+
+# Deterministic keyword → emoji map. Keeps the AI-suggest path free of an
+# extra Gemini round trip (no duplicate Gemini calls — A4 requirement). The
+# client treats the emoji as a *suggestion* and lets the user change it.
+# Order matters: more specific keywords are checked first.
+_FOOD_EMOJI_KEYWORDS = [
+    (("pizza",), "🍕"),
+    (("burger", "cheeseburger", "hamburger"), "🍔"),
+    (("fries", "french fry"), "🍟"),
+    (("hot dog", "hotdog"), "🌭"),
+    (("taco",), "🌮"),
+    (("burrito", "wrap"), "🌯"),
+    (("sandwich", "sub ", "panini"), "🥪"),
+    (("salad",), "🥗"),
+    (("sushi", "sashimi", "nigiri"), "🍣"),
+    (("ramen", "noodle", "pho", "pasta", "spaghetti", "udon"), "🍜"),
+    (("rice", "biryani", "fried rice"), "🍚"),
+    (("curry",), "🍛"),
+    (("steak", "beef", "brisket"), "🥩"),
+    (("bacon",), "🥓"),
+    (("chicken", "poultry", "wings", "nugget"), "🍗"),
+    (("fish", "salmon", "tuna", "cod", "tilapia"), "🐟"),
+    (("shrimp", "prawn", "lobster", "crab", "shellfish"), "🦐"),
+    (("egg", "omelet", "omelette"), "🥚"),
+    (("cheese",), "🧀"),
+    (("milk", "dairy"), "🥛"),
+    (("yogurt", "yoghurt", "greek yogurt"), "🍶"),
+    (("bread", "toast", "bagel", "baguette"), "🍞"),
+    (("croissant",), "🥐"),
+    (("pancake", "waffle"), "🥞"),
+    (("cereal", "oatmeal", "oats", "porridge", "granola", "muesli"), "🥣"),
+    (("apple",), "🍎"),
+    (("banana",), "🍌"),
+    (("orange", "tangerine", "clementine"), "🍊"),
+    (("grape",), "🍇"),
+    (("strawberry", "berries", "berry"), "🍓"),
+    (("watermelon",), "🍉"),
+    (("avocado",), "🥑"),
+    (("broccoli",), "🥦"),
+    (("carrot",), "🥕"),
+    (("potato", "mashed potato"), "🥔"),
+    (("corn",), "🌽"),
+    (("tomato",), "🍅"),
+    (("mushroom",), "🍄"),
+    (("nut", "almond", "peanut", "cashew", "walnut"), "🥜"),
+    (("chocolate", "brownie"), "🍫"),
+    (("cookie", "biscuit"), "🍪"),
+    (("cake", "cupcake"), "🍰"),
+    (("donut", "doughnut"), "🍩"),
+    (("ice cream", "gelato"), "🍦"),
+    (("candy", "sweet"), "🍬"),
+    (("popcorn",), "🍿"),
+    (("coffee", "espresso", "latte", "cappuccino"), "☕"),
+    (("tea", "matcha"), "🍵"),
+    (("soda", "cola", "soft drink", "pop"), "🥤"),
+    (("juice", "smoothie", "shake"), "🥤"),
+    (("beer",), "🍺"),
+    (("wine",), "🍷"),
+    (("water",), "💧"),
+    (("protein bar", "protein shake", "whey", "supplement"), "💪"),
+    (("soup", "broth", "stew"), "🍲"),
+    (("honey",), "🍯"),
+    (("butter", "oil"), "🧈"),
+    (("pretzel",), "🥨"),
+    (("dumpling", "gyoza", "potsticker"), "🥟"),
+]
+
+
+def _suggest_emoji(name: Optional[str]) -> Optional[str]:
+    """Pick a food emoji from a name; return None when nothing matches confidently."""
+    if not name:
+        return None
+    lowered = name.lower()
+    for keywords, emoji in _FOOD_EMOJI_KEYWORDS:
+        for kw in keywords:
+            if kw in lowered:
+                return emoji
+    return None
+
+
+def _normalize_food_name(name: Optional[str]) -> str:
+    """Lowercase + collapse whitespace for duplicate comparison."""
+    if not name:
+        return ""
+    return " ".join(name.lower().split())
+
+
+async def _find_duplicate_custom_food(
+    db, user_id: str, candidate_name: Optional[str]
+) -> Optional[AiSuggestedDuplicate]:
+    """
+    Detect an existing custom food that closely matches the candidate name
+    (C5: duplicate of an existing custom food → offer "use existing").
+    """
+    norm = _normalize_food_name(candidate_name)
+    if not norm:
+        return None
+    try:
+        result = (
+            db.client.table("saved_foods")
+            .select("id, name, total_calories, total_protein_g, source_type")
+            .eq("user_id", user_id)
+            .is_("deleted_at", "null")
+            .ilike("name", f"%{candidate_name.strip()}%")
+            .limit(10)
+            .execute()
+        )
+        for row in result.data or []:
+            if _normalize_food_name(row.get("name")) == norm:
+                return AiSuggestedDuplicate(
+                    id=row["id"],
+                    name=row["name"],
+                    total_calories=row.get("total_calories"),
+                    total_protein_g=row.get("total_protein_g"),
+                    source_type=FoodSourceType(row.get("source_type", "text")),
+                )
+    except Exception as e:
+        # Duplicate detection is best-effort — never block the suggestion on it.
+        logger.warning(f"Duplicate-food check failed for {user_id}: {e}")
+    return None
+
+
+@router.post("/saved-foods/ai-suggest", response_model=AiSuggestFoodResponse)
+@limiter.limit("15/minute")
+async def ai_suggest_custom_food(
+    request: Request,
+    body: AiSuggestFoodRequest,
+    current_user: dict = Depends(get_current_user),
+):
+    """
+    A4 — Suggest fields for a NEW custom food. Does NOT create or log anything.
+
+    Two paths:
+      - typed `name`        → text food analysis (reuses /analyze-text engine)
+      - `image_base64`      → nutrition-label OCR (reuses analyze_nutrition_label)
+
+    Every returned value is advisory — the client renders them into editable
+    fields. Macros the AI cannot determine are returned as null + flagged in
+    `missing_fields` (never silently guessed). A matching existing custom food
+    is returned in `duplicate` so the client can offer "use existing".
+    """
+    user_id = current_user["id"]
+
+    if not body.name and not body.image_base64:
+        raise HTTPException(
+            status_code=400,
+            detail="Provide either a food name or a nutrition-label photo.",
+        )
+
+    db = get_supabase_db()
+
+    # ---- Path 1: nutrition-label photo ------------------------------------
+    if body.image_base64:
+        try:
+            from services.vision_service import get_vision_service
+            vision_service = get_vision_service()
+            analysis = await asyncio.wait_for(
+                vision_service.analyze_nutrition_label(
+                    image_base64=body.image_base64,
+                    mime_type=body.mime_type or "image/jpeg",
+                    servings_consumed=1.0,
+                ),
+                timeout=60,
+            )
+        except asyncio.TimeoutError:
+            raise HTTPException(status_code=504, detail="Label analysis timed out. Please retry.")
+        except Exception as e:
+            logger.error(f"[ai-suggest] Label OCR failed: {e}", exc_info=True)
+            raise safe_internal_error(e, "nutrition")
+
+        if not analysis or not analysis.get("food_items"):
+            # C5: AI couldn't read it → return a flagged-empty response, don't guess.
+            return AiSuggestFoodResponse(
+                source="nutrition_label",
+                low_confidence=True,
+                missing_fields=["calories", "protein_g", "carbs_g", "fat_g", "fiber_g"],
+                note="Could not read the nutrition label. Enter the values manually or retry with a clearer photo.",
+            )
+
+        product_name = analysis.get("product_name")
+        if product_name in (None, "", "unknown"):
+            product_name = None
+        first_item = (analysis.get("food_items") or [{}])[0]
+
+        # The label OCR returns a product name; a recognizable brand may be
+        # embedded. We only surface a brand if the model explicitly read one —
+        # never invent one (C5).
+        brand = analysis.get("brand")
+        if brand in (None, "", "unknown"):
+            brand = None
+
+        def _num(v):
+            return v if isinstance(v, (int, float)) and v >= 0 else None
+
+        cal = _num(analysis.get("total_calories"))
+        protein = _num(analysis.get("total_protein_g"))
+        carbs = _num(analysis.get("total_carbs_g"))
+        fat = _num(analysis.get("total_fat_g"))
+        fiber = _num(analysis.get("total_fiber_g"))
+
+        missing = [
+            f for f, v in [
+                ("calories", cal), ("protein_g", protein),
+                ("carbs_g", carbs), ("fat_g", fat),
+            ] if v is None
+        ]
+        # health_score_reasons == ["ai_unavailable"] signals a degraded read.
+        degraded = analysis.get("health_score_reasons") == ["ai_unavailable"]
+        low_conf = bool(missing) or degraded
+
+        suggested_name = product_name or first_item.get("name")
+        dup = await _find_duplicate_custom_food(db, user_id, suggested_name)
+
+        return AiSuggestFoodResponse(
+            name=suggested_name,
+            brand=brand,
+            emoji=_suggest_emoji(suggested_name),
+            amount=analysis.get("serving_size") or first_item.get("amount"),
+            calories=int(cal) if cal is not None else None,
+            protein_g=protein,
+            carbs_g=carbs,
+            fat_g=fat,
+            fiber_g=fiber,
+            source="nutrition_label",
+            low_confidence=low_conf,
+            missing_fields=missing,
+            note=(
+                "Some values were unreadable — fill them in before saving."
+                if missing else
+                ("Double-check the values against the label." if degraded else None)
+            ),
+            duplicate=dup,
+        )
+
+    # ---- Path 2: typed name ----------------------------------------------
+    cache_service = get_food_analysis_cache_service()
+    try:
+        analysis = await asyncio.wait_for(
+            cache_service.analyze_food(
+                description=body.name,
+                user_id=user_id,
+                use_cache=True,
+            ),
+            timeout=8.0,
+        )
+    except asyncio.TimeoutError:
+        raise HTTPException(status_code=504, detail="Analysis timed out. Please retry.")
+    except Exception as e:
+        logger.error(f"[ai-suggest] Text analysis failed: {e}", exc_info=True)
+        raise safe_internal_error(e, "nutrition")
+
+    if not analysis or not analysis.get("food_items"):
+        # C5: AI couldn't determine macros → flagged-empty, manual entry.
+        return AiSuggestFoodResponse(
+            name=body.name.strip(),
+            emoji=_suggest_emoji(body.name),
+            source="text",
+            low_confidence=True,
+            missing_fields=["calories", "protein_g", "carbs_g", "fat_g", "fiber_g"],
+            note="Couldn't estimate this food. Enter the macros manually.",
+        )
+
+    first_item = (analysis.get("food_items") or [{}])[0]
+
+    def _num2(v):
+        return v if isinstance(v, (int, float)) and v >= 0 else None
+
+    cal = _num2(analysis.get("total_calories")) or _num2(first_item.get("calories"))
+    protein = _num2(analysis.get("total_protein_g")) or _num2(first_item.get("protein_g"))
+    carbs = _num2(analysis.get("total_carbs_g")) or _num2(first_item.get("carbs_g"))
+    fat = _num2(analysis.get("total_fat_g")) or _num2(first_item.get("fat_g"))
+    fiber = _num2(analysis.get("total_fiber_g")) or _num2(first_item.get("fiber_g"))
+
+    missing = [
+        f for f, v in [
+            ("calories", cal), ("protein_g", protein),
+            ("carbs_g", carbs), ("fat_g", fat),
+        ] if v is None
+    ]
+
+    # A cleaner display name: prefer the AI's parsed item name over raw input.
+    suggested_name = first_item.get("name") or body.name.strip()
+    # Brand is captured only if the AI parsed one — we never invent it.
+    brand = first_item.get("brand") or analysis.get("brand")
+    if brand in (None, "", "unknown"):
+        brand = None
+
+    dup = await _find_duplicate_custom_food(db, user_id, suggested_name)
+
+    return AiSuggestFoodResponse(
+        name=suggested_name,
+        brand=brand,
+        emoji=_suggest_emoji(suggested_name) or _suggest_emoji(body.name),
+        amount=first_item.get("amount"),
+        calories=int(cal) if cal is not None else None,
+        protein_g=protein,
+        carbs_g=carbs,
+        fat_g=fat,
+        fiber_g=fiber,
+        source="text",
+        low_confidence=bool(missing),
+        missing_fields=missing,
+        note=("Some macros couldn't be estimated — fill them in before saving." if missing else None),
+        duplicate=dup,
+    )
 
 

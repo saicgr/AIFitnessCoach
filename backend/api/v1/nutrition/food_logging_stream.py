@@ -32,6 +32,10 @@ from services.food_analysis.mood_inference import (
     build_insert_patch,
     infer_mood_from_nutrition,
 )
+from services.food_logging_rules_service import (
+    fetch_food_logging_rules,
+    build_rules_prompt_block,
+)
 
 from api.v1.nutrition.models import (
     LogTextRequest,
@@ -44,6 +48,34 @@ from api.v1.nutrition.helpers import (
 
 router = APIRouter()
 logger = get_logger(__name__)
+
+
+def _build_remembered_message(food_items: list) -> Optional[str]:
+    """L3 — derive the meal-level "Zealova remembered…" affirmation.
+
+    `apply_user_food_overrides` tags each item it auto-corrected with a
+    `remembered_label`. We collapse those into one short banner string for
+    the result sheet. Returns None when nothing was remembered.
+    """
+    labels = [
+        it.get("remembered_label")
+        for it in (food_items or [])
+        if isinstance(it, dict) and it.get("remembered_label")
+    ]
+    if not labels:
+        return None
+    if len(labels) == 1:
+        return labels[0]
+    # Multiple foods remembered — list the names compactly.
+    names = []
+    for it in food_items:
+        if isinstance(it, dict) and it.get("remembered_label"):
+            n = it.get("name")
+            if n:
+                names.append(str(n))
+    if names:
+        return f"Zealova remembered your numbers for {', '.join(names)}"
+    return f"Zealova remembered {len(labels)} of your foods"
 
 @router.post("/analyze-text-stream")
 @limiter.limit("10/minute")
@@ -245,6 +277,14 @@ async def analyze_food_from_text_streaming(request: Request, body: LogTextReques
                 # Skip cache checks (already done above) — go straight to Gemini
                 # Run analysis as a task and send keep-alive pings to prevent
                 # Render proxy from closing the SSE connection during long AI calls
+                # L3 — fetch the user's standing food-logging rules and build
+                # the prompt block so they're applied to this text analysis.
+                _rules = fetch_food_logging_rules(db, body.user_id)
+                _rules_block = build_rules_prompt_block(
+                    _rules,
+                    has_per_log_instruction=bool((body.description or "").strip()),
+                )
+
                 analysis_task = asyncio.create_task(cache_service.analyze_food(
                     description=body.description,
                     user_goals=user_goals,
@@ -255,6 +295,7 @@ async def analyze_food_from_text_streaming(request: Request, body: LogTextReques
                     mood_before=body.mood_before,
                     meal_type=body.meal_type,
                     personal_history=personal_history or None,
+                    standing_rules_block=_rules_block,
                 ))
 
                 # Send SSE keep-alive comments every 10s while waiting for Gemini
@@ -294,6 +335,18 @@ async def analyze_food_from_text_streaming(request: Request, body: LogTextReques
                 protein_g = _override_totals["protein_g"]
                 carbs_g = _override_totals["carbs_g"]
                 fat_g = _override_totals["fat_g"]
+
+            # L4 — "accuracy you can trust". When the macros came straight from
+            # a verified food-DB row (the 198k-row override / common-foods
+            # tables), tag each item so the result sheet shows a 'verified'
+            # badge instead of treating it as a shaky AI estimate. The model
+            # never sets this — it is a server-side cross-check signal.
+            if food_analysis.get("cache_hit") and food_analysis.get(
+                "cache_source"
+            ) in ("override", "common_foods", "multi_lookup", "user_contributed"):
+                for _it in food_items:
+                    if isinstance(_it, dict):
+                        _it.setdefault("verified_source", "override_db")
 
             overall_meal_score = food_analysis.get('overall_meal_score')
             health_score = food_analysis.get('health_score')
@@ -359,6 +412,11 @@ async def analyze_food_from_text_streaming(request: Request, body: LogTextReques
                 # Inflammation / ultra-processed tracking
                 "inflammation_score": text_inflammation_score,
                 "is_ultra_processed": text_is_ultra_processed,
+                # A3 — short note of what the user's instruction changed.
+                "applied_instruction_note": food_analysis.get('applied_instruction_note'),
+                # L3 — "Zealova remembered your <food>" affirmation when a
+                # learned correction was auto-applied.
+                "remembered_message": _build_remembered_message(food_items),
             }
             yield f"event: done\ndata: {json.dumps(response_data)}\n\n"
 
@@ -395,6 +453,10 @@ async def analyze_food_from_text_streaming(request: Request, body: LogTextReques
                             "health_score": tips.get("health_score") or health_score,
                             "health_score_reasons": tips.get("health_score_reasons")
                             or health_score_reasons,
+                            # L1 — coaching extras: a concrete next-meal idea and
+                            # (when the day is well over budget) a coach fork.
+                            "next_meal_suggestion": tips.get("next_meal_suggestion"),
+                            "over_budget_fork": tips.get("over_budget_fork"),
                         }
                         yield f"event: coach_tips\ndata: {json.dumps(coach_tips_data)}\n\n"
                 except Exception as tip_err:
@@ -495,12 +557,19 @@ async def log_food_from_image_streaming(
 
             gemini_service = GeminiService()
 
+            # L3 — standing food-logging rules for the image-log path.
+            _log_rules = fetch_food_logging_rules(get_supabase_db(), user_id)
+            _log_rules_block = build_rules_prompt_block(
+                _log_rules, has_per_log_instruction=False,
+            )
+
             # Run Gemini analysis and S3 upload concurrently with keep-alive pings
             analysis_task = asyncio.create_task(asyncio.gather(
                 gemini_service.analyze_food_image(
                     image_base64=image_base64,
                     mime_type=content_type,
                     user_id=user_id,
+                    standing_rules_block=_log_rules_block,
                 ),
                 upload_food_image_to_s3(
                     file_bytes=image_bytes,
@@ -554,6 +623,22 @@ async def log_food_from_image_streaming(
                 carbs_g = _override_totals["carbs_g"]
                 fat_g = _override_totals["fat_g"]
 
+            # L4 — global verified cross-check. The text path gets a 'verified'
+            # badge for free via `cache_source`; the image path has no cache
+            # hit, so each AI-estimated item is cross-checked here against the
+            # 198k-row food_nutrition_overrides table by exact normalized name.
+            # On a confident match → verified macros + verified_source.
+            from services.food_override_service import apply_global_verified_crosscheck
+            food_items, _verified_totals, _n_verified = apply_global_verified_crosscheck(
+                food_items,
+            )
+            if _n_verified:
+                logger.info(f"[STREAM image] Verified {_n_verified} item(s) vs global DB for {user_id}")
+                total_calories = _verified_totals["total_calories"]
+                protein_g = _verified_totals["protein_g"]
+                carbs_g = _verified_totals["carbs_g"]
+                fat_g = _verified_totals["fat_g"]
+
             # Extract micronutrients from analysis
             micronutrients = {}
             micronutrient_keys = [
@@ -592,10 +677,15 @@ async def log_food_from_image_streaming(
             health_score_reasons = food_analysis.get('health_score_reasons')
             try:
                 cache_service = get_food_analysis_cache_service()
+                # Pass the user's timezone so the daily budget (and the L1
+                # "remaining" math behind the next-meal suggestion) is scoped
+                # to the user's local day, not UTC.
+                tip_tz = resolve_timezone(request, get_supabase_db(), user_id)
                 tips = await cache_service.enrich_with_tips(
                     food_items=food_items,
                     meal_type=meal_type,
                     user_id=user_id,
+                    timezone_str=tip_tz or "",
                 )
                 if tips:
                     encouragements = tips.get("encouragements", [])
@@ -676,6 +766,8 @@ async def log_food_from_image_streaming(
                 "health_score": health_score,
                 "health_score_reasons": health_score_reasons,
                 "total_time_ms": elapsed_ms(),
+                # L3 — "Zealova remembered your <food>" affirmation.
+                "remembered_message": _build_remembered_message(food_items),
             }
             yield f"event: done\ndata: {json.dumps(response_data)}\n\n"
 
@@ -855,12 +947,21 @@ async def analyze_food_from_image_streaming(
                         f"cuisine={identification.cuisine_tag}, "
                         f"layout={identification.plate_layout}"
                     )
+                    # L3 — standing food-logging rules for the phase-2 image
+                    # path. Threaded through user_context into the Stage-2
+                    # Gemini macro estimation so prep rules (low-oil, skim
+                    # milk, 0-cal sweetener) adjust the estimate.
+                    _img_rules = fetch_food_logging_rules(get_supabase_db(), user_id)
+                    _img_rules_block = build_rules_prompt_block(
+                        _img_rules, has_per_log_instruction=False,
+                    )
                     return await cache_svc.analyze_dishes_from_vision(
                         dishes=identification.dishes,
                         user_context={
                             "user_id": user_id,
                             "meal_type": meal_type,
                             "cuisine_tag": identification.cuisine_tag,
+                            "standing_rules_block": _img_rules_block,
                         },
                     )
 
@@ -870,12 +971,18 @@ async def analyze_food_from_image_streaming(
                 ))
             else:
                 # Legacy heavyweight path — preserved for rollback safety.
+                # L3 — standing food-logging rules on the legacy image path.
+                _legacy_rules = fetch_food_logging_rules(get_supabase_db(), user_id)
+                _legacy_rules_block = build_rules_prompt_block(
+                    _legacy_rules, has_per_log_instruction=False,
+                )
                 analysis_future = asyncio.ensure_future(asyncio.gather(
                     gemini_service.analyze_food_image(
                         image_base64=image_base64,
                         mime_type=content_type,
                         request_id=request_id,
                         user_id=user_id,
+                        standing_rules_block=_legacy_rules_block,
                     ),
                     safe_s3_upload(),
                 ))
@@ -934,6 +1041,23 @@ async def analyze_food_from_image_streaming(
                 protein_g = _override_totals["protein_g"]
                 carbs_g = _override_totals["carbs_g"]
                 fat_g = _override_totals["fat_g"]
+
+            # L4 — global verified cross-check. Match each AI-estimated image
+            # item against the 198k-row food_nutrition_overrides table by exact
+            # normalized name (same lookup the text/cache path uses). On a
+            # confident match → verified macros + verified_source='global_db',
+            # which flows out through the `done` event's `food_items` so the
+            # frontend's verified badge picks it up.
+            from services.food_override_service import apply_global_verified_crosscheck
+            food_items, _verified_totals, _n_verified = apply_global_verified_crosscheck(
+                food_items,
+            )
+            if _n_verified:
+                logger.info(f"[ANALYZE-STREAM:{request_id}] Verified {_n_verified} item(s) vs global DB")
+                total_calories = _verified_totals["total_calories"]
+                protein_g = _verified_totals["protein_g"]
+                carbs_g = _verified_totals["carbs_g"]
+                fat_g = _verified_totals["fat_g"]
 
             # Micronutrients
             sodium_mg = food_analysis.get('sodium_mg')
@@ -1017,6 +1141,8 @@ async def analyze_food_from_image_streaming(
                 # Inflammation / ultra-processed tracking
                 "inflammation_score": analyze_inflammation_score,
                 "is_ultra_processed": analyze_is_ultra_processed,
+                # L3 — "Zealova remembered your <food>" affirmation.
+                "remembered_message": _build_remembered_message(food_items),
             }
             yield f"event: done\ndata: {json.dumps(response_data)}\n\n"
 
@@ -1026,10 +1152,15 @@ async def analyze_food_from_image_streaming(
             # the event just shows no tips — fully graceful.
             try:
                 cache_service = get_food_analysis_cache_service()
+                # Pass the user's timezone so the daily budget (and the L1
+                # "remaining" math behind the next-meal suggestion) is scoped
+                # to the user's local day, not UTC.
+                tip_tz = resolve_timezone(request, get_supabase_db(), user_id)
                 tips = await cache_service.enrich_with_tips(
                     food_items=food_items,
                     meal_type=meal_type,
                     user_id=user_id,
+                    timezone_str=tip_tz or "",
                 )
                 if tips:
                     coach_tips_data = {
@@ -1040,6 +1171,9 @@ async def analyze_food_from_image_streaming(
                         "recommended_swap": tips.get("recommended_swap"),
                         "health_score": tips.get("health_score") or health_score,
                         "health_score_reasons": tips.get("health_score_reasons") or health_score_reasons,
+                        # L1 — coaching extras (see analyze-text-stream above).
+                        "next_meal_suggestion": tips.get("next_meal_suggestion"),
+                        "over_budget_fork": tips.get("over_budget_fork"),
                     }
                     yield f"event: coach_tips\ndata: {json.dumps(coach_tips_data)}\n\n"
             except Exception as tip_err:
@@ -1275,6 +1409,15 @@ async def log_food_from_multi_image_streaming(
             vision = get_vision_service()
 
             db = get_supabase_db()
+
+            # L3 — standing food-logging rules for the multi-image path.
+            # Applied to plate + buffet analyses (the user's own food); the
+            # rules service decides whether the rule block is non-empty.
+            _multi_rules = fetch_food_logging_rules(db, user_id)
+            _multi_rules_block = build_rules_prompt_block(
+                _multi_rules, has_per_log_instruction=bool((user_message or "").strip()),
+            )
+
             user_tz = resolve_timezone(request, db, user_id)
             user = db.get_user(user_id)
             if user:
@@ -1321,6 +1464,7 @@ async def log_food_from_multi_image_streaming(
                                 s3_keys=[s3_key], mime_types=[mime],
                                 user_context=user_message, analysis_mode=actual_mode,
                                 nutrition_context=nutrition_context,
+                                standing_rules_block=_multi_rules_block,
                             ),
                             timeout=60,
                         )
@@ -1371,6 +1515,7 @@ async def log_food_from_multi_image_streaming(
                     s3_keys=storage_keys, mime_types=mime_types,
                     user_context=user_message, analysis_mode=analysis_mode,
                     nutrition_context=nutrition_context,
+                    standing_rules_block=_multi_rules_block,
                 ),
                 timeout=90,
             )
@@ -1429,6 +1574,8 @@ async def log_food_from_multi_image_streaming(
                 glycemic_load = analysis_result.get("glycemic_load")
                 fodmap_rating = analysis_result.get("fodmap_rating")
                 fodmap_reason = analysis_result.get("fodmap_reason")
+                # A3 — short note of what the user's instruction changed.
+                applied_instruction_note = analysis_result.get("applied_instruction_note")
 
                 # Human-consent branch: do NOT persist. Client renders a
                 # review sheet and posts to /food-logs (via logFoodDirect)
@@ -1453,6 +1600,7 @@ async def log_food_from_multi_image_streaming(
                         "health_score_reasons": health_score_reasons,
                         "inflammation_score": inflammation_score,
                         "is_ultra_processed": is_ultra_processed,
+                        "applied_instruction_note": applied_instruction_note,
                         "image_urls": image_urls,
                         "storage_keys": storage_keys,
                         "total_time_ms": elapsed_ms(),

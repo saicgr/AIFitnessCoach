@@ -427,6 +427,10 @@ async def award_goal_xp(
     - workout_complete: 100 XP (once per day)
     - protein_goal: 50 XP (once per day)
     - body_measurements: 20 XP (once per day)
+    - bonus_minigame: 75-150 XP (once per day) — celebration mini-game ("Nutrient
+      Rush") reward. Scaled by the optional `score` the client passes. Capped at
+      once per day via the existing daily-goal dedup so users cannot farm XP by
+      replaying the game.
     """
     try:
         db = get_supabase_db()
@@ -449,6 +453,8 @@ async def award_goal_xp(
             "steps_goal": 100,
             "hydration_goal": 40,
             "calorie_goal": 60,
+            # Celebration mini-game reward. Base value; may be scaled by score below.
+            "bonus_minigame": 75,
         }
 
         if request.goal_type not in goal_xp_amounts:
@@ -456,6 +462,18 @@ async def award_goal_xp(
 
         xp_amount = goal_xp_amounts[request.goal_type]
         source = f"daily_goal_{request.goal_type}"
+
+        # For the celebration mini-game, scale XP by the game score the client
+        # passes. Score 0 -> base 75 XP, higher scores ramp up to a 150 XP cap.
+        # This is a no-op for every other goal type.
+        if request.goal_type == "bonus_minigame":
+            base = 75
+            bonus_cap = 75  # max additional XP on top of the base
+            score = request.score if isinstance(request.score, int) and request.score > 0 else 0
+            # +1 XP per score point, clamped to bonus_cap. Tune divisor here if
+            # the mini-game's typical score range changes.
+            xp_amount = base + min(score, bonus_cap)
+            logger.info(f"[XP] bonus_minigame score={score} -> xp_amount={xp_amount}")
 
         # Ensure user has a user_xp record (critical for award_xp function to work)
         try:
@@ -500,7 +518,11 @@ async def award_goal_xp(
                 "p_xp_amount": xp_amount,
                 "p_source": source,
                 "p_source_id": request.source_id,
-                "p_description": f"Daily goal: {request.goal_type.replace('_', ' ')}",
+                "p_description": (
+                    "Nutrient Rush mini-game reward"
+                    if request.goal_type == "bonus_minigame"
+                    else f"Daily goal: {request.goal_type.replace('_', ' ')}"
+                ),
                 "p_is_verified": False
             }
         ).execute()
@@ -526,7 +548,11 @@ async def award_goal_xp(
         return AwardGoalXPResponse(
             success=True,
             xp_awarded=actual_xp_awarded,
-            message=f"+{actual_xp_awarded} XP for {request.goal_type.replace('_', ' ')}!"
+            message=(
+                f"+{actual_xp_awarded} XP from Nutrient Rush!"
+                if request.goal_type == "bonus_minigame"
+                else f"+{actual_xp_awarded} XP for {request.goal_type.replace('_', ' ')}!"
+            )
         )
 
     except HTTPException:

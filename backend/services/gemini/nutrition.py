@@ -84,6 +84,7 @@ class NutritionMixin:
         mime_type: str = "image/jpeg",
         request_id: str = None,
         user_id: Optional[str] = None,
+        standing_rules_block: str = "",
     ) -> Dict:
         """
         Analyze a food image and extract nutrition information using Gemini Vision.
@@ -175,6 +176,12 @@ ULTRA-PROCESSED (is_ultra_processed): true if food would be NOVA Group 4 — con
 Per-item inflammation_score: Rate EACH food item individually. Meal-level inflammation_score: Calorie-weighted average of all items (round to nearest int).
 
 MICRONUTRIENTS: Estimate all vitamins (A, C, D, E, K, B1, B2, B3, B6, B9, B12), minerals (calcium, iron, magnesium, zinc, selenium, potassium, sodium, phosphorus, copper, manganese), and fatty acids (omega-3, omega-6) for the total meal. Use standard USDA values for the identified foods.'''
+
+        # L3 — inject the user's standing food-logging rules so they apply to
+        # every photo analysis without re-typing. Empty string when the user
+        # has no rules, so a rules-free user keeps the leaner prompt.
+        if standing_rules_block:
+            prompt = prompt + standing_rules_block
 
         # Timeout for image analysis - needs to be generous for complex images
         IMAGE_ANALYSIS_TIMEOUT = 30  # 30 seconds — most images analyze in 2-8s, generous buffer for API spikes
@@ -387,6 +394,7 @@ MICRONUTRIENTS: Estimate all vitamins (A, C, D, E, K, B1, B2, B3, B6, B9, B12), 
         meal_type: Optional[str] = None,
         user_id: Optional[str] = None,
         personal_history: Optional[List[Dict]] = None,
+        standing_rules_block: str = "",
     ) -> Optional[Dict]:
         """
         Parse a text description of food and extract nutrition information with goal-based rankings.
@@ -422,6 +430,10 @@ MICRONUTRIENTS: Estimate all vitamins (A, C, D, E, K, B1, B2, B3, B6, B9, B12), 
                 nutrition_targets,
                 user_id or "anon",
                 personal_history_key,
+                # L3 — a change to the user's standing rules must invalidate
+                # the food-text cache, otherwise a stale (rule-free) result
+                # would be served after the user adds/edits a rule.
+                standing_rules_block or "",
             )
             # Skip cache entirely when there's personal history — the note is
             # user-specific AND mood_before-specific, and we'd rather re-run than
@@ -550,7 +562,8 @@ Per-item inflammation_score: Rate EACH food item individually. Meal-level inflam
   "warnings": ["Any concerns - skip if none"],
   "ai_suggestion": "Next time: specific actionable tip",
   "recommended_swap": "Healthier alternative if applicable",
-  "personal_history_note": "Short friendly callout when user has prior history with this food — else null"
+  "personal_history_note": "Short friendly callout when user has prior history with this food — else null",
+  "applied_instruction_note": "Short past-tense note of what a user CORRECTION/INSTRUCTION changed (e.g. 'Halved the portion; removed the bread.') — null if the input was a plain food description with no correction"
 }}'''
         else:
             response_format = '''{{
@@ -578,7 +591,8 @@ Per-item inflammation_score: Rate EACH food item individually. Meal-level inflam
   "warnings": ["Any concerns - skip if none"],
   "ai_suggestion": "Next time: specific actionable tip",
   "recommended_swap": "Healthier alternative if applicable",
-  "personal_history_note": "Short friendly callout when user has prior history with this food — else null"
+  "personal_history_note": "Short friendly callout when user has prior history with this food — else null",
+  "applied_instruction_note": "Short past-tense note of what a user CORRECTION/INSTRUCTION changed (e.g. 'Halved the portion; removed the bread.') — null if the input was a plain food description with no correction"
 }}'''
 
         # Build actionable tip guidance based on user goals
@@ -606,7 +620,7 @@ SCORE-BASED TIP TONE:
         prompt = f'''Parse food and return nutrition JSON. Be fast and accurate.
 
 Food: "{description}"
-{user_context}{rag_section}{personal_history_section}{scoring_criteria if user_goals else ""}{tip_guidance}
+{user_context}{rag_section}{standing_rules_block}{personal_history_section}{scoring_criteria if user_goals else ""}{tip_guidance}
 
 Return ONLY JSON (no markdown):
 {response_format}
@@ -616,6 +630,23 @@ FOOD NAMING RULES (CRITICAL — lookup accuracy depends on this):
 - NEVER canonicalize to a shorter or more generic name. The DB has distinct rows
   for specific variants with very different macros — stripping a qualifier yields
   the wrong row.
+
+INSTRUCTION FOLLOWING (when the input contains a correction or instruction):
+- The input may be a plain food description OR carry an explicit instruction/correction
+  ("ate half", "exclude the bread", "no oil", "this is actually pizza", "the plate is ~10in").
+- HONOR explicit portion overrides — "ate half" halves calories/macros/weight_g of the affected
+  items; a stated weight or fraction wins over any default.
+- EXCLUDE named foods — if told to remove/skip/exclude a food, drop that item entirely from
+  food_items and every total; do not just zero it.
+- APPLY stated logic — "no oil", "grilled not fried", "skim milk" change the macros accordingly.
+- CONTRADICTION — if the instruction names a different food than first described, trust the
+  instruction and re-analyze from it.
+- IMPLAUSIBLE claims ("5000 cal of lettuce") — keep a realistic estimate, note you did not apply it.
+- A nonsense / off-topic / abusive instruction, or one that is actually a question — ignore it
+  for the numbers and leave applied_instruction_note null.
+- CONFLICTS ("no oil" + "deep fried") — follow the most specific / last one, note the conflict.
+- ALWAYS set `applied_instruction_note` to a short past-tense summary of what an instruction
+  changed; leave it null when the input was a plain description with no correction.
 
 ITEM NAME LANGUAGE (CRITICAL):
 - The "name" field MUST be in the SAME LANGUAGE the user wrote. If the user wrote English, keep English.

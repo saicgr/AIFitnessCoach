@@ -5,7 +5,7 @@ from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 
-from core.auth import get_current_user
+from core.auth import get_current_user, verify_user_ownership
 from core.exceptions import safe_internal_error
 from core.timezone_utils import resolve_timezone, local_date_to_utc_range, user_today_date
 from core.logger import get_logger
@@ -295,3 +295,158 @@ async def get_dynamic_nutrition_targets(
         logger.error(f"Failed to get dynamic nutrition targets: {e}", exc_info=True)
         raise safe_internal_error(e, "nutrition")
 
+
+
+# ─── L3 "It remembers you" — standing food-logging rules ──────────────────────
+# A user can define standing rules ("no bun", "0-cal sweetener", "we cook
+# low-oil South Indian", "skim milk not whole"). They are stored as a JSONB
+# array on nutrition_preferences.food_logging_rules and auto-injected into
+# every food photo + text analysis (see services/food_logging_rules_service.py).
+
+import uuid as _uuid
+from pydantic import BaseModel as _BaseModel, Field as _Field
+from services.food_logging_rules_service import (
+    fetch_food_logging_rules,
+    detect_rule_conflicts,
+    MAX_RULES,
+)
+
+
+class FoodLoggingRuleCreate(_BaseModel):
+    """Payload to add a new standing rule."""
+    text: str = _Field(..., min_length=1, max_length=200)
+
+
+class FoodLoggingRuleUpdate(_BaseModel):
+    """Payload to edit a rule. Either field may be supplied."""
+    text: Optional[str] = _Field(None, min_length=1, max_length=200)
+    enabled: Optional[bool] = None
+
+
+def _persist_rules(db, user_id: str, rules: List[dict]) -> None:
+    """Write the full rules array back to nutrition_preferences (upsert)."""
+    payload = {
+        "food_logging_rules": rules,
+        "updated_at": datetime.utcnow().isoformat(),
+    }
+    existing = (
+        db.client.table("nutrition_preferences")
+        .select("id")
+        .eq("user_id", user_id)
+        .maybe_single()
+        .execute()
+    )
+    if existing and existing.data:
+        db.client.table("nutrition_preferences").update(payload).eq("user_id", user_id).execute()
+    else:
+        payload["user_id"] = user_id
+        db.client.table("nutrition_preferences").insert(payload).execute()
+
+
+def _rules_response(rules: List[dict]) -> dict:
+    """Shape the standard response: rules + any detected conflicts (C9)."""
+    return {
+        "rules": rules,
+        "conflicts": detect_rule_conflicts(rules),
+        "max_rules": MAX_RULES,
+    }
+
+
+@router.get("/preferences/{user_id}/food-logging-rules")
+async def list_food_logging_rules(user_id: str, current_user: dict = Depends(get_current_user)):
+    """List the user's standing food-logging rules + any conflicting pairs."""
+    verify_user_ownership(current_user, user_id)
+    try:
+        db = get_supabase_db()
+        rules = fetch_food_logging_rules(db, user_id)
+        return _rules_response(rules)
+    except Exception as e:
+        logger.error(f"Failed to list food-logging rules: {e}", exc_info=True)
+        raise safe_internal_error(e, "nutrition")
+
+
+@router.post("/preferences/{user_id}/food-logging-rules")
+async def add_food_logging_rule(
+    user_id: str,
+    body: FoodLoggingRuleCreate,
+    current_user: dict = Depends(get_current_user),
+):
+    """Add a new standing rule. Rejects when the per-user cap is reached."""
+    verify_user_ownership(current_user, user_id)
+    try:
+        db = get_supabase_db()
+        rules = fetch_food_logging_rules(db, user_id)
+        if len(rules) >= MAX_RULES:
+            raise HTTPException(
+                status_code=400,
+                detail=f"You can have at most {MAX_RULES} standing rules. Delete one to add another.",
+            )
+        new_rule = {
+            "id": str(_uuid.uuid4()),
+            "text": body.text.strip()[:200],
+            "created_at": datetime.utcnow().isoformat(),
+            "enabled": True,
+        }
+        rules.append(new_rule)
+        _persist_rules(db, user_id, rules)
+        return _rules_response(rules)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to add food-logging rule: {e}", exc_info=True)
+        raise safe_internal_error(e, "nutrition")
+
+
+@router.patch("/preferences/{user_id}/food-logging-rules/{rule_id}")
+async def update_food_logging_rule(
+    user_id: str,
+    rule_id: str,
+    body: FoodLoggingRuleUpdate,
+    current_user: dict = Depends(get_current_user),
+):
+    """Edit a rule's text or toggle it enabled/disabled (C9 — stale-rule review)."""
+    verify_user_ownership(current_user, user_id)
+    try:
+        db = get_supabase_db()
+        rules = fetch_food_logging_rules(db, user_id)
+        found = False
+        for r in rules:
+            if r.get("id") == rule_id:
+                if body.text is not None:
+                    r["text"] = body.text.strip()[:200]
+                if body.enabled is not None:
+                    r["enabled"] = body.enabled
+                found = True
+                break
+        if not found:
+            raise HTTPException(status_code=404, detail="Rule not found.")
+        _persist_rules(db, user_id, rules)
+        return _rules_response(rules)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to update food-logging rule: {e}", exc_info=True)
+        raise safe_internal_error(e, "nutrition")
+
+
+@router.delete("/preferences/{user_id}/food-logging-rules/{rule_id}")
+async def delete_food_logging_rule(
+    user_id: str,
+    rule_id: str,
+    current_user: dict = Depends(get_current_user),
+):
+    """Delete a standing rule."""
+    verify_user_ownership(current_user, user_id)
+    try:
+        db = get_supabase_db()
+        rules = fetch_food_logging_rules(db, user_id)
+        remaining = [r for r in rules if r.get("id") != rule_id]
+        if len(remaining) == len(rules):
+            raise HTTPException(status_code=404, detail="Rule not found.")
+        _persist_rules(db, user_id, remaining)
+        return _rules_response(remaining)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to delete food-logging rule: {e}", exc_info=True)
+        raise safe_internal_error(e, "nutrition")

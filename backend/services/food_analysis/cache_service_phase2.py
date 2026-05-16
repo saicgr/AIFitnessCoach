@@ -639,6 +639,10 @@ class FoodAnalysisCacheServicePhase2:
                         self.gemini_service.parse_food_description(
                             description=description,
                             user_id=user_context.get("user_id"),
+                            # L3 — standing food-logging rules carried in the
+                            # user_context dict by the caller. Empty string when
+                            # the user has none.
+                            standing_rules_block=user_context.get("standing_rules_block", ""),
                         ),
                         timeout=15.0,
                     )

@@ -356,7 +356,24 @@ class FoodItemSchema(BaseModel):
     )
     confidence: Optional[Literal["high", "medium", "low"]] = Field(
         default=None,
-        description="Set to 'low' by L3 tripwire when the item fails a sanity check.",
+        description=(
+            "Your honest confidence in THIS item's identification and portion. "
+            "'high' = clearly identifiable, portion obvious; 'medium' = identity "
+            "clear but portion estimated; 'low' = identity ambiguous, hidden "
+            "contents, blurry, or a regional dish you are unsure of. Be honest — "
+            "a 'low' here surfaces a 1-tap confirm to the user. L3 tripwire may "
+            "also downgrade this to 'low' on a sanity-check failure."
+        ),
+    )
+    estimate_reasoning: Optional[str] = Field(
+        default=None,
+        description=(
+            "ONE short grounded phrase (<=80 chars) explaining HOW the portion "
+            "was estimated, citing a visible cue — e.g. '~220g; plate reads "
+            "~10in', 'standard 1-cup serving', 'label states 2 servings'. MUST "
+            "be grounded in an actual visible/stated signal — never invent "
+            "details. Omit (null) when there is no real basis for an estimate."
+        ),
     )
     requires_user_confirmation: Optional[bool] = Field(
         default=False,
@@ -365,6 +382,14 @@ class FoodItemSchema(BaseModel):
     sanity_clamped: Optional[bool] = Field(
         default=False,
         description="Set True by L2/L3 when the values were modified from the model's raw output.",
+    )
+    verified_source: Optional[str] = Field(
+        default=None,
+        description=(
+            "Set by the server (NOT the model) to 'override_db' when this item's "
+            "AI estimate was cross-checked against and replaced by a verified "
+            "food_nutrition_overrides row. Surfaces a 'verified' badge in the UI."
+        ),
     )
     goal_score: Optional[int] = Field(default=None, description="Score 1-10 based on user goals")
     inflammation_score: Optional[int] = Field(default=None, description="Inflammation score 1-10, 10 = most inflammatory")
@@ -443,6 +468,10 @@ class FoodAnalysisResponse(BaseModel):
     health_score_reasons: Optional[List[str]] = Field(
         default=None,
         description="Why this meal earned its health_score. Use these tags: high_protein, high_fiber, anti_inflammatory, low_added_sugar, balanced_macros (positives) | ultra_processed, deep_fried, refined_flour, added_sugar, high_sodium, high_glycemic, low_fiber, processed_meat, trans_fat (negatives). 1-5 tags.",
+    )
+    applied_instruction_note: Optional[str] = Field(
+        default=None,
+        description="Short plain-language note (<=140 chars) of WHAT changed in this analysis BECAUSE OF the user's instruction — e.g. 'Halved every portion; removed the bread.' Set ONLY when the user supplied an instruction AND it altered the result. Null if the user gave no instruction or it had no effect.",
     )
 
 

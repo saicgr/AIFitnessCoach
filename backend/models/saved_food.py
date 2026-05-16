@@ -66,6 +66,11 @@ class SavedFoodItem(BaseModel):
     # Count-based scaling fields (for countable items like tater tots, cookies)
     count: Optional[int] = Field(default=None, ge=0, le=1000)
     weight_per_unit_g: Optional[float] = Field(default=None, ge=0, le=1000)
+    # A4 custom-food fields — stored in the food_items JSON so no schema
+    # migration is needed. `brand` is captured only when known (never invented);
+    # `emoji` is the chosen display icon.
+    brand: Optional[str] = Field(default=None, max_length=120)
+    emoji: Optional[str] = Field(default=None, max_length=16)
 
 
 # ============================================================
@@ -200,3 +205,60 @@ class SimilarFoodsResponse(BaseModel):
     """Response for similar foods search via ChromaDB."""
     similar_foods: List[SavedFoodSummary]
     query: str
+
+
+# ============================================================
+# A4 — AI-ASSISTED CUSTOM FOOD CREATION
+# ============================================================
+
+class AiSuggestFoodRequest(BaseModel):
+    """
+    Request to AI-suggest fields for a new custom food.
+
+    Provide EITHER `name` (text path → text food analysis) OR
+    `image_base64` (label photo path → reuse nutrition-label OCR).
+    """
+    name: Optional[str] = Field(default=None, max_length=255,
+                                description="Typed food name for text-based suggestion")
+    image_base64: Optional[str] = Field(default=None,
+                                        description="Base64 nutrition-label photo for OCR-based suggestion")
+    mime_type: Optional[str] = Field(default="image/jpeg", max_length=50)
+
+
+class AiSuggestedDuplicate(BaseModel):
+    """An existing custom food that closely matches the suggestion."""
+    id: str
+    name: str
+    total_calories: Optional[int] = None
+    total_protein_g: Optional[float] = None
+    source_type: FoodSourceType = FoodSourceType.TEXT
+
+
+class AiSuggestFoodResponse(BaseModel):
+    """
+    AI suggestions for a custom food. EVERY field is advisory — the client
+    renders all of these into editable inputs (C5: all editable before save).
+    """
+    # Suggested display name + branding
+    name: Optional[str] = None
+    brand: Optional[str] = None          # captured only if the AI actually read a brand — never invented
+    emoji: Optional[str] = None          # deterministic keyword→emoji; null if no confident match
+
+    # Suggested macros (per the amount/serving below). Any field may be null
+    # when the AI could not determine it — the client leaves it blank/flagged,
+    # it is NEVER silently guessed.
+    amount: Optional[str] = None         # e.g. "1 serving", "100g"
+    calories: Optional[int] = None
+    protein_g: Optional[float] = None
+    carbs_g: Optional[float] = None
+    fat_g: Optional[float] = None
+    fiber_g: Optional[float] = None
+
+    # Trust signals (C5: AI can't determine confidently → flag, don't guess)
+    source: str = "text"                 # "text" | "nutrition_label"
+    low_confidence: bool = False         # true → client shows a "double-check" hint
+    missing_fields: List[str] = Field(default_factory=list)  # macro fields the AI could not read
+    note: Optional[str] = None           # human-readable explanation of any caveat
+
+    # Duplicate detection (C5)
+    duplicate: Optional[AiSuggestedDuplicate] = None

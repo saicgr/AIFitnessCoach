@@ -39,6 +39,9 @@ class MenuAnalysisCreate(BaseModel):
     """Request body for saving a menu analysis as a reusable artifact."""
     title: Optional[str] = None
     restaurant_name: Optional[str] = None
+    # Optional free-text restaurant address — any country, any format.
+    # Never geocoded, never required (C11: both name + address optional).
+    address: Optional[str] = None
     analysis_type: str = Field(..., pattern=r"^(plate|menu|buffet)$")
     sections: List[Dict[str, Any]] = Field(default_factory=list)
     food_items: List[Dict[str, Any]] = Field(default_factory=list)
@@ -49,6 +52,8 @@ class MenuAnalysisCreate(BaseModel):
 class MenuAnalysisUpdate(BaseModel):
     title: Optional[str] = None
     restaurant_name: Optional[str] = None
+    # Editable later from the Saved Menus card (C11: address editable later).
+    address: Optional[str] = None
     is_pinned: Optional[bool] = None
 
 
@@ -56,6 +61,7 @@ class MenuAnalysisOut(BaseModel):
     id: str
     title: Optional[str]
     restaurant_name: Optional[str]
+    address: Optional[str]
     analysis_type: str
     sections: List[Dict[str, Any]]
     food_items: List[Dict[str, Any]]
@@ -98,6 +104,7 @@ def _row_to_out(row: Dict[str, Any]) -> MenuAnalysisOut:
         id=row["id"],
         title=row.get("title"),
         restaurant_name=row.get("restaurant_name"),
+        address=row.get("address"),
         analysis_type=row["analysis_type"],
         sections=row.get("sections") or [],
         food_items=row.get("food_items") or [],
@@ -195,6 +202,57 @@ async def get_menu_analysis(
     return _row_to_out(rows[0])
 
 
+class DuplicateMenuMatch(BaseModel):
+    """A near-duplicate saved menu surfaced to the client so it can offer
+    'update the existing entry?' instead of silently inserting a twin."""
+    id: str
+    title: Optional[str]
+    restaurant_name: Optional[str]
+    address: Optional[str]
+
+
+@router.get("/menu-analyses-duplicate-check", response_model=Optional[DuplicateMenuMatch])
+async def check_menu_duplicate(
+    current_user: dict = Depends(get_current_user),
+    restaurant_name: Optional[str] = Query(default=None),
+    address: Optional[str] = Query(default=None),
+):
+    """C11: 'Same restaurant menu saved twice' — return the most recent
+    existing menu whose restaurant name + address normalize to the same
+    value, so the client can offer to UPDATE it rather than duplicate it.
+    Returns null when there's no usable name (nothing to match on) or no
+    match. Address is compared loosely (case/whitespace-insensitive)."""
+    user_id = current_user["id"]
+    name_norm = _normalize_dish_name(restaurant_name or "")
+    if not name_norm:
+        # Nothing to dedupe against — a name-less menu is never a "duplicate".
+        return None
+    addr_norm = (address or "").strip().lower()
+
+    db = get_supabase_db()
+    resp = (
+        db.client.table("menu_analyses")
+        .select("id, title, restaurant_name, address, created_at")
+        .eq("user_id", user_id)
+        .is_("deleted_at", "null")
+        .order("created_at", desc=True)
+        .limit(200)
+        .execute()
+    )
+    for row in (resp.data or []):
+        if _normalize_dish_name(row.get("restaurant_name") or "") != name_norm:
+            continue
+        if (row.get("address") or "").strip().lower() != addr_norm:
+            continue
+        return DuplicateMenuMatch(
+            id=row["id"],
+            title=row.get("title"),
+            restaurant_name=row.get("restaurant_name"),
+            address=row.get("address"),
+        )
+    return None
+
+
 @router.post("/menu-analyses", response_model=MenuAnalysisOut)
 async def create_menu_analysis(
     payload: MenuAnalysisCreate,
@@ -205,7 +263,7 @@ async def create_menu_analysis(
     explicitly (bookmark button) or automatically at the end of the
     SSE pipeline. Idempotent-ish — callers may submit the same menu
     twice; we store duplicates and let the user dedupe via the
-    history UI."""
+    history UI (or pre-empt it with /menu-analyses-duplicate-check)."""
     user_id = current_user["id"]
     db = get_supabase_db()
 
@@ -214,6 +272,7 @@ async def create_menu_analysis(
         "user_id": user_id,
         "title": payload.title,
         "restaurant_name": payload.restaurant_name,
+        "address": payload.address,
         "analysis_type": payload.analysis_type,
         "sections": payload.sections,
         "food_items": payload.food_items,
@@ -252,6 +311,8 @@ async def update_menu_analysis(
         updates["title"] = payload.title
     if payload.restaurant_name is not None:
         updates["restaurant_name"] = payload.restaurant_name
+    if payload.address is not None:
+        updates["address"] = payload.address
     if payload.is_pinned is not None:
         updates["is_pinned"] = payload.is_pinned
 

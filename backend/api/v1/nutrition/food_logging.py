@@ -181,12 +181,23 @@ async def log_food_from_image(
         logger.info(f"Analyzing image + uploading to S3: size={len(image_bytes)} bytes, mime_type={content_type}")
         gemini_service = GeminiService()
 
+        # L3 — standing food-logging rules for the non-streaming image path.
+        from services.food_logging_rules_service import (
+            fetch_food_logging_rules,
+            build_rules_prompt_block,
+        )
+        _fl_rules = fetch_food_logging_rules(get_supabase_db(), user_id)
+        _fl_rules_block = build_rules_prompt_block(
+            _fl_rules, has_per_log_instruction=False,
+        )
+
         # Both tasks run concurrently - total time = max(gemini_time, s3_time)
         food_analysis, (image_url, storage_key) = await asyncio.gather(
             gemini_service.analyze_food_image(
                 image_base64=image_base64,
                 mime_type=content_type,
                 user_id=user_id,
+                standing_rules_block=_fl_rules_block,
             ),
             upload_food_image_to_s3(
                 file_bytes=image_bytes,

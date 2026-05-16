@@ -149,6 +149,9 @@ class BonusTemplate(NullTolerantResponse):
 class AwardGoalXPRequest(BaseModel):
     goal_type: str
     source_id: Optional[str] = None
+    # Optional gameplay score (used by goal_type="bonus_minigame" to scale the
+    # XP reward). Ignored for all other goal types.
+    score: Optional[int] = None
 
 
 class AwardGoalXPResponse(NullTolerantResponse):

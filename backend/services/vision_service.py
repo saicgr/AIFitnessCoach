@@ -663,7 +663,9 @@ Return ONLY valid JSON with this exact structure:
             "fat_g": <float>,
             "weight_g": <float - estimated weight in grams>,
             "count": <integer or null - number of countable items like eggs, cookies>,
-            "weight_per_unit_g": <float or null - weight of one piece for countable items>
+            "weight_per_unit_g": <float or null - weight of one piece for countable items>,
+            "confidence": "high" | "medium" | "low",
+            "estimate_reasoning": "<short grounded phrase, <=80 chars, or null>"
         }}
     ],
     "total_calories": <integer>,
@@ -681,7 +683,14 @@ Guidelines:
 - Health score: 1-3 (poor), 4-6 (average), 7-8 (good), 9-10 (excellent)
 - Feedback should be constructive and encouraging, mentioning positives first
 - Include fiber estimate if vegetables/whole grains are present
-- Estimate all micronutrients (vitamins, minerals, fatty acids) based on the identified foods"""
+- Estimate all micronutrients (vitamins, minerals, fatty acids) based on the identified foods
+- confidence: be HONEST per item. 'high' = clearly identifiable + obvious
+  portion; 'medium' = identity clear, portion estimated; 'low' = ambiguous
+  identity, hidden contents (smoothie/soup/wrap), blurry, or an unfamiliar
+  regional dish. A 'low' surfaces a 1-tap user confirm — do not over-claim.
+- estimate_reasoning: ONE short phrase citing a REAL visible cue for the
+  portion ('~220g; plate reads ~10in', 'standard 1-cup serving'). Must be
+  grounded — never invent details. Set null when there is no real basis."""
 
         try:
             logger.info(f"🍽️ Analyzing food image with Gemini (cache={'yes' if cache_name else 'no'})")
@@ -1020,6 +1029,7 @@ Guidelines:
         user_context: Optional[str] = None,
         analysis_mode: str = "auto",
         nutrition_context: Optional[dict] = None,
+        standing_rules_block: str = "",
     ) -> dict:
         """
         Analyze multiple food images from S3 for nutrition estimation.
@@ -1067,6 +1077,51 @@ Guidelines:
             user_ctx_str = f'\nUser says: "{user_context}"' if user_context else ""
             suggested_meal = self._get_suggested_meal_type()
 
+            # A3 — instruction-following contract. Only injected when the user
+            # actually typed an instruction, so a no-instruction scan keeps the
+            # leaner prompt. Hardened so the model honors explicit overrides,
+            # exclusions and stated logic, and reports back WHAT it changed.
+            instruction_block = ""
+            if user_context and user_context.strip():
+                instruction_block = (
+                    "\n\nUSER INSTRUCTION (HIGH PRIORITY — read carefully):\n"
+                    f'The user wrote: "{user_context.strip()}"\n'
+                    "Treat this instruction as authoritative over what the photo alone suggests:\n"
+                    "1. PORTION OVERRIDE — if the user states an amount or fraction "
+                    "(\"I ate half\", \"only a quarter\", \"~10in plate\", \"300g\"), scale the "
+                    "affected items to match. \"I ate half\" -> halve calories, macros and weight_g of "
+                    "every plated item unless the user scopes it to one food.\n"
+                    "2. EXCLUDE NAMED FOODS — if the user says to exclude/remove/skip a food "
+                    "(\"exclude the bread\", \"no rice\", \"didn't eat the fries\"), DROP that item "
+                    "entirely from food_items and from every total. Do not just zero it out.\n"
+                    "3. APPLY STATED LOGIC — honor preparation/ingredient claims (\"no oil\", "
+                    "\"grilled not fried\", \"skim milk\", \"add 2 tbsp peanut butter\") and recompute "
+                    "macros accordingly.\n"
+                    "4. CONTRADICTION — if the instruction names a food the photo clearly does NOT "
+                    "show, trust the instruction and re-analyze from the text; if it names a food "
+                    "you cannot find to exclude/modify, apply what you can and say so in the note.\n"
+                    "5. IMPLAUSIBLE CLAIMS — if the instruction is physically implausible "
+                    "(\"5000 cal of lettuce\"), keep a realistic estimate and note that you did not "
+                    "apply the implausible figure.\n"
+                    "6. NONSENSE / QUESTIONS — if the instruction is off-topic, abusive, or actually "
+                    "a question, ignore it for the numbers and analyze the photo normally; leave "
+                    "applied_instruction_note null.\n"
+                    "7. CONFLICTS — if two instructions conflict (\"no oil\" + \"deep fried\"), follow "
+                    "the most specific / last one and note the conflict.\n"
+                    "8. REPORT BACK — set `applied_instruction_note` to a short past-tense summary of "
+                    "exactly what the instruction changed (e.g. 'Halved all portions; removed the "
+                    "bread.'). If the instruction changed nothing, leave it null.\n"
+                )
+
+            # L3 — standing food-logging rules. Built by the caller via
+            # food_logging_rules_service.build_rules_prompt_block(); empty when
+            # the user has no rules. Appended to instruction_block so all three
+            # prompt branches (plate/buffet/menu) carry it. The rules service
+            # already encoded the per-log-instruction override wording, so a
+            # per-log instruction wins over a conflicting standing rule (C9).
+            if standing_rules_block:
+                instruction_block = instruction_block + standing_rules_block
+
             if analysis_mode == "buffet":
                 prompt = f"""Analyze this buffet/food spread. Identify EVERY distinct dish visible — do not skip any.
 
@@ -1087,7 +1142,7 @@ REQUIRED per dish (NEVER omit any field below):
 - added_sugar_g (grams of added sugar per serving; excludes naturally-occurring whole-fruit/whole-dairy sugar). Use 0.0 when none. NEVER null.
 - is_ultra_processed (bool; NOVA Group 4 → true). NEVER null.
 - coach_tip (≤ 18 words: pick or skip, tailored to the user's nutrition context).
-{nutrition_ctx_str}{user_ctx_str}
+{nutrition_ctx_str}{user_ctx_str}{instruction_block}
 
 Return ONLY this JSON, no other keys:
 {{
@@ -1188,9 +1243,12 @@ Return ONLY this JSON, no other keys:
 Identify EVERY distinct food/drink item across all images. Each visually distinct dish, side, sauce, garnish, or beverage is its own food_item — do NOT collapse multiple foods into one entry. If two images show different dishes, return separate items for each.
 
 Current time suggests this is likely {suggested_meal}.
-{nutrition_ctx_str}{user_ctx_str}
+{nutrition_ctx_str}{user_ctx_str}{instruction_block}
 
 Use the plate analysis JSON schema from your cached reference.
+When the user supplied an instruction above, also return a top-level
+`applied_instruction_note` string summarizing what the instruction changed
+(or null if it changed nothing).
 
 REQUIRED per food_item (NEVER omit):
 - name, amount, calories, protein_g, carbs_g, fat_g, fiber_g, weight_g
@@ -1211,7 +1269,7 @@ Return valid JSON."""
 Identify EVERY distinct food/drink item across all images. Each visually distinct dish, side, sauce, garnish, or beverage gets its own food_item entry — do NOT merge multiple foods into one. If two images show different dishes, return separate items for each.
 
 Current time suggests this is likely {suggested_meal}.
-{nutrition_ctx_str}{user_ctx_str}
+{nutrition_ctx_str}{user_ctx_str}{instruction_block}
 
 Return ONLY valid JSON with this exact structure:
 {{
@@ -1251,7 +1309,8 @@ Return ONLY valid JSON with this exact structure:
     "fodmap_rating": "low",
     "fodmap_reason": null,
     "added_sugar_g": 0.0,
-    "feedback": "Brief coaching feedback"
+    "feedback": "Brief coaching feedback",
+    "applied_instruction_note": null
 }}
 
 Guidelines:
@@ -1437,13 +1496,23 @@ Analyze this screenshot from a nutrition/fitness tracking app.
 
 TASKS:
 1. Identify the source app (MyFitnessPal, Cronometer, LoseIt, Samsung Health, etc.)
-2. Extract ALL food entries visible with their calories and macros
+2. Extract ALL food entries visible with their calories and macros — log EVERY
+   food row, never silently collapse a multi-food screenshot into one item.
 3. Determine the meal type from context or time-based suggestion: {suggested_meal}
+4. CONTENT CHECK: if this screenshot is actually a RECIPE (ingredient list +
+   cooking steps) or a generic web page / chat — NOT a nutrition-tracking panel
+   — set "content_kind" to "recipe" or "not_nutrition" and leave food_items empty.
+5. If calorie/macro values are cut off, glared, or unreadable, list those field
+   names in "unreadable_fields" and keep your best estimate (do not invent
+   precise numbers for a field you cannot see).
+6. Detect units: if the screenshot shows energy in kilojoules (kJ), convert to
+   kcal (1 kcal = 4.184 kJ) and note "kj_converted" in "unit_notes".
 
 {f'User says: "{user_context}"' if user_context else ''}
 
 Return ONLY valid JSON with this exact structure:
 {{
+    "content_kind": "nutrition_panel" | "recipe" | "not_nutrition",
     "source_app": "app name or unknown",
     "meal_type": "breakfast" | "lunch" | "dinner" | "snack",
     "food_items": [
@@ -1461,6 +1530,9 @@ Return ONLY valid JSON with this exact structure:
     "total_carbs_g": <float>,
     "total_fat_g": <float>,
     "total_fiber_g": <float>,
+    "unreadable_fields": ["names of fields that were glared/cut-off, empty if clean"],
+    "unit_notes": ["e.g. kj_converted, per_100g_normalized — empty if none"],
+    "low_confidence": <true if the screenshot layout is unknown or values are shaky>,
     "health_score": <integer 1-10>,
     "health_score_reasons": ["1-5 tags from: high_protein, high_fiber, anti_inflammatory, low_added_sugar, balanced_macros (positives) | ultra_processed, deep_fried, refined_flour, added_sugar, high_sodium, high_glycemic, low_fiber, processed_meat, trans_fat (negatives)"],
     "feedback": "Brief coaching feedback about the logged meals (2-3 sentences)"
@@ -1507,6 +1579,10 @@ Guidelines:
                     result[field] = self._get_default_value(field)
 
             result.setdefault("source_app", "unknown")
+            result.setdefault("content_kind", "nutrition_panel")
+            result.setdefault("unreadable_fields", [])
+            result.setdefault("unit_notes", [])
+            result.setdefault("low_confidence", False)
             result.setdefault("total_fiber_g", 0.0)
             result.setdefault("health_score", 5)
             # Health-score reasons must always be present so the ScoreExplainSheet
@@ -1557,18 +1633,32 @@ Guidelines:
 Analyze this nutrition facts label from food packaging.
 
 TASKS:
-1. Read the product name if visible
+1. Read the product name and brand if visible
 2. Extract serving size and servings per container
-3. Extract ALL nutrition facts per serving
+3. Extract ALL nutrition facts PER SERVING (the values printed on the label)
 4. The user consumed {servings_consumed} serving(s) - multiply all values accordingly
+5. UNIT DETECTION: if energy is given in kilojoules (kJ) instead of kcal,
+   convert (1 kcal = 4.184 kJ). If the panel is "per 100g" rather than
+   "per serving", normalize to the stated serving size. Record what you did
+   in "unit_notes".
+6. GLARE / CUT-OFF: if a value is obscured by glare or cropped off the image,
+   add that field name to "unreadable_fields" and keep your best estimate —
+   do NOT fabricate a precise number you cannot read.
+7. MULTI-SERVING: always report "servings_per_container" so the app can
+   confirm the user did not log the whole package by mistake.
 
 {f'User says: "{user_context}"' if user_context else ''}
 
 Return ONLY valid JSON with this exact structure:
 {{
     "product_name": "product name or unknown",
+    "brand": "brand name if printed, else null",
     "serving_size": "serving size as shown on label",
     "servings_per_container": <float or null>,
+    "per_serving_calories": <integer per single serving>,
+    "unreadable_fields": ["names of glared/cut-off fields, empty if clean"],
+    "unit_notes": ["e.g. kj_converted, per_100g_normalized — empty if none"],
+    "low_confidence": <true if the label is hard to read>,
     "meal_type": "{suggested_meal}",
     "food_items": [
         {{
@@ -1629,8 +1719,13 @@ Guidelines:
                     result[field] = self._get_default_value(field)
 
             result.setdefault("product_name", "unknown")
+            result.setdefault("brand", None)
             result.setdefault("serving_size", "unknown")
             result.setdefault("servings_per_container", None)
+            result.setdefault("per_serving_calories", None)
+            result.setdefault("unreadable_fields", [])
+            result.setdefault("unit_notes", [])
+            result.setdefault("low_confidence", False)
             result.setdefault("total_fiber_g", 0.0)
             result.setdefault("health_score", 5)
             if not result.get("health_score_reasons"):
