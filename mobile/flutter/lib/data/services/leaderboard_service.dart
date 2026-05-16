@@ -6,7 +6,8 @@ enum LeaderboardType {
   challengeMasters('challenge_masters'),
   volumeKings('volume_kings'),
   streaks('streaks'),
-  weeklyChallenges('weekly_challenges');
+  weeklyChallenges('weekly_challenges'),
+  nutrientRush('nutrient_rush');
 
   final String value;
   const LeaderboardType(this.value);
@@ -227,6 +228,8 @@ class LeaderboardService {
         return 'Workout Streaks';
       case LeaderboardType.weeklyChallenges:
         return 'This Week';
+      case LeaderboardType.nutrientRush:
+        return 'Nutrient Rush';
     }
   }
 
@@ -241,6 +244,63 @@ class LeaderboardService {
         return '🔥';
       case LeaderboardType.weeklyChallenges:
         return '⚡';
+      case LeaderboardType.nutrientRush:
+        return '🚀';
+    }
+  }
+
+  // ============================================================
+  // MINI-GAME SCORE (Nutrient Rush)
+  // ============================================================
+
+  /// Submit a mini-game run's final score.
+  ///
+  /// Called on EVERY game-over. The backend raises the stored personal best
+  /// only when [score] is higher; every call still counts as a play.
+  /// Returns the post-submission state: `{high_score, plays, is_new_best,
+  /// submitted_score}`. Throws on network/server error.
+  Future<Map<String, dynamic>> submitMinigameScore({
+    required int score,
+    String gameKey = 'nutrient_rush',
+  }) async {
+    try {
+      final response = await _apiClient.post(
+        '/leaderboard/minigame/score',
+        data: {'score': score, 'game_key': gameKey},
+      );
+
+      if (response.statusCode == 200) {
+        debugPrint('✅ [Leaderboard] Submitted minigame score: $score');
+        return response.data as Map<String, dynamic>;
+      } else {
+        throw Exception('Failed to submit minigame score: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('❌ [Leaderboard] Error submitting minigame score: $e');
+      rethrow;
+    }
+  }
+
+  /// Get the current user's persisted mini-game personal best.
+  ///
+  /// A user who has never played returns `high_score: 0, plays: 0`.
+  Future<Map<String, dynamic>> getMinigameHighScore({
+    String gameKey = 'nutrient_rush',
+  }) async {
+    try {
+      final response = await _apiClient.get(
+        '/leaderboard/minigame/high-score',
+        queryParameters: {'game_key': gameKey},
+      );
+
+      if (response.statusCode == 200) {
+        return response.data as Map<String, dynamic>;
+      } else {
+        throw Exception('Failed to get minigame high score: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('❌ [Leaderboard] Error getting minigame high score: $e');
+      rethrow;
     }
   }
 }

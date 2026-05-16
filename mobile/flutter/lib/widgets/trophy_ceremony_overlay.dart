@@ -100,6 +100,7 @@ class _TrophyCeremonyScreenState
       context,
       accentColor,
       rewardEligible: true,
+      ref: ref,
     );
     if (!mounted) return;
     if (score > 0) {

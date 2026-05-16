@@ -46,6 +46,8 @@ from models.leaderboard import (
     LeaderboardUnlockStatus, LeaderboardStats,
     AsyncChallengeRequest, AsyncChallengeResponse,
     LeaderboardType, LeaderboardFilter,
+    SubmitMinigameScoreRequest, SubmitMinigameScoreResponse,
+    MINIGAME_SCORE_MAX,
 )
 from services.leaderboard_service import LeaderboardService
 
@@ -353,6 +355,75 @@ async def create_async_challenge(
 
 
 # ============================================================
+# MINI-GAME SCORE (Nutrient Rush)
+# ============================================================
+
+@router.post("/minigame/score", response_model=SubmitMinigameScoreResponse)
+async def submit_minigame_score(
+    request: SubmitMinigameScoreRequest,
+    current_user: dict = Depends(get_current_user),
+):
+    """
+    Submit a Nutrient Rush mini-game run's final score.
+
+    Called on EVERY game-over (both celebration bonus rounds and freeplay).
+    The stored personal best is only raised when the new score is higher;
+    every submission still increments the play count. This is independent of
+    the XP anti-farm cap (freeplay scores count toward the high score but
+    never award XP).
+
+    Anti-cheat: scores above MINIGAME_SCORE_MAX are implausible for a ~45s
+    run and rejected with 422.
+    """
+    if request.score > MINIGAME_SCORE_MAX:
+        raise HTTPException(
+            status_code=422,
+            detail=f"Score exceeds plausible maximum ({MINIGAME_SCORE_MAX})",
+        )
+
+    try:
+        result = leaderboard_service.submit_minigame_score(
+            user_id=current_user["id"],
+            score=request.score,
+            game_key=request.game_key,
+        )
+        return SubmitMinigameScoreResponse(
+            high_score=result["high_score"],
+            plays=result["plays"],
+            is_new_best=result["is_new_best"],
+            submitted_score=request.score,
+        )
+    except Exception as e:
+        raise safe_internal_error(e, "minigame_score_submit")
+
+
+@router.get("/minigame/high-score", response_model=SubmitMinigameScoreResponse)
+async def get_minigame_high_score(
+    game_key: str = Query("nutrient_rush", max_length=40),
+    current_user: dict = Depends(get_current_user),
+):
+    """
+    Get the requesting user's persisted Nutrient Rush personal best.
+
+    A user who has never played returns high_score=0, plays=0 (never 404).
+    `submitted_score` echoes the stored best for response-shape consistency.
+    """
+    try:
+        result = leaderboard_service.get_minigame_high_score(
+            user_id=current_user["id"],
+            game_key=game_key,
+        )
+        return SubmitMinigameScoreResponse(
+            high_score=result["high_score"],
+            plays=result["plays"],
+            is_new_best=False,
+            submitted_score=result["high_score"],
+        )
+    except Exception as e:
+        raise safe_internal_error(e, "minigame_high_score")
+
+
+# ============================================================
 # HELPER FUNCTIONS
 # ============================================================
 
@@ -363,6 +434,7 @@ def _get_order_column(leaderboard_type: LeaderboardType) -> str:
         LeaderboardType.volume_kings: "total_volume_lbs",
         LeaderboardType.streaks: "best_streak",
         LeaderboardType.weekly_challenges: "weekly_wins",
+        LeaderboardType.nutrient_rush: "minigame_high_score",
     }[leaderboard_type]
 
 
@@ -401,6 +473,9 @@ def _build_leaderboard_entry(
         entry.weekly_wins = data.get("weekly_wins", 0)
         entry.weekly_completed = data.get("weekly_completed", 0)
         entry.weekly_win_rate = data.get("weekly_win_rate", 0.0)
+    elif leaderboard_type == LeaderboardType.nutrient_rush:
+        entry.minigame_high_score = data.get("minigame_high_score", 0)
+        entry.minigame_plays = data.get("minigame_plays", 0)
 
     return entry
 

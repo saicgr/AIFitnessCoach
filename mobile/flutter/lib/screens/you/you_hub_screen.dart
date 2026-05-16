@@ -168,7 +168,7 @@ class _YouHubScreenState extends ConsumerState<YouHubScreen>
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final accent = AccentColorScope.of(context).getColor(isDark);
     // rewardEligible: false → anti-farm: freeplay never awards XP.
-    await showNutrientRushGame(context, accent, rewardEligible: false);
+    await showNutrientRushGame(context, accent, rewardEligible: false, ref: ref);
   }
 
   @override

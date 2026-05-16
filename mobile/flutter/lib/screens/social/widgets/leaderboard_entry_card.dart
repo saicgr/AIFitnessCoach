@@ -10,6 +10,11 @@ class LeaderboardEntryCard extends StatelessWidget {
   final bool isDark;
   final VoidCallback onChallengeTap;
 
+  /// Whether to show the "Beat Their Best" challenge button. Disabled for
+  /// boards (e.g. the Nutrient Rush mini-game) where the workout-based
+  /// async challenge flow does not apply.
+  final bool showChallengeButton;
+
   const LeaderboardEntryCard({
     super.key,
     required this.entry,
@@ -17,6 +22,7 @@ class LeaderboardEntryCard extends StatelessWidget {
     required this.leaderboardService,
     required this.isDark,
     required this.onChallengeTap,
+    this.showChallengeButton = true,
   });
 
   @override
@@ -116,7 +122,7 @@ class LeaderboardEntryCard extends StatelessWidget {
           ),
 
           // Challenge Button
-          if (!isCurrentUser)
+          if (!isCurrentUser && showChallengeButton)
             IconButton(
               onPressed: onChallengeTap,
               icon: Icon(
@@ -169,6 +175,17 @@ class LeaderboardEntryCard extends StatelessWidget {
         _buildStatItem('📊', '${weeklyRate.toStringAsFixed(1)}%'),
       ]);
     }
+    // Nutrient Rush mini-game stats
+    else if (selectedType == LeaderboardType.nutrientRush) {
+      final highScore = entry['minigame_high_score'] ?? 0;
+      final plays = entry['minigame_plays'] ?? 0;
+      stats.addAll([
+        _buildStatItem('🚀', '$highScore pts'),
+        _buildStatItem('🎮', '$plays plays'),
+      ]);
+    }
+
+    if (stats.isEmpty) return const SizedBox.shrink();
 
     return Row(
       children: stats.expand((w) => [w, const SizedBox(width: 12)]).take(stats.length * 2 - 1).toList(),

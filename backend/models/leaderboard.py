@@ -14,6 +14,7 @@ class LeaderboardType(str, Enum):
     volume_kings = "volume_kings"  # Total weight lifted
     streaks = "streaks"  # Longest workout streaks
     weekly_challenges = "weekly_challenges"  # Challenges won this week
+    nutrient_rush = "nutrient_rush"  # Nutrient Rush mini-game best score
 
 
 class LeaderboardFilter(str, Enum):
@@ -74,6 +75,10 @@ class LeaderboardEntry(BaseModel):
     weekly_wins: Optional[int] = None
     weekly_completed: Optional[int] = None
     weekly_win_rate: Optional[float] = None
+
+    # Nutrient Rush mini-game
+    minigame_high_score: Optional[int] = None
+    minigame_plays: Optional[int] = None
 
     # Metadata
     is_friend: bool = False  # Is this user in requester's friends list?
@@ -162,3 +167,31 @@ class AsyncChallengeResponse(BaseModel):
     workout_name: str
     target_stats: dict  # Their stats to beat
     notification_sent: bool  # False for async (they only get notified if you beat it)
+
+
+# ============================================================
+# MINI-GAME SCORE SUBMISSION
+# ============================================================
+
+# Server-side anti-cheat: the Nutrient Rush run is a ~45s soft-capped loop.
+# A genuinely excellent run lands ~600-900; even an extreme sustained-combo
+# run cannot realistically exceed a few thousand. 5000 is a generous hard
+# ceiling — anything above it is implausible and rejected outright.
+MINIGAME_SCORE_MAX = 5000
+
+
+class SubmitMinigameScoreRequest(BaseModel):
+    """Request to submit a mini-game run's final score."""
+    score: int = Field(..., ge=0, description="Final score for the run (>= 0)")
+    game_key: str = Field(
+        "nutrient_rush", max_length=40,
+        description="Mini-game identifier (only nutrient_rush today)",
+    )
+
+
+class SubmitMinigameScoreResponse(BaseModel):
+    """Response after submitting a mini-game score."""
+    high_score: int  # The user's persisted best after this submission
+    plays: int  # Total runs the user has submitted for this game
+    is_new_best: bool  # True if this run set a new personal best
+    submitted_score: int  # Echo of the score that was submitted

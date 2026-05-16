@@ -324,6 +324,7 @@ class _LevelUpDialogState extends ConsumerState<LevelUpDialog>
       context,
       accentColor,
       rewardEligible: true,
+      ref: ref,
     );
     if (!mounted) return;
     setState(() {

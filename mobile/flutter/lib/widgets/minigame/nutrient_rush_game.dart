@@ -1,7 +1,11 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/services/haptic_service.dart';
+import '../../data/services/leaderboard_service.dart';
+import '../../data/services/api_client.dart';
+import '../../data/repositories/auth_repository.dart';
 
 // =============================================================================
 // Nutrient Rush — a tiny, optional fitness-themed arcade mini-game.
@@ -35,11 +39,64 @@ import '../../data/services/haptic_service.dart';
 /// The game itself never touches the XP system — it only renders the correct
 /// game-over copy from this flag and returns the score. All awarding is the
 /// caller's responsibility.
+///
+/// [ref] — when supplied, the game persists the run's score to the backend on
+/// every game-over (both celebration and freeplay plays count toward the
+/// personal best; this is separate from the XP anti-farm cap) and shows the
+/// persisted personal best + a friends high-score view. When `null` (e.g. a
+/// context with no Riverpod scope) the game runs fully offline with only a
+/// session-local best — no crash.
 Future<int> showNutrientRushGame(
   BuildContext context,
   Color accentColor, {
   bool rewardEligible = false,
+  WidgetRef? ref,
 }) async {
+  // Build the persistence hooks only when a Riverpod ref is available.
+  LeaderboardService? service;
+  String? userId;
+  if (ref != null) {
+    try {
+      service = LeaderboardService(ref.read(apiClientProvider));
+      userId = ref.read(authStateProvider).user?.id;
+    } catch (e) {
+      // No API client in scope — degrade to offline (session-local best).
+      debugPrint('⚠️ [NutrientRush] leaderboard service unavailable: $e');
+      service = null;
+      userId = null;
+    }
+  }
+  // Persistence needs an authenticated user; without one, run offline.
+  if (userId == null) service = null;
+
+  // Pre-fetch the persisted personal best so the intro/game-over can show it
+  // immediately. Failure is non-fatal — the game still runs.
+  int? initialBest;
+  if (service != null) {
+    try {
+      final data = await service.getMinigameHighScore();
+      initialBest = (data['high_score'] as num?)?.toInt();
+    } catch (e) {
+      debugPrint('⚠️ [NutrientRush] could not fetch personal best: $e');
+    }
+  }
+
+  // Submit callback: posts the final score, returns the post-submit best.
+  Future<int?> Function(int)? onSubmitScore;
+  if (service != null) {
+    final s = service;
+    onSubmitScore = (int score) async {
+      try {
+        final res = await s.submitMinigameScore(score: score);
+        return (res['high_score'] as num?)?.toInt();
+      } catch (e) {
+        debugPrint('⚠️ [NutrientRush] score submit failed: $e');
+        return null;
+      }
+    };
+  }
+
+  if (!context.mounted) return 0;
   final result = await Navigator.of(context).push<int>(
     PageRouteBuilder<int>(
       opaque: false,
@@ -48,6 +105,10 @@ Future<int> showNutrientRushGame(
       pageBuilder: (_, __, ___) => NutrientRushGame(
         accentColor: accentColor,
         rewardEligible: rewardEligible,
+        initialPersonalBest: initialBest,
+        onSubmitScore: onSubmitScore,
+        leaderboardService: service,
+        userId: userId,
       ),
       transitionsBuilder: (_, anim, __, child) => FadeTransition(
         opacity: anim,
@@ -66,10 +127,30 @@ class NutrientRushGame extends StatefulWidget {
   /// see [showNutrientRushGame].
   final bool rewardEligible;
 
+  /// The user's persisted personal best, pre-fetched before launch. `null`
+  /// when persistence is unavailable (offline / no Riverpod scope).
+  final int? initialPersonalBest;
+
+  /// Called on every game-over with the run's final score. Returns the
+  /// post-submission persisted personal best, or `null` if the submit failed.
+  /// When `null`, the game keeps only a session-local best.
+  final Future<int?> Function(int score)? onSubmitScore;
+
+  /// Used to power the in-game friends high-score view. `null` → no view.
+  final LeaderboardService? leaderboardService;
+
+  /// The authenticated user's id — required by the leaderboard query for the
+  /// high-score view. `null` → high-score view is unavailable.
+  final String? userId;
+
   const NutrientRushGame({
     super.key,
     required this.accentColor,
     this.rewardEligible = false,
+    this.initialPersonalBest,
+    this.onSubmitScore,
+    this.leaderboardService,
+    this.userId,
   });
 
   @override
@@ -101,6 +182,14 @@ class _NutrientRushGameState extends State<NutrientRushGame>
   int _lives = 3;
   int _combo = 0;
   int _bestCombo = 0;
+
+  // ── Persisted personal best ──
+  // Seeded from the pre-fetched value; updated after each game-over submit.
+  int? _personalBest;
+  // True while a score is being POSTed to the backend.
+  bool _submittingScore = false;
+  // True when the just-finished run set a new persisted personal best.
+  bool _isNewBest = false;
   double _elapsed = 0; // seconds since play started
   double _spawnTimer = 0;
   double _difficulty = 1.0;
@@ -118,6 +207,7 @@ class _NutrientRushGameState extends State<NutrientRushGame>
   void initState() {
     super.initState();
     _ticker = createTicker(_onTick);
+    _personalBest = widget.initialPersonalBest;
   }
 
   @override
@@ -143,6 +233,8 @@ class _NutrientRushGameState extends State<NutrientRushGame>
       _difficulty = 1.0;
       _catcherX = 0.5;
       _catcherTargetX = 0.5;
+      _isNewBest = false;
+      _submittingScore = false;
     });
     _lastTick = Duration.zero;
     _accumulator = 0;
@@ -166,6 +258,43 @@ class _NutrientRushGameState extends State<NutrientRushGame>
     _ticker.stop();
     HapticService.heavy();
     setState(() => _phase = _GamePhase.gameOver);
+    _submitScore();
+  }
+
+  /// Submits the finished run's score to the backend (every game-over counts —
+  /// freeplay and celebration plays alike). Updates the persisted personal
+  /// best shown on the game-over screen. Best-effort: a failed submit leaves
+  /// the session-local state intact and never blocks the UI.
+  Future<void> _submitScore() async {
+    final submit = widget.onSubmitScore;
+    if (submit == null) {
+      // No persistence wired — fall back to a session-local best so the
+      // game-over screen still shows something meaningful.
+      if (mounted) {
+        setState(() {
+          _isNewBest = _personalBest == null || _score > _personalBest!;
+          if (_isNewBest) _personalBest = _score;
+        });
+      }
+      return;
+    }
+
+    final prevBest = _personalBest;
+    if (mounted) setState(() => _submittingScore = true);
+    final newBest = await submit(_score);
+    if (!mounted) return;
+    setState(() {
+      _submittingScore = false;
+      if (newBest != null) {
+        _personalBest = newBest;
+        _isNewBest = prevBest == null || _score > prevBest;
+      } else {
+        // Submit failed — keep an optimistic session-local best.
+        _isNewBest = prevBest == null || _score > prevBest;
+        if (_isNewBest) _personalBest = _score;
+      }
+    });
+    if (_isNewBest && _score > 0) HapticService.success();
   }
 
   /// Closes the game, returning the final score to the caller.
@@ -493,6 +622,10 @@ class _NutrientRushGameState extends State<NutrientRushGame>
         _legendRow('🍩🍔🍟🥤', 'Dodge — costs a life', const Color(0xFFFF5252)),
         const SizedBox(height: 6),
         _body('Drag anywhere to steer.', dim: true),
+        if (_personalBest != null && _personalBest! > 0) ...[
+          const SizedBox(height: 10),
+          _body('🚀 Your best: $_personalBest', dim: false),
+        ],
         const SizedBox(height: 18),
         _primaryButton('PLAY', _startGame),
         const SizedBox(height: 8),
@@ -515,15 +648,27 @@ class _NutrientRushGameState extends State<NutrientRushGame>
 
   Widget _buildGameOverOverlay() {
     final survived = _elapsed >= _runLength;
+    // Personal-best line: prefer the persisted value; null only before the
+    // first-ever submit resolves (or fully offline) — then fall back to score.
+    final bestValue = _personalBest ?? _score;
     return _centeredPanel(
       children: [
         Text(survived ? '🏆' : '💪', style: const TextStyle(fontSize: 52)),
         const SizedBox(height: 10),
         _title(survived ? 'SURVIVED THE RUSH!' : 'GOOD RUN!'),
+        if (_isNewBest && _score > 0) ...[
+          const SizedBox(height: 8),
+          _newBestBadge(),
+        ],
         const SizedBox(height: 14),
         _statRow('SCORE', '$_score'),
         const SizedBox(height: 6),
         _statRow('BEST COMBO', 'x$_bestCombo'),
+        const SizedBox(height: 6),
+        _statRow(
+          'PERSONAL BEST',
+          _submittingScore ? '…' : '$bestValue',
+        ),
         const SizedBox(height: 16),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
@@ -550,8 +695,56 @@ class _NutrientRushGameState extends State<NutrientRushGame>
         const SizedBox(height: 18),
         _primaryButton('PLAY AGAIN', _startGame),
         const SizedBox(height: 8),
+        if (widget.leaderboardService != null && widget.userId != null) ...[
+          _textButton('🏆 High Scores', _showHighScores),
+          const SizedBox(height: 2),
+        ],
         _textButton('Done', _exit),
       ],
+    );
+  }
+
+  /// A small "NEW BEST!" flourish shown on the game-over screen when the run
+  /// set a new persisted personal best.
+  Widget _newBestBadge() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFC107).withValues(alpha: 0.18),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFFFC107).withValues(alpha: 0.6)),
+      ),
+      child: const Text(
+        '🎉 NEW PERSONAL BEST!',
+        style: TextStyle(
+          color: Color(0xFFFFC107),
+          fontSize: 12,
+          fontWeight: FontWeight.w900,
+          letterSpacing: 1,
+          decoration: TextDecoration.none,
+        ),
+      ),
+    );
+  }
+
+  /// Opens the friends high-score view as a bottom sheet.
+  void _showHighScores() {
+    final service = widget.leaderboardService;
+    final uid = widget.userId;
+    if (service == null || uid == null) return;
+    HapticService.light();
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: const Color(0xF21A1A1A),
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (_) => _HighScoresSheet(
+        service: service,
+        userId: uid,
+        accentColor: widget.accentColor,
+      ),
     );
   }
 
@@ -875,4 +1068,237 @@ class _GamePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _GamePainter old) => true;
+}
+
+// =============================================================================
+// High-scores sheet — friends leaderboard for the Nutrient Rush mini-game.
+//
+// Reuses the existing leaderboard system (board id `nutrient_rush`, friends
+// scope). Reachable from the game-over screen. Degrades gracefully: empty
+// friend list, unranked viewer, or an unlock-gate 403 all render a friendly
+// state instead of an error.
+// =============================================================================
+
+class _HighScoresSheet extends StatefulWidget {
+  final LeaderboardService service;
+  final String userId;
+  final Color accentColor;
+
+  const _HighScoresSheet({
+    required this.service,
+    required this.userId,
+    required this.accentColor,
+  });
+
+  @override
+  State<_HighScoresSheet> createState() => _HighScoresSheetState();
+}
+
+class _HighScoresSheetState extends State<_HighScoresSheet> {
+  bool _loading = true;
+  String? _error;
+  List<Map<String, dynamic>> _entries = const [];
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final data = await widget.service.getLeaderboard(
+        userId: widget.userId,
+        leaderboardType: LeaderboardType.nutrientRush,
+        filterType: LeaderboardFilter.friends,
+        limit: 50,
+      );
+      final raw = (data['entries'] as List?) ?? const [];
+      if (mounted) {
+        setState(() {
+          _entries =
+              raw.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+          _loading = false;
+        });
+      }
+    } catch (e) {
+      // Unlock-gate 403, network error, etc. — show a friendly message.
+      debugPrint('⚠️ [NutrientRush] high-scores load failed: $e');
+      if (mounted) {
+        setState(() {
+          _error = 'Could not load high scores right now.';
+          _loading = false;
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final accent = widget.accentColor;
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Center(
+              child: Container(
+                width: 36,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.white24,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                const Text('🚀', style: TextStyle(fontSize: 22)),
+                const SizedBox(width: 8),
+                const Expanded(
+                  child: Text(
+                    'Nutrient Rush — Friends',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 17,
+                      fontWeight: FontWeight.w900,
+                      decoration: TextDecoration.none,
+                    ),
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close_rounded, color: Colors.white54),
+                  onPressed: () => Navigator.of(context).maybePop(),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxHeight: 380),
+              child: _buildBody(accent),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBody(Color accent) {
+    if (_loading) {
+      return SizedBox(
+        height: 120,
+        child: Center(
+          child: CircularProgressIndicator(color: accent, strokeWidth: 2.5),
+        ),
+      );
+    }
+    if (_error != null) {
+      return _message('😕', _error!);
+    }
+    if (_entries.isEmpty) {
+      // Friendly empty state: no friends ranked yet (or none have played).
+      return _message(
+        '👥',
+        'No friends on the board yet.\nAdd friends and challenge them in Nutrient Rush!',
+      );
+    }
+    return ListView.separated(
+      shrinkWrap: true,
+      itemCount: _entries.length,
+      separatorBuilder: (_, __) => const SizedBox(height: 8),
+      itemBuilder: (_, i) => _row(_entries[i], accent),
+    );
+  }
+
+  Widget _message(String emoji, String text) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 28),
+      child: Column(
+        children: [
+          Text(emoji, style: const TextStyle(fontSize: 40)),
+          const SizedBox(height: 10),
+          Text(
+            text,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.6),
+              fontSize: 13,
+              height: 1.4,
+              decoration: TextDecoration.none,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _row(Map<String, dynamic> entry, Color accent) {
+    final rank = (entry['rank'] as num?)?.toInt() ?? 0;
+    final name = entry['user_name'] as String? ?? 'User';
+    final score = (entry['minigame_high_score'] as num?)?.toInt() ?? 0;
+    final isMe = entry['is_current_user'] as bool? ?? false;
+    final medal = switch (rank) {
+      1 => '🥇',
+      2 => '🥈',
+      3 => '🥉',
+      _ => '#$rank',
+    };
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: isMe
+            ? accent.withValues(alpha: 0.16)
+            : Colors.white.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(12),
+        border: isMe
+            ? Border.all(color: accent.withValues(alpha: 0.5))
+            : null,
+      ),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 38,
+            child: Text(
+              medal,
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: rank <= 3 ? 20 : 14,
+                fontWeight: FontWeight.w800,
+                decoration: TextDecoration.none,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              isMe ? '$name (You)' : name,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                decoration: TextDecoration.none,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            '$score',
+            style: TextStyle(
+              color: accent,
+              fontSize: 16,
+              fontWeight: FontWeight.w900,
+              decoration: TextDecoration.none,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }

@@ -45,7 +45,7 @@ class _LeaderboardTabState extends ConsumerState<LeaderboardTab>
   @override
   void initState() {
     super.initState();
-    _typeTabController = TabController(length: 4, vsync: this);
+    _typeTabController = TabController(length: 5, vsync: this);
     _typeTabController.addListener(_onTypeTabChanged);
 
     _leaderboardService = LeaderboardService(ref.read(apiClientProvider));
@@ -169,6 +169,7 @@ class _LeaderboardTabState extends ConsumerState<LeaderboardTab>
             SegmentedTabItem(label: '🏋️ Volume'),
             SegmentedTabItem(label: '🔥 Streaks'),
             SegmentedTabItem(label: '⚡ Week'),
+            SegmentedTabItem(label: '🚀 Rush'),
           ],
         ),
 
@@ -259,12 +260,21 @@ class _LeaderboardTabState extends ConsumerState<LeaderboardTab>
   }
 
   Widget _buildEmptyState(BuildContext context, bool isDark) {
+    final isRush = _selectedType == LeaderboardType.nutrientRush;
+    final String description;
+    if (_selectedFilter == LeaderboardFilter.friends) {
+      description = isRush
+          ? 'Add friends and challenge them in Nutrient Rush!'
+          : 'Add friends to see their rankings!';
+    } else {
+      description = isRush
+          ? 'Play Nutrient Rush to set a high score and appear here!'
+          : 'Complete challenges to appear on the leaderboard!';
+    }
     return SocialEmptyState(
-      icon: Icons.emoji_events_outlined,
+      icon: isRush ? Icons.sports_esports_outlined : Icons.emoji_events_outlined,
       title: 'No Rankings Yet',
-      description: _selectedFilter == LeaderboardFilter.friends
-          ? 'Add friends to see their rankings!'
-          : 'Complete challenges to appear on the leaderboard!',
+      description: description,
       actionLabel: null,
       onAction: null,
     );
@@ -320,6 +330,10 @@ class _LeaderboardTabState extends ConsumerState<LeaderboardTab>
                       leaderboardService: _leaderboardService,
                       isDark: isDark,
                       onChallengeTap: () => _showChallengeOptions(context, entry),
+                      // The workout-based async challenge does not apply to
+                      // the Nutrient Rush mini-game board.
+                      showChallengeButton:
+                          _selectedType != LeaderboardType.nutrientRush,
                     ),
                   );
                 },

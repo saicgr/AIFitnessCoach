@@ -137,6 +137,11 @@ class LeaderboardRankCard extends StatelessWidget {
         _buildStatColumn(context, '💪 Completed', '${stats['weekly_completed'] ?? 0}'),
         _buildStatColumn(context, '📊 Win Rate', '${weeklyRate.toStringAsFixed(1)}%'),
       ]);
+    } else if (selectedType == LeaderboardType.nutrientRush) {
+      statWidgets.addAll([
+        _buildStatColumn(context, '🚀 Best Score', '${stats['minigame_high_score'] ?? 0}'),
+        _buildStatColumn(context, '🎮 Plays', '${stats['minigame_plays'] ?? 0}'),
+      ]);
     }
 
     return Row(

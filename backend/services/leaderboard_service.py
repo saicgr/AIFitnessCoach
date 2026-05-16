@@ -36,6 +36,7 @@ class LeaderboardService:
         LeaderboardType.volume_kings: "leaderboard_volume_kings",
         LeaderboardType.streaks: "leaderboard_streaks",
         LeaderboardType.weekly_challenges: "leaderboard_weekly_challenges",
+        LeaderboardType.nutrient_rush: "leaderboard_minigame",
     }
 
     ORDER_COLUMNS = {
@@ -43,7 +44,11 @@ class LeaderboardService:
         LeaderboardType.volume_kings: "total_volume_lbs",
         LeaderboardType.streaks: "best_streak",
         LeaderboardType.weekly_challenges: "weekly_wins",
+        LeaderboardType.nutrient_rush: "minigame_high_score",
     }
+
+    # game_key used for the Nutrient Rush mini-game in `minigame_scores`.
+    NUTRIENT_RUSH_GAME_KEY = "nutrient_rush"
 
     # ============================================================
     # UNLOCK STATUS
@@ -266,6 +271,70 @@ class LeaderboardService:
             "target_user_name": target_user_name,
             "workout_name": workout_data.get("workout_name", "Their Best Workout"),
             "target_stats": target_stats,
+        }
+
+    # ============================================================
+    # MINI-GAME SCORES
+    # ============================================================
+
+    def submit_minigame_score(
+        self,
+        user_id: str,
+        score: int,
+        game_key: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Submit a mini-game run score (last-best-wins).
+
+        Calls the `submit_minigame_score` RPC which upserts the row, raising
+        the stored best only when the new score is higher and always
+        incrementing the play count. The caller (API layer) is responsible
+        for the anti-cheat upper bound; this method only forwards.
+
+        Returns: {high_score, plays, is_new_best}.
+        """
+        gk = game_key or self.NUTRIENT_RUSH_GAME_KEY
+        result = self.supabase.rpc("submit_minigame_score", {
+            "p_user_id": user_id,
+            "p_game_key": gk,
+            "p_score": int(score),
+        }).execute()
+
+        row = result.data[0] if result.data else None
+        if not row:
+            # RPC always returns a row after upsert; treat absence as a 0-state.
+            return {"high_score": int(score), "plays": 1, "is_new_best": score > 0}
+
+        return {
+            "high_score": int(row.get("high_score", score) or 0),
+            "plays": int(row.get("plays", 1) or 0),
+            "is_new_best": bool(row.get("is_new_best", False)),
+        }
+
+    def get_minigame_high_score(
+        self,
+        user_id: str,
+        game_key: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Read a user's persisted mini-game best.
+
+        Returns {high_score, plays}. A user who has never played returns
+        {high_score: 0, plays: 0} (no row) — never raises.
+        """
+        gk = game_key or self.NUTRIENT_RUSH_GAME_KEY
+        result = (
+            self.supabase.table("minigame_scores")
+            .select("high_score, plays")
+            .eq("user_id", user_id)
+            .eq("game_key", gk)
+            .limit(1)
+            .execute()
+        )
+        if not result.data:
+            return {"high_score": 0, "plays": 0}
+        row = result.data[0]
+        return {
+            "high_score": int(row.get("high_score", 0) or 0),
+            "plays": int(row.get("plays", 0) or 0),
         }
 
     # ============================================================

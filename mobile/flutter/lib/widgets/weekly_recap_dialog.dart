@@ -101,6 +101,7 @@ class _WeeklyRecapDialogState extends ConsumerState<_WeeklyRecapDialog>
       context,
       accentColor,
       rewardEligible: true,
+      ref: ref,
     );
     if (!mounted) return;
     if (score > 0) {
