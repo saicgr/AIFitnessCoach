@@ -427,17 +427,17 @@ export default function ToolsIndex() {
               <TrustBox icon="💚" title="Built solo" body="Sai builds Zealova solo. These tools sustain the company, no ads." />
             </section>
 
-            {/* Bottom install CTA — shown AFTER the tools so users have
-                seen the value before they're asked to install. */}
-            <section className="mt-16 rounded-3xl border border-emerald-500/30 bg-gradient-to-br from-emerald-950 via-zinc-900 to-zinc-950 p-8 sm:p-12">
+            {/* Bottom install CTA — a deliberate dark accent block, literal
+                hex colors so it renders identically in light and dark. */}
+            <section className="mt-16 rounded-3xl border border-emerald-500/40 bg-[#0b1f17] p-8 sm:p-12">
               <div className="max-w-2xl">
-                <p className="text-xs font-semibold uppercase tracking-wider text-emerald-400 mb-3">
+                <p className="text-xs font-semibold uppercase tracking-wider text-[#34d399] mb-3">
                   Loved a tool? Run them on autopilot.
                 </p>
-                <h2 className="text-2xl sm:text-3xl font-bold text-white mb-3 tracking-tight">
+                <h2 className="text-2xl sm:text-3xl font-bold text-[#fafafa] mb-3 tracking-tight">
                   Want every calculation applied automatically?
                 </h2>
-                <p className="text-zinc-400 leading-relaxed mb-5 text-sm sm:text-base">
+                <p className="text-[#a1a1aa] leading-relaxed mb-5 text-sm sm:text-base">
                   Zealova runs every calculation here against your real training and food logs.
                   1RM updates after each lift. TDEE auto-adjusts to your weight trend. Macros adapt weekly.
                 </p>
@@ -446,11 +446,11 @@ export default function ToolsIndex() {
                     href="https://play.google.com/store/apps/details?id=com.aifitnesscoach.app&referrer=utm_source%3Dtools%26utm_medium%3Dindex%26utm_content%3Dbottom-cta"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-block px-6 py-3 rounded-xl bg-emerald-500 text-zinc-900 font-bold hover:bg-emerald-400 transition shadow-lg shadow-emerald-500/20"
+                    className="inline-block px-6 py-3 rounded-xl bg-emerald-500 text-[#0a0a0a] font-bold hover:bg-emerald-400 transition shadow-lg shadow-emerald-500/20"
                   >
                     Get Zealova for Android
                   </a>
-                  <span className="text-xs text-zinc-500">
+                  <span className="text-xs text-[#71717a]">
                     Live on Google Play · 7-day free trial · cancel anytime
                   </span>
                 </div>

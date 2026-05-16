@@ -81,14 +81,17 @@ export default function InstallCta({
     }
   };
 
+  // This card is a deliberate dark accent block — it renders identically on
+  // light and dark tool pages, so every color is a literal hex value that
+  // the light-mode zinc/white palette remap cannot touch.
   if (isIos) {
     return (
-      <div className={`rounded-2xl border border-emerald-500/30 bg-gradient-to-br from-emerald-950 to-zinc-900 p-6 ${className}`}>
-        <p className="text-sm font-semibold text-emerald-400 mb-1">iOS coming soon</p>
-        <p className="text-base text-white font-bold mb-2">{primary}</p>
-        {secondary && <p className="text-sm text-zinc-400 mb-4">{secondary}</p>}
+      <div className={`rounded-2xl border border-emerald-500/40 bg-[#0b1f17] p-6 ${className}`}>
+        <p className="text-sm font-semibold text-[#34d399] mb-1">iOS coming soon</p>
+        <p className="text-base text-[#fafafa] font-bold mb-2">{primary}</p>
+        {secondary && <p className="text-sm text-[#a1a1aa] mb-4">{secondary}</p>}
         {iosSubmitted ? (
-          <p className="text-sm text-emerald-400">
+          <p className="text-sm text-[#34d399]">
             {iosMessage || "You're on the iOS waitlist. We'll email you at launch."}
           </p>
         ) : (
@@ -99,33 +102,33 @@ export default function InstallCta({
               value={iosEmail}
               onChange={(e) => setIosEmail(e.target.value)}
               placeholder="you@example.com"
-              className="flex-1 px-3 py-2 rounded-lg bg-zinc-800 border border-zinc-700 text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              className="flex-1 px-3 py-2 rounded-lg bg-[#27272a] border border-[#3f3f46] text-[#fafafa] placeholder:text-[#71717a] text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
             />
             <button
               type="submit"
               disabled={iosSubmitting}
-              className="px-4 py-2 rounded-lg bg-emerald-500 text-zinc-900 text-sm font-semibold hover:bg-emerald-400 disabled:opacity-60 transition"
+              className="px-4 py-2 rounded-lg bg-emerald-500 text-[#0a0a0a] text-sm font-semibold hover:bg-emerald-400 disabled:opacity-60 transition"
             >
               {iosSubmitting ? 'Joining...' : 'Notify me'}
             </button>
           </form>
         )}
-        {iosError && <p className="text-xs text-red-400 mt-2">{iosError}</p>}
+        {iosError && <p className="text-xs text-[#f87171] mt-2">{iosError}</p>}
       </div>
     );
   }
 
   return (
-    <div className={`rounded-2xl border border-emerald-500/30 bg-gradient-to-br from-emerald-950 to-zinc-900 p-6 ${className}`}>
-      <p className="text-base text-white font-bold mb-1">{primary}</p>
-      {secondary && <p className="text-sm text-zinc-400 mb-4">{secondary}</p>}
+    <div className={`rounded-2xl border border-emerald-500/40 bg-[#0b1f17] p-6 ${className}`}>
+      <p className="text-base text-[#fafafa] font-bold mb-1">{primary}</p>
+      {secondary && <p className="text-sm text-[#a1a1aa] mb-4">{secondary}</p>}
       <button
         onClick={handleOpen}
-        className="w-full sm:w-auto px-6 py-3 rounded-xl bg-emerald-500 text-zinc-900 font-semibold hover:bg-emerald-400 transition shadow-lg shadow-emerald-500/20"
+        className="w-full sm:w-auto px-6 py-3 rounded-xl bg-emerald-500 text-[#0a0a0a] font-semibold hover:bg-emerald-400 transition shadow-lg shadow-emerald-500/20"
       >
         Open in Zealova
       </button>
-      <p className="text-xs text-zinc-500 mt-3">
+      <p className="text-xs text-[#71717a] mt-3">
         Free 7-day trial. $7.99/mo or $59.99/yr after. Cancel anytime.
       </p>
     </div>

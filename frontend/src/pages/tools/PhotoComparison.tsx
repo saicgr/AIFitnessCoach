@@ -81,6 +81,11 @@ export default function PhotoComparison() {
       // Trigger a re-render so the canvas redraws with the logo.
       setSlots((s) => [...s]);
     };
+    img.onerror = () => {
+      // Logo failed to load — the watermark falls back to text-only so the
+      // bottom-right Zealova mark is still present on the export.
+      logoRef.current = null;
+    };
   }, []);
 
   const handleFile = useCallback(async (index: number, file: File | null) => {
@@ -331,8 +336,8 @@ export default function PhotoComparison() {
 
       <InstallCta
         slug="photo-comparison"
-        primary="Track every progress photo in one timeline"
-        secondary="Zealova auto-saves your progress photos, tags each with weight and body fat, and shows side-by-side comparisons for any two dates in one tap."
+        primary="This web tool composes 2 to 4 photos. The app does the rest."
+        secondary="Zealova has the full progress photo experience: an unlimited auto-saved timeline, every photo tagged with your weight and body fat, side-by-side comparison of any two dates in one tap, and private on-device storage. This tool is just the quick share-card composer."
       />
 
       <MethodologyFooter

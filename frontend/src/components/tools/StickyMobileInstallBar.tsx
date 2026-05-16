@@ -84,22 +84,22 @@ export default function StickyMobileInstallBar({ slug, result, primary }: Props)
   };
 
   return (
-    <div className="sm:hidden fixed bottom-0 left-0 right-0 z-40 px-3 pb-3 pt-2 bg-gradient-to-t from-zinc-950 via-zinc-950/95 to-transparent pointer-events-none">
-      <div className="pointer-events-auto flex items-center gap-2 rounded-2xl border border-emerald-500/30 bg-zinc-900 shadow-2xl shadow-emerald-500/10 p-2">
+    <div className="sm:hidden fixed bottom-0 left-0 right-0 z-40 px-3 pb-3 pt-2 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/95 to-transparent pointer-events-none">
+      <div className="pointer-events-auto flex items-center gap-2 rounded-2xl border border-emerald-500/30 bg-[#0f1713] shadow-2xl shadow-emerald-500/10 p-2">
         <div className="flex-1 min-w-0 pl-2">
-          <p className="text-[11px] uppercase tracking-wider text-emerald-400 font-semibold">Save this result</p>
-          <p className="text-xs text-zinc-300 truncate">{primary || 'Track everything in the Zealova app.'}</p>
+          <p className="text-[11px] uppercase tracking-wider text-[#34d399] font-semibold">Save this result</p>
+          <p className="text-xs text-[#d4d4d8] truncate">{primary || 'Track everything in the Zealova app.'}</p>
         </div>
         <button
           onClick={handleOpen}
-          className="shrink-0 px-3 py-2 rounded-xl bg-emerald-500 text-zinc-900 text-xs font-bold hover:bg-emerald-400 transition"
+          className="shrink-0 px-3 py-2 rounded-xl bg-emerald-500 text-[#0a0a0a] text-xs font-bold hover:bg-emerald-400 transition"
         >
           Open app
         </button>
         <button
           onClick={onDismiss}
           aria-label="Dismiss"
-          className="shrink-0 w-7 h-7 rounded-lg text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800 transition flex items-center justify-center text-base"
+          className="shrink-0 w-7 h-7 rounded-lg text-[#71717a] hover:text-[#d4d4d8] hover:bg-[#27272a] transition flex items-center justify-center text-base"
         >
           ×
         </button>

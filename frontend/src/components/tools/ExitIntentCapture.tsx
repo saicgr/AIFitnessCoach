@@ -104,12 +104,12 @@ export default function ExitIntentCapture({ toolSlug, resultSummary }: Props) {
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-md rounded-3xl border border-emerald-500/30 bg-gradient-to-br from-zinc-900 to-zinc-950 shadow-2xl shadow-emerald-500/10 p-6 sm:p-8 relative"
+        className="w-full max-w-md rounded-3xl border border-emerald-500/30 bg-[#0f1713] shadow-2xl shadow-emerald-500/10 p-6 sm:p-8 relative"
       >
         <button
           onClick={onDismiss}
           aria-label="Close"
-          className="absolute top-3 right-3 w-9 h-9 rounded-lg text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800 transition flex items-center justify-center text-xl"
+          className="absolute top-3 right-3 w-9 h-9 rounded-lg text-[#71717a] hover:text-[#e4e4e7] hover:bg-[#27272a] transition flex items-center justify-center text-xl"
         >
           ×
         </button>
@@ -117,20 +117,20 @@ export default function ExitIntentCapture({ toolSlug, resultSummary }: Props) {
         {confirmed ? (
           <div className="text-center py-4">
             <div className="text-4xl mb-3">✓</div>
-            <p className="text-lg font-bold text-white">You're in.</p>
-            <p className="text-sm text-zinc-400 mt-2">
+            <p className="text-lg font-bold text-[#fafafa]">You're in.</p>
+            <p className="text-sm text-[#a1a1aa] mt-2">
               Your result is on its way to your inbox.
             </p>
           </div>
         ) : (
           <>
-            <p className="text-xs uppercase tracking-widest text-emerald-400 font-bold mb-2">
+            <p className="text-xs uppercase tracking-widest text-[#34d399] font-bold mb-2">
               Don't lose this
             </p>
-            <h3 className="text-2xl font-bold text-white tracking-tight leading-tight">
+            <h3 className="text-2xl font-bold text-[#fafafa] tracking-tight leading-tight">
               Want this saved? We'll email it to you.
             </h3>
-            <p className="mt-3 text-sm text-zinc-400 leading-relaxed">
+            <p className="mt-3 text-sm text-[#a1a1aa] leading-relaxed">
               One email with your result and a 1-tap link to track it in the Zealova app. No spam. No drip campaigns.
             </p>
 
@@ -142,19 +142,19 @@ export default function ExitIntentCapture({ toolSlug, resultSummary }: Props) {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
                 autoComplete="email"
-                className="w-full px-4 py-3 rounded-xl bg-zinc-800 border border-zinc-700 text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                className="w-full px-4 py-3 rounded-xl bg-[#27272a] border border-[#3f3f46] text-[#fafafa] text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
               />
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full px-4 py-3 rounded-xl bg-emerald-500 text-zinc-900 text-sm font-bold hover:bg-emerald-400 disabled:opacity-60 transition"
+                className="w-full px-4 py-3 rounded-xl bg-emerald-500 text-[#0a0a0a] text-sm font-bold hover:bg-emerald-400 disabled:opacity-60 transition"
               >
                 {submitting ? 'Sending...' : 'Email me my result'}
               </button>
               {error && <p className="text-xs text-red-400 mt-1">{error}</p>}
             </form>
 
-            <p className="text-[11px] text-zinc-600 mt-4 text-center">
+            <p className="text-[11px] text-[#71717a] mt-4 text-center">
               We use this to send your result. Unsubscribe any time.
             </p>
           </>

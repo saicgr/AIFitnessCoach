@@ -173,6 +173,7 @@ export default function MarketingNav() {
   ];
 
   const resourceLinks = [
+    { label: 'Blog', to: '/blog' },
     { label: 'FAQ', to: '/faq' },
     { label: 'Roadmap', to: '/roadmap' },
     { label: 'Contact', to: '/contact' },

@@ -122,6 +122,16 @@ html.tool-route:not(.dark-mode) {
   --color-zinc-400: #52525b;   /* secondary text         */
   --color-zinc-500: #71717a;   /* muted text (unchanged) */
   --color-zinc-600: #a1a1aa;   /* most-muted text        */
+
+  /* Emerald shades that are only ever used one way across the tool pages:
+   * emerald-300 is always accent TEXT (light green, invisible on a light
+   * surface) so it darkens; emerald-900/950 are always translucent dark
+   * highlight BACKGROUNDS so they lighten. Verified no inverse usage
+   * (no bg-emerald-300, no text-emerald-950) before remapping. emerald
+   * 400/500/600 are left alone so buttons + bright accents stay vivid. */
+  --color-emerald-300: #047857;  /* accent text -> emerald-700 (dark)   */
+  --color-emerald-900: #a7f3d0;  /* gradient bg -> emerald-200 (light)  */
+  --color-emerald-950: #d1fae5;  /* highlight bg -> emerald-100 (light) */
 }
 
 /* === BASE STYLES === */

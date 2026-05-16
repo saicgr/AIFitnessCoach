@@ -60,41 +60,41 @@ export default function RateLimitModal({
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-lg rounded-3xl border border-emerald-500/30 bg-gradient-to-br from-emerald-950 via-zinc-900 to-zinc-950 shadow-2xl shadow-emerald-500/10 p-7 sm:p-9 relative"
+        className="w-full max-w-lg rounded-3xl border border-emerald-500/30 bg-[#0f1713] shadow-2xl shadow-emerald-500/10 p-7 sm:p-9 relative"
       >
         <button
           onClick={onClose}
           aria-label="Close"
-          className="absolute top-3 right-3 w-9 h-9 rounded-lg text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800 transition flex items-center justify-center text-xl"
+          className="absolute top-3 right-3 w-9 h-9 rounded-lg text-[#71717a] hover:text-[#e4e4e7] hover:bg-[#27272a] transition flex items-center justify-center text-xl"
         >
           ×
         </button>
 
-        <p className="text-xs font-bold uppercase tracking-widest text-emerald-400 mb-3">
+        <p className="text-xs font-bold uppercase tracking-widest text-[#34d399] mb-3">
           {kind === 'capacity' ? 'Tool at capacity' : 'Daily limit reached'}
         </p>
-        <h3 className="text-2xl sm:text-3xl font-bold text-white tracking-tight leading-tight">
+        <h3 className="text-2xl sm:text-3xl font-bold text-[#fafafa] tracking-tight leading-tight">
           {kind === 'capacity'
             ? `The free ${toolName} is busy right now.`
             : `You hit your free ${toolName} limit.`}
         </h3>
-        <p className="mt-3 text-sm text-zinc-400 leading-relaxed">
+        <p className="mt-3 text-sm text-[#a1a1aa] leading-relaxed">
           {kind === 'capacity'
             ? `So many people are using this free tool that we've hit today's shared limit. The Zealova app has no shared cap, so you can run it now.`
             : `To keep this tool free for everyone, web access resets every ${resetWindow}. Get unlimited use in the Zealova app, plus auto-tracking and weekly adaptation.`}
         </p>
 
         <div className="mt-6 grid grid-cols-1 gap-2 text-sm">
-          <div className="flex items-center gap-2 text-zinc-300">
-            <span className="text-emerald-400">✓</span>
+          <div className="flex items-center gap-2 text-[#d4d4d8]">
+            <span className="text-[#34d399]">✓</span>
             <span>Unlimited AI analyses</span>
           </div>
-          <div className="flex items-center gap-2 text-zinc-300">
-            <span className="text-emerald-400">✓</span>
+          <div className="flex items-center gap-2 text-[#d4d4d8]">
+            <span className="text-[#34d399]">✓</span>
             <span>Every result auto-saved to your history</span>
           </div>
-          <div className="flex items-center gap-2 text-zinc-300">
-            <span className="text-emerald-400">✓</span>
+          <div className="flex items-center gap-2 text-[#d4d4d8]">
+            <span className="text-[#34d399]">✓</span>
             <span>7-day free trial. $7.99/mo or $59.99/yr.</span>
           </div>
         </div>
@@ -103,7 +103,7 @@ export default function RateLimitModal({
           {isIos ? (
             <a
               href="/waitlist"
-              className="w-full text-center px-5 py-3.5 rounded-xl bg-emerald-500 text-zinc-900 font-bold hover:bg-emerald-400 transition shadow-lg shadow-emerald-500/20"
+              className="w-full text-center px-5 py-3.5 rounded-xl bg-emerald-500 text-[#0a0a0a] font-bold hover:bg-emerald-400 transition shadow-lg shadow-emerald-500/20"
             >
               Join iOS waitlist
             </a>
@@ -112,20 +112,20 @@ export default function RateLimitModal({
               href={playStoreUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="w-full text-center px-5 py-3.5 rounded-xl bg-emerald-500 text-zinc-900 font-bold hover:bg-emerald-400 transition shadow-lg shadow-emerald-500/20"
+              className="w-full text-center px-5 py-3.5 rounded-xl bg-emerald-500 text-[#0a0a0a] font-bold hover:bg-emerald-400 transition shadow-lg shadow-emerald-500/20"
             >
               Get Zealova for Android
             </a>
           )}
           <button
             onClick={onClose}
-            className="w-full text-center px-5 py-2.5 rounded-xl text-sm text-zinc-400 hover:text-zinc-200 transition"
+            className="w-full text-center px-5 py-2.5 rounded-xl text-sm text-[#a1a1aa] hover:text-[#e4e4e7] transition"
           >
             I&apos;ll come back tomorrow
           </button>
         </div>
 
-        <p className="mt-5 text-[11px] text-zinc-600 text-center">
+        <p className="mt-5 text-[11px] text-[#71717a] text-center">
           Live on Google Play. 7-day free trial, cancel anytime.
         </p>
       </div>
