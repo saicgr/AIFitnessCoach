@@ -171,14 +171,45 @@ Score meals on a 1-10 scale:
 - 1-2: Very poor, essentially junk food, no nutritional value
 
 ## INFLAMMATION SCORE RUBRIC
-Every food_item AND the meal as a whole must emit inflammation_score (1-10, higher = more inflammatory):
-- 1-2: Strongly anti-inflammatory — wild salmon, turmeric, berries, leafy greens, ginger tea, extra-virgin olive oil
-- 3-4: Mildly anti-inflammatory — most vegetables, whole grains, nuts, legumes, plain yogurt, eggs from pasture-raised hens
-- 5: Neutral — plain rice, plain chicken breast, milk, plain pasta
-- 6-7: Mildly inflammatory — white bread, red meat, full-fat cheese, pan-fried foods, butter
-- 8-9: Moderately inflammatory — processed meats (bacon, sausage, salami), fast food, sugary drinks, packaged snacks, instant noodles
-- 10: Highly inflammatory — deep-fried ultra-processed combos, items with trans fats, candy + soda meals
-Meal-level inflammation_score = calorie-weighted average of per-item scores, rounded to the nearest integer.
+Every food_item AND the meal as a whole must emit inflammation_score (integer 1-10, higher = more inflammatory).
+
+### Band guide
+- 1-2: Strongly anti-inflammatory — wild/oily fish (salmon, sardines), turmeric, berries, leafy greens, ginger tea, extra-virgin olive oil, nuts, seeds
+- 3-4: Mildly anti-inflammatory — most non-starchy vegetables, intact whole grains (oats, quinoa, brown rice), legumes, plain unsweetened yogurt, pasture-raised eggs, avocado
+- 5: Neutral — plain white rice, plain chicken breast, plain milk, plain pasta, plain potato
+- 6-7: Inflammatory — refined-flour items, added sugar, red meat, full-fat cheese, pan-fried foods, butter, alcohol, sugary drinks
+- 8-9: Strongly inflammatory — processed/cured meats, deep-fried foods, fast food, packaged ultra-processed snacks, instant noodles
+- 10: Highly inflammatory — deep-fried ultra-processed combos, trans-fat items, candy + soda meals
+
+### HARD PER-ITEM FLOORS — these OVERRIDE the band guide. A qualifying item's inflammation_score must be AT LEAST the floor below, never lower:
+- Added sugar of any kind (maple/agave/corn syrup, honey, table sugar, sweetened/flavored yogurt, soda, jam, sweetened compote) → item inflammation_score >= 6
+- Refined flour (white-flour pancakes, white bread, bagels, pastries, croissants, sugary breakfast cereal, white-flour tortillas) → item >= 6
+- Deep-fried (French fries, fried chicken, tempura, doughnuts, fried spring rolls, onion rings) → item >= 7
+- Processed or cured meat (bacon, sausage, hot dog, salami, ham, pepperoni, deli meat) → item >= 7
+- Alcohol or sugary drinks (beer, wine, cocktails, fruit juice, sweetened iced tea, energy drinks) → item >= 6
+- Genuinely anti-inflammatory whole foods (oily fish, leafy greens, berries, extra-virgin olive oil, nuts, seeds, turmeric, ginger) → item 1-3
+
+### HEALTH-HALO WARNING
+Do NOT let a "healthy" reputation lower the score. Granola, smoothie bowls, protein bars, flavored/fruit-on-the-bottom yogurt, fruit juice, "veggie" chips, and trail mix are frequently high in added sugar or industrially processed. Judge them ONLY on their actual added sugar and processing level — apply the added-sugar floor (>= 6) whenever added sugar is present, regardless of the health halo.
+
+### Worked examples
+- Maple syrup → 7 (pure added sugar; floor 6, but glycemic load pushes higher)
+- White-flour pancakes (no whole grain) → 6 (refined flour floor)
+- Blueberry compote, sweetened → 6 (added sugar floor; the berries alone would be 2, but the added sugar dominates)
+- Plain fresh blueberries → 2 (genuine anti-inflammatory whole food)
+- Bacon → 8 (processed/cured meat floor 7, plus saturated fat)
+- French fries → 8 (deep-fried floor 7, plus refined starch)
+- Grilled wild salmon → 2
+- Spinach salad with EVOO → 2
+- Plain oatmeal → 3
+- Granola with honey → 6 (health-halo; added sugar floor applies)
+
+### MEAL-LEVEL inflammation_score
+1. Compute the calorie-weighted average of the per-item inflammation_score values.
+2. Round to the NEAREST integer (not floor — e.g. 5.5 rounds to 6, 5.4 rounds to 5).
+3. CALORIE-DOMINANT CLAMP: identify the single food_item contributing the most calories to the meal. If that calorie-dominant item has inflammation_score >= 6, the meal-level inflammation_score MUST NOT be below 5 — raise it to 5 if the weighted average came out lower. A small genuinely anti-inflammatory side (e.g. a fruit side) must NEVER pull a refined-carb or added-sugar based meal down into the "anti-inflammatory" range.
+
+Worked meal example: pancakes (white flour, 320 kcal, item 6) + maple syrup (210 kcal, item 7) + blueberry compote (90 kcal, item 6). Weighted avg = (320*6 + 210*7 + 90*6)/620 = (1920+1470+540)/620 ≈ 6.3 → rounds to 6. Calorie-dominant item is pancakes (score 6 >= 6), so the clamp confirms the meal stays >= 5. Final meal inflammation_score = 6.
 
 ## ULTRA-PROCESSED (is_ultra_processed) RUBRIC
 Emit is_ultra_processed (boolean) for every food_item AND the meal as a whole.

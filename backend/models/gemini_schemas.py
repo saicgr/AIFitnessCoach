@@ -51,6 +51,7 @@ class CoachIntentEnum(str, Enum):
     GENERATE_QUICK_WORKOUT = "generate_quick_workout"
     SET_WATER_GOAL = "set_water_goal"
     LOG_WEIGHT = "log_weight"
+    LOG_ACTIVITY = "log_activity"
     GENERATE_WEEKLY_PLAN = "generate_weekly_plan"
     ADJUST_PLAN = "adjust_plan"
     EXPLAIN_PLAN = "explain_plan"
@@ -69,6 +70,148 @@ class IntentExtractionResponse(BaseModel):
     hydration_amount: Optional[int] = Field(default=None, description="Number of glasses/cups")
     water_goal_glasses: Optional[int] = Field(default=None, description="Daily water goal in glasses")
     weight_value: Optional[float] = Field(default=None, description="Weight value to log")
+
+
+# =============================================================================
+# UNIVERSAL LOGGING EXTRACTION SCHEMAS (Phase 6 — AI Coach natural-language log)
+# =============================================================================
+
+class LoggedExerciseItem(BaseModel):
+    """One exercise inside a logged micro-workout (A4).
+
+    Example: "20 pushups, 30 squats, 1-min plank" → three of these.
+    """
+    name: str = Field(..., description="Exercise name ('pushups','squats','plank').")
+    reps: Optional[int] = Field(
+        default=None, description="Total reps if a count was given ('20 pushups'→20).",
+    )
+    sets: Optional[int] = Field(
+        default=None, description="Number of sets if stated ('3x10'→sets=3,reps=10).",
+    )
+    duration_seconds: Optional[int] = Field(
+        default=None,
+        description="Hold/duration in seconds for timed moves ('1-min plank'→60).",
+    )
+
+
+class LogActionItem(BaseModel):
+    """One discrete loggable action parsed from a chat message.
+
+    A single message can yield several of these ("did yoga AND drank water").
+    Only past-tense / completed actions become items; questions, future
+    plans, and negations are excluded by the extractor.
+    """
+    domain: str = Field(
+        ...,
+        description=(
+            "One of: workout | water | weight | sleep | mood | measurement "
+            "| habit | sauna | fasting. Pick the single best fit."
+        ),
+    )
+    activity_type: Optional[str] = Field(
+        default=None,
+        description="For domain=workout: the activity ('yoga','run','basketball').",
+    )
+    exercises: List[LoggedExerciseItem] = Field(
+        default=[],
+        description=(
+            "For domain=workout: the individual exercises when the user "
+            "listed them ('20 pushups, 30 squats, 1-min plank'). Leave empty "
+            "for single-activity logs like 'did 30 min yoga'."
+        ),
+    )
+    refers_to_scheduled_workout: bool = Field(
+        default=False,
+        description=(
+            "For domain=workout: TRUE when the user is reporting they did "
+            "THEIR PLANNED workout using generic phrasing — 'did my workout', "
+            "'finished my workout', 'did legs today', 'trained chest', "
+            "'crushed leg day', 'completed today's session'. FALSE for a "
+            "distinct standalone activity ('did 30 min yoga', 'ran 5k', "
+            "'played basketball') even if a workout is also scheduled."
+        ),
+    )
+    fasting_action: Optional[str] = Field(
+        default=None,
+        description=(
+            "For domain=fasting: 'start' when the user began a fast "
+            "('started my fast','I'm fasting now') or 'end' when they broke "
+            "it ('broke my fast','ended my fast','done fasting')."
+        ),
+    )
+    fasting_protocol: Optional[str] = Field(
+        default=None,
+        description=(
+            "For domain=fasting start: protocol if stated ('16:8','18:6',"
+            "'20:4','OMAD','24h'). Null -> default 16:8."
+        ),
+    )
+    duration_minutes: Optional[float] = Field(
+        default=None, description="Duration in minutes (workout/sleep/sauna).",
+    )
+    distance_km: Optional[float] = Field(
+        default=None, description="Distance in km if stated (running/cycling).",
+    )
+    intensity: Optional[str] = Field(
+        default=None,
+        description="easy|medium|hard if the user signalled it ('hot yoga'→hard).",
+    )
+    volume_ml: Optional[float] = Field(
+        default=None, description="For domain=water: fluid volume in millilitres.",
+    )
+    weight_kg: Optional[float] = Field(
+        default=None, description="For domain=weight: body weight in kilograms.",
+    )
+    mood: Optional[str] = Field(
+        default=None,
+        description="For domain=mood: one of great|good|okay|tired|stressed|sad.",
+    )
+    measurement_type: Optional[str] = Field(
+        default=None,
+        description="For domain=measurement: waist|hips|chest|arms|thighs|body_fat.",
+    )
+    measurement_value: Optional[float] = Field(
+        default=None, description="For domain=measurement: numeric value (cm or %).",
+    )
+    habit_name: Optional[str] = Field(
+        default=None,
+        description="For domain=habit: the habit ('meditation','vitamins','reading').",
+    )
+    occurred_at_hint: Optional[str] = Field(
+        default=None,
+        description=(
+            "Natural-language time hint exactly as the user said it "
+            "('yesterday','this morning','last night','2 hours ago'). "
+            "Null means now."
+        ),
+    )
+    name: Optional[str] = Field(
+        default=None, description="Short human label for the confirmation message.",
+    )
+
+
+class LogExtractionResponse(BaseModel):
+    """Result of parsing a chat message for loggable wellness events."""
+    is_log: bool = Field(
+        ...,
+        description=(
+            "True ONLY if the user is reporting something they ALREADY DID "
+            "(past tense / completed). False for questions, future plans "
+            "('should I…','I'm going to…'), and negations ('I didn't…')."
+        ),
+    )
+    actions: List[LogActionItem] = Field(
+        default=[], description="One entry per discrete loggable action.",
+    )
+    needs_clarification: bool = Field(
+        default=False,
+        description="True if the user clearly logged something but a key "
+        "detail is missing (e.g. 'I worked out' with no activity/duration).",
+    )
+    clarification_question: Optional[str] = Field(
+        default=None,
+        description="One concise question to fill the missing detail.",
+    )
 
 
 # =============================================================================

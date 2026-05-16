@@ -57,6 +57,12 @@ class CoachIntent(str, Enum):
     # Additional action intents
     SET_WATER_GOAL = "set_water_goal"
     LOG_WEIGHT = "log_weight"
+    # Universal natural-language logging (Phase 6) — covers activity, sleep,
+    # mood, measurement, habit, sauna, fasting, and multi-action messages.
+    # The food/hydration/weight intents above still route to their existing
+    # specialist paths; LOG_ACTIVITY is the catch-all for everything else and
+    # for multi-domain utterances ("did yoga AND drank water").
+    LOG_ACTIVITY = "log_activity"
     # Public share artifact generation (single workout / week / month / PRs / 1RM / summary)
     GENERATE_SHARE_ARTIFACT = "generate_share_artifact"
 

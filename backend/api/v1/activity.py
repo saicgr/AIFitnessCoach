@@ -230,6 +230,82 @@ async def get_today_activity(user_id: str, request: Request, current_user: dict 
     return row_to_activity_response(row)
 
 
+@router.get("/ai-burned/{user_id}")
+async def get_ai_burned_today(user_id: str, request: Request, current_user: dict = Depends(get_current_user)):
+    """Sum today's calories burned from chat / manually logged activities.
+
+    Phase 6 — feeds the home "TRACKING" flame icon so an AI-Coach-logged
+    activity ("I did 30 min yoga") shows its burned calories even when the
+    user hasn't connected HealthKit / Health Connect.
+
+    Double-count safety (X2/X9): AI/chat/manual workouts live in the
+    `workouts` table, which is a SEPARATE store from `daily_activity`
+    (where HealthKit/Strava sync writes). They never overlap by storage.
+    Within `workouts` we additionally EXCLUDE any chat-logged workout that
+    has a wearable-synced sibling within ±20min — that sibling's calories
+    are already counted by the HealthKit `daily_activity` total, so adding
+    the chat copy too would double-count the same real-world session.
+    """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
+
+    db = get_supabase_db()
+    user_tz = resolve_timezone(request, db, user_id)
+    today = get_user_today(user_tz)
+
+    try:
+        # All completed workouts logged today via chat / manual entry.
+        rows = db.client.table("workouts").select(
+            "id, name, estimated_calories, completed_at, generation_source, generation_method"
+        ).eq("user_id", user_id).eq("is_completed", True).gte(
+            "completed_at", f"{today}T00:00:00"
+        ).lte("completed_at", f"{today}T23:59:59.999999").execute()
+
+        wearable_sources = {
+            "wearable_sync_apple_health", "wearable_sync_fitbit",
+            "wearable_sync_garmin", "wearable_sync_health_connect",
+            "health_connect",
+        }
+        manual_logs = []
+        wearable_times = []
+        for r in (rows.data or []):
+            src = r.get("generation_source") or ""
+            ct = r.get("completed_at")
+            if src in wearable_sources:
+                if ct:
+                    wearable_times.append(datetime.fromisoformat(ct.replace("Z", "+00:00")))
+            elif r.get("generation_method") == "manual_log":
+                manual_logs.append(r)
+
+        total = 0
+        counted = 0
+        for r in manual_logs:
+            cals = r.get("estimated_calories") or 0
+            if cals <= 0:
+                continue
+            ct = r.get("completed_at")
+            # Skip if a wearable already logged a session within ±20min.
+            overlapped = False
+            if ct:
+                try:
+                    cdt = datetime.fromisoformat(ct.replace("Z", "+00:00"))
+                    for wt in wearable_times:
+                        if abs((cdt - wt).total_seconds()) <= 1200:
+                            overlapped = True
+                            break
+                except Exception:
+                    pass
+            if overlapped:
+                continue
+            total += int(cals)
+            counted += 1
+
+        return {"date": today, "ai_burned_calories": total, "activity_count": counted}
+    except Exception as e:
+        logger.error(f"[Activity] ai-burned query failed for {user_id}: {e}", exc_info=True)
+        return {"date": today, "ai_burned_calories": 0, "activity_count": 0}
+
+
 @router.get("/date/{user_id}/{activity_date}", response_model=Optional[DailyActivityResponse])
 async def get_activity_by_date(user_id: str, activity_date: date, current_user: dict = Depends(get_current_user)):
     """Get activity for a specific date."""

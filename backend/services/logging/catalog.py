@@ -316,6 +316,35 @@ def estimate_calories(met: float, weight_kg: float, duration_minutes: float) -> 
 
 
 # ---------------------------------------------------------------------------
+# Intensity adjustment (X4 — "hot yoga" vs "yoga", "intense hike")
+# ---------------------------------------------------------------------------
+
+# Multiplier applied to the catalog MET when the user signals an intensity.
+# "medium" is the catalog baseline. Conservative band — never more than ±40%.
+INTENSITY_MET_MULTIPLIER: Dict[str, float] = {
+    "easy": 0.80,
+    "light": 0.80,
+    "medium": 1.00,
+    "moderate": 1.00,
+    "hard": 1.30,
+    "intense": 1.35,
+    "vigorous": 1.35,
+}
+
+
+def intensity_adjusted_met(base_met: float, intensity: Optional[str]) -> float:
+    """Scale a catalog MET by a user-supplied intensity word.
+
+    "hot yoga" / "intense hike" burn meaningfully more than the catalog
+    baseline; "easy walk" burns less. Unknown words → baseline (1.0).
+    """
+    if not intensity:
+        return base_met
+    return base_met * INTENSITY_MET_MULTIPLIER.get(intensity.lower().strip(), 1.0)
+
+
+
+# ---------------------------------------------------------------------------
 # Time-of-day / day hints
 # ---------------------------------------------------------------------------
 

@@ -560,7 +560,7 @@ class FoodAnalysisCacheServicePart2:
             if not all_food_items:
                 return None
 
-            score = self._compute_health_score(total_cals, total_protein, total_fiber)
+            score = self._compute_health_score(total_cals, total_protein, total_fiber, total_carbs)
 
             return {
                 "food_items": all_food_items,
@@ -852,7 +852,7 @@ class FoodAnalysisCacheServicePart2:
                 fi["modifiers"] = modifier_details
                 food_items = [fi]
 
-            score = self._compute_health_score(total_cals, total_protein, total_fiber)
+            score = self._compute_health_score(total_cals, total_protein, total_fiber, total_carbs)
 
             logger.info(
                 f"🎯 Modified override HIT: '{description}' → base='{food_name}', "
@@ -1050,7 +1050,7 @@ class FoodAnalysisCacheServicePart2:
         micronutrients = common_food.get("micronutrients", {})
 
         # Compute a simple health score from macros
-        score = self._compute_health_score(calories, protein_g, fiber_g)
+        score = self._compute_health_score(calories, protein_g, fiber_g, carbs_g)
 
         return {
             "food_items": [food_item],
@@ -1081,17 +1081,64 @@ class FoodAnalysisCacheServicePart2:
         }
 
     @staticmethod
-    def _compute_health_score(calories: int, protein_g: float, fiber_g: float) -> int:
-        """Compute a simple health score (1-10) from macros."""
-        protein_ratio = (protein_g * 4) / max(calories, 1)
+    def _compute_health_score(
+        calories: int,
+        protein_g: float,
+        fiber_g: float,
+        carbs_g: Optional[float] = None,
+        sugar_g: Optional[float] = None,
+    ) -> int:
+        """Deterministic 1-10 health score from macros (no Gemini).
+
+        Rewards protein and fiber; penalizes high calories, high added/total
+        sugar, and low fiber density relative to carbs (a refined-carb signal).
+        ``carbs_g`` and ``sugar_g`` are optional — when omitted the refined-carb
+        and sugar penalties are skipped (back-compatible with older callers).
+
+        NOTE: this definition is shadowed by FoodAnalysisCacheServicePhase2's
+        via MRO for the combined FoodAnalysisCacheService class — both are kept
+        identical so direct use of either class behaves the same.
+        """
         score = 5  # neutral baseline
-        if protein_ratio >= 0.25:
+        if protein_g >= 20:
             score += 2
-        elif protein_ratio >= 0.15:
+        elif protein_g >= 10:
             score += 1
         if fiber_g >= 5:
+            score += 2
+        elif fiber_g >= 3:
             score += 1
-        return min(score, 10)
+        if calories > 800:
+            score -= 2
+        elif calories > 600:
+            score -= 1
+
+        # Refined-carb penalty — combines a high-sugar signal and a
+        # low-fiber-density signal. Added sugar and refined starch overlap
+        # heavily, so the two sub-signals are summed then capped at -2 to
+        # avoid an unrealistically harsh double penalty (tuned so a
+        # pancakes+syrup breakfast lands ~4, a whole-food meal stays 8+).
+        refined_penalty = 0
+
+        # High added/total sugar.
+        if sugar_g is not None:
+            if sugar_g >= 25:
+                refined_penalty += 2
+            elif sugar_g >= 15:
+                refined_penalty += 1
+
+        # Low fiber density relative to carbs. A carb-heavy meal (>= 30g
+        # carbs) that delivers almost no fiber is refined starch/sugar.
+        if carbs_g is not None and carbs_g >= 30:
+            fiber_ratio = fiber_g / carbs_g if carbs_g > 0 else 0.0
+            if fiber_ratio < 0.05:
+                refined_penalty += 2
+            elif fiber_ratio < 0.10:
+                refined_penalty += 1
+
+        score -= min(refined_penalty, 2)
+
+        return max(1, min(10, score))
 
     async def _try_cache(self, description: str) -> Optional[Dict[str, Any]]:
         """
@@ -1250,6 +1297,8 @@ class FoodAnalysisCacheServicePart2:
             macros.get("calories", 0),
             macros.get("protein_g", 0),
             macros.get("fiber_g", 0),
+            macros.get("carbs_g"),
+            macros.get("sugar_g"),
         )
 
         # Cache miss - call Gemini

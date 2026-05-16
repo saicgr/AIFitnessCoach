@@ -34,6 +34,7 @@ from core.timezone_utils import get_user_today, resolve_timezone
 from services.logging.catalog import (
     estimate_calories,
     get_activity,
+    intensity_adjusted_met,
     resolve_activity,
     resolve_day_offset,
     steps_to_walking_minutes,
@@ -42,7 +43,35 @@ from services.logging.catalog import (
 logger = get_logger(__name__)
 router = APIRouter()
 
-ALLOWED_DOMAINS = {"workout", "food", "water", "sleep", "weight", "mood"}
+ALLOWED_DOMAINS = {
+    "workout", "food", "water", "sleep", "weight", "mood",
+    # Phase 6 — universal natural-language logging additions.
+    "measurement", "habit", "sauna", "fasting",
+}
+
+# Default fasting protocol when the user doesn't name one ("started my fast").
+_FASTING_PROTOCOL_GOALS = {
+    "12:12": 720, "14:10": 600, "16:8": 960, "18:6": 1080,
+    "20:4": 1200, "omad": 1380, "23:1": 1380,
+    "24h": 1440, "36h": 2160, "48h": 2880, "5:2": 1440,
+}
+_DEFAULT_FASTING_PROTOCOL = "16:8"
+
+# Body-measurement type → body_measurements column. Phase 6 measurement domain.
+_MEASUREMENT_COLUMN = {
+    "waist": "waist_cm",
+    "hips": "hip_cm",
+    "hip": "hip_cm",
+    "chest": "chest_cm",
+    "neck": "neck_cm",
+    "arms": "bicep_right_cm",
+    "bicep": "bicep_right_cm",
+    "thighs": "thigh_right_cm",
+    "thigh": "thigh_right_cm",
+    "shoulders": "shoulder_cm",
+    "shoulder": "shoulder_cm",
+    "body_fat": "body_fat_percent",
+}
 
 ALLOWED_SOURCES = {
     "chat", "manual", "voice", "camera", "menu_scan", "barcode",
@@ -89,7 +118,7 @@ def _verify_undo_token(token: str, user_id: str) -> Optional[Dict[str, str]]:
 
 class EventLogRequest(BaseModel):
     user_id: str = Field(..., max_length=64)
-    domain: Literal["workout", "food", "water", "sleep", "weight", "mood"]
+    domain: str = Field(..., max_length=32)
     source: str = Field("chat", max_length=64)
     occurred_at: Optional[str] = Field(None, description="ISO8601, defaults to now")
     payload: Dict[str, Any] = Field(default_factory=dict)
@@ -102,6 +131,20 @@ class EventLogRequest(BaseModel):
         if normalized not in ALLOWED_SOURCES:
             raise ValueError(
                 f"source must be one of {sorted(ALLOWED_SOURCES)} (got {v!r})"
+            )
+        return normalized
+
+    @field_validator("domain")
+    @classmethod
+    def _check_domain(cls, v: str) -> str:
+        normalized = v.lower().strip()
+        # "activity" is an accepted alias for "workout" (the universal
+        # logger sometimes emits the friendlier name).
+        if normalized == "activity":
+            normalized = "workout"
+        if normalized not in ALLOWED_DOMAINS:
+            raise ValueError(
+                f"domain must be one of {sorted(ALLOWED_DOMAINS)} (got {v!r})"
             )
         return normalized
 
@@ -118,7 +161,7 @@ class EventLogResponse(BaseModel):
 
 class EventEditRequest(BaseModel):
     user_id: str = Field(..., max_length=64)
-    domain: Literal["workout", "food", "water", "sleep", "weight", "mood"]
+    domain: str = Field(..., max_length=32)
     patch: Dict[str, Any] = Field(default_factory=dict)
 
 
@@ -196,24 +239,52 @@ async def _write_workout(
     except Exception:
         pass
 
+    intensity = (payload.get("intensity") or activity.default_intensity).lower()
+
     calories = metadata.get("calories")
     if not calories:
-        calories = estimate_calories(activity.met, user_weight_kg, duration_minutes)
+        # X4 — scale the catalog MET by the stated intensity so "hot yoga"
+        # / "intense hike" burn more than the moderate baseline.
+        adjusted_met = intensity_adjusted_met(activity.met, intensity)
+        calories = estimate_calories(adjusted_met, user_weight_kg, duration_minutes)
 
-    intensity = (payload.get("intensity") or activity.default_intensity).lower()
     workout_name = activity.display_name
     if metadata.get("body_part"):
         workout_name = f"{metadata['body_part'].title()} {workout_name}"
 
-    # Synthetic exercises_json so workout history reads correctly
-    exercises_json = [{
-        "name": activity.display_name,
-        "duration_minutes": duration_minutes,
-        "intensity": intensity,
-        "category": activity.category,
-        "icon": activity.icon,
-        "notes": metadata.get("notes"),
-    }]
+    # A4 — itemized micro-workout. When the chat extractor captured the
+    # individual exercises ("20 pushups, 30 squats, 1-min plank"), persist
+    # each one into exercises_json so workout history reflects the actual
+    # session content. Otherwise fall back to a single synthetic entry.
+    logged_exercises = metadata.get("exercises") or []
+    if logged_exercises:
+        exercises_json = []
+        for ex in logged_exercises:
+            entry = {
+                "name": (ex.get("name") or "exercise").title(),
+                "category": activity.category,
+                "icon": activity.icon,
+                "intensity": intensity,
+            }
+            if ex.get("sets"):
+                entry["sets"] = ex["sets"]
+            if ex.get("reps"):
+                entry["reps"] = ex["reps"]
+            if ex.get("duration_seconds"):
+                entry["duration_seconds"] = ex["duration_seconds"]
+            exercises_json.append(entry)
+        # Reflect the circuit in the workout name when it's a generic log.
+        if workout_name == activity.display_name and activity.canonical_id == "calisthenics":
+            workout_name = "Bodyweight circuit"
+    else:
+        exercises_json = [{
+            "name": activity.display_name,
+            "duration_minutes": duration_minutes,
+            "intensity": intensity,
+            "category": activity.category,
+            "icon": activity.icon,
+            "notes": metadata.get("notes"),
+        }]
 
     row = {
         "user_id": user_id,
@@ -224,6 +295,12 @@ async def _write_workout(
         "completed_at": occurred_at,
         "is_completed": True,
         "status": "completed",
+        # A logged-completed activity is NOT the day's canonical plan, so it
+        # must NOT claim the is_current slot — otherwise the partial unique
+        # index `workouts_one_current_per_user_day` (migration 2048/2049)
+        # rejects it whenever the user already has an auto-generated workout
+        # for that day. is_current=False keeps it out of the index entirely.
+        "is_current": False,
         "completion_method": "chat" if source == "chat" else "manual",
         "exercises_json": exercises_json,
         "duration_minutes": duration_minutes,
@@ -368,6 +445,9 @@ async def _write_sleep(db, user_id: str, source: str, occurred_at: str, payload:
         "completed_at": occurred_at,
         "is_completed": True,
         "status": "completed",
+        # Sleep is never the canonical daily workout — keep it out of the
+        # one-current-per-day partial unique index (see _write_workout).
+        "is_current": False,
         "completion_method": "chat" if source == "chat" else "manual",
         "exercises_json": [{
             "name": "Sleep",
@@ -393,6 +473,247 @@ async def _write_sleep(db, user_id: str, source: str, occurred_at: str, payload:
         "raw_id": inserted["id"],
         "name": "Sleep",
     }
+
+
+async def _write_measurement(db, user_id: str, source: str, occurred_at: str, payload: Dict[str, Any]) -> Dict[str, Any]:
+    """Insert a body measurement (waist/hips/chest/arms/body-fat) into
+    body_measurements. Phase 6 — chat-driven measurement logging.
+    """
+    mtype = (payload.get("measurement_type") or "").lower().strip()
+    value = payload.get("value")
+    column = _MEASUREMENT_COLUMN.get(mtype)
+    if not column:
+        raise HTTPException(
+            status_code=422,
+            detail={"code": "INVALID_MEASUREMENT",
+                    "message": f"measurement_type must be one of {sorted(_MEASUREMENT_COLUMN)}"},
+        )
+    if value is None or float(value) <= 0:
+        raise HTTPException(status_code=422, detail={"code": "MISSING_VALUE", "message": "value is required"})
+    row = {
+        "user_id": user_id,
+        column: float(value),
+        "measured_at": occurred_at,
+        "measurement_source": source,
+        "notes": payload.get("notes"),
+    }
+    row = {k: v for k, v in row.items() if v is not None}
+    result = db.client.table("body_measurements").insert(row).execute()
+    if not result.data:
+        raise HTTPException(status_code=500, detail="body_measurements insert returned empty")
+    inserted = result.data[0]
+    return {
+        "event_id": f"measurement:{inserted['id']}",
+        "raw_id": inserted["id"],
+        "name": f"{mtype.replace('_', ' ').title()}: {value}",
+    }
+
+
+async def _write_sauna(db, user_id: str, source: str, occurred_at: str, payload: Dict[str, Any]) -> Dict[str, Any]:
+    """Insert a sauna / heat-exposure session into sauna_logs.
+
+    The home flame icon already aggregates `sauna_logs.estimated_calories`
+    via `dailySaunaProvider`, so a chat-logged sauna shows up on the flame
+    with zero extra wiring.
+    """
+    duration_minutes = int(payload.get("duration_minutes") or 0)
+    if duration_minutes <= 0:
+        raise HTTPException(status_code=422, detail={"code": "MISSING_DURATION", "message": "duration_minutes is required"})
+    # Sauna burn ≈ 1.5 kcal/min as a conservative passive-heat estimate.
+    est_calories = round(duration_minutes * 1.5)
+    row = {
+        "user_id": user_id,
+        "duration_minutes": duration_minutes,
+        "estimated_calories": est_calories,
+        "logged_at": occurred_at,
+        "local_date": occurred_at[:10],
+        "notes": payload.get("session_type") or payload.get("notes"),
+    }
+    row = {k: v for k, v in row.items() if v is not None}
+    result = db.client.table("sauna_logs").insert(row).execute()
+    if not result.data:
+        raise HTTPException(status_code=500, detail="sauna_logs insert returned empty")
+    inserted = result.data[0]
+    return {
+        "event_id": f"sauna:{inserted['id']}",
+        "raw_id": inserted["id"],
+        "name": f"{duration_minutes} min sauna",
+        "calories": est_calories,
+    }
+
+
+async def _write_habit(db, user_id: str, source: str, occurred_at: str, payload: Dict[str, Any]) -> Dict[str, Any]:
+    """Check off a habit for the day. Phase 6 — chat-driven habit logging.
+
+    Resolves the user's habit by fuzzy name match. If no matching habit
+    exists, auto-creates one (the AI Coach offers to track it) so the user
+    never hits a dead end.
+    """
+    habit_name = (payload.get("habit_name") or "").strip()
+    if not habit_name:
+        raise HTTPException(status_code=422, detail={"code": "MISSING_HABIT", "message": "habit_name is required"})
+
+    log_date = occurred_at[:10]
+    # Find an existing active habit whose name overlaps the request.
+    habit_id = None
+    matched_name = habit_name
+    created_habit = False
+    try:
+        existing = db.client.table("habits").select("id, name").eq(
+            "user_id", user_id
+        ).eq("is_active", True).execute()
+        needle = habit_name.lower()
+        for h in (existing.data or []):
+            hn = (h.get("name") or "").lower()
+            if hn and (hn in needle or needle in hn):
+                habit_id = h["id"]
+                matched_name = h["name"]
+                break
+    except Exception as e:
+        logger.warning(f"[Events] habit lookup failed: {e}")
+
+    if not habit_id:
+        # Auto-create the habit so chat logging always succeeds.
+        new_habit = {
+            "user_id": user_id,
+            "name": habit_name.title(),
+            "category": "general",
+            "habit_type": "positive",
+            "frequency": "daily",
+            "is_suggested": True,
+        }
+        created = db.client.table("habits").insert(new_habit).execute()
+        if not created.data:
+            raise HTTPException(status_code=500, detail="habit auto-create failed")
+        habit_id = created.data[0]["id"]
+        matched_name = created.data[0]["name"]
+        created_habit = True
+
+    # Upsert today's habit_log as completed.
+    log_row = {
+        "habit_id": habit_id,
+        "user_id": user_id,
+        "log_date": log_date,
+        "completed": True,
+        "completed_at": occurred_at,
+        "notes": payload.get("notes"),
+    }
+    log_row = {k: v for k, v in log_row.items() if v is not None}
+    try:
+        result = db.client.table("habit_logs").upsert(
+            log_row, on_conflict="habit_id,log_date",
+        ).execute()
+    except Exception:
+        # Fallback: plain insert if the conflict target isn't recognised.
+        result = db.client.table("habit_logs").insert(log_row).execute()
+    if not result.data:
+        raise HTTPException(status_code=500, detail="habit_logs write returned empty")
+    inserted = result.data[0]
+    return {
+        "event_id": f"habit:{inserted['id']}",
+        "raw_id": inserted["id"],
+        "name": f"{matched_name}" + (" (new habit)" if created_habit else ""),
+    }
+
+
+async def _write_fasting(db, user_id: str, source: str, occurred_at: str, payload: Dict[str, Any]) -> Dict[str, Any]:
+    """Start or end an intermittent fast (A18).
+
+    Reuses the fasting_records table directly (same shape the
+    /api/v1/fasting/start + /{id}/end endpoints write) so chat-driven
+    fasting stays in sync with the Fasting tab — the active-fast timer,
+    history, and streak all read this table.
+
+    payload:
+        fasting_action: 'start' | 'end'
+        protocol: optional protocol id for a start ('16:8', 'OMAD', …)
+    """
+    action = (payload.get("fasting_action") or "").lower().strip()
+
+    if action == "start":
+        # Reject a second concurrent fast — mirrors /fasting/start.
+        existing = db.client.table("fasting_records").select("id").eq(
+            "user_id", user_id
+        ).eq("status", "active").execute()
+        if existing.data:
+            raise HTTPException(
+                status_code=400,
+                detail={"code": "FAST_ALREADY_ACTIVE",
+                        "message": "You already have an active fast."},
+            )
+        protocol = (payload.get("protocol") or _DEFAULT_FASTING_PROTOCOL).lower().strip()
+        goal_minutes = _FASTING_PROTOCOL_GOALS.get(protocol, 960)
+        protocol_display = protocol.upper() if protocol == "omad" else protocol
+        ptype = "extended" if goal_minutes >= 1440 else (
+            "modified" if protocol in ("5:2",) else "tre")
+        row = {
+            "user_id": user_id,
+            "start_time": occurred_at,
+            "goal_duration_minutes": goal_minutes,
+            "protocol": protocol_display,
+            "protocol_type": ptype,
+            "status": "active",
+            "completed_goal": False,
+            "zones_reached": [],
+        }
+        result = db.client.table("fasting_records").insert(row).execute()
+        if not result.data:
+            raise HTTPException(status_code=500, detail="fasting_records insert returned empty")
+        inserted = result.data[0]
+        return {
+            "event_id": f"fasting:{inserted['id']}",
+            "raw_id": inserted["id"],
+            "name": f"{protocol_display} fast started",
+            "fasting_state": "started",
+            "goal_minutes": goal_minutes,
+        }
+
+    if action == "end":
+        active = db.client.table("fasting_records").select("*").eq(
+            "user_id", user_id
+        ).eq("status", "active").order("start_time", desc=True).limit(1).execute()
+        if not active.data:
+            raise HTTPException(
+                status_code=404,
+                detail={"code": "NO_ACTIVE_FAST",
+                        "message": "No active fast to end."},
+            )
+        fast = active.data[0]
+        try:
+            start_dt = datetime.fromisoformat(fast["start_time"].replace("Z", "+00:00"))
+        except Exception:
+            start_dt = datetime.now(timezone.utc)
+        end_dt = datetime.fromisoformat(occurred_at.replace("Z", "+00:00")) \
+            if occurred_at else datetime.now(timezone.utc)
+        if end_dt.tzinfo is None:
+            end_dt = end_dt.replace(tzinfo=timezone.utc)
+        actual_minutes = max(0, int((end_dt - start_dt).total_seconds() / 60))
+        goal_minutes = fast.get("goal_duration_minutes") or 1
+        completion_pct = round(min(actual_minutes / goal_minutes * 100, 999), 1)
+        completed_goal = completion_pct >= 100
+        db.client.table("fasting_records").update({
+            "end_time": end_dt.isoformat(),
+            "actual_duration_minutes": actual_minutes,
+            "status": "completed",
+            "completed_goal": completed_goal,
+            "completion_percentage": completion_pct,
+            "updated_at": end_dt.isoformat(),
+        }).eq("id", fast["id"]).execute()
+        hrs = actual_minutes // 60
+        mins = actual_minutes % 60
+        return {
+            "event_id": f"fasting:{fast['id']}",
+            "raw_id": fast["id"],
+            "name": f"Fast ended — {hrs}h {mins}m",
+            "fasting_state": "ended",
+            "actual_minutes": actual_minutes,
+        }
+
+    raise HTTPException(
+        status_code=422,
+        detail={"code": "INVALID_FASTING_ACTION",
+                "message": "fasting_action must be 'start' or 'end'"},
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -455,7 +776,15 @@ async def log_event(
         result = await _write_mood(db, body.user_id, body.source, occurred_at, body.payload)
     elif body.domain == "sleep":
         result = await _write_sleep(db, body.user_id, body.source, occurred_at, body.payload)
-    else:  # pragma: no cover — Literal type guards this at request parse
+    elif body.domain == "measurement":
+        result = await _write_measurement(db, body.user_id, body.source, occurred_at, body.payload)
+    elif body.domain == "sauna":
+        result = await _write_sauna(db, body.user_id, body.source, occurred_at, body.payload)
+    elif body.domain == "habit":
+        result = await _write_habit(db, body.user_id, body.source, occurred_at, body.payload)
+    elif body.domain == "fasting":
+        result = await _write_fasting(db, body.user_id, body.source, occurred_at, body.payload)
+    else:  # pragma: no cover — the domain validator guards this at request parse
         raise HTTPException(status_code=400, detail=f"unknown domain {body.domain!r}")
 
     # Cache for idempotency lookups
@@ -506,6 +835,22 @@ async def log_event(
     except Exception as ach_err:
         logger.warning(f"[Achievements] computer failed: {ach_err}", exc_info=True)
 
+    # XP / streak parity (X16) — a chat-logged workout must award XP and
+    # count for the daily streak EXACTLY like a UI-completed workout. We
+    # reuse the same idempotent `_award_workout_complete_xp` helper that the
+    # /workouts/complete endpoint uses, so a chat-log + a UI-complete on the
+    # same day never double-award (shared `daily_goal_workout_complete`
+    # dedup key + user-local-today window).
+    if body.domain == "workout":
+        try:
+            from api.v1.workouts.crud_completion import _award_workout_complete_xp
+            _award_workout_complete_xp(
+                supabase=db.client, request=request, db=db,
+                user_id=body.user_id, workout_id=result["raw_id"],
+            )
+        except Exception as xp_err:
+            logger.warning(f"[Events] workout XP award failed: {xp_err}", exc_info=True)
+
     # Invalidate caches
     try:
         local_date = occurred_at[:10]
@@ -516,8 +861,14 @@ async def log_event(
     except Exception as cache_err:
         logger.warning(f"[Events] cache invalidation failed: {cache_err}", exc_info=True)
 
-    expires_at = int(time.time()) + _UNDO_TTL_SECONDS
-    undo_token = _sign_undo_token(body.domain, result["raw_id"], body.user_id, expires_at)
+    # Issue an undo token for normal inserts. Fasting is excluded: a fast is
+    # a STATE TRANSITION, not a row insert — a blind delete would orphan the
+    # timer ("start") or silently discard the completed window ("end"). The
+    # user reverses a fast from the Fasting tab instead.
+    undo_token = None
+    if body.domain != "fasting":
+        expires_at = int(time.time()) + _UNDO_TTL_SECONDS
+        undo_token = _sign_undo_token(body.domain, result["raw_id"], body.user_id, expires_at)
 
     warning = None
     if overlap_warning:
@@ -651,6 +1002,10 @@ def _table_for_domain(domain: str) -> str:
         "weight": "body_measurements",
         "mood": "mood_log",
         "sleep": "workouts",  # sleep stored in workouts with type='sleep'
+        "measurement": "body_measurements",
+        "sauna": "sauna_logs",
+        "habit": "habit_logs",
+        "fasting": "fasting_records",
     }[domain]
 
 
@@ -662,6 +1017,12 @@ def _editable_fields(domain: str) -> set[str]:
         "weight": {"weight_kg", "notes"},
         "mood": {"mood", "energy_level", "notes"},
         "sleep": {"duration_minutes", "exercises_json"},
+        "measurement": {"waist_cm", "hip_cm", "chest_cm", "neck_cm",
+                        "bicep_right_cm", "thigh_right_cm", "shoulder_cm",
+                        "body_fat_percent", "notes"},
+        "sauna": {"duration_minutes", "estimated_calories", "notes"},
+        "habit": {"completed", "value", "notes"},
+        "fasting": {"notes", "mood_after", "energy_level_after"},
     }[domain]
 
 

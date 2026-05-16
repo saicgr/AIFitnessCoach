@@ -595,6 +595,7 @@ class FoodAnalysisCacheServicePhase2:
         total_c = sum(float(it.get("carbs_g", 0)) for it in food_items)
         total_f = sum(float(it.get("fat_g", 0)) for it in food_items)
         total_fib = sum(float(it.get("fiber_g", 0)) for it in food_items)
+        total_sugar = sum(float(it.get("sugar_g", 0) or 0) for it in food_items)
 
         return {
             "meal_type": meal_type,
@@ -604,7 +605,9 @@ class FoodAnalysisCacheServicePhase2:
             "total_carbs_g": round(total_c, 1),
             "total_fat_g": round(total_f, 1),
             "total_fiber_g": round(total_fib, 1),
-            "health_score": self._compute_health_score(total_cal, total_p, total_fib),
+            "health_score": self._compute_health_score(
+                total_cal, total_p, total_fib, total_c, total_sugar
+            ),
             "feedback": "",  # populated by enrich_with_tips later if requested
             "_cache_metadata": {
                 "novel_count": len(novel),
@@ -675,8 +678,20 @@ class FoodAnalysisCacheServicePhase2:
         return await asyncio.gather(*[_one(n, d) for n, d in novel])
 
     @staticmethod
-    def _compute_health_score(calories: int, protein_g: float, fiber_g: float) -> int:
-        """Simple 1-10 health score (mirrors the existing helper in part2)."""
+    def _compute_health_score(
+        calories: int,
+        protein_g: float,
+        fiber_g: float,
+        carbs_g: Optional[float] = None,
+        sugar_g: Optional[float] = None,
+    ) -> int:
+        """Deterministic 1-10 health score from macros (no Gemini).
+
+        Rewards protein and fiber; penalizes high calories, high added/total
+        sugar, and low fiber density relative to carbs (a refined-carb signal).
+        ``carbs_g`` and ``sugar_g`` are optional — when omitted the refined-carb
+        and sugar penalties are skipped (back-compatible with older callers).
+        """
         score = 5
         if protein_g >= 20:
             score += 2
@@ -690,6 +705,32 @@ class FoodAnalysisCacheServicePhase2:
             score -= 2
         elif calories > 600:
             score -= 1
+
+        # Refined-carb penalty — combines a high-sugar signal and a
+        # low-fiber-density signal. Added sugar and refined starch overlap
+        # heavily, so the two sub-signals are summed then capped at -2 to
+        # avoid an unrealistically harsh double penalty (tuned so a
+        # pancakes+syrup breakfast lands ~4, a whole-food meal stays 8+).
+        refined_penalty = 0
+
+        # High added/total sugar.
+        if sugar_g is not None:
+            if sugar_g >= 25:
+                refined_penalty += 2
+            elif sugar_g >= 15:
+                refined_penalty += 1
+
+        # Low fiber density relative to carbs. A carb-heavy meal (>= 30g
+        # carbs) that delivers almost no fiber is refined starch/sugar.
+        if carbs_g is not None and carbs_g >= 30:
+            fiber_ratio = fiber_g / carbs_g if carbs_g > 0 else 0.0
+            if fiber_ratio < 0.05:
+                refined_penalty += 2
+            elif fiber_ratio < 0.10:
+                refined_penalty += 1
+
+        score -= min(refined_penalty, 2)
+
         return max(1, min(10, score))
 
     # ---- Menu-shaped lookup (with menu_scan_cache) -----------------------

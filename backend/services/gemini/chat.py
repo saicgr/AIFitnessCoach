@@ -105,7 +105,7 @@ class ChatMixin:
 
 Return ONLY valid JSON in this exact format (no markdown, no explanation):
 {
-  "intent": "add_exercise|remove_exercise|swap_workout|modify_intensity|reschedule|delete_workout|recommend_workout_change|report_injury|change_setting|navigate|start_workout|complete_workout|log_hydration|set_water_goal|log_weight|generate_quick_workout|log_food|nutrition_summary|recent_meals|question",
+  "intent": "add_exercise|remove_exercise|swap_workout|modify_intensity|reschedule|delete_workout|recommend_workout_change|report_injury|change_setting|navigate|start_workout|complete_workout|log_hydration|set_water_goal|log_weight|log_activity|generate_quick_workout|log_food|nutrition_summary|recent_meals|question",
   "exercises": ["exercise name 1", "exercise name 2"],
   "muscle_groups": ["chest", "back", "shoulders", "biceps", "triceps", "legs", "core", "glutes"],
   "modification": "easier|harder|shorter|longer",
@@ -134,6 +134,21 @@ INTENT DEFINITIONS:
 - log_hydration: User wants to LOG water intake (e.g., "log 8 glasses of water", "I drank 3 cups", "track my water")
 - set_water_goal: User wants to SET their daily water goal (e.g., "set my water goal to 10 glasses", "change my daily water target to 12 cups")
 - log_weight: User wants to LOG their weight (e.g., "log my weight as 75kg", "I weigh 165 lbs", "record my weight")
+- log_activity: User is TELLING US they ALREADY DID a trackable wellness activity so we can log it. This is the universal natural-language logger. Use it for COMPLETED:
+    * Exercise / activity: "I did 30 min yoga", "ran 5k", "played basketball for an hour", "did 20 pushups", "hiked 3 hours", "20 min sauna", "5-min ice bath"
+    * Did their PLANNED workout (generic phrasing): "did my workout", "finished my workout", "did legs today", "trained chest", "crushed leg day", "completed today's session"
+    * Micro-workout with listed exercises: "did 20 pushups, 30 squats and a 1-min plank"
+    * Sleep: "slept 7 hours", "got about 6.5 hours of sleep last night"
+    * Mood / energy: "feeling really sore", "low energy today", "feeling great"
+    * Body measurement: "my waist is 32 inches", "measured my arms at 15 inches", "body fat is 18%"
+    * Habit: "meditated for 10 min", "took my vitamins", "did my journaling"
+    * Fasting: "started my fast", "I'm fasting now", "began my 16:8", "broke my fast", "ended my fast", "done fasting"
+    * Multi-action: "did 30 min yoga and drank 500ml water" (one message, several logs)
+  CRITICAL — only PAST/COMPLETED reports count. DO NOT classify as log_activity:
+    * "should I do yoga?" / "what workout should I do?" → question
+    * "I'm going to run later" / "planning to lift tomorrow" → question
+    * "I didn't work out" / "skipped my run" → question
+  NOTE: water-only ("drank 500ml water") may be log_hydration OR log_activity — both work. Eating food → log_food. Weighing → log_weight OR log_activity.
 - generate_quick_workout: User wants to CREATE/GENERATE a new workout (e.g., "give me a quick workout", "create a 15-minute workout", "make me a cardio workout", "I need a short workout", "new workout please")
 - log_food: User is TELLING US WHAT THEY ATE/DRANK/ARE EATING so we can log it. Save to the meal list.
     Past tense ("I ate", "I had", "just had", "just finished", "just ate", "just drank", "just finished drinking", "for breakfast I had", "breakfast was", "consumed", "demolished", "polished off"):

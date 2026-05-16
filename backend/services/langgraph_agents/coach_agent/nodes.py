@@ -232,21 +232,25 @@ def format_workout_context(schedule: Dict[str, Any]) -> str:
     return "\n".join(parts)
 
 
-def should_handle_action(state: CoachAgentState) -> Literal["action", "respond"]:
+def should_handle_action(state: CoachAgentState) -> Literal["action", "log", "respond"]:
     """
-    Determine if this is an action request or general question.
+    Determine if this is an action request, a wellness log, or a question.
 
-    Routes to action if:
-    - User wants to change settings
-    - User wants to navigate somewhere
-    - User wants to start/complete a workout
+    Routes to `log` for universal natural-language logging (Phase 6) —
+    "I did 30 min yoga", "drank 500ml water", "weighed 70kg", "slept 7h",
+    "meditated 10 min", "20 min sauna", and multi-action messages.
 
-    Routes to respond for:
-    - General questions
-    - Greetings
-    - Motivation requests
+    Routes to `action` for settings / navigation / workout control.
+
+    Routes to `respond` for general questions, greetings, motivation.
     """
     intent = state.get("intent")
+
+    # Phase 6 — the universal logger. LOG_WEIGHT routes here too so chat
+    # weight logging actually PERSISTS (it used to only emit UI action_data).
+    if intent in (CoachIntent.LOG_ACTIVITY, CoachIntent.LOG_WEIGHT):
+        logger.info(f"[Coach Router] Logging intent: {intent} -> log")
+        return "log"
 
     action_intents = [
         CoachIntent.CHANGE_SETTING,
@@ -254,7 +258,6 @@ def should_handle_action(state: CoachAgentState) -> Literal["action", "respond"]
         CoachIntent.START_WORKOUT,
         CoachIntent.COMPLETE_WORKOUT,
         CoachIntent.SET_WATER_GOAL,
-        CoachIntent.LOG_WEIGHT,
     ]
 
     if intent in action_intents:
@@ -461,6 +464,324 @@ You just performed an app action for the user. Acknowledge it naturally and brie
         "final_response": response,
         "action_data": action_data,
     }
+
+
+async def coach_log_node(state: CoachAgentState) -> Dict[str, Any]:
+    """Universal natural-language logger (Phase 6).
+
+    Parses the user's message into one-or-more structured wellness events,
+    persists each via the `/events/log` endpoint, and confirms with concrete
+    results ("Logged 30 min yoga — ~95 kcal 🔥"). Every log is undoable via
+    the signed `undo_token` carried in action_data.
+
+    Handles:
+      - multi-action messages (one message → several logs)
+      - the vague-input case (X3 — asks exactly one clarifying question)
+      - done-vs-future is enforced by the extractor (X10/X13)
+      - workout calories flow to the home flame icon via the workouts table
+        (X9 — see api/v1/activity.py get_ai_burned_today)
+    """
+    from datetime import datetime, timedelta, timezone
+
+    from services.logging.log_extractor import extract_log_actions
+
+    logger.info("[Coach Log] Universal logging path...")
+
+    user_message = state.get("user_message", "")
+    user_id = state.get("user_id")
+    gemini_service = GeminiService()
+
+    # ── Extract structured loggable actions ──────────────────────────────
+    extraction = await extract_log_actions(user_message, user_id=str(user_id) if user_id else None)
+
+    # X3 — clear log but missing key detail → one concise question, no write.
+    if extraction.get("needs_clarification"):
+        question = extraction.get("clarification_question") \
+            or "Got it — what did you do, and for how long?"
+        return {
+            "ai_response": question,
+            "final_response": question,
+            "action_data": None,
+        }
+
+    actions = extraction.get("actions") or []
+
+    # X10/X13 — not actually a log (question / future / negation). Fall back
+    # to a normal coaching reply rather than logging anything.
+    if not extraction.get("is_log") or not actions:
+        logger.info("[Coach Log] No loggable action — deferring to coach reply")
+        return await coach_response_node(state)
+
+    if not user_id:
+        msg = "Sign in so I can save that to your log."
+        return {"ai_response": msg, "final_response": msg, "action_data": None}
+
+    # ── A5 / X14 — scheduled-workout reconciliation ──────────────────────
+    # When the user reports doing their PLANNED session in generic terms
+    # ("did legs today", "finished my workout", "trained chest"), complete
+    # the workout that's already SCHEDULED for today instead of inserting a
+    # duplicate freeform activity log. The extractor flags these actions
+    # with refers_to_scheduled_workout=True.
+    completed_scheduled = None   # dict describing the completed plan, if any
+    if any(
+        a.get("domain") == "workout" and a.get("refers_to_scheduled_workout")
+        for a in actions
+    ):
+        completed_scheduled = await _complete_scheduled_workout(
+            state, str(user_id),
+        )
+        if completed_scheduled is not None:
+            # The scheduled workout was completed — drop the workout actions
+            # that referred to it so we don't ALSO create a freeform log.
+            actions = [
+                a for a in actions
+                if not (a.get("domain") == "workout"
+                        and a.get("refers_to_scheduled_workout"))
+            ]
+        else:
+            # No scheduled workout (or already done) — fall through and log
+            # the workout actions as freeform activity. Strip the flag so
+            # _post_process already produced a usable payload; if it lacks a
+            # duration we ask one clarifying question instead.
+            unusable = [
+                a for a in actions
+                if a.get("domain") == "workout"
+                and a.get("refers_to_scheduled_workout")
+                and not (a.get("payload") or {}).get("duration_minutes")
+            ]
+            if unusable and len(unusable) == len(
+                [a for a in actions if a.get("domain") == "workout"]
+            ):
+                # Every workout action is a flag-only reference with no
+                # detail and there's nothing scheduled to complete → ask.
+                q = ("Nice — I don't see a workout scheduled for today. "
+                     "What did you do, and for how long?")
+                # Keep any non-workout actions (multi-action) flowing.
+                actions = [a for a in actions if a.get("domain") != "workout"]
+                if not actions:
+                    return {"ai_response": q, "final_response": q,
+                            "action_data": None}
+
+    # ── Persist each action via the events endpoint (in-process) ─────────
+    from api.v1.wellness.events import EventLogRequest, log_event as endpoint_log_event
+    from fastapi import Request as _Req
+
+    scope = {"type": "http", "headers": [], "method": "POST", "path": "/events/log"}
+
+    logged = []   # successful EventLogResponse dicts + display labels
+    failed = []   # human-readable failure notes
+    for act in actions:
+        # X1 — resolve the natural-language time hint to a concrete UTC ISO.
+        occurred_at_iso = _resolve_log_timestamp(act.get("occurred_at_hint"))
+        try:
+            body = EventLogRequest(
+                user_id=str(user_id),
+                domain=act["domain"],
+                source="chat",
+                occurred_at=occurred_at_iso,
+                payload=act["payload"],
+            )
+            req = _Req(scope=scope, receive=None)
+            resp = await endpoint_log_event(
+                request=req, body=body, current_user={"id": str(user_id)},
+            )
+            rd = resp.model_dump() if hasattr(resp, "model_dump") else dict(resp)
+            rd["display"] = act.get("display")
+            rd["extractor_warning"] = act.get("warning")
+            logged.append(rd)
+        except Exception as e:
+            detail = getattr(e, "detail", None) or str(e)
+            logger.warning(f"[Coach Log] write failed for {act['domain']}: {detail}")
+            failed.append(act.get("display") or act["domain"])
+
+    if not logged and completed_scheduled is None:
+        msg = "I couldn't save that — mind rephrasing what you did?"
+        if failed:
+            msg = f"I couldn't log {', '.join(failed)} — could you rephrase?"
+        return {"ai_response": msg, "final_response": msg, "action_data": None}
+
+    # ── Build action_data ────────────────────────────────────────────────
+    # Single log → flat event_logged payload (back-compat with the existing
+    # frontend handler). Multiple logs → an `events` list the handler
+    # iterates. Either way the frontend refreshes timeline + flame + undo.
+    def _event_payload(rd: Dict[str, Any]) -> Dict[str, Any]:
+        return {
+            "domain": rd.get("domain"),
+            "event_id": rd.get("event_id"),
+            "name": rd.get("name"),
+            "calories": rd.get("calories"),
+            "undo_token": rd.get("undo_token"),
+            "warning": rd.get("warning") or rd.get("extractor_warning"),
+            "created": rd.get("created", True),
+        }
+
+    sched_already_done = bool(
+        completed_scheduled and completed_scheduled.get("already_done")
+    )
+
+    if completed_scheduled is not None and not logged:
+        if sched_already_done:
+            # Nothing changed — the workout was already complete. No
+            # action_data; just an acknowledging reply below.
+            action_data = None
+        else:
+            # A5 — only a scheduled-workout completion happened. Emit the
+            # existing `complete_workout` action so the frontend flips the
+            # hero-carousel checkmark + week strip exactly like the UI path.
+            action_data = {
+                "action": "complete_workout",
+                "workout_id": completed_scheduled.get("workout_id"),
+                "success": True,
+            }
+    elif len(logged) == 1 and completed_scheduled is None:
+        action_data = {"action": "event_logged", **_event_payload(logged[0])}
+    else:
+        # Multi-action, or a scheduled completion alongside other logs.
+        action_data = {
+            "action": "event_logged",
+            "events": [_event_payload(rd) for rd in logged],
+        }
+        if completed_scheduled is not None and not sched_already_done:
+            action_data["completed_workout_id"] = \
+                completed_scheduled.get("workout_id")
+
+    # ── Concrete confirmation copy (X18) ─────────────────────────────────
+    confirm_lines = []
+    if completed_scheduled is not None:
+        _sched_name = completed_scheduled.get("name", "your scheduled workout")
+        if sched_already_done:
+            confirm_lines.append(f"{_sched_name} was already marked complete")
+        else:
+            confirm_lines.append(f"{_sched_name} marked complete ✅")
+    for rd in logged:
+        label = rd.get("display") or rd.get("name") or "your activity"
+        cals = rd.get("calories")
+        if cals and rd.get("domain") in ("workout", "sauna"):
+            confirm_lines.append(f"{label} — ~{cals} kcal 🔥")
+        else:
+            confirm_lines.append(label)
+    summary = "; ".join(confirm_lines)
+
+    warnings = [rd.get("warning") or rd.get("extractor_warning")
+                for rd in logged if rd.get("warning") or rd.get("extractor_warning")]
+    warn_note = (" Note: " + " ".join(w for w in warnings if w)) if warnings else ""
+
+    ai_settings = state.get("ai_settings")
+    base_system_prompt = get_coach_system_prompt(ai_settings)
+    system_prompt = f"""{base_system_prompt}
+
+The user just logged the following and it has been SAVED to their tracker:
+  {summary}{warn_note}
+
+Confirm warmly in ONE or TWO short sentences that it's logged, repeating the
+concrete result (duration / calories / amount). Add at most one brief
+coaching nudge. Do NOT ask a question. Stay in character — persona above."""
+
+    conversation_history = [
+        {"role": msg["role"], "content": msg["content"]}
+        for msg in state.get("conversation_history", [])
+    ]
+    try:
+        response = await gemini_service.chat(
+            user_message=user_message,
+            system_prompt=system_prompt,
+            conversation_history=conversation_history,
+        )
+    except Exception as e:
+        logger.warning(f"[Coach Log] confirmation copy failed: {e}")
+        # Deterministic fallback — never leave the log silent (X18).
+        response = f"Logged: {summary}.{warn_note}"
+
+    logger.info(f"[Coach Log] Logged {len(logged)} event(s); failed {len(failed)}")
+    return {
+        "ai_response": response,
+        "final_response": response,
+        "action_data": action_data,
+    }
+
+
+async def _complete_scheduled_workout(state, user_id: str):
+    """A5 / X14 — complete today's SCHEDULED workout, if there is one.
+
+    Returns {workout_id, name} when a scheduled, not-yet-completed workout
+    was marked done; returns None when there's nothing scheduled (or it's
+    already complete) — the caller then logs a freeform activity instead.
+
+    Uses the same `complete_workout` endpoint the UI uses, so PRs, streaks,
+    XP and strength-score recalcs all run identically.
+    """
+    # Prefer the workout already threaded into agent state; fall back to a
+    # fresh fetch for today.
+    workout = state.get("current_workout")
+    if not workout or not workout.get("id"):
+        try:
+            from services.langgraph_agents.tools.nutrition_context_helpers import (
+                fetch_todays_workout,
+            )
+            workout = await fetch_todays_workout(user_id)
+        except Exception as e:
+            logger.warning(f"[Coach Log] fetch_todays_workout failed: {e}")
+            workout = None
+
+    if not workout or not workout.get("id"):
+        return None  # rest day / nothing scheduled → caller logs freeform
+
+    if workout.get("is_completed") or workout.get("status") == "completed":
+        # Already done — don't double-complete; treat as "nothing to do" so
+        # the caller falls through. The confirmation copy still acknowledges.
+        logger.info("[Coach Log] scheduled workout already completed")
+        return {
+            "workout_id": workout.get("id"),
+            "name": workout.get("name") or "your workout",
+            "already_done": True,
+        }
+
+    try:
+        from api.v1.workouts.crud_completion import complete_workout
+        from fastapi import Request as _Req
+        from starlette.background import BackgroundTasks as _BgTasks
+
+        scope = {"type": "http", "headers": [], "method": "POST",
+                 "path": "/workouts/complete"}
+        await complete_workout(
+            request=_Req(scope=scope, receive=None),
+            workout_id=str(workout["id"]),
+            background_tasks=_BgTasks(),
+            completion_method="marked_done",
+            current_user={"id": user_id},
+        )
+        logger.info(f"[Coach Log] completed scheduled workout {workout['id']}")
+        return {
+            "workout_id": workout.get("id"),
+            "name": workout.get("name") or "your workout",
+        }
+    except Exception as e:
+        detail = getattr(e, "detail", None) or str(e)
+        logger.warning(f"[Coach Log] complete scheduled workout failed: {detail}")
+        return None  # fall through to freeform log
+
+
+def _resolve_log_timestamp(hint) -> str:
+    """Convert a natural-language time hint to a concrete UTC ISO string.
+
+    X1 — "yesterday" / "this morning" / "last night" must log to the right
+    date, not "now". Reuses the catalog's deterministic hint tables.
+    """
+    from datetime import datetime, timedelta, timezone
+    from services.logging.catalog import resolve_day_offset, resolve_time_of_day
+
+    now = datetime.now(timezone.utc)
+    if not hint:
+        return now.isoformat()
+    target = now + timedelta(days=resolve_day_offset(hint))
+    tod = resolve_time_of_day(hint)
+    if tod:
+        midpoint = (tod[0] + tod[1]) // 2
+        target = target.replace(hour=midpoint, minute=0, second=0, microsecond=0)
+        # Never produce a future timestamp (e.g. "this evening" said at noon).
+        if target > now:
+            target = now
+    return target.isoformat()
 
 
 async def coach_response_node(state: CoachAgentState) -> Dict[str, Any]:

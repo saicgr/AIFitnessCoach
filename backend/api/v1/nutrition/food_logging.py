@@ -354,6 +354,11 @@ async def log_food_from_text(body: LogTextRequest, background_tasks: BackgroundT
     - "chicken salad with grilled chicken, lettuce, tomatoes, and ranch dressing"
     - "a bowl of oatmeal with banana and honey"
     """
+    # Never trust client-supplied body.user_id — see log_food_direct. The chat
+    # path sends the Supabase auth_id, not the backend users.id. Overwrite with
+    # the authoritative id resolved by get_current_user.
+    body.user_id = current_user["id"]
+
     logger.info(f"Logging food from text for user {body.user_id}: {body.description[:50]}...")
 
     try:
@@ -655,6 +660,15 @@ async def log_food_direct(
 
     The caller provides the nutrition data directly, which is logged as-is.
     """
+    # SECURITY + CORRECTNESS: never trust the client-supplied body.user_id.
+    # The chat path sends the Supabase auth_id, not the backend users.id —
+    # which caused a food_logs_user_id_fkey 500. get_current_user has already
+    # resolved the authoritative backend users.id; overwrite body.user_id with
+    # it so every downstream use (insert, overrides, streak, cache, edits) is
+    # correct. Also closes an IDOR — a caller could otherwise log food onto
+    # another user's account by passing a different user_id.
+    body.user_id = current_user["id"]
+
     logger.info(f"Logging food directly for user {body.user_id}, source: {body.source_type}")
 
     # Debug: Log incoming values
@@ -893,6 +907,9 @@ async def log_food_from_text_streaming(request: Request, body: LogTextRequest, c
 
     Returns SSE events with progress updates and final food log.
     """
+    # Never trust client-supplied body.user_id — see log_food_direct.
+    body.user_id = current_user["id"]
+
     logger.info(f"[STREAM] Logging food from text for user {body.user_id}: {body.description[:50]}...")
 
     async def generate_sse() -> AsyncGenerator[str, None]:

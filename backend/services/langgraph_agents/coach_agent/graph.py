@@ -7,6 +7,7 @@ from .state import CoachAgentState
 from .nodes import (
     should_handle_action,
     coach_action_node,
+    coach_log_node,
     coach_response_node,
 )
 from core.logger import get_logger
@@ -42,20 +43,23 @@ def build_coach_agent_graph():
 
     # Add nodes
     graph.add_node("action", coach_action_node)
+    graph.add_node("log", coach_log_node)
     graph.add_node("respond", coach_response_node)
 
-    # Router: action or general response?
+    # Router: action, universal log, or general response?
     graph.add_conditional_edges(
         START,
         should_handle_action,
         {
             "action": "action",
+            "log": "log",
             "respond": "respond",
         }
     )
 
-    # Both nodes go to END
+    # All nodes go to END
     graph.add_edge("action", END)
+    graph.add_edge("log", END)
     graph.add_edge("respond", END)
 
     compiled = graph.compile()

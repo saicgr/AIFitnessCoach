@@ -125,6 +125,7 @@ class FoodAnalysisCacheService(FoodAnalysisCacheServicePart2, FoodAnalysisCacheS
         total_carbs = sum(float(item.get("carbs_g", 0)) for item in food_items)
         total_fat = sum(float(item.get("fat_g", 0)) for item in food_items)
         total_fiber = sum(float(item.get("fiber_g", 0)) for item in food_items)
+        total_sugar = sum(float(item.get("sugar_g", 0) or 0) for item in food_items)
 
         macros = {
             "calories": total_cal,
@@ -139,7 +140,9 @@ class FoodAnalysisCacheService(FoodAnalysisCacheServicePart2, FoodAnalysisCacheS
         if item_scores:
             health_score = round(sum(item_scores) / len(item_scores))
         else:
-            health_score = self._compute_health_score(total_cal, total_protein, total_fiber)
+            health_score = self._compute_health_score(
+                total_cal, total_protein, total_fiber, total_carbs, total_sugar
+            )
 
         # Fetch user context (goals, targets, daily summary)
         user_goals = []
@@ -419,6 +422,7 @@ class FoodAnalysisCacheService(FoodAnalysisCacheServicePart2, FoodAnalysisCacheS
                     total_c = sum(float(it.get("carbs_g", 0)) for it in component_results)
                     total_f = sum(float(it.get("fat_g", 0)) for it in component_results)
                     total_fib = sum(float(it.get("fiber_g", 0)) for it in component_results)
+                    total_sug = sum(float(it.get("sugar_g", 0) or 0) for it in component_results)
                     aggregated = {
                         "meal_type": meal_type or "snack",
                         "food_items": component_results,
@@ -427,7 +431,9 @@ class FoodAnalysisCacheService(FoodAnalysisCacheServicePart2, FoodAnalysisCacheS
                         "total_carbs_g": round(total_c, 1),
                         "total_fat_g": round(total_f, 1),
                         "total_fiber_g": round(total_fib, 1),
-                        "health_score": self._compute_health_score(total_cal, total_p, total_fib),
+                        "health_score": self._compute_health_score(
+                            total_cal, total_p, total_fib, total_c, total_sug
+                        ),
                         "feedback": "",
                     }
                     result.update(aggregated)
@@ -700,7 +706,7 @@ class FoodAnalysisCacheService(FoodAnalysisCacheServicePart2, FoodAnalysisCacheS
                 "unit": "g",
             }]
 
-        score = self._compute_health_score(total_calories, protein_g, fiber_g)
+        score = self._compute_health_score(total_calories, protein_g, fiber_g, carbs_g)
 
         return {
             "food_items": food_items,
@@ -861,7 +867,7 @@ class FoodAnalysisCacheService(FoodAnalysisCacheServicePart2, FoodAnalysisCacheS
             food_item["weight_per_unit_g"] = override["override_weight_per_piece_g"]
             food_item["count"] = default_count
 
-        score = self._compute_health_score(total_calories, total_protein, total_fiber)
+        score = self._compute_health_score(total_calories, total_protein, total_fiber, total_carbs)
 
         result = {
             "food_items": [food_item],
@@ -971,7 +977,7 @@ class FoodAnalysisCacheService(FoodAnalysisCacheServicePart2, FoodAnalysisCacheS
         if override.get("override_weight_per_piece_g"):
             food_item["weight_per_unit_g"] = override["override_weight_per_piece_g"]
 
-        score = self._compute_health_score(total_calories, total_protein, total_fiber)
+        score = self._compute_health_score(total_calories, total_protein, total_fiber, total_carbs)
 
         result = {
             "food_items": [food_item],
@@ -1073,7 +1079,7 @@ class FoodAnalysisCacheService(FoodAnalysisCacheServicePart2, FoodAnalysisCacheS
             food_item["weight_per_unit_g"] = override["override_weight_per_piece_g"]
             food_item["count"] = count_display
 
-        score = self._compute_health_score(total_calories, total_protein, total_fiber)
+        score = self._compute_health_score(total_calories, total_protein, total_fiber, total_carbs)
 
         result = {
             "food_items": [food_item],

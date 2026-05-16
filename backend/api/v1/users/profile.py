@@ -28,6 +28,36 @@ router = APIRouter()
 logger = get_logger(__name__)
 
 
+def _parse_list_field(value):
+    """Coerce an incoming goals/equipment/injuries field to a list.
+
+    The client is inconsistent: it sometimes sends a JSON-encoded array
+    (`'["Build Muscle"]'`), sometimes a plain scalar string
+    (`'Build Muscle'`), and sometimes an actual list. A plain string is
+    NOT valid JSON, so a naive `json.loads()` raises JSONDecodeError and
+    500s the whole PUT. Handle every shape here.
+    """
+    if value is None:
+        return None
+    if isinstance(value, list):
+        return value
+    if isinstance(value, str):
+        stripped = value.strip()
+        if not stripped:
+            return []
+        try:
+            parsed = json.loads(stripped)
+        except json.JSONDecodeError:
+            # Plain scalar string — wrap as a single-element list.
+            return [stripped]
+        if isinstance(parsed, list):
+            return parsed
+        # JSON parsed to a scalar (e.g. "Build Muscle" with quotes) — wrap it.
+        return [parsed]
+    # dict or other — pass through unchanged.
+    return value
+
+
 async def _schedule_welcome_email(
     *,
     background_tasks: "BackgroundTasks",
@@ -241,9 +271,9 @@ async def create_user(request, user: UserCreate,
         db = get_supabase_db()
 
         # Parse JSON strings to actual types for Supabase JSONB
-        goals = json.loads(user.goals) if isinstance(user.goals, str) else user.goals
-        equipment = json.loads(user.equipment) if isinstance(user.equipment, str) else user.equipment
-        active_injuries = json.loads(user.active_injuries) if isinstance(user.active_injuries, str) else user.active_injuries
+        goals = _parse_list_field(user.goals)
+        equipment = _parse_list_field(user.equipment)
+        active_injuries = _parse_list_field(user.active_injuries)
 
         # Merge extended onboarding fields into preferences
         final_preferences = merge_extended_fields_into_preferences(
@@ -619,7 +649,7 @@ async def update_user(user_id: str, user: UserUpdate,
         if user.fitness_level is not None:
             update_data["fitness_level"] = user.fitness_level
         if user.goals is not None:
-            update_data["goals"] = json.loads(user.goals) if isinstance(user.goals, str) else user.goals
+            update_data["goals"] = _parse_list_field(user.goals)
         if user.equipment is not None:
             # Dual-write to legacy `equipment` VARCHAR + new `equipment_v2`
             # text[]. See migrations/2031_users_equipment_array_v2.sql.
@@ -637,10 +667,10 @@ async def update_user(user_id: str, user: UserUpdate,
             )
             equipment_changed = new_eq != existing_eq
         if user.custom_equipment is not None:
-            update_data["custom_equipment"] = json.loads(user.custom_equipment) if isinstance(user.custom_equipment, str) else user.custom_equipment
+            update_data["custom_equipment"] = _parse_list_field(user.custom_equipment)
             logger.info(f"Updating custom_equipment for user {user_id}")
         if user.active_injuries is not None:
-            update_data["active_injuries"] = json.loads(user.active_injuries) if isinstance(user.active_injuries, str) else user.active_injuries
+            update_data["active_injuries"] = _parse_list_field(user.active_injuries)
         if user.onboarding_completed is not None:
             update_data["onboarding_completed"] = user.onboarding_completed
             # Set timestamp when onboarding is marked as completed
@@ -1053,7 +1083,12 @@ async def update_user(user_id: str, user: UserUpdate,
             # Index exercise variety/consistency settings to ChromaDB for AI context
             prefs = update_data.get("preferences", {})
             if isinstance(prefs, str):
-                prefs = json.loads(prefs)
+                try:
+                    prefs = json.loads(prefs)
+                except json.JSONDecodeError:
+                    prefs = {}
+            if not isinstance(prefs, dict):
+                prefs = {}
 
             has_exercise_variety_settings = any([
                 prefs.get("exercise_consistency"),

@@ -132,6 +132,9 @@ INTENT_TO_AGENT = {
     CoachIntent.NAVIGATE: AgentType.COACH,
     CoachIntent.SET_WATER_GOAL: AgentType.COACH,
     CoachIntent.LOG_WEIGHT: AgentType.COACH,
+    # Universal natural-language logging (Phase 6) — handled by the coach
+    # agent's dedicated `log` node (parses + persists via /events/log).
+    CoachIntent.LOG_ACTIVITY: AgentType.COACH,
 }
 
 # Keyword-based routing for message analysis

@@ -353,7 +353,20 @@ async def claim_daily_crate(
             if crate_date_obj > today_obj:
                 raise HTTPException(status_code=400, detail="Cannot claim crates from the future")
             if (today_obj - crate_date_obj).days > 9:
-                raise HTTPException(status_code=400, detail="Crate too old to claim (max 9 days)")
+                # An expired crate is a business outcome, NOT a bad request.
+                # Returning 400 here made the home-screen "Open All" batch
+                # hard-fail ("Failed to open crates") whenever one crate in
+                # the set was >9 days old. Return a graceful result instead
+                # so the batch claims every still-valid crate and just skips
+                # this one. get_unclaimed_crates (migration 2077) also filters
+                # these out, so a well-behaved client never sends one.
+                logger.info(
+                    f"[XP] Skipping expired crate (>9 days): user={user_id}, crate_date={crate_date}"
+                )
+                return {
+                    "success": False,
+                    "message": "This crate has expired — crates can only be opened within 9 days.",
+                }
         else:
             # Default to user's local today
             crate_date = today_str

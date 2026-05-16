@@ -362,6 +362,46 @@ async def analyze_food_from_text_streaming(request: Request, body: LogTextReques
             }
             yield f"event: done\ndata: {json.dumps(response_data)}\n\n"
 
+            # ── Coaching tips — streamed AFTER `done` ──────────────────────
+            # The fast macro estimate already rendered. If the analysis did
+            # NOT carry coach commentary (the speed-rearchitected fast path
+            # often returns macros only), generate it now via a dedicated
+            # follow-up Gemini call and ship it as a late `coach_tips` event.
+            # Mirrors the image-stream path so the "Coach's Tip" card is
+            # always populated. A client that doesn't handle the event just
+            # shows no tips — fully graceful.
+            already_has_tips = bool(
+                (ai_suggestion and str(ai_suggestion).strip())
+                or (encouragements and any(str(e).strip() for e in encouragements))
+                or (warnings and any(str(w).strip() for w in warnings))
+                or (recommended_swap and str(recommended_swap).strip())
+            )
+            if not already_has_tips and food_items:
+                try:
+                    tip_tz = resolve_timezone(request, get_supabase_db(), body.user_id)
+                    tips = await cache_service.enrich_with_tips(
+                        food_items=food_items,
+                        meal_type=body.meal_type,
+                        mood_before=body.mood_before,
+                        user_id=body.user_id,
+                        timezone_str=tip_tz or "",
+                    )
+                    if tips:
+                        coach_tips_data = {
+                            "ai_suggestion": tips.get("ai_suggestion"),
+                            "encouragements": tips.get("encouragements", []),
+                            "warnings": tips.get("warnings", []),
+                            "recommended_swap": tips.get("recommended_swap"),
+                            "health_score": tips.get("health_score") or health_score,
+                            "health_score_reasons": tips.get("health_score_reasons")
+                            or health_score_reasons,
+                        }
+                        yield f"event: coach_tips\ndata: {json.dumps(coach_tips_data)}\n\n"
+                except Exception as tip_err:
+                    logger.warning(
+                        f"[ANALYZE-STREAM] coach_tips enrichment failed: {tip_err}"
+                    )
+
         except asyncio.CancelledError:
             # Client disconnected mid-stream. Cancel the inflight Gemini call
             # so we stop awaiting it (we already paid for any in-flight HTTP
