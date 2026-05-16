@@ -1,13 +1,11 @@
 // Fetch client for the public /roadmap board API (backend: api/v1/public_roadmap.py).
 //
-// In production the marketing site reaches the backend via a same-origin
-// Vercel rewrite (see vercel.json `/api/v1/roadmap/:path*`), so the default
-// base is the relative `/api/v1/roadmap`. For local dev, set VITE_API_URL to
-// the running backend (e.g. http://127.0.0.1:8011) — same convention as
-// lib/aiToolsClient.ts.
+// The base is a RELATIVE path on purpose. The marketing site reaches the
+// backend via a same-origin Vercel rewrite (vercel.json `/api/v1/roadmap/
+// :path*`) — same approach as the waitlist form. Calling the Render URL
+// directly (via VITE_API_URL) would be cross-origin and CORS-blocked.
 
-const ROOT = (import.meta.env.VITE_API_URL || '').replace(/\/api\/v1\/?$/, '');
-const BASE = `${ROOT}/api/v1/roadmap`;
+const BASE = '/api/v1/roadmap';
 
 export interface RoadmapStateEntry {
   vote_count: number;

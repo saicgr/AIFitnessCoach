@@ -182,10 +182,17 @@ class Settings(BaseSettings):
     # Redis (shared cache across workers)
     redis_url: Optional[str] = None
 
-    # CORS (for Flutter app)
+    # CORS (for Flutter app + the marketing site)
     # Specific allowed origins - do not use ["*"] with allow_credentials=True
+    # Marketing-site calls normally go through same-origin Vercel rewrites, but
+    # the zealova.com / fitwiz.us origins are listed as a safety net (and so
+    # any direct cross-origin call, e.g. free-tools usage, is not CORS-blocked).
     cors_origins: list[str] = [
         "https://aifitnesscoach-zqi3.onrender.com",
+        "https://zealova.com",
+        "https://www.zealova.com",
+        "https://fitwiz.us",
+        "https://www.fitwiz.us",
         "http://localhost:8000",
         "http://10.0.2.2:8000",
     ]
