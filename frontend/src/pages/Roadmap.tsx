@@ -1,258 +1,207 @@
+// Public product roadmap — a live kanban board for zealova.com/roadmap.
+//
+// Board CONTENT is static (data/roadmap.ts) so the page prerenders for SEO.
+// Vote counts + comments are dynamic: they hydrate client-side after mount
+// from /api/v1/roadmap (see lib/roadmapApi.ts). Visitors vote by email and
+// comment without an account.
+
+import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { AnimatePresence } from 'framer-motion';
 import MarketingNav from '../components/marketing/MarketingNav';
 import MarketingFooter from '../components/marketing/MarketingFooter';
 import { BRANDING } from '../lib/branding';
+import { ROADMAP_FEATURES, getFeatureBySlug, type RoadmapFeature } from '../data/roadmap';
+import {
+  fetchRoadmapState,
+  getVotedSlugs,
+  markVoted,
+  type RoadmapState,
+} from '../lib/roadmapApi';
+import KanbanBoard from '../components/roadmap/KanbanBoard';
+import VoteModal from '../components/roadmap/VoteModal';
+import FeatureDrawer from '../components/roadmap/FeatureDrawer';
+import SuggestFeatureModal from '../components/roadmap/SuggestFeatureModal';
 
-type Status = 'shipping' | 'next' | 'later';
-
-interface RoadmapItem {
-  title: string;
-  description: string;
-  status: Status;
-}
-
-interface RoadmapSection {
-  title: string;
-  subtitle: string;
-  status: Status;
-  items: RoadmapItem[];
-}
-
-const sections: RoadmapSection[] = [
-  {
-    title: 'Now — Shipping in the next few weeks',
-    subtitle: 'These are queued up and going out as soon as builds are signed.',
-    status: 'shipping',
-    items: [
-      {
-        title: 'Public Android launch',
-        description:
-          'Zealova is now approved for Google Play production. Public release is rolling out shortly.',
-        status: 'shipping',
-      },
-      {
-        title: 'iOS launch',
-        description: 'App Store submission immediately following Android.',
-        status: 'shipping',
-      },
-      {
-        title: 'Recipe Import',
-        description:
-          'Paste any recipe link or screenshot — Zealova extracts the ingredients, scales portions, and auto-logs it to your meals with calories and macros.',
-        status: 'shipping',
-      },
-      {
-        title: 'Sharper food recognition',
-        description:
-          'Better calorie and macro estimates on mixed plates, with an expanding international food database.',
-        status: 'shipping',
-      },
-    ],
-  },
-  {
-    title: 'Next — In active development',
-    subtitle: 'Started or planned for the following sprint.',
-    status: 'next',
-    items: [
-      {
-        title: 'Form-check from video',
-        description:
-          'Upload a squat, bench, or deadlift clip. Get rep-by-rep coaching feedback grounded in NSCA / NASM cues.',
-        status: 'next',
-      },
-      {
-        title: 'Food Preferences',
-        description:
-          'Meal pattern, allergens, cooking skill, budget, and dietary restrictions — used to personalize AI meal suggestions and recipe generation.',
-        status: 'next',
-      },
-      {
-        title: '"What Should I Eat?" widget',
-        description:
-          'One tap on your home or lock screen for an AI meal idea with calories and macros, plus a one-tap "Log it" button.',
-        status: 'next',
-      },
-      {
-        title: 'Bluetooth heart-rate hardware',
-        description:
-          'Pair BLE chest straps and HR monitors for live in-workout BPM, zones, and post-workout recovery insights.',
-        status: 'next',
-      },
-      {
-        title: 'Recipe Discovery Feed',
-        description:
-          'Browse, like, and remix recipes shared by the community. Ships alongside the Social tab.',
-        status: 'next',
-      },
-    ],
-  },
-  {
-    title: 'Later — On the horizon',
-    subtitle:
-      'Bigger pieces being designed and validated. Order may shift based on user feedback.',
-    status: 'later',
-    items: [
-      {
-        title: 'Home-screen widget suite',
-        description:
-          'Toggleable home-screen widgets: Fitness Score, Daily Stats, Weight Tracker, Calories Summary, Macro Rings, Quick Start, Mini Calendar.',
-        status: 'later',
-      },
-      {
-        title: 'Progress analytics',
-        description:
-          'Strength + volume charts over time, muscle heatmap of recently trained groups, week-over-week exercise variation.',
-        status: 'later',
-      },
-      {
-        title: 'Body & measurement tracking',
-        description:
-          'Quick body measurements, before/after photo compare, and daily activity summary from your wearable.',
-        status: 'later',
-      },
-      {
-        title: 'Holistic Weekly Plan',
-        description:
-          'A single weekly view that blends workouts, nutrition, hydration, and fasting — plus rest-day recovery tips.',
-        status: 'later',
-      },
-      {
-        title: 'Mood-aware workouts',
-        description:
-          'Quick mood check-in that adapts the day\'s session — lighter on low-energy days, harder when you\'re ready.',
-        status: 'later',
-      },
-      {
-        title: 'Journey + ROI',
-        description:
-          'Visualize your fitness journey over months and years: total workouts, time invested, milestones, and momentum.',
-        status: 'later',
-      },
-      {
-        title: 'Social & challenges',
-        description:
-          'Active challenges, leaderboards, and friend activity — opt-in, never the default.',
-        status: 'later',
-      },
-      {
-        title: 'Coach companion app',
-        description:
-          'A separate trainer-side product (same backend) where coaches can build and assign programs to clients.',
-        status: 'later',
-      },
-    ],
-  },
-];
-
-const statusStyles: Record<Status, { label: string; bg: string; text: string; ring: string }> = {
-  shipping: {
-    label: 'Now',
-    bg: 'rgba(34, 197, 94, 0.12)',
-    text: 'rgb(34, 197, 94)',
-    ring: 'rgba(34, 197, 94, 0.35)',
-  },
-  next: {
-    label: 'Next',
-    bg: 'rgba(56, 189, 248, 0.12)',
-    text: 'rgb(56, 189, 248)',
-    ring: 'rgba(56, 189, 248, 0.35)',
-  },
-  later: {
-    label: 'Later',
-    bg: 'rgba(168, 85, 247, 0.12)',
-    text: 'rgb(168, 85, 247)',
-    ring: 'rgba(168, 85, 247, 0.35)',
-  },
-};
-
-function StatusBadge({ status }: { status: Status }) {
-  const style = statusStyles[status];
-  return (
-    <span
-      className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-medium uppercase tracking-wider"
-      style={{
-        backgroundColor: style.bg,
-        color: style.text,
-        border: `1px solid ${style.ring}`,
-      }}
-    >
-      {style.label}
-    </span>
-  );
-}
+const TITLE = 'Zealova Roadmap: What We Are Building Next';
+const META_DESC =
+  'The live Zealova product roadmap. See what is shipped, in progress, and under consideration — and vote on the features you want next.';
+const CANONICAL = `https://${BRANDING.marketingDomain}/roadmap`;
 
 export default function Roadmap() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [state, setState] = useState<RoadmapState>({});
+  const [votedSlugs, setVotedSlugs] = useState<Set<string>>(new Set());
+  const [drawerFeature, setDrawerFeature] = useState<RoadmapFeature | null>(null);
+  const [voteFeature, setVoteFeature] = useState<RoadmapFeature | null>(null);
+  const [suggestOpen, setSuggestOpen] = useState(false);
+
+  // SEO meta.
+  useEffect(() => {
+    document.title = `${TITLE} | Zealova`;
+    const setMeta = (key: string, value: string, prop = false) => {
+      const attr = prop ? 'property' : 'name';
+      let el = document.head.querySelector<HTMLMetaElement>(`meta[${attr}="${key}"]`);
+      if (!el) {
+        el = document.createElement('meta');
+        el.setAttribute(attr, key);
+        document.head.appendChild(el);
+      }
+      el.content = value;
+    };
+    setMeta('description', META_DESC);
+    setMeta('og:title', TITLE, true);
+    setMeta('og:description', META_DESC, true);
+    setMeta('og:url', CANONICAL, true);
+    setMeta('og:type', 'website', true);
+    setMeta('twitter:card', 'summary_large_image');
+    setMeta('twitter:title', TITLE);
+    setMeta('twitter:description', META_DESC);
+    let canonical = document.head.querySelector<HTMLLinkElement>('link[rel="canonical"]');
+    if (!canonical) {
+      canonical = document.createElement('link');
+      canonical.rel = 'canonical';
+      document.head.appendChild(canonical);
+    }
+    canonical.href = CANONICAL;
+  }, []);
+
+  // Hydrate live counts + restore voted state + handle ?feature= deep link.
+  useEffect(() => {
+    setVotedSlugs(getVotedSlugs());
+    fetchRoadmapState().then(setState);
+    const slug = searchParams.get('feature');
+    if (slug) {
+      const f = getFeatureBySlug(slug);
+      if (f) setDrawerFeature(f);
+    }
+    // Run once on mount; deep link handled here intentionally.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const openDrawer = (feature: RoadmapFeature) => {
+    setDrawerFeature(feature);
+    setSearchParams({ feature: feature.slug }, { replace: true });
+  };
+  const closeDrawer = () => {
+    setDrawerFeature(null);
+    searchParams.delete('feature');
+    setSearchParams(searchParams, { replace: true });
+  };
+
+  const handleVoted = (slug: string, newCount: number) => {
+    setState((prev) => ({
+      ...prev,
+      [slug]: { vote_count: newCount, comment_count: prev[slug]?.comment_count ?? 0 },
+    }));
+    setVotedSlugs((prev) => new Set(prev).add(slug));
+    markVoted(slug);
+  };
+
+  const handleCommentAdded = (slug: string) => {
+    setState((prev) => ({
+      ...prev,
+      [slug]: {
+        vote_count: prev[slug]?.vote_count ?? 0,
+        comment_count: (prev[slug]?.comment_count ?? 0) + 1,
+      },
+    }));
+  };
+
+  const stats = useMemo(() => {
+    const shipped = ROADMAP_FEATURES.filter((f) => f.column === 'released').length;
+    const inProgress = ROADMAP_FEATURES.filter((f) => f.column === 'in_progress').length;
+    const openToVotes = ROADMAP_FEATURES.filter((f) => f.votable).length;
+    return { shipped, inProgress, openToVotes };
+  }, []);
+
   return (
     <div className="min-h-screen bg-[var(--color-background)] text-[var(--color-text)]">
       <MarketingNav />
 
-      <section className="pt-28 pb-20 px-6">
-        <div className="max-w-[820px] mx-auto">
+      <main className="mx-auto max-w-[1180px] px-5 pt-28 pb-20 sm:px-6">
+        {/* Header */}
+        <div className="max-w-2xl">
           <h1
-            className="text-[36px] sm:text-[48px] font-semibold tracking-[-0.02em] mb-4"
+            className="text-[34px] font-semibold tracking-[-0.02em] sm:text-[44px]"
             style={{ fontFamily: 'var(--font-heading)' }}
           >
             Roadmap
           </h1>
-          <p className="text-[15px] text-[var(--color-text-secondary)] leading-relaxed mb-4">
-            What's coming next to {BRANDING.appName}. This page is the source of truth — if it isn't here, it isn't being worked on yet.
+          <p className="mt-3 text-[15px] leading-relaxed text-[var(--color-text-secondary)]">
+            What we have shipped, what we are building, and what is up for debate. Vote on the
+            ideas you want next — every vote is read, and we email you the day a feature you
+            backed goes live.
           </p>
-          <p className="text-[13px] text-[var(--color-text-muted)] leading-relaxed mb-12">
-            Last updated April 2026 · Order is intentional but flexible based on user feedback.
-          </p>
-
-          <div className="space-y-14">
-            {sections.map((section) => (
-              <div key={section.title}>
-                <div className="flex items-center gap-3 mb-2">
-                  <h2
-                    className="text-[22px] sm:text-[26px] font-semibold text-[var(--color-text)]"
-                    style={{ fontFamily: 'var(--font-heading)' }}
-                  >
-                    {section.title}
-                  </h2>
-                  <StatusBadge status={section.status} />
-                </div>
-                <p className="text-[14px] text-[var(--color-text-muted)] leading-relaxed mb-6">
-                  {section.subtitle}
-                </p>
-
-                <div className="space-y-3">
-                  {section.items.map((item) => (
-                    <div
-                      key={item.title}
-                      className="border border-[var(--color-border)] rounded-xl p-5 hover:border-[var(--color-text-muted)] transition-colors"
-                    >
-                      <div className="flex items-start justify-between gap-4 mb-2">
-                        <h3 className="text-[16px] font-semibold text-[var(--color-text)]">
-                          {item.title}
-                        </h3>
-                        <StatusBadge status={item.status} />
-                      </div>
-                      <p className="text-[14px] text-[var(--color-text-secondary)] leading-relaxed">
-                        {item.description}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="mt-16 p-6 border border-[var(--color-border)] rounded-xl">
-            <h3
-              className="text-[18px] font-semibold mb-2"
-              style={{ fontFamily: 'var(--font-heading)' }}
-            >
-              Have a request?
-            </h3>
-            <p className="text-[14px] text-[var(--color-text-secondary)] leading-relaxed">
-              Email <a href={`mailto:${BRANDING.supportEmail}`} className="underline">{BRANDING.supportEmail}</a> or open the in-app chat with the AI coach and tag it as feedback. Every request is read.
-            </p>
-          </div>
         </div>
-      </section>
+
+        {/* Stat row + suggest CTA */}
+        <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-3">
+          <div className="flex gap-6">
+            <Stat value={stats.shipped} label="Shipped" />
+            <Stat value={stats.inProgress} label="In progress" />
+            <Stat value={stats.openToVotes} label="Open to votes" />
+          </div>
+          <button
+            onClick={() => setSuggestOpen(true)}
+            className="ml-auto inline-flex items-center gap-2 rounded-full bg-emerald-500 px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-emerald-500/20 transition-all hover:bg-emerald-400"
+          >
+            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+            </svg>
+            Suggest a feature
+          </button>
+        </div>
+
+        {/* Board */}
+        <div className="mt-9">
+          <KanbanBoard
+            state={state}
+            votedSlugs={votedSlugs}
+            onOpen={openDrawer}
+            onVote={(f) => setVoteFeature(f)}
+          />
+        </div>
+      </main>
 
       <MarketingFooter />
+
+      {/* Overlays */}
+      <AnimatePresence>
+        {drawerFeature && (
+          <FeatureDrawer
+            key="drawer"
+            feature={drawerFeature}
+            voteCount={state[drawerFeature.slug]?.vote_count ?? 0}
+            voted={votedSlugs.has(drawerFeature.slug)}
+            onClose={closeDrawer}
+            onVote={(f) => setVoteFeature(f)}
+            onCommentAdded={handleCommentAdded}
+          />
+        )}
+      </AnimatePresence>
+      <AnimatePresence>
+        {voteFeature && (
+          <VoteModal
+            key="vote"
+            feature={voteFeature}
+            onClose={() => setVoteFeature(null)}
+            onVoted={handleVoted}
+          />
+        )}
+      </AnimatePresence>
+      <AnimatePresence>
+        {suggestOpen && <SuggestFeatureModal key="suggest" onClose={() => setSuggestOpen(false)} />}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+function Stat({ value, label }: { value: number; label: string }) {
+  return (
+    <div>
+      <div className="text-[22px] font-bold leading-none text-[var(--color-text)]">{value}</div>
+      <div className="mt-1 text-[12px] font-medium text-[var(--color-text-muted)]">{label}</div>
     </div>
   );
 }

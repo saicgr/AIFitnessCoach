@@ -84,11 +84,11 @@ export default function MarketingNav() {
   const { theme, toggleTheme } = useAppStore();
 
   const toolsRef = useRef<HTMLDivElement>(null);
-  const compareRef = useRef<HTMLDivElement>(null);
+  const articlesRef = useRef<HTMLDivElement>(null);
   const resourcesRef = useRef<HTMLDivElement>(null);
 
   useClickOutside(toolsRef, () => { if (openDropdown === 'tools') setOpenDropdown(null); });
-  useClickOutside(compareRef, () => { if (openDropdown === 'compare') setOpenDropdown(null); });
+  useClickOutside(articlesRef, () => { if (openDropdown === 'articles') setOpenDropdown(null); });
   useClickOutside(resourcesRef, () => { if (openDropdown === 'resources') setOpenDropdown(null); });
 
   // The landing page has a cinematic hero the nav floats transparently over
@@ -151,10 +151,11 @@ export default function MarketingNav() {
     </motion.div>
   );
 
-  // Single top-level link kept simple. Everything else lives in 3
-  // organized dropdowns: Tools, Compare, Resources.
+  // Two top-level links (Features, Roadmap). Everything else lives in 3
+  // organized dropdowns: Tools, Articles, Resources.
   const navLinks = [
     { label: 'Features', to: '/features' },
+    { label: 'Roadmap', to: '/roadmap' },
   ];
 
   const toolsLinks = [
@@ -162,20 +163,34 @@ export default function MarketingNav() {
     { label: 'Glossary', to: '/glossary', desc: '15 fitness concepts explained' },
   ];
 
-  const compareLinks = [
-    { label: 'All comparisons & guides', to: '/blog' },
-    { label: 'vs Google Health', to: '/vs/google-health' },
-    { label: 'Best AI Fitness Apps 2026', to: '/best-ai-fitness-apps-2026' },
-    { label: 'Best Calorie Trackers 2026', to: '/best-calorie-tracker-apps-2026' },
-    { label: 'Best Workout Generators 2026', to: '/best-workout-generator-apps-2026' },
-    { label: 'Best Fitbit Alternatives', to: '/best-fitbit-alternatives-2026' },
-    { label: 'Best MyFitnessPal Alternatives', to: '/best-myfitnesspal-alternatives-2026' },
+  // Articles dropdown — every long-form marketing page, grouped by type.
+  const articleGroups = [
+    {
+      heading: 'Comparisons',
+      links: [{ label: 'Zealova vs Google Health', to: '/vs/google-health' }],
+    },
+    {
+      heading: 'Roundups',
+      links: [
+        { label: 'Best AI Fitness Apps 2026', to: '/best-ai-fitness-apps-2026' },
+        { label: 'Best Calorie Trackers 2026', to: '/best-calorie-tracker-apps-2026' },
+        { label: 'Best Workout Generators 2026', to: '/best-workout-generator-apps-2026' },
+        { label: 'Best Fitbit Alternatives', to: '/best-fitbit-alternatives-2026' },
+        { label: 'Best MyFitnessPal Alternatives', to: '/best-myfitnesspal-alternatives-2026' },
+      ],
+    },
+    {
+      heading: 'Guides',
+      links: [
+        { label: 'Blog hub', to: '/blog' },
+        { label: 'Glossary', to: '/glossary' },
+      ],
+    },
   ];
+  const articleLinksFlat = articleGroups.flatMap((g) => g.links);
 
   const resourceLinks = [
-    { label: 'Blog', to: '/blog' },
     { label: 'FAQ', to: '/faq' },
-    { label: 'Roadmap', to: '/roadmap' },
     { label: 'Contact', to: '/contact' },
     { label: 'Privacy Policy', to: '/privacy' },
     { label: 'Terms of Service', to: '/terms' },
@@ -203,7 +218,7 @@ export default function MarketingNav() {
             {BRANDING.appName}
           </Link>
 
-          {/* Desktop Nav — 4 top-level items: Tools · Compare · Features · Resources */}
+          {/* Desktop Nav — Tools · Articles · Features · Roadmap · Resources */}
           <div className="hidden md:flex items-center gap-6">
             {/* Tools Dropdown */}
             <div ref={toolsRef} className="relative">
@@ -228,22 +243,30 @@ export default function MarketingNav() {
               </AnimatePresence>
             </div>
 
-            {/* Compare Dropdown */}
-            <div ref={compareRef} className="relative">
-              <button onClick={() => toggle('compare')} className={dropdownBtnClass('compare')}>
-                Compare {chevron('compare')}
+            {/* Articles Dropdown — long-form pages grouped by type */}
+            <div ref={articlesRef} className="relative">
+              <button onClick={() => toggle('articles')} className={dropdownBtnClass('articles')}>
+                Articles {chevron('articles')}
               </button>
               <AnimatePresence>
-                {openDropdown === 'compare' && dropdownPanel(
-                  compareLinks.map((link) => (
-                    <Link
-                      key={link.to}
-                      to={link.to}
-                      onClick={() => setOpenDropdown(null)}
-                      className={dropdownItemClass}
-                    >
-                      {link.label}
-                    </Link>
+                {openDropdown === 'articles' && dropdownPanel(
+                  articleGroups.map((group, gi) => (
+                    <div key={group.heading}>
+                      {gi > 0 && <div className="h-px bg-[var(--color-border)] my-1.5 mx-2" />}
+                      <p className="px-4 py-1 text-[10px] uppercase tracking-wider text-[var(--color-text-muted)] font-semibold">
+                        {group.heading}
+                      </p>
+                      {group.links.map((link) => (
+                        <Link
+                          key={link.to}
+                          to={link.to}
+                          onClick={() => setOpenDropdown(null)}
+                          className={dropdownItemClass}
+                        >
+                          {link.label}
+                        </Link>
+                      ))}
+                    </div>
                   )),
                   "w-72"
                 )}
@@ -265,7 +288,7 @@ export default function MarketingNav() {
               </Link>
             ))}
 
-            {/* Resources Dropdown — FAQ, Roadmap, Contact, Legal, Community */}
+            {/* Resources Dropdown — FAQ, Contact, Legal, Community */}
             <div ref={resourcesRef} className="relative">
               <button onClick={() => toggle('resources')} className={dropdownBtnClass('resources')}>
                 Resources {chevron('resources')}
@@ -397,9 +420,9 @@ export default function MarketingNav() {
                 </Link>
               ))}
 
-              {/* Compare group */}
-              <p className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider px-4 pt-3 pb-1">Compare</p>
-              {compareLinks.map((link) => (
+              {/* Articles group */}
+              <p className="text-xs font-semibold text-[var(--color-text-muted)] uppercase tracking-wider px-4 pt-3 pb-1">Articles</p>
+              {articleLinksFlat.map((link) => (
                 <Link
                   key={link.to}
                   to={link.to}
