@@ -39,8 +39,8 @@ export default function KanbanColumn({
         </p>
       </div>
 
-      {/* Cards */}
-      <div className="flex flex-col gap-2.5">
+      {/* Cards — each column scrolls independently on desktop */}
+      <div className="flex flex-col gap-2.5 lg:max-h-[70vh] lg:overflow-y-auto lg:pr-1.5">
         <AnimatePresence mode="popLayout">
           {features.map((feature) => {
             const entry = state[feature.slug];

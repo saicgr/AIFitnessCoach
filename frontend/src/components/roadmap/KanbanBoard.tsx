@@ -141,7 +141,7 @@ export default function KanbanBoard({ state, votedSlugs, onOpen, onVote }: Kanba
       </div>
 
       {/* ---- Desktop: 5 columns side by side ---- */}
-      <div className="hidden gap-4 lg:grid lg:grid-cols-5">
+      <div className="hidden gap-5 lg:grid lg:grid-cols-5">
         {ROADMAP_COLUMNS.map((column) => (
           <KanbanColumn
             key={column.id}

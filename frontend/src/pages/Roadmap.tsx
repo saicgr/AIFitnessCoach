@@ -121,7 +121,7 @@ export default function Roadmap() {
     <div className="min-h-screen bg-[var(--color-background)] text-[var(--color-text)]">
       <MarketingNav />
 
-      <main className="mx-auto max-w-[1180px] px-5 pt-28 pb-20 sm:px-6">
+      <main className="mx-auto max-w-[1800px] px-5 pt-28 pb-20 sm:px-8">
         {/* Header */}
         <div className="max-w-2xl">
           <h1
