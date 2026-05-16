@@ -12,7 +12,9 @@
     "seo": "node scripts/generate-seo.mjs",
     "og": "node scripts/generate-og.mjs",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "deploy": "bash scripts/deploy.sh prod",
+    "deploy:preview": "bash scripts/deploy.sh preview"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
