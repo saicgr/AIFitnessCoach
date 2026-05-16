@@ -33,6 +33,21 @@ final healthSyncProvider = StateNotifierProvider<HealthSyncNotifier, HealthSyncS
   return HealthSyncNotifier(ref.watch(healthServiceProvider));
 });
 
+/// AI / chat / manually-logged calories burned TODAY (Phase 6).
+///
+/// Powers the home "TRACKING" flame icon so an activity logged through the
+/// AI Coach ("I did 30 min yoga") shows its burned calories even when no
+/// wearable is connected. The backend de-duplicates against wearable-synced
+/// sessions, so this is safe to add to the HealthKit total.
+///
+/// `family` keyed by userId. Invalidate it after a chat `event_logged`
+/// (see chat_repository_part_chat_messages_notifier.dart) to refresh.
+final aiBurnedCaloriesProvider =
+    FutureProvider.family<int, String>((ref, userId) async {
+  final service = ref.watch(activityServiceProvider);
+  return service.getAiBurnedCaloriesToday(userId);
+});
+
 /// Health service for interacting with Health Connect (Android) / HealthKit (iOS)
 class HealthService {
   final Health _health = Health();

@@ -465,6 +465,9 @@ class NutritionRepository {
       String eventType = '';
       String eventData = '';
       String buffer = '';
+      // Hold the `done` payload so the late `coach_tips` event can be merged
+      // into a COMPLETE foodLog (the coach-tip card needs the full meal).
+      Map<String, dynamic>? doneData;
 
       debugPrint('🔍 [Nutrition-Text] Starting to read SSE stream...');
       await for (final bytes in responseBody.stream) {
@@ -498,6 +501,7 @@ class NutritionRepository {
                 } else if (eventType == 'done') {
                   debugPrint('✅ [Nutrition-Text] Analysis complete! Parsing JSON...');
                   try {
+                    doneData = data;
                     final foodLog = LogFoodResponse.fromJson(data);
                     debugPrint('✅ [Nutrition-Text] Parsed: ${foodLog.totalCalories} cal, ${foodLog.foodItems.length} items');
                     // Cache the successful result
@@ -523,6 +527,37 @@ class NutritionRepository {
                       isAnalysisOnly: true,
                     );
                   }
+                } else if (eventType == 'coach_tips') {
+                  // Late-arriving coaching tips — streamed AFTER `done` so the
+                  // macro card already rendered fast. Merge the tip fields
+                  // into the stored `done` payload and re-emit a COMPLETE
+                  // foodLog so the UI can swap the shimmer for the real tip.
+                  final merged = <String, dynamic>{...?doneData};
+                  for (final k in const [
+                    'ai_suggestion', 'encouragements', 'warnings',
+                    'recommended_swap', 'health_score', 'health_score_reasons',
+                  ]) {
+                    if (data[k] != null) merged[k] = data[k];
+                  }
+                  LogFoodResponse? mergedLog;
+                  if (merged.isNotEmpty) {
+                    try {
+                      mergedLog = LogFoodResponse.fromJson(merged);
+                      _cacheResult(cacheKey, mergedLog);
+                    } catch (e) {
+                      debugPrint('⚠️ [Nutrition-Text] coach_tips merge parse error: $e');
+                    }
+                  }
+                  yield FoodLoggingProgress(
+                    step: 3,
+                    totalSteps: 3,
+                    message: 'Coach tips ready',
+                    elapsedMs: elapsedMs,
+                    foodLog: mergedLog,
+                    isCompleted: true,
+                    isAnalysisOnly: true,
+                    coachTips: data,
+                  );
                 } else if (eventType == 'error') {
                   debugPrint('❌ [Nutrition-Text] Server error: ${data['error']}');
                   yield FoodLoggingProgress(

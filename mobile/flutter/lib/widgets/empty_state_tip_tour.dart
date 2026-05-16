@@ -67,6 +67,14 @@ class EmptyStateTipTour extends StatefulWidget {
   /// Bottom padding (only matters for default alignment).
   final EdgeInsetsGeometry padding;
 
+  /// When true, the card-placement logic reserves extra bottom clearance for
+  /// the floating main navigation bar (~76pt). Set this on tours that run on
+  /// screens hosting the main nav (Discover, leaderboards, home tabs) so a
+  /// card placed *below* its spotlight target doesn't slide under the nav.
+  /// Leave false for sheet-hosted tours and full-screen modals that have no
+  /// main nav bar.
+  final bool hasMainNavBar;
+
   const EmptyStateTipTour({
     super.key,
     required this.tourId,
@@ -74,7 +82,13 @@ class EmptyStateTipTour extends StatefulWidget {
     this.forceShow = false,
     this.alignment = Alignment.bottomCenter,
     this.padding = const EdgeInsets.fromLTRB(16, 0, 16, 24),
+    this.hasMainNavBar = false,
   });
+
+  /// Height of the floating main navigation bar plus the gap between it and
+  /// a tour card placed just above it. Used to pad `bottomSafe` so cards
+  /// below their target clear the nav.
+  static const double mainNavClearance = 76;
 
   /// Clear the persisted dismissal flag for one specific tour.
   static Future<void> reset(String tourId) async {
@@ -299,7 +313,13 @@ class _EmptyStateTipTourState extends State<EmptyStateTipTour> {
         final mq = MediaQuery.of(context);
         final screenSize = mq.size;
         final topSafe = mq.padding.top + 16;
-        final bottomSafe = mq.padding.bottom + 24;
+        // `mq.padding.bottom` only covers the OS home-indicator inset. On
+        // screens that host the floating main nav bar, a card placed *below*
+        // its target would otherwise extend under/over the nav — add the
+        // nav's height (+gap) so the placement logic reserves room for it.
+        final bottomSafe = mq.padding.bottom +
+            24 +
+            (widget.hasMainNavBar ? EmptyStateTipTour.mainNavClearance : 0);
         // 16pt gap between spotlight ring and card.
         const gap = 16.0;
 
@@ -572,7 +592,11 @@ class _TipCard extends StatelessWidget {
             ],
           ),
           padding: const EdgeInsets.fromLTRB(18, 16, 14, 16),
-          child: Column(
+          // Scrollable so a tall tip (long body wrapping to several lines,
+          // many step dots) never overflows when the placement logic has
+          // to squeeze the card into a tight slot beside the spotlight.
+          child: SingleChildScrollView(
+            child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -671,6 +695,7 @@ class _TipCard extends StatelessWidget {
                 ],
               ),
             ],
+            ),
           ),
         ),
       ),

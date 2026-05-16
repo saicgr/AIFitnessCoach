@@ -50,7 +50,78 @@ class MenuAnalysisTour {
         ),
       ];
 
-  static Widget overlay() => Positioned.fill(
-        child: EmptyStateTipTour(tourId: id, tips: steps()),
-      );
+  /// Mount the tour on the Menu Analysis sheet.
+  ///
+  /// The sheet body is hosted inside a `GlassSheet` whose `Stack` does NOT
+  /// start at the top of the device — it floats some way down the screen.
+  /// If the `EmptyStateTipTour` were dropped directly into that `Stack`
+  /// (the old `Positioned.fill` form), the tour's card-placement logic —
+  /// which reasons in full-screen `MediaQuery` coordinates — would push a
+  /// card near the sheet's top edge *outside* the sheet bounds, where it
+  /// was clipped.
+  ///
+  /// `_MenuAnalysisTourHost` instead inserts the tour into the root
+  /// `Overlay`, so the tour's `RenderBox` fills the whole screen. Its
+  /// origin is then (0, 0), which makes the screen-global rect math in
+  /// `EmptyStateTipTour._resolveTargetRect` line up exactly with
+  /// `MediaQuery` — the spotlight cutout stays aligned with the anchored
+  /// widgets, and cards are no longer clipped by the sheet.
+  static Widget overlay() => const _MenuAnalysisTourHost();
 }
+
+/// Zero-size widget that mounts the Menu Analysis [EmptyStateTipTour] into
+/// the root [Overlay] for its lifetime, then tears it down on dispose.
+///
+/// Rendering through the root overlay (rather than as a `Positioned.fill`
+/// child of the `GlassSheet` `Stack`) gives the tour a full-screen
+/// coordinate space that matches `MediaQuery`, fixing top-edge clipping of
+/// cards anchored near the sheet's upper border.
+class _MenuAnalysisTourHost extends StatefulWidget {
+  const _MenuAnalysisTourHost();
+
+  @override
+  State<_MenuAnalysisTourHost> createState() => _MenuAnalysisTourHostState();
+}
+
+class _MenuAnalysisTourHostState extends State<_MenuAnalysisTourHost> {
+  OverlayEntry? _entry;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      // `rootOverlay: true` ensures we land on the app-level Overlay, above
+      // the GlassSheet's route, so the tour fills the entire screen.
+      final overlay = Overlay.of(context, rootOverlay: true);
+      final entry = OverlayEntry(
+        builder: (_) => Positioned.fill(
+          child: EmptyStateTipTour(
+            tourId: MenuAnalysisTour.id,
+            tips: _menuAnalysisTips,
+            // No main nav bar — Menu Analysis is a modal sheet.
+            hasMainNavBar: false,
+          ),
+        ),
+      );
+      _entry = entry;
+      overlay.insert(entry);
+    });
+  }
+
+  @override
+  void dispose() {
+    // Remove the overlay entry when the sheet is dismissed so the tour
+    // doesn't linger over whatever screen is underneath.
+    _entry?.remove();
+    _entry = null;
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => const SizedBox.shrink();
+}
+
+/// Tips list hoisted to a top-level `const` so the [OverlayEntry] builder
+/// (which runs outside `_MenuAnalysisTourHost`'s build) can reference it.
+final List<EmptyStateTip> _menuAnalysisTips = MenuAnalysisTour.steps();

@@ -156,6 +156,27 @@ class ActivityService {
     }
   }
 
+  /// Get today's calories burned from chat- / manually-logged activities.
+  ///
+  /// Phase 6 — feeds the home flame icon so an AI-Coach-logged activity
+  /// ("I did 30 min yoga") shows its burned calories even without a
+  /// connected wearable. The backend already de-duplicates against
+  /// wearable-synced sessions, so this value can be safely ADDED to the
+  /// HealthKit total without double-counting.
+  Future<int> getAiBurnedCaloriesToday(String userId) async {
+    try {
+      final response = await _apiClient.get('/activity/ai-burned/$userId');
+      if (response.statusCode == 200 && response.data != null) {
+        final data = response.data as Map<String, dynamic>;
+        return (data['ai_burned_calories'] as num?)?.round() ?? 0;
+      }
+      return 0;
+    } catch (e) {
+      debugPrint('❌ [Activity] Error getting AI burned calories: $e');
+      return 0;
+    }
+  }
+
   /// Get activity history from backend
   Future<List<DailyActivity>> getActivityHistory(
     String userId, {

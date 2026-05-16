@@ -207,6 +207,12 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
   // Re-entrancy guard for the manual "Add food" flow — protects against
   // double-tapping the action chip while a stream is still in-flight.
   bool _addingFoodItem = false;
+  // True between the `done` event (fast macro estimate) and the late
+  // `coach_tips` event — drives the shimmer placeholder on the coach-tip
+  // card so the "Coach's Tip" always appears even on the fast macro path.
+  bool _awaitingCoachTip = false;
+  // Re-entrancy guard for the Refine-with-AI correction flow.
+  bool _refiningMeal = false;
   String _sourceType = 'text';
   /// Specific input method — sent to backend so food_logs.input_type is
   /// populated. Values match the migration-1960 CHECK allowlist: text, voice,

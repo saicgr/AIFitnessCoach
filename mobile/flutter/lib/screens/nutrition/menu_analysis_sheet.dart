@@ -13,6 +13,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/theme_colors.dart';
@@ -642,6 +643,13 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
   Color _glassBorder(BuildContext context, double alpha) =>
       _glassTint(context, alpha);
 
+  /// Theme-aware app accent orange — uses the darker [AppColorsLight.orange]
+  /// in light mode so badges/buttons stay legible on a white background.
+  Color _themeOrange(BuildContext context) =>
+      Theme.of(context).brightness == Brightness.dark
+          ? AppColors.orange
+          : AppColorsLight.orange;
+
   // ───────────────────────── build ─────────────────────────
 
   @override
@@ -718,6 +726,11 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
             onPressed: _bookmarkAnalysis,
           ),
           IconButton(
+            tooltip: 'Saved menus',
+            icon: Icon(Icons.history_rounded, color: colors.textSecondary),
+            onPressed: () => context.push('/menu-history'),
+          ),
+          IconButton(
             icon: Icon(Icons.close, color: colors.textMuted),
             onPressed: () => Navigator.pop(context),
           ),
@@ -727,6 +740,7 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
   }
 
   Widget _budgetRings(ThemeColors colors) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final state = ref.watch(nutritionPreferencesProvider);
     final summary = ref.watch(nutritionProvider).todaySummary;
     final totals = _selectedTotals;
@@ -759,29 +773,34 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
               children: [
                 MacroBudgetRing(
                   label: 'Cal',
-            consumed: consumedCal.toDouble(),
-            target: state.currentCalorieTarget.toDouble(),
-            color: AppColors.coral,
-          ),
-          MacroBudgetRing(
-            label: 'Protein',
-            consumed: consumedP,
-            target: state.currentProteinTarget.toDouble(),
-            color: AppColors.macroProtein,
-            unit: 'g',
-          ),
-          MacroBudgetRing(
-            label: 'Carbs',
-            consumed: consumedC,
-            target: state.currentCarbsTarget.toDouble(),
-            color: AppColors.macroCarbs,
-            unit: 'g',
-          ),
+                  consumed: consumedCal.toDouble(),
+                  target: state.currentCalorieTarget.toDouble(),
+                  color: isDark ? AppColors.coral : AppColorsLight.coral,
+                ),
+                MacroBudgetRing(
+                  label: 'Protein',
+                  consumed: consumedP,
+                  target: state.currentProteinTarget.toDouble(),
+                  color: isDark
+                      ? AppColors.macroProtein
+                      : AppColorsLight.macroProtein,
+                  unit: 'g',
+                ),
+                MacroBudgetRing(
+                  label: 'Carbs',
+                  consumed: consumedC,
+                  target: state.currentCarbsTarget.toDouble(),
+                  color: isDark
+                      ? AppColors.macroCarbs
+                      : AppColorsLight.macroCarbs,
+                  unit: 'g',
+                ),
                 MacroBudgetRing(
                   label: 'Fat',
                   consumed: consumedF,
                   target: state.currentFatTarget.toDouble(),
-                  color: AppColors.macroFat,
+                  color:
+                      isDark ? AppColors.macroFat : AppColorsLight.macroFat,
                   unit: 'g',
                 ),
               ],
@@ -892,7 +911,7 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: AppColors.orange.withValues(alpha: 0.55), width: 1),
+                      borderSide: BorderSide(color: _themeOrange(context).withValues(alpha: 0.55), width: 1),
                     ),
                   ),
                 ),
@@ -901,7 +920,7 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
               KeyedSubtree(
                 key: _filterButtonKey,
                 child: Material(
-                  color: AppColors.orange.withValues(alpha: 0.15),
+                  color: _themeOrange(context).withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(12),
                   child: InkWell(
                     onTap: _openFilterSheet,
@@ -909,7 +928,7 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
                     child: Container(
                       padding: const EdgeInsets.all(10),
                       child: Icon(Icons.tune,
-                          size: 20, color: AppColors.orange),
+                          size: 20, color: _themeOrange(context)),
                     ),
                   ),
                 ),
@@ -1000,7 +1019,7 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
             : Icons.arrow_downward_rounded);
     return Material(
       color: active
-          ? AppColors.orange.withValues(alpha: 0.15)
+          ? _themeOrange(context).withValues(alpha: 0.15)
           : _glassTint(context, 0.05),
       borderRadius: BorderRadius.circular(10),
       child: InkWell(
@@ -1015,7 +1034,7 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
             borderRadius: BorderRadius.circular(10),
             border: active
                 ? Border.all(
-                    color: AppColors.orange.withValues(
+                    color: _themeOrange(context).withValues(
                         alpha: isPrimary ? 0.55 : 0.3),
                     width: isPrimary ? 1.2 : 1)
                 : null,
@@ -1028,12 +1047,12 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: active ? FontWeight.w700 : FontWeight.w600,
-                  color: active ? AppColors.orange : colors.textSecondary,
+                  color: active ? _themeOrange(context) : colors.textSecondary,
                 ),
               ),
               if (arrow != null) ...[
                 const SizedBox(width: 4),
-                Icon(arrow, size: 12, color: AppColors.orange),
+                Icon(arrow, size: 12, color: _themeOrange(context)),
               ],
             ],
           ),
@@ -1046,7 +1065,7 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
     final highlighted = extraCount > 0;
     return Material(
       color: highlighted
-          ? AppColors.orange.withValues(alpha: 0.15)
+          ? _themeOrange(context).withValues(alpha: 0.15)
           : _glassTint(context, 0.05),
       borderRadius: BorderRadius.circular(10),
       child: InkWell(
@@ -1057,7 +1076,7 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(10),
             border: highlighted
-                ? Border.all(color: AppColors.orange.withValues(alpha: 0.4))
+                ? Border.all(color: _themeOrange(context).withValues(alpha: 0.4))
                 : null,
           ),
           child: Row(
@@ -1066,7 +1085,7 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
               Icon(Icons.tune_rounded,
                   size: 14,
                   color:
-                      highlighted ? AppColors.orange : colors.textSecondary),
+                      highlighted ? _themeOrange(context) : colors.textSecondary),
               const SizedBox(width: 6),
               Text(
                 highlighted ? 'More (+$extraCount)' : 'More…',
@@ -1074,7 +1093,7 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
                   color:
-                      highlighted ? AppColors.orange : colors.textSecondary,
+                      highlighted ? _themeOrange(context) : colors.textSecondary,
                 ),
               ),
             ],
@@ -1095,7 +1114,7 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
       alignment: Alignment.centerLeft,
       child: Material(
         color: hasSort
-            ? AppColors.orange.withValues(alpha: 0.15)
+            ? _themeOrange(context).withValues(alpha: 0.15)
             : _glassTint(context, 0.05),
         borderRadius: BorderRadius.circular(10),
         child: InkWell(
@@ -1106,7 +1125,7 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(10),
               border: hasSort
-                  ? Border.all(color: AppColors.orange.withValues(alpha: 0.4))
+                  ? Border.all(color: _themeOrange(context).withValues(alpha: 0.4))
                   : null,
             ),
             child: Row(
@@ -1114,14 +1133,14 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
               children: [
                 Icon(Icons.swap_vert,
                     size: 16,
-                    color: hasSort ? AppColors.orange : colors.textSecondary),
+                    color: hasSort ? _themeOrange(context) : colors.textSecondary),
                 const SizedBox(width: 6),
                 Text(
                   hasSort ? 'Sort: ${primary!.field.label}' : 'Sort',
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
-                    color: hasSort ? AppColors.orange : colors.textSecondary,
+                    color: hasSort ? _themeOrange(context) : colors.textSecondary,
                   ),
                 ),
                 if (hasSort) ...[
@@ -1131,7 +1150,7 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
                         ? Icons.arrow_upward
                         : Icons.arrow_downward,
                     size: 12,
-                    color: AppColors.orange,
+                    color: _themeOrange(context),
                   ),
                 ],
                 if (extraCount > 0) ...[
@@ -1141,7 +1160,7 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
                     style: TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.orange.withValues(alpha: 0.8),
+                      color: _themeOrange(context).withValues(alpha: 0.8),
                     ),
                   ),
                 ],
@@ -1258,7 +1277,7 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
       child: _collapsibleSection(
         title: 'Recommended for you',
         icon: Icons.auto_awesome,
-        titleColor: AppColors.orange,
+        titleColor: _themeOrange(context),
         subtitleCount: rec.picks.length,
         expanded: _showRecommended,
         onToggle: () => setState(() => _showRecommended = !_showRecommended),
@@ -1286,7 +1305,7 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
-                  color: AppColors.orange,
+                  color: _themeOrange(context),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
@@ -1402,7 +1421,7 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
               icon: const Icon(Icons.refresh_rounded, size: 16),
               label: const Text('Clear filters'),
               style: TextButton.styleFrom(
-                foregroundColor: AppColors.orange,
+                foregroundColor: _themeOrange(context),
               ),
             ),
           ],
@@ -1573,7 +1592,7 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
                         : 'Select dishes to log'),
                 onPressed: (_selected.isEmpty || _logged) ? null : _handleLog,
                 style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.orange,
+                  backgroundColor: _themeOrange(context),
                   padding: const EdgeInsets.symmetric(vertical: 12),
                 ),
               ),

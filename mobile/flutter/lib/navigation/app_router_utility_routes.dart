@@ -108,6 +108,12 @@ List<RouteBase> _utilityRoutes() => [
         builder: (context, state) => const NutritionSettingsScreen(),
       ),
 
+      // Saved Menus - History of bookmarked menu/buffet analyses
+      GoRoute(
+        path: '/menu-history',
+        builder: (context, state) => const MenuAnalysisHistoryScreen(),
+      ),
+
       // Mood History and Analytics
       GoRoute(
         path: '/mood-history',

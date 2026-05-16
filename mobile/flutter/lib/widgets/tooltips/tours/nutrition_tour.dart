@@ -47,7 +47,11 @@ class NutritionTour {
   static Widget overlay() => Positioned.fill(
         child: SafeArea(
           top: false,
-          child: EmptyStateTipTour(tourId: id, tips: steps()),
+          child: EmptyStateTipTour(
+            tourId: id,
+            tips: steps(),
+            hasMainNavBar: true,
+          ),
         ),
       );
 }

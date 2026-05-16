@@ -33,6 +33,9 @@ class MacroBudgetRing extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final labelColor =
+        (isDark ? Colors.white : Colors.black).withValues(alpha: 0.7);
     final isOver = consumed > target && target > 0;
     final remaining = target - consumed;
     final progress = target <= 0 ? 0.0 : (consumed / target).clamp(0.0, 1.0);
@@ -103,7 +106,7 @@ class MacroBudgetRing extends StatelessWidget {
           style: TextStyle(
             fontSize: 10,
             fontWeight: FontWeight.w800,
-            color: Colors.white.withValues(alpha: 0.7),
+            color: labelColor,
             letterSpacing: 1.2,
           ),
         ),

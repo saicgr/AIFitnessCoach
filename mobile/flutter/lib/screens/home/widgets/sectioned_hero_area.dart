@@ -341,8 +341,8 @@ class _HeroOverflowMenu extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final showSynced = ref.watch(showSyncedInCarouselProvider);
     return PopupMenuButton<_HeroOverflowAction>(
-      tooltip: 'More options',
-      icon: Icon(Icons.more_vert, size: 18, color: tint),
+      tooltip: 'Calendar display options',
+      icon: Icon(Icons.tune, size: 18, color: tint),
       padding: EdgeInsets.zero,
       onSelected: (action) {
         HapticService.selection();

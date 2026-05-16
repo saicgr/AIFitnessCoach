@@ -155,6 +155,7 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
       _progressDetail = null;
       _analysisElapsedMs = null;
       _previousResponse = null;
+      _awaitingCoachTip = false;
     });
     // Only show loading indicator if analysis takes > 500ms (avoids flash for cache hits)
     _loadingDelayTimer?.cancel();
@@ -187,9 +188,55 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
         }
 
         if (progress.isCompleted && progress.foodLog != null) {
-          response = progress.foodLog;
-          setState(() => _analysisElapsedMs = progress.elapsedMs);
-          break;
+          // The `done` event renders the macro card immediately (~2-3s). A
+          // late `coach_tips` event (progress.hasCoachTips) may follow a few
+          // seconds later carrying a foodLog with the coach commentary merged
+          // in. We do NOT break on `done` — keep listening so the tip swaps
+          // in when it arrives. The shimmer placeholder shows meanwhile.
+          final finalResponse = progress.foodLog!;
+          response = finalResponse;
+          final isTips = progress.hasCoachTips;
+          setState(() {
+            _analysisElapsedMs = progress.elapsedMs;
+            _isAnalyzing = false;
+            _showLoadingIndicator = false;
+            _analyzedResponse = finalResponse;
+            if (!isTips) {
+              // Only reset edits on the first (done) render — a late tips
+              // re-render must not wipe portion edits the user made.
+              _originalFoodItems =
+                  List<FoodItemRanking>.from(finalResponse.foodItems);
+              _pendingItemEdits.clear();
+              // The coach-tip card shows a shimmer until coach_tips lands.
+              _awaitingCoachTip = (finalResponse.aiSuggestion == null ||
+                      finalResponse.aiSuggestion!.trim().isEmpty) &&
+                  (finalResponse.encouragements == null ||
+                      !finalResponse.encouragements!
+                          .any((e) => e.trim().isEmpty == false)) &&
+                  (finalResponse.warnings == null ||
+                      !finalResponse.warnings!
+                          .any((w) => w.trim().isEmpty == false)) &&
+                  (finalResponse.recommendedSwap == null ||
+                      finalResponse.recommendedSwap!.trim().isEmpty);
+            } else {
+              _awaitingCoachTip = false;
+            }
+          });
+          if (!isTips) {
+            final description = _descriptionController.text.trim();
+            ref.read(posthogServiceProvider).capture(
+              eventName: 'food_text_analyzed',
+              properties: <String, Object>{
+                'description_length': description.length,
+                'meal_type': _selectedMealType.name,
+              },
+            );
+            // Show "Log This Meal" tooltip tour on first analysis
+            _triggerLogMealTour();
+          }
+          _loadingDelayTimer?.cancel();
+          if (isTips) break; // tips arrived — stream is done
+          continue; // keep listening for the late coach_tips event
         }
 
         setState(() {
@@ -203,26 +250,11 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
       debugPrint('🍎 [LogMeal] Streaming complete, response: $response');
       _loadingDelayTimer?.cancel();
       if (mounted && response != null) {
-        final description = _descriptionController.text.trim();
-        ref.read(posthogServiceProvider).capture(
-          eventName: 'food_text_analyzed',
-          properties: <String, Object>{
-            'description_length': description.length,
-            'meal_type': _selectedMealType.name,
-          },
-        );
-        final finalResponse = response;
-        setState(() {
-          _isAnalyzing = false;
-          _showLoadingIndicator = false;
-          _analyzedResponse = finalResponse;
-          // Snapshot the AI's per-item nutrition so inline edits diff against
-          // the original values (shallow copy — FoodItemRanking is immutable).
-          _originalFoodItems = List<FoodItemRanking>.from(finalResponse.foodItems);
-          _pendingItemEdits.clear();
-        });
-        // Show "Log This Meal" tooltip tour on first analysis
-        _triggerLogMealTour();
+        // _analyzedResponse already set inside the loop on the `done` event.
+        // If the stream ended before coach_tips arrived, clear the shimmer.
+        if (_awaitingCoachTip) {
+          setState(() => _awaitingCoachTip = false);
+        }
       } else if (mounted) {
         setState(() {
           _isAnalyzing = false;
@@ -1644,6 +1676,19 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
                 // re-render must not wipe portion edits the user made.
                 _originalFoodItems = List<FoodItemRanking>.from(response.foodItems);
                 _pendingItemEdits.clear();
+                // Shimmer the coach-tip card until coach_tips arrives.
+                _awaitingCoachTip = (response.aiSuggestion == null ||
+                        response.aiSuggestion!.trim().isEmpty) &&
+                    (response.encouragements == null ||
+                        !response.encouragements!
+                            .any((e) => e.trim().isEmpty == false)) &&
+                    (response.warnings == null ||
+                        !response.warnings!
+                            .any((w) => w.trim().isEmpty == false)) &&
+                    (response.recommendedSwap == null ||
+                        response.recommendedSwap!.trim().isEmpty);
+              } else {
+                _awaitingCoachTip = false;
               }
             }
           });
@@ -2020,6 +2065,226 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
       }
     } finally {
       if (mounted) setState(() => _addingFoodItem = false);
+    }
+  }
+
+  /// Build a compact, correction-framed description for the Refine flow.
+  /// Lists the current item set (name + macros) plus, when the user has made
+  /// manual per-item edits, an explicit "keep these exact" instruction so the
+  /// re-analysis (RE2) never clobbers values the user already corrected.
+  String _buildRefineDescription(String note) {
+    final items = _analyzedResponse!.foodItems;
+    final editedNames = _pendingItemEdits.keys
+        .where((i) => i >= 0 && i < items.length)
+        .map((i) => items[i].name.trim())
+        .where((n) => n.isNotEmpty)
+        .toSet();
+
+    final itemLines = <String>[];
+    for (final it in items) {
+      final cal = it.calories ?? 0;
+      final p = (it.proteinG ?? 0).round();
+      final c = (it.carbsG ?? 0).round();
+      final f = (it.fatG ?? 0).round();
+      itemLines.add('- ${it.name}: ${cal}kcal, ${p}g protein, '
+          '${c}g carbs, ${f}g fat');
+    }
+    final currentBlock = itemLines.isEmpty
+        ? '(no items detected yet)'
+        : itemLines.join('\n');
+
+    final keepLine = editedNames.isEmpty
+        ? ''
+        : "\nKeep these items' nutrition EXACTLY as listed unless the "
+            "correction directly changes them: ${editedNames.join(', ')}.";
+
+    // The streaming text-analysis endpoint treats this whole string as a meal
+    // description and returns a corrected full item list (handles add, remove,
+    // modify, portion scaling, brand swaps — RE3/R1-R10 — in one pass).
+    return 'Correcting a previous meal analysis.\n'
+        'Current meal items:\n$currentBlock\n'
+        "User correction: \"$note\".$keepLine\n"
+        'Apply the correction and return the corrected FULL meal item list '
+        'with accurate macros.';
+  }
+
+  /// Refine-with-AI — opens the glass note sheet, sends the note + current
+  /// item set to the streaming text-analysis endpoint framed as a CORRECTION,
+  /// and REPLACES the current item set with the result (Add appends; Refine
+  /// replaces). Totals + scoring are recomputed via [_rebuildResponseWithItems]
+  /// and the late `coach_tips` event. The previous analysis is kept on failure
+  /// and a one-step revert is offered via `_previousResponse`.
+  Future<void> _handleRefineMeal() async {
+    if (_refiningMeal) return;
+    if (_analyzedResponse == null) return;
+
+    final isGuest = ref.read(isGuestModeProvider);
+    if (isGuest) {
+      final canDescribe =
+          await ref.read(guestUsageLimitsProvider.notifier).useTextDescribe();
+      if (!canDescribe) {
+        if (mounted) {
+          GuestUpgradeSheet.show(context, feature: GuestFeatureLimit.textDescribe);
+        }
+        return;
+      }
+    }
+
+    final note = await showRefineFoodSheet(context);
+    if (note == null || note.trim().isEmpty) return; // RE5: empty → no-op
+    if (!mounted) return;
+
+    // RE5: a too-short / nonsense note can't meaningfully correct a meal —
+    // gentle no-op rather than destroying the current analysis.
+    if (note.trim().length < 3) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Add a bit more detail to refine.')),
+      );
+      return;
+    }
+
+    // RE12: snapshot the current analysis so the user can revert in one step,
+    // and RE7: restore it untouched if the network call fails.
+    final previousAnalysis = _analyzedResponse;
+    final previousOriginals = _originalFoodItems == null
+        ? null
+        : List<FoodItemRanking>.from(_originalFoodItems!);
+    final previousEdits = <int, List<FoodItemEdit>>{
+      for (final e in _pendingItemEdits.entries) e.key: List.of(e.value),
+    };
+
+    setState(() {
+      _refiningMeal = true;
+      _isAnalyzing = true;
+      _showLoadingIndicator = true;
+      _progressMessage = 'Refining your meal...';
+      _progressDetail = null;
+      _awaitingCoachTip = false;
+    });
+    final messenger = ScaffoldMessenger.of(context);
+
+    try {
+      final repository = ref.read(nutritionRepositoryProvider);
+      LogFoodResponse? streamed;
+      await for (final progress in repository.analyzeFoodFromTextStreaming(
+        userId: widget.userId,
+        description: _buildRefineDescription(note.trim()),
+        mealType: _selectedMealType.value,
+        moodBefore: _moodBefore?.value,
+      )) {
+        if (!mounted) return;
+        if (progress.hasError) {
+          // RE7: keep the previous analysis intact on failure.
+          messenger.showSnackBar(
+            SnackBar(content: Text("Couldn't refine: ${progress.message}")),
+          );
+          return;
+        }
+        if (progress.isCompleted && progress.foodLog != null) {
+          streamed = progress.foodLog;
+          if (progress.hasCoachTips) break;
+          continue; // keep listening for the late coach_tips event
+        }
+        setState(() {
+          _progressMessage = progress.message;
+          _progressDetail = progress.detail;
+        });
+      }
+
+      if (!mounted) return;
+      // RE5/RE13: refine returned nothing usable — keep the prior analysis.
+      if (streamed == null || streamed.foodItems.isEmpty) {
+        messenger.showSnackBar(
+          const SnackBar(
+            content: Text("Couldn't apply that correction — meal unchanged."),
+          ),
+        );
+        return;
+      }
+
+      final refined = streamed;
+      // RE9: sanity-clamp implausible totals — flag rather than trust blindly.
+      final cals = refined.totalCalories;
+      if (cals <= 0 || cals > 6000) {
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text(
+              cals <= 0
+                  ? 'That correction produced an empty meal — kept the previous estimate.'
+                  : "That correction looks off ($cals kcal) — kept the previous estimate.",
+            ),
+          ),
+        );
+        return;
+      }
+
+      // REPLACE the item set (Add appends — Refine replaces). Re-snapshot the
+      // originals so subsequent per-item edits diff against the refined values,
+      // and clear stale per-item edits (they keyed the old item indices).
+      setState(() {
+        // Keep _previousResponse so the existing "back to results" / revert
+        // affordance (RE12) can restore the pre-refine estimate.
+        _previousResponse = previousAnalysis;
+        _originalFoodItems = List<FoodItemRanking>.from(refined.foodItems);
+        _pendingItemEdits.clear();
+        // _rebuildResponseWithItems recomputes totals; health/inflammation
+        // scoring (RE8) comes from the refined response itself.
+        _analyzedResponse = refined;
+        _awaitingCoachTip = (refined.aiSuggestion == null ||
+                refined.aiSuggestion!.trim().isEmpty) &&
+            (refined.encouragements == null ||
+                !refined.encouragements!.any((e) => e.trim().isNotEmpty)) &&
+            (refined.warnings == null ||
+                !refined.warnings!.any((w) => w.trim().isNotEmpty)) &&
+            (refined.recommendedSwap == null ||
+                refined.recommendedSwap!.trim().isEmpty);
+      });
+
+      ref.read(posthogServiceProvider).capture(
+        eventName: 'food_meal_refined',
+        properties: <String, Object>{
+          'note_length': note.trim().length,
+          'items_before': previousAnalysis?.foodItems.length ?? 0,
+          'items_after': refined.foodItems.length,
+          'data_source': _sourceType,
+        },
+      );
+
+      messenger.showSnackBar(
+        SnackBar(
+          content: const Text('Meal refined'),
+          action: SnackBarAction(
+            label: 'Undo',
+            onPressed: () {
+              if (!mounted) return;
+              setState(() {
+                _analyzedResponse = previousAnalysis;
+                _originalFoodItems = previousOriginals;
+                _pendingItemEdits
+                  ..clear()
+                  ..addAll(previousEdits);
+                _previousResponse = null;
+                _awaitingCoachTip = false;
+              });
+            },
+          ),
+        ),
+      );
+    } catch (e) {
+      // RE7: network/timeout mid-refine — previous analysis is still in state.
+      if (mounted) {
+        messenger.showSnackBar(
+          SnackBar(content: Text("Couldn't refine: $e")),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _refiningMeal = false;
+          _isAnalyzing = false;
+          _showLoadingIndicator = false;
+        });
+      }
     }
   }
 

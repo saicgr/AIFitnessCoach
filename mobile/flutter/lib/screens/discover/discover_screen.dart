@@ -217,7 +217,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
           Positioned(
             left: 0,
             right: 0,
-            bottom: MediaQuery.of(context).viewPadding.bottom + 76,
+            bottom: MediaQuery.of(context).viewPadding.bottom + 68,
             child: Center(
               child: Builder(builder: (context) {
               final board = ref.watch(discoverBoardProvider);
@@ -2444,8 +2444,13 @@ class _RangeChips extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+    // Wrap (not Row): all 9 range chips don't fit one line on narrow phones —
+    // a Row with spaceEvenly overflowed 44px because it never shrinks children.
+    // Wrap flows the extras onto a second line so every range stays visible.
+    return Wrap(
+      alignment: WrapAlignment.center,
+      spacing: 8,
+      runSpacing: 8,
       children: [
         for (final r in FitnessHistoryRange.values)
           _chip(r, r == selected),

@@ -107,6 +107,7 @@ import '../core/providers/language_provider.dart';
 import '../core/accessibility/accessibility_provider.dart';
 import '../screens/nutrition/widget_log_trigger_screen.dart';
 import '../screens/nutrition/recipe_suggestions_screen.dart';
+import '../screens/nutrition/menu_analysis_history_screen.dart';
 import '../screens/mood/mood_history_screen.dart';
 import '../screens/scores/scoring_screen.dart';
 import '../screens/custom_exercises/custom_exercises_screen.dart';

@@ -1434,6 +1434,21 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
   /// Refreshes the providers a freshly-logged event would change so the home
   /// Timeline + hero card reflect it without requiring a manual pull-to-refresh.
   Future<void> _handleEventLogged(Map<String, dynamic> actionData) async {
+    // Phase 6 — a single chat message can produce SEVERAL logs ("did yoga
+    // and drank water"). Multi-action results arrive as an `events` list;
+    // single-action results stay flat for back-compat. Normalize to a list
+    // of domains and refresh each.
+    final eventsList = actionData['events'] as List<dynamic>?;
+    if (eventsList != null && eventsList.isNotEmpty) {
+      debugPrint('📝 [Chat] Multi-event log: ${eventsList.length} events');
+      for (final e in eventsList) {
+        if (e is Map<String, dynamic>) {
+          await _refreshForEventDomain(e['domain'] as String?);
+        }
+      }
+      return;
+    }
+
     final domain = actionData['domain'] as String?;
     final eventId = actionData['event_id'] as String?;
     final undoToken = actionData['undo_token'] as String?;
@@ -1441,14 +1456,15 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
       '📝 [Chat] Event logged: domain=$domain, id=$eventId, '
       'undo_token=${undoToken != null ? "present" : "null"}',
     );
+    await _refreshForEventDomain(domain);
+  }
 
-    // NB: the Timeline section refreshes on its own — backend write hooks
-    // call invalidate_timeline_cache (api/v1/timeline_cache.py), so the
-    // next Timeline fetch returns the fresh payload. Once D3 lands a
-    // Timeline provider here, we can wire an explicit invalidate for
-    // sub-second freshness instead of waiting on the next user-driven
-    // refresh.
-
+  /// Refresh the providers affected by one logged wellness event.
+  ///
+  /// NB: the Timeline section refreshes on its own — backend write hooks
+  /// call invalidate_timeline_cache (api/v1/timeline_cache.py), so the next
+  /// Timeline fetch returns the fresh payload.
+  Future<void> _refreshForEventDomain(String? domain) async {
     // Domain-specific refreshes — match the existing pattern in this file.
     switch (domain) {
       case 'workout':
@@ -1475,10 +1491,18 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
           }
         } catch (_) {}
         break;
+      case 'sauna':
+        // A chat-logged sauna adds calories to the home flame icon —
+        // _refreshTodayWorkout() also invalidates aiBurnedCaloriesProvider.
+        _refreshTodayWorkout();
+        break;
       case 'weight':
       case 'mood':
+      case 'measurement':
+      case 'habit':
         // No global provider invalidation needed beyond the timeline refresh
-        // — the home card for these domains pulls from the timeline payload.
+        // — the home cards for these domains pull from the timeline payload,
+        // and the dedicated screens (Measurements, Habits) re-fetch on view.
         break;
       default:
         debugPrint('📝 [Chat] Unknown event domain: $domain');

@@ -489,13 +489,15 @@ class ScoreExplainSheet extends StatelessWidget {
         // `health_score_reasons` tags (high_protein, ultra_processed, …)
         // which the shared _TriggersBox renders coloured by polarity.
         final v = (value is int) ? value as int : int.tryParse('$value') ?? -1;
+        // 3-tier scheme aligned with the legend bands below:
+        // index 0 = 7-10 GOOD, index 1 = 4-6 AVERAGE, index 2 = 1-3 POOR.
         final idx = v < 0
             ? -1
-            : v <= 3
-                ? 2
-                : v <= 6
+            : v >= 7
+                ? 0
+                : v >= 4
                     ? 1
-                    : 0;
+                    : 2;
         final hasReasons = triggers != null && triggers!.isNotEmpty;
         final onlyUnavailable =
             hasReasons && triggers!.length == 1 && triggers!.first == 'ai_unavailable';
@@ -506,22 +508,21 @@ class ScoreExplainSheet extends StatelessWidget {
               ? 'Score detail is unavailable for this meal. Newly logged meals will include a full reason breakdown.'
               : "Each meal gets a 1–10 health score based on protein, fiber, processing level, added sugar, "
                   "sodium, and inflammation. Tags below show WHY this meal landed where it did.",
-          accent: v >= 8
+          // 3-tier scheme matching the legend bands: >=7 GOOD (green),
+          // >=4 AVERAGE (orange), else POOR (error). Keeping the badge
+          // colour and the highlighted legend band in lock-step.
+          accent: v >= 7
               ? AppColors.success
-              : v >= 5
-                  ? AppColors.teal
-                  : v >= 3
-                      ? AppColors.yellow
-                      : AppColors.error,
+              : v >= 4
+                  ? AppColors.orange
+                  : AppColors.error,
           currentLabel: v < 0
               ? null
-              : v >= 8
-                  ? 'EXCELLENT'
-                  : v >= 5
-                      ? 'GOOD'
-                      : v >= 3
-                          ? 'AVERAGE'
-                          : 'POOR',
+              : v >= 7
+                  ? 'GOOD'
+                  : v >= 4
+                      ? 'AVERAGE'
+                      : 'POOR',
           activeIndex: idx,
           levels: const [
             _Level(

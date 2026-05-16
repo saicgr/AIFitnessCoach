@@ -20,6 +20,7 @@ import 'fullscreen_image_viewer.dart';
 import 'proposed_change_card.dart';
 import 'chat_action_confirm_card.dart';
 import 'equipment_match_card.dart';
+import 'event_logged_undo_card.dart';
 import 'share_artifact_card.dart';
 import 'report_message_sheet.dart';
 import 'voice_message_widget.dart';
@@ -320,6 +321,14 @@ class ChatMessageBubble extends ConsumerWidget {
           if (!isUser &&
               message.actionData?['action'] == 'share_artifact_generated')
             ShareArtifactCard(data: message.actionData!),
+          // ── Phase 6: universal-logging undo card ──────────────────────
+          // After the AI Coach logs a wellness event ("I did 30 min yoga"),
+          // show a compact "Logged ✓ · Undo" row per event. Backed by the
+          // signed undo_token; self-disables after the 30s token window.
+          if (!isUser && message.actionData?['action'] == 'event_logged')
+            EventLoggedUndoCard(
+              actionData: Map<String, dynamic>.from(message.actionData!),
+            ),
           // ── Issue 2: Equipment match card ──────────────────────────
           // Rendered when the identify_equipment tool returns
           // action='open_swap_or_add'. Tapping a match row hands off to

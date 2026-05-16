@@ -61,12 +61,14 @@ class MenuAnalysisItemCard extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(8, 10, 12, 10),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppColors.orange.withValues(alpha: 0.08)
+              ? (isDark ? AppColors.orange : AppColorsLight.orange)
+                  .withValues(alpha: isDark ? 0.08 : 0.10)
               : (isDark ? Colors.white.withValues(alpha: 0.04) : Colors.grey.shade50),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isSelected
-                ? AppColors.orange.withValues(alpha: 0.4)
+                ? (isDark ? AppColors.orange : AppColorsLight.orange)
+                    .withValues(alpha: 0.4)
                 : (isDark ? AppColors.cardBorder : Colors.grey.shade200),
           ),
         ),
@@ -475,6 +477,13 @@ class _BreakdownPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    // White-alpha is invisible on a light background — flip to black-alpha
+    // in light mode so the pill fill/border actually read.
+    final tintBase = isDark ? Colors.white : Colors.black;
+    final textSecondary =
+        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -483,10 +492,10 @@ class _BreakdownPill extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.06),
+            color: tintBase.withValues(alpha: 0.06),
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: Colors.white.withValues(alpha: 0.18),
+              color: tintBase.withValues(alpha: 0.18),
               width: 0.8,
             ),
           ),
@@ -498,11 +507,11 @@ class _BreakdownPill extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.textSecondary,
+                  color: textSecondary,
                 ),
               ),
               const SizedBox(width: 3),
-              Icon(Icons.chevron_right, size: 14, color: AppColors.textMuted),
+              Icon(Icons.chevron_right, size: 14, color: textMuted),
             ],
           ),
         ),

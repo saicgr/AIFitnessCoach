@@ -141,7 +141,7 @@ class _YouHubScreenState extends ConsumerState<YouHubScreen>
             Positioned(
               left: 0,
               right: 0,
-              bottom: MediaQuery.of(context).viewPadding.bottom + 76,
+              bottom: MediaQuery.of(context).viewPadding.bottom + 68,
               child: Center(
                 child: AnimatedBuilder(
                   animation: _tabController,

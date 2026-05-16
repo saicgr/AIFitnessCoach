@@ -469,24 +469,54 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
                             ),
                           ),
                         ),
-                      if ((_capturedImagePath != null || response.imageUrl != null) && response.plateDescription != null && response.plateDescription!.isNotEmpty)
+                      if (_capturedImagePath != null || response.imageUrl != null)
                         const SizedBox(width: 10),
-                      // Plate description text
-                      if (response.plateDescription != null && response.plateDescription!.isNotEmpty)
-                        Expanded(
-                          child: Text(
-                            response.plateDescription!,
-                            style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic, color: textMuted),
-                            maxLines: 3,
-                            overflow: TextOverflow.ellipsis,
-                          ),
+                      // Text column beside the thumbnail: a one-line summary of
+                      // the detected item names (so the user sees WHAT was
+                      // detected without expanding the "N Food Items" section),
+                      // plus the AI plate description underneath when present.
+                      Flexible(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (_detectedItemsSummary(response).isNotEmpty)
+                              Text(
+                                _detectedItemsSummary(response),
+                                style: TextStyle(
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.w600,
+                                  color: textPrimary,
+                                  height: 1.3,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            if (response.plateDescription != null && response.plateDescription!.isNotEmpty) ...[
+                              if (_detectedItemsSummary(response).isNotEmpty)
+                                const SizedBox(height: 3),
+                              Text(
+                                response.plateDescription!,
+                                style: TextStyle(fontSize: 11.5, fontStyle: FontStyle.italic, color: textMuted),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ],
                         ),
+                      ),
                     ],
                   ),
                 ],
                 const SizedBox(height: 6),
-                // Action buttons row
-                Row(
+                // Action buttons row — a Wrap so the 5 actions (Save, Edit,
+                // Add, Refine, Report) reflow to a second line on small
+                // devices instead of overflowing.
+                Wrap(
+                  spacing: 16,
+                  runSpacing: 8,
+                  crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
                     // Star button
                     GestureDetector(
@@ -496,10 +526,10 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
                           ? SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary))
                           : Icon(_isSaved ? Icons.star : Icons.star_border, size: 22, color: _isSaved ? AppColors.yellow : textMuted),
                     ),
-                    const SizedBox(width: 16),
                     GestureDetector(
                       onTap: _handleEdit,
                       child: Row(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(Icons.edit, size: 14, color: textMuted),
                           const SizedBox(width: 4),
@@ -507,7 +537,6 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
                         ],
                       ),
                     ),
-                    const SizedBox(width: 16),
                     // Flag / report inaccuracy
                     // Manual "Add" chip — open a tiny text-input sheet, run
                     // text-analyze, append to current items. Avoids re-snapping.
@@ -546,7 +575,35 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
                         ),
                       );
                     }),
-                    const SizedBox(width: 16),
+                    // Refine with AI — opens a correction note sheet, sends the
+                    // note + current items to the streaming text-analysis
+                    // endpoint framed as a correction, and REPLACES the item
+                    // set with the result (Add appends — Refine replaces).
+                    Builder(builder: (ctx) {
+                      final purple = isDark ? AppColors.purple : AppColorsLight.purple;
+                      return GestureDetector(
+                        onTap: _refiningMeal ? null : _handleRefineMeal,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (_refiningMeal)
+                              SizedBox(
+                                width: 12, height: 12,
+                                child: CircularProgressIndicator(
+                                    strokeWidth: 2, color: purple),
+                              )
+                            else
+                              Icon(Icons.auto_fix_high, size: 14, color: purple),
+                            const SizedBox(width: 4),
+                            Text('Refine',
+                                style: TextStyle(
+                                    fontSize: 12,
+                                    color: purple,
+                                    fontWeight: FontWeight.w600)),
+                          ],
+                        ),
+                      );
+                    }),
                     GestureDetector(
                       onTap: () {
                         final items = response.foodItemsRanked;
@@ -565,6 +622,7 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
                         );
                       },
                       child: Row(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(Icons.flag_outlined, size: 14, color: textMuted),
                           const SizedBox(width: 4),
@@ -655,7 +713,13 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
                 // AI Coach Tip (also surfaces the personal_history pill when
                 // the server flagged this food as one the user has had bad
                 // reactions to before).
-                if ((response.aiSuggestion != null && response.aiSuggestion!.trim().isNotEmpty) ||
+                //
+                // The card renders when the analysis carries any tip field
+                // OR while we're still awaiting the late `coach_tips` SSE
+                // event (_awaitingCoachTip) — in which case it shows a
+                // shimmer placeholder that swaps to the real tip on arrival.
+                if (_awaitingCoachTip ||
+                    (response.aiSuggestion != null && response.aiSuggestion!.trim().isNotEmpty) ||
                     (response.encouragements != null && response.encouragements!.any((e) => e.trim().isNotEmpty)) ||
                     (response.warnings != null && response.warnings!.any((w) => w.trim().isNotEmpty)) ||
                     (response.recommendedSwap != null && response.recommendedSwap!.trim().isNotEmpty) ||
@@ -672,6 +736,7 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
                       personalHistoryNote: response.personalHistoryNote,
                       isDark: isDark,
                       coach: coach,
+                      isLoading: _awaitingCoachTip,
                       onHistoryTap: () {
                         // Close the meal log sheet, then jump into the
                         // Patterns tab so the user can see the full history.
@@ -737,6 +802,23 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
         ),
       ],
     );
+  }
+
+  /// One-line summary of detected food item names, e.g.
+  /// "Whole grain pancakes · Blueberry compote · Maple syrup +1".
+  /// Shows the first ~3 names joined with " · "; remaining items collapse
+  /// into a "+N" suffix. Returns '' when there are no named items.
+  String _detectedItemsSummary(dynamic response) {
+    final items = response.foodItemsRanked as List;
+    final names = items
+        .map((it) => (it.name as String?)?.trim() ?? '')
+        .where((n) => n.isNotEmpty)
+        .toList();
+    if (names.isEmpty) return '';
+    const shown = 3;
+    if (names.length <= shown) return names.join('  ·  ');
+    final extra = names.length - shown;
+    return '${names.take(shown).join('  ·  ')}  +$extra';
   }
 
   void _showFullScreenImage(BuildContext context, String? localPath, String? networkUrl) {

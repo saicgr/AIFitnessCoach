@@ -17,6 +17,10 @@ class CollapsibleAISuggestion extends StatefulWidget {
   final CoachPersona? coach;
   /// Optional — tap on the history pill navigates here.
   final VoidCallback? onHistoryTap;
+  /// When true the expanded body shows a shimmer placeholder instead of the
+  /// tip content — used while the late `coach_tips` SSE event is still in
+  /// flight so the card appears immediately after the fast macro estimate.
+  final bool isLoading;
 
   const CollapsibleAISuggestion({
     super.key,
@@ -28,6 +32,7 @@ class CollapsibleAISuggestion extends StatefulWidget {
     required this.isDark,
     this.coach,
     this.onHistoryTap,
+    this.isLoading = false,
   });
 
   @override
@@ -107,13 +112,15 @@ class _CollapsibleAISuggestionState extends State<CollapsibleAISuggestion> {
               firstChild: const SizedBox.shrink(),
               secondChild: Padding(
                 padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
-                child: AISuggestionContent(
-                  suggestion: widget.suggestion,
-                  encouragements: widget.encouragements,
-                  warnings: widget.warnings,
-                  recommendedSwap: widget.recommendedSwap,
-                  isDark: widget.isDark,
-                ),
+                child: widget.isLoading
+                    ? _CoachTipShimmer(isDark: widget.isDark)
+                    : AISuggestionContent(
+                        suggestion: widget.suggestion,
+                        encouragements: widget.encouragements,
+                        warnings: widget.warnings,
+                        recommendedSwap: widget.recommendedSwap,
+                        isDark: widget.isDark,
+                      ),
               ),
               crossFadeState: _isExpanded ? CrossFadeState.showSecond : CrossFadeState.showFirst,
               duration: const Duration(milliseconds: 200),
@@ -175,6 +182,94 @@ class _PersonalHistoryPill extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Shimmer placeholder shown inside the coach-tip card while the late
+/// `coach_tips` SSE event is still in flight (~2-3s after the macro card).
+class _CoachTipShimmer extends StatefulWidget {
+  final bool isDark;
+  const _CoachTipShimmer({required this.isDark});
+
+  @override
+  State<_CoachTipShimmer> createState() => _CoachTipShimmerState();
+}
+
+class _CoachTipShimmerState extends State<_CoachTipShimmer>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1100),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final base = (widget.isDark ? Colors.white : Colors.black)
+        .withValues(alpha: widget.isDark ? 0.07 : 0.05);
+    final textMuted =
+        widget.isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    Widget bar(double widthFactor) {
+      return AnimatedBuilder(
+        animation: _controller,
+        builder: (context, _) {
+          final t = _controller.value;
+          return FractionallySizedBox(
+            alignment: Alignment.centerLeft,
+            widthFactor: widthFactor,
+            child: Container(
+              height: 11,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(6),
+                gradient: LinearGradient(
+                  begin: Alignment(-1 - 2 * (1 - t), 0),
+                  end: Alignment(1 - 2 * (1 - t), 0),
+                  colors: [base, base.withValues(alpha: base.a * 2.2), base],
+                ),
+              ),
+            ),
+          );
+        },
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            SizedBox(
+              width: 12,
+              height: 12,
+              child: CircularProgressIndicator(
+                strokeWidth: 1.6, color: textMuted),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              'Coach is reviewing your meal…',
+              style: TextStyle(fontSize: 12, color: textMuted),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        bar(1.0),
+        const SizedBox(height: 7),
+        bar(0.85),
+        const SizedBox(height: 7),
+        bar(0.6),
+      ],
     );
   }
 }

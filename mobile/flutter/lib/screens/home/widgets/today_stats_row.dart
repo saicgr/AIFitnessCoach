@@ -298,12 +298,24 @@ class _BurnedPill extends ConsumerWidget {
     final userId = authState.user?.id;
     final saunaAsync = userId != null ? ref.watch(dailySaunaProvider(userId)) : null;
     final saunaCal = saunaAsync?.valueOrNull?.totalCalories ?? 0;
-    final burned = healthBurned + saunaCal;
+
+    // Phase 6 — calories burned from AI-Coach- / manually-logged activities.
+    // The backend de-duplicates these against wearable-synced sessions, so
+    // adding them to the HealthKit total never double-counts.
+    final aiBurnedAsync =
+        userId != null ? ref.watch(aiBurnedCaloriesProvider(userId)) : null;
+    final aiBurned = aiBurnedAsync?.valueOrNull ?? 0;
+
+    final burned = healthBurned + saunaCal + aiBurned;
+    // The pill is "lit" whenever ANY source has data — a chat-logged yoga
+    // session should turn the flame on even with no wearable connected.
+    final bool hasData =
+        (connected && healthBurned > 0) || saunaCal > 0 || aiBurned > 0;
 
     return _StatPillContainer(
       onTap: () {
         HapticService.light();
-        if ((connected && healthBurned > 0) || saunaCal > 0) {
+        if (hasData) {
           showCaloriesBurnedSheet(context, burned.toDouble());
         } else {
           context.push('/stats');
@@ -313,11 +325,11 @@ class _BurnedPill extends ConsumerWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            connected || saunaCal > 0 ? '$burned' : '--',
+            connected || saunaCal > 0 || aiBurned > 0 ? '$burned' : '--',
             style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.bold,
-              color: (connected && healthBurned > 0) || saunaCal > 0
+              color: hasData
                   ? const Color(0xFFFF6B35)
                   : Theme.of(context).colorScheme.onSurface,
             ),
@@ -328,7 +340,7 @@ class _BurnedPill extends ConsumerWidget {
           Icon(
             Icons.local_fire_department,
             size: 14,
-            color: (connected && healthBurned > 0) || saunaCal > 0
+            color: hasData
                 ? const Color(0xFFFF6B35)
                 : Theme.of(context).colorScheme.onSurfaceVariant,
           ),

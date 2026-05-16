@@ -1,103 +1,153 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/theme_colors.dart';
+import '../../../widgets/glass_sheet.dart';
 
-/// Small bottom sheet with a single TextField + Cancel/Add buttons used for
-/// "Add food" flows (manually-typed item appended to a meal preview, or
+/// Small glassmorphic bottom sheet with a single TextField + Cancel/Add used
+/// for "Add food" flows (a manually-typed item appended to a meal preview, or
 /// pre-selected onto a menu-analysis sheet). Returns the trimmed description
 /// string, or null if the user cancelled / dismissed.
 ///
-/// Kept extremely lightweight on purpose — the heavy lifting (calling the
-/// streaming text-analysis endpoint, merging items into the parent state)
-/// happens in the caller. This keeps the sheet reusable across log_meal and
-/// menu_analysis without coupling either to the other's data shape.
+/// Kept lightweight on purpose — the heavy lifting (calling the streaming
+/// text-analysis endpoint, merging items into the parent state) happens in the
+/// caller, so the sheet stays reusable across log_meal and menu_analysis.
 Future<String?> showAddFoodSheet(BuildContext context) {
-  final controller = TextEditingController();
-  return showModalBottomSheet<String>(
+  return showGlassSheet<String>(
     context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
-    builder: (ctx) {
-      final colors = ThemeColors.of(ctx);
-      final teal = const Color(0xFF14B8A6);
-      return Padding(
-        padding: EdgeInsets.only(
-          left: 16,
-          right: 16,
-          top: 12,
-          bottom: 16 + MediaQuery.of(ctx).viewInsets.bottom,
-        ),
-        child: Material(
-          color: colors.background,
-          borderRadius: BorderRadius.circular(18),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Icon(Icons.add_circle_outline, color: teal, size: 22),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Add food',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: colors.textPrimary,
-                      ),
-                    ),
-                  ],
+    builder: (_) => const GlassSheet(
+      showHandle: true,
+      child: _AddFoodSheetBody(),
+    ),
+  );
+}
+
+/// Correction-oriented variant of [showAddFoodSheet]. Same lightweight glass
+/// sheet, but the copy frames the note as a correction to the current
+/// analysis (e.g. "deep fried, no whole grain pancakes, I ate half"). The
+/// caller sends the note + the current item set to the streaming
+/// text-analysis endpoint framed as a CORRECTION and replaces the item set
+/// with the result. Returns the trimmed note, or null if cancelled.
+Future<String?> showRefineFoodSheet(BuildContext context) {
+  return showGlassSheet<String>(
+    context: context,
+    builder: (_) => const GlassSheet(
+      showHandle: true,
+      child: _AddFoodSheetBody(
+        title: 'Refine with AI',
+        icon: Icons.auto_fix_high,
+        hintText:
+            "e.g. 'made with olive oil, no whole grain' or 'I only ate half'",
+        actionLabel: 'Refine',
+        actionIcon: Icons.auto_awesome,
+      ),
+    ),
+  );
+}
+
+/// StatefulWidget body so the [TextEditingController] is owned by an element
+/// with a real lifecycle. Disposing it here in [dispose] (which Flutter calls
+/// only AFTER the sheet's exit animation finishes) fixes the
+/// "TextEditingController used after being disposed" crash that the old
+/// function-scoped controller + `.whenComplete(controller.dispose)` caused —
+/// `whenComplete` fired on `Navigator.pop`, while the TextField was still
+/// mounted and rebuilding through the dismiss animation.
+class _AddFoodSheetBody extends StatefulWidget {
+  final String title;
+  final IconData icon;
+  final String hintText;
+  final String actionLabel;
+  final IconData actionIcon;
+
+  const _AddFoodSheetBody({
+    this.title = 'Add food',
+    this.icon = Icons.add_circle_outline,
+    this.hintText = 'e.g. 1 scoop whey protein, 1 tbsp peanut butter',
+    this.actionLabel = 'Add',
+    this.actionIcon = Icons.add,
+  });
+
+  @override
+  State<_AddFoodSheetBody> createState() => _AddFoodSheetBodyState();
+}
+
+class _AddFoodSheetBodyState extends State<_AddFoodSheetBody> {
+  final _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    final text = _controller.text.trim();
+    if (text.isEmpty) return;
+    Navigator.pop(context, text);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = ThemeColors.of(context);
+    const teal = Color(0xFF14B8A6);
+
+    // GlassSheet already handles the keyboard inset (AnimatedPadding) and the
+    // drag handle — this body only needs its own content padding.
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(widget.icon, color: teal, size: 22),
+              const SizedBox(width: 8),
+              Text(
+                widget.title,
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: colors.textPrimary,
                 ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: controller,
-                  autofocus: true,
-                  minLines: 1,
-                  maxLines: 3,
-                  textInputAction: TextInputAction.done,
-                  style: TextStyle(color: colors.textPrimary, fontSize: 14),
-                  decoration: InputDecoration(
-                    hintText: 'e.g. 1 scoop whey protein, 1 tbsp peanut butter',
-                    hintStyle:
-                        TextStyle(color: colors.textSecondary, fontSize: 13),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  onSubmitted: (v) {
-                    final text = v.trim();
-                    if (text.isEmpty) return;
-                    Navigator.pop(ctx, text);
-                  },
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(ctx),
-                      child: const Text('Cancel'),
-                    ),
-                    const SizedBox(width: 8),
-                    FilledButton.icon(
-                      onPressed: () {
-                        final text = controller.text.trim();
-                        if (text.isEmpty) return;
-                        Navigator.pop(ctx, text);
-                      },
-                      icon: const Icon(Icons.add, size: 16),
-                      label: const Text('Add'),
-                      style: FilledButton.styleFrom(backgroundColor: teal),
-                    ),
-                  ],
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ),
-      );
-    },
-  ).whenComplete(controller.dispose);
+          const SizedBox(height: 12),
+          TextField(
+            controller: _controller,
+            autofocus: true,
+            minLines: 1,
+            maxLines: 3,
+            textInputAction: TextInputAction.done,
+            style: TextStyle(color: colors.textPrimary, fontSize: 14),
+            decoration: InputDecoration(
+              hintText: widget.hintText,
+              hintStyle: TextStyle(color: colors.textSecondary, fontSize: 13),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            onSubmitted: (_) => _submit(),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+              const SizedBox(width: 8),
+              FilledButton.icon(
+                onPressed: _submit,
+                icon: Icon(widget.actionIcon, size: 16),
+                label: Text(widget.actionLabel),
+                style: FilledButton.styleFrom(backgroundColor: teal),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 }

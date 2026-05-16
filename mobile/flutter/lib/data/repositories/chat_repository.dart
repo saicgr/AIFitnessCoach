@@ -19,6 +19,7 @@ import '../../core/models/meal_context.dart';
 import '../models/user.dart';
 import '../services/api_client.dart';
 import '../services/connectivity_service.dart';
+import '../services/health_service.dart';
 import '../services/data_cache_service.dart';
 import '../services/recipe_notification_router.dart';
 import '../providers/audio_preferences_provider.dart';
@@ -71,6 +72,12 @@ final chatMessagesProvider =
   // would break the dispose lifecycle.
   void refreshTodayWorkout() {
     ref.read(todayWorkoutProvider.notifier).invalidateAndRefresh();
+    // Phase 6 — a chat-logged activity / sauna changes today's burned
+    // calories; invalidate so the home flame icon re-fetches immediately.
+    final uid = ref.read(authStateProvider).user?.id;
+    if (uid != null) {
+      ref.invalidate(aiBurnedCaloriesProvider(uid));
+    }
   }
   return ChatMessagesNotifier(repository, apiClient, workoutsNotifier, workoutRepository, user, themeNotifier, router, hydrationNotifier, nutritionNotifier, getAISettings, setAIGenerating, getUnifiedContext, offlineCoach, isOnline, getSoundPrefs, getAudioPrefs, refreshTodayWorkout);
 });

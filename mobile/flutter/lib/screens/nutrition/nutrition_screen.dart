@@ -752,8 +752,10 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
       Positioned(
         left: 0,
         right: 0,
-        // Sit a visible gap above the floating MainShell nav bar (52px tall).
-        bottom: MediaQuery.of(context).viewPadding.bottom + 76,
+        // Sit a small gap above the floating MainShell nav bar. The nav pill
+        // (52px tall) sits at viewPadding.bottom + 10, so its top edge is at
+        // viewPadding.bottom + 62 — +68 leaves a tidy 6px gap.
+        bottom: MediaQuery.of(context).viewPadding.bottom + 68,
         child: Center(
           child: GlassNutritionTabBar(
             controller: _tabController,
