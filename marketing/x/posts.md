@@ -1194,3 +1194,71 @@ Stack: Flutter/Riverpod, FastAPI on Render, Supabase, Gemini. Try Zealova: https
 update: home screen loads immediately now. users who got empty state — this is the commit that fixed it.
 
 ### 📝 END POST CONTENT
+
+---
+
+## 2026-05-16 — "timeout storm — event loop frozen under concurrent load"
+
+**Status:** Drafted, not yet posted
+
+<details>
+<summary>🔬 Research log + plan (click to expand)</summary>
+
+**Research log (2026-05-16):**
+- Anchored commit: `71963cc` — 2026-05-15 22:49:36 -0500 — "perf(backend): unfreeze the event loop under concurrent load". Commit body uses the phrase "2026-05-16 timeout storm" — real concurrent users triggered it. One ~21s workout generation froze the entire Gunicorn worker; 50 concurrent requests all locked at identical 16.5s. Fixed at 10:49 PM. Post-fix: 60 concurrent requests, all 200.
+- Narrative keyword: "timeout storm", "froze the event loop" — live production incident from real users.
+- Algo finding: Replies worth 150× likes; first-hour author replies = top individual ranking signal (PostEverywhere, SocialBee, May 2026). Threads 4-8 tweets optimal. Text-first outperforms video 30%. External links suppressed — zealova.com in self-reply only.
+- Hashtag finding: 1 tag — `#buildinpublic` woven into tweet 5 body sentence. Confirmed top evergreen tag for indie-hacker X lane (AutoTweet, May 2026). No second tag; 3+ tags = −17% penalty.
+- Trend hook hijack: None — original builder story: first real concurrent load → backend froze → late-night fix. Technical angle (asyncio.to_thread) is bookmark-bait for FastAPI/Python devs.
+- Source links:
+  - https://posteverywhere.ai/blog/how-the-x-twitter-algorithm-works
+  - https://socialbee.com/blog/twitter-algorithm/
+  - https://www.autotweet.io/blog/best-hashtags-for-x-twitter-2026
+  - https://www.teract.ai/resources/twitter-strategy-indie-hackers-2026
+
+**Plan:**
+- Day/time: Sat May 16, 2026 — post 9–11am ET or 2–4pm ET
+- Hashtags: 1 tag — `#buildinpublic` woven into tweet 5 body
+- Pre-post warmup: 15 min commenting on #buildinpublic / #FastAPI / #Python threads before posting
+- Self-reply immediately after tweet 5 with zealova.com link
+- Quote-tweet tweet 1 ~2h later (fresh session): "update: 60 concurrent requests, all 200. the event loop breathes again."
+- First-hour: reply to every comment within 5 min; tweet 3 (asyncio.to_thread benchmark numbers) is bookmark-bait for FastAPI/Python devs; tweet 4 (the async trap) is discussion-bait for backend devs
+
+</details>
+
+### 📝 POST CONTENT BELOW — copy-paste this
+
+**1/** (176 chars)
+Real users. Real concurrent load. My backend froze. One slow workout generation locked the entire event loop. Every request behind it timed out. Fixed last night at 10:49 PM. 🧵
+
+---
+
+**2/** (201 chars)
+FastAPI + async looks safe. But supabase-py .execute() is a blocking HTTP call. Every auth check, every DB query ran ON the event loop. One ~21s generation froze the whole worker. Everyone else waited.
+
+---
+
+**3/** (207 chars)
+Fix: asyncio.to_thread() around every sync call. All 8 ChromaDB RAG files. Every supabase-py execute(). Auth verification. Pre-fix: 50 requests stuck at 16.5s each. Post-fix: 60 concurrent requests, all 200.
+
+---
+
+**4/** (207 chars)
+The async trap: async def does NOT make libraries non-blocking. supabase-py, chromadb, psycopg2 — they all block the event loop. Until you thread them, you have one request per worker. Not async. Sequential.
+
+---
+
+**5/** (181 chars)
+Building Zealova — AI fitness coach. The timeout storm was our first real concurrent load. You shipping async FastAPI? Audit every sync call inside your async routes. #buildinpublic
+
+---
+
+**Self-reply (post immediately after tweet 5):**
+Stack: FastAPI on Render, Supabase, ChromaDB (RAG), Gemini, Flutter. Try Zealova: https://zealova.com
+
+---
+
+**Quote-tweet tweet 1 ~2h later (fresh session):**
+update: 60 concurrent requests, all 200. the event loop breathes again.
+
+### 📝 END POST CONTENT
