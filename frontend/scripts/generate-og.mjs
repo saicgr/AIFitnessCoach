@@ -22,8 +22,24 @@ import fs from 'node:fs/promises';
 const require = createRequire(import.meta.url);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
-const OUT_DIR = path.join(ROOT, 'public/og/tools');
+const OG_DIR = path.join(ROOT, 'public/og');
+const OUT_DIR = path.join(OG_DIR, 'tools');
 const FORCE = process.argv.includes('--force');
+
+// Static (non-tool) marketing pages that need their own 1200x630 share card.
+// Rendered to public/og/<slug>.png. Add an entry + reference it from the
+// page's og:image meta tag.
+const STATIC_CARDS = [
+  {
+    slug: 'roadmap',
+    kicker: 'Product Roadmap',
+    title: 'Vote on what we build next',
+    tagline:
+      "See what's shipped, what's in progress, and what's up for debate — then vote on the features you want most.",
+    footLeft: 'Live roadmap · one-tap voting',
+    footRight: 'zealova.com/roadmap',
+  },
+];
 
 const isVercelBuild = process.cwd().startsWith('/vercel');
 let puppeteer;
@@ -67,9 +83,8 @@ function esc(s) {
     .replace(/>/g, '&gt;');
 }
 
-function cardHtml(tool) {
-  // One-line tagline: first sentence of the description, trimmed.
-  const tagline = (tool.description || '').split(/\.\s/)[0].slice(0, 120);
+// Generic 1200x630 brand card. Used for both tool cards and static-page cards.
+function cardHtml({ kicker, title, tagline, footLeft, footRight }) {
   return `<!DOCTYPE html><html><head><meta charset="utf-8"><style>
   * { margin:0; padding:0; box-sizing:border-box; }
   html,body { width:1200px; height:630px; }
@@ -94,46 +109,72 @@ function cardHtml(tool) {
     line-height:1.4; max-width:1000px; }
   .foot { display:flex; align-items:center; justify-content:space-between;
     font-size:22px; color:#a1a1aa; }
-  .free { color:#34d399; font-weight:700; }
+  .accent { color:#34d399; font-weight:700; }
   </style></head><body>
     <div class="brand"><div class="logo">Z</div><span>Zealova</span></div>
     <div>
-      <div class="kicker">Free tool</div>
-      <div class="title">${esc(tool.name)}</div>
+      <div class="kicker">${esc(kicker)}</div>
+      <div class="title">${esc(title)}</div>
       ${tagline ? `<div class="tagline">${esc(tagline)}</div>` : ''}
     </div>
     <div class="foot">
-      <span class="free">Free. No sign-up. Nothing leaves your device.</span>
-      <span>zealova.com/free-tools</span>
+      <span class="accent">${esc(footLeft)}</span>
+      <span>${esc(footRight)}</span>
     </div>
   </body></html>`;
+}
+
+function toolCard(tool) {
+  // One-line tagline: first sentence of the description, trimmed.
+  const tagline = (tool.description || '').split(/\.\s/)[0].slice(0, 120);
+  return cardHtml({
+    kicker: 'Free tool',
+    title: tool.name,
+    tagline,
+    footLeft: 'Free. No sign-up. Nothing leaves your device.',
+    footRight: 'zealova.com/free-tools',
+  });
 }
 
 async function main() {
   const tools = await parseRegistry();
   await fs.mkdir(OUT_DIR, { recursive: true });
 
-  // Determine which slugs still need a PNG.
-  const pending = [];
-  for (const t of tools) {
-    const dst = path.join(OUT_DIR, `${t.slug}.png`);
-    if (FORCE) {
-      pending.push(t);
-      continue;
-    }
+  const exists = async (p) => {
     try {
-      await fs.access(dst);
+      await fs.access(p);
+      return true;
     } catch {
-      pending.push(t);
+      return false;
+    }
+  };
+
+  // Tool cards still needing a PNG.
+  const pendingTools = [];
+  for (const t of tools) {
+    if (FORCE || !(await exists(path.join(OUT_DIR, `${t.slug}.png`)))) {
+      pendingTools.push(t);
     }
   }
 
-  if (pending.length === 0) {
-    console.log(`[og] all ${tools.length} tool cards already present, nothing to render`);
+  // Static-page cards still needing a PNG.
+  const pendingStatic = [];
+  for (const c of STATIC_CARDS) {
+    if (FORCE || !(await exists(path.join(OG_DIR, `${c.slug}.png`)))) {
+      pendingStatic.push(c);
+    }
+  }
+
+  if (pendingTools.length === 0 && pendingStatic.length === 0) {
+    console.log(
+      `[og] all ${tools.length} tool + ${STATIC_CARDS.length} static cards already present, nothing to render`,
+    );
     return;
   }
 
-  console.log(`[og] rendering ${pending.length} OG card(s)...`);
+  console.log(
+    `[og] rendering ${pendingTools.length} tool + ${pendingStatic.length} static OG card(s)...`,
+  );
   const browser = await puppeteer.launch({
     headless: 'new',
     args: chromiumArgs,
@@ -141,24 +182,30 @@ async function main() {
   });
   const page = await browser.newPage();
   await page.setViewport({ width: 1200, height: 630, deviceScaleFactor: 1 });
+  const clip = { x: 0, y: 0, width: 1200, height: 630 };
 
   let ok = 0;
-  for (const t of pending) {
+  for (const t of pendingTools) {
     try {
-      await page.setContent(cardHtml(t), { waitUntil: 'load' });
-      await page.screenshot({
-        path: path.join(OUT_DIR, `${t.slug}.png`),
-        type: 'png',
-        clip: { x: 0, y: 0, width: 1200, height: 630 },
-      });
+      await page.setContent(toolCard(t), { waitUntil: 'load' });
+      await page.screenshot({ path: path.join(OUT_DIR, `${t.slug}.png`), type: 'png', clip });
       ok++;
     } catch (err) {
-      console.error(`[og] FAIL ${t.slug}: ${err.message}`);
+      console.error(`[og] FAIL tool ${t.slug}: ${err.message}`);
+    }
+  }
+  for (const c of pendingStatic) {
+    try {
+      await page.setContent(cardHtml(c), { waitUntil: 'load' });
+      await page.screenshot({ path: path.join(OG_DIR, `${c.slug}.png`), type: 'png', clip });
+      ok++;
+    } catch (err) {
+      console.error(`[og] FAIL static ${c.slug}: ${err.message}`);
     }
   }
 
   await browser.close();
-  console.log(`[og] done. ${ok}/${pending.length} cards rendered.`);
+  console.log(`[og] done. ${ok}/${pendingTools.length + pendingStatic.length} cards rendered.`);
 }
 
 main().catch((err) => {

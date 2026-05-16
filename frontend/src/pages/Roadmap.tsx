@@ -54,7 +54,9 @@ export default function Roadmap() {
     setMeta('og:description', META_DESC, true);
     setMeta('og:url', CANONICAL, true);
     setMeta('og:type', 'website', true);
+    setMeta('og:image', `https://${BRANDING.marketingDomain}/og/roadmap.png`, true);
     setMeta('twitter:card', 'summary_large_image');
+    setMeta('twitter:image', `https://${BRANDING.marketingDomain}/og/roadmap.png`);
     setMeta('twitter:title', TITLE);
     setMeta('twitter:description', META_DESC);
     let canonical = document.head.querySelector<HTMLLinkElement>('link[rel="canonical"]');
