@@ -24,6 +24,10 @@
       "source": "/api/v1/waitlist",
       "destination": "https://aifitnesscoach-zqi3.onrender.com/api/v1/waitlist/"
     },
+    {
+      "source": "/api/v1/roadmap/:path*",
+      "destination": "https://aifitnesscoach-zqi3.onrender.com/api/v1/roadmap/:path*"
+    },
     { "source": "/(.*)", "destination": "/__spa_shell.html" }
   ],
   "headers": [
