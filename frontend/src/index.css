@@ -132,6 +132,16 @@ html.tool-route:not(.dark-mode) {
   --color-emerald-300: #047857;  /* accent text -> emerald-700 (dark)   */
   --color-emerald-900: #a7f3d0;  /* gradient bg -> emerald-200 (light)  */
   --color-emerald-950: #d1fae5;  /* highlight bg -> emerald-100 (light) */
+
+  /* Blue is the "competitor / other app" accent on comparison pages and
+   * is used identically to emerald: blue-400 is always accent TEXT (light
+   * blue, invisible on a light surface) so it darkens; blue-900/950 are
+   * always translucent dark borders + highlight BACKGROUNDS so they
+   * lighten. Verified no inverse usage (no bg-blue-400, no text-blue-950)
+   * across the marketing pages before remapping. */
+  --color-blue-400: #1d4ed8;  /* accent text -> blue-700 (dark)         */
+  --color-blue-900: #bfdbfe;  /* border       -> blue-200 (light)       */
+  --color-blue-950: #dbeafe;  /* highlight bg  -> blue-100 (light)      */
 }
 
 /* === BASE STYLES === */
