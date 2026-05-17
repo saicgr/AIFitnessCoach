@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Zealova — Home v18 (swipeable tiles, Chat FAB)</title>
+<style>
+  :root{
+    --bg:#000000; --card:#141414; --elevated:#1A1A1A; --border:#262626;
+    --t1:#FAFAFA; --t2:#A1A1AA; --t3:#71717A;
+    --accent:#8B5CF6; --accent2:#A855F7;
+    --nutri:#F97316; --steps:#22C55E; --sleep:#8B5CF6; --fast:#06B6D4; --water:#38BDF8;
+    --hr:#EF4444; --green:#22C55E; --miss:#EF4444; --burn:#F97316; --track:#2A2A2E;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased;}
+  body{
+    background:radial-gradient(1100px 700px at 50% -8%, #181228 0%, #060608 58%, #000 100%);
+    color:var(--t1); min-height:100vh; padding:46px 26px 80px;
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;
+  }
+  h1.title{font-size:27px;font-weight:800;letter-spacing:-.5px;text-align:center;}
+  .sub{color:var(--t2);margin:8px auto 0;font-size:14px;line-height:1.6;text-align:center;
+    max-width:760px;}
+  .panel{max-width:820px;margin:18px auto 0;text-align:left;
+    background:rgba(139,92,246,.06);border:1px solid #2e2742;border-radius:14px;
+    padding:15px 20px;}
+  .panel h3{font-size:12px;font-weight:800;letter-spacing:.5px;color:var(--accent2);
+    text-transform:uppercase;margin-bottom:9px;}
+  .panel ol{margin:0 0 0 18px;}
+  .panel li{font-size:13px;color:var(--t2);line-height:1.65;margin-bottom:6px;}
+  .panel li b{color:var(--t1);}
+
+  .stage{display:flex;justify-content:center;margin-top:30px;}
+  .phone{width:414px;height:892px;background:#000;border-radius:60px;padding:13px;
+    box-shadow:0 0 0 2px #2a2a2e,0 44px 90px -22px rgba(0,0,0,.92);position:relative;}
+  .screen{width:100%;height:100%;background:var(--bg);border-radius:48px;
+    overflow:hidden;position:relative;display:flex;flex-direction:column;}
+  .notch{position:absolute;top:0;left:50%;transform:translateX(-50%);
+    width:132px;height:34px;background:#000;border-radius:0 0 20px 20px;z-index:30;}
+  .statusbar{height:53px;display:flex;align-items:flex-end;justify-content:space-between;
+    padding:0 30px 6px;font-size:14px;font-weight:600;flex-shrink:0;}
+  .statusbar .icons{display:flex;gap:5px;align-items:center;font-size:12px;}
+  .body{flex:1;overflow-y:auto;padding:0 17px 14px;}
+  .body::-webkit-scrollbar{width:0;}
+
+  .appbar{display:flex;align-items:center;justify-content:space-between;padding:9px 2px 13px;}
+  .hi .g{font-size:13px;color:var(--t2);font-weight:600;}
+  .hi h2{font-size:24px;font-weight:800;letter-spacing:-.4px;margin-top:1px;}
+  .appbar-right{display:flex;align-items:center;gap:11px;}
+  .streakpill{display:flex;align-items:center;gap:8px;background:var(--elevated);
+    border:1px solid var(--border);border-radius:999px;padding:5px 12px 5px 5px;}
+  .lvlring{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;
+    background:conic-gradient(var(--accent) 78%, var(--track) 0);font-size:11px;font-weight:800;}
+  .lvlring span{width:22px;height:22px;border-radius:50%;background:var(--bg);
+    display:grid;place-items:center;}
+  .fire{font-size:13px;color:var(--t2);font-weight:700;}
+  .icobtn{color:var(--t2);font-size:18px;position:relative;}
+  .belldot{position:absolute;top:-1px;right:-2px;width:7px;height:7px;border-radius:50%;
+    background:var(--miss);border:1.5px solid var(--bg);}
+
+  .weekstrip{display:flex;justify-content:space-between;padding:2px 2px 13px;}
+  .wday{display:flex;flex-direction:column;align-items:center;gap:6px;}
+  .wday .wl{font-size:11px;font-weight:700;color:var(--t3);}
+  .wday .wd{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;
+    font-size:15px;font-weight:800;border:2.5px solid var(--track);color:var(--t1);}
+  .wday .wd.done{border-color:var(--green);}
+  .wday .wd.miss{border-color:var(--miss);}
+  .wday .wd.today{background:var(--accent);border-color:var(--accent);color:#fff;
+    box-shadow:0 0 16px -3px rgba(139,92,246,.7);}
+  .wday .wd.future{border-color:#1f1f22;color:var(--t3);}
+
+  .sbanner{position:relative;margin:0 2px 12px;height:98px;}
+  .speek{position:absolute;left:7px;right:7px;height:76px;border-radius:14px;
+    background:#161616;border:1px solid var(--border);}
+  .speek.p1{top:11px;} .speek.p2{top:18px;opacity:.55;}
+  .scard{position:absolute;left:0;right:0;top:0;height:76px;border-radius:14px;
+    background:#150f08;border:1.5px solid rgba(249,115,22,.55);
+    display:flex;align-items:center;gap:11px;padding:0 13px;
+    box-shadow:0 0 20px -6px rgba(249,115,22,.25);}
+  .scard .sico{width:42px;height:42px;border-radius:11px;flex-shrink:0;
+    background:rgba(249,115,22,.14);border:1px solid rgba(249,115,22,.3);
+    display:grid;place-items:center;font-size:18px;}
+  .scard .stx{flex:1;min-width:0;}
+  .scard .stx b{font-size:13.5px;font-weight:800;}
+  .scard .stx p{font-size:11px;color:var(--t2);margin-top:2px;}
+  .scard .sact{font-size:12px;font-weight:800;color:var(--burn);flex-shrink:0;}
+  .sx{position:absolute;right:2px;top:-6px;width:27px;height:27px;border-radius:8px;
+    background:var(--elevated);border:1px solid var(--border);display:grid;
+    place-items:center;color:var(--t2);font-size:12px;z-index:5;}
+  .scount{position:absolute;right:13px;bottom:0;background:var(--elevated);
+    border:1px solid var(--border);border-radius:6px;padding:1px 6px;
+    font-size:9px;font-weight:700;color:var(--t2);}
+
+  .clabel{font-size:9.5px;font-weight:800;letter-spacing:.7px;color:var(--t3);}
+
+  .wkcard{display:flex;align-items:center;gap:12px;
+    background:linear-gradient(150deg,#1d1633 0%,#141414 62%);
+    border:1px solid #34294f;border-radius:18px;padding:13px;margin-bottom:12px;}
+  .wkico{width:48px;height:48px;border-radius:13px;flex-shrink:0;
+    background:rgba(139,92,246,.16);border:1px solid #3a3050;
+    display:grid;place-items:center;font-size:22px;}
+  .wkmid{flex:1;min-width:0;}
+  .wkmid .r1{display:flex;align-items:center;gap:7px;}
+  .wkmid .tp{font-size:8.5px;font-weight:800;letter-spacing:.4px;padding:3px 6px;
+    border-radius:5px;background:var(--accent);color:#fff;}
+  .wkmid h3{font-size:16px;font-weight:800;letter-spacing:-.3px;}
+  .wkmid p{font-size:11.5px;color:var(--t2);font-weight:600;margin-top:3px;}
+  .playbtn{width:54px;height:54px;border-radius:50%;flex-shrink:0;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    display:grid;place-items:center;font-size:20px;color:#fff;
+    box-shadow:0 8px 20px -6px rgba(139,92,246,.7);}
+
+  /* swipeable bento */
+  .bento{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:11px;}
+  .tile{background:var(--card);border:1px solid var(--border);border-radius:18px;
+    padding:13px;position:relative;cursor:pointer;user-select:none;}
+  .tbody{min-height:128px;}
+  .tpage[hidden]{display:none;}
+  .tileh{display:flex;align-items:center;gap:6px;margin-bottom:8px;}
+  .tileh .tl{font-size:9.5px;font-weight:800;letter-spacing:.6px;color:var(--t3);}
+  .tilebig{font-size:24px;font-weight:800;letter-spacing:-.8px;}
+  .tilebig small{font-size:10.5px;color:var(--t3);font-weight:700;letter-spacing:0;}
+  .tilesub{font-size:10px;color:var(--t3);font-weight:600;margin-top:2px;}
+  .pbar{height:6px;border-radius:5px;background:var(--track);overflow:hidden;margin:9px 0 7px;}
+  .pbar > i{display:block;height:100%;border-radius:5px;}
+  .tilefoot{font-size:10px;color:var(--t2);font-weight:600;}
+  .srow{display:flex;align-items:center;font-size:11px;color:var(--t2);font-weight:600;
+    padding:6px 0;}
+  .srow + .srow{border-top:1px solid var(--border);}
+  .srow b{color:var(--t1);font-weight:800;margin-left:auto;}
+  .sleepbars{display:flex;align-items:flex-end;gap:3px;height:22px;margin:9px 0 6px;}
+  .sleepbars i{flex:1;background:var(--sleep);opacity:.5;border-radius:2px;}
+  .sleepbars i.hi{opacity:1;}
+  .tileplay{position:absolute;top:11px;right:11px;width:30px;height:30px;border-radius:50%;
+    background:rgba(6,182,212,.18);border:1px solid rgba(6,182,212,.45);
+    display:grid;place-items:center;font-size:12px;color:var(--fast);z-index:3;}
+  .tdots{display:flex;gap:4px;justify-content:center;margin-top:9px;}
+  .tdots i{width:4px;height:4px;border-radius:50%;background:var(--track);}
+  .tdots i.on{background:var(--accent2);width:12px;border-radius:2px;}
+
+  /* water tile (full width, swipeable) */
+  .watertile{background:var(--card);border:1px solid var(--border);border-radius:18px;
+    padding:13px 14px;margin-bottom:13px;cursor:pointer;user-select:none;}
+  .wt-row{display:flex;align-items:center;gap:13px;}
+  .wtpage[hidden]{display:none;}
+  .watertile .wico{width:42px;height:42px;border-radius:11px;flex-shrink:0;
+    background:rgba(56,189,248,.16);border:1px solid rgba(56,189,248,.3);
+    display:grid;place-items:center;font-size:19px;}
+  .watertile .wmid{flex:1;min-width:0;}
+  .watertile .wtop{display:flex;justify-content:space-between;align-items:baseline;}
+  .watertile .wtop .wl{font-size:10px;font-weight:800;letter-spacing:.6px;color:var(--t3);}
+  .watertile .wtop .wv{font-size:13px;font-weight:800;}
+  .watertile .wtop .wv small{color:var(--t3);font-weight:700;font-size:10px;}
+  .watertile .wbar{height:7px;border-radius:6px;background:var(--track);
+    overflow:hidden;margin-top:8px;}
+  .watertile .wbar > i{display:block;height:100%;border-radius:6px;background:var(--water);}
+  .watertile .wadd{width:40px;height:40px;border-radius:12px;flex-shrink:0;
+    background:rgba(56,189,248,.16);border:1px solid rgba(56,189,248,.4);
+    color:var(--water);display:grid;place-items:center;font-size:21px;font-weight:300;}
+  .wtdots{display:flex;gap:4px;justify-content:center;margin-top:9px;}
+  .wtdots i{width:4px;height:4px;border-radius:50%;background:var(--track);}
+  .wtdots i.on{background:var(--water);width:12px;border-radius:2px;}
+
+  /* quick actions — moved below water, 5 buttons */
+  .qa-wrap{margin-bottom:13px;}
+  .qa-head{margin-bottom:8px;}
+  .qa-grid{display:flex;justify-content:space-between;}
+  .qa{width:62px;display:flex;flex-direction:column;align-items:center;gap:6px;}
+  .qa .ic{width:60px;height:56px;border-radius:15px;background:var(--card);
+    border:1px solid var(--border);display:grid;place-items:center;font-size:20px;}
+  .qa span{font-size:9.5px;color:var(--t2);font-weight:600;}
+
+  .planhead{display:flex;justify-content:space-between;align-items:baseline;
+    margin:6px 2px 11px;}
+  .planhead h3{font-size:17px;font-weight:800;letter-spacing:-.3px;}
+  .planhead .pc{font-size:12px;font-weight:800;color:var(--accent2);}
+  .prow{display:flex;align-items:center;gap:12px;background:var(--card);
+    border:1px solid var(--border);border-radius:15px;padding:12px 13px;margin-bottom:9px;}
+  .prow .pico{width:42px;height:42px;border-radius:11px;display:grid;place-items:center;
+    font-size:18px;flex-shrink:0;}
+  .prow .ptx{flex:1;min-width:0;}
+  .prow .ptx .r1{display:flex;align-items:center;gap:7px;}
+  .prow .ptx b{font-size:13.5px;font-weight:800;}
+  .prow .ptx p{font-size:11px;color:var(--t2);margin-top:2px;}
+  .donepill{font-size:8.5px;font-weight:800;letter-spacing:.4px;padding:3px 7px;
+    border-radius:5px;background:rgba(139,92,246,.2);color:var(--accent2);}
+  .prow .ptime{font-size:11px;color:var(--t3);font-weight:700;}
+  .prow .pchev{color:var(--t3);font-size:15px;}
+
+  /* Chat (AI coach) FAB */
+  .chatfab{position:absolute;right:17px;bottom:86px;display:flex;align-items:center;
+    gap:9px;z-index:20;}
+  .chatfab .clbl{background:var(--elevated);border:1px solid #3a3050;border-radius:999px;
+    padding:8px 13px;font-size:11.5px;font-weight:800;color:var(--t1);}
+  .chatfab .cbtn{width:58px;height:58px;border-radius:50%;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    display:grid;place-items:center;font-size:24px;color:#fff;
+    box-shadow:0 12px 28px -6px rgba(139,92,246,.85);}
+
+  .navbar{flex-shrink:0;height:72px;background:rgba(15,15,17,.94);
+    border-top:1px solid var(--border);backdrop-filter:blur(12px);
+    display:flex;align-items:center;justify-content:space-around;padding-bottom:8px;}
+  .nav{display:flex;flex-direction:column;align-items:center;gap:3px;
+    color:var(--t3);font-size:9.5px;font-weight:700;}
+  .nav.active{color:var(--accent2);}
+  .nav .nic{font-size:18px;}
+  .nav.active .nic{background:rgba(139,92,246,.16);padding:5px 15px;border-radius:999px;}
+  .legend{max-width:820px;margin:40px auto 0;border-top:1px solid var(--border);
+    padding-top:20px;color:var(--t3);font-size:12px;line-height:1.7;text-align:center;}
+</style>
+</head>
+<body>
+
+<h1 class="title">Zealova — Home · v18</h1>
+<p class="sub">All 7 of your questions answered in the build — tap any tile to swipe its
+deeper metrics; the Chat coach is now the floating button.</p>
+
+<div class="panel">
+  <h3>Your 7 questions — answered</h3>
+  <ol>
+    <li><b>Calories burned</b> — now has a clear home: the Steps tile is renamed
+    <b>ACTIVITY</b> and swipes Steps → <b>Calories Burned</b> (big) → Heart Rate. It also
+    still shows "🔥 312 burned" on the Steps page.</li>
+    <li><b>Water in quick actions</b> — removed. It was redundant with the Water tile's own
+    "+". One water entry point now.</li>
+    <li><b>Chat as the floating button</b> — <b>yes, good call.</b> Unlike the "+", the AI
+    coach is genuinely a from-anywhere action and isn't duplicated elsewhere. So Chat leaves
+    the quick row and becomes the floating <b>Coach</b> button (auto-hides on scroll).</li>
+    <li><b>Every tile swipeable</b> — done. Nutrition, Activity, Sleep, Fasting and Water
+    each swipe 2–3 pages of deeper metrics (page dots show it). Try it in the mockup.</li>
+    <li><b>"My Space"</b> — that's the existing <code>LayoutEditorScreen</code> ("My Space")
+    home-layout editor. This bento home becomes the new <b>default layout</b>; each tile is
+    a layout unit, so My Space keeps doing exactly its job — reorder / show / hide tiles
+    (and it's where workout-led vs nutrition-led order is set). Entry stays in the ⋮ menu.</li>
+    <li><b>Quick actions below water</b> — yes, moved there. Hero (workout) + status (bento
+    + water) come first; the "do something" row sits just before Today's Plan. Better flow.</li>
+    <li><b>Is 6 too much?</b> Not objectively — but after removing Chat (→FAB) and Water
+    (→tile) it naturally drops to a cleaner <b>5</b>: Food · Scan Menu · Fridge · Photo Log
+    · More.</li>
+  </ol>
+</div>
+
+<div class="stage">
+  <div class="phone"><div class="screen"><div class="notch"></div>
+    <div class="statusbar"><span>9:41</span>
+      <span class="icons"><span>••••</span><span>📶</span><span>🔋</span></span></div>
+    <div class="body">
+
+      <div class="appbar">
+        <div class="hi"><div class="g">Good morning,</div><h2>Chetan 👋</h2></div>
+        <div class="appbar-right">
+          <div class="streakpill"><div class="lvlring"><span>7</span></div>
+            <div class="fire">🔥 2</div></div>
+          <div class="icobtn">🔔<span class="belldot"></span></div>
+          <div class="icobtn">⋮</div>
+        </div>
+      </div>
+
+      <div class="weekstrip">
+        <div class="wday"><span class="wl">M</span><span class="wd done">11</span></div>
+        <div class="wday"><span class="wl">T</span><span class="wd miss">12</span></div>
+        <div class="wday"><span class="wl">W</span><span class="wd done">13</span></div>
+        <div class="wday"><span class="wl">T</span><span class="wd done">14</span></div>
+        <div class="wday"><span class="wl">F</span><span class="wd miss">15</span></div>
+        <div class="wday"><span class="wl">S</span><span class="wd today">16</span></div>
+        <div class="wday"><span class="wl">S</span><span class="wd future">17</span></div>
+      </div>
+
+      <div class="sbanner">
+        <div class="speek p2"></div><div class="speek p1"></div>
+        <div class="scard">
+          <div class="sico">🕐</div>
+          <div class="stx"><b>Missed: Upper Body</b>
+            <p>Yesterday · 60min · 5 exercises</p></div>
+          <div class="sact">Do Today</div>
+        </div>
+        <div class="sx">✕</div><div class="scount">4</div>
+      </div>
+
+      <div class="wkcard">
+        <div class="wkico">🏋️</div>
+        <div class="wkmid">
+          <div class="r1"><span class="tp">TODAY</span><h3>Forged Set-Storm</h3></div>
+          <p>Strength · 60m · 6 exercises</p>
+        </div>
+        <div class="playbtn">▶</div>
+      </div>
+
+      <!-- swipeable bento -->
+      <div class="bento">
+        <!-- NUTRITION -->
+        <div class="tile" data-card>
+          <div class="tbody">
+            <div class="tpage">
+              <div class="tileh"><span>🍎</span><span class="tl">NUTRITION</span></div>
+              <div class="tilebig">1,180 <small>kcal left</small></div>
+              <div class="tilesub">of 2,400 target</div>
+              <div class="pbar"><i style="width:51%;background:var(--nutri)"></i></div>
+              <div class="tilefoot">P 48 · C 100 · F 32 g left</div>
+            </div>
+            <div class="tpage" hidden>
+              <div class="tileh"><span>🍎</span><span class="tl">MACROS LEFT</span></div>
+              <div class="srow">Protein <b>48 g</b></div>
+              <div class="srow">Carbs <b>100 g</b></div>
+              <div class="srow">Fat <b>32 g</b></div>
+            </div>
+            <div class="tpage" hidden>
+              <div class="tileh"><span>📊</span><span class="tl">THIS WEEK</span></div>
+              <div class="tilebig" style="font-size:21px;">2,140 <small>avg / day</small></div>
+              <div class="tilesub">6 of 7 days logged</div>
+              <div class="tilefoot" style="margin-top:9px;">🍽 3 meals logged today</div>
+            </div>
+          </div>
+          <div class="tdots"><i class="on"></i><i></i><i></i></div>
+        </div>
+        <!-- ACTIVITY -->
+        <div class="tile" data-card>
+          <div class="tbody">
+            <div class="tpage">
+              <div class="tileh"><span>👟</span><span class="tl">ACTIVITY</span></div>
+              <div class="tilebig">7,342</div>
+              <div class="tilesub">of 10,000 steps</div>
+              <div class="pbar"><i style="width:73%;background:var(--steps)"></i></div>
+              <div class="tilefoot">🔥 312 kcal burned</div>
+            </div>
+            <div class="tpage" hidden>
+              <div class="tileh"><span>🔥</span><span class="tl">CALORIES BURNED</span></div>
+              <div class="tilebig" style="color:var(--burn)">312</div>
+              <div class="tilesub">active energy today</div>
+              <div class="tilefoot" style="margin-top:9px;">1,952 total incl. workout</div>
+            </div>
+            <div class="tpage" hidden>
+              <div class="tileh"><span>❤️</span><span class="tl">HEART</span></div>
+              <div class="srow">Resting HR <b>58 bpm</b></div>
+              <div class="srow">Current <b>72 bpm</b></div>
+              <div class="srow">Active min <b>44 m</b></div>
+            </div>
+          </div>
+          <div class="tdots"><i class="on"></i><i></i><i></i></div>
+        </div>
+        <!-- SLEEP -->
+        <div class="tile" data-card>
+          <div class="tbody">
+            <div class="tpage">
+              <div class="tileh"><span>🌙</span><span class="tl">SLEEP</span></div>
+              <div class="tilebig">7h 12m</div>
+              <div class="tilesub">Goal 8h · 90% · score 82</div>
+              <div class="sleepbars"><i style="height:40%"></i><i style="height:70%"></i>
+                <i style="height:55%"></i><i class="hi" style="height:90%"></i>
+                <i style="height:60%"></i><i style="height:75%"></i>
+                <i class="hi" style="height:100%"></i></div>
+              <div class="tilefoot">Bed 10:30 PM</div>
+            </div>
+            <div class="tpage" hidden>
+              <div class="tileh"><span>🌙</span><span class="tl">STAGES</span></div>
+              <div class="srow">Deep <b>1h 22m</b></div>
+              <div class="srow">Light <b>4h 10m</b></div>
+              <div class="srow">REM <b>1h 40m</b></div>
+            </div>
+            <div class="tpage" hidden>
+              <div class="tileh"><span>📊</span><span class="tl">THIS WEEK</span></div>
+              <div class="tilebig" style="font-size:21px;">7h 04m <small>avg</small></div>
+              <div class="tilesub">resting HR 58 bpm</div>
+              <div class="tilefoot" style="margin-top:9px;">Best night: Thu · 8h 02m</div>
+            </div>
+          </div>
+          <div class="tdots"><i class="on"></i><i></i><i></i></div>
+        </div>
+        <!-- FASTING -->
+        <div class="tile" data-card>
+          <div class="tileplay">▶</div>
+          <div class="tbody">
+            <div class="tpage">
+              <div class="tileh"><span>⏱️</span><span class="tl">FASTING</span></div>
+              <div class="tilebig">14:18</div>
+              <div class="tilesub">16:8 · 1h 42m left</div>
+              <div class="pbar"><i style="width:88%;background:var(--fast)"></i></div>
+              <div class="tilefoot">Almost there 🎯</div>
+            </div>
+            <div class="tpage" hidden>
+              <div class="tileh"><span>🔥</span><span class="tl">ZONES</span></div>
+              <div class="srow">Fed <b>✓ done</b></div>
+              <div class="srow">Fat burn <b>✓ done</b></div>
+              <div class="srow">Ketosis <b>🔥 now</b></div>
+            </div>
+            <div class="tpage" hidden>
+              <div class="tileh"><span>📊</span><span class="tl">STREAK</span></div>
+              <div class="tilebig" style="font-size:21px;">6 <small>fasts in a row</small></div>
+              <div class="tilesub">longest ever 18h 04m</div>
+              <div class="tilefoot" style="margin-top:9px;">avg window 15h 30m</div>
+            </div>
+          </div>
+          <div class="tdots"><i class="on"></i><i></i><i></i></div>
+        </div>
+      </div>
+
+      <!-- water tile (swipeable) -->
+      <div class="watertile" data-water>
+        <div class="wtpage">
+          <div class="wt-row">
+            <div class="wico">💧</div>
+            <div class="wmid">
+              <div class="wtop"><span class="wl">WATER · TODAY</span>
+                <span class="wv">5 <small>of 8 cups · 1.2 L</small></span></div>
+              <div class="wbar"><i style="width:62%"></i></div>
+            </div>
+            <div class="wadd">+</div>
+          </div>
+        </div>
+        <div class="wtpage" hidden>
+          <div class="wt-row">
+            <div class="wico">📊</div>
+            <div class="wmid">
+              <div class="wtop"><span class="wl">WATER · THIS WEEK</span>
+                <span class="wv">6.2 <small>cups avg · best Wed 9</small></span></div>
+              <div class="wbar"><i style="width:78%"></i></div>
+            </div>
+            <div class="wadd">+</div>
+          </div>
+        </div>
+        <div class="wtdots"><i class="on"></i><i></i></div>
+      </div>
+
+      <!-- quick actions — below water, 5 buttons -->
+      <div class="qa-wrap">
+        <div class="qa-head"><span class="clabel">QUICK ACTIONS</span></div>
+        <div class="qa-grid">
+          <div class="qa"><div class="ic">🍴</div><span>Food</span></div>
+          <div class="qa"><div class="ic">📖</div><span>Scan Menu</span></div>
+          <div class="qa"><div class="ic">🧊</div><span>Fridge</span></div>
+          <div class="qa"><div class="ic">📷</div><span>Photo Log</span></div>
+          <div class="qa"><div class="ic">•••</div><span>More</span></div>
+        </div>
+      </div>
+
+      <div class="planhead"><h3>Today's Plan</h3><span class="pc">1 of 5 done</span></div>
+      <div class="prow">
+        <div class="pico" style="background:rgba(139,92,246,.16)">🏋️</div>
+        <div class="ptx"><div class="r1"><b>Morning Workout</b>
+          <span class="donepill">DONE</span></div><p>Push Day · 8 exercises</p></div>
+        <div class="ptime">7:00 AM</div><span class="pchev">›</span>
+      </div>
+      <div class="prow">
+        <div class="pico" style="background:rgba(6,182,212,.16)">⏱️</div>
+        <div class="ptx"><b>Fasting Window</b><p>16:8 Intermittent</p></div>
+        <div class="ptime">8:00 PM</div><span class="pchev">›</span>
+      </div>
+      <div class="prow">
+        <div class="pico" style="background:rgba(249,115,22,.16)">🍎</div>
+        <div class="ptx"><b>Nutrition Goal</b><p>2,400 kcal target</p></div>
+        <div class="ptime">All day</div><span class="pchev">›</span>
+      </div>
+
+    </div>
+
+    <!-- Chat / AI Coach FAB -->
+    <div class="chatfab">
+      <span class="clbl">Ask Coach</span>
+      <div class="cbtn">✦</div>
+    </div>
+
+    <div class="navbar">
+      <div class="nav active"><span class="nic">🏠</span>Home</div>
+      <div class="nav"><span class="nic">🏋</span>Workouts</div>
+      <div class="nav"><span class="nic">🍴</span>Nutrition</div>
+      <div class="nav"><span class="nic">🌐</span>Discover</div>
+      <div class="nav"><span class="nic">★</span>You</div>
+    </div>
+  </div></div>
+</div>
+
+<div class="legend">
+  v18 — tap any tile (or the water tile) to swipe its deeper-metric pages · calories burned
+  lives on the Activity tile · Chat is the floating "Ask Coach" button · quick actions are
+  5, below water · the bento layout is the new My Space default (still reorder/toggle there).
+</div>
+
+<script>
+  document.querySelectorAll('.tile[data-card]').forEach(function(c){
+    var pages=c.querySelectorAll('.tpage'),dots=c.querySelectorAll('.tdots i'),i=0;
+    function show(n){i=(n+pages.length)%pages.length;
+      pages.forEach(function(p,k){p.hidden=k!==i;});
+      dots.forEach(function(d,k){d.classList.toggle('on',k===i);});}
+    c.addEventListener('click',function(e){
+      if(e.target.closest('.tileplay'))return; show(i+1);});
+  });
+  document.querySelectorAll('.watertile[data-water]').forEach(function(c){
+    var pages=c.querySelectorAll('.wtpage'),dots=c.querySelectorAll('.wtdots i'),i=0;
+    function show(n){i=(n+pages.length)%pages.length;
+      pages.forEach(function(p,k){p.hidden=k!==i;});
+      dots.forEach(function(d,k){d.classList.toggle('on',k===i);});}
+    c.addEventListener('click',function(e){
+      if(e.target.closest('.wadd'))return; show(i+1);});
+  });
+</script>
+
+</body>
+</html>

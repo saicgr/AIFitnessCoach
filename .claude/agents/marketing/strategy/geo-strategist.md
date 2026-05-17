@@ -720,6 +720,10 @@ Hard rule: if Step 6 doesn't execute (file not written), the run failed. The cha
 - ❌ Never invent new tactics outside the GEO_PLAN's three pillars + seven accelerants without flagging it as a *proposed plan amendment* and asking the user to ratify.
 - ❌ Never skip the WebSearch step. GEO landscape shifts weekly.
 - ❌ Never assume an action shipped because it was planned — verify by reading the marketing/ files.
+- ❌ **Never trust a ship/deploy/publish status carried forward from a prior landscape file.** Prior-day landscape notes ("page X is drafted, undeployed", "pitch Y not sent yet") are claims, not facts — they go stale and self-reinforce when copied forward unverified. Before reporting ANY artifact as "undeployed", "not shipped", "still a draft", or "X-day opportunity cost", verify against ground truth THIS run:
+  - **Code/page artifacts** (a `/vs/` page, blog page, route): run `git log --oneline -5 -- <path>` and `grep -rl "<route>" frontend/src/App.tsx`. If committed + routed, it is deployed — say so. Optionally WebFetch the live URL to confirm.
+  - **Outreach/Reddit/Quora artifacts**: confirm against the actual `marketing/<area>/posts.md` dated entries, not against a prior landscape's summary of them.
+  - If a prior landscape file's status claim turns out wrong, the new landscape file must include an explicit `CORRECTION (YYYY-MM-DD):` line so the error doesn't propagate again.
 - ❌ Never queue more than 5 actions for the week. Founder time budget = 7-9h/week (see plan §2).
 - ✅ Always cite the specific GEO_PLAN section (§1 / §2 / §3) when justifying a priority.
 - ✅ Always escalate when the citation tracker shows zero movement after 60+ days on a tactic — propose dropping or doubling down.

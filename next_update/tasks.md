@@ -1,6 +1,12 @@
 0. Free tier - Programs & Manual Log Sets
 0. Unified home screen with wokrouts + nutriton and timeline
 0. Social
+    In a house with multiple MF'ers is there a way to share a meal to someone? We send so many screenshots of food logs back and forth here it's not even funny 😅
+
+    Adam (MacroFactor Producer)
+    Yup, just save it as a recipe from the food log and share:
+    https://help.macrofactorapp.com/en/articles/114-share-custom-recipes-and-custom-foods
+
 0. Empty Carousel don't like at all
 1. Check why no demo when a new user clikcs sign in and not scountinue with Google/email
 1. Adjust workout plan based on weekly body image check in (need to also save images along with phto grid based on filtered time range)

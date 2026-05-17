@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Zealova — Home v16 (what the + does)</title>
+<style>
+  :root{
+    --bg:#000000; --card:#141414; --elevated:#1A1A1A; --border:#262626;
+    --t1:#FAFAFA; --t2:#A1A1AA; --t3:#71717A;
+    --accent:#8B5CF6; --accent2:#A855F7;
+    --nutri:#F97316; --steps:#22C55E; --sleep:#8B5CF6; --fast:#06B6D4; --water:#38BDF8;
+    --green:#22C55E; --miss:#EF4444; --burn:#F97316; --track:#2A2A2E;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased;}
+  body{
+    background:radial-gradient(1200px 720px at 50% -8%, #181228 0%, #060608 58%, #000 100%);
+    color:var(--t1); min-height:100vh; padding:46px 26px 80px;
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;
+  }
+  h1.title{font-size:27px;font-weight:800;letter-spacing:-.5px;text-align:center;}
+  .sub{color:var(--t2);margin:8px auto 0;font-size:14px;line-height:1.6;text-align:center;
+    max-width:780px;}
+  .panel{max-width:820px;margin:18px auto 0;text-align:left;
+    background:rgba(139,92,246,.06);border:1px solid #2e2742;border-radius:14px;
+    padding:15px 20px;}
+  .panel h3{font-size:12px;font-weight:800;letter-spacing:.5px;color:var(--accent2);
+    text-transform:uppercase;margin:11px 0 7px;}
+  .panel h3:first-child{margin-top:0;}
+  .panel p{font-size:13px;color:var(--t2);line-height:1.65;margin-bottom:5px;}
+  .panel p b{color:var(--t1);}
+
+  .variants{display:flex;gap:50px;justify-content:center;flex-wrap:wrap;margin-top:30px;}
+  .vcol{display:flex;flex-direction:column;align-items:center;}
+  .vname{font-size:14px;font-weight:800;margin-bottom:16px;color:var(--accent2);
+    letter-spacing:.4px;text-transform:uppercase;}
+
+  .phone{width:404px;height:872px;background:#000;border-radius:58px;padding:12px;
+    box-shadow:0 0 0 2px #2a2a2e,0 44px 90px -22px rgba(0,0,0,.92);position:relative;}
+  .screen{width:100%;height:100%;background:var(--bg);border-radius:47px;
+    overflow:hidden;position:relative;display:flex;flex-direction:column;}
+  .notch{position:absolute;top:0;left:50%;transform:translateX(-50%);
+    width:130px;height:33px;background:#000;border-radius:0 0 20px 20px;z-index:30;}
+  .statusbar{height:51px;display:flex;align-items:flex-end;justify-content:space-between;
+    padding:0 29px 6px;font-size:13px;font-weight:600;flex-shrink:0;}
+  .statusbar .icons{display:flex;gap:5px;align-items:center;font-size:11px;}
+  .body{flex:1;overflow-y:auto;padding:0 16px 14px;}
+  .body::-webkit-scrollbar{width:0;}
+
+  .appbar{display:flex;align-items:center;justify-content:space-between;padding:8px 2px 12px;}
+  .hi .g{font-size:12px;color:var(--t2);font-weight:600;}
+  .hi h2{font-size:22px;font-weight:800;letter-spacing:-.4px;margin-top:1px;}
+  .appbar-right{display:flex;align-items:center;gap:10px;}
+  .streakpill{display:flex;align-items:center;gap:7px;background:var(--elevated);
+    border:1px solid var(--border);border-radius:999px;padding:4px 11px 4px 4px;}
+  .lvlring{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;
+    background:conic-gradient(var(--accent) 78%, var(--track) 0);font-size:10px;font-weight:800;}
+  .lvlring span{width:21px;height:21px;border-radius:50%;background:var(--bg);
+    display:grid;place-items:center;}
+  .fire{font-size:12px;color:var(--t2);font-weight:700;}
+  .icobtn{color:var(--t2);font-size:17px;}
+
+  .weekstrip{display:flex;justify-content:space-between;padding:2px 2px 13px;}
+  .wday{display:flex;flex-direction:column;align-items:center;gap:6px;}
+  .wday .wl{font-size:11px;font-weight:700;color:var(--t3);}
+  .wday .wd{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;
+    font-size:15px;font-weight:800;border:2.5px solid var(--track);color:var(--t1);}
+  .wday .wd.done{border-color:var(--green);}
+  .wday .wd.miss{border-color:var(--miss);}
+  .wday .wd.today{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .wday .wd.future{border-color:#1f1f22;color:var(--t3);}
+
+  .sbanner{position:relative;margin:0 2px 12px;height:96px;}
+  .speek{position:absolute;left:6px;right:6px;height:74px;border-radius:14px;
+    background:#161616;border:1px solid var(--border);}
+  .speek.p1{top:11px;} .speek.p2{top:18px;opacity:.55;}
+  .scard{position:absolute;left:0;right:0;top:0;height:74px;border-radius:14px;
+    background:#150f08;border:1.5px solid rgba(249,115,22,.55);
+    display:flex;align-items:center;gap:10px;padding:0 12px;}
+  .scard .sico{width:40px;height:40px;border-radius:10px;flex-shrink:0;
+    background:rgba(249,115,22,.14);border:1px solid rgba(249,115,22,.3);
+    display:grid;place-items:center;font-size:17px;}
+  .scard .stx{flex:1;min-width:0;}
+  .scard .stx b{font-size:13.5px;font-weight:800;}
+  .scard .stx p{font-size:10.5px;color:var(--t2);margin-top:2px;}
+  .scard .sact{font-size:12px;font-weight:800;color:var(--burn);}
+  .sx{position:absolute;right:2px;top:-6px;width:26px;height:26px;border-radius:8px;
+    background:var(--elevated);border:1px solid var(--border);display:grid;
+    place-items:center;color:var(--t2);font-size:12px;z-index:5;}
+
+  .qrow{display:flex;justify-content:space-between;margin-bottom:12px;}
+  .qa{width:56px;display:flex;flex-direction:column;align-items:center;gap:5px;}
+  .qa .ic{width:53px;height:51px;border-radius:14px;background:var(--card);
+    border:1px solid var(--border);display:grid;place-items:center;font-size:18px;}
+  .qa.chat .ic{background:rgba(139,92,246,.16);border-color:#3a3050;}
+  .qa span{font-size:9px;color:var(--t2);font-weight:600;}
+
+  .wkcard{display:flex;align-items:center;gap:11px;
+    background:linear-gradient(150deg,#1d1633 0%,#141414 62%);
+    border:1px solid #34294f;border-radius:17px;padding:12px;margin-bottom:12px;}
+  .wkico{width:46px;height:46px;border-radius:12px;flex-shrink:0;
+    background:rgba(139,92,246,.16);border:1px solid #3a3050;
+    display:grid;place-items:center;font-size:21px;}
+  .wkmid{flex:1;min-width:0;}
+  .wkmid .r1{display:flex;align-items:center;gap:6px;}
+  .wkmid .tp{font-size:8px;font-weight:800;padding:3px 6px;border-radius:5px;
+    background:var(--accent);color:#fff;}
+  .wkmid h3{font-size:15px;font-weight:800;}
+  .wkmid p{font-size:11px;color:var(--t2);font-weight:600;margin-top:2px;}
+  .playbtn{width:52px;height:52px;border-radius:50%;flex-shrink:0;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    display:grid;place-items:center;font-size:19px;color:#fff;
+    box-shadow:0 8px 18px -6px rgba(139,92,246,.7);}
+
+  .bento{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
+  .tile{background:var(--card);border:1px solid var(--border);border-radius:17px;
+    padding:13px;position:relative;}
+  .tileh{display:flex;align-items:center;gap:6px;margin-bottom:8px;}
+  .tileh .tl{font-size:9px;font-weight:800;letter-spacing:.6px;color:var(--t3);}
+  .tilebig{font-size:23px;font-weight:800;letter-spacing:-.8px;}
+  .tilebig small{font-size:10.5px;color:var(--t3);font-weight:700;letter-spacing:0;}
+  .tilesub{font-size:10px;color:var(--t3);font-weight:600;margin-top:2px;}
+  .pbar{height:6px;border-radius:5px;background:var(--track);overflow:hidden;margin:9px 0 7px;}
+  .pbar > i{display:block;height:100%;border-radius:5px;}
+  .tilefoot{font-size:9.5px;color:var(--t2);font-weight:600;}
+  .sleepbars{display:flex;align-items:flex-end;gap:3px;height:22px;margin:9px 0 6px;}
+  .sleepbars i{flex:1;background:var(--sleep);opacity:.5;border-radius:2px;}
+  .sleepbars i.hi{opacity:1;}
+  .tileplay{position:absolute;top:11px;right:11px;width:30px;height:30px;border-radius:50%;
+    background:rgba(6,182,212,.18);border:1px solid rgba(6,182,212,.45);
+    display:grid;place-items:center;font-size:12px;color:var(--fast);}
+
+  .watertile{display:flex;align-items:center;gap:12px;background:var(--card);
+    border:1px solid var(--border);border-radius:17px;padding:12px 13px;}
+  .watertile .wico{width:40px;height:40px;border-radius:11px;flex-shrink:0;
+    background:rgba(56,189,248,.16);border:1px solid rgba(56,189,248,.3);
+    display:grid;place-items:center;font-size:18px;}
+  .watertile .wmid{flex:1;min-width:0;}
+  .watertile .wtop{display:flex;justify-content:space-between;align-items:baseline;}
+  .watertile .wtop .wl{font-size:9.5px;font-weight:800;letter-spacing:.6px;color:var(--t3);}
+  .watertile .wtop .wv{font-size:12.5px;font-weight:800;}
+  .watertile .wtop .wv small{color:var(--t3);font-weight:700;font-size:9.5px;}
+  .watertile .wbar{height:7px;border-radius:6px;background:var(--track);
+    overflow:hidden;margin-top:7px;}
+  .watertile .wbar > i{display:block;height:100%;border-radius:6px;
+    width:62%;background:var(--water);}
+  .watertile .wadd{width:38px;height:38px;border-radius:11px;flex-shrink:0;
+    background:rgba(56,189,248,.16);border:1px solid rgba(56,189,248,.4);
+    color:var(--water);display:grid;place-items:center;font-size:20px;font-weight:300;}
+
+  /* FAB */
+  .fab{position:absolute;right:17px;bottom:86px;width:58px;height:58px;border-radius:50%;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    display:grid;place-items:center;color:#fff;font-size:29px;font-weight:300;
+    box-shadow:0 12px 28px -6px rgba(139,92,246,.85);z-index:20;}
+  .fabnote{position:absolute;right:84px;bottom:100px;background:var(--elevated);
+    border:1px solid #3a3050;border-radius:9px;padding:6px 10px;font-size:10px;
+    font-weight:700;color:var(--t2);z-index:20;}
+  .fabnote::after{content:"";position:absolute;right:-5px;bottom:13px;width:9px;height:9px;
+    background:var(--elevated);border-right:1px solid #3a3050;border-top:1px solid #3a3050;
+    transform:rotate(45deg);}
+
+  .navbar{flex-shrink:0;height:70px;background:rgba(15,15,17,.94);
+    border-top:1px solid var(--border);backdrop-filter:blur(12px);
+    display:flex;align-items:center;justify-content:space-around;padding-bottom:8px;}
+  .nav{display:flex;flex-direction:column;align-items:center;gap:3px;
+    color:var(--t3);font-size:9px;font-weight:700;}
+  .nav.active{color:var(--accent2);}
+  .nav .nic{font-size:17px;}
+  .nav.active .nic{background:rgba(139,92,246,.16);padding:5px 14px;border-radius:999px;}
+
+  /* ---- Quick Log sheet (phone 2) ---- */
+  .scrim{position:absolute;inset:0;background:rgba(0,0,0,.66);z-index:40;}
+  .dimhint{padding:60px 22px 0;opacity:.32;}
+  .dimhint h2{font-size:22px;font-weight:800;}
+  .dimhint .ds{font-size:13px;color:var(--t2);margin:14px 0;}
+  .dimrow{height:46px;background:#141414;border:1px solid var(--border);
+    border-radius:14px;margin-bottom:12px;}
+  .sheet{position:absolute;left:0;right:0;bottom:0;z-index:50;
+    background:#171520;border-top:1px solid #3a3050;border-radius:26px 26px 0 0;
+    padding:10px 18px 26px;box-shadow:0 -20px 50px -10px rgba(0,0,0,.7);}
+  .handle{width:38px;height:4px;border-radius:3px;background:#3a3a44;margin:0 auto 14px;}
+  .sheeth{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
+  .sheeth h3{font-size:18px;font-weight:800;letter-spacing:-.3px;}
+  .sheeth .x{width:30px;height:30px;border-radius:9px;background:var(--elevated);
+    border:1px solid var(--border);display:grid;place-items:center;color:var(--t2);
+    font-size:14px;}
+  .aibar{display:flex;align-items:center;gap:9px;background:var(--bg);
+    border:1px solid #3a3050;border-radius:14px;padding:12px 13px;margin-bottom:15px;}
+  .aibar .sp{font-size:16px;}
+  .aibar .pt{flex:1;font-size:12px;color:var(--t3);font-weight:600;}
+  .aibar .mic{width:30px;height:30px;border-radius:9px;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    display:grid;place-items:center;font-size:13px;color:#fff;}
+  .loggrid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
+  .logopt{background:var(--bg);border:1px solid var(--border);border-radius:15px;
+    padding:14px 6px;display:flex;flex-direction:column;align-items:center;gap:8px;}
+  .logopt .li{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;
+    font-size:19px;}
+  .logopt span{font-size:11px;font-weight:700;color:var(--t1);}
+  .logopt small{font-size:8.5px;color:var(--t3);font-weight:600;}
+
+  .legend{max-width:820px;margin:40px auto 0;border-top:1px solid var(--border);
+    padding-top:20px;color:var(--t3);font-size:12px;line-height:1.7;text-align:center;}
+</style>
+</head>
+<body>
+
+<h1 class="title">Zealova — What the "+" does</h1>
+<p class="sub">Keeping it as a floating button (not the nav centre). Here's exactly what it
+does — and how it stops covering content.</p>
+
+<div class="panel">
+  <h3>What the "+" button does</h3>
+  <p>The "+" is the <b>universal quick-logger</b>. Tap it from anywhere and a <b>Quick Log
+  sheet</b> slides up (phone 2) — log <b>Food, Water, Weight, a Workout, Measurements, or
+  Mood</b> in one or two taps, plus an <b>AI input</b> at the top: type or speak
+  "<i>2 eggs and a coffee</i>" and it logs the meal for you.</p>
+  <p><b>Why it exists alongside the quick-action row:</b> the 6 quick actions live at the
+  top of Home and scroll away. The "+" <b>floats and follows you</b> — it's on Home,
+  Workouts, Nutrition, every tab — so logging is always one tap, wherever you are. The
+  quick-action row = shortcuts; the "+" = the always-there logger.</p>
+
+  <h3>Fixing the "it covers content" problem (without the nav centre)</h3>
+  <p>Per your call it stays a floating button. To stop it burying tiles: it
+  <b>auto-hides while you scroll down</b> and slides back when you scroll up or stop —
+  so when you're reading the bento it tucks away; when you pause, it's there. The page
+  also keeps bottom padding so the last tile never sits under it. That's the standard
+  Material behaviour and it removes the overlap you saw.</p>
+</div>
+
+<div class="variants">
+  <div class="vcol">
+    <div class="vname">Home — the "+" floats bottom-right</div>
+    <div class="phone"><div class="screen"><div class="notch"></div>
+      <div class="statusbar"><span>9:41</span>
+        <span class="icons"><span>••••</span><span>📶</span><span>🔋</span></span></div>
+      <div class="body">
+        <div class="appbar">
+          <div class="hi"><div class="g">Good morning,</div><h2>Chetan 👋</h2></div>
+          <div class="appbar-right">
+            <div class="streakpill"><div class="lvlring"><span>7</span></div>
+              <div class="fire">🔥 2</div></div>
+            <div class="icobtn">🔔</div><div class="icobtn">⋮</div>
+          </div>
+        </div>
+        <div class="weekstrip">
+          <div class="wday"><span class="wl">M</span><span class="wd done">11</span></div>
+          <div class="wday"><span class="wl">T</span><span class="wd miss">12</span></div>
+          <div class="wday"><span class="wl">W</span><span class="wd done">13</span></div>
+          <div class="wday"><span class="wl">T</span><span class="wd done">14</span></div>
+          <div class="wday"><span class="wl">F</span><span class="wd miss">15</span></div>
+          <div class="wday"><span class="wl">S</span><span class="wd today">16</span></div>
+          <div class="wday"><span class="wl">S</span><span class="wd future">17</span></div>
+        </div>
+        <div class="sbanner">
+          <div class="speek p2"></div><div class="speek p1"></div>
+          <div class="scard"><div class="sico">🕐</div>
+            <div class="stx"><b>Missed: Upper Body</b>
+              <p>Yesterday · 60min · 5 exercises</p></div>
+            <div class="sact">Do Today</div></div>
+          <div class="sx">✕</div>
+        </div>
+        <div class="qrow">
+          <div class="qa chat"><div class="ic">💬</div><span>Chat</span></div>
+          <div class="qa"><div class="ic">🍴</div><span>Food</span></div>
+          <div class="qa"><div class="ic">💧</div><span>Water</span></div>
+          <div class="qa"><div class="ic">📖</div><span>Scan Menu</span></div>
+          <div class="qa"><div class="ic">🧊</div><span>Fridge</span></div>
+          <div class="qa"><div class="ic">•••</div><span>More</span></div>
+        </div>
+        <div class="wkcard">
+          <div class="wkico">🏋️</div>
+          <div class="wkmid">
+            <div class="r1"><span class="tp">TODAY</span><h3>Forged Set-Storm</h3></div>
+            <p>Strength · 60m · 6 exercises</p></div>
+          <div class="playbtn">▶</div>
+        </div>
+        <div class="bento">
+          <div class="tile">
+            <div class="tileh"><span>🍎</span><span class="tl">NUTRITION</span></div>
+            <div class="tilebig">1,180 <small>kcal left</small></div>
+            <div class="tilesub">of 2,400 target</div>
+            <div class="pbar"><i style="width:51%;background:var(--nutri)"></i></div>
+            <div class="tilefoot">P 48 · C 100 · F 32 g left</div>
+          </div>
+          <div class="tile">
+            <div class="tileh"><span>👟</span><span class="tl">STEPS</span></div>
+            <div class="tilebig">7,342</div>
+            <div class="tilesub">of 10,000</div>
+            <div class="pbar"><i style="width:73%;background:var(--steps)"></i></div>
+            <div class="tilefoot">🔥 312 kcal burned</div>
+          </div>
+          <div class="tile">
+            <div class="tileh"><span>🌙</span><span class="tl">SLEEP</span></div>
+            <div class="tilebig">7h 12m</div>
+            <div class="tilesub">Goal 8h · 90%</div>
+            <div class="sleepbars"><i style="height:40%"></i><i style="height:70%"></i>
+              <i style="height:55%"></i><i class="hi" style="height:90%"></i>
+              <i style="height:60%"></i><i style="height:75%"></i>
+              <i class="hi" style="height:100%"></i></div>
+            <div class="tilefoot">Bed 10:30 PM</div>
+          </div>
+          <div class="tile">
+            <div class="tileplay">▶</div>
+            <div class="tileh"><span>⏱️</span><span class="tl">FASTING</span></div>
+            <div class="tilebig">14:18</div>
+            <div class="tilesub">16:8 · 1h 42m left</div>
+            <div class="pbar"><i style="width:88%;background:var(--fast)"></i></div>
+            <div class="tilefoot">Almost there 🎯</div>
+          </div>
+        </div>
+        <div class="watertile">
+          <div class="wico">💧</div>
+          <div class="wmid">
+            <div class="wtop"><span class="wl">WATER</span>
+              <span class="wv">5 <small>of 8 cups</small></span></div>
+            <div class="wbar"><i></i></div>
+          </div>
+          <div class="wadd">+</div>
+        </div>
+      </div>
+      <div class="fabnote">Tap → Quick Log</div>
+      <div class="fab">+</div>
+      <div class="navbar">
+        <div class="nav active"><span class="nic">🏠</span>Home</div>
+        <div class="nav"><span class="nic">🏋</span>Workouts</div>
+        <div class="nav"><span class="nic">🍴</span>Nutrition</div>
+        <div class="nav"><span class="nic">🌐</span>Discover</div>
+        <div class="nav"><span class="nic">★</span>You</div>
+      </div>
+    </div></div>
+  </div>
+
+  <div class="vcol">
+    <div class="vname">Tapped "+" → the Quick Log sheet</div>
+    <div class="phone"><div class="screen"><div class="notch"></div>
+      <div class="statusbar"><span>9:41</span>
+        <span class="icons"><span>••••</span><span>📶</span><span>🔋</span></span></div>
+      <div class="dimhint">
+        <h2>Good morning, Chetan</h2>
+        <div class="ds">Saturday · May 16</div>
+        <div class="dimrow"></div><div class="dimrow"></div><div class="dimrow"></div>
+      </div>
+      <div class="scrim"></div>
+      <div class="sheet">
+        <div class="handle"></div>
+        <div class="sheeth"><h3>Quick Log</h3><div class="x">✕</div></div>
+        <div class="aibar">
+          <span class="sp">✨</span>
+          <span class="pt">Type or say it — "2 eggs and a coffee"…</span>
+          <span class="mic">🎤</span>
+        </div>
+        <div class="loggrid">
+          <div class="logopt"><div class="li" style="background:rgba(34,197,94,.16)">🍴</div>
+            <span>Food</span><small>meal / snack</small></div>
+          <div class="logopt"><div class="li" style="background:rgba(56,189,248,.16)">💧</div>
+            <span>Water</span><small>+1 cup</small></div>
+          <div class="logopt"><div class="li" style="background:rgba(245,158,11,.16)">⚖️</div>
+            <span>Weight</span><small>body weight</small></div>
+          <div class="logopt"><div class="li" style="background:rgba(139,92,246,.16)">🏋️</div>
+            <span>Workout</span><small>quick log</small></div>
+          <div class="logopt"><div class="li" style="background:rgba(6,182,212,.16)">📏</div>
+            <span>Measure</span><small>waist, arms…</small></div>
+          <div class="logopt"><div class="li" style="background:rgba(168,85,247,.16)">😊</div>
+            <span>Mood</span><small>how you feel</small></div>
+        </div>
+      </div>
+      <div class="navbar">
+        <div class="nav active"><span class="nic">🏠</span>Home</div>
+        <div class="nav"><span class="nic">🏋</span>Workouts</div>
+        <div class="nav"><span class="nic">🍴</span>Nutrition</div>
+        <div class="nav"><span class="nic">🌐</span>Discover</div>
+        <div class="nav"><span class="nic">★</span>You</div>
+      </div>
+    </div></div>
+  </div>
+</div>
+
+<div class="legend">
+  The "+" = universal quick-logger, on every tab, auto-hides on scroll-down so it never
+  buries a tile. Tapping it opens the Quick Log sheet — AI text/voice input + Food · Water ·
+  Weight · Workout · Measure · Mood. Stays a floating button (not the nav centre).
+</div>
+
+</body>
+</html>

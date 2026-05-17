@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Zealova — Bento Home v15 (water + fasting play)</title>
+<style>
+  :root{
+    --bg:#000000; --card:#141414; --elevated:#1A1A1A; --border:#262626;
+    --t1:#FAFAFA; --t2:#A1A1AA; --t3:#71717A;
+    --accent:#8B5CF6; --accent2:#A855F7;
+    --nutri:#F97316; --steps:#22C55E; --sleep:#8B5CF6; --fast:#06B6D4; --water:#38BDF8;
+    --green:#22C55E; --miss:#EF4444; --burn:#F97316; --track:#2A2A2E;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased;}
+  body{
+    background:radial-gradient(1100px 700px at 50% -8%, #181228 0%, #060608 58%, #000 100%);
+    color:var(--t1); min-height:100vh; padding:46px 26px 80px;
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;
+  }
+  h1.title{font-size:27px;font-weight:800;letter-spacing:-.5px;text-align:center;}
+  .sub{color:var(--t2);margin:8px auto 0;font-size:14px;line-height:1.6;text-align:center;
+    max-width:720px;}
+  .panel{max-width:720px;margin:18px auto 0;text-align:left;
+    background:rgba(139,92,246,.06);border:1px solid #2e2742;border-radius:14px;
+    padding:15px 20px;}
+  .panel h3{font-size:12px;font-weight:800;letter-spacing:.5px;color:var(--accent2);
+    text-transform:uppercase;margin:11px 0 7px;}
+  .panel h3:first-child{margin-top:0;}
+  .panel p{font-size:13px;color:var(--t2);line-height:1.65;margin-bottom:5px;}
+  .panel p b{color:var(--t1);}
+  .panel .q{color:var(--accent2);font-weight:800;}
+
+  .stage{display:flex;justify-content:center;margin-top:32px;}
+  .phone{width:412px;height:888px;background:#000;border-radius:60px;padding:13px;
+    box-shadow:0 0 0 2px #2a2a2e,0 44px 90px -22px rgba(0,0,0,.92);position:relative;}
+  .screen{width:100%;height:100%;background:var(--bg);border-radius:48px;
+    overflow:hidden;position:relative;display:flex;flex-direction:column;}
+  .notch{position:absolute;top:0;left:50%;transform:translateX(-50%);
+    width:132px;height:34px;background:#000;border-radius:0 0 20px 20px;z-index:30;}
+  .statusbar{height:53px;display:flex;align-items:flex-end;justify-content:space-between;
+    padding:0 30px 6px;font-size:14px;font-weight:600;flex-shrink:0;}
+  .statusbar .icons{display:flex;gap:5px;align-items:center;font-size:12px;}
+  .body{flex:1;overflow-y:auto;padding:0 17px 14px;}
+  .body::-webkit-scrollbar{width:0;}
+
+  .appbar{display:flex;align-items:center;justify-content:space-between;padding:9px 2px 13px;}
+  .hi .g{font-size:13px;color:var(--t2);font-weight:600;}
+  .hi h2{font-size:24px;font-weight:800;letter-spacing:-.4px;margin-top:1px;}
+  .appbar-right{display:flex;align-items:center;gap:11px;}
+  .streakpill{display:flex;align-items:center;gap:8px;background:var(--elevated);
+    border:1px solid var(--border);border-radius:999px;padding:5px 12px 5px 5px;}
+  .lvlring{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;
+    background:conic-gradient(var(--accent) 78%, var(--track) 0);font-size:11px;font-weight:800;}
+  .lvlring span{width:22px;height:22px;border-radius:50%;background:var(--bg);
+    display:grid;place-items:center;}
+  .fire{font-size:13px;color:var(--t2);font-weight:700;}
+  .icobtn{color:var(--t2);font-size:18px;position:relative;}
+  .belldot{position:absolute;top:-1px;right:-2px;width:7px;height:7px;border-radius:50%;
+    background:var(--miss);border:1.5px solid var(--bg);}
+
+  .weekstrip{display:flex;justify-content:space-between;padding:2px 2px 14px;}
+  .wday{display:flex;flex-direction:column;align-items:center;gap:7px;}
+  .wday .wl{font-size:12px;font-weight:700;color:var(--t3);}
+  .wday .wd{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;
+    font-size:16px;font-weight:800;border:2.5px solid var(--track);color:var(--t1);}
+  .wday .wd.done{border-color:var(--green);}
+  .wday .wd.miss{border-color:var(--miss);}
+  .wday .wd.today{background:var(--accent);border-color:var(--accent);color:#fff;
+    box-shadow:0 0 16px -3px rgba(139,92,246,.7);}
+  .wday .wd.future{border-color:#1f1f22;color:var(--t3);}
+
+  .sbanner{position:relative;margin:0 2px 13px;height:100px;}
+  .speek{position:absolute;left:7px;right:7px;height:78px;border-radius:15px;
+    background:#161616;border:1px solid var(--border);}
+  .speek.p1{top:12px;} .speek.p2{top:20px;opacity:.55;}
+  .scard{position:absolute;left:0;right:0;top:0;height:78px;border-radius:15px;
+    background:#150f08;border:1.5px solid rgba(249,115,22,.55);
+    display:flex;align-items:center;gap:11px;padding:0 13px;
+    box-shadow:0 0 20px -6px rgba(249,115,22,.25);}
+  .scard .sico{width:42px;height:42px;border-radius:11px;flex-shrink:0;
+    background:rgba(249,115,22,.14);border:1px solid rgba(249,115,22,.3);
+    display:grid;place-items:center;font-size:18px;}
+  .scard .stx{flex:1;min-width:0;}
+  .scard .stx b{font-size:14px;font-weight:800;}
+  .scard .stx p{font-size:11px;color:var(--t2);margin-top:2px;}
+  .scard .sact{font-size:12.5px;font-weight:800;color:var(--burn);flex-shrink:0;}
+  .sx{position:absolute;right:2px;top:-6px;width:28px;height:28px;border-radius:8px;
+    background:var(--elevated);border:1px solid var(--border);display:grid;
+    place-items:center;color:var(--t2);font-size:13px;z-index:5;}
+  .scount{position:absolute;right:13px;bottom:0;background:var(--elevated);
+    border:1px solid var(--border);border-radius:6px;padding:1px 6px;
+    font-size:9.5px;font-weight:700;color:var(--t2);}
+
+  .qrow{display:flex;justify-content:space-between;margin-bottom:13px;}
+  .qa{width:60px;display:flex;flex-direction:column;align-items:center;gap:6px;}
+  .qa .ic{width:56px;height:54px;border-radius:15px;background:var(--card);
+    border:1px solid var(--border);display:grid;place-items:center;font-size:20px;}
+  .qa.chat .ic{background:rgba(139,92,246,.16);border-color:#3a3050;}
+  .qa span{font-size:10px;color:var(--t2);font-weight:600;}
+
+  .wkcard{display:flex;align-items:center;gap:12px;
+    background:linear-gradient(150deg,#1d1633 0%,#141414 62%);
+    border:1px solid #34294f;border-radius:18px;padding:13px;margin-bottom:13px;}
+  .wkico{width:48px;height:48px;border-radius:13px;flex-shrink:0;
+    background:rgba(139,92,246,.16);border:1px solid #3a3050;
+    display:grid;place-items:center;font-size:22px;}
+  .wkmid{flex:1;min-width:0;}
+  .wkmid .r1{display:flex;align-items:center;gap:7px;}
+  .wkmid .tp{font-size:8.5px;font-weight:800;letter-spacing:.4px;padding:3px 6px;
+    border-radius:5px;background:var(--accent);color:#fff;}
+  .wkmid h3{font-size:16px;font-weight:800;letter-spacing:-.3px;}
+  .wkmid p{font-size:11.5px;color:var(--t2);font-weight:600;margin-top:3px;}
+  .playbtn{width:56px;height:56px;border-radius:50%;flex-shrink:0;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    display:grid;place-items:center;font-size:21px;color:#fff;
+    box-shadow:0 8px 20px -6px rgba(139,92,246,.7);}
+
+  .bento{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:11px;}
+  .tile{background:var(--card);border:1px solid var(--border);border-radius:18px;
+    padding:14px;position:relative;}
+  .tileh{display:flex;align-items:center;gap:6px;margin-bottom:9px;}
+  .tileh .ti{font-size:13px;}
+  .tileh .tl{font-size:9.5px;font-weight:800;letter-spacing:.6px;color:var(--t3);}
+  .tilebig{font-size:25px;font-weight:800;letter-spacing:-.8px;}
+  .tilebig small{font-size:11px;color:var(--t3);font-weight:700;letter-spacing:0;}
+  .tilesub{font-size:10.5px;color:var(--t3);font-weight:600;margin-top:2px;}
+  .pbar{height:6px;border-radius:5px;background:var(--track);overflow:hidden;margin:10px 0 8px;}
+  .pbar > i{display:block;height:100%;border-radius:5px;}
+  .tilefoot{font-size:10px;color:var(--t2);font-weight:600;}
+  .sleepbars{display:flex;align-items:flex-end;gap:3px;height:24px;margin:10px 0 7px;}
+  .sleepbars i{flex:1;background:var(--sleep);opacity:.5;border-radius:2px;}
+  .sleepbars i.hi{opacity:1;}
+  /* small play on fasting tile */
+  .tileplay{position:absolute;top:12px;right:12px;width:32px;height:32px;border-radius:50%;
+    background:rgba(6,182,212,.18);border:1px solid rgba(6,182,212,.45);
+    display:grid;place-items:center;font-size:13px;color:var(--fast);}
+
+  /* water tile — full width */
+  .watertile{display:flex;align-items:center;gap:13px;background:var(--card);
+    border:1px solid var(--border);border-radius:18px;padding:13px 14px;margin-bottom:6px;}
+  .watertile .wico{width:42px;height:42px;border-radius:11px;flex-shrink:0;
+    background:rgba(56,189,248,.16);border:1px solid rgba(56,189,248,.3);
+    display:grid;place-items:center;font-size:19px;}
+  .watertile .wmid{flex:1;min-width:0;}
+  .watertile .wtop{display:flex;justify-content:space-between;align-items:baseline;}
+  .watertile .wtop .wl{font-size:10px;font-weight:800;letter-spacing:.6px;color:var(--t3);}
+  .watertile .wtop .wv{font-size:13px;font-weight:800;}
+  .watertile .wtop .wv small{color:var(--t3);font-weight:700;font-size:10px;}
+  .watertile .wbar{height:7px;border-radius:6px;background:var(--track);
+    overflow:hidden;margin-top:8px;}
+  .watertile .wbar > i{display:block;height:100%;border-radius:6px;background:var(--water);}
+  .watertile .wadd{width:40px;height:40px;border-radius:12px;flex-shrink:0;
+    background:rgba(56,189,248,.16);border:1px solid rgba(56,189,248,.4);
+    color:var(--water);display:grid;place-items:center;font-size:21px;font-weight:300;}
+
+  .planhead{display:flex;justify-content:space-between;align-items:baseline;
+    margin:18px 2px 11px;}
+  .planhead h3{font-size:17px;font-weight:800;letter-spacing:-.3px;}
+  .planhead .pc{font-size:12px;font-weight:800;color:var(--accent2);}
+  .prow{display:flex;align-items:center;gap:12px;background:var(--card);
+    border:1px solid var(--border);border-radius:15px;padding:12px 13px;margin-bottom:9px;}
+  .prow .pico{width:42px;height:42px;border-radius:11px;display:grid;place-items:center;
+    font-size:18px;flex-shrink:0;}
+  .prow .ptx{flex:1;min-width:0;}
+  .prow .ptx .r1{display:flex;align-items:center;gap:7px;}
+  .prow .ptx b{font-size:13.5px;font-weight:800;}
+  .prow .ptx p{font-size:11px;color:var(--t2);margin-top:2px;}
+  .donepill{font-size:8.5px;font-weight:800;letter-spacing:.4px;padding:3px 7px;
+    border-radius:5px;background:rgba(139,92,246,.2);color:var(--accent2);}
+  .prow .ptime{font-size:11px;color:var(--t3);font-weight:700;}
+  .prow .pchev{color:var(--t3);font-size:15px;}
+
+  .fab{position:absolute;right:18px;bottom:88px;width:58px;height:58px;border-radius:50%;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    display:grid;place-items:center;color:#fff;font-size:29px;font-weight:300;
+    box-shadow:0 12px 28px -6px rgba(139,92,246,.8);z-index:20;}
+
+  .navbar{flex-shrink:0;height:72px;background:rgba(15,15,17,.94);
+    border-top:1px solid var(--border);backdrop-filter:blur(12px);
+    display:flex;align-items:center;justify-content:space-around;padding-bottom:8px;}
+  .nav{display:flex;flex-direction:column;align-items:center;gap:3px;
+    color:var(--t3);font-size:9.5px;font-weight:700;}
+  .nav.active{color:var(--accent2);}
+  .nav .nic{font-size:18px;}
+  .nav.active .nic{background:rgba(139,92,246,.16);padding:5px 15px;border-radius:999px;}
+  .legend{max-width:720px;margin:40px auto 0;border-top:1px solid var(--border);
+    padding-top:20px;color:var(--t3);font-size:12px;line-height:1.7;text-align:center;}
+</style>
+</head>
+<body>
+
+<h1 class="title">Zealova — Bento Home · v15</h1>
+<p class="sub">Honest critique below + your two asks: a small play button on Fasting,
+and Water now visible.</p>
+
+<div class="panel">
+  <h3>My honest take on v14 — would I be fine with it as a user?</h3>
+  <p><b>Yes, mostly — it's genuinely good.</b> Modern, on-trend (bento + week strip + dark),
+  and clean per element. The important things — today's workout + start, the day's stats —
+  are clear. I'd happily use it.</p>
+  <p><b>But three honest gripes:</b><br/>
+  1. The <b>"+" FAB overlaps content</b> — in your screenshot it's sitting right on top of
+  the Fasting tile, hiding the timer. That's not a bug, it's the nature of a floating
+  button: it <i>always</i> covers a corner of whatever you've scrolled to. If that bugs
+  you, the clean fix is making "+" the <b>center button of the bottom nav</b> (MyFitnessPal
+  does exactly this) — never covers content. Trade-off: the nav goes to 4 tabs + center "+".<br/>
+  2. <b>It scrolls a fair bit</b> — banner + week + quick row + workout fill screen one;
+  bento + water + plan are below. Normal for a do-everything home, but it is content-heavy.<br/>
+  3. The two-line greeting wrapped awkwardly — <b>fixed</b> (intentional "Good morning," /
+  "Chetan" stack, date moved into the week strip which already shows it).</p>
+
+  <h3>Your two asks — done</h3>
+  <p>• <b>Small play on Fasting</b> — a 32px ▶ control sits top-right of the Fasting tile
+  (start a fast / manage it without leaving home).<br/>
+  • <b>Water</b> — added a dedicated full-width <b>Water tile</b> under the bento: 5 of 8
+  cups, progress bar, and a "+" to log a glass instantly.</p>
+  <p class="q">Decision needed: keep the "+" as a floating FAB (covers a corner), or move it
+  to the <b>nav center</b> (clean, but nav drops to 4 tabs + "+")?</p>
+</div>
+
+<div class="stage">
+  <div class="phone"><div class="screen"><div class="notch"></div>
+    <div class="statusbar"><span>9:41</span>
+      <span class="icons"><span>••••</span><span>📶</span><span>🔋</span></span></div>
+    <div class="body">
+
+      <div class="appbar">
+        <div class="hi"><div class="g">Good morning,</div><h2>Chetan 👋</h2></div>
+        <div class="appbar-right">
+          <div class="streakpill"><div class="lvlring"><span>7</span></div>
+            <div class="fire">🔥 2</div></div>
+          <div class="icobtn">🔔<span class="belldot"></span></div>
+          <div class="icobtn">⋮</div>
+        </div>
+      </div>
+
+      <div class="weekstrip">
+        <div class="wday"><span class="wl">M</span><span class="wd done">11</span></div>
+        <div class="wday"><span class="wl">T</span><span class="wd miss">12</span></div>
+        <div class="wday"><span class="wl">W</span><span class="wd done">13</span></div>
+        <div class="wday"><span class="wl">T</span><span class="wd done">14</span></div>
+        <div class="wday"><span class="wl">F</span><span class="wd miss">15</span></div>
+        <div class="wday"><span class="wl">S</span><span class="wd today">16</span></div>
+        <div class="wday"><span class="wl">S</span><span class="wd future">17</span></div>
+      </div>
+
+      <div class="sbanner">
+        <div class="speek p2"></div><div class="speek p1"></div>
+        <div class="scard">
+          <div class="sico">🕐</div>
+          <div class="stx"><b>Missed: Upper Body</b>
+            <p>Yesterday · 60min · 5 exercises</p></div>
+          <div class="sact">Do Today</div>
+        </div>
+        <div class="sx">✕</div><div class="scount">4</div>
+      </div>
+
+      <div class="qrow">
+        <div class="qa chat"><div class="ic">💬</div><span>Chat</span></div>
+        <div class="qa"><div class="ic">🍴</div><span>Food</span></div>
+        <div class="qa"><div class="ic">💧</div><span>Water</span></div>
+        <div class="qa"><div class="ic">📖</div><span>Scan Menu</span></div>
+        <div class="qa"><div class="ic">🧊</div><span>Fridge</span></div>
+        <div class="qa"><div class="ic">•••</div><span>More</span></div>
+      </div>
+
+      <div class="wkcard">
+        <div class="wkico">🏋️</div>
+        <div class="wkmid">
+          <div class="r1"><span class="tp">TODAY</span><h3>Forged Set-Storm</h3></div>
+          <p>Strength · 60m · 6 exercises</p>
+        </div>
+        <div class="playbtn">▶</div>
+      </div>
+
+      <div class="bento">
+        <div class="tile">
+          <div class="tileh"><span class="ti">🍎</span><span class="tl">NUTRITION</span></div>
+          <div class="tilebig">1,180 <small>kcal left</small></div>
+          <div class="tilesub">of 2,400 target</div>
+          <div class="pbar"><i style="width:51%;background:var(--nutri)"></i></div>
+          <div class="tilefoot">P 48 · C 100 · F 32 g left</div>
+        </div>
+        <div class="tile">
+          <div class="tileh"><span class="ti">👟</span><span class="tl">STEPS</span></div>
+          <div class="tilebig">7,342</div>
+          <div class="tilesub">of 10,000</div>
+          <div class="pbar"><i style="width:73%;background:var(--steps)"></i></div>
+          <div class="tilefoot">🔥 312 kcal burned</div>
+        </div>
+        <div class="tile">
+          <div class="tileh"><span class="ti">🌙</span><span class="tl">SLEEP</span></div>
+          <div class="tilebig">7h 12m</div>
+          <div class="tilesub">Goal 8h · 90% · score 82</div>
+          <div class="sleepbars"><i style="height:40%"></i><i style="height:70%"></i>
+            <i style="height:55%"></i><i class="hi" style="height:90%"></i>
+            <i style="height:60%"></i><i style="height:75%"></i>
+            <i class="hi" style="height:100%"></i></div>
+          <div class="tilefoot">Bed 10:30 PM</div>
+        </div>
+        <div class="tile">
+          <div class="tileplay">▶</div>
+          <div class="tileh"><span class="ti">⏱️</span><span class="tl">FASTING</span></div>
+          <div class="tilebig">14:18</div>
+          <div class="tilesub">16:8 · 1h 42m left</div>
+          <div class="pbar"><i style="width:88%;background:var(--fast)"></i></div>
+          <div class="tilefoot">Almost there 🎯</div>
+        </div>
+      </div>
+
+      <!-- water tile -->
+      <div class="watertile">
+        <div class="wico">💧</div>
+        <div class="wmid">
+          <div class="wtop"><span class="wl">WATER</span>
+            <span class="wv">5 <small>of 8 cups · 1.2 L</small></span></div>
+          <div class="wbar"><i style="width:62%"></i></div>
+        </div>
+        <div class="wadd">+</div>
+      </div>
+
+      <div class="planhead"><h3>Today's Plan</h3><span class="pc">1 of 5 done</span></div>
+      <div class="prow">
+        <div class="pico" style="background:rgba(139,92,246,.16)">🏋️</div>
+        <div class="ptx"><div class="r1"><b>Morning Workout</b>
+          <span class="donepill">DONE</span></div><p>Push Day · 8 exercises</p></div>
+        <div class="ptime">7:00 AM</div><span class="pchev">›</span>
+      </div>
+      <div class="prow">
+        <div class="pico" style="background:rgba(6,182,212,.16)">⏱️</div>
+        <div class="ptx"><b>Fasting Window</b><p>16:8 Intermittent</p></div>
+        <div class="ptime">8:00 PM</div><span class="pchev">›</span>
+      </div>
+      <div class="prow">
+        <div class="pico" style="background:rgba(249,115,22,.16)">🍎</div>
+        <div class="ptx"><b>Nutrition Goal</b><p>2,400 kcal target</p></div>
+        <div class="ptime">All day</div><span class="pchev">›</span>
+      </div>
+
+    </div>
+
+    <div class="fab">+</div>
+
+    <div class="navbar">
+      <div class="nav active"><span class="nic">🏠</span>Home</div>
+      <div class="nav"><span class="nic">🏋</span>Workouts</div>
+      <div class="nav"><span class="nic">🍴</span>Nutrition</div>
+      <div class="nav"><span class="nic">🌐</span>Discover</div>
+      <div class="nav"><span class="nic">★</span>You</div>
+    </div>
+  </div></div>
+</div>
+
+<div class="legend">
+  v15 — Water tile added (cups + bar + quick-log "+") · small ▶ play control on the
+  Fasting tile · greeting tightened to a clean two-line stack · honest note on the FAB
+  overlap (decide: FAB vs nav-center "+").
+</div>
+
+</body>
+</html>

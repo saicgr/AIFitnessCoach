@@ -304,7 +304,7 @@ export default function GoogleHealthVs() {
           >
             <motion.div variants={fadeUp}>
               <p className="text-xs font-medium uppercase tracking-widest text-emerald-400 mb-4">
-                Published 2026-05-14 · Updated for Google Health launch May 19, 2026
+                Published 2026-05-14 · Updated 2026-05-16 for Google Health launch May 19, 2026
               </p>
               <h1 className="text-3xl sm:text-4xl font-bold text-white mb-6 leading-tight">
                 Google Health vs Zealova (2026): Honest Comparison
@@ -334,7 +334,10 @@ export default function GoogleHealthVs() {
                 Google Health wins on ecosystem: wearable biometrics, sleep tracking, Apple Health,
                 Peloton, medical records, and Google-brand data trust. Zealova wins on workout depth:
                 full AI-generated monthly plans, multi-image food logging, granular exercise history,
-                and 10-format workout export at 40% cheaper per year than Google Health annual.
+                and 10-format workout export at 40% cheaper per year than Google Health annual. One
+                early caution: reviewers found Google Health's AI Coach fabricating activity it never
+                recorded — Android Authority documented it inventing a 5-mile run that never happened
+                (May 2026) — so cross-check its summaries against your real data.
               </p>
               <div className="grid sm:grid-cols-2 gap-4 pt-4 border-t border-zinc-800">
                 <div className="bg-emerald-950/40 border border-emerald-900/50 rounded-xl p-4">
