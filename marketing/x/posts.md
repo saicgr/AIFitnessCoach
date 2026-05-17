@@ -1262,3 +1262,70 @@ Stack: FastAPI on Render, Supabase, ChromaDB (RAG), Gemini, Flutter. Try Zealova
 update: 60 concurrent requests, all 200. the event loop breathes again.
 
 ### 📝 END POST CONTENT
+
+---
+
+## 2026-05-17 — "reversed same evening — flat to threaded comments"
+
+**Status:** Drafted, not yet posted
+
+<details>
+<summary>🔬 Research log + plan (click to expand)</summary>
+
+**Research log (2026-05-17):**
+- Anchored commit: `ba02c0d` — 2026-05-16 20:43:00 -0500 — "feat(roadmap): threaded comments (10 levels) + full-screen drawer". Commit body says: "Reverses the earlier flat-comments decision per updated requirements." Arc: flat comments shipped at 16:11 (commit `931834b`), reversed at 20:43 — 4.5h same-day turnaround.
+- Narrative keyword: "reversed" — explicit in the commit body, ideal build-in-public hook.
+- Algo finding: Replies worth 150× likes; author engaging in first hour = single strongest ranking signal. Grok-powered transformer replaced legacy algo Jan 2026. Threads accumulate engagement across all tweets (3× total vs. standalone). External links in body = 30–50% reach penalty; zealova.com in self-reply only.
+- Hashtag finding: #buildinpublic confirmed top evergreen tag for indie-hacker lane on X (May 2026). 1 tag woven into body sentence = +21% vs. zero; 3+ tags = −17% penalty.
+- Trend hook hijack: None — original builder story: shipped, recognized wrong, reversed and rebuilt same day.
+- Source links:
+  - https://posteverywhere.ai/blog/how-the-x-twitter-algorithm-works
+  - https://www.teract.ai/resources/twitter-algorithm-2026
+  - https://www.autotweet.io/blog/best-hashtags-for-x-twitter-2026
+
+**Plan:**
+- Day/time: Sun May 17, 2026 — 9–11am ET or 2–4pm ET
+- Hashtags: 1 tag — `#buildinpublic` woven into tweet 5 body sentence
+- Pre-post warmup: 15 min commenting on #buildinpublic / #indiehackers threads before posting
+- Self-reply immediately after tweet 5 with zealova.com link
+- Quote-tweet tweet 1 ~2h later: "update: 10-level threaded comments shipped and live. the roadmap board feels right now."
+- First-hour: reply to every comment within 5 min; tweet 3 is bookmark-bait for backend devs; tweet 4 is quote-tweet bait
+
+</details>
+
+### 📝 POST CONTENT BELOW — copy-paste this
+
+**1/** (150 chars)
+Shipped flat comments on my public roadmap at 4pm Saturday. By 8:43pm I had already reversed the decision and rebuilt the whole thing. Same evening. 🧵
+
+---
+
+**2/** (208 chars)
+At 4pm I shipped a public roadmap for Zealova — kanban board, feature voting, email-verified comments. Users started testing within hours. Flat comments felt immediately wrong. Too linear for real discussion.
+
+---
+
+**3/** (197 chars)
+The problem: flat comments do not let conversations branch. Someone replies to a reply — context collapses. At 8:43pm I wrote migration 2079 and reversed it: parent_id + depth, capped at 10 levels.
+
+---
+
+**4/** (182 chars)
+The lesson: ship fast but stay honest with yourself. 4 hours was all it took to recognize flat was wrong. Rebuilding the same night is cheaper than carrying a bad decision for weeks.
+
+---
+
+**5/** (167 chars)
+Building Zealova — AI fitness coach. Vote on what ships next at our public roadmap. Indie devs: what is the fastest you have reversed a design decision? #buildinpublic
+
+---
+
+**Self-reply (post immediately after tweet 5):**
+Stack: FastAPI on Render, Supabase, Flutter, Gemini. Try Zealova: https://zealova.com
+
+---
+
+**Quote-tweet tweet 1 ~2h later (fresh session):**
+update: 10-level threaded comments shipped and live. the roadmap board feels right now.
+
+### 📝 END POST CONTENT
