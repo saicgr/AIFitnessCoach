@@ -52,7 +52,12 @@ class CommentRequest(BaseModel):
     author_name: str = Field(min_length=1, max_length=80)
     body: str = Field(min_length=1, max_length=1000)
     email: Optional[EmailStr] = None
+    parent_id: Optional[str] = Field(default=None, max_length=64)  # reply target
     website: Optional[str] = Field(default=None, max_length=200)  # honeypot
+
+
+# Threaded comments are capped at 10 levels: depth 0 (top-level) .. depth 9.
+MAX_COMMENT_DEPTH = 9
 
 
 class SuggestRequest(BaseModel):
@@ -151,12 +156,13 @@ async def vote(request: Request, payload: VoteRequest):
 
 @router.get("/comments/{feature_slug}")
 async def list_comments(feature_slug: str):
-    """Flat comment list for a feature, oldest-first. No threading, no sort."""
+    """All comments for a feature, oldest-first. Threaded — each row carries
+    parent_id + depth; the client assembles the tree."""
     db = get_supabase()
     try:
         rows = (
             db.client.table("roadmap_comments")
-            .select("id, author_name, body, created_at")
+            .select("id, author_name, body, created_at, parent_id, depth")
             .eq("feature_slug", feature_slug.strip())
             .eq("is_hidden", False)
             .order("created_at", desc=False)
@@ -180,19 +186,43 @@ async def add_comment(request: Request, payload: CommentRequest):
     author = payload.author_name.strip()
     body = payload.body.strip()
     db = get_supabase()
+
+    # Resolve the reply target (if any) and compute thread depth.
+    parent_id = (payload.parent_id or "").strip() or None
+    depth = 0
+    if parent_id:
+        try:
+            parent = (
+                db.client.table("roadmap_comments")
+                .select("feature_slug, depth")
+                .eq("id", parent_id)
+                .single()
+                .execute()
+            )
+            prow = parent.data
+        except Exception:
+            prow = None
+        if not prow or prow.get("feature_slug") != slug:
+            raise HTTPException(status_code=400, detail="Reply target not found.")
+        depth = (prow.get("depth") or 0) + 1
+        if depth > MAX_COMMENT_DEPTH:
+            raise HTTPException(status_code=400, detail="Maximum reply depth reached.")
+
     try:
         ins = db.client.table("roadmap_comments").insert({
             "feature_slug": slug,
             "author_name": author,
             "body": body,
             "email": (str(payload.email).strip().lower() if payload.email else None),
+            "parent_id": parent_id,
+            "depth": depth,
         }).execute()
     except Exception as e:
         logger.error(f"[roadmap] comment insert failed slug={slug}: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Could not post comment. Please try again.")
 
     row = (ins.data or [{}])[0]
-    logger.info(f"[roadmap] comment slug={slug} by={author}")
+    logger.info(f"[roadmap] comment slug={slug} by={author} depth={depth}")
     return {
         "success": True,
         "comment": {
@@ -200,6 +230,8 @@ async def add_comment(request: Request, payload: CommentRequest):
             "author_name": author,
             "body": body,
             "created_at": row.get("created_at"),
+            "parent_id": parent_id,
+            "depth": depth,
         },
     }
 

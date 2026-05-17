@@ -2,15 +2,7 @@ import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import type { RoadmapFeature } from '../../data/roadmap';
 import { ROADMAP_COLUMNS, TAG_COLORS } from '../../data/roadmap';
-import {
-  addComment,
-  fetchComments,
-  getIdentity,
-  saveIdentity,
-  type RoadmapComment,
-} from '../../lib/roadmapApi';
-
-const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+import CommentThread from './CommentThread';
 
 interface FeatureDrawerProps {
   feature: RoadmapFeature;
@@ -21,18 +13,6 @@ interface FeatureDrawerProps {
   onCommentAdded: (slug: string) => void;
 }
 
-function timeAgo(iso: string): string {
-  const diff = Date.now() - new Date(iso).getTime();
-  const mins = Math.floor(diff / 60000);
-  if (mins < 1) return 'just now';
-  if (mins < 60) return `${mins}m ago`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
-  const days = Math.floor(hrs / 24);
-  if (days < 30) return `${days}d ago`;
-  return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-}
-
 export default function FeatureDrawer({
   feature,
   voteCount,
@@ -41,34 +21,16 @@ export default function FeatureDrawer({
   onVote,
   onCommentAdded,
 }: FeatureDrawerProps) {
-  const [comments, setComments] = useState<RoadmapComment[]>([]);
-  const [loadingComments, setLoadingComments] = useState(true);
-  const [name, setName] = useState(getIdentity().name || '');
-  const [email, setEmail] = useState(getIdentity().email || '');
-  const [body, setBody] = useState('');
-  const [honeypot, setHoneypot] = useState('');
-  const [posting, setPosting] = useState(false);
-  const [commentError, setCommentError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [expanded, setExpanded] = useState(false);
 
   const column = ROADMAP_COLUMNS.find((c) => c.id === feature.column)!;
 
   useEffect(() => {
-    let active = true;
-    setLoadingComments(true);
-    fetchComments(feature.slug).then((list) => {
-      if (active) {
-        setComments(list);
-        setLoadingComments(false);
-      }
-    });
     const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
     window.addEventListener('keydown', onKey);
-    return () => {
-      active = false;
-      window.removeEventListener('keydown', onKey);
-    };
-  }, [feature.slug, onClose]);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
 
   const share = async () => {
     const url = `${window.location.origin}/roadmap?feature=${feature.slug}`;
@@ -81,25 +43,8 @@ export default function FeatureDrawer({
     }
   };
 
-  const postComment = async () => {
-    const cleanEmail = email.trim().toLowerCase();
-    if (!name.trim()) return setCommentError('Add your name.');
-    if (!EMAIL_RE.test(cleanEmail)) return setCommentError('Enter a valid email.');
-    if (!body.trim()) return setCommentError('Write a comment first.');
-    setPosting(true);
-    setCommentError(null);
-    try {
-      const res = await addComment(feature.slug, name.trim(), body.trim(), cleanEmail, honeypot);
-      if (res.comment) setComments((c) => [...c, res.comment!]);
-      setBody('');
-      saveIdentity({ name: name.trim(), email: cleanEmail });
-      onCommentAdded(feature.slug);
-    } catch (e) {
-      setCommentError(e instanceof Error ? e.message : 'Could not post comment.');
-    } finally {
-      setPosting(false);
-    }
-  };
+  // When expanded to full screen, content is centered in a readable column.
+  const inner = expanded ? 'mx-auto w-full max-w-3xl' : 'w-full';
 
   return (
     <motion.div
@@ -112,7 +57,9 @@ export default function FeatureDrawer({
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
 
       <motion.aside
-        className="relative flex h-full w-full max-w-md flex-col bg-[var(--color-surface)] shadow-2xl"
+        className={`relative flex h-full w-full flex-col bg-[var(--color-surface)] shadow-2xl transition-[max-width] duration-300 ${
+          expanded ? 'max-w-full' : 'max-w-md'
+        }`}
         initial={{ x: '100%' }}
         animate={{ x: 0 }}
         exit={{ x: '100%' }}
@@ -120,174 +67,115 @@ export default function FeatureDrawer({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-start justify-between gap-3 border-b border-[var(--color-border)] p-5">
-          <div className="min-w-0">
-            <span
-              className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold"
-              style={{ backgroundColor: `${column.accent}22`, color: column.accent }}
-            >
-              {column.emoji} {column.label}
-            </span>
-            <h2 className="mt-2.5 text-xl font-bold leading-snug text-[var(--color-text)]">
-              {feature.title}
-            </h2>
+        <div className="border-b border-[var(--color-border)] p-5">
+          <div className={`flex items-start justify-between gap-3 ${inner}`}>
+            <div className="min-w-0">
+              <span
+                className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold"
+                style={{ backgroundColor: `${column.accent}22`, color: column.accent }}
+              >
+                {column.emoji} {column.label}
+              </span>
+              <h2 className="mt-2.5 text-xl font-bold leading-snug text-[var(--color-text)]">
+                {feature.title}
+              </h2>
+            </div>
+            <div className="flex shrink-0 items-center gap-1">
+              <button
+                onClick={() => setExpanded((v) => !v)}
+                aria-label={expanded ? 'Exit full screen' : 'Full screen'}
+                className="hidden h-9 w-9 items-center justify-center rounded-full text-[var(--color-text-muted)] hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-text)] transition-colors sm:flex"
+              >
+                {expanded ? (
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 9V4.5M9 9H4.5M9 9L3.75 3.75M15 9h4.5M15 9V4.5M15 9l5.25-5.25M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 15h4.5M15 15v4.5m0-4.5l5.25 5.25" />
+                  </svg>
+                ) : (
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9m11.25-5.25v4.5m0-4.5h-4.5m4.5 0L15 9m-11.25 11.25v-4.5m0 4.5h4.5m-4.5 0L9 15m11.25 5.25v-4.5m0 4.5h-4.5m4.5 0L15 15" />
+                  </svg>
+                )}
+              </button>
+              <button
+                onClick={onClose}
+                aria-label="Close"
+                className="flex h-9 w-9 items-center justify-center rounded-full text-[var(--color-text-muted)] hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-text)] transition-colors"
+              >
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
           </div>
-          <button
-            onClick={onClose}
-            aria-label="Close"
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[var(--color-text-muted)] hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-text)] transition-colors"
-          >
-            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
         </div>
 
         {/* Scrollable body */}
         <div className="flex-1 overflow-y-auto p-5">
-          <p className="text-sm leading-relaxed text-[var(--color-text-secondary)]">
-            {feature.description}
-          </p>
-
-          <div className="mt-3 flex flex-wrap gap-1.5">
-            {feature.tags.map((tag) => (
-              <span
-                key={tag}
-                className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold tracking-wide"
-                style={{ backgroundColor: TAG_COLORS[tag].bg, color: TAG_COLORS[tag].text }}
-              >
-                {tag}
-              </span>
-            ))}
-            {feature.eta && (
-              <span className="inline-flex items-center rounded-full bg-[var(--color-surface-muted)] px-2 py-0.5 text-[10px] font-semibold text-[var(--color-text-muted)]">
-                {feature.eta}
-              </span>
-            )}
-          </div>
-
-          {feature.reason && (
-            <p className="mt-3 rounded-lg bg-rose-500/8 px-3 py-2 text-[13px] leading-snug text-rose-500/90">
-              <span className="font-semibold">Why not: </span>
-              {feature.reason}
+          <div className={inner}>
+            <p className="text-sm leading-relaxed text-[var(--color-text-secondary)]">
+              {feature.description}
             </p>
-          )}
 
-          {/* Vote + share actions */}
-          <div className="mt-5 flex gap-2.5">
-            {feature.votable && (
-              <button
-                onClick={() => onVote(feature)}
-                className={`flex flex-1 items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-semibold transition-all ${
-                  voted
-                    ? 'bg-blue-500 text-white'
-                    : 'border border-[var(--color-border)] bg-[var(--color-surface-muted)] text-[var(--color-text)] hover:border-blue-400 hover:text-blue-500'
-                }`}
-              >
-                <svg
-                  className="h-4 w-4"
-                  fill={voted ? 'currentColor' : 'none'}
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  strokeWidth={2.5}
+            <div className="mt-3 flex flex-wrap gap-1.5">
+              {feature.tags.map((tag) => (
+                <span
+                  key={tag}
+                  className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold tracking-wide"
+                  style={{ backgroundColor: TAG_COLORS[tag].bg, color: TAG_COLORS[tag].text }}
                 >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5" />
-                </svg>
-                {voted ? 'Voted' : 'Vote'} · {voteCount}
-              </button>
-            )}
-            <button
-              onClick={share}
-              className="flex items-center justify-center gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] px-4 py-2.5 text-sm font-semibold text-[var(--color-text)] transition-colors hover:text-blue-500"
-            >
-              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.8}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" />
-              </svg>
-              {copied ? 'Copied' : 'Share'}
-            </button>
-          </div>
-
-          {/* Comments — flat, no threading, no sort */}
-          <div className="mt-7">
-            <h3 className="text-sm font-bold text-[var(--color-text)]">
-              Comments {comments.length > 0 && `(${comments.length})`}
-            </h3>
-
-            <div className="mt-3 space-y-3">
-              {loadingComments && (
-                <p className="text-[13px] text-[var(--color-text-muted)]">Loading comments…</p>
-              )}
-              {!loadingComments && comments.length === 0 && (
-                <p className="text-[13px] text-[var(--color-text-muted)]">
-                  No comments yet. Be the first to weigh in.
-                </p>
-              )}
-              {comments.map((c) => (
-                <div key={c.id} className="rounded-lg border border-[var(--color-border)] p-3">
-                  <div className="flex items-baseline justify-between gap-2">
-                    <span className="text-[13px] font-semibold text-[var(--color-text)]">
-                      {c.author_name}
-                    </span>
-                    <span className="text-[11px] text-[var(--color-text-muted)]">
-                      {timeAgo(c.created_at)}
-                    </span>
-                  </div>
-                  <p className="mt-1 whitespace-pre-wrap text-[13px] leading-relaxed text-[var(--color-text-secondary)]">
-                    {c.body}
-                  </p>
-                </div>
+                  {tag}
+                </span>
               ))}
+              {feature.eta && (
+                <span className="inline-flex items-center rounded-full bg-[var(--color-surface-muted)] px-2 py-0.5 text-[10px] font-semibold text-[var(--color-text-muted)]">
+                  {feature.eta}
+                </span>
+              )}
             </div>
 
-            {/* Add-comment form */}
-            <div className="mt-4 space-y-2.5">
-              <div className="flex gap-2.5">
-                <input
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Your name"
-                  maxLength={80}
-                  className="w-1/2 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-muted)] px-3 py-2 text-[13px] text-[var(--color-text)] placeholder:text-[var(--color-text-muted)] focus:border-blue-400 focus:outline-none"
-                />
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Your email"
-                  className="w-1/2 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-muted)] px-3 py-2 text-[13px] text-[var(--color-text)] placeholder:text-[var(--color-text-muted)] focus:border-blue-400 focus:outline-none"
-                />
-              </div>
-              <input
-                type="text"
-                tabIndex={-1}
-                autoComplete="off"
-                value={honeypot}
-                onChange={(e) => setHoneypot(e.target.value)}
-                className="absolute left-[-9999px] h-0 w-0"
-                aria-hidden="true"
-              />
-              <textarea
-                value={body}
-                onChange={(e) => setBody(e.target.value)}
-                placeholder="Share your thoughts on this idea…"
-                rows={3}
-                maxLength={1000}
-                className="w-full resize-none rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-muted)] px-3 py-2 text-[13px] text-[var(--color-text)] placeholder:text-[var(--color-text-muted)] focus:border-blue-400 focus:outline-none"
-              />
-              {commentError && <p className="text-[12px] text-rose-500">{commentError}</p>}
-              <button
-                onClick={postComment}
-                disabled={posting}
-                className="w-full rounded-lg bg-[var(--color-text)] py-2.5 text-[13px] font-semibold text-[var(--color-surface)] transition-opacity hover:opacity-90 disabled:opacity-60"
-              >
-                {posting ? 'Posting…' : 'Post comment'}
-              </button>
-              <p className="text-[11px] leading-snug text-[var(--color-text-muted)]">
-                Your name shows on the comment. Your email never does — it's only
-                used to keep comments accountable, the same email you vote with.
+            {feature.reason && (
+              <p className="mt-3 rounded-lg bg-rose-500/8 px-3 py-2 text-[13px] leading-snug text-rose-500/90">
+                <span className="font-semibold">Why not: </span>
+                {feature.reason}
               </p>
+            )}
+
+            {/* Vote + share actions */}
+            <div className="mt-5 flex gap-2.5">
+              {feature.votable && (
+                <button
+                  onClick={() => onVote(feature)}
+                  className={`flex flex-1 items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-semibold transition-all ${
+                    voted
+                      ? 'bg-blue-500 text-white'
+                      : 'border border-[var(--color-border)] bg-[var(--color-surface-muted)] text-[var(--color-text)] hover:border-blue-400 hover:text-blue-500'
+                  }`}
+                >
+                  <svg
+                    className="h-4 w-4"
+                    fill={voted ? 'currentColor' : 'none'}
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    strokeWidth={2.5}
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5" />
+                  </svg>
+                  {voted ? 'Voted' : 'Vote'} · {voteCount}
+                </button>
+              )}
+              <button
+                onClick={share}
+                className="flex items-center justify-center gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] px-4 py-2.5 text-sm font-semibold text-[var(--color-text)] transition-colors hover:text-blue-500"
+              >
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.8}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" />
+                </svg>
+                {copied ? 'Copied' : 'Share'}
+              </button>
             </div>
+
+            {/* Threaded comments */}
+            <CommentThread featureSlug={feature.slug} onCommentAdded={onCommentAdded} />
           </div>
         </div>
       </motion.aside>
