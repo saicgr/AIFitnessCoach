@@ -83,12 +83,15 @@ export function addComment(
   featureSlug: string,
   authorName: string,
   body: string,
+  email = '',
   honeypot = '',
 ): Promise<{ success: boolean; comment: RoadmapComment | null }> {
   return postJson('/comment', {
     feature_slug: featureSlug,
     author_name: authorName,
     body,
+    // Omit when blank — the backend validates email as EmailStr when present.
+    email: email || undefined,
     website: honeypot,
   });
 }
@@ -123,5 +126,32 @@ export function markVoted(slug: string): void {
     localStorage.setItem(VOTED_KEY, JSON.stringify([...set]));
   } catch {
     /* localStorage unavailable — voted state just won't persist */
+  }
+}
+
+// --- Visitor identity (name + email), captured once -------------------
+// Shared by voting and commenting so the visitor enters their email once
+// and it's prefilled everywhere after — no account, no repeated typing.
+
+const IDENTITY_KEY = 'zealova_roadmap_identity';
+
+export interface RoadmapIdentity {
+  name?: string;
+  email?: string;
+}
+
+export function getIdentity(): RoadmapIdentity {
+  try {
+    return JSON.parse(localStorage.getItem(IDENTITY_KEY) || '{}');
+  } catch {
+    return {};
+  }
+}
+
+export function saveIdentity(patch: RoadmapIdentity): void {
+  try {
+    localStorage.setItem(IDENTITY_KEY, JSON.stringify({ ...getIdentity(), ...patch }));
+  } catch {
+    /* localStorage unavailable — identity just won't persist */
   }
 }

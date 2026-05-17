@@ -2,7 +2,15 @@ import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import type { RoadmapFeature } from '../../data/roadmap';
 import { ROADMAP_COLUMNS, TAG_COLORS } from '../../data/roadmap';
-import { addComment, fetchComments, type RoadmapComment } from '../../lib/roadmapApi';
+import {
+  addComment,
+  fetchComments,
+  getIdentity,
+  saveIdentity,
+  type RoadmapComment,
+} from '../../lib/roadmapApi';
+
+const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 
 interface FeatureDrawerProps {
   feature: RoadmapFeature;
@@ -35,7 +43,8 @@ export default function FeatureDrawer({
 }: FeatureDrawerProps) {
   const [comments, setComments] = useState<RoadmapComment[]>([]);
   const [loadingComments, setLoadingComments] = useState(true);
-  const [name, setName] = useState('');
+  const [name, setName] = useState(getIdentity().name || '');
+  const [email, setEmail] = useState(getIdentity().email || '');
   const [body, setBody] = useState('');
   const [honeypot, setHoneypot] = useState('');
   const [posting, setPosting] = useState(false);
@@ -73,16 +82,17 @@ export default function FeatureDrawer({
   };
 
   const postComment = async () => {
-    if (!name.trim() || !body.trim()) {
-      setCommentError('Add your name and a comment.');
-      return;
-    }
+    const cleanEmail = email.trim().toLowerCase();
+    if (!name.trim()) return setCommentError('Add your name.');
+    if (!EMAIL_RE.test(cleanEmail)) return setCommentError('Enter a valid email.');
+    if (!body.trim()) return setCommentError('Write a comment first.');
     setPosting(true);
     setCommentError(null);
     try {
-      const res = await addComment(feature.slug, name.trim(), body.trim(), honeypot);
+      const res = await addComment(feature.slug, name.trim(), body.trim(), cleanEmail, honeypot);
       if (res.comment) setComments((c) => [...c, res.comment!]);
       setBody('');
+      saveIdentity({ name: name.trim(), email: cleanEmail });
       onCommentAdded(feature.slug);
     } catch (e) {
       setCommentError(e instanceof Error ? e.message : 'Could not post comment.');
@@ -231,14 +241,23 @@ export default function FeatureDrawer({
 
             {/* Add-comment form */}
             <div className="mt-4 space-y-2.5">
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Your name"
-                maxLength={80}
-                className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-muted)] px-3 py-2 text-[13px] text-[var(--color-text)] placeholder:text-[var(--color-text-muted)] focus:border-blue-400 focus:outline-none"
-              />
+              <div className="flex gap-2.5">
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Your name"
+                  maxLength={80}
+                  className="w-1/2 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-muted)] px-3 py-2 text-[13px] text-[var(--color-text)] placeholder:text-[var(--color-text-muted)] focus:border-blue-400 focus:outline-none"
+                />
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Your email"
+                  className="w-1/2 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-muted)] px-3 py-2 text-[13px] text-[var(--color-text)] placeholder:text-[var(--color-text-muted)] focus:border-blue-400 focus:outline-none"
+                />
+              </div>
               <input
                 type="text"
                 tabIndex={-1}
@@ -264,6 +283,10 @@ export default function FeatureDrawer({
               >
                 {posting ? 'Posting…' : 'Post comment'}
               </button>
+              <p className="text-[11px] leading-snug text-[var(--color-text-muted)]">
+                Your name shows on the comment. Your email never does — it's only
+                used to keep comments accountable, the same email you vote with.
+              </p>
             </div>
           </div>
         </div>

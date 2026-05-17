@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { RoadmapFeature } from '../../data/roadmap';
-import { voteForFeature, markVoted } from '../../lib/roadmapApi';
+import { voteForFeature, markVoted, getIdentity, saveIdentity } from '../../lib/roadmapApi';
 
 interface VoteModalProps {
   feature: RoadmapFeature;
@@ -41,7 +41,7 @@ function ConfettiBurst() {
 }
 
 export default function VoteModal({ feature, onClose, onVoted }: VoteModalProps) {
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(getIdentity().email || '');
   const [notify, setNotify] = useState(true);
   const [honeypot, setHoneypot] = useState('');
   const [status, setStatus] = useState<'idle' | 'sending' | 'done'>('idle');
@@ -66,6 +66,7 @@ export default function VoteModal({ feature, onClose, onVoted }: VoteModalProps)
     try {
       const res = await voteForFeature(feature.slug, clean, notify, honeypot);
       markVoted(feature.slug);
+      saveIdentity({ email: clean });
       onVoted(feature.slug, res.vote_count);
       setStatus('done');
       setTimeout(onClose, 1900);
