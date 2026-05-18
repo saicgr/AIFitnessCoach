@@ -142,17 +142,20 @@ class _WeeklyRecapDialogState extends ConsumerState<_WeeklyRecapDialog>
             shouldLoop: false,
             colors: [tierHeroColor, accent, AppColors.cyan, Colors.white],
           ),
-          // SKIP button
+          // Skip control — a deliberate compact pill rather than bare debug
+          // text. Translucent fill + soft border read as an intentional
+          // dismiss affordance while staying quieter than the primary CTA.
+          // Positioned top-right respecting the status-bar safe area.
           Positioned(
-            top: 16 + MediaQuery.of(context).padding.top,
+            top: 12 + MediaQuery.of(context).padding.top,
             right: 12,
-            child: TextButton(
-              onPressed: () {
+            child: _SkipPill(
+              textMuted: textMuted,
+              border: border,
+              onTap: () {
                 HapticService.light();
                 Navigator.of(context).pop();
               },
-              style: TextButton.styleFrom(foregroundColor: textMuted),
-              child: const Text('SKIP'),
             ),
           ),
           // Main card
@@ -259,27 +262,15 @@ class _WeeklyRecapDialogState extends ConsumerState<_WeeklyRecapDialog>
                         },
                         accent: accent,
                       ),
-                      const SizedBox(height: 8),
-                      // Optional bonus mini-game — never blocks the CTA above.
-                      Center(
-                        child: TextButton.icon(
-                          onPressed: _playBonusGame,
-                          icon: const Text('🚀',
-                              style: TextStyle(fontSize: 14)),
-                          label: const Text(
-                            'PLAY BONUS ROUND',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: 1.2,
-                            ),
-                          ),
-                          style: TextButton.styleFrom(
-                            foregroundColor: accent,
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 8),
-                          ),
-                        ),
+                      const SizedBox(height: 10),
+                      // Optional bonus mini-game — an inviting tappable card,
+                      // clearly secondary to the purple CTA above but enticing
+                      // enough not to be missed. Never blocks the CTA.
+                      _BonusRoundCard(
+                        onTap: _playBonusGame,
+                        accent: accent,
+                        textColor: textColor,
+                        textMuted: textMuted,
                       ),
                     ],
                   ),
@@ -756,6 +747,155 @@ class _CtaButton extends StatelessWidget {
           fontSize: 14,
           fontWeight: FontWeight.w900,
           letterSpacing: 0.5,
+        ),
+      ),
+    );
+  }
+}
+
+/// Compact, deliberate "Skip" pill shown top-right of the recap modal.
+/// Uses a translucent fill + soft border drawn from the same theme values
+/// (`textMuted`, `border`) used elsewhere in this file — no hardcoded hex.
+/// Guarantees a 44×44 minimum tap target so it stays comfortably tappable
+/// even though the visible pill is smaller.
+class _SkipPill extends StatelessWidget {
+  final Color textMuted;
+  final Color border;
+  final VoidCallback onTap;
+  const _SkipPill({
+    required this.textMuted,
+    required this.border,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(999),
+        // 44×44 minimum keeps the touch target accessible while the
+        // painted pill itself stays visually compact.
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+          child: Center(
+            child: Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+              decoration: BoxDecoration(
+                // Subtle translucent fill — reads as an intentional control,
+                // not floating debug text, and stays quieter than the CTA.
+                color: textMuted.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(999),
+                border: Border.all(color: border),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Skip',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: textMuted,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Icon(Icons.close_rounded, size: 14, color: textMuted),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Optional bonus mini-game entry rendered as an enticing tappable card.
+/// Accent-tinted gradient + border make it feel like a reward worth tapping,
+/// while staying clearly secondary to the solid-accent "START THIS WEEK" CTA.
+/// The recap model exposes no bonus best-score field, so none is shown —
+/// no invented data.
+class _BonusRoundCard extends StatelessWidget {
+  final VoidCallback onTap;
+  final Color accent;
+  final Color textColor;
+  final Color textMuted;
+  const _BonusRoundCard({
+    required this.onTap,
+    required this.accent,
+    required this.textColor,
+    required this.textMuted,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            // Faint accent gradient — inviting without competing with the
+            // solid-accent primary CTA directly above it.
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                accent.withValues(alpha: 0.16),
+                accent.withValues(alpha: 0.06),
+              ],
+            ),
+            border: Border.all(color: accent.withValues(alpha: 0.4)),
+          ),
+          child: Row(
+            children: [
+              // Rocket badge in a soft accent disc.
+              Container(
+                width: 38,
+                height: 38,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: accent.withValues(alpha: 0.18),
+                  shape: BoxShape.circle,
+                ),
+                child: const Text('🚀', style: TextStyle(fontSize: 18)),
+              ),
+              const SizedBox(width: 12),
+              // Title + honest one-line teaser. Expanded so long-form
+              // localized copy can't overflow on an iPhone SE.
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Bonus Round',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w900,
+                        color: textColor,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Catch nutrients, win bonus XP',
+                      style: TextStyle(fontSize: 12, color: textMuted),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              // Play affordance — a clear, accent-tinted play glyph.
+              Icon(Icons.play_arrow_rounded, size: 26, color: accent),
+            ],
+          ),
         ),
       ),
     );
