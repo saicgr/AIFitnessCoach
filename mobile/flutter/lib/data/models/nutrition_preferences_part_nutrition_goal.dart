@@ -1,6 +1,17 @@
 part of 'nutrition_preferences.dart';
 
 
+/// Diet preset for the bodyweight-anchored macro recommendation.
+///
+/// `recommended` is the goal-derived default (legacy behaviour — protein/fat
+/// g/kg follow the user's nutrition goal). The other three are fixed g/kg
+/// presets ported from `frontend/src/lib/calc/macros.ts`:
+///   - balanced       : protein 2.0 g/kg, fat 0.9 g/kg
+///   - highProteinCut : protein 2.4 g/kg, fat 0.8 g/kg
+///   - keto           : protein 2.0 g/kg, fat = 75% of calories, carbs leftover
+enum MacroPreset { recommended, balanced, highProteinCut, keto }
+
+
 /// Nutrition goal options
 enum NutritionGoal {
   loseFat('lose_fat', 'Lose Fat', -500, 2.0),
@@ -497,6 +508,58 @@ class NutritionCalculator {
     return (protein: protein, carbs: carbs, fat: fat);
   }
 
+  /// Resolves the protein anchor base weight for macro calculation.
+  ///
+  /// Anchoring 2.0 g/kg of TOTAL bodyweight overshoots for higher-body-fat
+  /// users (protein needs scale with lean mass, not fat mass). Decision tree:
+  ///
+  ///   1. Known body-fat % → anchor to LEAN BODY MASS
+  ///      LBM = weight × (1 − bf/100). Best physiological anchor.
+  ///   2. Else target weight set, goal is Lose Fat, and target < current →
+  ///      anchor to the TARGET weight (you eat for the body you're building
+  ///      toward, not the heavier one you're leaving).
+  ///   3. Else → anchor to TOTAL bodyweight (no better signal available).
+  ///
+  /// Returns the chosen base weight (kg) and a human-readable label for the
+  /// caption ("based on lean mass" / "based on goal weight" / "based on
+  /// bodyweight"). When LBM is the anchor, the g/kg ceiling is higher
+  /// (~2.7 g/kg LBM ≈ 2.0-2.2 g/kg total) — see [proteinAnchorIsLeanMass].
+  static ({double baseKg, String label, bool isLeanMass}) resolveProteinAnchor({
+    required double bodyweightKg,
+    required NutritionGoal goal,
+    double? bodyFatPercent,
+    double? targetWeightKg,
+  }) {
+    // 1. Lean body mass anchor — only valid for a plausible body-fat range.
+    if (bodyFatPercent != null &&
+        bodyFatPercent > 0 &&
+        bodyFatPercent < 60) {
+      final lbm = bodyweightKg * (1 - bodyFatPercent / 100);
+      if (lbm > 0) {
+        return (baseKg: lbm, label: 'based on lean mass', isLeanMass: true);
+      }
+    }
+
+    // 2. Goal-weight anchor — only when cutting toward a lighter target.
+    if (goal == NutritionGoal.loseFat &&
+        targetWeightKg != null &&
+        targetWeightKg > 0 &&
+        targetWeightKg < bodyweightKg) {
+      return (
+        baseKg: targetWeightKg,
+        label: 'based on goal weight',
+        isLeanMass: false,
+      );
+    }
+
+    // 3. Fallback — total bodyweight.
+    return (
+      baseKg: bodyweightKg,
+      label: 'based on bodyweight',
+      isLeanMass: false,
+    );
+  }
+
   /// Calculate macro targets from a calorie budget anchored to bodyweight.
   ///
   /// Ports the marketing-site bodyweight-anchored model
@@ -511,6 +574,16 @@ class NutritionCalculator {
   ///   - protein: Lose Fat 2.0, Build Muscle 2.0, everything else 1.8
   ///   - fat:     Lose Fat 0.8 (floor — endocrine minimum), else 0.9
   ///
+  /// B4: protein is anchored via [resolveProteinAnchor] — to lean body mass
+  /// when a body-fat % is known (~2.2 g/kg LBM, up to 2.7), to the goal
+  /// weight when cutting toward a lighter target, else to total bodyweight.
+  /// This prevents the 2.0 g/kg-of-total-bodyweight overshoot for
+  /// higher-body-fat users.
+  ///
+  /// B7: [preset] overrides the goal-derived g/kg. The keto branch sets fat
+  /// to 75% of calories (ported from `macros.ts`) and lets carbs absorb the
+  /// remainder (typically under 50 g).
+  ///
   /// Edge case: a non-positive [bodyweightKg] (missing weight log AND
   /// missing profile weight) has no anchor — we cannot compute g/kg. We
   /// fall back to the diet-type %-split [calculateMacros] (balanced split)
@@ -519,6 +592,9 @@ class NutritionCalculator {
     required double calories,
     required double bodyweightKg,
     required NutritionGoal goal,
+    MacroPreset preset = MacroPreset.recommended,
+    double? bodyFatPercent,
+    double? targetWeightKg,
   }) {
     // No bodyweight anchor — degrade gracefully to the %-split model.
     if (bodyweightKg <= 0) {
@@ -528,20 +604,71 @@ class NutritionCalculator {
       );
     }
 
-    // Goal-aware protein: high end (2.0 g/kg) on a cut or a lean-gain to
-    // protect/build lean mass; 1.8 g/kg for maintain / energy / health
-    // goals where the calorie pressure on muscle is lower.
-    final double proteinPerKg =
-        (goal == NutritionGoal.loseFat || goal == NutritionGoal.buildMuscle)
+    // B4: resolve the protein anchor base weight (lean mass / goal weight /
+    // total bodyweight). Protein g/kg is interpreted against THIS base.
+    final anchor = resolveProteinAnchor(
+      bodyweightKg: bodyweightKg,
+      goal: goal,
+      bodyFatPercent: bodyFatPercent,
+      targetWeightKg: targetWeightKg,
+    );
+
+    // g/kg figures depend on the preset (B7) and, for `recommended`, the
+    // goal. When anchored to LEAN MASS the protein g/kg is scaled up
+    // (~2.2 g/kg LBM ≈ 1.8 g/kg total at 20% BF) so the absolute grams stay
+    // sensible; capped at 2.7 g/kg LBM per the LBM protein band.
+    double proteinPerKg;
+    double fatPerKg;
+    double? fatKcalPct; // when set, fat is a % of calories (keto)
+
+    switch (preset) {
+      case MacroPreset.balanced:
+        proteinPerKg = 2.0;
+        fatPerKg = 0.9;
+        fatKcalPct = null;
+        break;
+      case MacroPreset.highProteinCut:
+        proteinPerKg = 2.4;
+        fatPerKg = 0.8;
+        fatKcalPct = null;
+        break;
+      case MacroPreset.keto:
+        proteinPerKg = 2.0;
+        fatPerKg = 0; // unused — fat is calorie-driven
+        fatKcalPct = 0.75;
+        break;
+      case MacroPreset.recommended:
+        // Goal-aware: high end (2.0 g/kg) on a cut or a lean-gain to
+        // protect/build lean mass; 1.8 g/kg otherwise.
+        proteinPerKg = (goal == NutritionGoal.loseFat ||
+                goal == NutritionGoal.buildMuscle)
             ? 2.0
             : 1.8;
+        // Fat floor sits lower on a cut (0.8 g/kg — practical endocrine
+        // minimum) to free calories for carbs; 0.9 g/kg otherwise.
+        fatPerKg = goal == NutritionGoal.loseFat ? 0.8 : 0.9;
+        fatKcalPct = null;
+        break;
+    }
 
-    // Fat floor sits lower on a cut (0.8 g/kg — practical endocrine
-    // minimum) to free calories for carbs; 0.9 g/kg otherwise.
-    final double fatPerKg = goal == NutritionGoal.loseFat ? 0.8 : 0.9;
+    // When anchored to lean mass, bump protein g/kg toward the LBM band
+    // (2.2 g/kg LBM default, hard cap 2.7) — the goal-derived total-weight
+    // figure would under-shoot when applied to the smaller LBM number.
+    if (anchor.isLeanMass) {
+      proteinPerKg = (proteinPerKg * 1.15).clamp(2.0, 2.7);
+    }
 
-    final int proteinG = (bodyweightKg * proteinPerKg).round();
-    final int fatG = (bodyweightKg * fatPerKg).round();
+    final int proteinG = (anchor.baseKg * proteinPerKg).round();
+
+    final int fatG;
+    if (fatKcalPct != null) {
+      // Keto: fat is a fixed share of total calories.
+      fatG = (calories * fatKcalPct / 9).round();
+    } else {
+      // Fat is anchored to total bodyweight (endocrine need scales with
+      // total mass, not lean mass — unlike protein).
+      fatG = (bodyweightKg * fatPerKg).round();
+    }
 
     // Carbs fill the remaining calorie budget. Clamp at 0 so a very low
     // calorie target (protein+fat kcal already exceed it) never yields a

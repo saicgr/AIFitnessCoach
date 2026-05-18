@@ -1128,7 +1128,22 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
   /// Menu scan — take or pick 1..N photos of a restaurant menu, send through
   /// /log-multi-image-stream with analysis_mode="menu". On response, open
   /// MenuAnalysisSheet for the user to tick items and log them.
-  Future<void> _scanMenu() async {
+  ///
+  /// #15 re-scan-in-place: when [updateSavedMenuId] is non-null, this is a
+  /// re-scan of an ALREADY-saved menu. Instead of opening the normal
+  /// MenuAnalysisSheet save flow, the fresh scan results are PATCHed onto that
+  /// saved `menu_analyses` row (no duplicate) and a refreshed saved-menu sheet
+  /// is opened. See [_analyzeMultiImages] for where the branch lands.
+  Future<void> _scanMenu({String? updateSavedMenuId}) async {
+    // #15 — when the sheet was opened via `showMenuRescanSheet(...)` (the
+    // one-tap re-scan entry from the Saved Menu sheet), the saved-menu id is
+    // stashed in a library-level var because `autoOpenMenuScan` calls
+    // `_scanMenu()` with no args from initState. Consume it exactly once so a
+    // later normal menu scan in the same sheet doesn't accidentally re-scan.
+    if (updateSavedMenuId == null && _pendingMenuRescanId != null) {
+      updateSavedMenuId = _pendingMenuRescanId;
+      _pendingMenuRescanId = null;
+    }
     final picker = ImagePicker();
     final amber = const Color(0xFFF59E0B);
     final source = await showGlassSheet<ImageSource>(
@@ -1221,6 +1236,7 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
       analysisMode: 'menu',
       inputType: 'menu_scan',
       userMessage: userMessage,
+      updateSavedMenuId: updateSavedMenuId,
     );
   }
 
@@ -1713,6 +1729,10 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
     /// Vision; the originals from `files` go to S3 archive via
     /// `images_original[]`.
     List<Uint8List>? thumbBytesList,
+    /// #15 re-scan-in-place: when set, the menu scan results are PATCHed onto
+    /// this saved `menu_analyses` row instead of opening the normal save flow.
+    /// Only honored for menu/buffet modes (a plate re-scan has no saved row).
+    String? updateSavedMenuId,
   }) async {
     final isGuest = ref.read(isGuestModeProvider);
     if (isGuest) {
@@ -1761,6 +1781,15 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
       MenuAnalysisStreamingController? streamingController;
       bool sheetOpened = false;
       String? pageAnalysisType;
+
+      // #15 re-scan-in-place state. In re-scan mode we never open the live
+      // streaming sheet — instead we silently accumulate every page's items
+      // and image urls here, then PATCH the saved row once the scan finishes.
+      // This keeps a cancelled/failed scan from ever touching the saved menu.
+      final bool isRescan = updateSavedMenuId != null &&
+          (analysisMode == 'menu' || analysisMode == 'buffet');
+      final List<Map<String, dynamic>> rescanItems = [];
+      final List<String> rescanPhotoUrls = [];
 
       Future<void> openSheetWithInitialItems(
         List<Map<String, dynamic>> initial,
@@ -1841,6 +1870,16 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
 
         if (progress.isPageEvent) {
           pageAnalysisType = progress.pageAnalysisType ?? pageAnalysisType;
+          if (isRescan) {
+            // Re-scan: accumulate silently; the sheet stays closed until the
+            // PATCH succeeds. The progress indicator keeps showing meanwhile.
+            rescanItems.addAll(progress.pageItems);
+            if (progress.pageImageUrl != null &&
+                progress.pageImageUrl!.isNotEmpty) {
+              rescanPhotoUrls.add(progress.pageImageUrl!);
+            }
+            continue;
+          }
           if (!sheetOpened) {
             sheetOpened = true;
             _loadingDelayTimer?.cancel();
@@ -1884,6 +1923,21 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
       }
 
       _loadingDelayTimer?.cancel();
+
+      // #15 re-scan-in-place: the scan finished and we never opened the live
+      // sheet. Gather the freshest results (prefer the `done` payload, fall
+      // back to the per-page accumulators for the progressive backend path)
+      // and PATCH them onto the saved menu row. Handles its own completion.
+      if (isRescan) {
+        await _completeMenuRescan(
+          savedMenuId: updateSavedMenuId,
+          finalPayload: finalProgress?.result,
+          accumulatedItems: rescanItems,
+          accumulatedPhotoUrls: rescanPhotoUrls,
+          analysisMode: analysisMode,
+        );
+        return;
+      }
 
       // Progressive path: sheet is open and controller is managing items.
       // Just mark controller done and return; the sheet handles its own
@@ -2092,6 +2146,177 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
         _error = e.toString();
       });
     }
+  }
+
+  /// #15 re-scan-in-place completion. Called only when a re-scan finished
+  /// WITHOUT error or cancellation (a cancelled/failed scan returns earlier in
+  /// `_analyzeMultiImages` and never reaches here, so the saved menu is never
+  /// touched on the unhappy path). Builds the fresh sections/food_items/photo
+  /// urls, PATCHes them onto the saved row, then opens the refreshed
+  /// MenuAnalysisSheet for that saved menu.
+  ///
+  /// On PATCH failure: surfaces a clear error and returns — the saved menu row
+  /// on the server is left exactly as it was (PATCH is atomic server-side).
+  Future<void> _completeMenuRescan({
+    required String savedMenuId,
+    required Map<String, dynamic>? finalPayload,
+    required List<Map<String, dynamic>> accumulatedItems,
+    required List<String> accumulatedPhotoUrls,
+    required String analysisMode,
+  }) async {
+    // Resolve the freshest scan results. The non-progressive backend path
+    // returns everything in the `done` payload; the progressive path streams
+    // per-page events which we accumulated in `accumulatedItems` instead.
+    final List<Map<String, dynamic>> freshItems;
+    final payloadItems = (finalPayload?['food_items'] as List?)
+        ?.whereType<Map>()
+        .map((e) => Map<String, dynamic>.from(e))
+        .toList();
+    if (payloadItems != null && payloadItems.isNotEmpty) {
+      freshItems = payloadItems;
+    } else {
+      freshItems = accumulatedItems;
+    }
+
+    // Empty results → the photo was unreadable. Do NOT PATCH (that would wipe
+    // the saved menu's existing dishes). Surface an error, leave row intact.
+    if (freshItems.isEmpty) {
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _showLoadingIndicator = false;
+        _error = analysisMode == 'menu'
+            ? "Couldn't read this menu — the saved menu was left unchanged."
+            : "Couldn't identify dishes — the saved menu was left unchanged.";
+      });
+      return;
+    }
+
+    // Sections (menu/buffet group headers) — optional; empty list is valid.
+    final freshSections = (finalPayload?['sections'] as List?)
+            ?.whereType<Map>()
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList() ??
+        const <Map<String, dynamic>>[];
+
+    // Photo urls — prefer the `done` payload's image_urls, fall back to the
+    // per-page image urls accumulated during progressive streaming.
+    final payloadPhotoUrls =
+        (finalPayload?['image_urls'] as List?)?.cast<String>();
+    final freshPhotoUrls = (payloadPhotoUrls != null &&
+            payloadPhotoUrls.isNotEmpty)
+        ? payloadPhotoUrls
+        : accumulatedPhotoUrls;
+
+    // `_analysisElapsedMs` is nullable (int?) — coalesce to 0 before use.
+    final elapsedMs = (finalPayload?['total_time_ms'] as num?)?.toDouble() ??
+        (_analysisElapsedMs ?? 0).toDouble();
+    final elapsedSeconds = elapsedMs > 0 ? elapsedMs / 1000.0 : null;
+    final analysisType =
+        (finalPayload?['analysis_type'] as String?) ?? analysisMode;
+
+    setState(() {
+      _isLoading = false;
+      _showLoadingIndicator = false;
+    });
+
+    final api = ref.read(apiClientProvider);
+    final repository = ref.read(nutritionRepositoryProvider);
+
+    Map<String, dynamic>? updatedRow;
+    try {
+      final resp = await api.patch<Map<String, dynamic>>(
+        '/nutrition/menu-analyses/$savedMenuId',
+        data: {
+          'sections': freshSections,
+          'food_items': freshItems,
+          'menu_photo_urls': freshPhotoUrls,
+          if (elapsedSeconds != null) 'elapsed_seconds': elapsedSeconds,
+          'analysis_type': analysisType,
+        },
+      );
+      updatedRow = resp.data;
+    } catch (e) {
+      // PATCH failed — the saved menu row is untouched on the server.
+      if (mounted) {
+        setState(() {
+          _error = "Couldn't update the saved menu — it was left unchanged. "
+              "Please try again.";
+        });
+      }
+      return;
+    }
+
+    if (!mounted || updatedRow == null) return;
+
+    // Refreshed sheet — reopen the saved menu with the new content. Passing
+    // `savedMenuId` keeps the header bookmark in its "saved" state.
+    final refreshedItems = (updatedRow['food_items'] as List?)
+            ?.whereType<Map>()
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList() ??
+        freshItems;
+    final refreshedPhotoUrls =
+        (updatedRow['menu_photo_urls'] as List?)?.cast<String>() ??
+            freshPhotoUrls;
+    final refreshedElapsed =
+        (updatedRow['elapsed_seconds'] as num?)?.toDouble() ?? elapsedSeconds;
+    final refreshedType =
+        (updatedRow['analysis_type'] as String?) ?? analysisType;
+    final savedTitle = updatedRow['title'] as String?;
+    final restaurantName = updatedRow['restaurant_name'] as String?;
+    final restaurantAddress = updatedRow['address'] as String?;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Menu updated')),
+    );
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => MenuAnalysisSheet(
+        foodItems: refreshedItems,
+        analysisType: refreshedType,
+        isDark: widget.isDark,
+        userId: widget.userId,
+        mealType: _selectedMealType.value,
+        menuPhotoUrls: refreshedPhotoUrls,
+        elapsedSeconds: refreshedElapsed,
+        restaurantName: restaurantName,
+        restaurantAddress: restaurantAddress,
+        // Saved-menu identity — header renders in "saved" state, no re-save.
+        savedMenuId: savedMenuId,
+        savedTitle: savedTitle,
+        onLogItems: (selected) async {
+          try {
+            await repository.logSelectedMealItems(
+              userId: widget.userId,
+              mealType: _selectedMealType.value,
+              analysisType: refreshedType,
+              items: selected,
+              inputType: refreshedType == 'menu' ? 'menu_scan' : 'buffet_scan',
+              imageUrl:
+                  refreshedPhotoUrls.isNotEmpty ? refreshedPhotoUrls.first : null,
+            );
+            if (mounted) {
+              ref.read(nutritionProvider.notifier).loadTodaySummary(widget.userId);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Logged ${selected.length} item${selected.length == 1 ? '' : 's'}')),
+              );
+              Navigator.of(context).pop(); // close MenuAnalysisSheet
+              Navigator.of(context).pop(); // close LogMealSheet
+            }
+          } catch (e) {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Failed to log: $e')),
+              );
+            }
+          }
+        },
+      ),
+    );
   }
 
 
@@ -2926,5 +3151,51 @@ class _GlassMenuOption extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// #15 — one-tap "re-scan a saved menu" entry point.
+// ─────────────────────────────────────────────────────────────────────────
+
+/// Library-level handoff slot for the saved-menu id being re-scanned.
+///
+/// `showLogMealSheet(autoOpenMenuScan: true)` triggers `_scanMenu()` from
+/// `initState` with NO arguments, so there is no constructor channel to pass
+/// the saved-menu id through. We stash it here just before opening the sheet;
+/// `_scanMenu` consumes and clears it on first read. Single-shot by design —
+/// only ever one re-scan in flight (the Saved Menu sheet is modal).
+String? _pendingMenuRescanId;
+
+/// #15 — launches the standard menu-scan flow (photo capture + SSE pipeline)
+/// in re-scan-in-place mode for an already-saved menu. When the scan finishes
+/// successfully, the fresh sections/food_items/photo urls are PATCHed onto the
+/// saved `menu_analyses` row identified by [savedMenuId] (no duplicate row),
+/// and the refreshed Menu Analysis sheet is reopened.
+///
+/// A cancelled or failed scan never PATCHes — the saved menu is left intact.
+///
+/// Reuses `showLogMealSheet(autoOpenMenuScan: true)` so the entire capture
+/// pipeline (camera/gallery picker, multi-page, streaming progress) is shared
+/// with a normal menu scan.
+Future<void> showMenuRescanSheet(
+  BuildContext context,
+  WidgetRef ref, {
+  required String savedMenuId,
+}) async {
+  // Stash the target id for `_scanMenu` to pick up. Set immediately before
+  // showing the sheet so there's no window for a stale value to leak.
+  _pendingMenuRescanId = savedMenuId;
+  try {
+    await showLogMealSheet(
+      context,
+      ref,
+      autoOpenMenuScan: true,
+    );
+  } finally {
+    // Defensive cleanup — if the sheet was dismissed before `_scanMenu` ever
+    // ran (e.g. userId resolution failed in showLogMealSheet), clear the slot
+    // so a later unrelated menu scan isn't wrongly treated as a re-scan.
+    _pendingMenuRescanId = null;
   }
 }

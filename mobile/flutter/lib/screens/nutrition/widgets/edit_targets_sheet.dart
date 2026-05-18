@@ -8,6 +8,7 @@ import '../../../core/theme/theme_colors.dart';
 import '../../../core/utils/weight_utils.dart';
 import '../../../data/models/nutrition_preferences.dart';
 import '../../../data/providers/nutrition_preferences_provider.dart';
+import '../../../data/repositories/measurements_repository.dart';
 import '../../onboarding/widgets/calorie_macro_estimator.dart';
 import 'nutrition_goals_card.dart' show showNutritionCalculationSheet;
 
@@ -58,6 +59,16 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
   late final TextEditingController _carbsController;
   late final TextEditingController _fatController;
 
+  // B-rebalance-on-commit: per-macro FocusNodes. The lock-calories rebalance
+  // of the OTHER two macros now runs only when the edited field is COMMITTED
+  // (onEditingComplete or focus loss) — not on every keystroke. Mid-type the
+  // field can transiently read 0g (e.g. clearing "150" to retype it), and a
+  // per-keystroke rebalance would blow up the other two macros. While typing
+  // we only refresh the live calculated-kcal / split display.
+  late final FocusNode _proteinFocus;
+  late final FocusNode _carbsFocus;
+  late final FocusNode _fatFocus;
+
   // Live calculated values
   int? _calculatedCalories;
   int? _percentageSum;
@@ -67,6 +78,25 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
   int? _recommendedProtein;
   int? _recommendedCarbs;
   int? _recommendedFat;
+
+  // B5: last non-zero carbs:fat kcal ratio. When a lock-calories rebalance
+  // would otherwise split evenly between two 0-kcal macros, we restore THIS
+  // remembered ratio instead of permanently flattening the split to 50/50.
+  double? _lastCarbsFatRatio; // carbsKcal / (carbsKcal + fatKcal)
+
+  // B7: currently-selected diet preset. Drives the goal-derived vs fixed
+  // g/kg macro recommendation.
+  MacroPreset _selectedPreset =
+      MacroPreset.recommended;
+
+  // B10: snapshot of the four macro fields + rate + preset taken when the
+  // sheet opens, so the "Reset" action can revert to exactly that state.
+  late final String _initialCalories;
+  late final String _initialProtein;
+  late final String _initialCarbs;
+  late final String _initialFat;
+  String? _initialRate;
+  late final MacroPreset _initialPreset;
 
   @override
   void initState() {
@@ -88,16 +118,55 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
 
     _selectedRate = prefs?.rateOfChange;
 
-    // Per-field listeners so a balance pass knows WHICH field changed.
-    // The balance routines only ever rewrite the OTHER controllers, so the
-    // user's cursor in the edited field is never disturbed.
+    // B-rebalance-on-commit: FocusNodes drive the rebalance on focus-loss.
+    _proteinFocus = FocusNode();
+    _carbsFocus = FocusNode();
+    _fatFocus = FocusNode();
+    _proteinFocus.addListener(() => _onMacroFocusChange(_MacroField.protein));
+    _carbsFocus.addListener(() => _onMacroFocusChange(_MacroField.carbs));
+    _fatFocus.addListener(() => _onMacroFocusChange(_MacroField.fat));
+
+    // B5: seed the remembered carbs:fat ratio from the opening values so the
+    // first even-split edge case can still restore a real ratio.
+    _rememberCarbsFatRatio();
+
+    // B10: snapshot the opening state for the Reset action.
+    _initialCalories = _caloriesController.text;
+    _initialProtein = _proteinController.text;
+    _initialCarbs = _carbsController.text;
+    _initialFat = _fatController.text;
+    _initialRate = _selectedRate;
+    _initialPreset = _selectedPreset;
+
+    // Per-field listeners. While typing these ONLY refresh the live display
+    // (calculated kcal / split bar). The actual lock-calories rebalance of
+    // the OTHER two macros runs on COMMIT — see `_onMacroFocusChange` and the
+    // `onEditingComplete` hook on each macro field.
     _caloriesController.addListener(_onCaloriesChanged);
-    _proteinController.addListener(() => _onMacroChanged(_MacroField.protein));
-    _carbsController.addListener(() => _onMacroChanged(_MacroField.carbs));
-    _fatController.addListener(() => _onMacroChanged(_MacroField.fat));
+    _proteinController.addListener(_onMacroTyping);
+    _carbsController.addListener(_onMacroTyping);
+    _fatController.addListener(_onMacroTyping);
 
     _computeRecommended();
     _recalculate();
+
+    // B4: ensure the latest body-fat measurement is available so the
+    // lean-body-mass protein anchor can trigger. `measurementsProvider`'s
+    // notifier doesn't auto-load — kick a (cache-first, cheap) load and
+    // re-derive the recommendation once it lands. No-op if already loaded.
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      final hasData =
+          ref.read(measurementsProvider).summary?.latestByType.isNotEmpty ??
+              false;
+      if (hasData) return;
+      await ref
+          .read(measurementsProvider.notifier)
+          .loadAllMeasurements(widget.userId);
+      if (!mounted) return;
+      // Recompute so the LBM-anchored protein recommendation appears.
+      _computeRecommended();
+    });
   }
 
   @override
@@ -106,7 +175,35 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
     _proteinController.dispose();
     _carbsController.dispose();
     _fatController.dispose();
+    _proteinFocus.dispose();
+    _carbsFocus.dispose();
+    _fatFocus.dispose();
     super.dispose();
+  }
+
+  /// B5: remember the current carbs:fat split (as a carbs-fraction of the two
+  /// macros' combined kcal) whenever both are non-zero. Restored later when a
+  /// rebalance would otherwise have to split two 0-kcal macros evenly.
+  void _rememberCarbsFatRatio() {
+    final carbs = int.tryParse(_carbsController.text) ?? 0;
+    final fat = int.tryParse(_fatController.text) ?? 0;
+    final carbsKcal = carbs * 4;
+    final fatKcal = fat * 9;
+    final total = carbsKcal + fatKcal;
+    if (total > 0) {
+      _lastCarbsFatRatio = carbsKcal / total;
+    }
+  }
+
+  FocusNode _focusFor(_MacroField m) {
+    switch (m) {
+      case _MacroField.protein:
+        return _proteinFocus;
+      case _MacroField.carbs:
+        return _carbsFocus;
+      case _MacroField.fat:
+        return _fatFocus;
+    }
   }
 
   bool get _showRateSelector {
@@ -141,17 +238,20 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
     );
     final recCalories = safe.calories;
 
-    // B3: bodyweight-anchored, goal-aware macro recommendation. Protein and
-    // fat are pinned to g/kg of bodyweight (physiological need), carbs fill
-    // the remaining budget — so the "Rec:" labels reflect the same model
-    // the marketing site uses. Falls back to the %-split model internally
-    // when bodyweight is unknown.
+    // B3/B7: bodyweight-anchored, goal-aware (or preset-driven) macro
+    // recommendation. Protein and fat are pinned to g/kg (physiological
+    // need), carbs fill the remaining budget. The selected diet preset
+    // overrides the goal-derived g/kg. The protein anchor (lean mass / goal
+    // weight / total bodyweight) is resolved inside calculateMacrosByBodyweight.
     final state = ref.read(nutritionPreferencesProvider);
     final bodyweightKg = state.latestWeight ?? user?.weightKg ?? 0;
     final macros = NutritionCalculator.calculateMacrosByBodyweight(
       calories: recCalories.toDouble(),
       bodyweightKg: bodyweightKg,
       goal: goal,
+      preset: _selectedPreset,
+      bodyFatPercent: _bodyFatPercent(),
+      targetWeightKg: user?.targetWeightKg,
     );
 
     setState(() {
@@ -160,6 +260,41 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
       _recommendedCarbs = macros.carbs;
       _recommendedFat = macros.fat;
     });
+  }
+
+  /// B4: body-fat % anchor source. Reads the latest logged body-fat
+  /// measurement from `measurementsProvider` (the StateNotifier behind the
+  /// Measurements screen — `MeasurementType.bodyFat` entries are stored as a
+  /// percentage, unit `%`). When the user has logged a body-fat reading the
+  /// protein anchor resolves to LEAN BODY MASS; otherwise this returns null
+  /// and `resolveProteinAnchor` falls through to goal-weight / bodyweight.
+  ///
+  /// `summary` is null until the notifier has loaded (3-tier cache — usually
+  /// already warm), and a `<= 0` / `>= 100` reading is treated as absent so a
+  /// stray bad entry can't poison the anchor.
+  double? _bodyFatPercent() {
+    final summary = ref.read(measurementsProvider).summary;
+    final entry = summary?.latestByType[MeasurementType.bodyFat];
+    final bf = entry?.value;
+    if (bf == null || bf <= 0 || bf >= 100) return null;
+    return bf;
+  }
+
+  /// B4: resolves the protein anchor (lean mass / goal weight / bodyweight)
+  /// for the current user, so the slider + caption can describe the base.
+  ({double baseKg, String label, bool isLeanMass})? _proteinAnchor() {
+    final state = ref.read(nutritionPreferencesProvider);
+    final user = ref.read(currentUserProvider).value;
+    final bodyweightKg = state.latestWeight ?? user?.weightKg ?? 0;
+    if (bodyweightKg <= 0) return null;
+    final goal =
+        state.preferences?.primaryGoalEnum ?? NutritionGoal.maintain;
+    return NutritionCalculator.resolveProteinAnchor(
+      bodyweightKg: bodyweightKg,
+      goal: goal,
+      bodyFatPercent: _bodyFatPercent(),
+      targetWeightKg: user?.targetWeightKg,
+    );
   }
 
   void _recalculate() {
@@ -223,17 +358,39 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
     _recalculate();
   }
 
-  /// Fired when one of the three macro fields changes. When calories are
-  /// locked, rebalances the OTHER two macros to hold the calorie target
-  /// (grams mode) or to keep the % sum at 100 (percentage mode).
-  void _onMacroChanged(_MacroField edited) {
+  /// Fired on EVERY keystroke in any macro field. Per spec, typing must NOT
+  /// trigger the lock-calories rebalance — clearing "150" to retype it would
+  /// momentarily read 0g and explode the other macros. So while typing we
+  /// only refresh the live display (calculated kcal + split bar). The actual
+  /// rebalance happens on commit (`_commitMacro`).
+  void _onMacroTyping() {
+    // A programmatic rewrite from a balance pass still needs the display to
+    // refresh, but must not itself re-balance — `_recalculate` is safe.
+    _recalculate();
+  }
+
+  /// B-rebalance-on-commit: focus-loss path. When a macro field loses focus
+  /// (user tapped elsewhere / dismissed the keyboard) we treat that as a
+  /// commit and run the rebalance.
+  void _onMacroFocusChange(_MacroField edited) {
+    if (!mounted) return;
+    if (_focusFor(edited).hasFocus) return; // gained focus — nothing to do
+    _commitMacro(edited);
+  }
+
+  /// Commits an edit to macro [edited]: when calories are locked, rebalances
+  /// the OTHER two macros to hold the calorie target (grams mode) or keep the
+  /// % sum at 100 (percentage mode). Invoked from `onEditingComplete` and on
+  /// focus loss — never per keystroke.
+  void _commitMacro(_MacroField edited) {
     if (_balancing) {
       _recalculate();
       return;
     }
     if (!_lockCalories) {
       // Unlocked: free editing — just refresh the calculated-kcal info row.
-      _macroOverflowWarning = null;
+      setState(() => _macroOverflowWarning = null);
+      _rememberCarbsFatRatio();
       _recalculate();
       return;
     }
@@ -243,6 +400,10 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
     } else {
       _balanceGrams(edited);
     }
+    // B5: capture the post-rebalance carbs:fat ratio so future even-split
+    // edge cases can restore it.
+    _rememberCarbsFatRatio();
+    setState(() {}); // surface _macroOverflowWarning changes
     _recalculate();
   }
 
@@ -298,10 +459,25 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
         aKcal = remainingKcal * (otherAKcal / othersCurrentKcal);
         bKcal = remainingKcal * (otherBKcal / othersCurrentKcal);
       } else {
-        // Edge case: both other macros are currently 0 — no ratio to
-        // preserve. Split the remaining budget evenly between them.
-        aKcal = remainingKcal / 2;
-        bKcal = remainingKcal / 2;
+        // B5: edge case — both other macros are currently 0 kcal, so their
+        // proportional split is undefined (a divide-by-zero). When the two
+        // others ARE carbs and fat AND we have a remembered carbs:fat ratio
+        // from before they were zeroed, restore THAT ratio instead of
+        // flattening permanently to 50/50. Otherwise split evenly.
+        final isCarbsFatPair = others.contains(_MacroField.carbs) &&
+            others.contains(_MacroField.fat);
+        if (isCarbsFatPair && _lastCarbsFatRatio != null) {
+          // _lastCarbsFatRatio is the carbs share of (carbs+fat) kcal.
+          final carbsIdx = others[0] == _MacroField.carbs ? 0 : 1;
+          final carbsShare = remainingKcal * _lastCarbsFatRatio!;
+          final fatShare = remainingKcal - carbsShare;
+          aKcal = carbsIdx == 0 ? carbsShare : fatShare;
+          bKcal = carbsIdx == 0 ? fatShare : carbsShare;
+        } else {
+          // No ratio to restore — split the remaining budget evenly.
+          aKcal = remainingKcal / 2;
+          bKcal = remainingKcal / 2;
+        }
       }
       _setControllerSilently(
           _controllerFor(others[0]), (aKcal / kcalPerG[others[0]]!).round());
@@ -462,6 +638,7 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
         _isPercentageMode = false;
         _macroOverflowWarning = null;
       });
+      _rememberCarbsFatRatio();
       _recalculate();
     } finally {
       if (mounted) setState(() => _isLoadingRecommended = false);
@@ -508,6 +685,7 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
       }
       _balancing = false;
       setState(() => _macroOverflowWarning = null);
+      _rememberCarbsFatRatio();
       _recalculate();
 
       final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -815,6 +993,7 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
             textMuted,
             elevated,
             proteinColor,
+            macroField: _MacroField.protein,
           ),
           // Per-kg quick-set scale. Only shown in grams mode (% mode is a
           // share-of-calories paradigm and per-kg doesn't apply). Hidden when
@@ -834,7 +1013,13 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
             textMuted,
             elevated,
             carbsColor,
+            macroField: _MacroField.carbs,
           ),
+          // B9: per-kg readout under the Carbs field (grams mode only).
+          if (!_isPercentageMode) ...[
+            const SizedBox(height: 4),
+            _buildMacroPerKgCaption(_carbsController, textMuted),
+          ],
           const SizedBox(height: 8),
           _buildFieldRow(
             'Fat',
@@ -845,7 +1030,21 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
             textMuted,
             elevated,
             fatColor,
+            macroField: _MacroField.fat,
           ),
+          // B9: per-kg readout under the Fat field (grams mode only).
+          if (!_isPercentageMode) ...[
+            const SizedBox(height: 4),
+            _buildMacroPerKgCaption(_fatController, textMuted),
+          ],
+          const SizedBox(height: 8),
+
+          // B8: live macro-split bar — P/C/F calorie proportions.
+          _buildMacroSplitBar(proteinColor, carbsColor, fatColor, textMuted),
+          const SizedBox(height: 8),
+
+          // B7: diet preset chips.
+          _buildPresetChips(textPrimary, textMuted, elevated, accent),
           const SizedBox(height: 8),
 
           // Info row
@@ -858,11 +1057,40 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
             const SizedBox(height: 8),
           ],
 
+          // B11: inline non-blocking sanity warnings (deficit / floor /
+          // extreme g/kg). Sits right under the info row's territory.
+          ..._buildSanityWarnings(textMuted),
+
           // Rate of change selector (only for lose/gain goals)
           if (_showRateSelector) ...[
             _buildRateSelector(isDark, textPrimary, textMuted, accent),
             const SizedBox(height: 8),
           ],
+
+          // B10: Reset link — reverts the four macro fields + rate + preset
+          // to the values present when the sheet opened.
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton.icon(
+              onPressed: _isSaving ? null : _resetToInitial,
+              icon: Icon(Icons.restart_alt_rounded, size: 14, color: textMuted),
+              label: Text(
+                'Reset',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: textMuted,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              style: TextButton.styleFrom(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+            ),
+          ),
+          const SizedBox(height: 4),
 
           // Action buttons
           Row(
@@ -1128,6 +1356,9 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
     Color elevated,
     Color macroColor, {
     bool isCalories = false,
+    // B-rebalance-on-commit: when set, the field is a macro field — attach
+    // its FocusNode and run the lock-calories rebalance on `onEditingComplete`.
+    _MacroField? macroField,
   }) {
     return Row(
       children: [
@@ -1204,7 +1435,16 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
         Expanded(
           child: TextField(
             controller: controller,
+            focusNode: macroField != null ? _focusFor(macroField) : null,
             keyboardType: TextInputType.number,
+            // B-rebalance-on-commit: keyboard "done" / next is a commit.
+            textInputAction: TextInputAction.done,
+            onEditingComplete: macroField != null
+                ? () {
+                    _commitMacro(macroField);
+                    FocusScope.of(context).unfocus();
+                  }
+                : null,
             style: TextStyle(color: textPrimary, fontSize: 15),
             textAlign: TextAlign.center,
             decoration: InputDecoration(
@@ -1264,37 +1504,71 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
     final stops = const [0.8, 1.2, 1.6, 2.0, 2.4];
     final fmt = NumberFormat.decimalPattern();
 
-    // B3: goal-aware "recommended" protein g/kg — mirrors the bodyweight
-    // macro model in NutritionCalculator.calculateMacrosByBodyweight:
-    // 2.0 g/kg on a cut or lean-gain (lean-mass retention), 1.8 otherwise.
-    final goal = ref.watch(nutritionPreferencesProvider).preferences
-            ?.primaryGoalEnum ??
-        NutritionGoal.maintain;
+    // B3: goal-aware "recommended" protein g/kg. The goal may be genuinely
+    // unknown (no preferences row) — distinguish that from `maintain` so the
+    // copy + default ratio are honestly generic rather than maintain-tinted.
+    final NutritionGoal? goalOrNull =
+        ref.watch(nutritionPreferencesProvider).preferences?.primaryGoalEnum;
+    final goal = goalOrNull ?? NutritionGoal.maintain;
     final recRatio =
         (goal == NutritionGoal.loseFat || goal == NutritionGoal.buildMuscle)
             ? 2.0
-            : 1.8;
-    final recGrams = (recRatio * weightKg).round();
-    // Goal-tuned phrasing for the recommendation label.
+            : 1.8; // generic / maintain default
+
+    // B4: protein anchor — base weight may be lean mass / goal weight /
+    // bodyweight. The slider's "recommended grams" uses the SAME anchor so
+    // it agrees with the headline recommendation.
+    final anchor = _proteinAnchor();
+    final anchorBaseKg = anchor?.baseKg ?? weightKg;
+    final anchorLabel = anchor?.label ?? 'based on bodyweight';
+    // LBM anchor uses a higher g/kg band (see calculateMacrosByBodyweight).
+    final effectiveRatio = (anchor?.isLeanMass ?? false)
+        ? (recRatio * 1.15).clamp(2.0, 2.7)
+        : recRatio;
+    final recGrams = (effectiveRatio * anchorBaseKg).round();
+
+    // B3: goal-adaptive recommendation label. The "g/kg" shown is the
+    // g/kg-of-anchor figure so the caption and number are consistent.
     final String recLabel;
-    switch (goal) {
+    switch (goalOrNull) {
       case NutritionGoal.loseFat:
         recLabel =
-            'Recommended to keep muscle while losing fat: ${recGrams}g (${recRatio.toStringAsFixed(1)} g/kg)';
+            'Recommended to keep muscle while losing fat: ${recGrams}g (${effectiveRatio.toStringAsFixed(1)} g/kg)';
         break;
       case NutritionGoal.buildMuscle:
         recLabel =
-            'Recommended to build muscle: ${recGrams}g (${recRatio.toStringAsFixed(1)} g/kg)';
+            'Recommended to support muscle growth: ${recGrams}g (${effectiveRatio.toStringAsFixed(1)} g/kg)';
+        break;
+      case NutritionGoal.maintain:
+      case NutritionGoal.recomposition:
+        recLabel =
+            'Recommended to maintain lean mass: ${recGrams}g (${effectiveRatio.toStringAsFixed(1)} g/kg)';
         break;
       default:
+        // Goal null / improveEnergy / eatHealthier — generic phrasing.
         recLabel =
-            'Recommended for your goal: ${recGrams}g (${recRatio.toStringAsFixed(1)} g/kg)';
+            'Recommended protein: ${recGrams}g (${effectiveRatio.toStringAsFixed(1)} g/kg)';
     }
-    // Caption explaining why protein is set high — surfaces the science so
-    // the recommendation doesn't feel arbitrary.
-    final String recCaption = goal == NutritionGoal.loseFat
-        ? 'A high protein intake protects lean mass in a calorie deficit.'
-        : 'A high protein intake supports muscle growth and recovery.';
+    // B3: goal-adaptive science caption. Generic when the goal is unknown.
+    final String recCaption;
+    switch (goalOrNull) {
+      case NutritionGoal.loseFat:
+        recCaption =
+            'A high protein intake protects lean mass in a calorie deficit.';
+        break;
+      case NutritionGoal.buildMuscle:
+        recCaption =
+            'A high protein intake supports muscle growth and recovery.';
+        break;
+      case NutritionGoal.maintain:
+      case NutritionGoal.recomposition:
+        recCaption =
+            'Adequate protein maintains lean mass and supports recovery.';
+        break;
+      default:
+        recCaption =
+            'Adequate protein supports recovery and lean-mass retention.';
+    }
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(110, 0, 0, 0), // align with input column
@@ -1482,6 +1756,24 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
               maxLines: 2,
             ),
           ),
+          // B4: name the protein anchor base so the recommendation isn't a
+          // mystery — "based on lean mass" / "based on goal weight" / etc.
+          Padding(
+            padding: const EdgeInsets.only(top: 1),
+            child: Row(
+              children: [
+                Icon(Icons.anchor_rounded, size: 9, color: textMuted),
+                const SizedBox(width: 3),
+                Expanded(
+                  child: Text(
+                    'Protein target $anchorLabel',
+                    style: TextStyle(fontSize: 9, color: textMuted),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -1603,27 +1895,88 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
     // is currently inspecting before they save.
     final rateStr = _selectedRate ?? prefs.rateOfChange ?? 'moderate';
 
-    final weeks = CalorieMacroEstimator.calculateWeeksToGoal(
-      currentWeight: currentWeight,
-      goalWeight: goalWeight,
-      weightDirection: weightDirection,
-      weightChangeRate: rateStr,
-    );
-    final goalDate = CalorieMacroEstimator.calculateGoalDate(
-      currentWeight: currentWeight,
-      goalWeight: goalWeight,
-      weightDirection: weightDirection,
-      weightChangeRate: rateStr,
-    );
+    // B2: detect whether the recommended calories were FLOORED at the
+    // gender-specific safe minimum. If so, the nominal rate (the chip the
+    // user picked) is NOT what they'll actually get \u2014 the achievable rate is
+    // limited by the real deficit `TDEE \u2212 flooredCalories`. We recompute the
+    // timeline from that actual deficit and surface a "capped" note.
+    final user2 = ref.read(currentUserProvider).value;
+    final gender = user2?.gender ?? 'male';
+    bool capped = false;
+    int? cappedMinimum;
+    int? weeks;
+    DateTime? goalDate;
+    int? actualDeficit; // cal/d \u2014 the deficit we actually display
+
+    if (tdee != null && tdee > 0) {
+      final safe = NutritionCalculator.calculateSafeTarget(
+        tdee: tdee,
+        gender: gender,
+        goal: nutritionGoal,
+        rate: RateOfChange.fromString(rateStr),
+      );
+      capped = safe.wasAdjusted;
+      cappedMinimum = capped ? safe.calories : null;
+    }
+
+    final weightDiff = (currentWeight - goalWeight).abs();
+
+    if (capped && nutritionGoal == NutritionGoal.loseFat && weightDiff >= 0.1) {
+      // Recompute timeline from the ACTUAL deficit. The nominal rate is
+      // unreachable once calories hit the floor.
+      // Wishnofsky: 1 kg fat \u2248 7700 kcal \u2192 weekly rate = deficit\u00d77/7700.
+      actualDeficit = tdee! - cappedMinimum!;
+      if (actualDeficit <= 0) {
+        // Floor sits at or above TDEE \u2014 no deficit is possible at all.
+        return Padding(
+          padding: const EdgeInsets.only(top: 2),
+          child: Row(
+            children: [
+              const Icon(Icons.warning_amber_rounded,
+                  size: 14, color: Colors.orange),
+              const SizedBox(width: 4),
+              Expanded(
+                child: Text(
+                  'Safe-minimum calories ($cappedMinimum) meet your TDEE \u2014 '
+                  'no deficit possible. Increase activity to lose fat.',
+                  style: const TextStyle(fontSize: 12, color: Colors.orange),
+                  maxLines: 2,
+                ),
+              ),
+            ],
+          ),
+        );
+      }
+      final weeklyRateKg = actualDeficit * 7 / 7700;
+      weeks = (weightDiff / weeklyRateKg).ceil();
+      goalDate = DateTime.now().add(Duration(days: weeks * 7));
+    } else {
+      // Not capped \u2014 use the standard rate-driven estimate.
+      weeks = CalorieMacroEstimator.calculateWeeksToGoal(
+        currentWeight: currentWeight,
+        goalWeight: goalWeight,
+        weightDirection: weightDirection,
+        weightChangeRate: rateStr,
+      );
+      goalDate = CalorieMacroEstimator.calculateGoalDate(
+        currentWeight: currentWeight,
+        goalWeight: goalWeight,
+        weightDirection: weightDirection,
+        weightChangeRate: rateStr,
+      );
+      // Deficit/surplus from the actual entered calories vs TDEE.
+      if (tdee != null && enteredCal != null) {
+        actualDeficit = (tdee - enteredCal).abs();
+      }
+    }
 
     if (weeks == null || goalDate == null) return null;
 
-    // Daily deficit/surplus
+    // Daily deficit/surplus label \u2014 always from the ACTUAL figure.
     String deficitInfo = '';
-    if (tdee != null && enteredCal != null) {
-      final diff = (tdee - enteredCal).abs();
+    if (actualDeficit != null) {
       final label = weightDirection == 'lose' ? 'deficit' : 'surplus';
-      deficitInfo = ' \u00b7 $diff cal/d $label';
+      deficitInfo = ' \u00b7 $actualDeficit cal/d $label';
     }
 
     final dateStr = DateFormat('MMM d').format(goalDate);
@@ -1632,17 +1985,35 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
 
     return Padding(
       padding: const EdgeInsets.only(top: 2),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.flag_outlined, size: 14, color: teal),
-          const SizedBox(width: 4),
-          Flexible(
-            child: Text(
-              '$goalLabel \u2192 ~$weeks wks ($dateStr)$deficitInfo',
-              style: TextStyle(fontSize: 12, color: textMuted),
-              overflow: TextOverflow.ellipsis,
-            ),
+          Row(
+            children: [
+              Icon(Icons.flag_outlined, size: 14, color: teal),
+              const SizedBox(width: 4),
+              Flexible(
+                child: Text(
+                  '$goalLabel \u2192 ~$weeks wks ($dateStr)$deficitInfo',
+                  style: TextStyle(fontSize: 12, color: textMuted),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
           ),
+          // B2: capped-at-safe-minimum note. The timeline above is already
+          // recomputed from the real deficit \u2014 this explains WHY it's slower
+          // than the rate chip implies.
+          if (capped && cappedMinimum != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 2, left: 18),
+              child: Text(
+                'Capped at safe minimum ($cappedMinimum kcal) \u2014 '
+                'timeline reflects the actual deficit.',
+                style: const TextStyle(fontSize: 10, color: Colors.orange),
+                maxLines: 2,
+              ),
+            ),
         ],
       ),
     );
@@ -1718,5 +2089,336 @@ class _EditTargetsSheetState extends ConsumerState<EditTargetsSheet> {
         ),
       ],
     );
+  }
+
+  // ── B9: per-kg readout under Fat / Carbs ─────────────────────────────
+
+  /// Small "X.X g/kg" caption under a macro field, mirroring the Protein
+  /// field's per-kg slider read-out. Grams mode only — % mode has no grams.
+  /// Hidden when bodyweight is unknown (no anchor for the ratio).
+  Widget _buildMacroPerKgCaption(
+    TextEditingController controller,
+    Color textMuted,
+  ) {
+    final state = ref.watch(nutritionPreferencesProvider);
+    final user = ref.watch(currentUserProvider).value;
+    final weightKg = state.latestWeight ?? user?.weightKg;
+    if (weightKg == null || weightKg <= 0) return const SizedBox.shrink();
+
+    final grams = int.tryParse(controller.text) ?? 0;
+    final ratio = grams / weightKg;
+    return Padding(
+      padding: const EdgeInsets.only(left: 110), // align with input column
+      child: Row(
+        children: [
+          Icon(Icons.straighten, size: 10, color: textMuted),
+          const SizedBox(width: 4),
+          Text(
+            '${ratio.toStringAsFixed(1)} g/kg',
+            style: TextStyle(fontSize: 10, color: textMuted),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ── B8: live macro-split bar ─────────────────────────────────────────
+
+  /// Horizontal stacked bar showing the P/C/F calorie proportions, updating
+  /// live as the user edits. In grams mode the kcal are computed from grams;
+  /// in % mode the entered percentages are used directly.
+  Widget _buildMacroSplitBar(
+    Color proteinColor,
+    Color carbsColor,
+    Color fatColor,
+    Color textMuted,
+  ) {
+    final p = int.tryParse(_proteinController.text) ?? 0;
+    final c = int.tryParse(_carbsController.text) ?? 0;
+    final f = int.tryParse(_fatController.text) ?? 0;
+
+    // Calorie contribution of each macro.
+    final int pKcal;
+    final int cKcal;
+    final int fKcal;
+    if (_isPercentageMode) {
+      // % mode: the entered values already ARE the calorie shares.
+      pKcal = p;
+      cKcal = c;
+      fKcal = f;
+    } else {
+      pKcal = p * 4;
+      cKcal = c * 4;
+      fKcal = f * 9;
+    }
+    final total = pKcal + cKcal + fKcal;
+    if (total <= 0) return const SizedBox.shrink();
+
+    final pPct = (pKcal / total * 100).round();
+    final cPct = (cKcal / total * 100).round();
+    final fPct = 100 - pPct - cPct; // absorb rounding
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(5),
+          child: SizedBox(
+            height: 10,
+            child: Row(
+              children: [
+                if (pKcal > 0)
+                  Expanded(flex: pKcal, child: Container(color: proteinColor)),
+                if (cKcal > 0)
+                  Expanded(flex: cKcal, child: Container(color: carbsColor)),
+                if (fKcal > 0)
+                  Expanded(flex: fKcal, child: Container(color: fatColor)),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 4),
+        // Legend with each macro's % share.
+        Row(
+          children: [
+            _splitLegendDot('P', pPct, proteinColor),
+            const SizedBox(width: 10),
+            _splitLegendDot('C', cPct, carbsColor),
+            const SizedBox(width: 10),
+            _splitLegendDot('F', fPct, fatColor),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _splitLegendDot(String label, int pct, Color color) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
+        const SizedBox(width: 4),
+        Text(
+          '$label $pct%',
+          style: TextStyle(
+            fontSize: 10,
+            fontWeight: FontWeight.w600,
+            color: color,
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ── B7: diet preset chips ────────────────────────────────────────────
+
+  /// Preset chip row. Selecting a preset overrides the goal-derived g/kg and
+  /// recomputes the recommendation, then applies it to the fields.
+  Widget _buildPresetChips(
+    Color textPrimary,
+    Color textMuted,
+    Color elevated,
+    Color accent,
+  ) {
+    const presets = [
+      (MacroPreset.recommended, 'Recommended'),
+      (MacroPreset.balanced, 'Balanced'),
+      (MacroPreset.highProteinCut, 'High-Protein Cut'),
+      (MacroPreset.keto, 'Keto'),
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Diet preset',
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: textMuted,
+          ),
+        ),
+        const SizedBox(height: 6),
+        // Wrap so the four chips never overflow on an iPhone SE.
+        Wrap(
+          spacing: 6,
+          runSpacing: 6,
+          children: presets.map((entry) {
+            final selected = _selectedPreset == entry.$1;
+            return GestureDetector(
+              onTap: () => _onPresetSelected(entry.$1),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 150),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                decoration: BoxDecoration(
+                  color: selected
+                      ? accent.withValues(alpha: 0.15)
+                      : elevated,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: selected
+                        ? accent
+                        : textMuted.withValues(alpha: 0.3),
+                  ),
+                ),
+                child: Text(
+                  entry.$2,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: selected ? accent : textPrimary,
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+      ],
+    );
+  }
+
+  /// B7: select a diet preset — recompute the recommendation under the new
+  /// preset's g/kg and apply it to the macro fields. Switches to grams mode
+  /// (presets are bodyweight-anchored gram models).
+  void _onPresetSelected(MacroPreset preset) {
+    setState(() => _selectedPreset = preset);
+    // Recompute `_recommendedX` under the new preset.
+    _computeRecommended();
+    final cal = _recommendedCalories;
+    final protein = _recommendedProtein;
+    final carbs = _recommendedCarbs;
+    final fat = _recommendedFat;
+    if (cal == null || protein == null || carbs == null || fat == null) {
+      // No recommendation computable (no TDEE) — the chip selection still
+      // sticks; nothing to apply.
+      return;
+    }
+    _balancing = true;
+    _caloriesController.text = cal.toString();
+    _proteinController.text = protein.toString();
+    _carbsController.text = carbs.toString();
+    _fatController.text = fat.toString();
+    _balancing = false;
+    setState(() {
+      _isPercentageMode = false;
+      _macroOverflowWarning = null;
+    });
+    _rememberCarbsFatRatio();
+    _recalculate();
+  }
+
+  // ── B10: reset ───────────────────────────────────────────────────────
+
+  /// Reverts the four macro fields + selected rate + preset to the values
+  /// captured when the sheet opened.
+  void _resetToInitial() {
+    _balancing = true;
+    _caloriesController.text = _initialCalories;
+    _proteinController.text = _initialProtein;
+    _carbsController.text = _initialCarbs;
+    _fatController.text = _initialFat;
+    _balancing = false;
+    setState(() {
+      _selectedRate = _initialRate;
+      _selectedPreset = _initialPreset;
+      _macroOverflowWarning = null;
+      _isPercentageMode = false; // opening state is always grams mode
+    });
+    _rememberCarbsFatRatio();
+    _computeRecommended();
+    _recalculate();
+  }
+
+  // ── B11: inline non-blocking sanity warnings ─────────────────────────
+
+  /// Builds zero or more non-blocking warning rows. These never gate Save —
+  /// they only flag values that are likely unintended:
+  ///   - entered calories ≥ TDEE on a Lose Fat goal (no deficit)
+  ///   - entered calories below the gender-specific safe floor
+  ///   - protein > ~2.6 g/kg (very high) or fat < ~0.5 g/kg (very low)
+  List<Widget> _buildSanityWarnings(Color textMuted) {
+    // % mode has no absolute grams/calories to sanity-check.
+    if (_isPercentageMode) return const [];
+
+    final warnings = <String>[];
+    final prefs = ref.read(nutritionPreferencesProvider).preferences;
+    final user = ref.read(currentUserProvider).value;
+    final goal = prefs?.primaryGoalEnum;
+    final tdee = prefs?.calculatedTdee;
+    final enteredCal = int.tryParse(_caloriesController.text);
+
+    // 1. No-deficit warning on a Lose Fat goal.
+    if (goal == NutritionGoal.loseFat &&
+        tdee != null &&
+        tdee > 0 &&
+        enteredCal != null &&
+        enteredCal >= tdee) {
+      warnings.add(
+          "This won't create a deficit — calories meet or exceed your TDEE "
+          '($tdee kcal).');
+    }
+
+    // 2. Below the safe calorie floor.
+    if (enteredCal != null) {
+      final gender = user?.gender ?? 'male';
+      final floor = gender.toLowerCase() == 'female'
+          ? NutritionCalculator.minCaloriesFemale
+          : NutritionCalculator.minCaloriesMale;
+      if (enteredCal < floor) {
+        warnings.add(
+            'Below the safe minimum of $floor kcal/day — check this is '
+            'intended.');
+      }
+    }
+
+    // 3. Extreme protein / fat g/kg.
+    final weightKg =
+        ref.read(nutritionPreferencesProvider).latestWeight ?? user?.weightKg;
+    if (weightKg != null && weightKg > 0) {
+      final protein = int.tryParse(_proteinController.text) ?? 0;
+      final fat = int.tryParse(_fatController.text) ?? 0;
+      final proteinPerKg = protein / weightKg;
+      final fatPerKg = fat / weightKg;
+      if (proteinPerKg > 2.6) {
+        warnings.add(
+            'Protein is very high (${proteinPerKg.toStringAsFixed(1)} g/kg) — '
+            'check this is intended.');
+      }
+      if (fat > 0 && fatPerKg < 0.5) {
+        warnings.add(
+            'Fat is very low (${fatPerKg.toStringAsFixed(1)} g/kg) — '
+            'check this is intended.');
+      }
+    }
+
+    if (warnings.isEmpty) return const [];
+
+    return [
+      ...warnings.map((w) => Padding(
+            padding: const EdgeInsets.only(bottom: 4),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(Icons.warning_amber_rounded,
+                    size: 14, color: Colors.orange),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Text(
+                    w,
+                    style: const TextStyle(
+                        fontSize: 11, color: Colors.orange),
+                    maxLines: 3,
+                  ),
+                ),
+              ],
+            ),
+          )),
+      const SizedBox(height: 4),
+    ];
   }
 }

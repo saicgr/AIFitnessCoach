@@ -5,6 +5,7 @@
 library;
 
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -28,10 +29,75 @@ class _MenuAnalysisHistoryScreenState
   bool _loading = true;
   String? _error;
 
+  // #14 — live search. Holds the trimmed, lower-cased query; empty means
+  // "show everything". Backed by its own controller so the clear (×) button
+  // can reset both the field and the filter in one tap.
+  final TextEditingController _searchController = TextEditingController();
+  String _query = '';
+
   @override
   void initState() {
     super.initState();
     _load();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  /// #16 — one-shot connectivity probe. Returns true when the device has a
+  /// network interface (wifi / mobile / ethernet / vpn). connectivity_plus
+  /// can occasionally false-negative, but for a pre-flight guard on a
+  /// user-initiated mutation a single check is the right trade-off: if it
+  /// says offline, the request would almost certainly fail anyway.
+  Future<bool> _isOnline() async {
+    try {
+      final results = await Connectivity().checkConnectivity();
+      return results.any((r) => r != ConnectivityResult.none);
+    } catch (_) {
+      // Probe itself failed — assume online so we never wrongly block a
+      // user who actually has a connection.
+      return true;
+    }
+  }
+
+  /// #16 — shared offline snackbar so every mutation surfaces the same
+  /// clear, non-technical message instead of a raw Dio error.
+  void _showOfflineMessage() {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text("You're offline — this needs a connection"),
+      ),
+    );
+  }
+
+  /// #14 — pinned-first ordering preserved within the live-filtered set.
+  /// Filters by title / restaurant_name / address, case-insensitive and
+  /// trimmed; an empty query returns every row untouched.
+  List<Map<String, dynamic>> get _visibleRows {
+    final rows = _rows ?? const <Map<String, dynamic>>[];
+    final q = _query;
+    final filtered = q.isEmpty
+        ? List<Map<String, dynamic>>.from(rows)
+        : rows.where((row) {
+            final haystack = [
+              (row['title'] as String?) ?? '',
+              (row['restaurant_name'] as String?) ?? '',
+              (row['address'] as String?) ?? '',
+            ].join(' ').toLowerCase();
+            return haystack.contains(q);
+          }).toList();
+    // Stable pinned-first sort — pinned cards float to the top of whatever
+    // subset survived the filter.
+    filtered.sort((a, b) {
+      final ap = a['is_pinned'] == true ? 0 : 1;
+      final bp = b['is_pinned'] == true ? 0 : 1;
+      return ap.compareTo(bp);
+    });
+    return filtered;
   }
 
   Future<void> _load() async {
@@ -98,12 +164,23 @@ class _MenuAnalysisHistoryScreenState
   }
 
   Future<void> _togglePin(Map<String, dynamic> row) async {
+    // #16 — pinning writes to the server; bail with a clear message offline.
+    if (!await _isOnline()) {
+      _showOfflineMessage();
+      return;
+    }
     try {
       final api = ref.read(apiClientProvider);
       await api.patch('/nutrition/menu-analyses/${row['id']}',
           data: {'is_pinned': !(row['is_pinned'] ?? false)});
       _load();
-    } catch (_) {/* silent */}
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not update pin: $e')),
+        );
+      }
+    }
   }
 
   /// A2 — edit BOTH the name and the address on an already-saved menu in a
@@ -184,6 +261,11 @@ class _MenuAnalysisHistoryScreenState
       },
     );
     if (result != true) return;
+    // #16 — renaming PATCHes the server; guard before issuing the request.
+    if (!await _isOnline()) {
+      _showOfflineMessage();
+      return;
+    }
     try {
       final api = ref.read(apiClientProvider);
       // Send empty strings (not null) so the user can clear either field —
@@ -203,11 +285,22 @@ class _MenuAnalysisHistoryScreenState
   }
 
   Future<void> _delete(Map<String, dynamic> row) async {
+    // #16 — deletion hits the server; bail with a clear message offline.
+    if (!await _isOnline()) {
+      _showOfflineMessage();
+      return;
+    }
     try {
       final api = ref.read(apiClientProvider);
       await api.delete('/nutrition/menu-analyses/${row['id']}');
       _load();
-    } catch (_) {/* silent */}
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not delete menu: $e')),
+        );
+      }
+    }
   }
 
   @override
@@ -234,25 +327,127 @@ class _MenuAnalysisHistoryScreenState
                 ))
               : (_rows?.isEmpty ?? true)
                   ? const Center(child: _EmptyState())
-                  : GridView.builder(
-                      padding: const EdgeInsets.all(12),
-                      // Slightly taller cards than v1 — the richer footer
-                      // now carries name + restaurant + address + date.
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 2,
-                        childAspectRatio: 0.66,
-                        mainAxisSpacing: 12,
-                        crossAxisSpacing: 12,
-                      ),
-                      itemCount: _rows!.length,
-                      itemBuilder: (_, i) => _Card(
-                        row: _rows![i],
-                        onTap: () => _openSaved(_rows![i]),
-                        onPin: () => _togglePin(_rows![i]),
-                        onDelete: () => _delete(_rows![i]),
-                        onEditDetails: () => _editDetails(_rows![i]),
-                      ),
-                    ),
+                  : _buildList(),
+    );
+  }
+
+  /// #14 — search field pinned above the grid, then either the filtered
+  /// grid or a tasteful "no matches" state when the query excludes
+  /// everything. The search row stays visible even with zero matches so
+  /// the user can edit / clear the query without losing context.
+  Widget _buildList() {
+    final visible = _visibleRows;
+    return Column(
+      children: [
+        _SearchField(
+          controller: _searchController,
+          onChanged: (value) {
+            setState(() => _query = value.trim().toLowerCase());
+          },
+          onClear: () {
+            _searchController.clear();
+            setState(() => _query = '');
+          },
+        ),
+        Expanded(
+          child: visible.isEmpty
+              ? Center(child: _NoMatchesState(query: _searchController.text))
+              : GridView.builder(
+                  padding: const EdgeInsets.all(12),
+                  // Slightly taller cards than v1 — the richer footer
+                  // now carries name + restaurant + address + date.
+                  gridDelegate:
+                      const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    childAspectRatio: 0.66,
+                    mainAxisSpacing: 12,
+                    crossAxisSpacing: 12,
+                  ),
+                  itemCount: visible.length,
+                  itemBuilder: (_, i) => _Card(
+                    row: visible[i],
+                    onTap: () => _openSaved(visible[i]),
+                    onPin: () => _togglePin(visible[i]),
+                    onDelete: () => _delete(visible[i]),
+                    onEditDetails: () => _editDetails(visible[i]),
+                  ),
+                ),
+        ),
+      ],
+    );
+  }
+}
+
+/// #14 — compact search box for the saved-menus grid. Trailing clear (×)
+/// appears only while the field has text.
+class _SearchField extends StatelessWidget {
+  final TextEditingController controller;
+  final ValueChanged<String> onChanged;
+  final VoidCallback onClear;
+
+  const _SearchField({
+    required this.controller,
+    required this.onChanged,
+    required this.onClear,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
+      child: TextField(
+        controller: controller,
+        onChanged: onChanged,
+        textInputAction: TextInputAction.search,
+        decoration: InputDecoration(
+          isDense: true,
+          hintText: 'Search by name, restaurant, or address',
+          prefixIcon: const Icon(Icons.search, size: 20),
+          // ValueListenableBuilder keeps the clear button in sync with the
+          // field contents without an extra setState on every keystroke.
+          suffixIcon: ValueListenableBuilder<TextEditingValue>(
+            valueListenable: controller,
+            builder: (_, value, __) => value.text.isEmpty
+                ? const SizedBox.shrink()
+                : IconButton(
+                    icon: const Icon(Icons.clear, size: 18),
+                    tooltip: 'Clear search',
+                    onPressed: onClear,
+                  ),
+          ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// #14 — shown when a non-empty query matches no saved menus. Distinct from
+/// `_EmptyState` (which means "you have no saved menus at all").
+class _NoMatchesState extends StatelessWidget {
+  final String query;
+  const _NoMatchesState({required this.query});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(32),
+      child: Column(mainAxisSize: MainAxisSize.min, children: [
+        Icon(Icons.search_off, size: 56, color: AppColors.textMuted),
+        const SizedBox(height: 12),
+        const Text('No matching menus',
+            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+        const SizedBox(height: 4),
+        Text(
+          query.trim().isEmpty
+              ? 'Try a different search.'
+              : 'Nothing matched "${query.trim()}". Try another search.',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 13, color: AppColors.textMuted),
+        ),
+      ]),
     );
   }
 }

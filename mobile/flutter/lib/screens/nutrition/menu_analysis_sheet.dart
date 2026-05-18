@@ -10,6 +10,7 @@ import 'dart:async';
 import 'dart:ui';
 
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -24,7 +25,12 @@ import '../../data/providers/nutrition_preferences_provider.dart';
 import '../../data/models/nutrition.dart';
 import '../../data/repositories/nutrition_repository.dart';
 import '../../data/services/api_client.dart';
+// #15 — `showMenuRescanSheet` lives in the LogMealSheet library; importing it
+// here lets the Saved Menu sheet launch the shared menu-scan pipeline in
+// re-scan-in-place mode.
+import 'log_meal_sheet.dart';
 import 'widgets/add_food_sheet.dart';
+import 'widgets/edit_targets_sheet.dart';
 import '../../services/menu_recommendation_service.dart';
 import '../../widgets/glass_sheet.dart';
 import 'widgets/menu_analysis/macro_budget_ring.dart';
@@ -764,51 +770,96 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
     if (_bookmarking) return;
     // Title + restaurant name + an optional free-text address. All three
     // are optional (C11): never block the save on a missing name/address.
+    // #6 — when the Name field is prefilled from a Gemini-detected
+    // restaurant name, the auto-detect hint should show until the user
+    // edits the field. `_prefilledName` captures the auto-detected value;
+    // it stays non-empty only when the name was actually auto-detected.
+    final autoDetectedName = widget.restaurantName?.trim() ?? '';
     final titleController =
         TextEditingController(text: widget.restaurantName ?? '');
     final addressController =
         TextEditingController(text: widget.restaurantAddress ?? '');
     final saved = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Save this menu'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: titleController,
-              autofocus: true,
-              maxLength: 60,
-              decoration: const InputDecoration(
-                labelText: 'Name (optional)',
-                hintText: 'e.g. Indian place near work',
+      builder: (ctx) {
+        // StatefulBuilder so the auto-detect hint can disappear the moment
+        // the user edits the prefilled Name.
+        return StatefulBuilder(
+          builder: (ctx, setLocal) {
+            // Hint visible only while the field still holds the exact
+            // auto-detected value (and a value was auto-detected at all).
+            final showAutoHint = autoDetectedName.isNotEmpty &&
+                titleController.text.trim() == autoDetectedName;
+            return AlertDialog(
+              title: const Text('Save this menu'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  TextField(
+                    controller: titleController,
+                    autofocus: true,
+                    maxLength: 60,
+                    onChanged: (_) => setLocal(() {}),
+                    decoration: const InputDecoration(
+                      labelText: 'Name (optional)',
+                      hintText: 'e.g. Indian place near work',
+                    ),
+                  ),
+                  if (showAutoHint)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Row(
+                        children: [
+                          Icon(Icons.auto_awesome,
+                              size: 12, color: AppColors.textMuted),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              'Auto-detected from the menu — edit if wrong',
+                              style: TextStyle(
+                                  fontSize: 11,
+                                  color: AppColors.textMuted),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  TextField(
+                    controller: addressController,
+                    // Plain free-text — any country, any format. No
+                    // geocoding, no format enforcement (C11).
+                    maxLines: 2,
+                    textCapitalization: TextCapitalization.words,
+                    decoration: const InputDecoration(
+                      labelText: 'Address (optional)',
+                      hintText: 'e.g. 123 Main St, or just "downtown"',
+                    ),
+                  ),
+                ],
               ),
-            ),
-            TextField(
-              controller: addressController,
-              // Plain free-text — any country, any format. No geocoding,
-              // no format enforcement (C11).
-              maxLines: 2,
-              textCapitalization: TextCapitalization.words,
-              decoration: const InputDecoration(
-                labelText: 'Address (optional)',
-                hintText: 'e.g. 123 Main St, or just "downtown"',
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Cancel')),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Save'),
-          ),
-        ],
-      ),
+              actions: [
+                TextButton(
+                    onPressed: () => Navigator.pop(ctx, false),
+                    child: const Text('Cancel')),
+                FilledButton(
+                  onPressed: () => Navigator.pop(ctx, true),
+                  child: const Text('Save'),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
     if (saved != true || !mounted) return;
+
+    // #16 — saving (and its duplicate-check) all need the network. Probe
+    // once here so the user gets a clear message instead of a raw error.
+    if (!await _isOnline()) {
+      _showOfflineMessage();
+      return;
+    }
 
     final title = titleController.text.trim();
     final address = addressController.text.trim();
@@ -928,15 +979,19 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
     final id = _savedMenuId;
     if (id == null || _bookmarking) return;
 
-    final nameController = TextEditingController(
-      text: (_savedTitle ?? widget.savedTitle ?? '').trim(),
-    );
+    final initialName = (_savedTitle ?? widget.savedTitle ?? '').trim();
+    final nameController = TextEditingController(text: initialName);
     final addressController = TextEditingController(
       text: widget.restaurantAddress ?? '',
     );
     // The Gemini-surfaced restaurant name — offered as a one-tap quick-fill
     // when it exists and differs from whatever is currently in the field.
     final restaurantName = widget.restaurantName?.trim() ?? '';
+    // #6 — the Name field counts as "auto-detected" only when its initial
+    // value was itself the Gemini restaurant name. The hint shows while the
+    // field still holds that exact value and hides once the user edits it.
+    final nameWasAutoDetected =
+        restaurantName.isNotEmpty && initialName == restaurantName;
 
     final action = await showDialog<String>(
       context: context,
@@ -947,10 +1002,15 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
           builder: (ctx, setLocal) {
             final showQuickFill = restaurantName.isNotEmpty &&
                 restaurantName != nameController.text.trim();
+            // #6 — hint visible while the field still holds the exact
+            // auto-detected value; hidden once the user edits it.
+            final showAutoHint = nameWasAutoDetected &&
+                nameController.text.trim() == restaurantName;
             return AlertDialog(
               title: const Text('Edit saved menu'),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   TextField(
                     controller: nameController,
@@ -962,6 +1022,25 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
                       hintText: 'e.g. Indian place near work',
                     ),
                   ),
+                  if (showAutoHint)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Row(
+                        children: [
+                          Icon(Icons.auto_awesome,
+                              size: 12, color: AppColors.textMuted),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              'Auto-detected from the menu — edit if wrong',
+                              style: TextStyle(
+                                  fontSize: 11,
+                                  color: AppColors.textMuted),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   // Quick-fill chip: tap to drop the detected restaurant name
                   // into the Name field.
                   if (showQuickFill)
@@ -988,6 +1067,20 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
                     decoration: const InputDecoration(
                       labelText: 'Address (optional)',
                       hintText: 'e.g. 123 Main St, or just "downtown"',
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  // #15 — re-scan affordance. Lets the user re-photograph
+                  // this menu and refresh its parsed items in place rather
+                  // than creating a duplicate saved entry. Full-width so it
+                  // reads as a distinct action below the editable fields.
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: TextButton.icon(
+                      icon: const Icon(Icons.document_scanner_outlined,
+                          size: 18),
+                      label: const Text('Re-scan menu'),
+                      onPressed: () => Navigator.pop(ctx, 'rescan'),
                     ),
                   ),
                 ],
@@ -1017,9 +1110,28 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
     );
 
     if (!mounted || action == null || action == 'cancel') return;
+
+    // #16 — both the 'save' (PATCH) and 'remove' (DELETE) branches below
+    // hit the server. The 're-scan' branch is handled separately inside
+    // `_rescanSavedMenu` (it has its own guard). Probe once up front.
+    if (action == 'save' || action == 'remove') {
+      if (!await _isOnline()) {
+        _showOfflineMessage();
+        return;
+      }
+    }
     final api = ref.read(apiClientProvider);
 
+    if (action == 'rescan') {
+      // #15 — re-photograph this saved menu and update it in place.
+      await _rescanSavedMenu(id);
+      return;
+    }
+
     if (action == 'remove') {
+      // The connectivity probe above is async — re-check `mounted` before
+      // touching `context` again to satisfy use_build_context_synchronously.
+      if (!mounted) return;
       // Confirm the destructive delete before issuing it.
       final confirmed = await showDialog<bool>(
         context: context,
@@ -1093,6 +1205,99 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
     } finally {
       if (mounted) setState(() => _bookmarking = false);
     }
+  }
+
+  /// #15 — re-scan a saved menu and refresh its parsed content IN PLACE
+  /// (no duplicate row). One tap: re-photograph the menu, re-run the scan
+  /// pipeline, PATCH this `savedMenuId`'s sections/food_items/menu_photo_urls/
+  /// elapsed_seconds, then reopen the refreshed Menu Analysis sheet.
+  ///
+  /// The photo-capture + SSE scan pipeline is shared with a normal menu scan
+  /// via `showMenuRescanSheet(...)` (LogMealSheet library), which threads
+  /// `updateSavedMenuId` through `_scanMenu` → `_analyzeMultiImages` →
+  /// `_completeMenuRescan`. A cancelled or failed scan never PATCHes, so the
+  /// saved menu is left untouched on the unhappy path.
+  Future<void> _rescanSavedMenu(String id) async {
+    if (!mounted) return;
+    // Re-scanning needs the network for the scan + PATCH. Block early with the
+    // shared offline message rather than letting the scan fail mid-pipeline.
+    if (!await _isOnline()) {
+      _showOfflineMessage();
+      return;
+    }
+    if (!mounted) return;
+
+    // Confirm before discarding this sheet — re-scan launches a fresh capture
+    // flow and reopens the menu afterwards, so we close the current sheet.
+    final proceed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Re-scan this menu?'),
+        content: const Text(
+          "We'll open the camera to photograph the menu again. The new "
+          'results replace this saved menu in place — no duplicate is '
+          'created. Cancelling the scan leaves the saved menu unchanged.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Re-scan'),
+          ),
+        ],
+      ),
+    );
+    if (proceed != true || !mounted) return;
+
+    // Capture ref before the async gap / sheet teardown — the State's `ref`
+    // is still valid here, and `showMenuRescanSheet` only needs it to resolve
+    // the user id + theme inside `showLogMealSheet`.
+    final widgetRef = ref;
+    final navigator = Navigator.of(context);
+
+    // Close this Saved Menu sheet first so the re-scan flow (and the refreshed
+    // sheet it reopens afterwards) isn't stacked behind a stale sheet.
+    navigator.pop();
+
+    // Launch the shared menu-scan pipeline in re-scan-in-place mode. On a
+    // successful scan it PATCHes `/nutrition/menu-analyses/$id` and reopens
+    // the refreshed Menu Analysis sheet; on cancel/failure nothing is PATCHed.
+    await showMenuRescanSheet(
+      navigator.context,
+      widgetRef,
+      savedMenuId: id,
+    );
+  }
+
+  // ───────────────────────── connectivity ─────────────────────────
+
+  /// #16 — one-shot connectivity probe used as a pre-flight guard before any
+  /// network mutation (save / rename / delete). connectivity_plus can rarely
+  /// false-negative, but for a user-initiated write a single check is the
+  /// right trade-off: if it reports offline the request would fail anyway.
+  Future<bool> _isOnline() async {
+    try {
+      final results = await Connectivity().checkConnectivity();
+      return results.any((r) => r != ConnectivityResult.none);
+    } catch (_) {
+      // Probe itself failed — assume online so we never wrongly block a
+      // user who actually has a connection.
+      return true;
+    }
+  }
+
+  /// #16 — shared offline snackbar so every guarded action surfaces the same
+  /// clear, non-technical message instead of a raw Dio error.
+  void _showOfflineMessage() {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text("You're offline — this needs a connection"),
+      ),
+    );
   }
 
   // ───────────────────────── glass tint helpers ─────────────────────────
@@ -1230,7 +1435,12 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
     final prefs = ref.watch(nutritionPreferencesProvider).preferences;
     final goal = prefs?.primaryGoalEnum;
     if (goal == null) return const SizedBox.shrink();
-    return Padding(
+    // #13 — the banner becomes tappable (→ Edit Daily Targets) only when a
+    // userId is available; EditTargetsSheet requires a non-null userId.
+    // Chat-flow callers that don't pass one keep a static, non-tappable
+    // banner rather than a dead tap target.
+    final canEditTargets = widget.userId != null;
+    final banner = Padding(
       padding: const EdgeInsets.only(top: 8),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -1262,10 +1472,58 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
                 ),
               ),
             ),
+            // #13 — subtle edit affordance so the banner reads as tappable.
+            if (canEditTargets) ...[
+              const SizedBox(width: 6),
+              Icon(Icons.edit_rounded, size: 12, color: colors.accent),
+            ],
           ],
         ),
       ),
     );
+    if (!canEditTargets) return banner;
+    return InkWell(
+      borderRadius: BorderRadius.circular(10),
+      onTap: _openEditTargets,
+      child: banner,
+    );
+  }
+
+  /// #13 — open the shared "Edit Daily Targets" sheet (the same
+  /// `EditTargetsSheet` presented from the nutrition Daily tab) wrapped in a
+  /// GlassSheet. After it closes, force-reload the nutrition preferences
+  /// notifier so the macro rings below pick up any changed calorie / macro
+  /// budget without needing the sheet to be reopened.
+  Future<void> _openEditTargets() async {
+    final userId = widget.userId;
+    if (userId == null || !mounted) return;
+    await showGlassSheet<void>(
+      context: context,
+      builder: (_) => GlassSheet(
+        child: EditTargetsSheet(
+          userId: userId,
+          // Force-reload preferences on save so the open rings reflect the
+          // new budget. `forceRefreshPreferences` updates the notifier's
+          // state in place (vs `invalidate`, which would tear down and
+          // re-create the notifier). Guarded by `mounted` because the save
+          // callback can fire while this sheet is mid-dismiss.
+          onSaved: () {
+            if (mounted) {
+              ref
+                  .read(nutritionPreferencesProvider.notifier)
+                  .forceRefreshPreferences(userId);
+            }
+          },
+        ),
+      ),
+    );
+    // Belt-and-braces: also refresh after the sheet fully closes in case the
+    // user changed targets via a path that didn't trigger onSaved.
+    if (mounted) {
+      ref
+          .read(nutritionPreferencesProvider.notifier)
+          .forceRefreshPreferences(userId);
+    }
   }
 
   Widget _budgetRings(ThemeColors colors) {
