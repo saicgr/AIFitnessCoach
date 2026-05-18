@@ -157,7 +157,11 @@ class EasyExerciseHeader extends ConsumerWidget {
             // Note = per-set text + audio + photo (the kg/lb toggle lives
             //       inside the Weight stepper now — right where the unit
             //       appears — so this slot holds the per-set note chip).
-            Row(
+            // 5 chips can exceed the row width on narrower devices — scale
+            // the whole strip down to fit instead of overflowing.
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 _LinkChip(
@@ -210,6 +214,7 @@ class EasyExerciseHeader extends ConsumerWidget {
                   ),
                 ],
               ],
+              ),
             ),
           ],
         ),

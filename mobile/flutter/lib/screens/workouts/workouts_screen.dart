@@ -9,28 +9,24 @@ import '../../data/models/workout.dart';
 import '../../data/models/workout_screen_summary.dart';
 import '../../core/constants/synced_workout_kinds.dart';
 import '../../data/providers/synced_workouts_provider.dart';
-import '../../data/providers/today_workout_provider.dart';
-import '../../data/repositories/auth_repository.dart';
 import '../../data/repositories/workout_repository.dart';
 import '../../widgets/synced/kind_avatar.dart';
 import '../../widgets/synced/metric_chip.dart';
 import '../profile/synced_workout_detail_screen.dart';
-import '../../data/models/gym_profile.dart';
-import '../../data/providers/gym_profile_provider.dart';
 import '../../data/services/haptic_service.dart';
 import '../../widgets/main_shell.dart';
 import '../../widgets/tooltips/tooltips.dart';
-import '../home/widgets/edit_gym_profile_sheet.dart';
 import '../../widgets/glass_sheet.dart';
 import '../../widgets/pill_swipe_navigation.dart';
-import '../home/widgets/cards/next_workout_card.dart';
 import '../home/widgets/cards/weekly_progress_card.dart';
-import '../home/widgets/hero_workout_card.dart';
+import 'widgets/workout_planner_section.dart';
 import 'widgets/exercise_preferences_card.dart';
+import 'widgets/workouts_floating_options_bar.dart';
 import 'widgets/upcoming_workouts_sheet.dart';
-import 'widgets/previous_workouts_sheet.dart';
 import 'widgets/favorite_workouts_sheet.dart';
 import '../home/widgets/manage_gym_profiles_sheet.dart';
+import '../home/widgets/week_calendar_strip.dart';
+import '../home/widgets/gym_profile_switcher.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
 /// Workouts screen - central hub for all workout-related content
@@ -58,6 +54,13 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
   GlobalKey get _exercisePreferencesKey => TooltipAnchors.workoutsExercisePrefs;
   GlobalKey get _todayWorkoutKey => TooltipAnchors.workoutsToday;
 
+  // Scroll controller + planner anchor key. The floating launcher bar's
+  // "Plan" item jumps the scroll view back to the planner section; the
+  // remaining items navigate / open sheets instead of scrolling.
+  final ScrollController _scrollController = ScrollController();
+  final GlobalKey _planSectionKey = GlobalKey();
+  int _activeOption = 0;
+
   @override
   void initState() {
     super.initState();
@@ -69,7 +72,42 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
 
   @override
   void dispose() {
+    _scrollController.dispose();
     super.dispose();
+  }
+
+  /// Dispatches the floating launcher bar action for [index].
+  ///
+  /// 0 Plan      → scroll back to the planner section.
+  /// 1 Gym       → open the manage-gym-profiles sheet.
+  /// 2 Library   → exercise library.
+  /// 3 History   → schedule / history screen.
+  void _onOptionSelected(int index) {
+    switch (index) {
+      case 0:
+        setState(() => _activeOption = 0);
+        final ctx = _planSectionKey.currentContext;
+        if (ctx == null) return;
+        Scrollable.ensureVisible(
+          ctx,
+          duration: const Duration(milliseconds: 420),
+          curve: Curves.easeOutCubic,
+          alignment: 0.05,
+        );
+        break;
+      case 1:
+        showGlassSheet(
+          context: context,
+          builder: (_) => const ManageGymProfilesSheet(),
+        );
+        break;
+      case 2:
+        context.push('/library');
+        break;
+      case 3:
+        context.push('/schedule');
+        break;
+    }
   }
 
   @override
@@ -83,8 +121,6 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
 
     // Watch workouts state (for weekly progress, upcoming list)
     final workoutsState = ref.watch(workoutsProvider);
-    // Watch todayWorkoutProvider (for today's/next workout - same as Home screen)
-    final todayWorkoutState = ref.watch(todayWorkoutProvider);
     // Watch lightweight screen summary (for weekly progress + previous sessions)
     final screenSummary = ref.watch(workoutScreenSummaryProvider);
 
@@ -95,6 +131,7 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
           children: [
             // Scrollable content
             CustomScrollView(
+              controller: _scrollController,
               slivers: [
                 // Top padding for the floating header (title pill row).
                 // 56 = 40 pt pill + 8 pt top + 8 pt bottom from
@@ -111,7 +148,6 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
                   textSecondary,
                   accentColor,
                   workoutsState.valueOrNull ?? [],
-                  todayWorkoutState,
                   screenSummary,
                 ),
               ],
@@ -124,6 +160,33 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
               textPrimary,
               textSecondary,
               accentColor,
+            ),
+
+            // Floating options bar — docked above MainShell's bottom nav,
+            // mirroring the Nutrition / Discover / You tabs. Pills jump the
+            // scroll view to the matching section.
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: MediaQuery.of(context).viewPadding.bottom + 68,
+              child: Center(
+                child: WorkoutsFloatingOptionsBar(
+                  accentColor: accentColor,
+                  activeIndex: _activeOption,
+                  onSelected: _onOptionSelected,
+                  items: const [
+                    WorkoutsOptionItem(
+                        label: 'Plan', icon: Icons.calendar_today_rounded),
+                    WorkoutsOptionItem(
+                        label: 'Gym', icon: Icons.storefront_outlined),
+                    WorkoutsOptionItem(
+                        label: 'Library',
+                        icon: Icons.menu_book_outlined),
+                    WorkoutsOptionItem(
+                        label: 'History', icon: Icons.history_rounded),
+                  ],
+                ),
+              ),
             ),
 
             // First-run spotlight tour. Anchors + copy live in
@@ -162,49 +225,24 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // Title pill — matches the Library pill's frosted-glass look
-                // (ClipRRect + BackdropFilter). Same height, padding, border,
-                // and font so the header reads as one consistent row.
-            ClipRRect(
-              borderRadius: BorderRadius.circular(20),
-              child: BackdropFilter(
-                filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-                child: Container(
-                  height: 40,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: isDark
-                        ? Colors.white.withValues(alpha: 0.1)
-                        : Colors.black.withValues(alpha: 0.05),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: isDark
-                          ? Colors.white.withValues(alpha: 0.15)
-                          : Colors.black.withValues(alpha: 0.08),
-                      width: 1,
-                    ),
-                  ),
+                // Plain bold title — slimmed from the old frosted pill so the
+                // header reads as one clean row and can't overflow. Secondary
+                // destinations (Library / Gym / Preferences) moved into the
+                // floating launcher bar.
+                Expanded(
                   child: Text(
                     'Workouts',
                     style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                      color: accentColor,
+                      fontSize: 22,
+                      fontWeight: FontWeight.w800,
+                      color: textPrimary,
+                      letterSpacing: -0.3,
                     ),
                   ),
                 ),
-              ),
-            ),
-            // Right side buttons
-            Row(
-              children: [
-                // Import button — surfaces the workout-history import flow
-                // that competitors (Hevy, Strong, Liftin') expose front and
-                // center. Was previously buried two screens deep under
-                // Settings → Training Preferences. Tapping it opens the
-                // bottom sheet so the user can pick a source (file / paste /
-                // manual entry) without leaving the Workouts tab.
+                // Single Import icon-button — surfaces the workout-history
+                // import picker sheet (file / paste / Health sync). Tray-with-
+                // down-arrow reads as "bring in / import".
                 _GlassmorphicButton(
                   onTap: () {
                     HapticService.light();
@@ -215,73 +253,14 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
                   },
                   isDark: isDark,
                   child: Icon(
-                    // file_upload_outlined reads as "import" much more clearly
-                    // than the old download_rounded glyph (which looked like
-                    // "save to device" / dimmed and confusing in the header).
-                    Icons.file_upload_outlined,
-                    color: textSecondary,
+                    Icons.move_to_inbox_outlined,
+                    color: accentColor,
                     size: 22,
                   ),
                 ),
                 const SizedBox(width: 8),
-                // Library button - pill shaped for text
-                GestureDetector(
-                  onTap: () {
-                    HapticService.light();
-                    context.push('/library');
-                  },
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(20),
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-                      child: Container(
-                        height: 40,
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        decoration: BoxDecoration(
-                          color: isDark
-                              ? Colors.white.withValues(alpha: 0.1)
-                              : Colors.black.withValues(alpha: 0.05),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: isDark
-                                ? Colors.white.withValues(alpha: 0.15)
-                                : Colors.black.withValues(alpha: 0.08),
-                            width: 1,
-                          ),
-                        ),
-                        child: Center(
-                          child: Text(
-                            'Library',
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: accentColor,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                // Gym manager button — opens ManageGymProfilesSheet
-                _GlassmorphicButton(
-                  onTap: () {
-                    HapticService.light();
-                    showGlassSheet(
-                      context: context,
-                      builder: (ctx) => const ManageGymProfilesSheet(),
-                    );
-                  },
-                  isDark: isDark,
-                  child: Icon(
-                    Icons.storefront_outlined,
-                    color: textSecondary,
-                    size: 22,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                // Workout settings button — opens WorkoutSettingsPage
+                // Workout settings gear — opens workout-specific preferences
+                // (replaces the old "Prefs" item in the floating bar).
                 _GlassmorphicButton(
                   onTap: () {
                     HapticService.light();
@@ -290,12 +269,18 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
                   isDark: isDark,
                   child: Icon(
                     Icons.settings_outlined,
-                    color: textSecondary,
+                    color: accentColor,
                     size: 22,
                   ),
                 ),
-              ],
-            ),
+                const SizedBox(width: 8),
+                // Overflow ⋮ menu — natural home for Workouts-tab actions.
+                // Currently hosts the global week-strip collapse toggle so the
+                // strip can be folded away from this tab too.
+                _WorkoutsOverflowMenu(
+                  isDark: isDark,
+                  accentColor: accentColor,
+                ),
               ],
             ),
             // Tier toggle moved into Exercise Preferences → Workout Mode
@@ -314,43 +299,9 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
     Color textSecondary,
     Color accentColor,
     List<Workout> workouts,
-    AsyncValue<TodayWorkoutResponse?> todayWorkoutState,
     AsyncValue<WorkoutScreenSummary?> screenSummary,
   ) {
     final now = DateTime.now();
-
-    // Use todayWorkoutProvider for today's/next workout (consistent with Home screen)
-    Workout? todayOrNextWorkout;
-    bool isToday = false;
-    int? daysUntilNext;
-    bool isNextWeek = false;
-    bool isGenerating = false;
-    String? generationMessage;
-    bool completedToday = false;
-
-    // Get user for checking if it's last workout day
-    final authState = ref.watch(authStateProvider);
-    final user = authState.user;
-    final isLastWorkoutDay = user?.isLastWorkoutDayOfWeek ?? false;
-
-    // Extract data from todayWorkoutState
-    final response = todayWorkoutState.valueOrNull;
-    if (response != null) {
-      isGenerating = response.isGenerating;
-      generationMessage = response.generationMessage;
-      completedToday = response.completedToday;
-      if (response.hasWorkoutToday && response.todayWorkout != null) {
-        todayOrNextWorkout = response.todayWorkout!.toWorkout();
-        isToday = true;
-      } else if (response.nextWorkout != null) {
-        todayOrNextWorkout = response.nextWorkout!.toWorkout();
-        daysUntilNext = response.daysUntilNext;
-        // Check if next workout is in next week (more than remaining days this week)
-        if (isLastWorkoutDay && daysUntilNext != null && daysUntilNext > 0) {
-          isNextWeek = true;
-        }
-      }
-    }
 
     // Calculate weekly progress - prefer screen summary if available
     final summaryData = screenSummary.valueOrNull;
@@ -404,7 +355,39 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
 
     return SliverList(
       delegate: SliverChildListDelegate([
-        const SizedBox(height: 8),
+        // Gym profile switcher + calendar tune-menu share one row — the
+        // switcher fills the former empty band below the title bar, and the
+        // tune icon sits inline on its right instead of wasting its own
+        // line. The week strip then sits directly beneath, no gap.
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 4, 12, 2),
+          child: Row(
+            children: [
+              const Expanded(
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: GymProfileSwitcher(),
+                ),
+              ),
+              WorkoutTuneMenu(
+                tint: Theme.of(context).brightness == Brightness.dark
+                    ? AppColors.textMuted
+                    : AppColorsLight.textMuted,
+              ),
+            ],
+          ),
+        ),
+
+        // Date strip + workout carousel — moved here from the home screen.
+        KeyedSubtree(
+          key: _planSectionKey,
+          child: KeyedSubtree(
+            key: _todayWorkoutKey,
+            child: const WorkoutPlannerSection(),
+          ),
+        ),
+
+        const SizedBox(height: 20),
 
         // Quick Actions Row
         KeyedSubtree(
@@ -420,39 +403,13 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
           child: const ExercisePreferencesCard(),
         ),
 
-        const SizedBox(height: 16),
+        const SizedBox(height: 24),
 
-        // Today's/Next Workout Section (using todayWorkoutProvider - same as Home)
-        // Priority: 1. Loading, 2. Error, 3. Generating, 4. Has workout, 5. Completed, 6. Preparing
-        KeyedSubtree(
-          key: _todayWorkoutKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: _buildWorkoutSection(
-              context,
-              textSecondary,
-              todayWorkoutState,
-              todayOrNextWorkout,
-              isToday,
-              isNextWeek,
-              daysUntilNext,
-              isGenerating,
-              generationMessage,
-              completedToday,
-            ),
-          ),
-        ),
-
-        // Weekly Progress
-        _buildSectionHeader(
-          'THIS WEEK',
-          textSecondary,
-          actionText: 'History',
-          onAction: () {
-            HapticService.light();
-            context.push('/schedule');
-          },
-        ),
+        // Weekly Progress. Gym management + History now live in the
+        // floating launcher bar, so the in-body "Managed Gym" section and
+        // the duplicate History action button were removed for a cleaner
+        // single scroll.
+        _buildSectionHeader('THIS WEEK', textSecondary),
         const SizedBox(height: 8),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -467,31 +424,21 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
         const SizedBox(height: 24),
 
         // Synced Workouts (Health Connect / Apple Health) — same rich
-        // visual system as the Profile tab. Excluded from Previous Sessions
-        // below so they don't appear twice.
+        // visual system as the Profile tab.
         _buildSyncedWorkoutsSection(context, isDark, textSecondary),
 
-        // Previous Sessions (excludes Health Connect imports)
-        _buildSectionHeader(
-          'PREVIOUS SESSIONS',
-          textSecondary,
-          actionText: 'View All',
-          onAction: () {
-            HapticService.light();
-            context.push('/schedule');
-          },
-        ),
-        const SizedBox(height: 8),
-        _buildPreviousSessions(context, workouts, isDark, textPrimary, textSecondary),
-        const SizedBox(height: 24),
+        // "Previous Sessions" was removed — it duplicated the floating
+        // bar's History launcher (full schedule/history screen). History
+        // is now the single entry point for past sessions.
 
         // JIT Generation: No "Generate More" button needed
         // Workouts are automatically generated after each completion
         // Show a subtle info message instead
         _buildJitInfoSection(isDark, textSecondary),
 
-        // Bottom padding for nav bar
-        const SizedBox(height: 100),
+        // Bottom padding — clears both MainShell's nav bar and the
+        // floating options bar docked above it.
+        const SizedBox(height: 168),
       ]),
     );
   }
@@ -523,20 +470,6 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
           Expanded(
             child: _buildQuickActionButton(
               context,
-              icon: Icons.search,
-              label: 'Browse',
-              color: accentColor,
-              isDark: isDark,
-              onTap: () {
-                HapticService.light();
-                context.push('/library');
-              },
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: _buildQuickActionButton(
-              context,
               icon: Icons.calendar_month_rounded,
               label: 'Upcoming',
               color: accentColor,
@@ -544,20 +477,6 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
               onTap: () {
                 HapticService.light();
                 showUpcomingWorkoutsSheet(context, ref);
-              },
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: _buildQuickActionButton(
-              context,
-              icon: Icons.history_rounded,
-              label: 'Previous',
-              color: accentColor,
-              isDark: isDark,
-              onTap: () {
-                HapticService.light();
-                showPreviousWorkoutsSheet(context, ref);
               },
             ),
           ),
@@ -808,120 +727,6 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
     );
   }
 
-  /// Build workout section with proper state handling (matches Home screen logic)
-  List<Widget> _buildWorkoutSection(
-    BuildContext context,
-    Color textSecondary,
-    AsyncValue<TodayWorkoutResponse?> todayWorkoutState,
-    Workout? todayOrNextWorkout,
-    bool isToday,
-    bool isNextWeek,
-    int? daysUntilNext,
-    bool isGenerating,
-    String? generationMessage,
-    bool completedToday,
-  ) {
-    debugPrint('🏋️ [WorkoutsScreen] Building workout section...');
-    debugPrint('🏋️ [WorkoutsScreen] isLoading: ${todayWorkoutState.isLoading}');
-    debugPrint('🏋️ [WorkoutsScreen] hasValue: ${todayWorkoutState.hasValue}');
-    debugPrint('🏋️ [WorkoutsScreen] hasError: ${todayWorkoutState.hasError}');
-    debugPrint('🏋️ [WorkoutsScreen] isGenerating: $isGenerating');
-    debugPrint('🏋️ [WorkoutsScreen] todayOrNextWorkout: ${todayOrNextWorkout?.name}');
-    debugPrint('🏋️ [WorkoutsScreen] completedToday: $completedToday');
-
-    // 1. Initial loading state (no previous data)
-    if (todayWorkoutState.isLoading && !todayWorkoutState.hasValue) {
-      debugPrint('🏋️ [WorkoutsScreen] Showing: Loading state');
-      return [
-        _buildSectionHeader('YOUR WORKOUT', textSecondary),
-        const SizedBox(height: 8),
-        const GeneratingHeroCard(
-          message: 'Loading your workout...',
-          subtitle: 'Fetching your personalized plan',
-        ),
-        const SizedBox(height: 24),
-      ];
-    }
-
-    // 2. Error state - show optimistic loading (workouts may still be generating)
-    if (todayWorkoutState.hasError) {
-      debugPrint('⚠️ [WorkoutsScreen] Error: ${todayWorkoutState.error}');
-      return [
-        _buildSectionHeader('YOUR WORKOUT', textSecondary),
-        const SizedBox(height: 8),
-        const GeneratingHeroCard(
-          message: 'Setting up your workouts...',
-          subtitle: 'This may take a moment',
-        ),
-        const SizedBox(height: 24),
-      ];
-    }
-
-    // 3. Has workout - show it (even if background generation is running for other dates)
-    if (todayOrNextWorkout != null) {
-      debugPrint('🏋️ [WorkoutsScreen] Showing: Workout card for ${todayOrNextWorkout.name}');
-      return [
-        _buildSectionHeader(
-          isToday
-              ? 'TODAY\'S WORKOUT'
-              : isNextWeek
-                  ? 'NEXT WEEK\'S WORKOUT${daysUntilNext != null ? ' (in $daysUntilNext day${daysUntilNext == 1 ? '' : 's'})' : ''}'
-                  : 'NEXT WORKOUT${daysUntilNext != null ? ' (in $daysUntilNext day${daysUntilNext == 1 ? '' : 's'})' : ''}',
-          textSecondary,
-        ),
-        const SizedBox(height: 8),
-        NextWorkoutCard(
-          workout: todayOrNextWorkout,
-          onStart: () {
-            HapticService.medium();
-            context.push('/active-workout', extra: todayOrNextWorkout);
-          },
-          showUpcomingLink: false,
-        ),
-        const SizedBox(height: 24),
-      ];
-    }
-
-    // 4. Completed today - show encouraging message
-    if (completedToday) {
-      debugPrint('🏋️ [WorkoutsScreen] Showing: Completed today state');
-      return [
-        _buildSectionHeader('YOUR WORKOUT', textSecondary),
-        const SizedBox(height: 8),
-        const GeneratingHeroCard(
-          message: 'Great job today!',
-          subtitle: 'Rest up for your next workout',
-        ),
-        const SizedBox(height: 24),
-      ];
-    }
-
-    // 5. Generating state - only when no workout exists at all
-    if (isGenerating) {
-      debugPrint('🏋️ [WorkoutsScreen] Showing: Generating state');
-      return [
-        _buildSectionHeader('YOUR WORKOUT', textSecondary),
-        const SizedBox(height: 8),
-        GeneratingHeroCard(
-          message: generationMessage ?? 'Generating your workout...',
-          subtitle: 'Your personalized plan is being created',
-        ),
-        const SizedBox(height: 24),
-      ];
-    }
-
-    // 6. No workout available - show preparing state (default fallback)
-    debugPrint('🏋️ [WorkoutsScreen] Showing: Preparing state (no workout available)');
-    return [
-      _buildSectionHeader('YOUR WORKOUT', textSecondary),
-      const SizedBox(height: 8),
-      const GeneratingHeroCard(
-        message: 'Preparing your workout...',
-        subtitle: 'Your personalized plan is being created',
-      ),
-      const SizedBox(height: 24),
-    ];
-  }
 }
 
 /// Card widget for displaying a previous workout session
@@ -1367,16 +1172,20 @@ class _WorkoutsTabSyncedCard extends ConsumerWidget {
 
 /// Glassmorphic button with blur effect
 class _GlassmorphicButton extends StatelessWidget {
-  final VoidCallback onTap;
+  /// Null when the button is hosted inside a `PopupMenuButton`, which
+  /// supplies its own tap handling — the inner widget must let taps fall
+  /// through to the menu rather than swallowing them.
+  final VoidCallback? onTap;
   final Widget child;
   final bool isDark;
-  final double size;
+
+  /// Fixed 40 pt square — every caller uses the same size.
+  static const double size = 40;
 
   const _GlassmorphicButton({
-    required this.onTap,
+    this.onTap,
     required this.child,
     required this.isDark,
-    this.size = 40,
   });
 
   @override
@@ -1404,6 +1213,73 @@ class _GlassmorphicButton extends StatelessWidget {
             ),
             child: Center(child: child),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Overflow ⋮ menu for the Workouts top bar. Rendered as a glassmorphic
+/// icon-button so it matches the Import button beside it. Hosts the global
+/// week-strip collapse/expand toggle (label reflects live
+/// `weekCalendarCollapsedProvider` state) and is the natural home for any
+/// future Workouts-tab overflow actions.
+class _WorkoutsOverflowMenu extends ConsumerWidget {
+  final bool isDark;
+  final Color accentColor;
+
+  const _WorkoutsOverflowMenu({
+    required this.isDark,
+    required this.accentColor,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isCollapsed = ref.watch(weekCalendarCollapsedProvider);
+    final textPrimary =
+        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+
+    return PopupMenuButton<int>(
+      tooltip: 'More options',
+      padding: EdgeInsets.zero,
+      position: PopupMenuPosition.under,
+      onSelected: (value) {
+        if (value == 0) {
+          HapticService.selection();
+          ref.read(weekCalendarCollapsedProvider.notifier).toggle();
+        }
+      },
+      itemBuilder: (_) => [
+        PopupMenuItem<int>(
+          value: 0,
+          child: Row(
+            children: [
+              Icon(
+                isCollapsed
+                    ? Icons.unfold_more_rounded
+                    : Icons.unfold_less_rounded,
+                size: 18,
+                color: textPrimary,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  isCollapsed ? 'Expand week view' : 'Collapse week view',
+                  style: TextStyle(color: textPrimary),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+      // PopupMenuButton supplies its own tap handling — the inner button
+      // omits `onTap` so the tap reaches the menu.
+      child: _GlassmorphicButton(
+        isDark: isDark,
+        child: Icon(
+          Icons.more_vert_rounded,
+          color: accentColor,
+          size: 22,
         ),
       ),
     );

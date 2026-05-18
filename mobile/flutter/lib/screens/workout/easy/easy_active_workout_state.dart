@@ -118,16 +118,28 @@ class EasyActiveWorkoutScreenState
     // back, expects their 2 sets still there). The shared session
     // provider is keyed by workout.id; `start` is a no-op if the same
     // workout is already in play.
+    //
+    // `start()` mutates the session provider; calling it synchronously in
+    // initState throws "Tried to modify a provider while the widget tree
+    // was building". Defer to a post-frame callback (the Riverpod-blessed
+    // fix) — the restore then re-seeds via setState.
     final session = ref.read(activeWorkoutSessionProvider.notifier);
-    session.start(widget.workout.id);
-    final stored = ref.read(activeWorkoutSessionProvider);
-    if (stored.workoutId == widget.workout.id) {
-      stored.completedSets.forEach((idx, logs) {
-        final s = _perExercise[idx];
-        if (s != null) s.completed.addAll(logs);
-      });
-      _currentIndex = stored.currentExerciseIndex.clamp(0, _exercises.length - 1);
-    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      session.start(widget.workout.id);
+      final stored = ref.read(activeWorkoutSessionProvider);
+      if (stored.workoutId == widget.workout.id &&
+          stored.completedSets.isNotEmpty) {
+        setState(() {
+          stored.completedSets.forEach((idx, logs) {
+            final s = _perExercise[idx];
+            if (s != null) s.completed.addAll(logs);
+          });
+          _currentIndex =
+              stored.currentExerciseIndex.clamp(0, _exercises.length - 1);
+        });
+      }
+    });
 
     _timer = WorkoutTimerController()
       ..onWorkoutTick = (_) {
