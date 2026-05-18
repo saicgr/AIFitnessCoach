@@ -150,6 +150,19 @@ class _EmptyStateTipTourState extends State<EmptyStateTipTour> {
   /// edits land without a Hot Restart.
   final ValueNotifier<Rect?> _targetRect = ValueNotifier<Rect?>(null);
 
+  /// Attached to the tip card so we can read its *actual* laid-out size
+  /// every frame. Card height is content-driven (body length, dot count,
+  /// theme text scaling) and unknown ahead of layout — without a real
+  /// measurement the placement logic can't tell whether a side has room,
+  /// which is exactly how the "Log a meal" card ended up clipped under
+  /// the status bar. Once measured, the card rect is hard-clamped into
+  /// the safe viewport.
+  final GlobalKey _cardKey = GlobalKey();
+
+  /// Last measured card size (tour-local space). Null until the first
+  /// post-frame measurement lands.
+  final ValueNotifier<Size?> _cardSize = ValueNotifier<Size?>(null);
+
   @override
   void initState() {
     super.initState();
@@ -161,6 +174,7 @@ class _EmptyStateTipTourState extends State<EmptyStateTipTour> {
   void dispose() {
     _disposed = true;
     _targetRect.dispose();
+    _cardSize.dispose();
     super.dispose();
   }
 
@@ -175,6 +189,7 @@ class _EmptyStateTipTourState extends State<EmptyStateTipTour> {
   void _pumpTargetRect() {
     if (!_ready || !_visible || widget.tips.isEmpty) {
       if (_targetRect.value != null) _targetRect.value = null;
+      if (_cardSize.value != null) _cardSize.value = null;
       return;
     }
     if (_step >= widget.tips.length) return;
@@ -183,6 +198,16 @@ class _EmptyStateTipTourState extends State<EmptyStateTipTour> {
     // Rect's == is value-based — only notify listeners on real movement.
     if (next != _targetRect.value) {
       _targetRect.value = next;
+    }
+    // Measure the card so the placement logic can clamp it fully into
+    // the safe viewport. Size's == is value-based, so this only notifies
+    // when the card actually resizes (step change, text reflow).
+    final cardCtx = _cardKey.currentContext;
+    final cardBox = cardCtx?.findRenderObject();
+    if (cardBox is RenderBox && cardBox.hasSize) {
+      if (cardBox.size != _cardSize.value) {
+        _cardSize.value = cardBox.size;
+      }
     }
   }
 
@@ -298,9 +323,25 @@ class _EmptyStateTipTourState extends State<EmptyStateTipTour> {
       ),
     );
 
+    // The spotlight-targeted branch needs the card wrapped in a keyed
+    // box so it can be measured each frame. Legacy (no target) branch
+    // doesn't clamp, so it uses the bare `card`.
+    final measuredCard = KeyedSubtree(key: _cardKey, child: card);
+
     // No target → simple aligned card (legacy behaviour).
+    //
+    // The tour content is hosted inside a `Positioned.fill` / `Overlay`
+    // subtree that has no `Material` ancestor. Without one, every `Text`
+    // in `_TipCard` falls back to Flutter's debug "no DefaultTextStyle"
+    // rendering — the yellow double-underline. `MaterialType.transparency`
+    // restores a Material (hence a `DefaultTextStyle`) ancestor without
+    // painting any background, shadow, or ink, so the card keeps its own
+    // blurred rounded look untouched.
     if (tip.targetKey == null) {
-      return Align(alignment: widget.alignment, child: card);
+      return Material(
+        type: MaterialType.transparency,
+        child: Align(alignment: widget.alignment, child: card),
+      );
     }
 
     // Per-frame ValueListenableBuilder: the ticker keeps `_targetRect` in
@@ -310,76 +351,135 @@ class _EmptyStateTipTourState extends State<EmptyStateTipTour> {
     return ValueListenableBuilder<Rect?>(
       valueListenable: _targetRect,
       builder: (context, rect, _) {
+        return ValueListenableBuilder<Size?>(
+          valueListenable: _cardSize,
+          builder: (context, cardSize, _) {
+            return _buildTargetedTour(context, rect, cardSize, tip, measuredCard);
+          },
+        );
+      },
+    );
+  }
+
+  /// Builds the spotlight + clamped card for a tip that has a target.
+  Widget _buildTargetedTour(
+    BuildContext context,
+    Rect? rect,
+    Size? cardSize,
+    EmptyStateTip tip,
+    Widget measuredCard,
+  ) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    {
         final mq = MediaQuery.of(context);
         final screenSize = mq.size;
-        final topSafe = mq.padding.top + 16;
-        // `mq.padding.bottom` only covers the OS home-indicator inset. On
-        // screens that host the floating main nav bar, a card placed *below*
-        // its target would otherwise extend under/over the nav — add the
-        // nav's height (+gap) so the placement logic reserves room for it.
+        // Hard safe-area edges the card must never cross. `topSafe`
+        // covers the status bar / notch / Dynamic Island; `bottomSafe`
+        // covers the home indicator plus, on nav-hosting screens, the
+        // floating main nav bar. A small margin keeps the card off the
+        // very pixel edge.
+        const edgeMargin = 12.0;
+        final topSafe = mq.padding.top + edgeMargin;
         final bottomSafe = mq.padding.bottom +
-            24 +
+            edgeMargin +
             (widget.hasMainNavBar ? EmptyStateTipTour.mainNavClearance : 0);
+        // Usable vertical band for the card.
+        final safeTop = topSafe;
+        final safeBottom = screenSize.height - bottomSafe;
         // 16pt gap between spotlight ring and card.
         const gap = 16.0;
+        // Horizontal inset of the card from the screen edges.
+        const sideInset = 16.0;
 
-        // Decide which side has more room, then position the card
-        // adjacent to the spotlight (not at the far screen edge). The
-        // old logic pinned the card to topCenter / bottomCenter and
-        // would land on top of unrelated UI like a segment toggle that
-        // happened to share the screen edge with the card.
-        final spaceBelow = rect == null
-            ? screenSize.height
-            : screenSize.height -
-                (rect.bottom + tip.targetPadding.bottom) -
-                bottomSafe;
-        final spaceAbove = rect == null
-            ? 0.0
-            : (rect.top - tip.targetPadding.top) - topSafe;
-        final placeBelow = rect == null ? true : spaceBelow >= spaceAbove;
+        // The card's outer width includes the tour's `padding`; the
+        // visible card itself is clamped to 360 inside `_TipCard`. Use
+        // the measured size when available, otherwise an estimate so the
+        // very first frame still places sensibly.
+        final cardH = cardSize?.height ?? 220.0;
+        // Never let the card claim more than the safe band — a long tip
+        // on a tiny screen (iPhone SE) must still show its X / Next row.
+        final maxCardH =
+            (safeBottom - safeTop).clamp(80.0, double.infinity);
+        final effectiveCardH = cardH.clamp(0.0, maxCardH);
 
         Widget positionedCard;
         if (rect == null) {
-          // No layout yet — fall back to a centered alignment.
-          positionedCard = Align(
-            alignment: Alignment.bottomCenter,
-            child: Padding(
-              padding: EdgeInsets.fromLTRB(16, 0, 16, bottomSafe),
-              child: card,
-            ),
-          );
-        } else if (placeBelow) {
-          final top = rect.bottom + tip.targetPadding.bottom + gap;
-          final maxH = (screenSize.height - top - bottomSafe).clamp(80.0, double.infinity);
+          // No layout yet — fall back to a bottom-anchored card sitting
+          // inside the safe band.
           positionedCard = Positioned(
-            left: 16,
-            right: 16,
-            top: top,
+            left: sideInset,
+            right: sideInset,
+            bottom: bottomSafe,
             child: Center(
               child: ConstrainedBox(
-                constraints: BoxConstraints(maxHeight: maxH),
-                child: card,
+                constraints: BoxConstraints(maxHeight: maxCardH),
+                child: measuredCard,
               ),
             ),
           );
         } else {
-          final bottomFromBottom =
-              (screenSize.height - rect.top) + tip.targetPadding.top + gap;
-          final maxH = (screenSize.height - bottomFromBottom - topSafe).clamp(80.0, double.infinity);
+          // Spotlight (cutout) rect including the tip's padding.
+          final spotTop = rect.top - tip.targetPadding.top;
+          final spotBottom = rect.bottom + tip.targetPadding.bottom;
+
+          // Room on each side BETWEEN the spotlight and the safe edge.
+          final spaceBelow = safeBottom - (spotBottom + gap);
+          final spaceAbove = (spotTop - gap) - safeTop;
+
+          // Prefer the side that can fully contain the card; if neither
+          // can, prefer the side with more room (the card will then be
+          // clamped and may overlap the target — acceptable; clipping is
+          // not).
+          final fitsBelow = spaceBelow >= effectiveCardH;
+          final fitsAbove = spaceAbove >= effectiveCardH;
+          final bool placeBelow;
+          if (fitsBelow && !fitsAbove) {
+            placeBelow = true;
+          } else if (fitsAbove && !fitsBelow) {
+            placeBelow = false;
+          } else {
+            // Both fit, or neither fits — go with the roomier side.
+            placeBelow = spaceBelow >= spaceAbove;
+          }
+
+          // Desired top of the card before clamping.
+          final desiredTop = placeBelow
+              ? spotBottom + gap
+              : spotTop - gap - effectiveCardH;
+
+          // Clamp the card fully inside the safe band. If the band is
+          // shorter than the card (extreme small screen), top pins to
+          // safeTop and the inner SingleChildScrollView in `_TipCard`
+          // handles the overflow — every control stays reachable.
+          final lowerBound = safeTop;
+          final upperBound = (safeBottom - effectiveCardH)
+              .clamp(safeTop, double.infinity);
+          final clampedTop = desiredTop.clamp(lowerBound, upperBound);
+
           positionedCard = Positioned(
-            left: 16,
-            right: 16,
-            bottom: bottomFromBottom,
+            left: sideInset,
+            right: sideInset,
+            top: clampedTop,
             child: Center(
               child: ConstrainedBox(
-                constraints: BoxConstraints(maxHeight: maxH),
-                child: card,
+                constraints: BoxConstraints(maxHeight: maxCardH),
+                child: measuredCard,
               ),
             ),
           );
         }
 
-        return Stack(
+        // Wrap the whole spotlight overlay in a transparent Material so
+        // every `Text` in `_TipCard` has a `Material` (and thus a
+        // `DefaultTextStyle`) ancestor — otherwise the tour, hosted in a
+        // bare `Overlay`/`Positioned.fill` subtree, renders all card text
+        // with Flutter's debug yellow double-underline.
+        // `MaterialType.transparency` adds NO background, shadow, or ink,
+        // so the spotlight scrim and the card's blurred rounded styling
+        // are visually unchanged.
+        return Material(
+          type: MaterialType.transparency,
+          child: Stack(
           children: [
             // Tap-anywhere-to-dismiss on the dim layer. The rect's
             // cutout area visually invites the user to interact with
@@ -417,9 +517,9 @@ class _EmptyStateTipTourState extends State<EmptyStateTipTour> {
             // Next / Got it / Close buttons drive navigation.
             positionedCard,
           ],
+          ),
         );
-      },
-    );
+    }
   }
 
   /// Resolve the rect of the tip's target widget *in this tour widget's
@@ -460,12 +560,26 @@ class _EmptyStateTipTourState extends State<EmptyStateTipTour> {
 }
 
 /// Paints a translucent dim layer with a rounded-rect cutout around the
-/// target, plus a glowing ring at the cutout edge so the eye snaps to it.
+/// target, plus a clean accent ring at the cutout edge so the eye snaps
+/// to it.
+///
+/// IMPORTANT: the scrim is a single, EVEN semi-transparent black — there
+/// is intentionally no gradient anywhere. An earlier version drew the
+/// ring with `MaskFilter.blur(BlurStyle.outer)`; on the light theme the
+/// accent resolves to a dark grey (`AppColorsLight.cyan == 0xFF424242`),
+/// so that outer blur smeared a grey halo from the bright cutout into
+/// the black dim — reading as an ugly white→grey→black vertical band,
+/// and bleeding over the bottom nav bar whenever the target sat low on
+/// the screen. The ring is now a crisp stroke with no mask blur.
 class _SpotlightPainter extends CustomPainter {
   final Rect? target;
   final EdgeInsets padding;
   final double radius;
   final Color accent;
+
+  /// Single flat scrim alpha — kept as a constant so the "no target" and
+  /// "with cutout" branches can never drift apart and produce a seam.
+  static const double _scrimAlpha = 0.62;
 
   _SpotlightPainter({
     required this.target,
@@ -476,14 +590,15 @@ class _SpotlightPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    // No target rect yet → full-screen dim, no cutout. Keeps the visual
-    // contract stable (user sees they're in a guided step) even before
-    // layout has resolved the highlighted widget's position.
+    final scrimPaint = Paint()
+      ..color = Colors.black.withValues(alpha: _scrimAlpha)
+      ..isAntiAlias = true;
+
+    // No target rect yet → full-screen even dim, no cutout. Keeps the
+    // visual contract stable (user sees they're in a guided step) even
+    // before layout has resolved the highlighted widget's position.
     if (target == null) {
-      canvas.drawRect(
-        Offset.zero & size,
-        Paint()..color = Colors.black.withValues(alpha: 0.62),
-      );
+      canvas.drawRect(Offset.zero & size, scrimPaint);
       return;
     }
 
@@ -497,31 +612,36 @@ class _SpotlightPainter extends CustomPainter {
     final r = radius.isInfinite
         ? Radius.circular(hole.shortestSide / 2)
         : Radius.circular(radius);
+    final holeRRect = RRect.fromRectAndRadius(hole, r);
 
+    // Even scrim with a clean rounded cutout punched out. `Path.combine`
+    // difference yields a hard, gradient-free edge — the highlighted
+    // widget shows through at full brightness, everything else (incl.
+    // the bottom nav bar) sits under one uniform dim.
     final overlay = Path()..addRect(Offset.zero & size);
-    final cutout = Path()..addRRect(RRect.fromRectAndRadius(hole, r));
+    final cutout = Path()..addRRect(holeRRect);
     final dimmed = Path.combine(PathOperation.difference, overlay, cutout);
+    canvas.drawPath(dimmed, scrimPaint);
 
-    canvas.drawPath(
-      dimmed,
-      Paint()..color = Colors.black.withValues(alpha: 0.62),
-    );
-
-    // Glow ring
-    final ringRect = RRect.fromRectAndRadius(hole, r);
+    // Clean accent ring hugging the cutout edge. No `MaskFilter.blur` —
+    // a blurred outer halo bleeds the (possibly dark-grey) accent into
+    // the scrim and over the nav bar. A crisp 2px stroke + a single
+    // low-alpha 4px stroke just inside it gives a subtle glow with a
+    // solid, uniform color and no fading band.
     canvas.drawRRect(
-      ringRect,
+      holeRRect,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 4
+        ..isAntiAlias = true
+        ..color = accent.withValues(alpha: 0.22),
+    );
+    canvas.drawRRect(
+      holeRRect,
       Paint()
         ..style = PaintingStyle.stroke
         ..strokeWidth = 2
-        ..color = accent.withValues(alpha: 0.95)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.outer, 6),
-    );
-    canvas.drawRRect(
-      ringRect,
-      Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.5
+        ..isAntiAlias = true
         ..color = accent,
     );
   }
