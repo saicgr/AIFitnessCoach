@@ -497,6 +497,63 @@ class NutritionCalculator {
     return (protein: protein, carbs: carbs, fat: fat);
   }
 
+  /// Calculate macro targets from a calorie budget anchored to bodyweight.
+  ///
+  /// Ports the marketing-site bodyweight-anchored model
+  /// (`frontend/src/lib/calc/macros.ts`): protein and fat are pinned to
+  /// grams-per-kg of bodyweight, and carbs absorb whatever calories remain.
+  /// This is preferred over the diet-type %-split model because protein
+  /// needs are physiological (lean-mass retention), not a share of an
+  /// arbitrary calorie total.
+  ///
+  /// Goal-aware g/kg values (consensus 1.6-2.2 g/kg for lean-mass
+  /// retention; the high end matters most on a cut):
+  ///   - protein: Lose Fat 2.0, Build Muscle 2.0, everything else 1.8
+  ///   - fat:     Lose Fat 0.8 (floor — endocrine minimum), else 0.9
+  ///
+  /// Edge case: a non-positive [bodyweightKg] (missing weight log AND
+  /// missing profile weight) has no anchor — we cannot compute g/kg. We
+  /// fall back to the diet-type %-split [calculateMacros] (balanced split)
+  /// rather than returning zeros or throwing.
+  static ({int protein, int carbs, int fat}) calculateMacrosByBodyweight({
+    required double calories,
+    required double bodyweightKg,
+    required NutritionGoal goal,
+  }) {
+    // No bodyweight anchor — degrade gracefully to the %-split model.
+    if (bodyweightKg <= 0) {
+      return calculateMacros(
+        calories: calories.round(),
+        dietType: DietType.balanced,
+      );
+    }
+
+    // Goal-aware protein: high end (2.0 g/kg) on a cut or a lean-gain to
+    // protect/build lean mass; 1.8 g/kg for maintain / energy / health
+    // goals where the calorie pressure on muscle is lower.
+    final double proteinPerKg =
+        (goal == NutritionGoal.loseFat || goal == NutritionGoal.buildMuscle)
+            ? 2.0
+            : 1.8;
+
+    // Fat floor sits lower on a cut (0.8 g/kg — practical endocrine
+    // minimum) to free calories for carbs; 0.9 g/kg otherwise.
+    final double fatPerKg = goal == NutritionGoal.loseFat ? 0.8 : 0.9;
+
+    final int proteinG = (bodyweightKg * proteinPerKg).round();
+    final int fatG = (bodyweightKg * fatPerKg).round();
+
+    // Carbs fill the remaining calorie budget. Clamp at 0 so a very low
+    // calorie target (protein+fat kcal already exceed it) never yields a
+    // negative carb figure.
+    final double remainingKcal =
+        calories - (proteinG * 4) - (fatG * 9);
+    final int carbsG =
+        (remainingKcal > 0 ? remainingKcal / 4 : 0).round();
+
+    return (protein: proteinG, carbs: carbsG, fat: fatG);
+  }
+
   /// Calculate all nutrition targets from user data
   /// Accepts multiple goals - uses the first goal for calorie calculations
   /// but stores all goals in the preferences

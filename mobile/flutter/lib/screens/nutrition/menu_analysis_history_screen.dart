@@ -67,6 +67,7 @@ class _MenuAnalysisHistoryScreenState
       final type = data['analysis_type'] as String? ?? 'menu';
       final restaurant = data['restaurant_name'] as String?;
       final address = data['address'] as String?;
+      final title = data['title'] as String?;
       if (!mounted) return;
       MenuAnalysisSheet.show(
         context,
@@ -82,6 +83,10 @@ class _MenuAnalysisHistoryScreenState
         elapsedSeconds: elapsed,
         restaurantName: restaurant,
         restaurantAddress: address,
+        // A1 — opened from history, so the sheet starts in its saved state:
+        // the header bookmark renders filled and taps into the edit dialog.
+        savedMenuId: data['id']?.toString(),
+        savedTitle: title,
       );
     } catch (e) {
       if (mounted) {
@@ -101,47 +106,97 @@ class _MenuAnalysisHistoryScreenState
     } catch (_) {/* silent */}
   }
 
-  /// Edit the restaurant address on an already-saved menu (C11: address is
-  /// editable later). Free-text, optional — clearing it is allowed.
-  Future<void> _editAddress(Map<String, dynamic> row) async {
-    final controller =
+  /// A2 — edit BOTH the name and the address on an already-saved menu in a
+  /// single dialog (C11: both editable later, free-text, optional —
+  /// clearing either is allowed). When the row carries a Gemini-detected
+  /// `restaurant_name`, a one-tap "Use restaurant name" chip fills the
+  /// Name field.
+  Future<void> _editDetails(Map<String, dynamic> row) async {
+    final nameController =
+        TextEditingController(text: (row['title'] as String?) ?? '');
+    final addressController =
         TextEditingController(text: (row['address'] as String?) ?? '');
-    final result = await showDialog<String?>(
+    final restaurant = (row['restaurant_name'] as String?)?.trim() ?? '';
+
+    final result = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Restaurant address'),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          maxLines: 2,
-          textCapitalization: TextCapitalization.words,
-          decoration: const InputDecoration(
-            hintText: 'e.g. 123 Main St, or just "downtown"',
-          ),
-        ),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel')),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, controller.text.trim()),
-            child: const Text('Save'),
-          ),
-        ],
-      ),
+      builder: (ctx) {
+        // StatefulBuilder so the quick-fill chip can hide once the Name
+        // field already matches the restaurant name.
+        return StatefulBuilder(
+          builder: (ctx, setLocal) {
+            final showQuickFill = restaurant.isNotEmpty &&
+                restaurant != nameController.text.trim();
+            return AlertDialog(
+              title: const Text('Edit details'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: nameController,
+                    autofocus: true,
+                    maxLength: 60,
+                    onChanged: (_) => setLocal(() {}),
+                    decoration: const InputDecoration(
+                      labelText: 'Name',
+                      hintText: 'e.g. Indian place near work',
+                    ),
+                  ),
+                  if (showQuickFill)
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: ActionChip(
+                          avatar:
+                              const Icon(Icons.storefront_outlined, size: 16),
+                          label: const Text('Use restaurant name',
+                              style: TextStyle(fontSize: 12)),
+                          onPressed: () => setLocal(() {
+                            nameController.text = restaurant;
+                          }),
+                        ),
+                      ),
+                    ),
+                  TextField(
+                    controller: addressController,
+                    maxLines: 2,
+                    textCapitalization: TextCapitalization.words,
+                    decoration: const InputDecoration(
+                      labelText: 'Address (optional)',
+                      hintText: 'e.g. 123 Main St, or just "downtown"',
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                    onPressed: () => Navigator.pop(ctx, false),
+                    child: const Text('Cancel')),
+                FilledButton(
+                  onPressed: () => Navigator.pop(ctx, true),
+                  child: const Text('Save'),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
-    if (result == null) return;
+    if (result != true) return;
     try {
       final api = ref.read(apiClientProvider);
-      // Send empty string (not null) so the user can clear the address —
-      // the endpoint only skips the field when it's None.
-      await api.patch('/nutrition/menu-analyses/${row['id']}',
-          data: {'address': result});
+      // Send empty strings (not null) so the user can clear either field —
+      // the endpoint only skips a field when it's None.
+      await api.patch('/nutrition/menu-analyses/${row['id']}', data: {
+        'title': nameController.text.trim(),
+        'address': addressController.text.trim(),
+      });
       _load();
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Could not update address: $e')),
+          SnackBar(content: Text('Could not update menu: $e')),
         );
       }
     }
@@ -195,7 +250,7 @@ class _MenuAnalysisHistoryScreenState
                         onTap: () => _openSaved(_rows![i]),
                         onPin: () => _togglePin(_rows![i]),
                         onDelete: () => _delete(_rows![i]),
-                        onEditAddress: () => _editAddress(_rows![i]),
+                        onEditDetails: () => _editDetails(_rows![i]),
                       ),
                     ),
     );
@@ -207,14 +262,14 @@ class _Card extends StatelessWidget {
   final VoidCallback onTap;
   final VoidCallback onPin;
   final VoidCallback onDelete;
-  final VoidCallback onEditAddress;
+  final VoidCallback onEditDetails;
 
   const _Card({
     required this.row,
     required this.onTap,
     required this.onPin,
     required this.onDelete,
-    required this.onEditAddress,
+    required this.onEditDetails,
   });
 
   @override
@@ -240,10 +295,9 @@ class _Card extends StatelessWidget {
               onTap: () { Navigator.pop(context); onPin(); },
             ),
             ListTile(
-              leading: const Icon(Icons.edit_location_alt_outlined),
-              title: Text(
-                  (address?.isNotEmpty ?? false) ? 'Edit address' : 'Add address'),
-              onTap: () { Navigator.pop(context); onEditAddress(); },
+              leading: const Icon(Icons.edit_outlined),
+              title: const Text('Edit details'),
+              onTap: () { Navigator.pop(context); onEditDetails(); },
             ),
             ListTile(
               leading: Icon(Icons.delete_outline, color: AppColors.error),
@@ -335,7 +389,7 @@ class _Card extends StatelessWidget {
                   if (address?.isNotEmpty == true) ...[
                     const SizedBox(height: 3),
                     GestureDetector(
-                      onTap: onEditAddress,
+                      onTap: onEditDetails,
                       child: Row(
                         children: [
                           Icon(Icons.place_outlined,
@@ -355,7 +409,7 @@ class _Card extends StatelessWidget {
                   ] else
                     // No address yet — offer a one-tap "Add address".
                     GestureDetector(
-                      onTap: onEditAddress,
+                      onTap: onEditDetails,
                       child: Padding(
                         padding: const EdgeInsets.only(top: 3),
                         child: Row(

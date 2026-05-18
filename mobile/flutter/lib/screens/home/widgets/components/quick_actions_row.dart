@@ -364,7 +364,9 @@ class CompactQuickActionsRow extends ConsumerWidget {
     // De-boxed (Round 4 / Task C): no outer panel, no per-tile card —
     // just colored icon chips with labels on the plain home background.
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8),
+      // 16pt to match the week strip below it + the home-screen standard
+      // (kHomeHPad) so the two rows share the same left/right edges.
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       child: expanded
           ? Column(
               mainAxisSize: MainAxisSize.min,

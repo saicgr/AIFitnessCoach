@@ -2037,6 +2037,11 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
 
       final imageUrls = (payload['image_urls'] as List?)?.cast<String>() ?? const [];
       final storageKeys = (payload['storage_keys'] as List?)?.cast<String>() ?? const [];
+      // A3 — the menu-analysis `done` event now carries an optional
+      // top-level `restaurant_name` (string or null) detected from the
+      // scanned menu. Pass it through so the save-menu dialog can prefill
+      // its Name field. Absent/null → behave as before (no prefill).
+      final restaurantName = payload['restaurant_name'] as String?;
 
       if (!mounted) return;
       showModalBottomSheet<void>(
@@ -2049,6 +2054,7 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
           isDark: widget.isDark,
           userId: widget.userId,
           mealType: _selectedMealType.value,
+          restaurantName: restaurantName,
           onLogItems: (selected) async {
             try {
               await repository.logSelectedMealItems(

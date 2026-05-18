@@ -114,6 +114,13 @@ class MenuAnalysisSheet extends ConsumerStatefulWidget {
   final String? userId;
   final String? mealType;
 
+  /// A1 — when this sheet was opened from an already-saved menu in history,
+  /// these carry the persisted `menu_analyses` row id + title so the header
+  /// bookmark icon renders in the "saved" state and tapping it opens the
+  /// edit/rename dialog instead of re-saving. Null for a fresh scan.
+  final String? savedMenuId;
+  final String? savedTitle;
+
   const MenuAnalysisSheet({
     super.key,
     required this.foodItems,
@@ -127,6 +134,8 @@ class MenuAnalysisSheet extends ConsumerStatefulWidget {
     this.restaurantAddress,
     this.userId,
     this.mealType,
+    this.savedMenuId,
+    this.savedTitle,
   });
 
   /// Preserve the v1 call pattern — used by log-meal + chat flows.
@@ -143,6 +152,8 @@ class MenuAnalysisSheet extends ConsumerStatefulWidget {
     String? restaurantAddress,
     String? userId,
     String? mealType,
+    String? savedMenuId,
+    String? savedTitle,
   }) {
     return showGlassSheet<void>(
       context: context,
@@ -158,6 +169,8 @@ class MenuAnalysisSheet extends ConsumerStatefulWidget {
         restaurantAddress: restaurantAddress,
         userId: userId,
         mealType: mealType,
+        savedMenuId: savedMenuId,
+        savedTitle: savedTitle,
       ),
     );
   }
@@ -180,6 +193,14 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
   bool _bookmarking = false;
   // Re-entrancy guard for the "Add food" button.
   bool _addingFood = false;
+
+  // A1 — mutable saved-state tracking. Initialized from the constructor
+  // params (non-null when opened from history) and flipped after a fresh
+  // `_bookmarkAnalysis()` save so the header bookmark icon updates instantly
+  // without needing to reopen the sheet. `_savedTitle` mirrors the current
+  // persisted title and is kept in sync by the edit dialog.
+  String? _savedMenuId;
+  String? _savedTitle;
 
   // L5 — per-dish "as eaten" adjustments, keyed by MenuItem.id. Restaurant
   // menu macros are "as served"; the user can correct each dish before it
@@ -207,6 +228,10 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
   @override
   void initState() {
     super.initState();
+    // A1 — seed saved-state from constructor params (set when reopened from
+    // history). A fresh scan leaves both null until the user saves.
+    _savedMenuId = widget.savedMenuId;
+    _savedTitle = widget.savedTitle;
     _items = _itemsFromMaps(widget.foodItems);
     // Default: hide dishes matching the user's allergens if any are set.
     // Resolved after first build via addPostFrameCallback because we need
@@ -837,6 +862,12 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
                 },
               );
               if (!mounted) return;
+              // A1 — updating an existing entry still flips this sheet into
+              // the saved state so the bookmark icon reflects it.
+              setState(() {
+                _savedMenuId = dup['id'].toString();
+                _savedTitle = title.isNotEmpty ? title : restaurantName;
+              });
               ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                 content: Text('Updated your saved menu'),
               ));
@@ -849,7 +880,7 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
         }
       }
 
-      await api.post('/nutrition/menu-analyses', data: {
+      final createResp = await api.post('/nutrition/menu-analyses', data: {
         'title': title.isEmpty ? null : title,
         'restaurant_name': restaurantName,
         'address': address.isEmpty ? null : address,
@@ -860,6 +891,20 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
         'elapsed_seconds': widget.elapsedSeconds,
       });
       if (!mounted) return;
+      // A1 — flip the header bookmark to its saved state immediately. The
+      // create endpoint echoes the new row; guard against an unexpected
+      // shape so a missing `id` never crashes the save flow.
+      final created = createResp.data;
+      if (created is Map && created['id'] != null) {
+        setState(() {
+          _savedMenuId = created['id'].toString();
+          _savedTitle = title.isNotEmpty
+              ? title
+              : ((restaurantName != null && restaurantName.isNotEmpty)
+                  ? restaurantName
+                  : null);
+        });
+      }
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
         content: Text('Saved to your menu history'),
       ));
@@ -867,6 +912,181 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text('Couldn\'t save: $e'),
+          backgroundColor: AppColors.error,
+        ));
+      }
+    } finally {
+      if (mounted) setState(() => _bookmarking = false);
+    }
+  }
+
+  /// A2 — rename / re-address an already-saved menu, or remove it from
+  /// saved entirely. Only reachable when `_savedMenuId != null` (the header
+  /// bookmark is in its saved state). Edits BOTH the free-text title and the
+  /// free-text address (C11: both optional, never format-enforced).
+  Future<void> _editSavedMenu() async {
+    final id = _savedMenuId;
+    if (id == null || _bookmarking) return;
+
+    final nameController = TextEditingController(
+      text: (_savedTitle ?? widget.savedTitle ?? '').trim(),
+    );
+    final addressController = TextEditingController(
+      text: widget.restaurantAddress ?? '',
+    );
+    // The Gemini-surfaced restaurant name — offered as a one-tap quick-fill
+    // when it exists and differs from whatever is currently in the field.
+    final restaurantName = widget.restaurantName?.trim() ?? '';
+
+    final action = await showDialog<String>(
+      context: context,
+      builder: (ctx) {
+        // StatefulBuilder so the quick-fill chip can react to the live
+        // contents of the name field (hidden once the name already matches).
+        return StatefulBuilder(
+          builder: (ctx, setLocal) {
+            final showQuickFill = restaurantName.isNotEmpty &&
+                restaurantName != nameController.text.trim();
+            return AlertDialog(
+              title: const Text('Edit saved menu'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: nameController,
+                    autofocus: true,
+                    maxLength: 60,
+                    onChanged: (_) => setLocal(() {}),
+                    decoration: const InputDecoration(
+                      labelText: 'Name',
+                      hintText: 'e.g. Indian place near work',
+                    ),
+                  ),
+                  // Quick-fill chip: tap to drop the detected restaurant name
+                  // into the Name field.
+                  if (showQuickFill)
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: ActionChip(
+                          avatar: const Icon(Icons.storefront_outlined, size: 16),
+                          label: Text(
+                            'Use restaurant name',
+                            style: const TextStyle(fontSize: 12),
+                          ),
+                          onPressed: () => setLocal(() {
+                            nameController.text = restaurantName;
+                          }),
+                        ),
+                      ),
+                    ),
+                  TextField(
+                    controller: addressController,
+                    maxLines: 2,
+                    textCapitalization: TextCapitalization.words,
+                    decoration: const InputDecoration(
+                      labelText: 'Address (optional)',
+                      hintText: 'e.g. 123 Main St, or just "downtown"',
+                    ),
+                  ),
+                ],
+              ),
+              actions: [
+                // Destructive remove-from-saved action.
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx, 'remove'),
+                  child: Text(
+                    'Remove from saved',
+                    style: TextStyle(color: AppColors.error),
+                  ),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx, 'cancel'),
+                  child: const Text('Cancel'),
+                ),
+                FilledButton(
+                  onPressed: () => Navigator.pop(ctx, 'save'),
+                  child: const Text('Save'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    if (!mounted || action == null || action == 'cancel') return;
+    final api = ref.read(apiClientProvider);
+
+    if (action == 'remove') {
+      // Confirm the destructive delete before issuing it.
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Remove from saved?'),
+          content: const Text(
+            'This menu will be deleted from your saved menus. '
+            'This cannot be undone.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              style: FilledButton.styleFrom(backgroundColor: AppColors.error),
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Remove'),
+            ),
+          ],
+        ),
+      );
+      if (confirmed != true || !mounted) return;
+      setState(() => _bookmarking = true);
+      try {
+        await api.delete('/nutrition/menu-analyses/$id');
+        if (!mounted) return;
+        setState(() {
+          _savedMenuId = null;
+          _savedTitle = null;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Removed from saved menus'),
+        ));
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text('Couldn\'t remove: $e'),
+            backgroundColor: AppColors.error,
+          ));
+        }
+      } finally {
+        if (mounted) setState(() => _bookmarking = false);
+      }
+      return;
+    }
+
+    // action == 'save' — PATCH title + address. Send empty strings (not
+    // null) so the user can clear either field; the endpoint only skips a
+    // field when it is None.
+    final newTitle = nameController.text.trim();
+    final newAddress = addressController.text.trim();
+    setState(() => _bookmarking = true);
+    try {
+      await api.patch('/nutrition/menu-analyses/$id', data: {
+        'title': newTitle,
+        'address': newAddress,
+      });
+      if (!mounted) return;
+      setState(() => _savedTitle = newTitle.isEmpty ? null : newTitle);
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Menu updated'),
+      ));
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('Couldn\'t update: $e'),
           backgroundColor: AppColors.error,
         ));
       }
@@ -917,6 +1137,7 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
                 child: ListView(
                   padding: const EdgeInsets.symmetric(horizontal: 14),
                   children: [
+                    _goalBanner(colors),
                     _budgetRings(colors),
                     if (widget.menuPhotoUrls.isNotEmpty) _photoStrip(),
                     _countsLine(colors),
@@ -967,11 +1188,25 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
             ),
           ),
           IconButton(
-            tooltip: 'Save menu',
+            // A1 — saved state: filled accent bookmark + "edit" affordance;
+            // unsaved state: outline add-bookmark + "save" affordance.
+            tooltip: _savedMenuId != null ? 'Saved · edit' : 'Save menu',
             icon: _bookmarking
-                ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
-                : Icon(Icons.bookmark_add_outlined, color: colors.textSecondary),
-            onPressed: _bookmarkAnalysis,
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2))
+                : Icon(
+                    _savedMenuId != null
+                        ? Icons.bookmark_rounded
+                        : Icons.bookmark_add_outlined,
+                    color: _savedMenuId != null
+                        ? colors.accent
+                        : colors.textSecondary,
+                  ),
+            onPressed: _savedMenuId != null
+                ? _editSavedMenu
+                : _bookmarkAnalysis,
           ),
           IconButton(
             tooltip: 'Saved menus',
@@ -983,6 +1218,52 @@ class _MenuAnalysisSheetState extends ConsumerState<MenuAnalysisSheet> {
             onPressed: () => Navigator.pop(context),
           ),
         ],
+      ),
+    );
+  }
+
+  /// A4 — compact "Goal: ..." banner shown directly above the macro
+  /// rings. Anchors the rings to the user's actual nutrition goal so the
+  /// budget context is obvious. Hidden entirely when no preferences /
+  /// primary goal is available (returns an empty box, no overflow).
+  Widget _goalBanner(ThemeColors colors) {
+    final prefs = ref.watch(nutritionPreferencesProvider).preferences;
+    final goal = prefs?.primaryGoalEnum;
+    if (goal == null) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: colors.accent.withValues(alpha: 0.10),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: colors.accent.withValues(alpha: 0.22),
+            width: 0.5,
+          ),
+        ),
+        // Row stays mainAxisSize.min so the banner hugs its content and
+        // never overflows on a narrow iPhone SE. The label is Flexible +
+        // ellipsis as a belt-and-braces guard for long goal names.
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.flag_rounded, size: 14, color: colors.accent),
+            const SizedBox(width: 6),
+            Flexible(
+              child: Text(
+                'Goal: ${goal.displayName}',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: colors.textPrimary,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
