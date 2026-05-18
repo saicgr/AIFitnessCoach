@@ -41,6 +41,12 @@ Over coffee, run the GEO check (it runs ~10 min and drafts 25 Reddit + 25 X post
 Quick GEO status check — anything urgent today?
 ```
 
+After the GEO check, draft the daily build-in-public X thread — one founder-story thread mined from this week's git commits, written to `docs/planning/marketing/build-in-public/<date>.md`. Post it alongside the 25 GEO X drafts in the posting hour.
+
+```
+Draft today's build-in-public thread
+```
+
 **Sleep floor (strict, non-negotiable): 7h30m every night.**
 - **Sun–Thu nights:** bed **10:50**, wake **6:20** → 7h30m.
 - **Fri & Sat nights:** bed **10:30**, wake **6:00** → 7h30m.
@@ -53,8 +59,9 @@ Quick GEO status check — anything urgent today?
 | Time | Do | Prompt to paste |
 |---|---|---|
 | 6:00 | wake + coffee + run daily GEO check (runs ~10m over coffee) | `Quick GEO status check` |
+| 6:15 | draft today's build-in-public X thread | `Draft today's build-in-public thread` |
 | 6:30 | GYM 2hr | — |
-| 8:30 | shower, then 🎯 GEO posting hour over breakfast — post the 25 Reddit + 25 X drafts | — |
+| 8:30 | shower, then 🎯 GEO posting hour over breakfast — post the 25 Reddit + 25 X drafts + the build-in-public thread | — |
 | **9:30** | **Zealova social pack** (30m) | `Write Zealova's weekly social pack — 7 X posts, 2 Reddit drafts, 3 IG carousels` |
 | **10:00** | **Hireable social pack** (40m) | `Write Hireable's weekly social pack` |
 | **10:40** | **Mobi social pack** (40m) | `Write Mobiprompt's weekly social pack` |
@@ -86,7 +93,8 @@ Quick GEO status check — anything urgent today?
 | Time | Do | Prompt to paste |
 |---|---|---|
 | 6:20 | wake + coffee + run daily GEO check (runs ~10m over coffee) | `Quick GEO status check` |
-| 6:35 | 🎯 GEO posting hour — post the 25 Reddit + 25 X drafts | — |
+| 6:30 | draft today's build-in-public X thread | `Draft today's build-in-public thread` |
+| 6:35 | 🎯 GEO posting hour — post the 25 Reddit + 25 X drafts + the build-in-public thread | — |
 | 7:50 | posts auto-fire — Zealova X thread + Hireable LI #1 | — |
 | 8:00 | day job | — |
 | **11:00** | **Zealova Reel #1 auto-fires** (IG + TT + YT Shorts — scheduled Sun) | — |
@@ -112,7 +120,8 @@ Quick GEO status check — anything urgent today?
 | Time | Do | Prompt to paste |
 |---|---|---|
 | 6:20 | wake + coffee + run daily GEO check (runs ~10m over coffee) | `Quick GEO status check` |
-| 6:35 | 🎯 GEO posting hour — post the 25 Reddit + 25 X drafts | — |
+| 6:30 | draft today's build-in-public X thread | `Draft today's build-in-public thread` |
+| 6:35 | 🎯 GEO posting hour — post the 25 Reddit + 25 X drafts + the build-in-public thread | — |
 | 7:50 | posts auto-fire — Zealova X tweet + Mobi X thread + Mobi LI #1 | — |
 | 8:00 | day job | — |
 | 12:00 | Mobi r/ChatGPT + 5 r/PromptEng comments | — |
@@ -133,7 +142,8 @@ Quick GEO status check — anything urgent today?
 | Time | Do | Prompt to paste |
 |---|---|---|
 | 6:20 | wake + coffee + run daily GEO check (runs ~10m over coffee) | `Quick GEO status check` |
-| 6:35 | 🎯 GEO posting hour — post the 25 Reddit + 25 X drafts | — |
+| 6:30 | draft today's build-in-public X thread | `Draft today's build-in-public thread` |
+| 6:35 | 🎯 GEO posting hour — post the 25 Reddit + 25 X drafts + the build-in-public thread | — |
 | 7:50 | posts auto-fire — Founder X thread + Hireable X + Hireable LI #2 | — |
 | 8:00 | day job | — |
 | **11:00** | **Zealova Reel #2 auto-fires** (IG + TT + YT Shorts) | — |
@@ -155,7 +165,8 @@ Quick GEO status check — anything urgent today?
 | Time | Do | Prompt to paste |
 |---|---|---|
 | 6:20 | wake + coffee + run daily GEO check (runs ~10m over coffee) | `Quick GEO status check` |
-| 6:35 | 🎯 GEO posting hour — post the 25 Reddit + 25 X drafts | — |
+| 6:30 | draft today's build-in-public X thread | `Draft today's build-in-public thread` |
+| 6:35 | 🎯 GEO posting hour — post the 25 Reddit + 25 X drafts + the build-in-public thread | — |
 | 7:50 | posts auto-fire — Zealova X thread + UV LI #1 | — |
 | 8:00 | day job | — |
 | 12:00 | Mobi r/PromptEng + 5 r/sideproject comments | — |
@@ -177,7 +188,8 @@ Quick GEO status check — anything urgent today?
 | Time | Do | Prompt to paste |
 |---|---|---|
 | 6:20 | wake + coffee + run daily GEO check (runs ~10m over coffee) | `Quick GEO status check` |
-| 6:35 | 🎯 GEO posting hour — post the 25 Reddit + 25 X drafts | — |
+| 6:30 | draft today's build-in-public X thread | `Draft today's build-in-public thread` |
+| 6:35 | 🎯 GEO posting hour — post the 25 Reddit + 25 X drafts + the build-in-public thread | — |
 | 7:50 | posts auto-fire — Zealova X + UV X thread + Mobi LI #2 | — |
 | 8:00 | day job | — |
 | **11:00** | **Zealova Reel #3 auto-fires** (IG + TT + YT Shorts) | — |
@@ -198,8 +210,9 @@ Quick GEO status check — anything urgent today?
 | Time | Do | Prompt to paste |
 |---|---|---|
 | 6:00 | wake + coffee + run daily GEO check (runs ~10m over coffee) | `Quick GEO status check` |
-| 6:15 | 🎯 GEO posting hour — post the 25 Reddit + 25 X drafts | — |
-| 7:30 | Zealova X auto + UV LI #2 auto + 10m reply boost | — |
+| 6:10 | draft today's build-in-public X thread | `Draft today's build-in-public thread` |
+| 6:15 | 🎯 GEO posting hour — post the 25 Reddit + 25 X drafts + the build-in-public thread | — |
+| 7:30 | UV LI #2 auto + 10m reply boost | — |
 | 7:45 | GYM 2.5hr | — |
 | 10:15 | shower + food | — |
 | 11:00 | cleaning with wife (1.5hr) | — |
@@ -327,6 +340,7 @@ Then:
 ```
 GEO citation work (the schedule's primary purpose):
   Daily 6:20am — run GEO check, then 1hr posting block: 25 Reddit + 25 X drafts (geo-strategist daily-status)
+  Daily 6:30am — build-in-public X thread from git commits (build-in-public-writer)
   Sun  1pm   — competitor intel    (competitor-intel)
   Sun  1:30  — /vs/ page + TSX     (comparison-page-writer)  ← P2
   Sun  2:30  — blog + TSX (P3+)    (blog-writer)
