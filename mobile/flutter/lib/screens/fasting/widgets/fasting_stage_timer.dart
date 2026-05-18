@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../../../core/theme/theme_colors.dart';
+import '../../../data/services/haptic_service.dart';
 import 'fasting_stage_model.dart';
 
 /// Live ticking circular fasting timer with a segmented metabolic-stage arc.
@@ -40,6 +41,28 @@ class _FastingStageTimerState extends State<FastingStageTimer>
   late final AnimationController _secondsPulse;
   late final AnimationController _ringEntry;
   int _lastSecond = -1;
+
+  /// Drives the tap-triggered tooltip on the goal marker so we can call
+  /// `ensureTooltipVisible()` imperatively (Tooltips are long-press by default).
+  final GlobalKey<TooltipState> _goalTooltipKey = GlobalKey<TooltipState>();
+
+  /// Human-readable goal label, e.g. "16h", "16h 30m", "45m". Appends
+  /// " · reached" once the live fast has met or exceeded the goal.
+  String _goalTooltipMessage() {
+    final goalMinutes = widget.goalMinutes;
+    final h = goalMinutes ~/ 60;
+    final m = goalMinutes % 60;
+    final String duration;
+    if (h > 0 && m > 0) {
+      duration = '${h}h ${m}m';
+    } else if (h > 0) {
+      duration = '${h}h';
+    } else {
+      duration = '${m}m';
+    }
+    final reached = widget.elapsedSeconds >= goalMinutes * 60;
+    return 'Fasting goal: $duration${reached ? ' · reached' : ''}';
+  }
 
   @override
   void initState() {
@@ -142,6 +165,12 @@ class _FastingStageTimerState extends State<FastingStageTimer>
                   ),
                   // Center content.
                   _buildCenter(colors, stageColor, size),
+                  // Tappable goal-marker hit target — sits ON the ring at the
+                  // goal angle, using the SAME angle math the painter uses, so
+                  // tapping the visible tick/badge surfaces a tooltip. Only
+                  // present while a fast is active and a real goal is set.
+                  if (widget.isActive && widget.goalMinutes > 0)
+                    ..._buildGoalMarkerTapTarget(colors, size, stroke),
                 ],
               );
             },
@@ -299,6 +328,82 @@ class _FastingStageTimerState extends State<FastingStageTimer>
         ),
       ],
     );
+  }
+
+  /// Builds the transparent ~36×36 tap target centered on the goal marker.
+  ///
+  /// The painter draws the marker at ring angle `startTop + (goalHours /
+  /// spanHours) * fullSweep` on the ring radius `(size - stroke) / 2`. We
+  /// reproduce that math here so the tap target tracks the visible marker on
+  /// both ring sizes (232 / 276) and at any goal/span. Returned as a list so
+  /// it can be spread into the Stack only when active.
+  List<Widget> _buildGoalMarkerTapTarget(
+      ThemeColors colors, double size, double stroke) {
+    final goalHours = widget.goalMinutes / 60.0;
+    final elapsedHours = widget.elapsedSeconds / 3600.0;
+    final elapsedHoursCeil = elapsedHours.ceilToDouble();
+    final spanHours = math.max(24.0, math.max(goalHours, elapsedHoursCeil));
+
+    // Marker is never drawn past the span — skip the tap target too.
+    if (goalHours <= 0 || goalHours > spanHours) return const [];
+
+    // Same angle math as _StageRingPainter.angleFor / paint.
+    const startTop = -math.pi / 2;
+    const fullSweep = 2 * math.pi;
+    final goalAngle =
+        startTop + (goalHours / spanHours).clamp(0.0, 1.0) * fullSweep;
+    final radius = (size - stroke) / 2;
+    final center = size / 2;
+
+    const double target = 36.0;
+    final markerX = center + radius * math.cos(goalAngle);
+    final markerY = center + radius * math.sin(goalAngle);
+
+    return [
+      Positioned(
+        left: markerX - target / 2,
+        top: markerY - target / 2,
+        width: target,
+        height: target,
+        child: Tooltip(
+          key: _goalTooltipKey,
+          message: _goalTooltipMessage(),
+          triggerMode: TooltipTriggerMode.manual,
+          preferBelow: false,
+          decoration: BoxDecoration(
+            color: colors.elevated,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: colors.cardBorder.withValues(alpha: 0.6),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.18),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          padding:
+              const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          textStyle: TextStyle(
+            fontSize: 12.5,
+            fontWeight: FontWeight.w600,
+            color: colors.textPrimary,
+          ),
+          child: GestureDetector(
+            // Tap-only — does not claim drags, so the ring/page stays
+            // scrollable and other gestures elsewhere are unaffected.
+            behavior: HitTestBehavior.opaque,
+            onTap: () {
+              HapticService.light();
+              _goalTooltipKey.currentState?.ensureTooltipVisible();
+            },
+            child: const SizedBox(width: target, height: target),
+          ),
+        ),
+      ),
+    ];
   }
 }
 
