@@ -41,7 +41,7 @@ Over coffee, run the GEO check (it runs ~10 min and drafts 25 Reddit + 25 X post
 Quick GEO status check — anything urgent today?
 ```
 
-After the GEO check, draft the daily build-in-public post — one founder story mined from this week's git commits (with fallback angles on no-commit weeks), adapted into an X thread AND a Threads post, with pasteable hashtags and a visual shot list. Written to `docs/planning/marketing/build-in-public/<date>.md`. Post both alongside the GEO drafts in the posting hour.
+After the GEO check, draft the daily build-in-public post. The agent rates each day's story and tells you what to do with it: **FULL THREAD** (a real ship / fix / rejection / milestone), **SINGLE TWEET** (a thin day — post just the hook), or **SKIP** (nothing worth it today — the GEO replies carry it). Aim 2-4 full threads a week, not one every day. When it earns a post, it comes as an X thread + a Threads post with pasteable hashtags and a visual shot list, written to `docs/planning/marketing/build-in-public/<date>.md`, posted alongside the GEO drafts in the posting hour.
 
 ```
 Draft today's build-in-public thread
@@ -61,7 +61,7 @@ Draft today's build-in-public thread
 | 6:00 | wake + coffee + run daily GEO check (runs ~10m over coffee) | `Quick GEO status check` |
 | 6:15 | draft build-in-public post (X thread + Threads) | `Draft today's build-in-public thread` |
 | 6:30 | GYM 2hr | — |
-| 8:30 | shower, then 🎯 GEO posting hour over breakfast — post the 25 Reddit + 25 X drafts + the build-in-public thread | — |
+| 8:30 | shower, then 🎯 GEO posting hour over breakfast — post the 25 Reddit + 25 X drafts + the build-in-public post (if it earned one) | — |
 | **9:30** | **Zealova social pack** (30m) | `Write Zealova's weekly social pack — 7 X posts, 2 Reddit drafts, 3 IG carousels` |
 | **10:00** | **Hireable social pack** (40m) | `Write Hireable's weekly social pack` |
 | **10:40** | **Mobi social pack** (40m) | `Write Mobiprompt's weekly social pack` |
@@ -94,7 +94,7 @@ Draft today's build-in-public thread
 |---|---|---|
 | 6:20 | wake + coffee + run daily GEO check (runs ~10m over coffee) | `Quick GEO status check` |
 | 6:30 | draft build-in-public post (X thread + Threads) | `Draft today's build-in-public thread` |
-| 6:35 | 🎯 GEO posting hour — post the 25 Reddit + 25 X drafts + the build-in-public thread | — |
+| 6:35 | 🎯 GEO posting hour — post the 25 Reddit + 25 X drafts + the build-in-public post (if it earned one) | — |
 | 7:50 | posts auto-fire — Zealova X thread + Hireable LI #1 | — |
 | 8:00 | day job | — |
 | **11:00** | **Zealova Reel #1 auto-fires** (IG + TT + YT Shorts — scheduled Sun) | — |
@@ -121,7 +121,7 @@ Draft today's build-in-public thread
 |---|---|---|
 | 6:20 | wake + coffee + run daily GEO check (runs ~10m over coffee) | `Quick GEO status check` |
 | 6:30 | draft build-in-public post (X thread + Threads) | `Draft today's build-in-public thread` |
-| 6:35 | 🎯 GEO posting hour — post the 25 Reddit + 25 X drafts + the build-in-public thread | — |
+| 6:35 | 🎯 GEO posting hour — post the 25 Reddit + 25 X drafts + the build-in-public post (if it earned one) | — |
 | 7:50 | posts auto-fire — Zealova X tweet + Mobi X thread + Mobi LI #1 | — |
 | 8:00 | day job | — |
 | 12:00 | Mobi r/ChatGPT + 5 r/PromptEng comments | — |
@@ -143,7 +143,7 @@ Draft today's build-in-public thread
 |---|---|---|
 | 6:20 | wake + coffee + run daily GEO check (runs ~10m over coffee) | `Quick GEO status check` |
 | 6:30 | draft build-in-public post (X thread + Threads) | `Draft today's build-in-public thread` |
-| 6:35 | 🎯 GEO posting hour — post the 25 Reddit + 25 X drafts + the build-in-public thread | — |
+| 6:35 | 🎯 GEO posting hour — post the 25 Reddit + 25 X drafts + the build-in-public post (if it earned one) | — |
 | 7:50 | posts auto-fire — Founder X thread + Hireable X + Hireable LI #2 | — |
 | 8:00 | day job | — |
 | **11:00** | **Zealova Reel #2 auto-fires** (IG + TT + YT Shorts) | — |
@@ -166,7 +166,7 @@ Draft today's build-in-public thread
 |---|---|---|
 | 6:20 | wake + coffee + run daily GEO check (runs ~10m over coffee) | `Quick GEO status check` |
 | 6:30 | draft build-in-public post (X thread + Threads) | `Draft today's build-in-public thread` |
-| 6:35 | 🎯 GEO posting hour — post the 25 Reddit + 25 X drafts + the build-in-public thread | — |
+| 6:35 | 🎯 GEO posting hour — post the 25 Reddit + 25 X drafts + the build-in-public post (if it earned one) | — |
 | 7:50 | posts auto-fire — Zealova X thread + UV LI #1 | — |
 | 8:00 | day job | — |
 | 12:00 | Mobi r/PromptEng + 5 r/sideproject comments | — |
@@ -189,7 +189,7 @@ Draft today's build-in-public thread
 |---|---|---|
 | 6:20 | wake + coffee + run daily GEO check (runs ~10m over coffee) | `Quick GEO status check` |
 | 6:30 | draft build-in-public post (X thread + Threads) | `Draft today's build-in-public thread` |
-| 6:35 | 🎯 GEO posting hour — post the 25 Reddit + 25 X drafts + the build-in-public thread | — |
+| 6:35 | 🎯 GEO posting hour — post the 25 Reddit + 25 X drafts + the build-in-public post (if it earned one) | — |
 | 7:50 | posts auto-fire — Zealova X + UV X thread + Mobi LI #2 | — |
 | 8:00 | day job | — |
 | **11:00** | **Zealova Reel #3 auto-fires** (IG + TT + YT Shorts) | — |
@@ -211,7 +211,7 @@ Draft today's build-in-public thread
 |---|---|---|
 | 6:00 | wake + coffee + run daily GEO check (runs ~10m over coffee) | `Quick GEO status check` |
 | 6:10 | draft build-in-public post (X thread + Threads) | `Draft today's build-in-public thread` |
-| 6:15 | 🎯 GEO posting hour — post the 25 Reddit + 25 X drafts + the build-in-public thread | — |
+| 6:15 | 🎯 GEO posting hour — post the 25 Reddit + 25 X drafts + the build-in-public post (if it earned one) | — |
 | 7:30 | UV LI #2 auto + 10m reply boost | — |
 | 7:45 | GYM 2.5hr | — |
 | 10:15 | shower + food | — |
@@ -340,7 +340,7 @@ Then:
 ```
 GEO citation work (the schedule's primary purpose):
   Daily 6:20am — run GEO check, then 1hr posting block: 25 Reddit + 25 X drafts (geo-strategist daily-status)
-  Daily 6:30am — build-in-public X thread from git commits (build-in-public-writer)
+  Daily 6:30am — build-in-public draft, X + Threads, post if it earns a thread (build-in-public-writer)
   Sun  1pm   — competitor intel    (competitor-intel)
   Sun  1:30  — /vs/ page + TSX     (comparison-page-writer)  ← P2
   Sun  2:30  — blog + TSX (P3+)    (blog-writer)

@@ -66,6 +66,16 @@ Secondary sources for fallback tiers: `next_update/` (roadmap, tasks, upcoming w
 
 Whatever tier, the story must be TRUE. A genuinely quiet week is fine to name ("no code shipped this week, here is why") if accurate — never spin a fake win.
 
+### Then assign the POST-WORTHINESS VERDICT
+
+A full thread every single day is the wrong cadence — story supply does not refill daily, and back-to-back threads split your own first-hour reply velocity. Target is **2-4 full threads per week**, single tweets in between, and the 25 GEO X replies carry daily presence. So rate today's story honestly:
+
+- **FULL THREAD** — a real, strong arc: a ship, a fix, a rejection, a launch, a milestone (a strong Tier 1, or Tier 2). Earns 4-6 tweets. Draft the full thread + Threads post.
+- **SINGLE TWEET** — a minor commit with no real arc, or a Tier 3 evergreen angle. Still worth a presence post, but as ONE standalone tweet (the hook reworked to stand alone, no 🧵), plus one Threads post. Not a full thread.
+- **SKIP** — nothing worth posting today AND a SINGLE TWEET or Tier 3 was already posted in the last 2 days (check the dated files). Let the GEO replies carry the day. Still write a short dated file recording the skip + reason so there is a trail.
+
+State the verdict explicitly and act on it in the steps below. Be honest — forcing a thread out of a thin week is exactly the failure this verdict prevents.
+
 ## Step 3 — Dedupe
 
 Read the last 7-10 dated files in `docs/planning/marketing/build-in-public/`. Do not repeat an angle or hook pattern already used.
@@ -83,13 +93,15 @@ Live WebSearch (use the real current month + year — both platforms, tags shift
 
 ## Step 5 — Draft the X thread (with hook variants)
 
+**Branch on the verdict:** if SINGLE TWEET, draft ONE standalone X tweet instead of a thread — the hook reworked to stand on its own (no 🧵, no "1/"), ≤270 chars, still carrying one concrete detail + a light Zealova through-line, and still gets a visual. If SKIP, do not draft — jump to Step 10 and write the skip note. Otherwise (FULL THREAD) draft the full thread:
+
 - **2-3 hook variants** for tweet 1 — different emotional angles (live-moment / confession / contrarian / specific-result). Recommend one, keep the others listed so the founder can swap.
 - 4-6 tweets total. Tweet 1 = chosen hook + 🧵 (one emoji max, the 🧵). Tweets 2-4 = the concrete how/what, technical specifics in service of the story. Tweet 5 = Zealova mention + a specific reply-prompt CTA. Optional tweet 6 = self-reply with `https://zealova.com`.
 - Each tweet ≤270 chars (280 hard limit; emoji = 2, URL = 23).
 
 ## Step 6 — Adapt to a Threads (Meta) post
 
-Threads is a separate platform, not a copy-paste of the X thread. Verify current Threads rules from Step 4's search, then:
+If the verdict is SINGLE TWEET, draft ONE Threads post (≤500) rather than a chain. If SKIP, skip this step. Threads is a separate platform, not a copy-paste of the X thread. Verify current Threads rules from Step 4's search, then:
 - 500 chars per post (vs X's 280). The X 5-tweet thread usually compresses into a 1-3 post Threads chain — a richer opening post carries more, follow-ups continue it.
 - Threads tone is slightly warmer and more conversational than X. Rewrite, do not truncate.
 - Links: keep `zealova.com` out of the opening post, put it in a follow-up post.
@@ -120,15 +132,16 @@ Char-count every X tweet (`python3 -c '...'`), every Threads post ≤500. Scan a
 
 ## Step 10 — Write the dated file
 
-Write to **`docs/planning/marketing/build-in-public/YYYY-MM-DD.md`** (create the dir if missing; landscape-file style, one file per day; if today's exists, append under `## Run 2`). Format:
+Write to **`docs/planning/marketing/build-in-public/YYYY-MM-DD.md`** (create the dir if missing; landscape-file style, one file per day; if today's exists, append under `## Run 2`). For a SKIP verdict, write only the header block (verdict + reason) and stop — no thread sections. Format:
 
 ```
 # Build-in-Public — YYYY-MM-DD
 
+**Post verdict:** FULL THREAD / SINGLE TWEET / SKIP — <one-line reason>
 **Story tier:** 1 (recent ship) / 2 (older arc) / 3 (non-ship angle)
 **Angle:** <short angle name>
 **Anchored source:** <commit hash + message + iso timestamp, OR the fallback source>
-**Status:** Drafted, not yet posted
+**Status:** Drafted, not yet posted  (for SKIP: "Skipped — not posted")
 
 ## Research log (YYYY-MM-DD)
 - X algo / Threads algo finding: <1 line each>
@@ -165,7 +178,7 @@ Tags (Threads): <tags>
 
 ## Step 11 — Output in the session + summary
 
-Print the X thread and the Threads post as plain text (tweet/post labels + char counts), the hashtag lines, and the visual shot list, so the founder copies straight to each app. Then summarize: story tier + anchored source, the narrative keyword that triggered the angle, char counts, the dated file path, and any second strong arc worth a follow-up. Committing the file is the founder's call — mention it, do not auto-commit.
+**Lead with the verdict** — the first line of the summary states FULL THREAD / SINGLE TWEET / SKIP and the one-line reason, so the founder knows immediately whether to post a thread, a single tweet, or nothing today. Then, unless SKIP, print the draft as plain text (tweet/post labels + char counts), the hashtag lines, and the visual shot list, so the founder copies straight to each app. Then summarize: story tier + anchored source, the narrative keyword that triggered the angle, the dated file path, and any second strong arc worth a follow-up. Committing the file is the founder's call — mention it, do not auto-commit.
 
 ## Make it go viral — bake these in, every run
 
@@ -177,4 +190,12 @@ Print the X thread and the Threads post as plain text (tweet/post labels + char 
 - **CTA is a specific verb-object**, not "thoughts?".
 - **First-hour reply velocity** is an algorithm signal on both platforms — note it in posting notes.
 
-**Self-check before finishing:** hook leads with a human moment (not a diff detail)? a visual specced for every hook post? hashtags on their own pasteable line for both platforms? zero em dashes? If any fail, fix before returning.
+**Self-check before finishing — ALL must pass, this is a hard gate:**
+- [ ] X thread drafted WITH 2-3 hook variants (one recommended)?
+- [ ] Threads (Meta) post drafted as a separate rewrite (not skipped, not a copy of the X thread)?
+- [ ] Visual shot list present for every hook post on both platforms?
+- [ ] `Hashtags (X):` line present (1-2 tags, woven into a tweet) AND `Tags (Threads):` line present (3-5 tags)?
+- [ ] Posting notes cover BOTH X and Threads, with platform-specific best windows?
+- [ ] Hook leads with a human moment, not a diff detail? Zero em dashes / en dashes / semicolons?
+
+If ANY box is unchecked, the run is incomplete — fix it before returning. Do not return an X-only draft.
