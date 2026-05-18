@@ -1,7 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'dart:math' show min;
+import 'dart:math' show min, Random;
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dio/dio.dart';
@@ -87,6 +88,39 @@ class NutritionRepository {
       _cacheOrder.add(key);
     }
     return result;
+  }
+
+  /// Generate a client-side idempotency key for a meal-log write (A11).
+  ///
+  /// Pass the SAME key across an offline-queued write and its later replay so
+  /// the backend de-dupes — a rapid double-tap of "Log" or a reconnect replay
+  /// can never create two food_log rows. Format: timestamp + random suffix.
+  static String newMealIdempotencyKey() {
+    final ts = DateTime.now().microsecondsSinceEpoch;
+    final rand = Random().nextInt(1 << 32).toRadixString(16);
+    return 'meal_${ts}_$rand';
+  }
+
+  /// Whether the device currently has connectivity. Used by [logAdjustedFood]
+  /// to decide between a live write and an offline-queued one.
+  static Future<bool> isOnline() async {
+    try {
+      final results = await Connectivity().checkConnectivity();
+      return results.any((r) =>
+          r == ConnectivityResult.wifi ||
+          r == ConnectivityResult.mobile ||
+          r == ConnectivityResult.ethernet ||
+          r == ConnectivityResult.vpn);
+    } catch (_) {
+      return true; // assume online on error — the write itself will fail-fast
+    }
+  }
+
+  /// Replay a previously-queued meal-log request body verbatim. Used by the
+  /// offline-queue flush — the body already carries its stable
+  /// `idempotency_key` so the server de-dupes any write that already landed.
+  Future<void> replayQueuedMealLog(Map<String, dynamic> body) async {
+    await _client.post('/nutrition/log-direct', data: body);
   }
 
   /// Delete a food log

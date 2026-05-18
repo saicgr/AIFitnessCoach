@@ -1,12 +1,15 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/today_workout.dart';
 import '../providers/today_workout_provider.dart';
 import '../repositories/nutrition_repository.dart';
 import '../repositories/hydration_repository.dart';
+import '../../utils/tz.dart';
 import 'api_client.dart';
 
 /// Pre-fetches all home screen data via the /home/bootstrap endpoint
@@ -18,8 +21,51 @@ class BootstrapPrefetchService {
   static bool _hasPrefetched = false;
   static Future<void>? _activePrefetch;
 
+  /// SharedPreferences key prefix for the persisted /home/bootstrap blob.
+  /// The full key is scoped to BOTH the user_id and the LOCAL calendar date
+  /// (see [_blobKey]) so a stale blob from yesterday — or from another signed
+  /// -in account — can never seed today's Home tiles.
+  static const String _blobKeyPrefix = 'home_bootstrap';
+
+  /// Parsed nutrition/hydration sub-maps stashed by [hydrateFromDiskBlob].
+  ///
+  /// `hydrateFromDiskBlob` runs pre-first-frame from `PrewarmerBoot.hydrateAll`
+  /// where there is no Riverpod `Ref`, so the nutrition/hydration notifiers
+  /// (which need a notifier instance) cannot be seeded there. We seed the
+  /// workout cache immediately (its API is static) and stash the rest; the
+  /// next [prefetch] call — which DOES have a `Ref` and still runs before
+  /// Home's first frame (router redirect) — drains the stash via
+  /// [_drainDiskStash] ahead of the network round-trip.
+  static Map<String, dynamic>? _stashedNutrition;
+  static Map<String, dynamic>? _stashedHydration;
+  static bool _diskStashConsumed = false;
+
+  /// Build the user+local-date scoped SharedPreferences key for the blob.
+  /// Uses [Tz.localDate] (device IANA tz) — never UTC — so crossing midnight
+  /// or travelling to a new timezone yields a fresh, correct key (A12b).
+  static String _blobKey(String userId) =>
+      '$_blobKeyPrefix:$userId:${Tz.localDate()}';
+
+  /// Locate the persisted blob for today from an already-open
+  /// [SharedPreferences] instance. `PrewarmerBoot.hydrateAll` runs pre-auth
+  /// and has no `user_id`, so we match on the `home_bootstrap:<uid>:<date>`
+  /// key whose date suffix equals today's LOCAL date. Returns null when no
+  /// blob for today exists (cold install, or yesterday's blob only).
+  static String? readDiskBlob(SharedPreferences prefs) {
+    final todaySuffix = ':${Tz.localDate()}';
+    for (final k in prefs.getKeys()) {
+      if (k.startsWith('$_blobKeyPrefix:') && k.endsWith(todaySuffix)) {
+        return prefs.getString(k);
+      }
+    }
+    return null;
+  }
+
   /// Fire-and-forget prefetch. Safe to call multiple times (deduped).
   static void prefetch(Ref ref) {
+    // Even when a network prefetch already ran/failed, still drain any disk
+    // stash so Home shows yesterday-free cached data instantly.
+    _drainDiskStash(ref);
     if (_hasPrefetched || _activePrefetch != null) return;
     _activePrefetch = _doPrefetch(ref).whenComplete(() {
       _activePrefetch = null;
@@ -43,6 +89,113 @@ class BootstrapPrefetchService {
   static void reset() {
     _hasPrefetched = false;
     _activePrefetch = null;
+    _stashedNutrition = null;
+    _stashedHydration = null;
+    _diskStashConsumed = false;
+  }
+
+  /// Pre-hydrate the in-memory home caches from a persisted /home/bootstrap
+  /// blob (called by `PrewarmerBoot.hydrateAll` before the first frame).
+  ///
+  /// [raw] is the raw JSON string read from SharedPreferences (or null if no
+  /// blob persisted). The blob is a versioned envelope:
+  ///   `{"v": 1, "local_date": "YYYY-MM-DD", "data": {<bootstrap payload>}}`
+  ///
+  /// Behaviour:
+  ///  • Workout is seeded immediately — its cache API (`preSeedCache`) is
+  ///    static, so no `Ref` is needed. A workout may legitimately be "today"
+  ///    or "next" (future-dated), so we accept it within a 24h window — i.e.
+  ///    we seed it regardless of the blob date as long as the blob is recent.
+  ///  • Nutrition/hydration are date-sensitive (today's macros/water). They
+  ///    are only stashed for [_drainDiskStash] when `local_date == today`.
+  ///  • A schema-version mismatch or malformed JSON is dropped silently —
+  ///    never crash boot over a cache blob.
+  static void hydrateFromDiskBlob(String? raw) {
+    if (raw == null || raw.isEmpty) return;
+    try {
+      final envelope = jsonDecode(raw);
+      if (envelope is! Map<String, dynamic>) return;
+      // Versioned envelope — drop on schema mismatch instead of crashing.
+      if (envelope['v'] != 1) {
+        debugPrint('⏸️ [Bootstrap] Disk blob schema mismatch (v=${envelope['v']}) — dropping');
+        return;
+      }
+      final data = envelope['data'];
+      if (data is! Map<String, dynamic>) return;
+      final blobDate = envelope['local_date'] as String?;
+      final isToday = blobDate == Tz.localDate();
+
+      // (A12d) Partial bootstrap tolerance — each domain is seeded only when
+      // present; missing domains fall through to their own loaders.
+
+      // Workout: static cache, safe to seed pre-frame. The blob's workout may
+      // be today's or a future "next workout"; a stale-by-one-day blob is
+      // still acceptable for the workout tile (24h window) so we seed it even
+      // when isToday is false, as long as the blob exists at all.
+      if (data.containsKey('today_workout')) {
+        _preSeedWorkout(data['today_workout']);
+      }
+
+      // Nutrition + hydration are strictly today-scoped. Only stash them when
+      // the blob is for today's local date — yesterday's macros rendered as
+      // today's would be a correctness bug.
+      if (isToday) {
+        final n = data['nutrition_summary'];
+        if (n is Map<String, dynamic>) _stashedNutrition = n;
+        final h = data['hydration'];
+        if (h is Map<String, dynamic>) _stashedHydration = h;
+      } else if (blobDate != null) {
+        debugPrint('⏸️ [Bootstrap] Disk blob is stale ($blobDate ≠ ${Tz.localDate()}) — nutrition/hydration skipped');
+      }
+      debugPrint('⚡ [Bootstrap] Pre-hydrated from disk blob (isToday=$isToday)');
+    } catch (e) {
+      debugPrint('⚠️ [Bootstrap] hydrateFromDiskBlob failed: $e');
+    }
+  }
+
+  /// Seed the nutrition/hydration notifiers from the stash captured by
+  /// [hydrateFromDiskBlob]. Called from [prefetch] (which has a `Ref`).
+  /// Idempotent — drains at most once per process.
+  static void _drainDiskStash(Ref ref) {
+    if (_diskStashConsumed) return;
+    _diskStashConsumed = true;
+    if (_stashedNutrition != null) {
+      _preSeedNutrition(ref, _stashedNutrition);
+    }
+    if (_stashedHydration != null) {
+      _preSeedHydration(ref, _stashedHydration);
+    }
+    _stashedNutrition = null;
+    _stashedHydration = null;
+  }
+
+  /// Write the raw /home/bootstrap payload to SharedPreferences under a
+  /// user+local-date scoped key, in a versioned envelope. Best-effort:
+  /// a disk write failure is logged, never thrown (it only costs a slower
+  /// next cold start).
+  static Future<void> _persistBlob(String userId, Map<String, dynamic> data) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final key = _blobKey(userId);
+      final envelope = jsonEncode({
+        'v': 1,
+        'local_date': Tz.localDate(),
+        'cached_at': DateTime.now().toIso8601String(),
+        'data': data,
+      });
+      await prefs.setString(key, envelope);
+      // Sweep any prior-day blobs for this user so SharedPreferences doesn't
+      // accumulate one stale envelope per day forever.
+      final prefix = '$_blobKeyPrefix:$userId:';
+      for (final k in prefs.getKeys()) {
+        if (k.startsWith(prefix) && k != key) {
+          await prefs.remove(k);
+        }
+      }
+      debugPrint('💾 [Bootstrap] Persisted blob to $key');
+    } catch (e) {
+      debugPrint('⚠️ [Bootstrap] _persistBlob failed: $e');
+    }
   }
 
   static Future<void> _doPrefetch(Ref ref) async {
@@ -93,6 +246,13 @@ class BootstrapPrefetchService {
 
       // Pre-seed hydration data
       _preSeedHydration(ref, data['hydration']);
+
+      // Persist the raw blob to disk so the NEXT cold start can pre-hydrate
+      // Home before the first frame (see [hydrateFromDiskBlob]). Wrapped in a
+      // versioned, local-date-stamped envelope. Fire-and-forget — never block
+      // the prefetch on disk I/O.
+      // ignore: unawaited_futures
+      _persistBlob(uid, data);
 
       _hasPrefetched = true;
       stopwatch.stop();

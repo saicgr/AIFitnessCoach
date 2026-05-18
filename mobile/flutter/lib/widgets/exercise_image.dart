@@ -221,30 +221,40 @@ class _ExerciseImageState extends ConsumerState<ExerciseImage> {
     );
   }
 
-  Widget _buildContent(Color fallbackIconColor) {
-    if (_isLoading) {
-      return const Center(
-        child: SizedBox(
-          width: 20,
-          height: 20,
-          child: CircularProgressIndicator(strokeWidth: 2),
-        ),
-      );
-    }
-
-    if (_hasError || _imageUrl == null) {
-      return Icon(
+  /// A layout-matched placeholder — the equipment-specific fallback icon
+  /// centered on the container's background. Used both while the URL is being
+  /// resolved AND while `CachedNetworkImage` downloads the bytes. Plan A9:
+  /// prefer a placeholder that occupies the exact final layout box (no spinner
+  /// pop / layout shift) so a grid of thumbnails settles instantly.
+  Widget _placeholder(Color fallbackIconColor) {
+    return Center(
+      child: Icon(
         _fallbackIconForEquipment(widget.equipmentHint, widget.exerciseName),
         color: fallbackIconColor,
         size: widget.width.isFinite ? widget.width * 0.5 : 40,
-      );
+      ),
+    );
+  }
+
+  Widget _buildContent(Color fallbackIconColor) {
+    // While resolving the URL, show the layout-matched placeholder (icon),
+    // not a spinner — keeps the box stable from first to final frame.
+    if (_isLoading) {
+      return _placeholder(fallbackIconColor);
+    }
+
+    if (_hasError || _imageUrl == null) {
+      return _placeholder(fallbackIconColor);
     }
 
     return CachedNetworkImage(
       imageUrl: _imageUrl!,
       // Dedicated cache manager isolates exercise-illustration HTTP traffic
       // from the rest of the app so a 50-row grid doesn't starve other
-      // image loads (and vice versa). ✅
+      // image loads (and vice versa). The CacheManager is disk-backed
+      // (JsonCacheInfoRepository + HttpFileService), so downloaded bytes
+      // persist across app restarts — only the URL needed a separate
+      // persistent cache (see ImageUrlCache, plan A9). ✅
       cacheManager: _ExerciseImageCacheManager.instance,
       // Use exercise name as stable cache key so presigned URL rotation
       // doesn't duplicate images in disk cache.
@@ -253,18 +263,13 @@ class _ExerciseImageState extends ConsumerState<ExerciseImage> {
       // Perf fix 2.2: constrain decoded image size in memory cache
       memCacheWidth: widget.width.isFinite ? (widget.width * 2).toInt().clamp(100, 400) : null,
       memCacheHeight: widget.height.isFinite ? (widget.height * 2).toInt().clamp(100, 400) : null,
-      placeholder: (_, __) => const Center(
-        child: SizedBox(
-          width: 20,
-          height: 20,
-          child: CircularProgressIndicator(strokeWidth: 2),
-        ),
-      ),
-      errorWidget: (_, __, ___) => Icon(
-        _fallbackIconForEquipment(widget.equipmentHint, widget.exerciseName),
-        color: fallbackIconColor,
-        size: widget.width.isFinite ? widget.width * 0.5 : 40,
-      ),
+      // Plan A9: gentle fade so a cold-cache load doesn't pop. A disk-cache
+      // hit decodes synchronously and skips the fade entirely.
+      fadeInDuration: const Duration(milliseconds: 220),
+      fadeOutDuration: const Duration(milliseconds: 120),
+      // Layout-matched placeholder (icon), not a spinner — no layout shift.
+      placeholder: (_, __) => _placeholder(fallbackIconColor),
+      errorWidget: (_, __, ___) => _placeholder(fallbackIconColor),
     );
   }
 }

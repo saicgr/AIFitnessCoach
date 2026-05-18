@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/fasting.dart';
 import '../repositories/fasting_repository.dart';
 import '../repositories/auth_repository.dart';
@@ -13,6 +15,73 @@ FastingState? _fastingInMemoryCache;
 /// real account switch and avoid the new user inheriting the prior user's
 /// fasting state.
 String? _fastingCacheOwnerUserId;
+
+// ===========================================================================
+// _ActiveFastDiskCache — stale-while-revalidate disk cache (A2)
+// ===========================================================================
+
+/// Persistent (cross-launch) cache for the user's CURRENT active fast.
+///
+/// An in-progress fast is the one piece of fasting state that must show
+/// instantly on a cold start — otherwise the timer appears to reset. Mirrors
+/// `_NutritionDiskCache`: a JSON-encoded `FastingRecord` in a versioned,
+/// user-scoped envelope.
+///
+/// NOT date-scoped: a fast legitimately spans midnight (e.g. an 18h fast
+/// started at 8 PM), so the only validity gate is the schema version and the
+/// user_id. The server reconciliation in `initialize` corrects a fast that
+/// was ended on another device.
+class _ActiveFastDiskCache {
+  static const _prefix = 'active_fast_v1::';
+  static const _schemaVersion = 1;
+
+  static String _key(String userId) => '$_prefix$userId';
+
+  /// Read the persisted active fast, or null when none / schema mismatch /
+  /// malformed. Never throws.
+  static Future<FastingRecord?> read(String userId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString(_key(userId));
+      if (raw == null || raw.isEmpty) return null;
+      final envelope = jsonDecode(raw);
+      if (envelope is! Map<String, dynamic>) return null;
+      if (envelope['v'] != _schemaVersion) return null; // drop on schema bump
+      final body = envelope['fast'];
+      if (body is! Map<String, dynamic>) return null;
+      return FastingRecord.fromJson(body);
+    } catch (e) {
+      debugPrint('🕐 [ActiveFastDiskCache] read failed: $e');
+      return null;
+    }
+  }
+
+  /// Write-through the active fast. Best-effort.
+  static Future<void> write(String userId, FastingRecord fast) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(
+        _key(userId),
+        jsonEncode({
+          'v': _schemaVersion,
+          'cached_at': DateTime.now().toIso8601String(),
+          'fast': fast.toJson(),
+        }),
+      );
+    } catch (e) {
+      debugPrint('🕐 [ActiveFastDiskCache] write failed: $e');
+    }
+  }
+
+  /// Drop the persisted fast — called when a fast ends/cancels so a stale
+  /// timer doesn't resurrect on the next cold start.
+  static Future<void> clear(String userId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_key(userId));
+    } catch (_) {/* best-effort */}
+  }
+}
 
 // ============================================
 // Fasting State
@@ -125,11 +194,28 @@ class FastingNotifier extends StateNotifier<FastingState> {
 
   /// Initialize fasting state for a user
   /// Skips API calls if data is already loaded for this user (prevents redundant calls on tab switch)
+  ///
+  /// Stale-while-revalidate (A2): before the network round-trip we seed
+  /// `activeFast` from the disk cache so an in-progress fast (and its timer)
+  /// shows INSTANTLY on a cold restart. The server response below then
+  /// reconciles — including correcting a fast that was ended elsewhere.
   Future<void> initialize(String userId, {bool forceRefresh = false}) async {
     // Skip if already initialized for this user (unless force refresh requested)
     if (!forceRefresh && _initializedUserId == userId && !state.isLoading && state.preferences != null) {
       debugPrint('🕐 [FastingProvider] Already initialized for $userId, skipping API calls');
       return;
+    }
+
+    // Disk seed — only when in-memory state has no active fast yet (cold
+    // start). Renders the running timer immediately while the network call
+    // below verifies it.
+    if (state.activeFast == null) {
+      final cachedFast = await _ActiveFastDiskCache.read(userId);
+      if (cachedFast != null && state.activeFast == null) {
+        debugPrint('🕐 [FastingProvider] Seeded active fast from disk cache');
+        state = state.copyWith(activeFast: cachedFast);
+        _startRefreshTimer();
+      }
     }
 
     state = state.copyWith(isLoading: true, clearError: true);
@@ -183,8 +269,13 @@ class FastingNotifier extends StateNotifier<FastingState> {
         debugPrint('⚠️ [FastingProvider] Score calculation error (non-fatal): $e');
       }
 
+      // (A12c) Reconcile the disk-seeded fast with the server's truth in
+      // place. `copyWith(activeFast:)` null-coalesces, so a server "no active
+      // fast" would NOT clear a disk-seeded one — use `clearActiveFast` when
+      // the server says there is none.
       state = state.copyWith(
         activeFast: activeFast,
+        clearActiveFast: activeFast == null,
         preferences: preferences,
         streak: streak,
         stats: stats,
@@ -198,9 +289,13 @@ class FastingNotifier extends StateNotifier<FastingState> {
       // Update in-memory cache for instant access on provider recreation
       _fastingInMemoryCache = state;
 
-      // Start refresh timer if there's an active fast
+      // Reconcile the disk cache with the server truth.
       if (activeFast != null) {
         _startRefreshTimer();
+        unawaited(_ActiveFastDiskCache.write(userId, activeFast));
+      } else {
+        _stopRefreshTimer();
+        unawaited(_ActiveFastDiskCache.clear(userId));
       }
 
       // Mark as initialized for this user
@@ -231,6 +326,8 @@ class FastingNotifier extends StateNotifier<FastingState> {
       );
       state = state.copyWith(activeFast: fast, isLoading: false);
       _startRefreshTimer();
+      // Persist so a cold restart shows the running timer instantly (A2).
+      unawaited(_ActiveFastDiskCache.write(userId, fast));
       debugPrint('✅ [FastingProvider] Fast started');
     } catch (e) {
       debugPrint('❌ [FastingProvider] Start fast error: $e');
@@ -260,6 +357,8 @@ class FastingNotifier extends StateNotifier<FastingState> {
 
       // Stop refresh timer
       _stopRefreshTimer();
+      // Drop the disk cache so a stale timer can't resurrect on cold start.
+      unawaited(_ActiveFastDiskCache.clear(userId));
 
       // Refresh streak, stats, and recalculate score
       final streak = await _repository.getStreak(userId);
@@ -299,6 +398,7 @@ class FastingNotifier extends StateNotifier<FastingState> {
       if (errorStr.contains('404') || errorStr.contains('not found')) {
         debugPrint('⚠️ [FastingProvider] Fast already ended on server, clearing local state');
         _stopRefreshTimer();
+        unawaited(_ActiveFastDiskCache.clear(userId));
 
         // Refresh data from server to sync state
         try {
@@ -336,6 +436,7 @@ class FastingNotifier extends StateNotifier<FastingState> {
         userId: userId,
       );
       _stopRefreshTimer();
+      unawaited(_ActiveFastDiskCache.clear(userId));
       state = state.copyWith(clearActiveFast: true, isLoading: false);
       debugPrint('✅ [FastingProvider] Fast cancelled');
     } catch (e) {
@@ -346,6 +447,7 @@ class FastingNotifier extends StateNotifier<FastingState> {
       if (errorStr.contains('404') || errorStr.contains('not found')) {
         debugPrint('⚠️ [FastingProvider] Fast already gone on server, clearing local state');
         _stopRefreshTimer();
+        unawaited(_ActiveFastDiskCache.clear(userId));
         state = state.copyWith(clearActiveFast: true, isLoading: false, clearError: true);
         return;
       }
@@ -364,6 +466,7 @@ class FastingNotifier extends StateNotifier<FastingState> {
         userId: userId,
       );
       state = state.copyWith(activeFast: updated);
+      unawaited(_ActiveFastDiskCache.write(userId, updated));
       debugPrint('✅ [FastingProvider] Fast paused');
     } catch (e) {
       debugPrint('❌ [FastingProvider] Pause fast error: $e');
@@ -381,6 +484,7 @@ class FastingNotifier extends StateNotifier<FastingState> {
         userId: userId,
       );
       state = state.copyWith(activeFast: updated);
+      unawaited(_ActiveFastDiskCache.write(userId, updated));
       debugPrint('✅ [FastingProvider] Fast resumed');
     } catch (e) {
       debugPrint('❌ [FastingProvider] Resume fast error: $e');
@@ -418,6 +522,8 @@ class FastingNotifier extends StateNotifier<FastingState> {
         isLoading: false,
       );
       _startRefreshTimer();
+      // Re-persist the reopened fast so a cold restart shows the timer again.
+      unawaited(_ActiveFastDiskCache.write(userId, reopened));
       debugPrint('✅ [FastingProvider] Fast end undone');
       return true;
     } catch (e) {

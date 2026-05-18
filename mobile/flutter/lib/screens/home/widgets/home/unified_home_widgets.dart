@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shimmer/shimmer.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/providers/user_provider.dart';
@@ -37,6 +38,51 @@ import '../workout_options_sheet.dart';
 
 const double kHomeGap = 14.0;
 const EdgeInsets kHomeHPad = EdgeInsets.symmetric(horizontal: 16);
+
+/// Shared cross-fade duration for skeleton→content (and stale→fresh)
+/// transitions on every Home tile. Short enough to feel instant, long
+/// enough to read as a fade rather than a hard pop.
+const Duration kHomeCrossFade = Duration(milliseconds: 220);
+
+/// Fixed height of the workout hero card. Shared by the loaded
+/// `_WorkoutHeroBody`, its loading skeleton and every status state so all
+/// three render at an identical size (zero layout shift on data arrival).
+const double _kWorkoutHeroHeight = 132;
+
+/// A single shimmering rounded rectangle — the building block for every
+/// layout-matched Home skeleton. The shimmer sweep colours follow the
+/// active theme (light/dark) via [ThemeColors] so the placeholder never
+/// flashes a hardcoded grey on the wrong surface.
+class _SkeletonBox extends StatelessWidget {
+  final double height;
+  final double radius;
+  final ThemeColors c;
+  const _SkeletonBox({
+    required this.height,
+    required this.c,
+    this.radius = 8,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    // `cardBorder` is the subtlest theme surface tone — using it as the base
+    // keeps the skeleton from out-shouting real content on either theme.
+    final base = c.cardBorder;
+    final highlight = c.glassSurface;
+    return Shimmer.fromColors(
+      baseColor: base,
+      highlightColor: highlight,
+      period: const Duration(milliseconds: 1200),
+      child: Container(
+        height: height,
+        decoration: BoxDecoration(
+          color: base,
+          borderRadius: BorderRadius.circular(radius),
+        ),
+      ),
+    );
+  }
+}
 
 // ----------------------------------------------------------------------------
 // Compact week strip — matches the Nutrition tab's light date strip
@@ -150,6 +196,12 @@ class HomeWorkoutCard extends ConsumerWidget {
         DateTime(selectedDate.year, selectedDate.month, selectedDate.day);
     final viewingToday = selDay == today;
 
+    // The card cross-fades between its loading skeleton, status states and
+    // the loaded hero. Every branch is sized to the SAME 132pt hero height
+    // (see `_kWorkoutHeroHeight`) so real data swaps in with zero
+    // layout shift — no taller/shorter "pop".
+    Widget content;
+
     // --- Non-today selection: drive the card off workoutsProvider, filtered
     // by scheduledDate. The /today provider only ever knows about today. ---
     if (!viewingToday) {
@@ -168,21 +220,19 @@ class HomeWorkoutCard extends ConsumerWidget {
 
       Widget body;
       if (workoutsAsync.isLoading && !workoutsAsync.hasValue) {
-        body = _shell(context, c,
-            child: _statusBody(c, 'Loading…', accent: c.accent));
+        // Cold load → hero-shaped shimmer skeleton (matches loaded size).
+        body = _heroSkeleton(c, key: const ValueKey('wk-loading'));
       } else if (dayWorkout == null) {
         final isFuture = selDay.isAfter(today);
-        body = _shell(
+        body = _heroStatus(
           context,
           c,
-          child: _statusBody(
-            c,
-            isFuture
-                ? 'Rest day — nothing scheduled'
-                : 'No workout was scheduled this day',
-            accent: c.textMuted,
-            iconName: 'sleep',
-          ),
+          key: const ValueKey('wk-empty'),
+          msg: isFuture
+              ? 'Rest day — nothing scheduled'
+              : 'No workout was scheduled this day',
+          accent: c.textMuted,
+          iconName: 'sleep',
         );
       } else {
         // The hero body carries its own card surface + horizontal padding.
@@ -192,7 +242,12 @@ class HomeWorkoutCard extends ConsumerWidget {
       return Column(
         children: [
           _viewingBanner(context, ref, c, selDay),
-          body,
+          // Cross-fade the body so skeleton→content (and rest-day↔workout)
+          // never hard-pops as the user scrubs the week strip.
+          AnimatedSwitcher(
+            duration: kHomeCrossFade,
+            child: body,
+          ),
         ],
       );
     }
@@ -200,40 +255,95 @@ class HomeWorkoutCard extends ConsumerWidget {
     final state = ref.watch(todayWorkoutProvider);
     final resp = state.valueOrNull;
 
-    // Loading / generating states.
+    // Loading / generating states — both render the hero-shaped skeleton so
+    // the swap to the real hero is a pure cross-fade with no resize.
     if (state.isLoading && !state.hasValue) {
-      return _shell(context, c,
-          child: _statusBody(c, 'Loading your workout…', accent: c.accent));
-    }
-    if (resp?.isGenerating == true && resp?.hasDisplayableContent != true) {
-      return _shell(context, c,
-          child: _statusBody(
-              c, resp?.generationMessage ?? 'Generating your workout…',
-              accent: c.accent));
-    }
+      content = _heroSkeleton(c, key: const ValueKey('today-loading'));
+    } else if (resp?.isGenerating == true &&
+        resp?.hasDisplayableContent != true) {
+      content = _heroSkeleton(c, key: const ValueKey('today-generating'));
+    } else {
+      final summary = resp?.todayWorkout ?? resp?.nextWorkout;
+      final workout = summary?.toWorkout();
 
-    final summary = resp?.todayWorkout ?? resp?.nextWorkout;
-    final workout = summary?.toWorkout();
-
-    // Rest day / nothing scheduled.
-    if (workout == null) {
-      if (resp?.completedToday == true) {
-        return _shell(context, c,
-            child: _statusBody(c, 'Workout complete — great job today!',
-                accent: c.success, iconName: 'check'));
+      // Rest day / nothing scheduled.
+      if (workout == null) {
+        if (resp?.completedToday == true) {
+          content = _heroStatus(context, c,
+              key: const ValueKey('today-complete'),
+              msg: 'Workout complete — great job today!',
+              accent: c.success,
+              iconName: 'check');
+        } else {
+          content = _heroStatus(context, c,
+              key: const ValueKey('today-rest'),
+              msg: 'Rest day — no workout scheduled',
+              accent: c.textMuted,
+              iconName: 'sleep');
+        }
+      } else {
+        final isToday = resp?.hasWorkoutToday == true;
+        // The hero body carries its own card surface + horizontal padding.
+        content = KeyedSubtree(
+          key: ValueKey('today-workout-${workout.id}'),
+          child: _workoutRow(context, ref, c, workout,
+              isToday: isToday, completed: false),
+        );
       }
-      return _shell(context, c,
-          child: _statusBody(c, 'Rest day — no workout scheduled',
-              accent: c.textMuted, iconName: 'sleep'));
     }
 
-    final isToday = resp?.hasWorkoutToday == true;
-    // The hero body carries its own card surface + horizontal padding.
-    return _workoutRow(context, ref, c, workout,
-        isToday: isToday, completed: false);
+    return AnimatedSwitcher(
+      duration: kHomeCrossFade,
+      child: content,
+    );
   }
 
-  /// Small "viewing <date>" affordance with a tap-to-return-to-today action.
+  /// Hero-shaped shimmer skeleton — 132pt tall, 18pt radius, exactly the
+  /// dimensions of the loaded `_WorkoutHeroBody`. Wrapped in [kHomeHPad] so
+  /// it occupies the identical footprint and there is zero layout shift when
+  /// the real hero cross-fades in.
+  Widget _heroSkeleton(ThemeColors c, {required Key key}) {
+    return Padding(
+      key: key,
+      padding: kHomeHPad,
+      child: _SkeletonBox(
+        height: _kWorkoutHeroHeight,
+        radius: 18,
+        c: c,
+      ),
+    );
+  }
+
+  /// Hero-shaped status card (rest day / complete / empty). Uses the SAME
+  /// 132pt height as the loaded hero so the card never changes size between
+  /// states. Replaces the old small `_shell` container that caused a visible
+  /// shrink-then-grow when a workout finally loaded.
+  Widget _heroStatus(
+    BuildContext context,
+    ThemeColors c, {
+    required Key key,
+    required String msg,
+    required Color accent,
+    String iconName = 'workout',
+  }) {
+    return Padding(
+      key: key,
+      padding: kHomeHPad,
+      child: Container(
+        height: _kWorkoutHeroHeight,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: c.elevated,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: c.cardBorder),
+        ),
+        alignment: Alignment.centerLeft,
+        child: _statusBody(c, msg, accent: accent, iconName: iconName),
+      ),
+    );
+  }
+
+  /// Small "viewing [date]" affordance with a tap-to-return-to-today action.
   Widget _viewingBanner(
       BuildContext context, WidgetRef ref, ThemeColors c, DateTime date) {
     final now = DateTime.now();
@@ -306,21 +416,6 @@ class HomeWorkoutCard extends ConsumerWidget {
     );
   }
 
-  Widget _shell(BuildContext context, ThemeColors c, {required Widget child}) {
-    return Padding(
-      padding: kHomeHPad,
-      child: Container(
-        padding: const EdgeInsets.all(13),
-        decoration: BoxDecoration(
-          color: c.elevated,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: c.cardBorder),
-        ),
-        child: child,
-      ),
-    );
-  }
-
   Widget _statusBody(ThemeColors c, String msg,
       {required Color accent, String iconName = 'workout'}) {
     return Row(
@@ -361,7 +456,7 @@ class _WorkoutHeroBody extends ConsumerStatefulWidget {
 }
 
 class _WorkoutHeroBodyState extends ConsumerState<_WorkoutHeroBody> {
-  static const double _kHeroHeight = 132;
+  // Hero height comes from the shared top-level `_kWorkoutHeroHeight`.
 
   String? _imageUrl;
   bool _loadingImage = true;
@@ -405,9 +500,31 @@ class _WorkoutHeroBodyState extends ConsumerState<_WorkoutHeroBody> {
     if (cached != null) {
       _imageUrl = cached;
       _loadingImage = false;
+      // A9 (pre-cache): the hero is above-the-fold — warm the decoded image
+      // into Flutter's ImageCache so it paints instantly when the card mounts
+      // instead of fading in a frame or two later. Deferred to post-frame so
+      // a valid context (with MediaQuery) is available for precacheImage.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _precacheHeroImage(cached);
+      });
       return;
     }
     _fetchImage(name);
+  }
+
+  /// A9 (pre-cache): warm the exercise illustration into the global image
+  /// cache. Uses the same `CachedNetworkImageProvider` the card paints with
+  /// (and the same decode bounds) so the precache populates the exact cache
+  /// entry the `CachedNetworkImage` widget will hit — no double download.
+  void _precacheHeroImage(String url) {
+    if (!mounted) return;
+    precacheImage(
+      CachedNetworkImageProvider(url, maxWidth: 600, maxHeight: 360),
+      context,
+    ).catchError((_) {
+      // Best-effort warm-up — a failed precache just means the
+      // CachedNetworkImage placeholder shows briefly. No user-facing impact.
+    });
   }
 
   Future<void> _fetchImage(String exerciseName) async {
@@ -421,6 +538,8 @@ class _WorkoutHeroBodyState extends ConsumerState<_WorkoutHeroBody> {
         if (url != null && mounted) {
           await ImageUrlCache.set(exerciseName, url);
           if (!mounted) return;
+          // A9 (pre-cache): warm the decoded image before it paints.
+          _precacheHeroImage(url);
           setState(() {
             _imageUrl = url;
             _loadingImage = false;
@@ -454,10 +573,15 @@ class _WorkoutHeroBodyState extends ConsumerState<_WorkoutHeroBody> {
         HapticService.medium();
         context.push('/active-workout', extra: workout);
       },
-      child: ClipRRect(
+      // A5: the image-backed hero is the heaviest paint on Home (network
+      // image + gradient scrim). Isolating it in a RepaintBoundary stops a
+      // sibling tile's repaint (e.g. the per-second fasting tick) from
+      // forcing this expensive layer to re-rasterise.
+      child: RepaintBoundary(
+        child: ClipRRect(
         borderRadius: BorderRadius.circular(18),
         child: SizedBox(
-          height: _kHeroHeight,
+          height: _kWorkoutHeroHeight,
           child: Stack(
             fit: StackFit.expand,
             children: [
@@ -588,6 +712,7 @@ class _WorkoutHeroBodyState extends ConsumerState<_WorkoutHeroBody> {
             ],
           ),
         ),
+        ),
       ),
     );
   }
@@ -620,16 +745,16 @@ class _WorkoutHeroBodyState extends ConsumerState<_WorkoutHeroBody> {
           colors: [accent, accent.withValues(alpha: 0.7)],
         ),
       ),
+      // A3: while the exercise image URL resolves, sweep a soft shimmer over
+      // the accent gradient instead of a blocking spinner. The fill itself is
+      // already the final card size, so this is purely a texture change — the
+      // real image cross-fades in over it with no layout shift.
       child: _loadingImage
-          ? Center(
-              child: SizedBox(
-                width: 22,
-                height: 22,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: Colors.white.withValues(alpha: 0.6),
-                ),
-              ),
+          ? Shimmer.fromColors(
+              baseColor: Colors.white.withValues(alpha: 0.04),
+              highlightColor: Colors.white.withValues(alpha: 0.22),
+              period: const Duration(milliseconds: 1200),
+              child: const ColoredBox(color: Colors.white),
             )
           : null,
     );
@@ -698,7 +823,11 @@ class HomeNutritionCard extends ConsumerWidget {
 
     return Padding(
       padding: kHomeHPad,
-      child: Container(
+      // A5: paint-isolate the nutrition card. It's a multi-layer card
+      // (macro bars + two sub-tiles); a sibling Home tile rebuilding should
+      // not drag this whole surface into a repaint.
+      child: RepaintBoundary(
+        child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: c.elevated,
@@ -807,11 +936,18 @@ class HomeNutritionCard extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(width: 10),
-                  const Expanded(child: _NutritionFastingTile()),
+                  // A5: the fasting tile watches `fastingTimerProvider`,
+                  // which ticks every second. RepaintBoundary confines that
+                  // per-second repaint to the tile alone — the Water tile,
+                  // macro bars and the rest of the nutrition card stay put.
+                  const Expanded(
+                    child: RepaintBoundary(child: _NutritionFastingTile()),
+                  ),
                 ],
               ),
             ),
           ],
+        ),
         ),
       ),
     );

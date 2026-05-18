@@ -24,6 +24,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'bootstrap_prefetch_service.dart';
 import 'home_prewarmer.dart';
 import 'nutrition_prewarmer.dart';
 import 'social_prewarmer.dart';
@@ -53,11 +54,18 @@ class PrewarmerBoot {
       // prewarmer adds its own disk persistence.
       final youBlob = prefs.getString(YouOverviewPrewarmer.persistKey);
       final completionBlob = prefs.getString(WorkoutCompletionPrewarmer.persistKey);
+      // The /home/bootstrap blob key is user+local-date scoped; resolve it by
+      // scanning for today's suffix (no user_id available pre-auth).
+      final bootstrapBlob = BootstrapPrefetchService.readDiskBlob(prefs);
 
       // Dispatch synchronously to each prewarmer's static hydrator. None of
       // these touch IO, so they're all microseconds.
       YouOverviewPrewarmer.hydrateFromJsonStatic(youBlob);
       WorkoutCompletionPrewarmer.hydrateFromJsonStatic(completionBlob);
+      // Pre-hydrate Home from the persisted bootstrap blob so the workout
+      // tile renders on the first frame; nutrition/hydration are stashed and
+      // seeded by the next BootstrapPrefetchService.prefetch(ref) call.
+      BootstrapPrefetchService.hydrateFromDiskBlob(bootstrapBlob);
 
       // Other prewarmers don't persist to disk yet — call their no-op
       // hydrateFromDisk() so any future implementation gets picked up

@@ -76,6 +76,7 @@ import '../../widgets/usage_counter_strip.dart';
 import '../../widgets/app_tour/app_tour_controller.dart';
 import '../../core/services/posthog_service.dart';
 import '../../core/services/fitness_snapshot_service.dart';
+import '../../core/perf/perf_trace.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
 part 'home_screen_part_dummy_animation_controller.dart';
@@ -135,6 +136,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
   /// Ensures the Health Connect popup auto-shows at most once per app session.
   static bool _healthPopupShownThisSession = false;
+
+  /// Perf markers (Phase B hook): guards so each PerfTrace mark fires exactly
+  /// once. `_markedFirstContent` flips the first time `build()` runs with real
+  /// (non-skeleton) content; `_markedInteractive` flips once init completes.
+  bool _markedFirstContent = false;
+  bool _markedInteractive = false;
 
   void _triggerNavTour() {
     final steps = [
@@ -723,6 +730,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
   /// Load nutrition & hydration data so TodayStatsRow shows on first launch.
   /// Also pre-warms nutrition preferences so Profile tab loads instantly.
+  ///
+  /// A6 — unblock init: this no longer `await`s the three loads. All three
+  /// notifiers render cache-first (they emit their in-memory/SharedPrefs
+  /// cache synchronously and refresh in the background), so awaiting only
+  /// delayed Home's `_extInitState` postFrame `Future.wait` on a network
+  /// round-trip with no UI benefit. The loads are fired fire-and-forget,
+  /// mirroring `_refreshNutritionSilent()`, and this function returns
+  /// immediately.
   Future<void> _initializeNutritionAndHydration() async {
     final authState = ref.read(authStateProvider);
     final userId = authState.user?.id;
@@ -738,11 +753,69 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     // Fire-and-forget: it's not blocking the first paint of nutrition/macros.
     unawaited(ref.read(fastingProvider.notifier).initialize(userId));
 
-    await Future.wait([
-      ref.read(nutritionProvider.notifier).loadTodaySummary(userId),
-      ref.read(hydrationProvider.notifier).loadTodaySummary(userId),
-      ref.read(nutritionPreferencesProvider.notifier).initialize(userId),
-    ]);
+    // Fire-and-forget — providers are cache-first so the UI shows data
+    // immediately and the network refresh resolves silently. Not awaited so
+    // the postFrame init chain stays unblocked.
+    unawaited(ref.read(nutritionProvider.notifier).loadTodaySummary(userId));
+    unawaited(ref.read(hydrationProvider.notifier).loadTodaySummary(userId));
+    unawaited(
+        ref.read(nutritionPreferencesProvider.notifier).initialize(userId));
+  }
+
+  /// A8 — predictive prefetch. Once Home is interactive and idle, warm the
+  /// caches for the two screens a user is most likely to open next so those
+  /// taps feel instant:
+  ///   1. Today's workout detail — pre-fetch `getWorkout(id)` for today's
+  ///      (or the next) workout so [WorkoutDetailScreen]'s `_loadWorkout`
+  ///      hits a warm repository cache instead of a cold network call.
+  ///   2. The Nutrition daily screen's data — `nutritionProvider` and
+  ///      `hydrationProvider` today summaries (re-triggered cache-first;
+  ///      a no-op if already warm from `_initializeNutritionAndHydration`).
+  ///
+  /// This NEVER navigates — it only triggers loads. It's fire-and-forget,
+  /// fully `mounted`-guarded, and skipped entirely when the device is
+  /// offline so we don't burn a slow/metered connection on speculative work.
+  Future<void> _predictivePrefetch() async {
+    if (!mounted) return;
+
+    // Easy connectivity check: skip prefetch when fully offline. (We don't
+    // gate on mobile-vs-wifi — mobile data isn't necessarily slow, and the
+    // prefetch payload is tiny.)
+    try {
+      final conn = await Connectivity().checkConnectivity();
+      if (conn.every((r) => r == ConnectivityResult.none)) return;
+    } catch (_) {
+      // If the connectivity probe itself fails, just skip prefetch quietly.
+      return;
+    }
+    if (!mounted) return;
+
+    // (1) Today's workout detail — warm the workout repository cache.
+    final todayWorkout = _getTodayWorkoutFromState(ref.read(todayWorkoutProvider));
+    final workoutId = todayWorkout?.id;
+    if (workoutId != null && workoutId.isNotEmpty) {
+      // Fire-and-forget; getWorkout populates the repo's cache so the detail
+      // screen's _loadWorkout resolves instantly.
+      unawaited(
+        ref.read(workoutRepositoryProvider).getWorkout(workoutId).catchError(
+          (e) {
+            debugPrint('🔍 [Home] prefetch workout detail skipped: $e');
+            return null;
+          },
+        ),
+      );
+    }
+
+    // (2) Nutrition daily screen data — ensure today's nutrition + hydration
+    // summaries are warm. Cache-first notifiers, so this is a cheap no-op if
+    // _initializeNutritionAndHydration already populated them.
+    final userId = ref.read(authStateProvider).user?.id;
+    if (userId != null) {
+      unawaited(ref.read(nutritionProvider.notifier).loadTodaySummary(userId));
+      unawaited(ref
+          .read(hydrationProvider.notifier)
+          .loadTodaySummary(userId, showLoading: false));
+    }
   }
 
   /// Initialize window mode tracking with the user's ID
@@ -829,6 +902,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     final backgroundColor =
         isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
     final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
+
+    // Perf marker: 'home_first_content'. `_isInitializing` is true until the
+    // first workout check completes — once false, Home is rendering real
+    // (non-skeleton) content. Mark in a post-frame callback so it fires after
+    // this frame is actually painted, and only once.
+    if (!_markedFirstContent && !_isInitializing) {
+      _markedFirstContent = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        PerfTrace.mark('home_first_content');
+      });
+    }
 
     // Level-up listener moved to MainShell (widgets/main_shell.dart) so it fires from any screen
 
@@ -950,17 +1034,59 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     );
   }
 
+  /// Number of leading sections that are kept eager (above-the-fold). These
+  /// are visible without scrolling on virtually every device (quick actions,
+  /// week strip, hero workout card, nutrition card), so building them lazily
+  /// would only add a frame of jank on first paint with no scroll-cost win.
+  static const int _eagerSectionCount = 4;
+
   /// Build the customizable home sections as slivers, in the user's chosen
   /// order, skipping any they've hidden in "My Space". Each section gets a
   /// uniform [kHomeGap] below it. If every section is hidden the list is
   /// simply empty — the header + banners still render, no crash.
+  ///
+  /// A4 — lazy below-the-fold sections: the first [_eagerSectionCount]
+  /// sections render eagerly as [SliverToBoxAdapter]s (they're on-screen at
+  /// rest). Every remaining section is emitted through a single [SliverList]
+  /// with a [SliverChildBuilderDelegate] so it only builds when the user
+  /// scrolls it into the viewport. Section order and content are unchanged;
+  /// each below-the-fold section still gets its trailing [kHomeGap].
   List<Widget> _homeSectionSlivers(HomeSectionsState sections) {
     final visible = sections.visibleInOrder;
     final slivers = <Widget>[];
-    for (final section in visible) {
-      slivers.add(SliverToBoxAdapter(child: _widgetForSection(section)));
+
+    // Above-the-fold: eager adapters, preserving the per-section gap.
+    final eagerCount =
+        visible.length < _eagerSectionCount ? visible.length : _eagerSectionCount;
+    for (var i = 0; i < eagerCount; i++) {
+      slivers.add(SliverToBoxAdapter(child: _widgetForSection(visible[i])));
       slivers.add(const SliverToBoxAdapter(child: SizedBox(height: kHomeGap)));
     }
+
+    // Below-the-fold: a single lazily-building SliverList. Each visible
+    // section maps to one child = section widget + its trailing kHomeGap,
+    // so inter-section spacing matches the eager path exactly.
+    final lazyCount = visible.length - eagerCount;
+    if (lazyCount > 0) {
+      slivers.add(
+        SliverList(
+          delegate: SliverChildBuilderDelegate(
+            (context, index) {
+              final section = visible[eagerCount + index];
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _widgetForSection(section),
+                  const SizedBox(height: kHomeGap),
+                ],
+              );
+            },
+            childCount: lazyCount,
+          ),
+        ),
+      );
+    }
+
     return slivers;
   }
 

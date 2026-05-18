@@ -65,6 +65,113 @@ class _NutritionDiskCache {
 }
 
 
+// ===========================================================================
+// _MealWriteQueue — offline meal-logging write queue (A11)
+// ===========================================================================
+
+/// Disk-backed FIFO queue of meal-log writes (`POST /nutrition/log-direct`)
+/// made while the device is offline.
+///
+/// Each entry stores the FULL request body (the map `logAdjustedFood` builds)
+/// — including a stable `idempotency_key`. On a connectivity-restored event
+/// the queue flushes in FIFO order, de-duped by idempotency key; the same key
+/// on the body means a partial-flush-then-retry can't double-log either.
+///
+/// Versioned, user-scoped SharedPreferences envelope `{v, items:[...]}` — a
+/// schema mismatch drops the queue rather than crashing.
+class _MealWriteQueue {
+  static const _prefix = 'meal_write_queue_v1::';
+  static const _schemaVersion = 1;
+
+  static String _key(String userId) => '$_prefix$userId';
+
+  /// Append a meal-log request body to the on-disk queue, de-duping on the
+  /// embedded `idempotency_key`.
+  static Future<void> enqueue(String userId, Map<String, dynamic> body) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final list = await _read(prefs, userId);
+      final key = body['idempotency_key'];
+      if (key != null && list.any((b) => b['idempotency_key'] == key)) {
+        return; // already queued — never enqueue twice
+      }
+      list.add(body);
+      await _persist(prefs, userId, list);
+      debugPrint('🥗 [MealQueue] enqueued (depth=${list.length})');
+    } catch (e) {
+      debugPrint('🥗 [MealQueue] enqueue failed: $e');
+    }
+  }
+
+  static Future<List<Map<String, dynamic>>> _read(
+      SharedPreferences prefs, String userId) async {
+    final raw = prefs.getString(_key(userId));
+    if (raw == null || raw.isEmpty) return [];
+    try {
+      final envelope = jsonDecode(raw);
+      if (envelope is! Map<String, dynamic>) return [];
+      if (envelope['v'] != _schemaVersion) return []; // drop on schema bump
+      final items = envelope['items'];
+      if (items is! List) return [];
+      return items
+          .whereType<Map>()
+          .map((m) => Map<String, dynamic>.from(m))
+          .toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  static Future<void> _persist(SharedPreferences prefs, String userId,
+      List<Map<String, dynamic>> list) async {
+    if (list.isEmpty) {
+      await prefs.remove(_key(userId));
+      return;
+    }
+    await prefs.setString(
+      _key(userId),
+      jsonEncode({'v': _schemaVersion, 'items': list}),
+    );
+  }
+
+  /// Drain the queue in FIFO order via [send]. Stops on the first transient
+  /// failure and re-persists the remainder so order + idempotency hold for
+  /// the next online event. Returns the number of writes flushed.
+  static Future<int> flush(
+    String userId,
+    Future<bool> Function(Map<String, dynamic> body) send,
+  ) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      var list = await _read(prefs, userId);
+      if (list.isEmpty) return 0;
+      var flushed = 0;
+      while (list.isNotEmpty) {
+        final ok = await send(list.first);
+        if (!ok) break; // transient failure — keep the rest queued
+        list = list.sublist(1);
+        flushed++;
+        await _persist(prefs, userId, list);
+      }
+      debugPrint('🥗 [MealQueue] flushed $flushed, remaining ${list.length}');
+      return flushed;
+    } catch (e) {
+      debugPrint('🥗 [MealQueue] flush failed: $e');
+      return 0;
+    }
+  }
+
+  static Future<bool> isEmpty(String userId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return (await _read(prefs, userId)).isEmpty;
+    } catch (_) {
+      return true;
+    }
+  }
+}
+
+
 /// Progress event for streaming food logging
 class FoodLoggingProgress {
   /// Current step number (1-indexed)
@@ -252,7 +359,68 @@ class NutritionNotifier extends StateNotifier<NutritionState> {
   String? _lastLoadedUserId;  // Track which user data is loaded for
   DateTime? _lastLoadTime;     // Track when data was last loaded
 
-  NutritionNotifier(this._repository, this._ref) : super(const NutritionState());
+  /// Connectivity subscription that flushes the offline meal write queue
+  /// when the network is restored (A11).
+  StreamSubscription<List<ConnectivityResult>>? _connSub;
+  bool _isFlushingMealQueue = false;
+
+  /// Tombstones for meals deleted optimistically (A12c). A background
+  /// `loadTodaySummary` whose request was in flight BEFORE the delete landed
+  /// could otherwise resolve afterwards and resurrect the deleted meal. Any
+  /// id in this set is filtered out of an incoming server summary. An entry
+  /// is cleared once `commitDeleteLog`'s network delete confirms the server
+  /// also dropped it (so a later genuine re-log of the same id isn't hidden).
+  final Set<String> _deletedTombstones = {};
+
+  NutritionNotifier(this._repository, this._ref) : super(const NutritionState()) {
+    _connSub = Connectivity().onConnectivityChanged.listen((results) {
+      final online = results.any((r) =>
+          r == ConnectivityResult.wifi ||
+          r == ConnectivityResult.mobile ||
+          r == ConnectivityResult.ethernet ||
+          r == ConnectivityResult.vpn);
+      if (online) {
+        // Defer slightly so the radio + DNS settle before hitting the API.
+        Future.delayed(const Duration(milliseconds: 800), _flushMealQueue);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _connSub?.cancel();
+    super.dispose();
+  }
+
+  /// Flush the offline meal write queue. Each queued body is replayed verbatim
+  /// (via [NutritionRepository.replayQueuedMealLog]) so its stable
+  /// `idempotency_key` lets the server de-dupe any write that already landed.
+  /// On success the in-memory + disk caches are reconciled with the server.
+  Future<void> _flushMealQueue() async {
+    final userId = _lastLoadedUserId;
+    if (userId == null || _isFlushingMealQueue) return;
+    if (await _MealWriteQueue.isEmpty(userId)) return;
+    _isFlushingMealQueue = true;
+    try {
+      final flushed = await _MealWriteQueue.flush(userId, (body) async {
+        try {
+          await _repository.replayQueuedMealLog(body);
+          return true;
+        } catch (e) {
+          debugPrint('🥗 [Nutrition] queued meal flush item failed: $e');
+          return false; // transient — keep it (and the rest) queued
+        }
+      });
+      if (flushed > 0) {
+        // Reconcile: server now holds the real rows. forceRefresh so the
+        // optimistic splices are replaced by authoritative data in place.
+        await loadTodaySummary(userId, forceRefresh: true);
+        await loadRecentLogs(userId, forceRefresh: true);
+      }
+    } finally {
+      _isFlushingMealQueue = false;
+    }
+  }
 
   /// Pre-seed state from bootstrap data so the home screen shows nutrition instantly.
   void preSeedFromBootstrap({
@@ -364,11 +532,22 @@ class NutritionNotifier extends StateNotifier<NutritionState> {
     final stopwatch = Stopwatch()..start();
     try {
       // Pass local date to avoid UTC mismatch on server (Render runs in UTC)
-      final summary = await _repository.getDailySummary(userId, date: localDate);
+      var summary = await _repository.getDailySummary(userId, date: localDate);
       debugPrint(
         '🥗 [NutritionProvider] loadTodaySummary network: ${stopwatch.elapsedMilliseconds}ms '
         '(meals=${summary.meals.length}, kcal=${summary.totalCalories})',
       );
+      // (A12c) Reconcile in place — if this refresh's request predated an
+      // optimistic delete, the server payload still contains the deleted
+      // meal. Drop any tombstoned id so the delete isn't resurrected.
+      if (_deletedTombstones.isNotEmpty && summary.meals.isNotEmpty) {
+        final kept = summary.meals
+            .where((m) => !_deletedTombstones.contains(m.id))
+            .toList();
+        if (kept.length != summary.meals.length) {
+          summary = _recomputeTotals(summary, kept);
+        }
+      }
       state = state.copyWith(
         isLoading: false,
         todaySummary: summary,
@@ -573,6 +752,8 @@ class NutritionNotifier extends StateNotifier<NutritionState> {
     if (idx < 0) return null;
     final removed = summary.meals[idx];
     final remaining = [...summary.meals]..removeAt(idx);
+    // Tombstone the id so an in-flight background refresh can't resurrect it.
+    _deletedTombstones.add(logId);
     state = state.copyWith(
       todaySummary: _recomputeTotals(summary, remaining),
     );
@@ -603,6 +784,8 @@ class NutritionNotifier extends StateNotifier<NutritionState> {
   void restoreLog(FoodLog meal) {
     final summary = state.todaySummary;
     if (summary == null) return;
+    // Undo — lift the tombstone so the meal can re-appear from the server.
+    _deletedTombstones.remove(meal.id);
     final list = [...summary.meals];
     int insertAt = list.length;
     for (var i = 0; i < list.length; i++) {
@@ -741,12 +924,17 @@ class NutritionNotifier extends StateNotifier<NutritionState> {
   Future<void> commitDeleteLog(String userId, String logId, FoodLog snapshot) async {
     try {
       await _repository.deleteFoodLog(logId);
+      // Server has now dropped the row — future refreshes can't resurrect it,
+      // so the tombstone is no longer needed (and keeping it would hide a
+      // genuine re-log of a recycled id).
+      _deletedTombstones.remove(logId);
       // Refresh in the background — UI is already correct, this just keeps
       // server-derived metadata (recent logs, weekly aggregates) in sync.
       unawaited(loadRecentLogs(userId, forceRefresh: true));
     } catch (e) {
       // Roll back the optimistic removal if the network call fails so the
       // user doesn't end up with a deleted-locally-but-still-on-server row.
+      // restoreLog also lifts the tombstone.
       restoreLog(snapshot);
       state = state.copyWith(error: e.toString());
     }

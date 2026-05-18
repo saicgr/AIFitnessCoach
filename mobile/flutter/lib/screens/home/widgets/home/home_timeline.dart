@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shimmer/shimmer.dart';
 
 import '../../../../core/theme/theme_colors.dart';
 import '../../../../core/widgets/line_icon.dart';
@@ -42,13 +43,16 @@ class HomeTimeline extends ConsumerWidget {
     final timelineState = ref.watch(timelineProvider);
 
     // --- Build the body depending on the timeline feed state. -------------
+    // Each branch carries a ValueKey so the AnimatedSwitcher below cross-fades
+    // skeleton→content (and error→content) instead of hard-popping.
     Widget body;
     if (timelineState.isLoading && timelineState.days.isEmpty) {
-      // Cold start, no cached feed yet → per-row skeletons.
-      body = const _SkeletonList();
+      // Cold start, no cached feed yet → per-row shimmer skeletons.
+      body = const _SkeletonList(key: ValueKey('tl-skeleton'));
     } else if (timelineState.error != null && timelineState.days.isEmpty) {
       // Feed failed and we have nothing cached → tile-level error + retry.
       body = _ErrorTile(
+        key: const ValueKey('tl-error'),
         c: c,
         onRetry: () => ref.read(timelineProvider.notifier).refresh(),
       );
@@ -65,6 +69,7 @@ class HomeTimeline extends ConsumerWidget {
       );
       if (events.isEmpty) {
         body = Padding(
+          key: const ValueKey('tl-empty'),
           padding: const EdgeInsets.symmetric(vertical: 6),
           child: Text(
             isFuture ? 'Nothing planned for this day' : 'Nothing logged or planned yet',
@@ -77,6 +82,7 @@ class HomeTimeline extends ConsumerWidget {
         );
       } else {
         body = Column(
+          key: const ValueKey('tl-list'),
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             for (int i = 0; i < events.length; i++)
@@ -92,7 +98,11 @@ class HomeTimeline extends ConsumerWidget {
 
     return Padding(
       padding: kHomeHPad,
-      child: Container(
+      // A5: the timeline is a tall multi-row card; isolate its paint so a
+      // sibling Home tile rebuilding (or the shimmer sweep) doesn't force
+      // the whole feed to re-rasterise.
+      child: RepaintBoundary(
+        child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: c.elevated,
@@ -132,8 +142,21 @@ class HomeTimeline extends ConsumerWidget {
               ],
             ),
             const SizedBox(height: 12),
-            body,
+            // Cross-fade skeleton→content (and error→content) so the feed
+            // never hard-pops in. AnimatedSize absorbs the height delta
+            // between the fixed-height skeleton and the real list so the
+            // transition itself is smooth rather than a jump.
+            AnimatedSize(
+              duration: const Duration(milliseconds: 220),
+              curve: Curves.easeInOut,
+              alignment: Alignment.topCenter,
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 220),
+                child: body,
+              ),
+            ),
           ],
+        ),
         ),
       ),
     );
@@ -696,42 +719,57 @@ class _TimelineRow extends StatelessWidget {
 }
 
 /// Per-row loading placeholders shown on a cold start before the feed lands.
+///
+/// The whole list is wrapped in ONE [Shimmer] so the sweep runs as a single
+/// continuous gradient across all three rows (rather than three independent
+/// shimmers). Every placeholder block is sized to mirror the loaded
+/// `_TimelineRow` (11pt dot, 34pt icon chip, two text lines) so the real feed
+/// cross-fades in with no layout shift.
 class _SkeletonList extends StatelessWidget {
-  const _SkeletonList();
+  const _SkeletonList({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        for (int i = 0; i < 3; i++)
-          Padding(
-            padding: EdgeInsets.only(bottom: i == 2 ? 0 : 14),
-            child: const _SkeletonRow(),
-          ),
-      ],
+    final base = Theme.of(context).dividerColor.withValues(alpha: 0.30);
+    final highlight = Theme.of(context).dividerColor.withValues(alpha: 0.12);
+    return Shimmer.fromColors(
+      baseColor: base,
+      highlightColor: highlight,
+      period: const Duration(milliseconds: 1200),
+      child: Column(
+        children: [
+          for (int i = 0; i < 3; i++)
+            Padding(
+              padding: EdgeInsets.only(bottom: i == 2 ? 0 : 14),
+              child: _SkeletonRow(block: base),
+            ),
+        ],
+      ),
     );
   }
 }
 
+/// One skeleton row — geometry mirrors `_TimelineRow` exactly. [block] is the
+/// shimmer base colour painted into every placeholder shape.
 class _SkeletonRow extends StatelessWidget {
-  const _SkeletonRow();
+  final Color block;
+  const _SkeletonRow({required this.block});
 
   @override
   Widget build(BuildContext context) {
-    final base = Theme.of(context).dividerColor.withValues(alpha: 0.35);
     return Row(
       children: [
         Container(
           width: 11,
           height: 11,
-          decoration: BoxDecoration(shape: BoxShape.circle, color: base),
+          decoration: BoxDecoration(shape: BoxShape.circle, color: block),
         ),
         const SizedBox(width: 12),
         Container(
           width: 34,
           height: 34,
           decoration: BoxDecoration(
-            color: base,
+            color: block,
             borderRadius: BorderRadius.circular(10),
           ),
         ),
@@ -744,7 +782,7 @@ class _SkeletonRow extends StatelessWidget {
                 height: 11,
                 width: 130,
                 decoration: BoxDecoration(
-                  color: base,
+                  color: block,
                   borderRadius: BorderRadius.circular(4),
                 ),
               ),
@@ -753,7 +791,7 @@ class _SkeletonRow extends StatelessWidget {
                 height: 9,
                 width: 80,
                 decoration: BoxDecoration(
-                  color: base,
+                  color: block,
                   borderRadius: BorderRadius.circular(4),
                 ),
               ),
@@ -769,7 +807,7 @@ class _SkeletonRow extends StatelessWidget {
 class _ErrorTile extends StatelessWidget {
   final ThemeColors c;
   final VoidCallback onRetry;
-  const _ErrorTile({required this.c, required this.onRetry});
+  const _ErrorTile({super.key, required this.c, required this.onRetry});
 
   @override
   Widget build(BuildContext context) {

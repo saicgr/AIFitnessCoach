@@ -42,6 +42,23 @@ extension __HomeScreenStateExt on _HomeScreenState {
       ]);
       // Non-critical tasks run after critical ones resolve
       if (!mounted) return;
+
+      // Perf marker: 'home_interactive'. Critical init (_initializeWorkouts,
+      // current program, nutrition/hydration kick-off) has resolved — Home is
+      // now interactive. Fired exactly once.
+      if (!_markedInteractive) {
+        _markedInteractive = true;
+        PerfTrace.mark('home_interactive');
+      }
+
+      // A8 — predictive prefetch. Wait a short idle delay after the first
+      // frame so this speculative work doesn't contend with on-screen
+      // rendering, then warm the workout-detail + nutrition-daily caches.
+      Future.delayed(const Duration(milliseconds: 600), () {
+        if (!mounted) return;
+        _predictivePrefetch();
+      });
+
       Future.wait([
         Future(() => _checkPendingWidgetAction()).catchError((e) {
           debugPrint('❌ [Home] _checkPendingWidgetAction error: $e');

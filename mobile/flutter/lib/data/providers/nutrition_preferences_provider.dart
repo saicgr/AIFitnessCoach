@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -22,6 +23,72 @@ const String _targetsRecalcV2DonePrefPrefix = 'nutrition_targets_recalc_v2_done_
 /// In-memory cache for instant display on provider recreation
 /// Survives provider invalidation and prevents loading flash
 NutritionPreferencesState? _nutritionPrefsInMemoryCache;
+
+// ===========================================================================
+// _NutritionPrefsDiskCache — stale-while-revalidate disk cache (A2)
+// ===========================================================================
+
+/// Persistent (cross-launch) cache for the user's `NutritionPreferences`.
+///
+/// Mirrors `_NutritionDiskCache`: a JSON-encoded `NutritionPreferences` in a
+/// versioned, user-scoped envelope. Preferences are NOT daily, so the cache
+/// is keyed only by user_id — no date stamp. Powers cold-start
+/// stale-while-revalidate: the nutrition prefs (target calories/macros that
+/// the Home macro ring reads) render instantly while `initialize` revalidates
+/// from the backend.
+class _NutritionPrefsDiskCache {
+  static const _prefix = 'nutrition_prefs_v1::';
+  static const _schemaVersion = 1;
+
+  static String _key(String userId) => '$_prefix$userId';
+
+  /// Read the persisted preferences, or null on miss / schema mismatch /
+  /// malformed JSON. Never throws — a stale render is corrected by the
+  /// network revalidation.
+  static Future<NutritionPreferences?> read(String userId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString(_key(userId));
+      if (raw == null || raw.isEmpty) return null;
+      final envelope = jsonDecode(raw);
+      if (envelope is! Map<String, dynamic>) return null;
+      if (envelope['v'] != _schemaVersion) return null; // drop on schema bump
+      final body = envelope['preferences'];
+      if (body is! Map<String, dynamic>) return null;
+      return NutritionPreferences.fromJson(body);
+    } catch (e) {
+      debugPrint('🥗 [NutritionPrefsDiskCache] read failed: $e');
+      return null;
+    }
+  }
+
+  /// Write-through the preferences. Best-effort.
+  static Future<void> write(String userId, NutritionPreferences value) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(
+        _key(userId),
+        jsonEncode({
+          'v': _schemaVersion,
+          'cached_at': DateTime.now().toIso8601String(),
+          'preferences': value.toJson(),
+        }),
+      );
+    } catch (e) {
+      debugPrint('🥗 [NutritionPrefsDiskCache] write failed: $e');
+    }
+  }
+
+  /// Drop the cache — provided for logout / account-switch cleanup parity
+  /// with `_NutritionDiskCache.clear`.
+  // ignore: unused_element
+  static Future<void> clear(String userId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_key(userId));
+    } catch (_) {/* best-effort */}
+  }
+}
 
 // ============================================
 // Nutrition Preferences State
@@ -186,6 +253,24 @@ class NutritionPreferencesNotifier extends StateNotifier<NutritionPreferencesSta
 
   Future<void> _runInitialize(String userId) async {
     state = state.copyWith(isLoading: true, clearError: true);
+
+    // Stale-while-revalidate (A2): seed preferences from the disk cache so the
+    // Home macro ring / target calories render instantly on a cold start,
+    // before the network round-trip below. Only when in-memory state is empty.
+    if (state.preferences == null) {
+      final cached = await _NutritionPrefsDiskCache.read(userId);
+      if (cached != null && state.preferences == null) {
+        debugPrint('🥗 [NutritionPrefsProvider] Seeded preferences from disk cache');
+        state = state.copyWith(
+          preferences: cached,
+          // Honour the cached backend flag so onboarding gating is correct
+          // even before the network confirms.
+          onboardingCompleted: state.onboardingCompleted ||
+              cached.nutritionOnboardingCompleted,
+        );
+      }
+    }
+
     try {
       debugPrint('🥗 [NutritionPrefsProvider] Initializing for $userId');
 
@@ -237,6 +322,10 @@ class NutritionPreferencesNotifier extends StateNotifier<NutritionPreferencesSta
       );
       // Update in-memory cache for instant access on provider recreation
       _nutritionPrefsInMemoryCache = state;
+      // Write through to disk for the next cold start (A2).
+      if (preferences != null) {
+        unawaited(_NutritionPrefsDiskCache.write(userId, preferences));
+      }
 
       debugPrint(
           '✅ [NutritionPrefsProvider] Initialized: onboarded=${state.onboardingCompleted} (backend=$backendOnboardingCompleted, was=$wasOnboardingCompleted), weights=${weightHistory.length}');
@@ -295,6 +384,8 @@ class NutritionPreferencesNotifier extends StateNotifier<NutritionPreferencesSta
             : null,
       );
       state = _nutritionPrefsInMemoryCache!;
+      // Persist the recalculated preferences so the next cold start is fresh.
+      unawaited(_NutritionPrefsDiskCache.write(userId, updated));
 
       debugPrint('✅ [NutritionPrefsProvider] v2 recalc done: $oldCal → $newCal cal');
     } catch (e) {
@@ -377,6 +468,8 @@ class NutritionPreferencesNotifier extends StateNotifier<NutritionPreferencesSta
         onboardingCompleted: true,
         isLoading: false,
       );
+      _nutritionPrefsInMemoryCache = state;
+      unawaited(_NutritionPrefsDiskCache.write(userId, preferences));
       debugPrint('✅ [NutritionPrefsProvider] Onboarding completed (saved to backend)');
     } catch (e) {
       debugPrint('❌ [NutritionPrefsProvider] Onboarding error: $e');
@@ -412,6 +505,8 @@ class NutritionPreferencesNotifier extends StateNotifier<NutritionPreferencesSta
         preferences: preferences,
       );
       state = state.copyWith(preferences: saved, isLoading: false);
+      _nutritionPrefsInMemoryCache = state;
+      unawaited(_NutritionPrefsDiskCache.write(userId, saved));
       debugPrint('✅ [NutritionPrefsProvider] Preferences saved');
     } catch (e) {
       debugPrint('❌ [NutritionPrefsProvider] Save preferences error: $e');
@@ -493,6 +588,9 @@ class NutritionPreferencesNotifier extends StateNotifier<NutritionPreferencesSta
         dynamicTargets: dynamicTargets,
       );
       _nutritionPrefsInMemoryCache = state;
+      if (preferences != null) {
+        unawaited(_NutritionPrefsDiskCache.write(userId, preferences));
+      }
       debugPrint('✅ [NutritionPrefsProvider] Force-refresh done: goal=${preferences?.nutritionGoals}, cal=${preferences?.targetCalories}');
     } catch (e) {
       debugPrint('❌ [NutritionPrefsProvider] Force-refresh error: $e');
@@ -535,6 +633,8 @@ class NutritionPreferencesNotifier extends StateNotifier<NutritionPreferencesSta
         dynamicTargets: dynamicTargets,
         isLoading: false,
       );
+      _nutritionPrefsInMemoryCache = state;
+      unawaited(_NutritionPrefsDiskCache.write(userId, preferences));
       debugPrint('✅ [NutritionPrefsProvider] Targets recalculated');
     } catch (e) {
       debugPrint('❌ [NutritionPrefsProvider] Recalculate error: $e');
@@ -633,6 +733,8 @@ class NutritionPreferencesNotifier extends StateNotifier<NutritionPreferencesSta
         dynamicTargets: dynamicTargets,
         isLoading: false,
       );
+      _nutritionPrefsInMemoryCache = state;
+      unawaited(_NutritionPrefsDiskCache.write(userId, saved));
       debugPrint('✅ [NutritionPrefsProvider] Targets updated');
     } catch (e) {
       debugPrint('❌ [NutritionPrefsProvider] Update targets error: $e');
@@ -659,6 +761,8 @@ class NutritionPreferencesNotifier extends StateNotifier<NutritionPreferencesSta
         preferences: updatedPreferences,
       );
       state = state.copyWith(preferences: saved);
+      _nutritionPrefsInMemoryCache = state;
+      unawaited(_NutritionPrefsDiskCache.write(userId, saved));
 
       debugPrint('✅ [NutritionPrefsProvider] Weekly check-in recorded, dismiss counter reset');
     } catch (e) {
