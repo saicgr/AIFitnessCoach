@@ -33,11 +33,15 @@
 
 ---
 
-## DAILY (every morning, 5 min at 5:50 AM coffee)
+## DAILY (every morning — wake 6:20, 1hr GEO posting block)
+
+Wake 6:20. Over coffee, run the GEO check (it runs ~10 min and drafts 25 Reddit + 25 X posts). Then 6:35–7:35 is the GEO posting hour: paste the drafts into Reddit and X. 6:30–7:30 CT = 7:30–8:30 ET, Reddit's high-traffic morning window.
 
 ```
 Quick GEO status check — anything urgent today?
 ```
+
+**Sleep floor (non-negotiable): 7 hours.** Wake 6:20, hard bed by 11:00 at the latest (10:30 target). Night job-app blocks stop when bedtime hits — never run past the floor.
 
 ---
 
@@ -45,9 +49,8 @@ Quick GEO status check — anything urgent today?
 
 | Time | Do | Prompt to paste |
 |---|---|---|
-| 5:50 | coffee + daily ritual | `Quick GEO status check` |
-| 6:20 | 15 job apps | — |
-| 6:50 | build 40m + 2 background agents | — |
+| 6:20 | wake + coffee + run daily GEO check (runs ~10m over coffee) | `Quick GEO status check` |
+| 6:35 | 🎯 GEO posting hour — post the 25 Reddit + 25 X drafts | — |
 | 7:50 | posts auto-fire — Zealova X thread + Hireable LI #1 | — |
 | 8:00 | day job | — |
 | **11:00** | **Zealova Reel #1 auto-fires** (IG + TT + YT Shorts — scheduled Sun) | — |
@@ -72,9 +75,8 @@ Quick GEO status check — anything urgent today?
 
 | Time | Do | Prompt to paste |
 |---|---|---|
-| 5:50 | coffee + daily ritual | `Quick GEO status check` |
-| 6:20 | 15 apps | — |
-| 6:50 | build 40m | — |
+| 6:20 | wake + coffee + run daily GEO check (runs ~10m over coffee) | `Quick GEO status check` |
+| 6:35 | 🎯 GEO posting hour — post the 25 Reddit + 25 X drafts | — |
 | 7:50 | posts auto-fire — Zealova X tweet + Mobi X thread + Mobi LI #1 | — |
 | 8:00 | day job | — |
 | 12:00 | Mobi r/ChatGPT + 5 r/PromptEng comments | — |
@@ -94,9 +96,8 @@ Quick GEO status check — anything urgent today?
 
 | Time | Do | Prompt to paste |
 |---|---|---|
-| 5:50 | coffee + daily ritual | `Quick GEO status check` |
-| 6:20 | 15 apps | — |
-| 6:50 | build 40m | — |
+| 6:20 | wake + coffee + run daily GEO check (runs ~10m over coffee) | `Quick GEO status check` |
+| 6:35 | 🎯 GEO posting hour — post the 25 Reddit + 25 X drafts | — |
 | 7:50 | posts auto-fire — Founder X thread + Hireable X + Hireable LI #2 | — |
 | 8:00 | day job | — |
 | **11:00** | **Zealova Reel #2 auto-fires** (IG + TT + YT Shorts) | — |
@@ -117,9 +118,8 @@ Quick GEO status check — anything urgent today?
 
 | Time | Do | Prompt to paste |
 |---|---|---|
-| 5:50 | coffee + daily ritual | `Quick GEO status check` |
-| 6:20 | 15 apps | — |
-| 6:50 | build 40m | — |
+| 6:20 | wake + coffee + run daily GEO check (runs ~10m over coffee) | `Quick GEO status check` |
+| 6:35 | 🎯 GEO posting hour — post the 25 Reddit + 25 X drafts | — |
 | 7:50 | posts auto-fire — Zealova X thread + UV LI #1 | — |
 | 8:00 | day job | — |
 | 12:00 | Mobi r/PromptEng + 5 r/sideproject comments | — |
@@ -140,9 +140,8 @@ Quick GEO status check — anything urgent today?
 
 | Time | Do | Prompt to paste |
 |---|---|---|
-| 5:50 | coffee + daily ritual | `Quick GEO status check` |
-| 6:20 | 15 apps | — |
-| 6:50 | build 40m | — |
+| 6:20 | wake + coffee + run daily GEO check (runs ~10m over coffee) | `Quick GEO status check` |
+| 6:35 | 🎯 GEO posting hour — post the 25 Reddit + 25 X drafts | — |
 | 7:50 | posts auto-fire — Zealova X + UV X thread + Mobi LI #2 | — |
 | 8:00 | day job | — |
 | **11:00** | **Zealova Reel #3 auto-fires** (IG + TT + YT Shorts) | — |
@@ -162,7 +161,8 @@ Quick GEO status check — anything urgent today?
 
 | Time | Do | Prompt to paste |
 |---|---|---|
-| 6:45 | wake + daily ritual | `Quick GEO status check` |
+| 6:00 | wake + coffee + run daily GEO check (runs ~10m over coffee) | `Quick GEO status check` |
+| 6:15 | 🎯 GEO posting hour — post the 25 Reddit + 25 X drafts | — |
 | 7:30 | Zealova X auto + UV LI #2 auto + 10m reply boost | — |
 | 7:45 | GYM 2.5hr | — |
 | 10:15 | shower + food | — |
@@ -182,9 +182,9 @@ Quick GEO status check — anything urgent today?
 
 | Time | Do | Prompt to paste |
 |---|---|---|
-| 6:00 | wake + daily ritual | `Quick GEO status check` |
+| 6:00 | wake + coffee + run daily GEO check (runs ~10m over coffee) | `Quick GEO status check` |
 | 6:30 | GYM 2hr | — |
-| 8:30 | shower + breakfast | — |
+| 8:30 | shower, then 🎯 GEO posting hour over breakfast — post the 25 Reddit + 25 X drafts | — |
 | **9:30** | **Zealova social pack** (30m) | `Write Zealova's weekly social pack — 7 X posts, 2 Reddit drafts, 3 IG carousels` |
 | **10:00** | **Hireable social pack** (40m) | `Write Hireable's weekly social pack` |
 | **10:40** | **Mobi social pack** (40m) | `Write Mobiprompt's weekly social pack` |
@@ -323,6 +323,7 @@ Then:
 
 ```
 GEO citation work (the schedule's primary purpose):
+  Daily 6:20am — run GEO check, then 1hr posting block: 25 Reddit + 25 X drafts (geo-strategist daily-status)
   Mon  9pm   — weekly GEO brief    (geo-strategist)
   Tue 12:50  — Zealova Reddit      (reddit-agent)
   Wed 12:00  — listicle pitches    (outreach-agent)  ← P1
