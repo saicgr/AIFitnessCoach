@@ -523,6 +523,12 @@ class MenuDishSchema(BaseModel):
 class BuffetAnalysisResponse(BaseModel):
     """Schema for buffet-mode multi-dish analysis — flat list of dishes."""
     analysis_type: str = Field(default="buffet", description="Always 'buffet'.")
+    # Restaurant / venue name if visible on signage, station labels, or
+    # branding in the image. Null when no name is visible.
+    restaurant_name: Optional[str] = Field(
+        default=None,
+        description="Name of the restaurant / venue if visible anywhere in the image (signage, station labels, branding). Null if not visible.",
+    )
     dishes: List[MenuDishSchema] = Field(..., description="Every distinct dish visible in the buffet. Do not skip any.")
 
 
@@ -535,6 +541,12 @@ class MenuSectionSchema(BaseModel):
 class MenuAnalysisResponse(BaseModel):
     """Schema for menu-mode analysis — sections containing dishes."""
     analysis_type: str = Field(default="menu", description="Always 'menu'.")
+    # Restaurant name if visible anywhere on the menu image (header, logo,
+    # footer). Null when no name is visible.
+    restaurant_name: Optional[str] = Field(
+        default=None,
+        description="Name of the restaurant if visible anywhere on the menu image (header, logo, footer). Null if not visible.",
+    )
     sections: List[MenuSectionSchema] = Field(..., description="All sections of the menu; extract EVERY dish across ALL sections.")
 
 

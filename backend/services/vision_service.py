@@ -1142,11 +1142,14 @@ REQUIRED per dish (NEVER omit any field below):
 - added_sugar_g (grams of added sugar per serving; excludes naturally-occurring whole-fruit/whole-dairy sugar). Use 0.0 when none. NEVER null.
 - is_ultra_processed (bool; NOVA Group 4 → true). NEVER null.
 - coach_tip (≤ 18 words: pick or skip, tailored to the user's nutrition context).
+
+RESTAURANT NAME: If the restaurant / venue name is visible anywhere in the image (signage, station labels, branding), extract it into a top-level "restaurant_name" string. Set "restaurant_name" to null if no name is visible.
 {nutrition_ctx_str}{user_ctx_str}{instruction_block}
 
 Return ONLY this JSON, no other keys:
 {{
     "analysis_type": "buffet",
+    "restaurant_name": "Spice Garden Buffet",
     "dishes": [
         {{
             "name": "Chicken Biryani",
@@ -1196,11 +1199,14 @@ REQUIRED per dish (NEVER omit any field below):
 - added_sugar_g (grams of added sugar per serving; excludes naturally-occurring whole-fruit/whole-dairy sugar). Use 0.0 when none. NEVER null.
 - is_ultra_processed (bool; NOVA Group 4 → true). NEVER null.
 - coach_tip (≤ 18 words, tailored to user's goals — pick-or-skip with why).
+
+RESTAURANT NAME: If the restaurant's name is visible anywhere on the menu image (header, logo, footer), extract it into a top-level "restaurant_name" string. Set "restaurant_name" to null if no name is visible.
 {nutrition_ctx_str}{user_ctx_str}
 
 Return ONLY this JSON, no other keys:
 {{
     "analysis_type": "menu",
+    "restaurant_name": "Tandoor House",
     "sections": [
         {{
             "section_name": "mains",
@@ -1457,6 +1463,11 @@ Guidelines:
                 for dish in dishes:
                     _apply_dish_health_fallbacks(dish)
                     _log_dish_if_missing_fields(dish, analysis_mode)
+                # Guarantee restaurant_name is present on the result so the
+                # streaming layer can carry it through. Treat a missing key
+                # (Gemini omitted it) or an empty string as null — no fallback.
+                rn = result.get("restaurant_name")
+                result["restaurant_name"] = rn if (isinstance(rn, str) and rn.strip()) else None
 
             result["analysis_type"] = analysis_mode
             # L2+L3 portion validation across all entry shapes.

@@ -1456,6 +1456,9 @@ async def log_food_from_multi_image_streaming(
 
                 all_items: List[dict] = []
                 successful_pages = 0
+                # First non-null restaurant name seen across all menu pages.
+                # Stays None if no page surfaced a name (emitted as null below).
+                restaurant_name: Optional[str] = None
                 for idx, (s3_key, mime) in enumerate(zip(storage_keys, mime_types)):
                     page_num = idx + 1
                     try:
@@ -1471,6 +1474,12 @@ async def log_food_from_multi_image_streaming(
                         page_items = _flatten_menu_items(per_image_result, actual_mode)
                         all_items.extend(page_items)
                         successful_pages += 1
+                        # Capture the restaurant name from the first page that
+                        # surfaces one; later pages don't override it.
+                        if restaurant_name is None:
+                            page_rn = per_image_result.get("restaurant_name")
+                            if isinstance(page_rn, str) and page_rn.strip():
+                                restaurant_name = page_rn.strip()
                         page_event = {
                             "type": "page",
                             "analysis_type": actual_mode,
@@ -1497,6 +1506,8 @@ async def log_food_from_multi_image_streaming(
                     "success": successful_pages > 0,
                     "analysis_type": actual_mode,
                     "food_items": all_items,
+                    # First non-null restaurant name across pages, else null.
+                    "restaurant_name": restaurant_name,
                     "successful_pages": successful_pages,
                     "total_pages": n,
                     "image_urls": image_urls,
