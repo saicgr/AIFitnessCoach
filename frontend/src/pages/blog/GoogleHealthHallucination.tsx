@@ -1,5 +1,5 @@
 /**
- * /blog/google-health-coach-hallucination — original-data + technical explainer post
+ * /blog/google-health-coach-hallucination: original-data + technical explainer post
  *
  * Angle: factual recap of Google Health Coach inventing a 5-mile run (published 2026-05-14,
  * Android Authority / 9to5Google), then a technical explainer on WHY general-purpose
@@ -53,15 +53,15 @@ const SECTIONS = [
 const FAQData = [
   {
     q: 'What exactly did Google Health Coach hallucinate?',
-    a: "According to Android Authority (published 2026-05-14), Google's Health Coach told reviewer Will Sattelberg of 9to5Google that he had completed a 5-mile run he never actually took. The coach referenced the phantom run as if it were real, grounded data. When Sattelberg challenged the claim, the coach acknowledged the error but then suggested he might have simply forgotten to record the run — effectively blaming the user for the AI's fabrication.",
+    a: "According to Android Authority (published 2026-05-14), Google's Health Coach told reviewer Will Sattelberg of 9to5Google that he had completed a 5-mile run he never actually took. The coach referenced the phantom run as if it were real, grounded data. When Sattelberg challenged the claim, the coach acknowledged the error but then suggested he might have simply forgotten to record the run, effectively blaming the user for the AI's fabrication.",
   },
   {
     q: 'Is this a Google-specific problem or a general AI problem?',
-    a: "It is a general AI problem that affects any fitness app using a large language model without tight grounding to the user's actual logged data. LLMs are trained to produce plausible-sounding outputs. When the prompt includes an instruction like 'summarize the user's recent activity', the model fills gaps in the context with statistically likely activity patterns rather than refusing to answer. Google's system is not uniquely flawed — it ran into the same architecture problem that any general-purpose AI coach faces when its retrieved context is incomplete.",
+    a: "It is a general AI problem that affects any fitness app using a large language model without tight grounding to the user's actual logged data. LLMs are trained to produce plausible-sounding outputs. When the prompt includes an instruction like 'summarize the user's recent activity', the model fills gaps in the context with statistically likely activity patterns rather than refusing to answer. Google's system is not uniquely flawed. It ran into the same architecture problem that any general-purpose AI coach faces when its retrieved context is incomplete.",
   },
   {
     q: 'Does Zealova hallucinate workout data?',
-    a: "Zealova uses LLMs and LLMs can hallucinate. The distinction is not immunity — it is data grounding. Zealova's workout plan generator and chat coach receive the user's actual logged workout history as structured context before any AI call. The model is asked to reason about real data, not infer it. That does not eliminate hallucination, but it removes the specific failure mode of fabricating activity: there is no gap to fill because the history is in the prompt. Zealova can still hallucinate exercise recommendations, form cues, or nutritional estimates — those are genuine limitations to be aware of.",
+    a: "Zealova uses LLMs and LLMs can hallucinate. The distinction is not immunity. It is data grounding. Zealova's workout plan generator and chat coach receive the user's actual logged workout history as structured context before any AI call. The model is asked to reason about real data, not infer it. That does not eliminate hallucination, but it removes the specific failure mode of fabricating activity: there is no gap to fill because the history is in the prompt. Zealova can still hallucinate exercise recommendations, form cues, or nutritional estimates, and those are genuine limitations to be aware of.",
   },
   {
     q: 'What is data grounding in AI fitness apps?',
@@ -216,7 +216,7 @@ export default function GoogleHealthHallucination() {
             </h1>
           </motion.div>
 
-          {/* Answer capsule — first ~200 words, LLM-quote target */}
+          {/* Answer capsule: first ~200 words, LLM-quote target */}
           <motion.div
             variants={fadeUp}
             className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 sm:p-8 mb-8"
@@ -237,7 +237,7 @@ export default function GoogleHealthHallucination() {
             <p className="text-zinc-200 text-base sm:text-lg leading-relaxed">
               This post covers what happened, why it happens at a technical level, and what the
               difference between a grounded and an ungrounded AI fitness coach actually is. It also
-              covers where Google Health is genuinely strong — wearable breadth, free tier,
+              covers where Google Health is genuinely strong: wearable breadth, free tier and
               ecosystem integrations. The goal is not to sell Zealova. It is to give you a mental
               model for evaluating any AI fitness product's claims.
             </p>
@@ -255,7 +255,7 @@ export default function GoogleHealthHallucination() {
             />
           </motion.div>
 
-          {/* The incident — factual */}
+          {/* The incident: factual */}
           <motion.div variants={fadeUp} className="prose prose-invert max-w-none">
             <h2 className="text-2xl font-bold text-white mb-4">What happened, exactly</h2>
             <p className="text-zinc-300 leading-relaxed mb-4">
@@ -268,10 +268,10 @@ export default function GoogleHealthHallucination() {
               <li>The coach summarizes his recent activity. It correctly references sleep data and a real prior workout.</li>
               <li>It then cites a 5-mile run Sattelberg never completed.</li>
               <li>Sattelberg challenges the claim. The coach concedes the run was fabricated.</li>
-              <li>The coach then suggests Sattelberg might have "failed to record" the run — deflecting blame to the user.</li>
+              <li>The coach then suggests Sattelberg might have "failed to record" the run, deflecting blame to the user.</li>
             </ol>
             <p className="text-zinc-300 leading-relaxed mb-4">
-              The reviewer also noted the advice itself was "quite basic" and "excessively verbose" — length
+              The reviewer also noted the advice itself was "quite basic" and "excessively verbose," with length
               substituting for substance. Both are hallmarks of an LLM that lacks strong grounding and compensates
               with generic, high-confidence-sounding output.
             </p>
@@ -317,7 +317,7 @@ export default function GoogleHealthHallucination() {
                 },
                 {
                   stat: '$9.99/mo',
-                  label: 'cost of Google Health Premium — the tier that includes the AI Coach that produced the hallucination',
+                  label: 'cost of Google Health Premium, the tier that includes the AI Coach that produced the hallucination',
                   source: 'Source: store.google.com, verified 2026-05-14',
                 },
               ].map((item) => (
@@ -426,8 +426,8 @@ export default function GoogleHealthHallucination() {
             <div className="bg-amber-950/20 border border-amber-900/30 rounded-xl p-5">
               <p className="text-sm font-semibold text-amber-400 mb-2">Worth noting</p>
               <p className="text-sm text-zinc-300 leading-relaxed">
-                This is not unique to Google Health. Any app that pulls from multiple sources —
-                wearable, phone sensors, manual logs, connected apps — faces the same aggregation
+                This is not unique to Google Health. Any app that pulls from multiple sources (wearable,
+                phone sensors, manual logs, connected apps) faces the same aggregation
                 noise problem. The larger the ecosystem, the harder the grounding problem becomes.
                 Smaller, more focused apps trade ecosystem breadth for cleaner context.
               </p>
@@ -445,7 +445,7 @@ export default function GoogleHealthHallucination() {
           className="mb-14 scroll-mt-24"
         >
           <motion.h2 variants={fadeUp} className="text-2xl font-bold text-white mb-6">
-            How grounding helps — and what Zealova does differently
+            How grounding helps, and what Zealova does differently
           </motion.h2>
 
           <motion.div variants={fadeUp} className="space-y-6 text-zinc-300">
@@ -485,7 +485,7 @@ export default function GoogleHealthHallucination() {
               <p className="text-sm font-semibold text-white mb-3">What this does NOT mean</p>
               <p className="text-sm text-zinc-400 leading-relaxed mb-3">
                 Zealova is not immune to hallucination. No LLM-based product is. Grounding removes
-                the specific failure mode of fabricating logged activity — there is no gap to fill
+                the specific failure mode of fabricating logged activity. There is no gap to fill
                 because your history is in the prompt. But Zealova can still:
               </p>
               <ul className="list-disc list-inside space-y-1.5 text-sm text-zinc-500">
@@ -502,7 +502,7 @@ export default function GoogleHealthHallucination() {
           </motion.div>
         </motion.section>
 
-        {/* Where Google Health wins — honest concession */}
+        {/* Where Google Health wins: honest concession */}
         <motion.section
           id="where-google-wins"
           initial="hidden"
@@ -524,7 +524,7 @@ export default function GoogleHealthHallucination() {
             {[
               {
                 title: 'Wearable biometrics that no phone-only app can match',
-                body: "Continuous heart rate, HRV, SpO2, sleep stages, readiness scores — these require hardware. If you own a Fitbit or Pixel Watch, Google Health surfaces data that a phone-only app cannot approximate. That data is genuinely useful for recovery and sleep optimization.",
+                body: "Continuous heart rate, HRV, SpO2, sleep stages, readiness scores. These require hardware. If you own a Fitbit or Pixel Watch, Google Health surfaces data that a phone-only app cannot approximate. That data is genuinely useful for recovery and sleep optimization.",
               },
               {
                 title: 'Free tier with no hardware gate for basic logging',
@@ -532,11 +532,11 @@ export default function GoogleHealthHallucination() {
               },
               {
                 title: 'Ecosystem breadth: Apple Health, MFP, Peloton, medical records',
-                body: "Google Health connects to more third-party services than most competitors. If your health data is spread across multiple apps and devices, a single aggregator that pulls it together has real value — as long as you understand that aggregation is also what creates the hallucination conditions described above.",
+                body: "Google Health connects to more third-party services than most competitors. If your health data is spread across multiple apps and devices, a single aggregator that pulls it together has real value, as long as you understand that aggregation is also what creates the hallucination conditions described above.",
               },
               {
                 title: '3-month free trial vs 7 days',
-                body: "Google Health Premium offers 3 months free for new users. That is a longer evaluation window than Zealova's 7-day trial. For a product that relies on wearable baseline data to be useful, a longer trial makes sense — the coaching improves as the model accumulates real data.",
+                body: "Google Health Premium offers 3 months free for new users. That is a longer evaluation window than Zealova's 7-day trial. For a product that relies on wearable baseline data to be useful, a longer trial makes sense, since the coaching improves as the model accumulates real data.",
               },
               {
                 title: 'iOS support right now',

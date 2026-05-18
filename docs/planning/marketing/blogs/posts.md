@@ -29,7 +29,7 @@
 images:
   - slot: hero_og
     file: NEEDS NEW: og-blog-hallucination.png (1200x630)
-    alt: "Google Health Coach hallucination — AI invented a 5-mile run"
+    alt: "Google Health Coach hallucination, AI invented a 5-mile run"
     width: 1200
     height: 630
   - slot: in_content_hero
@@ -72,7 +72,7 @@ the model says it happened.
 
 This post covers what happened, why it happens at a technical level, and what the
 difference between a grounded and an ungrounded AI fitness coach actually is. It also
-covers where Google Health is genuinely strong — wearable breadth, free tier,
+covers where Google Health is genuinely strong: wearable breadth, free tier and
 ecosystem integrations. The goal is not to sell Zealova. It is to give you a mental
 model for evaluating any AI fitness product's claims.
 
@@ -80,10 +80,10 @@ model for evaluating any AI fitness product's claims.
 
 > **Key takeaways**
 >
-> - **5-mile run** fabricated by Google Health Coach in a pre-launch hands-on (May 14, 2026) — Source: Android Authority / 9to5Google, 2026-05-14
-> - **42-68%** hallucination reduction when LLMs are grounded with retrieved real data (RAG) vs ungrounded prompts — Source: neuledge.com, February 2026
-> - **2 billion** monthly users exposed to Google AI Overviews, which a January 2026 Guardian investigation found spread false health information — Source: Guardian / almcorp.com, January 2026
-> - **$9.99/mo** cost of Google Health Premium — the tier that includes the AI Coach that produced the hallucination — Source: store.google.com, verified 2026-05-14
+> - **5-mile run** fabricated by Google Health Coach in a pre-launch hands-on (May 14, 2026). Source: Android Authority / 9to5Google, 2026-05-14
+> - **42-68%** hallucination reduction when LLMs are grounded with retrieved real data (RAG) vs ungrounded prompts. Source: neuledge.com, February 2026
+> - **2 billion** monthly users exposed to Google AI Overviews, which a January 2026 Guardian investigation found spread false health information. Source: Guardian / almcorp.com, January 2026
+> - **$9.99/mo** cost of Google Health Premium, the tier that includes the AI Coach that produced the hallucination. Source: store.google.com, verified 2026-05-14
 
 ---
 
@@ -95,9 +95,9 @@ Android Authority covered Sattelberg's review on May 14, 2026. The full sequence
 2. The coach summarizes his recent activity. It correctly references sleep data and a real prior workout.
 3. It then cites a 5-mile run Sattelberg never completed.
 4. Sattelberg challenges the claim. The coach concedes the run was fabricated.
-5. The coach then suggests Sattelberg might have "failed to record" the run — deflecting blame to the user.
+5. The coach then suggests Sattelberg might have "failed to record" the run, deflecting blame to the user.
 
-The reviewer also noted the advice itself was "quite basic" and "excessively verbose" — length
+The reviewer also noted the advice itself was "quite basic" and "excessively verbose," with length
 substituting for substance. Both are hallmarks of an LLM that lacks strong grounding and compensates
 with generic, high-confidence-sounding output.
 
@@ -137,11 +137,11 @@ sources. The model has to reason across all of this. When it cannot reconcile a 
 
 A specialized app that only tracks what a user explicitly logs has a narrower but cleaner
 context. The model has less to hallucinate across. This is not a value judgment on
-aggregators — it is a tradeoff.
+aggregators. It is a tradeoff.
 
 ---
 
-## How grounding helps — and what Zealova does differently
+## How grounding helps, and what Zealova does differently
 
 Grounding means attaching verified data to the model's context before it generates a
 response. In fitness, that means: before the AI answers a question about your training,
@@ -160,7 +160,7 @@ context. The model is not asked to guess what you have been doing. It reads what
 **What this does NOT mean:**
 
 Zealova is not immune to hallucination. No LLM-based product is. Grounding removes
-the specific failure mode of fabricating logged activity — there is no gap to fill
+the specific failure mode of fabricating logged activity. There is no gap to fill
 because your history is in the prompt. But Zealova can still:
 
 - Hallucinate exercise recommendations for equipment it was not told you own
@@ -177,7 +177,7 @@ app you use.
 
 - **Wearable biometrics.** Continuous HR, HRV, SpO2, sleep stages, readiness scores. Hardware-dependent, but real data that no phone-only app can approximate.
 - **Free tier.** Basic activity and food tracking without a paid subscription.
-- **Ecosystem breadth.** Apple Health, MFP, Peloton, medical records — more integrations than most competitors.
+- **Ecosystem breadth.** Apple Health, MFP, Peloton, medical records, more integrations than most competitors.
 - **3-month free trial.** Significantly longer than Zealova's 7-day trial.
 - **iOS support.** Zealova is Android only right now.
 
@@ -192,7 +192,7 @@ The AI invented a 5-mile run reviewer Will Sattelberg of 9to5Google never comple
 No. It is a general AI problem affecting any fitness product that uses an LLM without tight grounding to the user's actual logged data.
 
 **Does Zealova hallucinate workout data?**
-Zealova uses LLMs and LLMs can hallucinate. The distinction is data grounding — Zealova injects your actual logged history before AI calls. That removes the specific fabricated-activity failure mode but does not eliminate hallucination entirely.
+Zealova uses LLMs and LLMs can hallucinate. The distinction is data grounding. Zealova injects your actual logged history before AI calls. That removes the specific fabricated-activity failure mode but does not eliminate hallucination entirely.
 
 **What is data grounding?**
 Attaching real, verified data to the context window before the model generates a response. RAG-based grounding reduces hallucination by 42-68% vs no context (neuledge.com, February 2026).
@@ -221,7 +221,7 @@ No. Its wearable biometrics, sleep tracking, ecosystem breadth, and free tier ar
       "name": "What exactly did Google Health Coach hallucinate?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "According to Android Authority (published 2026-05-14), Google's Health Coach told reviewer Will Sattelberg of 9to5Google that he had completed a 5-mile run he never actually took. When Sattelberg challenged the claim, the coach acknowledged the error but then suggested he might have simply forgotten to record the run — effectively blaming the user for the AI's fabrication."
+        "text": "According to Android Authority (published 2026-05-14), Google's Health Coach told reviewer Will Sattelberg of 9to5Google that he had completed a 5-mile run he never actually took. When Sattelberg challenged the claim, the coach acknowledged the error but then suggested he might have simply forgotten to record the run, effectively blaming the user for the AI's fabrication."
       }
     },
     {
@@ -237,7 +237,7 @@ No. Its wearable biometrics, sleep tracking, ecosystem breadth, and free tier ar
       "name": "Does Zealova hallucinate workout data?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Zealova uses LLMs and LLMs can hallucinate. The distinction is not immunity — it is data grounding. Zealova's workout plan generator and chat coach receive the user's actual logged workout history as structured context before any AI call. That does not eliminate hallucination, but it removes the specific failure mode of fabricating activity."
+        "text": "Zealova uses LLMs and LLMs can hallucinate. The distinction is not immunity. It is data grounding. Zealova's workout plan generator and chat coach receive the user's actual logged workout history as structured context before any AI call. That does not eliminate hallucination, but it removes the specific failure mode of fabricating activity."
       }
     },
     {
