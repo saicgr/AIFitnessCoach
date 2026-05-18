@@ -87,8 +87,6 @@ class WeekCalendarStrip extends ConsumerWidget {
       );
     }
 
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
@@ -126,22 +124,6 @@ class WeekCalendarStrip extends ConsumerWidget {
                 },
               );
             }),
-          ),
-          // Collapse affordance
-          GestureDetector(
-            onTap: () {
-              HapticService.selection();
-              ref.read(weekCalendarCollapsedProvider.notifier).toggle();
-            },
-            behavior: HitTestBehavior.opaque,
-            child: Padding(
-              padding: const EdgeInsets.only(top: 2),
-              child: Icon(
-                Icons.expand_less,
-                size: 18,
-                color: textMuted,
-              ),
-            ),
           ),
         ],
       ),
@@ -243,176 +225,132 @@ class _DayCell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // --- Today: outlined rounded-rect pill wrapping day + date ---
+    // Compact cell visual — matches the Nutrition tab's `NutritionDateStrip`
+    // so the strip looks identical across Home, Workouts and Nutrition.
+    //
+    // Today (selected or not) → filled accent rounded-rect pill with white
+    // label + number stacked inside. Every other day → label above a 32×32
+    // circle. A small status indicator sits below all cells.
+
     if (isToday) {
-      return GestureDetector(
+      return _buildTodayPill();
+    }
+
+    final Color dateColor;
+    final Color labelColor;
+    final FontWeight dateWeight;
+    Color? cellBg;
+    Border? cellBorder;
+
+    if (isSelected) {
+      // Selected (non-today) — accent outline ring + accent text.
+      cellBorder = Border.all(color: accentColor, width: 2);
+      dateColor = accentColor;
+      labelColor = accentColor;
+      dateWeight = FontWeight.w700;
+    } else if (workoutStatus != null) {
+      dateColor = isDark ? Colors.white : Colors.black87;
+      labelColor = isDark ? Colors.white70 : Colors.black54;
+      dateWeight = FontWeight.w500;
+    } else {
+      dateColor = isDark ? Colors.white38 : Colors.black26;
+      labelColor = isDark ? Colors.white38 : Colors.black26;
+      dateWeight = FontWeight.w400;
+    }
+
+    return Expanded(
+      child: GestureDetector(
         onTap: onTap,
         behavior: HitTestBehavior.opaque,
         child: SizedBox(
-          width: 42,
+          height: 64,
           child: Column(
             mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  Container(
-                    width: 38,
-                    padding: const EdgeInsets.symmetric(vertical: 6),
-                    decoration: BoxDecoration(
-                      color: Colors.transparent,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: accentColor, width: 2),
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          dayLabel,
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            color: accentColor,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          '$dateNumber',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.bold,
-                            color: accentColor,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  // Checkmark badge when previous day's workout is complete
-                  if (previousDayCompleted)
-                    Positioned(
-                      bottom: -4,
-                      left: 0,
-                      right: 0,
-                      child: Center(
-                        child: Container(
-                          width: 16,
-                          height: 16,
-                          decoration: BoxDecoration(
-                            color: AppColors.success,
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: isDark ? AppColors.background : AppColorsLight.background,
-                              width: 2,
-                            ),
-                          ),
-                          child: const Icon(
-                            Icons.check,
-                            size: 10,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ),
-                  // X mark badge when previous day's workout was missed
-                  if (previousDayMissed)
-                    Positioned(
-                      bottom: -4,
-                      left: 0,
-                      right: 0,
-                      child: Center(
-                        child: Container(
-                          width: 16,
-                          height: 16,
-                          decoration: BoxDecoration(
-                            color: AppColors.error,
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: isDark ? AppColors.background : AppColorsLight.background,
-                              width: 2,
-                            ),
-                          ),
-                          child: const Icon(
-                            Icons.close,
-                            size: 10,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
+              Text(
+                dayLabel,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: labelColor,
+                ),
               ),
               const SizedBox(height: 4),
-              // Status indicator below pill
-              _buildStatusIndicator(),
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: cellBg,
+                  border: cellBorder,
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  '$dateNumber',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: dateWeight,
+                    color: dateColor,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 4),
+              SizedBox(height: 6, child: _buildStatusIndicator()),
             ],
           ),
         ),
-      );
-    }
+      ),
+    );
+  }
 
-    // --- Non-today cells: original minimal layout ---
-    Color dateColor;
-    Color dayLabelColor;
-    FontWeight dateFontWeight;
-    Color? cellBg;
-
-    if (isSelected) {
-      cellBg = accentColor.withValues(alpha: 0.15);
-      dateColor = isDark ? Colors.white : Colors.black87;
-      dayLabelColor = isDark ? Colors.white : Colors.black87;
-      dateFontWeight = FontWeight.w600;
-    } else if (workoutStatus != null) {
-      cellBg = null;
-      dateColor = isDark ? Colors.white : Colors.black87;
-      dayLabelColor = isDark ? Colors.white70 : Colors.black54;
-      dateFontWeight = FontWeight.w500;
-    } else {
-      cellBg = null;
-      dateColor = isDark ? Colors.white38 : Colors.black26;
-      dayLabelColor = isDark ? Colors.white38 : Colors.black26;
-      dateFontWeight = FontWeight.normal;
-    }
-
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: SizedBox(
-        width: 42,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Day abbreviation
-            Text(
-              dayLabel,
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w500,
-                color: dayLabelColor,
-              ),
-            ),
-            const SizedBox(height: 4),
-            // Date number with optional circle background
-            Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: cellBg,
-              ),
-              alignment: Alignment.center,
-              child: Text(
-                '$dateNumber',
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: dateFontWeight,
-                  color: dateColor,
+  /// Today cell: filled solid accent rounded-rect pill (matching
+  /// `NutritionDateStrip`) with white label + white number stacked inside.
+  Widget _buildTodayPill() {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        behavior: HitTestBehavior.opaque,
+        child: SizedBox(
+          height: 64,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                constraints: const BoxConstraints(minWidth: 36),
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
+                decoration: BoxDecoration(
+                  color: accentColor,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      dayLabel,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '$dateNumber',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ),
-            const SizedBox(height: 4),
-            // Status indicator: X for missed, dot for others
-            _buildStatusIndicator(),
-          ],
+              const SizedBox(height: 4),
+              SizedBox(height: 6, child: _buildStatusIndicator()),
+            ],
+          ),
         ),
       ),
     );
@@ -424,27 +362,28 @@ class _DayCell extends StatelessWidget {
   /// Whether this day was missed (past + scheduled but not completed)
   bool get _isMissed => workoutStatus == false && isPast;
 
-  /// Build the status indicator: checkmark for completed, X for missed, dot for scheduled
+  /// Build the compact status indicator — a single small dot, matching the
+  /// Nutrition tab's `NutritionDateStrip`. Green = done, red = missed,
+  /// accent = scheduled. Keeps the strip visually light (no check/X marks).
   Widget _buildStatusIndicator() {
+    final Color? dotColor;
     if (_isCompleted) {
-      // Green checkmark for completed workouts
-      return Icon(Icons.check, size: 12, color: AppColors.success);
+      dotColor = AppColors.success;
+    } else if (_isMissed) {
+      dotColor = AppColors.error;
+    } else if (workoutStatus == false) {
+      dotColor = accentColor;
+    } else {
+      dotColor = null;
     }
-    if (_isMissed) {
-      // Red X for missed workouts
-      return Icon(Icons.close, size: 10, color: AppColors.error);
-    }
-    if (workoutStatus == false) {
-      // Accent dot for scheduled (future) workouts
-      return Container(
-        width: 6,
-        height: 6,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: accentColor,
-        ),
-      );
-    }
-    return const SizedBox(height: 6);
+    if (dotColor == null) return const SizedBox.shrink();
+    return Container(
+      width: 5,
+      height: 5,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: dotColor,
+      ),
+    );
   }
 }

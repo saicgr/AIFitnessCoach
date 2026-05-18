@@ -268,23 +268,28 @@ const quickActionRegistry = <String, QuickAction>{
   ),
 };
 
-// Home shortcut bar layout: 2 rows × 5 slots.
-//   Row 1 (slots 1-5): first 5 entries below.
-//   Row 2 (slots 6-9): entries 6-9. Slot 10 is the fixed "More" tile.
-// Anything beyond index 8 lives in the full QuickActionsSheet (reached via More).
+// Home shortcut bar layout (home-v27 redesign — `CompactQuickActionsRow`):
+//   Single-row mode  → slots 1-5 are the first 5 entries; slot 6 = fixed "More".
+//   Two-row mode     → slots 1-11 are the first 11 entries; slot 12 = fixed "More".
+// The user reorders this list in the customize sheet; "More" is never an
+// entry here — it is appended by the row widget. Anything past the visible
+// cutoff stays reachable inside the full QuickActionsSheet (via More).
+//
+// D3: 'workout' / 'quick_workout' removed from the pinned default — the
+// Workouts tab already covers them. They remain in the catalog below so
+// users can still pin them via the customize sheet / reach them via More.
 const defaultQuickActionOrder = [
-  // COMING SOON: 'fasting' removed from default order — re-add when fasting feature launches
-  // Slot 5 default flipped from 'scan_food' (document-scanner) to
-  // 'photo_food' (single-camera "snap your plate") per user feedback —
-  // the food-icon variant reads more like "log this meal" at a glance.
-  'quick_workout', 'food', 'water', 'chat', 'photo_food',  // row 1 (slots 1-5)
-  'weight', 'photo', 'measure', 'scan_menu',                // row 2 (slots 6-9); slot 10 = More
-  'mood', 'scan_food', 'barcode_food', 'history', 'steps', 'workout', 'programs',
+  // Default row 1 (single-row mode, slots 1-5; slot 6 = More):
+  //   Coach · Log Food · Scan Menu · Water · Weight
+  'chat', 'food', 'scan_menu', 'water', 'weight',
+  // Two-row mode fills slots 6-11 from here (slot 12 = More):
+  'photo_food', 'photo', 'mood', 'scan_food', 'barcode_food', 'measure',
+  // ─── long-tail (More sheet only unless reordered up):
+  'quick_workout', 'workout', 'history', 'steps', 'programs',
   'library', 'settings', 'schedule', 'habits',
   'progress', 'stats', 'achievements', 'hydration', 'summaries',
-  // ─── More-only overflow ── never appears in primary 2×5 grid:
+  // ─── More-only overflow ── never appears in the primary grid:
   'share_plan',
-  // Issue 2: discoverable in More sheet, but never promoted into the 2×5
-  // grid (slot 9 default stays scan_menu — quick_actions_layout rule).
+  // Issue 2: discoverable in More sheet only.
   'identify_equipment',
 ];

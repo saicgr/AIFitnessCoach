@@ -395,38 +395,42 @@ class _EndFastButtonState extends ConsumerState<_EndFastButton> {
 
 
 
-/// Grid action item with icon and label — delegates to the shared
-/// [QuickActionTile] chrome.
+/// Grid action item with icon and label — delegates to the de-boxed
+/// [_DeboxedActionTile] chrome. Pass either [icon] (a Material glyph) or
+/// [iconChild] (e.g. a [LineIcon] from the redesign icon set).
 class _GridActionItem extends StatelessWidget {
-  final IconData icon;
+  final IconData? icon;
+  final Widget? iconChild;
   final String label;
   final Color iconColor;
   final VoidCallback onTap;
   final bool isDark;
 
   const _GridActionItem({
-    required this.icon,
+    this.icon,
+    this.iconChild,
     required this.label,
     required this.iconColor,
     required this.onTap,
     required this.isDark,
-  });
+  }) : assert(icon != null || iconChild != null, 'icon or iconChild required');
 
   @override
   Widget build(BuildContext context) {
-    return QuickActionTile(
+    return _DeboxedActionTile(
       isDark: isDark,
       onTap: onTap,
       icon: icon,
+      iconChild: iconChild,
       label: label,
       iconColor: iconColor,
     );
   }
 }
 
-/// Type alias to the shared widget — keeps the bespoke grid widgets in
+/// Type alias to the de-boxed tile — keeps the bespoke grid widgets in
 /// this file unchanged while routing every tile through the same chrome.
-typedef _GridActionTile = QuickActionTile;
+typedef _GridActionTile = _DeboxedActionTile;
 
 
 /// Presets shown inside the Custom water picker. Covers sip-sized amounts

@@ -555,10 +555,17 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final order = ref.watch(quickActionOrderProvider);
+    final expanded = ref.watch(quickActionsExpandedProvider);
+    // D2: the customize list drives the SAME slot model the home row renders.
+    //   Single-row mode → first 5 are visible (slot 6 = More).
+    //   Two-row mode    → first 11 are visible (slots 7-11 = row 2, slot 12 = More).
+    final row1Cutoff = 5;
+    final visibleCutoff = expanded ? 11 : 5;
 
     return GlassSheet(
-      // Cap the More sheet at 75% so it reads as a focused picker rather than
-      // a near-fullscreen wall of options (Issue 6 — felt overwhelming).
+      // Cap the sheet at 75%. A3: the body below uses Expanded so the
+      // reorder list flexes to fill — header + footer ("Reset to Default")
+      // are pinned and always reachable, no Column overflow on any device.
       maxHeightFraction: 0.75,
       child: SafeArea(
         top: false,
@@ -597,17 +604,19 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
               child: Text(
-                'Drag to reorder. Top 9 appear in your shortcut bar (slots 1–5 row 1, 6–9 row 2, slot 10 is More).',
+                expanded
+                    ? 'Drag to reorder. The top 11 fill your shortcut bar — '
+                        'slots 1–6 (row 1) and 7–11 (row 2); slot 12 is More.'
+                    : 'Drag to reorder. The top 5 fill your shortcut bar; '
+                        'slot 6 is More. Turn on "Show two rows" for 12 slots.',
                 style: TextStyle(fontSize: 13, color: textMuted),
               ),
             ),
-            // Reorderable list in a constrained height container
-            ConstrainedBox(
-              constraints: BoxConstraints(
-                maxHeight: MediaQuery.of(context).size.height * 0.55,
-              ),
+            // A3: Expanded → the list flexes to fill all space between the
+            // pinned header and the pinned "Reset to Default" footer, so the
+            // edit-mode Column never exceeds the 0.75 sheet cap.
+            Expanded(
               child: ReorderableListView.builder(
-                shrinkWrap: true,
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 proxyDecorator: (child, index, animation) {
                   return AnimatedBuilder(
@@ -633,9 +642,12 @@ class _QuickActionsSheetState extends ConsumerState<_QuickActionsSheet> {
                 itemBuilder: (context, index) {
                   final actionId = order[index];
                   final action = quickActionRegistry[actionId]!;
-                  // First 5 = row 1, next 4 = row 2 (slot 10 is the fixed More tile, not in this list).
-                  final isRow1 = index < 5;
-                  final isRow2 = index >= 5 && index < 9;
+                  // Slot model mirrors the home CompactQuickActionsRow:
+                  // first `row1Cutoff` = row 1, the rest up to `visibleCutoff`
+                  // = row 2 (only in two-row mode). "More" is a fixed tile
+                  // appended by the row widget — not part of this list.
+                  final isRow1 = index < row1Cutoff;
+                  final isRow2 = index >= row1Cutoff && index < visibleCutoff;
                   final isVisibleInBar = isRow1 || isRow2;
 
                   return Container(

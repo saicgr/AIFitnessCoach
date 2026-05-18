@@ -412,10 +412,9 @@ extension _HomeScreenStateUI1 on _HomeScreenState {
             ));
             halfWidthTiles.clear();
           }
-          // Hero workout section moved to the unified-home `HomeWorkoutCard`
-          // sliver (see `_widgetForSection`). This legacy tile-layout path is
-          // dead; emit nothing so the old SectionedHeroArea anchor isn't
-          // mounted (it would duplicate the live carousel's GlobalKey).
+          slivers.add(SliverToBoxAdapter(
+            child: _buildHeroSectionFixed(context, todayWorkoutState, isAIGenerating, isDark),
+          ));
           continue;
         }
 
@@ -577,9 +576,10 @@ extension _HomeScreenStateUI1 on _HomeScreenState {
     bool isAIGenerating,
   ) {
     return [
-      // Hero workout section moved to the unified-home `HomeWorkoutCard`
-      // sliver. This legacy fallback path no longer renders SectionedHeroArea
-      // (its tour anchor would duplicate the live carousel's GlobalKey).
+      // Hero workout section
+      SliverToBoxAdapter(
+        child: _buildHeroSectionFixed(context, todayWorkoutState, isAIGenerating, isDark),
+      ),
       // Quick actions row
       SliverToBoxAdapter(
         child: Padding(

@@ -7,8 +7,11 @@ import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/providers/xp_provider.dart';
 import '../../../data/services/haptic_service.dart';
 import 'components/components.dart';
-import 'gym_profile_switcher.dart';
+import 'manage_gym_profiles_sheet.dart';
+import '../../../core/providers/user_provider.dart';
+import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/app_tour/app_tour_controller.dart';
+import 'week_calendar_strip.dart';
 
 /// Clean, minimal header for the "Minimalist" home screen preset.
 ///
@@ -33,9 +36,7 @@ class MinimalHeader extends ConsumerWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Row(
         children: [
-          const Expanded(
-            child: GymProfileSwitcher(collapsed: true),
-          ),
+          const Expanded(child: _Greeting()),
           const _LevelStreakPill(),
           const SizedBox(width: 4),
           NotificationBellButton(isDark: isDark),
@@ -46,14 +47,63 @@ class MinimalHeader extends ConsumerWidget {
   }
 }
 
+/// Time-of-day greeting + the user's first name. Replaces the gym-profile
+/// switcher in the header — switching gyms moved into the ⋮ menu.
+class _Greeting extends ConsumerWidget {
+  const _Greeting();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final hour = DateTime.now().hour;
+    final greeting = hour < 12
+        ? 'Good morning,'
+        : hour < 17
+            ? 'Good afternoon,'
+            : 'Good evening,';
+    final name = ref.watch(currentUserProvider).valueOrNull?.name;
+    final firstName = (name != null && name.trim().isNotEmpty)
+        ? name.trim().split(' ').first
+        : 'there';
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          greeting,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: isDark ? Colors.white60 : Colors.black54,
+          ),
+        ),
+        const SizedBox(height: 1),
+        Text(
+          firstName,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w800,
+            letterSpacing: -0.3,
+            color: isDark ? Colors.white : const Color(0xFF0A0A0A),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 /// 3-dot overflow menu holding secondary header actions (Edit home, Settings).
-class _OverflowMenuButton extends StatelessWidget {
+class _OverflowMenuButton extends ConsumerWidget {
   final bool isDark;
   const _OverflowMenuButton({required this.isDark});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final iconColor = isDark ? Colors.white70 : Colors.black54;
+    final weekCollapsed = ref.watch(weekCalendarCollapsedProvider);
     return PopupMenuButton<String>(
       tooltip: 'More',
       icon: Icon(Icons.more_vert, size: 22, color: iconColor),
@@ -63,7 +113,16 @@ class _OverflowMenuButton extends StatelessWidget {
       onSelected: (value) {
         HapticService.light();
         switch (value) {
-          case 'edit_home':
+          case 'change_gym':
+            showGlassSheet(
+              context: context,
+              builder: (_) => const ManageGymProfilesSheet(),
+            );
+            break;
+          case 'toggle_week':
+            ref.read(weekCalendarCollapsedProvider.notifier).toggle();
+            break;
+          case 'my_space':
             context.push('/settings/homescreen');
             break;
           case 'settings':
@@ -73,13 +132,37 @@ class _OverflowMenuButton extends StatelessWidget {
       },
       itemBuilder: (context) => [
         PopupMenuItem<String>(
-          value: 'edit_home',
+          value: 'change_gym',
+          child: Row(
+            children: [
+              Icon(Icons.storefront_outlined, size: 20, color: iconColor),
+              const SizedBox(width: 12),
+              const Text('Change gym profile'),
+            ],
+          ),
+        ),
+        PopupMenuItem<String>(
+          value: 'toggle_week',
+          child: Row(
+            children: [
+              Icon(
+                weekCollapsed ? Icons.expand_more : Icons.expand_less,
+                size: 20,
+                color: iconColor,
+              ),
+              const SizedBox(width: 12),
+              Text(weekCollapsed ? 'Expand week view' : 'Collapse week view'),
+            ],
+          ),
+        ),
+        PopupMenuItem<String>(
+          value: 'my_space',
           child: Row(
             children: [
               Icon(Icons.dashboard_customize_outlined,
                   size: 20, color: iconColor),
               const SizedBox(width: 12),
-              const Text('Edit home screen'),
+              const Text('My Space'),
             ],
           ),
         ),

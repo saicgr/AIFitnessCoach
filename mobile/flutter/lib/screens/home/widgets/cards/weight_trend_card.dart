@@ -228,7 +228,7 @@ class WeightTrendCard extends ConsumerWidget {
             Icon(Icons.scale, color: trendColor, size: 20),
             const SizedBox(width: 8),
             Text(
-              'Weight Trend',
+              'Weight Trends',
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,

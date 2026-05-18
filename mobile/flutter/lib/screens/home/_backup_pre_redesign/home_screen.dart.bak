@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../data/services/fasting_ongoing_notification_service.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import '../../core/accessibility/accessibility_provider.dart';
 import 'package:go_router/go_router.dart';
@@ -25,8 +24,6 @@ import '../../data/repositories/auth_repository.dart';
 import '../../data/models/workout.dart';
 import '../../data/repositories/workout_repository.dart';
 import '../../data/providers/today_workout_provider.dart';
-import '../../data/providers/home_sections_provider.dart';
-import '../../data/providers/fasting_provider.dart';
 import '../../data/services/deep_link_service.dart';
 import '../../data/services/health_service.dart';
 import '../../widgets/glass_sheet.dart';
@@ -47,8 +44,7 @@ import 'widgets/my_program_summary_card.dart';
 import 'widgets/hero_workout_card.dart';
 import '../../core/providers/week_start_provider.dart';
 import 'widgets/hero_workout_carousel.dart';
-import 'widgets/home/unified_home_widgets.dart';
-import 'widgets/home/home_timeline.dart';
+import 'widgets/sectioned_hero_area.dart';
 import 'widgets/swipeable_hero_section.dart' show HomeFocus, homeFocusProvider;
 import 'widgets/workout_category_pills.dart';
 import 'widgets/habits_section.dart';
@@ -142,7 +138,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         id: 'nav_step_topbar',
         targetKey: AppTourKeys.topBarKey,
         title: 'Your Command Center',
-        description: 'Customize your home layout, switch gym profiles, and track your level — all from here.',
+        description: 'Switch between gyms, customize your home screen layout, access settings, and track your level.',
         position: TooltipPosition.below,
       ),
       AppTourStep(
@@ -211,9 +207,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     if (!mounted) return;
     if (state != AppLifecycleState.resumed) return;
     try {
-      // Replay any fasting notification action (Pause/Resume, End Fast) that
-      // fired in the background isolate while the app was not foregrounded.
-      FastingOngoingNotificationService.instance.drainPendingBackgroundAction();
       // Auto-refresh when returning to app (with rate limiting). It has its
       // own internal guards but a defensive try here means any escape from
       // those guards still doesn't crash the app.
@@ -730,14 +723,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     // Pre-warm fasting provider (loads in constructor, no await needed)
     ref.read(fastingSettingsProvider);
 
-    // Initialize the fasting STATE provider too — the home nutrition card's
-    // fasting row and the timeline's active-fast row both read
-    // `fastingProvider.activeFast`. Without this call the provider only ever
-    // has its (usually empty) in-memory cache, so an in-progress fast never
-    // surfaces on Home until the user opens the standalone Fasting screen.
-    // Fire-and-forget: it's not blocking the first paint of nutrition/macros.
-    unawaited(ref.read(fastingProvider.notifier).initialize(userId));
-
     await Future.wait([
       ref.read(nutritionProvider.notifier).loadTodaySummary(userId),
       ref.read(hydrationProvider.notifier).loadTodaySummary(userId),
@@ -825,6 +810,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
   @override
   Widget build(BuildContext context) {
+    // M12: Use .select() for granular rebuilds - only rebuild when the specific data changes
+    final todayWorkoutState = ref.watch(todayWorkoutProvider);
+    final isAIGenerating = ref.watch(aiGeneratingWorkoutProvider);
+    // Watch local layout for tile visibility settings
+    final localLayoutState = ref.watch(localLayoutProvider);
+
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final backgroundColor =
         isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
@@ -927,68 +918,45 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           backgroundColor: elevatedColor,
           child: SafeArea(
             child: CustomScrollView(
-              slivers: [
-                // Header — greeting + streak + bell + overflow. Fixed chrome.
-                const SliverToBoxAdapter(child: MinimalHeader()),
+            slivers: [
+              // Header: Always minimal (level ring now pairs streak count inline)
+              const SliverToBoxAdapter(
+                child: MinimalHeader(),
+              ),
 
-                // Stacked notification-panel banners + rating prompt — fixed
-                // system chrome, always directly under the header. Both
-                // self-collapse to zero height when there's nothing to show.
-                const SliverToBoxAdapter(child: StackedBannerPanel()),
-                const SliverToBoxAdapter(child: RatingPromptBanner()),
+              // Rank/percentile is now surfaced inside StackedBannerPanel as
+              // a BannerType.rankPercentile entry (stacks with Daily Crate,
+              // missed workouts, etc.) — no separate hero card.
 
-                // User-customizable sections, rendered in the order and
-                // visibility chosen via "My Space" (homeSectionsProvider).
-                ..._homeSectionSlivers(ref.watch(homeSectionsProvider)),
+              // Stacked notification-panel banners (all active, swipeable)
+              const SliverToBoxAdapter(
+                child: StackedBannerPanel(),
+              ),
 
-                // Bottom padding for nav bar.
-                const SliverToBoxAdapter(child: SizedBox(height: 120)),
-              ],
-            ),
+              // Rating-prompt banner — visible when the user has hit
+              // the engagement threshold but the auto-trigger sheet
+              // window has passed (or they tapped Maybe Later). The
+              // widget self-gates via RatingPromptService.
+              const SliverToBoxAdapter(
+                child: RatingPromptBanner(),
+              ),
+
+              // Dynamic tiles from local layout
+              ...localLayoutState.when(
+                loading: () => _buildFallbackTilesAsSlivers(context, isDark, todayWorkoutState, isAIGenerating),
+                error: (_, __) => _buildFallbackTilesAsSlivers(context, isDark, todayWorkoutState, isAIGenerating),
+                data: (layout) => _buildLayoutTilesAsSlivers(context, layout, isDark, todayWorkoutState, isAIGenerating),
+              ),
+
+              // Bottom padding for nav bar
+              const SliverToBoxAdapter(
+                child: SizedBox(height: 120),
+              ),
+            ],
           ),
         ),
+      ),
     );
-  }
-
-  /// Build the customizable home sections as slivers, in the user's chosen
-  /// order, skipping any they've hidden in "My Space". Each section gets a
-  /// uniform [kHomeGap] below it. If every section is hidden the list is
-  /// simply empty — the header + banners still render, no crash.
-  List<Widget> _homeSectionSlivers(HomeSectionsState sections) {
-    final visible = sections.visibleInOrder;
-    final slivers = <Widget>[];
-    for (final section in visible) {
-      slivers.add(SliverToBoxAdapter(child: _widgetForSection(section)));
-      slivers.add(const SliverToBoxAdapter(child: SizedBox(height: kHomeGap)));
-    }
-    return slivers;
-  }
-
-  /// Maps a [HomeSection] to its concrete home widget.
-  Widget _widgetForSection(HomeSection section) {
-    switch (section) {
-      case HomeSection.quickActions:
-        return const Padding(
-          padding: EdgeInsets.only(bottom: 4),
-          child: QuickActionsRow(),
-        );
-      case HomeSection.weekStrip:
-        return const HomeWeekStrip();
-      case HomeSection.workoutCard:
-        return const HomeWorkoutCard();
-      case HomeSection.nutritionCard:
-        return const HomeNutritionCard();
-      case HomeSection.metricTrio:
-        return const HomeMetricTrio();
-      case HomeSection.weeklyReport:
-        return WeeklyReportCard(
-          isDark: Theme.of(context).brightness == Brightness.dark,
-        );
-      case HomeSection.timeline:
-        return const HomeTimeline();
-      case HomeSection.habits:
-        return const HabitsSection();
-    }
   }
 
   /// Extract workout from todayWorkoutProvider state
@@ -1009,6 +977,33 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       loading: () => true,
       data: (response) => response?.isGenerating ?? false,
     ) ?? false;
+  }
+
+  /// Build hero section with tab pills (Workouts | Nutrition | Fasting)
+  /// and weekly carousel for workouts
+  Widget _buildHeroSectionFixed(
+    BuildContext context,
+    AsyncValue<TodayWorkoutResponse?> todayWorkoutState,
+    bool isAIGenerating,
+    bool isDark,
+  ) {
+    return SectionedHeroArea(
+      carouselPageController: _carouselPageController,
+      carouselKey: AppTourKeys.heroCarouselKey,
+      onCarouselItemsChanged: (items) {
+        if (mounted && items.length != _carouselItems.length ||
+            (items.isNotEmpty && _carouselItems.isNotEmpty &&
+             items.first.date != _carouselItems.first.date)) {
+          setState(() => _carouselItems = items);
+        }
+      },
+      onPageChanged: _onCarouselPageChanged,
+      todayWorkoutState: todayWorkoutState,
+      isAIGenerating: isAIGenerating,
+      isInitializing: _isInitializing,
+      selectedWeekDay: _selectedWeekDay,
+      onWeekDaySelected: _onWeekDaySelected,
+    );
   }
 
   /// Handle day tap in week strip

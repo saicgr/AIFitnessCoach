@@ -89,7 +89,9 @@ class QuickActionsExpandedNotifier extends StateNotifier<bool> {
 
   Future<void> _load() async {
     final prefs = await SharedPreferences.getInstance();
-    state = prefs.getBool(_quickActionExpandedKey) ?? true;
+    // Default OFF — home shows a single quick-actions row unless the user
+    // explicitly opts into two rows.
+    state = prefs.getBool(_quickActionExpandedKey) ?? false;
   }
 
   Future<void> toggle() async {
@@ -99,10 +101,25 @@ class QuickActionsExpandedNotifier extends StateNotifier<bool> {
   }
 }
 
+/// Home `CompactQuickActionsRow` slot IDs.
+///
+/// Single-row mode → first 5 IDs (slot 6 = the fixed "More" tile, appended
+/// by the row widget). Two-row mode → first 11 IDs (slot 12 = "More").
+/// "More" is never part of the order list — it is rendered separately in
+/// [quick_actions_row.dart].
+List<String> homeQuickActionSlotIds(List<String> order, {required bool expanded}) {
+  final visibleCount = expanded ? 11 : 5;
+  return order
+      .where((id) => quickActionRegistry.containsKey(id))
+      .take(visibleCount)
+      .toList();
+}
+
 /// Row 1 of the shortcut bar — first 5 actions in the user's order.
 final pinnedQuickActionsProvider = Provider<List<QuickAction>>((ref) {
   final order = ref.watch(quickActionOrderProvider);
   return order
+      .where((id) => quickActionRegistry.containsKey(id))
       .take(5)
       .map((id) => quickActionRegistry[id]!)
       .toList();
@@ -111,17 +128,7 @@ final pinnedQuickActionsProvider = Provider<List<QuickAction>>((ref) {
 final orderedQuickActionsProvider = Provider<List<QuickAction>>((ref) {
   final order = ref.watch(quickActionOrderProvider);
   return order
-      .map((id) => quickActionRegistry[id]!)
-      .toList();
-});
-
-/// Row 2 of the shortcut bar — actions 6-9. Slot 10 is the fixed "More" tile
-/// rendered separately in [quick_actions_row.dart].
-final secondRowActionsProvider = Provider<List<QuickAction>>((ref) {
-  final order = ref.watch(quickActionOrderProvider);
-  return order
-      .skip(5)
-      .take(4)
+      .where((id) => quickActionRegistry.containsKey(id))
       .map((id) => quickActionRegistry[id]!)
       .toList();
 });

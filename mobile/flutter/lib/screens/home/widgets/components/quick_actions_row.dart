@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/models/quick_action.dart';
+import '../../../../core/theme/theme_colors.dart';
+import '../../../../core/widgets/line_icon.dart';
 import '../../../../data/providers/fasting_provider.dart';
 import '../../../../data/providers/quick_action_provider.dart';
 import '../../../../data/repositories/hydration_repository.dart';
@@ -11,13 +13,11 @@ import '../../../../data/services/haptic_service.dart';
 import '../../../../widgets/glass_sheet.dart';
 import '../../../../widgets/main_shell.dart';
 import '../../../../widgets/mood_picker_sheet.dart';
-import '../../../../widgets/quick_action_tile.dart';
 import '../../../../widgets/quick_actions_sheet.dart';
 import '../../../fasting/widgets/log_weight_sheet.dart';
 import '../../../nutrition/log_meal_sheet.dart';
 import '../../../workout/widgets/equipment_snap_flow.dart';
 import '../../../workout/widgets/quick_workout_sheet.dart';
-import '../../../../widgets/app_tour/app_tour_controller.dart';
 import '../../../../data/repositories/progress_photos_repository.dart';
 import '../../../stats/widgets/photos_tab.dart';
 
@@ -38,8 +38,15 @@ Widget buildQuickActionWidget(String actionId, bool isDark, BuildContext context
       return _MoodGridActionItem(isDark: isDark);
     case 'food':
       return _GridActionItem(
-        icon: Icons.restaurant_outlined,
-        label: 'Food',
+        // LineIcon 'nutrition' (the v27 mockup uses a fork glyph for this
+        // slot; 'nutrition' is the closest match in the redesign icon set).
+        iconChild: LineIcon(
+          'nutrition',
+          size: 18,
+          color: quickActionRegistry['food']?.color ?? AppColors.accent,
+        ),
+        // v27 mockup labels this slot "Log Food", not just "Food".
+        label: 'Log Food',
         // Registry has been re-keyed across releases ('food' vs 'log_food');
         // a `!` here threw "Null check operator used on a null value" for
         // users on a stale install. Default to a safe accent if missing.
@@ -52,6 +59,10 @@ Widget buildQuickActionWidget(String actionId, bool isDark, BuildContext context
           // just-logged meal visible) instead of being thrown back to Home.
           context.go('/nutrition');
           Future.microtask(() {
+            // D4: Log Food must open the meal sheet on the Search tab.
+            // showLogMealSheet has no explicit initial-tab param — the
+            // sheet's default mode is `_AiLogMode.search` (E1), so an
+            // unparameterized call lands on Search.
             if (context.mounted) showLogMealSheet(context, ref);
           });
         },
@@ -182,6 +193,24 @@ Widget buildQuickActionWidget(String actionId, bool isDark, BuildContext context
         },
         isDark: isDark,
       );
+    case 'workout':
+      // v27 mockup uses a dumbbell glyph for this slot — LineIcon 'workout'
+      // is the dumbbell line-icon in the redesign set.
+      final workout = quickActionRegistry['workout'];
+      return _GridActionItem(
+        iconChild: LineIcon(
+          'workout',
+          size: 18,
+          color: workout?.color ?? AppColors.accent,
+        ),
+        label: workout?.label ?? 'Workout',
+        iconColor: workout?.color ?? AppColors.accent,
+        onTap: () {
+          HapticService.light();
+          context.push(workout?.route ?? '/workouts');
+        },
+        isDark: isDark,
+      );
     default:
       final action = quickActionRegistry[actionId];
       if (action == null) return const SizedBox.shrink();
@@ -277,63 +306,280 @@ class QuickActionsRow extends StatelessWidget {
   }
 }
 
-/// Compact quick actions: 2 rows × 5 slots. Both rows are always visible.
-/// Row 1: actions 1-5 (from [pinnedQuickActionsProvider]).
-/// Row 2: actions 6-9 (from [secondRowActionsProvider]) + the fixed More tile
-/// at slot 10, which opens the full QuickActionsSheet for the long-tail actions.
+/// Builds a single home shortcut slot from an action ID. Slot 1 (`chat`) is
+/// special-cased to the branded [_CoachQuickAction] gradient tile; every
+/// other ID routes through [buildQuickActionWidget] so the home row and the
+/// customize sheet stay driven by the exact same slot model.
+Widget _buildHomeSlot(String actionId, bool isDark, BuildContext context,
+    WidgetRef ref) {
+  if (actionId == 'chat') {
+    return _CoachQuickAction(isDark: isDark);
+  }
+  return buildQuickActionWidget(actionId, isDark, context, ref);
+}
+
+/// Quick actions — a customizable shortcut bar that honors the user's
+/// "Show two rows" preference (`quickActionsExpandedProvider`) and the
+/// per-slot order they set in the customize sheet.
+///
+///   Single-row mode (toggle OFF) → 1 row of 6: slots 1-5 from the user's
+///     order + a fixed "More" tile in slot 6.
+///   Two-row mode (toggle ON)     → 2 rows of 6 (12 slots): slots 1-11 from
+///     the user's order + a fixed "More" tile in slot 12.
+///
+/// Default order (D3): Coach · Log Food · Scan Menu · Water · Weight · More.
+/// "Workout" is intentionally not pinned — the Workouts tab covers it.
+///
+/// The legacy "2×5 grid" layout is retired — this is the v27 compact row(s).
 class CompactQuickActionsRow extends ConsumerWidget {
   const CompactQuickActionsRow({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final pinnedActions = ref.watch(pinnedQuickActionsProvider);
-    final secondRow = ref.watch(secondRowActionsProvider);
-    // Visible enclosing surface — the previous alpha 0.03–0.05 black
-    // disappeared on the dark home background, leaving the 10 tiles
-    // floating loose. A subtle white-tint card + 1pt border reads as
-    // "these belong together" without competing with the tiles.
-    final cardBg = isDark
-        ? Colors.white.withValues(alpha: 0.04)
-        : Colors.black.withValues(alpha: 0.04);
-    final cardBorder = isDark
-        ? Colors.white.withValues(alpha: 0.08)
-        : Colors.black.withValues(alpha: 0.08);
+    final order = ref.watch(quickActionOrderProvider);
+    final expanded = ref.watch(quickActionsExpandedProvider);
 
+    // First 5 (single-row) or first 11 (two-row) slot IDs; "More" is appended
+    // by this widget and is never part of the user's order list.
+    final slotIds = homeQuickActionSlotIds(order, expanded: expanded);
+
+    // Lay the slots out 6-per-row. The final slot is always the "More" tile.
+    final List<Widget> tiles = [
+      for (final id in slotIds) _buildHomeSlot(id, isDark, context, ref),
+      _MoreActionsButton(isDark: isDark),
+    ];
+
+    Widget buildRow(int start, int end) {
+      final children = <Widget>[];
+      for (int i = start; i < end; i++) {
+        if (i > start) children.add(const SizedBox(width: 4));
+        children.add(Expanded(
+          child: i < tiles.length ? tiles[i] : const SizedBox.shrink(),
+        ));
+      }
+      return Row(children: children);
+    }
+
+    // De-boxed (Round 4 / Task C): no outer panel, no per-tile card —
+    // just colored icon chips with labels on the plain home background.
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4),
-      child: Container(
-        padding: const EdgeInsets.all(6),
-        decoration: BoxDecoration(
-          color: cardBg,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: cardBorder, width: 1),
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      child: expanded
+          ? Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                buildRow(0, 6),
+                const SizedBox(height: 8),
+                buildRow(6, 12),
+              ],
+            )
+          : buildRow(0, 6),
+    );
+  }
+}
+
+/// De-boxed quick-action tile (Round 4 / Task C) — replaces the boxed
+/// [QuickActionTile] chrome on the home row. Keeps the small rounded
+/// colored icon chip + the label directly below it, but drops the rounded
+/// card background and 1pt border so the tiles sit on the plain home
+/// background. Ink + scale press feedback preserved; tap target ≥44px.
+class _DeboxedActionTile extends StatefulWidget {
+  final bool isDark;
+  final VoidCallback onTap;
+  final VoidCallback? onLongPress;
+  final IconData? icon;
+  final Widget? iconChild;
+  final String label;
+  final Color iconColor;
+
+  /// Mutes the icon chip to a neutral tint (used by the More button).
+  final bool muteChip;
+
+  const _DeboxedActionTile({
+    required this.isDark,
+    required this.onTap,
+    required this.label,
+    required this.iconColor,
+    this.onLongPress,
+    this.icon,
+    this.iconChild,
+    this.muteChip = false,
+  }) : assert(icon != null || iconChild != null, 'icon or iconChild required');
+
+  @override
+  State<_DeboxedActionTile> createState() => _DeboxedActionTileState();
+}
+
+class _DeboxedActionTileState extends State<_DeboxedActionTile> {
+  bool _pressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = widget.isDark;
+    final textColor =
+        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    // Chip background carries the visual identity. In dark mode the tint is
+    // boosted (0.22 vs 0.14) so the chip stays legible against the dark
+    // home background without the old card frame behind it.
+    final chipColor = widget.muteChip
+        ? (isDark
+            ? Colors.white.withValues(alpha: 0.12)
+            : Colors.black.withValues(alpha: 0.06))
+        : widget.iconColor.withValues(alpha: isDark ? 0.22 : 0.14);
+    final iconRender = widget.iconChild ??
+        Icon(
+          widget.icon,
+          size: 18,
+          color: widget.muteChip
+              ? textColor.withValues(alpha: 0.7)
+              : widget.iconColor,
+        );
+
+    return Semantics(
+      button: true,
+      label: widget.label,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: widget.onTap,
+          onLongPress: widget.onLongPress,
+          onHighlightChanged: (v) => setState(() => _pressed = v),
+          borderRadius: BorderRadius.circular(12),
+          child: AnimatedScale(
+            scale: _pressed ? 0.94 : 1.0,
+            duration: const Duration(milliseconds: 110),
+            curve: Curves.easeOut,
+            child: ConstrainedBox(
+              // ≥44px tap target even without the card padding.
+              constraints: const BoxConstraints(minHeight: 44),
+              child: Padding(
+                padding:
+                    const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 40,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: chipColor,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: iconRender,
+                    ),
+                    const SizedBox(height: 5),
+                    SizedBox(
+                      // Fixed height keeps every tile the same height even
+                      // when a long label ("Scan Menu") wraps to 2 lines.
+                      height: 24,
+                      child: Text(
+                        widget.label,
+                        style: TextStyle(
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w600,
+                          color: textColor,
+                          height: 1.1,
+                        ),
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                        softWrap: true,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Row 1: slots 1-5 (pinned actions).
-            Row(
-              children: [
-                for (int i = 0; i < pinnedActions.length; i++) ...[
-                  if (i > 0) const SizedBox(width: 4),
-                  Expanded(child: buildQuickActionWidget(pinnedActions[i].id, isDark, context, ref)),
-                ],
-              ],
+      ),
+    );
+  }
+}
+
+/// "Coach" quick-action tile — slot 1 of the v27 row. De-boxed (Task C):
+/// no card background or border. The Coach identity is now carried solely
+/// by the full-accent-gradient icon chip + white spark glyph, which stands
+/// apart from the tinted-flat chips of the other actions.
+class _CoachQuickAction extends ConsumerStatefulWidget {
+  final bool isDark;
+
+  const _CoachQuickAction({required this.isDark});
+
+  @override
+  ConsumerState<_CoachQuickAction> createState() => _CoachQuickActionState();
+}
+
+class _CoachQuickActionState extends ConsumerState<_CoachQuickAction> {
+  bool _pressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = ref.colors(context);
+    final textColor = colors.textPrimary;
+
+    return Semantics(
+      button: true,
+      label: 'Coach',
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            HapticService.light();
+            context.push('/chat');
+          },
+          onHighlightChanged: (v) => setState(() => _pressed = v),
+          borderRadius: BorderRadius.circular(12),
+          child: AnimatedScale(
+            scale: _pressed ? 0.94 : 1.0,
+            duration: const Duration(milliseconds: 110),
+            curve: Curves.easeOut,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(minHeight: 44),
+              child: Padding(
+                padding:
+                    const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 40,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        gradient: colors.accentGradient,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const LineIcon(
+                        'spark',
+                        size: 18,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 5),
+                    SizedBox(
+                      height: 24,
+                      child: Text(
+                        'Coach',
+                        style: TextStyle(
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w600,
+                          color: textColor,
+                          height: 1.1,
+                        ),
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                        softWrap: true,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
-            const SizedBox(height: 4),
-            // Row 2: slots 6-9 (second row) + slot 10 = More (fixed).
-            Row(
-              children: [
-                for (int i = 0; i < secondRow.length; i++) ...[
-                  if (i > 0) const SizedBox(width: 4),
-                  Expanded(child: buildQuickActionWidget(secondRow[i].id, isDark, context, ref)),
-                ],
-                if (secondRow.isNotEmpty) const SizedBox(width: 4),
-                Expanded(child: _MoreActionsButton(isDark: isDark)),
-              ],
-            ),
-          ],
+          ),
         ),
       ),
     );
