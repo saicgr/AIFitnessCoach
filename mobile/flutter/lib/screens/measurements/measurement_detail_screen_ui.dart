@@ -3,6 +3,9 @@ part of 'measurement_detail_screen.dart';
 /// UI builder methods extracted from _MeasurementDetailScreenState
 extension _MeasurementDetailScreenStateUI on _MeasurementDetailScreenState {
 
+  /// Renders the measurement history with the shared interactive [TrendChart]
+  /// (Phase G7). The chart provides EWMA-smoothed trend line over raw dots,
+  /// pinch-zoom + pan, a drag-scrub crosshair tooltip, and a min/avg/max row.
   Widget _buildChart(
     List<MeasurementEntry> history, {
     required Color cyan,
@@ -11,279 +14,37 @@ extension _MeasurementDetailScreenStateUI on _MeasurementDetailScreenState {
   }) {
     if (history.isEmpty) return const SizedBox.shrink();
 
-    // Reverse to show oldest first (left to right)
-    final reversedHistory = history.reversed.toList();
+    // history is newest-first — TrendChart sorts internally, but build the
+    // points oldest-first for clarity.
+    final points = [
+      for (final e in history.reversed)
+        TrendPoint(date: e.recordedAt, value: e.getValueInUnit(_isMetric)),
+    ];
 
-    // Use time-based X coordinates (milliseconds since epoch) so the chart
-    // correctly represents the time range of the selected period.
-    final now = DateTime.now();
-    double maxX = now.millisecondsSinceEpoch.toDouble();
-    double minX;
-    if (_selectedPeriod == 'all' && reversedHistory.isNotEmpty) {
-      // For "All", start from the oldest entry (with a small left padding)
-      final oldest = reversedHistory.first.recordedAt;
-      final rangePadding = now.difference(oldest).inMilliseconds * 0.05;
-      minX = oldest.millisecondsSinceEpoch.toDouble() - rangePadding;
-    } else {
-      minX = _periodStartDate().millisecondsSinceEpoch.toDouble();
-    }
-    // Floor the visible range to 1 hour so the 1D pill doesn't collapse
-    // when opened in the first few seconds after midnight (minX == maxX).
-    const minRangeMs = 60 * 60 * 1000.0;
-    if (maxX - minX < minRangeMs) {
-      maxX = minX + minRangeMs;
-    }
+    final unit = _isMetric ? _type.metricUnit : _type.imperialUnit;
 
-    final spots = reversedHistory.map((entry) {
-      return FlSpot(
-        entry.recordedAt.millisecondsSinceEpoch.toDouble(),
-        entry.getValueInUnit(_isMetric),
-      );
-    }).toList();
+    // MacroFactor-style smoothing only makes sense with enough points; with
+    // 1–2 entries fall back to the raw line (alpha 1.0 = no smoothing).
+    final alpha = points.length >= 3 ? 0.25 : 1.0;
 
-    if (spots.isEmpty) return const SizedBox.shrink();
-
-    final values = spots.map((s) => s.y).toList();
-    final rawMinY = values.reduce((a, b) => a < b ? a : b);
-    final rawMaxY = values.reduce((a, b) => a > b ? a : b);
-    // If all values are the same, add a fixed padding so the chart isn't flat
-    final valuePadding = rawMinY == rawMaxY ? 5.0 : (rawMaxY - rawMinY) * 0.15;
-    var minY = rawMinY - valuePadding;
-    var maxY = rawMaxY + valuePadding;
-
-    // Extend minY/maxY to encompass health zone lines
-    final zoneLines = _getHealthZoneLines();
-    for (final line in zoneLines) {
-      if (line.y < minY) minY = line.y - valuePadding * 0.5;
-      if (line.y > maxY) maxY = line.y + valuePadding * 0.5;
-    }
-
-    // Build line bars - EWMA trend line for weight with 3+ data points
-    final bool showEWMA = _type == MeasurementType.weight && values.length >= 3;
-    final List<LineChartBarData> lineBars = [];
-
-    if (showEWMA) {
-      final ewmaValues = _computeEWMA(values, alpha: 0.3);
-      final ewmaSpots = <FlSpot>[];
-      for (int i = 0; i < ewmaValues.length; i++) {
-        ewmaSpots.add(FlSpot(
-          reversedHistory[i].recordedAt.millisecondsSinceEpoch.toDouble(),
-          ewmaValues[i],
-        ));
-      }
-
-      // Raw data line: thin and dotted
-      lineBars.add(
-        LineChartBarData(
-          spots: spots,
-          isCurved: true,
-          color: cyan.withOpacity(0.5),
-          barWidth: 1.5,
-          dashArray: [4, 4],
-          isStrokeCapRound: true,
-          dotData: FlDotData(
-            show: true,
-            getDotPainter: (spot, percent, barData, index) {
-              return FlDotCirclePainter(
-                radius: 3,
-                color: cyan.withOpacity(0.5),
-                strokeWidth: 1.5,
-                strokeColor: isDark ? AppColors.pureBlack : Colors.white,
-              );
-            },
-          ),
-          belowBarData: BarAreaData(show: false),
+    // Convert the gendered health-zone HorizontalLines into TrendZoneBands.
+    final zoneBands = [
+      for (final line in _getHealthZoneLines())
+        TrendZoneBand(
+          value: line.y,
+          label: line.label.labelResolver(line),
+          color: line.color ?? cyan,
         ),
-      );
+    ];
 
-      // EWMA trend line: thick solid with gradient fill
-      lineBars.add(
-        LineChartBarData(
-          spots: ewmaSpots,
-          isCurved: true,
-          color: cyan,
-          barWidth: 3,
-          isStrokeCapRound: true,
-          dotData: const FlDotData(show: false),
-          belowBarData: BarAreaData(
-            show: true,
-            gradient: LinearGradient(
-              colors: [cyan.withOpacity(0.3), cyan.withOpacity(0.0)],
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-            ),
-          ),
-        ),
-      );
-    } else {
-      // Default single line
-      lineBars.add(
-        LineChartBarData(
-          spots: spots,
-          isCurved: true,
-          color: cyan,
-          barWidth: 3,
-          isStrokeCapRound: true,
-          dotData: FlDotData(
-            show: true,
-            getDotPainter: (spot, percent, barData, index) {
-              return FlDotCirclePainter(
-                radius: 4,
-                color: cyan,
-                strokeWidth: 2,
-                strokeColor: isDark ? AppColors.pureBlack : Colors.white,
-              );
-            },
-          ),
-          belowBarData: BarAreaData(
-            show: true,
-            gradient: LinearGradient(
-              colors: [cyan.withOpacity(0.3), cyan.withOpacity(0.0)],
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-            ),
-          ),
-        ),
-      );
-    }
-
-    // Calculate appropriate date label interval
-    final totalMs = maxX - minX;
-    final totalDays = totalMs / (1000 * 60 * 60 * 24);
-    // Aim for ~4-5 labels on the X axis. Use ms-level granularity so sub-day
-    // ranges (1D, 3D) get hourly ticks instead of being clamped to whole days.
-    final double intervalMs;
-    if (totalDays <= 1) {
-      // ~6 hour spacing for 1D
-      intervalMs = 6 * 60 * 60 * 1000.0;
-    } else if (totalDays <= 3) {
-      // ~18 hour spacing for 3D
-      intervalMs = 18 * 60 * 60 * 1000.0;
-    } else {
-      final intervalDays = (totalDays / 4).ceil().clamp(1, 365);
-      intervalMs = intervalDays * 24 * 60 * 60 * 1000.0;
-    }
-
-    // Pick date format based on range
-    final String datePattern;
-    if (totalDays <= 1) {
-      datePattern = 'h a';
-    } else if (totalDays <= 3) {
-      datePattern = 'M/d h a';
-    } else if (totalDays <= 14) {
-      datePattern = 'M/d';
-    } else if (totalDays <= 180) {
-      datePattern = 'MMM d';
-    } else {
-      datePattern = 'MMM yy';
-    }
-
-    return LineChart(
-      LineChartData(
-        clipData: const FlClipData.all(),
-        gridData: FlGridData(
-          show: true,
-          drawVerticalLine: false,
-          horizontalInterval: (maxY - minY) / 4,
-          getDrawingHorizontalLine: (value) => FlLine(
-            color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
-            strokeWidth: 0.5,
-          ),
-        ),
-        titlesData: FlTitlesData(
-          leftTitles: AxisTitles(
-            sideTitles: SideTitles(
-              showTitles: true,
-              reservedSize: 48,
-              getTitlesWidget: (value, meta) {
-                // Skip edge labels to prevent clipping
-                if (value <= minY || value >= maxY) {
-                  return const SizedBox.shrink();
-                }
-                return Padding(
-                  padding: const EdgeInsets.only(right: 6),
-                  child: Text(
-                    _formatValue(value),
-                    style: TextStyle(fontSize: 10, color: textMuted),
-                    textAlign: TextAlign.right,
-                  ),
-                );
-              },
-            ),
-          ),
-          bottomTitles: AxisTitles(
-            sideTitles: SideTitles(
-              showTitles: true,
-              reservedSize: 40,
-              interval: intervalMs,
-              getTitlesWidget: (value, meta) {
-                // Skip labels outside range, and suppress labels that land too
-                // close to the min/max edges — fl_chart anchors interval ticks
-                // to the epoch, which can place a tick a hour or two away
-                // from maxX and visually overlap the edge label (caught
-                // 2026-05-12 on the 3D range: "5/12 1 AM" collided with
-                // "5/12 10 AM"). The threshold is intentionally wide
-                // (0.9 * intervalMs) and inclusive (<=) to stop adjacent
-                // ticks from rendering on top of the right edge label.
-                if (value < minX || value > maxX) {
-                  return const SizedBox.shrink();
-                }
-                final edgeThreshold = intervalMs * 0.9;
-                final isEdge = value == maxX || value == minX;
-                if (!isEdge) {
-                  if ((value - minX).abs() <= edgeThreshold ||
-                      (maxX - value).abs() <= edgeThreshold) {
-                    return const SizedBox.shrink();
-                  }
-                }
-                final date = DateTime.fromMillisecondsSinceEpoch(value.toInt());
-                return Padding(
-                  padding: const EdgeInsets.only(top: 8),
-                  child: Text(
-                    DateFormat(datePattern).format(date),
-                    style: TextStyle(fontSize: 10, color: textMuted),
-                  ),
-                );
-              },
-            ),
-          ),
-          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-        ),
-        borderData: FlBorderData(show: false),
-        minX: minX,
-        maxX: maxX,
-        minY: minY,
-        maxY: maxY,
-        extraLinesData: ExtraLinesData(horizontalLines: zoneLines),
-        lineBarsData: lineBars,
-        lineTouchData: LineTouchData(
-          handleBuiltInTouches: true,
-          touchTooltipData: LineTouchTooltipData(
-            fitInsideHorizontally: true,
-            fitInsideVertically: true,
-            getTooltipColor: (spot) =>
-                isDark ? AppColors.nearBlack : Colors.white,
-            tooltipRoundedRadius: 10,
-            getTooltipItems: (touchedSpots) {
-              return touchedSpots.map((spot) {
-                final date = DateTime.fromMillisecondsSinceEpoch(spot.x.toInt());
-                final unit =
-                    _isMetric ? _type.metricUnit : _type.imperialUnit;
-                return LineTooltipItem(
-                  '${_formatValue(spot.y)} $unit\n${DateFormat('MMM d, y').format(date)}',
-                  TextStyle(
-                    color: isDark
-                        ? AppColors.textPrimary
-                        : AppColorsLight.textPrimary,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 12,
-                  ),
-                );
-              }).toList();
-            },
-          ),
-        ),
+    return TrendChart(
+      accent: cyan,
+      primary: TrendChartSeries(
+        label: '${_type.displayName} Trend',
+        unit: unit,
+        points: points,
+        smoothingAlpha: alpha,
+        zoneBands: zoneBands,
       ),
     );
   }

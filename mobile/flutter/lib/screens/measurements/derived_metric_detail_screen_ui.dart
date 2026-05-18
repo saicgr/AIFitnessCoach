@@ -107,7 +107,7 @@ extension _DerivedMetricDetailScreenStateUI on _DerivedMetricDetailScreenState {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Trend',
+            'Trends',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
@@ -115,10 +115,10 @@ extension _DerivedMetricDetailScreenStateUI on _DerivedMetricDetailScreenState {
             ),
           ),
           const SizedBox(height: 16),
-          SizedBox(
-            height: 200,
-            child: history.isEmpty
-                ? Center(
+          history.isEmpty
+                ? SizedBox(
+                    height: 200,
+                    child: Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -139,7 +139,7 @@ extension _DerivedMetricDetailScreenStateUI on _DerivedMetricDetailScreenState {
                         ),
                       ],
                     ),
-                  )
+                  ))
                 : _buildChart(
                     history,
                     gender: gender,
@@ -147,13 +147,14 @@ extension _DerivedMetricDetailScreenStateUI on _DerivedMetricDetailScreenState {
                     textMuted: textMuted,
                     isDark: isDark,
                   ),
-          ),
         ],
       ),
     );
   }
 
 
+  /// Renders the derived-metric history with the shared interactive
+  /// [TrendChart] (Phase G7) — EWMA trend line, pinch-zoom, scrub tooltip.
   Widget _buildChart(
     List<({DateTime date, double value})> history, {
     required String? gender,
@@ -163,145 +164,31 @@ extension _DerivedMetricDetailScreenStateUI on _DerivedMetricDetailScreenState {
   }) {
     if (history.isEmpty) return const SizedBox.shrink();
 
-    // Already sorted oldest-first from _computeHistory
-    final spots = history.asMap().entries.map((entry) {
-      return FlSpot(entry.key.toDouble(), entry.value.value);
-    }).toList();
+    // _computeHistory already sorts oldest-first.
+    final points = [
+      for (final e in history) TrendPoint(date: e.date, value: e.value),
+    ];
 
-    if (spots.isEmpty) return const SizedBox.shrink();
+    // Smoothing only with enough points; otherwise raw line (alpha 1.0).
+    final alpha = points.length >= 3 ? 0.25 : 1.0;
 
-    final values = spots.map((s) => s.y).toList();
-    final dataMin = values.reduce((a, b) => a < b ? a : b);
-    final dataMax = values.reduce((a, b) => a > b ? a : b);
-
-    // Include health zone lines in min/max calculation
-    final zoneLines = _getHealthZoneLines(_type, gender);
-    double minY = dataMin;
-    double maxY = dataMax;
-    for (final line in zoneLines) {
-      if (line.y < minY) minY = line.y;
-      if (line.y > maxY) maxY = line.y;
-    }
-    final range = maxY - minY;
-    minY = minY - range * 0.1;
-    maxY = maxY + range * 0.1;
-    if (minY == maxY) {
-      minY -= 1;
-      maxY += 1;
-    }
-
-    return LineChart(
-      LineChartData(
-        gridData: FlGridData(
-          show: true,
-          drawVerticalLine: false,
-          horizontalInterval: (maxY - minY) / 4,
-          getDrawingHorizontalLine: (value) => FlLine(
-            color: isDark ? AppColors.cardBorder : AppColorsLight.cardBorder,
-            strokeWidth: 0.5,
-          ),
+    final zoneBands = [
+      for (final line in _getHealthZoneLines(_type, gender))
+        TrendZoneBand(
+          value: line.y,
+          label: line.label.labelResolver(line),
+          color: line.color ?? cyan,
         ),
-        extraLinesData: ExtraLinesData(horizontalLines: zoneLines),
-        titlesData: FlTitlesData(
-          leftTitles: AxisTitles(
-            sideTitles: SideTitles(
-              showTitles: true,
-              reservedSize: 45,
-              getTitlesWidget: (value, meta) => Text(
-                _formatValue(value),
-                style: TextStyle(fontSize: 10, color: textMuted),
-              ),
-            ),
-          ),
-          bottomTitles: AxisTitles(
-            sideTitles: SideTitles(
-              showTitles: true,
-              reservedSize: 30,
-              interval: (history.length / 4)
-                  .ceil()
-                  .toDouble()
-                  .clamp(1, double.infinity),
-              getTitlesWidget: (value, meta) {
-                final index = value.toInt();
-                if (index >= 0 && index < history.length) {
-                  final date = history[index].date;
-                  return Padding(
-                    padding: const EdgeInsets.only(top: 8),
-                    child: Text(
-                      DateFormat('M/d').format(date),
-                      style: TextStyle(fontSize: 10, color: textMuted),
-                    ),
-                  );
-                }
-                return const SizedBox.shrink();
-              },
-            ),
-          ),
-          rightTitles:
-              const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          topTitles:
-              const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-        ),
-        borderData: FlBorderData(show: false),
-        minY: minY,
-        maxY: maxY,
-        lineBarsData: [
-          LineChartBarData(
-            spots: spots,
-            isCurved: true,
-            color: cyan,
-            barWidth: 3,
-            isStrokeCapRound: true,
-            dotData: FlDotData(
-              show: true,
-              getDotPainter: (spot, percent, barData, index) {
-                return FlDotCirclePainter(
-                  radius: 4,
-                  color: cyan,
-                  strokeWidth: 2,
-                  strokeColor:
-                      isDark ? AppColors.pureBlack : Colors.white,
-                );
-              },
-            ),
-            belowBarData: BarAreaData(
-              show: true,
-              gradient: LinearGradient(
-                colors: [
-                  cyan.withOpacity(0.3),
-                  cyan.withOpacity(0.0),
-                ],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-              ),
-            ),
-          ),
-        ],
-        lineTouchData: LineTouchData(
-          touchTooltipData: LineTouchTooltipData(
-            getTooltipColor: (spot) =>
-                isDark ? AppColors.nearBlack : Colors.white,
-            tooltipRoundedRadius: 8,
-            getTooltipItems: (touchedSpots) {
-              return touchedSpots.map((spot) {
-                final index = spot.x.toInt();
-                final date = index < history.length
-                    ? history[index].date
-                    : DateTime.now();
-                return LineTooltipItem(
-                  '${_formatValue(spot.y)} ${_getUnit(_type)}\n${DateFormat('MMM d, y').format(date)}',
-                  TextStyle(
-                    color: isDark
-                        ? AppColors.textPrimary
-                        : AppColorsLight.textPrimary,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 12,
-                  ),
-                );
-              }).toList();
-            },
-          ),
-        ),
+    ];
+
+    return TrendChart(
+      accent: cyan,
+      primary: TrendChartSeries(
+        label: '${_getDisplayName(_type)} Trend',
+        unit: _getUnit(_type),
+        points: points,
+        smoothingAlpha: alpha,
+        zoneBands: zoneBands,
       ),
     );
   }

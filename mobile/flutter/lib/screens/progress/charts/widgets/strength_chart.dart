@@ -1,30 +1,41 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/theme/theme_colors.dart';
 import '../../../../data/models/progress_charts.dart';
 
-/// Line chart displaying strength progression per muscle group
-class StrengthChart extends StatelessWidget {
+/// Strength Trends — multi-series line chart of strength progression per
+/// muscle group.
+///
+/// This chart is kept bespoke (NOT migrated to the shared [TrendChart])
+/// because TrendChart only models a primary + single secondary series, while
+/// strength progression plots up to five muscle groups at once. It is themed
+/// via [ThemeColors] and keeps an interactive touch tooltip so it still feels
+/// consistent with the rest of the Trends system (Phase G5a/G5c).
+class StrengthChart extends ConsumerWidget {
   final StrengthProgressionData data;
 
   const StrengthChart({super.key, required this.data});
 
-  // Predefined colors for muscle groups
+  /// Distinct hues for the muscle-group series. These are deliberately
+  /// multi-colour (one per series) — a monochrome accent can't disambiguate
+  /// five overlapping lines.
   static const List<Color> _muscleColors = [
-    Colors.blue,
-    Colors.green,
-    Colors.orange,
-    Colors.purple,
-    Colors.red,
-    Colors.teal,
-    Colors.pink,
-    Colors.indigo,
-    Colors.amber,
-    Colors.cyan,
+    Color(0xFF3B82F6), // blue
+    Color(0xFF22C55E), // green
+    Color(0xFFF97316), // orange
+    Color(0xFFA855F7), // purple
+    Color(0xFFEF4444), // red
+    Color(0xFF14B8A6), // teal
+    Color(0xFFEC4899), // pink
+    Color(0xFF6366F1), // indigo
+    Color(0xFFF59E0B), // amber
+    Color(0xFF06B6D4), // cyan
   ];
 
   @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final colors = ref.colors(context);
 
     if (data.data.isEmpty) {
       return const SizedBox.shrink();
@@ -85,12 +96,12 @@ class StrengthChart extends StatelessWidget {
                 radius: 4,
                 color: color,
                 strokeWidth: 2,
-                strokeColor: Colors.white,
+                strokeColor: colors.background,
               ),
             ),
             belowBarData: BarAreaData(
               show: true,
-              color: color.withOpacity(0.1),
+              color: color.withValues(alpha: 0.1),
             ),
           ),
         );
@@ -100,22 +111,23 @@ class StrengthChart extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest,
+        color: colors.surface,
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: colors.cardBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(Icons.show_chart, color: colorScheme.primary),
+              Icon(Icons.show_chart, color: colors.accent),
               const SizedBox(width: 8),
               Text(
-                'Strength Over Time',
+                'Strength Trends',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  color: colorScheme.onSurface,
+                  color: colors.textPrimary,
                 ),
               ),
             ],
@@ -131,8 +143,8 @@ class StrengthChart extends StatelessWidget {
                 lineTouchData: LineTouchData(
                   enabled: true,
                   touchTooltipData: LineTouchTooltipData(
-                    getTooltipColor: (_) =>
-                        colorScheme.inverseSurface.withOpacity(0.9),
+                    getTooltipColor: (_) => colors.elevated,
+                    tooltipBorder: BorderSide(color: colors.cardBorder),
                     tooltipPadding: const EdgeInsets.all(8),
                     tooltipMargin: 8,
                     getTooltipItems: (touchedSpots) {
@@ -157,7 +169,7 @@ class StrengthChart extends StatelessWidget {
                   drawVerticalLine: false,
                   horizontalInterval: yMax > 0 ? yMax / 4 : 1,
                   getDrawingHorizontalLine: (value) => FlLine(
-                    color: colorScheme.outline.withOpacity(0.1),
+                    color: colors.cardBorder.withValues(alpha: 0.5),
                     strokeWidth: 1,
                   ),
                 ),
@@ -181,7 +193,7 @@ class StrengthChart extends StatelessWidget {
                           child: Text(
                             _formatWeekLabel(sortedWeeks[index]),
                             style: TextStyle(
-                              color: colorScheme.onSurfaceVariant,
+                              color: colors.textMuted,
                               fontSize: 10,
                             ),
                           ),
@@ -202,7 +214,7 @@ class StrengthChart extends StatelessWidget {
                           child: Text(
                             _formatYLabel(value),
                             style: TextStyle(
-                              color: colorScheme.onSurfaceVariant,
+                              color: colors.textMuted,
                               fontSize: 10,
                             ),
                           ),
@@ -253,7 +265,7 @@ class StrengthChart extends StatelessWidget {
                     _formatMuscleGroup(muscleGroups[index]),
                     style: TextStyle(
                       fontSize: 11,
-                      color: colorScheme.onSurfaceVariant,
+                      color: colors.textSecondary,
                     ),
                   ),
                 ],

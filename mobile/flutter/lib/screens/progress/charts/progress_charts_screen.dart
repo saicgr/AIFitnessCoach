@@ -14,6 +14,8 @@ import 'widgets/time_range_selector.dart';
 import 'widgets/muscle_group_filter.dart';
 import '../../../widgets/pill_app_bar.dart';
 import '../../../widgets/segmented_tab_bar.dart';
+import '../../../core/constants/app_colors.dart';
+import '../../../core/widgets/line_icon.dart';
 
 /// Visual Progress Charts Screen
 /// Displays line and bar charts showing strength and volume progression over time
@@ -64,8 +66,18 @@ class _ProgressChartsScreenState extends ConsumerState<ProgressChartsScreen>
     return Scaffold(
       backgroundColor: colorScheme.surface,
       appBar: PillAppBar(
-        title: 'Progress Charts',
+        title: 'Trends',
         actions: [
+          PillAppBarAction(
+            customIcon: LineIcon(
+              'custom_trend',
+              size: 20,
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? Colors.white70
+                  : AppColorsLight.textSecondary,
+            ),
+            onTap: () => context.push('/trends/custom'),
+          ),
           PillAppBarAction(
             icon: Icons.refresh,
             visible: !state.isLoading,
@@ -84,8 +96,8 @@ class _ProgressChartsScreenState extends ConsumerState<ProgressChartsScreen>
                       controller: _tabController,
                       showIcons: false,
                       tabs: const [
-                        SegmentedTabItem(label: 'Volume'),
-                        SegmentedTabItem(label: 'Strength'),
+                        SegmentedTabItem(label: 'Volume Trends'),
+                        SegmentedTabItem(label: 'Strength Trends'),
                       ],
                     ),
 

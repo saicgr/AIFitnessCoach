@@ -3,8 +3,11 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
+import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/theme_colors.dart';
+import '../../core/widgets/line_icon.dart';
+import '../../data/providers/trend_series_provider.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/repositories/measurements_repository.dart';
 import '../../data/services/haptic_service.dart';
@@ -13,6 +16,8 @@ import '../../widgets/glass_circle_fab.dart';
 import '../../widgets/glass_sheet.dart';
 import '../../utils/share_report_helper.dart';
 import '../../core/constants/branding.dart';
+import '../../widgets/trends/trend_chart.dart';
+import '../../widgets/trends/trend_correlation.dart';
 
 part 'measurement_detail_screen_part_stat_item.dart';
 
@@ -96,7 +101,12 @@ class _MeasurementDetailScreenState
     final filteredHistory = _filterByPeriod(history);
     final unit = _isMetric ? _type.metricUnit : _type.imperialUnit;
     final latest = measurementsState.summary?.latestByType[_type];
-    final change = measurementsState.summary?.changeFromPrevious[_type];
+    // G7a: only surface a "from previous" delta when at least 2 real entries
+    // exist in the selected range. On a single data point the delta is
+    // meaningless ("↑ 28.5 from previous" against nothing).
+    final change = filteredHistory.length >= 2
+        ? measurementsState.summary?.changeFromPrevious[_type]
+        : null;
 
     return Scaffold(
       backgroundColor: backgroundColor,
@@ -113,10 +123,14 @@ class _MeasurementDetailScreenState
               color: cyan,
               child: CustomScrollView(
                 slivers: [
-                  // Header with title (offset for floating back button)
+                  // Header with title. The horizontal insets clear BOTH
+                  // floating affordances in the Stack: 56px on the left for
+                  // the back button, 56px on the right for the share FAB —
+                  // otherwise the "Metric" unit pill collides with the share
+                  // button (G7c).
                   SliverToBoxAdapter(
                     child: Padding(
-                      padding: const EdgeInsets.fromLTRB(56, 12, 16, 8),
+                      padding: const EdgeInsets.fromLTRB(56, 56, 16, 8),
                       child: Row(
                         children: [
                           Expanded(
@@ -131,6 +145,22 @@ class _MeasurementDetailScreenState
                               ),
                             ),
                           ),
+                          // Custom Trends entry — opens the trends explorer
+                          // pre-selected to this measurement's metric.
+                          IconButton(
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(
+                                minWidth: 36, minHeight: 36),
+                            icon: LineIcon('custom_trend',
+                                color: textMuted, size: 22),
+                            tooltip: 'View trends',
+                            onPressed: () {
+                              HapticService.light();
+                              context.push('/trends/custom',
+                                  extra: _trendMetricForType(_type));
+                            },
+                          ),
+                          const SizedBox(width: 4),
                           // Unit toggle
                           GestureDetector(
                             onTap: () {
@@ -504,7 +534,7 @@ class _MeasurementDetailScreenState
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Trend',
+            'Trends',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
@@ -512,10 +542,10 @@ class _MeasurementDetailScreenState
             ),
           ),
           const SizedBox(height: 16),
-          SizedBox(
-            height: 220,
-            child: history.isEmpty
-                ? Center(
+          history.isEmpty
+                ? SizedBox(
+                    height: 220,
+                    child: Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -538,21 +568,11 @@ class _MeasurementDetailScreenState
                         ),
                       ],
                     ),
-                  )
+                  ))
                 : _buildChart(history, cyan: cyan, textMuted: textMuted, isDark: isDark),
-          ),
         ],
       ),
     );
-  }
-
-  List<double> _computeEWMA(List<double> values, {double alpha = 0.3}) {
-    if (values.isEmpty) return [];
-    final result = <double>[values.first];
-    for (int i = 1; i < values.length; i++) {
-      result.add(alpha * values[i] + (1 - alpha) * result[i - 1]);
-    }
-    return result;
   }
 
   List<HorizontalLine> _getHealthZoneLines() {
@@ -678,6 +698,17 @@ class _MeasurementDetailScreenState
         ],
       ),
     );
+  }
+
+  /// Maps the viewed [MeasurementType] to its matching [TrendMetric] so the
+  /// Custom Trends explorer opens pre-selected to this measurement. Matches on
+  /// the shared `apiValue`/`measurementType` key; returns null when unmapped
+  /// (the route then falls back to the default Weight metric).
+  TrendMetric? _trendMetricForType(MeasurementType type) {
+    for (final m in TrendMetric.values) {
+      if (m.measurementType == type.apiValue) return m;
+    }
+    return null;
   }
 
   Color _getRelatedChangeColor(MeasurementType type, double change) {

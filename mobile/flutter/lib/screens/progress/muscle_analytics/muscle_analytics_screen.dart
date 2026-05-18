@@ -74,7 +74,7 @@ class _MuscleAnalyticsScreenState extends ConsumerState<MuscleAnalyticsScreen>
 
     return Scaffold(
       appBar: PillAppBar(
-        title: 'Muscle Analytics',
+        title: 'Muscle Trends',
         actions: [
           PillAppBarAction(
             icon: Icons.ios_share_rounded,

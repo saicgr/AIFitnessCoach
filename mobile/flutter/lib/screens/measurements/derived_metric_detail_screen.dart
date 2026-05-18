@@ -8,6 +8,8 @@ import '../../data/repositories/auth_repository.dart';
 import '../../data/repositories/measurements_repository.dart';
 import '../../data/services/haptic_service.dart';
 import '../../widgets/glass_back_button.dart';
+import '../../widgets/trends/trend_chart.dart';
+import '../../widgets/trends/trend_correlation.dart';
 
 
 part 'derived_metric_detail_screen_part_derived_metric_type.dart';
