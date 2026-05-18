@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Google Health Coach Invented a Workout. Here's Why AI Fitness Apps Do This. | Zealova</title>
+
+  <!-- Meta -->
+  <meta name="description" content="Google's AI Health Coach fabricated a 5-mile run that never happened. A technical explainer on why general-purpose AI fitness products hallucinate workout data, and what data grounding actually means." />
+
+  <!-- OpenGraph -->
+  <meta property="og:title" content="Google Health Coach Invented a Workout. Here's Why AI Fitness Apps Do This." />
+  <meta property="og:description" content="Google's AI Health Coach fabricated a 5-mile run that never happened. A technical explainer on why general-purpose AI fitness products hallucinate workout data, and what data grounding actually means." />
+  <meta property="og:url" content="https://zealova.com/blog/google-health-coach-hallucination" />
+  <meta property="og:image" content="https://zealova.com/screenshots/og-blog-hallucination.png" />
+  <meta property="og:type" content="article" />
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Google Health Coach Invented a Workout. Here's Why AI Fitness Apps Do This." />
+  <meta name="twitter:description" content="Google's AI Health Coach fabricated a 5-mile run that never happened. A technical explainer on why general-purpose AI fitness products hallucinate workout data, and what data grounding actually means." />
+  <meta name="twitter:image" content="https://zealova.com/screenshots/og-blog-hallucination.png" />
+
+  <link rel="canonical" href="https://zealova.com/blog/google-health-coach-hallucination" />
+
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- JSON-LD: BlogPosting -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "headline": "Google Health Coach Invented a Workout. Here's Why AI Fitness Apps Do This.",
+    "description": "Google's AI Health Coach fabricated a 5-mile run that never happened. A technical explainer on why general-purpose AI fitness products hallucinate workout data, and what data grounding actually means.",
+    "image": "https://zealova.com/screenshots/og-blog-hallucination.png",
+    "author": {
+      "@type": "Person",
+      "name": "Sai",
+      "url": "https://zealova.com/about"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "Zealova",
+      "url": "https://zealova.com"
+    },
+    "datePublished": "2026-05-18",
+    "dateModified": "2026-05-18",
+    "mainEntityOfPage": "https://zealova.com/blog/google-health-coach-hallucination",
+    "url": "https://zealova.com/blog/google-health-coach-hallucination"
+  }
+  </script>
+
+  <!-- JSON-LD: FAQPage -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "What exactly did Google Health Coach hallucinate?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "According to Android Authority (published 2026-05-14), Google's Health Coach told reviewer Will Sattelberg of 9to5Google that he had completed a 5-mile run he never actually took. When Sattelberg challenged the claim, the coach acknowledged the error but then suggested he might have simply forgotten to record the run."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Is this a Google-specific problem or a general AI problem?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "It is a general AI problem that affects any fitness app using a large language model without tight grounding to the user's actual logged data. LLMs are trained to produce plausible-sounding outputs. When the prompt includes an instruction like 'summarize the user's recent activity', the model fills gaps in the context with statistically likely activity patterns rather than refusing to answer."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Does Zealova hallucinate workout data?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Zealova uses LLMs and LLMs can hallucinate. The distinction is not immunity — it is data grounding. Zealova's workout plan generator and chat coach receive the user's actual logged workout history as structured context before any AI call. That does not eliminate hallucination, but it removes the specific failure mode of fabricating activity."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What is data grounding in AI fitness apps?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Grounding means attaching real, verified data to the context window before the model generates a response. In fitness, that means the AI reads your actual logged sets, reps, weights, and timestamps before answering a question about your training. Research on RAG systems shows grounding reduces hallucinations by 42-68% compared to prompting the model with no retrieved context (neuledge.com, February 2026)."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Should I trust AI fitness app workout summaries?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Cross-check any AI summary against your raw logged data, especially for anything that sounds surprising. This applies to Google Health, Zealova, and any other AI fitness coach. If the coach references an activity you do not remember doing, check the source: did your phone step counter infer it, did a connected app log it, or did the AI fabricate it?"
+        }
+      }
+    ]
+  }
+  </script>
+
+  <!-- JSON-LD: BreadcrumbList -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://zealova.com" },
+      { "@type": "ListItem", "position": 2, "name": "Blog", "item": "https://zealova.com/blog" },
+      { "@type": "ListItem", "position": 3, "name": "Google Health Coach hallucination", "item": "https://zealova.com/blog/google-health-coach-hallucination" }
+    ]
+  }
+  </script>
+
+  <style>
+    body { background-color: #09090b; }
+    .prose-body p { margin-bottom: 1rem; }
+    details > summary { cursor: pointer; }
+    details[open] .faq-icon::before { content: '-'; }
+    .faq-icon::before { content: '+'; }
+  </style>
+</head>
+<body class="bg-zinc-950 text-zinc-100 min-h-screen">
+
+  <!-- Preview banner -->
+  <div class="bg-yellow-900 text-yellow-200 px-4 py-2 text-sm text-center">
+    PREVIEW - Static HTML preview of /blog/google-health-coach-hallucination. Production is the TSX page.
+  </div>
+
+  <!-- Nav stub -->
+  <nav class="border-b border-zinc-800 px-6 py-4 flex items-center justify-between max-w-5xl mx-auto">
+    <a href="/" class="text-white font-bold text-lg">Zealova</a>
+    <div class="flex gap-6 text-sm text-zinc-400">
+      <a href="/blog" class="hover:text-white transition">Blog</a>
+      <a href="/pricing" class="hover:text-white transition">Pricing</a>
+    </div>
+  </nav>
+
+  <!-- Main layout: sidebar TOC + article -->
+  <div class="max-w-5xl mx-auto px-4 sm:px-6 py-12 flex gap-10">
+
+    <!-- TOC sidebar (desktop only) -->
+    <aside class="hidden lg:block w-52 shrink-0">
+      <div class="sticky top-8">
+        <p class="text-xs font-semibold uppercase tracking-widest text-zinc-500 mb-4">On this page</p>
+        <nav class="space-y-2 text-sm">
+          <a href="#what-happened" class="block text-zinc-400 hover:text-emerald-400 transition">What happened</a>
+          <a href="#key-stats" class="block text-zinc-400 hover:text-emerald-400 transition">Key takeaways</a>
+          <a href="#why-it-happens" class="block text-zinc-400 hover:text-emerald-400 transition">Why AI fitness apps hallucinate</a>
+          <a href="#aggregator-problem" class="block text-zinc-400 hover:text-emerald-400 transition">The aggregator problem</a>
+          <a href="#how-grounding-helps" class="block text-zinc-400 hover:text-emerald-400 transition">How grounding helps</a>
+          <a href="#where-google-wins" class="block text-zinc-400 hover:text-emerald-400 transition">Where Google Health still wins</a>
+          <a href="#faq" class="block text-zinc-400 hover:text-emerald-400 transition">FAQ</a>
+        </nav>
+      </div>
+    </aside>
+
+    <!-- Article body -->
+    <article class="flex-1 min-w-0">
+
+      <!-- Breadcrumb -->
+      <nav class="text-sm text-zinc-500 mb-10">
+        <a href="/" class="hover:text-zinc-300 transition">Home</a>
+        <span class="mx-2">/</span>
+        <a href="/blog" class="hover:text-zinc-300 transition">Blog</a>
+        <span class="mx-2">/</span>
+        <span class="text-zinc-400">Google Health Coach hallucination</span>
+      </nav>
+
+      <!-- Header + answer capsule -->
+      <section id="what-happened" class="mb-14 scroll-mt-24">
+        <p class="text-xs font-medium uppercase tracking-widest text-emerald-400 mb-4">
+          Published 2026-05-18 by Sai
+        </p>
+        <h1 class="text-3xl sm:text-4xl font-bold text-white mb-6 leading-tight">
+          Google Health Coach Invented a Workout. Here's Why AI Fitness Apps Do This.
+        </h1>
+
+        <!-- Answer capsule -->
+        <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 sm:p-8 mb-8">
+          <p class="text-zinc-200 text-base sm:text-lg leading-relaxed mb-4">
+            On May 14, 2026, Will Sattelberg of 9to5Google published a hands-on review of Google Health Coach.
+            The coach told him he had completed a 5-mile run that he never actually did.
+            When he pushed back, the coach acknowledged the fabrication, then suggested he might
+            have forgotten to record the run.
+          </p>
+          <p class="text-zinc-200 text-base sm:text-lg leading-relaxed mb-4">
+            This is not a Google-specific bug. It is a predictable failure mode for any AI fitness
+            product that asks a large language model to summarize a user's activity without first
+            grounding that model in the user's actual logged data. The model fills gaps with
+            statistically plausible output. A 5-mile run is plausible for an active person. So
+            the model says it happened.
+          </p>
+          <p class="text-zinc-200 text-base sm:text-lg leading-relaxed">
+            This post covers what happened, why it happens at a technical level, and what the
+            difference between a grounded and an ungrounded AI fitness coach actually is. It also
+            covers where Google Health is genuinely strong. The goal is not to sell Zealova. It is
+            to give you a mental model for evaluating any AI fitness product's claims.
+          </p>
+        </div>
+
+        <!-- Hero image -->
+        <div class="flex justify-center mb-8">
+          <img
+            src="/screenshots/intro_phone_2.png"
+            alt="Zealova AI coach showing workout plan grounded in real logged history"
+            width="270"
+            height="600"
+            loading="lazy"
+            class="rounded-2xl w-full max-w-[200px] object-cover"
+          />
+        </div>
+
+        <!-- Incident detail -->
+        <h2 class="text-2xl font-bold text-white mb-4">What happened, exactly</h2>
+        <p class="text-zinc-300 leading-relaxed mb-4">
+          Android Authority covered Sattelberg's review on the same day it published
+          (<a href="https://www.androidauthority.com/google-health-coach-hallucinations-3667257/" target="_blank" rel="noopener noreferrer" class="text-emerald-400 hover:text-emerald-300 underline">androidauthority.com</a>, May 14, 2026).
+          The full sequence:
+        </p>
+        <ol class="list-decimal list-inside space-y-3 text-zinc-300 mb-6">
+          <li>Sattelberg opens Google Health Coach in the pre-launch period (before May 19 public launch).</li>
+          <li>The coach summarizes his recent activity. It correctly references sleep data and a real prior workout.</li>
+          <li>It then cites a 5-mile run Sattelberg never completed.</li>
+          <li>Sattelberg challenges the claim. The coach concedes the run was fabricated.</li>
+          <li>The coach then suggests Sattelberg might have "failed to record" the run — deflecting blame to the user.</li>
+        </ol>
+        <p class="text-zinc-300 leading-relaxed mb-4">
+          The reviewer also noted the advice itself was "quite basic" and "excessively verbose" — length
+          substituting for substance. Both are hallmarks of an LLM that lacks strong grounding and
+          compensates with generic, high-confidence-sounding output.
+        </p>
+        <p class="text-zinc-300 leading-relaxed">
+          This is a paid product. Google Health Premium costs $9.99/month, launching May 19. The
+          hallucination surfaced in pre-launch access, just days before the full public rollout.
+        </p>
+      </section>
+
+      <!-- Key stats -->
+      <section id="key-stats" class="mb-14 scroll-mt-24">
+        <div class="bg-zinc-900 border border-emerald-900/40 rounded-2xl p-6 sm:p-8">
+          <p class="text-xs font-semibold uppercase tracking-widest text-emerald-400 mb-5">
+            Key takeaways
+          </p>
+          <div class="grid sm:grid-cols-2 gap-6">
+            <div class="border-l-2 border-emerald-500/40 pl-4">
+              <p class="text-2xl font-bold text-white mb-1">5-mile run</p>
+              <p class="text-sm text-zinc-300 leading-relaxed mb-1">fabricated by Google Health Coach in a pre-launch hands-on (May 14, 2026)</p>
+              <p class="text-xs text-zinc-500">Source: Android Authority / 9to5Google, 2026-05-14</p>
+            </div>
+            <div class="border-l-2 border-emerald-500/40 pl-4">
+              <p class="text-2xl font-bold text-white mb-1">42-68%</p>
+              <p class="text-sm text-zinc-300 leading-relaxed mb-1">hallucination reduction when LLMs are grounded with retrieved real data (RAG) vs ungrounded prompts</p>
+              <p class="text-xs text-zinc-500">Source: neuledge.com, February 2026</p>
+            </div>
+            <div class="border-l-2 border-emerald-500/40 pl-4">
+              <p class="text-2xl font-bold text-white mb-1">2 billion</p>
+              <p class="text-sm text-zinc-300 leading-relaxed mb-1">monthly users exposed to Google AI Overviews, which a January 2026 Guardian investigation found spread false health information</p>
+              <p class="text-xs text-zinc-500">Source: Guardian / almcorp.com, January 2026</p>
+            </div>
+            <div class="border-l-2 border-emerald-500/40 pl-4">
+              <p class="text-2xl font-bold text-white mb-1">$9.99/mo</p>
+              <p class="text-sm text-zinc-300 leading-relaxed mb-1">cost of Google Health Premium — the tier that includes the AI Coach that produced the hallucination</p>
+              <p class="text-xs text-zinc-500">Source: store.google.com, verified 2026-05-14</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Why it happens -->
+      <section id="why-it-happens" class="mb-14 scroll-mt-24">
+        <h2 class="text-2xl font-bold text-white mb-6">Why AI fitness apps hallucinate workout data</h2>
+        <div class="space-y-5 text-zinc-300">
+          <p class="leading-relaxed">
+            Large language models do not know what you did yesterday. They predict the next token
+            based on the patterns in their training data. When you ask a fitness coach chatbot
+            "what have I been up to this week?", the model needs your workout data injected into
+            the context window before it can answer accurately.
+          </p>
+          <p class="leading-relaxed">
+            If that injection is missing, incomplete, or noisy, the model does not say "I don't
+            know." It generates a plausible-sounding response. Active users run. Active users run
+            about 3-7 miles. So the model produces a run that fits the pattern. This is not malice.
+            It is how next-token prediction works when the grounding is weak.
+          </p>
+          <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-5">
+            <p class="text-sm font-semibold text-white mb-3">Three conditions that make hallucination more likely:</p>
+            <ol class="list-decimal list-inside space-y-3 text-sm text-zinc-400">
+              <li>
+                <span class="font-medium text-zinc-200">Missing context.</span>
+                The model is asked to summarize activity but the user's actual log is not included in the prompt. The model infers activity from training data priors.
+              </li>
+              <li>
+                <span class="font-medium text-zinc-200">Noisy multi-source aggregation.</span>
+                Data comes from a wearable step counter, a third-party connected app, a manual entry, and a health record. These sources conflict or have gaps. The model smooths over the gaps with inference.
+              </li>
+              <li>
+                <span class="font-medium text-zinc-200">Optimizing for plausible output, not verifiable output.</span>
+                A model trained on RLHF learns that confident, coherent responses get better ratings. Generic, verbose advice scores well. Saying "I don't have enough data" scores poorly. So the model says something rather than nothing.
+              </li>
+            </ol>
+          </div>
+          <p class="leading-relaxed">
+            All three conditions were likely present in the Google Health Coach incident. The coach
+            correctly referenced real data in some places (sleep, a real workout), which means grounding
+            was partial. The 5-mile run appears to have been the model filling a gap it could not verify.
+          </p>
+        </div>
+      </section>
+
+      <!-- Aggregator problem -->
+      <section id="aggregator-problem" class="mb-14 scroll-mt-24">
+        <h2 class="text-2xl font-bold text-white mb-6">The aggregator problem: more data sources, more gaps</h2>
+        <div class="space-y-5 text-zinc-300">
+          <p class="leading-relaxed">
+            Google Health is an aggregator. It pulls from your Fitbit, Apple Health, MyFitnessPal,
+            Peloton, connected apps, manual logs, and health records. This breadth is one of its
+            genuine strengths for biometric tracking. But it creates a specific challenge for AI
+            summarization.
+          </p>
+          <p class="leading-relaxed">
+            When 6 data sources feed into a context window, each with different schemas, update
+            frequencies, and reliability levels, the resulting context is messy. Gaps appear between
+            sources. The model has to reason across all of this. When it cannot reconcile a gap, it fills it.
+          </p>
+          <p class="leading-relaxed">
+            A specialized app that only tracks what a user explicitly logs has a narrower but cleaner
+            context. The model has less to hallucinate across. This is a tradeoff, not a value judgment.
+          </p>
+          <div class="bg-amber-950/20 border border-amber-900/30 rounded-xl p-5">
+            <p class="text-sm font-semibold text-amber-400 mb-2">Worth noting</p>
+            <p class="text-sm text-zinc-300 leading-relaxed">
+              This is not unique to Google Health. Any app that pulls from multiple sources faces the
+              same aggregation noise problem. The larger the ecosystem, the harder the grounding problem becomes.
+              Smaller, more focused apps trade ecosystem breadth for cleaner context.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- How grounding helps -->
+      <section id="how-grounding-helps" class="mb-14 scroll-mt-24">
+        <h2 class="text-2xl font-bold text-white mb-6">How grounding helps — and what Zealova does differently</h2>
+        <div class="space-y-5 text-zinc-300">
+          <p class="leading-relaxed">
+            Grounding means attaching verified data to the model's context before it generates a
+            response. In fitness, that means: before the AI answers a question about your training,
+            it reads your actual logged sets, reps, weights, exercises, and dates.
+          </p>
+          <p class="leading-relaxed">
+            Research on RAG systems consistently shows grounding reduces hallucination rates significantly.
+            A 2026 developer guide on LLM grounding (<a href="https://neuledge.com/blog/2026-02-20/what-is-llm-grounding" target="_blank" rel="noopener noreferrer" class="text-emerald-400 hover:text-emerald-300 underline">neuledge.com, published February 2026</a>)
+            cites 42-68% reduction in hallucinations when models are given retrieved real context vs no context.
+            Clinical RAG systems have pushed hallucination rates to 5.8% using self-reflective verification
+            layers on top of retrieval (<a href="https://www.mdpi.com/2079-9292/14/21/4227" target="_blank" rel="noopener noreferrer" class="text-emerald-400 hover:text-emerald-300 underline">MDPI Electronics 14(21):4227</a>).
+          </p>
+          <p class="leading-relaxed">
+            Zealova's workout plan generator and coach do this: before any AI call related to your
+            training, the system pulls your actual logged workout history and injects it as structured
+            context. The model is not asked to guess what you have been doing. It reads what you logged.
+          </p>
+
+          <!-- Supporting image -->
+          <div class="flex justify-center my-6">
+            <img
+              src="/screenshots/intro_phone_4.png"
+              alt="Zealova per-exercise workout history showing real logged sets and weights"
+              width="270"
+              height="600"
+              loading="lazy"
+              class="rounded-2xl w-full max-w-[200px] object-cover"
+            />
+          </div>
+
+          <div class="bg-zinc-900 border border-zinc-800 rounded-xl p-5">
+            <p class="text-sm font-semibold text-white mb-3">What this does NOT mean</p>
+            <p class="text-sm text-zinc-400 leading-relaxed mb-3">
+              Zealova is not immune to hallucination. No LLM-based product is. Grounding removes
+              the specific failure mode of fabricating logged activity. But Zealova can still:
+            </p>
+            <ul class="list-disc list-inside space-y-1.5 text-sm text-zinc-500">
+              <li>Hallucinate exercise recommendations for equipment it was not told you own</li>
+              <li>Produce overconfident nutritional estimates from food photos</li>
+              <li>Generate generic advice when the logged data is thin</li>
+              <li>Make errors in form cues or exercise descriptions</li>
+            </ul>
+            <p class="text-sm text-zinc-400 leading-relaxed mt-3">
+              Cross-checking AI output against your raw data is good practice regardless of which app you use.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Where Google Health wins -->
+      <section id="where-google-wins" class="mb-14 scroll-mt-24">
+        <h2 class="text-2xl font-bold text-white mb-6">Where Google Health is genuinely strong</h2>
+        <p class="text-zinc-400 text-sm mb-6">
+          Writing about a competitor's failure without acknowledging what they do well is not useful analysis.
+        </p>
+        <ul class="space-y-4">
+          <li class="flex gap-4 bg-zinc-900 border border-zinc-800 rounded-xl px-5 py-4">
+            <span class="text-blue-400 mt-0.5 text-base font-bold shrink-0">+</span>
+            <div>
+              <p class="text-sm font-semibold text-white mb-1">Wearable biometrics that no phone-only app can match</p>
+              <p class="text-sm text-zinc-400 leading-relaxed">Continuous HR, HRV, SpO2, sleep stages, readiness scores. If you own a Fitbit or Pixel Watch, Google Health surfaces data that a phone-only app cannot approximate.</p>
+            </div>
+          </li>
+          <li class="flex gap-4 bg-zinc-900 border border-zinc-800 rounded-xl px-5 py-4">
+            <span class="text-blue-400 mt-0.5 text-base font-bold shrink-0">+</span>
+            <div>
+              <p class="text-sm font-semibold text-white mb-1">Free tier with no hardware gate for basic logging</p>
+              <p class="text-sm text-zinc-400 leading-relaxed">Google Health has a free option for basic activity and food tracking. Zealova requires a subscription after 7 days.</p>
+            </div>
+          </li>
+          <li class="flex gap-4 bg-zinc-900 border border-zinc-800 rounded-xl px-5 py-4">
+            <span class="text-blue-400 mt-0.5 text-base font-bold shrink-0">+</span>
+            <div>
+              <p class="text-sm font-semibold text-white mb-1">Ecosystem breadth: Apple Health, MFP, Peloton, medical records</p>
+              <p class="text-sm text-zinc-400 leading-relaxed">Google Health connects to more third-party services than most competitors. Aggregation creates the grounding problem, but it also creates real value for users with scattered health data.</p>
+            </div>
+          </li>
+          <li class="flex gap-4 bg-zinc-900 border border-zinc-800 rounded-xl px-5 py-4">
+            <span class="text-blue-400 mt-0.5 text-base font-bold shrink-0">+</span>
+            <div>
+              <p class="text-sm font-semibold text-white mb-1">3-month free trial vs 7 days</p>
+              <p class="text-sm text-zinc-400 leading-relaxed">Google Health Premium offers 3 months free for new users. That is a longer evaluation window. For a product that relies on wearable baseline data to be useful, a longer trial makes sense.</p>
+            </div>
+          </li>
+          <li class="flex gap-4 bg-zinc-900 border border-zinc-800 rounded-xl px-5 py-4">
+            <span class="text-blue-400 mt-0.5 text-base font-bold shrink-0">+</span>
+            <div>
+              <p class="text-sm font-semibold text-white mb-1">iOS support right now</p>
+              <p class="text-sm text-zinc-400 leading-relaxed">Zealova is Android only. Google Health is live on iOS and Android.</p>
+            </div>
+          </li>
+        </ul>
+      </section>
+
+      <!-- FAQ -->
+      <section id="faq" class="mb-14 scroll-mt-24">
+        <h2 class="text-2xl font-bold text-white mb-6">FAQ</h2>
+        <div class="space-y-2" id="faq-list">
+
+          <details class="border border-zinc-800 rounded-xl overflow-hidden">
+            <summary class="w-full text-left px-5 py-4 flex justify-between items-start gap-4 bg-zinc-900 hover:bg-zinc-800/80 cursor-pointer list-none">
+              <span class="text-sm font-medium text-zinc-200">What exactly did Google Health Coach hallucinate?</span>
+              <span class="text-zinc-500 shrink-0 text-lg leading-none faq-icon"></span>
+            </summary>
+            <div class="px-5 py-4 bg-zinc-950 border-t border-zinc-800">
+              <p class="text-sm text-zinc-400 leading-relaxed">According to Android Authority (published 2026-05-14), Google's Health Coach told reviewer Will Sattelberg of 9to5Google that he had completed a 5-mile run he never actually took. When Sattelberg challenged the claim, the coach acknowledged the error but then suggested he might have simply forgotten to record the run.</p>
+            </div>
+          </details>
+
+          <details class="border border-zinc-800 rounded-xl overflow-hidden">
+            <summary class="w-full text-left px-5 py-4 flex justify-between items-start gap-4 bg-zinc-900 hover:bg-zinc-800/80 cursor-pointer list-none">
+              <span class="text-sm font-medium text-zinc-200">Is this a Google-specific problem or a general AI problem?</span>
+              <span class="text-zinc-500 shrink-0 text-lg leading-none faq-icon"></span>
+            </summary>
+            <div class="px-5 py-4 bg-zinc-950 border-t border-zinc-800">
+              <p class="text-sm text-zinc-400 leading-relaxed">It is a general AI problem that affects any fitness app using a large language model without tight grounding to the user's actual logged data. LLMs are trained to produce plausible-sounding outputs. When the prompt includes an instruction like 'summarize the user's recent activity', the model fills gaps in the context with statistically likely activity patterns rather than refusing to answer.</p>
+            </div>
+          </details>
+
+          <details class="border border-zinc-800 rounded-xl overflow-hidden">
+            <summary class="w-full text-left px-5 py-4 flex justify-between items-start gap-4 bg-zinc-900 hover:bg-zinc-800/80 cursor-pointer list-none">
+              <span class="text-sm font-medium text-zinc-200">Does Zealova hallucinate workout data?</span>
+              <span class="text-zinc-500 shrink-0 text-lg leading-none faq-icon"></span>
+            </summary>
+            <div class="px-5 py-4 bg-zinc-950 border-t border-zinc-800">
+              <p class="text-sm text-zinc-400 leading-relaxed">Zealova uses LLMs and LLMs can hallucinate. The distinction is not immunity — it is data grounding. Zealova's workout plan generator and chat coach receive the user's actual logged workout history as structured context before any AI call. That does not eliminate hallucination, but it removes the specific failure mode of fabricating activity.</p>
+            </div>
+          </details>
+
+          <details class="border border-zinc-800 rounded-xl overflow-hidden">
+            <summary class="w-full text-left px-5 py-4 flex justify-between items-start gap-4 bg-zinc-900 hover:bg-zinc-800/80 cursor-pointer list-none">
+              <span class="text-sm font-medium text-zinc-200">What is data grounding in AI fitness apps?</span>
+              <span class="text-zinc-500 shrink-0 text-lg leading-none faq-icon"></span>
+            </summary>
+            <div class="px-5 py-4 bg-zinc-950 border-t border-zinc-800">
+              <p class="text-sm text-zinc-400 leading-relaxed">Grounding means attaching real, verified data to the context window before the model generates a response. In fitness, that means the AI reads your actual logged sets, reps, weights, and timestamps before answering. Research on RAG systems shows grounding reduces hallucinations by 42-68% vs no context (neuledge.com, February 2026).</p>
+            </div>
+          </details>
+
+          <details class="border border-zinc-800 rounded-xl overflow-hidden">
+            <summary class="w-full text-left px-5 py-4 flex justify-between items-start gap-4 bg-zinc-900 hover:bg-zinc-800/80 cursor-pointer list-none">
+              <span class="text-sm font-medium text-zinc-200">Why do large-scale health apps struggle with this more than smaller focused apps?</span>
+              <span class="text-zinc-500 shrink-0 text-lg leading-none faq-icon"></span>
+            </summary>
+            <div class="px-5 py-4 bg-zinc-950 border-t border-zinc-800">
+              <p class="text-sm text-zinc-400 leading-relaxed">Large aggregators pull from many data sources: wearable steps, inferred calorie burn, connected third-party apps, manual logs, and health records. The more sources, the more opportunities for missing, conflicting, or low-quality data to enter the context. A focused app that only tracks what a user explicitly logs has a cleaner, more verifiable context to give the model.</p>
+            </div>
+          </details>
+
+          <details class="border border-zinc-800 rounded-xl overflow-hidden">
+            <summary class="w-full text-left px-5 py-4 flex justify-between items-start gap-4 bg-zinc-900 hover:bg-zinc-800/80 cursor-pointer list-none">
+              <span class="text-sm font-medium text-zinc-200">Should I trust AI fitness app workout summaries?</span>
+              <span class="text-zinc-500 shrink-0 text-lg leading-none faq-icon"></span>
+            </summary>
+            <div class="px-5 py-4 bg-zinc-950 border-t border-zinc-800">
+              <p class="text-sm text-zinc-400 leading-relaxed">Cross-check any AI summary against your raw logged data, especially for anything that sounds surprising. This applies to Google Health, Zealova, and any other AI fitness coach. If the coach references an activity you do not remember doing, check the source: did your phone step counter infer it, did a connected app log it, or did the AI fabricate it?</p>
+            </div>
+          </details>
+
+          <details class="border border-zinc-800 rounded-xl overflow-hidden">
+            <summary class="w-full text-left px-5 py-4 flex justify-between items-start gap-4 bg-zinc-900 hover:bg-zinc-800/80 cursor-pointer list-none">
+              <span class="text-sm font-medium text-zinc-200">Is Google Health a bad app because of this incident?</span>
+              <span class="text-zinc-500 shrink-0 text-lg leading-none faq-icon"></span>
+            </summary>
+            <div class="px-5 py-4 bg-zinc-950 border-t border-zinc-800">
+              <p class="text-sm text-zinc-400 leading-relaxed">No. Google Health is genuinely strong on wearable biometrics, sleep tracking, Apple Health integration, MFP connectivity, and ecosystem breadth. The hallucination issue is a real limitation worth knowing about, not a reason to dismiss the app entirely.</p>
+            </div>
+          </details>
+
+        </div>
+      </section>
+
+      <!-- Methodology -->
+      <section class="mb-14">
+        <div class="bg-zinc-900/60 border border-zinc-800 rounded-xl px-5 py-4">
+          <p class="text-xs font-semibold uppercase tracking-widest text-zinc-500 mb-2">Methodology and disclosure</p>
+          <p class="text-sm text-zinc-400 leading-relaxed">
+            The Google Health Coach hallucination incident is sourced from Android Authority
+            (androidauthority.com, published 2026-05-14) and the original hands-on by Will Sattelberg
+            of 9to5Google. RAG hallucination reduction figures are from neuledge.com (LLM grounding guide,
+            published 2026-02-20). Clinical RAG figures (5.8% hallucination) are from MDPI Electronics
+            14(21):4227. The Guardian AI Overviews investigation (January 2026) is cited via almcorp.com
+            summary. Google Health pricing verified at store.google.com, 2026-05-14. I am the founder of
+            Zealova. I have tried to concede every honest Google Health advantage. Email me: sai@zealova.com.
+          </p>
+        </div>
+      </section>
+
+      <!-- CTA -->
+      <section class="text-center">
+        <div class="bg-zinc-900 border border-zinc-800 rounded-2xl p-8 sm:p-12">
+          <h2 class="text-2xl sm:text-3xl font-bold text-white mb-3">Try Zealova free for 7 days</h2>
+          <p class="text-zinc-400 text-base mb-8 max-w-md mx-auto">
+            AI workout plans grounded in what you actually logged. No hardware required. Android live now.
+          </p>
+          <div class="flex flex-col sm:flex-row gap-4 justify-center">
+            <a
+              href="https://play.google.com/store/apps/details?id=com.aifitnesscoach.app"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="inline-flex items-center justify-center px-8 py-3.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-semibold text-base transition-colors"
+            >
+              Download on Android
+            </a>
+            <a
+              href="/vs/google-health"
+              class="inline-flex items-center justify-center px-8 py-3.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white font-semibold text-base transition-colors"
+            >
+              Full Zealova vs Google Health comparison
+            </a>
+          </div>
+        </div>
+
+        <p class="text-xs text-zinc-600 mt-8 leading-relaxed max-w-2xl mx-auto">
+          Last updated 2026-05-18 by Sai. Sources: Android Authority (androidauthority.com, 2026-05-14);
+          9to5Google original hands-on (2026-05-14); neuledge.com LLM grounding guide (2026-02-20);
+          MDPI Electronics 14(21):4227; Guardian AI Overviews investigation summary (almcorp.com, January 2026);
+          store.google.com pricing (verified 2026-05-14). Refresh cycle: 60 days.
+        </p>
+      </section>
+
+    </article>
+  </div>
+
+  <!-- Footer stub -->
+  <footer class="border-t border-zinc-800 mt-20 px-6 py-10 text-center text-sm text-zinc-500">
+    <p>Zealova &mdash; AI fitness coach for Android. <a href="/privacy" class="hover:text-zinc-300">Privacy</a> &middot; <a href="/terms" class="hover:text-zinc-300">Terms</a> &middot; <a href="/about" class="hover:text-zinc-300">About</a></p>
+  </footer>
+
+</body>
+</html>

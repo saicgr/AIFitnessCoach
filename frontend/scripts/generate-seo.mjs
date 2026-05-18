@@ -40,6 +40,7 @@ const STATIC_ROUTES = [
   { path: '/health-disclaimer', priority: '0.3', changefreq: 'yearly' },
   { path: '/vs/google-health', priority: '0.7', changefreq: 'monthly' },
   { path: '/vs/bevel', priority: '0.7', changefreq: 'monthly' },
+  { path: '/blog/google-health-coach-hallucination', priority: '0.7', changefreq: 'monthly' },
   { path: '/best-ai-fitness-apps-2026', priority: '0.7', changefreq: 'monthly' },
   { path: '/best-calorie-tracker-apps-2026', priority: '0.7', changefreq: 'monthly' },
   { path: '/best-workout-generator-apps-2026', priority: '0.7', changefreq: 'monthly' },

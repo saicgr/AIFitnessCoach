@@ -94,6 +94,8 @@ build/
 google*
 !frontend/src/pages/vs/GoogleHealth.tsx
 !frontend/src/pages/vs/google-health.preview.html
+!frontend/src/pages/blog/GoogleHealthHallucination.tsx
+!frontend/src/pages/blog/google-health-coach-hallucination.preview.html
 gen-lang-client-*.json
 aifitnesscoach-5e5d3-firebase-adminsdk-fbsvc-5e932acb66.json
 

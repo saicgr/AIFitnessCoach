@@ -20,6 +20,16 @@ interface Entry {
   tag: string;
 }
 
+const ARTICLES: Entry[] = [
+  {
+    to: '/blog/google-health-coach-hallucination',
+    title: "Google Health Coach Invented a Workout. Here's Why AI Fitness Apps Do This.",
+    blurb:
+      "A factual recap of the Google Health Coach hallucination incident (May 2026) and a technical explainer on why general-purpose AI fitness products fabricate workout data.",
+    tag: 'Article',
+  },
+];
+
 const COMPARISONS: Entry[] = [
   {
     to: '/vs/google-health',
@@ -123,7 +133,7 @@ export default function Blog() {
     '@context': 'https://schema.org',
     '@type': 'ItemList',
     name: 'Zealova fitness app comparisons and guides',
-    itemListElement: [...COMPARISONS, ...ROUNDUPS].map((e, i) => ({
+    itemListElement: [...ARTICLES, ...COMPARISONS, ...ROUNDUPS].map((e, i) => ({
       '@type': 'ListItem',
       position: i + 1,
       name: e.title,
@@ -153,6 +163,17 @@ export default function Blog() {
             competitors win, and where Zealova does.
           </p>
         </header>
+
+        <section className="mb-12">
+          <h2 className="text-xl font-bold text-white mb-5 flex items-center gap-2">
+            <span>📰</span> Articles
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {ARTICLES.map((e) => (
+              <ArticleCard key={e.to} entry={e} />
+            ))}
+          </div>
+        </section>
 
         <section className="mb-12">
           <h2 className="text-xl font-bold text-white mb-5 flex items-center gap-2">

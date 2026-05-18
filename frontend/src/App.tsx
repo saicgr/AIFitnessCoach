@@ -40,6 +40,7 @@ import Library from './pages/Library';
 import Achievements from './pages/Achievements';
 import PublicWorkout from './pages/PublicWorkout';
 import GoogleHealthVs from './pages/vs/GoogleHealth';
+import GoogleHealthHallucination from './pages/blog/GoogleHealthHallucination';
 import BevelVs from './pages/vs/Bevel';
 import BestAiFitnessApps2026 from './pages/best/AiFitnessApps2026';
 import BestCalorieTrackerApps2026 from './pages/best/CalorieTrackerApps2026';
@@ -193,6 +194,8 @@ function App() {
         <Route path="/roadmap" element={<Roadmap />} />
         <Route path="/waitlist" element={<Waitlist />} />
         <Route path="/delete-account" element={<DeleteAccount />} />
+        {/* Blog posts — editorial, original-data, technical explainers */}
+        <Route path="/blog/google-health-coach-hallucination" element={<GoogleHealthHallucination />} />
         {/* Comparison pages — SEO */}
         <Route path="/vs/google-health" element={<GoogleHealthVs />} />
         <Route path="/vs/bevel" element={<BevelVs />} />

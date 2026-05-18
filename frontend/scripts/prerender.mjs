@@ -91,6 +91,7 @@ async function buildRouteList() {
     '/waitlist',
     '/vs/google-health',
     '/vs/bevel',
+    '/blog/google-health-coach-hallucination',
     '/blog',
     '/free-tools',
     '/glossary',
