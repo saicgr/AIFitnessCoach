@@ -1329,3 +1329,73 @@ Stack: FastAPI on Render, Supabase, Flutter, Gemini. Try Zealova: https://zealov
 update: 10-level threaded comments shipped and live. the roadmap board feels right now.
 
 ### 📝 END POST CONTENT
+
+---
+
+## 2026-05-18 — "midnight before Google — comparison page comments"
+
+**Status:** Drafted, not yet posted
+
+<details>
+<summary>🔬 Research log + plan (click to expand)</summary>
+
+**Research log (2026-05-18):**
+- Anchored commit: `9790d9d` — 2026-05-18 00:20:31 -0500 — "feat(comments): page-comments API for marketing comparison/roundup pages". Built at midnight Sunday (12:20 AM). Migration 2082, /page-comments router, email-keyed flat comments on /vs/* and /best-* marketing pages. Narrative keywords: "midnight", timing drama — Google Health Coach (Gemini-powered) launched May 19, the day after this commit.
+- Arc: MFP acquired Cal AI (March 2026) → Google enters at $9.99/mo (May 19) → solo founder at midnight builds the only moat available: comparison page SEO targeting competitor alternative queries.
+- Algo finding: One reply = 27 likes algorithmically; author engaging with replies = +75 (single strongest signal). Threads 3× total engagement vs standalone. External links in tweet body reduce reach ~50%; zealova.com in self-reply only. X now uses semantic NLP, hashtags less critical for discovery.
+- Hashtag finding: 0-1 hashtags max; 3+ triggers spam filter. `#buildinpublic` confirmed top evergreen tag for indie-hacker lane on X (AutoTweet May 2026). 1 tag woven into tweet 5 body sentence.
+- Trend hook hijack: David-vs-Goliath — Google $9.99/mo AI health coach launched the day after this midnight commit. MFP/Cal AI acquisition March 2026. Consolidation accelerating. Solo founder targeting competitor alternatives is the only viable wedge.
+- Source links:
+  - https://techcrunch.com/2026/05/07/googles-9-99-per-month-ai-health-coach-launches-may-19/
+  - https://techcrunch.com/2026/03/02/myfitnesspal-has-acquired-cal-ai-the-viral-calorie-app-built-by-teens/
+  - https://opentweet.io/blog/how-twitter-x-algorithm-works-2026
+  - https://www.teract.ai/resources/twitter-algorithm-2026
+  - https://www.autotweet.io/blog/best-hashtags-for-x-twitter-2026
+  - https://www.teract.ai/resources/twitter-strategy-indie-hackers-2026
+
+**Plan:**
+- Day/time: Mon May 18, 2026 — 9–11am ET or 2–4pm ET
+- Hashtags: 1 tag — `#buildinpublic` woven into tweet 5 body sentence
+- Pre-post warmup: 15 min commenting on #buildinpublic / #indiehackers / #solofounder threads before posting
+- Self-reply immediately after tweet 5 with zealova.com link
+- Quote-tweet tweet 1 ~2h later (fresh session): "update: /vs/myfitnesspal and /vs/fitbod pages now have live comment sections. every comment adds fresh content signal."
+- First-hour: reply to every comment within 5 min; tweet 3 (technical build) is bookmark-bait for FastAPI/backend devs; tweet 4 (same principle, different context) is discussion-bait for product/founder audience
+
+</details>
+
+### 📝 POST CONTENT BELOW — copy-paste this
+
+**1/** (220 chars)
+The night before Google launched their $9.99/mo AI fitness coach, I was up at midnight building comment sections on my /vs/competitor pages. My only weapon against 200M-user incumbents: ranking for their alternatives. 🧵
+
+---
+
+**2/** (210 chars)
+MFP acquired Cal AI. Google Health Coach launched yesterday. Consolidation is accelerating. Solo founders can't win 'best AI fitness app.' But 'MyFitnessPal alternative 2026'? Different intent. Different fight.
+
+---
+
+**3/** (217 chars)
+The build: migration 2082, /page-comments API. Email-keyed, no login. 10/hr rate limit per IP. Honeypot drops bots silently. Comments publish instantly. Every new comment = fresh content signal on every page, forever.
+
+---
+
+**4/** (192 chars)
+Deliberate: flat, no threading. Yesterday I reversed flat→threaded for the roadmap. Today flat was right. Marketing pages are not forums. Same principle. Different context. Different solution.
+
+---
+
+**5/** (194 chars)
+Building Zealova — AI fitness coach. Competing with Google and 200M-user apps by targeting their abandoned search queries. Solo founders: what's your SEO wedge against incumbents? #buildinpublic
+
+---
+
+**Self-reply (post immediately after tweet 5):**
+Stack: FastAPI on Render, Supabase, Flutter, Gemini, ChromaDB. Try Zealova: https://zealova.com
+
+---
+
+**Quote-tweet tweet 1 ~2h later (fresh session):**
+update: /vs/myfitnesspal and /vs/fitbod pages now have live comment sections. every comment adds a fresh content signal.
+
+### 📝 END POST CONTENT
