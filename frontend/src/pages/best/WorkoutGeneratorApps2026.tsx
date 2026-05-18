@@ -20,9 +20,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import MarketingNav from '../../components/marketing/MarketingNav';
-import ScrollSpyToc from '../../components/marketing/ScrollSpyToc';
-import MarketingFooter from '../../components/marketing/MarketingFooter';
+import ArticleLayout from '../../components/marketing/ArticleLayout';
 import { BRANDING } from '../../lib/branding';
 
 const fadeUp = {
@@ -30,6 +28,14 @@ const fadeUp = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.55, ease: [0.25, 0.1, 0.25, 1] as const } },
 };
 const stagger = { visible: { transition: { staggerChildren: 0.1 } } };
+
+const SECTIONS = [
+  { id: 'answer', label: 'The short answer' },
+  { id: 'quick-picks', label: 'TL;DR' },
+  { id: 'breakdown', label: 'Full breakdown' },
+  { id: 'faq', label: 'Common questions' },
+  { id: 'try', label: 'Try Zealova' },
+];
 
 const CANONICAL_URL = `https://${BRANDING.marketingDomain}/best-workout-generator-apps-2026`;
 const OG_IMAGE = `/screenshots/og-best-workout-generator.png`;
@@ -215,10 +221,7 @@ export default function BestWorkoutGeneratorApps2026() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdFaq) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdBreadcrumb) }} />
 
-      <div className="min-h-screen bg-zinc-950 text-zinc-100">
-        <MarketingNav />
-        <ScrollSpyToc />
-        <main className="max-w-4xl mx-auto px-4 sm:px-6 py-16 sm:py-24">
+      <ArticleLayout slug="best-workout-generator-apps-2026" sections={SECTIONS}>
 
           <nav className="text-sm text-zinc-500 mb-10" aria-label="Breadcrumb">
             <Link to="/" className="hover:text-zinc-300 transition-colors">Home</Link>
@@ -227,7 +230,7 @@ export default function BestWorkoutGeneratorApps2026() {
           </nav>
 
           {/* Answer capsule */}
-          <motion.section initial="hidden" animate="visible" variants={stagger} className="mb-14">
+          <motion.section id="answer" initial="hidden" animate="visible" variants={stagger} className="mb-14 scroll-mt-24">
             <motion.div variants={fadeUp}>
               <p className="text-xs font-medium uppercase tracking-widest text-emerald-400 mb-4">
                 Updated 2026-05-15 · Pricing verified per source, this run
@@ -267,7 +270,7 @@ export default function BestWorkoutGeneratorApps2026() {
           </motion.section>
 
           {/* Quick picks */}
-          <motion.section initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger} className="mb-14">
+          <motion.section id="quick-picks" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger} className="mb-14 scroll-mt-24">
             <motion.h2 variants={fadeUp} className="text-2xl font-bold text-white mb-6">TL;DR</motion.h2>
             <motion.div variants={fadeUp} className="overflow-x-auto rounded-xl border border-zinc-800">
               <table className="w-full text-sm">
@@ -304,7 +307,7 @@ export default function BestWorkoutGeneratorApps2026() {
           </motion.section>
 
           {/* App cards */}
-          <motion.section initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger} className="mb-14">
+          <motion.section id="breakdown" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger} className="mb-14 scroll-mt-24">
             <motion.h2 variants={fadeUp} className="text-2xl font-bold text-white mb-8">Full breakdown</motion.h2>
             <div className="space-y-6">
               {apps.map((app) => (
@@ -338,7 +341,7 @@ export default function BestWorkoutGeneratorApps2026() {
           </motion.section>
 
           {/* FAQ */}
-          <motion.section initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger} className="mb-14">
+          <motion.section id="faq" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger} className="mb-14 scroll-mt-24">
             <motion.h2 variants={fadeUp} className="text-2xl font-bold text-white mb-6">Common questions</motion.h2>
             <div className="space-y-3">
               {FAQData.map((item, i) => (
@@ -357,8 +360,8 @@ export default function BestWorkoutGeneratorApps2026() {
           </motion.section>
 
           {/* CTA */}
-          <motion.section initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}
-            className="bg-emerald-950/30 border border-emerald-900/50 rounded-2xl p-8 text-center">
+          <motion.section id="try" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp}
+            className="bg-emerald-950/30 border border-emerald-900/50 rounded-2xl p-8 text-center scroll-mt-24">
             <h2 className="text-2xl font-bold text-white mb-3">Try Zealova free for 7 days</h2>
             <p className="text-zinc-400 mb-2 text-sm">AI workout plans, food photo logging, and a 5-agent chat coach. $59.99/yr after trial.</p>
             <p className="text-xs text-zinc-500 mb-6">Android only. iOS coming soon.</p>
@@ -374,9 +377,7 @@ export default function BestWorkoutGeneratorApps2026() {
             Williams TD et al. (JSCR 2017), Israetel M et al. (Sports MDPI 2021).
             Pricing: arvo.guru (2026-05-15), leaveit2ai.com (2026-05-15), Zealova internal.
           </p>
-        </main>
-        <MarketingFooter />
-      </div>
+      </ArticleLayout>
     </>
   );
 }

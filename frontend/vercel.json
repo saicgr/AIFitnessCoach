@@ -33,6 +33,10 @@
       "source": "/api/v1/roadmap/:path*",
       "destination": "https://aifitnesscoach-zqi3.onrender.com/api/v1/roadmap/:path*"
     },
+    {
+      "source": "/api/v1/page-comments/:path*",
+      "destination": "https://aifitnesscoach-zqi3.onrender.com/api/v1/page-comments/:path*"
+    },
     { "source": "/(.*)", "destination": "/__spa_shell.html" }
   ],
   "headers": [

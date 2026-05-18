@@ -49,9 +49,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import MarketingNav from '../../components/marketing/MarketingNav';
-import ScrollSpyToc from '../../components/marketing/ScrollSpyToc';
-import MarketingFooter from '../../components/marketing/MarketingFooter';
+import ArticleLayout from '../../components/marketing/ArticleLayout';
 import { BRANDING } from '../../lib/branding';
 
 const fadeUp = {
@@ -62,6 +60,19 @@ const fadeUp = {
 const stagger = {
   visible: { transition: { staggerChildren: 0.1 } },
 };
+
+const SECTIONS = [
+  { id: 'answer', label: 'The short answer' },
+  { id: 'tldr', label: 'TL;DR' },
+  { id: 'comparison', label: 'Feature comparison' },
+  { id: 'pricing', label: 'Pricing breakdown' },
+  { id: 'why-zealova', label: 'Why gym users pick Zealova' },
+  { id: 'zealova-wins', label: 'Where Zealova wins' },
+  { id: 'google-health-wins', label: 'Where Google Health wins' },
+  { id: 'fitbit-frustrations', label: 'Fitbit user frustrations' },
+  { id: 'which-to-pick', label: 'Which to pick' },
+  { id: 'faq', label: 'FAQ' },
+];
 
 const CANONICAL_URL = `https://${BRANDING.marketingDomain}/vs/google-health`;
 
@@ -282,11 +293,7 @@ export default function GoogleHealthVs() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdBreadcrumb) }}
       />
 
-      <div className="min-h-screen bg-zinc-950 text-zinc-100">
-        <MarketingNav />
-        <ScrollSpyToc />
-
-        <main className="max-w-4xl mx-auto px-4 sm:px-6 py-16 sm:py-24">
+      <ArticleLayout slug="vs/google-health" sections={SECTIONS}>
 
           {/* Breadcrumb */}
           <nav className="text-sm text-zinc-500 mb-10" aria-label="Breadcrumb">
@@ -297,10 +304,11 @@ export default function GoogleHealthVs() {
 
           {/* Answer capsule — first ~200 words, LLM-quote target */}
           <motion.section
+            id="answer"
             initial="hidden"
             animate="visible"
             variants={stagger}
-            className="mb-14"
+            className="mb-14 scroll-mt-24"
           >
             <motion.div variants={fadeUp}>
               <p className="text-xs font-medium uppercase tracking-widest text-emerald-400 mb-4">
@@ -360,11 +368,12 @@ export default function GoogleHealthVs() {
 
           {/* TL;DR Table */}
           <motion.section
+            id="tldr"
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true }}
             variants={stagger}
-            className="mb-8"
+            className="mb-8 scroll-mt-24"
           >
             <motion.h2 variants={fadeUp} className="text-2xl font-bold text-white mb-6">
               TL;DR
@@ -464,11 +473,12 @@ export default function GoogleHealthVs() {
 
           {/* Full Feature Comparison Table — MOVED BEFORE hero wedges per recon */}
           <motion.section
+            id="comparison"
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true }}
             variants={stagger}
-            className="mb-14"
+            className="mb-14 scroll-mt-24"
           >
             <motion.h2 variants={fadeUp} className="text-2xl font-bold text-white mb-6">
               Feature comparison
@@ -506,11 +516,12 @@ export default function GoogleHealthVs() {
 
           {/* Pricing Detail */}
           <motion.section
+            id="pricing"
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true }}
             variants={stagger}
-            className="mb-14"
+            className="mb-14 scroll-mt-24"
           >
             <motion.h2 variants={fadeUp} className="text-2xl font-bold text-white mb-6">
               Pricing breakdown
@@ -620,11 +631,12 @@ export default function GoogleHealthVs() {
 
           {/* Hero Wedges — now comes AFTER table per recon */}
           <motion.section
+            id="why-zealova"
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true }}
             variants={stagger}
-            className="mb-14"
+            className="mb-14 scroll-mt-24"
           >
             <motion.h2 variants={fadeUp} className="text-2xl font-bold text-white mb-6">
               Why gym-focused users pick Zealova over Google Health
@@ -692,11 +704,12 @@ export default function GoogleHealthVs() {
 
           {/* Where Zealova wins — trimmed from 9 to 7 bullets per recon (sharper, more defensible) */}
           <motion.section
+            id="zealova-wins"
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true }}
             variants={stagger}
-            className="mb-14"
+            className="mb-14 scroll-mt-24"
           >
             <motion.h2 variants={fadeUp} className="text-2xl font-bold text-white mb-6">
               Where Zealova wins
@@ -749,11 +762,12 @@ export default function GoogleHealthVs() {
 
           {/* Where Google Health wins — trimmed from 9 to 7 bullets per recon */}
           <motion.section
+            id="google-health-wins"
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true }}
             variants={stagger}
-            className="mb-14"
+            className="mb-14 scroll-mt-24"
           >
             <motion.h2 variants={fadeUp} className="text-2xl font-bold text-white mb-6">
               Where Google Health wins
@@ -806,11 +820,12 @@ export default function GoogleHealthVs() {
 
           {/* What Fitbit users are frustrated about — NEW section in v4, Hoot exemplar move */}
           <motion.section
+            id="fitbit-frustrations"
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true }}
             variants={stagger}
-            className="mb-14"
+            className="mb-14 scroll-mt-24"
           >
             <motion.h2 variants={fadeUp} className="text-2xl font-bold text-white mb-4">
               What Fitbit users are frustrated about right now
@@ -844,11 +859,12 @@ export default function GoogleHealthVs() {
 
           {/* Use-case picker */}
           <motion.section
+            id="which-to-pick"
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true }}
             variants={stagger}
-            className="mb-14"
+            className="mb-14 scroll-mt-24"
           >
             <motion.h2 variants={fadeUp} className="text-2xl font-bold text-white mb-2">
               Which one should you pick?
@@ -915,11 +931,12 @@ export default function GoogleHealthVs() {
 
           {/* FAQ accordion — expanded to 14 Q/As in v4 */}
           <motion.section
+            id="faq"
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true }}
             variants={stagger}
-            className="mb-14"
+            className="mb-14 scroll-mt-24"
           >
             <motion.h2 variants={fadeUp} className="text-2xl font-bold text-white mb-6">
               FAQ
@@ -1019,10 +1036,7 @@ export default function GoogleHealthVs() {
             </p>
           </motion.section>
 
-        </main>
-
-        <MarketingFooter />
-      </div>
+      </ArticleLayout>
     </>
   );
 }

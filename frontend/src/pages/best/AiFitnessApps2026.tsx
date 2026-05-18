@@ -22,9 +22,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import MarketingNav from '../../components/marketing/MarketingNav';
-import ScrollSpyToc from '../../components/marketing/ScrollSpyToc';
-import MarketingFooter from '../../components/marketing/MarketingFooter';
+import ArticleLayout from '../../components/marketing/ArticleLayout';
 import { BRANDING } from '../../lib/branding';
 
 const fadeUp = {
@@ -35,6 +33,15 @@ const fadeUp = {
 const stagger = {
   visible: { transition: { staggerChildren: 0.1 } },
 };
+
+const SECTIONS = [
+  { id: 'answer', label: 'The short answer' },
+  { id: 'quick-picks', label: 'Quick picks' },
+  { id: 'breakdown', label: 'The full breakdown' },
+  { id: 'use-cases', label: 'Which app for you' },
+  { id: 'faq', label: 'Common questions' },
+  { id: 'try', label: 'Try Zealova' },
+];
 
 const CANONICAL_URL = `https://${BRANDING.marketingDomain}/best-ai-fitness-apps-2026`;
 const OG_IMAGE = `/screenshots/og-best-ai-fitness-apps.png`;
@@ -285,11 +292,7 @@ export default function BestAiFitnessApps2026() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdFaq) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdBreadcrumb) }} />
 
-      <div className="min-h-screen bg-zinc-950 text-zinc-100">
-        <MarketingNav />
-        <ScrollSpyToc />
-
-        <main className="max-w-4xl mx-auto px-4 sm:px-6 py-16 sm:py-24">
+      <ArticleLayout slug="best-ai-fitness-apps-2026" sections={SECTIONS}>
 
           <nav className="text-sm text-zinc-500 mb-10" aria-label="Breadcrumb">
             <Link to="/" className="hover:text-zinc-300 transition-colors">Home</Link>
@@ -298,7 +301,7 @@ export default function BestAiFitnessApps2026() {
           </nav>
 
           {/* Answer capsule */}
-          <motion.section initial="hidden" animate="visible" variants={stagger} className="mb-14">
+          <motion.section id="answer" initial="hidden" animate="visible" variants={stagger} className="mb-14 scroll-mt-24">
             <motion.div variants={fadeUp}>
               <p className="text-xs font-medium uppercase tracking-widest text-emerald-400 mb-4">
                 Updated 2026-05-15 · Pricing verified per source, this run
@@ -338,7 +341,7 @@ export default function BestAiFitnessApps2026() {
           </motion.section>
 
           {/* Quick picks table */}
-          <motion.section initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger} className="mb-14">
+          <motion.section id="quick-picks" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger} className="mb-14 scroll-mt-24">
             <motion.h2 variants={fadeUp} className="text-2xl font-bold text-white mb-6">TL;DR: Quick picks</motion.h2>
             <motion.div variants={fadeUp} className="overflow-x-auto rounded-xl border border-zinc-800">
               <table className="w-full text-sm">
@@ -375,7 +378,7 @@ export default function BestAiFitnessApps2026() {
           </motion.section>
 
           {/* App cards */}
-          <motion.section initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger} className="mb-14">
+          <motion.section id="breakdown" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger} className="mb-14 scroll-mt-24">
             <motion.h2 variants={fadeUp} className="text-2xl font-bold text-white mb-8">The full breakdown</motion.h2>
             <div className="space-y-6">
               {apps.map((app) => (
@@ -415,7 +418,7 @@ export default function BestAiFitnessApps2026() {
           </motion.section>
 
           {/* Use-case picker */}
-          <motion.section initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger} className="mb-14">
+          <motion.section id="use-cases" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger} className="mb-14 scroll-mt-24">
             <motion.h2 variants={fadeUp} className="text-2xl font-bold text-white mb-6">Which app for which use case</motion.h2>
             <motion.div variants={fadeUp} className="space-y-4">
               {[
@@ -436,7 +439,7 @@ export default function BestAiFitnessApps2026() {
           </motion.section>
 
           {/* FAQ */}
-          <motion.section initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger} className="mb-14">
+          <motion.section id="faq" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={stagger} className="mb-14 scroll-mt-24">
             <motion.h2 variants={fadeUp} className="text-2xl font-bold text-white mb-6">Common questions</motion.h2>
             <div className="space-y-3">
               {FAQData.map((item, i) => (
@@ -460,7 +463,7 @@ export default function BestAiFitnessApps2026() {
           </motion.section>
 
           {/* CTA */}
-          <motion.section initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} className="bg-emerald-950/30 border border-emerald-900/50 rounded-2xl p-8 text-center">
+          <motion.section id="try" initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} className="bg-emerald-950/30 border border-emerald-900/50 rounded-2xl p-8 text-center scroll-mt-24">
             <h2 className="text-2xl font-bold text-white mb-3">Try Zealova free for 7 days</h2>
             <p className="text-zinc-400 mb-2 text-sm">
               AI workout plans, food photo logging, and a 5-agent chat coach. Android, $7.99/mo or $59.99/yr after trial.
@@ -482,10 +485,7 @@ export default function BestAiFitnessApps2026() {
             This page reflects the author's independent assessment.
           </p>
 
-        </main>
-
-        <MarketingFooter />
-      </div>
+      </ArticleLayout>
     </>
   );
 }

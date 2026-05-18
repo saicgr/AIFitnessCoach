@@ -90,6 +90,7 @@ async function buildRouteList() {
     '/roadmap',
     '/waitlist',
     '/vs/google-health',
+    '/vs/bevel',
     '/blog',
     '/free-tools',
     '/glossary',
