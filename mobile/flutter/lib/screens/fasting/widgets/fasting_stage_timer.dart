@@ -81,9 +81,15 @@ class _FastingStageTimerState extends State<FastingStageTimer>
 
     final elapsedHours = widget.elapsedSeconds / 3600.0;
     final goalHours = widget.goalMinutes / 60.0;
-    final progress = goalHours <= 0
-        ? 0.0
-        : (elapsedHours / goalHours).clamp(0.0, 1.0);
+
+    // Fixed-span ring: scale the ring to a stable hour window that is wide
+    // enough to hold the goal AND the live elapsed position, so the dot
+    // never wraps back to the top once the fast passes its goal. A 24h
+    // minimum keeps the metabolic-stage arcs (Fed → Autophagy) laid out on
+    // a steady scale.
+    final elapsedHoursCeil = elapsedHours.ceilToDouble();
+    final spanHours =
+        math.max(24.0, math.max(goalHours, elapsedHoursCeil));
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -123,11 +129,13 @@ class _FastingStageTimerState extends State<FastingStageTimer>
                     height: size,
                     child: CustomPaint(
                       painter: _StageRingPainter(
-                        progress: progress * entry,
+                        elapsedHours: elapsedHours * entry,
                         goalHours: goalHours,
+                        spanHours: spanHours,
                         currentStage: widget.stage,
                         stroke: stroke,
                         trackColor: colors.cardBorder.withValues(alpha: 0.4),
+                        goalMarkerColor: colors.textPrimary,
                         isActive: widget.isActive,
                       ),
                     ),
@@ -262,12 +270,14 @@ class _FastingStageTimerState extends State<FastingStageTimer>
             ),
           ],
         ),
-        const SizedBox(height: 1),
+        const SizedBox(height: 2),
+        // Unambiguous: the big number above is ELAPSED time, not remaining.
         Text(
-          'elapsed',
+          'ELAPSED',
           style: TextStyle(
-            fontSize: 11,
-            letterSpacing: 1.2,
+            fontSize: 10,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 2.0,
             color: colors.textMuted,
           ),
         ),
@@ -292,22 +302,36 @@ class _FastingStageTimerState extends State<FastingStageTimer>
   }
 }
 
-/// Paints the metabolic-stage ring: faded stage segments behind, a brightly
-/// filled progress arc through completed stages, and a tracking dot.
+/// Paints the metabolic-stage ring on a FIXED hour span (not the goal), so
+/// the live dot never wraps: faded stage segments behind, a brightly filled
+/// progress arc through completed stages, a goal notch, and a tracking dot.
 class _StageRingPainter extends CustomPainter {
-  final double progress; // 0..1 of goal
+  /// Live elapsed hours of the fast.
+  final double elapsedHours;
+
+  /// The user's goal in hours (drives the goal notch position).
   final double goalHours;
+
+  /// The fixed hour window the whole ring is scaled to — wide enough to
+  /// hold both the goal and the current elapsed position, so nothing wraps.
+  final double spanHours;
+
   final FastingStage currentStage;
   final double stroke;
   final Color trackColor;
+
+  /// Theme-aware color for the goal notch / check (textPrimary).
+  final Color goalMarkerColor;
   final bool isActive;
 
   _StageRingPainter({
-    required this.progress,
+    required this.elapsedHours,
     required this.goalHours,
+    required this.spanHours,
     required this.currentStage,
     required this.stroke,
     required this.trackColor,
+    required this.goalMarkerColor,
     required this.isActive,
   });
 
@@ -316,13 +340,15 @@ class _StageRingPainter extends CustomPainter {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = (size.width - stroke) / 2;
     final rect = Rect.fromCircle(center: center, radius: radius);
-    final goal = goalHours <= 0 ? 16.0 : goalHours;
+    final span = spanHours <= 0 ? 24.0 : spanHours;
 
     const startTop = -math.pi / 2;
     const fullSweep = 2 * math.pi;
 
+    // Every hour value maps onto the SAME fixed span — never the goal —
+    // so the dot and the stage arcs share one stable scale.
     double angleFor(double hours) =>
-        startTop + (hours / goal).clamp(0.0, 1.0) * fullSweep;
+        startTop + (hours / span).clamp(0.0, 1.0) * fullSweep;
 
     // 1. Base track.
     canvas.drawArc(
@@ -337,11 +363,13 @@ class _StageRingPainter extends CustomPainter {
         ..color = trackColor,
     );
 
-    // 2. Faded stage segments (only those that fall within the goal window).
+    // 2. Faded stage segments — laid out across the fixed span. Every stage
+    //    up to the span fits, including Autophagy / Deep Autophagy past the
+    //    goal, so the path ahead of the dot is always visible.
     for (final stage in FastingStage.values) {
-      if (stage.startHour >= goal) break;
+      if (stage.startHour >= span) break;
       final segStart = angleFor(stage.startHour.toDouble());
-      final segEndHour = math.min(stage.endHour.toDouble(), goal);
+      final segEndHour = math.min(stage.endHour.toDouble(), span);
       final segSweep = angleFor(segEndHour) - segStart;
       if (segSweep <= 0) continue;
       canvas.drawArc(
@@ -357,24 +385,37 @@ class _StageRingPainter extends CustomPainter {
       );
     }
 
-    if (!isActive || progress <= 0) return;
+    // 3. Filled progress arc — colored per stage up to the live position.
+    final progressHours = elapsedHours.clamp(0.0, span);
+    if (isActive && progressHours > 0) {
+      for (final stage in FastingStage.values) {
+        if (stage.startHour >= progressHours) break;
+        if (stage.startHour >= span) break;
+        final segStart = stage.startHour.toDouble();
+        final segEnd = math.min(
+            stage.endHour.toDouble(), math.min(progressHours, span));
+        if (segEnd <= segStart) continue;
 
-    // 3. Filled progress arc — colored per stage up to live position.
-    final progressHours = (progress * goal).clamp(0.0, goal);
-    for (final stage in FastingStage.values) {
-      if (stage.startHour >= progressHours) break;
-      if (stage.startHour >= goal) break;
-      final segStart = stage.startHour.toDouble();
-      final segEnd =
-          math.min(stage.endHour.toDouble(), math.min(progressHours, goal));
-      if (segEnd <= segStart) continue;
+        final a0 = angleFor(segStart);
+        final sweep = angleFor(segEnd) - a0;
+        final isCurrent = stage == currentStage;
 
-      final a0 = angleFor(segStart);
-      final sweep = angleFor(segEnd) - a0;
-      final isCurrent = stage == currentStage;
+        if (isCurrent) {
+          // Glow under the current stage segment.
+          canvas.drawArc(
+            rect,
+            a0,
+            sweep,
+            false,
+            Paint()
+              ..style = PaintingStyle.stroke
+              ..strokeWidth = stroke + 6
+              ..strokeCap = StrokeCap.round
+              ..color = stage.color.withValues(alpha: 0.32)
+              ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6),
+          );
+        }
 
-      if (isCurrent) {
-        // Glow under the current stage segment.
         canvas.drawArc(
           rect,
           a0,
@@ -382,29 +423,82 @@ class _StageRingPainter extends CustomPainter {
           false,
           Paint()
             ..style = PaintingStyle.stroke
-            ..strokeWidth = stroke + 6
+            ..strokeWidth = stroke
             ..strokeCap = StrokeCap.round
-            ..color = stage.color.withValues(alpha: 0.32)
-            ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 6),
+            ..color =
+                stage.color.withValues(alpha: isCurrent ? 1.0 : 0.78),
         );
       }
-
-      canvas.drawArc(
-        rect,
-        a0,
-        sweep,
-        false,
-        Paint()
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = stroke
-          ..strokeCap = StrokeCap.round
-          ..color = stage.color
-              .withValues(alpha: isCurrent ? 1.0 : 0.78),
-      );
     }
 
-    // 4. Tracking dot at the live position.
-    final dotAngle = startTop + progress * fullSweep;
+    // 4. Goal marker — a radial tick on the ring at the goal position. Once
+    //    elapsed ≥ goal it becomes a filled "done" dot with a check, so
+    //    "goal reached" is obvious on the ring (the dot itself never resets).
+    if (goalHours > 0 && goalHours <= span) {
+      final goalAngle = angleFor(goalHours);
+      final goalReached = isActive && elapsedHours >= goalHours;
+      final cos = math.cos(goalAngle);
+      final sin = math.sin(goalAngle);
+
+      if (goalReached) {
+        // Filled "done" badge sitting on the ring.
+        final badge = Offset(
+          center.dx + radius * cos,
+          center.dy + radius * sin,
+        );
+        // Glow + filled badge in the stage color — white check reads
+        // clearly on it in both light and dark themes.
+        canvas.drawCircle(
+          badge,
+          stroke * 0.85,
+          Paint()
+            ..color = currentStage.color.withValues(alpha: 0.4)
+            ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5),
+        );
+        canvas.drawCircle(
+          badge,
+          stroke * 0.62,
+          Paint()..color = currentStage.color,
+        );
+        // Check mark drawn in the badge.
+        final cm = stroke * 0.30;
+        final checkPaint = Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = stroke * 0.16
+          ..strokeCap = StrokeCap.round
+          ..strokeJoin = StrokeJoin.round
+          ..color = Colors.white;
+        final path = Path()
+          ..moveTo(badge.dx - cm * 0.95, badge.dy + cm * 0.05)
+          ..lineTo(badge.dx - cm * 0.20, badge.dy + cm * 0.78)
+          ..lineTo(badge.dx + cm * 1.00, badge.dy - cm * 0.70);
+        canvas.drawPath(path, checkPaint);
+      } else {
+        // Radial tick crossing the ring, plus a small flag dot.
+        final inner = radius - stroke * 0.85;
+        final outer = radius + stroke * 0.85;
+        canvas.drawLine(
+          Offset(center.dx + inner * cos, center.dy + inner * sin),
+          Offset(center.dx + outer * cos, center.dy + outer * sin),
+          Paint()
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 3.0
+            ..strokeCap = StrokeCap.round
+            ..color = goalMarkerColor.withValues(alpha: 0.85),
+        );
+        canvas.drawCircle(
+          Offset(center.dx + outer * cos, center.dy + outer * sin),
+          3.2,
+          Paint()..color = goalMarkerColor.withValues(alpha: 0.85),
+        );
+      }
+    }
+
+    if (!isActive || progressHours <= 0) return;
+
+    // 5. Tracking dot at the live position — mapped on the fixed span, so it
+    //    always sits inside the current stage's arc and never wraps.
+    final dotAngle = angleFor(elapsedHours);
     final dot = Offset(
       center.dx + radius * math.cos(dotAngle),
       center.dy + radius * math.sin(dotAngle),
@@ -430,8 +524,9 @@ class _StageRingPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _StageRingPainter old) =>
-      old.progress != progress ||
+      old.elapsedHours != elapsedHours ||
       old.currentStage != currentStage ||
       old.goalHours != goalHours ||
+      old.spanHours != spanHours ||
       old.isActive != isActive;
 }
