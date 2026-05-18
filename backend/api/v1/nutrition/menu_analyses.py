@@ -55,6 +55,14 @@ class MenuAnalysisUpdate(BaseModel):
     # Editable later from the Saved Menus card (C11: address editable later).
     address: Optional[str] = None
     is_pinned: Optional[bool] = None
+    # Re-scan-in-place support: a fresh scan of an already-saved menu PATCHes
+    # the new parse results onto the existing row instead of inserting a twin.
+    # All optional — a plain metadata edit (title/pin) never sends these.
+    sections: Optional[List[Dict[str, Any]]] = None
+    food_items: Optional[List[Dict[str, Any]]] = None
+    menu_photo_urls: Optional[List[str]] = None
+    elapsed_seconds: Optional[float] = None
+    analysis_type: Optional[str] = None
 
 
 class MenuAnalysisOut(BaseModel):
@@ -315,6 +323,23 @@ async def update_menu_analysis(
         updates["address"] = payload.address
     if payload.is_pinned is not None:
         updates["is_pinned"] = payload.is_pinned
+    # Re-scan-in-place fields — only present when the client just finished a
+    # fresh scan of this saved menu. Each is applied only if explicitly sent.
+    if payload.sections is not None:
+        updates["sections"] = payload.sections
+    if payload.food_items is not None:
+        updates["food_items"] = payload.food_items
+    if payload.menu_photo_urls is not None:
+        updates["menu_photo_urls"] = payload.menu_photo_urls
+    if payload.elapsed_seconds is not None:
+        updates["elapsed_seconds"] = payload.elapsed_seconds
+    if payload.analysis_type is not None:
+        updates["analysis_type"] = payload.analysis_type
+
+    if updates:
+        # Bump updated_at so the Saved Menus list reflects the re-scan
+        # (sort order + "updated" labels stay accurate).
+        updates["updated_at"] = datetime.now(tz=timezone.utc).isoformat()
 
     if not updates:
         # No-op update — just return the current row
