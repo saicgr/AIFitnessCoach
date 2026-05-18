@@ -170,6 +170,16 @@ class FastingRecord {
   final String? endedBy;
   @JsonKey(name: 'breaking_meal_id')
   final String? breakingMealId;
+
+  /// When the fast was paused (null = not currently paused). While paused,
+  /// elapsed time stops accruing. (Task I — pause/resume.)
+  @JsonKey(name: 'paused_at')
+  final DateTime? pausedAt;
+
+  /// Running total of seconds the fast has spent paused across all pauses.
+  @JsonKey(name: 'accumulated_paused_seconds')
+  final int accumulatedPausedSeconds;
+
   @JsonKey(name: 'created_at')
   final DateTime createdAt;
   @JsonKey(name: 'updated_at')
@@ -195,6 +205,8 @@ class FastingRecord {
     this.energyLevelAfter,
     this.endedBy,
     this.breakingMealId,
+    this.pausedAt,
+    this.accumulatedPausedSeconds = 0,
     required this.createdAt,
     this.updatedAt,
   });
@@ -202,10 +214,22 @@ class FastingRecord {
   /// Check if fast is currently active
   bool get isActive => status == 'active' && endTime == null;
 
-  /// Get elapsed duration in minutes
+  /// Whether the fast is currently paused.
+  bool get isPaused => pausedAt != null;
+
+  /// Total seconds the fast has been suspended, including the in-progress
+  /// pause (if any). Used to keep elapsed time pause-aware.
+  int get totalPausedSeconds {
+    if (pausedAt == null) return accumulatedPausedSeconds;
+    final ongoing = DateTime.now().difference(pausedAt!).inSeconds;
+    return accumulatedPausedSeconds + (ongoing > 0 ? ongoing : 0);
+  }
+
+  /// Get elapsed duration in minutes (pause-aware — suspended time excluded).
   int get elapsedMinutes {
     final end = endTime ?? DateTime.now();
-    return end.difference(startTime).inMinutes;
+    final raw = end.difference(startTime).inSeconds - totalPausedSeconds;
+    return (raw > 0 ? raw : 0) ~/ 60;
   }
 
   /// Get elapsed hours
@@ -261,8 +285,11 @@ class FastingRecord {
     int? energyLevelAfter,
     String? endedBy,
     String? breakingMealId,
+    DateTime? pausedAt,
+    int? accumulatedPausedSeconds,
     DateTime? createdAt,
     DateTime? updatedAt,
+    bool clearPausedAt = false,
   }) {
     return FastingRecord(
       id: id ?? this.id,
@@ -285,10 +312,53 @@ class FastingRecord {
       energyLevelAfter: energyLevelAfter ?? this.energyLevelAfter,
       endedBy: endedBy ?? this.endedBy,
       breakingMealId: breakingMealId ?? this.breakingMealId,
+      pausedAt: clearPausedAt ? null : (pausedAt ?? this.pausedAt),
+      accumulatedPausedSeconds:
+          accumulatedPausedSeconds ?? this.accumulatedPausedSeconds,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
   }
+}
+
+/// One day's entry in a custom weekly fasting schedule (Task G).
+///
+/// A weekday with no [ScheduledFastDay] (a missing/null map entry) is an
+/// eating / rest day. When [protocol] is `custom`, [customFastingHours] holds
+/// the chosen fasting window length.
+class ScheduledFastDay {
+  /// Protocol id (the [FastingProtocol] enum name, e.g. `sixteen8`).
+  final String protocol;
+
+  /// Custom fasting-window hours — only meaningful when [protocol] is custom.
+  final int? customFastingHours;
+
+  const ScheduledFastDay({
+    required this.protocol,
+    this.customFastingHours,
+  });
+
+  /// Resolve to a [FastingProtocol] enum value.
+  FastingProtocol get fastingProtocol => FastingProtocol.fromString(protocol);
+
+  /// Fasting-window hours for this scheduled day.
+  int get fastingHours {
+    if (protocol == 'custom') return customFastingHours ?? 16;
+    return fastingProtocol.fastingHours;
+  }
+
+  factory ScheduledFastDay.fromJson(Map<String, dynamic> json) {
+    return ScheduledFastDay(
+      protocol: json['protocol'] as String? ?? 'sixteen8',
+      customFastingHours: (json['custom_fasting_hours'] as num?)?.toInt(),
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'protocol': protocol,
+        if (customFastingHours != null)
+          'custom_fasting_hours': customFastingHours,
+      };
 }
 
 /// Fasting preferences for a user
@@ -332,6 +402,12 @@ class FastingPreferences {
   @JsonKey(name: 'experience_level')
   final String experienceLevel;
 
+  /// Custom weekly fasting schedule (Task G): weekday (0 = Monday … 6 = Sunday)
+  /// mapped to a [ScheduledFastDay]. A weekday absent from the map is an
+  /// eating / rest day. Null/empty = no custom schedule (use [defaultProtocol]).
+  @JsonKey(name: 'weekly_schedule')
+  final Map<int, ScheduledFastDay>? weeklySchedule;
+
   const FastingPreferences({
     this.id,
     required this.userId,
@@ -352,7 +428,39 @@ class FastingPreferences {
     this.fastingOnboardingCompleted = false,
     this.onboardingCompletedAt,
     this.experienceLevel = 'beginner',
+    this.weeklySchedule,
   });
+
+  /// Resolve today's planned protocol from the custom weekly schedule (Task G).
+  ///
+  /// Returns the [FastingProtocol] scheduled for today's weekday, or `null`
+  /// when today is a rest/eating day. When no weekly schedule is set, falls
+  /// back to [defaultProtocol] so callers always get a sensible value.
+  ///
+  /// [now] is injectable for testing; defaults to the device-local clock so
+  /// the lookup honors local midnight rollover.
+  FastingProtocol? plannedProtocolForToday([DateTime? now]) {
+    final today = now ?? DateTime.now();
+    // Dart weekday: Mon = 1 … Sun = 7  →  schedule key: Mon = 0 … Sun = 6.
+    final key = today.weekday - 1;
+    final schedule = weeklySchedule;
+    if (schedule == null || schedule.isEmpty) {
+      return FastingProtocol.fromString(defaultProtocol);
+    }
+    final entry = schedule[key];
+    if (entry == null) return null; // rest / eating day
+    return entry.fastingProtocol;
+  }
+
+  /// The raw [ScheduledFastDay] for today (null = rest day or no schedule).
+  ScheduledFastDay? scheduledFastDayForToday([DateTime? now]) {
+    final today = now ?? DateTime.now();
+    return weeklySchedule?[today.weekday - 1];
+  }
+
+  /// True when a custom weekly schedule is configured.
+  bool get hasWeeklySchedule =>
+      weeklySchedule != null && weeklySchedule!.isNotEmpty;
 
   /// Get the fasting hours for current protocol
   int get fastingHours {
@@ -394,6 +502,8 @@ class FastingPreferences {
     bool? fastingOnboardingCompleted,
     DateTime? onboardingCompletedAt,
     String? experienceLevel,
+    Map<int, ScheduledFastDay>? weeklySchedule,
+    bool clearWeeklySchedule = false,
   }) {
     return FastingPreferences(
       id: id ?? this.id,
@@ -423,6 +533,9 @@ class FastingPreferences {
       onboardingCompletedAt:
           onboardingCompletedAt ?? this.onboardingCompletedAt,
       experienceLevel: experienceLevel ?? this.experienceLevel,
+      weeklySchedule: clearWeeklySchedule
+          ? null
+          : (weeklySchedule ?? this.weeklySchedule),
     );
   }
 }

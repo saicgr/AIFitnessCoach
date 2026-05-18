@@ -354,6 +354,123 @@ class FastingNotifier extends StateNotifier<FastingState> {
     }
   }
 
+  /// Pause the current active fast (suspends elapsed-time accrual). (Task I)
+  Future<void> pauseFast(String userId) async {
+    if (state.activeFast == null) return;
+    try {
+      debugPrint('⏸️ [FastingProvider] Pausing fast');
+      final updated = await _repository.pauseFast(
+        fastId: state.activeFast!.id,
+        userId: userId,
+      );
+      state = state.copyWith(activeFast: updated);
+      debugPrint('✅ [FastingProvider] Fast paused');
+    } catch (e) {
+      debugPrint('❌ [FastingProvider] Pause fast error: $e');
+      state = state.copyWith(error: e.toString());
+    }
+  }
+
+  /// Resume the current paused fast. (Task I)
+  Future<void> resumeFast(String userId) async {
+    if (state.activeFast == null) return;
+    try {
+      debugPrint('▶️ [FastingProvider] Resuming fast');
+      final updated = await _repository.resumeFast(
+        fastId: state.activeFast!.id,
+        userId: userId,
+      );
+      state = state.copyWith(activeFast: updated);
+      debugPrint('✅ [FastingProvider] Fast resumed');
+    } catch (e) {
+      debugPrint('❌ [FastingProvider] Resume fast error: $e');
+      state = state.copyWith(error: e.toString());
+    }
+  }
+
+  /// Undo a just-ended fast — re-opens it back to active within the backend's
+  /// short undo window. [fastId] is the id of the fast that was ended. (Task I)
+  Future<bool> undoEndFast({
+    required String userId,
+    required String fastId,
+  }) async {
+    state = state.copyWith(isLoading: true, clearError: true);
+    try {
+      debugPrint('↩️ [FastingProvider] Undoing end of fast $fastId');
+      final reopened = await _repository.undoEndFast(
+        fastId: fastId,
+        userId: userId,
+      );
+
+      // Refresh streak/stats/history so the undone fast leaves history.
+      final streak = await _repository.getStreak(userId);
+      final stats = await _repository.getStats(userId: userId);
+      final history = await _repository.getFastingHistory(
+        userId: userId,
+        limit: 10,
+      );
+
+      state = state.copyWith(
+        activeFast: reopened,
+        streak: streak,
+        stats: stats,
+        history: history,
+        isLoading: false,
+      );
+      _startRefreshTimer();
+      debugPrint('✅ [FastingProvider] Fast end undone');
+      return true;
+    } catch (e) {
+      debugPrint('❌ [FastingProvider] Undo end fast error: $e');
+      state = state.copyWith(isLoading: false, error: e.toString());
+      return false;
+    }
+  }
+
+  /// Edit a past (completed) fast's start/end times. Recomputes duration and
+  /// completion on the backend and refreshes history + stats. (Task I)
+  Future<bool> editFast({
+    required String userId,
+    required String fastId,
+    required DateTime startTime,
+    required DateTime endTime,
+  }) async {
+    try {
+      debugPrint('✏️ [FastingProvider] Editing fast $fastId');
+      final edited = await _repository.editFast(
+        fastId: fastId,
+        userId: userId,
+        startTime: startTime,
+        endTime: endTime,
+      );
+
+      // Refresh dependent aggregates so edits propagate everywhere.
+      final streak = await _repository.getStreak(userId);
+      final stats = await _repository.getStats(userId: userId);
+      final history = await _repository.getFastingHistory(
+        userId: userId,
+        limit: 50,
+      );
+
+      // Splice the edited record into the in-memory history list too.
+      final patched = [
+        for (final r in history) r.id == edited.id ? edited : r,
+      ];
+
+      state = state.copyWith(
+        streak: streak,
+        stats: stats,
+        history: patched,
+      );
+      debugPrint('✅ [FastingProvider] Fast edited');
+      return true;
+    } catch (e) {
+      debugPrint('❌ [FastingProvider] Edit fast error: $e');
+      state = state.copyWith(error: e.toString());
+      return false;
+    }
+  }
+
   /// Save fasting preferences
   Future<void> savePreferences({
     required String userId,
@@ -559,6 +676,38 @@ final computedFastingZoneProvider = Provider<FastingZone>((ref) {
 
   final elapsedMinutes = ref.watch(fastingElapsedMinutesProvider);
   return FastingZone.fromElapsedMinutes(elapsedMinutes);
+});
+
+// ============================================
+// AI Fasting Insight Provider (Task D)
+// ============================================
+
+/// AI-generated plain-English fasting insight for the current user.
+///
+/// Backed by `POST /insights/{user_id}/fasting-analysis` (Gemini, 6h-cached
+/// server-side). Returns an honest empty-state string when there is no
+/// fasting history. Auto-disposes so it re-fetches when the fasting screen is
+/// reopened; pass the current [FastingState] aggregates via the family arg is
+/// avoided — it reads them off [fastingProvider] directly to stay in sync.
+final fastingInsightProvider =
+    FutureProvider.autoDispose<String>((ref) async {
+  final userId = ref.watch(authStateProvider.select((s) => s.user?.id));
+  if (userId == null) {
+    throw Exception('Sign in to see AI insights.');
+  }
+  final fasting = ref.watch(fastingProvider);
+  final streak = fasting.streak;
+  final stats = fasting.stats;
+  if (streak == null || stats == null) {
+    throw Exception('Fasting data not loaded yet.');
+  }
+  final repository = ref.watch(fastingRepositoryProvider);
+  return repository.getFastingInsight(
+    userId: userId,
+    streak: streak,
+    stats: stats,
+    activeFast: fasting.activeFast,
+  );
 });
 
 // ============================================

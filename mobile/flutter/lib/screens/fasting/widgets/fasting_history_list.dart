@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/fasting.dart';
+import 'fasting_mood_checkin.dart';
 
 /// List of past fasting records
 class FastingHistoryList extends StatelessWidget {
@@ -37,7 +38,7 @@ class FastingHistoryList extends StatelessWidget {
             ),
           );
         }
-        return _FastingHistoryCard(
+        return FastingHistoryCard(
           record: history[index],
           isDark: isDark,
         );
@@ -46,13 +47,19 @@ class FastingHistoryList extends StatelessWidget {
   }
 }
 
-class _FastingHistoryCard extends StatelessWidget {
+class FastingHistoryCard extends StatelessWidget {
   final FastingRecord record;
   final bool isDark;
 
-  const _FastingHistoryCard({
+  /// When set, an "Edit" affordance appears that lets the user correct this
+  /// fast's start/end times (Task I — edit past fasts).
+  final VoidCallback? onEdit;
+
+  const FastingHistoryCard({
+    super.key,
     required this.record,
     required this.isDark,
+    this.onEdit,
   });
 
   @override
@@ -148,6 +155,22 @@ class _FastingHistoryCard extends StatelessWidget {
                   ],
                 ),
               ),
+              // Edit-past-fast affordance (Task I).
+              if (onEdit != null) ...[
+                const SizedBox(width: 6),
+                GestureDetector(
+                  onTap: onEdit,
+                  behavior: HitTestBehavior.opaque,
+                  child: Padding(
+                    padding: const EdgeInsets.all(2),
+                    child: Icon(
+                      Icons.edit_outlined,
+                      size: 17,
+                      color: textMuted,
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
           const SizedBox(height: 12),
@@ -199,6 +222,20 @@ class _FastingHistoryCard extends StatelessWidget {
                 ),
             ],
           ),
+
+          // Before → after mood / energy (Task F).
+          if (record.moodBefore != null ||
+              record.moodAfter != null ||
+              record.energyLevelBefore != null ||
+              record.energyLevelAfter != null) ...[
+            const SizedBox(height: 10),
+            MoodEnergyDelta(
+              moodBefore: record.moodBefore,
+              moodAfter: record.moodAfter,
+              energyBefore: record.energyLevelBefore,
+              energyAfter: record.energyLevelAfter,
+            ),
+          ],
 
           // Notes (if any)
           if (record.notes != null && record.notes!.isNotEmpty) ...[

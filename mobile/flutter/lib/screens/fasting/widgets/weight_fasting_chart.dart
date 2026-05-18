@@ -1,9 +1,18 @@
 import 'package:flutter/material.dart';
-import '../../../core/constants/app_colors.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart' hide TextDirection;
+import '../../../core/theme/theme_colors.dart';
 import '../../../data/models/fasting_impact.dart';
 
-/// Chart showing weight trends on fasting vs non-fasting days
-class WeightFastingChart extends StatelessWidget {
+/// Weight Trends — weight on fasting vs non-fasting days.
+///
+/// This chart is kept bespoke (NOT migrated to the shared [TrendChart])
+/// because its defining feature is per-point colouring: each dot is tinted
+/// by whether that day was a fasting day. TrendChart models a single uniform
+/// series and cannot express that distinction. It is themed via
+/// [ThemeColors] and given a tap tooltip so it still feels consistent with
+/// the rest of the Trends system (Phase G5a/G5c).
+class WeightFastingChart extends ConsumerStatefulWidget {
   final List<FastingDayData> dailyData;
   final double height;
   final bool isDark;
@@ -11,37 +20,45 @@ class WeightFastingChart extends StatelessWidget {
   const WeightFastingChart({
     super.key,
     required this.dailyData,
-    this.height = 200,
+    this.height = 220,
     this.isDark = true,
   });
 
   @override
-  Widget build(BuildContext context) {
-    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    // Use monochrome accent
-    final accentColor = isDark ? AppColors.accent : AppColorsLight.accent;
+  ConsumerState<WeightFastingChart> createState() =>
+      _WeightFastingChartState();
+}
 
-    // Filter days with weight data
-    final daysWithWeight = dailyData.where((d) => d.weight != null).toList();
+class _WeightFastingChartState extends ConsumerState<WeightFastingChart> {
+  /// Index of the day currently surfaced by the tap tooltip, or null.
+  int? _selectedIndex;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = ref.colors(context);
+
+    // Filter days with weight data.
+    final daysWithWeight =
+        widget.dailyData.where((d) => d.weight != null).toList()
+          ..sort((a, b) => a.date.compareTo(b.date));
 
     if (daysWithWeight.isEmpty) {
       return Container(
-        height: height,
+        height: widget.height,
         decoration: BoxDecoration(
-          color: elevated,
+          color: colors.elevated,
           borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: colors.cardBorder),
         ),
         child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.show_chart, color: textMuted, size: 48),
+              Icon(Icons.show_chart, color: colors.textMuted, size: 48),
               const SizedBox(height: 8),
               Text(
                 'No weight data available',
-                style: TextStyle(color: textMuted),
+                style: TextStyle(color: colors.textMuted),
               ),
             ],
           ),
@@ -49,19 +66,20 @@ class WeightFastingChart extends StatelessWidget {
       );
     }
 
-    // Calculate min/max weight for scaling
+    // Calculate min/max weight for scaling.
     final weights = daysWithWeight.map((d) => d.weight!).toList();
     final minWeight = weights.reduce((a, b) => a < b ? a : b);
     final maxWeight = weights.reduce((a, b) => a > b ? a : b);
     final range = maxWeight - minWeight;
-    final paddedMin = minWeight - (range * 0.1);
-    final paddedMax = maxWeight + (range * 0.1);
+    final paddedMin = minWeight - (range == 0 ? 1 : range * 0.1);
+    final paddedMax = maxWeight + (range == 0 ? 1 : range * 0.1);
 
     return Container(
-      height: height,
+      height: widget.height,
       decoration: BoxDecoration(
-        color: elevated,
+        color: colors.elevated,
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: colors.cardBorder),
       ),
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -69,14 +87,14 @@ class WeightFastingChart extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(Icons.show_chart, color: accentColor, size: 20),
+              Icon(Icons.show_chart, color: colors.accent, size: 20),
               const SizedBox(width: 8),
               Text(
-                'Weight Trend',
+                'Weight Trends',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
-                  color: textPrimary,
+                  color: colors.textPrimary,
                 ),
               ),
             ],
@@ -84,23 +102,48 @@ class WeightFastingChart extends StatelessWidget {
           const SizedBox(height: 8),
           Row(
             children: [
-              _buildLegendItem('Fasting days', accentColor),
+              _buildLegendItem('Fasting days', colors.accent),
               const SizedBox(width: 16),
-              _buildLegendItem('Non-fasting', textMuted),
+              _buildLegendItem('Non-fasting', colors.textMuted),
             ],
           ),
           const SizedBox(height: 16),
           Expanded(
-            child: CustomPaint(
-              size: Size.infinite,
-              painter: _WeightChartPainter(
-                data: daysWithWeight,
-                minWeight: paddedMin,
-                maxWeight: paddedMax,
-                fastingColor: accentColor,
-                nonFastingColor: textMuted.withOpacity(0.5),
-                gridColor: textMuted.withOpacity(0.2),
-              ),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                return GestureDetector(
+                  // Tap a point to surface its date + weight (G5c tooltip).
+                  onTapDown: (details) {
+                    final w = constraints.maxWidth;
+                    final step =
+                        w / (daysWithWeight.length - 1).clamp(1, double.infinity);
+                    final idx = (details.localPosition.dx / step)
+                        .round()
+                        .clamp(0, daysWithWeight.length - 1);
+                    setState(() {
+                      _selectedIndex = _selectedIndex == idx ? null : idx;
+                    });
+                  },
+                  child: CustomPaint(
+                    size: Size.infinite,
+                    painter: _WeightChartPainter(
+                      data: daysWithWeight,
+                      minWeight: paddedMin,
+                      maxWeight: paddedMax,
+                      fastingColor: colors.accent,
+                      nonFastingColor:
+                          colors.textMuted.withValues(alpha: 0.5),
+                      gridColor: colors.cardBorder.withValues(alpha: 0.5),
+                      lineColor: colors.accent.withValues(alpha: 0.45),
+                      selectedIndex: _selectedIndex,
+                      tooltipBg: colors.surface,
+                      tooltipBorder: colors.cardBorder,
+                      tooltipText: colors.textPrimary,
+                      tooltipMuted: colors.textMuted,
+                    ),
+                  ),
+                );
+              },
             ),
           ),
         ],
@@ -140,6 +183,12 @@ class _WeightChartPainter extends CustomPainter {
   final Color fastingColor;
   final Color nonFastingColor;
   final Color gridColor;
+  final Color lineColor;
+  final int? selectedIndex;
+  final Color tooltipBg;
+  final Color tooltipBorder;
+  final Color tooltipText;
+  final Color tooltipMuted;
 
   _WeightChartPainter({
     required this.data,
@@ -148,6 +197,12 @@ class _WeightChartPainter extends CustomPainter {
     required this.fastingColor,
     required this.nonFastingColor,
     required this.gridColor,
+    required this.lineColor,
+    required this.selectedIndex,
+    required this.tooltipBg,
+    required this.tooltipBorder,
+    required this.tooltipText,
+    required this.tooltipMuted,
   });
 
   @override
@@ -157,7 +212,7 @@ class _WeightChartPainter extends CustomPainter {
     final range = maxWeight - minWeight;
     if (range <= 0) return;
 
-    // Draw grid lines
+    // Draw grid lines.
     final gridPaint = Paint()
       ..color = gridColor
       ..strokeWidth = 1;
@@ -167,38 +222,117 @@ class _WeightChartPainter extends CustomPainter {
       canvas.drawLine(Offset(0, y), Offset(size.width, y), gridPaint);
     }
 
-    // Draw data points
     final pointWidth = size.width / (data.length - 1).clamp(1, data.length);
 
+    double xOf(int i) => i * pointWidth;
+    double yOf(double weight) =>
+        size.height - (((weight - minWeight) / range) * size.height);
+
+    // Draw connecting lines.
+    final linePaint = Paint()
+      ..color = lineColor
+      ..strokeWidth = 1.5;
+    for (var i = 0; i < data.length - 1; i++) {
+      if (data[i].weight == null || data[i + 1].weight == null) continue;
+      canvas.drawLine(
+        Offset(xOf(i), yOf(data[i].weight!)),
+        Offset(xOf(i + 1), yOf(data[i + 1].weight!)),
+        linePaint,
+      );
+    }
+
+    // Draw data points.
     for (var i = 0; i < data.length; i++) {
       final day = data[i];
       if (day.weight == null) continue;
-
-      final x = i * pointWidth;
-      final normalizedWeight = (day.weight! - minWeight) / range;
-      final y = size.height - (normalizedWeight * size.height);
-
       final pointPaint = Paint()
         ..color = day.isFastingDay ? fastingColor : nonFastingColor
         ..style = PaintingStyle.fill;
+      canvas.drawCircle(Offset(xOf(i), yOf(day.weight!)), 4, pointPaint);
+    }
 
-      canvas.drawCircle(Offset(x, y), 4, pointPaint);
+    // Draw tap tooltip + crosshair for the selected point.
+    final sel = selectedIndex;
+    if (sel != null && sel >= 0 && sel < data.length) {
+      final day = data[sel];
+      if (day.weight != null) {
+        final px = xOf(sel);
+        final py = yOf(day.weight!);
 
-      // Draw line to next point
-      if (i < data.length - 1 && data[i + 1].weight != null) {
-        final nextX = (i + 1) * pointWidth;
-        final nextNormalized = (data[i + 1].weight! - minWeight) / range;
-        final nextY = size.height - (nextNormalized * size.height);
+        // Crosshair.
+        canvas.drawLine(
+          Offset(px, 0),
+          Offset(px, size.height),
+          Paint()
+            ..color = tooltipMuted.withValues(alpha: 0.5)
+            ..strokeWidth = 1,
+        );
+        // Emphasised dot.
+        canvas.drawCircle(
+          Offset(px, py),
+          6,
+          Paint()
+            ..color = day.isFastingDay ? fastingColor : nonFastingColor
+            ..style = PaintingStyle.fill,
+        );
+        canvas.drawCircle(
+          Offset(px, py),
+          6,
+          Paint()
+            ..color = tooltipBg
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 2,
+        );
 
-        final linePaint = Paint()
-          ..color = gridColor
-          ..strokeWidth = 1;
+        // Tooltip text.
+        final dateStr = DateFormat('MMM d').format(day.date);
+        final tag = day.isFastingDay ? 'Fasting' : 'Non-fasting';
+        final tp = TextPainter(
+          text: TextSpan(children: [
+            TextSpan(
+              text: '${day.weight!.toStringAsFixed(1)}\n',
+              style: TextStyle(
+                color: tooltipText,
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            TextSpan(
+              text: '$dateStr · $tag',
+              style: TextStyle(color: tooltipMuted, fontSize: 10),
+            ),
+          ]),
+          textDirection: TextDirection.ltr,
+        )..layout();
 
-        canvas.drawLine(Offset(x, y), Offset(nextX, nextY), linePaint);
+        const pad = 8.0;
+        var boxX = px - tp.width / 2 - pad;
+        boxX = boxX.clamp(0.0, size.width - tp.width - 2 * pad);
+        final boxY = (py - tp.height - 2 * pad - 8).clamp(0.0, size.height);
+        final rect = Rect.fromLTWH(
+          boxX,
+          boxY,
+          tp.width + 2 * pad,
+          tp.height + 2 * pad,
+        );
+        final rrect = RRect.fromRectAndRadius(rect, const Radius.circular(8));
+        canvas.drawRRect(rrect, Paint()..color = tooltipBg);
+        canvas.drawRRect(
+          rrect,
+          Paint()
+            ..color = tooltipBorder
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 1,
+        );
+        tp.paint(canvas, Offset(boxX + pad, boxY + pad));
       }
     }
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+  bool shouldRepaint(covariant _WeightChartPainter oldDelegate) =>
+      oldDelegate.data != data ||
+      oldDelegate.selectedIndex != selectedIndex ||
+      oldDelegate.minWeight != minWeight ||
+      oldDelegate.maxWeight != maxWeight;
 }

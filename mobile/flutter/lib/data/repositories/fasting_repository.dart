@@ -176,6 +176,133 @@ class FastingRepository {
     }
   }
 
+  /// Pause an active fast — suspends elapsed-time accrual. (Task I)
+  Future<FastingRecord> pauseFast({
+    required String fastId,
+    required String userId,
+  }) async {
+    try {
+      debugPrint('⏸️ [Fasting] Pausing fast $fastId');
+      final response = await _client.post(
+        '/fasting/$fastId/pause',
+        data: {'user_id': userId},
+      );
+      debugPrint('✅ [Fasting] Fast paused');
+      return FastingRecord.fromJson(response.data);
+    } catch (e) {
+      debugPrint('❌ [Fasting] Error pausing fast: $e');
+      rethrow;
+    }
+  }
+
+  /// Resume a paused fast. (Task I)
+  Future<FastingRecord> resumeFast({
+    required String fastId,
+    required String userId,
+  }) async {
+    try {
+      debugPrint('▶️ [Fasting] Resuming fast $fastId');
+      final response = await _client.post(
+        '/fasting/$fastId/resume',
+        data: {'user_id': userId},
+      );
+      debugPrint('✅ [Fasting] Fast resumed');
+      return FastingRecord.fromJson(response.data);
+    } catch (e) {
+      debugPrint('❌ [Fasting] Error resuming fast: $e');
+      rethrow;
+    }
+  }
+
+  /// Re-open a just-ended fast back to active status. (Task I)
+  Future<FastingRecord> undoEndFast({
+    required String fastId,
+    required String userId,
+  }) async {
+    try {
+      debugPrint('↩️ [Fasting] Undo-end fast $fastId');
+      final response = await _client.post(
+        '/fasting/$fastId/undo-end',
+        data: {'user_id': userId},
+      );
+      debugPrint('✅ [Fasting] Fast re-opened');
+      return FastingRecord.fromJson(response.data);
+    } catch (e) {
+      debugPrint('❌ [Fasting] Error undoing fast end: $e');
+      rethrow;
+    }
+  }
+
+  /// Edit a completed fast's start/end times — recomputes duration and
+  /// completion on the backend. (Task I)
+  Future<FastingRecord> editFast({
+    required String fastId,
+    required String userId,
+    required DateTime startTime,
+    required DateTime endTime,
+  }) async {
+    try {
+      debugPrint('✏️ [Fasting] Editing fast $fastId times');
+      final response = await _client.post(
+        '/fasting/$fastId/edit',
+        data: {
+          'user_id': userId,
+          'start_time': startTime.toUtc().toIso8601String(),
+          'end_time': endTime.toUtc().toIso8601String(),
+        },
+      );
+      debugPrint('✅ [Fasting] Fast edited');
+      return FastingRecord.fromJson(response.data);
+    } catch (e) {
+      debugPrint('❌ [Fasting] Error editing fast: $e');
+      rethrow;
+    }
+  }
+
+  /// Get an AI-generated plain-English fasting insight. (Task D)
+  ///
+  /// Calls `POST /insights/{user_id}/fasting-analysis` — Gemini-backed and
+  /// cached 6h on the backend. Returns the insight text.
+  Future<String> getFastingInsight({
+    required String userId,
+    required FastingStreak streak,
+    required FastingStats stats,
+    FastingRecord? activeFast,
+  }) async {
+    try {
+      debugPrint('🤖 [Fasting] Getting AI fasting insight for $userId');
+      final body = <String, dynamic>{
+        'current_streak': streak.currentStreak,
+        'longest_streak': streak.longestStreak,
+        'completed_fasts': stats.completedFasts,
+        'total_fasts': stats.totalFasts,
+        'completion_rate': stats.completionRate,
+        'avg_duration_hours': stats.avgDurationHours,
+        'longest_fast_hours': stats.longestFastHours,
+        'fasts_this_week': streak.fastsThisWeek,
+      };
+      if (activeFast != null) {
+        body['current_protocol'] = activeFast.protocol;
+        body['elapsed_hours'] = activeFast.elapsedMinutes / 60.0;
+        body['goal_hours'] = activeFast.goalDurationMinutes / 60.0;
+        body['current_stage'] = activeFast.currentZone.displayName;
+      }
+      final response = await _client.post(
+        '/insights/$userId/fasting-analysis',
+        data: body,
+      );
+      final insight = response.data['insight'] as String?;
+      if (insight == null || insight.isEmpty) {
+        throw Exception('Empty fasting insight response');
+      }
+      debugPrint('✅ [Fasting] AI fasting insight retrieved');
+      return insight;
+    } catch (e) {
+      debugPrint('❌ [Fasting] Error getting AI fasting insight: $e');
+      rethrow;
+    }
+  }
+
   // ============================================
   // Fasting Preferences
   // ============================================

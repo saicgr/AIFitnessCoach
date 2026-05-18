@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/fasting.dart';
 import '../../../data/services/haptic_service.dart';
+import 'fasting_plan_cards.dart';
 
 /// Bottom sheet for starting a new fast
 class StartFastSheet extends StatefulWidget {
@@ -147,9 +148,27 @@ class _StartFastSheetState extends State<StartFastSheet> {
             ),
             const SizedBox(height: 20),
 
+            // === GOAL-FRAMED PLAN CARDS (Section C) ===
+            // A scrollable gallery of attractive plan cards. Tapping one
+            // selects that protocol (mirrors the chips below).
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 0),
+              child: FastingPlanCards(
+                title: 'Choose a Plan',
+                selectedProtocol: _selectedProtocol,
+                onSelect: (plan) {
+                  _selectProtocol(plan.protocol);
+                  if (plan.protocol == FastingProtocol.custom) {
+                    setState(() {}); // reveal custom slider
+                  }
+                },
+              ),
+            ),
+            const SizedBox(height: 18),
+
             // === PROTOCOL SELECTION ===
             Text(
-              'Protocol',
+              'Or pick a protocol',
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,

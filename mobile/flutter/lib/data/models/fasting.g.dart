@@ -45,6 +45,11 @@ FastingRecord _$FastingRecordFromJson(Map<String, dynamic> json) =>
       energyLevelAfter: (json['energy_level_after'] as num?)?.toInt(),
       endedBy: json['ended_by'] as String?,
       breakingMealId: json['breaking_meal_id'] as String?,
+      pausedAt: json['paused_at'] == null
+          ? null
+          : DateTime.parse(json['paused_at'] as String),
+      accumulatedPausedSeconds:
+          (json['accumulated_paused_seconds'] as num?)?.toInt() ?? 0,
       createdAt: DateTime.parse(json['created_at'] as String),
       updatedAt: json['updated_at'] == null
           ? null
@@ -72,6 +77,8 @@ Map<String, dynamic> _$FastingRecordToJson(FastingRecord instance) =>
       'energy_level_after': instance.energyLevelAfter,
       'ended_by': instance.endedBy,
       'breaking_meal_id': instance.breakingMealId,
+      'paused_at': instance.pausedAt?.toIso8601String(),
+      'accumulated_paused_seconds': instance.accumulatedPausedSeconds,
       'created_at': instance.createdAt.toIso8601String(),
       'updated_at': instance.updatedAt?.toIso8601String(),
     };
@@ -109,6 +116,12 @@ FastingPreferences _$FastingPreferencesFromJson(Map<String, dynamic> json) =>
           ? null
           : DateTime.parse(json['onboarding_completed_at'] as String),
       experienceLevel: json['experience_level'] as String? ?? 'beginner',
+      weeklySchedule: (json['weekly_schedule'] as Map<String, dynamic>?)?.map(
+        (k, e) => MapEntry(
+          int.parse(k),
+          ScheduledFastDay.fromJson(e as Map<String, dynamic>),
+        ),
+      ),
     );
 
 Map<String, dynamic> _$FastingPreferencesToJson(
@@ -133,6 +146,9 @@ Map<String, dynamic> _$FastingPreferencesToJson(
   'fasting_onboarding_completed': instance.fastingOnboardingCompleted,
   'onboarding_completed_at': instance.onboardingCompletedAt?.toIso8601String(),
   'experience_level': instance.experienceLevel,
+  'weekly_schedule': instance.weeklySchedule?.map(
+    (k, e) => MapEntry(k.toString(), e.toJson()),
+  ),
 };
 
 FastingStreak _$FastingStreakFromJson(

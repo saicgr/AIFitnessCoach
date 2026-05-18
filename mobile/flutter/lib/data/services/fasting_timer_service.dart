@@ -1,9 +1,12 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart' show TimeOfDay, DayPeriod;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:timezone/timezone.dart' as tz;
 import '../models/fasting.dart';
+import 'fasting_live_activity_service.dart';
+import 'fasting_ongoing_notification_service.dart';
 
 /// Fasting timer service provider
 final fastingTimerServiceProvider = Provider<FastingTimerService>((ref) {
@@ -19,6 +22,17 @@ class FastingTimerService {
       FlutterLocalNotificationsPlugin();
   Timer? _zoneCheckTimer;
   FastingZone? _lastNotifiedZone;
+
+  /// Drives periodic refresh of the live fast surface (ongoing notification
+  /// + iOS Live Activity). Distinct from [_zoneCheckTimer].
+  Timer? _liveSurfaceTimer;
+
+  /// The zone last pushed to the live surface — updates are only sent on a
+  /// zone change (native chronometers tick the clock themselves).
+  FastingZone? _lastLiveSurfaceZone;
+
+  /// The pause-state last pushed to the live surface.
+  bool? _lastLiveSurfacePaused;
 
   FastingTimerService(this._ref);
 
@@ -420,12 +434,160 @@ class FastingTimerService {
   }
 
   // ============================================
+  // Live Fast Surface (ongoing notification + iOS Live Activity)
+  // ============================================
+
+  /// Start the live fast surface for [fast]: an ongoing actionable
+  /// notification (Android) and an iOS Live Activity. Respects the user's
+  /// fasting notification preferences via [notificationsEnabled].
+  ///
+  /// Fired on fast start / resume. Idempotent — re-starting refreshes.
+  Future<void> startLiveSurface(
+    FastingRecord fast, {
+    required bool notificationsEnabled,
+  }) async {
+    if (!notificationsEnabled) {
+      debugPrint(
+          '🕐 [FastingTimer] Notifications disabled — skipping live surface');
+      return;
+    }
+    try {
+      await FastingOngoingNotificationService.instance.initialize();
+      await FastingLiveActivityService.instance.init();
+
+      final state = _buildActivityState(fast);
+      await FastingLiveActivityService.instance.start(state);
+      await _showOngoingNotification(fast);
+
+      _lastLiveSurfaceZone = fast.currentZone;
+      _lastLiveSurfacePaused = fast.isPaused;
+
+      // Refresh the surfaces periodically so stage / pause changes and the
+      // ends-at body stay current. Native chronometers tick the clock.
+      _liveSurfaceTimer?.cancel();
+      _liveSurfaceTimer = Timer.periodic(
+        const Duration(seconds: 30),
+        (_) => _refreshLiveSurface(fast),
+      );
+      debugPrint('🕐 [FastingTimer] Live fast surface started');
+    } catch (e) {
+      debugPrint('❌ [FastingTimer] startLiveSurface failed: $e');
+    }
+  }
+
+  /// Push the latest [fast] state to the live surface — call after pause /
+  /// resume so the buttons + status flip immediately.
+  Future<void> updateLiveSurface(
+    FastingRecord fast, {
+    required bool notificationsEnabled,
+  }) async {
+    if (!notificationsEnabled) return;
+    if (!FastingOngoingNotificationService.instance.isShowing &&
+        !FastingLiveActivityService.instance.isActive) {
+      // Surface isn't up (e.g. notifications were off at start) — start it.
+      await startLiveSurface(fast, notificationsEnabled: notificationsEnabled);
+      return;
+    }
+    try {
+      await FastingLiveActivityService.instance
+          .update(_buildActivityState(fast));
+      await _showOngoingNotification(fast);
+      _lastLiveSurfaceZone = fast.currentZone;
+      _lastLiveSurfacePaused = fast.isPaused;
+    } catch (e) {
+      debugPrint('❌ [FastingTimer] updateLiveSurface failed: $e');
+    }
+  }
+
+  /// Tear down the live fast surface. Fired on fast end / cancel.
+  Future<void> endLiveSurface() async {
+    _liveSurfaceTimer?.cancel();
+    _liveSurfaceTimer = null;
+    _lastLiveSurfaceZone = null;
+    _lastLiveSurfacePaused = null;
+    try {
+      await FastingLiveActivityService.instance.end();
+      await FastingOngoingNotificationService.instance.cancel();
+      debugPrint('🕐 [FastingTimer] Live fast surface ended');
+    } catch (e) {
+      debugPrint('❌ [FastingTimer] endLiveSurface failed: $e');
+    }
+  }
+
+  /// Periodic tick — only pushes an update when the stage or pause-state has
+  /// actually changed (cheap on battery; clocks tick natively).
+  Future<void> _refreshLiveSurface(FastingRecord fast) async {
+    final zone = fast.currentZone;
+    if (zone != _lastLiveSurfaceZone ||
+        fast.isPaused != _lastLiveSurfacePaused) {
+      await FastingLiveActivityService.instance
+          .update(_buildActivityState(fast));
+      await _showOngoingNotification(fast);
+      _lastLiveSurfaceZone = zone;
+      _lastLiveSurfacePaused = fast.isPaused;
+    }
+  }
+
+  /// Build the iOS Live Activity state from a [FastingRecord].
+  FastingActivityState _buildActivityState(FastingRecord fast) {
+    final zone = fast.currentZone;
+    final goalEndsAt =
+        fast.startTime.add(Duration(minutes: fast.goalDurationMinutes));
+    return FastingActivityState(
+      protocolName: FastingProtocol.fromString(fast.protocol).displayName,
+      stageName: zone.displayName,
+      stageDescription: zone.description,
+      startedAt: fast.startTime,
+      goalEndsAt: goalEndsAt,
+      goalDurationMinutes: fast.goalDurationMinutes,
+      isPaused: fast.isPaused,
+      pausedSeconds: fast.totalPausedSeconds,
+    );
+  }
+
+  /// Show / refresh the Android ongoing actionable notification.
+  Future<void> _showOngoingNotification(FastingRecord fast) async {
+    final zone = fast.currentZone;
+    final goalEndsAt = fast.startTime
+        .add(Duration(minutes: fast.goalDurationMinutes))
+        .add(Duration(seconds: fast.totalPausedSeconds));
+    // Anchor the native chronometer to start + total paused time so it
+    // renders pause-aware elapsed time.
+    final chronometerAnchor =
+        fast.startTime.add(Duration(seconds: fast.totalPausedSeconds));
+
+    final goalHours = fast.goalDurationMinutes ~/ 60;
+    await FastingOngoingNotificationService.instance.show(
+      stageName: zone.displayName,
+      stageDescription: zone.description,
+      elapsedText: fast.elapsedTimeString,
+      goalText: '${goalHours}h goal',
+      endsAtText: fast.isPaused
+          ? 'Paused'
+          : 'Ends ~${_formatClock(goalEndsAt)}',
+      isPaused: fast.isPaused,
+      progress: fast.progress,
+      chronometerAnchor: chronometerAnchor,
+    );
+  }
+
+  /// Format a [DateTime] as a short wall-clock time, e.g. "7:30 PM".
+  String _formatClock(DateTime dt) {
+    final tod = TimeOfDay.fromDateTime(dt);
+    final h = tod.hourOfPeriod == 0 ? 12 : tod.hourOfPeriod;
+    final m = tod.minute.toString().padLeft(2, '0');
+    final period = tod.period == DayPeriod.am ? 'AM' : 'PM';
+    return '$h:$m $period';
+  }
+
+  // ============================================
   // Cleanup
   // ============================================
 
   /// Dispose of resources
   void dispose() {
     _stopZoneMonitoring();
+    _liveSurfaceTimer?.cancel();
   }
 }
 

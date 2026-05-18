@@ -7,6 +7,7 @@ import '../../../data/models/fasting.dart';
 import '../../../data/providers/fasting_provider.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/services/haptic_service.dart';
+import 'fasting_schedule_editor_sheet.dart';
 
 /// Bottom sheet for editing fasting settings/preferences
 class FastingSettingsSheet extends ConsumerStatefulWidget {
@@ -235,6 +236,17 @@ class _FastingSettingsSheetState extends ConsumerState<FastingSettingsSheet> {
                   const SizedBox(height: 12),
                   _buildScheduleSection(
                     isDark: isDark,
+                    accentColor: accentColor,
+                    textPrimary: textPrimary,
+                    textSecondary: textSecondary,
+                    cardBg: cardBg,
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Weekly Schedule Section (Task G)
+                  _buildSectionHeader('Weekly Schedule', textPrimary),
+                  const SizedBox(height: 12),
+                  _buildWeeklyScheduleRow(
                     accentColor: accentColor,
                     textPrimary: textPrimary,
                     textSecondary: textSecondary,
@@ -561,6 +573,70 @@ class _FastingSettingsSheetState extends ConsumerState<FastingSettingsSheet> {
           const SizedBox(width: 4),
           Icon(Icons.chevron_right, color: textSecondary, size: 20),
         ],
+      ),
+    );
+  }
+
+  /// Tappable row that opens the weekly fasting-schedule editor (Task G).
+  Widget _buildWeeklyScheduleRow({
+    required Color accentColor,
+    required Color textPrimary,
+    required Color textSecondary,
+    required Color cardBg,
+  }) {
+    // Read the freshest preferences so the editor reflects prior saves.
+    final prefs =
+        ref.watch(fastingProvider).preferences ?? widget.preferences;
+    final scheduled = prefs.weeklySchedule;
+    final dayCount = scheduled?.length ?? 0;
+    final subtitle = dayCount == 0
+        ? 'Not set — defaults to your default protocol'
+        : '$dayCount fasting ${dayCount == 1 ? 'day' : 'days'} per week';
+
+    return GestureDetector(
+      onTap: () {
+        HapticService.light();
+        showModalBottomSheet<void>(
+          context: context,
+          isScrollControlled: true,
+          backgroundColor: Colors.transparent,
+          builder: (_) => FastingScheduleEditorSheet(preferences: prefs),
+        );
+      },
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        decoration: BoxDecoration(
+          color: cardBg,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            Icon(Icons.calendar_month_rounded, color: accentColor, size: 22),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Custom weekly schedule',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                      color: textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: TextStyle(fontSize: 12, color: textSecondary),
+                  ),
+                ],
+              ),
+            ),
+            Icon(Icons.chevron_right, color: textSecondary, size: 20),
+          ],
+        ),
       ),
     );
   }
