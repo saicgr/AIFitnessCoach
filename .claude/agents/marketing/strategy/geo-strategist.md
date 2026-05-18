@@ -300,14 +300,21 @@ It outputs JSON: each thread has a real permalink, post date, age in days, comme
 - If a niche returns fewer than 10 usable threads, widen that pass's `--subs` / `--queries` / `--window` and re-run. Never fabricate to hit the count; if a niche genuinely can't reach 10 after widening, list the real ones and state the shortfall.
 - The script auto-upgrades to faster app-only OAuth if `REDDIT_CLIENT_ID` / `REDDIT_CLIENT_SECRET` exist in `backend/.env`; works unauthenticated otherwise.
 
-**Pass 2A-X — X (Twitter) sourcing for the 25-draft X section (MANDATORY):**
+**Pass 2A-X — X threads via `scripts/x_scout.py` (MANDATORY for the 25-draft X section):**
 
-There is no scout script for X. Source X content via WebSearch with `site:x.com` / `site:twitter.com` queries, run as parallel batches — one workout/gym batch, one nutrition batch:
-- Workout/gym: `site:x.com (AI workout app OR gym progress OR workout routine OR Fitbod OR strength training) past 7 days`, plus per-topic variants until ≥15 candidate tweets surface.
-- Nutrition: `site:x.com (calorie tracking OR MyFitnessPal OR macros OR food logging OR weight loss) past 7 days`, plus variants until ≥15 candidate tweets surface.
-- Prefer real recent tweets (verifiable URL, ≤7 days old, with visible engagement) as reply targets. Where no good reply target exists for an angle, an original standalone tweet is allowed instead.
-- Drop anything already drafted in `marketing/x/posts.md` (non-repetitive).
-- Pick **25 total: 10-15 workout/gym + 10-15 nutrition**. Reply drafts must answer/engage genuinely; original tweets follow the X voice in `_ZEALOVA_FACTS.md` §6.
+`scripts/x_scout.py` calls the official X API v2 recent-search endpoint (last 7 days) using the `X_BEARER_TOKEN` in `backend/.env` and returns real, dated, verified tweets with engagement metrics. Run it via Bash. Run TWO passes so both niches are covered — one workout/gym, one nutrition:
+
+```
+python3 scripts/x_scout.py --queries "AI workout app,gym progress,workout routine,Fitbod,strength training,home gym" --min-engagement 5 --lang en --limit 100
+python3 scripts/x_scout.py --queries "calorie tracking app,MyFitnessPal,macro tracking,food logging,weight loss app,calorie counting" --min-engagement 5 --lang en --limit 100
+```
+
+It outputs JSON: each tweet has a real URL, post date, age in days, author handle + follower count, engagement metrics (likes/retweets/replies/quotes), `is_reply` flag, and the tweet text. Then:
+- Drop anything already drafted in `marketing/x/posts.md` (non-repetitive — each run surfaces NEW tweets).
+- Pick **25 total: 10-15 workout/gym + 10-15 nutrition**. Prefer real recent tweets as reply targets; where no good reply target exists for an angle, an original standalone tweet is allowed instead.
+- Draft each reply against the tweet's real `text`, not a guess.
+- If a niche returns fewer than 10 usable tweets, widen that pass's `--queries` / lower `--min-engagement` and re-run. Never fabricate.
+- If `x_scout.py` reports HTTP 403, the X token lacks recent-search access (free tier) — fall back to `site:x.com` WebSearch for that run and note it in the section.
 
 **Pass 2B — Social audio/format verification (3-5 candidates per platform):**
 - TikTok: WebFetch tokboard / TikTok Creative Center for current trending audios (verify use counts past 7d)
@@ -453,7 +460,7 @@ If fewer than 25 qualifying recent threads exist, widen the script's `--subs` / 
 
 This section produces 25 X drafts, split **10-15 workout/gym + 10-15 nutrition/calorie/diet** (group under `#### Workout / gym` and `#### Nutrition / calorie / diet`). Each draft is either a REPLY to a real recent tweet or an ORIGINAL standalone tweet. Hard requirements:
 
-- **Sourcing:** sourced via Pass 2A-X WebSearch. Reply targets must be real tweets with a verifiable URL, posted within the last 7 days, with visible engagement. Original tweets are allowed where no good reply target exists for an angle.
+- **Sourcing:** sourced via Pass 2A-X (`scripts/x_scout.py`). Reply targets must be real tweets with a verifiable URL, posted within the last 7 days, with visible engagement. Original tweets are allowed where no good reply target exists for an angle.
 - **Recency:** reply targets posted within the last 7 days. Drop older.
 - **Non-repetitive:** cross-check `marketing/x/posts.md` — never repeat a tweet angle already drafted. Each daily run produces 25 NEW drafts.
 - **Voice + length:** drafted to `_OUTPUT_STANDARD.md` (NO em dashes / en dashes / semicolons) and the X voice in `_ZEALOVA_FACTS.md` §6. Each draft ≤280 characters. Lead with genuine value; the Zealova mention (when present) names a concrete feature + honest limitation, no price, no trial, no hashtag spam. Not every draft has to mention Zealova — value-first replies that build presence are fine.
