@@ -1417,6 +1417,33 @@ class NutritionRepository {
     );
   }
 
+  /// Per-day macro series over an ARBITRARY rolling window (Trends engine).
+  ///
+  /// Unlike [getMacrosSummary] (fixed day/week/month/90d buckets) and
+  /// [getWeeklyNutrition] (hard 7-day window), this passes a `days` override
+  /// so the Custom Trends chart can plot real logged per-day macros for the
+  /// full selected range — 7D through 1Y and All. `days: 0` ⇒ all history.
+  ///
+  /// Returns null on failure so the caller surfaces an honest empty/error
+  /// state rather than fabricating points.
+  Future<MacrosSummaryResponse?> getMacrosSummaryRange(
+    String userId, {
+    required int days,
+  }) async {
+    try {
+      final resp = await _client.get(
+        '/nutrition/food-patterns/macros-summary/$userId',
+        queryParameters: {'days': days},
+      );
+      return MacrosSummaryResponse.fromJson(
+        Map<String, dynamic>.from(resp.data as Map),
+      );
+    } catch (e) {
+      debugPrint('⚠️ [Nutrition] getMacrosSummaryRange($days) failed: $e');
+      return null;
+    }
+  }
+
   /// Raw food_log rows for the Patterns timeline (Section 4).
   Future<List<Map<String, dynamic>>> getPatternsHistory(
     String userId, {

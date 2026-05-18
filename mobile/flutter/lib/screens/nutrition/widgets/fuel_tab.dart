@@ -4,6 +4,7 @@ import '../../../data/models/micronutrients.dart';
 import '../../../data/services/haptic_service.dart';
 import '../nutrient_explorer.dart';
 import '../tabs/hydration_tab.dart';
+import 'fasting_panel.dart';
 
 /// Merged Nutrients + Water tab — a single Fuel tab with a pill segmented
 /// control at the top to switch between the two views.
@@ -36,7 +37,7 @@ class FuelTab extends StatefulWidget {
   State<FuelTab> createState() => _FuelTabState();
 }
 
-enum _FuelSection { nutrients, water }
+enum _FuelSection { nutrients, water, fasting }
 
 class _FuelTabState extends State<FuelTab> with AutomaticKeepAliveClientMixin {
   late _FuelSection _section = widget.initialSection == 'water'
@@ -105,6 +106,18 @@ class _FuelTabState extends State<FuelTab> with AutomaticKeepAliveClientMixin {
                   textPrimary: textPrimary,
                   textMuted: textMuted,
                 ),
+                const SizedBox(width: 4),
+                _buildPill(
+                  label: 'Fasting',
+                  icon: Icons.timer_outlined,
+                  selected: _section == _FuelSection.fasting,
+                  onTap: () {
+                    HapticService.light();
+                    setState(() => _section = _FuelSection.fasting);
+                  },
+                  textPrimary: textPrimary,
+                  textMuted: textMuted,
+                ),
               ],
             ),
           ),
@@ -112,20 +125,24 @@ class _FuelTabState extends State<FuelTab> with AutomaticKeepAliveClientMixin {
         Expanded(
           child: AnimatedSwitcher(
             duration: const Duration(milliseconds: 200),
-            child: _section == _FuelSection.nutrients
-                ? NutrientExplorerTab(
-                    key: const ValueKey('fuel-nutrients'),
-                    userId: widget.userId,
-                    summary: widget.micronutrients,
-                    isLoading: widget.isLoading,
-                    onRefresh: widget.onRefreshMicronutrients,
-                    isDark: widget.isDark,
-                  )
-                : HydrationTab(
-                    key: const ValueKey('fuel-water'),
-                    userId: widget.userId,
-                    isDark: widget.isDark,
-                  ),
+            child: switch (_section) {
+              _FuelSection.nutrients => NutrientExplorerTab(
+                  key: const ValueKey('fuel-nutrients'),
+                  userId: widget.userId,
+                  summary: widget.micronutrients,
+                  isLoading: widget.isLoading,
+                  onRefresh: widget.onRefreshMicronutrients,
+                  isDark: widget.isDark,
+                ),
+              _FuelSection.water => HydrationTab(
+                  key: const ValueKey('fuel-water'),
+                  userId: widget.userId,
+                  isDark: widget.isDark,
+                ),
+              _FuelSection.fasting => const FastingPanel(
+                  key: ValueKey('fuel-fasting'),
+                ),
+            },
           ),
         ),
       ],

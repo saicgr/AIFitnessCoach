@@ -250,24 +250,11 @@ extension __LogMealSheetStateL2 on _LogMealSheetState {
       );
     }
 
-    // Empty state — brand-new user, or a user who only logs one-offs.
+    // Empty — brand-new user, or one who only logs one-offs. Hide the
+    // whole section rather than showing an empty promise card; the Recent
+    // list below already covers re-logging until frequent meals build up.
     if (_frequentMeals.isEmpty) {
-      if (!_frequentMealsLoaded) return const SizedBox.shrink();
-      return Padding(
-        padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            header(''),
-            const SizedBox(height: 6),
-            Text(
-              'Log a few meals and your go-to favourites show up here for one-tap re-logging.',
-              style: TextStyle(
-                  fontSize: 11.5, height: 1.35, color: textMuted),
-            ),
-          ],
-        ),
-      );
+      return const SizedBox.shrink();
     }
 
     // Populated — the one-tap chip row.

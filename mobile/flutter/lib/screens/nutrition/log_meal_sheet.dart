@@ -70,7 +70,7 @@ const String _kFoodBrowserLastUsedKey = 'food_browser_filter';
 /// instruction form; `voice` (L2) is the hands-free dictation path
 /// with a confirm-the-transcript step; `search` keeps the existing
 /// typed food-search / browser experience reachable.
-enum _AiLogMode { snap, describe, voice, search }
+enum _AiLogMode { search, snap, describe, voice }
 
 
 /// Shows the log meal bottom sheet from anywhere in the app
@@ -195,9 +195,9 @@ class _LogMealSheetState extends ConsumerState<LogMealSheet> {
   bool _hasScanned = false;
 
   // ─── A1 Snap / Describe mode state ─────────────────────────────
-  /// Active AI-logging mode. Defaults to Describe (the richest path);
-  /// Snap is the one-tap instant-camera path.
-  _AiLogMode _aiMode = _AiLogMode.describe;
+  /// Active AI-logging mode. Defaults to Search (the typed food-search /
+  /// browser path); Snap is the one-tap instant-camera path.
+  _AiLogMode _aiMode = _AiLogMode.search;
   /// Photos staged in the Describe form before the single Analyze round
   /// trip. Capped at 5 (the existing multi-image limit).
   final List<XFile> _describePhotos = [];

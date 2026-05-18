@@ -9,7 +9,7 @@ import '../../data/providers/nutrition_preferences_provider.dart';
 import '../../data/repositories/nutrition_repository.dart';
 import '../../data/services/api_client.dart';
 import '../../widgets/glass_sheet.dart';
-import '../../widgets/main_shell.dart';
+import '../../widgets/nav_bar_hider_mixin.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
 part 'weekly_checkin_sheet_part_weekly_summary_card.dart';
@@ -80,7 +80,8 @@ class WeeklyCheckinSheet extends ConsumerStatefulWidget {
   ConsumerState<WeeklyCheckinSheet> createState() => _WeeklyCheckinSheetState();
 }
 
-class _WeeklyCheckinSheetState extends ConsumerState<WeeklyCheckinSheet> {
+class _WeeklyCheckinSheetState extends ConsumerState<WeeklyCheckinSheet>
+    with NavBarHiderMixin {
   bool _isLoading = true;
   String? _error;
   late bool _showIntro;
@@ -99,31 +100,6 @@ class _WeeklyCheckinSheetState extends ConsumerState<WeeklyCheckinSheet> {
     super.initState();
     _showIntro = widget.isFirstTime;
     if (!_showIntro) _loadData();
-
-    // Hide nav bar from inside the sheet's own lifecycle. Using
-    // addPostFrameCallback because Riverpod doesn't allow mutating provider
-    // state during widget construction. dispose() below pairs the restore.
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      ref.read(floatingNavBarVisibleProvider.notifier).state = false;
-    });
-  }
-
-  @override
-  void dispose() {
-    // Always restore the floating nav bar when the sheet's element unmounts.
-    // dispose() runs on EVERY dismiss path (X tap, barrier tap, swipe-down,
-    // back gesture, route pop). The previous show-helper's try/finally was
-    // being silently eaten by a parent-ref rebuild race; doing it from the
-    // sheet's own ref + own lifecycle is race-free because this State and
-    // its ref live exactly as long as the sheet route.
-    try {
-      ref.read(floatingNavBarVisibleProvider.notifier).state = true;
-    } catch (_) {
-      // Container disposed (app backgrounded mid-pop) — no action needed,
-      // a fresh container will start with the default `true`.
-    }
-    super.dispose();
   }
 
   Future<void> _loadData() async {

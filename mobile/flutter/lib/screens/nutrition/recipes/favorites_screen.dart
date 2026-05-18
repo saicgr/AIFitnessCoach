@@ -14,7 +14,7 @@ import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/providers/recipe_favorites_provider.dart';
 import '../../../data/providers/recipe_providers.dart';
 import '../../../widgets/glass_back_button.dart';
-import '../../../widgets/main_shell.dart' show floatingNavBarVisibleProvider;
+import '../../../widgets/nav_bar_hider_mixin.dart';
 import 'recipe_detail_screen.dart';
 import 'widgets/recipe_card.dart';
 
@@ -31,35 +31,8 @@ class FavoritesScreen extends ConsumerStatefulWidget {
   ConsumerState<FavoritesScreen> createState() => _FavoritesScreenState();
 }
 
-class _FavoritesScreenState extends ConsumerState<FavoritesScreen> {
-  @override
-  void initState() {
-    super.initState();
-    _hideNavBar();
-  }
-
-  @override
-  void reassemble() {
-    super.reassemble();
-    // Re-hide after hot reload (initState doesn't re-fire).
-    _hideNavBar();
-  }
-
-  void _hideNavBar() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        ref.read(floatingNavBarVisibleProvider.notifier).state = false;
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    try {
-      ref.read(floatingNavBarVisibleProvider.notifier).state = true;
-    } catch (_) {}
-    super.dispose();
-  }
+class _FavoritesScreenState extends ConsumerState<FavoritesScreen>
+    with NavBarHiderMixin {
 
   @override
   Widget build(BuildContext context) {

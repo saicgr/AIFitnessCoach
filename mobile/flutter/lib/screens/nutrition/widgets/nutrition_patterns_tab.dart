@@ -4,7 +4,10 @@ import 'package:intl/intl.dart';
 import 'package:fl_chart/fl_chart.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/theme_colors.dart';
 import '../../../widgets/liquid_glass_action_bar.dart';
+import '../../../widgets/trends/trend_chart.dart';
+import '../../../widgets/trends/trend_correlation.dart';
 import '../../../data/models/food_patterns.dart';
 import '../../../data/providers/food_patterns_provider.dart';
 import '../../../data/repositories/nutrition_repository.dart';
@@ -334,7 +337,7 @@ class _MacroChartsSection extends ConsumerWidget {
       MacrosQuery(userId: userId, range: range, date: date),
     ));
     return _SectionContainer(
-      title: range == 'day' ? "Today's Macros" : 'Macros & Calories',
+      title: range == 'day' ? "Today's Macros" : 'Nutrition Trends',
       isDark: isDark,
       child: async.when(
         loading: () => const _LoadingStub(height: 180),
@@ -364,10 +367,7 @@ class _MacroChartsSection extends ConsumerWidget {
               ),
               if (range != 'day') ...[
                 const SizedBox(height: 16),
-                SizedBox(
-                  height: 140,
-                  child: _CalorieTrend(summary: summary, isDark: isDark),
-                ),
+                _CalorieTrend(summary: summary, isDark: isDark),
               ],
             ],
           );
@@ -484,55 +484,55 @@ class _MacroLegend extends StatelessWidget {
   }
 }
 
-class _CalorieTrend extends StatelessWidget {
+/// Calorie Trends — the daily calorie series rendered through the shared
+/// [TrendChart] engine (Phase G5a) so it gets EWMA smoothing, a scrub
+/// tooltip, pinch-zoom and consistent theming. The calorie goal, when set,
+/// is drawn as a horizontal zone band.
+class _CalorieTrend extends ConsumerWidget {
   final MacrosSummaryResponse summary;
   final bool isDark;
   const _CalorieTrend({required this.summary, required this.isDark});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final points = summary.dailySeries;
-    if (points.length < 2) {
-      return Center(
-        child: Text('Need more days of data',
-            style: TextStyle(fontSize: 12, color: textMuted)),
+    final colors = ref.colors(context);
+
+    // Build TrendPoints from the daily macro series — skip days that fail to
+    // parse a date rather than fabricating one.
+    final trendPoints = <TrendPoint>[
+      for (final p in summary.dailySeries)
+        if (DateTime.tryParse(p.date) != null)
+          TrendPoint(
+            date: DateTime.parse(p.date),
+            value: p.calories.toDouble(),
+          ),
+    ];
+
+    if (trendPoints.length < 2) {
+      return SizedBox(
+        height: 80,
+        child: Center(
+          child: Text('Need more days of data',
+              style: TextStyle(fontSize: 12, color: textMuted)),
+        ),
       );
     }
-    final maxCal = points.map((p) => p.calories).fold(0, (a, b) => a > b ? a : b).toDouble();
-    return LineChart(
-      LineChartData(
-        minY: 0,
-        maxY: (maxCal * 1.2).clamp(500, 5000),
-        gridData: const FlGridData(show: false),
-        borderData: FlBorderData(show: false),
-        titlesData: const FlTitlesData(show: false),
-        lineBarsData: [
-          LineChartBarData(
-            spots: [
-              for (int i = 0; i < points.length; i++)
-                FlSpot(i.toDouble(), points[i].calories.toDouble()),
-            ],
-            isCurved: true,
-            color: AppColors.cyan,
-            barWidth: 2.5,
-            dotData: const FlDotData(show: false),
-            belowBarData: BarAreaData(
-              show: true,
-              color: AppColors.cyan.withValues(alpha: 0.1),
-            ),
-          ),
-          if (summary.calorieGoal != null)
-            LineChartBarData(
-              spots: [
-                FlSpot(0, summary.calorieGoal!.toDouble()),
-                FlSpot((points.length - 1).toDouble(), summary.calorieGoal!.toDouble()),
-              ],
-              isCurved: false,
-              color: AppColors.orange.withValues(alpha: 0.6),
-              barWidth: 1.5,
-              dashArray: [4, 4],
-              dotData: const FlDotData(show: false),
+
+    final goal = summary.calorieGoal;
+    return TrendChart(
+      accent: colors.accent,
+      height: 180,
+      primary: TrendChartSeries(
+        label: 'Calorie Trends',
+        unit: 'kcal',
+        points: trendPoints,
+        zoneBands: [
+          if (goal != null && goal > 0)
+            TrendZoneBand(
+              value: goal.toDouble(),
+              label: 'Goal',
+              color: colors.warning,
             ),
         ],
       ),

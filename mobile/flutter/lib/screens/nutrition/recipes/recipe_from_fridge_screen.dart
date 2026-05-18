@@ -14,7 +14,7 @@ import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/models/ingredient_analysis.dart';
 import '../../../data/repositories/recipe_repository.dart';
 import '../../../widgets/glass_back_button.dart';
-import '../../../widgets/main_shell.dart' show floatingNavBarVisibleProvider;
+import '../../../widgets/nav_bar_hider_mixin.dart';
 
 class RecipeFromFridgeScreen extends ConsumerStatefulWidget {
   final String userId;
@@ -40,7 +40,8 @@ class RecipeFromFridgeScreen extends ConsumerStatefulWidget {
 /// recipe matching.
 const int _kMaxFridgePhotos = 5;
 
-class _RecipeFromFridgeScreenState extends ConsumerState<RecipeFromFridgeScreen> {
+class _RecipeFromFridgeScreenState extends ConsumerState<RecipeFromFridgeScreen>
+    with NavBarHiderMixin {
   final List<String> _items = [];
   final _addCtrl = TextEditingController();
   // Parallel lists: index i refers to the same photo across all three.
@@ -61,7 +62,6 @@ class _RecipeFromFridgeScreenState extends ConsumerState<RecipeFromFridgeScreen>
   @override
   void initState() {
     super.initState();
-    _hideNavBar();
     if (widget.initialImagesB64.isNotEmpty) {
       // Seed state from entry-sheet picks before the first frame so we
       // never show an empty "type ingredients" prompt for a flow the
@@ -85,25 +85,8 @@ class _RecipeFromFridgeScreenState extends ConsumerState<RecipeFromFridgeScreen>
   }
 
   @override
-  void reassemble() {
-    super.reassemble();
-    _hideNavBar();
-  }
-
-  void _hideNavBar() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        ref.read(floatingNavBarVisibleProvider.notifier).state = false;
-      }
-    });
-  }
-
-  @override
   void dispose() {
     _addCtrl.dispose();
-    try {
-      ref.read(floatingNavBarVisibleProvider.notifier).state = true;
-    } catch (_) {}
     super.dispose();
   }
 

@@ -11,7 +11,7 @@ import '../../../data/repositories/nutrition_repository.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/main_shell.dart';
 import 'edit_targets_sheet.dart';
-import 'nutrition_streak_card.dart';
+import 'fasting_saved_row.dart';
 import 'pinned_nutrients_card.dart';
 import 'logged_meals_section.dart';
 import 'schedule_meal_sheet.dart' show SchedulePreset;
@@ -386,15 +386,13 @@ class _DailyTabState extends ConsumerState<DailyTab>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // 0. STREAK CARD — moved out of Nutrition Settings (where it
-                //    was buried) to this top-of-Daily position so users see
-                //    their streak every time they open the Nutrition tab.
-                //    Settings now holds only the Weekly Goal toggle.
-                //    Hidden on historical dates: "Log a meal today to get
-                //    started" is wrong copy when the user is viewing
-                //    yesterday or earlier.
+                // 0. FASTING / SAVED split row — replaces the old
+                //    logging-streak banner. Two equal-width tappable cards:
+                //    a live fasting-state entry point and a shortcut to the
+                //    user's saved recipes/foods. Hidden on historical dates
+                //    to mirror the previous banner's today-only placement.
                 if (widget.userId.isNotEmpty && widget.isViewingToday) ...[
-                  NutritionStreakCard(
+                  FastingSavedRow(
                     userId: widget.userId,
                     isDark: widget.isDark,
                   ),

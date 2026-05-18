@@ -145,109 +145,237 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Action buttons row: icon buttons left, analyze pill right.
-          // Mic moved into the "What did you eat?" TextField as a suffix icon
-          // so this row can host a dedicated Menu scan button instead.
-          // The icon group is wrapped in a horizontal scroller so adding the
-          // Import-scan button (6 icons) never overflows on an iPhone SE —
-          // the Analyze pill stays pinned to the right.
-          Row(
+          // Action row redesigned: 5 LABELED capture chips (Photo / Barcode /
+          // Menu / Scan / Coach) replace the old 6 bare icons. Photo and Scan
+          // open a small chooser; Barcode, Menu and Coach act in one tap. The
+          // chips are laid out with a Wrap so labels never overflow on an
+          // iPhone SE — they flow onto a second line if width is tight.
+          //
+          // Analyze stays the clear primary CTA: a filled accent pill on its
+          // own full-width row below the lighter capture chips.
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            alignment: WrapAlignment.center,
             children: [
-              Flexible(
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: [
-                      // Camera button — multi-photo capable scan.
-                      ActionIconButton(
-                        icon: Icons.camera_alt,
-                        onTap: () => _pickImages(ImageSource.camera),
-                        isDark: isDark,
-                        color: const Color(0xFF3B82F6), // blue
-                      ),
-                      const SizedBox(width: 2),
-
-                      // Gallery button — multi-photo capable scan.
-                      ActionIconButton(
-                        icon: Icons.photo_library_outlined,
-                        onTap: () => _pickImages(ImageSource.gallery),
-                        isDark: isDark,
-                        color: const Color(0xFF8B5CF6), // purple
-                      ),
-                      const SizedBox(width: 2),
-
-                      // Menu scan — takes one or more menu photos, routes to
-                      // analyze_multi_food_images with analysis_mode="menu"
-                      // and opens the MenuAnalysisSheet checklist on success.
-                      ActionIconButton(
-                        icon: Icons.menu_book_outlined,
-                        onTap: _scanMenu,
-                        isDark: isDark,
-                        color: const Color(0xFFF59E0B), // amber
-                      ),
-                      const SizedBox(width: 2),
-
-                      // Barcode button
-                      ActionIconButton(
-                        icon: Icons.qr_code_scanner,
-                        onTap: _openBarcodeScanner,
-                        isDark: isDark,
-                        color: const Color(0xFF10B981), // green
-                      ),
-                      const SizedBox(width: 2),
-
-                      // Import scan — first-class entry for nutrition-label
-                      // OCR and app-screenshot OCR (Parity A2). Opens a
-                      // chooser sheet; each option picks an image and routes
-                      // through the direct scan endpoint into this same
-                      // result sheet for review/edit.
-                      ActionIconButton(
-                        icon: Icons.document_scanner_outlined,
-                        onTap: _openImportScanSheet,
-                        isDark: isDark,
-                        color: const Color(0xFF06B6D4), // cyan
-                      ),
-                      const SizedBox(width: 2),
-
-                      // AI Coach button — opens a context-aware popup with
-                      // preset questions informed by today's logged meals,
-                      // workout, and favorites. Does NOT replace Analyze.
-                      ActionIconButton(
-                        icon: Icons.chat_bubble_outline_rounded,
-                        onTap: _openAiCoachSheet,
-                        isDark: isDark,
-                        color: AccentColorScope.of(context).getColor(isDark),
-                      ),
-                    ],
-                  ),
-                ),
+              // Photo — opens a 2-option chooser (camera / library).
+              _CaptureChip(
+                icon: Icons.photo_camera_outlined,
+                label: 'Photo',
+                color: const Color(0xFF3B82F6), // blue
+                isDark: isDark,
+                onTap: _openPhotoChooser,
               ),
 
-              const SizedBox(width: 8),
+              // Barcode — fastest, most-common scan; promoted to its own
+              // top-level chip. One tap straight to the live scanner.
+              _CaptureChip(
+                icon: Icons.qr_code_scanner,
+                label: 'Barcode',
+                color: const Color(0xFF10B981), // green
+                isDark: isDark,
+                onTap: _openBarcodeScanner,
+              ),
 
-              // Analyze pill button
-              ElevatedButton.icon(
-                onPressed: hasText ? _handleAnalyze : null,
-                icon: const Icon(Icons.auto_awesome, size: 16),
-                label: const Text('Analyze', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: orange,
-                  foregroundColor: Colors.white,
-                  disabledBackgroundColor: orange.withValues(alpha: 0.3),
-                  disabledForegroundColor: Colors.white54,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  minimumSize: Size.zero,
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                ),
+              // Menu scan — signature feature, one tap straight to _scanMenu.
+              _CaptureChip(
+                icon: Icons.menu_book_outlined,
+                label: 'Menu',
+                color: const Color(0xFFF59E0B), // amber
+                isDark: isDark,
+                onTap: _scanMenu,
+              ),
+
+              // Scan — opens a 2-option chooser (nutrition label / app
+              // screenshot).
+              _CaptureChip(
+                icon: Icons.qr_code_scanner,
+                label: 'Scan',
+                color: const Color(0xFF10B981), // green
+                isDark: isDark,
+                onTap: _openScanChooser,
+              ),
+
+              // Coach — context-aware AI meal-suggestion popup.
+              _CaptureChip(
+                icon: Icons.chat_bubble_outline_rounded,
+                label: 'Coach',
+                color: orange,
+                isDark: isDark,
+                onTap: _openAiCoachSheet,
               ),
             ],
+          ),
+
+          const SizedBox(height: 8),
+
+          // Analyze — primary CTA. Full-width filled accent pill, visually
+          // dominant over the lighter capture chips above.
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: hasText ? _handleAnalyze : null,
+              icon: const Icon(Icons.auto_awesome, size: 18),
+              label: const Text('Analyze',
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: orange,
+                foregroundColor: Colors.white,
+                disabledBackgroundColor: orange.withValues(alpha: 0.3),
+                disabledForegroundColor: Colors.white54,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+              ),
+            ),
           ),
 
           const SizedBox(height: 4),
 
           // Daily macro summary pill
           _buildDailyMacroBar(isDark),
+        ],
+      ),
+    );
+  }
+
+  // ─── Bottom-bar choosers ──────────────────────────────────────
+
+  /// Photo chip → small 2-option chooser: take a photo with the camera
+  /// (multi-shot loop) or choose existing photos from the library. Both
+  /// delegate to the existing [_pickImages].
+  Future<void> _openPhotoChooser() async {
+    const blue = Color(0xFF3B82F6);
+    final source = await showGlassSheet<ImageSource>(
+      context: context,
+      builder: (ctx) {
+        final colors = ThemeColors.of(ctx);
+        final isDark = colors.isDark;
+        return GlassSheet(
+          child: SafeArea(
+            top: false,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _chooserHeader(
+                      colors, blue, Icons.photo_camera_outlined, 'Add Food Photo'),
+                  _GlassMenuOption(
+                    icon: Icons.camera_alt_outlined,
+                    label: 'Take photo',
+                    subtitle: 'Up to 5 shots — add another between photos',
+                    color: blue,
+                    isDark: isDark,
+                    onTap: () => Navigator.pop(ctx, ImageSource.camera),
+                  ),
+                  const SizedBox(height: 10),
+                  _GlassMenuOption(
+                    icon: Icons.collections_outlined,
+                    label: 'Choose from library',
+                    subtitle: 'Pick up to 5 from your photos',
+                    color: blue,
+                    isDark: isDark,
+                    onTap: () => Navigator.pop(ctx, ImageSource.gallery),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+    if (source == null || !mounted) return;
+    await _pickImages(source);
+  }
+
+  /// Scan chip → 2-option chooser: nutrition label or app screenshot. Both
+  /// route through the existing label/screenshot OCR flows. Barcode is now a
+  /// dedicated top-level chip and no longer appears here.
+  Future<void> _openScanChooser() async {
+    const green = Color(0xFF10B981);
+    final choice = await showGlassSheet<String>(
+      context: context,
+      builder: (ctx) {
+        final colors = ThemeColors.of(ctx);
+        final isDark = colors.isDark;
+        return GlassSheet(
+          child: SafeArea(
+            top: false,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _chooserHeader(
+                      colors, green, Icons.qr_code_scanner, 'Scan & Import'),
+                  _GlassMenuOption(
+                    icon: Icons.qr_code_2_outlined,
+                    label: 'Nutrition label',
+                    subtitle: 'Read macros off a packaged food label',
+                    color: green,
+                    isDark: isDark,
+                    onTap: () => Navigator.pop(ctx, 'label'),
+                  ),
+                  const SizedBox(height: 10),
+                  _GlassMenuOption(
+                    icon: Icons.screenshot_outlined,
+                    label: 'Screenshot',
+                    subtitle: 'Import a log from MyFitnessPal, Cronometer…',
+                    color: green,
+                    isDark: isDark,
+                    onTap: () => Navigator.pop(ctx, 'screenshot'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+    if (choice == null || !mounted) return;
+    switch (choice) {
+      case 'label':
+        await _scanNutritionLabel();
+        break;
+      case 'screenshot':
+        await _scanAppScreenshot();
+        break;
+    }
+  }
+
+  /// Shared header row for the bottom-bar choosers — matches the existing
+  /// `_scanMenu` / `_openImportScanSheet` chooser styling (tinted icon tile +
+  /// title).
+  Widget _chooserHeader(
+      ThemeColors colors, Color color, IconData icon, String title) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(4, 4, 4, 16),
+      child: Row(
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, size: 20, color: color),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              title,
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: colors.textPrimary,
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -629,26 +757,9 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
                   runSpacing: 8,
                   crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
-                    // Star button
-                    GestureDetector(
-                      behavior: HitTestBehavior.opaque,
-                      onTap: _isSaved || _isSaving ? null : _handleSaveAsFavorite,
-                      child: _isSaving
-                          ? SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary))
-                          : Icon(_isSaved ? Icons.star : Icons.star_border, size: 22, color: _isSaved ? AppColors.yellow : textMuted),
-                    ),
-                    GestureDetector(
-                      onTap: _handleEdit,
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.edit, size: 14, color: textMuted),
-                          const SizedBox(width: 4),
-                          Text('Edit', style: TextStyle(fontSize: 12, color: textMuted)),
-                        ],
-                      ),
-                    ),
-                    // Flag / report inaccuracy
+                    // Order: Add · Refine · Edit · ★ · Report — the
+                    // emphasized result-fixing actions lead, Favorite is
+                    // secondary, the Report flag is always last.
                     // Manual "Add" chip — open a tiny text-input sheet, run
                     // text-analyze, append to current items. Avoids re-snapping.
                     Builder(builder: (ctx) {
@@ -715,6 +826,27 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
                         ),
                       );
                     }),
+                    // Edit — modify the analyzed values.
+                    GestureDetector(
+                      onTap: _handleEdit,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.edit, size: 14, color: textMuted),
+                          const SizedBox(width: 4),
+                          Text('Edit', style: TextStyle(fontSize: 12, color: textMuted)),
+                        ],
+                      ),
+                    ),
+                    // Favorite — save this meal for one-tap re-logging.
+                    GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: _isSaved || _isSaving ? null : _handleSaveAsFavorite,
+                      child: _isSaving
+                          ? SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: isDark ? AppColors.textSecondary : AppColorsLight.textSecondary))
+                          : Icon(_isSaved ? Icons.star : Icons.star_border, size: 22, color: _isSaved ? AppColors.yellow : textMuted),
+                    ),
+                    // Report — flag an inaccurate AI analysis. Always last.
                     GestureDetector(
                       onTap: () {
                         final items = response.foodItemsRanked;
@@ -1366,4 +1498,63 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
     );
   }
 
+}
+
+/// Labeled capture action used in the Search-mode bottom bar — a compact
+/// icon + text chip. Replaces the old bare [ActionIconButton] icons so every
+/// action is self-describing. Sized to keep four chips on one line on an
+/// iPhone SE, but laid out inside a [Wrap] so it degrades gracefully.
+class _CaptureChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  final bool isDark;
+  final VoidCallback onTap;
+
+  const _CaptureChip({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.isDark,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final textPrimary =
+        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: isDark ? 0.14 : 0.10),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: color.withValues(alpha: isDark ? 0.30 : 0.28),
+              width: 0.8,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 17, color: color),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: textPrimary,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }

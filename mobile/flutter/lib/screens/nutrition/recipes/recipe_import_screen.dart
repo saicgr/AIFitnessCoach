@@ -14,7 +14,7 @@ import '../../../data/models/ingredient_analysis.dart';
 import '../../../data/models/recipe.dart';
 import '../../../data/repositories/recipe_repository.dart';
 import '../../../widgets/glass_back_button.dart';
-import '../../../widgets/main_shell.dart' show floatingNavBarVisibleProvider;
+import '../../../widgets/nav_bar_hider_mixin.dart';
 import '../../../widgets/segmented_tab_bar.dart';
 import 'recipe_create_screen.dart';
 import 'widgets/embedded_camera_panel.dart';
@@ -28,7 +28,7 @@ class RecipeImportScreen extends ConsumerStatefulWidget {
 }
 
 class _RecipeImportScreenState extends ConsumerState<RecipeImportScreen>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, NavBarHiderMixin {
   late final TabController _tab;
   final _urlCtrl = TextEditingController();
   final _textCtrl = TextEditingController();
@@ -41,21 +41,6 @@ class _RecipeImportScreenState extends ConsumerState<RecipeImportScreen>
     super.initState();
     _tab = TabController(length: 3, vsync: this);
     _tab.addListener(_onTabChanged);
-    _hideNavBar();
-  }
-
-  @override
-  void reassemble() {
-    super.reassemble();
-    _hideNavBar();
-  }
-
-  void _hideNavBar() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        ref.read(floatingNavBarVisibleProvider.notifier).state = false;
-      }
-    });
   }
 
   void _onTabChanged() {
@@ -70,9 +55,6 @@ class _RecipeImportScreenState extends ConsumerState<RecipeImportScreen>
     _tab.dispose();
     _urlCtrl.dispose();
     _textCtrl.dispose();
-    try {
-      ref.read(floatingNavBarVisibleProvider.notifier).state = true;
-    } catch (_) {}
     super.dispose();
   }
 

@@ -15,7 +15,7 @@ import '../../../data/models/meal_plan.dart';
 import '../../../data/models/scheduled_recipe.dart';
 import '../../../data/repositories/recipe_repository.dart';
 import '../../../widgets/glass_back_button.dart';
-import '../../../widgets/main_shell.dart' show floatingNavBarVisibleProvider;
+import '../../../widgets/nav_bar_hider_mixin.dart';
 import '../grocery/grocery_list_screen.dart';
 import '../recipes/widgets/coach_review_sheet.dart';
 
@@ -35,7 +35,8 @@ class MealPlannerScreen extends ConsumerStatefulWidget {
   ConsumerState<MealPlannerScreen> createState() => _MealPlannerScreenState();
 }
 
-class _MealPlannerScreenState extends ConsumerState<MealPlannerScreen> {
+class _MealPlannerScreenState extends ConsumerState<MealPlannerScreen>
+    with NavBarHiderMixin {
   MealPlan? _plan;
   SimulateResponse? _sim;
   bool _loading = true;
@@ -45,29 +46,6 @@ class _MealPlannerScreenState extends ConsumerState<MealPlannerScreen> {
   void initState() {
     super.initState();
     _load();
-    _hideNavBar();
-  }
-
-  @override
-  void reassemble() {
-    super.reassemble();
-    _hideNavBar();
-  }
-
-  void _hideNavBar() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        ref.read(floatingNavBarVisibleProvider.notifier).state = false;
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    try {
-      ref.read(floatingNavBarVisibleProvider.notifier).state = true;
-    } catch (_) {}
-    super.dispose();
   }
 
   Future<void> _load() async {

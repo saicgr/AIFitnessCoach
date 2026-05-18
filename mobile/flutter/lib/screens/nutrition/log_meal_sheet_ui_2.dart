@@ -5,10 +5,9 @@ extension __LogMealSheetStateExt2 on _LogMealSheetState {
 
   // ─── Input View ───────────────────────────────────────────────
 
-  /// Top-level input view. A1 — a Snap | Describe | Search segmented
-  /// control sits above a mode-specific body so the AI surface reads as
-  /// two clear modes (MacroFactor parity) instead of a flat row of
-  /// co-equal buttons.
+  /// Top-level input view. A Search | Snap | Describe | Voice segmented
+  /// control sits above a mode-specific body. Search is the first tab and
+  /// the default mode; the other tabs surface the AI-logging paths.
   Widget _buildInputView(bool isDark) {
     return Column(
       children: [
@@ -116,12 +115,14 @@ extension __LogMealSheetStateExt2 on _LogMealSheetState {
       ),
       child: Row(
         children: [
+          // Search is the first tab and the sheet's default mode — the
+          // typed food-search / browser path the user reaches for most.
+          seg(_AiLogMode.search, Icons.search_rounded, 'Search'),
           seg(_AiLogMode.snap, Icons.bolt_rounded, 'Snap'),
           seg(_AiLogMode.describe, Icons.notes_rounded, 'Describe'),
           // L2 — Voice is a first-class hands-free mode, not a buried
-          // mic icon. Sits between Describe and Search.
+          // mic icon.
           seg(_AiLogMode.voice, Icons.mic_rounded, 'Voice'),
-          seg(_AiLogMode.search, Icons.search_rounded, 'Search'),
         ],
       ),
     );
@@ -311,12 +312,13 @@ extension __LogMealSheetStateExt2 on _LogMealSheetState {
             style: TextStyle(
                 fontSize: 13, fontWeight: FontWeight.w700, color: textPrimary),
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: 3),
           Text(
-            '3 best photos give the best result — meal, components or menu (max 5).',
-            style: TextStyle(fontSize: 11.5, height: 1.35, color: textMuted),
+            'Add up to 5 photos — the meal, its components, or a menu. '
+            '3 clear shots work best.',
+            style: TextStyle(fontSize: 11.5, height: 1.4, color: textMuted),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
           SizedBox(
             height: 84,
             child: ListView(
@@ -340,7 +342,12 @@ extension __LogMealSheetStateExt2 on _LogMealSheetState {
             style: TextStyle(
                 fontSize: 13, fontWeight: FontWeight.w700, color: textPrimary),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 3),
+          Text(
+            'Tell the AI anything that helps — portion eaten, swaps, plate size.',
+            style: TextStyle(fontSize: 11.5, height: 1.4, color: textMuted),
+          ),
+          const SizedBox(height: 8),
           Container(
             decoration: BoxDecoration(
               color: glassSurface,
@@ -362,8 +369,7 @@ extension __LogMealSheetStateExt2 on _LogMealSheetState {
               decoration: InputDecoration(
                 border: InputBorder.none,
                 isDense: true,
-                hintText:
-                    'Describe the meal or tell the AI what to do — e.g. "grilled chicken bowl, I ate half".',
+                hintText: 'e.g. "grilled chicken bowl, I ate half"',
                 hintStyle: TextStyle(
                     color: textMuted.withValues(alpha: 0.7), fontSize: 14, height: 1.35),
               ),

@@ -22,7 +22,7 @@ import '../../../data/models/recipe.dart';
 import '../../../data/repositories/nutrition_repository.dart';
 import '../../../data/repositories/recipe_repository.dart';
 import '../../../widgets/glass_back_button.dart';
-import '../../../widgets/main_shell.dart' show floatingNavBarVisibleProvider;
+import '../../../widgets/nav_bar_hider_mixin.dart';
 
 class RecipeCreateScreen extends ConsumerStatefulWidget {
   final String userId;
@@ -34,7 +34,8 @@ class RecipeCreateScreen extends ConsumerStatefulWidget {
   ConsumerState<RecipeCreateScreen> createState() => _RecipeCreateScreenState();
 }
 
-class _RecipeCreateScreenState extends ConsumerState<RecipeCreateScreen> {
+class _RecipeCreateScreenState extends ConsumerState<RecipeCreateScreen>
+    with NavBarHiderMixin {
   final _nameController = TextEditingController();
   final _instructionsController = TextEditingController();
   final _yieldController = TextEditingController();
@@ -65,21 +66,6 @@ class _RecipeCreateScreenState extends ConsumerState<RecipeCreateScreen> {
         ..addAll(p.ingredients.map(_RecipeRow.fromCreate))
         ..add(_RecipeRow.empty());
     }
-    _hideNavBar();
-  }
-
-  @override
-  void reassemble() {
-    super.reassemble();
-    _hideNavBar();
-  }
-
-  void _hideNavBar() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        ref.read(floatingNavBarVisibleProvider.notifier).state = false;
-      }
-    });
   }
 
   @override
@@ -87,9 +73,6 @@ class _RecipeCreateScreenState extends ConsumerState<RecipeCreateScreen> {
     _nameController.dispose();
     _instructionsController.dispose();
     _yieldController.dispose();
-    try {
-      ref.read(floatingNavBarVisibleProvider.notifier).state = true;
-    } catch (_) {}
     super.dispose();
   }
 

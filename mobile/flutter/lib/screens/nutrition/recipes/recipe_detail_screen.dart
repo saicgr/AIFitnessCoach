@@ -18,7 +18,7 @@ import '../../../data/repositories/nutrition_repository.dart';
 import '../../../data/repositories/recipe_repository.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../widgets/glass_back_button.dart';
-import '../../../widgets/main_shell.dart' show floatingNavBarVisibleProvider;
+import '../../../widgets/nav_bar_hider_mixin.dart';
 import '../../../data/models/grocery_list.dart';
 import '../grocery/grocery_list_screen.dart';
 import '../meal_planner/meal_planner_screen.dart';
@@ -43,7 +43,8 @@ class RecipeDetailScreen extends ConsumerStatefulWidget {
   ConsumerState<RecipeDetailScreen> createState() => _RecipeDetailScreenState();
 }
 
-class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
+class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen>
+    with NavBarHiderMixin {
   Recipe? _recipe;
   bool _loading = true;
   String? _error;
@@ -52,32 +53,7 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen> {
   @override
   void initState() {
     super.initState();
-    _hideNavBar();
     _load();
-  }
-
-  @override
-  void reassemble() {
-    super.reassemble();
-    // Re-hide after hot reload (initState doesn't re-fire).
-    _hideNavBar();
-  }
-
-  void _hideNavBar() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        ref.read(floatingNavBarVisibleProvider.notifier).state = false;
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    // Restore the floating nav bar when leaving detail.
-    try {
-      ref.read(floatingNavBarVisibleProvider.notifier).state = true;
-    } catch (_) {}
-    super.dispose();
   }
 
   Future<void> _load() async {

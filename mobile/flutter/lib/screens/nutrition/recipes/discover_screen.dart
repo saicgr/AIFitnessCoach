@@ -13,7 +13,7 @@ import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/providers/recipe_favorites_provider.dart';
 import '../../../data/providers/recipe_providers.dart';
 import '../../../widgets/glass_back_button.dart';
-import '../../../widgets/main_shell.dart' show floatingNavBarVisibleProvider;
+import '../../../widgets/nav_bar_hider_mixin.dart';
 import 'recipe_detail_screen.dart';
 import 'widgets/recipe_card.dart';
 
@@ -30,7 +30,8 @@ class DiscoverScreen extends ConsumerStatefulWidget {
   ConsumerState<DiscoverScreen> createState() => _DiscoverScreenState();
 }
 
-class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
+class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
+    with NavBarHiderMixin {
   String? _category; // null == All
   String _sort = 'most_logged';
 
@@ -58,33 +59,6 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
     'drink': 'drink',
   };
 
-  @override
-  void initState() {
-    super.initState();
-    _hideNavBar();
-  }
-
-  @override
-  void reassemble() {
-    super.reassemble();
-    _hideNavBar();
-  }
-
-  void _hideNavBar() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        ref.read(floatingNavBarVisibleProvider.notifier).state = false;
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    try {
-      ref.read(floatingNavBarVisibleProvider.notifier).state = true;
-    } catch (_) {}
-    super.dispose();
-  }
 
   void _cycleSort() {
     final idx = _sortCycle.indexOf(_sort);

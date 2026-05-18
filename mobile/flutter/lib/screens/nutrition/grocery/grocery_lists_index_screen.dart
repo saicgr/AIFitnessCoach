@@ -10,7 +10,7 @@ import '../../../data/models/grocery_list.dart';
 import '../../../data/providers/recipe_providers.dart';
 import '../../../data/repositories/recipe_repository.dart';
 import '../../../widgets/glass_back_button.dart';
-import '../../../widgets/main_shell.dart' show floatingNavBarVisibleProvider;
+import '../../../widgets/nav_bar_hider_mixin.dart';
 import 'grocery_list_screen.dart';
 
 class GroceryListsIndexScreen extends ConsumerStatefulWidget {
@@ -21,36 +21,8 @@ class GroceryListsIndexScreen extends ConsumerStatefulWidget {
   ConsumerState<GroceryListsIndexScreen> createState() => _GroceryListsIndexScreenState();
 }
 
-class _GroceryListsIndexScreenState extends ConsumerState<GroceryListsIndexScreen> {
-  @override
-  void initState() {
-    super.initState();
-    _hideNavBar();
-  }
-
-  @override
-  void reassemble() {
-    super.reassemble();
-    _hideNavBar();
-  }
-
-  void _hideNavBar() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        ref.read(floatingNavBarVisibleProvider.notifier).state = false;
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    // Belt-and-suspenders restore — primary restore happens at the push site
-    // in recipes_tab._pushAndRestoreNavBar, which survives swipe-back/race.
-    try {
-      ref.read(floatingNavBarVisibleProvider.notifier).state = true;
-    } catch (_) {}
-    super.dispose();
-  }
+class _GroceryListsIndexScreenState extends ConsumerState<GroceryListsIndexScreen>
+    with NavBarHiderMixin {
 
   Future<void> _createManualList(String userId, bool isDark) async {
     final nameController = TextEditingController();
