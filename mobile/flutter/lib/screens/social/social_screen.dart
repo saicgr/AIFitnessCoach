@@ -14,7 +14,7 @@ import 'tabs/friends_tab.dart';
 import 'tabs/messages_tab.dart';
 import '../../widgets/app_loading.dart';
 import '../../widgets/pill_app_bar.dart';
-import '../../widgets/main_shell.dart';
+import '../../widgets/nav_bar_hider_mixin.dart';
 import '../../core/services/posthog_service.dart';
 import 'friend_search_screen.dart';
 import 'conversation_screen.dart';

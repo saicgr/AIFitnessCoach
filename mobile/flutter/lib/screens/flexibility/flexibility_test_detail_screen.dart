@@ -69,10 +69,10 @@ class _FlexibilityTestDetailScreenState extends ConsumerState<FlexibilityTestDet
             _buildStatusCard(latestAssessment, theme),
             const SizedBox(height: 20),
 
-            // Progress Chart
+            // Flexibility Trends chart
             if (trend != null && trend.trendData.length > 1) ...[
               Text(
-                'Progress',
+                'Flexibility Trends',
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),

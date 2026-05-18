@@ -1,8 +1,14 @@
 import 'package:flutter/material.dart';
 import '../../../data/models/flexibility_assessment.dart';
 
-/// Chart widget showing flexibility progress over time
-class FlexibilityProgressChart extends StatelessWidget {
+/// Flexibility Trends — chart of flexibility progression over time.
+///
+/// Kept bespoke (NOT migrated to the shared [TrendChart]) because its
+/// `trendData` is a loose `Map` list whose date key is not guaranteed; the
+/// shared engine requires a typed [TrendPoint] with a real date. It is
+/// themed and given an interactive tap tooltip so it still feels consistent
+/// with the rest of the Trends system (Phase G5c).
+class FlexibilityProgressChart extends StatefulWidget {
   final FlexibilityTrend trend;
   final double height;
 
@@ -11,6 +17,18 @@ class FlexibilityProgressChart extends StatelessWidget {
     required this.trend,
     this.height = 200,
   });
+
+  @override
+  State<FlexibilityProgressChart> createState() =>
+      _FlexibilityProgressChartState();
+}
+
+class _FlexibilityProgressChartState extends State<FlexibilityProgressChart> {
+  /// Index of the data point currently surfaced by the tap tooltip.
+  int? _selectedIndex;
+
+  FlexibilityTrend get trend => widget.trend;
+  double get height => widget.height;
 
   @override
   Widget build(BuildContext context) {
@@ -49,21 +67,51 @@ class FlexibilityProgressChart extends StatelessWidget {
         // Chart
         SizedBox(
           height: height,
-          child: CustomPaint(
-            size: Size.infinite,
-            painter: _ChartPainter(
-              data: trend.trendData,
-              minValue: minVal - padding,
-              maxValue: maxVal + padding,
-              lineColor: theme.colorScheme.primary,
-              fillColor: theme.colorScheme.primary.withOpacity(0.1),
-              gridColor: theme.colorScheme.onSurface.withOpacity(0.1),
-              textStyle: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurface.withOpacity(0.5),
-                fontSize: 10,
-              ) ?? const TextStyle(fontSize: 10),
-              unit: trend.unit,
-            ),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              return GestureDetector(
+                // Tap a point to surface its value + rating (G5c tooltip).
+                onTapDown: (details) {
+                  const leftPadding = 40.0;
+                  const rightPadding = 16.0;
+                  final chartWidth =
+                      constraints.maxWidth - leftPadding - rightPadding;
+                  final n = trend.trendData.length;
+                  final step =
+                      chartWidth / (n - 1).clamp(1, double.infinity);
+                  final idx = ((details.localPosition.dx - leftPadding) / step)
+                      .round()
+                      .clamp(0, n - 1);
+                  setState(() {
+                    _selectedIndex = _selectedIndex == idx ? null : idx;
+                  });
+                },
+                child: CustomPaint(
+                  size: Size.infinite,
+                  painter: _ChartPainter(
+                    data: trend.trendData,
+                    minValue: minVal - padding,
+                    maxValue: maxVal + padding,
+                    lineColor: theme.colorScheme.primary,
+                    fillColor: theme.colorScheme.primary.withOpacity(0.1),
+                    gridColor:
+                        theme.colorScheme.onSurface.withOpacity(0.1),
+                    textStyle: theme.textTheme.bodySmall?.copyWith(
+                          color:
+                              theme.colorScheme.onSurface.withOpacity(0.5),
+                          fontSize: 10,
+                        ) ??
+                        const TextStyle(fontSize: 10),
+                    unit: trend.unit,
+                    selectedIndex: _selectedIndex,
+                    tooltipBg: theme.colorScheme.surface,
+                    tooltipBorder:
+                        theme.colorScheme.outline.withOpacity(0.4),
+                    tooltipText: theme.colorScheme.onSurface,
+                  ),
+                ),
+              );
+            },
           ),
         ),
 
@@ -269,6 +317,10 @@ class _ChartPainter extends CustomPainter {
   final Color gridColor;
   final TextStyle textStyle;
   final String unit;
+  final int? selectedIndex;
+  final Color tooltipBg;
+  final Color tooltipBorder;
+  final Color tooltipText;
 
   _ChartPainter({
     required this.data,
@@ -279,6 +331,10 @@ class _ChartPainter extends CustomPainter {
     required this.gridColor,
     required this.textStyle,
     required this.unit,
+    required this.selectedIndex,
+    required this.tooltipBg,
+    required this.tooltipBorder,
+    required this.tooltipText,
   });
 
   @override
@@ -394,6 +450,78 @@ class _ChartPainter extends CustomPainter {
         canvas.drawCircle(points[i], 3, innerPaint);
       }
     }
+
+    // Draw the tap tooltip + crosshair for the selected point (G5c).
+    final sel = selectedIndex;
+    if (sel != null && sel >= 0 && sel < points.length) {
+      final p = points[sel];
+      // Crosshair.
+      canvas.drawLine(
+        Offset(p.dx, topPadding),
+        Offset(p.dx, size.height - bottomPadding),
+        Paint()
+          ..color = gridColor
+          ..strokeWidth = 1,
+      );
+      // Emphasised dot.
+      canvas.drawCircle(
+        p,
+        6,
+        Paint()
+          ..color = lineColor
+          ..style = PaintingStyle.fill,
+      );
+      canvas.drawCircle(
+        p,
+        6,
+        Paint()
+          ..color = tooltipBg
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 2,
+      );
+
+      // Tooltip text — value + optional rating.
+      final measurement = (data[sel]['measurement'] as num).toDouble();
+      final valueStr =
+          measurement.toStringAsFixed(measurement == measurement.truncate() ? 0 : 1);
+      final unitStr = unit == 'degrees' ? '°' : ' $unit';
+      final rating = data[sel]['rating'] as String?;
+      final tp = TextPainter(
+        text: TextSpan(children: [
+          TextSpan(
+            text: '$valueStr$unitStr\n',
+            style: TextStyle(
+              color: tooltipText,
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          TextSpan(
+            text: rating != null ? rating.toUpperCase() : 'Assessment',
+            style: textStyle,
+          ),
+        ]),
+        textDirection: TextDirection.ltr,
+      )..layout();
+
+      const pad = 8.0;
+      var boxX = (p.dx - tp.width / 2 - pad)
+          .clamp(0.0, size.width - tp.width - 2 * pad);
+      final boxY =
+          (p.dy - tp.height - 2 * pad - 8).clamp(0.0, size.height);
+      final rect =
+          Rect.fromLTWH(boxX, boxY, tp.width + 2 * pad, tp.height + 2 * pad);
+      final rrect = RRect.fromRectAndRadius(rect, const Radius.circular(8));
+      canvas.drawRRect(rrect, Paint()..color = tooltipBg);
+      canvas.drawRRect(
+        rrect,
+        Paint()
+          ..color = tooltipBorder
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1,
+      );
+      tp.paint(canvas, Offset(boxX + pad, boxY + pad));
+    }
   }
 
   Color _getRatingColor(String rating) {
@@ -412,5 +540,9 @@ class _ChartPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+  bool shouldRepaint(covariant _ChartPainter oldDelegate) =>
+      oldDelegate.data != data ||
+      oldDelegate.selectedIndex != selectedIndex ||
+      oldDelegate.minValue != minValue ||
+      oldDelegate.maxValue != maxValue;
 }

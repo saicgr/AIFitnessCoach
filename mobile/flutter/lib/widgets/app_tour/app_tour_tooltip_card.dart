@@ -1,7 +1,13 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 
-/// Glassmorphic tooltip card shown during app tours
+/// Glassmorphic tooltip card shown during app tours.
+///
+/// The card is height-bounded by [maxHeight]: the title + description scroll
+/// internally when content would exceed the cap, while the header (step
+/// counter + Skip) and the footer (progress dots + Next/Got it) stay pinned
+/// and always visible. This guarantees a consistent control footer on every
+/// step and every tab — fixing the "no Next button on Home/Nutrition" issue.
 class AppTourTooltipCard extends StatelessWidget {
   final String title;
   final String description;
@@ -13,6 +19,10 @@ class AppTourTooltipCard extends StatelessWidget {
   final bool isDark;
   final Color accentColor;
 
+  /// Hard ceiling for the card height. The description region scrolls if the
+  /// content would exceed it so the footer is never clipped off-screen.
+  final double maxHeight;
+
   const AppTourTooltipCard({
     super.key,
     required this.title,
@@ -23,6 +33,7 @@ class AppTourTooltipCard extends StatelessWidget {
     required this.onSkip,
     required this.isDark,
     required this.accentColor,
+    required this.maxHeight,
     this.onPrev,
   });
 
@@ -34,29 +45,40 @@ class AppTourTooltipCard extends StatelessWidget {
 
     // Translucent enough to keep the glass feel, opaque enough to stay
     // readable when something dark sits behind the card (modal scrim,
-    // dark hero imagery, etc.). Light mode previously used 0.62 white
-    // which composited to muddy gray + unreadable black text whenever a
-    // bottom-sheet barrier or busy background was underneath.
+    // dark hero imagery, etc.).
     final bgColor = isDark
-        ? const Color(0xFF1C1C1E).withValues(alpha: 0.86)
-        : Colors.white.withValues(alpha: 0.94);
+        ? const Color(0xFF1C1C1E).withValues(alpha: 0.92)
+        : Colors.white.withValues(alpha: 0.96);
     final borderColor = isDark
         ? Colors.white.withValues(alpha: 0.18)
         : Colors.black.withValues(alpha: 0.08);
     final textPrimary = isDark ? Colors.white : Colors.black87;
     final textSecondary = isDark
-        ? Colors.white.withValues(alpha: 0.70)
-        : Colors.black.withValues(alpha: 0.60);
+        ? Colors.white.withValues(alpha: 0.72)
+        : Colors.black.withValues(alpha: 0.62);
+    // The Skip control needs to stay clearly legible — a faint secondary grey
+    // rendered "barely visible" over the home header. Use a solid filled
+    // capsule with a high-contrast surface so it reads in both light + dark.
+    final skipBg = isDark
+        ? Colors.white.withValues(alpha: 0.14)
+        : Colors.black.withValues(alpha: 0.06);
+    final skipBorder = isDark
+        ? Colors.white.withValues(alpha: 0.30)
+        : Colors.black.withValues(alpha: 0.18);
+    final skipText = isDark
+        ? Colors.white.withValues(alpha: 0.95)
+        : Colors.black.withValues(alpha: 0.80);
 
     return ClipRRect(
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(22),
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 28, sigmaY: 28),
         child: Container(
           width: cardWidth,
+          constraints: BoxConstraints(maxHeight: maxHeight),
           decoration: BoxDecoration(
             color: bgColor,
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(22),
             border: Border.all(color: borderColor, width: 1),
             // Top-to-bottom highlight gradient gives the glass a subtle
             // sheen edge so it doesn't look like a flat translucent slab.
@@ -64,15 +86,15 @@ class AppTourTooltipCard extends StatelessWidget {
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
               colors: [
-                Colors.white.withValues(alpha: isDark ? 0.06 : 0.18),
+                Colors.white.withValues(alpha: isDark ? 0.06 : 0.20),
                 Colors.transparent,
               ],
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: isDark ? 0.45 : 0.18),
-                blurRadius: 28,
-                offset: const Offset(0, 8),
+                color: Colors.black.withValues(alpha: isDark ? 0.48 : 0.20),
+                blurRadius: 30,
+                offset: const Offset(0, 10),
               ),
             ],
           ),
@@ -101,6 +123,9 @@ class AppTourTooltipCard extends StatelessWidget {
               accentColor: accentColor,
               textPrimary: textPrimary,
               textSecondary: textSecondary,
+              skipBg: skipBg,
+              skipBorder: skipBorder,
+              skipText: skipText,
             ),
           ),
         ),
@@ -121,6 +146,9 @@ class _CardContent extends StatelessWidget {
   final Color accentColor;
   final Color textPrimary;
   final Color textSecondary;
+  final Color skipBg;
+  final Color skipBorder;
+  final Color skipText;
 
   const _CardContent({
     super.key,
@@ -135,17 +163,20 @@ class _CardContent extends StatelessWidget {
     required this.accentColor,
     required this.textPrimary,
     required this.textSecondary,
+    required this.skipBg,
+    required this.skipBorder,
+    required this.skipText,
   });
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.fromLTRB(22, 20, 22, 20),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header: step counter + skip
+          // Header: step counter + skip — pinned, never scrolls.
           Row(
             children: [
               Text(
@@ -153,52 +184,69 @@ class _CardContent extends StatelessWidget {
                 style: TextStyle(
                   color: textSecondary,
                   fontSize: 12,
-                  fontWeight: FontWeight.w500,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.3,
                 ),
               ),
               const Spacer(),
               GestureDetector(
                 onTap: onSkip,
+                behavior: HitTestBehavior.opaque,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 13, vertical: 6),
                   decoration: BoxDecoration(
-                    border: Border.all(color: textSecondary.withValues(alpha: 0.4)),
-                    borderRadius: BorderRadius.circular(12),
+                    color: skipBg,
+                    border: Border.all(color: skipBorder, width: 1),
+                    borderRadius: BorderRadius.circular(13),
                   ),
                   child: Text(
                     'Skip tutorial',
                     style: TextStyle(
-                      color: textSecondary,
+                      color: skipText,
                       fontSize: 12,
-                      fontWeight: FontWeight.w500,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.2,
                     ),
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          // Title
-          Text(
-            title,
-            style: TextStyle(
-              color: textPrimary,
-              fontSize: 17,
-              fontWeight: FontWeight.w700,
+          const SizedBox(height: 14),
+          // Title + description — scrolls internally if content is tall so
+          // the footer below always stays visible within [maxHeight].
+          Flexible(
+            child: SingleChildScrollView(
+              physics: const ClampingScrollPhysics(),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      color: textPrimary,
+                      fontSize: 17.5,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: -0.2,
+                    ),
+                  ),
+                  const SizedBox(height: 7),
+                  Text(
+                    description,
+                    style: TextStyle(
+                      color: textSecondary,
+                      fontSize: 14,
+                      height: 1.45,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
-          const SizedBox(height: 6),
-          // Description
-          Text(
-            description,
-            style: TextStyle(
-              color: textSecondary,
-              fontSize: 14,
-              height: 1.4,
-            ),
-          ),
-          const SizedBox(height: 16),
-          // Step dots
+          const SizedBox(height: 18),
+          // Footer: step dots + Prev/Next — pinned, always rendered on every
+          // step regardless of how tall the description is.
           Row(
             children: [
               ...List.generate(totalSteps, (i) {
@@ -211,7 +259,7 @@ class _CardContent extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: isActive
                         ? accentColor
-                        : accentColor.withValues(alpha: 0.5),
+                        : accentColor.withValues(alpha: 0.35),
                     borderRadius: BorderRadius.circular(3),
                   ),
                 );
@@ -221,12 +269,13 @@ class _CardContent extends StatelessWidget {
               if (onPrev != null) ...[
                 GestureDetector(
                   onTap: onPrev,
+                  behavior: HitTestBehavior.opaque,
                   child: Container(
-                    width: 36,
-                    height: 36,
+                    width: 38,
+                    height: 38,
                     decoration: BoxDecoration(
                       color: accentColor.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(18),
+                      borderRadius: BorderRadius.circular(19),
                     ),
                     child: Icon(
                       Icons.arrow_back_rounded,
@@ -235,27 +284,48 @@ class _CardContent extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 9),
               ],
-              // Next/Finish button
+              // Next/Finish button — always rendered on every step so the
+              // tour control footer is consistent across all tabs.
               GestureDetector(
                 onTap: onNext,
+                behavior: HitTestBehavior.opaque,
                 child: Container(
-                  height: 36,
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  height: 40,
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
                   decoration: BoxDecoration(
                     color: accentColor,
-                    borderRadius: BorderRadius.circular(18),
-                  ),
-                  child: Center(
-                    child: Text(
-                      isLastStep ? 'Got it!' : 'Next',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: accentColor.withValues(alpha: 0.35),
+                        blurRadius: 14,
+                        offset: const Offset(0, 5),
                       ),
-                    ),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        isLastStep ? 'Got it!' : 'Next',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.2,
+                        ),
+                      ),
+                      if (!isLastStep) ...[
+                        const SizedBox(width: 4),
+                        const Icon(
+                          Icons.arrow_forward_rounded,
+                          color: Colors.white,
+                          size: 16,
+                        ),
+                      ],
+                    ],
                   ),
                 ),
               ),

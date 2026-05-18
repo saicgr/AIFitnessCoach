@@ -142,7 +142,7 @@ class _HourlyActivityChartState extends State<HourlyActivityChart>
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    'Hourly Activity',
+                    'Activity Trends',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,

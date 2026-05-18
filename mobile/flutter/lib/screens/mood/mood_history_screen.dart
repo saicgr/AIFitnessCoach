@@ -6,6 +6,8 @@ import '../../core/constants/app_colors.dart';
 import '../../widgets/app_loading.dart';
 import '../../core/services/posthog_service.dart';
 import '../../widgets/pill_app_bar.dart';
+import '../../core/widgets/line_icon.dart';
+import '../../data/providers/trend_series_provider.dart';
 import '../../data/providers/mood_history_provider.dart';
 import 'widgets/mood_analytics_card.dart';
 import 'widgets/mood_calendar_heatmap.dart';
@@ -60,6 +62,17 @@ class _MoodHistoryScreenState extends ConsumerState<MoodHistoryScreen> {
       appBar: PillAppBar(
         title: 'Mood History & Analysis',
         actions: [
+          PillAppBarAction(
+            customIcon: LineIcon(
+              'custom_trend',
+              size: 20,
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? Colors.white70
+                  : AppColorsLight.textSecondary,
+            ),
+            onTap: () => context.push('/trends/custom',
+                extra: TrendMetric.moodScore),
+          ),
           PillAppBarAction(icon: Icons.refresh, onTap: () => ref.read(moodHistoryProvider.notifier).refresh()),
         ],
       ),

@@ -213,9 +213,19 @@ class _AppTourOverlayState extends ConsumerState<AppTourOverlay>
     }
 
     const spotlightPadding = 10.0;
-    const estimatedCardHeight = 180.0;
+    // Generous estimate: longer descriptions (e.g. the Home / Nutrition nav
+    // steps) wrap to 3-4 lines, pushing the card past the old 180px guess.
+    // Under-estimating placed the card too low when anchored `above`, which
+    // pushed the progress dots + Next button off the bottom of the screen —
+    // the user-reported "no Next button on Home/Nutrition" symptom. The card
+    // itself now hard-caps its own height (see AppTourTooltipCard.maxHeight)
+    // and scrolls the description if it would exceed this estimate, so the
+    // dots + Next/Got it footer are ALWAYS rendered on every step.
+    const estimatedCardHeight = 260.0;
+    final safeBottom = MediaQuery.of(context).padding.bottom;
+    final safeTop = MediaQuery.of(context).padding.top;
 
-    final tooltipTop = isTargetFound
+    final rawTop = isTargetFound
         ? _tooltipTop(
             spotlightRect: targetRect,
             cardHeight: estimatedCardHeight,
@@ -224,9 +234,21 @@ class _AppTourOverlayState extends ConsumerState<AppTourOverlay>
             spotlightPadding: spotlightPadding,
           )
         : (screenSize.height - estimatedCardHeight) / 2;
+    // Hard clamp so the card (and its dots + Next button footer) is always
+    // fully on-screen regardless of how tall the description renders.
+    final maxTop =
+        screenSize.height - estimatedCardHeight - safeBottom - 24.0;
+    final tooltipTop = rawTop.clamp(24.0, maxTop > 24.0 ? maxTop : 24.0);
 
     final cardWidth = (screenSize.width - 48).clamp(0.0, 360.0);
     final tooltipLeft = ((screenSize.width - cardWidth) / 2).clamp(24.0, double.infinity);
+    // Hard ceiling for the card: never taller than the gap between the top
+    // safe area and the bottom safe area (minus breathing room). The card
+    // scrolls its description internally if the content would exceed this,
+    // guaranteeing the dots + Next footer stay visible on every step/tab.
+    final cardMaxHeight =
+        (screenSize.height - safeTop - safeBottom - 48.0)
+            .clamp(200.0, double.infinity);
 
     return Positioned.fill(
       child: FadeTransition(
@@ -303,6 +325,7 @@ class _AppTourOverlayState extends ConsumerState<AppTourOverlay>
                   totalSteps: tourState.steps.length,
                   isDark: isDark,
                   accentColor: accentColor,
+                  maxHeight: cardMaxHeight,
                   onNext: () => controller.next(),
                   onPrev: tourState.currentStep > 0 ? () => controller.prev() : null,
                   onSkip: () => controller.dismiss(),

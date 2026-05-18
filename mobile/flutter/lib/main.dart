@@ -21,6 +21,9 @@ import 'data/services/live_activity_service.dart';
 import 'data/services/notification_service.dart';
 import 'data/services/widget_action_headless_service.dart';
 import 'data/services/background_sync_service.dart';
+import 'data/services/fasting_ongoing_notification_service.dart';
+import 'data/providers/fasting_provider.dart';
+import 'data/repositories/auth_repository.dart';
 import 'data/services/prewarmer_boot.dart';
 import 'data/local/database.dart' show AppDatabase;
 import 'data/local/database_provider.dart';
@@ -303,6 +306,38 @@ Future<void> _initNonCriticalServices(
   await LiveActivityService.instance.init().catchError((e) {
     debugPrint('⚠️ LiveActivityService initialization failed: $e');
   });
+
+  // Wire the ongoing-fast notification action buttons (Pause/Resume,
+  // End Fast) to the fasting provider. The closures read the live user id
+  // and active fast off the container so a background-isolate tap still
+  // hits the real notifier methods.
+  try {
+    FastingOngoingNotificationService.instance.wireCallbacks(
+      onPauseResume: () {
+        final userId =
+            container.read(authStateProvider).user?.id;
+        if (userId == null) return;
+        final fasting = container.read(fastingProvider);
+        final notifier = container.read(fastingProvider.notifier);
+        if (fasting.activeFast == null) return;
+        if (fasting.activeFast!.isPaused) {
+          notifier.resumeFast(userId);
+        } else {
+          notifier.pauseFast(userId);
+        }
+      },
+      onEndFast: () {
+        final userId =
+            container.read(authStateProvider).user?.id;
+        if (userId == null) return;
+        if (container.read(fastingProvider).activeFast == null) return;
+        container.read(fastingProvider.notifier).endFast(userId: userId);
+      },
+    );
+    debugPrint('✅ Fasting ongoing-notification callbacks wired');
+  } catch (e) {
+    debugPrint('⚠️ Fasting notification callback wiring failed: $e');
+  }
 
   // Universal Links / App Links ingress for referral invites. Reads
   // cold-start URI and subscribes to warm-start stream. If the user

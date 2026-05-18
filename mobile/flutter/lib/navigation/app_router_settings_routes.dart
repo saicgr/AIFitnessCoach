@@ -129,10 +129,10 @@ List<RouteBase> _settingsRoutes() => [
         builder: (context, state) => const My1RMsScreen(),
       ),
 
-      // Layout Editor (My Space) - Home screen layout customization
+      // My Space — reorder / show-hide the unified home screen's sections.
       GoRoute(
         path: '/settings/homescreen',
-        builder: (context, state) => const LayoutEditorScreen(),
+        builder: (context, state) => const HomeMySpaceScreen(),
       ),
 
       // Legacy routes redirect to unified My Exercises screen

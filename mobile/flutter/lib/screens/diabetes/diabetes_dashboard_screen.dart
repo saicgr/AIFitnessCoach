@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/widgets/line_icon.dart';
 import '../../data/providers/diabetes_provider.dart';
+import '../../data/providers/trend_series_provider.dart';
 import '../../data/services/haptic_service.dart';
 import '../../widgets/pill_app_bar.dart';
 import '../../widgets/glass_sheet.dart';
@@ -85,6 +88,15 @@ class _DiabetesDashboardScreenState
       appBar: PillAppBar(
         title: 'Diabetes',
         actions: [
+          PillAppBarAction(
+            customIcon: LineIcon(
+              'custom_trend',
+              size: 20,
+              color: textSecondary,
+            ),
+            onTap: () => context.push('/trends/custom',
+                extra: TrendMetric.glucoseAvg),
+          ),
           if (!diabetesState.isSyncing)
             PillAppBarAction(icon: Icons.refresh, onTap: () {
               HapticService.light();

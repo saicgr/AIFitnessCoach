@@ -17,7 +17,7 @@ import '../../data/providers/fitness_profile_provider.dart';
 import '../../data/providers/fitness_shape_history_provider.dart';
 import '../../data/providers/xp_provider.dart';
 import '../../data/services/haptic_service.dart';
-import '../../widgets/liquid_glass_action_bar.dart';
+import '../../widgets/floating_tab_bar.dart';
 import '../../widgets/glass_sheet.dart';
 import '../../widgets/tooltips/tooltips.dart';
 import '../../widgets/main_shell.dart' show floatingNavBarVisibleProvider;
@@ -223,22 +223,23 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
               final board = ref.watch(discoverBoardProvider);
               final selectedIndex = DiscoverScreen._boardOptions
                   .indexWhere((opt) => opt.$1 == board);
-              return LiquidGlassActionBar(
+              return FloatingTabBar(
+                mode: FloatingTabBarMode.viewSwitcher,
                 accentColor: accent,
                 selectedIndex: selectedIndex < 0 ? 0 : selectedIndex,
+                onTap: (i) {
+                  ref.read(discoverBoardProvider.notifier).state =
+                      DiscoverScreen._boardOptions[i].$1;
+                },
                 items: [
                   for (final opt in DiscoverScreen._boardOptions)
-                    LiquidGlassAction(
+                    FloatingTabItem(
                       label: opt.$2,
                       icon: switch (opt.$1) {
                         'xp' => Icons.bolt_outlined,
                         'volume' => Icons.fitness_center_outlined,
                         'streaks' => Icons.local_fire_department_outlined,
                         _ => Icons.tune_rounded,
-                      },
-                      onTap: () {
-                        ref.read(discoverBoardProvider.notifier).state =
-                            opt.$1;
                       },
                     ),
                 ],

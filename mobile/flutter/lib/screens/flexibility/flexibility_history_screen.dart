@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import '../../core/constants/app_colors.dart';
+import '../../core/widgets/line_icon.dart';
 import '../../data/models/flexibility_assessment.dart';
 import '../../data/providers/flexibility_provider.dart';
+import '../../data/providers/trend_series_provider.dart';
 import '../../widgets/pill_app_bar.dart';
 import '../../widgets/glass_sheet.dart';
 
@@ -52,6 +56,19 @@ class _FlexibilityHistoryScreenState extends ConsumerState<FlexibilityHistoryScr
     return Scaffold(
       appBar: PillAppBar(
         title: 'Assessment History',
+        actions: [
+          PillAppBarAction(
+            customIcon: LineIcon(
+              'custom_trend',
+              size: 20,
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? Colors.white70
+                  : AppColorsLight.textSecondary,
+            ),
+            onTap: () => context.push('/trends/custom',
+                extra: TrendMetric.flexibilityMeasurement),
+          ),
+        ],
       ),
       body: Column(
         children: [

@@ -13,7 +13,7 @@ import '../../data/repositories/auth_repository.dart';
 import '../../widgets/app_loading.dart';
 import '../../core/services/posthog_service.dart';
 import '../../widgets/pill_app_bar.dart';
-import '../../widgets/main_shell.dart';
+import '../../widgets/nav_bar_hider_mixin.dart';
 import 'friend_profile_screen.dart';
 import 'group_settings_screen.dart';
 
@@ -41,7 +41,8 @@ class ConversationScreen extends ConsumerStatefulWidget {
   ConsumerState<ConversationScreen> createState() => _ConversationScreenState();
 }
 
-class _ConversationScreenState extends ConsumerState<ConversationScreen> {
+class _ConversationScreenState extends ConsumerState<ConversationScreen>
+    with NavBarHiderMixin {
   final _messageController = TextEditingController();
   final _scrollController = ScrollController();
   bool _isSending = false;
@@ -55,7 +56,6 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
         eventName: 'social_conversation_opened',
         properties: {'is_group': widget.isGroup},
       );
-      ref.read(floatingNavBarVisibleProvider.notifier).state = false;
       final authState = ref.read(authStateProvider);
       final userId = authState.user?.id;
       if (userId != null) {
@@ -95,9 +95,6 @@ class _ConversationScreenState extends ConsumerState<ConversationScreen> {
     _scrollController.dispose();
     final realtimeService = ref.read(conversationRealtimeServiceProvider);
     realtimeService.leaveConversation();
-    Future.microtask(() {
-      ref.read(floatingNavBarVisibleProvider.notifier).state = true;
-    });
     super.dispose();
   }
 

@@ -59,7 +59,7 @@ class MoodWeeklyChart extends ConsumerWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              'This Week',
+              'Mood Trends',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
@@ -238,12 +238,27 @@ class _DayColumn extends StatelessWidget {
     required this.textSecondary,
   });
 
+  /// Plain-English summary surfaced by the tap tooltip (G5c).
+  String _tooltipMessage() {
+    if (!day.hasCheckins) {
+      return '${day.dayName} — no check-in';
+    }
+    final mood = day.primaryMoodEnum?.label ?? 'logged';
+    final count = day.checkinCount;
+    return '${day.dayName} — $mood'
+        '${count > 1 ? ' · $count check-ins' : ''}';
+  }
+
   @override
   Widget build(BuildContext context) {
     final hasCheckin = day.hasCheckins;
     final primaryMood = day.primaryMoodEnum;
 
-    return Column(
+    return Tooltip(
+      message: _tooltipMessage(),
+      triggerMode: TooltipTriggerMode.tap,
+      preferBelow: false,
+      child: Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         // Day name (abbreviated)
@@ -306,6 +321,7 @@ class _DayColumn extends StatelessWidget {
         else
           const SizedBox(height: 16),
       ],
+      ),
     );
   }
 }

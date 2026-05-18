@@ -14,6 +14,8 @@ import '../../data/services/haptic_service.dart';
 import '../../shareables/shareable_data.dart';
 import '../../shareables/shareable_sheet.dart';
 import '../../widgets/pill_app_bar.dart';
+import '../../core/widgets/line_icon.dart';
+import '../../data/providers/trend_series_provider.dart';
 
 // ============================================================================
 // Sort Mode
@@ -99,6 +101,15 @@ class _PersonalRecordsScreenState extends ConsumerState<PersonalRecordsScreen> {
       appBar: PillAppBar(
         title: 'Personal Records',
         actions: [
+          PillAppBarAction(
+            customIcon: LineIcon(
+              'custom_trend',
+              size: 20,
+              color: isDark ? Colors.white70 : AppColorsLight.textSecondary,
+            ),
+            onTap: () => context.push('/trends/custom',
+                extra: TrendMetric.strength1rm),
+          ),
           PillAppBarAction(
             icon: Icons.ios_share_rounded,
             onTap: () => _openShareSheet(

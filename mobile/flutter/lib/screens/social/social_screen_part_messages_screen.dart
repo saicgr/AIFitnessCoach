@@ -10,25 +10,15 @@ class _MessagesScreen extends ConsumerStatefulWidget {
 }
 
 
-class _MessagesScreenState extends ConsumerState<_MessagesScreen> {
+class _MessagesScreenState extends ConsumerState<_MessagesScreen>
+    with NavBarHiderMixin {
   bool _isSearching = false;
   String _searchQuery = '';
   final _searchController = TextEditingController();
 
   @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(floatingNavBarVisibleProvider.notifier).state = false;
-    });
-  }
-
-  @override
   void dispose() {
     _searchController.dispose();
-    Future.microtask(() {
-      ref.read(floatingNavBarVisibleProvider.notifier).state = true;
-    });
     super.dispose();
   }
 

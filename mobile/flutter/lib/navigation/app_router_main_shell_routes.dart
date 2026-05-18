@@ -164,5 +164,16 @@ List<RouteBase> _mainShellRoutes() => [
         builder: (context, state) => const LiveChatScreen(),
       ),
 
+      // Fasting → Body Status stage journey (full screen, no bottom nav).
+      GoRoute(
+        path: '/fasting/body-status',
+        builder: (context, state) => const FastingBodyStatusScreen(),
+      ),
+      // Fasting → educational Guide (full screen, no bottom nav).
+      GoRoute(
+        path: '/fasting/guide',
+        builder: (context, state) => const FastingGuideScreen(),
+      ),
+
 
 ];

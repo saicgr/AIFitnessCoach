@@ -655,6 +655,28 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               ExercisePreferencesCard(key: _preferencesKey, margin: EdgeInsets.zero),
               const SizedBox(height: 12),
               const _TrainingFocusCard(),
+              const SizedBox(height: 12),
+              // Custom Trends — also surfaced in the You hub's Stats &
+              // Rewards tab (INSIGHTS). Mirrored here in TRAINING so it's
+              // discoverable from the Profile sub-tab too.
+              Container(
+                decoration: BoxDecoration(
+                  color: elevated,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: cardBorder),
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: _buildAccountRow(
+                  _AccountRowData(
+                    icon: Icons.auto_graph_rounded,
+                    iconColor: isDark ? AppColors.orange : AppColorsLight.orange,
+                    title: 'Custom Trends',
+                    onTap: () => context.push('/trends/custom'),
+                  ),
+                  textPrimary,
+                  textMuted,
+                ),
+              ),
               const SizedBox(height: 24),
 
               // SYNCED WORKOUTS

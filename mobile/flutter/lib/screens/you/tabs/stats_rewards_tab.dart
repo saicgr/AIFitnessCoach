@@ -164,6 +164,22 @@ class _YouStatsRewardsTabState extends ConsumerState<YouStatsRewardsTab> {
           ),
           const SizedBox(height: 20),
 
+          // INSIGHTS — interactive trends + correlations
+          _SectionLabel(label: 'INSIGHTS', fg: fg),
+          const SizedBox(height: 10),
+          _MetricTile(
+            icon: Icons.auto_graph_rounded,
+            title: 'Custom Trends',
+            headline: 'Build a trend',
+            sub: 'Overlay any two metrics & see the correlation',
+            fg: fg,
+            accent: accent,
+            isDark: isDark,
+            route: '/trends/custom',
+            wide: true,
+          ),
+          const SizedBox(height: 20),
+
           // RECOGNITION — earned badges
           _SectionLabel(label: 'RECOGNITION', fg: fg),
           const SizedBox(height: 10),

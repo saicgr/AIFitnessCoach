@@ -7,19 +7,26 @@ import '../data/services/haptic_service.dart';
 ///
 /// Each action is rendered as a 44×44 circle pill.
 class PillAppBarAction {
-  final IconData icon;
+  /// Material glyph for the pill. Ignored when [customIcon] is supplied.
+  final IconData? icon;
   final Color? iconColor;
   final VoidCallback? onTap;
+
+  /// Optional custom icon widget (e.g. a `LineIcon`). When provided it is
+  /// rendered instead of [icon] — size/colour are the widget's own concern.
+  final Widget? customIcon;
 
   /// When false the pill is hidden (use for conditional actions).
   final bool visible;
 
   const PillAppBarAction({
-    required this.icon,
+    this.icon,
     this.iconColor,
     required this.onTap,
+    this.customIcon,
     this.visible = true,
-  });
+  }) : assert(icon != null || customIcon != null,
+            'Provide either an icon or a customIcon');
 }
 
 /// Drop-in [AppBar] replacement that renders the back button, title, and
@@ -166,10 +173,13 @@ class PillAppBar extends StatelessWidget implements PreferredSizeWidget {
                   width: 44,
                   height: 44,
                   decoration: pillDecor(),
-                  child: Icon(
-                    action.icon,
-                    color: action.iconColor ?? iconColor,
-                    size: 20,
+                  child: Center(
+                    child: action.customIcon ??
+                        Icon(
+                          action.icon,
+                          color: action.iconColor ?? iconColor,
+                          size: 20,
+                        ),
                   ),
                 ),
               ),

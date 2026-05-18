@@ -12,7 +12,7 @@ import '../../data/providers/health_import_provider.dart';
 import '../../data/repositories/workout_repository.dart';
 import '../../data/services/haptic_service.dart';
 import '../../widgets/charts/workout_metric_chart.dart';
-import '../../widgets/main_shell.dart' show floatingNavBarVisibleProvider;
+import '../../widgets/nav_bar_hider_mixin.dart';
 import '../../widgets/pill_app_bar.dart';
 import '../../widgets/synced/kind_avatar.dart';
 import '../../widgets/synced/metric_chip.dart';
@@ -34,7 +34,7 @@ class SyncedWorkoutDetailScreen extends ConsumerStatefulWidget {
 }
 
 class _SyncedWorkoutDetailScreenState
-    extends ConsumerState<SyncedWorkoutDetailScreen> {
+    extends ConsumerState<SyncedWorkoutDetailScreen> with NavBarHiderMixin {
   late Workout _workout;
   bool _enriching = false;
 
@@ -42,28 +42,7 @@ class _SyncedWorkoutDetailScreenState
   void initState() {
     super.initState();
     _workout = widget.workout;
-    // Hide the floating pill nav bar while the detail is on top. It's
-    // owned by MainShell, which persists behind pushed routes. Restored
-    // in dispose(). Defense-in-depth alongside the caller's own hide
-    // in profile_screen_part_account_row_data.dart.
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      ref.read(floatingNavBarVisibleProvider.notifier).state = false;
-    });
     _maybeOpportunisticallyEnrich();
-  }
-
-  @override
-  void dispose() {
-    // Best-effort restore. When the caller (profile row) wraps push with
-    // whenComplete, this is redundant but safe — setting the provider to
-    // the same value is a no-op.
-    try {
-      ref.read(floatingNavBarVisibleProvider.notifier).state = true;
-    } catch (_) {
-      // Provider may be unavailable during teardown; swallow.
-    }
-    super.dispose();
   }
 
   Future<void> _maybeOpportunisticallyEnrich() async {

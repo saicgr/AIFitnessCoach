@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/accent_color_provider.dart';
+import '../../core/widgets/line_icon.dart';
+import '../../data/providers/trend_series_provider.dart';
 import '../../data/models/habit.dart';
 import '../../data/providers/habits_provider.dart';
 import '../../data/repositories/auth_repository.dart';
@@ -229,8 +231,23 @@ class HabitsScreen extends ConsumerWidget {
                     ),
                   ),
                 ),
-                // Invisible spacer matching back button width for centering
-                const SizedBox(width: 40),
+                // Custom Trends entry — sized to match the back button so
+                // the title stays visually centered.
+                SizedBox(
+                  width: 40,
+                  height: 40,
+                  child: IconButton(
+                    padding: EdgeInsets.zero,
+                    icon: LineIcon('custom_trend',
+                        color: textPrimary, size: 22),
+                    onPressed: () {
+                      HapticService.light();
+                      context.push('/trends/custom',
+                          extra: TrendMetric.habitCompletion);
+                    },
+                    tooltip: 'View trends',
+                  ),
+                ),
               ],
             ),
           ),

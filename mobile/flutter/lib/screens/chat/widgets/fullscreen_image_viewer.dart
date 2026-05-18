@@ -4,7 +4,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../widgets/main_shell.dart';
+import '../../../widgets/nav_bar_hider_mixin.dart';
 
 /// Full-screen image viewer with pinch-to-zoom and optional Hero animation.
 ///
@@ -33,29 +33,8 @@ class FullscreenImageViewer extends ConsumerStatefulWidget {
       _FullscreenImageViewerState();
 }
 
-class _FullscreenImageViewerState extends ConsumerState<FullscreenImageViewer> {
-  @override
-  void initState() {
-    super.initState();
-    // Hide the floating bottom nav so the photo can use the full screen.
-    // Defer to next frame — modifying provider state during build is
-    // disallowed, and initState happens before the first frame paints.
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      ref.read(floatingNavBarVisibleProvider.notifier).state = false;
-    });
-  }
-
-  @override
-  void dispose() {
-    // Always restore the nav, even on swipe-back / system gesture pop.
-    // Read the container directly so the call survives the widget being
-    // unmounted before the post-frame callback would fire.
-    final container = ProviderScope.containerOf(context, listen: false);
-    container.read(floatingNavBarVisibleProvider.notifier).state = true;
-    super.dispose();
-  }
-
+class _FullscreenImageViewerState extends ConsumerState<FullscreenImageViewer>
+    with NavBarHiderMixin {
   @override
   Widget build(BuildContext context) {
     final imageWidget = _buildImage();

@@ -33,11 +33,18 @@ class LiquidGlassActionBar extends StatelessWidget {
   /// fresh navigation event with no persistent state.
   final int? selectedIndex;
 
+  /// When non-null the bar is laid out at this fixed width and each pill
+  /// is given an equal `Expanded` slot. Used so the Discover board-tab
+  /// bar matches the floating bottom-nav bar width exactly instead of
+  /// hugging its (shorter) labels.
+  final double? fixedWidth;
+
   const LiquidGlassActionBar({
     super.key,
     required this.items,
     this.accentColor,
     this.selectedIndex,
+    this.fixedWidth,
   });
 
   @override
@@ -66,7 +73,7 @@ class LiquidGlassActionBar extends StatelessWidget {
         (isDark ? AppColors.accent : AppColorsLight.accent);
     final radius = BorderRadius.circular(kLiquidGlassActionBarHeight / 2);
 
-    return ClipRRect(
+    final bar = ClipRRect(
       borderRadius: radius,
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 32, sigmaY: 32),
@@ -127,23 +134,38 @@ class LiquidGlassActionBar extends StatelessWidget {
               ),
             ),
             // Items sized to content (not Expanded) so the whole bar is
-            // intrinsic-width and matches the floating bottom nav.
+            // intrinsic-width and matches the floating bottom nav — unless
+            // [fixedWidth] is set, in which case each pill takes an equal
+            // Expanded slot so the bar fills the matched width evenly.
             SizedBox(
               height: kLiquidGlassActionBarHeight,
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
                 child: Row(
-                  mainAxisSize: MainAxisSize.min,
+                  mainAxisSize:
+                      fixedWidth != null ? MainAxisSize.max : MainAxisSize.min,
                   children: [
                     for (int i = 0; i < items.length; i++)
-                      _ActionPill(
-                        item: items[i],
-                        textColor: textColor,
-                        iconAccent: items[i].iconColor ?? iconAccent,
-                        isDark: isDark,
-                        active: selectedIndex == i,
-                        activeAccent: iconAccent,
-                      ),
+                      if (fixedWidth != null)
+                        Expanded(
+                          child: _ActionPill(
+                            item: items[i],
+                            textColor: textColor,
+                            iconAccent: items[i].iconColor ?? iconAccent,
+                            isDark: isDark,
+                            active: selectedIndex == i,
+                            activeAccent: iconAccent,
+                          ),
+                        )
+                      else
+                        _ActionPill(
+                          item: items[i],
+                          textColor: textColor,
+                          iconAccent: items[i].iconColor ?? iconAccent,
+                          isDark: isDark,
+                          active: selectedIndex == i,
+                          activeAccent: iconAccent,
+                        ),
                   ],
                 ),
               ),
@@ -152,6 +174,11 @@ class LiquidGlassActionBar extends StatelessWidget {
         ),
       ),
     );
+
+    if (fixedWidth != null) {
+      return SizedBox(width: fixedWidth, child: bar);
+    }
+    return bar;
   }
 }
 

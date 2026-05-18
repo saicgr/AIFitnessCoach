@@ -7,7 +7,7 @@ import '../../data/providers/social_provider.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../widgets/app_loading.dart';
 import '../../widgets/pill_app_bar.dart';
-import '../../widgets/main_shell.dart';
+import '../../widgets/nav_bar_hider_mixin.dart';
 
 /// Group settings/info screen (F12)
 /// - Edit group name (if admin)
@@ -31,7 +31,8 @@ class GroupSettingsScreen extends ConsumerStatefulWidget {
   ConsumerState<GroupSettingsScreen> createState() => _GroupSettingsScreenState();
 }
 
-class _GroupSettingsScreenState extends ConsumerState<GroupSettingsScreen> {
+class _GroupSettingsScreenState extends ConsumerState<GroupSettingsScreen>
+    with NavBarHiderMixin {
   final _nameController = TextEditingController();
   bool _isEditingName = false;
   bool _isSavingName = false;
@@ -47,7 +48,7 @@ class _GroupSettingsScreenState extends ConsumerState<GroupSettingsScreen> {
     super.initState();
     _nameController.text = widget.groupName;
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(floatingNavBarVisibleProvider.notifier).state = false;
+      if (!mounted) return;
       final authState = ref.read(authStateProvider);
       final userId = authState.user?.id;
       if (userId != null) {
@@ -60,9 +61,6 @@ class _GroupSettingsScreenState extends ConsumerState<GroupSettingsScreen> {
   @override
   void dispose() {
     _nameController.dispose();
-    Future.microtask(() {
-      ref.read(floatingNavBarVisibleProvider.notifier).state = true;
-    });
     super.dispose();
   }
 

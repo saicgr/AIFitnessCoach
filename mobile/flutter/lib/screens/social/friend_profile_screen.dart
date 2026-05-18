@@ -8,7 +8,7 @@ import '../../data/providers/social_provider.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../widgets/app_loading.dart';
 import '../../widgets/pill_app_bar.dart';
-import '../../widgets/main_shell.dart';
+import '../../widgets/nav_bar_hider_mixin.dart';
 import 'conversation_screen.dart';
 
 class FriendProfileScreen extends ConsumerStatefulWidget {
@@ -20,7 +20,8 @@ class FriendProfileScreen extends ConsumerStatefulWidget {
   ConsumerState<FriendProfileScreen> createState() => _FriendProfileScreenState();
 }
 
-class _FriendProfileScreenState extends ConsumerState<FriendProfileScreen> {
+class _FriendProfileScreenState extends ConsumerState<FriendProfileScreen>
+    with NavBarHiderMixin {
   String? _userId;
   Map<String, dynamic>? _profile;
   Map<String, dynamic>? _socialSummary;
@@ -31,7 +32,7 @@ class _FriendProfileScreenState extends ConsumerState<FriendProfileScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(floatingNavBarVisibleProvider.notifier).state = false;
+      if (!mounted) return;
       final authState = ref.read(authStateProvider);
       final userId = authState.user?.id;
       if (userId != null) {
@@ -39,14 +40,6 @@ class _FriendProfileScreenState extends ConsumerState<FriendProfileScreen> {
         _loadProfile();
       }
     });
-  }
-
-  @override
-  void dispose() {
-    Future.microtask(() {
-      ref.read(floatingNavBarVisibleProvider.notifier).state = true;
-    });
-    super.dispose();
   }
 
   Future<void> _loadProfile() async {

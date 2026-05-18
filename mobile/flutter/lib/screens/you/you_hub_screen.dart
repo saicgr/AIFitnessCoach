@@ -35,7 +35,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/theme/accent_color_provider.dart';
 import '../../data/services/haptic_service.dart';
 import '../../data/services/minigame_unlock_service.dart';
-import '../../widgets/liquid_glass_action_bar.dart';
+import '../../widgets/floating_tab_bar.dart';
 import '../../widgets/minigame/nutrient_rush_game.dart';
 import '../profile/profile_screen.dart';
 import 'tabs/overview_tab.dart';
@@ -272,24 +272,23 @@ class _YouHubScreenState extends ConsumerState<YouHubScreen>
               child: Center(
                 child: AnimatedBuilder(
                   animation: _tabController,
-                  builder: (_, __) => LiquidGlassActionBar(
+                  builder: (_, __) => FloatingTabBar(
+                    mode: FloatingTabBarMode.viewSwitcher,
                     accentColor: accent,
                     selectedIndex: _tabController.index,
-                    items: [
-                      LiquidGlassAction(
+                    onTap: (i) => _tabController.animateTo(i),
+                    items: const [
+                      FloatingTabItem(
                         label: 'Overview',
                         icon: Icons.home_outlined,
-                        onTap: () => _tabController.animateTo(0),
                       ),
-                      LiquidGlassAction(
+                      FloatingTabItem(
                         label: 'Profile',
                         icon: Icons.person_outline,
-                        onTap: () => _tabController.animateTo(1),
                       ),
-                      LiquidGlassAction(
+                      FloatingTabItem(
                         label: 'Stats',
                         icon: Icons.emoji_events_outlined,
-                        onTap: () => _tabController.animateTo(2),
                       ),
                     ],
                   ),

@@ -60,6 +60,15 @@ List<RouteBase> _utilityRoutes() => [
         },
       ),
 
+      // Custom Trends builder — pick any two metrics, see overlay + correlation
+      GoRoute(
+        path: '/trends/custom',
+        builder: (context, state) => CustomTrendScreen(
+          initialMetric:
+              state.extra is TrendMetric ? state.extra as TrendMetric : null,
+        ),
+      ),
+
       // Glossary
       GoRoute(
         path: '/glossary',
@@ -112,6 +121,18 @@ List<RouteBase> _utilityRoutes() => [
       GoRoute(
         path: '/menu-history',
         builder: (context, state) => const MenuAnalysisHistoryScreen(),
+      ),
+
+      // Saved hub - bookmarked recipes / foods / menus across sub-tabs.
+      // The primary entry (the Nutrition "Saved" card) pushes the screen
+      // directly with a known userId; this route covers deep links and
+      // resolves the current user id via [_SavedHubRouteShell].
+      GoRoute(
+        path: '/saved',
+        builder: (context, state) {
+          final isDark = Theme.of(context).brightness == Brightness.dark;
+          return _SavedHubRouteShell(isDark: isDark);
+        },
       ),
 
       // Mood History and Analytics
@@ -481,3 +502,29 @@ List<RouteBase> _utilityRoutes() => [
         ),
       ),
 ];
+
+/// Deep-link shell for `/saved` — resolves the current user id, then mounts
+/// [SavedHubScreen]. The in-app entry (the Nutrition "Saved" card) pushes the
+/// hub directly with a known userId, so this is only hit by deep links.
+class _SavedHubRouteShell extends ConsumerWidget {
+  final bool isDark;
+  const _SavedHubRouteShell({required this.isDark});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return FutureBuilder<String?>(
+      future: ref.read(apiClientProvider).getUserId(),
+      builder: (context, snap) {
+        if (snap.connectionState != ConnectionState.done) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+        return SavedHubScreen(
+          userId: snap.data ?? '',
+          isDark: isDark,
+        );
+      },
+    );
+  }
+}
