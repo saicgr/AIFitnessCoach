@@ -132,15 +132,29 @@ Find 3 Reddit threads where users are complaining about MyFitnessPal's barcode-s
 > [triple-backtick]
 ```
 
-This rule applies to **everything** the user is meant to copy and paste somewhere external:
-- Prompts they paste into Claude Code → plain fenced code block
-- Reddit comment/post drafts they paste into Reddit → plain fenced code block, labeled (e.g. "Reply (paste into Reddit, 87 words):")
-- DM drafts they paste into IG / TikTok → plain fenced code block
-- Pitch emails they paste into Gmail → plain fenced code block
-- App Store / Play Store copy they paste into the console → plain fenced code block
-- Ad copy variants they paste into Ads Manager → plain fenced code block
+This rule applies to **everything** the user is meant to copy and paste somewhere external. **The format depends on the destination:**
 
-Multiple options → numbered headers with one-line rationale before each, each followed by its own plain fenced code block.
+**Destination = Claude Code (a terminal):** plain fenced code block. A terminal is plain-text, so code styling is harmless and the fence makes the prompt easy to select. This is the ONLY case where a fenced code block is correct.
+- Prompts the user pastes into Claude Code → fenced code block
+
+**Destination = a rich-text web editor:** **PLAIN TEXT — no code fence, no blockquote.** Rich-text editors interpret a pasted code block as literal code and render the comment in monospace (the founder reported exactly this from Reddit's comment box). Delimit the draft with a label line, then the draft as plain paragraphs between two `---` horizontal rules:
+- Reddit comments / posts, IG / TikTok DMs, Gmail pitch emails, App Store / Play Console copy, Ads Manager ad copy → plain text, NOT fenced
+
+Correct format for a rich-text-destination draft. **The `---` delimiters MUST have a blank line both above AND below them** — a `---` directly under a line of text renders that text as a giant H2 heading (markdown setext-heading syntax), which the founder reported. Blank lines on both sides make `---` render as a plain horizontal rule:
+
+Reply (paste into Reddit, 87 words):
+
+---
+
+The actual draft text goes here as plain paragraphs. Write it exactly as it should be posted.
+
+Multiple paragraphs are fine. The user selects the prose between the two rules.
+
+---
+
+Plain text copies as plain text from both the raw file and a rendered markdown preview, so it never picks up monospace styling. The label and the `---` rules are delimiters only — the user copies just the prose between them. Never let a `---` touch a line of draft text with no blank line between.
+
+Multiple options → numbered headers with one-line rationale before each, each followed by its own correctly-formatted draft (fenced only if the destination is Claude Code).
 
 ## Voice spec — write like Sai writes (binding, all drafted content)
 
@@ -157,11 +171,13 @@ Sai's actual writing style is short, direct, no fancy punctuation. The agents ar
 
 **Allowed:** periods, commas, question marks, regular dashes (- as a list marker only), parentheses sparingly.
 
+**Enforcement (mandatory):** before handing any drafted user-facing content to the user, scan it for `—`, `–`, `;`, and `...` and rewrite every occurrence. A draft that still contains a banned character means the run failed its own voice spec. This is the single most-flagged issue by the founder — do not skip the scan.
+
 **Sentence length:** average 10-18 words. Maximum 25. If a sentence runs longer, split it.
 
 **Tone markers:**
 - Casual contractions: "isn't" / "you're" / "I've" / "doesn't" / "won't"
-- Lowercase opening OK on TikTok DMs and casual subs (r/IndieHackers, r/SideProject)
+- **Sentence-case is the DEFAULT** — capitalize the first letter of every sentence. Lowercase-opening is the EXCEPTION, allowed ONLY on TikTok DMs and dev/builder subs (r/IndieHackers, r/SideProject, r/SaaS). Mainstream consumer subs (r/Myfitnesspal, r/loseit, r/Fitness, r/xxfitness, etc.) get normal sentence-case — all-lowercase reads as careless there.
 - No corporate verbs: leverage, synergy, unlock, empower, revolutionize, transform, elevate, optimize (verb form)
 - No essay-voice openers: "The pattern you're describing has a pretty consistent cause at growth-stage companies" → rewrite as "Yeah this is super common at growth-stage apps."
 - Concrete examples over abstract patterns
@@ -306,6 +322,37 @@ That's the difference. Real URLs you can click, verify, and act on.
 
 ---
 
+## ⚠️ Evidence rule — every factual claim INSIDE drafted content (binding, all agents)
+
+The Source traceability rule above governs the *action target* (which thread, which writer, which screenshot). This rule governs something different: **every factual assertion the agent writes INTO the drafted content itself** — a Reddit comment, Quora answer, blog paragraph, comparison-page row, pitch email, ad caption.
+
+A claim is any statement presented as fact: "MFP responded to complaints", "Fitbod raised its price", "MacroFactor recalculates TDEE weekly", "Cal AI was acquired in March 2026", "studies show X". If the user gets asked "source?" after posting, the draft must have an answer.
+
+**For every factual claim in a draft, the agent MUST do ONE of these three — never just state it:**
+
+1. **Back it** — a source URL verified live this run (WebFetch/WebSearch). Record the claim → URL mapping in the Research log. If the platform allows links, link it. If the platform is link-free (r/Myfitnesspal, r/loseit, most answer-only subs), make the claim **checkable in plain text** — name the artifact so the reader can find it themselves ("MFP's help-center article called 'Introducing the brand new Today tab'", not a vague "MFP said").
+2. **Hedge it honestly** — if the claim is only partially verifiable (e.g. it comes from one journalist's summary, not a primary source), phrase the uncertainty: "from what I've seen", "the coverage around it says", "reportedly". Never upgrade a second-hand report into a definitive "Company X said Y".
+3. **Cut it** — if you can't back it or honestly hedge it, delete the claim. A shorter honest draft beats a confident wrong one.
+
+**Honesty must still sound human.** The evidence rule is not a license to write like a bibliography. Do NOT name article titles in quotes, do NOT use colon-then-list constructions ("what they have done: there's an X, and a Y"), do NOT use citation verbs ("frames", "outlines", "states"). A real person hedges casually: "they've never put out a proper response", "there's a help article that basically treats it as a feature", "everything points to it being permanent". If the hedged draft reads like a research summary, it failed the voice spec — rewrite it conversational while keeping the same honesty.
+
+**Hard failures:**
+- ❌ Asserting a company "said" / "announced" / "responded" when the only source is a third-party blog. That's reporting, not a statement. Say "reportedly" or name the actual primary artifact.
+- ❌ Putting a quoted phrase in quotation marks and attributing it to a company when the phrase was actually a journalist's headline. Verify who said the words before quoting.
+- ❌ A primary-source fetch failed (403, empty body, paywalled) → you do NOT then state the claim as verified. A failed fetch means downgrade to hedge or cut.
+- ❌ Stating a competitor stat / feature / price without a `competitor-intel` profile URL or a live source behind it.
+
+**Research log requirement:** the per-run Research log must include a claim-to-proof map for every factual assertion in the draft. Format:
+
+```
+### Claim → proof map
+- "<claim as written in the draft>" → <source URL, verified YYYY-MM-DD> | or: HEDGED (only source is <X>) | or: CUT (could not verify)
+```
+
+If a claim has no row in this map, it cannot appear in the draft.
+
+---
+
 ## ⚠️ MANDATORY pre-submit checklist (run this BEFORE finalizing output)
 
 Before you finalize output, scan your draft and confirm EACH item below. If any one fails, restart that section.
@@ -314,6 +361,14 @@ Before you finalize output, scan your draft and confirm EACH item below. If any 
 - [ ] **Every actionable item has a WHERE** — a real URL / profile / file path / screenshot / identifier, verified live this run. No hypothetical targets.
 - [ ] **Every URL cited is from this run's WebFetch / WebSearch / file read** — not invented, not from training data.
 - [ ] **If I couldn't find a real WHERE for an action**, I either ran a scout-first fallback (returned real candidates and asked user to pick) or stopped and asked the user for the missing identifier. I did NOT draft for a hypothetical target.
+
+**Evidence — every factual claim inside the draft:**
+- [ ] **Every factual assertion in the drafted content** (a company said/did X, a competitor stat, a price, a study) is either backed by a live-verified source URL, honestly hedged ("reportedly" / "the coverage says"), or cut. No bare statements.
+- [ ] **No quoted phrase is attributed to a company unless I verified the company actually said those exact words** — journalist headlines are not company statements.
+- [ ] **No claim rests on a fetch that failed** (403 / empty body / paywall). Failed fetch → hedge or cut, never state as verified.
+- [ ] **The Research log contains a claim → proof map** with one row per factual assertion in the draft.
+- [ ] **On link-free platforms**, each backed claim names its source artifact in plain text so the reader can verify without a link.
+- [ ] **No §2G reliability-hold feature appears in ANY draft** — mechanically scan every draft for: form video analysis / "form check", in-workout or mid-session chat, recipe import, audio coach daily brief, MFP screenshot OCR, skill progressions, multi-execution UI tiers. These have code but are NOT reliability-validated — claiming them is a hard failure. Remove on sight. (This check has been failed repeatedly — treat it like the em-dash scan: literal, every run.)
 
 **Dates (NEW — required on every claim):**
 - [ ] **Every claim about a competitor move / launch / article / trend / Reddit thread / news event has its actual date inline**, in format `(published YYYY-MM-DD)` or `(launched YYYY-MM-DD)` or `(posted YYYY-MM-DD)`.
@@ -402,5 +457,5 @@ Otherwise: full three-section preamble, every run.
 
 ---
 
-**Version:** 1.0 — 2026-05-12
+**Version:** 1.1 — 2026-05-17 (added Evidence rule: every factual claim inside drafted content must be backed, hedged, or cut)
 **Applies to:** all 12 agents in `.claude/agents/marketing/{strategy,research,content,community,outreach}/`

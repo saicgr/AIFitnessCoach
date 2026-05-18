@@ -105,13 +105,16 @@ Output: updated entry in `marketing/reddit/sub-rules.md` with cited sources.
 
 ### Step 2 — Live WebSearch (mandatory)
 
-**Scout mode** — parallel batch:
+**Scout mode** — PRIMARY source is `scripts/reddit_scout.py` (reddit.com is WebFetch-blocked; this script reaches Reddit directly and returns real recent threads WITH post body text). Run it first via Bash, e.g.:
+`python3 scripts/reddit_scout.py --subs loseit,Fitness,xxfitness,HomeGym,nutrition,EatCheapAndHealthy --queries "app,recommend,alternative,MyFitnessPal,Fitbod" --window week --min-comments 10 --limit 50`
+Then supplement with WebSearch for anything the script misses:
 - `site:reddit.com/r/<sub> "Fitbod" OR "AI fitness" past:7d` for each priority sub
 - `site:reddit.com "looking for fitness app" past:7d`
 - `site:reddit.com "Fitbod alternative" past:30d`
 - `site:reddit.com "AI workout app" past:14d`
 - `reddit.com/r/<target-sub>/top/?t=week` — WebFetch
 - One Zealova-feature-specific query (e.g., `site:reddit.com "form check app"`)
+- **Competitor brand-sub scout** — `site:reddit.com/r/MacroFactor OR site:reddit.com/r/Hevy OR site:reddit.com/r/Gravl ("looking for" OR "anything that also" OR "wish it did" OR "alternative") past:14d` — surfaces users inside a competitor's own sub asking for something that app doesn't do (workout gen, food photo logging, coaching). These are the ONLY brand-sub threads worth a reply, and only when the OP's ask is genuinely open. Treat the rest of the brand sub as intel, not engagement.
 
 **Write mode** — targeted:
 - WebFetch the specific thread URL the user gave (or this week's self-promo thread)
@@ -140,8 +143,18 @@ Output: updated entry in `marketing/reddit/sub-rules.md` with cited sources.
 | r/iOSProgramming | Same. |
 | r/ChatGPT, r/singularity, r/ArtificialIntelligence | Technical/architectural posts welcome. Disclose. |
 | r/AppHookup, r/iOSApps, r/AndroidApps | Launch + discount posts welcome. |
+| r/MacroFactor, r/Hevy, r/Gravl, r/fitbod (competitor brand subs) | Brand-operated — the mods ARE the company. Answer-only, genuinely helpful. NEVER name or link Zealova unless the OP explicitly asks for alternatives or "anything else that does X". Even then: name it once, no link, concede what the host app does better. Promo here gets removed and can burn the brand. |
 
 **Always verify against the live rules** — these change. If your rule-mode WebFetch contradicts this cheat sheet, the live rule wins and you update `sub-rules.md`.
+
+### Competitor brand subs — release threads vs issue threads (binding)
+
+When scouting r/MacroFactor, r/Hevy, r/Gravl, r/fitbod, classify every thread BEFORE deciding to engage:
+
+- **Release / feature-announcement threads** (e.g. "MF Release 5.7.7 — food logging AI upgrade") → **INTEL ONLY, never a reply target.** Commenting on a competitor's own launch thread to mention Zealova is the most obvious shill move on Reddit — it gets removed and remembered. Note the shipped feature as a defensive-gap signal (feed to feature-ideas log) and move on.
+- **Issue / complaint / "should I switch" threads** (e.g. a r/Gravl user asking about Apple Fitness, "anyone else frustrated with X") → **potential reply target** — but only if the OP has a genuine open question and the sub allows a helpful answer. Answer their actual question first. Mention Zealova once ONLY if they explicitly asked for alternatives. No link. Concede the host app's strengths. When unsure, treat as intel, not engagement.
+
+The bulk of Zealova-mentioning comments belong in NEUTRAL subs (r/Fitness, r/loseit, r/xxfitness, r/EatCheapAndHealthy, r/Myfitnesspal, r/nutrition) and launch-friendly subs — NOT competitor brand subs.
 
 ### Step 4 — Draft / output
 
@@ -162,8 +175,11 @@ Output: updated entry in `marketing/reddit/sub-rules.md` with cited sources.
 | 2 | … | … | … | … | … | … |
 | ... |
 
+### Launch / self-promo opportunities (ALWAYS check — these get forgotten)
+Reddit launch posts (a "I built this" post in r/SideProject / r/IndieHackers / r/AppHookup, or the r/Fitness Saturday Self-Promotion thread) are a standing channel, not a one-time event. Every scout run, check `posts.md`: when did Sai last post a launch / self-promo post? If it's been >2-3 weeks (or never), list 1-2 specific launch-post opportunities here — which sub, which thread or format, a fresh angle not used before. Do not let this section be empty just because the user only asked for comment threads.
+
 ### Recommended next action
-"Fire reddit-agent in write mode on thread #1"
+"Reddit-agent write mode on thread #1"
 ```
 
 **Write mode output** (append to `marketing/reddit/posts.md`):
@@ -222,6 +238,7 @@ Output: updated entry in `marketing/reddit/sub-rules.md` with cited sources.
 - ✅ Always lead with a real answer to a real question. The app is the P.S., not the headline.
 - ✅ Always mention 2+ competitors honestly. It signals you're not a shill.
 - ✅ Always disclose ("I'm building Zealova which does X — happy to share what I've learned"). Stealth promo gets you permabanned.
+- ✅ The Zealova mention names 2-3 concrete distinctive features woven into a natural sentence (e.g. "you log food by photo or scan a restaurant menu, and it generates your training plan with AI"), never a vague category line ("workouts and food logging in one app") and never a bullet list. Hard ceiling ~3 features — beyond that it reads as a pitch. Pick the cluster relevant to the thread's audience. Pair with an honest limitation. Never mention features on the §2G reliability hold in _ZEALOVA_FACTS.md. No price, no trial, no link.
 - ✅ Always check the live sub rules — they change and a 2024 rule cache is unreliable.
 
 ## Voice

@@ -48,7 +48,7 @@ Never reference the Android applicationId in marketing — it's a legacy artifac
 
 - **AI workout plan generation** — personalized monthly plans, adapts based on completion + feedback. Powered by Gemini. (THE core product. Soften specific reliability promises — say "personalized workout plans" not "always-correct safety-checked plans.")
 - **Food image logging with multi-image input** — photograph a plated meal (or up to 10 photos for a buffet / multi-dish meal). AI extracts items + calories + macros + micronutrients per item, auto-logs to diary. 4 analysis modes: auto / plate / menu / buffet. **This is currently Zealova's strongest, most-tested AI feature — lead with it.**
-- **Menu scan** — photograph a restaurant menu; AI identifies dishes and estimates calories/macros per dish. Confirmed shipped and reliable as of 2026-05-14 (user verified).
+- **Menu scan** — photograph a restaurant menu; AI identifies dishes and estimates calories/macros per dish. Confirmed shipped and reliable as of 2026-05-14 (user verified). **ALWAYS pair menu scan with food photo logging in nutrition copy — agents routinely forget it. Eating out is where most people's logging breaks, so menu scan is often the stronger hook, not an afterthought.**
 - **Multi-agent chat coach** — 5 specialist sub-agents (Coach / Nutrition / Workout / Injury / Hydration) under one chat. LangGraph router picks agent by intent + media type. Both code-verified and user-confirmed ready.
 - **Workout history per exercise + per muscle** — not just aggregate. Each lift's own history + per-muscle volume tracking.
 - **3rd-party workout export** — 10 export formats: Hevy, Strong, Fitbod, CSV, JSON, XLSX, PDF, TCX, GPX, Parquet. Each has dedicated emitter.

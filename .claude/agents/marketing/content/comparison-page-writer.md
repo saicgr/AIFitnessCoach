@@ -209,6 +209,7 @@ After the markdown draft and asset manifest are locked, ship the deployable page
 1. **Grep the router** — `frontend/src/App.tsx` to find the routing pattern.
 2. **Read 1-2 existing pages** in `frontend/src/pages/` (e.g. `Pricing.tsx`, `Features.tsx`) to match the project's component conventions (Tailwind classes, Helmet/SEO pattern, motion lib).
 3. **Write** `frontend/src/pages/vs/<CompetitorPascalCase>.tsx` (mode A) or `frontend/src/pages/alternatives/<Slug>.tsx` (mode B) or `frontend/src/pages/best/<SegmentSlug>.tsx` (mode C). Component must include:
+   - **`<ArticleLayout slug="vs/<slug>" sections={SECTIONS}>` wrapping the whole article body.** `ArticleLayout` (`components/marketing/ArticleLayout.tsx`) supplies the nav, the left table-of-contents sidebar, the comment section, and the footer automatically. Define a `const SECTIONS = [{ id, label }, ...]` listing the article's 6-10 main sections; give each `<section>` a matching unique `id` plus the `scroll-mt-24` class. Do NOT add `MarketingNav` / `MarketingFooter` or your own TOC/comments — ArticleLayout owns all of that. Keep `<Helmet>` / JSON-LD OUTSIDE and above `<ArticleLayout>`.
    - `<Helmet>` (or project equivalent) — title, meta description, canonical URL, OG tags (`og:image` from the asset manifest), Twitter card (`twitter:image`)
    - JSON-LD `<script type="application/ld+json">` for `FAQPage` + `SoftwareApplication` + `BreadcrumbList` (the SoftwareApplication entry MUST include `image` field from the asset manifest)
    - Answer capsule (first 200 words) as a styled lead block, with the answer-capsule image floated right on desktop / stacked on mobile
@@ -218,7 +219,10 @@ After the markdown draft and asset manifest are locked, ship the deployable page
    - FAQ accordion
    - "Last updated" line
    - Zealova CTA reused from existing pages, with the CTA-section visual
-4. **Register the route** in `App.tsx`: `<Route path="/vs/<slug>" element={<VsCompetitorPage />} />` + import.
+4. **Register the route in THREE files** — a page missing ANY of these deploys invisible (no static HTML generated, not crawlable, not in the sitemap). This is mandatory, not optional:
+   - `frontend/src/App.tsx` — `<Route path="/vs/<slug>" element={<VsCompetitorPage />} />` + the import.
+   - `frontend/scripts/prerender.mjs` — add `'/vs/<slug>'` to the SSG route list (near the other `/vs/` entries).
+   - `frontend/scripts/generate-seo.mjs` — add `{ path: '/vs/<slug>', priority: '0.7', changefreq: 'monthly' }` to the sitemap list.
 5. **Verify** imports and JSX are syntactically clean. Do NOT run `npm run build`.
 6. **Echo the asset manifest** in the agent's final output — every `NEEDS NEW:` becomes a hand-off task list for Sai.
 

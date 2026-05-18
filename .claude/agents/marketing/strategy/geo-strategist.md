@@ -62,7 +62,7 @@ If the trigger phrase contains "quick", "status", "check", "happening today" →
 
 ### Floor 2 — Query count
 `daily-status` mode runs **MINIMUM 22 base WebSearches in parallel** (Buckets A through H), NEVER fewer. Plus:
-- Pass 2A: 5-7 Reddit WebFetches
+- Pass 2A: run `scripts/reddit_scout.py` via Bash (reddit.com is WebFetch-blocked; the script is the real thread source for the 10-draft Reddit section)
 - Pass 2B: 2-3 social verification fetches
 - Pass 2C: 5 launch deep-dive WebSearches IF a major launch is detected within ±14 days
 - Pass 2D: 1-2 verification fetches if Bucket H surfaced "we just shipped" posts
@@ -85,7 +85,7 @@ If your total tool-use count is under **25** on a normal week or under **30** on
 | 📱 Social — TikTok | 3 entries (or "Quiet — N met threshold") |
 | 📱 Social — IG | 3 entries (or "Quiet — N met threshold") |
 | 📱 Social — YouTube | 3 entries (or "Quiet — N met threshold") |
-| 📰 Reddit | 4-7 threads across niche clusters |
+| 📰 Reddit | 10 distinct threads posted ≤7d ago, EACH with a full ready-to-post draft |
 | 🔎 SERP / Listicles | 3-5 entries |
 | 🏢 Competitor moves | 3-5 entries |
 | 📅 Industry / launches | 2-4 entries |
@@ -227,6 +227,8 @@ The point: **agent NEVER uses static strings like "fitness app" or "calorie trac
 5. `site:reddit.com (<nutrition-niche KW from keywords file>) past 7 days hot` — substitute top 2 nutrition-niche keywords
 6. `site:reddit.com <rotating competitor name from _ZEALOVA_FACTS.md §4> past 7 days` — rotate weekly across top 8-10 competitors in facts file. Pick the one most likely in the news this week based on Bucket D findings.
 
+**Bucket B is the feeder for the 10-thread Reddit section.** These 3 queries each return many results, but if any is thin, add per-sub queries — `site:reddit.com/r/<sub> ("app" OR "looking for" OR "recommend") past 7 days` — across r/Fitness, r/loseit, r/xxfitness, r/EatCheapAndHealthy, r/nutrition, r/HomeGym, r/bodyweightfitness until Pass 2A has ≥10 verified-recent threads to draft.
+
 **Bucket C — SERP / blogs / listicles (past 14 days, 2 queries):**
 7. `best <top KW from keywords file> OR best <next-tier KW from keywords file> 2026 listicle published <past 14 days>` — new listicles + ranking shifts on actively-searched keywords
 8. `<rotating competitor name> alternative <current month year>` — alternative-roundup SERP movement
@@ -259,8 +261,13 @@ The point: **agent NEVER uses static strings like "fitness app" or "calorie trac
 
 19. **Per-competitor brand-sub watch.** Many competitors actively post on their own subreddits or in major fitness subs when they ship features. Run this as 2-3 sub-queries (rotate the subset weekly):
     - `site:reddit.com/r/MacroFactor past 14 days new feature OR announcement OR update` — MacroFactor's official sub is highly active with feature announcements
-    - `site:reddit.com/r/Gravl OR site:reddit.com/r/fitbod past 14 days new feature OR announcement` — other brand-operated subs (refresh list quarterly from facts §4)
+    - `site:reddit.com/r/Gravl OR site:reddit.com/r/fitbod OR site:reddit.com/r/Hevy past 14 days new feature OR announcement` — other brand-operated subs (refresh list quarterly from facts §4)
     - `site:reddit.com "<competitor name>" past 14 days "we just shipped" OR "we just launched" OR "we're rolling out" OR "today we're announcing"` — captures founder-style cross-posts to other subs
+    - **Issue / complaint / switching sub-query** — `site:reddit.com/r/MacroFactor OR site:reddit.com/r/Hevy OR site:reddit.com/r/Gravl ("looking for" OR "anything that also" OR "wish it did" OR "alternative" OR "frustrated" OR "should I switch" OR "thinking of switching") past 14 days` — surfaces users inside a competitor's own sub who are unhappy or shopping.
+
+    **Classify every brand-sub thread into one of two types — they get OPPOSITE treatment:**
+    - **Release / announcement threads** (a competitor shipped a feature, e.g. "MF Release 5.7.7") → INTEL. Feed into competitor-intel + Bucket G feature-ideas as a defensive-gap signal. NEVER a reply target — commenting on a competitor's launch thread is a shill move. Surface in "Competitor moves" / "Sustained context", not as a Reddit engagement target.
+    - **Issue / complaint / "should I switch" threads** → potential reply target. Surface in the Reddit "Competitor brand subs" cluster with a comment-opportunity flag. Reply only when the OP has a genuine open question; brand subs are answer-only and Zealova is named only if the OP explicitly asks for alternatives.
 20. `site:news.ycombinator.com fitness OR nutrition OR health AI OR "Show HN" <past 14 days>` — Hacker News covers AI app launches + developer reactions to platform changes (Google Health, Apple Health updates get HN discussion). Critical for builder-audience signal.
 21. `site:producthunt.com (fitness OR nutrition OR health OR AI coach) <past 30 days>` — Product Hunt launches in our category. Every new AI fitness/nutrition app launches here first; pre-listicle signal.
 22. **Launch deep-dive trigger.** IF Bucket E surfaced a major platform launch in past 14 days OR upcoming 14 days, run a Pass 2 deep-dive on that launch (see Pass 2 section below).
@@ -275,10 +282,20 @@ All queries are **US-primary by default** since the App Store / Play Store ranki
 
 After the parallel base WebSearch batch returns:
 
-**Pass 2A — Reddit deep-fetch (5-7 top candidates):**
-- WebFetch each candidate thread URL to confirm post date, exact comment count, top comment sample
-- Drop any thread that fails the quality threshold (≥20 comments OR ≥150 upvotes)
-- Catches "search snippet looked promising but the actual thread is dead"
+**Pass 2A — Reddit threads via `scripts/reddit_scout.py` (MANDATORY for the 10-thread section):**
+
+`reddit.com` is blocked for the WebFetch tool, but the machine's network is not. `scripts/reddit_scout.py` reaches Reddit directly and returns real, dated, verified threads. Run it via Bash:
+
+```
+python3 scripts/reddit_scout.py --subs loseit,Fitness,xxfitness,EatCheapAndHealthy,nutrition,HomeGym,bodyweightfitness,IntermittentFasting --queries "app,tracker,recommend,alternative,MyFitnessPal,AI workout,Fitbod" --window week --min-comments 10 --limit 60
+```
+
+It outputs JSON: each thread has a real permalink, post date, age in days, comment count, score, and the post body (`selftext`). Then:
+- Drop any thread already drafted in `marketing/reddit/posts.md` (non-repetitive — each run surfaces NEW threads).
+- Pick 10 that are genuine comment opportunities (open questions, app / recommendation / switching discussions, on-topic for Zealova).
+- Draft each reply against the thread's real `selftext`, not a guess from the title.
+- If the script returns fewer than 10 usable threads, widen `--subs` / `--queries` / `--window` and re-run. Never fabricate to hit 10.
+- The script auto-upgrades to faster app-only OAuth if `REDDIT_CLIENT_ID` / `REDDIT_CLIENT_SECRET` exist in `backend/.env`; works unauthenticated otherwise.
 
 **Pass 2B — Social audio/format verification (3-5 candidates per platform):**
 - TikTok: WebFetch tokboard / TikTok Creative Center for current trending audios (verify use counts past 7d)
@@ -396,20 +413,29 @@ Rule for inclusion in "Biggest moves": if you discover a feature/launch that's >
 
 If a platform has fewer than 3 qualifying entries this week, say so explicitly ("Quiet week on TikTok fitness niche — only 2 audios met threshold") rather than padding with low-quality items.
 
-**📰 Reddit (target 4-7 threads, each ≥20 comments OR ≥150 upvotes, posted past 7d):**
+**📰 Reddit — 10 distinct recent threads, EACH with a full ready-to-post draft (MANDATORY every daily-status run):**
 
-*By niche cluster (per facts §4 categories):*
+This section produces 10 Reddit comment opportunities AND the drafted comment for each. This is the heaviest part of the daily run — budget for it. Hard requirements:
 
-*Workout AI / strength:* (subs: r/Fitness, r/weightroom, r/bodybuilding, r/HomeGym)
-- <thread title> (posted YYYY-MM-DD, Nd ago, N comments, N upvotes, sub) — URL — why it matters
+- **Recency (non-negotiable):** every thread posted within the last 7 days. Engagement windows close fast — a reply on a 3-week-old thread gets ~10× fewer upvotes. Verify post date via Pass 2A WebFetch; drop anything older.
+- **Engagement:** each thread ≥20 comments OR ≥150 upvotes.
+- **Non-repetitive:** cross-check `marketing/reddit/posts.md` — never surface a thread already drafted, never repeat an angle already used. Each daily run produces 10 NEW threads.
+- **Spread:** ~6-7 neutral subs (r/Fitness, r/loseit, r/xxfitness, r/EatCheapAndHealthy, r/nutrition, r/HomeGym, r/bodyweightfitness) + ~2-3 competitor brand-sub ISSUE threads (never release/announcement threads — see Bucket H classification) + the rest builder/other.
+- **Full draft per thread:** each entry includes a complete, ready-to-paste comment, drafted to the binding rules in `_OUTPUT_STANDARD.md` (Evidence rule — every factual claim backed/hedged/cut, claim→proof map; Voice spec — sentence-case on mainstream subs, no em dashes, no corporate verbs, Sai's voice) and `_ZEALOVA_FACTS.md` (no §2G reliability-hold features — no form video analysis). Lead with a genuine answer; mention 2+ competitors honestly; the Zealova mention names 2-3 concrete distinctive features + an honest limitation; no price, no trial, no link in answer-only subs.
 
-*Nutrition / calorie tracking:* (subs: r/loseit, r/IntermittentFasting, r/keto)
-- <thread> (posted YYYY-MM-DD, ...) — URL
+Format each of the 10 like this:
 
-*Builder / app audiences:* (subs: r/IndieHackers, r/SideProject, r/SaaS, r/Flutter, r/iOSProgramming)
-- <thread> (posted ...) — URL
+- Header: `### N. r/<sub> — <thread title>`
+- URL line: link · posted YYYY-MM-DD (Nd ago) · N comments / N upvotes
+- Promo rule: answer-only / Saturday-only / link-OK / brand-sub answer-only
+- Why it fits: one line
+- Then the full ready-to-post comment in its OWN plain fenced code block, labeled `Draft (paste into Reddit, N words):` — so Sai can copy it cleanly.
 
-(Aim 4-7 total across clusters. Empty clusters get "No qualifying threads this week." Never pad.)
+**🛑 REAL THREADS ONLY — via `reddit_scout.py` (binding).** The 10 threads MUST come from `scripts/reddit_scout.py` output (see Pass 2A). Every thread has a real permalink, real date, real engagement numbers, and real post body — all verified live this run. NEVER invent a "representative" or "aggregated" thread, NEVER write `URL to verify: search r/X for...`, NEVER list a thread the script did not return. Draft each comment against the real `selftext`. If the script can't yield 10 usable threads even after widening its arguments, list ONLY the real ones and state the shortfall plainly at the top of the section. Drafting comments for hypothetical threads is a failed run.
+
+If fewer than 10 qualifying recent threads exist, widen the script's `--subs` / `--queries` / `--window` — never pad with stale threads. All real threads found also get appended to `marketing/reddit/posts.md`.
+
+*Zealova launch-post status (gap check — required every run):* Read `marketing/reddit/posts.md`. Has Sai posted a launch / show-your-app post in r/SideProject, r/IndieHackers, r/AppHookup, or the r/Fitness Saturday Self-Promotion thread in the past 30 days? If NOT, flag explicitly: "GAP — no Zealova launch post on Reddit in 30d. Recommend a r/SideProject or r/IndieHackers build-story post this week." Launch posts are a standing channel separate from value-comment threads; they don't happen unless surfaced here.
 
 **🔎 SERP / Listicles / Blogs (target 3-5 entries, sites with ≥10K monthly traffic OR major brands):**
 - <listicle title / ranking shift> (published YYYY-MM-DD, Nd ago, URL, site traffic tier, who's named, who's missing)

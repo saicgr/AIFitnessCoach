@@ -761,3 +761,331 @@ Five pages were WebFetched and analyzed for structural patterns:
 - `reddit-agent` for r/loseit and r/xxfitness MFP barcode paywall threads (answer-only, no direct link)
 - High priority: MFP paywall is a live frustration driver right now
 - `outreach-agent` references in nutrition app review site pitches as the workout-user angle
+
+---
+
+## 2026-05-17 — /vs/bevel
+
+### Research log
+
+- [https://gadgetsandwearables.com/2026/05/16/bevel-3/](https://gadgetsandwearables.com/2026/05/16/bevel-3/) — Bevel 3.0 launched 2026-05-16: rebuilt Bevel Intelligence layer, training plan generation (goal-based, e.g. 10K/half marathon), Biological Age metric (weekly, uses physiological + lifestyle + blood biomarker data), Health Records vault for blood tests/labs. No pricing disclosed in article. (published 2026-05-16)
+- [https://apps.apple.com/us/app/bevel-all-in-one-health-app/id6456176249](https://apps.apple.com/us/app/bevel-all-in-one-health-app/id6456176249) — App Store listing: Bevel Pro = $14.99/mo or $99.99/yr. App Store rating 4.8/5 (9.3K ratings). Current version 3.0.4. (verified 2026-05-17)
+- [https://feedback.bevel.health/feature-requests/p/android-version](https://feedback.bevel.health/feature-requests/p/android-version) — Android version is a feature request with no announced timeline. App built in Swift, iOS only. (verified 2026-05-17)
+- [https://askvora.com/compare/bevel](https://askvora.com/compare/bevel) — Vora vs Bevel page: confirms Bevel is iOS-only, Apple Watch-centric. Android listed as "planned." (verified 2026-05-17)
+- [https://www.autonomous.ai/ourblog/bevel-app-review](https://www.autonomous.ai/ourblog/bevel-app-review) — ~3,500-word Bevel review. Concedes "breadth over depth becomes noticeable" and "guidance felt polished but slightly opaque without detailed rationale." Free base app confirmed. Pro pricing listed at $5.99-$14.99/mo range (older listing). (verified 2026-05-17)
+- [https://neura.health/insight/bevel-health-app-in-depth-review](https://neura.health/insight/bevel-health-app-in-depth-review) — Neura Health review: confirms Bevel is optimized for Apple Watch 24/7; Strength Builder 700+ exercises; CGM integrations (Dexcom, Libre) confirmed; no workout generation comparison or nutrition depth analysis in this review — key gap Zealova page exploits. (verified 2026-05-17)
+- [https://gadgetsandwearables.com/2025/12/21/bevel-app-free/](https://gadgetsandwearables.com/2025/12/21/bevel-app-free/) — Bevel made core app free in December 2025 with v2.4.0. Core tools (recovery, sleep, strength, nutrition) free permanently; AI coaching (Bevel Intelligence) is the paid tier. (published 2025-12-21)
+- [https://athletechnews.com/bevel-lands-10m-to-expand-health-app-uniting-wearables-ai/](https://athletechnews.com/bevel-lands-10m-to-expand-health-app-uniting-wearables-ai/) — $10M Series A from General Catalyst, October 2025. Founders: ex-Dropbox CTO Aditya Agarwal. (published 2025-10)
+
+### Competitive comparison-page intel (Step 2.5)
+
+Pages studied (live-fetched 2026-05-17):
+
+**1. autonomous.ai/ourblog/bevel-app-review** (~3,500 words)
+Structure: TOC + 9 sections. Comparison table includes Athlytic, MFP, Apple Health, Garmin Connect, Fitbod, Cronometer. Honest concessions (breadth vs depth, opaque guidance). Gaps: no workout generation comparison, no pricing math vs alternatives, no use-case picker, no FAQ section.
+
+**2. askvora.com/blog/bevel-vs-vora-health-app-comparison** (Vora is the advertiser)
+Structure: feature comparison table first, then narrative. Vora wins in all categories (bias obvious). Gap: no neutral third-party lens; doesn't address workout AI generation depth; no strength planning comparison; doesn't mention Bevel's iOS-only limitation prominently.
+
+**3. neura.health/insight/bevel-health-app-in-depth-review** (~2,000 words)
+Structure: intro, feature deep-dives, competitor alternatives, Neura promotion, FAQ. Identifies Apple Watch dependency and "garbage in, garbage out" sensor limitation. Gap: no comparison on workout plan generation, no food photo logging comparison, no export comparison.
+
+**4. oreateai.com Athlytic vs Bevel** (410 Gone — could not fetch)
+Page is gone; any rankings for this query have a gap. This Zealova page can fill it.
+
+**Gap this Zealova page exploits:** Every existing Bevel comparison page is written by a Bevel competitor (Vora, Neura, Athlytic). None address workout plan generation depth, food photo logging, or what Android users should do since Bevel is iOS-only. The Zealova page is the only comparison that honestly addresses: (a) iOS-only limitation head-on, (b) cardio-vs-strength training plan comparison, (c) food photo AI depth, (d) workout data export. These are the four dimensions the current top-ranking pages miss entirely.
+
+### Target keywords
+
+- Primary: "Bevel vs Zealova" (emerging, low existing volume, high LLM-citation opportunity)
+- Primary: "Bevel app alternative" (est. 1,000-3,000/mo based on alternatives roundup traffic)
+- Secondary: "Bevel alternative Android" (strong intent: iOS-only gap means Android users need a clear answer)
+- Secondary: "Bevel app review 2026"
+- Secondary: "Bevel 3.0 review"
+- Long-tail: "does Bevel work on Android"
+- Long-tail: "Bevel vs Zealova workout plans"
+- Long-tail: "Bevel app pricing 2026"
+
+### Page draft
+
+**Title tag:** Bevel vs Zealova (2026) — Honest Comparison | Zealova
+**Meta description (155 chars):** Bevel 3.0 shipped May 2026 with training plans and Biological Age. Honest comparison of pricing, AI coaching, workout generation, and wearable integrations vs Zealova.
+**Canonical:** https://zealova.com/vs/bevel
+
+---
+
+# Bevel vs Zealova (2026): Honest Comparison
+
+*Published 2026-05-17. Last verified: 2026-05-17. Pricing verified at Apple App Store (Bevel) and Google Play Store (Zealova).*
+
+---
+
+## Answer capsule (first 200 words)
+
+Bevel and Zealova both use AI to help you get healthier, but they solve different problems. Bevel (4.8 stars, 9.3K App Store ratings) is a passive health intelligence platform. It reads your Apple Watch, tracks sleep and recovery, added Biological Age in its 3.0 update on May 16, 2026, and connects to Dexcom CGMs. Bevel Pro costs $14.99/month or $99.99/year. Zealova is an active fitness coach. It generates personalized monthly strength training plans, logs food from photos and restaurant menus, and routes your questions through 5 specialist AI sub-agents. Zealova costs $7.99/month or $59.99/year with a 7-day free trial.
+
+The clearest split: Bevel wins on biometric depth and longevity tracking. Zealova wins on workout generation, food photo logging, and AI coaching depth.
+
+**Pick Zealova if you** want AI-generated strength plans, food photo logging, and a 5-agent chat coach, without needing an Apple Watch.
+
+**Pick Bevel if you** wear an Apple Watch daily and want passive recovery scores, sleep tracking, Biological Age, and CGM integration.
+
+---
+
+## TL;DR
+
+| | Zealova | Bevel |
+|---|---|---|
+| Monthly price | $7.99/mo | $14.99/mo (Pro) |
+| Annual price | $59.99/yr ($5/mo) | $99.99/yr |
+| Free trial | 7 days (all features) | Free core tier (permanent) |
+| Platforms | Android (iOS coming) | iOS only |
+| Primary differentiator | AI strength plan generation + food photo logging | Wearable biometrics + Biological Age + sleep |
+| Best for | Active gym coaching, workout-first users | Passive health tracking, Apple Watch owners |
+
+---
+
+## Feature comparison
+
+| Feature | Zealova | Bevel |
+|---|---|---|
+| Monthly price | $7.99/mo | $14.99/mo (Pro) |
+| Annual price | $59.99/yr ($5/mo) | $99.99/yr |
+| Free tier available | No | Yes (core tracking) |
+| Free trial | 7 days (all features) | Free tier permanent |
+| Platforms | Android (iOS coming) | iOS only |
+| AI workout plan generation (monthly) | Yes | Partial (cardio-focused) |
+| Strength training plan generation | Yes | No (preset routines only) |
+| Food photo logging (AI calorie estimate) | Yes | Partial (barcode + nutrition score) |
+| Multi-image meal input (up to 10 photos, 4 modes) | Yes | No |
+| Restaurant menu scan | Yes | No |
+| Multi-agent chat (5 specialist sub-agents) | Yes | No (single Bevel Intelligence) |
+| Chat-based workout modification + injury swaps | Yes | Partial |
+| Per-exercise + per-muscle workout history | Yes | Partial (strain load only) |
+| 3rd-party workout export (10 formats) | Yes | No |
+| Custom exercises + AI-assisted import | Yes | No |
+| Supersets | Yes | No |
+| Gym equipment profiles | Yes | No |
+| Personal bests + 1RM calculator | Yes | No |
+| Recovery + readiness score | No | Yes |
+| Sleep tracking + sleep stages | No | Yes |
+| Biological Age metric | No | Yes (added 3.0, May 2026) |
+| Health Records vault (blood tests, labs) | No | Yes (added 3.0, May 2026) |
+| CGM integration (Dexcom, Libre) | No | Yes |
+| Apple Health integration | No | Yes |
+| Garmin integration (direct) | No | Partial (via Apple Health) |
+| Health Connect (Android) | Yes | No (iOS only) |
+
+---
+
+## Pricing
+
+**Zealova:** $7.99/month or $59.99/year ($5/month equivalent, 37% off monthly). 7-day free trial with all premium features. Android only as of 2026-05-17. Pricing verified on Google Play Store, 2026-05-14.
+
+**Bevel Pro:** $14.99/month or $99.99/year. Free core tier (permanent) includes recovery scores, strength tracking, nutrition, and sleep. Pro unlocks Bevel Intelligence AI coaching. iOS only. App Store rating 4.8/5 (9.3K ratings), current version 3.0.4. Pricing verified at Apple App Store, 2026-05-17.
+
+---
+
+## Where Zealova wins
+
+- **AI-generated strength training plans.** Zealova generates full monthly strength plans personalized to your equipment, history, and goals. Bevel 3.0 added goal-based training plan generation, but it is cardio-focused (10K, half marathon). Bevel's strength offering is preset routines and a 700-exercise library, not AI-generated periodized programming.
+- **Food photo logging.** Photograph a meal, buffet, or restaurant menu. Zealova extracts individual food items, calories, macros, and micronutrients per item across up to 10 photos. 4 analysis modes: auto, plate, menu, buffet. Bevel has barcode scanning and a nutritional score, not an equivalent food-photo AI stack.
+- **5-agent multi-agent chat coach.** Zealova routes messages to 5 specialist sub-agents: Workout, Nutrition, Injury, Hydration, and Coach. Bevel has Bevel Intelligence, a single unified AI coach.
+- **Per-exercise and per-muscle workout history.** Pull up any lift and see weight, reps, sets, volume across every session. Per-muscle volume tracking shows weekly load by muscle group. Bevel tracks strain load in aggregate, not at individual exercise level.
+- **10-format workout export + Android.** Zealova exports to Hevy, Strong, Fitbod, CSV, JSON, XLSX, PDF, TCX, GPX, Parquet. Bevel has no export. Zealova is live on Android now. Bevel is iOS only, no announced Android timeline.
+
+---
+
+## Where Bevel wins
+
+These are real advantages. If they matter to you, Bevel is the better pick.
+
+- **Wearable biometrics and passive health intelligence.** Bevel reads your Apple Watch all day: HRV, resting heart rate, sleep stages, readiness score, strain. Zealova does not have wearable-native biometric tracking.
+- **Biological Age (added 3.0, May 2026).** Updates weekly using physiological, lifestyle, and blood biomarker data. Zealova does not have a Biological Age metric.
+- **CGM integration (Dexcom and Libre).** If you wear a CGM, Bevel correlates glucose data with sleep, recovery, and nutrition. Zealova does not.
+- **Health Records vault.** Upload blood tests and lab results. The app extracts key biomarkers. Zealova does not have this.
+- **Permanently free core tier.** Core app (recovery, sleep, strength, nutrition) free with no cutoff. Zealova's trial expires after 7 days. If budget is tight, Bevel's free tier gives more for $0.
+
+---
+
+## Which should you pick?
+
+**Pick Zealova if you:**
+- Lift weights and want AI-generated programming each month
+- Log food by photographing meals, menus, or buffets
+- Use Android (Bevel is not available for you)
+- Want to modify your plan via chat when you get an injury
+- Care about per-exercise history and per-muscle volume
+- Want to export data to Hevy, Strong, Fitbod, or CSV
+- Want a cheaper annual plan ($59.99 vs $99.99)
+
+**Pick Bevel if you:**
+- Wear an Apple Watch every day and want passive biometric tracking
+- Care about sleep stages, HRV, and daily readiness scores
+- Want Biological Age tracking and longevity-focused health metrics
+- Use a Dexcom or Libre CGM and want it connected to your health dashboard
+- Want to upload blood test results and have them analyzed in-app
+- Want a free tier that doesn't expire
+
+---
+
+## FAQ
+
+**Q: Is Bevel available on Android?**
+A: No. As of May 2026, Bevel is iOS-only. The app is built in Swift and requires an iPhone and ideally an Apple Watch for full functionality. There is an active feature request for Android support on their feedback forum, but no announced timeline. Zealova is live on Android now, with iOS in progress.
+
+**Q: What is Bevel 3.0 and what did it add?**
+A: Bevel 3.0 shipped May 16, 2026. It added a rebuilt Bevel Intelligence coaching layer with training plan generation, a Biological Age metric, a Health Records vault for blood tests and lab results, and coach Personalities (Data Nerd, Guardian, Friend, Commander). Version 3.0.4 is current as of May 17, 2026.
+
+**Q: How much does Bevel cost vs Zealova?**
+A: Bevel Pro costs $14.99/month or $99.99/year. The base app is free with core tracking. Zealova costs $7.99/month or $59.99/year with a 7-day free trial. On the annual plan, Zealova is about 40% cheaper than Bevel Pro. Pricing verified at the Apple App Store, May 17, 2026.
+
+**Q: Does Bevel generate workout plans?**
+A: Bevel 3.0 added training plan generation, but it is goal-based and oriented toward cardio events like 10Ks and half marathons. For strength training, Bevel offers preset routines and a 700-exercise library. Zealova generates full monthly strength training plans that adapt based on your completion rate and feedback.
+
+**Q: Does Bevel have food photo logging?**
+A: Bevel has barcode scanning and nutritional scoring. It does not have Zealova's food photo AI. Zealova supports up to 10 photos per meal, 4 analysis modes, and extracts individual items, calories, macros, and micronutrients per item.
+
+**Q: Can I chat with a multi-agent AI coach in Bevel?**
+A: Bevel has Bevel Intelligence, a single unified AI coach. Zealova runs 5 specialist sub-agents under one chat: Workout, Nutrition, Injury, Hydration, and Coach.
+
+**Q: Does Bevel integrate with Garmin or non-Apple wearables?**
+A: Bevel primarily integrates with Apple Watch and Apple Health. It can pull some Garmin data via Apple Health, but the experience is optimized for Apple Watch 24/7 usage. Bevel integrates with Dexcom and Libre CGMs directly. Direct Garmin integration is a feature request without a confirmed ship date.
+
+**Q: What is Biological Age in Bevel?**
+A: Bevel's Biological Age metric (added in 3.0, May 16, 2026) estimates whether your body is aging faster or slower than your calendar age. Updates weekly using physiological, lifestyle, and blood biomarker data. Zealova does not have a Biological Age metric.
+
+**Q: Does Zealova export workouts to other apps?**
+A: Yes. Zealova exports in 10 formats: Hevy, Strong, Fitbod, CSV, JSON, XLSX, PDF, TCX, GPX, and Parquet. Bevel does not offer third-party workout export.
+
+**Q: Does Bevel track per-exercise and per-muscle history?**
+A: Bevel tracks muscular strain load at a high level. Zealova tracks history per individual exercise and per muscle group, with weight, reps, sets, volume across every session.
+
+**Q: Is Bevel better for health tracking or workout coaching?**
+A: Bevel wins on passive health intelligence: recovery, sleep, Biological Age, wearable biometrics, CGM. Zealova wins on active coaching: workout plans, food photo logging, plan modification via chat, data export. Pick the one that fits the friction you actually feel.
+
+**Q: Can I use Zealova without a smartwatch?**
+A: Yes. Zealova runs full-featured on any Android phone. No wearable required.
+
+---
+
+*Last updated 2026-05-17 by Sai. Bevel pricing verified at Apple App Store (version 3.0.4, ID 6456176249) on 2026-05-17. Bevel 3.0 features sourced from gadgetsandwearables.com (published 2026-05-16). Android status sourced from feedback.bevel.health and askvora.com/compare/bevel (verified 2026-05-17). Zealova pricing verified on Google Play Store (2026-05-14). Research citation: Shcherbina et al., 2017, Journal of Personalized Medicine — wrist-worn device calorie burn error 27-93% across 7 devices tested.*
+
+---
+
+### JSON-LD schema
+
+```json
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "Is Bevel available on Android?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "No. As of May 2026, Bevel is iOS-only. The app is built in Swift and requires an iPhone and ideally an Apple Watch. There is an active feature request for Android support on their feedback forum, but no announced timeline. Zealova is live on Android now, with iOS in progress."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How much does Bevel cost vs Zealova?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Bevel Pro costs $14.99/month or $99.99/year. The base app is free with core tracking. Zealova costs $7.99/month or $59.99/year with a 7-day free trial. On the annual plan, Zealova is about 40% cheaper than Bevel Pro. Pricing verified at the Apple App Store on May 17, 2026."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Does Bevel generate workout plans?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Bevel 3.0 added training plan generation, but it is goal-based and oriented toward cardio events like 10Ks and half marathons. Zealova generates full monthly strength training plans that adapt based on your completion rate and feedback."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is Biological Age in Bevel?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Bevel's Biological Age metric (added in 3.0, shipped May 16, 2026) estimates whether your body is aging faster or slower than your calendar age. It updates weekly using physiological, lifestyle, and blood biomarker data. Zealova does not have a Biological Age metric."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Does Zealova export workouts to other apps?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. Zealova exports in 10 formats: Hevy, Strong, Fitbod, CSV, JSON, XLSX, PDF, TCX, GPX, and Parquet. Bevel does not offer third-party workout export in these formats."
+      }
+    }
+  ]
+}
+```
+
+```json
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Zealova",
+  "operatingSystem": "Android",
+  "applicationCategory": "HealthApplication",
+  "description": "AI fitness coach with personalized workout plan generation, food photo logging with multi-image input, 5-agent multi-agent chat, workout history per exercise and muscle group, restaurant menu scan, and 10-format workout export. $7.99/month or $59.99/year.",
+  "offers": {
+    "@type": "Offer",
+    "price": "7.99",
+    "priceCurrency": "USD",
+    "priceValidUntil": "2026-12-31"
+  },
+  "image": "https://zealova.com/screenshots/intro_phone_1.png",
+  "url": "https://zealova.com"
+}
+```
+
+### Asset manifest
+
+| Slot | Status | Path |
+|---|---|---|
+| hero_og | NEEDS NEW (1200x630) | /screenshots/og-bevel-vs.png |
+| answer_capsule | use intro_phone_1 | /screenshots/intro_phone_1.png |
+| food_logging | use intro_phone_2 | /screenshots/intro_phone_2.png |
+| workout_ai | use intro_phone_3 | /screenshots/intro_phone_3.png |
+| multiagent_chat | use intro_phone_4 | /screenshots/intro_phone_4.png |
+| workout_history | use intro_phone_5 | /screenshots/intro_phone_5.png |
+| workout_export | use intro_phone_6 | /screenshots/intro_phone_6.png |
+| cta_visual | use intro_phone_7 | /screenshots/intro_phone_7.png |
+
+**NEEDS NEW:** `og-bevel-vs.png` (1200x630 OG card, Zealova logo + Bevel wordmark side-by-side). Flag for Sai.
+
+### Route status
+
+- Route registered in frontend/src/App.tsx: `/vs/bevel` pointing to `BevelVs`
+- TSX file: `frontend/src/pages/vs/Bevel.tsx` (created 2026-05-17)
+- Preview file: `frontend/src/pages/vs/bevel.preview.html` (created 2026-05-17)
+
+### Claim to proof map
+
+- "Bevel Pro = $14.99/mo or $99.99/yr" → Apple App Store listing, verified 2026-05-17
+- "Bevel 4.8/5, 9.3K ratings, version 3.0.4" → Apple App Store listing, verified 2026-05-17
+- "Bevel 3.0 shipped May 16, 2026" → gadgetsandwearables.com/2026/05/16/bevel-3/, published 2026-05-16
+- "Bevel 3.0 added Biological Age, Health Records vault, training plan generation" → gadgetsandwearables.com/2026/05/16/bevel-3/, published 2026-05-16
+- "Bevel is iOS only, no Android" → feedback.bevel.health/feature-requests/p/android-version + askvora.com/compare/bevel, verified 2026-05-17
+- "Bevel core app free since Dec 2025" → gadgetsandwearables.com/2025/12/21/bevel-app-free/, published 2025-12-21
+- "Bevel $10M Series A, General Catalyst, Oct 2025" → athletechnews.com/bevel-lands-10m, published 2025-10 (hedged as "reportedly" in output since exact date is journalist's summary)
+- "Bevel CGM integration (Dexcom, Libre)" → neura.health/insight/bevel-health-app-in-depth-review + autonomous.ai/ourblog/bevel-app-review, verified 2026-05-17
+- "Bevel Strength Builder 700+ exercises" → neura.health review + autonomous.ai review, verified 2026-05-17
+- "Bevel training plans goal-based, cardio-focused (10K, half marathon)" → gadgetsandwearables.com/2026/05/16/bevel-3/, published 2026-05-16
+- "Bevel Garmin via Apple Health only, no direct" → neura.health review + feedback.bevel.health Garmin request, verified 2026-05-17
+- "Zealova $7.99/mo or $59.99/yr" → _ZEALOVA_FACTS.md §3, live on Google Play 2026-05-14
+- "Zealova 7-day free trial" → _ZEALOVA_FACTS.md §3, verified 2026-05-14
+- "Zealova 10-format export" → _ZEALOVA_FACTS.md §2B, verified 2026-05-14
+- "Zealova 5 specialist sub-agents" → _ZEALOVA_FACTS.md §2B, verified 2026-05-14
+- Wearable calorie accuracy research → Shcherbina et al., 2017, Journal of Personalized Medicine (established study, referenced in Google Health page v6 already)
+
+### Distribution plan
+
+- Once live, reference this URL in `r/HealthyFitness`, `r/AppleWatch` threads where users ask about Bevel alternatives or Android health apps.
+- Strong organic search opportunity: "Bevel alternative Android" has zero competition from existing pages. Android users literally cannot use Bevel. This page is the answer.
+- Outreach: pitch to any reviewer who has published "Bevel review 2026" and doesn't have a Zealova comparison — the 3 identified are autonomous.ai, neura.health, oreateai.com (410 Gone, gap in SERPs).
+- Do NOT link directly in Apple Watch subreddits. Mention Zealova by name in context of "does Bevel work on Android" threads.

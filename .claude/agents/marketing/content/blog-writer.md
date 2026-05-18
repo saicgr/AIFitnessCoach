@@ -167,13 +167,17 @@ After the markdown draft and asset manifest are locked, ship the deployable page
 2. **Read 1-2 existing pages** in `frontend/src/pages/` (e.g. `About.tsx`, `FAQ.tsx`) to match the project's component conventions (Tailwind classes, layout wrapper, `<Helmet>` / meta-tag pattern, motion lib, etc).
 3. **Write** `frontend/src/pages/blog/<PascalCaseSlug>.tsx`:
    - Default-export a React FC component
+   - **Wrap the whole article body in `<ArticleLayout slug="blog/<slug>" sections={SECTIONS}>`.** `ArticleLayout` (`components/marketing/ArticleLayout.tsx`) supplies the nav, the left table-of-contents sidebar, the comment section, and the footer. Define a `const SECTIONS = [{ id, label }, ...]` for the post's main sections; give each `<section>` a matching unique `id` + the `scroll-mt-24` class. Do NOT add your own nav/footer/TOC/comments. Keep `<Helmet>` / JSON-LD OUTSIDE and above `<ArticleLayout>`.
    - Page `<title>`, meta description, OpenGraph tags (with `og:image` from manifest), Twitter card tags (with `twitter:image`)
    - JSON-LD `<script type="application/ld+json">` blocks for `BlogPosting` + `FAQPage` schemas (BlogPosting must include `image` field from the manifest)
    - Content rendered from the markdown body
    - **Inline `<img>` tags** for every image slot in the manifest — each with `loading="lazy"`, explicit `width` + `height` (prevents CLS), descriptive `alt` text, Tailwind responsive classes
    - Soft Zealova CTA component reused from existing pages
    - Mobile-responsive (the project already uses Tailwind)
-4. **Register the route** in `App.tsx`: `<Route path="/blog/<slug>" element={<BlogSlugPage />} />` plus the import.
+4. **Register the route in THREE files** — a page missing ANY of these deploys invisible (no static HTML, not crawlable, not in the sitemap). Mandatory:
+   - `frontend/src/App.tsx` — `<Route path="/blog/<slug>" element={<BlogSlugPage />} />` + the import.
+   - `frontend/scripts/prerender.mjs` — add `'/blog/<slug>'` to the SSG route list.
+   - `frontend/scripts/generate-seo.mjs` — add `{ path: '/blog/<slug>', priority: '0.7', changefreq: 'monthly' }` to the sitemap list.
 5. **Update the blog index** — if `frontend/src/pages/Blog.tsx` exists, add an entry; if not, propose creating it with a simple list of posts.
 6. **Verify** the file builds — DO NOT run `npm run build` (slow); just visually verify the imports and JSX are syntactically clean.
 7. **Echo the asset manifest** in the agent's final output so every `NEEDS NEW:` becomes a hand-off task for Sai.
