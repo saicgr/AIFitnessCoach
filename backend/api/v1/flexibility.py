@@ -6,15 +6,17 @@ Provides personalized stretch recommendations based on assessment results.
 """
 from core.db import get_supabase_db
 
-from fastapi import APIRouter, HTTPException, Query, Depends
+from fastapi import APIRouter, HTTPException, Query, Depends, Request
 from typing import List, Optional
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
 import uuid
 
 from core.logger import get_logger
 from core.activity_logger import log_user_activity, log_user_error
 from core.auth import get_current_user
 from core.exceptions import safe_internal_error
+from core.timezone_utils import resolve_timezone, get_user_today
 from services.flexibility import (
     evaluate_flexibility,
     get_recommendations,
@@ -872,4 +874,94 @@ async def get_stretch_recommendations(test_type: str, rating: str, current_user:
 
     except Exception as e:
         logger.error(f"Failed to get recommendations: {e}", exc_info=True)
+        raise safe_internal_error(e, "flexibility")
+
+
+# ── Custom Trends: per-assessment-date series per test type ─────────────────
+
+@router.get("/user/{user_id}/trends")
+async def get_flexibility_trends(
+    user_id: str,
+    request: Request,
+    days: int = Query(
+        default=180, ge=0, le=1825,
+        description="Rolling-window size in days ending today. 0 = all history.",
+    ),
+    test_type: Optional[str] = Query(
+        default=None,
+        description="Optional single test_type filter (e.g. sit_and_reach).",
+    ),
+    current_user: dict = Depends(get_current_user),
+):
+    """Per-assessment-date flexibility series for the Custom Trends chart.
+
+    `flexibility_assessments` holds one row per test taken (timestamped via
+    `assessed_at`). Each `daily_series` point carries the measurement + rating
+    + percentile for one assessment, bucketed by the user's local calendar
+    date. Multiple test types on the same day produce multiple points (each
+    tagged with `test_type`), so the client can split into per-test lines.
+    Days with no assessment are absent — no fabricated data.
+    """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
+
+    try:
+        db = get_supabase_db()
+        user_tz = resolve_timezone(request, db, user_id)
+        end_user = get_user_today(user_tz)
+        # 0 ⇒ all history (cap ~5y so the query stays bounded).
+        span = days if days > 0 else 1825
+        start_user = (
+            datetime.strptime(end_user, "%Y-%m-%d").date() - timedelta(days=span - 1)
+        )
+        try:
+            tz = ZoneInfo(user_tz)
+        except Exception:
+            tz = ZoneInfo("UTC")
+        # assessed_at is a UTC timestamp; widen the UTC fetch window by a day
+        # on each side so timezone-shifted rows aren't dropped at the edges.
+        cutoff_utc = (
+            datetime.combine(start_user, datetime.min.time(), tzinfo=timezone.utc)
+            - timedelta(days=1)
+        ).isoformat()
+
+        query = (
+            db.client.table("flexibility_assessments")
+            .select("test_type,measurement,unit,rating,percentile,assessed_at")
+            .eq("user_id", user_id)
+            .gte("assessed_at", cutoff_utc)
+        )
+        if test_type:
+            query = query.eq("test_type", test_type)
+        result = query.order("assessed_at").execute()
+        rows = result.data or []
+
+        def _local_date(iso_str: str) -> str:
+            dt = datetime.fromisoformat(iso_str.replace("Z", "+00:00"))
+            if dt.tzinfo is None:
+                dt = dt.replace(tzinfo=timezone.utc)
+            return dt.astimezone(tz).strftime("%Y-%m-%d")
+
+        daily_series = []
+        for row in rows:
+            local_date = _local_date(row["assessed_at"])
+            # Clip to the requested user-local window after bucketing.
+            if local_date < start_user.isoformat() or local_date > end_user:
+                continue
+            measurement = row.get("measurement")
+            daily_series.append({
+                "date": local_date,
+                "test_type": row.get("test_type"),
+                "measurement": float(measurement) if measurement is not None else None,
+                "unit": row.get("unit"),
+                "rating": row.get("rating"),
+                "percentile": row.get("percentile"),
+            })
+
+        return {"daily_series": daily_series}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get flexibility trends: {e}", exc_info=True)
         raise safe_internal_error(e, "flexibility")

@@ -679,5 +679,77 @@ async def get_habit_logs(
 
 
 
+# ── Custom Trends: per-day habit completion % ───────────────────────────────
+
+@router.get("/{user_id}/trends")
+async def get_habit_trends(
+    user_id: str, request: Request,
+    days: int = Query(
+        default=90, ge=0, le=1825,
+        description="Rolling-window size in days ending today. 0 = all history.",
+    ),
+    current_user: dict = Depends(get_current_user),
+):
+    """Per-day habit-completion-% series for the Custom Trends chart.
+
+    For each day that has at least one `habit_logs` row, the point reports
+    `completed_habits / tracked_habits * 100`. The denominator is the number
+    of habits actually logged that day (a real row exists) — we do not
+    reconstruct a scheduled-habit denominator from current `is_active` state,
+    which would fabricate data for past dates. `log_date` is already the
+    user's local calendar date, so no UTC bucketing is needed. Days with no
+    habit log are absent from `daily_series`.
+    """
+    verify_user_ownership(current_user, user_id)
+
+    try:
+        db = get_supabase_db()
+        user_tz = resolve_timezone(request, db, user_id)
+        today = datetime.strptime(get_user_today(user_tz), "%Y-%m-%d").date()
+        # 0 ⇒ all history (cap ~5y so the query stays bounded).
+        span = days if days > 0 else 1825
+        start_date = today - timedelta(days=span - 1)
+
+        result = db.client.table("habit_logs").select(
+            "log_date,completed,skipped"
+        ).eq("user_id", user_id).gte(
+            "log_date", start_date.isoformat()
+        ).lte("log_date", today.isoformat()).order("log_date").execute()
+        rows = result.data or []
+
+        # Bucket per local date. Skipped logs count toward tracked total but
+        # not toward completed (matches the today endpoint's completed sum).
+        daily_map: dict[str, dict] = {}
+        for row in rows:
+            d = row.get("log_date")
+            if not d:
+                continue
+            bucket = daily_map.setdefault(d, {"tracked": 0, "completed": 0})
+            bucket["tracked"] += 1
+            if row.get("completed"):
+                bucket["completed"] += 1
+
+        daily_series = []
+        for d in sorted(daily_map.keys()):
+            b = daily_map[d]
+            tracked = b["tracked"]
+            completed = b["completed"]
+            daily_series.append({
+                "date": d,
+                "tracked_habits": tracked,
+                "completed_habits": completed,
+                "completion_percentage": round(completed / tracked * 100, 1)
+                if tracked > 0 else 0.0,
+            })
+
+        return {"daily_series": daily_series}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Error getting habit trends: {e}", exc_info=True)
+        raise safe_internal_error(e, "endpoint")
+
+
 # Include secondary endpoints
 router.include_router(_endpoints_router)

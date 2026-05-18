@@ -17,7 +17,7 @@ import uuid
 
 from core.logger import get_logger
 from core.activity_logger import log_user_activity, log_user_error
-from core.timezone_utils import resolve_timezone, get_user_today
+from core.timezone_utils import resolve_timezone, get_user_today, local_date_to_utc_range
 from models.schemas import (
     HydrationLog, HydrationLogCreate,
     DailyHydrationSummary, HydrationGoalUpdate,
@@ -190,16 +190,19 @@ async def get_daily_hydration(
             else:
                 raise
 
-        # Fall back to logged_at range for legacy data or missing column
+        # Fall back to logged_at range for legacy data or missing column.
+        # The window MUST be the user's LOCAL midnight->midnight day converted
+        # to UTC — a naive datetime.combine() is treated as UTC by Supabase,
+        # which for a UTC-offset user leaks the previous local evening's logs
+        # into "today" (e.g. water logged 10pm CST = ~4am UTC next day).
         if result is None or not result.data:
-            start_of_day = datetime.combine(target_date, datetime.min.time())
-            end_of_day = datetime.combine(target_date, datetime.max.time())
+            start_utc, end_utc = local_date_to_utc_range(target_date_str, user_tz)
             result = db.client.table("hydration_logs").select("*").eq(
                 "user_id", user_id
             ).gte(
-                "logged_at", start_of_day.isoformat()
+                "logged_at", start_utc
             ).lte(
-                "logged_at", end_of_day.isoformat()
+                "logged_at", end_utc
             ).order("logged_at", desc=True).execute()
 
         logs = [row_to_hydration_log(row) for row in (result.data or [])]

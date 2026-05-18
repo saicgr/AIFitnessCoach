@@ -777,6 +777,247 @@ async def get_habit_suggestions(
         }
 
 
+# ==================== TREND ANALYSIS (Custom Trends screen) ====================
+
+
+class TrendAnalysisSeries(BaseModel):
+    """One metric series as displayed on the Custom Trends chart."""
+    label: str
+    unit: str = ""
+    is_primary: bool = False
+    # Compact [date(YYYY-MM-DD), value] pairs in chronological order.
+    points: List[List[Any]] = []
+
+
+class TrendAnalysisRequest(BaseModel):
+    """POST /insights/{user_id}/trend-analysis body — the exact series the
+    Custom Trends screen is currently showing, plus the active range and any
+    event overlays the user enabled."""
+    range_label: str = ""
+    series: List[TrendAnalysisSeries] = []
+    # Optional event-overlay counts (workouts / fasting / rest days in window).
+    events: Dict[str, int] = {}
+    # Pairwise Pearson correlations vs the primary, keyed by overlay label.
+    correlations: Dict[str, float] = {}
+
+
+def _summarize_trend_series(s: TrendAnalysisSeries) -> str:
+    """Build a compact textual summary of a single series for the LLM prompt.
+    We send aggregates (first/last/min/max/avg/n), never fabricate points."""
+    vals = [
+        float(p[1])
+        for p in s.points
+        if isinstance(p, (list, tuple)) and len(p) >= 2 and p[1] is not None
+    ]
+    if not vals:
+        return f"- {s.label}: no data points"
+    n = len(vals)
+    first, last = vals[0], vals[-1]
+    avg = sum(vals) / n
+    change = last - first
+    pct = (change / first * 100.0) if first else 0.0
+    return (
+        f"- {s.label} ({s.unit or 'unitless'}{', PRIMARY' if s.is_primary else ''}): "
+        f"{n} days logged; start {first:.1f}, latest {last:.1f}, "
+        f"min {min(vals):.1f}, max {max(vals):.1f}, avg {avg:.1f}; "
+        f"net change {change:+.1f} ({pct:+.1f}%)"
+    )
+
+
+@router.post("/{user_id}/trend-analysis")
+@limiter.limit("20/minute")
+async def analyze_trends(
+    request: Request,
+    user_id: str,
+    body: TrendAnalysisRequest,
+    current_user: dict = Depends(get_current_user),
+):
+    """Plain-English AI analysis of the metrics currently shown on the Custom
+    Trends chart. Pure analysis over client-supplied series — no DB writes.
+
+    Returns `{"insight": str, "cached": bool}`. Never fabricates: when there is
+    too little data it says so honestly."""
+    try:
+        series = [s for s in body.series if s.points]
+        if not series:
+            return {
+                "insight": "Log a few more days of data to unlock a trend "
+                "analysis here.",
+                "cached": False,
+            }
+
+        # Honest low-data guard — the longest series still drives the verdict.
+        max_points = max(len(s.points) for s in series)
+        if max_points < 3:
+            return {
+                "insight": "Not enough history yet — keep logging and an "
+                "analysis will appear once there are at least a few days "
+                "of data.",
+                "cached": False,
+            }
+
+        # 6h cache keyed on the displayed shape (range + labels + point counts).
+        shape = ";".join(
+            f"{s.label}:{len(s.points)}:{s.is_primary}" for s in series
+        )
+        cache_key = (
+            f"trend_analysis_{user_id}_"
+            + hashlib.sha1(
+                f"{body.range_label}|{shape}".encode()
+            ).hexdigest()[:16]
+        )
+        db = get_supabase_db()
+        cached = db.client.table("ai_insight_cache").select("*").eq(
+            "cache_key", cache_key
+        ).gt("expires_at", datetime.utcnow().isoformat()).limit(1).execute()
+        if cached.data:
+            return {"insight": cached.data[0]["insight"], "cached": True}
+
+        lines = "\n".join(_summarize_trend_series(s) for s in series)
+        corr_txt = ""
+        if body.correlations:
+            corr_txt = "\nCorrelations vs the primary metric:\n" + "\n".join(
+                f"- {k}: r={v:+.2f}" for k, v in body.correlations.items()
+            )
+        ev_txt = ""
+        if body.events:
+            ev_txt = "\nEvents in this window: " + ", ".join(
+                f"{k}: {v}" for k, v in body.events.items() if v
+            )
+
+        prompt = (
+            "You are a fitness data analyst. In 2-4 short sentences, give a "
+            "concise, plain-English read of the trends below. Mention the "
+            "overall direction of the primary metric, any notable change, "
+            "and — if there are overlay metrics — whether they move together "
+            "or oppositely. Be specific with numbers but conversational. Do "
+            "not invent data or give medical advice.\n\n"
+            f"Time range: {body.range_label}\n"
+            f"Metrics:\n{lines}{corr_txt}{ev_txt}"
+        )
+
+        response = await gemini_service.chat(user_message=prompt)
+        insight = (response or "").strip()
+        if not insight:
+            raise RuntimeError("empty Gemini response")
+
+        _cache_insight(db, cache_key, insight, hours=6)
+        return {"insight": insight, "cached": False}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to analyze trends for {user_id}: {e}", exc_info=True)
+        raise safe_internal_error(e, "insights")
+
+
+# ==================== FASTING ANALYSIS (Fasting screen) ====================
+
+
+class FastingAnalysisRequest(BaseModel):
+    """POST /insights/{user_id}/fasting-analysis body — the user's current
+    fasting stats as displayed on the fasting screen. Pure analysis over
+    client-supplied stats; no DB writes other than the AI cache."""
+    current_streak: int = 0
+    longest_streak: int = 0
+    completed_fasts: int = 0
+    total_fasts: int = 0
+    completion_rate: float = 0.0          # percent 0-100
+    avg_duration_hours: float = 0.0
+    longest_fast_hours: float = 0.0
+    fasts_this_week: int = 0
+    # Current active fast context (optional — absent when not fasting).
+    current_protocol: Optional[str] = None
+    elapsed_hours: Optional[float] = None
+    goal_hours: Optional[float] = None
+    current_stage: Optional[str] = None
+
+
+@router.post("/{user_id}/fasting-analysis")
+@limiter.limit("20/minute")
+async def analyze_fasting(
+    request: Request,
+    user_id: str,
+    body: FastingAnalysisRequest,
+    current_user: dict = Depends(get_current_user),
+):
+    """Plain-English AI analysis of the user's fasting patterns (streak,
+    completion rate, average duration, and — when fasting — the live stage).
+
+    Returns `{"insight": str, "cached": bool}`. Cached 6h. When there is no
+    fasting history it returns an honest empty-state message instead of
+    fabricating an analysis."""
+    try:
+        # Empty-state guard — no completed fasts means nothing to analyze.
+        if body.completed_fasts <= 0 and body.total_fasts <= 0:
+            return {
+                "insight": "Complete a fast to unlock personalized insights "
+                "about your fasting patterns.",
+                "cached": False,
+            }
+
+        # 6h cache keyed on the displayed stats shape.
+        shape = (
+            f"{body.current_streak}|{body.completed_fasts}|{body.total_fasts}|"
+            f"{round(body.completion_rate)}|{round(body.avg_duration_hours, 1)}|"
+            f"{body.fasts_this_week}|{body.current_protocol}|{body.current_stage}"
+        )
+        cache_key = (
+            f"fasting_analysis_{user_id}_"
+            + hashlib.sha1(shape.encode()).hexdigest()[:16]
+        )
+        db = get_supabase_db()
+        cached = db.client.table("ai_insight_cache").select("*").eq(
+            "cache_key", cache_key
+        ).gt("expires_at", datetime.utcnow().isoformat()).limit(1).execute()
+        if cached.data:
+            return {"insight": cached.data[0]["insight"], "cached": True}
+
+        lines = [
+            f"- Current streak: {body.current_streak} day(s) "
+            f"(longest {body.longest_streak})",
+            f"- Fasts completed: {body.completed_fasts} of {body.total_fasts} "
+            f"started ({body.completion_rate:.0f}% completion rate)",
+            f"- Average fast duration: {body.avg_duration_hours:.1f}h "
+            f"(longest {body.longest_fast_hours:.1f}h)",
+            f"- Fasts this week: {body.fasts_this_week}",
+        ]
+        if body.current_protocol and body.elapsed_hours is not None:
+            stage_txt = f", in the {body.current_stage} stage" if body.current_stage else ""
+            goal_txt = (
+                f" toward a {body.goal_hours:.0f}h goal"
+                if body.goal_hours else ""
+            )
+            lines.append(
+                f"- Currently fasting on {body.current_protocol}: "
+                f"{body.elapsed_hours:.1f}h elapsed{goal_txt}{stage_txt}"
+            )
+
+        prompt = (
+            "You are a supportive fasting coach. In 2-4 short sentences, give "
+            "a concise, plain-English read of this user's fasting patterns. "
+            "Acknowledge what's going well, note one realistic area to improve, "
+            "and — if they are currently fasting — a brief encouraging word "
+            "about their current stage. Be specific with numbers but warm and "
+            "conversational. Do not invent data or give medical advice.\n\n"
+            "Fasting stats:\n" + "\n".join(lines)
+        )
+
+        response = await gemini_service.chat(user_message=prompt)
+        insight = (response or "").strip()
+        if not insight:
+            raise RuntimeError("empty Gemini response")
+
+        _cache_insight(db, cache_key, insight, hours=6)
+        return {"insight": insight, "cached": False}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to analyze fasting for {user_id}: {e}", exc_info=True)
+        raise safe_internal_error(e, "insights")
+
+
 # ==================== HELPER FUNCTIONS ====================
 
 def _cache_insight(db, cache_key: str, insight: str, hours: int = 24):

@@ -729,3 +729,77 @@ async def get_hormonal_insights(
     except Exception as e:
         logger.error(f"[Hormonal] Error getting insights: {e}", exc_info=True)
         raise safe_internal_error(e, "endpoint")
+
+
+# ── Custom Trends: per-day hormone/cycle time series ────────────────────────
+
+@router.get("/trends/{user_id}")
+async def get_hormone_trends(
+    user_id: UUID,
+    request: Request,
+    days: int = Query(
+        default=90, ge=0, le=1825,
+        description="Rolling-window size in days ending today. 0 = all history.",
+    ),
+    current_user: dict = Depends(get_current_user),
+):
+    """Per-day hormone/cycle time series for the Custom Trends chart.
+
+    `hormone_logs` rows are already one-per-user-per-day (keyed on `log_date`,
+    which is the user's local calendar date), so no UTC bucketing is needed.
+    Days with no log are absent from `daily_series` — no fabricated data.
+
+    Numeric fields plotted: energy_level, sleep_quality, libido_level,
+    stress_level, motivation_level, recovery_feeling, basal_body_temperature
+    (1-10 scales; BBT in Celsius). `cycle_day`, `cycle_phase` and `period_flow`
+    are included so the chart can render a future-period / cycle-phase overlay.
+    """
+    if str(current_user.get("id") or current_user.get("sub")) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
+
+    try:
+        today = user_today_date(request, None, str(user_id))
+        # 0 ⇒ all history (cap ~5y so the query stays bounded).
+        span = days if days > 0 else 1825
+        start_date = (today - timedelta(days=span - 1)).isoformat()
+
+        supabase = get_supabase().client
+        result = (
+            supabase.table("hormone_logs")
+            .select(
+                "log_date,cycle_day,cycle_phase,period_flow,"
+                "energy_level,sleep_quality,libido_level,stress_level,"
+                "motivation_level,recovery_feeling,basal_body_temperature"
+            )
+            .eq("user_id", str(user_id))
+            .gte("log_date", start_date)
+            .lte("log_date", today.isoformat())
+            .order("log_date")
+            .execute()
+        )
+        rows = result.data or []
+
+        daily_series = []
+        for row in rows:
+            bbt = row.get("basal_body_temperature")
+            daily_series.append({
+                "date": row.get("log_date"),
+                "cycle_day": row.get("cycle_day"),
+                "cycle_phase": row.get("cycle_phase"),
+                "period_flow": row.get("period_flow"),
+                "energy_level": row.get("energy_level"),
+                "sleep_quality": row.get("sleep_quality"),
+                "libido_level": row.get("libido_level"),
+                "stress_level": row.get("stress_level"),
+                "motivation_level": row.get("motivation_level"),
+                "recovery_feeling": row.get("recovery_feeling"),
+                "basal_body_temperature": float(bbt) if bbt is not None else None,
+            })
+
+        return {"daily_series": daily_series}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"[Hormonal] Error getting trends: {e}", exc_info=True)
+        raise safe_internal_error(e, "endpoint")

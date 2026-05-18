@@ -58,6 +58,8 @@ class FastingPreferencesRequest(BaseModel):
     dinner_reminder_hour: Optional[int] = Field(None, ge=0, le=23)
     extended_protocol_acknowledged: Optional[bool] = False
     safety_responses: Optional[dict] = None
+    # Custom weekly schedule (Task G): weekday "0".."6" -> protocol descriptor.
+    weekly_schedule: Optional[Dict[str, Any]] = None
 
 
 class CompleteOnboardingRequest(BaseModel):
@@ -130,6 +132,7 @@ class FastingPreferencesResponse(BaseModel):
     dinner_reminder_hour: Optional[int] = None
     extended_protocol_acknowledged: Optional[bool] = False
     safety_responses: Optional[dict] = None
+    weekly_schedule: Optional[Dict[str, Any]] = None
     safety_screening_completed: bool
     safety_warnings_acknowledged: Optional[List[str]] = None
     has_medical_conditions: Optional[bool] = False

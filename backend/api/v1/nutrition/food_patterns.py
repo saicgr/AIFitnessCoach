@@ -87,12 +87,33 @@ _RANGE_OPTIONS = {"day", "week", "month", "90d"}
 
 
 def _resolve_range(
-    range_name: str, anchor_date: Optional[str], user_tz: str
+    range_name: str,
+    anchor_date: Optional[str],
+    user_tz: str,
+    days_override: Optional[int] = None,
 ) -> tuple[str, str, str, str]:
     """Return (start_utc_iso, end_utc_iso, start_date_user, end_date_user).
 
     Ranges anchor on the user's local calendar. `90d` is a rolling window and
-    ignores anchor_date."""
+    ignores anchor_date.
+
+    When [days_override] is supplied it takes priority over [range_name] and
+    produces a rolling window of exactly that many days ending today. This is
+    used by the Trends engine, which needs arbitrary windows (180d / 365d /
+    all-time) that the fixed day/week/month/90d buckets don't cover. A value of
+    0 means "all history" — we cap it at 5 years to bound the query."""
+    if days_override is not None and days_override >= 0:
+        end_user = get_user_today(user_tz)
+        # 0 ⇒ all history (capped at ~5y so the DB query stays bounded).
+        span = days_override if days_override > 0 else 1825
+        start_user_date = (
+            datetime.strptime(end_user, "%Y-%m-%d").date()
+            - timedelta(days=span - 1)
+        ).strftime("%Y-%m-%d")
+        start_utc, _ = local_date_to_utc_range(start_user_date, user_tz)
+        _, end_utc = local_date_to_utc_range(end_user, user_tz)
+        return start_utc, end_utc, start_user_date, end_user
+
     if range_name not in _RANGE_OPTIONS:
         raise HTTPException(status_code=400, detail=f"Unsupported range: {range_name}")
 
@@ -310,15 +331,26 @@ async def get_macros_summary(
     request: Request,
     range: str = Query(default="week"),  # noqa: A002
     date: Optional[str] = Query(default=None),
+    days: Optional[int] = Query(
+        default=None,
+        ge=0,
+        le=1825,
+        description=(
+            "Rolling-window override in days (Trends engine). When set, "
+            "supersedes `range`; 0 means all history."
+        ),
+    ),
     current_user: dict = Depends(get_current_user),
 ):
     _ensure_owner(current_user, user_id)
 
     db = get_supabase_db()
     user_tz = resolve_timezone(request, db, user_id)
-    start_utc, end_utc, start_d, end_d = _resolve_range(range, date, user_tz)
+    start_utc, end_utc, start_d, end_d = _resolve_range(
+        range, date, user_tz, days_override=days
+    )
 
-    cache_key = f"{user_id}:{range}:{start_d}:{end_d}"
+    cache_key = f"{user_id}:{range}:days{days}:{start_d}:{end_d}"
     cached = await _macros_cache.get(cache_key)
     if cached is not None:
         return cached
@@ -396,6 +428,140 @@ async def get_macros_summary(
         raise
     except Exception as e:
         logger.error(f"get_macros_summary failed for {user_id}: {e}", exc_info=True)
+        raise safe_internal_error(e, "nutrition_patterns")
+
+
+# ── 3b. Micronutrients summary (Custom Trends) ──────────────────────────────
+
+# Every micronutrient column on food_logs (migration 038). Daily SUMS of each
+# are returned so the Custom Trends chart can plot any single micronutrient.
+_MICRO_COLUMNS = [
+    "vitamin_a_ug", "vitamin_c_mg", "vitamin_d_iu", "vitamin_e_mg",
+    "vitamin_k_ug", "vitamin_b1_mg", "vitamin_b2_mg", "vitamin_b3_mg",
+    "vitamin_b5_mg", "vitamin_b6_mg", "vitamin_b7_ug", "vitamin_b9_ug",
+    "vitamin_b12_ug", "choline_mg", "calcium_mg", "iron_mg", "magnesium_mg",
+    "zinc_mg", "selenium_ug", "potassium_mg", "sodium_mg", "phosphorus_mg",
+    "copper_mg", "manganese_mg", "iodine_ug", "chromium_ug", "molybdenum_ug",
+    "omega3_g", "omega6_g", "saturated_fat_g", "trans_fat_g",
+    "monounsaturated_fat_g", "polyunsaturated_fat_g", "cholesterol_mg",
+    "sugar_g", "added_sugar_g", "caffeine_mg", "alcohol_g",
+]
+
+_micros_cache = RedisCache(prefix="patterns_micros", ttl_seconds=300, max_size=400)
+
+
+class MicrosDailyPoint(BaseModel):
+    date: str
+    # Per-day SUM of each micronutrient. Populated dynamically.
+
+    class Config:
+        extra = "allow"
+
+
+class MicrosSummaryResponse(BaseModel):
+    range: str
+    start_date: str
+    end_date: str
+    days_counted: int
+    micronutrient_columns: list[str]
+    daily_series: list[dict]
+
+
+@router.get("/food-patterns/micros-summary/{user_id}", response_model=MicrosSummaryResponse)
+async def get_micros_summary(
+    user_id: str,
+    request: Request,
+    range: str = Query(default="week"),  # noqa: A002
+    date: Optional[str] = Query(default=None),
+    days: Optional[int] = Query(
+        default=None, ge=0, le=1825,
+        description=(
+            "Rolling-window override in days (Trends engine). When set, "
+            "supersedes `range`; 0 means all history."
+        ),
+    ),
+    current_user: dict = Depends(get_current_user),
+):
+    """Per-day SUMS of every micronutrient column on food_logs (migration 038).
+
+    Mirrors `macros-summary`: a `days` rolling window bucketed by the user's
+    local date. Days with no food logs are simply absent from `daily_series`.
+    """
+    _ensure_owner(current_user, user_id)
+
+    db = get_supabase_db()
+    user_tz = resolve_timezone(request, db, user_id)
+    start_utc, end_utc, start_d, end_d = _resolve_range(
+        range, date, user_tz, days_override=days
+    )
+
+    cache_key = f"{user_id}:{range}:days{days}:{start_d}:{end_d}"
+    cached = await _micros_cache.get(cache_key)
+    if cached is not None:
+        return cached
+
+    try:
+        select_cols = "logged_at," + ",".join(_MICRO_COLUMNS)
+        resp = db.client.table("food_logs")\
+            .select(select_cols)\
+            .eq("user_id", user_id)\
+            .is_("deleted_at", "null")\
+            .gte("logged_at", start_utc)\
+            .lt("logged_at", end_utc)\
+            .order("logged_at")\
+            .execute()
+        rows = resp.data or []
+
+        from zoneinfo import ZoneInfo
+        try:
+            tz = ZoneInfo(user_tz)
+        except Exception:
+            tz = ZoneInfo("UTC")
+
+        def _to_local_date(iso_str: str) -> str:
+            dt = datetime.fromisoformat(iso_str.replace("Z", "+00:00"))
+            if dt.tzinfo is None:
+                dt = dt.replace(tzinfo=timezone.utc)
+            return dt.astimezone(tz).strftime("%Y-%m-%d")
+
+        # date -> {col: running sum}
+        daily_map: dict[str, dict] = {}
+        for row in rows:
+            local_date = _to_local_date(row["logged_at"])
+            bucket = daily_map.get(local_date)
+            if bucket is None:
+                bucket = {col: 0.0 for col in _MICRO_COLUMNS}
+                daily_map[local_date] = bucket
+            for col in _MICRO_COLUMNS:
+                val = row.get(col)
+                if val is not None:
+                    try:
+                        bucket[col] += float(val)
+                    except (TypeError, ValueError):
+                        pass
+
+        daily_series = []
+        for d in sorted(daily_map.keys()):
+            bucket = daily_map[d]
+            point = {"date": d}
+            for col in _MICRO_COLUMNS:
+                point[col] = round(bucket[col], 3)
+            daily_series.append(point)
+
+        response = MicrosSummaryResponse(
+            range=range,
+            start_date=start_d,
+            end_date=end_d,
+            days_counted=len(daily_series),
+            micronutrient_columns=_MICRO_COLUMNS,
+            daily_series=daily_series,
+        )
+        await _micros_cache.set(cache_key, response.model_dump())
+        return response
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"get_micros_summary failed for {user_id}: {e}", exc_info=True)
         raise safe_internal_error(e, "nutrition_patterns")
 
 

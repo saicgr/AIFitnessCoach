@@ -22,10 +22,10 @@ from .cardio_models import *  # noqa: F401, F403
 from .cardio_endpoints import router as _endpoints_router
 
 
-from datetime import datetime, date, timedelta
+from datetime import datetime, date, timedelta, timezone
 from typing import Optional, List, Dict, Any
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
-from core.timezone_utils import resolve_timezone
+from core.timezone_utils import get_user_today, resolve_timezone
 from pydantic import BaseModel, Field
 from decimal import Decimal
 
@@ -645,6 +645,202 @@ async def create_cardio_session(
 
     return _parse_cardio_session(response.data[0])
 
+
+
+# ── Cardio trends — per-day time series (Custom Trends chart) ───────────────
+
+
+def _avg_pace_to_seconds(pace: Optional[str]) -> Optional[float]:
+    """Parse a 'MM:SS' avg_pace_per_km string into total seconds."""
+    if not pace or ":" not in str(pace):
+        return None
+    try:
+        mm, ss = str(pace).split(":")
+        return int(mm) * 60 + int(ss)
+    except (ValueError, TypeError):
+        return None
+
+
+def _seconds_to_pace(total_seconds: Optional[float]) -> Optional[str]:
+    """Format total seconds back into a 'MM:SS' pace string."""
+    if total_seconds is None:
+        return None
+    total = int(round(total_seconds))
+    return f"{total // 60}:{total % 60:02d}"
+
+
+class CardioDailyPoint(BaseModel):
+    date: str
+    sessions: int
+    total_distance_km: float
+    total_duration_minutes: int
+    total_elevation_gain_m: int
+    total_calories_burned: int
+    avg_pace_per_km: Optional[str] = None
+    avg_speed_kmh: Optional[float] = None
+    avg_heart_rate: Optional[float] = None
+    max_heart_rate: Optional[int] = None
+    cardio_types: List[str] = Field(default_factory=list)
+
+
+class CardioVo2Point(BaseModel):
+    date: str
+    vo2_max_estimate: float
+
+
+class CardioTrendsResponse(BaseModel):
+    days: int
+    start_date: str
+    end_date: str
+    days_counted: int
+    daily_series: List[CardioDailyPoint]
+    vo2_series: List[CardioVo2Point]
+
+
+@router.get("/sessions/{user_id}/trends", response_model=CardioTrendsResponse)
+async def get_cardio_trends(
+    user_id: str,
+    request: Request,
+    days: int = Query(
+        default=90, ge=0, le=1825,
+        description="Rolling-window in days ending today; 0 means all history.",
+    ),
+    current_user: dict = Depends(get_current_user),
+):
+    """Per-day cardio time series for the Custom Trends chart.
+
+    One row per day, bucketed by the user's local date. Distance / duration /
+    elevation / calories are SUMMED across the day's sessions; pace, speed and
+    heart rate are AVERAGED. Days with no sessions are absent. VO2 max comes
+    from `cardio_metrics` and is returned as its own sparse series.
+    """
+    if str(current_user.get("id") or current_user.get("sub")) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
+
+    db = get_supabase_db()
+    user_tz = resolve_timezone(request, db, user_id)
+
+    end_user = get_user_today(user_tz)
+    span = days if days > 0 else 1825
+    start_user = (
+        datetime.strptime(end_user, "%Y-%m-%d").date() - timedelta(days=span - 1)
+    ).strftime("%Y-%m-%d")
+    # cardio_sessions / cardio_metrics use created_at / measured_at — bound the
+    # query on a wide UTC window, then bucket precisely by local date below.
+    start_utc = f"{start_user}T00:00:00+00:00"
+    end_utc = (
+        datetime.strptime(end_user, "%Y-%m-%d").date() + timedelta(days=1)
+    ).strftime("%Y-%m-%dT00:00:00+00:00")
+
+    try:
+        from zoneinfo import ZoneInfo
+        try:
+            tz = ZoneInfo(user_tz)
+        except Exception:
+            tz = ZoneInfo("UTC")
+
+        def _to_local_date(iso_str: str) -> str:
+            dt = datetime.fromisoformat(iso_str.replace("Z", "+00:00"))
+            if dt.tzinfo is None:
+                dt = dt.replace(tzinfo=timezone.utc)
+            return dt.astimezone(tz).strftime("%Y-%m-%d")
+
+        sess_resp = db.client.table("cardio_sessions")\
+            .select("created_at,cardio_type,distance_km,duration_minutes,"
+                    "avg_pace_per_km,avg_speed_kmh,elevation_gain_m,"
+                    "avg_heart_rate,max_heart_rate,calories_burned")\
+            .eq("user_id", user_id)\
+            .gte("created_at", start_utc)\
+            .lt("created_at", end_utc)\
+            .order("created_at")\
+            .execute()
+        rows = sess_resp.data or []
+
+        # date -> running aggregates
+        agg: dict[str, dict] = {}
+        for row in rows:
+            d = _to_local_date(row["created_at"])
+            b = agg.get(d)
+            if b is None:
+                b = {
+                    "sessions": 0, "distance": 0.0, "duration": 0,
+                    "elevation": 0, "calories": 0,
+                    "pace_secs": [], "speeds": [], "avg_hrs": [],
+                    "max_hrs": [], "types": [],
+                }
+                agg[d] = b
+            b["sessions"] += 1
+            b["distance"] += float(row.get("distance_km") or 0)
+            b["duration"] += int(row.get("duration_minutes") or 0)
+            b["elevation"] += int(row.get("elevation_gain_m") or 0)
+            b["calories"] += int(row.get("calories_burned") or 0)
+            pace_secs = _avg_pace_to_seconds(row.get("avg_pace_per_km"))
+            if pace_secs is not None:
+                b["pace_secs"].append(pace_secs)
+            if row.get("avg_speed_kmh") is not None:
+                b["speeds"].append(float(row["avg_speed_kmh"]))
+            if row.get("avg_heart_rate") is not None:
+                b["avg_hrs"].append(int(row["avg_heart_rate"]))
+            if row.get("max_heart_rate") is not None:
+                b["max_hrs"].append(int(row["max_heart_rate"]))
+            ctype = row.get("cardio_type")
+            if ctype and ctype not in b["types"]:
+                b["types"].append(ctype)
+
+        daily_series: List[CardioDailyPoint] = []
+        for d in sorted(agg.keys()):
+            b = agg[d]
+            daily_series.append(CardioDailyPoint(
+                date=d,
+                sessions=b["sessions"],
+                total_distance_km=round(b["distance"], 3),
+                total_duration_minutes=b["duration"],
+                total_elevation_gain_m=b["elevation"],
+                total_calories_burned=b["calories"],
+                avg_pace_per_km=_seconds_to_pace(
+                    sum(b["pace_secs"]) / len(b["pace_secs"])
+                ) if b["pace_secs"] else None,
+                avg_speed_kmh=round(sum(b["speeds"]) / len(b["speeds"]), 2)
+                if b["speeds"] else None,
+                avg_heart_rate=round(sum(b["avg_hrs"]) / len(b["avg_hrs"]), 1)
+                if b["avg_hrs"] else None,
+                max_heart_rate=max(b["max_hrs"]) if b["max_hrs"] else None,
+                cardio_types=b["types"],
+            ))
+
+        # VO2 max — sparse series from cardio_metrics (one point per measurement
+        # day; if multiple in a day, keep the latest).
+        vo2_resp = db.client.table("cardio_metrics")\
+            .select("measured_at,vo2_max_estimate")\
+            .eq("user_id", user_id)\
+            .gte("measured_at", start_utc)\
+            .lt("measured_at", end_utc)\
+            .order("measured_at")\
+            .execute()
+        vo2_map: dict[str, float] = {}
+        for row in (vo2_resp.data or []):
+            v = row.get("vo2_max_estimate")
+            if v is None or not row.get("measured_at"):
+                continue
+            vo2_map[_to_local_date(row["measured_at"])] = float(v)
+        vo2_series = [
+            CardioVo2Point(date=d, vo2_max_estimate=round(vo2_map[d], 2))
+            for d in sorted(vo2_map.keys())
+        ]
+
+        return CardioTrendsResponse(
+            days=days,
+            start_date=start_user,
+            end_date=end_user,
+            days_counted=len(daily_series),
+            daily_series=daily_series,
+            vo2_series=vo2_series,
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"get_cardio_trends failed for {user_id}: {e}", exc_info=True)
+        raise safe_internal_error(e, "cardio_trends")
 
 
 # Include secondary endpoints

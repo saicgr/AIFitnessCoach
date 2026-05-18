@@ -12,12 +12,13 @@ from .feedback_models import *  # noqa: F401, F403
 from .feedback_endpoints import router as _endpoints_router
 
 
-from fastapi import APIRouter, HTTPException, Depends, Request
+from fastapi import APIRouter, HTTPException, Depends, Query, Request
 from typing import List, Optional
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from pydantic import BaseModel
 
 from core.logger import get_logger
+from core.timezone_utils import get_user_today, resolve_timezone
 from core.activity_logger import log_user_activity, log_user_error
 from models.schemas import (
     ExerciseFeedbackCreate, ExerciseFeedback,
@@ -418,6 +419,150 @@ async def get_user_feedback_stats(
     except Exception as e:
         logger.error(f"Failed to get feedback stats: {e}", exc_info=True)
         raise safe_internal_error(e, "endpoint")
+
+
+# ============================================
+# Workout feedback trends — per-day time series (Custom Trends chart)
+# ============================================
+
+# energy_level / overall_difficulty are stored as VARCHAR enums. The Custom
+# Trends chart needs numeric series, so we map each to an ordinal scale and
+# average those per day.
+_ENERGY_SCALE = {
+    "exhausted": 1, "tired": 2, "good": 3, "energized": 4, "great": 5,
+}
+# Difficulty is ordered low→high; "just_right" sits in the middle.
+_DIFFICULTY_SCALE = {
+    "too_easy": 1, "just_right": 2, "too_hard": 3,
+}
+
+
+class WorkoutFeedbackDailyPoint(BaseModel):
+    date: str
+    feedback_count: int
+    avg_overall_rating: float
+    avg_energy_level: Optional[float] = None
+    avg_overall_difficulty: Optional[float] = None
+
+
+class WorkoutFeedbackTrendsResponse(BaseModel):
+    days: int
+    start_date: str
+    end_date: str
+    days_counted: int
+    energy_scale: dict
+    difficulty_scale: dict
+    daily_series: List[WorkoutFeedbackDailyPoint]
+
+
+@router.get("/user/{user_id}/trends", response_model=WorkoutFeedbackTrendsResponse)
+async def get_workout_feedback_trends(
+    user_id: str,
+    request: Request,
+    days: int = Query(
+        default=90, ge=0, le=1825,
+        description="Rolling-window in days ending today; 0 means all history.",
+    ),
+    current_user: dict = Depends(get_current_user),
+):
+    """Per-day averages of workout feedback for the Custom Trends chart.
+
+    One row per day bucketed by the user's local date: average overall_rating
+    (1-5), average energy_level and overall_difficulty mapped onto numeric
+    scales (see `energy_scale` / `difficulty_scale` in the response). Days
+    with no feedback are absent.
+    """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
+
+    try:
+        db = get_supabase_db()
+        user_tz = resolve_timezone(request, db, user_id)
+
+        end_user = get_user_today(user_tz)
+        span = days if days > 0 else 1825
+        start_user = (
+            datetime.strptime(end_user, "%Y-%m-%d").date()
+            - timedelta(days=span - 1)
+        ).strftime("%Y-%m-%d")
+        start_utc = f"{start_user}T00:00:00+00:00"
+        end_utc = (
+            datetime.strptime(end_user, "%Y-%m-%d").date() + timedelta(days=1)
+        ).strftime("%Y-%m-%dT00:00:00+00:00")
+
+        # completed_at is the workout-completion timestamp; fall back to
+        # created_at for rows where it is null.
+        result = db.client.table("workout_feedback")\
+            .select("completed_at,created_at,overall_rating,"
+                    "energy_level,overall_difficulty")\
+            .eq("user_id", user_id)\
+            .gte("created_at", start_utc)\
+            .lt("created_at", end_utc)\
+            .execute()
+        rows = result.data or []
+
+        from zoneinfo import ZoneInfo
+        try:
+            tz = ZoneInfo(user_tz)
+        except Exception:
+            tz = ZoneInfo("UTC")
+
+        def _to_local_date(iso_str: str) -> str:
+            dt = datetime.fromisoformat(iso_str.replace("Z", "+00:00"))
+            if dt.tzinfo is None:
+                dt = dt.replace(tzinfo=timezone.utc)
+            return dt.astimezone(tz).strftime("%Y-%m-%d")
+
+        agg: dict[str, dict] = {}
+        for row in rows:
+            ts = row.get("completed_at") or row.get("created_at")
+            if not ts:
+                continue
+            d = _to_local_date(ts)
+            b = agg.get(d)
+            if b is None:
+                b = {"ratings": [], "energy": [], "difficulty": []}
+                agg[d] = b
+            if row.get("overall_rating") is not None:
+                b["ratings"].append(int(row["overall_rating"]))
+            e = _ENERGY_SCALE.get(row.get("energy_level"))
+            if e is not None:
+                b["energy"].append(e)
+            diff = _DIFFICULTY_SCALE.get(row.get("overall_difficulty"))
+            if diff is not None:
+                b["difficulty"].append(diff)
+
+        daily_series: List[WorkoutFeedbackDailyPoint] = []
+        for d in sorted(agg.keys()):
+            b = agg[d]
+            r = b["ratings"]
+            daily_series.append(WorkoutFeedbackDailyPoint(
+                date=d,
+                feedback_count=len(r),
+                avg_overall_rating=round(sum(r) / len(r), 2) if r else 0.0,
+                avg_energy_level=round(sum(b["energy"]) / len(b["energy"]), 2)
+                if b["energy"] else None,
+                avg_overall_difficulty=round(
+                    sum(b["difficulty"]) / len(b["difficulty"]), 2
+                ) if b["difficulty"] else None,
+            ))
+
+        return WorkoutFeedbackTrendsResponse(
+            days=days,
+            start_date=start_user,
+            end_date=end_user,
+            days_counted=len(daily_series),
+            energy_scale=_ENERGY_SCALE,
+            difficulty_scale=_DIFFICULTY_SCALE,
+            daily_series=daily_series,
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get workout feedback trends: {e}", exc_info=True)
+        raise safe_internal_error(e, "endpoint")
+
 
 @router.get("/exercise/{exercise_name}/stats")
 async def get_exercise_feedback_stats(

@@ -28,7 +28,7 @@ from datetime import datetime, date, timedelta, timezone
 from typing import Optional, List, Dict, Any
 from fastapi import APIRouter, HTTPException, Query, Depends, BackgroundTasks, Request
 from core.auth import get_current_user, verify_user_ownership
-from core.timezone_utils import user_today_date, resolve_timezone
+from core.timezone_utils import user_today_date, resolve_timezone, get_user_today
 from core.exceptions import safe_internal_error
 from pydantic import BaseModel, Field
 
@@ -1096,6 +1096,130 @@ async def weekly_volume_per_muscle(current_user: dict = Depends(get_current_user
         return WeeklyVolumePerMuscleResponse(muscles=entries)
     except Exception as e:
         raise safe_internal_error(e, "weekly_volume_per_muscle")
+
+
+# ── Custom Trends: per-day wellbeing-score time series ──────────────────────
+
+@router.get("/wellbeing-trends", tags=["Scores"])
+async def get_wellbeing_trends(
+    http_request: Request,
+    user_id: str = Query(...),
+    days: int = Query(
+        default=90, ge=0, le=1825,
+        description="Rolling-window size in days ending today. 0 = all history.",
+    ),
+    current_user: dict = Depends(get_current_user),
+):
+    """Per-day wellbeing-score time series for the Custom Trends chart.
+
+    Aggregates five score tables, each keyed on a DATE column that is already
+    the user's local calendar date (no UTC bucketing needed):
+      - `fitness_scores`         -> overall_fitness_score (calculated_date)
+      - `readiness_scores`       -> readiness_score        (score_date)
+      - `fasting_scores`         -> score                  (score_date)
+      - `daily_subjective_checkin` -> morning/evening mood + energy (check_date)
+      - `nutrition_scores`       -> nutrition_score (WEEKLY — keyed on week_start)
+
+    The four per-day tables are merged into `daily_series` (one point per date
+    that has at least one score; missing fields are null). `nutrition_scores`
+    is weekly, so it is returned separately as `weekly_nutrition_series` keyed
+    on `week_start`. Days/weeks with no row are absent — no fabricated data.
+    """
+    verify_user_ownership(current_user, user_id)
+
+    try:
+        db = get_supabase_db()
+        user_tz = resolve_timezone(http_request, db, user_id)
+        today = date.fromisoformat(get_user_today(user_tz))
+        # 0 ⇒ all history (cap ~5y so the query stays bounded).
+        span = days if days > 0 else 1825
+        start_date = (today - timedelta(days=span - 1)).isoformat()
+        end_date = today.isoformat()
+
+        # ── Per-day tables ──────────────────────────────────────────────────
+        merged: dict[str, dict] = {}
+
+        def _point(d: str) -> dict:
+            return merged.setdefault(d, {
+                "date": d,
+                "fitness_score": None,
+                "readiness_score": None,
+                "fasting_score": None,
+                "morning_mood": None,
+                "morning_energy": None,
+                "evening_mood": None,
+                "overall_day_rating": None,
+            })
+
+        fit = db.client.table("fitness_scores").select(
+            "calculated_date,overall_fitness_score"
+        ).eq("user_id", user_id).gte(
+            "calculated_date", start_date
+        ).lte("calculated_date", end_date).execute()
+        for r in (fit.data or []):
+            d = r.get("calculated_date")
+            if d:
+                _point(d)["fitness_score"] = r.get("overall_fitness_score")
+
+        rdy = db.client.table("readiness_scores").select(
+            "score_date,readiness_score"
+        ).eq("user_id", user_id).gte(
+            "score_date", start_date
+        ).lte("score_date", end_date).execute()
+        for r in (rdy.data or []):
+            d = r.get("score_date")
+            if d:
+                _point(d)["readiness_score"] = r.get("readiness_score")
+
+        fst = db.client.table("fasting_scores").select(
+            "score_date,score"
+        ).eq("user_id", user_id).gte(
+            "score_date", start_date
+        ).lte("score_date", end_date).execute()
+        for r in (fst.data or []):
+            d = r.get("score_date")
+            if d:
+                _point(d)["fasting_score"] = r.get("score")
+
+        chk = db.client.table("daily_subjective_checkin").select(
+            "check_date,morning_mood,morning_energy,evening_mood,overall_day_rating"
+        ).eq("user_id", user_id).gte(
+            "check_date", start_date
+        ).lte("check_date", end_date).execute()
+        for r in (chk.data or []):
+            d = r.get("check_date")
+            if d:
+                p = _point(d)
+                p["morning_mood"] = r.get("morning_mood")
+                p["morning_energy"] = r.get("morning_energy")
+                p["evening_mood"] = r.get("evening_mood")
+                p["overall_day_rating"] = r.get("overall_day_rating")
+
+        daily_series = [merged[d] for d in sorted(merged.keys())]
+
+        # ── Weekly table: nutrition_scores ──────────────────────────────────
+        ntr = db.client.table("nutrition_scores").select(
+            "week_start,week_end,nutrition_score,adherence_percent"
+        ).eq("user_id", user_id).gte(
+            "week_end", start_date
+        ).lte("week_start", end_date).order("week_start").execute()
+        weekly_nutrition_series = [{
+            "week_start": r.get("week_start"),
+            "week_end": r.get("week_end"),
+            "nutrition_score": r.get("nutrition_score"),
+            "adherence_percent": float(r["adherence_percent"])
+            if r.get("adherence_percent") is not None else None,
+        } for r in (ntr.data or [])]
+
+        return {
+            "daily_series": daily_series,
+            "weekly_nutrition_series": weekly_nutrition_series,
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise safe_internal_error(e, "wellbeing_trends")
 
 
 # Include secondary endpoints

@@ -9,6 +9,10 @@ Fasting Records:
 - GET  /api/v1/fasting/active/{user_id} - Get current active fast
 - GET  /api/v1/fasting/history/{user_id} - Get fasting history
 - PUT  /api/v1/fasting/{fast_id} - Update a fast record
+- POST /api/v1/fasting/{fast_id}/pause - Pause an active fast
+- POST /api/v1/fasting/{fast_id}/resume - Resume a paused fast
+- POST /api/v1/fasting/{fast_id}/undo-end - Re-open a just-ended fast
+- POST /api/v1/fasting/{fast_id}/edit - Edit a past fast's start/end times
 
 Fasting Preferences:
 - GET  /api/v1/fasting/preferences/{user_id} - Get fasting preferences
@@ -35,7 +39,7 @@ from .fasting_models import *  # noqa: F401, F403
 from .fasting_endpoints import router as _endpoints_router
 
 from fastapi import APIRouter, HTTPException, Query, Request, Depends
-from typing import Any, List, Optional
+from typing import Any, Dict, List, Optional
 from datetime import datetime, date, timedelta
 from decimal import Decimal
 import uuid
@@ -87,6 +91,23 @@ class UpdateFastRequest(BaseModel):
     energy_level: Optional[int] = Field(None, ge=1, le=5)
 
 
+class PauseFastRequest(BaseModel):
+    """Request to pause or resume an active fast (Task I)."""
+    user_id: str
+
+
+class UndoEndFastRequest(BaseModel):
+    """Request to revert a just-ended fast back to active (Task I)."""
+    user_id: str
+
+
+class EditFastRequest(BaseModel):
+    """Request to edit a completed fast's start/end times (Task I)."""
+    user_id: str
+    start_time: str = Field(description="New start time, ISO 8601")
+    end_time: str = Field(description="New end time, ISO 8601")
+
+
 class FastingPreferencesRequest(BaseModel):
     """Fasting preferences update request."""
     user_id: str
@@ -108,6 +129,10 @@ class FastingPreferencesRequest(BaseModel):
     dinner_reminder_hour: Optional[int] = Field(None, ge=0, le=23)
     extended_protocol_acknowledged: Optional[bool] = False
     safety_responses: Optional[dict] = None
+    # Custom weekly schedule (Task G): map of weekday "0".."6" (Mon..Sun) ->
+    # protocol descriptor {"protocol": "16:8", "custom_fasting_hours": null}.
+    # A missing/null entry = an eating/rest day.
+    weekly_schedule: Optional[Dict[str, Any]] = None
 
 
 class CompleteOnboardingRequest(BaseModel):
@@ -143,6 +168,9 @@ class FastingRecordResponse(BaseModel):
     mood_before: Optional[str] = None
     mood_after: Optional[str] = None
     energy_level: Optional[int] = None
+    # Pause/resume (Task I): paused_at set => fast is currently paused.
+    paused_at: Optional[str] = None
+    accumulated_paused_seconds: int = 0
     created_at: str
     updated_at: Optional[str] = None
 
@@ -180,6 +208,7 @@ class FastingPreferencesResponse(BaseModel):
     dinner_reminder_hour: Optional[int] = None
     extended_protocol_acknowledged: Optional[bool] = False
     safety_responses: Optional[dict] = None
+    weekly_schedule: Optional[Dict[str, Any]] = None
     safety_screening_completed: bool
     safety_warnings_acknowledged: Optional[List[str]] = None
     has_medical_conditions: Optional[bool] = False
@@ -292,6 +321,8 @@ def row_to_fasting_record(row: dict) -> FastingRecordResponse:
         mood_before=row.get("mood_before"),
         mood_after=row.get("mood_after"),
         energy_level=row.get("energy_level"),
+        paused_at=row.get("paused_at"),
+        accumulated_paused_seconds=row.get("accumulated_paused_seconds") or 0,
         created_at=row.get("created_at"),
         updated_at=row.get("updated_at"),
     )
@@ -320,6 +351,7 @@ def row_to_preferences(row: dict) -> FastingPreferencesResponse:
         dinner_reminder_hour=row.get("dinner_reminder_hour"),
         extended_protocol_acknowledged=row.get("extended_protocol_acknowledged", False),
         safety_responses=row.get("safety_responses"),
+        weekly_schedule=row.get("weekly_schedule"),
         safety_screening_completed=row.get("safety_screening_completed", False),
         safety_warnings_acknowledged=row.get("safety_warnings_acknowledged"),
         has_medical_conditions=row.get("has_medical_conditions", False),
@@ -539,7 +571,19 @@ async def end_fast(fast_id: str, data: EndFastRequest, http_request: Request, cu
         # Calculate duration - ensure both datetimes are timezone-aware
         start_time = datetime.fromisoformat(fast["start_time"].replace("Z", "+00:00"))
         end_time = datetime.now(start_time.tzinfo)  # Use same timezone as start_time
-        actual_minutes = int((end_time - start_time).total_seconds() / 60)
+
+        # Pause-aware elapsed: subtract all suspended time (Task I). If the fast
+        # is ended while still paused, also subtract the in-progress pause.
+        paused_seconds = fast.get("accumulated_paused_seconds") or 0
+        if fast.get("paused_at"):
+            paused_at = datetime.fromisoformat(
+                fast["paused_at"].replace("Z", "+00:00")
+            )
+            paused_seconds += int((end_time - paused_at).total_seconds())
+        actual_minutes = max(
+            0,
+            int(((end_time - start_time).total_seconds() - paused_seconds) / 60),
+        )
         goal_minutes = fast["goal_duration_minutes"]
 
         # Calculate completion
@@ -556,6 +600,8 @@ async def end_fast(fast_id: str, data: EndFastRequest, http_request: Request, cu
             "notes": data.notes or fast.get("notes"),
             "mood_after": data.mood_after,
             "energy_level": data.energy_level,
+            "paused_at": None,  # clear any in-progress pause
+            "accumulated_paused_seconds": paused_seconds,
             "updated_at": end_time.isoformat(),  # Use same timezone-aware datetime
         }
 
@@ -728,6 +774,195 @@ async def update_fast_record(fast_id: str, data: UpdateFastRequest, current_user
         raise safe_internal_error(e, "update_fast_record")
 
 
+@router.post("/{fast_id}/pause", response_model=FastingRecordResponse)
+async def pause_fast(fast_id: str, data: PauseFastRequest, current_user: dict = Depends(get_current_user)):
+    """Pause an active fast — suspends elapsed-time accrual (Task I)."""
+    if str(current_user["id"]) != str(data.user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
+    logger.info(f"Pausing fast {fast_id} for user {data.user_id}")
+
+    try:
+        db = get_supabase_db()
+
+        result = db.client.table("fasting_records").select("*").eq(
+            "id", fast_id
+        ).eq("user_id", data.user_id).eq("status", "active").execute()
+
+        if not result.data:
+            raise HTTPException(status_code=404, detail="Active fast not found")
+
+        fast = result.data[0]
+        if fast.get("paused_at"):
+            raise HTTPException(status_code=400, detail="Fast is already paused")
+
+        now = datetime.utcnow().isoformat()
+        update = db.client.table("fasting_records").update({
+            "paused_at": now,
+            "updated_at": now,
+        }).eq("id", fast_id).execute()
+
+        return row_to_fasting_record(update.data[0])
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise safe_internal_error(e, "pause_fast")
+
+
+@router.post("/{fast_id}/resume", response_model=FastingRecordResponse)
+async def resume_fast(fast_id: str, data: PauseFastRequest, current_user: dict = Depends(get_current_user)):
+    """Resume a paused fast — folds the suspended interval into the running
+    accumulated_paused_seconds total (Task I)."""
+    if str(current_user["id"]) != str(data.user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
+    logger.info(f"Resuming fast {fast_id} for user {data.user_id}")
+
+    try:
+        db = get_supabase_db()
+
+        result = db.client.table("fasting_records").select("*").eq(
+            "id", fast_id
+        ).eq("user_id", data.user_id).eq("status", "active").execute()
+
+        if not result.data:
+            raise HTTPException(status_code=404, detail="Active fast not found")
+
+        fast = result.data[0]
+        if not fast.get("paused_at"):
+            raise HTTPException(status_code=400, detail="Fast is not paused")
+
+        paused_at = datetime.fromisoformat(fast["paused_at"].replace("Z", "+00:00"))
+        now = datetime.now(paused_at.tzinfo)
+        added = max(0, int((now - paused_at).total_seconds()))
+        total_paused = (fast.get("accumulated_paused_seconds") or 0) + added
+
+        update = db.client.table("fasting_records").update({
+            "paused_at": None,
+            "accumulated_paused_seconds": total_paused,
+            "updated_at": datetime.utcnow().isoformat(),
+        }).eq("id", fast_id).execute()
+
+        return row_to_fasting_record(update.data[0])
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise safe_internal_error(e, "resume_fast")
+
+
+@router.post("/{fast_id}/undo-end", response_model=FastingRecordResponse)
+async def undo_end_fast(fast_id: str, data: UndoEndFastRequest, current_user: dict = Depends(get_current_user)):
+    """Re-open a just-ended fast back to active status (Task I). Only allowed
+    within a short window after ending and when no other fast is active."""
+    if str(current_user["id"]) != str(data.user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
+    logger.info(f"Undo-end fast {fast_id} for user {data.user_id}")
+
+    try:
+        db = get_supabase_db()
+
+        result = db.client.table("fasting_records").select("*").eq(
+            "id", fast_id
+        ).eq("user_id", data.user_id).eq("status", "completed").execute()
+
+        if not result.data:
+            raise HTTPException(status_code=404, detail="Completed fast not found")
+
+        fast = result.data[0]
+
+        # Time-window guard — only undoable shortly after ending.
+        if fast.get("end_time"):
+            ended_at = datetime.fromisoformat(fast["end_time"].replace("Z", "+00:00"))
+            now = datetime.now(ended_at.tzinfo)
+            if (now - ended_at).total_seconds() > 600:  # 10 minute window
+                raise HTTPException(
+                    status_code=400,
+                    detail="Undo window has expired (10 minutes)",
+                )
+
+        # Don't re-open if the user already has another active fast.
+        existing = db.client.table("fasting_records").select("id").eq(
+            "user_id", data.user_id
+        ).eq("status", "active").execute()
+        if existing.data:
+            raise HTTPException(
+                status_code=400,
+                detail="You already have an active fast. End it first.",
+            )
+
+        update = db.client.table("fasting_records").update({
+            "status": "active",
+            "end_time": None,
+            "actual_duration_minutes": None,
+            "completed_goal": False,
+            "completion_percentage": None,
+            "mood_after": None,
+            "energy_level": None,
+            "updated_at": datetime.utcnow().isoformat(),
+        }).eq("id", fast_id).execute()
+
+        return row_to_fasting_record(update.data[0])
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise safe_internal_error(e, "undo_end_fast")
+
+
+@router.post("/{fast_id}/edit", response_model=FastingRecordResponse)
+async def edit_fast(fast_id: str, data: EditFastRequest, current_user: dict = Depends(get_current_user)):
+    """Edit a completed fast's start/end times and recompute its duration and
+    completion (Task I)."""
+    if str(current_user["id"]) != str(data.user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
+    logger.info(f"Editing fast {fast_id} for user {data.user_id}")
+
+    try:
+        db = get_supabase_db()
+
+        result = db.client.table("fasting_records").select("*").eq(
+            "id", fast_id
+        ).eq("user_id", data.user_id).neq("status", "active").execute()
+
+        if not result.data:
+            raise HTTPException(status_code=404, detail="Fast record not found")
+
+        fast = result.data[0]
+
+        start_time = datetime.fromisoformat(data.start_time.replace("Z", "+00:00"))
+        end_time = datetime.fromisoformat(data.end_time.replace("Z", "+00:00"))
+        if end_time <= start_time:
+            raise HTTPException(
+                status_code=400,
+                detail="End time must be after start time",
+            )
+
+        paused_seconds = fast.get("accumulated_paused_seconds") or 0
+        actual_minutes = max(
+            0,
+            int(((end_time - start_time).total_seconds() - paused_seconds) / 60),
+        )
+        goal_minutes = fast["goal_duration_minutes"]
+        completion_percent = calculate_completion_percentage(actual_minutes, goal_minutes)
+        completed_goal = completion_percent >= 100
+
+        update = db.client.table("fasting_records").update({
+            "start_time": start_time.isoformat(),
+            "end_time": end_time.isoformat(),
+            "actual_duration_minutes": actual_minutes,
+            "completed_goal": completed_goal,
+            "completion_percentage": completion_percent,
+            "updated_at": datetime.utcnow().isoformat(),
+        }).eq("id", fast_id).execute()
+
+        return row_to_fasting_record(update.data[0])
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise safe_internal_error(e, "edit_fast")
+
+
 # ==================== Fasting Preferences Endpoints ====================
 
 @router.get("/preferences/{user_id}", response_model=Optional[FastingPreferencesResponse])
@@ -776,6 +1011,7 @@ async def update_preferences(user_id: str, data: FastingPreferencesRequest, curr
             "notify_goal_reached": data.notify_goal_reached,
             "notify_eating_window_end": data.notify_eating_window_end,
             "is_keto_adapted": data.is_keto_adapted,
+            "weekly_schedule": data.weekly_schedule,
             "updated_at": datetime.utcnow().isoformat(),
         }
 

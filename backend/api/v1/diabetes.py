@@ -11,11 +11,12 @@ from .diabetes_models import *  # noqa: F401, F403
 from .diabetes_endpoints import router as _endpoints_router
 
 
-from datetime import datetime, date, timedelta
+from datetime import datetime, date, timedelta, timezone
 from typing import List, Optional
-from fastapi import APIRouter, HTTPException, Depends, Query
+from fastapi import APIRouter, HTTPException, Depends, Query, Request
 from core.auth import get_current_user
 from core.exceptions import safe_internal_error
+from core.timezone_utils import get_user_today, resolve_timezone
 from pydantic import BaseModel, Field, validator
 import uuid
 
@@ -960,6 +961,167 @@ async def get_a1c_trend(user_id: str, current_user: dict = Depends(get_current_u
 
     return A1cTrendResponse(trend=trend, change=change, period_months=len(result.data) * 3)
 
+
+
+# ============================================================
+# Diabetes trends — per-day time series (Custom Trends chart)
+# ============================================================
+
+
+class GlucoseDailyPoint(BaseModel):
+    date: str
+    reading_count: int
+    avg_glucose: float
+    min_glucose: int
+    max_glucose: int
+    total_insulin_units: float
+    insulin_dose_count: int
+
+
+class A1cPoint(BaseModel):
+    date: str
+    a1c_value: float
+
+
+class DiabetesTrendsResponse(BaseModel):
+    days: int
+    start_date: str
+    end_date: str
+    days_counted: int
+    daily_series: List[GlucoseDailyPoint]
+    a1c_series: List[A1cPoint]
+
+
+@router.get("/glucose/{user_id}/trends", response_model=DiabetesTrendsResponse)
+async def get_diabetes_trends(
+    user_id: str,
+    request: Request,
+    days: int = Query(
+        default=90, ge=0, le=1825,
+        description="Rolling-window in days ending today; 0 means all history.",
+    ),
+    current_user: dict = Depends(get_current_user),
+):
+    """Per-day glucose + insulin time series for the Custom Trends chart.
+
+    One row per day bucketed by the user's local date: average / min / max
+    glucose and total insulin units. Days with no readings AND no insulin
+    doses are absent. HbA1c (sparse) is returned as its own `a1c_series`.
+    """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
+
+    db = get_supabase_db()
+    user_tz = resolve_timezone(request, db, user_id)
+
+    end_user = get_user_today(user_tz)
+    span = days if days > 0 else 1825
+    start_user = (
+        datetime.strptime(end_user, "%Y-%m-%d").date() - timedelta(days=span - 1)
+    ).strftime("%Y-%m-%d")
+    start_utc = f"{start_user}T00:00:00+00:00"
+    end_utc = (
+        datetime.strptime(end_user, "%Y-%m-%d").date() + timedelta(days=1)
+    ).strftime("%Y-%m-%dT00:00:00+00:00")
+
+    try:
+        from zoneinfo import ZoneInfo
+        try:
+            tz = ZoneInfo(user_tz)
+        except Exception:
+            tz = ZoneInfo("UTC")
+
+        def _to_local_date(iso_str: str) -> str:
+            dt = datetime.fromisoformat(iso_str.replace("Z", "+00:00"))
+            if dt.tzinfo is None:
+                dt = dt.replace(tzinfo=timezone.utc)
+            return dt.astimezone(tz).strftime("%Y-%m-%d")
+
+        glu_resp = db.client.table("glucose_readings")\
+            .select("timestamp,glucose_mg_dl")\
+            .eq("user_id", user_id)\
+            .gte("timestamp", start_utc)\
+            .lt("timestamp", end_utc)\
+            .order("timestamp")\
+            .execute()
+        ins_resp = db.client.table("insulin_doses")\
+            .select("timestamp,units")\
+            .eq("user_id", user_id)\
+            .gte("timestamp", start_utc)\
+            .lt("timestamp", end_utc)\
+            .order("timestamp")\
+            .execute()
+
+        # date -> aggregates
+        agg: dict[str, dict] = {}
+
+        def _bucket(d: str) -> dict:
+            b = agg.get(d)
+            if b is None:
+                b = {"glucose": [], "insulin": 0.0, "insulin_count": 0}
+                agg[d] = b
+            return b
+
+        for row in (glu_resp.data or []):
+            val = row.get("glucose_mg_dl")
+            if val is None or not row.get("timestamp"):
+                continue
+            _bucket(_to_local_date(row["timestamp"]))["glucose"].append(int(val))
+
+        for row in (ins_resp.data or []):
+            units = row.get("units")
+            if units is None or not row.get("timestamp"):
+                continue
+            b = _bucket(_to_local_date(row["timestamp"]))
+            b["insulin"] += float(units)
+            b["insulin_count"] += 1
+
+        daily_series: List[GlucoseDailyPoint] = []
+        for d in sorted(agg.keys()):
+            b = agg[d]
+            g = b["glucose"]
+            daily_series.append(GlucoseDailyPoint(
+                date=d,
+                reading_count=len(g),
+                avg_glucose=round(sum(g) / len(g), 1) if g else 0.0,
+                min_glucose=min(g) if g else 0,
+                max_glucose=max(g) if g else 0,
+                total_insulin_units=round(b["insulin"], 2),
+                insulin_dose_count=b["insulin_count"],
+            ))
+
+        # HbA1c sparse series — keyed by test_date.
+        a1c_resp = db.client.table("a1c_records")\
+            .select("test_date,a1c_value")\
+            .eq("user_id", user_id)\
+            .gte("test_date", start_user)\
+            .lte("test_date", end_user)\
+            .order("test_date")\
+            .execute()
+        a1c_map: dict[str, float] = {}
+        for row in (a1c_resp.data or []):
+            v = row.get("a1c_value")
+            td = row.get("test_date")
+            if v is None or not td:
+                continue
+            a1c_map[str(td)[:10]] = float(v)
+        a1c_series = [
+            A1cPoint(date=d, a1c_value=round(a1c_map[d], 2))
+            for d in sorted(a1c_map.keys())
+        ]
+
+        return DiabetesTrendsResponse(
+            days=days,
+            start_date=start_user,
+            end_date=end_user,
+            days_counted=len(daily_series),
+            daily_series=daily_series,
+            a1c_series=a1c_series,
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise safe_internal_error(e, "diabetes_trends")
 
 
 # Include secondary endpoints

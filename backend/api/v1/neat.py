@@ -1137,6 +1137,69 @@ async def get_neat_streaks(user_id: str,
         raise safe_internal_error(e, "neat_streaks")
 
 
+# ── Custom Trends: per-day NEAT score + step-goal-% time series ─────────────
+
+@router.get("/score/{user_id}/trends", tags=["NEAT Score"])
+async def get_neat_trends(
+    user_id: str,
+    request: Request,
+    days: int = Query(
+        default=90, ge=0, le=1825,
+        description="Rolling-window size in days ending today. 0 = all history.",
+    ),
+    current_user: dict = Depends(get_current_user),
+):
+    """Per-day NEAT score + step-goal-% series for the Custom Trends chart.
+
+    Reads `neat_daily_scores`, which holds one aggregated row per user per day
+    keyed on `score_date` (already the user's local calendar date — no UTC
+    bucketing needed). Each point reports `neat_score` (0-100), `total_steps`,
+    `step_goal_percentage` (total_steps / goal_at_time * 100, using the goal
+    that was active that day), and `step_goal_achieved`. Days with no row are
+    absent from `daily_series` — no fabricated data.
+    """
+    if str(current_user.get("id") or current_user.get("sub")) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
+
+    try:
+        db = get_supabase_db()
+        today = user_today_date(request, db, user_id)
+        # 0 ⇒ all history (cap ~5y so the query stays bounded).
+        span = days if days > 0 else 1825
+        start_date = (today - timedelta(days=span - 1)).isoformat()
+
+        response = db.client.table("neat_daily_scores").select(
+            "score_date,neat_score,total_steps,goal_at_time,"
+            "step_goal_achieved,active_hours,sedentary_hours"
+        ).eq("user_id", user_id).gte(
+            "score_date", start_date
+        ).lte("score_date", today.isoformat()).order("score_date").execute()
+        rows = response.data or []
+
+        daily_series = []
+        for r in rows:
+            steps = r.get("total_steps") or 0
+            goal = r.get("goal_at_time") or 0
+            daily_series.append({
+                "date": r.get("score_date"),
+                "neat_score": r.get("neat_score"),
+                "total_steps": steps,
+                "goal_at_time": goal,
+                "step_goal_percentage": round(steps / goal * 100, 1)
+                if goal > 0 else None,
+                "step_goal_achieved": bool(r.get("step_goal_achieved")),
+                "active_hours": r.get("active_hours"),
+                "sedentary_hours": r.get("sedentary_hours"),
+            })
+
+        return {"daily_series": daily_series}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error fetching NEAT trends: {e}", exc_info=True)
+        raise safe_internal_error(e, "neat_trends")
+
 
 # Include secondary endpoints
 router.include_router(_endpoints_router)

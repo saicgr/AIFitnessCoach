@@ -88,6 +88,14 @@ class MetricsHistoryItem(BaseModel):
     bmr: Optional[float]
     tdee: Optional[float]
     body_fat: Optional[float]
+    # Derived body-composition metrics — already stored per-row in user_metrics
+    # (see migration 001) and already SELECTed by list_user_metrics. Exposed
+    # here so the Trends layer can plot real per-day FFMI / waist-to-height
+    # history instead of only the latest snapshot from /metrics/latest.
+    ffmi: Optional[float] = None
+    lean_body_mass: Optional[float] = None
+    waist_to_height_ratio: Optional[float] = None
+    waist_to_hip_ratio: Optional[float] = None
 
 
 def row_to_metrics_history_item(row: dict) -> MetricsHistoryItem:
@@ -102,6 +110,10 @@ def row_to_metrics_history_item(row: dict) -> MetricsHistoryItem:
         bmr=row.get("bmr"),
         tdee=row.get("tdee"),
         body_fat=body_fat,
+        ffmi=row.get("ffmi"),
+        lean_body_mass=row.get("lean_body_mass"),
+        waist_to_height_ratio=row.get("waist_to_height_ratio"),
+        waist_to_hip_ratio=row.get("waist_to_hip_ratio"),
     )
 
 
