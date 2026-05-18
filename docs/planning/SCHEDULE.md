@@ -33,15 +33,51 @@
 
 ---
 
-## DAILY (every morning — wake 6:20, 1hr GEO posting block)
+## DAILY (every morning — run the GEO check, then 1hr posting block)
 
-Wake 6:20. Over coffee, run the GEO check (it runs ~10 min and drafts 25 Reddit + 25 X posts). Then 6:35–7:35 is the GEO posting hour: paste the drafts into Reddit and X. 6:30–7:30 CT = 7:30–8:30 ET, Reddit's high-traffic morning window.
+Over coffee, run the GEO check (it runs ~10 min and drafts 25 Reddit + 25 X posts). Then the GEO posting hour: paste the drafts into Reddit and X. The weekday window 6:35–7:35 CT = 7:35–8:35 ET, Reddit's high-traffic morning window.
 
 ```
 Quick GEO status check — anything urgent today?
 ```
 
-**Sleep floor (non-negotiable): 7 hours.** Wake 6:20, hard bed by 11:00 at the latest (10:30 target). Night job-app blocks stop when bedtime hits — never run past the floor.
+**Sleep floor (strict, non-negotiable): 7h30m every night.**
+- **Sun–Thu nights:** bed **10:50**, wake **6:20** → 7h30m.
+- **Fri & Sat nights:** bed **10:30**, wake **6:00** → 7h30m.
+- Night job-app blocks hard-stop at bedtime. Never run past the floor — the bedtime is the cap, not a suggestion.
+
+---
+
+## SUNDAY — **KEYSTONE BATCH DAY**
+
+| Time | Do | Prompt to paste |
+|---|---|---|
+| 6:00 | wake + coffee + run daily GEO check (runs ~10m over coffee) | `Quick GEO status check` |
+| 6:30 | GYM 2hr | — |
+| 8:30 | shower, then 🎯 GEO posting hour over breakfast — post the 25 Reddit + 25 X drafts | — |
+| **9:30** | **Zealova social pack** (30m) | `Write Zealova's weekly social pack — 7 X posts, 2 Reddit drafts, 3 IG carousels` |
+| **10:00** | **Hireable social pack** (40m) | `Write Hireable's weekly social pack` |
+| **10:40** | **Mobi social pack** (40m) | `Write Mobiprompt's weekly social pack` |
+| **11:20** | **UV social pack** (30m) | `Write Ultraviolet's weekly social pack` |
+| **11:50** | **Founder posts** (15m) | `Write founder Wed thread + next Sun reflection` |
+| **12:05** | **Schedule everything (20m):** X+LI → Typefully · IG carousel + 3 Reels → Meta Business Suite (Mon/Wed/Fri 11am) · 3 Reels → TikTok @zealova native scheduler · 3 Reels → YouTube Shorts @zealova manual upload · Reddit drafts → Notion. **YouTube long-form** (when ready, after polish step mid-week following 1st Sun) — upload separately to YouTube @zealova with thumbnail + timestamped description. | — |
+| 12:25 | 5m engagement target list | — |
+| 12:30 | lunch with wife | — |
+| **1:00** | **🎯 GEO CONTENT BLOCK — comp page** (30m intel) | `Profile <competitor>` (next in /vs/ queue) |
+| **1:30** | **comparison page + scaffold** (1.5hr) | `Write the /vs/<competitor> page` |
+| **2:30 (Phase 3+)** | **blog post + scaffold** (1hr) | `What should I blog about this week?` then `Write a data post on <topic>` |
+| **3:30 (Phase 3+)** | **Quora answers** (30m) | `Find 5 Quora questions to answer this week` then `Draft an answer for #1` |
+| 3:00 (Phase 1-2) | active build 2hr | — |
+| **3:00 (1st Sun of month only)** | **🎯 YouTube long-form record + rough edit** (2hr) — replaces build block this Sun. Aim 6-10 min initially (longer once practiced). Script outline drafted Fri night from queue below. | — |
+| **mid-week evening following 1st Sun** (steal 1hr from a build slot) | **Polish + upload to YouTube @zealova** — thumbnail, description with timestamps + 3-5 citable stats + comparison-page link, publish | — |
+| **12:00 (last Sun of month, 30m, all phases)** | **🎯 Monthly ASO check** — drift scan + propose 1-3 small tweaks | `Monthly ASO check` |
+| **1:00 (last Sun of each quarter, 2hr — replaces Sun build that day)** | **🎯 Quarterly ASO deep audit** — full review of every listing asset + onboarding | `Do a quarterly ASO deep audit of Zealova` |
+| **(Phase 3+ only) Sunday batch +20m at ~12:25** | **🎯 Weekly ad creative** — 3-5 new ad variants for running campaigns | `Weekly ad creative for this Sunday` |
+| 5:00 | 50 apps | — |
+| 6:00 | 50 apps | — |
+| 7:00 | meal prep + wife dinner | — |
+| 9:30 | 5m weekly review | — |
+| 10:50 | bed | — |
 
 ---
 
@@ -67,7 +103,7 @@ Quick GEO status check — anything urgent today?
 | **9:00** | **🎯 weekly GEO anchor (15m)** | `Run the weekly GEO cadence` |
 | 9:00 (1st Mon of month) | +30m monthly snapshot | `Run the monthly citation snapshot` |
 | 9:15 | night bulk — 45 apps | — |
-| 10:30 | bed | — |
+| 10:50 | bed | — |
 
 ---
 
@@ -88,7 +124,7 @@ Quick GEO status check — anything urgent today?
 | 7:30 | dinner with wife | — |
 | 8:30 | wife time | — |
 | **9:00** | night bulk 45 apps + LI engagement + (10m) scout for Wed | `Find 2 Reddit threads in target subs I should reply to tomorrow` |
-| 10:30 | bed | — |
+| 10:50 | bed | — |
 
 ---
 
@@ -110,7 +146,7 @@ Quick GEO status check — anything urgent today?
 | 6:30 | dinner with wife | — |
 | 7:30 | wife time | — |
 | 9:00 | night bulk 45 apps | — |
-| 10:30 | bed | — |
+| 10:50 | bed | — |
 
 ---
 
@@ -132,7 +168,7 @@ Quick GEO status check — anything urgent today?
 | 8:30 | wife time | — |
 | **9:00** | night bulk + Mobi/Zealova engagement + **🎯 10m listicle followups** | `Follow up on this week's listicle pitches sent Wed` |
 | **9:15 (Phase 3+ only, mid-month Thu)** | **🎯 15m ad performance review** — kill losers, scale winners | `Review last 2 weeks of ad performance — kill losers, scale winners` |
-| 10:30 | bed | — |
+| 10:50 | bed | — |
 
 ---
 
@@ -175,39 +211,6 @@ Quick GEO status check — anything urgent today?
 | **5:00** | **Zealova Reddit live** — draft first | `Draft my r/getmotivated post for tonight` OR `Draft my r/Fitness Saturday self-promo post` |
 | 5:10 | wife time | — |
 | 10:30 | bed | — |
-
----
-
-## SUNDAY — **KEYSTONE BATCH DAY**
-
-| Time | Do | Prompt to paste |
-|---|---|---|
-| 6:00 | wake + coffee + run daily GEO check (runs ~10m over coffee) | `Quick GEO status check` |
-| 6:30 | GYM 2hr | — |
-| 8:30 | shower, then 🎯 GEO posting hour over breakfast — post the 25 Reddit + 25 X drafts | — |
-| **9:30** | **Zealova social pack** (30m) | `Write Zealova's weekly social pack — 7 X posts, 2 Reddit drafts, 3 IG carousels` |
-| **10:00** | **Hireable social pack** (40m) | `Write Hireable's weekly social pack` |
-| **10:40** | **Mobi social pack** (40m) | `Write Mobiprompt's weekly social pack` |
-| **11:20** | **UV social pack** (30m) | `Write Ultraviolet's weekly social pack` |
-| **11:50** | **Founder posts** (15m) | `Write founder Wed thread + next Sun reflection` |
-| **12:05** | **Schedule everything (20m):** X+LI → Typefully · IG carousel + 3 Reels → Meta Business Suite (Mon/Wed/Fri 11am) · 3 Reels → TikTok @zealova native scheduler · 3 Reels → YouTube Shorts @zealova manual upload · Reddit drafts → Notion. **YouTube long-form** (when ready, after polish step mid-week following 1st Sun) — upload separately to YouTube @zealova with thumbnail + timestamped description. | — |
-| 12:25 | 5m engagement target list | — |
-| 12:30 | lunch with wife | — |
-| **1:00** | **🎯 GEO CONTENT BLOCK — comp page** (30m intel) | `Profile <competitor>` (next in /vs/ queue) |
-| **1:30** | **comparison page + scaffold** (1.5hr) | `Write the /vs/<competitor> page` |
-| **2:30 (Phase 3+)** | **blog post + scaffold** (1hr) | `What should I blog about this week?` then `Write a data post on <topic>` |
-| **3:30 (Phase 3+)** | **Quora answers** (30m) | `Find 5 Quora questions to answer this week` then `Draft an answer for #1` |
-| 3:00 (Phase 1-2) | active build 2hr | — |
-| **3:00 (1st Sun of month only)** | **🎯 YouTube long-form record + rough edit** (2hr) — replaces build block this Sun. Aim 6-10 min initially (longer once practiced). Script outline drafted Fri night from queue below. | — |
-| **mid-week evening following 1st Sun** (steal 1hr from a build slot) | **Polish + upload to YouTube @zealova** — thumbnail, description with timestamps + 3-5 citable stats + comparison-page link, publish | — |
-| **12:00 (last Sun of month, 30m, all phases)** | **🎯 Monthly ASO check** — drift scan + propose 1-3 small tweaks | `Monthly ASO check` |
-| **1:00 (last Sun of each quarter, 2hr — replaces Sun build that day)** | **🎯 Quarterly ASO deep audit** — full review of every listing asset + onboarding | `Do a quarterly ASO deep audit of Zealova` |
-| **(Phase 3+ only) Sunday batch +20m at ~12:25** | **🎯 Weekly ad creative** — 3-5 new ad variants for running campaigns | `Weekly ad creative for this Sunday` |
-| 5:00 | 50 apps | — |
-| 6:00 | 50 apps | — |
-| 7:00 | meal prep + wife dinner | — |
-| 9:30 | 5m weekly review | — |
-| 10:00 | bed | — |
 
 ---
 
@@ -324,33 +327,33 @@ Then:
 ```
 GEO citation work (the schedule's primary purpose):
   Daily 6:20am — run GEO check, then 1hr posting block: 25 Reddit + 25 X drafts (geo-strategist daily-status)
+  Sun  1pm   — competitor intel    (competitor-intel)
+  Sun  1:30  — /vs/ page + TSX     (comparison-page-writer)  ← P2
+  Sun  2:30  — blog + TSX (P3+)    (blog-writer)
+  Sun  3pm   — Quora (P3+)         (quora-and-forum-agent)
   Mon  9pm   — weekly GEO brief    (geo-strategist)
+  1st Mon    — citation snapshot   (citation-tracker)
   Tue 12:50  — Zealova Reddit      (reddit-agent)
   Wed 12:00  — listicle pitches    (outreach-agent)  ← P1
   Wed  5:30  — Reddit reply        (reddit-agent)
   Thu  9pm   — listicle followups  (outreach-agent)
   Fri 12:50  — reply-to-trending   (reddit-agent)
   Sat  5pm   — Saturday Reddit     (reddit-agent)
-  Sun  1pm   — competitor intel    (competitor-intel)
-  Sun  1:30  — /vs/ page + TSX     (comparison-page-writer)  ← P2
-  Sun  2:30  — blog + TSX (P3+)    (blog-writer)
-  Sun  3pm   — Quora (P3+)         (quora-and-forum-agent)
-  1st Mon    — citation snapshot   (citation-tracker)
 
 Install/audience work (separate from GEO — Cal AI playbook):
+  Sun 9:30   — Social packs ×5 apps (social-post-creator) — drafts X/LI/IG/Reddit copy
+  Sun 12:05  — Queue everything into Typefully + MBS + TT + YT
+  1st Sun 3-5pm — Record + rough-edit 1 YouTube long-form  ← LLM-citation engine
+  Mon 11am    — Reel #1 auto-drops (IG + TikTok + YT Shorts) + IG carousel
+  Wed 11am    — Reel #2 auto-drops
+  Mid-week after 1st Sun — 1hr polish + upload
   Fri  5:45pm — Reels shot list      (reels-producer shot-list)  ← prep tomorrow
+  Fri 11am    — Reel #3 auto-drops + IG carousel
   Sat 3:00pm  — Record 3 Reels       (manual filming per shot list)
   Sat 4:00pm  — Repurpose to 9 exports (reels-producer repurpose)  ← TT/IG/YT variants
   Sat 4:30pm  — Edit 9 exports (manual CapCut)
-  Mon 11am    — Reel #1 auto-drops (IG + TikTok + YT Shorts) + IG carousel
-  Wed 11am    — Reel #2 auto-drops
-  Fri 11am    — Reel #3 auto-drops + IG carousel
   (after posting) — log it           (reels-producer log)
   1st of month — performance review  (reels-producer performance)
-  1st Sun 3-5pm — Record + rough-edit 1 YouTube long-form  ← LLM-citation engine
-  Mid-week after 1st Sun — 1hr polish + upload
-  Sun 9:30   — Social packs ×5 apps (social-post-creator) — drafts X/LI/IG/Reddit copy
-  Sun 12:05  — Queue everything into Typefully + MBS + TT + YT
 
 Conversion / paid (post-Phase-0 + Phase 3+):
   Phase 0 once          — ASO deep audit                    (aso-optimizer audit)
