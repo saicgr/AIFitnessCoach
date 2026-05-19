@@ -211,6 +211,51 @@ class SupabaseManager:
         """Get a new database session (raw, without semaphore)."""
         return self._session_maker()
 
+    def pool_stats(self) -> dict:
+        """Snapshot of SQLAlchemy connection-pool pressure (Phase D4).
+
+        Reads the live counters off the async engine's underlying pool. All
+        values are in-memory ints — this is cheap and never touches the DB,
+        so it is safe to call from an observability endpoint on any tick.
+
+        Fields:
+          * size            — configured pool_size
+          * checked_out     — connections currently in use by a request
+          * checked_in      — idle connections sitting in the pool
+          * overflow        — connections opened beyond pool_size (>=0); a
+                              high/maxed value means the pool is under pressure
+          * max_overflow    — configured overflow ceiling
+          * total_capacity  — size + max_overflow (hard concurrency ceiling)
+        """
+        settings = get_settings()
+        stats: dict = {
+            "size": settings.db_pool_size,
+            "max_overflow": settings.db_max_overflow,
+            "total_capacity": settings.db_pool_size + settings.db_max_overflow,
+            "pool_timeout_seconds": settings.db_pool_timeout,
+        }
+        try:
+            pool = self._engine.pool
+            # QueuePool exposes these; some pool classes (NullPool) do not.
+            checked_out = pool.checkedout() if hasattr(pool, "checkedout") else None
+            checked_in = pool.checkedin() if hasattr(pool, "checkedin") else None
+            overflow = pool.overflow() if hasattr(pool, "overflow") else None
+            stats.update({
+                "checked_out": checked_out,
+                "checked_in": checked_in,
+                "overflow": overflow,
+            })
+            if checked_out is not None:
+                # Fraction of the hard capacity currently in use — the single
+                # number to watch during a load test.
+                stats["utilization"] = round(
+                    checked_out / stats["total_capacity"], 4
+                ) if stats["total_capacity"] else 0.0
+        except Exception as e:
+            logger.debug(f"pool_stats: could not read pool counters: {e}")
+            stats["error"] = "pool counters unavailable"
+        return stats
+
     async def _acquire_connection_fast_fail(self):
         """Acquire a pooled DB connection, failing FAST instead of hanging.
 

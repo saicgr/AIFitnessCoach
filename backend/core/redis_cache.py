@@ -98,11 +98,32 @@ async def release_lock(key: str) -> None:
             logger.debug(f"Redis lock release error ({key}): {e}")
 
 
+# Process-wide registry of every RedisCache instance, so the observability
+# endpoint can report hit-rate for ALL caches without each one being wired up
+# individually. WeakSet so a discarded cache doesn't leak.
+import weakref as _weakref
+_cache_registry: "_weakref.WeakSet[RedisCache]" = _weakref.WeakSet()
+
+
+def all_cache_stats() -> list:
+    """Return hit/miss stats for every live RedisCache instance.
+
+    Consumed by the admin observability endpoint (Phase D4) so cache pressure
+    is visible per cache prefix. Cheap: just reads in-memory counters.
+    """
+    return [c.get_stats() for c in list(_cache_registry)]
+
+
 class RedisCache:
     """
     TTL cache backed by Redis (shared across workers) with in-memory fallback.
 
     Drop-in replacement for ResponseCache — same get/set/make_key interface.
+
+    Tracks lightweight in-process hit/miss counters (Phase D4 observability):
+    every `get()` increments `_hits` or `_misses`. Counters are plain ints —
+    incrementing them adds negligible overhead to the cache hot path. They are
+    per-worker (like the cache's own local fallback) and reset on restart.
     """
 
     def __init__(self, prefix: str, ttl_seconds: int = 300, max_size: int = 200):
@@ -113,19 +134,35 @@ class RedisCache:
         self._local: dict = {}
         from datetime import datetime, timedelta
         self._local_ttl = timedelta(seconds=ttl_seconds)
+        # Phase D4 — hit-rate counters (per-worker, reset on restart).
+        self._hits = 0
+        self._misses = 0
+        _cache_registry.add(self)
 
     async def get(self, key: str) -> Optional[Any]:
-        """Get a cached value. Tries Redis first, falls back to local."""
+        """Get a cached value. Tries Redis first, falls back to local.
+
+        Records a hit/miss for observability. A Redis error falls through to
+        the local cache and the local result determines hit vs miss, so the
+        counters reflect the value actually served.
+        """
         if _redis_available and _redis_client:
             try:
                 raw = await _redis_client.get(self._prefix + key)
                 if raw is not None:
+                    self._hits += 1
                     return json.loads(raw)
+                self._misses += 1
                 return None
             except Exception as e:
                 logger.debug(f"Redis GET error: {e}")
         # Fallback to local cache
-        return self._local_get(key)
+        value = self._local_get(key)
+        if value is not None:
+            self._hits += 1
+        else:
+            self._misses += 1
+        return value
 
     async def set(self, key: str, value: Any, ttl_override: Optional[int] = None):
         """Store a value. Writes to Redis if available, otherwise local.
@@ -176,12 +213,17 @@ class RedisCache:
 
     def get_stats(self) -> dict:
         """Return basic cache statistics (for monitoring endpoints)."""
+        total = self._hits + self._misses
         return {
             "backend": "redis" if (_redis_available and _redis_client) else "local",
             "local_size": len(self._local),
             "max_size": self._max_size,
             "prefix": self._prefix,
             "ttl_seconds": self._ttl,
+            "hits": self._hits,
+            "misses": self._misses,
+            "lookups": total,
+            "hit_rate": round(self._hits / total, 4) if total else 0.0,
         }
 
     # Synchronous versions for non-async code paths

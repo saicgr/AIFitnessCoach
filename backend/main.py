@@ -34,6 +34,11 @@ from core.config import get_settings
 from core.logger import get_logger, set_log_context, clear_log_context
 from core.rate_limiter import limiter
 from core.redis_cache import init_redis, close_redis, ping_redis
+from core.metrics import request_metrics as _request_metrics
+
+# Bound function for the metrics middleware hot path — avoids an attribute
+# lookup per request.
+_record_request_metric = _request_metrics.record
 from api.v1 import router as v1_router
 from api.v1 import chat as chat_module
 from services.gemini_service import GeminiService
@@ -277,6 +282,78 @@ class LoggingMiddleware:
         finally:
             clear_log_context()
             sentry_clear_request_context()
+
+
+class MetricsMiddleware:
+    """Pure ASGI middleware that records per-route latency + status (Phase D4).
+
+    Records into the process-wide `request_metrics` registry so the admin
+    observability endpoint can surface p50/p95/p99 + request count + error
+    rate per endpoint.
+
+    Hot-path cost: one `time.perf_counter()` pair, one deque append and two
+    int increments per request — no disk, no network, no blocking.
+
+    Route label = the matched path TEMPLATE (`/api/v1/home/bootstrap`), NOT
+    the raw path with ids. Starlette's router writes the matched `APIRoute`
+    onto `scope["route"]` during routing; since `scope` is a shared mutable
+    dict, it is populated by the time `self.app(...)` returns. Requests that
+    match no route (404s, OPTIONS preflight misses, mounted sub-apps) fall
+    back to a small set of fixed labels so they cannot explode cardinality.
+    """
+
+    # Pure-ASGI middleware is wrapped OUTSIDE the router, so it also sees
+    # requests to mounted sub-apps (/mcp, /static) — bucket those coarsely.
+    def __init__(self, app: ASGIApp):
+        self.app = app
+
+    def _route_label(self, scope: Scope) -> str:
+        route = scope.get("route")
+        if route is not None:
+            # APIRoute / Route expose `.path` = the template with {placeholders}.
+            path_format = getattr(route, "path_format", None) or getattr(route, "path", None)
+            if path_format:
+                return path_format
+        # No matched route — Mount sub-apps and 404s land here.
+        raw = scope.get("path", "") or ""
+        if raw.startswith("/mcp"):
+            return "<mcp>"
+        if raw.startswith("/static"):
+            return "<static>"
+        return "<unmatched>"
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send):
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+
+        start = time.perf_counter()
+        status_code = 500  # default if the app never sends a response.start
+
+        async def send_with_metrics(message):
+            nonlocal status_code
+            if message["type"] == "http.response.start":
+                status_code = message["status"]
+            await send(message)
+
+        try:
+            await self.app(scope, receive, send_with_metrics)
+        except Exception:
+            # Exception escaped downstream — record as a 500 then re-raise so
+            # the existing exception handlers still run.
+            duration_ms = (time.perf_counter() - start) * 1000
+            try:
+                _record_request_metric(self._route_label(scope), duration_ms, 500)
+            except Exception:
+                pass
+            raise
+        else:
+            duration_ms = (time.perf_counter() - start) * 1000
+            try:
+                _record_request_metric(self._route_label(scope), duration_ms, status_code)
+            except Exception:
+                # Metrics must never break a request.
+                pass
 
 
 async def _init_rag_service():
@@ -851,6 +928,12 @@ app.add_middleware(SecurityHeadersMiddleware)
 # Add SlowAPI middleware for rate limiting
 # This MUST be added for rate limiting to work properly
 app.add_middleware(SlowAPIMiddleware)
+
+# Add per-route metrics middleware (Phase D4 observability).
+# Added LAST => it is the OUTERMOST layer, so the latency it records is the
+# full server-side time the client experiences (incl. gzip, rate limiting,
+# logging). Pure-ASGI => negligible overhead, no TaskGroup, no SSE breakage.
+app.add_middleware(MetricsMiddleware)
 
 # Include API routes
 app.include_router(v1_router, prefix="/api")
