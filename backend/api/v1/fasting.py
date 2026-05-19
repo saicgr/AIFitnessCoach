@@ -320,7 +320,7 @@ def row_to_fasting_record(row: dict) -> FastingRecordResponse:
         notes=row.get("notes"),
         mood_before=row.get("mood_before"),
         mood_after=row.get("mood_after"),
-        energy_level=row.get("energy_level"),
+        energy_level=row.get("energy_level_after"),
         paused_at=row.get("paused_at"),
         accumulated_paused_seconds=row.get("accumulated_paused_seconds") or 0,
         created_at=row.get("created_at"),
@@ -599,7 +599,7 @@ async def end_fast(fast_id: str, data: EndFastRequest, http_request: Request, cu
             "completion_percentage": completion_percent,
             "notes": data.notes or fast.get("notes"),
             "mood_after": data.mood_after,
-            "energy_level": data.energy_level,
+            "energy_level_after": data.energy_level,
             "paused_at": None,  # clear any in-progress pause
             "accumulated_paused_seconds": paused_seconds,
             "updated_at": end_time.isoformat(),  # Use same timezone-aware datetime
@@ -709,7 +709,7 @@ async def get_active_fast(user_id: str, current_user: dict = Depends(get_current
 async def get_fasting_history(
     user_id: str,
     current_user: dict = Depends(get_current_user),
-    limit: int = Query(default=50, ge=1, le=200),
+    limit: int = Query(default=50, ge=1, le=1000),
     offset: int = Query(default=0, ge=0),
     from_date: Optional[str] = Query(None, description="Start date YYYY-MM-DD"),
     to_date: Optional[str] = Query(None, description="End date YYYY-MM-DD"),
@@ -757,7 +757,7 @@ async def update_fast_record(fast_id: str, data: UpdateFastRequest, current_user
         if data.mood_after is not None:
             update_data["mood_after"] = data.mood_after
         if data.energy_level is not None:
-            update_data["energy_level"] = data.energy_level
+            update_data["energy_level_after"] = data.energy_level
 
         result = db.client.table("fasting_records").update(update_data).eq(
             "id", fast_id
@@ -897,7 +897,7 @@ async def undo_end_fast(fast_id: str, data: UndoEndFastRequest, current_user: di
             "completed_goal": False,
             "completion_percentage": None,
             "mood_after": None,
-            "energy_level": None,
+            "energy_level_after": None,
             "updated_at": datetime.utcnow().isoformat(),
         }).eq("id", fast_id).execute()
 

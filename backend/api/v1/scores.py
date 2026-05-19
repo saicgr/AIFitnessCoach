@@ -962,8 +962,8 @@ async def calculate_strength_scores(
 @router.get("/personal-records", response_model=PRStatsResponse, tags=["Personal Records"])
 async def get_personal_records(
     user_id: str = Query(...),
-    limit: int = Query(10, ge=1, le=50),
-    period_days: int = Query(30, ge=1, le=365),
+    limit: int = Query(10, ge=1, le=500),
+    period_days: int = Query(30, ge=1, le=1825),
     current_user: dict = Depends(get_current_user),
 ):
     """Get personal records and statistics for a user."""

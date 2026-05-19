@@ -56,13 +56,13 @@ class ActivityDB(BaseDB):
         Returns:
             Activity record or None
         """
+        # SELECT * — row_to_activity_response picks the columns it needs and
+        # drops stale ones. Naming columns explicitly here drifted out of sync
+        # with the real schema (phantom `active_minutes`/`sleep_hours` → 42703;
+        # missing `synced_at`/`active_calories` → response-model 500s).
         result = (
             self.client.table("daily_activity")
-            .select(
-                "id, user_id, activity_date, steps, calories_burned, "
-                "distance_meters, active_minutes, resting_heart_rate, "
-                "avg_heart_rate, sleep_hours, source"
-            )
+            .select("*")
             .eq("user_id", user_id)
             .eq("activity_date", activity_date)
             .execute()
@@ -88,12 +88,12 @@ class ActivityDB(BaseDB):
         Returns:
             List of daily activity records
         """
+        # SELECT * — see get_daily_activity: an explicit column list drifted
+        # from the real schema and 500'd both on phantom columns and on
+        # required response-model fields it forgot to select.
         query = (
-            self.client.table("daily_activity").select(
-                "id, user_id, activity_date, steps, calories_burned, "
-                "distance_meters, active_minutes, resting_heart_rate, "
-                "avg_heart_rate, sleep_hours, source"
-            ).eq("user_id", user_id)
+            self.client.table("daily_activity").select("*")
+            .eq("user_id", user_id)
         )
 
         if from_date:

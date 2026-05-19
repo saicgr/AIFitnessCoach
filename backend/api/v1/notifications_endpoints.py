@@ -799,10 +799,10 @@ async def send_movement_reminders(
                 ).isoformat()
 
                 activity_response = supabase.client.table("daily_activity").select(
-                    "steps, hourly_steps"
+                    "steps, activity_date"
                 ).eq("user_id", user_id).gte(
-                    "date", today_start.split("T")[0]
-                ).order("date", desc=True).limit(1).execute()
+                    "activity_date", today_start.split("T")[0]
+                ).order("activity_date", desc=True).limit(1).execute()
 
                 if not activity_response.data:
                     # No activity data - might mean user hasn't synced or isn't using step tracking
@@ -811,8 +811,17 @@ async def send_movement_reminders(
 
                 activity = activity_response.data[0]
 
-                # Get hourly steps for current hour if available
+                # Per-hour step breakdown is not stored on daily_activity — the
+                # schema only carries a daily `steps` total. Without intra-day
+                # granularity we cannot determine whether the user is sedentary
+                # *right now*, so skip honestly rather than firing on a fake 0
+                # (which would flag every user as sedentary and spam reminders).
                 hourly_steps = activity.get("hourly_steps") or {}
+                if not hourly_steps:
+                    results["skipped_no_hourly_data"] = (
+                        results.get("skipped_no_hourly_data", 0) + 1
+                    )
+                    continue
                 current_hour_key = str(user_hour)
                 current_steps = hourly_steps.get(current_hour_key, 0)
 
@@ -913,8 +922,8 @@ async def get_movement_reminder_status(user_id: str,
         # Get today's activity
         today = datetime.utcnow().date().isoformat()
         activity_response = supabase.client.table("daily_activity").select(
-            "steps, hourly_steps"
-        ).eq("user_id", user_id).eq("date", today).limit(1).execute()
+            "steps, activity_date"
+        ).eq("user_id", user_id).eq("activity_date", today).limit(1).execute()
 
         current_hour = datetime.utcnow().hour
         current_hour_steps = 0
