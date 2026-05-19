@@ -51,6 +51,9 @@ class NutritionTour {
             tourId: id,
             tips: steps(),
             hasMainNavBar: true,
+            // Nutrition floats the Daily/Recipes/Patterns/Fuel tab pill
+            // above the main nav — reserve clearance so the card clears it.
+            extraBottomClearance: 72,
           ),
         ),
       );

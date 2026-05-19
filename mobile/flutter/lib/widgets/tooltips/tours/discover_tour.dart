@@ -60,6 +60,9 @@ class DiscoverTour {
             tourId: id,
             tips: steps(),
             hasMainNavBar: true,
+            // Discover floats the XP/Volume/Streaks board switcher above
+            // the main nav — reserve clearance so the card clears it.
+            extraBottomClearance: 72,
           ),
         ),
       );

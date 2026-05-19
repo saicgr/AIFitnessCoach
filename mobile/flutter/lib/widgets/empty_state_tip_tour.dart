@@ -75,6 +75,13 @@ class EmptyStateTipTour extends StatefulWidget {
   /// main nav bar.
   final bool hasMainNavBar;
 
+  /// Extra bottom clearance (pt) on top of [mainNavClearance], for screens
+  /// that float a SECOND control above the main nav — e.g. Discover's
+  /// XP/Volume/Streaks board switcher or Nutrition's Daily/Recipes/Patterns
+  /// tab pill. Without this the card's safe band extends under that pill and
+  /// the card visually collides with it.
+  final double extraBottomClearance;
+
   const EmptyStateTipTour({
     super.key,
     required this.tourId,
@@ -83,6 +90,7 @@ class EmptyStateTipTour extends StatefulWidget {
     this.alignment = Alignment.bottomCenter,
     this.padding = const EdgeInsets.fromLTRB(16, 0, 16, 24),
     this.hasMainNavBar = false,
+    this.extraBottomClearance = 0,
   });
 
   /// Height of the floating main navigation bar plus the gap between it and
@@ -382,7 +390,8 @@ class _EmptyStateTipTourState extends State<EmptyStateTipTour> {
         final topSafe = mq.padding.top + edgeMargin;
         final bottomSafe = mq.padding.bottom +
             edgeMargin +
-            (widget.hasMainNavBar ? EmptyStateTipTour.mainNavClearance : 0);
+            (widget.hasMainNavBar ? EmptyStateTipTour.mainNavClearance : 0) +
+            widget.extraBottomClearance;
         // Usable vertical band for the card.
         final safeTop = topSafe;
         final safeBottom = screenSize.height - bottomSafe;
@@ -678,9 +687,10 @@ class _TipCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final accent = isDark ? AppColors.cyan : AppColorsLight.cyan;
-    final bg = isDark
-        ? Colors.black.withValues(alpha: 0.78)
-        : Colors.white.withValues(alpha: 0.94);
+    // Fully opaque — the card sits over the dark tour scrim, so any
+    // translucency muddies the fill and hurts text contrast. Glass feel
+    // still comes from the BackdropFilter blur + shadow.
+    final bg = isDark ? const Color(0xFF1C1C1E) : Colors.white;
     final border = isDark
         ? Colors.white.withValues(alpha: 0.12)
         : Colors.black.withValues(alpha: 0.06);
