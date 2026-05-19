@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/cache/cache_first_mixin.dart';
+import '../../core/widgets/skeleton/skeleton.dart';
 import '../../data/services/api_client.dart';
 import '../../widgets/pill_app_bar.dart';
 
@@ -21,22 +23,74 @@ class WeeklyVolume {
   final Map<String, int> muscleVolumes;
   final bool wasDeload;
   const WeeklyVolume({required this.weekStart, required this.totalSets, this.muscleVolumes = const {}, this.wasDeload = false});
+
+  /// JSON round-trip helpers — used so the cache-first loader can persist the
+  /// computed weekly history (this is a screen-local model without codegen).
+  Map<String, dynamic> toJson() => {
+        'weekStart': weekStart.toIso8601String(),
+        'totalSets': totalSets,
+        'muscleVolumes': muscleVolumes,
+        'wasDeload': wasDeload,
+      };
+  factory WeeklyVolume.fromJson(Map<String, dynamic> json) => WeeklyVolume(
+        weekStart: DateTime.parse(json['weekStart'] as String),
+        totalSets: (json['totalSets'] as num).toInt(),
+        muscleVolumes: (json['muscleVolumes'] as Map).map(
+            (k, v) => MapEntry(k as String, (v as num).toInt())),
+        wasDeload: json['wasDeload'] as bool? ?? false,
+      );
 }
 
-class VolumeHistoryNotifier extends StateNotifier<VolumeHistoryState> {
+class VolumeHistoryNotifier extends StateNotifier<VolumeHistoryState>
+    with CacheFirstMixin {
   final Ref _ref;
   VolumeHistoryNotifier(this._ref) : super(const VolumeHistoryState());
 
+  /// Cache-first load: a valid disk blob renders the history instantly on a
+  /// cold start. The cache key embeds the muscle-group filter so per-muscle
+  /// views don't share a slot.
   Future<void> loadHistory({String? muscleGroup}) async {
-    state = state.copyWith(isLoading: true, error: null);
-    try {
-      final apiClient = _ref.read(apiClientProvider);
-      final userId = await apiClient.getUserId();
-      if (userId == null) {
-        state = state.copyWith(error: 'Not authenticated', isLoading: false);
-        return;
-      }
+    final apiClient = _ref.read(apiClientProvider);
+    final userId = await apiClient.getUserId();
+    if (userId == null) {
+      state = state.copyWith(error: 'Not authenticated', isLoading: false);
+      return;
+    }
 
+    if (state.history.isEmpty) {
+      state = state.copyWith(isLoading: true, error: null);
+    } else {
+      state = state.copyWith(error: null);
+    }
+
+    // Distinct cache slot per muscle-group filter (or 'all' for the unfiltered
+    // view) so switching the filter never reads stale cross-filter data.
+    final scope = muscleGroup ?? 'all';
+    await loadCacheFirst<List<WeeklyVolume>>(
+      cacheKey: 'volume_history_$scope',
+      userId: userId,
+      ttl: const Duration(hours: 6),
+      fetch: () => _fetchHistory(apiClient, userId, muscleGroup),
+      decode: (json) => (json['items'] as List<dynamic>)
+          .map((e) => WeeklyVolume.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      encode: (list) => {'items': list.map((w) => w.toJson()).toList()},
+      emit: (history, {required bool fromCache}) {
+        state = state.copyWith(history: history, isLoading: false);
+      },
+      onError: (e, _) {
+        state = state.copyWith(
+          isLoading: false,
+          error: state.history.isEmpty ? e.toString() : null,
+        );
+      },
+    );
+  }
+
+  /// Fetches and aggregates the weekly volume history. Throws on failure
+  /// (routed to [loadCacheFirst]'s onError).
+  Future<List<WeeklyVolume>> _fetchHistory(
+      ApiClient apiClient, String userId, String? muscleGroup) async {
       final queryParams = <String, dynamic>{'weeks': 8};
       if (muscleGroup != null) {
         queryParams['muscle_group'] = muscleGroup;
@@ -80,11 +134,7 @@ class VolumeHistoryNotifier extends StateNotifier<VolumeHistoryState> {
         );
       }).toList();
       history.sort((a, b) => b.weekStart.compareTo(a.weekStart));
-
-      state = state.copyWith(history: history, isLoading: false);
-    } catch (e) {
-      state = state.copyWith(error: e.toString(), isLoading: false);
-    }
+      return history;
   }
 }
 
@@ -115,7 +165,15 @@ class _VolumeHistoryScreenState extends ConsumerState<VolumeHistoryScreen> {
   }
 
   Widget _buildContent(bool d, Color tp, Color tm, Color el, VolumeHistoryState st) {
-    if (st.isLoading) return const Center(child: CircularProgressIndicator());
+    if (st.isLoading && st.history.isEmpty) {
+      // Layout-matched skeleton — a stack of week cards (~118pt tall each).
+      return ListView.separated(
+        padding: const EdgeInsets.all(16),
+        itemCount: 6,
+        separatorBuilder: (_, __) => const SizedBox(height: 12),
+        itemBuilder: (_, __) => const SkeletonBox(height: 118, radius: 16),
+      );
+    }
     if (st.error != null) return Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.error_outline, color: AppColors.error, size: 48), const SizedBox(height: 16), Text('Failed to load', style: TextStyle(color: tm)), TextButton(onPressed: () => ref.read(volumeHistoryProvider.notifier).loadHistory(muscleGroup: widget.initialMuscleGroup), child: const Text('Retry'))]));
     if (st.history.isEmpty) return Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.history, color: tm, size: 48), const SizedBox(height: 16), Text('No history yet', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: tp)), const SizedBox(height: 8), Text('Complete workouts to see volume trends', style: TextStyle(color: tm))]));
     return RefreshIndicator(onRefresh: () => ref.read(volumeHistoryProvider.notifier).loadHistory(muscleGroup: widget.initialMuscleGroup), child: ListView.separated(padding: const EdgeInsets.all(16), itemCount: st.history.length, separatorBuilder: (_, __) => const SizedBox(height: 12), itemBuilder: (c, i) => _buildWeekCard(st.history[i], d, tp, tm, el)));

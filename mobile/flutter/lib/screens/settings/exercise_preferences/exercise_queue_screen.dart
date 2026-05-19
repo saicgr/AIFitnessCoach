@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/providers/exercise_queue_provider.dart';
+import '../../../core/widgets/skeleton/skeleton.dart';
 import '../../../data/repositories/exercise_preferences_repository.dart';
 import '../../../widgets/pill_app_bar.dart';
 import 'widgets/exercise_picker_sheet.dart';
@@ -63,7 +64,9 @@ class ExerciseQueueScreen extends ConsumerWidget {
     final activeQueue = queueState.activeQueue;
 
     final body = queueState.isLoading
-        ? const Center(child: CircularProgressIndicator())
+        // Cache-first: layout-matched skeleton on the cold first load only;
+        // re-opens render instantly from the retained app-scoped provider.
+        ? _buildSkeleton()
         : activeQueue.isEmpty
             ? _buildEmptyState(context, ref, textMuted)
             : _buildQueueList(
@@ -105,6 +108,27 @@ class ExerciseQueueScreen extends ConsumerWidget {
         ],
       ),
       body: body,
+    );
+  }
+
+  /// Layout-matched skeleton for the cold first load. Mirrors the info banner
+  /// + reorderable list-tile rows so the swap to content does not reflow.
+  Widget _buildSkeleton() {
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(16),
+          child: SkeletonBox(height: 56, radius: 12),
+        ),
+        Expanded(
+          child: SkeletonList(
+            scrollable: true,
+            itemCount: 5,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            itemBuilder: (_, __) => const SkeletonCard(leadingSize: 44),
+          ),
+        ),
+      ],
     );
   }
 

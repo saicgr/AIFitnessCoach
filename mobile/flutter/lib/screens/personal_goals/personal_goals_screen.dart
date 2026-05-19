@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/goal_unit.dart';
-import '../../widgets/app_loading.dart';
+import '../../core/widgets/skeleton/skeleton.dart';
 import '../../widgets/app_snackbar.dart';
 import '../../widgets/glass_sheet.dart';
 import '../../data/services/api_client.dart';
+import '../../data/services/data_cache_service.dart';
 import '../../data/services/personal_goals_service.dart';
 import '../../data/providers/goal_suggestions_provider.dart';
 import 'widgets/goal_card.dart';
@@ -34,6 +35,10 @@ class _PersonalGoalsScreenState extends ConsumerState<PersonalGoalsScreen> {
   bool _isLoading = true;
   String? _error;
 
+  /// SharedPreferences slots for the cached weekly-goals + records payloads.
+  static const _goalsCacheKey = 'cache_personal_goals';
+  static const _recordsCacheKey = 'cache_personal_records';
+
   @override
   void initState() {
     super.initState();
@@ -55,30 +60,65 @@ class _PersonalGoalsScreenState extends ConsumerState<PersonalGoalsScreen> {
     }
   }
 
+  /// Cache-first load (Part-1 instant-load standard):
+  /// 1. Hydrate goals + records from disk and render them immediately so a
+  ///    cold start shows the user's real data on first frame (no spinner).
+  /// 2. Revalidate over the network in parallel and write-through-persist.
+  /// A network failure with a cache hit keeps the cached data visible.
   Future<void> _loadData() async {
-    setState(() {
-      _isLoading = true;
-      _error = null;
-    });
+    final userId = _userId;
+    if (userId == null) return;
 
+    // ---- Step 1: disk cache -------------------------------------------------
     try {
-      final goals = await _goalsService.getCurrentGoals(userId: _userId!);
-      final records = await _goalsService.getPersonalRecords(userId: _userId!);
+      final cachedGoals = await DataCacheService.instance
+          .getCached(_goalsCacheKey, userId: userId);
+      final cachedRecords = await DataCacheService.instance
+          .getCached(_recordsCacheKey, userId: userId);
+      if (cachedGoals != null && mounted) {
+        setState(() {
+          _goalsData = cachedGoals;
+          _recordsData = cachedRecords;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('🎯 [PersonalGoals] cache read failed: $e');
+    }
+
+    if (mounted && _isLoading) {
+      setState(() => _error = null);
+    }
+
+    // ---- Step 2: network revalidate (parallel) ------------------------------
+    try {
+      final results = await Future.wait([
+        _goalsService.getCurrentGoals(userId: userId),
+        _goalsService.getPersonalRecords(userId: userId),
+      ]);
+      final goals = results[0];
+      final records = results[1];
 
       if (mounted) {
         setState(() {
           _goalsData = goals;
           _recordsData = records;
           _isLoading = false;
+          _error = null;
         });
       }
+      // Write-through so the next cold start is instant.
+      await DataCacheService.instance.cache(_goalsCacheKey, goals, userId: userId);
+      await DataCacheService.instance
+          .cache(_recordsCacheKey, records, userId: userId);
     } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-          _error = e.toString();
-        });
-      }
+      if (!mounted) return;
+      // Keep cached data visible on a network failure; only escalate to the
+      // error view when nothing was rendered (cold-cache path).
+      setState(() {
+        _isLoading = false;
+        if (_goalsData == null) _error = e.toString();
+      });
     }
   }
 
@@ -289,7 +329,8 @@ class _PersonalGoalsScreenState extends ConsumerState<PersonalGoalsScreen> {
         actions: [PillAppBarAction(icon: Icons.refresh, onTap: _loadData)],
       ),
       body: _isLoading
-          ? AppLoading.fullScreen()
+          // Layout-matched skeleton — only on a true cold-cache first open.
+          ? _buildSkeleton()
           : _error != null
               ? _buildErrorState()
               : _buildContent(textPrimary, textSecondary),
@@ -302,6 +343,25 @@ class _PersonalGoalsScreenState extends ConsumerState<PersonalGoalsScreen> {
               icon: const Icon(Icons.add),
               label: const Text('New Goal'),
             ),
+    );
+  }
+
+  /// Loading placeholder mirroring the summary card + goal-card stack so the
+  /// skeleton → content cross-fade doesn't reflow.
+  Widget _buildSkeleton() {
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: const [
+        SkeletonBox(height: 88, radius: 16), // summary card
+        SizedBox(height: 24),
+        SkeletonBox(width: 120, height: 18), // "This Week" heading
+        SizedBox(height: 12),
+        SkeletonCard(showLeading: false, lines: 3, height: 130),
+        SizedBox(height: 12),
+        SkeletonCard(showLeading: false, lines: 3, height: 130),
+        SizedBox(height: 12),
+        SkeletonCard(showLeading: false, lines: 3, height: 130),
+      ],
     );
   }
 

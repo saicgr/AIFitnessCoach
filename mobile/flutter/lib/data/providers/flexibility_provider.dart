@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/cache/cache_first_mixin.dart';
 import '../models/flexibility_assessment.dart';
 import '../repositories/flexibility_repository.dart';
 
@@ -92,7 +93,8 @@ class FlexibilityState {
 // State Notifier
 // ============================================
 
-class FlexibilityNotifier extends StateNotifier<FlexibilityState> {
+class FlexibilityNotifier extends StateNotifier<FlexibilityState>
+    with CacheFirstMixin {
   final FlexibilityRepository _repository;
   String? _currentUserId;
 
@@ -103,24 +105,47 @@ class FlexibilityNotifier extends StateNotifier<FlexibilityState> {
     _currentUserId = userId;
   }
 
-  /// Load all flexibility tests
+  /// Load all flexibility tests — cache-first.
+  ///
+  /// The test catalogue is global reference data that changes rarely, so it is
+  /// stored under a global slot with a long TTL. A valid disk blob renders the
+  /// All-Tests tab instantly on a cold start.
   Future<void> loadTests() async {
-    state = state.copyWith(isLoading: true, clearError: true);
-
-    try {
-      final tests = await _repository.getFlexibilityTests();
-      state = state.copyWith(isLoading: false, tests: tests);
-      debugPrint('Loaded ${tests.length} flexibility tests');
-    } catch (e) {
-      debugPrint('Error loading flexibility tests: $e');
-      state = state.copyWith(
-        isLoading: false,
-        error: 'Failed to load flexibility tests: $e',
-      );
+    // Only block on the loading flag when there is genuinely nothing to show.
+    if (state.tests.isEmpty) {
+      state = state.copyWith(isLoading: true, clearError: true);
+    } else {
+      state = state.copyWith(clearError: true);
     }
+
+    await loadCacheFirst<List<FlexibilityTest>>(
+      cacheKey: 'flexibility_tests',
+      // Global reference data — no user scoping. The mixin tolerates an empty
+      // userId by sharing a single global slot, which is exactly right here.
+      userId: '',
+      ttl: const Duration(days: 7),
+      fetch: () => _repository.getFlexibilityTests(),
+      decode: (json) => (json['items'] as List<dynamic>)
+          .map((e) => FlexibilityTest.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      encode: (tests) => {'items': tests.map((t) => t.toJson()).toList()},
+      emit: (tests, {required bool fromCache}) {
+        state = state.copyWith(isLoading: false, tests: tests);
+      },
+      onError: (e, _) {
+        if (state.tests.isEmpty) {
+          state = state.copyWith(
+            isLoading: false,
+            error: 'Failed to load flexibility tests: $e',
+          );
+        } else {
+          state = state.copyWith(isLoading: false);
+        }
+      },
+    );
   }
 
-  /// Load user's latest assessments
+  /// Load user's latest assessments — cache-first.
   Future<void> loadLatestAssessments({String? userId}) async {
     final uid = userId ?? _currentUserId;
     if (uid == null) {
@@ -129,45 +154,69 @@ class FlexibilityNotifier extends StateNotifier<FlexibilityState> {
     }
     _currentUserId = uid;
 
-    state = state.copyWith(isLoading: true, clearError: true);
-
-    try {
-      final assessments = await _repository.getLatestAssessments(uid);
-      final latestMap = <String, FlexibilityAssessment>{};
-      for (final a in assessments) {
-        latestMap[a.testType] = a;
-      }
-
-      state = state.copyWith(
-        isLoading: false,
-        latestAssessments: latestMap,
-      );
-      debugPrint('Loaded ${assessments.length} latest assessments');
-    } catch (e) {
-      debugPrint('Error loading latest assessments: $e');
-      state = state.copyWith(
-        isLoading: false,
-        error: 'Failed to load assessments: $e',
-      );
+    if (state.latestAssessments.isEmpty) {
+      state = state.copyWith(isLoading: true, clearError: true);
+    } else {
+      state = state.copyWith(clearError: true);
     }
+
+    await loadCacheFirst<Map<String, FlexibilityAssessment>>(
+      cacheKey: 'flexibility_latest_assessments',
+      userId: uid,
+      ttl: const Duration(hours: 12),
+      fetch: () async {
+        final assessments = await _repository.getLatestAssessments(uid);
+        final latestMap = <String, FlexibilityAssessment>{};
+        for (final a in assessments) {
+          latestMap[a.testType] = a;
+        }
+        return latestMap;
+      },
+      decode: (json) => (json['items'] as Map<String, dynamic>).map(
+          (k, v) => MapEntry(
+              k, FlexibilityAssessment.fromJson(v as Map<String, dynamic>))),
+      encode: (map) =>
+          {'items': map.map((k, v) => MapEntry(k, v.toJson()))},
+      emit: (latestMap, {required bool fromCache}) {
+        state = state.copyWith(isLoading: false, latestAssessments: latestMap);
+      },
+      onError: (e, _) {
+        if (state.latestAssessments.isEmpty) {
+          state = state.copyWith(
+            isLoading: false,
+            error: 'Failed to load assessments: $e',
+          );
+        } else {
+          state = state.copyWith(isLoading: false);
+        }
+      },
+    );
   }
 
-  /// Load user's flexibility summary
+  /// Load user's flexibility summary — cache-first.
   Future<void> loadSummary({String? userId}) async {
     final uid = userId ?? _currentUserId;
     if (uid == null) return;
     _currentUserId = uid;
 
-    try {
-      final summary = await _repository.getSummary(uid);
-      state = state.copyWith(summary: summary);
-      debugPrint('Loaded flexibility summary: ${summary.overallScore}');
-    } catch (e) {
-      debugPrint('Error loading summary: $e');
-    }
+    await loadCacheFirst<FlexibilitySummary>(
+      cacheKey: 'flexibility_summary',
+      userId: uid,
+      ttl: const Duration(hours: 12),
+      fetch: () => _repository.getSummary(uid),
+      decode: FlexibilitySummary.fromJson,
+      encode: (s) => s.toJson(),
+      emit: (summary, {required bool fromCache}) {
+        state = state.copyWith(summary: summary);
+      },
+      // Summary is non-critical — errors stay silent (matches prior behaviour).
+    );
   }
 
-  /// Load assessment history for a specific test type
+  /// Load assessment history for a specific test type — cache-first.
+  ///
+  /// The cache slot is keyed by the test-type filter (or 'all' for the
+  /// unfiltered history) so per-test views never share a slot.
   Future<void> loadAssessmentHistory({
     String? userId,
     String? testType,
@@ -178,28 +227,41 @@ class FlexibilityNotifier extends StateNotifier<FlexibilityState> {
     if (uid == null) return;
     _currentUserId = uid;
 
-    state = state.copyWith(isLoading: true, clearError: true);
+    if (state.assessmentHistory.isEmpty) {
+      state = state.copyWith(isLoading: true, clearError: true);
+    } else {
+      state = state.copyWith(clearError: true);
+    }
 
-    try {
-      final history = await _repository.getAssessmentHistory(
+    await loadCacheFirst<List<FlexibilityAssessment>>(
+      cacheKey: 'flexibility_history_${testType ?? 'all'}',
+      userId: uid,
+      ttl: const Duration(hours: 12),
+      fetch: () => _repository.getAssessmentHistory(
         userId: uid,
         testType: testType,
         limit: limit,
         days: days,
-      );
-
-      state = state.copyWith(
-        isLoading: false,
-        assessmentHistory: history,
-      );
-      debugPrint('Loaded ${history.length} assessment history records');
-    } catch (e) {
-      debugPrint('Error loading assessment history: $e');
-      state = state.copyWith(
-        isLoading: false,
-        error: 'Failed to load history: $e',
-      );
-    }
+      ),
+      decode: (json) => (json['items'] as List<dynamic>)
+          .map((e) =>
+              FlexibilityAssessment.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      encode: (list) => {'items': list.map((a) => a.toJson()).toList()},
+      emit: (history, {required bool fromCache}) {
+        state = state.copyWith(isLoading: false, assessmentHistory: history);
+      },
+      onError: (e, _) {
+        if (state.assessmentHistory.isEmpty) {
+          state = state.copyWith(
+            isLoading: false,
+            error: 'Failed to load history: $e',
+          );
+        } else {
+          state = state.copyWith(isLoading: false);
+        }
+      },
+    );
   }
 
   /// Record a new assessment
@@ -295,19 +357,27 @@ class FlexibilityNotifier extends StateNotifier<FlexibilityState> {
     }
   }
 
-  /// Load stretch plans for user
+  /// Load stretch plans for user — cache-first.
   Future<void> loadStretchPlans({String? userId}) async {
     final uid = userId ?? _currentUserId;
     if (uid == null) return;
     _currentUserId = uid;
 
-    try {
-      final plans = await _repository.getStretchPlans(uid);
-      state = state.copyWith(stretchPlans: plans);
-      debugPrint('Loaded ${plans.length} stretch plans');
-    } catch (e) {
-      debugPrint('Error loading stretch plans: $e');
-    }
+    await loadCacheFirst<List<FlexibilityStretchPlan>>(
+      cacheKey: 'flexibility_stretch_plans',
+      userId: uid,
+      ttl: const Duration(hours: 12),
+      fetch: () => _repository.getStretchPlans(uid),
+      decode: (json) => (json['items'] as List<dynamic>)
+          .map((e) =>
+              FlexibilityStretchPlan.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      encode: (list) => {'items': list.map((p) => p.toJson()).toList()},
+      emit: (plans, {required bool fromCache}) {
+        state = state.copyWith(stretchPlans: plans);
+      },
+      // Stretch plans are non-critical — errors stay silent (matches prior).
+    );
   }
 
   /// Select a specific test for detailed view

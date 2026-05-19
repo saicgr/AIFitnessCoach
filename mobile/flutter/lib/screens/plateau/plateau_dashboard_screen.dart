@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/cache/cache_first_mixin.dart';
+import '../../core/widgets/skeleton/skeleton.dart';
 import '../../data/services/api_client.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../widgets/pill_app_bar.dart';
@@ -35,29 +37,52 @@ class PlateauDashboardState {
       );
 }
 
-class PlateauDashboardNotifier extends StateNotifier<PlateauDashboardState> {
+class PlateauDashboardNotifier extends StateNotifier<PlateauDashboardState>
+    with CacheFirstMixin {
   final Ref _ref;
 
   PlateauDashboardNotifier(this._ref)
       : super(const PlateauDashboardState());
 
+  /// Cache-first load: a valid disk blob renders the dashboard instantly on a
+  /// cold start; the network revalidate then swaps in fresh data silently.
   Future<void> loadData() async {
-    state = state.copyWith(isLoading: true, error: null);
-    try {
-      final apiClient = _ref.read(apiClientProvider);
-      final authState = _ref.read(authStateProvider);
-      final userId = authState.user?.id;
-      if (userId == null) {
-        state = state.copyWith(error: 'Not authenticated', isLoading: false);
-        return;
-      }
-
-      final response = await apiClient.get('/plateau/$userId/dashboard');
-      final data = response.data as Map<String, dynamic>;
-      state = state.copyWith(data: data, isLoading: false);
-    } catch (e) {
-      state = state.copyWith(error: e.toString(), isLoading: false);
+    final apiClient = _ref.read(apiClientProvider);
+    final authState = _ref.read(authStateProvider);
+    final userId = authState.user?.id;
+    if (userId == null) {
+      state = state.copyWith(error: 'Not authenticated', isLoading: false);
+      return;
     }
+
+    // Skeleton only when nothing is cached yet — returning users skip it.
+    if (state.data == null) {
+      state = state.copyWith(isLoading: true, error: null);
+    } else {
+      state = state.copyWith(error: null);
+    }
+
+    await loadCacheFirst<Map<String, dynamic>>(
+      cacheKey: 'plateau_dashboard',
+      userId: userId,
+      ttl: const Duration(hours: 6),
+      fetch: () async {
+        final response = await apiClient.get('/plateau/$userId/dashboard');
+        return response.data as Map<String, dynamic>;
+      },
+      // The dashboard payload is already a JSON map — store/restore as-is.
+      decode: (json) => json,
+      encode: (data) => data,
+      emit: (data, {required bool fromCache}) {
+        state = state.copyWith(data: data, isLoading: false);
+      },
+      onError: (e, _) {
+        state = state.copyWith(
+          isLoading: false,
+          error: state.data == null ? e.toString() : null,
+        );
+      },
+    );
   }
 }
 
@@ -91,8 +116,8 @@ class _PlateauDashboardScreenState
       appBar: const PillAppBar(
         title: 'Plateau Detection',
       ),
-      body: state.isLoading
-          ? const Center(child: CircularProgressIndicator())
+      body: state.isLoading && state.data == null
+          ? _buildSkeleton(colorScheme)
           : state.error != null
               ? _buildErrorState(colorScheme, state.error!)
               : state.data == null
@@ -151,6 +176,30 @@ class _PlateauDashboardScreenState
                         ),
                       ),
                     ),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Loading Skeleton
+  // ---------------------------------------------------------------------------
+
+  /// Layout-matched skeleton: a tall hero (overall status card) followed by a
+  /// short stack of plateau/recommendation cards, so the skeleton→content swap
+  /// does not reflow the scroll view.
+  Widget _buildSkeleton(ColorScheme colorScheme) {
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: const [
+        SkeletonBox(height: 150, radius: 20),
+        SizedBox(height: 20),
+        SkeletonBox(width: 180, height: 18),
+        SizedBox(height: 12),
+        SkeletonBox(height: 96, radius: 16),
+        SizedBox(height: 12),
+        SkeletonBox(height: 96, radius: 16),
+        SizedBox(height: 20),
+        SkeletonBox(height: 110, radius: 16),
+      ],
     );
   }
 

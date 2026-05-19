@@ -3,10 +3,12 @@ import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/widgets/skeleton/skeleton.dart';
 import '../../widgets/app_snackbar.dart';
 import '../../data/models/custom_goal.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/services/api_client.dart';
+import '../../data/services/data_cache_service.dart';
 import '../../widgets/app_dialog.dart';
 import '../../core/services/posthog_service.dart';
 import '../../widgets/pill_app_bar.dart';
@@ -43,6 +45,10 @@ class _CustomGoalsScreenState extends ConsumerState<CustomGoalsScreen> {
   bool _isCreating = false;
   String? _error;
 
+  /// SharedPreferences slot for the cached custom-goal list. User-scoped so
+  /// two accounts on one device never share goals.
+  static const _cacheKey = 'cache_custom_goals';
+
   @override
   void initState() {
     super.initState();
@@ -59,35 +65,83 @@ class _CustomGoalsScreenState extends ConsumerState<CustomGoalsScreen> {
     super.dispose();
   }
 
+  /// Cache-first load (Part-1 instant-load standard):
+  /// 1. Read the persisted goal list off disk and render it immediately, so a
+  ///    cold start shows the user's real goals on first frame — no spinner.
+  /// 2. Revalidate over the network and write the fresh list through to disk.
+  /// A network failure with a cache hit keeps the cached list on screen; only a
+  /// cold-cache failure surfaces the error state.
   Future<void> _loadGoals() async {
     final authState = ref.read(authStateProvider);
-    if (authState.user == null) return;
+    final userId = authState.user?.id;
+    if (userId == null) return;
 
-    setState(() {
-      _isLoading = true;
-      _error = null;
-    });
+    // ---- Step 1: disk cache -------------------------------------------------
+    try {
+      final cached = await DataCacheService.instance
+          .getCachedList(_cacheKey, userId: userId);
+      if (cached != null && mounted) {
+        setState(() {
+          _goals = cached.map(CustomGoal.fromJson).toList();
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('🎯 [CustomGoals] cache read failed: $e');
+    }
+
+    // ---- Step 2: network revalidate ----------------------------------------
+    // Only show the loading state if we have nothing cached to display.
+    if (mounted && _isLoading) {
+      setState(() => _error = null);
+    }
 
     try {
       final apiClient = ref.read(apiClientProvider);
-      final response = await apiClient.get(
-        '/custom-goals/${authState.user!.id}',
-      );
+      final response = await apiClient.get('/custom-goals/$userId');
 
       final data = response.data;
       if (data != null && data is List) {
+        final maps = data.cast<Map<String, dynamic>>();
+        if (mounted) {
+          setState(() {
+            _goals = maps.map(CustomGoal.fromJson).toList();
+            _isLoading = false;
+            _error = null;
+          });
+        }
+        // Write-through so the next cold start is instant.
+        await DataCacheService.instance.cacheList(_cacheKey, maps, userId: userId);
+      } else if (mounted) {
         setState(() {
-          _goals = data.map<CustomGoal>((g) => CustomGoal.fromJson(g)).toList();
           _isLoading = false;
         });
-      } else {
-        setState(() => _isLoading = false);
       }
     } catch (e) {
+      if (!mounted) return;
+      // Keep the cached list visible on a network failure; only the cold-cache
+      // path (still loading, nothing rendered) escalates to the error view.
       setState(() {
-        _error = 'Failed to load goals: $e';
         _isLoading = false;
+        if (_goals.isEmpty) _error = 'Failed to load goals: $e';
       });
+    }
+  }
+
+  /// Write the current in-memory goal list through to the disk cache so a
+  /// cold start reflects local mutations (create/delete/priority) instantly.
+  /// Best-effort — a cache write failure never blocks the UI.
+  Future<void> _persistGoals() async {
+    final userId = ref.read(authStateProvider).user?.id;
+    if (userId == null) return;
+    try {
+      await DataCacheService.instance.cacheList(
+        _cacheKey,
+        _goals.map((g) => g.toJson()).toList(),
+        userId: userId,
+      );
+    } catch (e) {
+      debugPrint('🎯 [CustomGoals] cache write failed: $e');
     }
   }
 
@@ -122,6 +176,8 @@ class _CustomGoalsScreenState extends ConsumerState<CustomGoalsScreen> {
           _goals.insert(0, newGoal);
           _goalController.clear();
         });
+        // Keep the disk cache in sync so a restart shows the new goal.
+        _persistGoals();
 
         // Show success with keywords preview
         if (mounted) {
@@ -272,6 +328,7 @@ class _CustomGoalsScreenState extends ConsumerState<CustomGoalsScreen> {
       setState(() {
         _goals.removeWhere((g) => g.id == goal.id);
       });
+      _persistGoals(); // keep disk cache in sync
 
       if (mounted) {
         AppSnackBar.success(context, 'Goal deleted');
@@ -299,6 +356,7 @@ class _CustomGoalsScreenState extends ConsumerState<CustomGoalsScreen> {
           _goals.sort((a, b) => b.priority.compareTo(a.priority));
         }
       });
+      _persistGoals(); // keep disk cache in sync
     } catch (e) {
       if (mounted) {
         AppSnackBar.error(context, 'Failed to update priority: $e');
@@ -318,12 +376,11 @@ class _CustomGoalsScreenState extends ConsumerState<CustomGoalsScreen> {
           // Input section
           _buildInputSection(),
 
-          // Goals list
+          // Goals list — layout-matched skeleton on a true cold-cache first
+          // open; returning users render their cached goals instantly.
           Expanded(
             child: _isLoading
-                ? const Center(
-                    child: CircularProgressIndicator(color: AppColors.cyan),
-                  )
+                ? _buildSkeleton()
                 : _error != null
                     ? _buildErrorState()
                     : _goals.isEmpty
@@ -442,6 +499,20 @@ class _CustomGoalsScreenState extends ConsumerState<CustomGoalsScreen> {
           ],
         ],
       ),
+    );
+  }
+
+  /// Card-shaped skeleton matching [_GoalCard]'s rough height.
+  Widget _buildSkeleton() {
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: const [
+        SkeletonCard(showLeading: false, lines: 3, height: 150),
+        SizedBox(height: 12),
+        SkeletonCard(showLeading: false, lines: 3, height: 150),
+        SizedBox(height: 12),
+        SkeletonCard(showLeading: false, lines: 3, height: 150),
+      ],
     );
   }
 

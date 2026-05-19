@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/providers/custom_exercises_provider.dart';
+import '../../../core/widgets/skeleton/skeleton.dart';
 import '../../../data/models/custom_exercise.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../widgets/glass_sheet.dart';
@@ -506,7 +507,14 @@ class _CustomTabState extends ConsumerState<_CustomTab>
     });
 
     if (state.isLoading && state.exercises.isEmpty) {
-      return const Center(child: CircularProgressIndicator());
+      // Cache-first: layout-matched skeleton on the cold first load only.
+      // The provider stays alive app-wide so subsequent opens render instantly.
+      return SkeletonList(
+        scrollable: true,
+        itemCount: 5,
+        padding: const EdgeInsets.all(16),
+        itemBuilder: (_, __) => const SkeletonCard(height: 96, lines: 3),
+      );
     }
 
     if (state.exercises.isEmpty) {

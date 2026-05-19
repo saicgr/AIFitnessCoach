@@ -6,9 +6,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/accent_color_provider.dart';
+import '../../../core/widgets/skeleton/skeleton.dart';
 import '../../../data/models/grocery_list.dart';
 import '../../../data/providers/recipe_providers.dart';
 import '../../../data/repositories/recipe_repository.dart';
+import '../../../data/services/data_cache_service.dart';
 import '../../../widgets/glass_back_button.dart';
 import '../../../widgets/nav_bar_hider_mixin.dart';
 import 'grocery_list_screen.dart';
@@ -23,6 +25,59 @@ class GroceryListsIndexScreen extends ConsumerStatefulWidget {
 
 class _GroceryListsIndexScreenState extends ConsumerState<GroceryListsIndexScreen>
     with NavBarHiderMixin {
+  /// Disk-cached list summaries, hydrated in [initState] so a cold start
+  /// renders the user's real grocery lists on first frame instead of a
+  /// spinner. The keep-alive `groceryListsProvider` then revalidates (SWR).
+  List<GroceryListSummary>? _cachedLists;
+
+  /// SharedPreferences slot for the cached list-index payload.
+  static const _cacheKey = 'cache_grocery_lists';
+
+  @override
+  void initState() {
+    super.initState();
+    _hydrateFromCache();
+  }
+
+  /// Read the persisted list summaries off disk (instant, no network).
+  Future<void> _hydrateFromCache() async {
+    try {
+      final cached = await DataCacheService.instance
+          .getCachedList(_cacheKey, userId: widget.userId);
+      if (cached != null && mounted) {
+        setState(() {
+          _cachedLists = cached.map(GroceryListSummary.fromJson).toList();
+        });
+      }
+    } catch (e) {
+      debugPrint('🛒 [GroceryLists] cache read failed: $e');
+    }
+  }
+
+  /// Write fresh summaries through to disk so the next cold start is instant.
+  /// `GroceryListSummary` has no `toJson`, so we re-emit the exact snake_case
+  /// shape `GroceryListSummary.fromJson` expects.
+  Future<void> _persistToCache(List<GroceryListSummary> lists) async {
+    try {
+      await DataCacheService.instance.cacheList(
+        _cacheKey,
+        lists
+            .map((l) => <String, dynamic>{
+                  'id': l.id,
+                  'name': l.name,
+                  'item_count': l.itemCount,
+                  'checked_count': l.checkedCount,
+                  'meal_plan_id': l.mealPlanId,
+                  'source_recipe_id': l.sourceRecipeId,
+                  'created_at': l.createdAt.toIso8601String(),
+                })
+            .toList(),
+        userId: widget.userId,
+      );
+    } catch (e) {
+      debugPrint('🛒 [GroceryLists] cache write failed: $e');
+    }
+  }
 
   Future<void> _createManualList(String userId, bool isDark) async {
     final nameController = TextEditingController();
@@ -108,13 +163,19 @@ class _GroceryListsIndexScreenState extends ConsumerState<GroceryListsIndexScree
           ),
           const SizedBox(height: 8),
           Expanded(
-            // Stale-while-refresh: render cached lists immediately if we
-            // have them (tab re-entry hits the keep-alive cache); spinner
-            // only flashes on the very first ever load for this user.
+            // Cache-first SWR: fresh network data wins; otherwise the
+            // disk-cached lists render instantly on cold start; the skeleton
+            // shows only when neither exists (genuine first-ever open).
             child: Builder(builder: (_) {
-              final cached = asyncLists.valueOrNull;
-              if (cached != null) {
-                return _buildListsBody(context, cached, text, muted, surface, accent);
+              final fresh = asyncLists.valueOrNull;
+              if (fresh != null) {
+                // Persist fresh data for the next cold start.
+                _persistToCache(fresh);
+                return _buildListsBody(context, fresh, text, muted, surface, accent);
+              }
+              if (_cachedLists != null) {
+                return _buildListsBody(
+                    context, _cachedLists!, text, muted, surface, accent);
               }
               if (asyncLists.hasError) {
                 return Center(
@@ -126,7 +187,7 @@ class _GroceryListsIndexScreenState extends ConsumerState<GroceryListsIndexScree
                   ),
                 );
               }
-              return const Center(child: CircularProgressIndicator());
+              return const _GroceryListsSkeleton();
             }),
           ),
         ],
@@ -192,6 +253,22 @@ class _GroceryListsIndexScreenState extends ConsumerState<GroceryListsIndexScree
           ),
         );
       },
+    );
+  }
+}
+
+/// Layout-matched loading placeholder for the grocery-list index. Mirrors the
+/// ListTile row shape so the skeleton → content cross-fade doesn't reflow.
+/// Shown only on a genuine first-ever open (no cache, no network yet).
+class _GroceryListsSkeleton extends StatelessWidget {
+  const _GroceryListsSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return const SkeletonList(
+      itemCount: 6,
+      spacing: 8,
+      padding: EdgeInsets.fromLTRB(16, 0, 16, 80),
     );
   }
 }

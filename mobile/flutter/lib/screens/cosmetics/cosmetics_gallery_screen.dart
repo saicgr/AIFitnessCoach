@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/accent_color_provider.dart';
+import '../../core/widgets/skeleton/skeleton.dart';
 import '../../data/models/cosmetic.dart';
 import '../../data/providers/cosmetics_provider.dart';
 import '../../data/providers/xp_provider.dart';
@@ -88,9 +89,9 @@ class _CosmeticsGalleryScreenState extends ConsumerState<CosmeticsGalleryScreen>
                   ),
                 ),
                 if (state.loading && state.catalog.isEmpty)
-                  const SliverFillRemaining(
-                    child: Center(child: CircularProgressIndicator()),
-                  )
+                  // Layout-matched skeleton — only on a true cold-cache first
+                  // open; returning users get cached cosmetics instantly.
+                  const SliverToBoxAdapter(child: _CosmeticsSkeleton())
                 else if (state.error != null && state.catalog.isEmpty)
                   SliverFillRemaining(
                     child: _buildError(state.error!, textColor, textMuted, accent),
@@ -327,6 +328,34 @@ class _CosmeticsGalleryScreenState extends ConsumerState<CosmeticsGalleryScreen>
             label: const Text('Retry'),
             style: TextButton.styleFrom(foregroundColor: accent),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Layout-matched loading placeholder for the cosmetics gallery — mirrors the
+/// loadout card + sectioned row stack so the skeleton → content cross-fade
+/// doesn't reflow. Shown only on a genuine cold-cache first open.
+class _CosmeticsSkeleton extends StatelessWidget {
+  const _CosmeticsSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: const [
+          SkeletonBox(height: 104, radius: 16), // loadout card
+          SizedBox(height: 20),
+          SkeletonBox(width: 80, height: 12), // section label
+          SizedBox(height: 10),
+          SkeletonList(itemCount: 4, spacing: 10),
+          SizedBox(height: 20),
+          SkeletonBox(width: 80, height: 12), // section label
+          SizedBox(height: 10),
+          SkeletonList(itemCount: 3, spacing: 10),
         ],
       ),
     );

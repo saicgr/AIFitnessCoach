@@ -157,6 +157,19 @@ class UnifiedNotificationsNotifier extends StateNotifier<AsyncValue<List<Unified
   Timer? _pollTimer;
 
   UnifiedNotificationsNotifier(this._ref) : super(const AsyncValue.loading()) {
+    // Instant-load: the local notification feed is persisted in
+    // SharedPreferences and loaded by `notificationsProvider` synchronously-
+    // fast. Seed the unified state from it immediately so the Notifications
+    // screen renders its real content on first frame instead of blocking on a
+    // network spinner while the challenge API resolves. The network merge in
+    // `_loadAll()` then refreshes the list in the background (SWR).
+    final seed = _ref
+        .read(notificationsProvider)
+        .map(UnifiedNotification.fromLocal)
+        .toList()
+      ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
+    state = AsyncValue.data(seed);
+
     _loadAll();
     // TODO: Re-enable when social features are launched
     // _startPolling();
@@ -259,13 +272,18 @@ class UnifiedNotificationsNotifier extends StateNotifier<AsyncValue<List<Unified
       state = AsyncValue.data(all);
     } catch (e, st) {
       debugPrint('🔔 [UnifiedNotifications] Error loading notifications: $e');
-      state = AsyncValue.error(e, st);
+      // Instant-load: if we already have (seeded or previously-loaded) data on
+      // screen, keep showing it rather than blanking to an error view — the
+      // local feed is still valid even if the network merge failed.
+      if (state is! AsyncData) {
+        state = AsyncValue.error(e, st);
+      }
     }
   }
 
-  /// Refresh all notifications
+  /// Refresh all notifications. Keeps the current list visible while the
+  /// network merge runs (no blocking spinner) — pull-to-refresh just SWRs.
   Future<void> refresh() async {
-    state = const AsyncValue.loading();
     await _loadAll();
   }
 

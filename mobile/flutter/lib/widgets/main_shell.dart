@@ -29,6 +29,7 @@ import 'floating_chat/floating_chat_overlay.dart';
 import 'level_up_dialog.dart';
 import 'streak_saved_dialog.dart';
 import 'offline_banner.dart';
+import 'email_verification_banner.dart';
 import '../data/providers/xp_provider.dart' show xpProvider, levelUpEventProvider, dailyLoginResultProvider;
 import '../data/providers/pending_celebrations_provider.dart';
 import 'trophy_ceremony_overlay.dart';
@@ -416,6 +417,8 @@ class MainShell extends ConsumerWidget {
                   _GuestModeBanner(isDark: isDark),
                 // Offline banner (auto-shows/hides based on connectivity)
                 const OfflineBanner(),
+                // Verify-your-email nudge (auto-shows/hides; non-blocking)
+                const EmailVerificationBanner(),
                 // Main content fills remaining space
                 Expanded(child: _child),
               ],

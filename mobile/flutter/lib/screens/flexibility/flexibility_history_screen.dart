@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/widgets/line_icon.dart';
+import '../../core/widgets/skeleton/skeleton.dart';
 import '../../data/models/flexibility_assessment.dart';
 import '../../data/providers/flexibility_provider.dart';
 import '../../data/providers/trend_series_provider.dart';
@@ -107,8 +108,8 @@ class _FlexibilityHistoryScreenState extends ConsumerState<FlexibilityHistoryScr
 
           // History list
           Expanded(
-            child: state.isLoading
-                ? const Center(child: CircularProgressIndicator())
+            child: state.isLoading && state.assessmentHistory.isEmpty
+                ? _buildHistorySkeleton()
                 : filteredHistory.isEmpty
                     ? _buildEmptyState(theme)
                     : RefreshIndicator(
@@ -134,6 +135,17 @@ class _FlexibilityHistoryScreenState extends ConsumerState<FlexibilityHistoryScr
           ),
         ],
       ),
+    );
+  }
+
+  /// Layout-matched skeleton — a list of history cards (rating tile + two text
+  /// lines), mirroring `_buildHistoryItem` so the swap is reflow-free.
+  Widget _buildHistorySkeleton() {
+    return ListView.separated(
+      padding: const EdgeInsets.all(16),
+      itemCount: 7,
+      separatorBuilder: (_, __) => const SizedBox(height: 12),
+      itemBuilder: (_, __) => const SkeletonCard(leadingSize: 48, lines: 3),
     );
   }
 

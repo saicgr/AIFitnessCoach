@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/theme/accent_color_provider.dart';
+import '../../core/widgets/skeleton/skeleton.dart';
 import '../../data/repositories/sync_repository.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
@@ -107,7 +108,10 @@ class ConnectedAppsScreen extends ConsumerWidget {
       body: RefreshIndicator(
         onRefresh: () async => ref.refresh(_connectedAccountsProvider.future),
         child: asyncAccounts.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
+          // Layout-matched skeleton: header card + one tile per catalog
+          // provider, so the skeleton -> content swap is reflow-free. The
+          // provider is autoDispose so this shows on every cold open.
+          loading: () => _buildSkeleton(),
           error: (e, _) => _ErrorState(message: '$e', onRetry: () {
             ref.invalidate(_connectedAccountsProvider);
           }),
@@ -132,6 +136,22 @@ class ConnectedAppsScreen extends ConsumerWidget {
       ),
     );
   }
+}
+
+/// Layout-matched skeleton for the cold load — header card + one card per
+/// catalog provider so the swap to real tiles does not reflow.
+Widget _buildSkeleton() {
+  return ListView(
+    padding: const EdgeInsets.all(16),
+    children: [
+      SkeletonBox(height: 96, radius: 16),
+      const SizedBox(height: 12),
+      for (var i = 0; i < _ProviderCatalog.entries.length; i++) ...[
+        const SkeletonCard(height: 110, leadingSize: 44, lines: 2),
+        const SizedBox(height: 8),
+      ],
+    ],
+  );
 }
 
 // ────────────────────────── Header + Footer ──────────────────────────

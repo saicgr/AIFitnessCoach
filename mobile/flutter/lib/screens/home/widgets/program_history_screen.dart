@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../models/program_history.dart';
+import '../../../core/widgets/skeleton/skeleton.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/repositories/auth_repository.dart';
+import '../../../data/services/data_cache_service.dart';
 import '../../../widgets/app_dialog.dart';
 import '../../../widgets/pill_app_bar.dart';
 import '../../../core/services/posthog_service.dart';
@@ -21,6 +23,9 @@ class _ProgramHistoryScreenState extends ConsumerState<ProgramHistoryScreen> {
   String? _errorMessage;
   List<ProgramHistory> _programs = [];
 
+  /// SharedPreferences slot for the cached program-history list.
+  static const _cacheKey = 'cache_program_history';
+
   @override
   void initState() {
     super.initState();
@@ -30,16 +35,34 @@ class _ProgramHistoryScreenState extends ConsumerState<ProgramHistoryScreen> {
     _loadProgramHistory();
   }
 
+  /// Cache-first load (Part-1 instant-load standard):
+  /// 1. Render the disk-cached program snapshots immediately so a cold open
+  ///    shows the user's real history on first frame (no spinner).
+  /// 2. Revalidate over the network and write-through-persist the fresh list.
+  /// A network failure with a cache hit keeps the cached list on screen.
   Future<void> _loadProgramHistory() async {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
+    final userId = ref.read(authStateProvider).user?.id;
 
+    // ---- Step 1: disk cache -------------------------------------------------
     try {
-      final authState = ref.read(authStateProvider);
-      final userId = authState.user?.id;
+      final cached = await DataCacheService.instance
+          .getCachedList(_cacheKey, userId: userId);
+      if (cached != null && mounted) {
+        setState(() {
+          _programs = cached.map(ProgramHistory.fromJson).toList();
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('📋 [ProgramHistory] cache read failed: $e');
+    }
 
+    if (mounted && _isLoading) {
+      setState(() => _errorMessage = null);
+    }
+
+    // ---- Step 2: network revalidate ----------------------------------------
+    try {
       if (userId == null) {
         throw Exception('User not authenticated');
       }
@@ -51,15 +74,23 @@ class _ProgramHistoryScreenState extends ConsumerState<ProgramHistoryScreen> {
         setState(() {
           _programs = programs;
           _isLoading = false;
+          _errorMessage = null;
         });
       }
+      // Write-through so the next cold start is instant.
+      await DataCacheService.instance.cacheList(
+        _cacheKey,
+        programs.map((p) => p.toJson()).toList(),
+        userId: userId,
+      );
     } catch (e) {
-      if (mounted) {
-        setState(() {
-          _errorMessage = e.toString();
-          _isLoading = false;
-        });
-      }
+      if (!mounted) return;
+      // Keep cached snapshots visible on a network failure; only escalate to
+      // the error view when nothing was rendered (cold-cache path).
+      setState(() {
+        _isLoading = false;
+        if (_programs.isEmpty) _errorMessage = e.toString();
+      });
     }
   }
 
@@ -121,7 +152,13 @@ class _ProgramHistoryScreenState extends ConsumerState<ProgramHistoryScreen> {
         title: 'Program History',
       ),
       body: _isLoading
-          ? Center(child: CircularProgressIndicator(color: colors.cyan))
+          // Layout-matched skeleton — only on a true cold-cache first open.
+          ? const SkeletonList(
+              itemCount: 4,
+              spacing: 16,
+              padding: EdgeInsets.all(16),
+              scrollable: true,
+            )
           : _errorMessage != null
               ? _buildErrorState(colors)
               : _programs.isEmpty

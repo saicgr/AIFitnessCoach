@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/accent_color_provider.dart';
+import '../../core/widgets/skeleton/skeleton.dart';
 import '../../data/models/referral_summary.dart';
 import '../../data/providers/referral_provider.dart';
 import '../../data/services/haptic_service.dart';
@@ -31,7 +32,9 @@ class ReferralsScreen extends ConsumerWidget {
       body: Stack(
         children: [
           RefreshIndicator(
-            onRefresh: () async => ref.invalidate(referralSummaryProvider),
+            // Cache-first SWR: revalidate in place, no blocking spinner —
+            // the current summary stays visible while the network refreshes.
+            onRefresh: () => ref.read(referralSummaryProvider.notifier).refresh(),
             color: accent,
             child: CustomScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
@@ -75,15 +78,14 @@ class ReferralsScreen extends ConsumerWidget {
                   padding: const EdgeInsets.all(16),
                   sliver: SliverToBoxAdapter(
                     child: summaryAsync.when(
-                      loading: () => const Center(
-                        child: Padding(
-                          padding: EdgeInsets.all(48),
-                          child: CircularProgressIndicator(),
-                        ),
-                      ),
+                      // Layout-matched skeleton — only ever shown on a genuine
+                      // cold-cache first open; returning users get the cached
+                      // summary instantly (CacheFirstMixin disk SWR).
+                      loading: () => const _ReferralsSkeleton(),
                       error: (e, _) => _ErrorCard(
                         error: e,
-                        onRetry: () => ref.invalidate(referralSummaryProvider),
+                        onRetry: () =>
+                            ref.read(referralSummaryProvider.notifier).refresh(),
                         textColor: textColor,
                         textMuted: textMuted,
                         accent: accent,
@@ -163,6 +165,35 @@ class ReferralsScreen extends ConsumerWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Layout-matched loading placeholder for the referrals body. Mirrors the
+/// shape of the code card + tier list so the skeleton → content cross-fade
+/// doesn't reflow. Shown only on a true cold-cache first open.
+class _ReferralsSkeleton extends StatelessWidget {
+  const _ReferralsSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Code card placeholder
+        const SkeletonBox(height: 220, radius: 20),
+        const SizedBox(height: 16),
+        // Enter-code card placeholder
+        const SkeletonBox(height: 64, radius: 16),
+        const SizedBox(height: 16),
+        // Next-tier card placeholder
+        const SkeletonBox(height: 96, radius: 16),
+        const SizedBox(height: 20),
+        // Tier rows
+        const SkeletonList(itemCount: 6, spacing: 8),
+        const SizedBox(height: 20),
+        const SkeletonBox(height: 160, radius: 16),
+      ],
     );
   }
 }
@@ -672,8 +703,9 @@ class _EnterCodeCardState extends ConsumerState<_EnterCodeCard> {
               : "Code applied! You'll both earn rewards once you complete your first workout.";
           _controller.clear();
         });
-        // Refresh the summary card so qualified_count updates.
-        ref.invalidate(referralSummaryProvider);
+        // Refresh the summary card so qualified_count updates — drop the disk
+        // cache and re-fetch (a plain invalidate would re-seed from stale disk).
+        ref.read(referralSummaryProvider.notifier).refresh();
       } else {
         setState(() => _error = r.message.isNotEmpty
             ? r.message

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/widgets/skeleton/skeleton.dart';
 import '../../../data/providers/today_workout_provider.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/repositories/exercise_preferences_repository.dart';
@@ -97,7 +98,15 @@ class _AvoidedExercisesScreenState extends ConsumerState<AvoidedExercisesScreen>
         // List
         Expanded(
           child: avoidedAsync.when(
-            loading: () => const Center(child: CircularProgressIndicator()),
+            // Cache-first: layout-matched skeleton rows on the cold first
+            // load; Riverpod keeps the resolved value in memory so re-opens
+            // render instantly.
+            loading: () => SkeletonList(
+              scrollable: true,
+              itemCount: 6,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              itemBuilder: (_, __) => const SkeletonCard(leadingSize: 44),
+            ),
             error: (error, _) => Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,

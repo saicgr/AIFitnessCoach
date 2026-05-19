@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/widgets/skeleton/skeleton.dart';
 import '../../data/services/api_client.dart';
-import '../../widgets/app_loading.dart';
 import '../../widgets/app_snackbar.dart';
 import '../../data/models/injury.dart';
 import '../../widgets/pill_app_bar.dart';
@@ -215,7 +215,7 @@ class _InjuriesScreenState extends ConsumerState<InjuriesScreen>
           ),
           Expanded(
             child: _isLoading
-          ? AppLoading.fullScreen()
+          ? const SkeletonList(itemCount: 5, padding: EdgeInsets.all(16))
           : _error != null
               ? _buildErrorState(textPrimary, textSecondary)
               : _buildContent(textPrimary, textSecondary, textMuted, elevated, cardBorder),

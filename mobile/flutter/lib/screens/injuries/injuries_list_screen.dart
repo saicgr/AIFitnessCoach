@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/cache/cache_first_mixin.dart';
+import '../../core/widgets/skeleton/skeleton.dart';
 import '../../data/models/injury.dart';
 import '../../data/services/api_client.dart';
 import '../../widgets/pill_app_bar.dart';
@@ -22,34 +24,73 @@ class InjuriesListState {
 
 enum InjuryFilter { active, healed, all }
 
-class InjuriesListNotifier extends StateNotifier<InjuriesListState> {
+/// Layout-matched skeleton row for the injury list — mirrors `_card`'s shape
+/// (leading icon tile + two stacked text lines) so the skeleton→content swap
+/// is reflow-free.
+Widget _injurySkeletonRow(BuildContext context, int index) =>
+    const SkeletonCard(leadingSize: 44, lines: 2);
+
+class InjuriesListNotifier extends StateNotifier<InjuriesListState>
+    with CacheFirstMixin {
   final Ref _ref;
   InjuriesListNotifier(this._ref) : super(const InjuriesListState());
 
+  /// Cache-first load: a valid disk blob renders the list instantly on a cold
+  /// start, then the network revalidate silently swaps in fresh data. The
+  /// network failure path keeps the cached list on screen (only surfaces an
+  /// error when there was nothing cached).
   Future<void> loadInjuries() async {
-    state = state.copyWith(isLoading: true, error: null);
-    try {
-      final apiClient = _ref.read(apiClientProvider);
-      final userId = await apiClient.getUserId();
-      if (userId == null) {
-        state = state.copyWith(error: 'Not authenticated', isLoading: false);
-        return;
-      }
-      final response = await apiClient.get('/injuries/$userId');
-      final data = response.data as Map<String, dynamic>;
-      final injuriesList = (data['injuries'] as List<dynamic>?)?.map((e) {
-        final m = Map<String, dynamic>.from(e as Map<String, dynamic>);
-        // InjurySummary from backend omits some fields that Injury.fromJson requires
-        m.putIfAbsent('user_id', () => userId);
-        m.putIfAbsent('affects_exercises', () => <String>[]);
-        m.putIfAbsent('affects_muscles', () => <String>[]);
-        m.putIfAbsent('recovery_phase', () => m['recovery_phase'] ?? 'acute');
-        return Injury.fromJson(m);
-      }).toList() ?? [];
-      state = state.copyWith(injuries: injuriesList, isLoading: false);
-    } catch (e) {
-      state = state.copyWith(error: e.toString(), isLoading: false);
+    final apiClient = _ref.read(apiClientProvider);
+    final userId = await apiClient.getUserId();
+    if (userId == null) {
+      state = state.copyWith(error: 'Not authenticated', isLoading: false);
+      return;
     }
+
+    // Only show the loading flag when we have nothing to display yet — a
+    // returning user with a cached list never sees the spinner state.
+    if (state.injuries.isEmpty) {
+      state = state.copyWith(isLoading: true, error: null);
+    } else {
+      state = state.copyWith(error: null);
+    }
+
+    await loadCacheFirst<List<Injury>>(
+      cacheKey: 'injuries_list',
+      userId: userId,
+      ttl: const Duration(hours: 12),
+      fetch: () async {
+        final response = await apiClient.get('/injuries/$userId');
+        final data = response.data as Map<String, dynamic>;
+        return (data['injuries'] as List<dynamic>?)?.map((e) {
+              final m = Map<String, dynamic>.from(e as Map<String, dynamic>);
+              // InjurySummary from backend omits some fields Injury.fromJson needs.
+              m.putIfAbsent('user_id', () => userId);
+              m.putIfAbsent('affects_exercises', () => <String>[]);
+              m.putIfAbsent('affects_muscles', () => <String>[]);
+              m.putIfAbsent(
+                  'recovery_phase', () => m['recovery_phase'] ?? 'acute');
+              return Injury.fromJson(m);
+            }).toList() ??
+            <Injury>[];
+      },
+      // The list is persisted as a single JSON map wrapping the array so it
+      // fits the mixin's Map-based decode/encode contract.
+      decode: (json) => (json['items'] as List<dynamic>)
+          .map((e) => Injury.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      encode: (list) => {'items': list.map((i) => i.toJson()).toList()},
+      emit: (injuries, {required bool fromCache}) {
+        state = state.copyWith(injuries: injuries, isLoading: false);
+      },
+      onError: (e, _) {
+        // Keep any cached list visible; only flag the error on a cold miss.
+        state = state.copyWith(
+          isLoading: false,
+          error: state.injuries.isEmpty ? e.toString() : null,
+        );
+      },
+    );
   }
 
   void setFilter(InjuryFilter filter) => state = state.copyWith(filter: filter);
@@ -88,7 +129,7 @@ class _InjuriesListScreenState extends ConsumerState<InjuriesListScreen> {
 
   Widget _chip(String l, InjuryFilter f, InjuryFilter c, bool d) { final s = f == c; final el = d ? AppColors.elevated : AppColorsLight.elevated; final tm = d ? AppColors.textMuted : AppColorsLight.textMuted; return GestureDetector(onTap: () { HapticFeedback.lightImpact(); ref.read(injuriesListProvider.notifier).setFilter(f); }, child: Container(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8), decoration: BoxDecoration(color: s ? AppColors.error.withOpacity(0.15) : el, borderRadius: BorderRadius.circular(20), border: Border.all(color: s ? AppColors.error : Colors.transparent)), child: Text(l, style: TextStyle(color: s ? AppColors.error : tm, fontWeight: s ? FontWeight.w600 : FontWeight.normal)))); }
 
-  Widget _content(bool d, Color tp, Color tm, Color el, InjuriesListState s) { if (s.isLoading) return const Center(child: CircularProgressIndicator()); if (s.error != null) return Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.error_outline, color: AppColors.error, size: 48), const SizedBox(height: 16), Text('Failed to load', style: TextStyle(color: tm)), TextButton(onPressed: () => ref.read(injuriesListProvider.notifier).loadInjuries(), child: const Text('Retry'))])); final inj = s.filteredInjuries; if (inj.isEmpty) return _empty(d, tp, tm, s.filter); return RefreshIndicator(onRefresh: () => ref.read(injuriesListProvider.notifier).loadInjuries(), child: ListView.separated(padding: const EdgeInsets.all(16), itemCount: inj.length, separatorBuilder: (_, __) => const SizedBox(height: 12), itemBuilder: (c, i) => _card(inj[i], d, tp, tm, el))); }
+  Widget _content(bool d, Color tp, Color tm, Color el, InjuriesListState s) { if (s.isLoading && s.injuries.isEmpty) return const SkeletonList(itemCount: 5, padding: EdgeInsets.all(16), itemBuilder: _injurySkeletonRow); if (s.error != null) return Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.error_outline, color: AppColors.error, size: 48), const SizedBox(height: 16), Text('Failed to load', style: TextStyle(color: tm)), TextButton(onPressed: () => ref.read(injuriesListProvider.notifier).loadInjuries(), child: const Text('Retry'))])); final inj = s.filteredInjuries; if (inj.isEmpty) return _empty(d, tp, tm, s.filter); return RefreshIndicator(onRefresh: () => ref.read(injuriesListProvider.notifier).loadInjuries(), child: ListView.separated(padding: const EdgeInsets.all(16), itemCount: inj.length, separatorBuilder: (_, __) => const SizedBox(height: 12), itemBuilder: (c, i) => _card(inj[i], d, tp, tm, el))); }
 
   Widget _empty(bool d, Color tp, Color tm, InjuryFilter f) { final t = f == InjuryFilter.active ? 'No Active Injuries' : f == InjuryFilter.healed ? 'No Healed Injuries' : 'No Injuries'; final sub = f == InjuryFilter.active ? 'Great news!' : 'Tap below to report'; final ic = f == InjuryFilter.active ? Icons.health_and_safety : Icons.local_hospital_outlined; return Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [Container(padding: const EdgeInsets.all(24), decoration: BoxDecoration(color: AppColors.success.withOpacity(0.1), shape: BoxShape.circle), child: Icon(ic, color: AppColors.success, size: 48)), const SizedBox(height: 24), Text(t, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: tp)), const SizedBox(height: 8), Text(sub, style: TextStyle(color: tm))])); }
 

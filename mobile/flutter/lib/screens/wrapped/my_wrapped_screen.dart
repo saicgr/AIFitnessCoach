@@ -4,16 +4,86 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/theme_colors.dart';
+import '../../core/widgets/skeleton/skeleton.dart';
 import '../../data/models/wrapped_summary.dart';
 import '../../data/providers/wrapped_provider.dart';
+import '../../data/services/data_cache_service.dart';
+import '../../data/services/api_client.dart';
 import '../../data/services/haptic_service.dart';
 import '../../widgets/pill_app_bar.dart';
 
-class MyWrappedScreen extends ConsumerWidget {
+class MyWrappedScreen extends ConsumerStatefulWidget {
   const MyWrappedScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<MyWrappedScreen> createState() => _MyWrappedScreenState();
+}
+
+class _MyWrappedScreenState extends ConsumerState<MyWrappedScreen> {
+  /// Disk-cached summary, hydrated in [initState] so a cold start renders the
+  /// user's real wrapped data on first frame instead of a spinner. The
+  /// `wrappedSummaryProvider` then revalidates over the network (SWR).
+  WrappedSummary? _cached;
+
+  /// SharedPreferences slot for the cached wrapped summary.
+  static const _cacheKey = 'cache_wrapped_summary';
+
+  @override
+  void initState() {
+    super.initState();
+    _hydrateFromCache();
+  }
+
+  /// Read the persisted summary off disk (instant, no network).
+  Future<void> _hydrateFromCache() async {
+    try {
+      final userId = await ref.read(apiClientProvider).getUserId();
+      final raw = await DataCacheService.instance
+          .getCached(_cacheKey, userId: userId);
+      if (raw != null && mounted) {
+        setState(() => _cached = WrappedSummary.fromJson(raw));
+      }
+    } catch (e) {
+      debugPrint('🎁 [Wrapped] cache read failed: $e');
+    }
+  }
+
+  /// Write a fresh summary through to disk. `WrappedSummary` has no `toJson`,
+  /// so we re-emit the exact snake_case shape its `fromJson` consumes.
+  Future<void> _persistToCache(WrappedSummary s) async {
+    try {
+      final userId = await ref.read(apiClientProvider).getUserId();
+      await DataCacheService.instance.cache(_cacheKey, _encode(s), userId: userId);
+    } catch (e) {
+      debugPrint('🎁 [Wrapped] cache write failed: $e');
+    }
+  }
+
+  static Map<String, dynamic> _encode(WrappedSummary s) => {
+        'available': s.available
+            .map((p) => <String, dynamic>{
+                  'period': p.period,
+                  'viewed': p.viewed,
+                  'personality': p.personality,
+                  'total_workouts': p.totalWorkouts,
+                  'total_volume_lbs': p.totalVolumeLbs,
+                })
+            .toList(),
+        'current_month': s.currentMonth == null
+            ? null
+            : <String, dynamic>{
+                'period': s.currentMonth!.period,
+                'workouts_so_far': s.currentMonth!.workoutsSoFar,
+                'volume_so_far': s.currentMonth!.volumeSoFar,
+                'prs_so_far': s.currentMonth!.prsSoFar,
+                'days_until_drop': s.currentMonth!.daysUntilDrop,
+                'eligible': s.currentMonth!.eligible,
+              },
+        'personalities_collected': s.personalitiesCollected,
+      };
+
+  @override
+  Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bg = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
@@ -35,31 +105,38 @@ class MyWrappedScreen extends ConsumerWidget {
               onBack: () => context.pop(),
             ),
             Expanded(
-              child: summaryAsync.when(
-                loading: () => const Center(
-                  child: SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  ),
-                ),
-                error: (_, __) => Center(
-                  child: Text(
-                    'Failed to load wrapped data',
-                    style: TextStyle(color: textMuted),
-                  ),
-                ),
-                data: (summary) => _buildBody(
-                  context,
-                  summary,
-                  elevated: elevated,
-                  textPrimary: textPrimary,
-                  textMuted: textMuted,
-                  cardBorder: cardBorder,
-                  accent: accent,
-                  accentGradient: accentGradient,
-                ),
-              ),
+              // Cache-first SWR: fresh network data wins (and is persisted for
+              // the next cold start); otherwise the disk-cached summary renders
+              // instantly; the skeleton shows only on a genuine first-ever
+              // open with neither cache nor network resolved.
+              child: Builder(builder: (_) {
+                final fresh = summaryAsync.valueOrNull;
+                if (fresh != null) {
+                  _persistToCache(fresh);
+                }
+                final summary = fresh ?? _cached;
+                if (summary != null) {
+                  return _buildBody(
+                    context,
+                    summary,
+                    elevated: elevated,
+                    textPrimary: textPrimary,
+                    textMuted: textMuted,
+                    cardBorder: cardBorder,
+                    accent: accent,
+                    accentGradient: accentGradient,
+                  );
+                }
+                if (summaryAsync.hasError) {
+                  return Center(
+                    child: Text(
+                      'Failed to load wrapped data',
+                      style: TextStyle(color: textMuted),
+                    ),
+                  );
+                }
+                return const _MyWrappedSkeleton();
+              }),
             ),
           ],
         ),
@@ -665,5 +742,30 @@ class MyWrappedScreen extends ConsumerWidget {
       'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
     ];
     return abbrs[(month - 1).clamp(0, 11)];
+  }
+}
+
+/// Layout-matched loading placeholder for My Wrapped — mirrors the hero card +
+/// current-month card + past-wraps grid stack so the skeleton → content
+/// cross-fade doesn't reflow. Shown only on a genuine cold-cache first open.
+class _MyWrappedSkeleton extends StatelessWidget {
+  const _MyWrappedSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      children: const [
+        SkeletonBox(height: 200, radius: 16), // hero card
+        SizedBox(height: 16),
+        SkeletonBox(height: 130, radius: 14), // current month
+        SizedBox(height: 24),
+        SkeletonBox(width: 100, height: 12), // "PAST WRAPS" label
+        SizedBox(height: 10),
+        SkeletonGrid(itemCount: 6, crossAxisCount: 3),
+        SizedBox(height: 24),
+        SkeletonBox(height: 150, radius: 14), // personalities card
+      ],
+    );
   }
 }

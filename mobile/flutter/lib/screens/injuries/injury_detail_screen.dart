@@ -4,7 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../core/constants/app_colors.dart';
-import '../../widgets/app_loading.dart';
+import '../../core/cache/cache_first_mixin.dart';
+import '../../core/widgets/skeleton/skeleton.dart';
 import '../../data/models/injury.dart';
 import '../../data/services/api_client.dart';
 import '../../widgets/pill_app_bar.dart';
@@ -25,7 +26,8 @@ class InjuryDetailScreen extends ConsumerStatefulWidget {
   ConsumerState<InjuryDetailScreen> createState() => _InjuryDetailScreenState();
 }
 
-class _InjuryDetailScreenState extends ConsumerState<InjuryDetailScreen> {
+class _InjuryDetailScreenState extends ConsumerState<InjuryDetailScreen>
+    with CacheFirstMixin {
   bool _isLoading = true;
   String? _error;
   Injury? _injury;
@@ -37,63 +39,89 @@ class _InjuryDetailScreenState extends ConsumerState<InjuryDetailScreen> {
     _loadInjuryDetails();
   }
 
+  /// Cache-first load: a valid disk blob (keyed by injury id) renders the
+  /// detail screen instantly on a cold start; the network revalidate then
+  /// swaps in fresh data. A network failure keeps any cached detail on screen.
   Future<void> _loadInjuryDetails() async {
-    setState(() {
-      _isLoading = true;
-      _error = null;
-    });
-
-    try {
-      final apiClient = ref.read(apiClientProvider);
-      final response = await apiClient.get('/injuries/detail/${widget.injuryId}');
-      final data = response.data as Map<String, dynamic>;
-
-      // Parse the injury from the InjuryWithDetails response
-      _injury = Injury.fromJson(data);
-
-      // Parse pain history from check-ins
-      final checkIns = data['check_ins'] as List<dynamic>? ?? [];
-      _painHistory = checkIns
-          .where((c) => c['pain_level'] != null)
-          .map((c) => PainHistoryEntry(
-                date: DateTime.parse(c['checked_at'] as String),
-                painLevel: (c['pain_level'] as num).toInt(),
-              ))
-          .toList();
-
-      // Add the initial pain level from the injury itself if available
-      if (_injury!.painLevel != null) {
-        _painHistory.add(PainHistoryEntry(
-          date: _injury!.reportedAt,
-          painLevel: _injury!.painLevel!,
-        ));
-      }
-
-      // Sort by date ascending
-      _painHistory.sort((a, b) => a.date.compareTo(b.date));
-
-      // Parse rehab exercises from the response if not already in injury model
-      if ((_injury!.rehabExercises == null || _injury!.rehabExercises!.isEmpty) &&
-          (data['rehab_exercises'] as List<dynamic>?)?.isNotEmpty == true) {
-        final rehabList = (data['rehab_exercises'] as List<dynamic>)
-            .map((e) => RehabExercise.fromJson(e as Map<String, dynamic>))
-            .toList();
-        _injury = _injury!.copyWith(rehabExercises: rehabList);
-      }
-
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-          _error = e.toString();
-        });
-      }
+    if (_injury == null) {
+      setState(() {
+        _isLoading = true;
+        _error = null;
+      });
+    } else {
+      setState(() => _error = null);
     }
+
+    final apiClient = ref.read(apiClientProvider);
+    await loadCacheFirst<Map<String, dynamic>>(
+      // Keyed by injury id so each injury keeps its own detail slot.
+      cacheKey: 'injury_detail_${widget.injuryId}',
+      // Detail data is not multi-account sensitive at the key level (the id is
+      // globally unique), but pass an empty scope explicitly.
+      userId: '',
+      ttl: const Duration(hours: 6),
+      fetch: () async {
+        final response =
+            await apiClient.get('/injuries/detail/${widget.injuryId}');
+        return response.data as Map<String, dynamic>;
+      },
+      // The detail payload is a raw JSON map — store/restore as-is.
+      decode: (json) => json,
+      encode: (data) => data,
+      emit: (data, {required bool fromCache}) {
+        if (!mounted) return;
+        setState(() {
+          _applyDetail(data);
+          _isLoading = false;
+        });
+      },
+      onError: (e, _) {
+        if (!mounted) return;
+        setState(() {
+          _isLoading = false;
+          // Keep any cached detail on screen; only flag a cold miss.
+          if (_injury == null) _error = e.toString();
+        });
+      },
+    );
+  }
+
+  /// Parse an injury-detail payload into [_injury] + [_painHistory]. Shared by
+  /// the cached and the fresh emit paths.
+  void _applyDetail(Map<String, dynamic> data) {
+    // Parse the injury from the InjuryWithDetails response.
+    var injury = Injury.fromJson(data);
+
+    // Parse pain history from check-ins.
+    final checkIns = data['check_ins'] as List<dynamic>? ?? [];
+    final painHistory = checkIns
+        .where((c) => c['pain_level'] != null)
+        .map((c) => PainHistoryEntry(
+              date: DateTime.parse(c['checked_at'] as String),
+              painLevel: (c['pain_level'] as num).toInt(),
+            ))
+        .toList();
+
+    // Add the initial pain level from the injury itself if available.
+    if (injury.painLevel != null) {
+      painHistory.add(PainHistoryEntry(
+        date: injury.reportedAt,
+        painLevel: injury.painLevel!,
+      ));
+    }
+    painHistory.sort((a, b) => a.date.compareTo(b.date));
+
+    // Parse rehab exercises from the response if not already in injury model.
+    if ((injury.rehabExercises == null || injury.rehabExercises!.isEmpty) &&
+        (data['rehab_exercises'] as List<dynamic>?)?.isNotEmpty == true) {
+      final rehabList = (data['rehab_exercises'] as List<dynamic>)
+          .map((e) => RehabExercise.fromJson(e as Map<String, dynamic>))
+          .toList();
+      injury = injury.copyWith(rehabExercises: rehabList);
+    }
+
+    _injury = injury;
+    _painHistory = painHistory;
   }
 
   void _showCheckInSheet() {
@@ -227,12 +255,32 @@ class _InjuryDetailScreenState extends ConsumerState<InjuryDetailScreen> {
         ],
       ),
       body: _isLoading
-          ? AppLoading.fullScreen()
+          ? _buildSkeleton()
           : _error != null
               ? _buildErrorState(textPrimary, textSecondary)
               : _injury == null
                   ? _buildEmptyState(textPrimary, textSecondary, textMuted)
                   : _buildContent(isDark, textPrimary, textSecondary, textMuted, elevated, cardBorder),
+    );
+  }
+
+  /// Layout-matched skeleton: header card, recovery-progress card, pain-history
+  /// card and a rehab section — mirrors `_buildContent` so the swap is
+  /// reflow-free.
+  Widget _buildSkeleton() {
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: const [
+        SkeletonBox(height: 150, radius: 20),
+        SizedBox(height: 24),
+        SkeletonBox(height: 110, radius: 16),
+        SizedBox(height: 24),
+        SkeletonBox(height: 170, radius: 16),
+        SizedBox(height: 24),
+        SkeletonBox(width: 160, height: 18),
+        SizedBox(height: 12),
+        SkeletonBox(height: 88, radius: 16),
+      ],
     );
   }
 

@@ -23,7 +23,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/api_constants.dart';
 import '../../core/theme/accent_color_provider.dart';
+import '../../core/widgets/skeleton/skeleton.dart';
 import '../../data/services/api_client.dart';
+import '../../data/services/data_cache_service.dart';
 
 class WeeklyWrappedScreen extends ConsumerStatefulWidget {
   final String? weekStart; // YYYY-MM-DD
@@ -40,20 +42,53 @@ class _WeeklyWrappedScreenState extends ConsumerState<WeeklyWrappedScreen> {
   String? _errorMessage;
   bool _loading = true;
 
+  /// SharedPreferences slot — scoped by the requested week so "latest" and a
+  /// specific past week never collide. `weekStart == null` ⇒ the latest week.
+  String get _cacheKey =>
+      'cache_weekly_wrapped_${widget.weekStart ?? "latest"}';
+
   @override
   void initState() {
     super.initState();
     _load();
   }
 
+  /// Cache-first load (Part-1 instant-load standard):
+  /// 1. Render the disk-cached recap immediately so a cold open shows the
+  ///    user's real week on first frame — important here because the
+  ///    `weekStart` path POSTs an expensive AI `/generate` call.
+  /// 2. Revalidate over the network and write-through-persist.
   Future<void> _load() async {
-    setState(() {
-      _loading = true;
-      _errorMessage = null;
-    });
+    final api = ref.read(apiClientProvider);
+    final userId = await api.getUserId();
+
+    // ---- Step 1: disk cache -------------------------------------------------
     try {
-      final api = ref.read(apiClientProvider);
-      final userId = await api.getUserId();
+      final cached =
+          await DataCacheService.instance.getCached(_cacheKey, userId: userId);
+      if (cached != null && mounted) {
+        final summary = cached['summary'];
+        final upcoming = cached['upcoming'];
+        setState(() {
+          if (summary is Map) _summary = summary.cast<String, dynamic>();
+          if (upcoming is List) {
+            _upcoming = upcoming
+                .map((e) => (e as Map).cast<String, dynamic>())
+                .toList();
+          }
+          if (_summary != null) _loading = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('🎁 [WeeklyWrapped] cache read failed: $e');
+    }
+
+    if (mounted && _loading) {
+      setState(() => _errorMessage = null);
+    }
+
+    // ---- Step 2: network revalidate ----------------------------------------
+    try {
       if (userId == null) throw StateError('Not signed in');
 
       // Latest summary if no week_start supplied — otherwise generate/fetch
@@ -91,23 +126,44 @@ class _WeeklyWrappedScreenState extends ConsumerState<WeeklyWrappedScreen> {
       final summaryRes = results[0];
       final upcomingRes = results[1];
 
+      Map<String, dynamic>? freshSummary;
+      List<Map<String, dynamic>>? freshUpcoming;
       if (summaryRes.statusCode == 200 && summaryRes.data is Map) {
-        _summary = (summaryRes.data as Map).cast<String, dynamic>();
+        freshSummary = (summaryRes.data as Map).cast<String, dynamic>();
       }
       if (upcomingRes.statusCode == 200) {
         final data = upcomingRes.data;
         if (data is List) {
-          _upcoming = data.cast<Map<String, dynamic>>();
+          freshUpcoming = data.cast<Map<String, dynamic>>();
         } else if (data is Map && data['workouts'] is List) {
-          _upcoming = (data['workouts'] as List).cast<Map<String, dynamic>>();
+          freshUpcoming =
+              (data['workouts'] as List).cast<Map<String, dynamic>>();
         }
       }
 
-      if (_summary == null) {
-        throw StateError('No weekly summary available yet.');
+      if (freshSummary == null) {
+        // No fresh summary — keep any cached recap on screen rather than
+        // blanking; only the cold-cache path surfaces the error.
+        if (_summary == null) {
+          throw StateError('No weekly summary available yet.');
+        }
+      } else {
+        _summary = freshSummary;
+        _upcoming = freshUpcoming ?? _upcoming;
+        _errorMessage = null;
+        // Write-through so the next cold start is instant (and skips the
+        // expensive /generate round-trip).
+        await DataCacheService.instance.cache(
+          _cacheKey,
+          {'summary': _summary, 'upcoming': _upcoming},
+          userId: userId,
+        );
       }
     } catch (e) {
-      _errorMessage = 'Couldn\'t load your week. Tap to retry.';
+      // Only show the error view when there is nothing cached to fall back to.
+      if (_summary == null) {
+        _errorMessage = 'Couldn\'t load your week. Tap to retry.';
+      }
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -131,7 +187,8 @@ class _WeeklyWrappedScreenState extends ConsumerState<WeeklyWrappedScreen> {
         iconTheme: IconThemeData(color: fg),
       ),
       body: _loading
-          ? Center(child: CircularProgressIndicator(color: accent))
+          // Layout-matched skeleton — only on a true cold-cache first open.
+          ? const _WeeklyWrappedSkeleton()
           : _errorMessage != null
               ? _errorView(fg, accent)
               : _contentView(fg, accent),
@@ -381,6 +438,42 @@ class _SectionLabel extends StatelessWidget {
         fontWeight: FontWeight.w800,
         letterSpacing: 1.3,
       ),
+    );
+  }
+}
+
+/// Layout-matched loading placeholder for the weekly recap — mirrors the
+/// stats row + coach narrative + section stack so the skeleton → content
+/// cross-fade doesn't reflow. Shown only on a genuine cold-cache first open.
+class _WeeklyWrappedSkeleton extends StatelessWidget {
+  const _WeeklyWrappedSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      padding: const EdgeInsets.all(20),
+      children: const [
+        SkeletonBox(width: 140, height: 12), // week header
+        SizedBox(height: 20),
+        // 4 stat tiles
+        Row(
+          children: [
+            Expanded(child: SkeletonBox(height: 72, radius: 12)),
+            SizedBox(width: 12),
+            Expanded(child: SkeletonBox(height: 72, radius: 12)),
+            SizedBox(width: 12),
+            Expanded(child: SkeletonBox(height: 72, radius: 12)),
+            SizedBox(width: 12),
+            Expanded(child: SkeletonBox(height: 72, radius: 12)),
+          ],
+        ),
+        SizedBox(height: 24),
+        SkeletonBox(height: 120, radius: 14), // coach narrative
+        SizedBox(height: 20),
+        SkeletonBox(width: 100, height: 11), // section label
+        SizedBox(height: 10),
+        SkeletonList(itemCount: 3, spacing: 8),
+      ],
     );
   }
 }

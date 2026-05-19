@@ -8,8 +8,10 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/accent_color_provider.dart';
+import '../../../core/widgets/skeleton/skeleton.dart';
 import '../../../data/models/grocery_list.dart';
 import '../../../data/repositories/recipe_repository.dart';
+import '../../../data/services/data_cache_service.dart';
 import '../../../widgets/pill_app_bar.dart';
 
 class GroceryListScreen extends ConsumerStatefulWidget {
@@ -27,21 +29,91 @@ class _GroceryListScreenState extends ConsumerState<GroceryListScreen> {
   String? _error;
   bool _showStaples = false;
 
+  /// Per-list SharedPreferences slot — keyed by listId so each list caches
+  /// independently.
+  String get _cacheKey => 'cache_grocery_list_${widget.listId}';
+
   @override
   void initState() {
     super.initState();
     _load();
   }
 
+  /// Cache-first load (Part-1 instant-load standard):
+  /// 1. Render the disk-cached list immediately so a cold open shows real
+  ///    items on first frame (no spinner).
+  /// 2. Revalidate over the network and write-through-persist the fresh list.
   Future<void> _load() async {
-    setState(() => _loading = true);
+    // ---- Step 1: disk cache -------------------------------------------------
+    try {
+      final cached = await DataCacheService.instance
+          .getCached(_cacheKey, userId: widget.userId);
+      if (cached != null && mounted) {
+        setState(() {
+          _list = GroceryList.fromJson(cached);
+          _loading = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('🛒 [GroceryList] cache read failed: $e');
+    }
+
+    // ---- Step 2: network revalidate ----------------------------------------
     try {
       final l = await ref.read(recipeRepositoryProvider).getGroceryList(widget.listId);
-      if (mounted) setState(() { _list = l; _loading = false; });
+      if (mounted) setState(() { _list = l; _loading = false; _error = null; });
+      await _persistToCache(l);
     } catch (e) {
-      if (mounted) setState(() { _error = e.toString(); _loading = false; });
+      // Keep the cached list visible on a network failure; only escalate to
+      // the error view when nothing was rendered (cold-cache path).
+      if (mounted && _list == null) {
+        setState(() { _error = e.toString(); _loading = false; });
+      } else if (mounted) {
+        setState(() => _loading = false);
+      }
     }
   }
+
+  /// Write the current list through to disk. `GroceryList`/`GroceryListItem`
+  /// have no `toJson`, so we re-emit the exact snake_case shape their
+  /// `fromJson` factories expect — a loss-free round-trip.
+  Future<void> _persistToCache(GroceryList l) async {
+    try {
+      await DataCacheService.instance.cache(
+        _cacheKey,
+        _encodeList(l),
+        userId: widget.userId,
+      );
+    } catch (e) {
+      debugPrint('🛒 [GroceryList] cache write failed: $e');
+    }
+  }
+
+  /// Encode a [GroceryList] to the JSON map `GroceryList.fromJson` consumes.
+  static Map<String, dynamic> _encodeList(GroceryList l) => {
+        'id': l.id,
+        'user_id': l.userId,
+        'meal_plan_id': l.mealPlanId,
+        'source_recipe_id': l.sourceRecipeId,
+        'name': l.name,
+        'notes': l.notes,
+        'created_at': l.createdAt.toIso8601String(),
+        'updated_at': l.updatedAt.toIso8601String(),
+        'items': l.items
+            .map((i) => <String, dynamic>{
+                  'id': i.id,
+                  'list_id': i.listId,
+                  'ingredient_name': i.ingredientName,
+                  'quantity': i.quantity,
+                  'unit': i.unit,
+                  'aisle': i.aisle?.value,
+                  'is_checked': i.isChecked,
+                  'is_staple_suppressed': i.isStapleSuppressed,
+                  'source_recipe_ids': i.sourceRecipeIds,
+                  'notes': i.notes,
+                })
+            .toList(),
+      };
 
   Future<void> _toggle(GroceryListItem item) async {
     setState(() {
@@ -55,6 +127,8 @@ class _GroceryListScreenState extends ConsumerState<GroceryListScreen> {
         createdAt: _list!.createdAt, updatedAt: DateTime.now(),
       );
     });
+    // Persist the optimistic toggle so a restart reflects it instantly.
+    if (_list != null) _persistToCache(_list!);
     try {
       await ref.read(recipeRepositoryProvider)
           .updateGroceryItem(widget.listId, item.id, {'is_checked': !item.isChecked});
@@ -368,7 +442,8 @@ class _GroceryListScreenState extends ConsumerState<GroceryListScreen> {
         ],
       ),
       body: _loading
-          ? const Center(child: CircularProgressIndicator())
+          // Layout-matched skeleton — only on a true cold-cache first open.
+          ? const _GroceryListSkeleton()
           : _error != null
               ? Center(child: Text('Error: $_error', style: TextStyle(color: muted)))
               : _buildBody(accent, text, muted, surface),
@@ -456,6 +531,29 @@ class _GroceryListScreenState extends ConsumerState<GroceryListScreen> {
                     : null,
               )),
         ],
+      ],
+    );
+  }
+}
+
+/// Layout-matched loading placeholder for the grocery list. Mirrors the
+/// aisle-header + checkbox-row stack so the skeleton → content cross-fade
+/// doesn't reflow. Shown only on a genuine cold-cache first open.
+class _GroceryListSkeleton extends StatelessWidget {
+  const _GroceryListSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 80),
+      children: const [
+        SkeletonBox(width: 90, height: 12), // aisle header
+        SizedBox(height: 10),
+        SkeletonList(itemCount: 4, spacing: 8),
+        SizedBox(height: 20),
+        SkeletonBox(width: 110, height: 12), // aisle header
+        SizedBox(height: 10),
+        SkeletonList(itemCount: 3, spacing: 8),
       ],
     );
   }

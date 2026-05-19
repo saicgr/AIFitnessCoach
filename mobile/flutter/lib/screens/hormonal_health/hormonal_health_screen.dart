@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/widgets/skeleton/skeleton.dart';
 import '../../data/models/hormonal_health.dart';
 import '../../data/providers/hormonal_health_provider.dart';
 import '../../data/repositories/hormonal_health_repository.dart';
@@ -35,7 +36,7 @@ class _HormonalHealthScreenState extends ConsumerState<HormonalHealthScreen> {
         ],
       ),
       body: profileAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        loading: () => _buildSkeleton(),
         error: (e, _) => _buildErrorState(context, e),
         data: (profile) {
           if (profile == null) {
@@ -49,6 +50,23 @@ class _HormonalHealthScreenState extends ConsumerState<HormonalHealthScreen> {
         icon: const Icon(Icons.add),
         label: const Text('Log Today'),
       ),
+    );
+  }
+
+  /// Layout-matched skeleton mirroring the dashboard card stack so the
+  /// loading→content swap does not reflow.
+  Widget _buildSkeleton() {
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: const [
+        SkeletonBox(height: 140, radius: 12),
+        SizedBox(height: 16),
+        SkeletonBox(height: 96, radius: 12),
+        SizedBox(height: 16),
+        SkeletonBox(height: 96, radius: 12),
+        SizedBox(height: 16),
+        SkeletonBox(height: 120, radius: 12),
+      ],
     );
   }
 
@@ -152,12 +170,7 @@ class _HormonalHealthScreenState extends ConsumerState<HormonalHealthScreen> {
           // Cycle Tracker (if menstrual tracking enabled)
           if (profile.menstrualTrackingEnabled)
             cyclePhaseAsync.when(
-              loading: () => const Card(
-                child: Padding(
-                  padding: EdgeInsets.all(24),
-                  child: Center(child: CircularProgressIndicator()),
-                ),
-              ),
+              loading: () => const SkeletonBox(height: 140, radius: 12),
               error: (_, __) => const SizedBox.shrink(),
               data: (cycleInfo) => CycleTrackerWidget(
                 cycleInfo: cycleInfo,

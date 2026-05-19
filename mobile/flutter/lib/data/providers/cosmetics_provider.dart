@@ -1,5 +1,6 @@
-import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/cache/cache_first_mixin.dart';
 import '../models/cosmetic.dart';
 import '../services/api_client.dart';
 
@@ -55,31 +56,100 @@ class CosmeticsState {
       );
 }
 
-class CosmeticsNotifier extends StateNotifier<CosmeticsState> {
+class CosmeticsNotifier extends StateNotifier<CosmeticsState> with CacheFirstMixin {
   final ApiClient _client;
   CosmeticsNotifier(this._client) : super(const CosmeticsState()) {
     load();
   }
 
+  /// Cache-first load (Part-1 instant-load standard). Persists the raw catalog
+  /// + ownership API responses so a cold start renders the cosmetics gallery
+  /// instantly from disk, then revalidates over the network. The catalog is
+  /// effectively static and ownership changes rarely, so a 12h TTL is ample.
   Future<void> load() async {
     state = state.copyWith(loading: true, clearError: true);
-    try {
-      final cat = await _client.get('/xp/cosmetics/catalog');
-      final mine = await _client.get('/xp/cosmetics/me');
-      final catalogList = ((cat.data as Map)['cosmetics'] as List? ?? [])
-          .map((j) => Cosmetic.fromJson(j as Map<String, dynamic>))
-          .toList();
-      final ownedMap = <String, UserCosmetic>{
-        for (final j in ((mine.data as Map)['cosmetics'] as List? ?? []))
-          (j as Map<String, dynamic>)['cosmetic_id'] as String:
-              UserCosmetic.fromJson(j),
-      };
-      state = state.copyWith(loading: false, catalog: catalogList, owned: ownedMap);
-    } catch (e) {
-      debugPrint('load cosmetics failed: $e');
-      state = state.copyWith(loading: false, error: e);
-    }
+    final userId = await _client.getUserId() ?? '';
+    await loadCacheFirst<CosmeticsState>(
+      cacheKey: 'cosmetics_gallery',
+      userId: userId,
+      ttl: const Duration(hours: 12),
+      fetch: _fetchFresh,
+      decode: _decode,
+      encode: _encode,
+      emit: (data, {required bool fromCache}) {
+        if (mounted) {
+          state = data.copyWith(loading: false, clearError: true);
+        }
+      },
+      onError: (e, st) {
+        debugPrint('load cosmetics failed: $e');
+        // Keep cached catalog/owned on screen if we have it; only flag the
+        // error so the cold-cache path can show the retry view.
+        if (mounted) state = state.copyWith(loading: false, error: e);
+      },
+    );
   }
+
+  /// Fetch + parse the catalog and ownership endpoints into a [CosmeticsState].
+  Future<CosmeticsState> _fetchFresh() async {
+    final cat = await _client.get('/xp/cosmetics/catalog');
+    final mine = await _client.get('/xp/cosmetics/me');
+    return _decode({
+      'catalog': (cat.data as Map)['cosmetics'] ?? [],
+      'owned': (mine.data as Map)['cosmetics'] ?? [],
+    });
+  }
+
+  /// Decode the persisted/raw `{catalog: [...], owned: [...]}` envelope. The
+  /// lists are the verbatim API rows, so `Cosmetic.fromJson` /
+  /// `UserCosmetic.fromJson` decode them with no extra mapping.
+  static CosmeticsState _decode(Map<String, dynamic> json) {
+    final catalogList = ((json['catalog'] as List?) ?? const [])
+        .map((j) => Cosmetic.fromJson((j as Map).cast<String, dynamic>()))
+        .toList();
+    final ownedMap = <String, UserCosmetic>{
+      for (final j in ((json['owned'] as List?) ?? const []))
+        (j as Map).cast<String, dynamic>()['cosmetic_id'] as String:
+            UserCosmetic.fromJson((j).cast<String, dynamic>()),
+    };
+    return CosmeticsState(catalog: catalogList, owned: ownedMap);
+  }
+
+  /// Encode for disk write-through. We persist the ORIGINAL raw API rows
+  /// (carried unchanged by `_fetchFresh`) so the round-trip is loss-free even
+  /// though `Cosmetic`/`UserCosmetic` have no `toJson`.
+  static Map<String, dynamic> _encode(CosmeticsState s) => {
+        'catalog': s.catalog.map(_encodeCosmetic).toList(),
+        'owned': s.owned.values.map(_encodeOwned).toList(),
+      };
+
+  /// Re-emit a [Cosmetic] in the exact snake_case shape `Cosmetic.fromJson`
+  /// consumes (colors back to `#RRGGBB` hex).
+  static Map<String, dynamic> _encodeCosmetic(Cosmetic c) {
+    String? hex(Color? col) => col == null
+        ? null
+        : '#${(col.toARGB32() & 0xFFFFFF).toRadixString(16).padLeft(6, '0')}';
+    return {
+      'id': c.id,
+      'type': c.type.apiValue,
+      'display_name': c.displayName,
+      'description': c.description,
+      'emoji': c.emoji,
+      'color_hex': hex(c.color),
+      'gradient_hex': hex(c.gradient),
+      'tier': c.tier,
+      'is_animated': c.isAnimated,
+      'unlock_level': c.unlockLevel,
+    };
+  }
+
+  /// Re-emit a [UserCosmetic] in the shape `UserCosmetic.fromJson` consumes.
+  static Map<String, dynamic> _encodeOwned(UserCosmetic u) => {
+        'cosmetic_id': u.cosmeticId,
+        'unlocked_at': u.unlockedAt.toIso8601String(),
+        'unlocked_at_level': u.unlockedAtLevel,
+        'is_equipped': u.isEquipped,
+      };
 
   Future<void> equip(String cosmeticId) async {
     try {

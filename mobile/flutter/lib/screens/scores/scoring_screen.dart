@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/widgets/skeleton/skeleton.dart';
 import '../../data/providers/scores_provider.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/services/context_logging_service.dart';
@@ -87,9 +88,25 @@ class _ScoringScreenState extends ConsumerState<ScoringScreen> {
           ),
           // Content
           if (scoresState.isLoading && scoresState.overview == null)
-            const SliverFillRemaining(
-              child: Center(
-                child: CircularProgressIndicator(),
+            // Layout-matched skeleton: score hero, breakdown grid, then two
+            // detail cards — mirrors `_buildContent` so the swap is reflow-free.
+            // `scoresProvider` keeps an in-memory cache, so a returning user
+            // within a session skips this and renders content instantly.
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Column(
+                  children: const [
+                    SizedBox(height: 8),
+                    SkeletonBox(height: 180, radius: 16),
+                    SizedBox(height: 24),
+                    SkeletonBox(height: 120, radius: 16),
+                    SizedBox(height: 24),
+                    SkeletonBox(height: 140, radius: 16),
+                    SizedBox(height: 16),
+                    SkeletonBox(height: 120, radius: 16),
+                  ],
+                ),
               ),
             )
           else

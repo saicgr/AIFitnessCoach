@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/providers/training_intensity_provider.dart';
+import '../../../core/widgets/skeleton/skeleton.dart';
 import '../../../data/models/training_intensity.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../../core/services/posthog_service.dart';
@@ -69,7 +70,10 @@ class _My1RMsScreenState extends ConsumerState<My1RMsScreen> {
         ],
       ),
       body: oneRMsState.isLoading || _isAutoPopulating
-          ? const Center(child: CircularProgressIndicator())
+          // Cache-first: layout-matched skeleton on the cold first load (and
+          // while auto-populating). The provider stays alive app-wide so
+          // re-opening the screen renders the list instantly.
+          ? _buildSkeleton()
           : oneRMsState.oneRMs.isEmpty
               ? _buildEmptyState(context, isDark, textPrimary, textMuted)
               : RepaintBoundary(
@@ -97,6 +101,17 @@ class _My1RMsScreenState extends ConsumerState<My1RMsScreen> {
               label: const Text('Add 1RM'),
             ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+    );
+  }
+
+  /// Layout-matched skeleton for the cold first load. Mirrors the 1RM card
+  /// list so the skeleton -> content swap does not reflow.
+  Widget _buildSkeleton() {
+    return SkeletonList(
+      scrollable: true,
+      itemCount: 6,
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
+      itemBuilder: (_, __) => const SkeletonCard(height: 92, lines: 2),
     );
   }
 

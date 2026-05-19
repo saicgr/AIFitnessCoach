@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/providers/user_provider.dart';
 import '../../core/theme/accent_color_provider.dart';
+import '../../core/widgets/skeleton/skeleton.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/repositories/workout_history_import_file_repository.dart';
 import '../../data/repositories/workout_history_repository.dart';
@@ -37,6 +38,10 @@ class _WorkoutHistoryImportScreenState
   final _setsController = TextEditingController(text: '3');
 
   bool _isLoading = false;
+  // True only during the very first data fetch — drives a layout-matched
+  // skeleton instead of a blank spinner. Subsequent in-place reloads (after a
+  // submit / delete) keep the form + lists visible and refresh silently.
+  bool _isInitialLoad = true;
   List<StrengthSummary> _strengthSummary = [];
   List<WorkoutHistoryRecord> _recentHistory = [];
 
@@ -69,8 +74,6 @@ class _WorkoutHistoryImportScreenState
     final user = authState.user;
     if (user == null || _repository == null) return;
 
-    setState(() => _isLoading = true);
-
     try {
       final results = await Future.wait([
         _repository!.getStrengthSummary(userId: user.id),
@@ -81,11 +84,14 @@ class _WorkoutHistoryImportScreenState
       setState(() {
         _strengthSummary = results[0] as List<StrengthSummary>;
         _recentHistory = results[1] as List<WorkoutHistoryRecord>;
+        // First fetch resolved — drop the skeleton, render real content. A
+        // reload after a submit/delete keeps content visible (no skeleton).
+        _isInitialLoad = false;
       });
     } catch (e) {
       debugPrint('Error loading data: $e');
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
+      // Even on error, leave the skeleton — the form below is still usable.
+      if (mounted) setState(() => _isInitialLoad = false);
     }
   }
 
@@ -284,8 +290,25 @@ class _WorkoutHistoryImportScreenState
 
     return Scaffold(
       appBar: const PillAppBar(title: 'Import Workout History'),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+      body: _isInitialLoad
+          // Cache-first: layout-matched skeleton on the cold first load only.
+          // File-import card + info card + a few history rows mirror the real
+          // body so the swap to content does not reflow.
+          ? ListView(
+              padding: const EdgeInsets.all(16),
+              children: [
+                SkeletonBox(height: 120, radius: 12),
+                const SizedBox(height: 24),
+                SkeletonBox(height: 88, radius: 12),
+                const SizedBox(height: 24),
+                const SkeletonCard(showLeading: false, lines: 1),
+                const SizedBox(height: 16),
+                for (var i = 0; i < 4; i++) ...[
+                  const SkeletonCard(height: 72),
+                  const SizedBox(height: 12),
+                ],
+              ],
+            )
           : SingleChildScrollView(
               padding: const EdgeInsets.all(16),
               child: Column(

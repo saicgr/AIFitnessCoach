@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/widgets/skeleton/skeleton.dart';
 import '../../data/local/database.dart';
 import '../../data/local/database_provider.dart';
 import '../../data/services/sync_engine.dart';
@@ -261,7 +262,14 @@ class _SyncDetailsScreenState extends ConsumerState<SyncDetailsScreen> {
       backgroundColor: backgroundColor,
       appBar: const PillAppBar(title: 'Sync Details'),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          // Local Drift query — fast, but show a layout-matched skeleton
+          // instead of a blocking spinner so the first frame is never empty.
+          ? SkeletonList(
+              scrollable: true,
+              itemCount: 5,
+              padding: const EdgeInsets.all(16),
+              itemBuilder: (_, __) => const SkeletonCard(height: 104, lines: 3),
+            )
           : _deadLetterItems.isEmpty
               ? Center(
                   child: Column(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/animations/app_animations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/widgets/skeleton/skeleton.dart';
 import '../../data/models/flexibility_assessment.dart';
 import '../../data/providers/flexibility_provider.dart';
 import 'widgets/flexibility_test_card.dart';
@@ -78,7 +79,7 @@ class _FlexibilityAssessmentScreenState extends ConsumerState<FlexibilityAssessm
           ),
           Expanded(
             child: state.isLoading && state.tests.isEmpty
-                ? const Center(child: CircularProgressIndicator())
+                ? _buildSkeleton()
                 : state.error != null && state.tests.isEmpty
                     ? _buildErrorState(state.error!)
                     : TabBarView(
@@ -92,6 +93,25 @@ class _FlexibilityAssessmentScreenState extends ConsumerState<FlexibilityAssessm
           ),
         ],
       ),
+    );
+  }
+
+  /// Layout-matched skeleton: a score hero card followed by a stack of test
+  /// cards, mirroring the Overview tab so the swap is reflow-free.
+  Widget _buildSkeleton() {
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: const [
+        SkeletonBox(height: 120, radius: 16),
+        SizedBox(height: 24),
+        SkeletonBox(width: 160, height: 18),
+        SizedBox(height: 12),
+        SkeletonCard(showLeading: true, lines: 2),
+        SizedBox(height: 8),
+        SkeletonCard(showLeading: true, lines: 2),
+        SizedBox(height: 8),
+        SkeletonCard(showLeading: true, lines: 2),
+      ],
     );
   }
 

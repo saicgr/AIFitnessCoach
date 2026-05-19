@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/providers/staples_provider.dart';
 import '../../../core/providers/user_provider.dart';
+import '../../../core/widgets/skeleton/skeleton.dart';
 import '../../../data/models/exercise.dart';
 import '../../../data/providers/gym_profile_provider.dart';
 import '../../../data/repositories/exercise_preferences_repository.dart';
@@ -157,7 +158,9 @@ class StapleExercisesScreen extends ConsumerWidget {
     final body = Stack(
       children: [
         staplesState.isLoading
-            ? const Center(child: CircularProgressIndicator())
+            // Cache-first: layout-matched skeleton on the cold first load only;
+            // re-opens render instantly from the retained app-scoped provider.
+            ? _buildSkeleton()
             : staplesState.staples.isEmpty
                 ? _buildEmptyState(context, ref, textMuted)
                 : _buildStaplesList(
@@ -188,6 +191,27 @@ class StapleExercisesScreen extends ConsumerWidget {
         child: const Icon(Icons.add, color: Colors.white),
       ),
       body: body,
+    );
+  }
+
+  /// Layout-matched skeleton for the cold first load. Mirrors the info banner
+  /// + staple list-tile rows so the swap to real content does not reflow.
+  Widget _buildSkeleton() {
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(16),
+          child: SkeletonBox(height: 64, radius: 12),
+        ),
+        Expanded(
+          child: SkeletonList(
+            scrollable: true,
+            itemCount: 5,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            itemBuilder: (_, __) => const SkeletonCard(leadingSize: 44),
+          ),
+        ),
+      ],
     );
   }
 

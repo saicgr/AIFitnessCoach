@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/accent_color_provider.dart';
+import '../../core/widgets/skeleton/skeleton.dart';
 import '../../data/models/merch_claim.dart';
 import '../../data/providers/merch_claim_provider.dart';
 import '../../data/providers/merch_notification_prefs_provider.dart';
@@ -93,12 +94,10 @@ class _MerchClaimsScreenState extends ConsumerState<MerchClaimsScreen> {
                       _buildIntroCard(isDark, textColor, textMuted, elevated, border, accent),
                       const SizedBox(height: 20),
                       if (state.loading && state.claims.isEmpty)
-                        const Center(
-                          child: Padding(
-                            padding: EdgeInsets.all(32),
-                            child: CircularProgressIndicator(),
-                          ),
-                        )
+                        // Layout-matched skeleton — only on a true cold-cache
+                        // first open; returning users get cached claims
+                        // instantly (CacheFirstMixin disk SWR).
+                        const SkeletonList(itemCount: 3, spacing: 12)
                       else if (state.error != null && state.claims.isEmpty)
                         _buildError(state.error!, textColor, textMuted, accent)
                       else if (state.claims.isEmpty)

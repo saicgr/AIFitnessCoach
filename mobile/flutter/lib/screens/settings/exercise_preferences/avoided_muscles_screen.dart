@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/widgets/skeleton/skeleton.dart';
 import '../../../data/providers/today_workout_provider.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/repositories/exercise_preferences_repository.dart';
@@ -64,7 +65,23 @@ class _AvoidedMusclesScreenState extends ConsumerState<AvoidedMusclesScreen> {
     final avoidedAsync = ref.watch(avoidedMusclesProvider(userId));
 
     final body = avoidedAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
+        // Cache-first: layout-matched skeleton on the cold first load (body
+        // diagram block + instruction line). Riverpod retains the resolved
+        // value so re-opens render instantly.
+        loading: () => SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                SkeletonBox(width: 240, height: 14, radius: 6),
+                const SizedBox(height: 16),
+                // Body-diagram placeholder — matches the 550pt selector height.
+                SkeletonBox(height: 550, radius: 16),
+              ],
+            ),
+          ),
+        ),
         error: (error, _) => Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,

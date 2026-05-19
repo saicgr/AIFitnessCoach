@@ -4,6 +4,8 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/cache/cache_first_mixin.dart';
+import '../../core/widgets/skeleton/skeleton.dart';
 import '../../data/models/strain_prevention.dart';
 import '../../data/services/api_client.dart';
 import 'widgets/strain_risk_card.dart';
@@ -41,20 +43,51 @@ class StrainDashboardState {
       );
 }
 
-class StrainDashboardNotifier extends StateNotifier<StrainDashboardState> {
+class StrainDashboardNotifier extends StateNotifier<StrainDashboardState>
+    with CacheFirstMixin {
   final Ref _ref;
   StrainDashboardNotifier(this._ref) : super(const StrainDashboardState());
 
+  /// Cache-first load: a valid disk blob renders the dashboard instantly on a
+  /// cold start; the network revalidate (two parallel endpoints) then swaps in
+  /// fresh data silently. A network failure keeps any cached data on screen.
   Future<void> loadData() async {
-    state = state.copyWith(isLoading: true, error: null);
-    try {
-      final apiClient = _ref.read(apiClientProvider);
-      final userId = await apiClient.getUserId();
-      if (userId == null) {
-        state = state.copyWith(error: 'Not authenticated', isLoading: false);
-        return;
-      }
+    final apiClient = _ref.read(apiClientProvider);
+    final userId = await apiClient.getUserId();
+    if (userId == null) {
+      state = state.copyWith(error: 'Not authenticated', isLoading: false);
+      return;
+    }
 
+    if (state.data == null) {
+      state = state.copyWith(isLoading: true, error: null);
+    } else {
+      state = state.copyWith(error: null);
+    }
+
+    await loadCacheFirst<StrainDashboardData>(
+      cacheKey: 'strain_dashboard',
+      userId: userId,
+      ttl: const Duration(hours: 6),
+      fetch: () => _fetchDashboard(apiClient, userId),
+      decode: StrainDashboardData.fromJson,
+      encode: (d) => d.toJson(),
+      emit: (data, {required bool fromCache}) {
+        state = state.copyWith(data: data, isLoading: false);
+      },
+      onError: (e, _) {
+        state = state.copyWith(
+          isLoading: false,
+          error: state.data == null ? e.toString() : null,
+        );
+      },
+    );
+  }
+
+  /// Fetches and assembles the dashboard from the risk-assessment + alerts
+  /// endpoints. Throws on failure (routed to [loadCacheFirst]'s onError).
+  Future<StrainDashboardData> _fetchDashboard(
+      ApiClient apiClient, String userId) async {
       // Fetch risk assessment and alerts in parallel
       final results = await Future.wait([
         apiClient.get('/strain-prevention/$userId/risk-assessment'),
@@ -131,17 +164,12 @@ class StrainDashboardNotifier extends StateNotifier<StrainDashboardState> {
           mappedRiskLevel = 'safe';
       }
 
-      final data = StrainDashboardData(
+      return StrainDashboardData(
         muscleRisks: muscleRisks,
         unacknowledgedAlerts: alertsList,
         overallRiskLevel: mappedRiskLevel,
         totalAlertsCount: alertsList.length,
       );
-
-      state = state.copyWith(data: data, isLoading: false);
-    } catch (e) {
-      state = state.copyWith(error: e.toString(), isLoading: false);
-    }
   }
 
   Future<void> acknowledgeAlert(String alertId) async {
@@ -188,8 +216,8 @@ class _StrainDashboardScreenState extends ConsumerState<StrainDashboardScreen> {
           PillAppBarAction(icon: Icons.add_circle_outline, onTap: _navigateToReportStrain),
         ],
       ),
-      body: state.isLoading
-          ? const Center(child: CircularProgressIndicator())
+      body: state.isLoading && state.data == null
+          ? _buildSkeleton()
           : state.error != null
               ? _buildErrorState(colorScheme, state.error!)
               : state.data == null
@@ -247,6 +275,34 @@ class _StrainDashboardScreenState extends ConsumerState<StrainDashboardScreen> {
                         ),
                       ),
                     ),
+    );
+  }
+
+  /// Layout-matched skeleton: hero status card, quick-action row, then a stack
+  /// of muscle-risk cards — mirrors the real dashboard so the swap is
+  /// reflow-free.
+  Widget _buildSkeleton() {
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: const [
+        SkeletonBox(height: 150, radius: 20),
+        SizedBox(height: 16),
+        Row(
+          children: [
+            Expanded(child: SkeletonBox(height: 52, radius: 12)),
+            SizedBox(width: 12),
+            Expanded(child: SkeletonBox(height: 52, radius: 12)),
+          ],
+        ),
+        SizedBox(height: 24),
+        SkeletonBox(width: 160, height: 18),
+        SizedBox(height: 12),
+        SkeletonBox(height: 88, radius: 16),
+        SizedBox(height: 12),
+        SkeletonBox(height: 88, radius: 16),
+        SizedBox(height: 12),
+        SkeletonBox(height: 88, radius: 16),
+      ],
     );
   }
 

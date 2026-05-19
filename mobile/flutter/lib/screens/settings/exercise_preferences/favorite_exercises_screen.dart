@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/providers/favorites_provider.dart';
+import '../../../core/widgets/skeleton/skeleton.dart';
 import '../../../data/repositories/exercise_preferences_repository.dart';
 import '../../../core/services/posthog_service.dart';
 import '../../../widgets/pill_app_bar.dart';
@@ -64,7 +65,11 @@ class FavoriteExercisesScreen extends ConsumerWidget {
     final favoritesState = ref.watch(favoritesProvider);
 
     final body = favoritesState.isLoading
-        ? const Center(child: CircularProgressIndicator())
+        // Cache-first: on the very first cold load (provider has no in-memory
+        // data yet) render a layout-matched skeleton list instead of a
+        // blocking spinner. Re-opening the screen renders instantly from the
+        // app-scoped provider's retained state.
+        ? _buildSkeleton()
         : favoritesState.favorites.isEmpty
             ? _buildEmptyState(context, ref, textMuted)
             : _buildFavoritesList(
@@ -146,6 +151,29 @@ class FavoriteExercisesScreen extends ConsumerWidget {
         ),
       );
     }
+  }
+
+  /// Layout-matched skeleton shown only on a true cold first load. Mirrors the
+  /// info banner + list-tile rows so the skeleton -> content swap is reflow-free.
+  Widget _buildSkeleton() {
+    return Column(
+      children: [
+        // Info banner placeholder.
+        Padding(
+          padding: const EdgeInsets.all(16),
+          child: SkeletonBox(height: 64, radius: 12),
+        ),
+        // List rows placeholder — list-tile shaped (44pt leading + 2 lines).
+        Expanded(
+          child: SkeletonList(
+            scrollable: true,
+            itemCount: 6,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            itemBuilder: (_, __) => const SkeletonCard(leadingSize: 44),
+          ),
+        ),
+      ],
+    );
   }
 
   Widget _buildEmptyState(BuildContext context, WidgetRef ref, Color textMuted) {
