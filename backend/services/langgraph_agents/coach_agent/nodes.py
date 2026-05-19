@@ -784,6 +784,78 @@ def _resolve_log_timestamp(hint) -> str:
     return target.isoformat()
 
 
+def _build_coach_response_prompt(state: CoachAgentState):
+    """Build the (system_prompt, conversation_history) pair for a general
+    coaching reply.
+
+    Extracted from `coach_response_node` so the SSE token-streaming path
+    (`coach_response_stream`) builds an IDENTICAL prompt — the streamed reply
+    must be byte-for-byte equivalent to what the buffered node would produce.
+    """
+    context_parts = []
+
+    # Add current date/time
+    pacific = pytz.timezone('America/Los_Angeles')
+    now = datetime.now(pacific)
+    context_parts.append(f"CURRENT DATE/TIME: {now.strftime('%A, %B %d, %Y at %I:%M %p')} (Pacific Time)")
+
+    if state.get("user_profile"):
+        profile = state["user_profile"]
+        context_parts.append(f"\nUSER PROFILE:")
+        context_parts.append(f"- Fitness Level: {profile.get('fitness_level', 'beginner')}")
+        context_parts.append(f"- Goals: {', '.join(profile.get('goals', []))}")
+
+    if state.get("workout_schedule"):
+        context_parts.append(format_workout_context(state["workout_schedule"]))
+
+    if state.get("rag_context_formatted"):
+        context_parts.append(f"\nPrevious context:\n{state['rag_context_formatted']}")
+
+    context = "\n".join(context_parts)
+
+    ai_settings = state.get("ai_settings")
+    base_system_prompt = get_coach_system_prompt(ai_settings)
+
+    system_prompt = f"""{base_system_prompt}
+
+CONTEXT:
+{context}
+
+Reply to the user's message in your own voice. Stay in character — your persona is defined above."""
+
+    conversation_history = [
+        {"role": msg["role"], "content": msg["content"]}
+        for msg in state.get("conversation_history", [])
+    ]
+
+    return system_prompt, conversation_history
+
+
+async def coach_response_stream(state: CoachAgentState):
+    """Token-streaming variant of `coach_response_node` for the SSE chat path.
+
+    Yields incremental text deltas as Gemini generates the coaching reply,
+    instead of returning the whole string at once. Used by
+    `LangGraphCoachService.process_message_stream` ONLY for the text-only
+    general-coaching path (no media). The media path stays buffered because
+    multimodal vision replies are short and don't benefit from streaming.
+
+    Concatenating every yielded chunk reproduces the exact reply that
+    `coach_response_node` would have returned in `final_response`.
+    """
+    logger.info("[Coach Response Stream] Streaming coaching response...")
+    gemini_service = GeminiService()
+    system_prompt, conversation_history = _build_coach_response_prompt(state)
+
+    async for delta in gemini_service.chat_stream(
+        user_message=state["user_message"],
+        system_prompt=system_prompt,
+        conversation_history=conversation_history,
+        user_id=str(state.get("user_id", "")) or None,
+    ):
+        yield delta
+
+
 async def coach_response_node(state: CoachAgentState) -> Dict[str, Any]:
     """
     Handle general coaching responses.

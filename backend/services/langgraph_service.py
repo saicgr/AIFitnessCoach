@@ -1043,3 +1043,274 @@ class LangGraphCoachService:
         except Exception as e:
             logger.error(f"Agent execution failed: {e}", exc_info=True)
             raise
+
+    async def process_message_stream(self, request: ChatRequest):
+        """Streaming counterpart of `process_message`.
+
+        Runs the IDENTICAL pipeline (media validation, @mention detection,
+        intent extraction, RAG, agent selection, state build) and then yields
+        a sequence of event dicts so the caller (the SSE `/chat/send-stream`
+        endpoint) can forward them to the client as they happen:
+
+            {"type": "token",  "delta": "<text chunk>"}
+            {"type": "action", "action_data": {...}}
+            {"type": "result", "message": "<full reply>", "intent": <CoachIntent>,
+             "agent_type": <AgentType>, "rag_context_used": bool,
+             "similar_questions": [...], "action_data": {...} | None}
+
+        The terminal `result` event always fires (unless an exception is raised)
+        and carries everything the endpoint needs to persist the message and
+        emit the SSE `done` frame.
+
+        Streaming strategy:
+        - General-coaching text replies (Coach agent, `respond` route, no media)
+          are streamed token-by-token straight from Gemini — the user sees text
+          appear progressively.
+        - Every other path (workout proposals, food analysis, settings/nav
+          actions, wellness logging, any media message) runs the agent graph
+          via `ainvoke` exactly as the non-streaming endpoint does, and the
+          whole reply is emitted as ONE `token` event. This keeps multi-agent
+          routing, tool calls and action cards bit-identical to `/chat/send`.
+
+        Raises on hard failure (same contract as `process_message`); the
+        endpoint converts that into an SSE `error` frame.
+        """
+        logger.info(f"Streaming message: {request.message[:50]}...")
+
+        # 0. Validate media limits (per-request) — identical to process_message.
+        all_media = getattr(request, "media_refs", None) or []
+        if not all_media and getattr(request, "media_ref", None):
+            all_media = [request.media_ref]
+        if all_media:
+            self._validate_media_request(all_media)
+            await self._check_media_usage(request.user_id, len(all_media))
+
+        # 1. Detect @mention and sanitize against prompt injection.
+        mentioned_agent, cleaned_message = self._detect_agent_mention(request.message)
+        cleaned_message = self._sanitize_user_message(cleaned_message)
+
+        # 1a. Trivial fast-path — canned reply, no Gemini call.
+        all_media_for_fastpath = (
+            getattr(request, "media_refs", None)
+            or ([getattr(request, "media_ref", None)] if getattr(request, "media_ref", None) else [])
+        )
+        if (
+            mentioned_agent is None
+            and not all_media_for_fastpath
+            and not getattr(request, "image_base64", None)
+            and not getattr(request, "video_frames", None)
+            and _is_trivial_message(cleaned_message)
+        ):
+            trivial_reply = self._fast_trivial_reply(cleaned_message)
+            logger.info(f"Trivial fast-path hit (stream): {cleaned_message[:30]!r}")
+            yield {"type": "token", "delta": trivial_reply}
+            yield {
+                "type": "result",
+                "message": trivial_reply,
+                "intent": CoachIntent.QUESTION,
+                "agent_type": AgentType.COACH,
+                "rag_context_used": False,
+                "similar_questions": [],
+                "action_data": None,
+            }
+            return
+
+        # 2. Compute media signals (sync — no I/O).
+        has_image = request.image_base64 is not None
+        has_video = False
+        has_multi_images = False
+        has_multi_videos = False
+
+        if hasattr(request, "media_ref") and request.media_ref:
+            if request.media_ref.media_type == "video":
+                has_video = True
+            elif request.media_ref.media_type == "image":
+                has_image = True
+
+        if hasattr(request, "media_refs") and request.media_refs:
+            image_refs = [r for r in request.media_refs if r.media_type == "image"]
+            video_refs = [r for r in request.media_refs if r.media_type == "video"]
+            if len(image_refs) > 1:
+                has_multi_images = True
+                has_image = True
+            if len(video_refs) > 1:
+                has_multi_videos = True
+                has_video = True
+            if len(image_refs) == 1:
+                has_image = True
+            if len(video_refs) == 1:
+                has_video = True
+
+        if getattr(request, "video_frames", None):
+            has_video = True
+
+        has_media = has_image or has_video or has_multi_images or has_multi_videos
+
+        # 3. Intent extraction + media classification / RAG — identical logic.
+        skip_rag = has_media or _is_trivial_message(cleaned_message)
+        if has_media:
+            (intent, extraction_data), media_content_type = await asyncio.gather(
+                self._extract_intent(cleaned_message, user_id=request.user_id),
+                self._classify_media(request),
+            )
+            rag_context, rag_used, similar_questions = "", False, []
+        elif skip_rag:
+            intent, extraction_data = await self._extract_intent(
+                cleaned_message, user_id=request.user_id,
+            )
+            rag_context, rag_used, similar_questions = "", False, []
+            media_content_type = None
+        else:
+            (intent, extraction_data), (rag_context, rag_used, similar_questions) = \
+                await asyncio.gather(
+                    self._extract_intent(cleaned_message, user_id=request.user_id),
+                    self._get_rag_context(cleaned_message, request.user_id),
+                )
+            media_content_type = None
+        logger.info(f"Extracted intent (stream): {intent.value}")
+
+        selected_agent = self._select_agent(
+            mentioned_agent, intent, cleaned_message, has_image,
+            has_video=has_video,
+            has_multi_images=has_multi_images,
+            has_multi_videos=has_multi_videos,
+            media_content_type=media_content_type,
+            agent_override=request.agent_override,
+        )
+        logger.info(f"Selected agent (stream): {selected_agent.value}")
+
+        # 4b. Beast mode config (workout agent only).
+        beast_mode_config = None
+        if selected_agent == AgentType.WORKOUT:
+            try:
+                supabase = get_supabase().client
+                bm_result = supabase.table("user_settings").select(
+                    "beast_mode_config"
+                ).eq("user_id", request.user_id).maybe_single().execute()
+                if bm_result and bm_result.data and bm_result.data.get("beast_mode_config"):
+                    beast_mode_config = bm_result.data["beast_mode_config"]
+            except Exception as bm_err:
+                logger.warning(f"Failed to fetch beast mode config (stream): {bm_err}", exc_info=True)
+
+        # 5. Build agent state — identical to process_message.
+        agent_state = await self._build_agent_state(
+            selected_agent,
+            request,
+            cleaned_message,
+            intent,
+            extraction_data,
+            rag_context,
+            rag_used,
+            similar_questions,
+            beast_mode_config=beast_mode_config,
+            media_content_type=media_content_type,
+        )
+
+        # 6. Decide: true token-streaming vs. buffered agent run.
+        #    Token-streaming is only safe for the Coach `respond` route with no
+        #    media — every other route either produces structured action_data
+        #    or runs vision tools that can't be streamed token-by-token.
+        from services.langgraph_agents.coach_agent import (
+            should_handle_action,
+            coach_response_stream,
+        )
+
+        can_token_stream = (
+            selected_agent == AgentType.COACH
+            and not has_media
+            and should_handle_action(agent_state) == "respond"
+        )
+
+        if can_token_stream:
+            logger.info("Streaming path: token-by-token coach response")
+            collected: List[str] = []
+            try:
+                async for delta in coach_response_stream(agent_state):
+                    if delta:
+                        collected.append(delta)
+                        yield {"type": "token", "delta": delta}
+            except Exception as stream_err:
+                logger.error(f"Token stream failed: {stream_err}", exc_info=True)
+                raise
+            full_message = "".join(collected).strip()
+            if not full_message:
+                full_message = "I'm sorry, I couldn't generate a response. Could you try rephrasing?"
+                yield {"type": "token", "delta": full_message}
+            yield {
+                "type": "result",
+                "message": full_message,
+                "intent": intent,
+                "agent_type": selected_agent,
+                "rag_context_used": rag_used,
+                "similar_questions": similar_questions,
+                "action_data": None,
+            }
+            return
+
+        # 6b. Buffered path — run the agent graph exactly like process_message.
+        logger.info(f"Streaming path: buffered agent run ({selected_agent.value})")
+        use_nutrition_semaphore = (
+            selected_agent == AgentType.NUTRITION
+            and (has_image or has_multi_images)
+        )
+        agent_graph = self.agents[selected_agent]
+        start_time = time.time()
+
+        async def _run_agent():
+            return await asyncio.wait_for(
+                agent_graph.ainvoke(agent_state),
+                timeout=120.0,
+            )
+
+        try:
+            if use_nutrition_semaphore:
+                async with _NUTRITION_SEMAPHORE:
+                    final_state = await _run_agent()
+            else:
+                final_state = await _run_agent()
+        except asyncio.TimeoutError:
+            logger.error(f"Agent {selected_agent.value} timed out after 120s (stream)", exc_info=True)
+            raise Exception("AI agent timed out. Please try again.")
+        except Exception as agent_error:
+            error_msg = str(agent_error).lower()
+            if "thought_signature" in error_msg or "function call is missing" in error_msg:
+                logger.warning(f"Thought signature error with {selected_agent.value} (stream), retrying...", exc_info=True)
+                if "messages" in agent_state:
+                    agent_state["messages"] = []
+                try:
+                    if use_nutrition_semaphore:
+                        async with _NUTRITION_SEMAPHORE:
+                            final_state = await _run_agent()
+                    else:
+                        final_state = await _run_agent()
+                except asyncio.TimeoutError:
+                    logger.error(f"Agent {selected_agent.value} retry timed out (stream)", exc_info=True)
+                    raise Exception("AI agent timed out on retry. Please try again.")
+                except Exception as retry_error:
+                    logger.error(f"Retry also failed (stream): {retry_error}", exc_info=True)
+                    raise retry_error
+            else:
+                raise
+        elapsed = time.time() - start_time
+        logger.info(f"Agent {selected_agent.value} completed in {elapsed:.1f}s (stream)")
+
+        action_data = final_state.get("action_data")
+        raw_response = final_state.get("final_response", "I'm sorry, I couldn't process your request.")
+        message_str = _ensure_str(raw_response)
+        if not message_str.strip():
+            message_str = "I'm sorry, I couldn't generate a response. Could you try rephrasing?"
+
+        # Emit the buffered reply as a single token event so the client renders
+        # it through the same incremental path, then the action card (if any).
+        yield {"type": "token", "delta": message_str}
+        if action_data:
+            yield {"type": "action", "action_data": action_data}
+        yield {
+            "type": "result",
+            "message": message_str,
+            "intent": intent,
+            "agent_type": selected_agent,
+            "rag_context_used": final_state.get("rag_context_used", rag_used),
+            "similar_questions": final_state.get("similar_questions", similar_questions),
+            "action_data": action_data,
+        }

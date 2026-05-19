@@ -26,6 +26,29 @@ from services.gemini.utils import _sanitize_for_prompt
 
 logger = logging.getLogger("gemini")
 
+# Shared relaxed safety settings for chat — users may vent or use profanity,
+# and the coach personas are designed to handle it in-character. Used by both
+# the buffered `chat()` and the token-streaming `chat_stream()` paths so the
+# streaming reply is generated under identical conditions to the buffered one.
+_CHAT_SAFETY_SETTINGS = [
+    types.SafetySetting(
+        category="HARM_CATEGORY_HARASSMENT",
+        threshold="BLOCK_ONLY_HIGH",
+    ),
+    types.SafetySetting(
+        category="HARM_CATEGORY_HATE_SPEECH",
+        threshold="BLOCK_ONLY_HIGH",
+    ),
+    types.SafetySetting(
+        category="HARM_CATEGORY_SEXUALLY_EXPLICIT",
+        threshold="BLOCK_MEDIUM_AND_ABOVE",
+    ),
+    types.SafetySetting(
+        category="HARM_CATEGORY_DANGEROUS_CONTENT",
+        threshold="BLOCK_MEDIUM_AND_ABOVE",
+    ),
+]
+
 
 class ChatMixin:
     """Mixin providing chat and extraction methods for GeminiService."""
@@ -58,28 +81,6 @@ class ChatMixin:
         # Add current message
         contents.append(types.Content(role="user", parts=[types.Part.from_text(text=user_message)]))
 
-        # Relaxed safety settings for chat — users may vent or use profanity,
-        # and the coach personas are designed to handle it in-character.
-        # Block only BLOCK_ONLY_HIGH to avoid false positives on fitness content.
-        chat_safety_settings = [
-            types.SafetySetting(
-                category="HARM_CATEGORY_HARASSMENT",
-                threshold="BLOCK_ONLY_HIGH",
-            ),
-            types.SafetySetting(
-                category="HARM_CATEGORY_HATE_SPEECH",
-                threshold="BLOCK_ONLY_HIGH",
-            ),
-            types.SafetySetting(
-                category="HARM_CATEGORY_SEXUALLY_EXPLICIT",
-                threshold="BLOCK_MEDIUM_AND_ABOVE",
-            ),
-            types.SafetySetting(
-                category="HARM_CATEGORY_DANGEROUS_CONTENT",
-                threshold="BLOCK_MEDIUM_AND_ABOVE",
-            ),
-        ]
-
         response = await gemini_generate_with_retry(
             model=self.model,
             contents=contents,
@@ -87,13 +88,91 @@ class ChatMixin:
                 system_instruction=system_prompt,
                 max_output_tokens=settings.gemini_max_tokens,
                 temperature=settings.gemini_temperature,
-                safety_settings=chat_safety_settings,
+                safety_settings=_CHAT_SAFETY_SETTINGS,
             ),
             timeout=60,
             method_name="chat",
         )
 
         return response.text
+
+    async def chat_stream(
+        self,
+        user_message: str,
+        system_prompt: Optional[str] = None,
+        conversation_history: Optional[List[Dict[str, str]]] = None,
+        user_id: Optional[str] = None,
+    ):
+        """
+        Streaming variant of `chat()` — yields the assistant reply token-by-token
+        as Gemini generates it, instead of returning the whole string at once.
+
+        Used by the SSE chat endpoint (`POST /chat/send-stream`) so the user
+        sees the reply materialize progressively rather than after a 10-120s
+        blocking wait.
+
+        Args:
+            user_message: The user's message.
+            system_prompt: Optional system prompt for context.
+            conversation_history: List of previous messages.
+            user_id: User ID for per-user Gemini semaphore fairness.
+
+        Yields:
+            str: Incremental text deltas. Concatenating every yielded chunk
+            reproduces the full reply exactly.
+
+        Notes:
+            - Uses `client.aio.models.generate_content_stream`. No retry wrapper:
+              a streamed response can't be cleanly retried mid-flight once the
+              first chunk has been delivered to the client. The caller (the SSE
+              endpoint) is responsible for surfacing failures as an `error`
+              event.
+            - The `_gemini_semaphore` is held for the WHOLE stream so concurrency
+              limits still apply (unlike a single-shot call it stays open until
+              the generator is exhausted or closed).
+            - If the consumer stops iterating early (client disconnect), the
+              `async for` is GC'd / `aclose()`d and the semaphore is released —
+              no leak.
+        """
+        contents = []
+
+        if conversation_history:
+            for msg in conversation_history:
+                role = "user" if msg["role"] == "user" else "model"
+                contents.append(types.Content(role=role, parts=[types.Part.from_text(text=msg["content"])]))
+
+        contents.append(types.Content(role="user", parts=[types.Part.from_text(text=user_message)]))
+
+        config = types.GenerateContentConfig(
+            system_instruction=system_prompt,
+            max_output_tokens=settings.gemini_max_tokens,
+            temperature=settings.gemini_temperature,
+            safety_settings=_CHAT_SAFETY_SETTINGS,
+        )
+
+        last_response = None
+        async with _gemini_semaphore(user_id=user_id):
+            stream = await client.aio.models.generate_content_stream(
+                model=self.model,
+                contents=contents,
+                config=config,
+            )
+            async for chunk in stream:
+                last_response = chunk
+                # `chunk.text` is the delta for this chunk (the SDK does NOT
+                # accumulate). It can be None for non-text chunks (e.g. the
+                # final usage-only chunk) — skip those.
+                delta = getattr(chunk, "text", None)
+                if delta:
+                    yield delta
+
+        # Record token usage from the terminal chunk (carries usage_metadata).
+        if last_response is not None:
+            try:
+                _log_token_usage(last_response, "chat_stream", user_id or "system")
+            except Exception:
+                # Cost logging is best-effort — never fail the stream over it.
+                pass
 
     async def extract_intent(self, user_message: str, user_id: Optional[str] = None) -> IntentExtraction:
         """

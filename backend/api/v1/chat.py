@@ -894,10 +894,28 @@ async def send_message_stream(
     """
     Send a message to the AI fitness coach with Server-Sent Events streaming.
 
-    Streams the response in chunks:
-    1. {"event": "start", "agent": "coach"}
-    2. {"event": "token", "text": "..."} (20-word chunks)
-    3. {"event": "done", "action_data": {...}}
+    SSE CONTRACT — `Content-Type: text/event-stream`. Each event is a single
+    `data: <json>\\n\\n` frame. Exactly four event `type`s:
+
+      1. {"type":"token","delta":"<text chunk>"}
+         Incremental reply text. For general coaching questions these arrive
+         token-by-token straight from Gemini; for action-producing paths
+         (workout/nutrition/etc.) the whole reply arrives as one token event.
+      2. {"type":"action","action_data":{...}}
+         Emitted when the run produces an action card (workout proposal,
+         food analysis, settings change, navigation, ...).
+      3. {"type":"done","message_id":"<uuid>","content":"<full reply>",
+          "metadata":{"intent":...,"agent_type":...,"rag_context_used":...,
+          "action_data":...}}
+         Terminal success frame. `message_id` matches the persisted chat row
+         PK so the client can dedupe against Realtime / loadHistory.
+      4. {"type":"error","message":"..."}
+         Terminal failure frame.
+
+    Auth, rate limiting (shared 10/min bucket with `/send`), the consent gate,
+    premium gating, multi-agent routing and media handling are identical to
+    the non-streaming `/send` endpoint. The assistant message is still
+    persisted to chat history (background task, on `done`).
     """
     if str(current_user["id"]) != str(chat_request.user_id):
         raise HTTPException(status_code=403, detail="Access denied")
@@ -909,9 +927,27 @@ async def send_message_stream(
     # Resolve timezone once for all premium gate calls in this request
     _stream_tz = resolve_timezone(request, get_supabase_db(), chat_request.user_id)
 
-    # Per-user daily AI chat budget (free: 10/day, premium: unlimited)
+    # Per-user daily AI chat budget (free: 10/day, premium: unlimited).
+    # Mirror /send: also gate food-scanning / text-to-calories so a user
+    # can't dodge the limit by switching to the streaming endpoint.
     from core.premium_gate import check_premium_gate, track_premium_usage
     await check_premium_gate(chat_request.user_id, "ai_chat", _stream_tz)
+
+    _stream_gate_feature = None
+    _has_image_media = bool(
+        chat_request.image_base64
+        or (chat_request.media_ref and chat_request.media_ref.media_type == "image")
+        or (chat_request.media_refs and any(m.media_type == "image" for m in chat_request.media_refs))
+    )
+    if _has_image_media:
+        await check_premium_gate(chat_request.user_id, "food_scanning", _stream_tz)
+        _stream_gate_feature = "food_scanning"
+    else:
+        _msg_lower = chat_request.message.lower()
+        _calorie_keywords = ["calorie", "calories", "kcal", "how many cal", "nutrition info", "macros for", "macros in", "how much protein"]
+        if any(kw in _msg_lower for kw in _calorie_keywords):
+            await check_premium_gate(chat_request.user_id, "text_to_calories", _stream_tz)
+            _stream_gate_feature = "text_to_calories"
 
     from starlette.responses import StreamingResponse
 
@@ -920,71 +956,123 @@ async def send_message_stream(
         # Stable assistant message ID shared with the persisted DB row so
         # the client can dedupe (SSE token append vs. Realtime row insert).
         assistant_message_id = str(uuid.uuid4())
-        yield f"data: {json.dumps({'event': 'start', 'agent': 'coach', 'id': assistant_message_id})}\n\n"
+        # Accumulates the full reply across token events — needed for the
+        # `done` frame, DB persistence, analytics and the push notification.
+        full_reply_parts: List[str] = []
+        final_action_data = None
+        final_intent = None
+        final_agent_type = None
+        final_rag_used = False
 
         try:
-            response = await coach.process_message(chat_request)
+            # Consume the LangGraph streaming pipeline. Each yielded dict is one
+            # of: token / action / result (terminal). On client disconnect the
+            # `async for` is closed by Starlette → the underlying Gemini stream
+            # generator is `aclose()`d → the inflight call is cancelled and the
+            # semaphore released. No leak.
+            async for evt in coach.process_message_stream(chat_request):
+                # Bail out early if the client has gone away — stops the run
+                # and avoids burning Gemini tokens nobody will receive.
+                if await request.is_disconnected():
+                    logger.info(f"Client disconnected mid-stream for user {chat_request.user_id} — aborting run")
+                    return
+
+                etype = evt.get("type")
+                if etype == "token":
+                    delta = evt.get("delta", "")
+                    if delta:
+                        full_reply_parts.append(delta)
+                        yield f"data: {json.dumps({'type': 'token', 'delta': delta})}\n\n"
+                elif etype == "action":
+                    final_action_data = evt.get("action_data")
+                    yield f"data: {json.dumps({'type': 'action', 'action_data': final_action_data})}\n\n"
+                elif etype == "result":
+                    # Terminal event from the service. Carries the canonical
+                    # full message + routing metadata for persistence.
+                    final_intent = evt.get("intent")
+                    final_agent_type = evt.get("agent_type")
+                    final_rag_used = bool(evt.get("rag_context_used"))
+                    if evt.get("action_data") is not None:
+                        final_action_data = evt.get("action_data")
+                    # Prefer the service's canonical message; fall back to the
+                    # concatenated token stream if it was empty.
+                    svc_message = evt.get("message") or "".join(full_reply_parts)
+                    full_reply_parts = [svc_message]
+
             response_time_ms = int((time.time() - start_time) * 1000)
+            full_message = "".join(full_reply_parts).strip()
+            if not full_message:
+                full_message = "I'm sorry, I couldn't generate a response. Could you try rephrasing?"
 
-            # Chunk the response text into ~20-word segments. Emit the
-            # assistant_message_id on EVERY token event — the client only
-            # needs to capture it once but emitting on each chunk keeps the
-            # stream self-describing in case the start frame was dropped.
-            words = response.message.split()
-            first = True
-            for i in range(0, len(words), 20):
-                chunk = ' '.join(words[i:i + 20])
-                token_evt = {'event': 'token', 'id': assistant_message_id, 'text': chunk}
-                if first:
-                    first = False
-                yield f"data: {json.dumps(token_evt)}\n\n"
-
-            yield f"data: {json.dumps({'event': 'done', 'id': assistant_message_id, 'action_data': response.action_data})}\n\n"
-
-            # Track AI chat usage for daily budget
-            background_tasks.add_task(track_premium_usage, chat_request.user_id, "ai_chat", _stream_tz)
-
-            # ── Push notification FIRST ─────────────────────────────────
-            # Push notification for the coach reply. Scheduled BEFORE the
-            # DB-save task so a mid-stream client cancel still fires the
-            # push (FastAPI runs background tasks in the order they were
-            # added). Wrapped at the call-site in `send_coach_reply_push`
-            # itself with try/except — additional defensive logging here
-            # so a push failure NEVER breaks the response path.
-            _stream_agent_name = (
-                response.agent_type.value
-                if hasattr(response.agent_type, "value")
-                else (str(response.agent_type) if response.agent_type else None)
+            # ── Terminal `done` frame ────────────────────────────────────
+            _agent_type_str = (
+                final_agent_type.value
+                if hasattr(final_agent_type, "value")
+                else (str(final_agent_type) if final_agent_type else "coach")
             )
+            _intent_str = (
+                final_intent.value
+                if hasattr(final_intent, "value")
+                else (str(final_intent) if final_intent else "question")
+            )
+            done_evt = {
+                "type": "done",
+                "message_id": assistant_message_id,
+                "content": full_message,
+                "metadata": {
+                    "intent": _intent_str,
+                    "agent_type": _agent_type_str,
+                    "rag_context_used": final_rag_used,
+                    "action_data": final_action_data,
+                },
+            }
+            yield f"data: {json.dumps(done_evt)}\n\n"
+
+            # ── Background work — usage tracking, push, persistence ───────
+            background_tasks.add_task(track_premium_usage, chat_request.user_id, "ai_chat", _stream_tz)
+            if _stream_gate_feature:
+                background_tasks.add_task(track_premium_usage, chat_request.user_id, _stream_gate_feature, _stream_tz)
+
+            # Push notification for the coach reply. Scheduled BEFORE the
+            # DB-save task so a mid-stream client cancel still fires the push
+            # (FastAPI runs background tasks in registration order). The helper
+            # never raises.
             try:
                 background_tasks.add_task(
                     send_coach_reply_push,
                     str(chat_request.user_id),
-                    response.message,
+                    full_message,
                     chat_request.conversation_id,
-                    _stream_agent_name,
+                    _agent_type_str,
                 )
             except Exception as push_sched_err:
-                # ⚠️ Scheduling itself failed (very unlikely). Log and continue.
-                logger.warning(f"⚠️ Failed to schedule coach push: {push_sched_err}")
+                logger.warning(f"⚠️ Failed to schedule coach push (stream): {push_sched_err}")
 
-            # Schedule background tasks for DB persistence — honor the
-            # user's save_chat_history preference.
+            # Persist transcript — honor the save_chat_history preference.
             _stream_coach_persona_id = chat_request.ai_settings.coach_persona_id if chat_request.ai_settings else None
+            # Derive media_type for persistence (same logic as /send).
+            _stream_media_url = chat_request.media_url
+            _stream_media_type: Optional[str] = None
+            if chat_request.image_base64:
+                _stream_media_type = "image"
+            elif chat_request.media_ref:
+                _stream_media_type = chat_request.media_ref.media_type
+            elif chat_request.media_refs:
+                _stream_media_type = chat_request.media_refs[0].media_type
             if should_save_chat_history(consent_flags):
                 background_tasks.add_task(
                     _retry_task,
                     _save_chat_to_db,
                     chat_request.user_id,
                     chat_request.message,
-                    response.message,
-                    response.intent,
-                    response.agent_type,
-                    response.rag_context_used,
-                    response.action_data,
+                    full_message,
+                    final_intent,
+                    final_agent_type,
+                    final_rag_used,
+                    final_action_data,
                     _stream_coach_persona_id,
-                    None,  # media_url
-                    None,  # media_type
+                    _stream_media_url,
+                    _stream_media_type,
                     assistant_message_id,
                     task_name="save_chat_to_db",
                 )
@@ -995,10 +1083,10 @@ async def send_message_stream(
                 _save_chat_analytics,
                 chat_request.user_id,
                 chat_request.message,
-                response.message,
-                response.intent,
-                response.agent_type,
-                response.rag_context_used,
+                full_message,
+                final_intent,
+                final_agent_type,
+                final_rag_used,
                 response_time_ms,
                 chat_request.ai_settings,
                 task_name="save_chat_analytics",
@@ -1007,17 +1095,21 @@ async def send_message_stream(
                 _retry_task,
                 _log_chat_activity,
                 chat_request.user_id,
-                response.intent,
-                response.agent_type,
-                response.rag_context_used,
+                final_intent,
+                final_agent_type,
+                final_rag_used,
                 response_time_ms,
                 task_name="log_chat_activity",
             )
-
-            # (Push scheduled earlier — see "Push notification FIRST" above.)
+        except asyncio.CancelledError:
+            # Client disconnected — Starlette cancels the generator. Let the
+            # cancellation propagate so the Gemini stream is torn down; do NOT
+            # emit further frames (the socket is already gone).
+            logger.info(f"Stream cancelled (client disconnect) for user {chat_request.user_id}")
+            raise
         except Exception as e:
             logger.error(f"Streaming error: {e}", exc_info=True)
-            yield f"data: {json.dumps({'event': 'error', 'message': str(e)})}\n\n"
+            yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
 
     return StreamingResponse(
         _stream_response(),

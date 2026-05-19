@@ -9,8 +9,11 @@ This agent:
 """
 from .state import CoachAgentState
 from .graph import build_coach_agent_graph
+from .nodes import should_handle_action, coach_response_stream
 
 __all__ = [
     "CoachAgentState",
     "build_coach_agent_graph",
+    "should_handle_action",
+    "coach_response_stream",
 ]
