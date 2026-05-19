@@ -43,12 +43,11 @@ class AppTourTooltipCard extends StatelessWidget {
     final cardWidth = (screenWidth - 48).clamp(0.0, 360.0);
     final isLastStep = currentStep == totalSteps;
 
-    // Translucent enough to keep the glass feel, opaque enough to stay
-    // readable when something dark sits behind the card (modal scrim,
-    // dark hero imagery, etc.).
-    final bgColor = isDark
-        ? const Color(0xFF1C1C1E).withValues(alpha: 0.92)
-        : Colors.white.withValues(alpha: 0.96);
+    // Fully opaque: the card sits over a dark tour scrim, so any
+    // translucency muddies the fill and tanks text contrast. The glass
+    // feel comes from the BackdropFilter blur at the edges + the shadow,
+    // not from a see-through body.
+    final bgColor = isDark ? const Color(0xFF1C1C1E) : Colors.white;
     final borderColor = isDark
         ? Colors.white.withValues(alpha: 0.18)
         : Colors.black.withValues(alpha: 0.08);
@@ -77,19 +76,22 @@ class AppTourTooltipCard extends StatelessWidget {
           width: cardWidth,
           constraints: BoxConstraints(maxHeight: maxHeight),
           decoration: BoxDecoration(
-            color: bgColor,
-            borderRadius: BorderRadius.circular(22),
-            border: Border.all(color: borderColor, width: 1),
-            // Top-to-bottom highlight gradient gives the glass a subtle
-            // sheen edge so it doesn't look like a flat translucent slab.
+            // Subtle top sheen — both stops opaque (a translucent stop
+            // would let the scrim bleed through and break readability,
+            // and a `gradient` silently overrides any `color:` set here).
             gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
               colors: [
-                Colors.white.withValues(alpha: isDark ? 0.06 : 0.20),
-                Colors.transparent,
+                Color.alphaBlend(
+                  Colors.white.withValues(alpha: isDark ? 0.05 : 0.0),
+                  bgColor,
+                ),
+                bgColor,
               ],
             ),
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(color: borderColor, width: 1),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: isDark ? 0.48 : 0.20),
