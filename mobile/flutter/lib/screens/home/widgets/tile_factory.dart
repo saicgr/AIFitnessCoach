@@ -31,7 +31,14 @@ class TileFactory {
         // Coming soon
         return const SizedBox.shrink();
       case TileType.nextWorkout:
-        return _buildNextWorkoutTile(context, ref, tile, isDark);
+        // Anchor for home-tour step 2 ("Your AI Workout"). The tour key was
+        // stranded on the orphaned SectionedHeroArea/HeroWorkoutCarousel
+        // (old home layout) — the current home renders the hero as the
+        // nextWorkout tile, so the spotlight target lives here now.
+        return KeyedSubtree(
+          key: AppTourKeys.heroCarouselKey,
+          child: _buildNextWorkoutTile(context, ref, tile, isDark),
+        );
       case TileType.fitnessScore:
         // Coming soon
         return const SizedBox.shrink();
