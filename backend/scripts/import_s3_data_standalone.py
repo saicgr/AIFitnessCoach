@@ -4,6 +4,12 @@ Uses direct SQLAlchemy connection to avoid Supabase client dependency conflicts.
 
 Usage:
     python scripts/import_s3_data_standalone.py
+
+CONTAMINATION GUARD: this importer is a known source of generic / templated
+exercise `instructions`. After any run that adds or updates exercises, run
+    python scripts/audit_exercise_instructions.py --check
+and, if it fails, run backend/scripts/rewrite_exercise_instructions.py before
+release. See CLAUDE.md "Exercise instruction quality".
 """
 import asyncio
 import boto3

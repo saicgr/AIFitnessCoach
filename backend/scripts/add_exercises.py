@@ -7,6 +7,13 @@ Usage:
     python add_exercises.py --json exercises.json
     python add_exercises.py --single --name "Dead Hang" --body-part "upper body" ...
     python add_exercises.py --dry-run --json exercises.json
+
+CONTAMINATION GUARD: every new exercise must ship a real, specific instruction.
+After adding exercises, run
+    python scripts/audit_exercise_instructions.py --check
+If it fails, the new rows are generic/templated — fix the instruction text or
+run backend/scripts/rewrite_exercise_instructions.py. See CLAUDE.md
+"Exercise instruction quality".
 """
 
 import os
