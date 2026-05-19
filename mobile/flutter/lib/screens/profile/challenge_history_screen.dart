@@ -1,8 +1,12 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/services/posthog_service.dart';
+import '../../core/widgets/skeleton/skeleton.dart';
 import '../../data/services/challenges_service.dart';
 import '../../data/services/api_client.dart';
 import '../../widgets/pill_app_bar.dart';
@@ -47,11 +51,82 @@ class _ChallengeHistoryScreenState extends ConsumerState<ChallengeHistoryScreen>
     super.dispose();
   }
 
+  /// SharedPreferences key for this user's challenge-history disk cache.
+  /// Versioned so a payload-shape change drops stale blobs cleanly.
+  String get _diskCacheKey => 'challenge_history::v1::${widget.userId}';
+
+  /// 24 h disk TTL — a stale-but-instant history on cold start beats a
+  /// spinner; the background refresh below overwrites it within a moment.
+  static const Duration _diskTtl = Duration(hours: 24);
+
+  /// Read the disk cache, returning the persisted `{challenges, stats}` map
+  /// or null on miss / expiry / corruption. Best-effort — never throws.
+  Future<Map<String, dynamic>?> _readDiskCache() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString(_diskCacheKey);
+      if (raw == null || raw.isEmpty) return null;
+      final decoded = jsonDecode(raw);
+      if (decoded is! Map<String, dynamic>) return null;
+      final cachedAt = decoded['cachedAt'];
+      if (cachedAt is! int) return null;
+      final age = DateTime.now().millisecondsSinceEpoch - cachedAt;
+      if (age < 0 || age >= _diskTtl.inMilliseconds) {
+        await prefs.remove(_diskCacheKey);
+        return null;
+      }
+      final data = decoded['data'];
+      return data is Map<String, dynamic> ? data : null;
+    } catch (e) {
+      debugPrint('💾 [ChallengeHistory] disk read failed: $e');
+      return null;
+    }
+  }
+
+  /// Write-through the freshly fetched challenges + stats. Best-effort.
+  Future<void> _writeDiskCache(
+      List<Map<String, dynamic>> challenges, Map<String, dynamic>? stats) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(
+        _diskCacheKey,
+        jsonEncode({
+          'cachedAt': DateTime.now().millisecondsSinceEpoch,
+          'data': {'challenges': challenges, 'stats': stats},
+        }),
+      );
+    } catch (e) {
+      debugPrint('💾 [ChallengeHistory] disk write failed: $e');
+    }
+  }
+
+  /// Load challenge history cache-first (disk SWR).
+  ///
+  /// Step 1: read the disk cache — if a valid blob exists, paint it
+  /// immediately with `_isLoading:false` so a cold start renders instantly
+  /// (skeleton stays hidden). Step 2: fetch fresh from the network and
+  /// overwrite. If the disk cache missed we keep `_isLoading:true` so the
+  /// screen shows its skeleton until first content arrives.
   Future<void> _loadData() async {
-    setState(() {
-      _isLoading = true;
-      _error = null;
-    });
+    var servedFromCache = false;
+    final cached = await _readDiskCache();
+    if (cached != null && mounted) {
+      final challenges = ((cached['challenges'] as List?) ?? [])
+          .map((c) => Map<String, dynamic>.from(c as Map))
+          .toList();
+      servedFromCache = true;
+      setState(() {
+        _allChallenges = challenges;
+        _stats = cached['stats'] as Map<String, dynamic>?;
+        _isLoading = false;
+        _error = null;
+      });
+    } else {
+      setState(() {
+        _isLoading = true;
+        _error = null;
+      });
+    }
 
     try {
       // Load both received and sent challenges
@@ -70,32 +145,40 @@ class _ChallengeHistoryScreenState extends ConsumerState<ChallengeHistoryScreen>
         userId: widget.userId,
       );
 
+      if (!mounted) return;
+
+      // Combine received and sent, marking which is which
+      final combined = <Map<String, dynamic>>[
+        ...((receivedResponse['challenges'] as List?) ?? []).map((c) => {
+              ...c as Map<String, dynamic>,
+              'direction': 'received',
+            }),
+        ...((sentResponse['challenges'] as List?) ?? []).map((c) => {
+              ...c as Map<String, dynamic>,
+              'direction': 'sent',
+            }),
+      ];
+
+      // Sort by most recent first
+      combined.sort((a, b) {
+        final aDate = DateTime.parse(a['created_at'] as String);
+        final bDate = DateTime.parse(b['created_at'] as String);
+        return bDate.compareTo(aDate);
+      });
+
       setState(() {
-        // Combine received and sent, marking which is which
-        _allChallenges = [
-          ...((receivedResponse['challenges'] as List?) ?? []).map((c) => {
-                ...c as Map<String, dynamic>,
-                'direction': 'received',
-              }),
-          ...((sentResponse['challenges'] as List?) ?? []).map((c) => {
-                ...c as Map<String, dynamic>,
-                'direction': 'sent',
-              }),
-        ];
-
-        // Sort by most recent first
-        _allChallenges.sort((a, b) {
-          final aDate = DateTime.parse(a['created_at'] as String);
-          final bDate = DateTime.parse(b['created_at'] as String);
-          return bDate.compareTo(aDate);
-        });
-
+        _allChallenges = combined;
         _stats = statsResponse;
         _isLoading = false;
       });
+
+      // Write-through so the next cold start is instant.
+      await _writeDiskCache(combined, statsResponse);
     } catch (e) {
+      // Keep any cached data on screen; only surface the error if we have
+      // nothing else to show.
       setState(() {
-        _error = e.toString();
+        _error = servedFromCache ? null : e.toString();
         _isLoading = false;
       });
       debugPrint('❌ [ChallengeHistory] Error loading data: $e');
@@ -141,8 +224,16 @@ class _ChallengeHistoryScreenState extends ConsumerState<ChallengeHistoryScreen>
       appBar: PillAppBar(
         title: 'Challenge History',
       ),
+      // Cold-start skeleton — _isLoading is only true when the disk SWR
+      // cache missed (genuine first-ever open). Returning users rehydrate
+      // their challenge list instantly from disk.
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const SkeletonList(
+              itemCount: 6,
+              spacing: 12,
+              scrollable: true,
+              padding: EdgeInsets.all(16),
+            )
           : _error != null
               ? _buildErrorState()
               : RefreshIndicator(

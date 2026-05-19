@@ -7,6 +7,7 @@ library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/cache/cache_first_mixin.dart';
 import '../models/coach_review.dart';
 import '../models/cook_event.dart';
 import '../models/grocery_list.dart';
@@ -198,6 +199,108 @@ final favoriteRecipesProvider =
   ref.keepAlive();
   return ref.watch(recipeRepositoryProvider).listFavorites(userId);
 });
+
+// ============================================================
+// Cache-first (instant-load) list notifiers — Part-2 instant-load standard.
+//
+// The `discoverRecipesProvider` / `favoriteRecipesProvider` FutureProviders
+// above are kept untouched (other screens — saved_hub, fasting_saved_row —
+// still consume them). The notifiers below are dedicated to the owned recipe
+// screens: they persist their last good payload to disk via [CacheFirstMixin]
+// so a cold app start renders the previous grid INSTANTLY, then silently
+// revalidates against the network (stale-while-revalidate).
+// ============================================================
+
+/// A `StateNotifier<AsyncValue<RecipesResponse>>` that loads cache-first.
+///
+/// On construction it kicks off [load]: a valid disk blob is emitted first
+/// (so the screen paints instantly with no spinner), then the network result
+/// replaces it and is written through for the next cold start.
+class RecipeListNotifier extends StateNotifier<AsyncValue<RecipesResponse>>
+    with CacheFirstMixin {
+  RecipeListNotifier({
+    required this.cacheKey,
+    required this.userId,
+    required Future<RecipesResponse> Function() fetch,
+  })  : _fetch = fetch,
+        super(const AsyncLoading()) {
+    load();
+  }
+
+  /// Base SharedPreferences slot name (user-scope + schema version appended by
+  /// the mixin). Distinct per logical feed (discover args / favorites).
+  final String cacheKey;
+
+  /// Owning user — required so two accounts on one device never share a slot.
+  final String userId;
+
+  /// Produces the fresh value from the network.
+  final Future<RecipesResponse> Function() _fetch;
+
+  /// Run the cache-first load. Safe to call again for an explicit refresh.
+  Future<void> load() => loadCacheFirst<RecipesResponse>(
+        cacheKey: cacheKey,
+        userId: userId,
+        // 6h TTL: recipe feeds change slowly; a stale-but-recent grid is fine
+        // to flash for one frame before the silent revalidate lands.
+        ttl: const Duration(hours: 6),
+        fetch: _fetch,
+        decode: RecipesResponse.fromJson,
+        encode: (r) => r.toJson(),
+        emit: (data, {required bool fromCache}) {
+          // Never downgrade fresh data back to a cached value: if the network
+          // result already landed, ignore a late cache emit (can't happen with
+          // the mixin's ordering, but defensive).
+          if (!mounted) return;
+          state = AsyncData(data);
+        },
+        onError: (e, st) {
+          // Only surface a hard error when we have NOTHING cached to show —
+          // otherwise the screen keeps the stale grid and silently retries
+          // next open.
+          if (!mounted) return;
+          if (state.valueOrNull == null) {
+            state = AsyncError(e, st);
+          }
+        },
+      );
+
+  /// Force a fresh network read (e.g. pull-to-refresh). Keeps the current grid
+  /// on screen while revalidating.
+  Future<void> refresh() => load();
+}
+
+/// Cache-first Discover feed, keyed by [DiscoverArgs]. Dedicated to
+/// `DiscoverScreen`; renders the last grid instantly on cold start.
+final discoverRecipesCacheFirstProvider = StateNotifierProvider.autoDispose
+    .family<RecipeListNotifier, AsyncValue<RecipesResponse>, DiscoverArgs>(
+  (ref, args) {
+    ref.keepAlive();
+    final repo = ref.watch(recipeRepositoryProvider);
+    return RecipeListNotifier(
+      // Slot name embeds the filter combo so each category/sort pair has its
+      // own cached grid (switching chips still instant after the first visit).
+      cacheKey: 'recipes_discover::${args.category ?? "all"}::${args.sort}',
+      // Discover is not per-user; share one slot across accounts.
+      userId: '_discover',
+      fetch: () => repo.listDiscover(category: args.category, sort: args.sort),
+    );
+  },
+);
+
+/// Cache-first Favorites feed, keyed by userId. Dedicated to `FavoritesScreen`.
+final favoriteRecipesCacheFirstProvider = StateNotifierProvider.autoDispose
+    .family<RecipeListNotifier, AsyncValue<RecipesResponse>, String>(
+  (ref, userId) {
+    ref.keepAlive();
+    final repo = ref.watch(recipeRepositoryProvider);
+    return RecipeListNotifier(
+      cacheKey: 'recipes_favorites',
+      userId: userId,
+      fetch: () => repo.listFavorites(userId),
+    );
+  },
+);
 
 // ============================================================
 // Meal Planner

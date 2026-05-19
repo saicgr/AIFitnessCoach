@@ -134,6 +134,11 @@ class _PeriodSelector extends StatelessWidget {
 // Loading State
 // ---------------------------------------------------------------------------
 
+/// Cold-start skeleton for the Insights body. Shown ONLY on a genuine
+/// first-ever open (no disk cache) — returning users rehydrate instantly from
+/// the disk SWR layer in [InsightsNotifier.loadReport]. The card heights here
+/// (180 hero + 3×120) layout-match the real Overview / Nutrition / Recovery /
+/// Body cards so the skeleton → content cross-fade does not reflow.
 class _LoadingState extends StatelessWidget {
   final bool isDark;
 
@@ -141,38 +146,17 @@ class _LoadingState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final shimmerBase = isDark
-        ? Colors.white.withOpacity(0.05)
-        : Colors.black.withOpacity(0.04);
-
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       physics: const NeverScrollableScrollPhysics(),
       children: List.generate(4, (index) {
-        return Container(
-          margin: const EdgeInsets.only(bottom: 16),
-          height: index == 0 ? 180 : 120,
-          decoration: BoxDecoration(
-            color: elevated,
-            borderRadius: BorderRadius.circular(20),
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 16),
+          child: SkeletonBox(
+            height: index == 0 ? 180 : 120,
+            radius: 20,
           ),
-          child: Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
-              gradient: LinearGradient(
-                colors: [shimmerBase, shimmerBase.withOpacity(0), shimmerBase],
-              ),
-            ),
-          ),
-        )
-            .animate(onPlay: (c) => c.repeat())
-            .shimmer(
-              duration: 1200.ms,
-              color: isDark
-                  ? Colors.white.withOpacity(0.06)
-                  : Colors.black.withOpacity(0.04),
-            );
+        );
       }),
     );
   }

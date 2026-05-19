@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:simple_circular_progress_bar/simple_circular_progress_bar.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/accent_color_provider.dart';
+import '../../core/widgets/skeleton/skeleton.dart';
 import '../../data/providers/xp_provider.dart';
 import '../../data/models/xp_event.dart';
 import '../../data/models/user_xp.dart';

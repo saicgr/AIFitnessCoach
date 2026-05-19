@@ -6,7 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/theme_colors.dart';
-import '../../../widgets/app_loading.dart';
+import '../../../core/widgets/skeleton/skeleton.dart';
 import '../../../widgets/app_snackbar.dart';
 import '../../../data/providers/social_provider.dart';
 import '../../../data/providers/admin_provider.dart';
@@ -41,6 +41,23 @@ class _FeedTabState extends ConsumerState<FeedTab> {
   final ScrollController _scrollController = ScrollController();
   Timer? _autoScrollTimer;
   bool _disposed = false;
+
+  /// True until the feed has been opened once on this install. Drives whether
+  /// the cold-load placeholder is a skeleton (first ever) — the cache-first
+  /// provider means returning users never hit a skeleton again.
+  bool _isFirstEver = true;
+
+  /// Latches once the "seen" flag has been persisted this session.
+  bool _markedSeen = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Resolve the first-ever flag off the UI thread; never blocks the build.
+    CacheFirstView.hasBeenSeen('social_feed').then((seen) {
+      if (mounted && seen) setState(() => _isFirstEver = false);
+    });
+  }
 
   void _startAutoScroll() {
     _stopAutoScroll();
@@ -106,9 +123,14 @@ class _FeedTabState extends ConsumerState<FeedTab> {
 
     return Stack(
       children: [
-        activityFeedAsync.when(
-          loading: () => AppLoading.fullScreen(),
-          error: (error, stack) {
+        CacheFirstView<Map<String, dynamic>>(
+          value: activityFeedAsync,
+          isFirstEver: _isFirstEver,
+          traceLabel: 'social_feed',
+          // Layout-matched placeholder: a stories-ring strip + a list of
+          // post-card skeletons, mirroring the real feed shape.
+          skeletonBuilder: (context) => const _FeedSkeleton(),
+          errorBuilder: (context, error, st) {
             debugPrint('Error loading feed: $error');
             return SocialEmptyState(
               icon: Icons.cloud_off_rounded,
@@ -120,7 +142,14 @@ class _FeedTabState extends ConsumerState<FeedTab> {
               },
             );
           },
-          data: (feedData) {
+          contentBuilder: (context, feedData) {
+            // First successful content — persist the "seen" flag once so
+            // future cold opens skip the skeleton. Guard prevents repeated
+            // SharedPreferences writes on every rebuild this session.
+            if (!_markedSeen) {
+              _markedSeen = true;
+              CacheFirstView.markSeen('social_feed');
+            }
             // Backend returns 'items' key for activity list
             final allActivities = (feedData['items'] as List?) ?? [];
 
@@ -456,5 +485,54 @@ class _FeedTabState extends ConsumerState<FeedTab> {
         AppSnackBar.error(context, 'Failed to ${currentlyPinned ? 'unpin' : 'pin'} post. Please try again.');
       }
     }
+  }
+}
+
+/// Layout-matched skeleton for the activity feed shown ONLY on a true
+/// first-ever open (no cache has ever existed). It mirrors the real feed: a
+/// horizontal stories-ring strip on top, then a column of post-card
+/// placeholders, so the skeleton → content cross-fade does not reflow.
+class _FeedSkeleton extends StatelessWidget {
+  const _FeedSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    // Non-interactive: the real feed is a CustomScrollView, but the skeleton
+    // just needs to fill the viewport with placeholder shapes.
+    return ListView(
+      // Match the real feed: the list itself scrolls, padded like ActivityCard.
+      physics: const NeverScrollableScrollPhysics(),
+      padding: EdgeInsets.zero,
+      children: [
+        // Stories-ring strip placeholder (circle avatars in a row).
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+          child: SizedBox(
+            height: 72,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: 6,
+              separatorBuilder: (_, __) => const SizedBox(width: 12),
+              itemBuilder: (_, __) => const SkeletonCircle(size: 60),
+            ),
+          ),
+        ),
+        // Post-card placeholders — taller than a default SkeletonCard so they
+        // read as feed posts (avatar + text + media block).
+        Padding(
+          padding: const EdgeInsets.all(16),
+          child: SkeletonList(
+            itemCount: 4,
+            spacing: 16,
+            itemBuilder: (context, index) => const SkeletonCard(
+              height: 180,
+              lines: 3,
+              leadingSize: 40,
+            ),
+          ),
+        ),
+      ],
+    );
   }
 }

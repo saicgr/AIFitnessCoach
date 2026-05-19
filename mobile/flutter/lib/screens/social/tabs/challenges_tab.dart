@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/services/posthog_service.dart';
-import '../../../widgets/app_loading.dart';
+import '../../../core/widgets/skeleton/skeleton.dart';
 import '../../../widgets/app_snackbar.dart';
 import '../../../core/theme/theme_colors.dart';
 import '../../../data/providers/social_provider.dart';
@@ -78,15 +78,28 @@ class _ChallengesTabState extends ConsumerState<ChallengesTab>
     );
   }
 
+  /// Layout-matched placeholder for a challenge list — a column of tall
+  /// challenge-card skeletons mirroring [ChallengeCard].
+  Widget _buildChallengeListSkeleton() => const SkeletonList(
+        padding: EdgeInsets.all(16),
+        itemCount: 5,
+        spacing: 16,
+        scrollable: true,
+        itemBuilder: _challengeSkeletonItem,
+      );
+
+  static Widget _challengeSkeletonItem(BuildContext context, int index) =>
+      const SkeletonCard(height: 150, showLeading: false, lines: 3);
+
   Widget _buildMyChallenges(BuildContext context, bool isDark) {
     if (_userId == null) {
-      return AppLoading.fullScreen();
+      return _buildChallengeListSkeleton();
     }
 
     final activeChallengesAsync = ref.watch(userActiveChallengesProvider(_userId!));
 
     return activeChallengesAsync.when(
-      loading: () => AppLoading.fullScreen(),
+      loading: () => _buildChallengeListSkeleton(),
       error: (error, stack) {
         debugPrint('Error loading active challenges: $error');
         return SocialEmptyState(
@@ -147,13 +160,13 @@ class _ChallengesTabState extends ConsumerState<ChallengesTab>
 
   Widget _buildDiscoverChallenges(BuildContext context, bool isDark) {
     if (_userId == null) {
-      return AppLoading.fullScreen();
+      return _buildChallengeListSkeleton();
     }
 
     final challengesAsync = ref.watch(challengesListProvider(_userId!));
 
     return challengesAsync.when(
-      loading: () => AppLoading.fullScreen(),
+      loading: () => _buildChallengeListSkeleton(),
       error: (error, stack) {
         debugPrint('Error loading challenges: $error');
         return SocialEmptyState(

@@ -151,7 +151,14 @@ class _AllLevelsSheet extends ConsumerWidget {
                 const SizedBox(height: 8),
                 Expanded(
                   child: allLevelsAsync.when(
-                    loading: () => const Center(child: CircularProgressIndicator()),
+                    // Layout-matched skeleton rows instead of a blocking
+                    // spinner while the 250-level list loads.
+                    loading: () => const SkeletonList(
+                      itemCount: 8,
+                      spacing: 10,
+                      padding: EdgeInsets.symmetric(horizontal: 16),
+                      scrollable: true,
+                    ),
                     error: (error, _) => Center(
                       child: Padding(
                         padding: const EdgeInsets.all(32),

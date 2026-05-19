@@ -10,6 +10,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/accent_color_provider.dart';
+import '../../../core/widgets/skeleton/skeleton.dart';
+import '../../../data/models/recipe.dart';
 import '../../../data/providers/recipe_favorites_provider.dart';
 import '../../../data/providers/recipe_providers.dart';
 import '../../../widgets/glass_back_button.dart';
@@ -34,6 +36,25 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
     with NavBarHiderMixin {
   String? _category; // null == All
   String _sort = 'most_logged';
+
+  /// True until we know this screen has been opened before. Drives whether
+  /// [CacheFirstView] shows a skeleton (genuine first-ever open) or goes
+  /// straight to cached content. Defaults to false so a returning user never
+  /// gets trapped behind a skeleton if the seen-flag read is slow/fails.
+  bool _isFirstEver = false;
+
+  /// SharedPreferences screen key for the first-ever-open flag.
+  static const _seenKey = 'discover_screen';
+
+  @override
+  void initState() {
+    super.initState();
+    // Resolve first-ever-open asynchronously — never block initState. The
+    // cache-first provider already starts loading from disk in parallel.
+    CacheFirstView.hasBeenSeen(_seenKey).then((seen) {
+      if (mounted) setState(() => _isFirstEver = !seen);
+    });
+  }
 
   // Cycle order for the sort pill.
   static const _sortCycle = <String>[
@@ -76,7 +97,9 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
     final topPad = MediaQuery.of(context).padding.top;
 
     final args = DiscoverArgs(category: _category, sort: _sort);
-    final discoverAsync = ref.watch(discoverRecipesProvider(args));
+    // Cache-first notifier: a valid disk blob paints the grid instantly on a
+    // cold start, then the network result silently replaces it (SWR).
+    final discoverAsync = ref.watch(discoverRecipesCacheFirstProvider(args));
 
     return Scaffold(
       backgroundColor: bg,
@@ -136,17 +159,33 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
           ),
 
           Expanded(
-            child: discoverAsync.when(
-              loading: () =>
-                  Center(child: CircularProgressIndicator(color: accent)),
-              error: (err, _) => _ErrorView(
+            child: CacheFirstView<RecipesResponse>(
+              value: discoverAsync,
+              isFirstEver: _isFirstEver,
+              traceLabel: 'discover_screen',
+              // Layout-matched shimmer: same 2-col / 0.78-ratio grid as the
+              // real RecipeCard grid below, so the skeleton→content swap is
+              // reflow-free.
+              skeletonBuilder: (_) => const SkeletonGrid(
+                scrollable: true,
+                itemCount: 8,
+                crossAxisCount: 2,
+                childAspectRatio: 0.78,
+                spacing: 12,
+                padding: EdgeInsets.fromLTRB(16, 4, 16, 100),
+              ),
+              errorBuilder: (_, __, ___) => _ErrorView(
                 accent: accent,
                 text: text,
                 muted: muted,
-                onRetry: () =>
-                    ref.invalidate(discoverRecipesProvider(args)),
+                onRetry: () => ref
+                    .read(discoverRecipesCacheFirstProvider(args).notifier)
+                    .refresh(),
               ),
-              data: (resp) {
+              contentBuilder: (ctx, resp) {
+                // Mark seen after first content so future opens skip the
+                // skeleton entirely.
+                CacheFirstView.markSeen('discover_screen');
                 // Keep heart states in sync for discover items.
                 WidgetsBinding.instance.addPostFrameCallback((_) {
                   if (!mounted) return;
@@ -169,10 +208,10 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
 
                 return RefreshIndicator(
                   color: accent,
-                  onRefresh: () async {
-                    ref.invalidate(discoverRecipesProvider(args));
-                    await ref.read(discoverRecipesProvider(args).future);
-                  },
+                  onRefresh: () => ref
+                      .read(discoverRecipesCacheFirstProvider(args).notifier)
+                      .refresh(),
+                  // Lazy grid — GridView.builder only builds visible tiles.
                   child: GridView.builder(
                     padding: const EdgeInsets.fromLTRB(16, 4, 16, 100),
                     physics: const AlwaysScrollableScrollPhysics(),

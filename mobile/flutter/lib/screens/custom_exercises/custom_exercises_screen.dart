@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/providers/custom_exercises_provider.dart';
+import '../../core/widgets/skeleton/skeleton.dart';
 import '../../data/models/custom_exercise.dart';
 import '../../data/services/haptic_service.dart';
 import '../../widgets/glass_back_button.dart';
@@ -87,7 +88,14 @@ class _CustomExercisesScreenState extends ConsumerState<CustomExercisesScreen>
             ],
             Expanded(
               child: state.isLoading && state.exercises.isEmpty
-                  ? const Center(child: CircularProgressIndicator())
+                  // Layout-matched skeleton on a cold first load instead of a
+                  // blocking spinner. The provider keeps an in-memory cache,
+                  // so re-entering the screen in-session renders instantly.
+                  ? const SkeletonList(
+                      scrollable: true,
+                      itemCount: 6,
+                      padding: EdgeInsets.all(16),
+                    )
                   : state.exercises.isEmpty
                       ? EmptyCustomExercises(
                           onCreatePressed: () => _showCreateSheet(context),

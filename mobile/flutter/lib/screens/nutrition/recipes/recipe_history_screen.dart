@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/accent_color_provider.dart';
+import '../../../core/widgets/skeleton/skeleton.dart';
 import '../../../data/models/recipe_version.dart';
 import '../../../data/repositories/recipe_repository.dart';
 
@@ -100,7 +101,14 @@ class _RecipeHistoryScreenState extends ConsumerState<RecipeHistoryScreen> {
         iconTheme: IconThemeData(color: text),
       ),
       body: _loading
-          ? const Center(child: CircularProgressIndicator())
+          // Layout-matched skeleton rows (avatar chip + 2 text lines) instead
+          // of a blocking centered spinner.
+          ? const SkeletonList(
+              scrollable: true,
+              itemCount: 6,
+              padding: EdgeInsets.all(16),
+              itemBuilder: _historySkeletonRow,
+            )
           : _versions == null || _versions!.items.isEmpty
               ? Center(
                   child: Padding(
@@ -150,6 +158,22 @@ class _RecipeHistoryScreenState extends ConsumerState<RecipeHistoryScreen> {
     );
   }
 }
+
+/// Skeleton row for the history list — a version-chip avatar + 2 text lines
+/// inside a `Card`, matching the real `Card`/`ListTile` shape so the
+/// skeleton→content swap is reflow-free.
+Widget _historySkeletonRow(BuildContext context, int index) => const Card(
+      child: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Row(
+          children: [
+            SkeletonCircle(size: 40),
+            SizedBox(width: 16),
+            Expanded(child: SkeletonText(lines: 2)),
+          ],
+        ),
+      ),
+    );
 
 class _DiffSheet extends StatelessWidget {
   final RecipeDiff diff;

@@ -96,7 +96,12 @@ class _FilteredMessagesTab extends ConsumerWidget {
     final conversationsAsync = ref.watch(conversationsProvider(userId));
 
     return conversationsAsync.when(
-      loading: () => AppLoading.fullScreen(),
+      // Layout-matched placeholder mirroring the conversation cards.
+      loading: () => const SkeletonList(
+        padding: EdgeInsets.all(16),
+        itemCount: 8,
+        scrollable: true,
+      ),
       error: (_, __) => const Center(child: Text('Failed to load')),
       data: (conversations) {
         final filtered = conversations.where((c) {
@@ -233,7 +238,12 @@ class _NewMessagePickerScreen extends ConsumerWidget {
     final friendsAsync = ref.watch(friendsListProvider(userId));
 
     return friendsAsync.when(
-      loading: () => AppLoading.fullScreen(),
+      // Layout-matched placeholder mirroring the friend list rows.
+      loading: () => const SkeletonList(
+        padding: EdgeInsets.all(16),
+        itemCount: 8,
+        scrollable: true,
+      ),
       error: (_, __) => const Center(child: Text('Failed to load friends')),
       data: (friends) {
         if (friends.isEmpty) {
@@ -486,7 +496,12 @@ class _GroupCreateSheetState extends ConsumerState<_GroupCreateSheet> {
     final colors = ref.colors(context);
 
     return friendsAsync.when(
-      loading: () => AppLoading.fullScreen(),
+      // Layout-matched placeholder mirroring the friend list rows.
+      loading: () => const SkeletonList(
+        padding: EdgeInsets.all(16),
+        itemCount: 8,
+        scrollable: true,
+      ),
       error: (_, __) => const Center(child: Text('Failed to load friends')),
       data: (friends) {
         if (friends.isEmpty) {

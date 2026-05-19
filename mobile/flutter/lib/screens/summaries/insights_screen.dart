@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/widgets/skeleton/skeleton.dart';
 import '../../data/models/insights_report.dart';
 import '../../data/models/weekly_summary.dart';
 import '../../data/providers/insights_provider.dart';
@@ -212,17 +213,12 @@ class _InsightsScreenState extends ConsumerState<InsightsScreen> {
                             ),
                             const SizedBox(height: 12),
 
+                            // Cold-start skeleton for the past-reports list.
+                            // summaryState.isLoading is only ever true when
+                            // the disk SWR cache missed, so returning users
+                            // never see this — they get cached cards instantly.
                             if (summaryState.isLoading)
-                              Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 32),
-                                child: Center(
-                                  child: CircularProgressIndicator(
-                                    color: purple,
-                                    strokeWidth: 2,
-                                  ),
-                                ),
-                              )
+                              const SkeletonList(itemCount: 3, spacing: 12)
                             else if (summaryState.summaries.isEmpty)
                               _EmptyPastReports(isDark: isDark)
                             else

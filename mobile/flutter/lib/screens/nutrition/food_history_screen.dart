@@ -1,8 +1,12 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/accent_color_provider.dart';
+import '../../core/widgets/skeleton/skeleton.dart';
 import '../../widgets/pill_app_bar.dart';
 import '../../data/models/nutrition.dart';
 import '../../data/repositories/nutrition_repository.dart';
@@ -15,6 +19,12 @@ import 'widgets/portion_amount_input.dart';
 
 part 'food_history_screen_part_date_range.dart';
 part 'food_history_screen_part_frequent_food_chip.dart';
+
+/// SharedPreferences key holding the JSON snapshot of the most recent
+/// "all logs / all meal types" food-history load. Persisting only the default
+/// (unfiltered) view keeps the blob small and means a cold start renders the
+/// list instantly while the network revalidates in the background.
+const String _kFoodHistoryCacheKey = 'cachefirst::food_history_default::v1';
 
 
 /// Smart food history screen with search, frequently eaten, and date-grouped logs.
@@ -46,10 +56,64 @@ class _FoodHistoryScreenState extends ConsumerState<FoodHistoryScreen> {
   @override
   void initState() {
     super.initState();
+    // Cache-first: paint the last-seen logs instantly from disk (no await
+    // blocks the first frame), then revalidate over the network in _loadData.
+    _hydrateFromCache();
     _loadData();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(posthogServiceProvider).capture(eventName: 'food_history_viewed');
     });
+  }
+
+  /// User-scoped cache key — two accounts on the same device never collide.
+  String get _cacheKey => '$_kFoodHistoryCacheKey::${widget.userId}';
+
+  /// Read the persisted snapshot of the default (unfiltered) history view and
+  /// emit it immediately. Best-effort: any failure degrades to a clean cache
+  /// miss so the network load still drives the screen.
+  Future<void> _hydrateFromCache() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString(_cacheKey);
+      if (raw == null || raw.isEmpty) return;
+      final decoded = jsonDecode(raw);
+      if (decoded is! Map<String, dynamic>) return;
+      final logsJson = decoded['logs'];
+      final freqJson = decoded['frequentFoods'];
+      if (logsJson is! List || freqJson is! List) return;
+      final logs = logsJson
+          .whereType<Map<String, dynamic>>()
+          .map(FoodLog.fromJson)
+          .toList();
+      final freq = freqJson
+          .whereType<Map<String, dynamic>>()
+          .map(SavedFood.fromJson)
+          .toList();
+      // A network result may already have landed first — never overwrite
+      // fresher data with the stale cache.
+      if (!mounted || !_isLoading) return;
+      setState(() {
+        _logs = logs;
+        _frequentFoods = freq;
+        _isLoading = false;
+      });
+    } catch (e) {
+      debugPrint('💾 [FoodHistory] cache hydrate failed: $e');
+    }
+  }
+
+  /// Persist the default (unfiltered) view so the next cold start is instant.
+  /// Only the all-logs / all-meal-types view is cached to keep the blob small.
+  Future<void> _writeCache() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_cacheKey, jsonEncode({
+        'logs': _logs.map((l) => l.toJson()).toList(),
+        'frequentFoods': _frequentFoods.map((f) => f.toJson()).toList(),
+      }));
+    } catch (e) {
+      debugPrint('💾 [FoodHistory] cache write failed: $e');
+    }
   }
 
   /// Get fromDate/toDate strings based on selected date range
@@ -79,10 +143,17 @@ class _FoodHistoryScreenState extends ConsumerState<FoodHistoryScreen> {
   }
 
   Future<void> _loadData() async {
-    setState(() {
-      _isLoading = true;
-      _error = null;
-    });
+    // Only show the blocking placeholder when there is genuinely nothing on
+    // screen yet. A cache hit (or any prior content) keeps content visible
+    // while the network revalidates — no spinner flash for returning users.
+    if (_logs.isEmpty && _frequentFoods.isEmpty) {
+      setState(() {
+        _isLoading = true;
+        _error = null;
+      });
+    } else {
+      setState(() => _error = null);
+    }
 
     try {
       final repo = ref.read(nutritionRepositoryProvider);
@@ -115,10 +186,21 @@ class _FoodHistoryScreenState extends ConsumerState<FoodHistoryScreen> {
         _hasMore = _logs.length >= _currentLimit;
         _isLoading = false;
       });
+
+      // Write-through the default (unfiltered) view so the next cold start is
+      // instant. Filtered views are intentionally not cached.
+      if (_selectedMealFilter == null &&
+          _selectedDateRange == _DateRange.all) {
+        await _writeCache();
+      }
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _error = 'Failed to load food history. Please try again.';
+        // Keep any already-visible (cached) content rather than blanking to an
+        // error screen — only surface the error on a genuine cold failure.
+        if (_logs.isEmpty && _frequentFoods.isEmpty) {
+          _error = 'Failed to load food history. Please try again.';
+        }
         _isLoading = false;
       });
     }
@@ -453,8 +535,12 @@ class _FoodHistoryScreenState extends ConsumerState<FoodHistoryScreen> {
           // Content
           Expanded(
             child: _isLoading
-                ? Center(
-                    child: CircularProgressIndicator(color: teal),
+                // Layout-matched skeleton instead of a blocking spinner — a
+                // returning user with a warm cache never reaches this branch.
+                ? const SkeletonList(
+                    scrollable: true,
+                    itemCount: 7,
+                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   )
                 : _error != null
                     ? _ErrorState(

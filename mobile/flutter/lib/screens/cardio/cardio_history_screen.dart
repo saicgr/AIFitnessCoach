@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/widgets/skeleton/skeleton.dart';
 import '../../data/models/cardio_log.dart';
 import '../../data/providers/cardio_providers.dart';
 import '../../data/providers/habit_provider.dart' show currentUserIdProvider;
@@ -22,6 +23,21 @@ class CardioHistoryScreen extends ConsumerStatefulWidget {
 class _CardioHistoryScreenState extends ConsumerState<CardioHistoryScreen> {
   String? _activityFilter;
   DateTimeRange? _dateRange;
+
+  /// True only on a genuine first-ever open on this install — gates the
+  /// cold-start skeleton. Returning users see cached content instantly.
+  bool _isFirstEver = false;
+  static const String _seenKey = 'cardio_history_screen';
+
+  @override
+  void initState() {
+    super.initState();
+    // Resolve the first-open flag without blocking the first frame.
+    CacheFirstView.hasBeenSeen(_seenKey).then((seen) {
+      if (mounted) setState(() => _isFirstEver = !seen);
+    });
+    CacheFirstView.markSeen(_seenKey);
+  }
 
   // Quick-filter chip order: most common first (running dominates cardio
   // exports globally), machines last. Keeps the common cases one tap away.
@@ -111,17 +127,30 @@ class _CardioHistoryScreenState extends ConsumerState<CardioHistoryScreen> {
           ),
           const Divider(height: 1),
           Expanded(
-            child: logsAsync.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (err, _) => _ErrorState(
+            // Cache-first: a cold install shows a layout-matched row skeleton;
+            // a returning user sees the previous list instantly while the
+            // FutureProvider revalidates in the background.
+            child: CacheFirstView<List<CardioLog>>(
+              value: logsAsync,
+              isFirstEver: _isFirstEver,
+              traceLabel: 'cardio_history',
+              skeletonBuilder: (context) => const SkeletonList(
+                itemCount: 8,
+                scrollable: true,
+                padding: EdgeInsets.fromLTRB(12, 12, 12, 24),
+              ),
+              errorBuilder: (context, err, _) => _ErrorState(
                 message: 'Could not load cardio history',
                 detail: err.toString(),
                 onRetry: () => ref.invalidate(cardioLogsProvider(filter)),
               ),
-              data: (logs) {
+              contentBuilder: (context, logs) {
                 if (logs.isEmpty) {
-                  return _EmptyState(hasFilter: _activityFilter != null || _dateRange != null);
+                  return _EmptyState(
+                      hasFilter: _activityFilter != null || _dateRange != null);
                 }
+                // ListView.separated is already lazy (builder-based) — only
+                // visible rows are built even for a 1000+ row Strava import.
                 return ListView.separated(
                   padding: const EdgeInsets.only(bottom: 24),
                   itemCount: logs.length,
@@ -157,9 +186,11 @@ class _SummaryHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return summary.when(
-      loading: () => const SizedBox(
-        height: 96,
-        child: Center(child: LinearProgressIndicator()),
+      // Layout-matched skeleton instead of a blocking progress bar so the
+      // header swap is reflow-free and on-brand.
+      loading: () => const Padding(
+        padding: EdgeInsets.all(16),
+        child: SkeletonBox(height: 64, radius: 12),
       ),
       error: (_, __) => const SizedBox(height: 0),  // hide quietly; list below still works
       data: (s) {

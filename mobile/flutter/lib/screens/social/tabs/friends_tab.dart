@@ -5,7 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/animations/app_animations.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/theme_colors.dart';
-import '../../../widgets/app_loading.dart';
+import '../../../core/widgets/skeleton/skeleton.dart';
 import '../../../widgets/app_snackbar.dart';
 import '../../../data/providers/social_provider.dart';
 import '../../../data/repositories/auth_repository.dart';
@@ -278,7 +278,21 @@ class _FriendsTabState extends ConsumerState<FriendsTab>
               child: SizedBox(
                 height: 190,
                 child: _isLoadingPending
-                    ? AppLoading.fullScreen()
+                    // Horizontal placeholder row matching the pending-request
+                    // card carousel below.
+                    ? ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: 3,
+                        separatorBuilder: (_, __) => const SizedBox(width: 12),
+                        itemBuilder: (_, __) => const SizedBox(
+                          width: 150,
+                          child: SkeletonCard(
+                            height: 190,
+                            showLeading: false,
+                            lines: 3,
+                          ),
+                        ),
+                      )
                     : ListView.builder(
                         scrollDirection: Axis.horizontal,
                         itemCount: _pendingRequests.length,
@@ -310,15 +324,23 @@ class _FriendsTabState extends ConsumerState<FriendsTab>
     );
   }
 
+  /// Layout-matched placeholder for a friends/followers/following list — a
+  /// column of avatar-row card skeletons, mirroring [FriendCard].
+  Widget _buildListSkeleton() => const SkeletonList(
+        padding: EdgeInsets.all(16),
+        itemCount: 7,
+        scrollable: true,
+      );
+
   Widget _buildFriendsList(BuildContext context, bool isDark) {
     if (_userId == null) {
-      return AppLoading.fullScreen();
+      return _buildListSkeleton();
     }
 
     final friendsAsync = ref.watch(friendsListProvider(_userId!));
 
     return friendsAsync.when(
-      loading: () => AppLoading.fullScreen(),
+      loading: () => _buildListSkeleton(),
       error: (error, stack) {
         debugPrint('Error loading friends: $error');
         return SocialEmptyState(
@@ -371,13 +393,13 @@ class _FriendsTabState extends ConsumerState<FriendsTab>
 
   Widget _buildFollowersList(BuildContext context, bool isDark) {
     if (_userId == null) {
-      return AppLoading.fullScreen();
+      return _buildListSkeleton();
     }
 
     final followersAsync = ref.watch(followersListProvider(_userId!));
 
     return followersAsync.when(
-      loading: () => AppLoading.fullScreen(),
+      loading: () => _buildListSkeleton(),
       error: (error, stack) {
         debugPrint('Error loading followers: $error');
         return SocialEmptyState(
@@ -431,13 +453,13 @@ class _FriendsTabState extends ConsumerState<FriendsTab>
 
   Widget _buildFollowingList(BuildContext context, bool isDark) {
     if (_userId == null) {
-      return AppLoading.fullScreen();
+      return _buildListSkeleton();
     }
 
     final followingAsync = ref.watch(followingListProvider(_userId!));
 
     return followingAsync.when(
-      loading: () => AppLoading.fullScreen(),
+      loading: () => _buildListSkeleton(),
       error: (error, stack) {
         debugPrint('Error loading following: $error');
         return SocialEmptyState(

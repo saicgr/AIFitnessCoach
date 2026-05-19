@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../../core/services/posthog_service.dart';
+import '../../../core/widgets/skeleton/skeleton.dart';
 import '../../../data/models/exercise_history.dart';
 import '../../../data/models/scores.dart';
 import '../../../data/providers/exercise_history_provider.dart';
@@ -180,12 +181,22 @@ class _ExerciseHistoryScreenState extends ConsumerState<ExerciseHistoryScreen>
           ),
         ),
 
-        // Exercise list
+        // Exercise list. Cache-first: the underlying FutureProvider is not
+        // autoDispose, so a return visit shows the list instantly; the cold
+        // load shows a layout-matched skeleton instead of a blocking spinner.
         Expanded(
-          child: exercisesAsync.when(
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (error, _) => _buildErrorState(theme, error.toString()),
-            data: (exercises) {
+          child: CacheFirstView<List<MostPerformedExercise>>(
+            value: exercisesAsync,
+            isFirstEver: !exercisesAsync.hasValue,
+            traceLabel: 'exercise_history_list',
+            skeletonBuilder: (_) => const SkeletonList(
+              itemCount: 8,
+              padding: EdgeInsets.all(16),
+              scrollable: true,
+            ),
+            errorBuilder: (_, error, __) =>
+                _buildErrorState(theme, error.toString()),
+            contentBuilder: (context, exercises) {
               if (exercises.isEmpty) {
                 return _buildEmptyState(theme);
               }
@@ -325,8 +336,20 @@ class _PRsTabState extends ConsumerState<_PRsTab> {
     final scoresState = ref.watch(scoresProvider);
     final prStats = scoresState.prStats;
 
+    // Cache-first: `scoresProvider` retains prStats in memory across visits,
+    // so a return shows records instantly. The cold load shows a
+    // layout-matched skeleton (summary card + PR rows) instead of a spinner.
     if (scoresState.isLoading && prStats == null) {
-      return const Center(child: CircularProgressIndicator());
+      return ListView(
+        padding: const EdgeInsets.all(16),
+        children: const [
+          // Summary card placeholder.
+          SkeletonBox(height: 88, radius: 16),
+          SizedBox(height: 16),
+          // Recent-PR row placeholders.
+          SkeletonList(itemCount: 6),
+        ],
+      );
     }
 
     if (prStats == null) {

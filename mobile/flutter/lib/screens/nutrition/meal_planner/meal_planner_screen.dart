@@ -9,6 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/accent_color_provider.dart';
+import '../../../core/widgets/skeleton/skeleton.dart';
 import '../../../data/models/coach_review.dart';
 import '../../../data/models/grocery_list.dart';
 import '../../../data/models/meal_plan.dart';
@@ -118,7 +119,10 @@ class _MealPlannerScreenState extends ConsumerState<MealPlannerScreen>
           const SizedBox(height: 4),
           Expanded(
             child: _loading
-                ? const Center(child: CircularProgressIndicator())
+                // Layout-matched skeleton: a macro-rings header block + four
+                // meal-slot card placeholders, mirroring _buildBody so the
+                // skeleton→content swap is reflow-free. No blocking spinner.
+                ? const _MealPlannerSkeleton()
                 : _error != null
                     ? Center(
                         child: Padding(
@@ -272,6 +276,38 @@ class _MealPlannerScreenState extends ConsumerState<MealPlannerScreen>
     if (res == null || _plan == null) return;
     await repo.addPlanItem(_plan!.id, MealPlanItemCreate(mealType: meal, recipeId: res));
     await _load();
+  }
+}
+
+/// Layout-matched loading placeholder for the meal planner body.
+///
+/// Mirrors [_MealPlannerScreenState._buildBody]: a tall macro-rings header
+/// card followed by four meal-slot card placeholders. Rendered while the plan
+/// is being fetched/created so the user never sees a blocking spinner.
+class _MealPlannerSkeleton extends StatelessWidget {
+  const _MealPlannerSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      // Non-scrolling feel — placeholder content fits a phone screen — but a
+      // ListView keeps it robust on short devices (iPhone SE) without overflow.
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+      children: const [
+        // Macro projection header block (≈148pt tall, matching the real
+        // rings card).
+        SkeletonBox(height: 148, radius: 16),
+        SizedBox(height: 12),
+        // Four meal-slot card placeholders.
+        SkeletonBox(height: 96, radius: 14),
+        SizedBox(height: 10),
+        SkeletonBox(height: 96, radius: 14),
+        SizedBox(height: 10),
+        SkeletonBox(height: 96, radius: 14),
+        SizedBox(height: 10),
+        SkeletonBox(height: 96, radius: 14),
+      ],
+    );
   }
 }
 
@@ -650,7 +686,13 @@ class _AddRecipeDialogState extends ConsumerState<_AddRecipeDialog> {
                       return FutureBuilder(
                         future: ref.read(recipeRepositoryProvider).search(widget.userId, query: _q),
                         builder: (_, snap) {
-                          if (!snap.hasData) return const Center(child: CircularProgressIndicator());
+                          if (!snap.hasData) {
+                            // Skeleton rows instead of a blocking spinner.
+                            return const SkeletonList(
+                              scrollable: true,
+                              itemCount: 5,
+                            );
+                          }
                           final items = snap.data!.items;
                           return ListView(
                             children: items.map((r) => ListTile(

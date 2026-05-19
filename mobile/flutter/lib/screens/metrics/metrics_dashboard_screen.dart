@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/services/posthog_service.dart';
+import '../../core/widgets/skeleton/skeleton.dart';
 import '../../data/repositories/metrics_repository.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../widgets/glass_sheet.dart';
@@ -42,7 +43,12 @@ class _MetricsDashboardScreenState
   void initState() {
     super.initState();
     ref.read(posthogServiceProvider).capture(eventName: 'metrics_dashboard_viewed');
-    _loadMetrics();
+    // Non-blocking: defer the metrics load until after the first frame so the
+    // skeleton paints instantly. The StateNotifier retains any data from an
+    // earlier visit this session, so a return shows it immediately.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _loadMetrics();
+    });
   }
 
   Future<void> _loadMetrics() async {
@@ -141,15 +147,23 @@ class _MetricsDashboardScreenState
 
               const SliverToBoxAdapter(child: SizedBox(height: 20)),
 
-              // Current metrics cards
-              if (metricsState.latestMetrics != null) ...[
+              // Current metrics cards. Cache-first: when the StateNotifier
+              // already holds metrics they render instantly; on a cold load a
+              // layout-matched 2x2 skeleton grid stands in for the four cards.
+              if (metricsState.latestMetrics != null)
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: _buildCurrentMetricsGrid(metricsState.latestMetrics!),
                   ).animate().fadeIn(delay: 200.ms),
+                )
+              else if (metricsState.isLoading)
+                const SliverToBoxAdapter(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16),
+                    child: _MetricsGridSkeleton(),
+                  ),
                 ),
-              ],
 
               const SliverToBoxAdapter(child: SizedBox(height: 24)),
 
@@ -229,9 +243,7 @@ class _MetricsDashboardScreenState
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: metricsState.isLoading
-                      ? const Center(
-                          child: CircularProgressIndicator(color: AppColors.cyan),
-                        )
+                      ? const SkeletonBox(height: 218, radius: 12)
                       : metricsState.history.isEmpty
                           ? Center(
                               child: Column(
@@ -575,6 +587,39 @@ class _MetricsDashboardScreenState
           if (mounted) Navigator.pop(context);
         },
       ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Metrics Grid Skeleton
+// ─────────────────────────────────────────────────────────────────
+
+/// Layout-matched skeleton for the 2x2 current-metrics grid, shown on a cold
+/// load instead of leaving the slot blank until the network resolves.
+class _MetricsGridSkeleton extends StatelessWidget {
+  const _MetricsGridSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: const [
+        Row(
+          children: [
+            Expanded(child: SkeletonBox(height: 116, radius: 16)),
+            SizedBox(width: 12),
+            Expanded(child: SkeletonBox(height: 116, radius: 16)),
+          ],
+        ),
+        SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(child: SkeletonBox(height: 116, radius: 16)),
+            SizedBox(width: 12),
+            Expanded(child: SkeletonBox(height: 116, radius: 16)),
+          ],
+        ),
+      ],
     );
   }
 }

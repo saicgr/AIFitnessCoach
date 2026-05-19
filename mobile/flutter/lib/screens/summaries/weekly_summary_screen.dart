@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/widgets/skeleton/skeleton.dart';
 import '../../data/models/weekly_summary.dart';
 import '../../data/repositories/weekly_summary_repository.dart';
 import '../../data/services/api_client.dart';
@@ -61,9 +62,16 @@ class _WeeklySummaryScreenState extends ConsumerState<WeeklySummaryScreen> {
           ),
         ],
       ),
+      // Cold-start skeleton — state.isLoading is only true when the disk SWR
+      // cache missed (genuine first-ever open). Returning users rehydrate
+      // their summary cards instantly from disk, never seeing this.
       body: state.isLoading
-          ? Center(
-              child: CircularProgressIndicator(color: purple),
+          ? const SkeletonList(
+              itemCount: 5,
+              spacing: 16,
+              scrollable: true,
+              padding: EdgeInsets.all(16),
+              itemBuilder: _weeklySummarySkeletonItem,
             )
           : state.summaries.isEmpty
               ? _EmptyState(onGenerate: _generateSummary, isDark: isDark)
@@ -850,4 +858,14 @@ class _EmptyState extends StatelessWidget {
       ),
     );
   }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Cold-start skeleton row — layout-matches a real `_SummaryCard`
+// (a ~150pt tall rounded gradient card) so the skeleton → content
+// cross-fade does not reflow the list.
+// ─────────────────────────────────────────────────────────────────
+
+Widget _weeklySummarySkeletonItem(BuildContext context, int index) {
+  return const SkeletonBox(height: 150, radius: 20);
 }

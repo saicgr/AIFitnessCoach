@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/services/posthog_service.dart';
+import '../../../core/widgets/skeleton/skeleton.dart';
 import '../../../data/models/muscle_analytics.dart';
-import '../../../widgets/app_loading.dart';
 import '../../../data/providers/muscle_analytics_provider.dart';
 import '../../../data/repositories/muscle_analytics_repository.dart';
 import '../../../utils/share_report_helper.dart';
@@ -165,13 +165,18 @@ class _HeatmapTab extends ConsumerWidget {
     final theme = Theme.of(context);
     final heatmapAsync = ref.watch(muscleHeatmapProvider);
 
-    return heatmapAsync.when(
-      loading: () => AppLoading.fullScreen(),
-      error: (error, _) => _ErrorWidget(
+    // Cache-first: render a layout-matched skeleton on a cold load; once data
+    // exists keep it on screen during silent revalidation / transient errors.
+    return CacheFirstView<MuscleHeatmapData>(
+      value: heatmapAsync,
+      isFirstEver: !heatmapAsync.hasValue,
+      traceLabel: 'muscle_heatmap_tab',
+      skeletonBuilder: (_) => const _AnalyticsTabSkeleton(),
+      errorBuilder: (_, __, ___) => _ErrorWidget(
         message: 'Failed to load muscle data',
         onRetry: () => ref.invalidate(muscleHeatmapProvider),
       ),
-      data: (heatmap) {
+      contentBuilder: (context, heatmap) {
         if (!heatmap.hasData) {
           return const _EmptyWidget(
             icon: Icons.fitness_center_outlined,
@@ -179,6 +184,11 @@ class _HeatmapTab extends ConsumerWidget {
             message: 'Complete some workouts to see your muscle training heatmap.',
           );
         }
+
+        // Memoize the sorted list once per build — `sortedByIntensity` does a
+        // full copy + sort and was previously evaluated three times
+        // (.first, .last, .map) in this chart-heavy tree.
+        final sorted = heatmap.sortedByIntensity;
 
         return RefreshIndicator(
           onRefresh: () async => ref.invalidate(muscleHeatmapProvider),
@@ -193,7 +203,7 @@ class _HeatmapTab extends ConsumerWidget {
                     Expanded(
                       child: _StatCard(
                         title: 'Most Trained',
-                        value: _formatMuscleName(heatmap.sortedByIntensity.first.muscleId),
+                        value: _formatMuscleName(sorted.first.muscleId),
                         icon: Icons.local_fire_department,
                         color: Colors.orange,
                       ),
@@ -202,7 +212,7 @@ class _HeatmapTab extends ConsumerWidget {
                     Expanded(
                       child: _StatCard(
                         title: 'Least Trained',
-                        value: _formatMuscleName(heatmap.sortedByIntensity.last.muscleId),
+                        value: _formatMuscleName(sorted.last.muscleId),
                         icon: Icons.warning_outlined,
                         color: Colors.blue,
                       ),
@@ -236,7 +246,7 @@ class _HeatmapTab extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(height: 12),
-                ...heatmap.sortedByIntensity.map((muscle) => _MuscleListItem(
+                ...sorted.map((muscle) => _MuscleListItem(
                   muscle: muscle,
                   maxIntensity: heatmap.maxIntensity ?? 1,
                   onTap: () {
@@ -269,13 +279,17 @@ class _FrequencyTab extends ConsumerWidget {
     final theme = Theme.of(context);
     final frequencyAsync = ref.watch(muscleFrequencyProvider);
 
-    return frequencyAsync.when(
-      loading: () => AppLoading.fullScreen(),
-      error: (error, _) => _ErrorWidget(
+    // Cache-first: skeleton on cold load, content kept during revalidation.
+    return CacheFirstView<MuscleTrainingFrequency>(
+      value: frequencyAsync,
+      isFirstEver: !frequencyAsync.hasValue,
+      traceLabel: 'muscle_frequency_tab',
+      skeletonBuilder: (_) => const _AnalyticsTabSkeleton(),
+      errorBuilder: (_, __, ___) => _ErrorWidget(
         message: 'Failed to load frequency data',
         onRetry: () => ref.invalidate(muscleFrequencyProvider),
       ),
-      data: (frequency) {
+      contentBuilder: (context, frequency) {
         if (!frequency.hasData) {
           return const _EmptyWidget(
             icon: Icons.calendar_today,
@@ -374,13 +388,17 @@ class _BalanceTab extends ConsumerWidget {
     final theme = Theme.of(context);
     final balanceAsync = ref.watch(muscleBalanceProvider);
 
-    return balanceAsync.when(
-      loading: () => AppLoading.fullScreen(),
-      error: (error, _) => _ErrorWidget(
+    // Cache-first: skeleton on cold load, content kept during revalidation.
+    return CacheFirstView<MuscleBalanceData>(
+      value: balanceAsync,
+      isFirstEver: !balanceAsync.hasValue,
+      traceLabel: 'muscle_balance_tab',
+      skeletonBuilder: (_) => const _AnalyticsTabSkeleton(),
+      errorBuilder: (_, __, ___) => _ErrorWidget(
         message: 'Failed to load balance data',
         onRetry: () => ref.invalidate(muscleBalanceProvider),
       ),
-      data: (balance) {
+      contentBuilder: (context, balance) {
         if (!balance.hasData) {
           return const _EmptyWidget(
             icon: Icons.balance,
@@ -820,6 +838,41 @@ class _RatioCard extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Layout-matched skeleton for the three muscle-analytics tabs. Mirrors the
+/// shared shape — a row of two summary cards, a section header, a chart block,
+/// and a short list of breakdown rows — so the skeleton -> content cross-fade
+/// is reflow-free.
+class _AnalyticsTabSkeleton extends StatelessWidget {
+  const _AnalyticsTabSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      physics: const NeverScrollableScrollPhysics(),
+      padding: const EdgeInsets.all(16),
+      children: const [
+        // Two summary-stat cards side by side.
+        Row(
+          children: [
+            Expanded(child: SkeletonBox(height: 96, radius: 12)),
+            SizedBox(width: 12),
+            Expanded(child: SkeletonBox(height: 96, radius: 12)),
+          ],
+        ),
+        SizedBox(height: 24),
+        // Section header.
+        SkeletonBox(width: 160, height: 18),
+        SizedBox(height: 16),
+        // Chart / visualization block.
+        SkeletonBox(height: 200, radius: 16),
+        SizedBox(height: 24),
+        // Breakdown list rows.
+        SkeletonList(itemCount: 4),
+      ],
     );
   }
 }

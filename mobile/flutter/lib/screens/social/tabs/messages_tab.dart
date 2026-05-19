@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/animations/app_animations.dart';
 import '../../../core/constants/app_colors.dart';
-import '../../../widgets/app_loading.dart';
+import '../../../core/widgets/skeleton/skeleton.dart';
 import '../../../core/theme/theme_colors.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/providers/social_provider.dart';
@@ -42,7 +42,13 @@ class _MessagesTabState extends ConsumerState<MessagesTab> {
     final conversationsAsync = ref.watch(conversationsProvider(userId));
 
     return conversationsAsync.when(
-      loading: () => AppLoading.fullScreen(),
+      // Layout-matched placeholder: a column of avatar-row card skeletons
+      // mirroring the conversation cards below.
+      loading: () => const SkeletonList(
+        padding: EdgeInsets.all(16),
+        itemCount: 8,
+        scrollable: true,
+      ),
       error: (error, stack) {
         debugPrint('Error loading conversations: $error');
         return SocialEmptyState(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/widgets/skeleton/skeleton.dart';
 import '../../data/providers/neat_provider.dart' as real_neat;
 import '../../data/services/api_client.dart';
 import '../../data/services/haptic_service.dart';
@@ -366,6 +367,11 @@ class _NeatDashboardScreenState extends ConsumerState<NeatDashboardScreen>
   late AnimationController _scoreAnimationController;
   late Animation<double> _scoreAnimation;
 
+  /// True only on a genuine first-ever open on this install — gates the
+  /// cold-start skeleton vs. instant cached content for returning users.
+  bool _isFirstEver = false;
+  static const String _seenKey = 'neat_dashboard_screen';
+
   @override
   void initState() {
     super.initState();
@@ -378,8 +384,16 @@ class _NeatDashboardScreenState extends ConsumerState<NeatDashboardScreen>
       curve: Curves.easeOutCubic,
     );
 
+    // Resolve the first-open flag without blocking the first frame.
+    CacheFirstView.hasBeenSeen(_seenKey).then((seen) {
+      if (mounted) setState(() => _isFirstEver = !seen);
+    });
+
+    // Load is fired post-frame (non-blocking) — the screen renders a skeleton
+    // on a cold install or instant content on a return visit.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadData();
+      CacheFirstView.markSeen(_seenKey);
     });
   }
 
@@ -425,38 +439,43 @@ class _NeatDashboardScreenState extends ConsumerState<NeatDashboardScreen>
         onRefresh: _loadData,
         color: AppColors.cyan,
         backgroundColor: elevatedColor,
-        child: neatState.isLoading && neatState.score == null
-            ? _buildLoadingState(textMuted)
-            : neatState.error != null && neatState.score == null
-                ? _buildErrorState(neatState.error!, textPrimary, textSecondary)
-                : _buildContent(
-                    context,
-                    neatState,
-                    isDark,
-                    elevatedColor,
-                    textPrimary,
-                    textSecondary,
-                    textMuted,
-                    cardBorder,
-                  ),
+        // Cache-first: a cold install shows a card-shaped skeleton; a returning
+        // user sees the last dashboard instantly. `NeatState` is mapped to an
+        // AsyncValue so the shared host drives the skeleton↔content fade.
+        child: CacheFirstView<NeatState>(
+          value: _asAsync(neatState),
+          isFirstEver: _isFirstEver,
+          traceLabel: 'neat_dashboard',
+          skeletonBuilder: (context) => const _NeatDashboardSkeleton(),
+          errorBuilder: (context, err, _) =>
+              _buildErrorState(err.toString(), textPrimary, textSecondary),
+          contentBuilder: (context, data) => _buildContent(
+            context,
+            data,
+            isDark,
+            elevatedColor,
+            textPrimary,
+            textSecondary,
+            textMuted,
+            cardBorder,
+          ),
+        ),
       ),
     );
   }
 
-  Widget _buildLoadingState(Color textMuted) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const CircularProgressIndicator(color: AppColors.cyan),
-          const SizedBox(height: 16),
-          Text(
-            'Loading activity data...',
-            style: TextStyle(color: textMuted),
-          ),
-        ],
-      ),
-    );
+  /// Map [NeatState] into an [AsyncValue] for [CacheFirstView].
+  ///
+  /// Once a score exists we always return `AsyncData` so a silent refresh
+  /// never blanks the dashboard back to a skeleton. A hard error with nothing
+  /// cached surfaces as `AsyncError`.
+  AsyncValue<NeatState> _asAsync(NeatState state) {
+    if (state.score != null) return AsyncValue.data(state);
+    if (state.error != null) {
+      return AsyncValue.error(state.error!, StackTrace.current);
+    }
+    if (state.isLoading) return const AsyncValue.loading();
+    return AsyncValue.data(state);
   }
 
   Widget _buildErrorState(
@@ -642,6 +661,43 @@ class _NeatDashboardScreenState extends ConsumerState<NeatDashboardScreen>
           const SizedBox(height: 32),
         ],
       ),
+    );
+  }
+}
+
+/// Layout-matched cold-start placeholder for [NeatDashboardScreen].
+///
+/// Mirrors the real dashboard's stack — NEAT score header, step goal, hourly
+/// activity timeline, active hours, streaks and achievements cards — so the
+/// skeleton→content cross-fade is reflow-free. Scrolls so it never overflows
+/// on a small device (iPhone SE).
+class _NeatDashboardSkeleton extends StatelessWidget {
+  const _NeatDashboardSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+      children: const [
+        // NEAT score hero card.
+        SkeletonBox(height: 200, radius: 16),
+        SizedBox(height: 16),
+        // Step goal progress card.
+        SkeletonBox(height: 120, radius: 16),
+        SizedBox(height: 16),
+        // Hourly activity timeline card.
+        SkeletonBox(height: 160, radius: 16),
+        SizedBox(height: 16),
+        // Active hours card.
+        SkeletonBox(height: 120, radius: 16),
+        SizedBox(height: 16),
+        // Streaks card.
+        SkeletonBox(height: 110, radius: 16),
+        SizedBox(height: 16),
+        // Achievements card.
+        SkeletonBox(height: 140, radius: 16),
+      ],
     );
   }
 }

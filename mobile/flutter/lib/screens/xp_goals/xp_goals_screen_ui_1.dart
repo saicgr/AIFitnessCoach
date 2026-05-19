@@ -455,15 +455,10 @@ extension _XPGoalsScreenStateUI1 on _XPGoalsScreenState {
     final progressBgColor = isDark ? textMuted.withValues(alpha: 0.2) : Colors.grey.shade300;
 
     return extendedProgress.when(
-      loading: () => Container(
-        height: 100,
-        decoration: BoxDecoration(
-          color: cardBg,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: borderColor, width: 1.5),
-        ),
-        child: const Center(child: CircularProgressIndicator()),
-      ),
+      // Layout-matched skeleton instead of a blocking spinner: the weekly
+      // progress card is a single fixed-height surface, so a same-sized
+      // SkeletonBox keeps the swap reflow-free.
+      loading: () => const SkeletonBox(height: 100, radius: 16),
       error: (e, _) => Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
@@ -644,15 +639,9 @@ extension _XPGoalsScreenStateUI1 on _XPGoalsScreenState {
     final progressBgColor = isDark ? textMuted.withValues(alpha: 0.2) : Colors.grey.shade300;
 
     return monthlyProgress.when(
-      loading: () => Container(
-        height: 100,
-        decoration: BoxDecoration(
-          color: cardBg,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: borderColor, width: 1.5),
-        ),
-        child: const Center(child: CircularProgressIndicator()),
-      ),
+      // Layout-matched skeleton instead of a blocking spinner — see the
+      // weekly card above for rationale.
+      loading: () => const SkeletonBox(height: 100, radius: 16),
       error: (e, _) => Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(

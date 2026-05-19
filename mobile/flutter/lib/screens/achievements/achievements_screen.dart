@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/widgets/skeleton/skeleton.dart';
 import '../../data/models/achievement.dart';
 import '../../data/repositories/achievements_repository.dart';
 import '../../data/services/api_client.dart';
@@ -51,10 +52,6 @@ class _AchievementsScreenState extends ConsumerState<AchievementsScreen>
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final backgroundColor =
         isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
-    final textPrimary =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final cyan = isDark ? AppColors.cyan : AppColorsLight.cyan;
 
     return Scaffold(
       backgroundColor: backgroundColor,
@@ -73,10 +70,13 @@ class _AchievementsScreenState extends ConsumerState<AchievementsScreen>
             ],
           ),
           Expanded(
-            child: state.isLoading
-                ? Center(
-                    child: LottieLoading(size: 80, color: cyan),
-                  )
+            // Cache-first: a warm start has `hasLoaded == true` (the notifier
+            // emitted a disk-cached summary/badge list before any network I/O)
+            // so content renders instantly. The layout-matched skeleton is
+            // shown ONLY on a genuine first-ever open while the first fetch
+            // is still in flight — never a blocking full-screen spinner.
+            child: (!state.hasLoaded && state.isLoading)
+                ? const _AchievementsSkeleton()
                 : TabBarView(
                     controller: _tabController,
                     children: [
@@ -89,6 +89,37 @@ class _AchievementsScreenState extends ConsumerState<AchievementsScreen>
                     ],
                   ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// First-open skeleton — layout-matched to the Summary tab so the
+// skeleton → content cross-fade does not reflow.
+// ─────────────────────────────────────────────────────────────────
+
+class _AchievementsSkeleton extends StatelessWidget {
+  const _AchievementsSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      // Disable scroll — a placeholder should not move under the user.
+      physics: const NeverScrollableScrollPhysics(),
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: const [
+          // Points hero card placeholder (matches _PointsCard footprint).
+          SkeletonBox(height: 200, radius: 20),
+          SizedBox(height: 24),
+          // Section header line.
+          SkeletonBox(width: 140, height: 12, radius: 6),
+          SizedBox(height: 12),
+          // Stacked achievement-row placeholders (matches _AchievementCard).
+          SkeletonList(itemCount: 4, spacing: 12),
         ],
       ),
     );

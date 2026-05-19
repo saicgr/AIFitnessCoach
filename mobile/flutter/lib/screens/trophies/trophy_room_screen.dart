@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:simple_circular_progress_bar/simple_circular_progress_bar.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/accent_color_provider.dart';
+import '../../core/widgets/skeleton/skeleton.dart';
 import '../../data/models/trophy.dart';
 import '../../data/models/trophy_filter_state.dart';
 import '../../data/models/user_xp.dart';
@@ -42,7 +43,7 @@ class _TrophyRoomScreenState extends ConsumerState<TrophyRoomScreen> {
     for (final category in TrophyCategory.values) {
       _expandedSections[category] = true;
     }
-    // Defer provider modification until after build
+    // Defer provider modification until after build.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadData();
       ref.read(posthogServiceProvider).capture(eventName: 'trophy_room_viewed');
@@ -188,15 +189,13 @@ class _TrophyRoomScreenState extends ConsumerState<TrophyRoomScreen> {
                   ),
                 ),
 
-              // Loading indicator
-              if (isLoading)
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.all(32),
-                    child: Center(
-                      child: CircularProgressIndicator(color: accentColor),
-                    ),
-                  ),
+              // First-open skeleton: shown ONLY while the very first fetch
+              // is in flight and there is genuinely no trophy data yet. A
+              // warm start has cached trophies in the shared xpProvider, so
+              // content renders instantly and no skeleton (or spinner) shows.
+              if (isLoading && allTrophies.isEmpty)
+                const SliverToBoxAdapter(
+                  child: _TrophyRoomSkeleton(),
                 ),
 
               // Empty state
@@ -841,6 +840,9 @@ class _TrophyRoomScreenState extends ConsumerState<TrophyRoomScreen> {
     );
   }
 
+  // _showTrophyDetail is defined below; the skeleton widget for the cold-open
+  // loading state lives at the bottom of this file (_TrophyRoomSkeleton).
+
   void _showTrophyDetail(
     TrophyProgress trophy,
     bool isDark,
@@ -860,6 +862,32 @@ class _TrophyRoomScreenState extends ConsumerState<TrophyRoomScreen> {
         textMuted: textMuted,
         elevatedColor: elevatedColor,
         accentColor: accentColor,
+      ),
+    );
+  }
+}
+
+/// First-open skeleton for the Trophy Room — a section header line plus a
+/// stack of placeholder trophy-card rows that mirror the real `_TrophyCard`
+/// footprint, so the skeleton → content cross-fade does not reflow. Shown
+/// ONLY on a cold install while the first trophy fetch is in flight; a warm
+/// start has cached trophies in the shared xpProvider and skips this entirely.
+class _TrophyRoomSkeleton extends StatelessWidget {
+  const _TrophyRoomSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Padding(
+      padding: EdgeInsets.fromLTRB(16, 16, 16, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Category section-header placeholder.
+          SkeletonBox(width: 160, height: 16, radius: 8),
+          SizedBox(height: 16),
+          // Placeholder trophy-card rows (icon + two text lines each).
+          SkeletonList(itemCount: 6, spacing: 8),
+        ],
       ),
     );
   }

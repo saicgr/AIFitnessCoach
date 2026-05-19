@@ -1,8 +1,12 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/widgets/skeleton/skeleton.dart';
 import '../../data/models/body_analyzer.dart';
 import '../../data/repositories/body_analyzer_repository.dart';
 import 'body_analyzer_capture_screen.dart';
@@ -35,11 +39,109 @@ class _BodyAnalyzerScreenState extends ConsumerState<BodyAnalyzerScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) => _load());
   }
 
+  /// Disk-cache key. Versioned so a payload-shape change drops stale blobs.
+  /// Not user-scoped here: the Body Analyzer repository is auth-scoped
+  /// server-side and the cache is wiped on logout via SharedPreferences
+  /// clear, but we still TTL-bound it to 24 h so it can't go badly stale.
+  static const String _diskCacheKey = 'body_analyzer_overview::v1';
+  static const Duration _diskTtl = Duration(hours: 24);
+
+  /// Read the persisted overview (latest + history + body age). Returns null
+  /// on miss / expiry / corruption. Best-effort — never throws.
+  Future<Map<String, dynamic>?> _readDiskCache() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString(_diskCacheKey);
+      if (raw == null || raw.isEmpty) return null;
+      final decoded = jsonDecode(raw);
+      if (decoded is! Map<String, dynamic>) return null;
+      final cachedAt = decoded['cachedAt'];
+      if (cachedAt is! int) return null;
+      final age = DateTime.now().millisecondsSinceEpoch - cachedAt;
+      if (age < 0 || age >= _diskTtl.inMilliseconds) {
+        await prefs.remove(_diskCacheKey);
+        return null;
+      }
+      final data = decoded['data'];
+      return data is Map<String, dynamic> ? data : null;
+    } catch (e) {
+      debugPrint('💾 [BodyAnalyzer] disk read failed: $e');
+      return null;
+    }
+  }
+
+  /// Write-through the freshly fetched overview. Best-effort.
+  Future<void> _writeDiskCache(
+    BodyAnalyzerSnapshot? latest,
+    List<BodyAnalyzerSnapshot> history,
+    BodyAgeResult? bodyAge,
+  ) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(
+        _diskCacheKey,
+        jsonEncode({
+          'cachedAt': DateTime.now().millisecondsSinceEpoch,
+          'data': {
+            'latest': latest?.toJson(),
+            'history': history.map((s) => s.toJson()).toList(),
+            // BodyAgeResult has no toJson — persist its three ints by hand.
+            'bodyAge': bodyAge == null
+                ? null
+                : {
+                    'body_age': bodyAge.bodyAge,
+                    'chronological_age': bodyAge.chronologicalAge,
+                    'delta': bodyAge.delta,
+                  },
+          },
+        }),
+      );
+    } catch (e) {
+      debugPrint('💾 [BodyAnalyzer] disk write failed: $e');
+    }
+  }
+
+  /// Load the Body Analyzer overview cache-first (disk SWR).
+  ///
+  /// Step 1: read the disk cache — if a valid blob exists, paint it
+  /// immediately with `_loading:false` so a cold start renders instantly
+  /// (skeleton stays hidden). Step 2: fetch fresh from the network and
+  /// overwrite. On a disk miss we keep `_loading:true` so the screen shows
+  /// its layout-matched skeleton until first content arrives.
   Future<void> _load() async {
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
+    var servedFromCache = false;
+    final cached = await _readDiskCache();
+    if (cached != null && mounted) {
+      try {
+        final latestJson = cached['latest'] as Map<String, dynamic>?;
+        final historyJson = (cached['history'] as List?) ?? const [];
+        final bodyAgeJson = cached['bodyAge'] as Map<String, dynamic>?;
+        servedFromCache = true;
+        setState(() {
+          _latest = latestJson == null
+              ? null
+              : BodyAnalyzerSnapshot.fromJson(latestJson);
+          _history = historyJson
+              .map((j) =>
+                  BodyAnalyzerSnapshot.fromJson(j as Map<String, dynamic>))
+              .toList();
+          _bodyAge =
+              bodyAgeJson == null ? null : BodyAgeResult.fromJson(bodyAgeJson);
+          _loading = false;
+          _error = null;
+        });
+      } catch (e) {
+        debugPrint('💾 [BodyAnalyzer] disk decode failed: $e');
+        servedFromCache = false;
+      }
+    }
+    if (!servedFromCache) {
+      setState(() {
+        _loading = true;
+        _error = null;
+      });
+    }
+
     try {
       final repo = ref.read(bodyAnalyzerRepositoryProvider);
       final results = await Future.wait([
@@ -48,15 +150,26 @@ class _BodyAnalyzerScreenState extends ConsumerState<BodyAnalyzerScreen> {
         repo.bodyAge(),
       ]);
       if (!mounted) return;
+      final latest = results[0] as BodyAnalyzerSnapshot?;
+      final history = results[1] as List<BodyAnalyzerSnapshot>;
+      final bodyAge = results[2] as BodyAgeResult;
       setState(() {
-        _latest = results[0] as BodyAnalyzerSnapshot?;
-        _history = results[1] as List<BodyAnalyzerSnapshot>;
-        _bodyAge = results[2] as BodyAgeResult;
+        _latest = latest;
+        _history = history;
+        _bodyAge = bodyAge;
+        _loading = false;
       });
+      // Write-through so the next cold start is instant.
+      await _writeDiskCache(latest, history, bodyAge);
     } catch (e) {
-      if (mounted) setState(() => _error = '$e');
-    } finally {
-      if (mounted) setState(() => _loading = false);
+      // Keep any cached overview on screen; only surface the error if we
+      // have nothing else to show.
+      if (mounted) {
+        setState(() {
+          if (!servedFromCache) _error = '$e';
+          _loading = false;
+        });
+      }
     }
   }
 
@@ -163,7 +276,7 @@ class _BodyAnalyzerScreenState extends ConsumerState<BodyAnalyzerScreen> {
       ),
       body: SafeArea(
         child: _loading
-            ? const Center(child: CircularProgressIndicator())
+            ? _buildSkeleton()
             : _error != null
                 ? _buildError(textMuted)
                 : RefreshIndicator(
@@ -200,6 +313,37 @@ class _BodyAnalyzerScreenState extends ConsumerState<BodyAnalyzerScreen> {
           (_latest != null && !_loading) ? _buildActionBar(isDark) : null,
     );
   }
+
+  /// Cold-start skeleton — layout-matches `_buildLatest`: a hero score card,
+  /// a row of three composition rings, and two stacked text cards. Only ever
+  /// shown on a genuine first-ever open (no disk cache); returning users
+  /// rehydrate the real overview instantly from the disk SWR layer.
+  Widget _buildSkeleton() => ListView(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+        children: const [
+          // Hero score card.
+          SkeletonBox(height: 150, radius: 18),
+          SizedBox(height: 12),
+          // Body-type chip + body-age badge row.
+          SkeletonBox(height: 34, radius: 10),
+          SizedBox(height: 16),
+          // Three composition rings.
+          Row(
+            children: [
+              Expanded(child: SkeletonBox(height: 120, radius: 14)),
+              SizedBox(width: 8),
+              Expanded(child: SkeletonBox(height: 120, radius: 14)),
+              SizedBox(width: 8),
+              Expanded(child: SkeletonBox(height: 120, radius: 14)),
+            ],
+          ),
+          SizedBox(height: 16),
+          // Feedback + tips cards.
+          SkeletonBox(height: 90, radius: 14),
+          SizedBox(height: 12),
+          SkeletonBox(height: 110, radius: 14),
+        ],
+      );
 
   Widget _buildError(Color textMuted) => Center(
         child: Padding(

@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../core/constants/app_colors.dart';
-import '../../widgets/app_loading.dart';
 import '../../core/services/posthog_service.dart';
+import '../../core/widgets/skeleton/skeleton.dart';
 import '../../widgets/pill_app_bar.dart';
 import '../../core/widgets/line_icon.dart';
 import '../../data/providers/trend_series_provider.dart';
@@ -26,13 +26,29 @@ class MoodHistoryScreen extends ConsumerStatefulWidget {
 class _MoodHistoryScreenState extends ConsumerState<MoodHistoryScreen> {
   final ScrollController _scrollController = ScrollController();
 
+  /// True only on the genuine first-ever open of this screen on this install.
+  /// Controls whether the cold-start skeleton (vs. instant cached content) is
+  /// shown. Resolved async in [initState] from a SharedPreferences flag.
+  bool _isFirstEver = false;
+
+  /// SharedPreferences flag key for the first-open affordance.
+  static const String _seenKey = 'mood_history_screen';
+
   @override
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
+    // Resolve the first-ever flag BEFORE the load resolves so the skeleton is
+    // only ever shown on a true cold install — returning users see content.
+    CacheFirstView.hasBeenSeen(_seenKey).then((seen) {
+      if (mounted) setState(() => _isFirstEver = !seen);
+    });
+    // Kick off the load without blocking the first frame — the screen renders
+    // a skeleton (first open) or stale cached content immediately.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(moodHistoryProvider.notifier).initialize();
       ref.read(posthogServiceProvider).capture(eventName: 'mood_history_viewed');
+      CacheFirstView.markSeen(_seenKey);
     });
   }
 
@@ -76,9 +92,16 @@ class _MoodHistoryScreenState extends ConsumerState<MoodHistoryScreen> {
           PillAppBarAction(icon: Icons.refresh, onTap: () => ref.read(moodHistoryProvider.notifier).refresh()),
         ],
       ),
-      body: state.isLoading
-          ? AppLoading.fullScreen()
-          : RefreshIndicator(
+      // Cache-first: a cold install shows a layout-matched skeleton, a
+      // returning user sees content instantly while the provider revalidates
+      // silently. Map the legacy `MoodHistoryState` into an AsyncValue so the
+      // shared `CacheFirstView` host can drive the skeleton↔content crossfade.
+      body: CacheFirstView<MoodHistoryState>(
+        value: _asAsync(state),
+        isFirstEver: _isFirstEver,
+        traceLabel: 'mood_history',
+        skeletonBuilder: (context) => const _MoodHistorySkeleton(),
+        contentBuilder: (context, data) => RefreshIndicator(
               onRefresh: () => ref.read(moodHistoryProvider.notifier).refresh(),
               child: CustomScrollView(
                 controller: _scrollController,
@@ -224,7 +247,27 @@ class _MoodHistoryScreenState extends ConsumerState<MoodHistoryScreen> {
                 ],
               ),
             ),
+      ),
     );
+  }
+
+  /// Map the [MoodHistoryState] into an [AsyncValue] for [CacheFirstView].
+  ///
+  /// The provider seeds `checkins` synchronously once loaded; until then a
+  /// loading state with no rows drives the skeleton. Once any rows exist (even
+  /// stale ones) we always return `AsyncData` so a silent refresh never blanks
+  /// the screen back to a skeleton. A hard error with nothing to show surfaces
+  /// as `AsyncError`.
+  AsyncValue<MoodHistoryState> _asAsync(MoodHistoryState state) {
+    final hasContent = state.checkins.isNotEmpty || state.analytics != null;
+    if (hasContent) return AsyncValue.data(state);
+    if (state.isLoading) return const AsyncValue.loading();
+    if (state.error != null) {
+      return AsyncValue.error(state.error!, StackTrace.current);
+    }
+    // Not loading, no error, no content → an empty result; render content
+    // (the screen's own empty state) rather than trap behind a skeleton.
+    return AsyncValue.data(state);
   }
 
   Widget _buildDateHeader(
@@ -363,5 +406,46 @@ class _MoodHistoryScreenState extends ConsumerState<MoodHistoryScreen> {
 
   void _navigateToWorkout(String workoutId) {
     context.push('/workout/$workoutId');
+  }
+}
+
+/// Layout-matched cold-start placeholder for [MoodHistoryScreen].
+///
+/// Mirrors the real body's vertical rhythm — a weekly-chart block, an insights
+/// header, two analytics cards, a calendar block and a short check-in list —
+/// so the skeleton→content cross-fade does not reflow. Scrolls so it never
+/// overflows on a small device (iPhone SE).
+class _MoodHistorySkeleton extends StatelessWidget {
+  const _MoodHistorySkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: const [
+        // Weekly mood chart placeholder.
+        SkeletonBox(height: 180, radius: 16),
+        SizedBox(height: 20),
+        // "Your Mood Insights" header + subtitle.
+        SkeletonBox(width: 180, height: 20),
+        SizedBox(height: 8),
+        SkeletonBox(width: 110, height: 14),
+        SizedBox(height: 16),
+        // Streak + analytics cards.
+        SkeletonBox(height: 96, radius: 16),
+        SizedBox(height: 16),
+        SkeletonBox(height: 140, radius: 16),
+        SizedBox(height: 20),
+        // Calendar heatmap placeholder.
+        SkeletonBox(height: 220, radius: 16),
+        SizedBox(height: 20),
+        // Check-in history rows.
+        SkeletonCard(),
+        SizedBox(height: 12),
+        SkeletonCard(),
+        SizedBox(height: 12),
+        SkeletonCard(),
+      ],
+    );
   }
 }

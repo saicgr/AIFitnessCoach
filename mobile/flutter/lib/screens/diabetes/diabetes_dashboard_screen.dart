@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/widgets/line_icon.dart';
+import '../../core/widgets/skeleton/skeleton.dart';
 import '../../data/providers/diabetes_provider.dart';
 import '../../data/providers/trend_series_provider.dart';
 import '../../data/services/haptic_service.dart';
@@ -40,6 +41,11 @@ class _DiabetesDashboardScreenState
   late AnimationController _pulseController;
   late Animation<double> _pulseAnimation;
 
+  /// True only on a genuine first-ever open on this install — gates the
+  /// cold-start skeleton vs. instant cached content for returning users.
+  bool _isFirstEver = false;
+  static const String _seenKey = 'diabetes_dashboard_screen';
+
   @override
   void initState() {
     super.initState();
@@ -52,8 +58,16 @@ class _DiabetesDashboardScreenState
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
 
+    // Resolve the first-open flag without blocking the first frame.
+    CacheFirstView.hasBeenSeen(_seenKey).then((seen) {
+      if (mounted) setState(() => _isFirstEver = !seen);
+    });
+
+    // Load is fired post-frame (non-blocking) — the screen renders a skeleton
+    // on a cold install or instant content on a return visit.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadData();
+      CacheFirstView.markSeen(_seenKey);
     });
   }
 
@@ -108,40 +122,45 @@ class _DiabetesDashboardScreenState
         onRefresh: _loadData,
         color: AppColors.cyan,
         backgroundColor: elevatedColor,
-        child: diabetesState.isLoading && diabetesState.currentGlucose == null
-            ? _buildLoadingState(textMuted)
-            : diabetesState.error != null &&
-                    diabetesState.currentGlucose == null
-                ? _buildErrorState(
-                    diabetesState.error!, textPrimary, textSecondary)
-                : _buildContent(
-                    context,
-                    diabetesState,
-                    isDark,
-                    elevatedColor,
-                    textPrimary,
-                    textSecondary,
-                    textMuted,
-                    cardBorder,
-                  ),
+        // Cache-first: a cold install shows a card-shaped skeleton; a returning
+        // user sees the last dashboard instantly. `DiabetesState` is mapped to
+        // an AsyncValue so the shared host can drive the skeleton↔content fade.
+        child: CacheFirstView<DiabetesState>(
+          value: _asAsync(diabetesState),
+          isFirstEver: _isFirstEver,
+          traceLabel: 'diabetes_dashboard',
+          skeletonBuilder: (context) => const _DiabetesDashboardSkeleton(),
+          errorBuilder: (context, err, _) =>
+              _buildErrorState(err.toString(), textPrimary, textSecondary),
+          contentBuilder: (context, data) => _buildContent(
+            context,
+            data,
+            isDark,
+            elevatedColor,
+            textPrimary,
+            textSecondary,
+            textMuted,
+            cardBorder,
+          ),
+        ),
       ),
     );
   }
 
-  Widget _buildLoadingState(Color textMuted) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const CircularProgressIndicator(color: AppColors.cyan),
-          const SizedBox(height: 16),
-          Text(
-            'Loading diabetes data...',
-            style: TextStyle(color: textMuted),
-          ),
-        ],
-      ),
-    );
+  /// Map [DiabetesState] into an [AsyncValue] for [CacheFirstView].
+  ///
+  /// Once any glucose reading exists we always return `AsyncData` so a silent
+  /// refresh never blanks the dashboard back to a skeleton. A hard error with
+  /// nothing cached surfaces as `AsyncError`.
+  AsyncValue<DiabetesState> _asAsync(DiabetesState state) {
+    if (state.currentGlucose != null) return AsyncValue.data(state);
+    if (state.error != null) {
+      return AsyncValue.error(state.error!, StackTrace.current);
+    }
+    if (state.isLoading) return const AsyncValue.loading();
+    // Settled with no error and no reading → render content (the empty
+    // dashboard) rather than trap the user behind a skeleton.
+    return AsyncValue.data(state);
   }
 
   Widget _buildErrorState(
@@ -629,6 +648,43 @@ class _DiabetesDashboardScreenState
         ),
       ),
       ),
+    );
+  }
+}
+
+/// Layout-matched cold-start placeholder for [DiabetesDashboardScreen].
+///
+/// Mirrors the real dashboard's stack — current-glucose card, quick-action
+/// row, time-in-range, insulin summary, A1C and recent-readings cards — so the
+/// skeleton→content cross-fade is reflow-free. Scrolls so it never overflows
+/// on a small device (iPhone SE).
+class _DiabetesDashboardSkeleton extends StatelessWidget {
+  const _DiabetesDashboardSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+      children: const [
+        // Current glucose hero card.
+        SkeletonBox(height: 180, radius: 16),
+        SizedBox(height: 16),
+        // Quick-action row (two buttons).
+        SkeletonBox(height: 64, radius: 16),
+        SizedBox(height: 16),
+        // Time-in-range card.
+        SkeletonBox(height: 140, radius: 16),
+        SizedBox(height: 16),
+        // Today's insulin summary card.
+        SkeletonBox(height: 120, radius: 16),
+        SizedBox(height: 16),
+        // A1C card.
+        SkeletonBox(height: 120, radius: 16),
+        SizedBox(height: 16),
+        // Recent readings card.
+        SkeletonBox(height: 200, radius: 16),
+      ],
     );
   }
 }

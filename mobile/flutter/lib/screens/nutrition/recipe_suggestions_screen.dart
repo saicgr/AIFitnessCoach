@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/widgets/skeleton/skeleton.dart';
 import '../../core/services/posthog_service.dart';
 import '../../data/models/recipe_suggestion.dart';
 import '../../data/providers/recipe_suggestion_provider.dart';
@@ -338,7 +339,14 @@ class _RecipeSuggestionsScreenState extends ConsumerState<RecipeSuggestionsScree
     required Color textSecondary,
   }) {
     if (state.isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      // Layout-matched skeleton rows instead of a blocking centered spinner —
+      // mirrors the saved-recipe card list below.
+      return const SkeletonList(
+        scrollable: true,
+        itemCount: 6,
+        padding: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+        itemBuilder: _suggestionSkeletonRow,
+      );
     }
 
     if (state.savedRecipes.isEmpty) {
@@ -444,3 +452,13 @@ class _RecipeSuggestionsScreenState extends ConsumerState<RecipeSuggestionsScree
     }
   }
 }
+
+/// Skeleton row for the Saved tab loading state — a thumbnail + 2 text lines,
+/// roughly matching a [RecipeSuggestionCard]'s shape so the skeleton→content
+/// swap is reflow-free. Top-level so it can be a `const` tear-off.
+Widget _suggestionSkeletonRow(BuildContext context, int index) =>
+    const SkeletonCard(
+      showLeading: true,
+      leadingSize: 64,
+      lines: 3,
+    );

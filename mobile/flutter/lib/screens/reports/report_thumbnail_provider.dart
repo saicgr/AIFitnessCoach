@@ -1,4 +1,8 @@
+import 'dart:convert';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/providers/user_provider.dart';
@@ -12,6 +16,78 @@ class ReportThumbnailData {
   final String? secondary;
 
   const ReportThumbnailData({required this.primary, this.secondary});
+
+  Map<String, dynamic> toJson() => {'primary': primary, 'secondary': secondary};
+
+  factory ReportThumbnailData.fromJson(Map<String, dynamic> json) =>
+      ReportThumbnailData(
+        primary: json['primary'] as String? ?? '',
+        secondary: json['secondary'] as String?,
+      );
+}
+
+// ---------------------------------------------------------------------------
+// Disk stale-while-revalidate for report-hub thumbnails.
+//
+// `reportThumbnailProvider` is a FutureProvider.family — its in-memory cache
+// dies on every cold start, so each hub card used to re-hit Supabase before
+// it could show a live stat. Persisting the tiny 2-string payload to
+// SharedPreferences lets a cold open paint last-known thumbnails instantly,
+// then silently revalidate. 12 h TTL — these are month-bucketed stats that
+// only drift as the user logs more activity within the month.
+// ---------------------------------------------------------------------------
+const String _kThumbDiskPrefix = 'report_thumb::v1';
+const Duration _kThumbDiskTtl = Duration(hours: 12);
+
+String _thumbDiskKey(String userId, ReportThumbnailKey key) =>
+    '$_kThumbDiskPrefix::$userId::${key.route}::${key.month.year}-${key.month.month}';
+
+/// Read a persisted thumbnail. Returns null on miss / expiry / corruption.
+/// A stored `null` payload (the query legitimately found no data) is encoded
+/// as `{"empty": true}` so we can cache "no data" too and skip the re-query.
+Future<({bool hit, ReportThumbnailData? data})> _readThumbDisk(
+    String key) async {
+  try {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(key);
+    if (raw == null || raw.isEmpty) return (hit: false, data: null);
+    final decoded = jsonDecode(raw);
+    if (decoded is! Map<String, dynamic>) return (hit: false, data: null);
+    final cachedAt = decoded['cachedAt'];
+    if (cachedAt is! int) return (hit: false, data: null);
+    final age = DateTime.now().millisecondsSinceEpoch - cachedAt;
+    if (age < 0 || age >= _kThumbDiskTtl.inMilliseconds) {
+      await prefs.remove(key);
+      return (hit: false, data: null);
+    }
+    final body = decoded['data'];
+    if (body is Map<String, dynamic> && body['empty'] == true) {
+      return (hit: true, data: null);
+    }
+    if (body is Map<String, dynamic>) {
+      return (hit: true, data: ReportThumbnailData.fromJson(body));
+    }
+    return (hit: false, data: null);
+  } catch (e) {
+    debugPrint('💾 [ReportThumb] disk read failed: $e');
+    return (hit: false, data: null);
+  }
+}
+
+/// Write-through a thumbnail (or an explicit "no data" marker). Best-effort.
+Future<void> _writeThumbDisk(String key, ReportThumbnailData? data) async {
+  try {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(
+      key,
+      jsonEncode({
+        'cachedAt': DateTime.now().millisecondsSinceEpoch,
+        'data': data?.toJson() ?? {'empty': true},
+      }),
+    );
+  } catch (e) {
+    debugPrint('💾 [ReportThumb] disk write failed: $e');
+  }
 }
 
 /// Key for the thumbnail family. Equality is by route + (year, month) so the
@@ -43,6 +119,15 @@ final reportThumbnailProvider =
   final userId = ref.watch(currentUserIdProvider);
   if (userId == null) return null;
 
+  // Cold-start cache-first: a fresh disk blob (within the 12 h TTL) is
+  // returned immediately and the Supabase round-trip is skipped entirely —
+  // these are month-bucketed stats, so a few hours of staleness is fine and
+  // the hub card paints its live number instantly on a cold open. A stale /
+  // missing blob falls through to the live query + write-through below.
+  final diskKey = _thumbDiskKey(userId, key);
+  final disk = await _readThumbDisk(diskKey);
+  if (disk.hit) return disk.data;
+
   final monthStart = DateTime(key.month.year, key.month.month, 1);
   final monthEnd = DateTime(key.month.year, key.month.month + 1, 1);
   final monthStartIso = monthStart.toIso8601String();
@@ -51,7 +136,10 @@ final reportThumbnailProvider =
   final monthEndDate = monthEndIso.substring(0, 10);
   final db = Supabase.instance.client;
 
-  try {
+  // Runs the live Supabase query for this (report, month). Extracted so the
+  // single write-through below covers every report branch without having to
+  // touch each individual `return`.
+  Future<ReportThumbnailData?> runQuery() async {
     switch (key.route) {
       case '/summaries':
         final res = await db
@@ -238,12 +326,21 @@ final reportThumbnailProvider =
           secondary: '$days days logged',
         );
     }
-  } catch (_) {
-    // Soft-fail — card falls back to placeholder. Keeps the hub usable
-    // when one report's table is misconfigured / RLS-blocked.
     return null;
   }
-  return null;
+
+  try {
+    final result = await runQuery();
+    // Write-through so the next cold start renders this card instantly.
+    // A null result (no data this month) is cached too — see _writeThumbDisk.
+    await _writeThumbDisk(diskKey, result);
+    return result;
+  } catch (_) {
+    // Soft-fail — card falls back to placeholder. Keeps the hub usable
+    // when one report's table is misconfigured / RLS-blocked. Not cached so
+    // a transient failure retries on the next open.
+    return null;
+  }
 });
 
 /// ISO week-of-year. Used as an approximation to map weekly_volumes rows

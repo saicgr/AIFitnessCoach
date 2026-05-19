@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/services/posthog_service.dart';
+import '../../../core/widgets/skeleton/skeleton.dart';
 import '../../../data/models/exercise_history.dart';
 import '../../../data/providers/exercise_history_provider.dart';
 import '../../../data/repositories/exercise_history_repository.dart';
@@ -152,10 +153,16 @@ class _ProgressTab extends ConsumerWidget {
     final timeRange = ref.watch(exerciseHistoryTimeRangeProvider);
     final chartType = ref.watch(exerciseChartTypeProvider);
 
-    return historyAsync.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (error, _) => Center(child: Text('Error: $error')),
-      data: (history) {
+    // Cache-first: the exercise-history FutureProvider is not autoDispose, so
+    // a return visit renders instantly; the cold load shows a layout-matched
+    // skeleton (selectors + summary + chart) instead of a blocking spinner.
+    return CacheFirstView<ExerciseHistoryData>(
+      value: historyAsync,
+      isFirstEver: !historyAsync.hasValue,
+      traceLabel: 'exercise_progress_tab',
+      skeletonBuilder: (_) => const _ProgressTabSkeleton(),
+      errorBuilder: (_, error, __) => Center(child: Text('Error: $error')),
+      contentBuilder: (context, history) {
         if (!history.hasData) {
           return _buildEmptyState(theme);
         }
@@ -261,10 +268,18 @@ class _HistoryTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
 
-    return historyAsync.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (error, _) => Center(child: Text('Error: $error')),
-      data: (history) {
+    // Cache-first: skeleton list on cold load, instant on return visits.
+    return CacheFirstView<ExerciseHistoryData>(
+      value: historyAsync,
+      isFirstEver: !historyAsync.hasValue,
+      traceLabel: 'exercise_history_tab',
+      skeletonBuilder: (_) => const SkeletonList(
+        itemCount: 8,
+        padding: EdgeInsets.all(16),
+        scrollable: true,
+      ),
+      errorBuilder: (_, error, __) => Center(child: Text('Error: $error')),
+      contentBuilder: (context, history) {
         final sessions = history.sortedSessionsNewestFirst;
 
         if (sessions.isEmpty) {
@@ -281,6 +296,34 @@ class _HistoryTab extends ConsumerWidget {
           },
         );
       },
+    );
+  }
+}
+
+/// Layout-matched skeleton for the exercise Progress tab. Mirrors the real
+/// content order — time-range selector, summary card, chart-type selector,
+/// chart block — so the skeleton -> content cross-fade is reflow-free.
+class _ProgressTabSkeleton extends StatelessWidget {
+  const _ProgressTabSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      physics: const NeverScrollableScrollPhysics(),
+      padding: const EdgeInsets.all(16),
+      children: const [
+        // Time-range selector.
+        SkeletonBox(height: 36, radius: 18),
+        SizedBox(height: 24),
+        // Summary card.
+        SkeletonBox(height: 110, radius: 16),
+        SizedBox(height: 24),
+        // Chart-type selector.
+        SkeletonBox(height: 36, radius: 18),
+        SizedBox(height: 16),
+        // Progression chart block.
+        SkeletonBox(height: 220, radius: 16),
+      ],
     );
   }
 }
@@ -305,10 +348,32 @@ class _ExerciseInsightsCard extends StatefulWidget {
 class _ExerciseInsightsCardState extends State<_ExerciseInsightsCard> {
   bool _expanded = true;
 
+  // Memoized insight list. `_generateInsights()` walks the summary, chart data
+  // and PR async value — recomputing it on every `setState(_expanded)` toggle
+  // is wasted work, so it is cached and only rebuilt when the inputs change.
+  late List<String> _insights;
+
+  @override
+  void initState() {
+    super.initState();
+    _insights = _generateInsights();
+  }
+
+  @override
+  void didUpdateWidget(covariant _ExerciseInsightsCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Inputs that feed _generateInsights() changed → recompute.
+    if (oldWidget.summary != widget.summary ||
+        oldWidget.prsAsync != widget.prsAsync ||
+        oldWidget.chartData != widget.chartData) {
+      _insights = _generateInsights();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final insights = _generateInsights();
+    final insights = _insights;
 
     if (insights.isEmpty) return const SizedBox.shrink();
 

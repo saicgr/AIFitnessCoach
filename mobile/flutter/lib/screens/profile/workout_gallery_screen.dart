@@ -8,6 +8,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../../core/animations/app_animations.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/services/posthog_service.dart';
+import '../../core/widgets/skeleton/skeleton.dart';
 import '../../widgets/pill_app_bar.dart';
 import '../../widgets/glass_sheet.dart';
 import '../../data/providers/workout_gallery_provider.dart';
@@ -35,6 +36,10 @@ class _WorkoutGalleryScreenState extends ConsumerState<WorkoutGalleryScreen> {
   int _currentPage = 1;
   bool _hasMore = true;
   bool _isLoadingMore = false;
+  /// False until the first page has finished loading (success or error).
+  /// Gates the empty state so a cold open shows a skeleton grid, not a
+  /// premature "No images yet" while the first request is still in flight.
+  bool _firstLoadDone = false;
   final List<WorkoutGalleryImage> _images = [];
   final ScrollController _scrollController = ScrollController();
 
@@ -73,6 +78,9 @@ class _WorkoutGalleryScreenState extends ConsumerState<WorkoutGalleryScreen> {
     setState(() {
       _currentPage = 1;
       _images.clear();
+      // Re-enter the skeleton state while the (re)load is in flight — covers
+      // both the cold open and a filter-chip switch.
+      _firstLoadDone = false;
     });
 
     try {
@@ -88,10 +96,14 @@ class _WorkoutGalleryScreenState extends ConsumerState<WorkoutGalleryScreen> {
         setState(() {
           _images.addAll(result.images);
           _hasMore = result.hasMore;
+          _firstLoadDone = true;
         });
       }
     } catch (e) {
       debugPrint('Error loading gallery: $e');
+      // Mark the first load as done even on failure so the UI leaves the
+      // skeleton state — the empty state's copy doubles as a retry hint.
+      if (mounted) setState(() => _firstLoadDone = true);
     }
   }
 
@@ -193,8 +205,19 @@ class _WorkoutGalleryScreenState extends ConsumerState<WorkoutGalleryScreen> {
   }
 
   Widget _buildGalleryGrid() {
-    if (_userId == null) {
-      return const Center(child: CircularProgressIndicator());
+    // Cold-start: show a layout-matched skeleton grid (2-col, 9:16 tiles —
+    // identical to the real grid below) instead of a blocking spinner, until
+    // the user id resolves and the first page finishes loading.
+    if (_userId == null || !_firstLoadDone) {
+      return const SkeletonGrid(
+        itemCount: 6,
+        crossAxisCount: 2,
+        childAspectRatio: 9 / 16,
+        spacing: 12,
+        tileRadius: 12,
+        padding: EdgeInsets.all(16),
+        scrollable: true,
+      );
     }
 
     if (_images.isEmpty) {

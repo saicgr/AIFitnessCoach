@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/services/posthog_service.dart';
+import '../../../core/widgets/skeleton/skeleton.dart';
 import '../../../data/models/muscle_analytics.dart';
 import '../../../data/models/muscle_status.dart';
 import '../../../data/providers/muscle_analytics_provider.dart';
@@ -559,16 +560,23 @@ class _StatItem extends StatelessWidget {
   }
 }
 
+/// Layout-matched loading placeholder for the muscle-detail sections. Replaces
+/// the old centered spinner with shimmer skeletons — a summary-stat row and a
+/// tall chart/list block — so the load -> content swap is reflow-free.
 class _LoadingCard extends StatelessWidget {
   const _LoadingCard();
 
   @override
   Widget build(BuildContext context) {
-    return const Card(
-      child: Padding(
-        padding: EdgeInsets.all(32),
-        child: Center(child: CircularProgressIndicator()),
-      ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: const [
+        // Summary-stat row placeholder.
+        SkeletonBox(height: 72, radius: 12),
+        SizedBox(height: 12),
+        // Chart / exercise-list block placeholder.
+        SkeletonBox(height: 180, radius: 12),
+      ],
     );
   }
 }
@@ -640,10 +648,31 @@ class _InsightsCard extends StatefulWidget {
 class _InsightsCardState extends State<_InsightsCard> {
   bool _expanded = true;
 
+  // Memoized insight list. `_generateInsights()` iterates the frequency and
+  // balance async values — recomputing it on every `setState(_expanded)`
+  // toggle is wasted work, so it is cached and rebuilt only when inputs change.
+  late List<String> _insights;
+
+  @override
+  void initState() {
+    super.initState();
+    _insights = _generateInsights();
+  }
+
+  @override
+  void didUpdateWidget(covariant _InsightsCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.frequencyAsync != widget.frequencyAsync ||
+        oldWidget.balanceAsync != widget.balanceAsync ||
+        oldWidget.muscleGroup != widget.muscleGroup) {
+      _insights = _generateInsights();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final insights = _generateInsights();
+    final insights = _insights;
 
     if (insights.isEmpty) return const SizedBox.shrink();
 

@@ -1,7 +1,10 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/constants/app_colors.dart';
-import '../../../widgets/app_loading.dart';
+import '../../../core/widgets/skeleton/skeleton.dart';
 import '../../../widgets/app_snackbar.dart';
 import '../../../core/theme/theme_colors.dart';
 import '../../../data/services/leaderboard_service.dart';
@@ -41,6 +44,60 @@ class _LeaderboardTabState extends ConsumerState<LeaderboardTab>
   LeaderboardType _selectedType = LeaderboardType.challengeMasters;
   LeaderboardFilter _selectedFilter = LeaderboardFilter.global;
   String? _userCountryCode;
+
+  // ---- Disk SWR cache --------------------------------------------------
+  // The leaderboard board + unlock status are persisted to SharedPreferences
+  // so a cold restart renders the last-seen board INSTANTLY while a silent
+  // network refresh runs. Blobs carry a schema version + 12h freshness window.
+  static const String _cachePrefix = 'leaderboard_swr';
+  static const int _cacheSchema = 1;
+  static const Duration _cacheTtl = Duration(hours: 12);
+
+  /// Cache slot for the unlock status (per user).
+  String _unlockCacheKey() =>
+      '$_cachePrefix::unlock::v$_cacheSchema::${_userId ?? '_global'}';
+
+  /// Cache slot for a leaderboard board — keyed by user + type + filter +
+  /// country so switching tabs/filters never serves the wrong board.
+  String _boardCacheKey() =>
+      '$_cachePrefix::board::v$_cacheSchema::${_userId ?? '_global'}::'
+      '${_selectedType.name}::${_selectedFilter.name}::${_userCountryCode ?? '-'}';
+
+  /// Read a JSON-map blob from disk; null on miss, corruption, schema
+  /// mismatch, clock skew, or staleness beyond [_cacheTtl].
+  Future<Map<String, dynamic>?> _readCache(String key) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString(key);
+      if (raw == null || raw.isEmpty) return null;
+      final env = jsonDecode(raw);
+      if (env is! Map<String, dynamic>) return null;
+      if (env['sv'] != _cacheSchema) return null;
+      final cachedAt = env['cachedAt'];
+      if (cachedAt is! int) return null;
+      final age = DateTime.now().millisecondsSinceEpoch - cachedAt;
+      if (age < 0 || age >= _cacheTtl.inMilliseconds) return null;
+      final data = env['data'];
+      return data is Map<String, dynamic> ? data : null;
+    } catch (e) {
+      debugPrint('💾 [LeaderboardSWR] read failed: $e');
+      return null;
+    }
+  }
+
+  /// Persist a JSON-map blob in a versioned TTL envelope. Best-effort.
+  Future<void> _writeCache(String key, Map<String, dynamic> data) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(key, jsonEncode({
+        'sv': _cacheSchema,
+        'cachedAt': DateTime.now().millisecondsSinceEpoch,
+        'data': data,
+      }));
+    } catch (e) {
+      debugPrint('💾 [LeaderboardSWR] write failed: $e');
+    }
+  }
 
   @override
   void initState() {
@@ -83,8 +140,18 @@ class _LeaderboardTabState extends ConsumerState<LeaderboardTab>
   Future<void> _loadUnlockStatus() async {
     if (_userId == null) return;
 
+    // Cache-first: render the last-seen unlock status instantly if present.
+    final cached = await _readCache(_unlockCacheKey());
+    if (cached != null && mounted) {
+      setState(() {
+        _unlockStatus = cached;
+        _isUnlocked = cached['is_unlocked'] ?? false;
+      });
+    }
+
     try {
       final status = await _leaderboardService.getUnlockStatus(userId: _userId!);
+      await _writeCache(_unlockCacheKey(), status);
 
       if (mounted) {
         setState(() {
@@ -104,9 +171,14 @@ class _LeaderboardTabState extends ConsumerState<LeaderboardTab>
     } catch (e) {
       debugPrint('❌ Error loading unlock status: $e');
       if (mounted) {
+        // A cached status keeps the screen usable; only the spinner clears.
         setState(() {
           _isLoading = false;
         });
+        if (cached != null &&
+            (_isUnlocked || _selectedFilter == LeaderboardFilter.friends)) {
+          _loadLeaderboard();
+        }
       }
     }
   }
@@ -114,9 +186,19 @@ class _LeaderboardTabState extends ConsumerState<LeaderboardTab>
   Future<void> _loadLeaderboard() async {
     if (_userId == null) return;
 
-    setState(() {
-      _isLoading = true;
-    });
+    // Cache-first: paint the cached board instantly, then revalidate silently.
+    // Only show the skeleton when there is genuinely nothing cached.
+    final cached = await _readCache(_boardCacheKey());
+    if (cached != null && mounted) {
+      setState(() {
+        _leaderboardData = cached;
+        _isLoading = false;
+      });
+    } else if (mounted) {
+      setState(() {
+        _isLoading = true;
+      });
+    }
 
     try {
       final data = await _leaderboardService.getLeaderboard(
@@ -127,6 +209,7 @@ class _LeaderboardTabState extends ConsumerState<LeaderboardTab>
         limit: 100,
         offset: 0,
       );
+      await _writeCache(_boardCacheKey(), data);
 
       if (mounted) {
         setState(() {
@@ -137,6 +220,7 @@ class _LeaderboardTabState extends ConsumerState<LeaderboardTab>
     } catch (e) {
       debugPrint('❌ Error loading leaderboard: $e');
       if (mounted) {
+        // Keep any cached board on screen; just clear the loading flag.
         setState(() {
           _isLoading = false;
         });
@@ -149,8 +233,10 @@ class _LeaderboardTabState extends ConsumerState<LeaderboardTab>
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final backgroundColor = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
 
+    // First-ever / cold cache: a layout-matched skeleton of ranking rows
+    // instead of a blocking spinner.
     if (_isLoading) {
-      return AppLoading.fullScreen();
+      return const _LeaderboardSkeleton();
     }
 
     // Show locked state if global leaderboard not unlocked
@@ -426,5 +512,35 @@ class _LeaderboardTabState extends ConsumerState<LeaderboardTab>
     } catch (e) {
       return 'recently';
     }
+  }
+}
+
+/// Layout-matched skeleton for the leaderboard — a tall "your rank" card
+/// placeholder followed by a column of ranking-row placeholders, mirroring
+/// [LeaderboardRankCard] + [LeaderboardEntryCard]. Shown only on a cold cache.
+class _LeaderboardSkeleton extends StatelessWidget {
+  const _LeaderboardSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      physics: const NeverScrollableScrollPhysics(),
+      padding: const EdgeInsets.all(16),
+      children: [
+        // "Your rank" hero card placeholder.
+        const SkeletonBox(height: 88, radius: 16),
+        const SizedBox(height: 16),
+        // Ranking row placeholders — avatar + name/title text per row.
+        SkeletonList(
+          itemCount: 8,
+          spacing: 12,
+          itemBuilder: (context, index) => const SkeletonCard(
+            height: 64,
+            leadingSize: 36,
+            lines: 2,
+          ),
+        ),
+      ],
+    );
   }
 }

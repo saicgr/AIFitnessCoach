@@ -1,8 +1,12 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/accent_color_provider.dart';
+import '../../core/widgets/skeleton/skeleton.dart';
 import '../../data/models/user_xp.dart';
 import '../../data/providers/xp_provider.dart';
 import '../../data/repositories/auth_repository.dart';
@@ -26,42 +30,103 @@ class _XPLeaderboardScreenState extends ConsumerState<XPLeaderboardScreen> {
   String? _currentUserId;
   int? _currentUserRank;
 
+  // ---- Disk SWR cache --------------------------------------------------
+  // The XP leaderboard is persisted to SharedPreferences so a cold restart
+  // renders the last-seen ranking INSTANTLY while a silent network refresh
+  // runs. Versioned + 12h freshness window.
+  static const String _cacheKey = 'xp_leaderboard_swr::v1';
+  static const Duration _cacheTtl = Duration(hours: 12);
+
   @override
   void initState() {
     super.initState();
+    // Seed from disk first so the list is instant on a cold open, then
+    // revalidate from the network.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadData();
       ref.read(posthogServiceProvider).capture(eventName: 'leaderboard_viewed');
     });
   }
 
+  /// Apply a list of entries to state and recompute the current user's rank.
+  void _applyEntries(List<XPLeaderboardEntry> entries) {
+    _entries = entries;
+    _currentUserRank = null;
+    if (_currentUserId != null) {
+      final index = entries.indexWhere((e) => e.userId == _currentUserId);
+      if (index >= 0) _currentUserRank = index + 1;
+    }
+  }
+
+  /// Read the cached leaderboard from disk; null on miss / corruption /
+  /// schema or freshness failure.
+  Future<List<XPLeaderboardEntry>?> _readCache() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString(_cacheKey);
+      if (raw == null || raw.isEmpty) return null;
+      final env = jsonDecode(raw);
+      if (env is! Map<String, dynamic>) return null;
+      final cachedAt = env['cachedAt'];
+      if (cachedAt is! int) return null;
+      final age = DateTime.now().millisecondsSinceEpoch - cachedAt;
+      if (age < 0 || age >= _cacheTtl.inMilliseconds) return null;
+      final list = env['data'];
+      if (list is! List) return null;
+      return list
+          .map((e) => XPLeaderboardEntry.fromJson(
+              Map<String, dynamic>.from(e as Map)))
+          .toList();
+    } catch (e) {
+      debugPrint('💾 [XPLeaderboardSWR] read failed: $e');
+      return null;
+    }
+  }
+
+  /// Persist the leaderboard in a versioned TTL envelope. Best-effort.
+  Future<void> _writeCache(List<XPLeaderboardEntry> entries) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_cacheKey, jsonEncode({
+        'cachedAt': DateTime.now().millisecondsSinceEpoch,
+        'data': entries.map((e) => e.toJson()).toList(),
+      }));
+    } catch (e) {
+      debugPrint('💾 [XPLeaderboardSWR] write failed: $e');
+    }
+  }
+
   Future<void> _loadData() async {
-    setState(() => _isLoading = true);
+    final authState = ref.read(authStateProvider);
+    _currentUserId = authState.user?.id;
+
+    // Cache-first: paint the cached leaderboard instantly; only show the
+    // skeleton when there is genuinely nothing cached.
+    final cached = await _readCache();
+    if (cached != null && mounted) {
+      setState(() {
+        _applyEntries(cached);
+        _isLoading = false;
+      });
+    } else if (mounted) {
+      setState(() => _isLoading = true);
+    }
 
     try {
-      final authState = ref.read(authStateProvider);
-      _currentUserId = authState.user?.id;
-
       final repository = XPRepository(ref.read(apiClientProvider));
       final entries = await repository.getXPLeaderboard(limit: 100);
-
-      // Find current user's rank
-      if (_currentUserId != null) {
-        final index = entries.indexWhere((e) => e.userId == _currentUserId);
-        if (index >= 0) {
-          _currentUserRank = index + 1;
-        }
-      }
+      await _writeCache(entries);
 
       if (mounted) {
         setState(() {
-          _entries = entries;
+          _applyEntries(entries);
           _isLoading = false;
         });
       }
     } catch (e) {
       debugPrint('Error loading XP leaderboard: $e');
       if (mounted) {
+        // Keep any cached entries on screen; just clear the loading flag.
         setState(() => _isLoading = false);
       }
     }
@@ -103,13 +168,20 @@ class _XPLeaderboardScreenState extends ConsumerState<XPLeaderboardScreen> {
                 ),
               ),
 
-            // Loading indicator
-            if (_isLoading)
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.all(32),
-                  child: Center(
-                    child: CircularProgressIndicator(color: accentColor),
+            // Cold-cache placeholder: layout-matched ranking-row skeletons
+            // instead of a blocking spinner.
+            if (_isLoading && _entries.isEmpty)
+              SliverPadding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                sliver: SliverToBoxAdapter(
+                  child: SkeletonList(
+                    itemCount: 10,
+                    spacing: 8,
+                    itemBuilder: (context, index) => const SkeletonCard(
+                      height: 64,
+                      leadingSize: 40,
+                      lines: 2,
+                    ),
                   ),
                 ),
               ),

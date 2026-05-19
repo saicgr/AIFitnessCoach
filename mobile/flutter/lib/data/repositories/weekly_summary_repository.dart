@@ -1,5 +1,8 @@
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/weekly_summary.dart';
 import '../models/insights_report.dart';
 import '../services/api_client.dart';
@@ -65,14 +68,34 @@ class WeeklySummaryNotifier extends StateNotifier<WeeklySummaryState> {
     }
   }
 
-  /// Load all summaries for a user
+  /// Load all summaries for a user — cache-first (disk SWR).
+  ///
+  /// Step 1: read the disk cache. If a valid blob exists we emit it
+  /// immediately with `isLoading:false` so the screen renders instantly on a
+  /// cold start (no spinner). Step 2: fetch fresh from the network and
+  /// overwrite. If the disk cache was empty we keep `isLoading:true` so the
+  /// screen shows its skeleton until first content arrives.
   Future<void> loadSummaries(String userId, {int limit = 12}) async {
-    state = state.copyWith(isLoading: true, error: null);
+    var servedFromCache = false;
+    final cached =
+        await _repository.getDiskCachedSummaries(userId, limit: limit);
+    if (cached != null) {
+      servedFromCache = true;
+      state = state.copyWith(isLoading: false, summaries: cached, error: null);
+    } else {
+      state = state.copyWith(isLoading: true, error: null);
+    }
+
     try {
       final summaries = await _repository.getSummaries(userId, limit: limit);
       state = state.copyWith(isLoading: false, summaries: summaries);
     } catch (e) {
-      state = state.copyWith(isLoading: false, error: e.toString());
+      // Keep any cached list on screen; only surface the error if we have
+      // nothing to show.
+      state = state.copyWith(
+        isLoading: false,
+        error: servedFromCache ? null : e.toString(),
+      );
     }
   }
 
@@ -116,6 +139,133 @@ class WeeklySummaryRepository {
   /// enough to cover the "user tapped back, then back into Insights" pattern.
   static const Duration _cacheTtl = Duration(seconds: 60);
   final Map<String, _CachedReport> _reportCache = {};
+
+  // --------------------------------------------------------------------------
+  // Disk (SharedPreferences) stale-while-revalidate layer.
+  //
+  // The in-memory `_reportCache` above is wiped on every cold start, so the
+  // first Insights / Weekly-Summary open after an app restart used to fall
+  // through to a blocking spinner. To make those screens render instantly on
+  // a cold start we additionally persist the *raw network JSON* under a
+  // versioned TTL envelope. We persist the raw JSON (not the model) because
+  // `InsightsReport` has no `toJson`; round-tripping through `fromJson` is
+  // lossless and keeps this change confined to repository-owned code.
+  //
+  // TTL is intentionally long (24 h) — a stale-but-instant report on cold
+  // start is strictly better UX than a spinner; the background network fetch
+  // overwrites it within a few hundred ms anyway.
+  // --------------------------------------------------------------------------
+  static const String _diskKeyPrefix = 'wsrepo_disk';
+  static const int _diskSchemaVersion = 1;
+  static const Duration _diskTtl = Duration(hours: 24);
+
+  /// Disk key for a serialized insights report. Scoped by user + range so two
+  /// accounts / two period selections never collide.
+  String _reportDiskKey(
+    String userId, {
+    required String startDate,
+    required String endDate,
+    required String groupBy,
+    required String include,
+  }) =>
+      '$_diskKeyPrefix::report::v$_diskSchemaVersion::$userId::$startDate::$endDate::$groupBy::$include';
+
+  /// Disk key for the serialized summaries list. Scoped by user + limit.
+  String _summariesDiskKey(String userId, int limit) =>
+      '$_diskKeyPrefix::summaries::v$_diskSchemaVersion::$userId::$limit';
+
+  /// Write [data] under [key] wrapped in a `{cachedAt, data}` TTL envelope.
+  /// Best-effort — a write failure must never break the network path.
+  Future<void> _diskWrite(String key, dynamic data) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(
+        key,
+        jsonEncode({
+          'cachedAt': DateTime.now().millisecondsSinceEpoch,
+          'data': data,
+        }),
+      );
+    } catch (e) {
+      debugPrint('💾 [WSRepo] disk write failed for $key: $e');
+    }
+  }
+
+  /// Read + TTL-validate the envelope at [key]. Returns the inner `data`
+  /// payload, or null on miss / expiry / corruption / clock-skew.
+  Future<dynamic> _diskRead(String key) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString(key);
+      if (raw == null || raw.isEmpty) return null;
+      final decoded = jsonDecode(raw);
+      if (decoded is! Map<String, dynamic>) return null;
+      final cachedAt = decoded['cachedAt'];
+      if (cachedAt is! int) return null;
+      final age = DateTime.now().millisecondsSinceEpoch - cachedAt;
+      // Negative age → device clock moved backwards → treat as invalid.
+      if (age < 0 || age >= _diskTtl.inMilliseconds) {
+        await prefs.remove(key);
+        return null;
+      }
+      return decoded['data'];
+    } catch (e) {
+      debugPrint('💾 [WSRepo] disk read failed for $key: $e');
+      return null;
+    }
+  }
+
+  /// Cold-start cache-first peek for an insights report. Reads the persisted
+  /// raw JSON from disk, decodes it into an [InsightsReport], and also seeds
+  /// the in-memory cache so a subsequent same-session toggle is instant.
+  /// Returns null on any miss — callers then fall through to the network.
+  Future<InsightsReport?> getDiskCachedInsightsReport(
+    String userId, {
+    required String startDate,
+    required String endDate,
+    String groupBy = 'week',
+    String include = 'all',
+  }) async {
+    final data = await _diskRead(_reportDiskKey(
+      userId,
+      startDate: startDate,
+      endDate: endDate,
+      groupBy: groupBy,
+      include: include,
+    ));
+    if (data is! Map<String, dynamic>) return null;
+    try {
+      final report = InsightsReport.fromJson(data);
+      _reportCache[_reportCacheKey(
+        userId,
+        startDate: startDate,
+        endDate: endDate,
+        groupBy: groupBy,
+        include: include,
+      )] = _CachedReport(report, DateTime.now());
+      return report;
+    } catch (e) {
+      debugPrint('💾 [WSRepo] disk report decode failed: $e');
+      return null;
+    }
+  }
+
+  /// Cold-start cache-first peek for the summaries list. Returns null on miss.
+  Future<List<WeeklySummary>?> getDiskCachedSummaries(
+    String userId, {
+    int limit = 12,
+  }) async {
+    final data = await _diskRead(_summariesDiskKey(userId, limit));
+    if (data is! List) return null;
+    try {
+      return data
+          .map((j) => WeeklySummary.fromJson(j as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      debugPrint('💾 [WSRepo] disk summaries decode failed: $e');
+      return null;
+    }
+  }
 
   String _reportCacheKey(
     String userId, {
@@ -179,7 +329,11 @@ class WeeklySummaryRepository {
     }
   }
 
-  /// Get all summaries for a user
+  /// Get all summaries for a user.
+  ///
+  /// On success the raw JSON list is written through to disk so the next
+  /// cold start of the Insights / Weekly-Summary screens can render instantly
+  /// via [getDiskCachedSummaries].
   Future<List<WeeklySummary>> getSummaries(String userId, {int limit = 12}) async {
     try {
       final response = await _client.get(
@@ -187,6 +341,8 @@ class WeeklySummaryRepository {
         queryParameters: {'limit': limit},
       );
       final data = response.data as List;
+      // Write-through the raw JSON for instant cold-start rehydration.
+      await _diskWrite(_summariesDiskKey(userId, limit), data);
       return data.map((json) => WeeklySummary.fromJson(json)).toList();
     } catch (e) {
       debugPrint('Error getting summaries: $e');
@@ -237,6 +393,19 @@ class WeeklySummaryRepository {
         include: include,
       );
       _reportCache[key] = _CachedReport(report, DateTime.now());
+      // Write-through the raw JSON so a cold start can rehydrate instantly.
+      if (response.data is Map<String, dynamic>) {
+        await _diskWrite(
+          _reportDiskKey(
+            userId,
+            startDate: startDate,
+            endDate: endDate,
+            groupBy: groupBy,
+            include: include,
+          ),
+          response.data,
+        );
+      }
       return report;
     } catch (e) {
       debugPrint('Error getting insights report: $e');

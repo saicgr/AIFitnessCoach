@@ -179,17 +179,21 @@ class InsightsNotifier extends StateNotifier<InsightsState> {
 
   /// Load report data for the selected period.
   ///
-  /// Stale-while-revalidate: if the repository has a fresh cached report for
-  /// the same (user, period) key we emit it immediately so the screen paints
-  /// without a skeleton, then refresh from the network in the background and
-  /// update when it returns. The user-perceived load time on a period toggle
-  /// inside the same session is zero.
+  /// Stale-while-revalidate, two tiers:
+  ///  1. In-memory cache (`getCachedInsightsReport`) — instant within a
+  ///     session, 60 s TTL.
+  ///  2. Disk cache (`getDiskCachedInsightsReport`) — survives a cold start,
+  ///     24 h TTL. Read only when the in-memory tier misses, so the first
+  ///     Insights open after an app restart paints instantly instead of
+  ///     showing a blocking spinner.
+  ///
+  /// After either tier emits, the network fetch refreshes in the background.
   Future<void> loadReport(String userId) async {
     final startDate = _startDate;
     final endDate = _endDate;
     final groupBy = _groupBy;
 
-    final cached = _repository.getCachedInsightsReport(
+    var cached = _repository.getCachedInsightsReport(
       userId,
       startDate: startDate,
       endDate: endDate,
@@ -197,11 +201,23 @@ class InsightsNotifier extends StateNotifier<InsightsState> {
     );
 
     if (cached != null) {
-      // Paint cached data; keep isLoadingReport=false so the skeleton stays
-      // hidden. Background refresh below will overwrite with fresh data.
+      // In-memory hit — paint instantly; skeleton stays hidden.
       state = state.copyWith(isLoadingReport: false, report: cached, error: null);
     } else {
-      state = state.copyWith(isLoadingReport: true, error: null);
+      // In-memory miss: try the disk cache before showing a skeleton.
+      final diskCached = await _repository.getDiskCachedInsightsReport(
+        userId,
+        startDate: startDate,
+        endDate: endDate,
+        groupBy: groupBy,
+      );
+      if (diskCached != null) {
+        cached = diskCached;
+        state = state.copyWith(
+            isLoadingReport: false, report: diskCached, error: null);
+      } else {
+        state = state.copyWith(isLoadingReport: true, error: null);
+      }
     }
 
     try {
@@ -213,10 +229,12 @@ class InsightsNotifier extends StateNotifier<InsightsState> {
       );
       state = state.copyWith(isLoadingReport: false, report: report);
     } catch (e) {
-      // If we had cached data, keep it on screen and surface the error quietly.
+      // If we already emitted a cached report (in-memory or disk) keep it on
+      // screen and swallow the refresh error — the screen's error state only
+      // triggers when `report == null`. Otherwise surface the failure.
       state = state.copyWith(
         isLoadingReport: false,
-        error: e.toString(),
+        error: cached != null ? null : e.toString(),
       );
     }
   }

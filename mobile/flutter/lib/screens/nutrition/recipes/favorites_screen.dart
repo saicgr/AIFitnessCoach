@@ -11,6 +11,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/accent_color_provider.dart';
+import '../../../core/widgets/skeleton/skeleton.dart';
+import '../../../data/models/recipe.dart';
 import '../../../data/providers/recipe_favorites_provider.dart';
 import '../../../data/providers/recipe_providers.dart';
 import '../../../widgets/glass_back_button.dart';
@@ -34,6 +36,22 @@ class FavoritesScreen extends ConsumerStatefulWidget {
 class _FavoritesScreenState extends ConsumerState<FavoritesScreen>
     with NavBarHiderMixin {
 
+  /// True only on a genuine first-ever open — drives whether [CacheFirstView]
+  /// shows the skeleton. Defaults to false so a returning user is never
+  /// trapped behind a skeleton if the seen-flag read is slow/fails.
+  bool _isFirstEver = false;
+
+  static const _seenKey = 'favorites_screen';
+
+  @override
+  void initState() {
+    super.initState();
+    // Resolve first-ever-open off the build path — never block initState.
+    CacheFirstView.hasBeenSeen(_seenKey).then((seen) {
+      if (mounted) setState(() => _isFirstEver = !seen);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final accent = AccentColorScope.of(context).getColor(widget.isDark);
@@ -43,7 +61,10 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen>
     final muted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final topPad = MediaQuery.of(context).padding.top;
 
-    final favoritesAsync = ref.watch(favoriteRecipesProvider(widget.userId));
+    // Cache-first notifier: the last favorites grid paints instantly on a
+    // cold start, then the network result silently revalidates it (SWR).
+    final favoritesAsync =
+        ref.watch(favoriteRecipesCacheFirstProvider(widget.userId));
 
     return Scaffold(
       backgroundColor: bg,
@@ -73,19 +94,32 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen>
           ),
           const SizedBox(height: 4),
           Expanded(
-            child: favoritesAsync.when(
-              loading: () => Center(
-                child: CircularProgressIndicator(color: accent),
+            child: CacheFirstView<RecipesResponse>(
+              value: favoritesAsync,
+              isFirstEver: _isFirstEver,
+              traceLabel: 'favorites_screen',
+              // Layout-matched shimmer mirroring the 2-col / 0.78-ratio grid.
+              skeletonBuilder: (_) => const SkeletonGrid(
+                scrollable: true,
+                itemCount: 8,
+                crossAxisCount: 2,
+                childAspectRatio: 0.78,
+                spacing: 12,
+                padding: EdgeInsets.fromLTRB(16, 8, 16, 100),
               ),
-              error: (err, _) => _ErrorView(
+              errorBuilder: (_, __, ___) => _ErrorView(
                 message: 'Couldn\'t load favorites.',
                 accent: accent,
                 text: text,
                 muted: muted,
-                onRetry: () =>
-                    ref.invalidate(favoriteRecipesProvider(widget.userId)),
+                onRetry: () => ref
+                    .read(favoriteRecipesCacheFirstProvider(widget.userId)
+                        .notifier)
+                    .refresh(),
               ),
-              data: (resp) {
+              contentBuilder: (ctx, resp) {
+                // Mark seen after first content so future opens skip skeleton.
+                CacheFirstView.markSeen('favorites_screen');
                 // Hydrate the app-wide favorites set after build so heart icons
                 // on other screens reflect the server's truth.
                 WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -105,12 +139,10 @@ class _FavoritesScreenState extends ConsumerState<FavoritesScreen>
 
                 return RefreshIndicator(
                   color: accent,
-                  onRefresh: () async {
-                    ref.invalidate(favoriteRecipesProvider(widget.userId));
-                    // Allow the provider to settle before the RefreshIndicator
-                    // dismisses — this keeps the spinner visible during refetch.
-                    await ref.read(favoriteRecipesProvider(widget.userId).future);
-                  },
+                  onRefresh: () => ref
+                      .read(favoriteRecipesCacheFirstProvider(widget.userId)
+                          .notifier)
+                      .refresh(),
                   child: GridView.builder(
                     padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
                     physics: const AlwaysScrollableScrollPhysics(),

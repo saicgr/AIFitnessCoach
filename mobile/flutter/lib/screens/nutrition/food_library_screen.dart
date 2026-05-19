@@ -1,8 +1,11 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shimmer/shimmer.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/widgets/skeleton/skeleton.dart';
 import '../../data/models/nutrition.dart';
 import '../../data/models/recipe.dart';
 import '../../data/repositories/nutrition_repository.dart';
@@ -19,6 +22,18 @@ import 'custom_food_builder_sheet.dart';
 
 part 'food_library_screen_part_food_library_card.dart';
 
+
+/// Layout-matched skeleton row for the food library list — mirrors the height
+/// and shape of a real `_FoodLibraryCard` (leading icon + name/macros stack)
+/// so the skeleton → content cross-fade does not reflow.
+Widget _foodLibrarySkeletonRow(BuildContext context, int index) {
+  return const SkeletonCard(
+    height: 80,
+    showLeading: true,
+    leadingSize: 44,
+    lines: 2,
+  );
+}
 
 /// Sort options for the food library
 enum FoodLibrarySortOption {
@@ -201,10 +216,21 @@ class FoodLibraryNotifier extends StateNotifier<FoodLibraryState> {
   FoodLibraryNotifier(this._repository, this._userId)
       : super(const FoodLibraryState());
 
-  /// Load all food library data
+  /// User-scoped SharedPreferences key for the cached library snapshot.
+  String get _cacheKey =>
+      'cachefirst::food_library::v1::$_userId';
+
+  /// Load all food library data, cache-first.
+  ///
+  /// Step 1 — hydrate from the disk snapshot so the list renders instantly on
+  /// a cold start. Step 2 — revalidate over the network and write-through.
   Future<void> loadData() async {
     state = state.copyWith(isLoading: true, error: null);
 
+    // Step 1: disk cache — best-effort, never blocks or throws.
+    await _hydrateFromCache();
+
+    // Step 2: network revalidate.
     try {
       // Load saved foods and recipes in parallel
       final results = await Future.wait([
@@ -221,12 +247,63 @@ class FoodLibraryNotifier extends StateNotifier<FoodLibraryState> {
         savedFoods: savedFoodsResponse.items,
         recipes: recipesResponse.items,
       );
+      await _writeCache();
     } catch (e) {
       debugPrint('Error loading food library: $e');
+      // Keep any cached content visible — only surface the error on a genuine
+      // cold failure where nothing has been loaded yet.
       state = state.copyWith(
         isLoading: false,
-        error: 'Failed to load food library',
+        error: (state.savedFoods.isEmpty && state.recipes.isEmpty)
+            ? 'Failed to load food library'
+            : null,
       );
+    }
+  }
+
+  /// Read the persisted library snapshot and emit it immediately. Best-effort:
+  /// any failure (missing/corrupt blob) degrades to a clean cache miss.
+  Future<void> _hydrateFromCache() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString(_cacheKey);
+      if (raw == null || raw.isEmpty) return;
+      final decoded = jsonDecode(raw);
+      if (decoded is! Map<String, dynamic>) return;
+      final savedJson = decoded['savedFoods'];
+      final recipesJson = decoded['recipes'];
+      if (savedJson is! List || recipesJson is! List) return;
+      final saved = savedJson
+          .whereType<Map<String, dynamic>>()
+          .map(SavedFood.fromJson)
+          .toList();
+      final recipes = recipesJson
+          .whereType<Map<String, dynamic>>()
+          .map(RecipeSummary.fromJson)
+          .toList();
+      // Don't clobber a network result that may already have landed.
+      if (!mounted || !state.isLoading) return;
+      // Keep isLoading false so the screen swaps the skeleton for content.
+      state = state.copyWith(
+        isLoading: false,
+        savedFoods: saved,
+        recipes: recipes,
+      );
+    } catch (e) {
+      debugPrint('💾 [FoodLibrary] cache hydrate failed: $e');
+    }
+  }
+
+  /// Persist the current library snapshot so the next cold start is instant.
+  Future<void> _writeCache() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_cacheKey, jsonEncode({
+        'savedFoods': state.savedFoods.map((f) => f.toJson()).toList(),
+        'recipes': state.recipes.map((r) => r.toJson()).toList(),
+      }));
+    } catch (e) {
+      debugPrint('💾 [FoodLibrary] cache write failed: $e');
     }
   }
 
@@ -720,8 +797,17 @@ class _FoodLibraryScreenState extends ConsumerState<FoodLibraryScreen>
 
           // Content
           Expanded(
-            child: libraryState.isLoading
-                ? _buildShimmerLoading(isDark, elevated, cardBorder)
+            // A cold first load shows the layout-matched skeleton; a returning
+            // user is seeded from the disk cache and never sees it.
+            child: libraryState.isLoading &&
+                    libraryState.savedFoods.isEmpty &&
+                    libraryState.recipes.isEmpty
+                ? const SkeletonList(
+                    scrollable: true,
+                    itemCount: 8,
+                    itemBuilder: _foodLibrarySkeletonRow,
+                    padding: EdgeInsets.all(16),
+                  )
                 : libraryState.error != null
                     ? _buildErrorState(
                         libraryState.error!, isDark, textPrimary, textMuted, accentColor)
@@ -875,29 +961,6 @@ class _FoodLibraryScreenState extends ConsumerState<FoodLibraryScreen>
         const SnackBar(content: Text('Using your existing custom food')),
       );
     }
-  }
-
-  Widget _buildShimmerLoading(bool isDark, Color elevated, Color cardBorder) {
-    return Shimmer.fromColors(
-      baseColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
-      highlightColor:
-          isDark ? AppColors.glassSurface : AppColorsLight.glassSurface,
-      child: ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: 8,
-        itemBuilder: (context, index) {
-          return Container(
-            margin: const EdgeInsets.only(bottom: 12),
-            height: 80,
-            decoration: BoxDecoration(
-              color: elevated,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: cardBorder),
-            ),
-          );
-        },
-      ),
-    );
   }
 
   Widget _buildErrorState(String error, bool isDark, Color textPrimary,

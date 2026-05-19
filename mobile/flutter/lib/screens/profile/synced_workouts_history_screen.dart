@@ -28,6 +28,18 @@ class _SyncedWorkoutsHistoryScreenState
     extends ConsumerState<SyncedWorkoutsHistoryScreen> {
   SyncedKind? _selectedKind;
 
+  // --- Memoization of the synchronous, build()-time aggregations ----------
+  // `_breakdownByKind` and `_computePersonalRecords` both fold the entire
+  // synced-workout list. They depend ONLY on `all`, not on `_selectedKind`,
+  // so without memoization every filter-chip tap (a `setState`) would redo
+  // both folds for nothing. We cache the results against the identity of the
+  // `all` list — `syncedWorkoutsProvider` hands back a new list instance only
+  // when the underlying workouts actually change, so identity is a correct
+  // and cheap cache key.
+  List<Workout>? _memoSource;
+  Map<SyncedKind, int>? _memoBreakdown;
+  List<_PersonalRecord>? _memoRecords;
+
   @override
   Widget build(BuildContext context) {
     final all = ref.watch(syncedWorkoutsProvider);
@@ -46,8 +58,14 @@ class _SyncedWorkoutsHistoryScreenState
     final textPrimary = isDark ? Colors.white : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
-    final breakdown = _breakdownByKind(all);
-    final personalRecords = _computePersonalRecords(all);
+    // Recompute the aggregations only when the source list itself changed.
+    if (!identical(_memoSource, all)) {
+      _memoSource = all;
+      _memoBreakdown = _breakdownByKind(all);
+      _memoRecords = _computePersonalRecords(all);
+    }
+    final breakdown = _memoBreakdown!;
+    final personalRecords = _memoRecords!;
 
     return Scaffold(
       backgroundColor: background,

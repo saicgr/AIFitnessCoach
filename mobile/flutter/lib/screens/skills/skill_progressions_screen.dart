@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/widgets/skeleton/skeleton.dart';
 import '../../data/models/skill_progression.dart';
 import '../../data/providers/skill_progression_provider.dart';
 import '../../data/repositories/auth_repository.dart';
@@ -30,7 +31,8 @@ class _SkillProgressionsScreenState
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    _loadData();
+    // Non-blocking: load after first frame so the skeleton renders instantly.
+    _scheduleInitialLoad();
   }
 
   @override
@@ -48,6 +50,19 @@ class _SkillProgressionsScreenState
       ref.read(skillProgressionProvider.notifier).loadChains(),
       ref.read(skillProgressionProvider.notifier).loadUserProgress(userId: userId),
     ]);
+  }
+
+  /// Schedule the first data load AFTER the initial frame so `initState`
+  /// never blocks on a network round-trip — the screen paints its skeleton
+  /// (or any in-memory state retained by the notifier) instantly.
+  void _scheduleInitialLoad() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      // If the StateNotifier already holds chains from an earlier visit this
+      // session, the build shows them instantly; this call silently
+      // revalidates. On a true cold open it fills the skeleton.
+      _loadData();
+    });
   }
 
   @override
@@ -74,19 +89,25 @@ class _SkillProgressionsScreenState
 
             const SizedBox(height: 8),
 
-            // Tab Content
+            // Tab Content.
+            //
+            // Cache-first: the StateNotifier retains `chains` in memory across
+            // visits, so once any chain data exists the real tabs render
+            // immediately — a background reload never blanks the screen. The
+            // layout-matched skeleton shows ONLY on a genuine cold load (no
+            // chains yet AND no error).
             Expanded(
-              child: state.isLoading
-                  ? const Center(child: CircularProgressIndicator())
+              child: state.chains.isNotEmpty
+                  ? TabBarView(
+                      controller: _tabController,
+                      children: [
+                        _buildMyProgressTab(context, state, isDark),
+                        _buildAllChainsTab(context, state, isDark),
+                      ],
+                    )
                   : state.error != null
                       ? _buildErrorState(context, state.error!, isDark)
-                      : TabBarView(
-                          controller: _tabController,
-                          children: [
-                            _buildMyProgressTab(context, state, isDark),
-                            _buildAllChainsTab(context, state, isDark),
-                          ],
-                        ),
+                      : _buildSkeleton(),
             ),
           ],
         ),
@@ -287,6 +308,19 @@ class _SkillProgressionsScreenState
           ),
         ],
       ),
+    );
+  }
+
+  /// Layout-matched skeleton shown on a true first-ever cold load. Mirrors the
+  /// 2-column progression-chain grid so the skeleton -> content swap is
+  /// reflow-free.
+  Widget _buildSkeleton() {
+    return const SkeletonGrid(
+      itemCount: 6,
+      crossAxisCount: 2,
+      childAspectRatio: 0.85,
+      padding: EdgeInsets.fromLTRB(16, 16, 16, 16),
+      scrollable: true,
     );
   }
 

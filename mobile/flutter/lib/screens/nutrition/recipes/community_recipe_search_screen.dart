@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/accent_color_provider.dart';
+import '../../../core/widgets/skeleton/skeleton.dart';
 import '../../../data/models/recipe.dart';
 import '../../../data/providers/recipe_providers.dart';
 import '../../../data/repositories/recipe_repository.dart';
@@ -104,7 +105,17 @@ class _CommunityRecipeSearchScreenState extends ConsumerState<CommunityRecipeSea
                         scope: 'community',
                       )));
                       return asyncResults.when(
-                        loading: () => const Center(child: CircularProgressIndicator()),
+                        // Layout-matched skeleton rows (56pt thumb + 2 text
+                        // lines) instead of a blocking centered spinner.
+                        loading: () => SkeletonList(
+                          scrollable: true,
+                          itemCount: 7,
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          itemBuilder: (_, __) => const SkeletonCard(
+                            leadingSize: 56,
+                            lines: 2,
+                          ),
+                        ),
                         error: (e, _) => Center(child: Text('Error: $e', style: TextStyle(color: muted))),
                         data: (resp) {
                           if (resp.items.isEmpty) {

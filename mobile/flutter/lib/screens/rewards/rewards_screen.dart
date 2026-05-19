@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../core/widgets/skeleton/skeleton.dart';
 import '../../data/providers/xp_provider.dart';
+import '../../data/services/data_cache_service.dart';
 import '../../widgets/app_snackbar.dart';
 import '../../data/services/api_client.dart';
 import '../../widgets/pill_app_bar.dart';
@@ -22,15 +24,33 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen>
   late TabController _tabController;
   List<Map<String, dynamic>> _availableRewards = [];
   List<Map<String, dynamic>> _claimedRewards = [];
+
+  /// True until the first load (cache OR network) has produced data. Drives
+  /// whether a skeleton is shown — a warm start flips this synchronously-fast
+  /// from the disk cache so no skeleton is ever seen again.
   bool _isLoading = true;
+
+  /// True once content has been rendered from any source at least once. The
+  /// layout-matched skeleton is shown ONLY while this is false — a transient
+  /// network error on a warm start keeps the cached list on screen.
+  bool _hasContent = false;
   String? _error;
+
+  /// SharedPreferences keys for the cache-first reward lists. The generic
+  /// [DataCacheService] applies the default 1-hour TTL to unknown keys, then
+  /// a silent background refresh keeps them fresh.
+  static const String _kAvailableCacheKey = 'cache_rewards_available';
+  static const String _kClaimedCacheKey = 'cache_rewards_claimed';
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    _loadRewards();
+    // Non-blocking: kick the cache-first load off the first frame so initState
+    // never awaits network I/O.
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _loadRewards();
       ref.read(posthogServiceProvider).capture(eventName: 'rewards_viewed');
     });
   }
@@ -41,37 +61,74 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen>
     super.dispose();
   }
 
+  /// Cache-first load: render any disk-cached reward lists instantly, then
+  /// silently revalidate from the network and write the fresh lists through.
   Future<void> _loadRewards() async {
-    setState(() {
-      _isLoading = true;
-      _error = null;
-    });
+    if (!_hasContent) {
+      setState(() {
+        _isLoading = true;
+        _error = null;
+      });
+    }
 
+    final apiClient = ref.read(apiClientProvider);
+    final userId = await apiClient.getUserId();
+
+    if (userId == null) {
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _error = _hasContent ? null : 'Please log in to view rewards';
+      });
+      return;
+    }
+
+    final cache = DataCacheService.instance;
+
+    // ---- Step 1: disk cache — emit instantly if present -------------------
+    try {
+      final cachedAvailable =
+          await cache.getCachedList(_kAvailableCacheKey, userId: userId);
+      final cachedClaimed =
+          await cache.getCachedList(_kClaimedCacheKey, userId: userId);
+      if (mounted && (cachedAvailable != null || cachedClaimed != null)) {
+        setState(() {
+          _availableRewards = cachedAvailable ?? _availableRewards;
+          _claimedRewards = cachedClaimed ?? _claimedRewards;
+          _isLoading = false;
+          _hasContent = true;
+        });
+      }
+    } catch (e) {
+      // A corrupt cache read is treated as a miss — never breaks the load.
+      debugPrint('⚠️ [Rewards] cache read failed: $e');
+    }
+
+    // ---- Step 2: network fetch — revalidate + write-through ---------------
     try {
       final repository = ref.read(xpRepositoryProvider);
-      final apiClient = ref.read(apiClientProvider);
-      final userId = await apiClient.getUserId();
-
-      if (userId == null) {
-        setState(() {
-          _isLoading = false;
-          _error = 'Please log in to view rewards';
-        });
-        return;
-      }
-
       final available = await repository.getAvailableRewards(userId);
       final claimed = await repository.getClaimedRewards(userId);
 
+      if (!mounted) return;
       setState(() {
         _availableRewards = available;
         _claimedRewards = claimed;
         _isLoading = false;
+        _hasContent = true;
+        _error = null;
       });
+
+      // Write-through so the next cold start is instant. Best-effort.
+      await cache.cacheList(_kAvailableCacheKey, available, userId: userId);
+      await cache.cacheList(_kClaimedCacheKey, claimed, userId: userId);
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _isLoading = false;
-        _error = 'Failed to load rewards: $e';
+        // Keep the cached lists on screen if we have them; only surface the
+        // error when there is genuinely nothing to show.
+        _error = _hasContent ? null : 'Failed to load rewards: $e';
       });
     }
   }
@@ -339,12 +396,12 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen>
 
           // Tab Content
           Expanded(
-            child: _isLoading
-                ? const Center(
-                    child: CircularProgressIndicator(
-                      color: Color(0xFFFFD700),
-                    ),
-                  )
+            // Cache-first: a warm start has `_hasContent == true` so the
+            // cached reward lists render instantly. The layout-matched
+            // skeleton appears ONLY on a genuine first-ever open while the
+            // first fetch is still in flight — never a blocking spinner.
+            child: (!_hasContent && _isLoading)
+                ? const _RewardsSkeleton()
                 : _error != null
                     ? Center(
                         child: Column(
@@ -440,6 +497,24 @@ class _RewardsScreenState extends ConsumerState<RewardsScreen>
             onClaim: isAvailable ? () => _claimReward(reward) : null,
           );
         },
+      ),
+    );
+  }
+}
+
+/// First-open skeleton — a list of placeholder cards matching [_RewardCard]'s
+/// footprint (56pt leading icon + two text lines) so the skeleton → content
+/// cross-fade does not reflow.
+class _RewardsSkeleton extends StatelessWidget {
+  const _RewardsSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Padding(
+      padding: EdgeInsets.all(16),
+      child: SkeletonList(
+        itemCount: 5,
+        spacing: 12,
       ),
     );
   }

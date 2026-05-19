@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/widgets/skeleton/skeleton.dart';
 import '../../data/models/skill_progression.dart';
 import '../../data/providers/skill_progression_provider.dart';
 import '../../data/repositories/auth_repository.dart';
@@ -36,7 +37,11 @@ class _ChainDetailScreenState extends ConsumerState<ChainDetailScreen>
       vsync: this,
       duration: const Duration(milliseconds: 800),
     );
-    _loadChainDetail();
+    // Non-blocking: defer the network load until after the first frame so the
+    // skeleton paints instantly instead of `initState` awaiting a round-trip.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _loadChainDetail();
+    });
   }
 
   @override
@@ -73,13 +78,30 @@ class _ChainDetailScreenState extends ConsumerState<ChainDetailScreen>
     );
   }
 
+  /// Layout-matched skeleton shown while the chain detail loads on a cold
+  /// open. Mirrors the real content: header, an info card, then a vertical
+  /// stack of progression-step rows — so the skeleton -> content swap is
+  /// reflow-free instead of a centered blocking spinner.
   Widget _buildLoadingState(bool isDark) {
     return SafeArea(
       child: Column(
         children: [
           _buildHeader(context, null, isDark),
-          const Expanded(
-            child: Center(child: CircularProgressIndicator()),
+          Expanded(
+            child: ListView(
+              physics: const NeverScrollableScrollPhysics(),
+              padding: const EdgeInsets.all(16),
+              children: const [
+                // Chain info card placeholder.
+                SkeletonBox(height: 180, radius: 20),
+                SizedBox(height: 24),
+                // "Progression Path" section header placeholder.
+                SkeletonBox(width: 180, height: 20),
+                SizedBox(height: 16),
+                // Progression-step row placeholders.
+                SkeletonList(itemCount: 5),
+              ],
+            ),
           ),
         ],
       ),
