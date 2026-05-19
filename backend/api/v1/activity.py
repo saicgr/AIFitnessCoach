@@ -60,6 +60,10 @@ class DailyActivityInput(BaseModel):
     steps: int = Field(default=0, ge=0)
     calories_burned: float = Field(default=0, ge=0, description="Total calories burned")
     active_calories: float = Field(default=0, ge=0, description="Active calories only")
+    active_minutes: int = Field(
+        default=0, ge=0, le=1440,
+        description="Active/exercise minutes — HealthKit appleExerciseTime / Health Connect",
+    )
     resting_heart_rate: Optional[int] = Field(None, ge=30, le=250)
     avg_heart_rate: Optional[int] = Field(None, ge=30, le=250)
     max_heart_rate: Optional[int] = Field(None, ge=30, le=250)
@@ -86,6 +90,7 @@ class DailyActivityResponse(BaseModel):
     steps: int
     calories_burned: float
     active_calories: float
+    active_minutes: Optional[int]
     resting_heart_rate: Optional[int]
     avg_heart_rate: Optional[int]
     max_heart_rate: Optional[int]
@@ -133,6 +138,7 @@ def row_to_activity_response(row: dict) -> DailyActivityResponse:
         steps=row.get("steps") or 0,
         calories_burned=row.get("calories_burned") or 0,
         active_calories=row.get("active_calories") or 0,
+        active_minutes=row.get("active_minutes"),
         resting_heart_rate=row.get("resting_heart_rate"),
         avg_heart_rate=row.get("avg_heart_rate"),
         max_heart_rate=row.get("max_heart_rate"),
@@ -172,6 +178,7 @@ async def sync_daily_activity(input: DailyActivityInput, current_user: dict = De
         "steps": input.steps,
         "calories_burned": input.calories_burned,
         "active_calories": input.active_calories,
+        "active_minutes": input.active_minutes or 0,
         "resting_heart_rate": input.resting_heart_rate,
         "avg_heart_rate": input.avg_heart_rate,
         "max_heart_rate": input.max_heart_rate,
