@@ -263,32 +263,62 @@ class HomeWorkoutCard extends ConsumerWidget {
         resp?.hasDisplayableContent != true) {
       content = _heroSkeleton(c, key: const ValueKey('today-generating'));
     } else {
-      final summary = resp?.todayWorkout ?? resp?.nextWorkout;
-      final workout = summary?.toWorkout();
+      // Resolve today's workout. /workouts/today is authoritative when it
+      // returns one, but it resolves "today" off the gym-profile schedule —
+      // a workout rescheduled onto a non-profile day (a "Do this today"
+      // move) is NOT returned even though its scheduled_date is today. So
+      // when todayWorkout is null, fall back to a workoutsProvider row
+      // dated today — the SAME source the Workouts-tab carousel trusts —
+      // before dropping to the generic future nextWorkout.
+      final todayKey = _dateKey(today);
+      Workout? todayWorkout = resp?.todayWorkout?.toWorkout();
+      if (todayWorkout == null) {
+        final all =
+            ref.watch(workoutsProvider).valueOrNull ?? const <Workout>[];
+        final hits = <Workout>[];
+        for (final w in all) {
+          final raw = w.scheduledDate;
+          if (raw == null) continue;
+          final d = raw.length >= 10 ? raw.substring(0, 10) : raw;
+          if (d == todayKey) hits.add(w);
+        }
+        if (hits.isNotEmpty) {
+          // Prefer a not-yet-completed workout if the day has several.
+          hits.sort((a, b) => (a.isCompleted == true ? 1 : 0)
+              .compareTo(b.isCompleted == true ? 1 : 0));
+          todayWorkout = hits.first;
+        }
+      }
 
-      // Rest day / nothing scheduled.
-      if (workout == null) {
-        if (resp?.completedToday == true) {
-          content = _heroStatus(context, c,
-              key: const ValueKey('today-complete'),
-              msg: 'Workout complete — great job today!',
-              accent: c.success,
-              iconName: 'check');
-        } else {
+      if (resp?.completedToday == true ||
+          (todayWorkout != null && todayWorkout.isCompleted == true)) {
+        content = _heroStatus(context, c,
+            key: const ValueKey('today-complete'),
+            msg: 'Workout complete — great job today!',
+            accent: c.success,
+            iconName: 'check');
+      } else {
+        final workout = todayWorkout ?? resp?.nextWorkout?.toWorkout();
+        if (workout == null) {
+          // Rest day / nothing scheduled.
           content = _heroStatus(context, c,
               key: const ValueKey('today-rest'),
               msg: 'Rest day — no workout scheduled',
               accent: c.textMuted,
               iconName: 'sleep');
+        } else {
+          // "Today" badge only when this is the workout actually
+          // resolved/dated for today — not the generic nextWorkout
+          // fallback (a genuine future workout stays badged "Scheduled").
+          final isToday =
+              todayWorkout != null || resp?.hasWorkoutToday == true;
+          // The hero body carries its own card surface + horizontal padding.
+          content = KeyedSubtree(
+            key: ValueKey('today-workout-${workout.id}'),
+            child: _workoutRow(context, ref, c, workout,
+                isToday: isToday, completed: false),
+          );
         }
-      } else {
-        final isToday = resp?.hasWorkoutToday == true;
-        // The hero body carries its own card surface + horizontal padding.
-        content = KeyedSubtree(
-          key: ValueKey('today-workout-${workout.id}'),
-          child: _workoutRow(context, ref, c, workout,
-              isToday: isToday, completed: false),
-        );
       }
     }
 
