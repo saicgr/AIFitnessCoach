@@ -95,6 +95,7 @@ from api.v1 import wrapped  # Fitness Wrapped monthly recap cards
 from api.v1 import plateau  # Plateau detection (exercise + weight stalling)
 from api.v1 import email_cron  # Lifecycle email cron jobs
 from api.v1 import email_webhooks  # Resend webhook: bounce / complaint handling
+from api.v1.auth import email_verification  # Email verification (non-blocking nudge)
 from api.v1 import push_nudge_cron  # Hourly accountability push nudge cron jobs
 from api.v1 import weekly_wrapped_cron  # Sunday Wrapped hourly cron (tz-aware fire)
 from api.v1 import fitness_profile_cron  # Daily radar-shape snapshotter
@@ -451,6 +452,9 @@ router.include_router(plateau.router, prefix="/plateau", tags=["Plateau Detectio
 
 # Lifecycle email cron endpoint (secured by X-Cron-Secret header)
 router.include_router(email_cron.router, prefix="/emails", tags=["Email Cron"])
+
+# Email verification — non-blocking nudge (public verify link + authed resend)
+router.include_router(email_verification.router, prefix="/auth", tags=["Auth"])
 
 # Resend webhook (bounce / complaint / delivered events)
 router.include_router(email_webhooks.router, tags=["Email Webhooks"])

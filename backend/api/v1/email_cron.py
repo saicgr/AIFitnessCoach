@@ -129,19 +129,51 @@ def _is_email_suppressed(supabase, user_id: str, email_type: str) -> bool:
 
 # ─── Deduplication ──────────────────────────────────────────────────────────
 
+def _is_email_verified(supabase, user_id: str) -> bool:
+    """True if the user's email is verified (migration 2083).
+
+    Fail-open: any error returns True so a transient DB hiccup can never
+    silently halt all lifecycle email — the worst case is one email to a
+    possibly-unverified address, not a global email outage.
+    """
+    try:
+        res = supabase.client.table("users") \
+            .select("email_verified") \
+            .eq("id", user_id) \
+            .limit(1) \
+            .execute()
+        rows = res.data or []
+        return bool(rows[0].get("email_verified")) if rows else True
+    except Exception:
+        return True
+
+
 def _was_recently_sent(supabase, user_id: str, email_type: str, cooldown_days: int = DEFAULT_COOLDOWN_DAYS) -> bool:
     """Return True if this email should be skipped for this user.
 
-    "Skipped" combines two reasons into one gate — all ~24 email jobs already
-    use this as `if _was_recently_sent(...): continue`, so adding vacation +
-    comeback suppression here covers every job with zero callsite changes:
+    "Skipped" combines several reasons into one gate — all ~24 email jobs
+    already use this as `if _was_recently_sent(...): continue`, so adding
+    suppression here covers every job with zero callsite changes:
 
       1. Vacation mode is active (unless email_type is in CRITICAL_EMAIL_TYPES)
       2. User is in comeback mode and email_type is in COMEBACK_SUPPRESSED_EMAIL
-      3. This email_type was sent to this user within cooldown_days (dedup)
+      3. Sender-reputation guard: lifecycle/marketing mail to an unverified
+         address risks a bounce that degrades domain deliverability — skip it
+         for unverified users. Transactional mail (verification reminder,
+         billing / cancellation) always sends.
+      4. This email_type was sent to this user within cooldown_days (dedup)
     """
     # 1 + 2. Global suppression (vacation + comeback). Cached per run.
     if _is_email_suppressed(supabase, user_id, email_type):
+        return True
+
+    # 3. Sender-reputation guard. `cancel*` (subscription/billing) and the
+    # verification reminder itself are transactional and always send.
+    _is_transactional = (
+        email_type.startswith("cancel")
+        or email_type == "email_verification_reminder"
+    )
+    if not _is_transactional and not _is_email_verified(supabase, user_id):
         return True
 
     # 3. Dedup window
@@ -202,6 +234,7 @@ async def run_email_cron(
         ("win_back_30", _job_win_back_30(supabase, email_svc)),
         ("7day_upsell", _job_7day_upsell(supabase, email_svc)),
         ("onboarding_incomplete", _job_onboarding_incomplete(supabase, email_svc)),
+        ("email_verification_reminder", _job_email_verification_reminder(supabase, email_svc)),
         ("weekly_summary", _job_weekly_summary(supabase, email_svc)),
         ("comeback", _job_comeback(supabase, email_svc)),
         ("idle_nudge", _job_idle_nudge(supabase, email_svc)),
@@ -740,6 +773,53 @@ async def _job_onboarding_incomplete(supabase, email_svc) -> int:
         raise
 
     logger.info(f"🎯 onboarding_incomplete: {sent} emails sent")
+    return sent
+
+
+# ─── Job: Email Verification Reminder ───────────────────────────────────────
+
+async def _job_email_verification_reminder(supabase, email_svc) -> int:
+    """Remind users who signed up 24h+ ago and still have email_verified=false.
+
+    Naturally caps at ~2 sends: the 5-day `created_at` window combined with the
+    2-day cooldown means roughly a day-1 and a day-3 nudge, then the user ages
+    out of the window. No preference gate — verifying your own account is
+    transactional/security mail, not marketing.
+    """
+    # Local import avoids a module-level cycle (email_verification imports
+    # email_service, which is imported widely at startup).
+    from api.v1.auth.email_verification import issue_and_send_verification
+
+    email_type = "email_verification_reminder"
+    sent = 0
+    try:
+        window_start = (datetime.now(timezone.utc) - timedelta(days=5)).isoformat()
+        window_end = (datetime.now(timezone.utc) - timedelta(hours=24)).isoformat()
+
+        users_result = supabase.client.table("users") \
+            .select("id, email, name") \
+            .eq("email_verified", False) \
+            .gte("created_at", window_start) \
+            .lt("created_at", window_end) \
+            .execute()
+
+        for user in (users_result.data or []):
+            uid = user["id"]
+            if not user.get("email"):
+                continue
+            if _was_recently_sent(supabase, uid, email_type, cooldown_days=2):
+                continue
+            await issue_and_send_verification(
+                user_id=uid, email=user["email"], name=user.get("name"),
+            )
+            _log_email_sent(supabase, uid, email_type)
+            sent += 1
+
+    except Exception as e:
+        logger.error(f"❌ email_verification_reminder job failed: {e}", exc_info=True)
+        raise
+
+    logger.info(f"🎯 email_verification_reminder: {sent} emails sent")
     return sent
 
 

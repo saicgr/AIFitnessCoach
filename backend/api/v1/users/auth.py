@@ -14,6 +14,7 @@ from core.username_generator import generate_username_sync
 from models.schemas import User
 from services.admin_service import get_admin_service
 from services.email_service import get_email_service
+from api.v1.auth.email_verification import issue_and_send_verification
 from services.discord_webhooks import notify_signup
 from services.apple_auth_revocation import exchange_authorization_code
 
@@ -371,10 +372,21 @@ async def email_signup(request: Request, body: EmailSignupRequest,
             "equipment_v2": [],  # text[] column - dual-write during migration
             "preferences": {"name": full_name, "email": email},
             "active_injuries": [],
+            # Non-blocking nudge — the user is fully in the app immediately;
+            # a backend verification email + in-app banner handle the rest.
+            "email_verified": False,
         }
 
         created = db.create_user(new_user_data)
         logger.info(f"New user created via email signup: id={created['id']}, email={email}, role={created.get('role', 'user')}")
+
+        # Issue a verification token + send the branded verification email in
+        # the background. Best-effort: issue_and_send_verification never raises,
+        # so a mail-provider hiccup can never fail signup.
+        background_tasks.add_task(
+            issue_and_send_verification,
+            user_id=created["id"], email=email or "", name=full_name,
+        )
 
         # NOTE: Welcome email moved to onboarding-complete handler — see
         # api/v1/users/profile.py. Fires once name/goal/macros/first

@@ -544,6 +544,55 @@ class EmailService(
             logger.error(f"Failed to send billing issue email to {to_email}: {e}", exc_info=True)
             return {"error": str(e)}
 
+    async def send_verification_email(
+        self, to_email: str, first_name: str, verify_url: str,
+    ) -> Dict[str, Any]:
+        """Branded email-verification email.
+
+        Transactional/security mail — it is sent regardless of notification
+        preferences (there is no opt-out for verifying your own account).
+        """
+        if not self.is_configured():
+            return {"error": "Email service not configured"}
+
+        from core.config import get_settings
+        logo_url = get_settings().email_logo_url
+
+        name = first_name or "there"
+        subject = f"Verify your {branding.APP_NAME} email"
+        title = f"Verify your email, {name}"
+        subtitle = (
+            "Tap the button below to confirm this is your email. It keeps your "
+            "account secure and makes sure your trial reminders and coaching "
+            "updates actually reach you."
+        )
+        features = [
+            ("&#128274;", "Keeps your account secure",
+             "Confirms this inbox is yours, so a password reset always reaches you."),
+            ("&#128276;", "Never miss a reminder",
+             "Trial reminders and coaching updates land in the right inbox."),
+        ]
+        html_content = self._build_standard_email(
+            logo_url=logo_url, open_url=verify_url,
+            title=title, subtitle=subtitle,
+            cta_text="Verify my email",
+            features=features,
+            footer_text=(
+                f"You received this because an account was created with this "
+                f"email on {branding.APP_NAME}. If that was not you, you can "
+                f"safely ignore this message."
+            ),
+        )
+
+        try:
+            params = {"from": self.from_email, "to": [to_email], "subject": subject, "html": html_content}
+            response = resend.Emails.send(params)
+            logger.info(f"Verification email sent to {to_email}: {response}")
+            return {"success": True, "id": response.get("id")}
+        except Exception as e:
+            logger.error(f"Failed to send verification email to {to_email}: {e}", exc_info=True)
+            return {"error": str(e)}
+
     def _build_standard_email(
         self, logo_url: str, open_url: str, title: str, subtitle: str,
         cta_text: str, features: List[tuple], footer_text: str,

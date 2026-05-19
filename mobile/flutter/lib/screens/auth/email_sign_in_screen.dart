@@ -5,7 +5,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:supabase_flutter/supabase_flutter.dart' as sb;
 import '../../core/constants/app_colors.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../onboarding/pre_auth_quiz_data.dart';
@@ -21,8 +20,7 @@ class EmailSignInScreen extends ConsumerStatefulWidget {
   ConsumerState<EmailSignInScreen> createState() => _EmailSignInScreenState();
 }
 
-class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen>
-    with WidgetsBindingObserver {
+class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -32,17 +30,10 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen>
   bool _isSignUp = false;
   bool _obscurePassword = true;
   String? _errorMessage;
-  // Set when Supabase reports "email not confirmed" so we can:
-  //   1) render an explicit "I've verified — continue" CTA, and
-  //   2) silently retry sign-in when the app returns to the
-  //      foreground (user likely just tapped the verification link
-  //      in their email client and is back in our app).
-  bool _awaitingEmailConfirm = false;
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addObserver(this);
     // Defensive: if a stale snackbar from a previous mount of this
     // screen is still queued in ScaffoldMessenger (hot-reload doesn't
     // drain that queue), kill it as soon as the screen mounts so it
@@ -69,23 +60,7 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen>
   }
 
   @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    // When the user comes back from their email client (after tapping
-    // the verification link), Supabase has now flipped
-    // email_confirmed_at on the server. Quietly retry sign-in with the
-    // email + password they typed so they auto-proceed without needing
-    // to re-tap Create Account.
-    if (state == AppLifecycleState.resumed && _awaitingEmailConfirm) {
-      // Belt-and-braces: also guard here in case dispose runs between
-      // the resume event and the microtask scheduling.
-      if (!mounted) return;
-      _retryAfterVerification();
-    }
-  }
-
-  @override
   void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
     _emailController.dispose();
     _passwordController.dispose();
     _nameController.dispose();
@@ -184,15 +159,10 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen>
         if (mounted) {
           setState(() {
             _errorMessage = friendly;
-            _awaitingEmailConfirm = _looksLikeNeedsConfirm(raw);
           });
         }
         return;
       }
-
-      // Cleared on success — leaving the verification UI showing
-      // after a successful sign-in would be confusing.
-      _awaitingEmailConfirm = false;
 
       debugPrint('🟢 [Auth] Sign-in success: userId=${auth.user?.id}');
 
@@ -205,39 +175,10 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen>
     } catch (e) {
       debugPrint('🔴 [Auth] Sign-in threw exception: $e');
       final errorMsg = e.toString().replaceAll('Exception: ', '');
-
-      if (errorMsg.contains('check your email') || errorMsg.contains('verify your account')) {
-        if (mounted) {
-          setState(() {
-            _awaitingEmailConfirm = true;
-          });
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Row(
-                children: [
-                  Icon(Icons.mark_email_read, color: Colors.white, size: 20),
-                  SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      'Account created! Please check your email and confirm to sign in.',
-                      style: TextStyle(fontWeight: FontWeight.w500),
-                    ),
-                  ),
-                ],
-              ),
-              behavior: SnackBarBehavior.floating,
-              backgroundColor: AppColors.success,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              duration: const Duration(seconds: 6),
-            ),
-          );
-        }
-      } else {
-        if (mounted) {
-          setState(() {
-            _errorMessage = errorMsg;
-          });
-        }
+      if (mounted) {
+        setState(() {
+          _errorMessage = _humanizeAuthError(errorMsg);
+        });
       }
     } finally {
       if (mounted) {
@@ -313,135 +254,6 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen>
         l.contains('already exists') ||
         l.contains('user already') ||
         l.contains('duplicate key');
-  }
-
-  /// Re-sends the Supabase signup verification email. Called from the
-  /// "Resend" action on the still-not-confirmed snackbar (and from the
-  /// Resend link rendered next to the green continue button). Uses the
-  /// Supabase client directly because the existing AuthRepository
-  /// doesn't expose a resend method and adding one would be a bigger
-  /// refactor than this surface needs.
-  Future<void> _resendVerificationEmail() async {
-    final email = _emailController.text.trim();
-    if (email.isEmpty) return;
-    try {
-      await sb.Supabase.instance.client.auth.resend(
-        type: sb.OtpType.signup,
-        email: email,
-      );
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Verification email resent to $email.'),
-            behavior: SnackBarBehavior.floating,
-            backgroundColor: AppColors.success,
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12)),
-          ),
-        );
-      }
-    } catch (e) {
-      debugPrint('🔴 [Auth] Resend failed: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              "Couldn't resend right now. ${_humanizeAuthError(e.toString())}",
-            ),
-            behavior: SnackBarBehavior.floating,
-            backgroundColor: AppColors.error,
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12)),
-          ),
-        );
-      }
-    }
-  }
-
-  bool _looksLikeNeedsConfirm(String raw) {
-    final l = raw.toLowerCase();
-    return l.contains('email not confirmed') ||
-        l.contains('verify your account') ||
-        l.contains('check your email') ||
-        l.contains('confirm your email');
-  }
-
-  /// Called when the app comes back to the foreground while we're
-  /// waiting on an email verification. Quietly retries sign-in with the
-  /// email + password the user already typed; on success the auth
-  /// state flips and GoRouter advances them to the next onboarding
-  /// step automatically — no manual re-entry required.
-  Future<void> _retryAfterVerification() async {
-    // mounted guard BEFORE touching controllers — dispose() runs
-    // _emailController.dispose() in our State; if a delayed
-    // didChangeAppLifecycleState callback fires after dispose
-    // (race during navigation), reading .text throws
-    // "TextEditingController used after being disposed"
-    // (FITWIZ-FLUTTER-5H).
-    if (!mounted) return;
-    if (_isLoading) return;
-    final email = _emailController.text.trim();
-    final password = _passwordController.text.trim();
-    if (email.isEmpty || password.isEmpty) return;
-
-    // Drop any stale snackbars from earlier attempts so the user
-    // doesn't see stacked or lingering verification toasts.
-    ScaffoldMessenger.of(context).clearSnackBars();
-
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
-
-    try {
-      await ref.read(authStateProvider.notifier).signInWithEmail(
-            email,
-            password,
-          );
-      final auth = ref.read(authStateProvider);
-      if (auth.status == AuthStatus.error || auth.user == null) {
-        final raw = auth.errorMessage ?? '';
-        // Still not confirmed — keep the awaiting state so the next
-        // resume can try again. The red pill + green button + inline
-        // "Resend email" link already explain everything, so a stacked
-        // snackbar on top of all that is redundant noise. Tap is still
-        // acknowledged via the brief loading spinner on the button and
-        // a single light haptic.
-        if (_looksLikeNeedsConfirm(raw)) {
-          if (mounted) {
-            HapticFeedback.lightImpact();
-            setState(() {
-              _awaitingEmailConfirm = true;
-              _errorMessage = _humanizeAuthError(raw);
-            });
-          }
-          return;
-        }
-        if (mounted) {
-          setState(() {
-            _awaitingEmailConfirm = false;
-            _errorMessage = _humanizeAuthError(raw);
-          });
-        }
-        return;
-      }
-      // Success — clear the verification UI; GoRouter redirect will
-      // handle navigation based on the now-authenticated state.
-      if (mounted) {
-        setState(() {
-          _awaitingEmailConfirm = false;
-          _errorMessage = null;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _errorMessage = _humanizeAuthError(e.toString());
-        });
-      }
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
   }
 
   /// Translate raw Supabase / repository auth errors into actionable copy.
@@ -844,79 +656,6 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen>
                                   ],
                                 ),
                               ),
-                              // Explicit recover-from-verify CTA. If the
-                              // user just tapped the email link, the
-                              // app-resume listener will auto-retry —
-                              // but a tappable button is the belt-and-
-                              // suspenders fallback so they're never
-                              // stuck on this screen wondering what to
-                              // do next.
-                              if (_awaitingEmailConfirm) ...[
-                                const SizedBox(height: 10),
-                                GestureDetector(
-                                  onTap: _isLoading
-                                      ? null
-                                      : _retryAfterVerification,
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        vertical: 12, horizontal: 14),
-                                    decoration: BoxDecoration(
-                                      color: AppColors.success
-                                          .withValues(alpha: 0.12),
-                                      borderRadius:
-                                          BorderRadius.circular(12),
-                                      border: Border.all(
-                                        color: AppColors.success
-                                            .withValues(alpha: 0.5),
-                                      ),
-                                    ),
-                                    child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        Icon(
-                                          Icons.mark_email_read_rounded,
-                                          size: 18,
-                                          color: AppColors.success,
-                                        ),
-                                        const SizedBox(width: 8),
-                                        Text(
-                                          "I've verified — continue",
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.w700,
-                                            color: AppColors.success,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(height: 6),
-                                // Inline resend so users who never got
-                                // the email (typo, spam folder, expired
-                                // link) have a one-tap recovery without
-                                // backing out and starting over.
-                                Center(
-                                  child: TextButton(
-                                    onPressed: _isLoading
-                                        ? null
-                                        : _resendVerificationEmail,
-                                    child: Text(
-                                      "Didn't get it? Resend email",
-                                      style: TextStyle(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w500,
-                                        color: AppColors.textSecondary,
-                                        decoration:
-                                            TextDecoration.underline,
-                                        decorationColor:
-                                            AppColors.textSecondary,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
                             ],
 
                             const SizedBox(height: 24),
