@@ -85,7 +85,8 @@ class ChatScreen extends ConsumerStatefulWidget {
   ConsumerState<ChatScreen> createState() => _ChatScreenState();
 }
 
-class _ChatScreenState extends ConsumerState<ChatScreen> {
+class _ChatScreenState extends ConsumerState<ChatScreen>
+    with WidgetsBindingObserver {
   final _scrollController = ScrollController();
   final _textController = TextEditingController();
   final _focusNode = FocusNode();
@@ -98,6 +99,26 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   bool _initialMessageSent = false;
   bool _showScrollFAB = false;
   String? _highlightedMessageId;
+
+  // C4 — mirrors whether the notifier currently has a streaming bubble
+  // (live OR dropped). Only flips on null↔non-null transitions, so the
+  // ListView rebuilds once per stream start/end — never per token. The
+  // per-token repaints are isolated inside _StreamingBubble's own
+  // ValueListenableBuilder.
+  bool _streamingSlotVisible = false;
+  // The notifier's streamingBubble listenable we attach a transition
+  // listener to. Captured in initState's post-frame callback.
+  ValueNotifier<StreamingBubbleState?>? _streamingBubbleRef;
+
+  /// Listener on the notifier's streamingBubble — only triggers a screen
+  /// rebuild when the bubble appears or disappears, never on content change.
+  void _onStreamingTransition() {
+    final present = _streamingBubbleRef?.value != null;
+    if (present != _streamingSlotVisible && mounted) {
+      setState(() => _streamingSlotVisible = present);
+      if (present) _scrollToBottom();
+    }
+  }
 
   bool get _isLoading => _sendStatus != _MediaSendStatus.idle;
 
@@ -171,6 +192,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
   @override
   void initState() {
     super.initState();
+    // C3 — observe app lifecycle so a chat backgrounded mid-send re-syncs
+    // its history on resume (handled in didChangeAppLifecycleState).
+    WidgetsBinding.instance.addObserver(this);
     _scrollController.addListener(() {
       final show = _scrollController.offset > 200;
       if (show != _showScrollFAB) setState(() => _showScrollFAB = show);
@@ -186,6 +210,15 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
     // awaits to avoid a race where loadHistory's server fetch overwrites
     // sendMessage state.
     WidgetsBinding.instance.addPostFrameCallback((_) async {
+      // Attach the streaming-bubble transition listener (C4). Done here (not
+      // in the field initializer) because the provider must be readable.
+      if (mounted) {
+        _streamingBubbleRef =
+            ref.read(chatMessagesProvider.notifier).streamingBubble;
+        _streamingBubbleRef!.addListener(_onStreamingTransition);
+        // Sync initial state in case a stream was already in flight.
+        _onStreamingTransition();
+      }
       if (widget.initialMessage != null &&
           widget.initialMessage!.isNotEmpty &&
           !_initialMessageSent) {
@@ -204,12 +237,27 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _streamingBubbleRef?.removeListener(_onStreamingTransition);
     _elapsedTimer?.cancel();
     _elapsedNotifier.dispose();
     _scrollController.dispose();
     _textController.dispose();
     _focusNode.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    // C3 — when the app returns to the foreground, force-refresh chat history.
+    // A chat backgrounded mid-send (e.g. user switched apps while the AI was
+    // streaming) could otherwise sit on a stale snapshot: the streamed reply
+    // may have completed server-side without the client committing it.
+    // force: true bypasses the "already have messages" short-circuit.
+    if (state == AppLifecycleState.resumed && mounted) {
+      ref.read(chatMessagesProvider.notifier).loadHistory(force: true);
+    }
   }
 
   void _scrollToBottom() {
@@ -422,7 +470,12 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                   }
 
                   final hasMore = ref.read(chatMessagesProvider.notifier).hasMoreMessages;
-                  final extraItems = (_isLoading ? 1 : 0) + (hasMore ? 1 : 0);
+                  // The newest slot (index 0) exists while a send is loading
+                  // OR while a streaming bubble is present (a dropped reply
+                  // outlives the loading state — the partial text must stay
+                  // visible until the user retries, C2).
+                  final hasNewestSlot = _isLoading || _streamingSlotVisible;
+                  final extraItems = (hasNewestSlot ? 1 : 0) + (hasMore ? 1 : 0);
 
                   return ListView.builder(
                     key: const ValueKey('content'),
@@ -436,11 +489,33 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                     itemCount: messages.length + extraItems,
                     itemBuilder: (context, index) {
                       // With reverse: true, index 0 = bottom (newest).
-                      // Typing indicator is the newest item (index 0).
-                      if (index == 0 && _isLoading) {
-                        return _TypingIndicator(
-                          statusText: _statusLabel,
-                          elapsedListenable: _elapsedNotifier,
+                      // The newest item (index 0) is either the live
+                      // token-by-token streaming bubble (C4) or, before the
+                      // first token arrives, the typing indicator. Both share
+                      // this single slot so `extraItems` math is unchanged.
+                      if (index == 0 && hasNewestSlot) {
+                        final notifier =
+                            ref.read(chatMessagesProvider.notifier);
+                        // ValueListenableBuilder rebuilds ONLY this slot when
+                        // streamingBubble flips between null and a value —
+                        // the rest of the ListView is untouched.
+                        return ValueListenableBuilder<StreamingBubbleState?>(
+                          valueListenable: notifier.streamingBubble,
+                          builder: (context, streaming, _) {
+                            if (streaming != null) {
+                              return _StreamingBubble(
+                                notifier: notifier,
+                                coach: coach,
+                                onRetry: _retryStreamingDrop,
+                              );
+                            }
+                            // No tokens yet — show the existing typing
+                            // indicator with its 1-Hz elapsed label (C5).
+                            return _TypingIndicator(
+                              statusText: _statusLabel,
+                              elapsedListenable: _elapsedNotifier,
+                            );
+                          },
                         );
                       }
 
@@ -455,8 +530,9 @@ class _ChatScreenState extends ConsumerState<ChatScreen> {
                         );
                       }
 
-                      // Offset by 1 if loading indicator is shown
-                      final msgIndex = messages.length - 1 - (index - (_isLoading ? 1 : 0));
+                      // Offset by 1 if the newest slot (streaming bubble /
+                      // typing indicator) is occupying index 0.
+                      final msgIndex = messages.length - 1 - (index - (hasNewestSlot ? 1 : 0));
                       if (msgIndex < 0 || msgIndex >= messages.length) {
                         return const SizedBox.shrink();
                       }

@@ -82,6 +82,53 @@ final chatMessagesProvider =
   return ChatMessagesNotifier(repository, apiClient, workoutsNotifier, workoutRepository, user, themeNotifier, router, hydrationNotifier, nutritionNotifier, getAISettings, setAIGenerating, getUnifiedContext, offlineCoach, isOnline, getSoundPrefs, getAudioPrefs, refreshTodayWorkout);
 });
 
+/// A single decoded event off the `POST /chat/send-stream` SSE stream.
+///
+/// The backend emits four event shapes (see BACKEND CONTRACT):
+///   - `token`    → incremental text chunk in [delta] (append live)
+///   - `action`   → an action card payload in [actionData]
+///   - `done`     → final reconciliation: [messageId] + full [content] + [metadata]
+///   - `error`    → fatal stream error with a human-readable [message]
+///
+/// `progress` is also tolerated (uploading/analyzing/generating [phase] hints)
+/// so the existing typing-state UI can surface backend-side progress (C5).
+class ChatStreamEvent {
+  /// Event kind: token / action / done / error / progress.
+  final String type;
+
+  /// Incremental text chunk — present on `token` events.
+  final String? delta;
+
+  /// Action card payload — present on `action` events.
+  final Map<String, dynamic>? actionData;
+
+  /// Server-issued stable assistant-message UUID — present on `done`.
+  final String? messageId;
+
+  /// Full reconciled reply text — present on `done`.
+  final String? content;
+
+  /// Optional metadata bag (intent, agent_type, …) — present on `done`.
+  final Map<String, dynamic>? metadata;
+
+  /// Human-readable failure message — present on `error`.
+  final String? message;
+
+  /// Typing-phase hint (uploading/analyzing/generating) — present on `progress`.
+  final String? phase;
+
+  const ChatStreamEvent({
+    required this.type,
+    this.delta,
+    this.actionData,
+    this.messageId,
+    this.content,
+    this.metadata,
+    this.message,
+    this.phase,
+  });
+}
+
 /// Chat repository for API calls
 class ChatRepository {
   final ApiClient _apiClient;
@@ -407,6 +454,140 @@ class ChatRepository {
       debugPrint('❌ [Chat] Error sending message: $e');
       rethrow;
     }
+  }
+
+  /// Send a chat message and consume the AI reply as a token-by-token SSE
+  /// stream from `POST /chat/send-stream`.
+  ///
+  /// Yields a [ChatStreamEvent] for each decoded `data:` line. The caller
+  /// (ChatMessagesNotifier) is responsible for appending a placeholder
+  /// assistant bubble on the first `token`, appending each `delta` to it so
+  /// the reply types out live, and reconciling on `done`.
+  ///
+  /// This method NEVER falls back to the non-streaming path itself — if the
+  /// stream fails the error surfaces to the caller, which decides whether to
+  /// retry via the legacy [sendMessage]. Keeping the two paths separate means
+  /// a mid-stream drop can preserve partial text (C2) instead of silently
+  /// restarting a fresh blocking request.
+  Stream<ChatStreamEvent> sendMessageStreaming({
+    required String message,
+    required String userId,
+    Map<String, dynamic>? userProfile,
+    Map<String, dynamic>? currentWorkout,
+    Map<String, dynamic>? workoutSchedule,
+    List<Map<String, dynamic>>? conversationHistory,
+    Map<String, dynamic>? aiSettings,
+    String? unifiedContext,
+    String? agentOverride,
+  }) async* {
+    debugPrint('🔌 [Chat] Opening streaming send: ${message.substring(0, message.length.clamp(0, 50))}...');
+
+    // Dedicated Dio for the SSE stream — mirrors the workout-regeneration
+    // streaming pattern. We cannot reuse the shared ApiClient instance because
+    // it sets a JSON-decoding ResponseType; the stream needs raw bytes.
+    final streamingDio = Dio(BaseOptions(
+      baseUrl: _apiClient.baseUrl,
+      connectTimeout: const Duration(seconds: 30),
+      // LangGraph multi-agent replies can run long; the per-token cadence
+      // resets the receive timer, so 3 minutes is a generous ceiling.
+      receiveTimeout: const Duration(minutes: 3),
+      headers: {
+        'Accept': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+      },
+    ));
+
+    // Carry over the auth headers from the shared client (Supabase JWT etc.).
+    final authHeaders = await _apiClient.getAuthHeaders();
+    streamingDio.options.headers.addAll(authHeaders);
+
+    final response = await streamingDio.post(
+      '${ApiConstants.chat}/send-stream',
+      data: ChatRequest(
+        message: message,
+        userId: userId,
+        userProfile: userProfile,
+        currentWorkout: currentWorkout,
+        workoutSchedule: workoutSchedule,
+        conversationHistory: conversationHistory,
+        aiSettings: aiSettings,
+        unifiedContext: unifiedContext,
+        agentOverride: agentOverride,
+      ).toJson(),
+      options: Options(responseType: ResponseType.stream),
+    );
+
+    final responseBody = response.data as ResponseBody;
+
+    // SSE framing: events are separated by a blank line; each event is a set
+    // of `field: value` lines. We only care about `data:` lines here (the
+    // backend encodes the event kind inside the JSON `type` field, not the
+    // SSE `event:` field), but we still buffer across chunk boundaries so a
+    // `data:` line split mid-byte isn't dropped.
+    String buffer = '';
+    final dataLines = <String>[];
+
+    ChatStreamEvent? _decode(String jsonText) {
+      try {
+        final obj = jsonDecode(jsonText) as Map<String, dynamic>;
+        final type = obj['type'] as String? ?? 'unknown';
+        return ChatStreamEvent(
+          type: type,
+          delta: obj['delta'] as String?,
+          actionData: obj['action_data'] is Map
+              ? (obj['action_data'] as Map).cast<String, dynamic>()
+              : null,
+          messageId: obj['message_id'] as String?,
+          content: obj['content'] as String?,
+          metadata: obj['metadata'] is Map
+              ? (obj['metadata'] as Map).cast<String, dynamic>()
+              : null,
+          message: obj['message'] as String?,
+          phase: obj['phase'] as String?,
+        );
+      } catch (e) {
+        debugPrint('⚠️ [Chat] Failed to decode SSE data line: $e');
+        return null;
+      }
+    }
+
+    await for (final bytes in responseBody.stream) {
+      buffer += utf8.decode(bytes, allowMalformed: true);
+
+      while (buffer.contains('\n')) {
+        final newlineIndex = buffer.indexOf('\n');
+        final line = buffer.substring(0, newlineIndex).replaceAll('\r', '');
+        buffer = buffer.substring(newlineIndex + 1);
+
+        if (line.isEmpty) {
+          // Blank line — event boundary. Join multi-line `data:` payloads.
+          if (dataLines.isNotEmpty) {
+            final jsonText = dataLines.join('\n').trim();
+            dataLines.clear();
+            if (jsonText.isNotEmpty && jsonText != '[DONE]') {
+              final ev = _decode(jsonText);
+              if (ev != null) yield ev;
+            }
+          }
+          continue;
+        }
+
+        if (line.startsWith('data:')) {
+          dataLines.add(line.substring(5).trimLeft());
+        }
+        // `event:` / `id:` / `:` comment lines are intentionally ignored.
+      }
+    }
+
+    // Flush any trailing event that arrived without a closing blank line.
+    if (dataLines.isNotEmpty) {
+      final jsonText = dataLines.join('\n').trim();
+      if (jsonText.isNotEmpty && jsonText != '[DONE]') {
+        final ev = _decode(jsonText);
+        if (ev != null) yield ev;
+      }
+    }
+    debugPrint('🔌 [Chat] Streaming send closed cleanly');
   }
 
   /// Extract human-readable validation message from Pydantic 422 error detail

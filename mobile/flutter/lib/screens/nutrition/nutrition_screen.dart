@@ -1568,9 +1568,88 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
     List<FoodItemEdit>? itemEdits,
   }) async {
     if (_userId == null) return;
-    try {
-      final repository = ref.read(nutritionRepositoryProvider);
-      await repository.updateFoodLog(
+    final repository = ref.read(nutritionRepositoryProvider);
+
+    // Per-edit PostHog analytics — one event per audit row (matches the
+    // pre-save path). Fire-and-forget; done up front so it's recorded even
+    // though the network write below now runs in the background.
+    if (itemEdits != null && itemEdits.isNotEmpty) {
+      final posthog = ref.read(posthogServiceProvider);
+      for (final e in itemEdits) {
+        final deltaPct = e.previousValue != 0
+            ? ((e.updatedValue - e.previousValue) / e.previousValue * 100).toStringAsFixed(1)
+            : 'inf';
+        posthog.capture(
+          eventName: 'food_item_edited',
+          properties: <String, Object>{
+            'field': e.editedField,
+            'previous': e.previousValue,
+            'updated': e.updatedValue,
+            'delta': e.updatedValue - e.previousValue,
+            'delta_pct': deltaPct,
+            'source': 'post_save_nutrition_screen',
+            'food_item_name': e.foodItemName,
+            'food_log_id': logId,
+          },
+        );
+      }
+    }
+
+    // Micronutrient cache is tied to the day's macros — invalidate it so the
+    // next read recomputes after this edit lands.
+    _cachedMicronutrientsTime = null;
+
+    // WR2 — optimistic food EDIT. `commitUpdateLog` swaps the in-memory row's
+    // calories/macros instantly (meal row + macro rings update within one
+    // frame), runs the network PUT in the background, and rolls the row back
+    // (with a calm `state.error`) if the server rejects the edit.
+    await ref.read(nutritionProvider.notifier).commitUpdateLog(
+      logId,
+      // Transform: FoodLog has no copyWith (generated model) — rebuild the row
+      // with every field preserved and only the edited macros/calories
+      // swapped. `foodItems` is kept as-is; the background network response is
+      // the source of truth for the per-item breakdown, and the rings only
+      // read the row-level totals below.
+      (m) => FoodLog(
+        id: m.id,
+        userId: m.userId,
+        mealType: m.mealType,
+        loggedAt: m.loggedAt,
+        foodItems: m.foodItems,
+        totalCalories: calories,
+        proteinG: proteinG,
+        carbsG: carbsG,
+        fatG: fatG,
+        fiberG: m.fiberG,
+        healthScore: m.healthScore,
+        healthScoreReasons: m.healthScoreReasons,
+        aiFeedback: m.aiFeedback,
+        notes: m.notes,
+        moodBefore: m.moodBefore,
+        moodAfter: m.moodAfter,
+        energyLevel: m.energyLevel,
+        sodiumMg: m.sodiumMg,
+        sugarG: m.sugarG,
+        saturatedFatG: m.saturatedFatG,
+        cholesterolMg: m.cholesterolMg,
+        potassiumMg: m.potassiumMg,
+        calciumMg: m.calciumMg,
+        ironMg: m.ironMg,
+        vitaminAUg: m.vitaminAUg,
+        vitaminCMg: m.vitaminCMg,
+        vitaminDIu: m.vitaminDIu,
+        inflammationScore: m.inflammationScore,
+        isUltraProcessed: m.isUltraProcessed,
+        glycemicLoad: m.glycemicLoad,
+        fodmapRating: m.fodmapRating,
+        fodmapReason: m.fodmapReason,
+        imageUrl: m.imageUrl,
+        sourceType: m.sourceType,
+        userQuery: m.userQuery,
+        createdAt: m.createdAt,
+      ),
+      // networkUpdate: only awaited AFTER the optimistic row lands.
+      () => repository.updateFoodLog(
         logId: logId,
         totalCalories: calories,
         proteinG: proteinG,
@@ -1579,46 +1658,8 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
         weightG: weightG,
         foodItems: foodItems,
         itemEdits: itemEdits ?? const [],
-      );
-
-      // Per-edit PostHog analytics — one event per audit row (matches the
-      // pre-save path). Fire-and-forget.
-      if (itemEdits != null && itemEdits.isNotEmpty) {
-        final posthog = ref.read(posthogServiceProvider);
-        for (final e in itemEdits) {
-          final deltaPct = e.previousValue != 0
-              ? ((e.updatedValue - e.previousValue) / e.previousValue * 100).toStringAsFixed(1)
-              : 'inf';
-          posthog.capture(
-            eventName: 'food_item_edited',
-            properties: <String, Object>{
-              'field': e.editedField,
-              'previous': e.previousValue,
-              'updated': e.updatedValue,
-              'delta': e.updatedValue - e.previousValue,
-              'delta_pct': deltaPct,
-              'source': 'post_save_nutrition_screen',
-              'food_item_name': e.foodItemName,
-              'food_log_id': logId,
-            },
-          );
-        }
-      }
-
-      _cachedMicronutrientsTime = null;
-      await ref.read(nutritionProvider.notifier).refreshAll(_userId!);
-    } catch (e) {
-      debugPrint('Error updating meal: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Couldn’t update meal: ${_friendlyApiError(e)}'),
-            behavior: SnackBarBehavior.floating,
-            duration: const Duration(seconds: 5),
-          ),
-        );
-      }
-    }
+      ),
+    );
   }
 
   Future<List<FoodLogEditRecord>> _fetchItemEdits(String logId) async {

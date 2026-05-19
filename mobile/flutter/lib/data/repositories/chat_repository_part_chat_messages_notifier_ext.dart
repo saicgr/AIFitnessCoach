@@ -1,7 +1,321 @@
 part of 'chat_repository.dart';
 
+/// Result of an attempt to stream the assistant reply (Part 5 — C1).
+enum _StreamOutcome {
+  /// The stream produced at least one token and reached a terminal state
+  /// (done OR a mid-reply drop with partial text kept). The caller is done.
+  handled,
+
+  /// The stream failed before ANY token arrived (endpoint missing, immediate
+  /// connection error, etc.). The caller should fall back to the blocking
+  /// non-streaming POST /chat/send so the user still gets a reply.
+  fallbackToBlocking,
+}
+
 /// Methods extracted from ChatMessagesNotifier
 extension ChatMessagesNotifierExt on ChatMessagesNotifier {
+
+  /// Stream the AI-coach reply token-by-token via `POST /chat/send-stream`.
+  ///
+  /// Behavior (Part 5):
+  ///   - C1: first `token` appends a placeholder assistant bubble (held in
+  ///     [ChatMessagesNotifier.streamingBubble]); each `delta` appends to it
+  ///     so the reply TYPES OUT live; `done` reconciles the bubble into the
+  ///     main `state` list (dedup by message_id) and persists to cache.
+  ///   - C2: the partial text is persisted to cache on a throttled cadence;
+  ///     if the stream DROPS mid-reply the partial bubble is KEPT (marked
+  ///     dropped) so the user can resume/retry instead of losing the text.
+  ///   - C4: per-token updates only touch the ValueNotifier, never `state`.
+  ///   - C5: `progress` events flow through to the same typing state.
+  ///
+  /// Returns [_StreamOutcome.handled] once a terminal state is reached, or
+  /// [_StreamOutcome.fallbackToBlocking] if the stream failed before the
+  /// first token (so the caller can use the legacy blocking path).
+  Future<_StreamOutcome> _streamAssistantReply({
+    required String message,
+    required String userId,
+    required ChatMessage userMessage,
+    Map<String, dynamic>? userProfile,
+    Map<String, dynamic>? currentWorkout,
+    Map<String, dynamic>? workoutSchedule,
+    required List<Map<String, dynamic>> history,
+    required AISettings aiSettings,
+    required String unifiedContext,
+    required Stopwatch responseStopwatch,
+  }) async {
+    // The placeholder bubble's creation time is fixed up-front so that when
+    // it is finally committed to `state` it sorts AFTER the user message.
+    final createdAt = DateTime.now().toIso8601String();
+    bool sawToken = false;
+    Map<String, dynamic>? streamedActionData;
+
+    // Helper: mark the user bubble delivered in `state`.
+    void markUserDelivered() {
+      final msgs = state.valueOrNull ?? const <ChatMessage>[];
+      state = AsyncValue.data(msgs.map((m) {
+        if (m.createdAt == userMessage.createdAt &&
+            m.role == userMessage.role &&
+            m.content == userMessage.content) {
+          return m.copyWith(status: MessageStatus.delivered);
+        }
+        return m;
+      }).toList());
+    }
+
+    try {
+      final stream = _repository.sendMessageStreaming(
+        message: message,
+        userId: userId,
+        userProfile: userProfile,
+        currentWorkout: currentWorkout,
+        workoutSchedule: workoutSchedule,
+        conversationHistory: history,
+        aiSettings: aiSettings.toJson(),
+        unifiedContext: unifiedContext,
+      );
+
+      await for (final ev in stream) {
+        if (!mounted) return _StreamOutcome.handled;
+
+        switch (ev.type) {
+          case 'token':
+            final delta = ev.delta ?? '';
+            if (delta.isEmpty) break;
+            if (!sawToken) {
+              // First token — create the live placeholder bubble (C1) and
+              // mark the user message delivered.
+              sawToken = true;
+              markUserDelivered();
+              streamingBubble.value = StreamingBubbleState(
+                content: delta,
+                createdAt: createdAt,
+                coachPersonaId: aiSettings.coachPersonaId,
+              );
+            } else {
+              // Append the chunk — repaints ONLY the streaming bubble (C4).
+              final current = streamingBubble.value;
+              if (current != null) {
+                streamingBubble.value = current.copyWith(
+                  content: current.content + delta,
+                );
+              }
+            }
+            // C2 — throttled partial persist so a crash/drop keeps the text.
+            _persistPartialReply(userId, throttle: true);
+            break;
+
+          case 'action':
+            // Action card arrived inline — stash it so the committed bubble
+            // carries it, and run side-effects (navigation, refreshes).
+            if (ev.actionData != null) {
+              streamedActionData = ev.actionData;
+            }
+            break;
+
+          case 'progress':
+            // C5 — backend phase hint. The chat screen owns the visible
+            // typing label; nothing to mutate in the notifier, but log it
+            // so a slow multi-agent run is traceable.
+            debugPrint('⏳ [Chat] Stream progress phase=${ev.phase}');
+            break;
+
+          case 'done':
+            responseStopwatch.stop();
+            // Ensure the user bubble shows delivered even if the backend
+            // jumped straight to `done` without emitting any token events.
+            markUserDelivered();
+            await _commitStreamedReply(
+              userId: userId,
+              messageId: ev.messageId,
+              fullContent: ev.content ??
+                  streamingBubble.value?.content ??
+                  '',
+              metadata: ev.metadata,
+              actionData: streamedActionData ??
+                  (ev.metadata?['action_data'] is Map
+                      ? (ev.metadata!['action_data'] as Map)
+                          .cast<String, dynamic>()
+                      : null),
+              createdAt: createdAt,
+              coachPersonaId: aiSettings.coachPersonaId,
+              responseTimeMs: responseStopwatch.elapsedMilliseconds,
+            );
+            return _StreamOutcome.handled;
+
+          case 'error':
+            // Backend signalled a fatal error on the stream.
+            final errText = (ev.message ?? 'The coach hit an error.').trim();
+            if (sawToken) {
+              // We already have partial text — keep it (C2), mark dropped.
+              _handleStreamDrop(userId, reason: errText);
+            } else {
+              // No token yet — surface a clean error bubble (no partial).
+              _updateMessageStatus(userMessage, MessageStatus.error);
+              final updated = state.valueOrNull ?? const <ChatMessage>[];
+              state = AsyncValue.data([
+                ...updated,
+                ChatMessage(
+                  role: 'error',
+                  content: errText,
+                  createdAt: DateTime.now().toIso8601String(),
+                ),
+              ]);
+            }
+            return _StreamOutcome.handled;
+
+          default:
+            debugPrint('⚠️ [Chat] Unknown stream event type: ${ev.type}');
+        }
+      }
+
+      // Stream closed without a `done` event.
+      if (sawToken) {
+        // Partial reply but no terminal `done` — treat as a mid-reply drop
+        // and KEEP the partial text (C2).
+        _handleStreamDrop(userId,
+            reason: 'The connection dropped before the coach finished.');
+        return _StreamOutcome.handled;
+      }
+      // Nothing streamed at all — let the caller fall back to blocking send.
+      return _StreamOutcome.fallbackToBlocking;
+    } catch (e, st) {
+      debugPrint('❌ [Chat] Streaming reply error: $e');
+      debugPrint('❌ [Chat] Stack: $st');
+      if (!mounted) return _StreamOutcome.handled;
+      if (sawToken) {
+        // Drop AFTER tokens arrived — preserve the partial bubble (C2).
+        _handleStreamDrop(userId,
+            reason: e.toString().replaceFirst(RegExp(r'^Exception:\s*'), ''));
+        return _StreamOutcome.handled;
+      }
+      // Failed before the first token — fall back to the blocking path so
+      // the user still gets a complete reply.
+      return _StreamOutcome.fallbackToBlocking;
+    }
+  }
+
+  /// Commit a fully-streamed reply: clear the live [streamingBubble] and
+  /// append the final assistant [ChatMessage] to `state`, deduped by
+  /// server-issued [messageId]. Persists the settled list to cache (C1).
+  Future<void> _commitStreamedReply({
+    required String userId,
+    required String? messageId,
+    required String fullContent,
+    required Map<String, dynamic>? metadata,
+    required Map<String, dynamic>? actionData,
+    required String createdAt,
+    required String? coachPersonaId,
+    required int responseTimeMs,
+  }) async {
+    final cleaned = _stripActionDataFromMessage(fullContent);
+    final assistantMessage = ChatMessage(
+      id: messageId,
+      role: 'assistant',
+      content: cleaned,
+      intent: metadata?['intent'] as String?,
+      agentType: _agentTypeFromMetadata(metadata),
+      createdAt: createdAt,
+      actionData: actionData,
+      coachPersonaId: coachPersonaId,
+      responseTimeMs: responseTimeMs,
+    );
+
+    final before = state.valueOrNull ?? const <ChatMessage>[];
+    // Dedup by server message_id — a Realtime/loadHistory race could already
+    // have injected this row while the stream was running.
+    final alreadyPresent = messageId != null &&
+        before.any((m) => m.id == messageId);
+    // Fix #10 dedup gate (auto-coach-tip opt-out + Levenshtein near-dup).
+    final passesDedupGate = alreadyPresent
+        ? false
+        : await _shouldAppendAssistantMessage(assistantMessage);
+
+    final newMessages = (alreadyPresent || !passesDedupGate)
+        ? before
+        : [...before, assistantMessage];
+    state = AsyncValue.data(newMessages);
+
+    // Clear the live bubble AFTER committing so there's no flash of an empty
+    // gap between the streaming bubble vanishing and the real bubble landing.
+    streamingBubble.value = null;
+
+    await _saveToCache(userId, newMessages);
+
+    if (alreadyPresent) {
+      debugPrint('⚠️ [Chat] Streamed reply id=$messageId already in state — skip append');
+    } else if (!passesDedupGate) {
+      debugPrint('⚠️ [Chat] Streamed reply skipped — failed dedup gate');
+    } else {
+      debugPrint('✅ [Chat] Streamed reply committed (id=$messageId, ${cleaned.length} chars)');
+    }
+
+    // Run action side-effects LAST — a failure here must not hide the reply.
+    if (actionData != null) {
+      try {
+        await _processActionData(actionData);
+      } catch (e, st) {
+        debugPrint('⚠️ [Chat] Streamed action_data processing failed: $e');
+        debugPrint('⚠️ [Chat] Stack: $st');
+      }
+    }
+  }
+
+  /// Decode an [AgentType] from the `done` event metadata, tolerating either
+  /// a raw string (`agent_type`) or absence.
+  AgentType? _agentTypeFromMetadata(Map<String, dynamic>? metadata) {
+    final raw = metadata?['agent_type'];
+    if (raw is! String || raw.isEmpty) return null;
+    for (final t in AgentType.values) {
+      if (t.name == raw) return t;
+    }
+    return null;
+  }
+
+  /// C2 — handle a stream that dropped MID-reply. The partial text is NOT
+  /// discarded: the streaming bubble is marked `dropped` so the chat UI can
+  /// render the partial text with a resume/retry affordance, and the partial
+  /// is persisted so a cold start still shows it.
+  void _handleStreamDrop(String userId, {required String reason}) {
+    final current = streamingBubble.value;
+    if (current == null) return;
+    debugPrint('⚠️ [Chat] Stream dropped mid-reply — keeping ${current.content.length} partial chars. Reason: $reason');
+    // Mark dropped so the bound bubble shows the retry/resume UI. The text
+    // stays visible — we deliberately do NOT clear streamingBubble here.
+    streamingBubble.value = current.copyWith(dropped: true);
+    // Force a final (un-throttled) partial persist so the text survives a
+    // cold start.
+    _persistPartialReply(userId, throttle: false);
+  }
+
+  /// C2 — persist the in-progress streaming reply into the chat-history cache
+  /// alongside the committed messages, so a crash/kill mid-stream still shows
+  /// the partial text on next launch. Throttled to ~once/sec while streaming
+  /// to avoid hammering SharedPreferences on every token.
+  Future<void> _persistPartialReply(String userId,
+      {required bool throttle}) async {
+    final partial = streamingBubble.value;
+    if (partial == null || partial.content.isEmpty) return;
+    final now = DateTime.now();
+    if (throttle &&
+        now.difference(_lastPartialPersist) < const Duration(seconds: 1)) {
+      return;
+    }
+    _lastPartialPersist = now;
+    final committed = state.valueOrNull ?? const <ChatMessage>[];
+    // The partial bubble carries pending status so a reload renders it as a
+    // not-yet-final reply (and the retry path can target it).
+    final partialMessage = ChatMessage(
+      id: partial.messageId,
+      role: 'assistant',
+      content: partial.content,
+      createdAt: partial.createdAt,
+      coachPersonaId: partial.coachPersonaId,
+      status: MessageStatus.pending,
+    );
+    await _saveToCache(userId, [...committed, partialMessage]);
+  }
+
+  /// Send a message
 
   /// Send a message
   Future<void> sendMessage(String message) async {
@@ -198,6 +512,36 @@ extension ChatMessagesNotifierExt on ChatMessagesNotifier {
       // Measure user-perceived latency (tap-to-reply). Includes network +
       // backend processing — the number the user actually waits for.
       final responseStopwatch = Stopwatch()..start();
+
+      // --- STREAMING PATH (Part 5 — C1, default for new online sends) ----
+      // Stream the AI reply token-by-token so the user watches it type out
+      // instead of staring at a 10-120s "Thinking" spinner. The legacy
+      // blocking POST /chat/send is retained as a fallback below — if the
+      // stream fails BEFORE any token arrives we fall through to it; if it
+      // drops MID-reply we keep the partial text (C2) and stop.
+      final streamOutcome = await _streamAssistantReply(
+        message: message,
+        userId: userId,
+        userMessage: userMessage,
+        userProfile: userProfile,
+        currentWorkout: currentWorkout,
+        workoutSchedule: workoutSchedule,
+        history: history,
+        aiSettings: currentAISettings,
+        unifiedContext: unifiedContext,
+        responseStopwatch: responseStopwatch,
+      );
+      if (!mounted) return;
+      if (streamOutcome == _StreamOutcome.handled) {
+        // Streaming completed (done) or dropped mid-reply (partial kept).
+        // Either way the bubble + cache are already settled — nothing left
+        // for the blocking path to do.
+        return;
+      }
+      // streamOutcome == fallbackToBlocking — the stream failed before a
+      // single token landed. Fall through to the legacy non-streaming send.
+      debugPrint('⚠️ [Chat] Streaming send unavailable — falling back to blocking POST /chat/send');
+
       final sendResult = await _repository.sendMessage(
         message: message,
         userId: userId,

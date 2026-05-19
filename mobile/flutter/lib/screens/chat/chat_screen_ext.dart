@@ -287,6 +287,37 @@ extension __ChatScreenStateExt on _ChatScreenState {
   }
 
 
+  /// C2 — retry a streaming reply that dropped mid-stream.
+  ///
+  /// The dropped bubble's PARTIAL text is still visible (held in the
+  /// notifier's `streamingBubble`). Retrying clears that partial bubble and
+  /// re-sends the last user message, which opens a fresh stream. We do NOT
+  /// keep the half-finished text in history — a clean re-ask produces a
+  /// coherent reply rather than a stitched-together fragment.
+  void _retryStreamingDrop() {
+    if (_isLoading) return;
+    final notifier = ref.read(chatMessagesProvider.notifier);
+    final messages = ref.read(chatMessagesProvider).valueOrNull ?? [];
+    // Walk back to the most recent user message — that's what we re-send.
+    String? lastUserMessage;
+    for (int i = messages.length - 1; i >= 0; i--) {
+      if (messages[i].role == 'user') {
+        lastUserMessage = messages[i].content;
+        break;
+      }
+    }
+    if (lastUserMessage == null || lastUserMessage.isEmpty) return;
+    // Drop the partial streaming bubble — the fresh send will produce a new
+    // one. _sendMessage re-appends the user message, so clear the old one is
+    // unnecessary; a duplicate user bubble is acceptable and matches the
+    // existing _retryMessage behavior.
+    notifier.streamingBubble.value = null;
+    _streamingSlotVisible = false;
+    _textController.text = lastUserMessage;
+    _sendMessage();
+  }
+
+
   void _showUsageInfoSheet(BuildContext context) {
     // Refresh usage data before showing
     ref.read(usageTrackingProvider.notifier).fetchLimits();

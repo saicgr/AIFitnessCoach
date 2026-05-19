@@ -1,6 +1,59 @@
 part of 'chat_repository.dart';
 
 
+/// Snapshot of the assistant bubble that is currently streaming token-by-token.
+///
+/// While a reply streams, the partial text is held HERE — not in the main
+/// `state` list — so that only the last bubble (which subscribes to
+/// [ChatMessagesNotifier.streamingBubble]) rebuilds per token. The full
+/// `ListView` is never rebuilt at token cadence (C4).
+///
+/// On `done`/`error` the bubble is reconciled into `state` and the notifier
+/// is reset to `null`, which removes the live bubble and shows the committed
+/// (or failed) message instead.
+class StreamingBubbleState {
+  /// Server-issued message UUID once the `done` event lands; null while
+  /// tokens are still arriving (the bubble has no stable id yet).
+  final String? messageId;
+
+  /// Partial reply text accumulated from `delta` chunks so far.
+  final String content;
+
+  /// ISO8601 creation time — assigned once when streaming starts so the
+  /// bubble sorts correctly when it is finally committed to `state`.
+  final String createdAt;
+
+  /// Coach persona that owns this reply (for avatar/identity in the bubble).
+  final String? coachPersonaId;
+
+  /// True once the stream has dropped mid-reply. The partial [content] is
+  /// KEPT (C2) and the bubble shows a retry affordance instead of vanishing.
+  final bool dropped;
+
+  const StreamingBubbleState({
+    this.messageId,
+    required this.content,
+    required this.createdAt,
+    this.coachPersonaId,
+    this.dropped = false,
+  });
+
+  StreamingBubbleState copyWith({
+    String? messageId,
+    String? content,
+    bool? dropped,
+  }) {
+    return StreamingBubbleState(
+      messageId: messageId ?? this.messageId,
+      content: content ?? this.content,
+      createdAt: createdAt,
+      coachPersonaId: coachPersonaId,
+      dropped: dropped ?? this.dropped,
+    );
+  }
+}
+
+
 /// Chat messages state notifier
 class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> {
   final ChatRepository _repository;
@@ -43,6 +96,22 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
 
   // Offline message queue (#31)
   final List<String> _pendingOfflineMessages = [];
+
+  // ── Streaming reply state (Part 5 — C4) ────────────────────────────────
+  // The token-by-token assistant bubble lives in this ValueNotifier while it
+  // streams. The chat ListView renders a single bubble bound to this
+  // listenable as its newest item, so per-token updates repaint ONLY that
+  // bubble — never the whole list. `null` = no reply currently streaming.
+  final ValueNotifier<StreamingBubbleState?> streamingBubble =
+      ValueNotifier<StreamingBubbleState?>(null);
+
+  /// Last partial text persisted to cache during a stream, used to throttle
+  /// cache writes (C2) so we don't hammer SharedPreferences on every token.
+  DateTime _lastPartialPersist = DateTime.fromMillisecondsSinceEpoch(0);
+
+  /// Whether a streaming reply is currently in flight (true between the first
+  /// token and the terminal done/error event, or until a drop is handled).
+  bool get isStreaming => streamingBubble.value != null;
 
   // Fix #10 — one-time prune migration runs on first loadHistory of the
   // notifier's lifetime. Guarded by SharedPreferences claim so it never
@@ -281,6 +350,9 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
       n._hasMoreMessages = true;
       n._initialHistoryLoaded = false;
       n._pendingOfflineMessages.clear();
+      // Drop any in-flight streaming bubble so the previous user's partial
+      // reply can't flash before the next user's history loads.
+      n.streamingBubble.value = null;
     }
   }
 
@@ -1607,6 +1679,7 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
   @override
   void dispose() {
     _instances.remove(this);
+    streamingBubble.dispose();
     super.dispose();
   }
 }
