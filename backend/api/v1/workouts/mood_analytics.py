@@ -437,6 +437,107 @@ async def get_mood_analytics(
         raise safe_internal_error(e, "generation")
 
 
+class MoodCheckinInput(BaseModel):
+    """Input for logging a standalone mood check-in ("Just Log Mood")."""
+    mood: str
+    # Client-generated idempotency key. Stored in the context JSONB and checked
+    # before insert so a rapid double-tap, or an offline-queued write replayed
+    # after reconnect, cannot create two rows for the same logged mood.
+    idempotency_key: Optional[str] = None
+
+
+# Valid moods — kept in sync with the mobile `Mood` enum and the
+# mood_checkins.mood CHECK constraint (migration 2083).
+_VALID_MOODS = {
+    "great", "good", "motivated", "angry", "calm",
+    "stressed", "anxious", "tired", "low", "focused",
+}
+
+
+@router.post("/{user_id}/mood-checkins")
+async def create_mood_checkin(
+    user_id: str,
+    input: MoodCheckinInput,
+    current_user: dict = Depends(get_current_user),
+):
+    """Log a standalone mood check-in (the "Just Log Mood" path).
+
+    Inserts a row into mood_checkins — the same table mood-history /
+    mood-today / mood-weekly read from — so a logged mood is visible on every
+    mood surface. Idempotency-keyed: a replayed write returns the existing
+    row instead of inserting a duplicate.
+    """
+    logger.info(f"Creating mood check-in: user={user_id}, mood={input.mood}")
+
+    mood = (input.mood or "").lower().strip()
+    if mood not in _VALID_MOODS:
+        raise HTTPException(status_code=400, detail=f"Unknown mood: {input.mood}")
+
+    try:
+        db = get_supabase_db()
+
+        # Idempotency guard: if a row with this key already exists, return it
+        # rather than inserting a second one. The key lives in context JSONB
+        # (no dedicated column needed).
+        if input.idempotency_key:
+            existing = db.client.table("mood_checkins") \
+                .select("*") \
+                .eq("user_id", user_id) \
+                .eq("context->>idempotency_key", input.idempotency_key) \
+                .limit(1) \
+                .execute()
+            if existing.data:
+                row = existing.data[0]
+                config = mood_workout_service.get_mood_config(
+                    mood_workout_service.validate_mood(row.get("mood", mood))
+                )
+                return {
+                    "id": row.get("id"),
+                    "mood": row.get("mood"),
+                    "mood_emoji": config.emoji,
+                    "mood_color": config.color_hex,
+                    "check_in_time": row.get("check_in_time"),
+                    "workout_generated": row.get("workout_generated", False),
+                    "workout_completed": row.get("workout_completed", False),
+                }
+
+        context: Dict[str, Any] = {"source": "mood_picker"}
+        if input.idempotency_key:
+            context["idempotency_key"] = input.idempotency_key
+
+        result = db.client.table("mood_checkins").insert({
+            "user_id": user_id,
+            "mood": mood,
+            "workout_generated": False,
+            "context": context,
+        }).execute()
+
+        if not result.data:
+            raise HTTPException(
+                status_code=500, detail="Failed to create mood check-in",
+            )
+
+        row = result.data[0]
+        config = mood_workout_service.get_mood_config(
+            mood_workout_service.validate_mood(mood)
+        )
+        return {
+            "id": row.get("id"),
+            "mood": mood,
+            "mood_emoji": config.emoji,
+            "mood_color": config.color_hex,
+            "check_in_time": row.get("check_in_time"),
+            "workout_generated": False,
+            "workout_completed": False,
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to create mood check-in: {e}", exc_info=True)
+        raise safe_internal_error(e, "generation")
+
+
 @router.put("/{user_id}/mood-checkins/{checkin_id}/complete")
 async def mark_mood_workout_completed(user_id: str, checkin_id: str,
     current_user: dict = Depends(get_current_user),
