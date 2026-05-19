@@ -309,20 +309,34 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
 
         // Trust the backend's resolved today workout. /workouts/today already
         // honours the active gym profile's schedule (today.py
-        // _resolve_workout_days). The old client-side `workoutDays.contains`
-        // re-guard also stripped LEGITIMATE workouts rescheduled onto a
-        // non-preferred day ("Do this today") — so the home hero fell back to
-        // a FUTURE workout while the Workouts tab (no such guard) showed
-        // today's. Both surfaces now agree on `todayWorkout`.
-        final todayWorkout = todayWorkoutResponse?.todayWorkout?.toWorkout();
+        // _resolve_workout_days).
+        //
+        // Pin it to today's calendar date: a "Do this today" reschedule
+        // keeps the workout's ORIGINAL scheduled_date, so the date-keyed
+        // carousel below would file it on the wrong (future/past) slot —
+        // the home hero then fell through to a future workout badged
+        // SCHEDULED while the Workouts tab showed it as TODAY. Pinning the
+        // date makes the carousel place + badge it as today's.
+        var todayWorkout = todayWorkoutResponse?.todayWorkout?.toWorkout();
+        if (todayWorkout != null) {
+          final todayKey = _dateKey(DateTime.now());
+          final raw = todayWorkout.scheduledDate;
+          if (raw == null || raw.length < 10 || raw.substring(0, 10) != todayKey) {
+            todayWorkout = todayWorkout.copyWith(scheduledDate: todayKey);
+          }
+        }
 
         // Use valueOrNull so we don't block on the slow all-workouts fetch
         final allWorkouts = workoutsAsync.valueOrNull ?? [];
 
-        // Merge in today's workout from todayWorkoutProvider if not already in list
+        // Merge in today's workout. Replace any same-id entry from the
+        // all-workouts list so the date-pinned copy above wins (the list
+        // copy still carries the stale future/past scheduled_date).
         final mergedWorkouts = List<Workout>.from(allWorkouts);
-        if (todayWorkout != null && !mergedWorkouts.any((w) => w.id == todayWorkout.id)) {
-          mergedWorkouts.add(todayWorkout);
+        final tw = todayWorkout;
+        if (tw != null) {
+          mergedWorkouts.removeWhere((w) => w.id == tw.id);
+          mergedWorkouts.add(tw);
         }
         if (nextWorkout != null && !mergedWorkouts.any((w) => w.id == nextWorkout.id)) {
           mergedWorkouts.add(nextWorkout);
