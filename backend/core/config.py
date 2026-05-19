@@ -89,18 +89,19 @@ class Settings(BaseSettings):
     # This pool is PER GUNICORN WORKER. Total connections opened against the
     # Supavisor pooler are:
     #     instances × workers × (db_pool_size + db_max_overflow)
-    # At the autoscaling ceiling (render.yaml: maxInstances 8, -w 4):
-    #     8 instances × 4 workers × (5 + 10) = 480 client connections
+    # At the autoscaling ceiling (render.yaml: maxInstances 8, -w 2):
+    #     8 instances × 2 workers × (5 + 10) = 240 client connections
+    # Normal operation (minInstances 1, -w 2): 1 × 2 × 15 = 30 connections.
     # Because the app uses the TRANSACTION-mode pooler, connections are
     # short-lived/multiplexed, so a large per-worker pool buys nothing and
     # just risks Supavisor rejecting connections. The pool was therefore cut
     # from 10/15 to 5/10 so the worst-case math stays bounded.
     #
-    # ⚠️ OPS: 480 must stay UNDER the Supabase plan's pooler client-connection
-    # limit ("Pool Size" / max client connections in Dashboard → Database →
-    # Connection Pooling). VERIFY this against the current Supabase plan before
-    # deploying the autoscaled config — if the cap is below 480, either lower
-    # maxInstances/workers or raise the Supabase plan.
+    # ⚠️ OPS: the 240 worst-case (only reached if autoscaling hits 8 instances)
+    # must stay UNDER the Supabase plan's pooler client-connection limit
+    # ("Pool Size" / max client connections in Dashboard → Database →
+    # Connection Pooling). If the plan ever bumps to more workers/instances,
+    # re-check this math against the Supabase pooler cap.
     db_pool_size: int = 5            # Base persistent connections per worker
     db_max_overflow: int = 10        # Extra connections per worker under load
     db_pool_timeout: int = 30        # Seconds to wait for a connection

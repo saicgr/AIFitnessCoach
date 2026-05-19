@@ -11,38 +11,34 @@ services:
     name: fitwiz-backend
     env: python
     region: ohio
-    # ── BILLING / OPS DECISION (Phase D) ─────────────────────────────────
-    # `plan` is left at `standard` (2 GB / 1 CPU) intentionally — changing it
-    # is a billing decision and must be confirmed by a human before deploy.
+    # ── Plan + worker sizing (Phase D) ───────────────────────────────────
+    # `standard` = 1 CPU / 2 GB. Worker count is matched TO this plan:
+    # for an async (I/O-bound) FastAPI app the modern rule is ~1-2 workers
+    # per CPU core (NOT the sync `(2*cores)+1` formula). 1 CPU + the app's
+    # ~0.8-1 GB-per-worker footprint (Gemini/RAG/ChromaDB/LangGraph) → -w 2
+    # is the correct match: 2 workers fit in 2 GB and a single ~20s
+    # workout-generation request can't freeze the whole pool.
     #
-    # The startCommand below runs -w 4 (4 gunicorn workers). 4 workers on a
-    # 1-CPU `standard` instance OVER-SUBSCRIBES the CPU. Rule of thumb is
-    # ~1-2× CPU cores per worker count, so:
-    #   - `standard` (1 CPU)      → -w 2 is the right match
-    #   - `standard-plus`/`pro`   → 2-4 CPU → -w 4 is the right match
-    # Before deploying with -w 4, RAISE `plan` to a multi-core tier
-    # (standard-plus or pro) so workers ≈ 1-2× cores and the 2 GB → larger
-    # RAM holds 4 app copies. If you must stay on `standard`, drop -w 4 to
-    # -w 2 in the startCommand. This is a billing decision — do not assume.
-    #
-    # Pinned here so a blueprint sync never silently downgrades the service.
+    # If usage grows: bump `plan` to `pro` (2 CPU/4 GB → -w 2) or `pro plus`
+    # (4 CPU/8 GB → -w 4) and raise the worker count to match the new core
+    # count. Always keep workers ≈ 1-2× CPU cores. Pinned so a blueprint
+    # sync never silently downgrades the service.
     plan: standard
     branch: main
     rootDir: backend
     buildCommand: chmod +x build.sh && ./build.sh
-    # Horizontal autoscaling (Phase D). Render adds/removes instances between
-    # minInstances and maxInstances to keep average CPU near targetCPUPercent.
-    # minInstances: 2 keeps a warm spare so a single-instance failure or a
-    # deploy never drops the service to zero capacity.
+    # Horizontal autoscaling (Phase D) — the real lever for a traffic spike.
+    # Render adds/removes instances between minInstances and maxInstances to
+    # keep average CPU near targetCPUPercent. minInstances: 1 keeps cost at
+    # one instance for normal (low) traffic; maxInstances: 8 lets it scale
+    # out automatically if load ever spikes — no code change needed.
     scaling:
-      minInstances: 2
+      minInstances: 1
       maxInstances: 8
       targetCPUPercent: 70
-    # -w 4 → 4 workers → 4 event loops per instance. Worker count should be
-    # ~1-2× CPU cores of the instance plan (see BILLING / OPS note above).
-    # A single ~20s workout-generation request can no longer freeze the whole
-    # worker pool (2026-05-16 incident). --timeout 180 covers SSE generation.
-    startCommand: gunicorn main:app -w 4 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT --timeout 180
+    # -w 2 → 2 workers → 2 event loops, matched to the 1-CPU `standard` plan
+    # (see plan note above). --timeout 180 covers SSE streaming/generation.
+    startCommand: gunicorn main:app -w 2 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT --timeout 180
     healthCheckPath: /
     envVars:
       - key: PYTHON_VERSION
