@@ -79,6 +79,9 @@ class HistoryQuery {
 /// Mood/energy patterns for the Patterns tab (Section 3). Always 90-day window.
 final foodPatternsMoodProvider = FutureProvider.autoDispose
     .family<FoodPatternsMoodResponse, String>((ref, userId) async {
+  // One entry per user (no range/date key) — keepAlive so it can be
+  // prewarmed from main_shell and survives Patterns-tab re-entry.
+  ref.keepAlive();
   final repo = ref.watch(nutritionRepositoryProvider);
   return repo.getMoodPatterns(userId);
 });
@@ -121,6 +124,9 @@ final patternsHistoryProvider = FutureProvider.autoDispose
 /// Patterns/check-in settings (backed by user_nutrition_preferences).
 final patternsSettingsProvider = FutureProvider.autoDispose
     .family<PatternsSettings, String>((ref, userId) async {
+  // One entry per user (no range/date key) — keepAlive so it can be
+  // prewarmed from main_shell and survives Patterns-tab re-entry.
+  ref.keepAlive();
   final repo = ref.watch(nutritionRepositoryProvider);
   return repo.getPatternsSettings(userId);
 });

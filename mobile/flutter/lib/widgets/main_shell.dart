@@ -35,7 +35,12 @@ import 'level_up_dialog.dart';
 import 'streak_saved_dialog.dart';
 import 'offline_banner.dart';
 import 'email_verification_banner.dart';
-import '../data/providers/xp_provider.dart' show xpProvider, levelUpEventProvider, dailyLoginResultProvider;
+import '../data/providers/xp_provider.dart'
+    show
+        xpProvider,
+        levelUpEventProvider,
+        dailyLoginResultProvider,
+        unclaimedCratesCountProvider;
 import '../data/providers/pending_celebrations_provider.dart';
 import 'trophy_ceremony_overlay.dart';
 import '../data/models/gym_profile.dart';
@@ -61,6 +66,8 @@ import '../data/providers/synced_workouts_provider.dart'
     show syncedWorkoutsProvider;
 import '../data/providers/nutrition_preferences_provider.dart'
     show nutritionPreferencesProvider;
+import '../data/providers/food_patterns_provider.dart'
+    show foodPatternsMoodProvider, patternsSettingsProvider;
 
 part 'main_shell_part_edge_panel_handle.dart';
 part 'main_shell_part_guest_mode_banner.dart';
@@ -244,8 +251,9 @@ class MainShell extends ConsumerWidget {
     // Discover tab — kept-alive leaderboard snapshot; its notifier load()s
     // on creation.
     ref.read(discoverSnapshotProvider);
-    // You tab — XP / rewards state.
+    // You tab — XP / rewards state + unclaimed-crates badge count.
     ref.read(xpProvider);
+    ref.read(unclaimedCratesCountProvider);
 
     // Providers keyed by (or initialized with) the signed-in user id.
     final prewarmUserId = ref.read(authStateProvider).user?.id;
@@ -255,10 +263,17 @@ class MainShell extends ConsumerWidget {
       unawaited(ref.read(fastingProvider.notifier).initialize(prewarmUserId));
       // Home habits section — userId-family StateNotifier.
       ref.read(habitsProvider(prewarmUserId));
-      // Nutrition tab — batch-cook events + saved recipes/foods/menus.
-      // The Saved hub's lists all keepAlive(), so warming them here makes
-      // the first open of the Saved hub instant (no per-tab spinner).
+      // Nutrition · Daily tab — batch-cook events.
       ref.read(activeCookEventsProvider(prewarmUserId));
+      // Nutrition · Recipes sub-tab — upcoming meal schedules.
+      ref.read(upcomingSchedulesProvider(prewarmUserId));
+      // Nutrition · Patterns sub-tab — the two single-entry (userId-keyed)
+      // providers. The range/date-keyed ones (macros/topFoods/history)
+      // re-key as the user scrubs, so they load on first tab open.
+      ref.read(foodPatternsMoodProvider(prewarmUserId));
+      ref.read(patternsSettingsProvider(prewarmUserId));
+      // Nutrition · Saved hub — recipes/foods/menus. All keepAlive(), so
+      // warming them here makes the first open of the Saved hub instant.
       ref.read(favoriteRecipesProvider(prewarmUserId));
       ref.read(savedFoodsHubProvider(prewarmUserId));
       ref.read(savedMenusHubProvider);
