@@ -41,6 +41,7 @@ import '../../data/repositories/auth_repository.dart';
 import '../../data/repositories/workout_repository.dart';
 import '../../data/services/api_client.dart';
 import '../../data/services/exercise_history_batch_service.dart';
+import '../../data/services/image_url_cache.dart';
 import '../../data/services/live_activity_service.dart';
 import '../../data/services/pr_detection_service.dart';
 import '../../data/services/workout_notification_service.dart';
@@ -696,6 +697,85 @@ class _ActiveWorkoutScreenState
     }
   }
 
+  /// WF4 — rehydrate the in-progress workout from the SharedPreferences
+  /// checkpoint. Called once post-mount. If a checkpoint exists for THIS
+  /// workout it re-seeds `_completedSets`, the current exercise index, and
+  /// restores the elapsed workout timer. No-op when there's no checkpoint
+  /// (fresh workout) or when the live session already has more sets (e.g. a
+  /// tier swap already populated us — `restoreCheckpoint` guards that).
+  Future<void> _restoreWorkoutCheckpoint() async {
+    try {
+      final userId = await ref.read(apiClientProvider).getUserId();
+      if (!mounted) return;
+      final session = ref.read(activeWorkoutSessionProvider.notifier);
+      final restored = await session.restoreCheckpoint(
+        workoutId: widget.workout.id,
+        userId: userId,
+      );
+      if (!mounted || restored == null) return;
+      if (restored.workoutId != widget.workout.id) return;
+
+      final hasCheckpointSets = restored.completedSets.values
+          .any((l) => l.isNotEmpty);
+      if (!hasCheckpointSets && restored.elapsedSeconds <= 0) {
+        return; // empty checkpoint — nothing worth restoring
+      }
+
+      setState(() {
+        restored.completedSets.forEach((idx, logs) {
+          if (idx < _exercises.length && logs.isNotEmpty) {
+            // Don't clobber sets the mini-player / tier-swap restore already
+            // populated — only fill empty buckets.
+            if ((_completedSets[idx] ?? const <SetLog>[]).isEmpty) {
+              _completedSets[idx] = List<SetLog>.from(logs);
+            }
+          }
+        });
+        _currentExerciseIndex =
+            restored.currentExerciseIndex.clamp(0, _exercises.length - 1);
+        _viewingExerciseIndex = _currentExerciseIndex;
+        // Skip warmup — a restored session was already past it.
+        _currentPhase = WorkoutPhase.active;
+      });
+      // Restore the workout clock so duration / pace stay accurate.
+      if (restored.elapsedSeconds > _timerController.workoutSeconds) {
+        _timerController.startWorkoutTimer(
+            initialSeconds: restored.elapsedSeconds);
+      }
+      // Re-seed the input controllers against the restored current exercise.
+      initControllersForExercise(_currentExerciseIndex);
+      debugPrint(
+          '🔁 [ActiveWorkout] Restored checkpoint: '
+          '${restored.elapsedSeconds}s elapsed, '
+          '${restored.completedSets.values.fold<int>(0, (s, l) => s + l.length)} sets');
+    } catch (e) {
+      debugPrint('⚠️ [ActiveWorkout] checkpoint restore failed: $e');
+    }
+  }
+
+  /// WF2 — fire-and-forget batch prefetch of the first ~3 exercises'
+  /// illustration URLs into the persisted [ImageUrlCache]. Without this the
+  /// opening exercises briefly render a blank image slot while their
+  /// `/exercise-images/` lookup is in flight. Reuses the existing batch
+  /// endpoint + disk-backed cache, so repeat workouts are instant.
+  void _prefetchExerciseIllustrations() {
+    if (_exercises.isEmpty) return;
+    final names = _exercises
+        .take(3)
+        .map((e) => e.name)
+        .where((n) => n.isNotEmpty)
+        .toList(growable: false);
+    if (names.isEmpty) return;
+    unawaited(() async {
+      try {
+        await ImageUrlCache.initialize();
+        await ImageUrlCache.batchPreFetch(names, ref.read(apiClientProvider));
+      } catch (e) {
+        debugPrint('⚠️ [ActiveWorkout] illustration prefetch failed: $e');
+      }
+    }());
+  }
+
   /// If warmup loading takes too long, skip the loading screen
   /// so the user isn't stuck waiting. The warmup will either load
   /// in time or auto-skip to the active phase.
@@ -807,8 +887,16 @@ class _ActiveWorkoutScreenState
 
     // Initialize timer controller
     _timerController = WorkoutTimerController();
-    _timerController.onWorkoutTick = (_) {
+    _timerController.onWorkoutTick = (seconds) {
       setState(() {});
+      // WF4 — feed the elapsed clock into the shared session so the
+      // checkpoint persists an accurate timer. updateElapsedSeconds
+      // self-throttles (only schedules a write every ~5s) so this is cheap.
+      if (mounted) {
+        ref
+            .read(activeWorkoutSessionProvider.notifier)
+            .updateElapsedSeconds(seconds);
+      }
       // Only refresh the notification while the app is backgrounded.
       // While foregrounded, the shade entry is hidden (cancelled in
       // `didChangeAppLifecycleState(resumed)`) — re-firing it every
@@ -930,6 +1018,20 @@ class _ActiveWorkoutScreenState
           '🔁 [ActiveWorkout] Restored ${session.completedSets.length} exercise sets from tier swap');
     }
 
+    // WF4 — crash-safe checkpoint restore. If the app was killed mid-workout
+    // (or backgrounded + OS-reaped), a SharedPreferences checkpoint for THIS
+    // workout holds the logged sets / current exercise / elapsed timer.
+    // Restore them so the user picks up exactly where they left off instead
+    // of losing the session. Runs post-frame because it touches the session
+    // provider (can't mutate a provider during build) and calls setState.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _restoreWorkoutCheckpoint();
+    });
+    // WF2 — prefetch the first few exercise illustration URLs so the opening
+    // exercises don't show blank image slots while the user reads set 1.
+    _prefetchExerciseIllustrations();
+
     // Fetch historical data (fire-and-forget, doesn't block workout start)
     fetchExerciseHistory();
 
@@ -998,6 +1100,15 @@ class _ActiveWorkoutScreenState
         // wait for the next timer tick. Wire the remote-control callbacks
         // so Pause/Resume from the shade reaches the real screen timer.
         _isAppBackgrounded = true;
+        // WF4 — force an immediate (non-debounced) checkpoint write. The OS
+        // can freeze / kill the process while backgrounded; the debounce
+        // timer may not fire first, so flush synchronously here so a kill
+        // never loses sets logged since the last debounced write.
+        try {
+          unawaited(ref
+              .read(activeWorkoutSessionProvider.notifier)
+              .flushCheckpoint());
+        } catch (_) {/* ref may be unavailable during teardown */}
         WorkoutNotificationService.instance.onPauseResumePressed = togglePause;
         WorkoutNotificationService.instance.onStopPressed = () {
           // "Stop" just brings the app forward (showsUserInterface=true on
@@ -2008,6 +2119,12 @@ class _ActiveWorkoutScreenState
             : swappedExercise.sets ?? 3;
         _previousSets[exerciseIndex] = [];
       });
+      // WF4 — the swap clears the swapped exercise's completed sets; mirror
+      // the map into the session so the crash-safe checkpoint doesn't keep
+      // the pre-swap sets and mis-attribute them on a kill+restore.
+      ref
+          .read(activeWorkoutSessionProvider.notifier)
+          .syncSets(_completedSets);
 
       // Show success feedback
       if (mounted) {

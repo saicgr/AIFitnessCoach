@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/cache/offline_write_queue.dart';
 import '../../../core/models/set_progression.dart';
 import '../../../core/providers/active_workout_phase_provider.dart';
 import '../../../core/providers/weight_increments_provider.dart';
@@ -173,6 +174,14 @@ mixin WorkoutFlowMixin<T extends StatefulWidget> on State<T> {
 
     setState(() => currentPhase = WorkoutPhase.complete);
 
+    // WF7 — belt-and-suspenders prewarm. The 2nd-to-last-set heuristic in
+    // set_logging_mixin.dart already fires this for normal workouts; this
+    // unconditional call covers the edge cases that heuristic misses
+    // (single-set workouts, supersets, "Complete workout now"). Idempotent —
+    // a recent warm is a no-op, and concurrent callers share one in-flight
+    // future.
+    unawaited(WorkoutCompletionPrewarmer.warm(ref));
+
     // The completion-phase Scaffold (`buildCompletionScreen`) already shows
     // a centered trophy + "Saving workout..." label + spinner — adding a
     // glass loading overlay on top duplicates the affordance and the trophy
@@ -180,6 +189,13 @@ mixin WorkoutFlowMixin<T extends StatefulWidget> on State<T> {
     // alone is enough.
     await _runFinalizeWorkoutCompletion();
   }
+
+  /// WF9 — disk-persisted offline queue for workout-completion writes. If
+  /// `/complete` fails (offline / 5xx) the completion POST is enqueued here
+  /// and replayed when connectivity returns, so a finished workout is never
+  /// silently lost. Idempotency-keyed so a replay can't double-complete.
+  static final OfflineWriteQueue _completionQueue =
+      OfflineWriteQueue(feature: 'workout_complete');
 
   Future<void> _runFinalizeWorkoutCompletion() async {
 
@@ -209,195 +225,39 @@ mixin WorkoutFlowMixin<T extends StatefulWidget> on State<T> {
       },
     );
 
-    String? workoutLogId;
+    // Locally-computed totals. PRs / performance comparison / workoutLogId
+    // are no longer resolved on the navigation path (WF8) — they land via
+    // the background save, so the completion screen receives null for them.
     int totalCompletedSets = 0;
     int totalReps = 0;
     double totalVolumeKg = 0.0;
     int totalRestSeconds = 0;
     double avgRestSeconds = 0.0;
-    List<PersonalRecordInfo>? personalRecords;
-    PerformanceComparisonInfo? performanceComparison;
-    WorkoutCompletionResponse? completionResponse;
 
-    try {
-      final workoutRepo = ref.read(workoutRepositoryProvider);
-      final apiClient = ref.read(apiClientProvider);
-      final userId = await apiClient.getUserId();
-
-      debugPrint('🔍 [Complete] workout.id: ${workout.id}');
-      debugPrint('🔍 [Complete] userId: $userId');
-
-      if (workout.id != null && userId != null) {
-        debugPrint('🏋️ Saving workout log to backend...');
-        final setsJson = buildSetsJson();
-        final metadata = _buildWorkoutMetadata(workout);
-        debugPrint('🔍 [Complete] setsJson length: ${setsJson.length}');
-
-        // Compute totals up-front (pure-Dart, no I/O) so they're ready for
-        // any API that needs them, regardless of save-flow ordering.
-        totalCompletedSets = completedSets.values.fold<int>(
-          0, (sum, list) => sum + list.length,
-        );
-        final exercisesWithSets =
-            completedSets.values.where((l) => l.isNotEmpty).length;
-        for (final sets in completedSets.values) {
-          for (final setLog in sets) {
-            totalReps += setLog.reps;
-            totalVolumeKg += setLog.reps * setLog.weight;
-          }
-        }
-        if (restIntervals.isNotEmpty) {
-          for (final interval in restIntervals) {
-            totalRestSeconds += (interval['rest_seconds'] as int?) ?? 0;
-          }
-          avgRestSeconds = totalRestSeconds / restIntervals.length;
-        }
-
-        // Three independent waves to keep the "Saving workout..." spinner
-        // as short as possible:
-        //
-        //   Wave 1 (parallel):
-        //     - createWorkoutLog (returns workoutLogId)
-        //     - completeWorkout  (returns PRs + comparison; backend reads
-        //                         the workout's own exercises_json for PR
-        //                         detection — does NOT need set_performances
-        //                         rows to be inserted first)
-        //     - logDrinkIntake / logWorkoutExit / logSupersetUsage
-        //                         (all use only userId + workoutId)
-        //
-        //   Phase 1 inside logAllSetPerformances also kicks off in parallel
-        //   here — uploads don't need workoutLogId, only the final bulk
-        //   POST does. We resolve workoutLogId, then fire the bulk POST in
-        //   wave 2.
-        final completionFuture = workoutRepo.completeWorkout(workout.id!);
-        final createLogFuture = workoutRepo.createWorkoutLog(
-          workoutId: workout.id!,
-          userId: userId,
-          setsJson: setsJson,
-          totalTimeSeconds: timerController.workoutSeconds,
-          metadata: jsonEncode(metadata),
-        );
-
-        final ancillaryFutures = <Future>[];
-        if (totalDrinkIntakeMl > 0) {
-          ancillaryFutures.add(workoutRepo.logDrinkIntake(
-            workoutId: workout.id!,
-            userId: userId,
-            amountMl: totalDrinkIntakeMl,
-            drinkType: 'water',
-          ).then((_) =>
-              debugPrint('💧 Logged drink intake: ${totalDrinkIntakeMl}ml')));
-        }
-        ancillaryFutures.add(workoutRepo.logWorkoutExit(
-          workoutId: workout.id!,
-          userId: userId,
-          exitReason: 'completed',
-          exercisesCompleted: exercisesWithSets,
-          totalExercises: exercises.length,
-          setsCompleted: totalCompletedSets,
-          timeSpentSeconds: timerController.workoutSeconds,
-          progressPercentage: exercises.isNotEmpty
-              ? (exercisesWithSets / exercises.length * 100)
-              : 100.0,
-        ).then((_) => debugPrint('✅ Workout exit logged as completed')));
-        ancillaryFutures.add(logSupersetUsage(userId));
-
-        // Wave 2: once the workout-log row exists, fire the bulk
-        // set-performance POST. logAllSetPerformances internally awaits
-        // its own (parallelized) media uploads first, then bulk-POSTs.
-        final setPerfsFuture = createLogFuture.then((workoutLog) async {
-          if (workoutLog != null) {
-            debugPrint('✅ Workout log created: ${workoutLog['id']}');
-            workoutLogId = workoutLog['id'] as String;
-            await logAllSetPerformances(workoutLogId!, userId);
-          } else {
-            debugPrint(
-                '❌ [Complete] createWorkoutLog returned null - workoutLogId will be null');
-          }
-        });
-
-        // Only await the COMPLETION call — the rest can finish in the
-        // background while the user is already looking at the
-        // workout-complete screen. Previously we awaited Future.wait of all
-        // 5+ futures (completion + set-performances + drink intake + exit
-        // log + superset usage), which blocked the screen-push for 2-4s
-        // because set-performances includes media uploads. Now: complete →
-        // navigate → background drains the rest.
-        completionResponse = await completionFuture;
-        debugPrint('✅ Workout marked as complete');
-
-        // Kick off the completion-screen data prewarmer the moment we know
-        // the workout is officially complete — by the time the user lands
-        // on the screen (~16ms later), the totalWorkoutCount + achievements
-        // are already in cache so the screen renders instantly with stats
-        // populated instead of showing 1-2s of internal spinners.
-        unawaited(WorkoutCompletionPrewarmer.warm(ref, force: true));
-
-        // Fire-and-forget the rest of wave 2 + ancillary writes. Errors
-        // logged to console; never blocks navigation.
-        unawaited(setPerfsFuture.catchError((e) {
-          debugPrint('⚠️ Background set-performances POST failed: $e');
-        }));
-        for (final f in ancillaryFutures) {
-          unawaited(f.catchError((e) {
-            debugPrint('⚠️ Background ancillary write failed: $e');
-          }));
-        }
-
-        // Refresh every screen that summarizes workout history so the user
-        // sees this session reflected immediately — no app restart, no
-        // pull-to-refresh required. All cache-first providers absorb the
-        // invalidation as a silent revalidation.
-        if (mounted) {
-          ref.invalidate(workoutsProvider);
-          // Refresh /today so completedWorkout/completedToday flip server-side.
-          // Without this, todayWorkoutProvider's in-memory cache keeps the
-          // pre-completion snapshot, so the carousel + week strip lose the
-          // completed state as soon as workoutsProvider's silent refresh
-          // returns and overwrites the optimistic update.
-          ref.read(todayWorkoutProvider.notifier).invalidateAndRefresh();
-          ref.invalidate(muscleHeatmapProvider);
-          ref.invalidate(muscleFrequencyProvider);
-          ref.invalidate(muscleBalanceProvider);
-          ref.invalidate(scoresProvider);
-          ref.invalidate(milestonesProvider);
-          ref.invalidate(consistencyProvider);
-          ref.invalidate(consistencyDataProvider);
-          ref.invalidate(activityHeatmapProvider);
-          ref.invalidate(calendarHeatmapProvider);
-        }
-
-        // If the server already awarded the workout_complete XP inline
-        // (new behavior — see backend/api/v1/workouts/crud_completion.py),
-        // we only need to refresh the client XP state from the server.
-        // Skip the redundant `/xp/award-goal-xp` POST — the server dedup
-        // would treat it as a no-op anyway. Fall back to the legacy
-        // client-driven call for older backends that don't set the flag.
-        if (completionResponse?.xpAwarded == true) {
-          debugPrint('✅ Server already awarded ${completionResponse!.xpAmount} XP — refreshing local state');
-          // Refresh XP from backend so UI (level ring, streak) updates.
-          unawaited(ref.read(xpProvider.notifier).loadUserXP(showLoading: false));
-        } else {
-          // Legacy path: client-driven XP award. Safe against older
-          // backends that didn't include xp_awarded in the response.
-          ref.read(xpProvider.notifier).markWorkoutCompleted(workoutId: workout.id);
-        }
-
-        if (completionResponse != null && completionResponse.hasPRs) {
-          personalRecords = completionResponse.personalRecords;
-          debugPrint('🏆 Got ${personalRecords.length} PRs from completion API');
-        }
-
-        if (completionResponse != null && completionResponse.performanceComparison != null) {
-          performanceComparison = completionResponse.performanceComparison;
-          debugPrint('📊 Got performance comparison');
-        }
-      } else {
-        debugPrint('❌ [Complete] Skipping workout log creation: workout.id=${workout.id}, userId=$userId');
+    // Pure-Dart totals — computed up-front so the completion screen can
+    // render immediately from locally-known data with NO awaited network.
+    totalCompletedSets = completedSets.values.fold<int>(
+      0, (sum, list) => sum + list.length,
+    );
+    for (final sets in completedSets.values) {
+      for (final setLog in sets) {
+        totalReps += setLog.reps;
+        totalVolumeKg += setLog.reps * setLog.weight;
       }
-    } catch (e) {
-      debugPrint('❌ Failed to complete workout: $e');
     }
+    if (restIntervals.isNotEmpty) {
+      for (final interval in restIntervals) {
+        totalRestSeconds += (interval['rest_seconds'] as int?) ?? 0;
+      }
+      avgRestSeconds = totalRestSeconds / restIntervals.length;
+    }
+
+    // WF8 — kick off ALL backend writes WITHOUT awaiting them. The user
+    // sees the completion screen on the next frame; `/complete` + the
+    // Wave-2 set-performance POST + ancillary logs all drain in the
+    // background. WF9: a failed `/complete` is enqueued to the offline
+    // queue and replayed on reconnect, so a finished workout is never lost.
+    unawaited(_runBackgroundCompletionSave(workout));
 
     final exercisesPerformance = <Map<String, dynamic>>[];
     for (int i = 0; i < exercises.length; i++) {
@@ -415,27 +275,23 @@ mixin WorkoutFlowMixin<T extends StatefulWidget> on State<T> {
       }
     }
 
-    int completionCalories = 0;
-    if (completionResponse != null) {
-      completionCalories = completionResponse.performanceComparison
-          ?.workoutComparison.currentCalories ?? 0;
-      if (completionCalories <= 0) {
-        completionCalories = completionResponse.workout.estimatedCalories;
-      }
-    }
-    if (completionCalories <= 0) {
-      completionCalories = workout.estimatedCalories;
-    }
+    // WF8 — calories from the locally-stored estimate. The server-computed
+    // value (and PRs / performance comparison) resolve in the background
+    // save; the completion screen renders its calm "Saved" state immediately
+    // and silently upgrades these when the `/complete` response lands.
+    final completionCalories = workout.estimatedCalories;
 
     if (mounted) {
-      debugPrint('🏋️ [Complete] Navigating to workout-complete with workoutLogId: $workoutLogId, calories: $completionCalories');
+      debugPrint('🏋️ [Complete] Navigating to workout-complete (background save in flight)');
       context.go('/workout-complete', extra: {
         'workout': workout,
         'duration': timerController.workoutSeconds,
         'calories': completionCalories,
         'drinkIntakeMl': totalDrinkIntakeMl,
         'restIntervals': restIntervals.length,
-        'workoutLogId': workoutLogId,
+        // workoutLogId resolves inside the background save; null here is
+        // expected — the completion screen handles a deferred id.
+        'workoutLogId': null,
         'exercisesPerformance': exercisesPerformance,
         'totalRestSeconds': totalRestSeconds,
         'avgRestSeconds': avgRestSeconds,
@@ -444,12 +300,198 @@ mixin WorkoutFlowMixin<T extends StatefulWidget> on State<T> {
         'totalVolumeKg': totalVolumeKg,
         'challengeId': challengeId,
         'challengeData': challengeData,
-        'personalRecords': personalRecords,
-        'performanceComparison': performanceComparison,
-        // W1: Day 0-7 retention — trigger First Workout Forecast sheet
-        'isFirstWorkout': completionResponse?.isFirstWorkout ?? false,
+        // PRs / comparison arrive via the background `/complete` call.
+        'personalRecords': null,
+        'performanceComparison': null,
+        'isFirstWorkout': false,
       });
     }
+  }
+
+  /// WF8/WF9 — runs the full workout-completion save pipeline OFF the
+  /// navigation path. Called fire-and-forget from
+  /// [_runFinalizeWorkoutCompletion] so tapping Finish never awaits
+  /// `/complete`. All errors are caught; a failed/offline `/complete` is
+  /// persisted to [_completionQueue] and replayed when connectivity returns.
+  Future<void> _runBackgroundCompletionSave(Workout workout) async {
+    try {
+      final workoutRepo = ref.read(workoutRepositoryProvider);
+      final apiClient = ref.read(apiClientProvider);
+      final userId = await apiClient.getUserId();
+
+      if (workout.id == null || userId == null) {
+        debugPrint('❌ [Complete] Skipping save: workout.id=${workout.id}, userId=$userId');
+        return;
+      }
+
+      debugPrint('🏋️ [Complete] Background save starting...');
+      final setsJson = buildSetsJson();
+      final metadata = _buildWorkoutMetadata(workout);
+
+      final totalCompletedSets = completedSets.values
+          .fold<int>(0, (sum, list) => sum + list.length);
+      final exercisesWithSets =
+          completedSets.values.where((l) => l.isNotEmpty).length;
+
+      // Wave 1: completion + workout-log creation + ancillary logs, all
+      // parallel. The completion call's own optimistic in-memory mark
+      // already flipped the workout to complete (see WorkoutRepository
+      // .completeWorkout), so the home/today UI is correct regardless of
+      // when this network call resolves.
+      String? workoutLogId;
+      final createLogFuture = workoutRepo.createWorkoutLog(
+        workoutId: workout.id!,
+        userId: userId,
+        setsJson: setsJson,
+        totalTimeSeconds: timerController.workoutSeconds,
+        metadata: jsonEncode(metadata),
+      );
+
+      final ancillaryFutures = <Future>[];
+      if (totalDrinkIntakeMl > 0) {
+        ancillaryFutures.add(workoutRepo.logDrinkIntake(
+          workoutId: workout.id!,
+          userId: userId,
+          amountMl: totalDrinkIntakeMl,
+          drinkType: 'water',
+        ));
+      }
+      ancillaryFutures.add(workoutRepo.logWorkoutExit(
+        workoutId: workout.id!,
+        userId: userId,
+        exitReason: 'completed',
+        exercisesCompleted: exercisesWithSets,
+        totalExercises: exercises.length,
+        setsCompleted: totalCompletedSets,
+        timeSpentSeconds: timerController.workoutSeconds,
+        progressPercentage: exercises.isNotEmpty
+            ? (exercisesWithSets / exercises.length * 100)
+            : 100.0,
+      ));
+      ancillaryFutures.add(logSupersetUsage(userId));
+
+      // Wave 2: once the workout-log row exists, bulk-POST set performances.
+      final setPerfsFuture = createLogFuture.then((workoutLog) async {
+        if (workoutLog != null) {
+          workoutLogId = workoutLog['id'] as String;
+          debugPrint('✅ [Complete] Workout log created: $workoutLogId');
+          await logAllSetPerformances(workoutLogId!, userId);
+        } else {
+          debugPrint('❌ [Complete] createWorkoutLog returned null');
+        }
+      });
+
+      // Fire the `/complete` call. On any failure (offline / 5xx) enqueue it
+      // to the offline queue so it replays on reconnect — never silently
+      // lost. The completion screen has already rendered a calm "Saved"
+      // state from local data, so the user sees no error.
+      unawaited(_completeWorkoutWithOfflineFallback(
+        workoutRepo: workoutRepo,
+        userId: userId,
+        workout: workout,
+      ));
+
+      // Drain wave 2 + ancillary writes in the background.
+      unawaited(setPerfsFuture.catchError((e) {
+        debugPrint('⚠️ [Complete] Background set-performances POST failed: $e');
+      }));
+      for (final f in ancillaryFutures) {
+        unawaited(f.catchError((e) {
+          debugPrint('⚠️ [Complete] Background ancillary write failed: $e');
+        }));
+      }
+
+      // Refresh every screen that summarizes workout history. Debounced
+      // (WF10) so the optimistic completed state doesn't flicker when the
+      // silent revalidation lands.
+      _scheduleCompletionRefresh(workout);
+
+      // XP refresh — the server awards workout_complete XP inline, so just
+      // reload local XP state. The legacy client-driven mark stays as a
+      // fallback for older backends and is also harmless (server de-dupes).
+      ref.read(xpProvider.notifier).markWorkoutCompleted(workoutId: workout.id);
+      unawaited(
+          ref.read(xpProvider.notifier).loadUserXP(showLoading: false));
+    } catch (e) {
+      debugPrint('❌ [Complete] Background save failed: $e');
+    }
+  }
+
+  /// Fire `POST /workouts/{id}/complete`; on failure persist it to the
+  /// offline queue keyed by an idempotency key so a reconnect replay can't
+  /// double-complete. The connectivity-restored flush is bound the first
+  /// time we enqueue.
+  Future<void> _completeWorkoutWithOfflineFallback({
+    required WorkoutRepository workoutRepo,
+    required String userId,
+    required Workout workout,
+  }) async {
+    try {
+      final response = await workoutRepo.completeWorkout(workout.id!);
+      if (response != null) {
+        debugPrint('✅ [Complete] Workout marked complete on server');
+        return;
+      }
+      // Null response = non-200 the repo already rolled back. Treat as a
+      // transient failure and queue for retry.
+      debugPrint('⚠️ [Complete] /complete returned null — enqueueing for retry');
+    } catch (e) {
+      debugPrint('⚠️ [Complete] /complete failed ($e) — enqueueing for retry');
+    }
+
+    // WF9 — persist the completion so it survives an app kill and replays
+    // when the device is back online.
+    final apiClient = ref.read(apiClientProvider);
+    final body = {
+      'workout_id': workout.id,
+      'idempotency_key': OfflineWriteQueue.idempotencyKey('wkout_complete'),
+    };
+    await _completionQueue.enqueue(userId: userId, body: body);
+    _completionQueue.bindConnectivity(
+      userId: userId,
+      sender: (queuedBody) async {
+        try {
+          final wid = queuedBody['workout_id'] as String?;
+          if (wid == null) return true; // poison item — drop it
+          final resp = await apiClient.post(
+            '/workouts/$wid/complete',
+            data: {'idempotency_key': queuedBody['idempotency_key']},
+          );
+          // 2xx delivered; the server de-dupes a replay via the key.
+          return resp.statusCode != null &&
+              resp.statusCode! >= 200 &&
+              resp.statusCode! < 300;
+        } catch (_) {
+          return false; // transient — keep queued, stop the flush
+        }
+      },
+    );
+  }
+
+  /// WF10 — debounced post-completion provider refresh. Without the debounce
+  /// a burst of invalidations (completion + background writes resolving back
+  /// to back) makes the optimistic "completed" state flicker between the
+  /// optimistic value and each silent revalidation. Coalesce into one pass.
+  Timer? _completionRefreshDebounce;
+  void _scheduleCompletionRefresh(Workout workout) {
+    _completionRefreshDebounce?.cancel();
+    _completionRefreshDebounce =
+        Timer(const Duration(milliseconds: 400), () {
+      if (!mounted) return;
+      ref.invalidate(workoutsProvider);
+      // Refresh /today so completedWorkout/completedToday flip server-side
+      // without the in-memory cache reverting the optimistic update.
+      ref.read(todayWorkoutProvider.notifier).invalidateAndRefresh();
+      ref.invalidate(muscleHeatmapProvider);
+      ref.invalidate(muscleFrequencyProvider);
+      ref.invalidate(muscleBalanceProvider);
+      ref.invalidate(scoresProvider);
+      ref.invalidate(milestonesProvider);
+      ref.invalidate(consistencyProvider);
+      ref.invalidate(consistencyDataProvider);
+      ref.invalidate(activityHeatmapProvider);
+      ref.invalidate(calendarHeatmapProvider);
+    });
   }
 
   /// Build comprehensive workout metadata JSON

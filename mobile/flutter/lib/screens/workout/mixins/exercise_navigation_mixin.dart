@@ -17,6 +17,7 @@ import '../../../data/repositories/workout_repository.dart';
 import '../../../data/services/api_client.dart';
 import '../../../data/services/haptic_service.dart';
 import '../models/workout_state.dart';
+import '../providers/active_workout_session_provider.dart';
 import '../widgets/exercise_options_sheet.dart' as options_sheet;
 import '../widgets/exercise_options_sheet.dart' show RepProgressionType;
 import '../widgets/exercise_analytics_page.dart';
@@ -679,6 +680,13 @@ mixin ExerciseNavigationMixin<T extends StatefulWidget> on State<T> {
             viewingExerciseIndex = exercises.length - 1;
           }
         });
+        // WF4 — deleting an exercise shifts every higher exercise index down
+        // by one. Push the remapped map into the session so the crash-safe
+        // checkpoint attributes logged sets to the CORRECT exercises after a
+        // kill+restore (otherwise sets would land on the wrong exercise).
+        ref
+            .read(activeWorkoutSessionProvider.notifier)
+            .syncSets(completedSets);
       },
       onAddExercise: () => showExerciseAddSheetImpl(),
     );
@@ -731,6 +739,12 @@ mixin ExerciseNavigationMixin<T extends StatefulWidget> on State<T> {
             previousSets[i] = [];
           }
         });
+        // WF4 — newly-added exercises get empty completed-set buckets; mirror
+        // the map so the checkpoint knows the new exercise count and a
+        // restore doesn't drop the just-added slots.
+        ref
+            .read(activeWorkoutSessionProvider.notifier)
+            .syncSets(completedSets);
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -809,6 +823,12 @@ mixin ExerciseNavigationMixin<T extends StatefulWidget> on State<T> {
             previousSets[i] = [];
           }
         });
+        // WF4 — newly-added exercises get empty completed-set buckets; mirror
+        // the map so the checkpoint knows the new exercise count and a
+        // restore doesn't drop the just-added slots.
+        ref
+            .read(activeWorkoutSessionProvider.notifier)
+            .syncSets(completedSets);
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -908,6 +928,10 @@ mixin ExerciseNavigationMixin<T extends StatefulWidget> on State<T> {
       currentExerciseIndex = newCurrentIndex;
       viewingExerciseIndex = newViewingIndex;
     });
+    // WF4 — a reorder shuffles exercise indices; push the remapped map so
+    // the checkpoint keeps each logged set bound to the right exercise after
+    // a kill+restore.
+    ref.read(activeWorkoutSessionProvider.notifier).syncSets(completedSets);
 
     if (removedFromSuperset) {
       ScaffoldMessenger.of(context).clearSnackBars();
@@ -978,6 +1002,11 @@ mixin ExerciseNavigationMixin<T extends StatefulWidget> on State<T> {
 
         currentExerciseIndex = remapSingleIndex(currentExerciseIndex, oldIdx, newIdx);
         viewingExerciseIndex = remapSingleIndex(viewingExerciseIndex, oldIdx, newIdx);
+        // WF4 — moving an exercise into a superset shifts indices; mirror the
+        // remapped map so the checkpoint stays correctly attributed.
+        ref
+            .read(activeWorkoutSessionProvider.notifier)
+            .syncSets(completedSets);
       }
     }
   }

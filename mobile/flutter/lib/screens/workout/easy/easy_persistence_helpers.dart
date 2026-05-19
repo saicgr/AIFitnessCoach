@@ -13,6 +13,8 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/cache/offline_write_queue.dart';
+
 import '../../../data/models/exercise.dart';
 import '../../../data/services/rating_prompt_service.dart';
 import '../../../data/models/workout.dart';
@@ -162,48 +164,37 @@ void detectEasyPRs({
   }
 }
 
-/// Result returned by [finalizeEasyWorkout] containing everything the
-/// caller needs to navigate to `/workout-complete` (and beyond).
-class EasyFinalizeResult {
-  final WorkoutCompletionResponse? completionResponse;
-  final List<PersonalRecordInfo>? personalRecords;
-  final PerformanceComparisonInfo? performanceComparison;
+/// WF8 — locally-computed aggregates for an Easy-tier workout. Pure-Dart, no
+/// I/O — so the completion screen can render INSTANTLY from this without
+/// awaiting any backend call.
+class EasyLocalAggregates {
   final int totalSets;
   final int totalReps;
   final double totalVolumeKg;
   final int calories;
   final List<Map<String, dynamic>> exercisesPerformance;
+  final String setsJson;
+  final List<Map<String, dynamic>> setsJsonList;
 
-  const EasyFinalizeResult({
-    required this.completionResponse,
-    required this.personalRecords,
-    required this.performanceComparison,
+  const EasyLocalAggregates({
     required this.totalSets,
     required this.totalReps,
     required this.totalVolumeKg,
     required this.calories,
     required this.exercisesPerformance,
+    required this.setsJson,
+    required this.setsJsonList,
   });
 }
 
-/// Finalize an Easy-tier workout: backfill the workout_log row with the
-/// full sets_json + metadata, fire the /complete endpoint to trigger PR
-/// detection + performance comparison + server-side XP, then invalidate
-/// the same provider set Advanced does so every history/score screen
-/// reflects the new session immediately.
-///
-/// Caller is responsible for navigating to `/workout-complete` with the
-/// returned data.
-Future<EasyFinalizeResult> finalizeEasyWorkout({
-  required WidgetRef ref,
+/// Compute Easy-tier workout aggregates synchronously. Mirrors the math
+/// `finalizeEasyWorkout` did, but with NO network — used so the Easy finish
+/// flow can navigate to `/workout-complete` on the same frame as the tap.
+EasyLocalAggregates computeEasyAggregates({
   required Workout workout,
   required List<WorkoutExercise> exercises,
   required Map<int, EasyExerciseState> perExercise,
-  required int totalTimeSeconds,
-  String? workoutLogId,
-}) async {
-  // Build aggregates and the rich sets_json the workout_performance_summary
-  // and exercise_performance_summary backend pipelines consume.
+}) {
   int totalSets = 0;
   int totalReps = 0;
   double totalVolumeKg = 0;
@@ -221,10 +212,6 @@ Future<EasyFinalizeResult> finalizeEasyWorkout({
 
     for (int sIdx = 0; sIdx < st.completed.length; sIdx++) {
       final s = st.completed[sIdx];
-      // Zero-weight + zero-reps placeholders inserted by the
-      // "Complete workout" overflow action are tracked but excluded
-      // from working-set totals so the user doesn't see a false 0/0
-      // padding the volume calculation.
       final isPlaceholder = s.reps <= 0 && s.weight <= 0;
       if (!isPlaceholder) {
         totalSets++;
@@ -234,15 +221,10 @@ Future<EasyFinalizeResult> finalizeEasyWorkout({
         exTotalReps += s.reps;
         exTotalWeight += s.weight;
       }
-
       setsJsonList.add(<String, dynamic>{
         'exercise_index': i,
         'exercise_name': exercise.name,
         'set_number': sIdx + 1,
-        // Write BOTH `reps` (canonical, matches Advanced/buildSetsJson) and
-        // `reps_completed` (legacy alias). Summary's general parser keys off
-        // `reps`; older Easy logs that only have `reps_completed` are still
-        // read via the fallback in workout_summary_general.dart.
         'reps': s.reps,
         'reps_completed': s.reps,
         'weight_kg': s.weight,
@@ -265,117 +247,145 @@ Future<EasyFinalizeResult> finalizeEasyWorkout({
     });
   }
 
-  final repo = ref.read(workoutRepositoryProvider);
-  final setsJsonStr = jsonEncode(setsJsonList);
-  final metadata = <String, dynamic>{
-    'sets_json': setsJsonList,
-    'logging_mode': 'easy',
-    'rest_intervals': const <Map<String, dynamic>>[],
-    'drink_events': const <Map<String, dynamic>>[],
-  };
-
-  // 1) Backfill workout_log row (created at first-set persistence with
-  //    sets_json='[]') with the full session data, OR create one now if
-  //    the per-set persistence path never ran (offline/error case).
-  if (workoutLogId != null) {
-    await repo.updateWorkoutLog(
-      logId: workoutLogId,
-      setsJson: setsJsonStr,
-      totalTimeSeconds: totalTimeSeconds,
-      metadata: metadata,
-    );
-  } else if (workout.id != null) {
-    final userId = await repo.getCurrentUserId();
-    if (userId != null) {
-      final created = await repo.createWorkoutLog(
-        workoutId: workout.id!,
-        userId: userId,
-        setsJson: setsJsonStr,
-        totalTimeSeconds: totalTimeSeconds,
-        metadata: jsonEncode(metadata),
-      );
-      workoutLogId = created?['id'] as String?;
-    }
-  }
-
-  // 2) Trigger backend completion: marks workout complete, computes the
-  //    workout_performance_summary + exercise_performance_summary rows,
-  //    detects PRs, awards server-side XP. This is the SAME endpoint the
-  //    Advanced flow calls.
-  WorkoutCompletionResponse? completionResponse;
-  List<PersonalRecordInfo>? personalRecords;
-  PerformanceComparisonInfo? performanceComparison;
-  if (workout.id != null) {
-    try {
-      completionResponse = await repo.completeWorkout(workout.id!);
-      if (completionResponse != null) {
-        if (completionResponse.hasPRs) {
-          personalRecords = completionResponse.personalRecords;
-          debugPrint(
-              '🏆 [EasyWorkout] Got ${personalRecords.length} PRs from completion API');
-        }
-        performanceComparison = completionResponse.performanceComparison;
-      }
-    } catch (e) {
-      debugPrint('❌ [EasyWorkout] completeWorkout failed: $e');
-    }
-  }
-
-  // 3) Calorie estimate — prefer server-computed, fall back to stored.
-  int calories = 0;
-  if (completionResponse != null) {
-    calories =
-        completionResponse.performanceComparison?.workoutComparison.currentCalories ?? 0;
-    if (calories <= 0) calories = completionResponse.workout.estimatedCalories;
-  }
-  if (calories <= 0) calories = workout.estimatedCalories;
-
-  // 4) XP: if the server already awarded inline (new behavior), refresh
-  //    local state; otherwise fall back to the legacy client-driven mark.
-  if (completionResponse?.xpAwarded == true) {
-    debugPrint(
-        '✅ [EasyWorkout] Server awarded ${completionResponse!.xpAmount} XP — refreshing local state');
-    unawaited(ref.read(xpProvider.notifier).loadUserXP(showLoading: false));
-  } else {
-    ref.read(xpProvider.notifier).markWorkoutCompleted(workoutId: workout.id);
-  }
-
-  // 5) Invalidate every provider that summarises workout history so the
-  //    user sees the new session reflected immediately. Mirrors the
-  //    Advanced flow exactly.
-  ref.invalidate(workoutsProvider);
-  // /today is the source of truth for hero carousel + week-strip checkmark.
-  // Without this refresh the in-memory cache keeps the pre-completion state,
-  // so today's card flips back to "scheduled" once the user navigates away
-  // from the summary screen.
-  ref.read(todayWorkoutProvider.notifier).invalidateAndRefresh();
-  ref.invalidate(muscleHeatmapProvider);
-  ref.invalidate(muscleFrequencyProvider);
-  ref.invalidate(muscleBalanceProvider);
-  ref.invalidate(scoresProvider);
-
-  // Bump rating-prompt counter — fire-and-forget. The active workout
-  // flow doesn't surface the sheet directly here because the user is
-  // mid-summary screen; the next home-screen visit picks up the
-  // banner-eligible state via shouldShowBanner().
-  try {
-    unawaited(ref.read(ratingPromptServiceProvider).recordWorkoutCompleted());
-  } catch (_) {}
-  ref.invalidate(milestonesProvider);
-  ref.invalidate(consistencyProvider);
-  ref.invalidate(consistencyDataProvider);
-  ref.invalidate(activityHeatmapProvider);
-  ref.invalidate(calendarHeatmapProvider);
-
-  return EasyFinalizeResult(
-    completionResponse: completionResponse,
-    personalRecords: personalRecords,
-    performanceComparison: performanceComparison,
+  return EasyLocalAggregates(
     totalSets: totalSets,
     totalReps: totalReps,
     totalVolumeKg: totalVolumeKg,
-    calories: calories,
+    // No server-computed calories yet — fall back to the stored estimate.
+    // The completion screen silently upgrades this if /complete later
+    // returns a precise number.
+    calories: workout.estimatedCalories,
     exercisesPerformance: exercisesPerformance,
+    setsJson: jsonEncode(setsJsonList),
+    setsJsonList: setsJsonList,
+  );
+}
+
+/// WF9 — offline queue for Easy-tier workout completion. Same machinery as
+/// the Advanced tier; idempotency-keyed so a reconnect replay can't
+/// double-complete.
+final OfflineWriteQueue _easyCompletionQueue =
+    OfflineWriteQueue(feature: 'workout_complete_easy');
+
+/// WF8/WF9 — run the Easy-tier backend save OFF the navigation path.
+///
+/// Fire-and-forget from `_finishWorkout`: backfills the workout_log row with
+/// the full sets_json + metadata, fires `/complete` (PR detection / summary
+/// / server XP), invalidates the history providers. A failed/offline
+/// `/complete` is enqueued and replayed on reconnect — never silently lost.
+Future<void> runEasyBackgroundSave({
+  required WidgetRef ref,
+  required Workout workout,
+  required EasyLocalAggregates aggregates,
+  required int totalTimeSeconds,
+  String? workoutLogId,
+}) async {
+  try {
+    final repo = ref.read(workoutRepositoryProvider);
+    final metadata = <String, dynamic>{
+      'sets_json': aggregates.setsJsonList,
+      'logging_mode': 'easy',
+      'rest_intervals': const <Map<String, dynamic>>[],
+      'drink_events': const <Map<String, dynamic>>[],
+    };
+
+    // 1) Backfill (or create) the workout_log row with the full session.
+    if (workoutLogId != null) {
+      await repo.updateWorkoutLog(
+        logId: workoutLogId,
+        setsJson: aggregates.setsJson,
+        totalTimeSeconds: totalTimeSeconds,
+        metadata: metadata,
+      );
+    } else if (workout.id != null) {
+      final userId = await repo.getCurrentUserId();
+      if (userId != null) {
+        final created = await repo.createWorkoutLog(
+          workoutId: workout.id!,
+          userId: userId,
+          setsJson: aggregates.setsJson,
+          totalTimeSeconds: totalTimeSeconds,
+          metadata: jsonEncode(metadata),
+        );
+        workoutLogId = created?['id'] as String?;
+      }
+    }
+
+    // 2) Fire /complete with offline fallback.
+    if (workout.id != null) {
+      await _easyCompleteWithOfflineFallback(ref: ref, workout: workout);
+    }
+
+    // 3) XP refresh — server awards inline; legacy mark is a harmless
+    //    fallback (server de-dupes).
+    ref.read(xpProvider.notifier).markWorkoutCompleted(workoutId: workout.id);
+    unawaited(ref.read(xpProvider.notifier).loadUserXP(showLoading: false));
+
+    // 4) Invalidate every history/score provider so the new session shows
+    //    up immediately. Mirrors the Advanced flow.
+    ref.invalidate(workoutsProvider);
+    ref.read(todayWorkoutProvider.notifier).invalidateAndRefresh();
+    ref.invalidate(muscleHeatmapProvider);
+    ref.invalidate(muscleFrequencyProvider);
+    ref.invalidate(muscleBalanceProvider);
+    ref.invalidate(scoresProvider);
+    ref.invalidate(milestonesProvider);
+    ref.invalidate(consistencyProvider);
+    ref.invalidate(consistencyDataProvider);
+    ref.invalidate(activityHeatmapProvider);
+    ref.invalidate(calendarHeatmapProvider);
+    try {
+      unawaited(
+          ref.read(ratingPromptServiceProvider).recordWorkoutCompleted());
+    } catch (_) {}
+  } catch (e) {
+    debugPrint('❌ [EasyWorkout] background save failed: $e');
+  }
+}
+
+/// Fire `POST /workouts/{id}/complete`; on failure persist to the offline
+/// queue keyed by an idempotency key and bind a connectivity-restored flush.
+Future<void> _easyCompleteWithOfflineFallback({
+  required WidgetRef ref,
+  required Workout workout,
+}) async {
+  final repo = ref.read(workoutRepositoryProvider);
+  try {
+    final resp = await repo.completeWorkout(workout.id!);
+    if (resp != null) {
+      debugPrint('✅ [EasyWorkout] /complete succeeded');
+      return;
+    }
+    debugPrint('⚠️ [EasyWorkout] /complete returned null — enqueueing');
+  } catch (e) {
+    debugPrint('⚠️ [EasyWorkout] /complete failed ($e) — enqueueing');
+  }
+
+  final userId = await repo.getCurrentUserId();
+  if (userId == null) return; // can't scope the queue — nothing else to do
+  final apiClient = ref.read(apiClientProvider);
+  final body = {
+    'workout_id': workout.id,
+    'idempotency_key': OfflineWriteQueue.idempotencyKey('wkout_complete_easy'),
+  };
+  await _easyCompletionQueue.enqueue(userId: userId, body: body);
+  _easyCompletionQueue.bindConnectivity(
+    userId: userId,
+    sender: (queuedBody) async {
+      try {
+        final wid = queuedBody['workout_id'] as String?;
+        if (wid == null) return true; // poison item — drop
+        final r = await apiClient.post(
+          '/workouts/$wid/complete',
+          data: {'idempotency_key': queuedBody['idempotency_key']},
+        );
+        return r.statusCode != null &&
+            r.statusCode! >= 200 &&
+            r.statusCode! < 300;
+      } catch (_) {
+        return false; // transient — keep queued
+      }
+    },
   );
 }
 

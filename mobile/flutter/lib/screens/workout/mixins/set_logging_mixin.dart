@@ -23,6 +23,7 @@ import '../../../core/providers/sound_preferences_provider.dart';
 import '../../../models/equipment_item.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../models/workout_state.dart';
+import '../providers/active_workout_session_provider.dart';
 import '../widgets/exercise_options_sheet.dart' show RepProgressionType;
 import '../widgets/intensity_prompt_sheet.dart';
 import '../widgets/number_input_widgets.dart';
@@ -188,6 +189,13 @@ mixin SetLoggingMixin<T extends StatefulWidget> on State<T> {
 
     completedSets[currentExerciseIndex] ??= [];
     completedSets[currentExerciseIndex]!.add(finalSetLog);
+    // WF4 — mirror every logged set into the shared session provider. This
+    // (a) keeps a tier swap (Advanced ↔ Easy) from dropping progress, and
+    // (b) triggers the debounced SharedPreferences checkpoint write so an
+    // app kill mid-workout can restore this set on relaunch.
+    ref
+        .read(activeWorkoutSessionProvider.notifier)
+        .recordSet(currentExerciseIndex, finalSetLog);
     setState(() {
       justCompletedSetIndex = completedSets[currentExerciseIndex]!.length - 1;
     });
@@ -585,18 +593,23 @@ mixin SetLoggingMixin<T extends StatefulWidget> on State<T> {
                 final editedWeight =
                     double.tryParse(editWeightController.text) ?? displayWeight;
                 final weightKg = useKg ? editedWeight : editedWeight * 0.453592;
+                final editedLog = SetLog(
+                  reps: int.tryParse(editRepsController.text) ?? set.reps,
+                  weight: weightKg,
+                  completedAt: set.completedAt,
+                  setType: set.setType,
+                  rir: editRir,
+                  rpe: set.rpe,
+                  targetReps: set.targetReps,
+                  notes: set.notes,
+                );
                 setState(() {
-                  completedSets[viewingExerciseIndex]![setIndex] = SetLog(
-                    reps: int.tryParse(editRepsController.text) ?? set.reps,
-                    weight: weightKg,
-                    completedAt: set.completedAt,
-                    setType: set.setType,
-                    rir: editRir,
-                    rpe: set.rpe,
-                    targetReps: set.targetReps,
-                    notes: set.notes,
-                  );
+                  completedSets[viewingExerciseIndex]![setIndex] = editedLog;
                 });
+                // WF4 — keep the crash-safe checkpoint in sync with edits.
+                ref
+                    .read(activeWorkoutSessionProvider.notifier)
+                    .replaceSet(viewingExerciseIndex, setIndex, editedLog);
                 Navigator.pop(dialogContext);
               },
               child: Text('Save',
@@ -616,19 +629,26 @@ mixin SetLoggingMixin<T extends StatefulWidget> on State<T> {
       return;
     }
 
+    late SetLog updated;
     setState(() {
       final existingSet = completedSets[viewingExerciseIndex]![setIndex];
-      completedSets[viewingExerciseIndex]![setIndex] = SetLog(
+      updated = SetLog(
         reps: reps,
         weight: weight,
         completedAt: existingSet.completedAt,
         setType: existingSet.setType,
       );
+      completedSets[viewingExerciseIndex]![setIndex] = updated;
     });
+    // WF4 — keep the crash-safe checkpoint in sync with the inline edit.
+    ref
+        .read(activeWorkoutSessionProvider.notifier)
+        .replaceSet(viewingExerciseIndex, setIndex, updated);
   }
 
   /// Delete a completed set
   void deleteCompletedSet(int setIndex) {
+    bool removedLoggedSet = false;
     setState(() {
       if (setIndex == -1) {
         final currentTotal = totalSetsPerExercise[viewingExerciseIndex] ?? 3;
@@ -640,8 +660,15 @@ mixin SetLoggingMixin<T extends StatefulWidget> on State<T> {
           setIndex >= 0 &&
           setIndex < completedSets[viewingExerciseIndex]!.length) {
         completedSets[viewingExerciseIndex]!.removeAt(setIndex);
+        removedLoggedSet = true;
       }
     });
+    // WF4 — a mid-list deletion can't be expressed by the append/pop-last
+    // session mutators, so push the whole map. The crash-safe checkpoint
+    // must reflect this deletion or a restore would resurrect the set.
+    if (removedLoggedSet) {
+      ref.read(activeWorkoutSessionProvider.notifier).syncSets(completedSets);
+    }
   }
 
   /// Quick complete or uncomplete a set by tapping its number
@@ -690,13 +717,23 @@ mixin SetLoggingMixin<T extends StatefulWidget> on State<T> {
       Future.delayed(const Duration(milliseconds: 600), () {
         if (mounted) setState(() => justCompletedSetIndex = null);
       });
+      // WF4 — this can insert at an ARBITRARY index, which the pure-append
+      // recordSet can't represent. Snapshot the whole map into the session
+      // so the checkpoint mirrors the real ordering.
+      ref.read(activeWorkoutSessionProvider.notifier).syncSets(completedSets);
     } else {
+      bool removedLoggedSet = false;
       if (completedSets[viewingExerciseIndex] != null &&
           setIndex >= 0 &&
           setIndex < completedSets[viewingExerciseIndex]!.length) {
         completedSets[viewingExerciseIndex]!.removeAt(setIndex);
+        removedLoggedSet = true;
       }
       setState(() {});
+      // WF4 — mirror the mid-list uncomplete/removal into the checkpoint.
+      if (removedLoggedSet) {
+        ref.read(activeWorkoutSessionProvider.notifier).syncSets(completedSets);
+      }
     }
   }
 

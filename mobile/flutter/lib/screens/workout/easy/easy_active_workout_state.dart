@@ -40,6 +40,7 @@ import '../../../data/models/exercise.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/services/api_client.dart';
 import '../../../data/services/pr_detection_service.dart';
+import '../../../data/services/workout_completion_prewarmer.dart';
 import '../controllers/workout_timer_controller.dart';
 import '../models/workout_state.dart';
 import '../widgets/change_equipment_helper.dart';
@@ -124,26 +125,49 @@ class EasyActiveWorkoutScreenState
     // was building". Defer to a post-frame callback (the Riverpod-blessed
     // fix) — the restore then re-seeds via setState.
     final session = ref.read(activeWorkoutSessionProvider.notifier);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
       session.start(widget.workout.id);
+      // WF4 — rehydrate the crash-safe checkpoint from SharedPreferences. If
+      // the app was killed mid-workout, this restores the logged sets +
+      // current exercise + elapsed timer for THIS workout. restoreCheckpoint
+      // also adopts the restored state as the live in-memory session.
+      final userId = await ref.read(apiClientProvider).getUserId();
+      if (!mounted) return;
+      await session.restoreCheckpoint(
+        workoutId: widget.workout.id,
+        userId: userId,
+      );
+      if (!mounted) return;
       final stored = ref.read(activeWorkoutSessionProvider);
       if (stored.workoutId == widget.workout.id &&
           stored.completedSets.isNotEmpty) {
         setState(() {
           stored.completedSets.forEach((idx, logs) {
             final s = _perExercise[idx];
-            if (s != null) s.completed.addAll(logs);
+            // Only fill empty buckets so a tier-swap restore isn't doubled.
+            if (s != null && s.completed.isEmpty) s.completed.addAll(logs);
           });
           _currentIndex =
               stored.currentExerciseIndex.clamp(0, _exercises.length - 1);
         });
       }
+      // Restore the workout clock if the checkpoint had one.
+      if (stored.elapsedSeconds > _timer.workoutSeconds) {
+        _timer.startWorkoutTimer(initialSeconds: stored.elapsedSeconds);
+      }
     });
 
     _timer = WorkoutTimerController()
-      ..onWorkoutTick = (_) {
+      ..onWorkoutTick = (seconds) {
         if (mounted) setState(() {});
+        // WF4 — feed the elapsed clock into the shared session so the
+        // checkpoint persists an accurate timer (self-throttled to ~5s).
+        if (mounted) {
+          ref
+              .read(activeWorkoutSessionProvider.notifier)
+              .updateElapsedSeconds(seconds);
+        }
       }
       ..onRestTick = (remaining) {
         _restBroadcaster?.push(remaining);
@@ -254,6 +278,22 @@ class EasyActiveWorkoutScreenState
       state.reps = state.targetReps;
       _editingSetIndex = null;
     });
+    // WF4 — _skipToSet appends placeholder SetLogs straight onto
+    // `state.completed` without going through recordSet, so mirror the full
+    // map into the session or those placeholders are lost on a restore.
+    _syncEasySessionSets();
+  }
+
+  /// WF4 — push the full per-exercise completed-sets map into the shared
+  /// session so the on-disk checkpoint exactly mirrors what the user has
+  /// logged. Used by paths that mutate `state.completed` outside the normal
+  /// recordSet/replaceSet append-or-replace flow.
+  void _syncEasySessionSets() {
+    final snapshot = <int, List<SetLog>>{};
+    _perExercise.forEach((idx, st) {
+      snapshot[idx] = List<SetLog>.from(st.completed);
+    });
+    ref.read(activeWorkoutSessionProvider.notifier).syncSets(snapshot);
   }
 
   /// Soft-cap so nobody accidentally creates a workout with 20 sets per
@@ -657,6 +697,10 @@ class EasyActiveWorkoutScreenState
             }
           }
         });
+        // WF4 — the swap reseeds the swapped exercise with an empty
+        // completed list; mirror the full map so the checkpoint doesn't keep
+        // the pre-swap sets for that index.
+        _syncEasySessionSets();
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Exercise swapped'),
@@ -710,40 +754,53 @@ class EasyActiveWorkoutScreenState
     _restBroadcaster?.dispose();
     _restBroadcaster = null;
 
-    // No glass loading overlay here — the screen already swaps to
-    // `_EasySavingOverlay` (trophy + "Saving workout..." + spinner) via
-    // `_isFinishing`, so layering another overlay on top would duplicate
-    // the loader and the underlying trophy bleeds through the scrim.
-    final result = await finalizeEasyWorkout(
-      ref: ref,
+    // WF8 — compute the completion-screen aggregates locally (pure-Dart, no
+    // I/O) so we can navigate to `/workout-complete` on this frame instead
+    // of awaiting `/complete`. The backend save runs fire-and-forget below.
+    final aggregates = computeEasyAggregates(
       workout: widget.workout,
       exercises: _exercises,
       perExercise: _perExercise,
-      totalTimeSeconds: _timer.workoutSeconds,
-      workoutLogId: _workoutLogId,
     );
 
-    if (!mounted) return;
+    // WF7 — make sure the completion-screen prewarmer has run so the screen
+    // renders with stats populated, no spinner wave. Idempotent.
+    unawaited(WorkoutCompletionPrewarmer.warm(ref));
+
+    // WF8/WF9 — backend save off the navigation path. Failures (offline /
+    // 5xx) are enqueued + replayed on reconnect inside runEasyBackgroundSave.
+    unawaited(runEasyBackgroundSave(
+      ref: ref,
+      workout: widget.workout,
+      aggregates: aggregates,
+      totalTimeSeconds: _timer.workoutSeconds,
+      workoutLogId: _workoutLogId,
+    ));
 
     // Tell any background "mini player" the workout is over and clear
     // the active-workout phase flag so re-entry restarts cleanly.
     ref.read(workoutMiniPlayerProvider.notifier).close();
     ref.read(activeWorkoutWarmupDoneProvider.notifier).state = false;
-    // Wipe the shared session so the next workout starts clean.
+    // Wipe the shared session (also deletes the WF4 on-disk checkpoint) so
+    // the next workout starts clean and a finished workout can't be resumed.
     ref.read(activeWorkoutSessionProvider.notifier).clear();
 
+    if (!mounted) return;
     context.go('/workout-complete', extra: <String, dynamic>{
       'workout': widget.workout,
       'duration': _timer.workoutSeconds,
-      'calories': result.calories,
+      'calories': aggregates.calories,
       'workoutLogId': _workoutLogId,
-      'exercisesPerformance': result.exercisesPerformance,
-      'totalSets': result.totalSets,
-      'totalReps': result.totalReps,
-      'totalVolumeKg': result.totalVolumeKg,
-      'personalRecords': result.personalRecords,
-      'performanceComparison': result.performanceComparison,
-      'isFirstWorkout': result.completionResponse?.isFirstWorkout ?? false,
+      'exercisesPerformance': aggregates.exercisesPerformance,
+      'totalSets': aggregates.totalSets,
+      'totalReps': aggregates.totalReps,
+      'totalVolumeKg': aggregates.totalVolumeKg,
+      // PRs / performance comparison resolve in the background save; the
+      // completion screen renders its calm "Saved" state and upgrades
+      // silently when they arrive. Null here is expected, not an error.
+      'personalRecords': null,
+      'performanceComparison': null,
+      'isFirstWorkout': false,
     });
   }
 

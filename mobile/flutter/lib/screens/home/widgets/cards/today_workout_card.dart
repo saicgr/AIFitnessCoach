@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../data/models/workout.dart';
 import '../../../../data/providers/today_workout_provider.dart';
 import '../../../../data/repositories/workout_repository.dart';
 import '../../../../data/services/haptic_service.dart';
@@ -587,13 +588,30 @@ class _TodayWorkoutCardState extends ConsumerState<TodayWorkoutCard>
   Future<void> _startWorkoutFromSummary(TodayWorkoutSummary summary) async {
     HapticService.medium();
 
-    // Log quick start tap for analytics
+    // Log quick start tap for analytics (fire-and-forget — never blocks the tap).
     ref.read(workoutRepositoryProvider).logQuickStart(summary.id);
 
     // Mark quick start as used
     ref.read(quickStartUsedProvider.notifier).state = true;
 
-    // Fetch full workout data and navigate
+    // WF1 — instant start. The Advanced/Easy active-workout route needs the
+    // FULL Workout (exercises list), not the lightweight TodayWorkoutSummary.
+    // `workoutsProvider` usually already has it in memory from the Home
+    // load, so check that cache synchronously and navigate on the SAME frame
+    // as the tap — no 200-600ms frozen tap awaiting `getWorkout`.
+    final cachedWorkouts =
+        ref.read(workoutsProvider).asData?.value ?? const <Workout>[];
+    final cachedFull = cachedWorkouts
+        .where((w) => w.id == summary.id && w.exercises.isNotEmpty)
+        .firstOrNull;
+    if (cachedFull != null) {
+      context.push('/active-workout', extra: cachedFull);
+      return;
+    }
+
+    // Cache miss (cold start, workout not yet hydrated) — fall back to the
+    // network fetch. The route requires a populated Workout, so we cannot
+    // navigate without it; the await here is unavoidable in this path.
     final repository = ref.read(workoutRepositoryProvider);
     final workout = await repository.getWorkout(summary.id);
 
