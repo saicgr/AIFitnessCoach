@@ -307,16 +307,14 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
         final todayWorkoutResponse = todayWorkoutAsync.valueOrNull;
         final nextWorkout = todayWorkoutResponse?.nextWorkout?.toWorkout();
 
-        // Guard: only surface todayWorkout when today is actually a workout day
-        // for the active gym profile. Stale Redis-cached responses after a profile
-        // switch can return a workout from the previous profile for a day that isn't
-        // in the new profile's schedule — this prevents it showing as "TODAY".
-        final nowForGuard = DateTime.now();
-        final todayDayIndex = nowForGuard.weekday - 1; // 1=Mon→0 … 7=Sun→6
-        final isTodayWorkoutDay = workoutDays.contains(todayDayIndex);
-        final todayWorkout = (isTodayWorkoutDay)
-            ? todayWorkoutResponse?.todayWorkout?.toWorkout()
-            : null;
+        // Trust the backend's resolved today workout. /workouts/today already
+        // honours the active gym profile's schedule (today.py
+        // _resolve_workout_days). The old client-side `workoutDays.contains`
+        // re-guard also stripped LEGITIMATE workouts rescheduled onto a
+        // non-preferred day ("Do this today") — so the home hero fell back to
+        // a FUTURE workout while the Workouts tab (no such guard) showed
+        // today's. Both surfaces now agree on `todayWorkout`.
+        final todayWorkout = todayWorkoutResponse?.todayWorkout?.toWorkout();
 
         // Use valueOrNull so we don't block on the slow all-workouts fetch
         final allWorkouts = workoutsAsync.valueOrNull ?? [];
