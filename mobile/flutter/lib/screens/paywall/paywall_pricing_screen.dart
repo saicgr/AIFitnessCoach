@@ -811,7 +811,10 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
           : 'Subscribe Now',
     };
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 4, 20, 16),
+      // Bottom padding kept tight: the enclosing SafeArea already insets
+      // for the home indicator, so extra padding here just floats the CTA
+      // block up and leaves a dead gap above the bezel.
+      padding: const EdgeInsets.fromLTRB(20, 4, 20, 2),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
