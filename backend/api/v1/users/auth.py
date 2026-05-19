@@ -323,15 +323,15 @@ async def email_signup(request: Request, body: EmailSignupRequest,
         supabase_manager = get_supabase()
         supabase_client = supabase_manager.auth_client
 
-        # Sign up with Supabase Auth
-        auth_response = supabase_client.auth.sign_up({
+        # The Flutter client ALREADY created the Supabase auth user via the
+        # SDK (`_supabase.auth.signUp`) before calling this endpoint — so a
+        # second `auth.sign_up()` here 409'd "User already registered" on
+        # EVERY email signup. Authenticate instead to resolve the auth user;
+        # this endpoint's real job is the public.users row + verification
+        # email + signup notification, which it does idempotently below.
+        auth_response = supabase_client.auth.sign_in_with_password({
             "email": body.email,
             "password": body.password,
-            "options": {
-                "data": {
-                    "full_name": body.name or "",
-                }
-            }
         })
 
         if not auth_response or not auth_response.user:
@@ -346,6 +346,15 @@ async def email_signup(request: Request, body: EmailSignupRequest,
         logger.info(f"Supabase user created: id={supabase_user_id}, email={email}")
 
         db = get_supabase_db()
+
+        # Idempotent: the /auth/sync call the client fires on the same
+        # sign-in event may have already backfilled this public.users row.
+        # If so, return it instead of letting create_user hit a duplicate
+        # auth_id unique-violation (which previously surfaced as a 400).
+        existing = db.get_user_by_auth_id(supabase_user_id)
+        if existing:
+            logger.info(f"Email signup — public.users row already exists: id={existing['id']}")
+            return row_to_user(existing, is_new_user=True, support_friend_added=False)
 
         # Generate unique username
         unique_username = generate_username_sync(name=full_name, email=email)
