@@ -27,6 +27,7 @@ class DailyActivity {
   final int? lightSleepMinutes;
   final int? awakeSleepMinutes;   // time awake during sleep
   final int? waterMl;             // hydration in ml
+  final int? activeMinutes;       // active/exercise minutes (watch-synced)
 
   const DailyActivity({
     this.steps = 0,
@@ -44,6 +45,7 @@ class DailyActivity {
     this.lightSleepMinutes,
     this.awakeSleepMinutes,
     this.waterMl,
+    this.activeMinutes,
   });
 }
 
@@ -433,6 +435,7 @@ class DailyActivityNotifier extends StateNotifier<DailyActivityState> {
       lightSleepMinutes: current?.lightSleepMinutes,
       awakeSleepMinutes: current?.awakeSleepMinutes,
       waterMl: current?.waterMl,
+      activeMinutes: activeMinutes ?? current?.activeMinutes,
     );
 
     state = state.copyWith(today: updated);

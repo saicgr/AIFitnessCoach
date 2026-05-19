@@ -112,6 +112,11 @@ class ActivityService {
           'light_sleep_minutes': activity.lightSleepMinutes,
           'awake_sleep_minutes': activity.awakeSleepMinutes,
           'water_ml': activity.waterMl,
+          // Active/exercise minutes — populated by the Apple Watch companion
+          // sync (watch_sync). The phone Health Connect read does NOT request
+          // EXERCISE_TIME: that would re-expand the deliberately minimised HC
+          // permission scope and needs a Play Data Safety review first.
+          'active_minutes': activity.activeMinutes ?? 0,
           'source': Platform.isAndroid ? 'health_connect' : 'apple_health',
         },
       );

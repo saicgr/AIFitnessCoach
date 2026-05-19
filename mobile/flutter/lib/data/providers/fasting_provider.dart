@@ -801,7 +801,13 @@ final fastingInsightProvider =
   if (userId == null) {
     throw Exception('Sign in to see AI insights.');
   }
-  final fasting = ref.watch(fastingProvider);
+  // ref.read (not watch): this provider is autoDispose, so it still re-fetches
+  // once each time the fasting screen is reopened — the intended behaviour.
+  // Watching the whole FastingState re-ran this on every 1-minute elapsed-time
+  // tick from _startRefreshTimer, POSTing the Gemini-backed fasting-analysis
+  // endpoint once per minute (cost + rate-limit pressure + hammered the
+  // endpoint during its 404 deploy gap).
+  final fasting = ref.read(fastingProvider);
   final streak = fasting.streak;
   final stats = fasting.stats;
   if (streak == null || stats == null) {

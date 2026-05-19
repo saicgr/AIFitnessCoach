@@ -1348,28 +1348,38 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
     }
   }
 
+  /// Mark the paywall done. The local state (auth notifier + the
+  /// `paywall_completed` pref) is written synchronously so navigation can
+  /// proceed immediately and a fast relaunch can't loop the user back here;
+  /// the server PUT is fire-and-forget so "Maybe later" dismisses instantly
+  /// instead of blocking on a `getUserId()` + PUT round-trip.
   Future<void> _markPaywallComplete(WidgetRef ref) async {
+    ref.read(authStateProvider.notifier).markPaywallComplete();
     try {
-      final apiClient = ref.read(apiClientProvider);
-      final userId = await apiClient.getUserId();
-      if (userId != null) {
-        await apiClient.put(
-          '${ApiConstants.users}/$userId',
-          data: {'paywall_completed': true},
-        );
-      }
-      ref.read(authStateProvider.notifier).markPaywallComplete();
-
-      // Store in SharedPreferences so notification scheduling knows paywall is done
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('paywall_completed', true);
-
-      // Now that both onboarding and paywall are complete, schedule notifications
-      ref.read(notificationPreferencesProvider.notifier).rescheduleNotifications();
-      debugPrint('🔔 [Paywall] paywall_completed saved & notifications scheduled');
     } catch (e) {
-      debugPrint('❌ [Paywall] Failed to update paywall_completed flag: $e');
+      debugPrint('❌ [Paywall] Failed to persist paywall_completed pref: $e');
     }
+    // Both onboarding + paywall complete — (re)schedule notifications.
+    ref.read(notificationPreferencesProvider.notifier).rescheduleNotifications();
+    // Server sync is deferred: the local flag + hard paywall already gate
+    // everything, so the UI never waits on this network call.
+    unawaited(() async {
+      try {
+        final apiClient = ref.read(apiClientProvider);
+        final userId = await apiClient.getUserId();
+        if (userId != null) {
+          await apiClient.put(
+            '${ApiConstants.users}/$userId',
+            data: {'paywall_completed': true},
+          );
+        }
+        debugPrint('🔔 [Paywall] paywall_completed synced to server');
+      } catch (e) {
+        debugPrint('❌ [Paywall] Failed to update paywall_completed flag: $e');
+      }
+    }());
   }
 
   /// Navigate to subscription success screen after paywall completion

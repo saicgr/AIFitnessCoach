@@ -892,23 +892,31 @@ class ApiClient with WidgetsBindingObserver {
   /// Get the base URL
   String get baseUrl => ApiConstants.apiBaseUrl;
 
-  /// Resolve a redirect Location header against `apiBaseUrl` so a 307/308
-  /// retry doesn't end up double-prefixed (`/api/v1/api/v1/...`).
+  /// Normalise a 307/308 redirect `Location` into a clean absolute-path
+  /// reference (leading `/`, NO `/api/v1` prefix) so the retried request
+  /// resolves to exactly one `/api/v1` once Dio prepends `baseUrl`.
   ///
-  /// Dio concatenates `baseUrl` + `options.path` literally, so when a
-  /// FastAPI redirect Location like `/api/v1/workouts/.../share-link/`
-  /// is fed back as `options.path`, the next request hits
-  /// `/api/v1/api/v1/...` and 404s. Strip the shared `apiVersion` prefix
-  /// when present; absolute URLs (http*) are passed through unchanged.
+  /// Three forms of `Location` all have to be handled or the retry
+  /// double-prefixes (`/api/v1/api/v1/...` → 404 — seen in prod on the
+  /// hormonal-health/trends call):
+  ///   1. absolute URL  `https://host/api/v1/x/`  → reduce to `/x/`
+  ///   2. path with version `/api/v1/x/`          → strip to `/x/`
+  ///   3. RELATIVE ref `api/v1/x/` (no leading /) → Dio resolves it
+  ///      against `baseUrl`'s directory, yielding `/api/v1/api/v1/x/`.
+  /// The fix: drop scheme+host, force a leading slash, then collapse
+  /// every leading `apiVersion` segment (baseUrl already carries one).
   static String _resolveRedirectPath(String redirectUrl) {
-    if (redirectUrl.startsWith('http://') || redirectUrl.startsWith('https://')) {
-      return redirectUrl;
+    var p = redirectUrl;
+    if (p.startsWith('http://') || p.startsWith('https://')) {
+      final u = Uri.parse(p);
+      p = u.path + (u.hasQuery ? '?${u.query}' : '');
     }
-    final prefix = ApiConstants.apiVersion;
-    if (redirectUrl.startsWith('$prefix/')) {
-      return redirectUrl.substring(prefix.length);
+    if (!p.startsWith('/')) p = '/$p';
+    final prefix = ApiConstants.apiVersion; // '/api/v1'
+    while (p.startsWith('$prefix/')) {
+      p = p.substring(prefix.length);
     }
-    return redirectUrl;
+    return p;
   }
 
   /// Get auth headers for manual requests (e.g., streaming).

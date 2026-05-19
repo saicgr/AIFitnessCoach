@@ -111,6 +111,15 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
   bool _isLoadingMicronutrients = false;
   bool _hasCheckedWeeklyCheckin = false;  // Guard flag for weekly check-in prompt
 
+  /// True only while the one-time `nutrition_v1` first-run tour still needs
+  /// to run (its `has_seen_` flag is unset). The three tooltip-anchor
+  /// `GlobalKey`s (`TooltipAnchors.nutrition*`) are app-global statics, so
+  /// attaching them unconditionally crashed with "Duplicate GlobalKey" when
+  /// two NutritionScreen instances briefly coexisted (shell keep-alive + a
+  /// pushed route). Gate the keys — and the tour overlay — on this flag so
+  /// after first run (the vast majority of the app's life) no key exists.
+  bool _nutritionTourActive = false;
+
   /// Sparse set of `yyyy-MM-dd` (local) keys for days with at least one
   /// food log. Drives the dot indicator under each day cell in the date
   /// strip. Refreshed on init + after every successful log.
@@ -140,6 +149,7 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
     // network refresh that follows is stale-while-revalidate.
     _hydrateFromDisk();
     _loadData();
+    _resolveNutritionTourActive();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(posthogServiceProvider).capture(eventName: 'nutrition_screen_viewed');
     });
@@ -164,6 +174,23 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
       }
     });
   }
+
+  /// Resolve whether the first-run `nutrition_v1` tour still needs to run.
+  /// Only then are the tooltip-anchor GlobalKeys attached (see
+  /// [_nutritionTourActive]). Once seen, this stays false forever.
+  Future<void> _resolveNutritionTourActive() async {
+    final sp = await SharedPreferences.getInstance();
+    final seen =
+        sp.getBool('has_seen_empty_tour_${TooltipIds.nutrition}') ?? false;
+    if (!mounted || seen) return;
+    setState(() => _nutritionTourActive = true);
+  }
+
+  /// Wrap [child] in the tour anchor [key] ONLY while the first-run tour is
+  /// pending. Outside first run the key is omitted entirely, so two
+  /// NutritionScreen instances can never both hold the same global key.
+  Widget _tourAnchor(GlobalKey key, Widget child) =>
+      _nutritionTourActive ? KeyedSubtree(key: key, child: child) : child;
 
   /// Set up listener to trigger weekly check-in when preferences are loaded
   void _setupWeeklyCheckinListener() {
@@ -632,9 +659,9 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
             // Horizontally-scrolling date strip. Replaces the chevron+pill
             // navigator and adds a meal-logged dot under each day for at-
             // a-glance density.
-            KeyedSubtree(
-              key: TooltipAnchors.nutritionDateNav,
-              child: NutritionDateStrip(
+            _tourAnchor(
+              TooltipAnchors.nutritionDateNav,
+              NutritionDateStrip(
                 selectedDate: _selectedDate,
                 loggedDateKeys: _loggedDateKeys,
                 onDaySelected: _jumpToDate,
@@ -675,9 +702,9 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
                           // (Log a meal). The tab as a whole is haloed so
                           // the spotlight follows whichever meal row is on
                           // screen.
-                          KeyedSubtree(
-                            key: TooltipAnchors.nutritionLogMeal,
-                            child: DailyTab(
+                          _tourAnchor(
+                            TooltipAnchors.nutritionLogMeal,
+                            DailyTab(
                             userId: _userId ?? '',
                             summary: state.todaySummary,
                             targets: state.targets,
@@ -770,8 +797,9 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
         ),
       ),
       // First-run spotlight tour. Anchors + copy live in
-      // `widgets/tooltips/tours/nutrition_tour.dart`.
-      NutritionTour.overlay(),
+      // `widgets/tooltips/tours/nutrition_tour.dart`. Mounted only while the
+      // tour is pending — same gate as its anchor keys (see _tourAnchor).
+      if (_nutritionTourActive) NutritionTour.overlay(),
       ]),
       floatingActionButton: null,
     );
@@ -838,9 +866,9 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
           const SizedBox(width: 6),
           // My Foods (Saved Foods + Recipes). Anchor for step 3 of
           // `nutrition_v1`.
-          KeyedSubtree(
-            key: TooltipAnchors.nutritionMyFoods,
-            child: GestureDetector(
+          _tourAnchor(
+            TooltipAnchors.nutritionMyFoods,
+            GestureDetector(
             onTap: () => _showMyFoodsSheet(isDark),
             child: Tooltip(
               message: 'My Foods',

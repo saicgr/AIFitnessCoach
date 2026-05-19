@@ -743,12 +743,18 @@ class _NutrientToggleChip extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 6),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                color: selected ? accent : textPrimary,
+            // Flexible + ellipsis: a long nutrient label (or a long-locale
+            // translation) would otherwise overflow this fixed-width chip Row.
+            Flexible(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                  color: selected ? accent : textPrimary,
+                ),
               ),
             ),
             const SizedBox(width: 6),
