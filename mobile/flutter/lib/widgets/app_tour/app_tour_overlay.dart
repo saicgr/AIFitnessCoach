@@ -269,13 +269,11 @@ class _AppTourOverlayState extends ConsumerState<AppTourOverlay>
                   final paintRect = rect ?? endRect;
                   final hasGradient = step.highlightColors != null;
                   final radius = step.cornerRadius ?? 12.0;
-                  // Leave the floating tab bar undimmed at the bottom of the
-                  // canvas. 52px nav bar height (matches navBarHeight in
-                  // main_shell_part_edge_panel_handle.dart:176) + system
-                  // bottom safe-area + an 8px breathing gap.
-                  final tabBarInset = 52.0 +
-                      MediaQuery.of(context).padding.bottom +
-                      8.0;
+                  // The scrim dims the FULL screen — leaving a bottom
+                  // strip undimmed produced an ugly grey->white band
+                  // behind the floating bars during the tour. The nav bar
+                  // renders on top anyway; a cutout still punches through
+                  // for steps that spotlight a nav item.
                   // `Size.infinite` so the painter covers the full
                   // Positioned.fill canvas. CustomPaint without an
                   // explicit size or child renders at zero size — which
@@ -293,7 +291,6 @@ class _AppTourOverlayState extends ConsumerState<AppTourOverlay>
                           spotlightPadding: spotlightPadding,
                           ringGradientColors: step.highlightColors,
                           gradientRotation: _gradientController.value,
-                          bottomInset: tabBarInset,
                         ),
                       ),
                     );
@@ -305,7 +302,6 @@ class _AppTourOverlayState extends ConsumerState<AppTourOverlay>
                       ringColor: accentColor,
                       cornerRadius: radius,
                       spotlightPadding: spotlightPadding,
-                      bottomInset: tabBarInset,
                     ),
                   );
                 },
