@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/widgets/skeleton/skeleton.dart';
 import '../../../data/models/nutrition_preferences.dart';
 import '../../../data/providers/nutrition_stats_provider.dart';
 import '../../../widgets/nutrition/health_metrics_card.dart';

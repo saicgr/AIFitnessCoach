@@ -60,8 +60,14 @@ class UnifiedHabitItem {
 }
 
 
-/// State notifier for managing habits from API
-class HabitsScreenNotifier extends StateNotifier<HabitsScreenState> {
+/// State notifier for managing habits from API.
+///
+/// Cache-first: [loadHabits] seeds the screen from a disk-persisted
+/// [TodayHabitsResponse] blob (via [CacheFirstMixin]) before the network read,
+/// so a cold app start renders the last-known habit list instantly instead of
+/// a blocking spinner.
+class HabitsScreenNotifier extends StateNotifier<HabitsScreenState>
+    with CacheFirstMixin {
   final HabitRepository _repository;
   final String _userId;
   final List<HabitData> Function() _getAutoHabits;
@@ -95,36 +101,54 @@ class HabitsScreenNotifier extends StateNotifier<HabitsScreenState> {
       state = state.copyWith(isLoading: true, error: null);
     }
 
-    try {
-      // Parallelize API + local storage calls
-      final results = await Future.wait([
-        _repository.getTodayHabits(_userId),
-        _loadSavedOrder(),
-      ]);
+    // Load the saved manual order once up-front; both the cache-emit and the
+    // network-emit need it to build the unified list.
+    final savedOrder = await _loadSavedOrder();
 
-      final todayResponse = results[0] as dynamic;
-      final savedOrder = results[1] as List<String>;
-
-      // Build unified habit list with saved order
-      final unified = await _buildUnifiedList(
-        _getAutoHabits(),
-        todayResponse.habits,
-        savedOrder,
-      );
-
-      _lastLoadTime = DateTime.now();
-      state = state.copyWith(
-        isLoading: false,
-        customHabits: todayResponse.habits,
-        unifiedHabits: unified,
-        totalHabits: todayResponse.totalHabits,
-        completedToday: todayResponse.completedToday,
-        completionPercentage: todayResponse.completionPercentage,
-        templates: HabitTemplate.defaults,
-      );
-    } catch (e) {
-      state = state.copyWith(isLoading: false, error: e.toString());
-    }
+    await loadCacheFirst<TodayHabitsResponse>(
+      cacheKey: 'habits_today',
+      userId: _userId,
+      // Day-scoped: "today's completion" must roll over at local midnight, so
+      // a value cached yesterday is never read back today.
+      localDateScoped: true,
+      // Short TTL — the network revalidate corrects it within the session;
+      // the cache exists purely to kill the cold-start spinner.
+      ttl: const Duration(hours: 12),
+      schemaVersion: 1,
+      fetch: () => _repository.getTodayHabits(_userId),
+      decode: TodayHabitsResponse.fromJson,
+      encode: (r) => r.toJson(),
+      emit: (todayResponse, {required bool fromCache}) async {
+        if (!mounted) return;
+        final unified = await _buildUnifiedList(
+          _getAutoHabits(),
+          todayResponse.habits,
+          savedOrder,
+        );
+        if (!mounted) return;
+        // Only the network result advances the freshness clock.
+        if (!fromCache) _lastLoadTime = DateTime.now();
+        state = state.copyWith(
+          isLoading: false,
+          customHabits: todayResponse.habits,
+          unifiedHabits: unified,
+          totalHabits: todayResponse.totalHabits,
+          completedToday: todayResponse.completedToday,
+          completionPercentage: todayResponse.completionPercentage,
+          templates: HabitTemplate.defaults,
+        );
+      },
+      onError: (e, st) {
+        if (!mounted) return;
+        // A cached list (if any) stays on screen; only a cold-cache failure
+        // surfaces an error.
+        if (state.unifiedHabits.isNotEmpty) {
+          state = state.copyWith(isLoading: false);
+        } else {
+          state = state.copyWith(isLoading: false, error: e.toString());
+        }
+      },
+    );
   }
 
   /// Load saved habit order from SharedPreferences
@@ -237,48 +261,71 @@ class HabitsScreenNotifier extends StateNotifier<HabitsScreenState> {
     return habitsById.values.toList();
   }
 
+  /// Toggle a custom habit's completion — OPTIMISTIC.
+  ///
+  /// The UI flips instantly (before any network I/O) so the check-off feels
+  /// immediate; if the persist fails the previous state is rolled back.
   Future<void> toggleHabit(String habitId, bool completed) async {
     // Only custom habits can be toggled
     if (habitId.startsWith('auto_')) return;
 
+    // Snapshot for rollback.
+    final previousCustom = state.customHabits;
+    final previousUnified = state.unifiedHabits;
+    final previousCompleted = state.completedToday;
+    final previousPercentage = state.completionPercentage;
+
+    // ---- Optimistic update FIRST (instant) --------------------------------
+    final updatedHabits = state.customHabits.map((h) {
+      return h.id == habitId ? h.copyWith(todayCompleted: completed) : h;
+    }).toList();
+    final updatedUnified = state.unifiedHabits.map((h) {
+      return h.id == habitId ? h.copyWith(todayCompleted: completed) : h;
+    }).toList();
+    final newCompletedCount =
+        updatedHabits.where((h) => h.todayCompleted).length;
+
+    state = state.copyWith(
+      customHabits: updatedHabits,
+      unifiedHabits: updatedUnified,
+      completedToday: newCompletedCount,
+      completionPercentage: updatedHabits.isEmpty
+          ? 0.0
+          : (newCompletedCount / updatedHabits.length * 100),
+    );
+
+    // ---- Persist; roll back on failure ------------------------------------
     try {
       await _repository.toggleTodayHabit(_userId, habitId, completed);
-      // Optimistic update
-      final updatedHabits = state.customHabits.map((h) {
-        if (h.id == habitId) {
-          return h.copyWith(todayCompleted: completed);
-        }
-        return h;
-      }).toList();
-
-      final newCompletedCount = updatedHabits.where((h) => h.todayCompleted).length;
-
-      // Update unified list
-      final updatedUnified = state.unifiedHabits.map((h) {
-        if (h.id == habitId) {
-          return h.copyWith(todayCompleted: completed);
-        }
-        return h;
-      }).toList();
-
-      state = state.copyWith(
-        customHabits: updatedHabits,
-        unifiedHabits: updatedUnified,
-        completedToday: newCompletedCount,
-        completionPercentage: updatedHabits.isEmpty
-            ? 0.0
-            : (newCompletedCount / updatedHabits.length * 100),
-      );
+      // Drop the stale cached blob so the next cold start reflects the toggle
+      // even before the network revalidate runs.
+      unawaited(invalidateCacheFirst(
+        cacheKey: 'habits_today',
+        userId: _userId,
+        localDateScoped: true,
+      ));
     } catch (e) {
-      // Reload on error
-      await loadHabits();
+      debugPrint('❌ [HabitsScreen] toggle failed, rolling back: $e');
+      if (!mounted) return;
+      state = state.copyWith(
+        customHabits: previousCustom,
+        unifiedHabits: previousUnified,
+        completedToday: previousCompleted,
+        completionPercentage: previousPercentage,
+      );
     }
   }
 
   Future<void> createHabitFromTemplate(String templateId) async {
     try {
       await _repository.createHabitFromTemplate(_userId, templateId);
-      await loadHabits();
+      // Drop the stale cached blob then force a fresh network load.
+      await invalidateCacheFirst(
+        cacheKey: 'habits_today',
+        userId: _userId,
+        localDateScoped: true,
+      );
+      await loadHabits(force: true);
     } catch (e) {
       state = state.copyWith(error: e.toString());
     }
@@ -288,11 +335,47 @@ class HabitsScreenNotifier extends StateNotifier<HabitsScreenState> {
     // Auto-tracked habits cannot be deleted
     if (habitId.startsWith('auto_')) return;
 
+    // Snapshot for rollback — the delete is optimistic so the row vanishes
+    // instantly when swiped.
+    final previousCustom = state.customHabits;
+    final previousUnified = state.unifiedHabits;
+    final previousTotal = state.totalHabits;
+    final previousCompleted = state.completedToday;
+    final previousPercentage = state.completionPercentage;
+
+    final updatedCustom =
+        state.customHabits.where((h) => h.id != habitId).toList();
+    final updatedUnified =
+        state.unifiedHabits.where((h) => h.id != habitId).toList();
+    final newCompleted = updatedCustom.where((h) => h.todayCompleted).length;
+    state = state.copyWith(
+      customHabits: updatedCustom,
+      unifiedHabits: updatedUnified,
+      totalHabits: updatedCustom.length,
+      completedToday: newCompleted,
+      completionPercentage: updatedCustom.isEmpty
+          ? 0.0
+          : (newCompleted / updatedCustom.length * 100),
+    );
+
     try {
       await _repository.deleteHabit(_userId, habitId);
-      await loadHabits();
+      unawaited(invalidateCacheFirst(
+        cacheKey: 'habits_today',
+        userId: _userId,
+        localDateScoped: true,
+      ));
     } catch (e) {
-      state = state.copyWith(error: e.toString());
+      debugPrint('❌ [HabitsScreen] delete failed, rolling back: $e');
+      if (!mounted) return;
+      state = state.copyWith(
+        customHabits: previousCustom,
+        unifiedHabits: previousUnified,
+        totalHabits: previousTotal,
+        completedToday: previousCompleted,
+        completionPercentage: previousPercentage,
+        error: e.toString(),
+      );
     }
   }
 

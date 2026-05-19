@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/widgets/skeleton/skeleton.dart';
 import '../../../data/providers/scores_provider.dart';
-import '../../../widgets/app_loading.dart';
 import '../../progress/widgets/strength_overview_card.dart';
 import 'overview_tab.dart';
 
@@ -19,7 +19,10 @@ class StrengthTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     if (userId == null) {
-      return AppLoading.fullScreen();
+      // userId resolves a tick after the Stats screen mounts. Show a
+      // layout-matched skeleton instead of a blocking spinner so the tab
+      // never flashes a centred CircularProgressIndicator.
+      return _buildSkeleton();
     }
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -106,6 +109,33 @@ class StrengthTab extends ConsumerWidget {
           ),
         ),
       ],
+    );
+  }
+
+  /// Layout-matched skeleton for the Strength tab: fitness score card,
+  /// strength overview card, then a few recent-PR rows. Mirrors the real
+  /// scroll body so the skeleton → content swap is reflow-free.
+  Widget _buildSkeleton() {
+    return SingleChildScrollView(
+      physics: const NeverScrollableScrollPhysics(),
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: const [
+          // Fitness Score card
+          SkeletonBox(height: 220, radius: 16),
+          SizedBox(height: 16),
+          // Strength Overview card
+          SkeletonBox(height: 180, radius: 16),
+          SizedBox(height: 24),
+          // "Recent Personal Records" header
+          SkeletonBox(width: 200, height: 18, radius: 6),
+          SizedBox(height: 12),
+          // PR rows
+          SkeletonList(itemCount: 3, spacing: 12),
+          SizedBox(height: 80),
+        ],
+      ),
     );
   }
 }

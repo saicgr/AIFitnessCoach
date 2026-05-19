@@ -11,10 +11,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/accent_color_provider.dart';
+import '../../../core/widgets/skeleton/skeleton.dart';
 import '../../../data/models/coach_review.dart';
 import '../../../data/models/recipe.dart';
 import '../../../data/providers/recipe_favorites_provider.dart';
 import '../../../data/repositories/nutrition_repository.dart';
+import '../../../data/services/data_cache_service.dart';
 import '../../../data/repositories/recipe_repository.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../widgets/glass_back_button.dart';
@@ -43,24 +45,59 @@ class RecipeDetailScreen extends ConsumerStatefulWidget {
   ConsumerState<RecipeDetailScreen> createState() => _RecipeDetailScreenState();
 }
 
+/// Per-recipe disk-cache key prefix. Each recipe gets its own slot keyed by
+/// recipeId so reopening a recipe renders its full detail instantly.
+const String _kRecipeDetailCacheKey = 'cache_recipe_detail';
+
 class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen>
     with NavBarHiderMixin {
+  /// The recipe to render. Null until the first data — cached OR fresh —
+  /// arrives; while null (and no [_error]) the screen shows a layout-matched
+  /// skeleton instead of a blocking spinner. A returning user has a disk-
+  /// cached recipe so never sees the skeleton.
   Recipe? _recipe;
-  bool _loading = true;
+
+  /// Set only when the network fetch fails AND no cached recipe is available
+  /// to fall back to.
   String? _error;
   bool _improvizing = false;
+
+  String get _cacheKey => '${_kRecipeDetailCacheKey}_${widget.recipeId}';
 
   @override
   void initState() {
     super.initState();
+    // Fire the cache-first load WITHOUT awaiting — initState must return
+    // synchronously so the first frame paints the scaffold + skeleton
+    // immediately instead of blocking on a network round-trip.
     _load();
   }
 
+  /// Cache-first load. Step 1 reads the disk-cached recipe and renders it
+  /// instantly (if present). Step 2 fetches fresh data and write-throughs it.
+  /// Never throws — a failed fetch with no cache surfaces via [_error].
   Future<void> _load() async {
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
+    setState(() => _error = null);
+
+    // ---- Step 1: disk cache — instant render -------------------------------
+    try {
+      final raw = await DataCacheService.instance
+          .getCached(_cacheKey, userId: widget.userId);
+      if (raw != null && mounted && _recipe == null) {
+        final cached = Recipe.fromJson(raw);
+        if (cached.isFavorited) {
+          ref.read(recipeFavoritesProvider.notifier).hydrate([cached.id]);
+        }
+        setState(() {
+          _recipe = cached;
+        });
+      }
+    } catch (e) {
+      // A corrupt / stale cache read is just a miss — keep the skeleton.
+      debugPrint('💾 [RecipeDetail] cache read failed: $e');
+    }
+
+    // ---- Step 2: network fetch — fresh data + write-through ----------------
     try {
       final r = await ref
           .read(nutritionRepositoryProvider)
@@ -73,13 +110,21 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen>
       }
       setState(() {
         _recipe = r;
-        _loading = false;
+        _error = null;
       });
+      // Write-through so the next open of this recipe is instant.
+      try {
+        await DataCacheService.instance
+            .cache(_cacheKey, r.toJson(), userId: widget.userId);
+      } catch (e) {
+        debugPrint('💾 [RecipeDetail] cache write failed: $e');
+      }
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _error = e.toString();
-        _loading = false;
+        // Only surface the error if we have nothing cached to show — a
+        // transient refresh failure must never blank a populated screen.
+        if (_recipe == null) _error = e.toString();
       });
     }
   }
@@ -93,13 +138,33 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen>
     final muted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final surface = isDark ? AppColors.elevated : AppColorsLight.elevated;
 
+    // Cache-first render priority:
+    //   1. A recipe (cached or fresh) → full content.
+    //   2. No recipe + error → retry affordance.
+    //   3. No recipe, still loading → layout-matched skeleton (not a spinner).
+    final Widget body;
+    if (_recipe != null) {
+      body = _buildContent(_recipe!, accent, text, muted, surface, isDark);
+    } else if (_error != null) {
+      body = _ErrorState(error: _error!, muted: muted, onRetry: _load);
+    } else {
+      body = _RecipeDetailSkeleton(isDark: isDark);
+    }
+
     return Scaffold(
       backgroundColor: bg,
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : _error != null
-              ? _ErrorState(error: _error!, muted: muted, onRetry: _load)
-              : _buildContent(_recipe!, accent, text, muted, surface, isDark),
+      // Cross-fade skeleton → content so the swap is smooth, not a hard cut.
+      body: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 260),
+        child: KeyedSubtree(
+          key: ValueKey(_recipe != null
+              ? 'content'
+              : _error != null
+                  ? 'error'
+                  : 'skeleton'),
+          child: body,
+        ),
+      ),
     );
   }
 
@@ -936,6 +1001,93 @@ class _HeartToggle extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Loading skeleton — layout-matched to the real detail content
+// ─────────────────────────────────────────────────────────────────────────
+
+/// Layout-matched skeleton shown on a true first-ever open of a recipe
+/// (nothing disk-cached, network still in flight). Mirrors the real detail
+/// geometry: 240px hero image, title, meta row, macro hero card, an action-
+/// chip row and a short ingredient list — so the skeleton → content swap is
+/// reflow-free and never flashes a blocking spinner.
+class _RecipeDetailSkeleton extends StatelessWidget {
+  final bool isDark;
+  const _RecipeDetailSkeleton({required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
+    final topPad = MediaQuery.of(context).padding.top;
+    return Stack(
+      children: [
+        CustomScrollView(
+          slivers: [
+            // Hero image placeholder (matches _buildHero's 240px image case).
+            SliverToBoxAdapter(
+              child: SkeletonBox(
+                radius: 0,
+                height: 240 + topPad,
+              ),
+            ),
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
+              sliver: SliverList(
+                delegate: SliverChildListDelegate([
+                  // Title (two lines, 24pt).
+                  const SkeletonBox(width: double.infinity, height: 26),
+                  const SizedBox(height: 8),
+                  const SkeletonBox(width: 180, height: 26),
+                  const SizedBox(height: 12),
+                  // Meta row pills.
+                  Row(
+                    children: const [
+                      SkeletonBox(width: 90, height: 20, radius: 999),
+                      SizedBox(width: 8),
+                      SkeletonBox(width: 70, height: 20, radius: 999),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  // Macro hero card.
+                  const SkeletonBox(
+                      width: double.infinity, height: 110, radius: 14),
+                  const SizedBox(height: 16),
+                  // Action-chip row.
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: const [
+                      SkeletonBox(width: 80, height: 34, radius: 20),
+                      SkeletonBox(width: 96, height: 34, radius: 20),
+                      SkeletonBox(width: 88, height: 34, radius: 20),
+                      SkeletonBox(width: 104, height: 34, radius: 20),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  // "Ingredients" heading.
+                  const SkeletonBox(width: 120, height: 18),
+                  const SizedBox(height: 12),
+                  // A few ingredient rows.
+                  for (var i = 0; i < 5; i++) ...[
+                    const SkeletonBox(
+                        width: double.infinity, height: 40, radius: 10),
+                    const SizedBox(height: 8),
+                  ],
+                ]),
+              ),
+            ),
+          ],
+        ),
+        // Floating back button — live during the skeleton so the user can
+        // leave immediately without waiting for the recipe to load.
+        Positioned(
+          left: 12,
+          top: topPad + 8,
+          child: GlassBackButton(onTap: () => Navigator.of(context).pop()),
+        ),
+      ],
     );
   }
 }

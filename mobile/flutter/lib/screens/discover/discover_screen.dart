@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/accent_color_provider.dart';
+import '../../core/widgets/skeleton/skeleton.dart';
 import '../../data/models/discover_snapshot.dart';
 import '../../data/models/fitness_profile.dart';
 import '../../data/models/fitness_shape_history.dart';
@@ -56,6 +57,17 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
   static const Duration _staleAfterResume = Duration(minutes: 5);
   static DateTime? _lastFetchedAt;
 
+  /// SharedPreferences key for the [CacheFirstView] first-ever-open flag.
+  /// While true the screen shows a layout-matched skeleton instead of a
+  /// blocking spinner; flipped false after the first successful render.
+  static const String _seenKey = 'discover_screen';
+
+  /// True only on a genuine first-ever open on this install — drives whether
+  /// [CacheFirstView] shows the skeleton. Defaults to false so a returning
+  /// user (whose provider seeds from the disk cache) never sees a skeleton if
+  /// the flag read is slow.
+  bool _isFirstEver = false;
+
   bool _isStale(Duration window) {
     final last = _lastFetchedAt;
     return last == null || DateTime.now().difference(last) > window;
@@ -82,6 +94,13 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
     // would show the default Lvl 1 · 0 XP from UserXP.empty() which is
     // jarringly wrong for a real user. Explicit load on Discover mount
     // guarantees the hero gets real numbers.
+    // Resolve whether this is a true cold-install first open. Returning users
+    // already have a disk-cached snapshot, so they render content instantly
+    // and must never see the skeleton again.
+    CacheFirstView.hasBeenSeen(_seenKey).then((seen) {
+      if (!mounted) return;
+      if (!seen) setState(() => _isFirstEver = true);
+    });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       _maybeRefresh(_staleAfterMount);
@@ -127,11 +146,19 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
 
     // Keep the previous snapshot visible while a board-tab refetch is in flight
     // so toggling XP / Volume / Streaks updates the data in place instead of
-    // blanking the whole screen with a spinner. First load (no prior value)
-    // still shows the loading state below.
-    final current = snap.valueOrNull;
-    final isFirstLoad = current == null && snap.isLoading;
-    final isReloading = current != null && snap.isLoading;
+    // blanking the whole screen — CacheFirstView latches the last value, so the
+    // previous board's data stays painted until the new board resolves.
+    final isReloading = snap.valueOrNull != null && snap.isLoading;
+
+    // Map AsyncValue<DiscoverSnapshot?> → AsyncValue<DiscoverSnapshot> for the
+    // CacheFirstView. A resolved-but-null value (network failure with no disk
+    // cache) becomes the genuinely-empty snapshot so the section empty-states
+    // render — never a stuck skeleton, never synthetic data.
+    final AsyncValue<DiscoverSnapshot> resolved = snap.when(
+      data: (d) => AsyncValue.data(d ?? _emptySnapshot()),
+      loading: () => const AsyncValue.loading(),
+      error: AsyncValue.error,
+    );
 
     return Scaffold(
       backgroundColor: bg,
@@ -179,20 +206,39 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
               padding: const EdgeInsets.all(16),
               sliver: SliverList(
                 delegate: SliverChildListDelegate([
-                  if (isFirstLoad)
-                    const Padding(
-                      padding: EdgeInsets.all(48),
-                      child: Center(child: CircularProgressIndicator()),
-                    )
-                  else
-                    _buildContent(
-                      context, ref, current ?? _emptySnapshot(),
-                      textColor: textColor,
-                      textMuted: textMuted,
+                  // Instant-load: cache-first render. On a true cold install
+                  // (no disk snapshot ever) a layout-matched skeleton shows;
+                  // every later open paints the cached snapshot immediately
+                  // and revalidates silently — no blocking spinner.
+                  CacheFirstView<DiscoverSnapshot>(
+                    value: resolved,
+                    isFirstEver: _isFirstEver,
+                    traceLabel: 'discover_screen',
+                    skeletonBuilder: (context) => _DiscoverSkeleton(
                       elevated: elevated,
                       border: border,
-                      accent: accent,
                     ),
+                    contentBuilder: (context, s) {
+                      // Mark seen after the first real content paints so
+                      // future opens compute isFirstEver == false.
+                      if (_isFirstEver) {
+                        CacheFirstView.markSeen(_seenKey);
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          if (mounted && _isFirstEver) {
+                            setState(() => _isFirstEver = false);
+                          }
+                        });
+                      }
+                      return _buildContent(
+                        context, ref, s,
+                        textColor: textColor,
+                        textMuted: textMuted,
+                        elevated: elevated,
+                        border: border,
+                        accent: accent,
+                      );
+                    },
+                  ),
                   // Clear the floating MainShell nav AND the Liquid Glass
                   // board-tab bar stacked above it.
                   const SizedBox(height: 180),
@@ -2483,6 +2529,134 @@ class _RangeChips extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+// ─── Instant-load skeleton ──────────────────────────────────────────────────
+
+/// Layout-matched loading placeholder for [DiscoverScreen].
+///
+/// Shown ONLY on a true cold-install first open (see `CacheFirstView`); every
+/// later open paints the cached snapshot instantly. The shape mirrors
+/// `_buildContent` — hero rank card, a Rising Stars header + horizontal strip,
+/// a Near You section header, and a short list of leaderboard rows — so the
+/// skeleton → content cross-fade does not reflow the layout.
+///
+/// Uses the shared skeleton primitives (theme-aware light + dark for free) and
+/// is built as a non-scrolling Column so it drops straight into the existing
+/// `SliverChildListDelegate`. Verified overflow-free on iPhone SE width.
+class _DiscoverSkeleton extends StatelessWidget {
+  final Color elevated;
+  final Color border;
+
+  const _DiscoverSkeleton({
+    required this.elevated,
+    required this.border,
+  });
+
+  /// One placeholder leaderboard row: rank chip + avatar + name/metric lines.
+  Widget _row() {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: elevated,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: border),
+      ),
+      child: Row(
+        children: const [
+          SkeletonBox(width: 26, height: 26, radius: 8),
+          SizedBox(width: 12),
+          SkeletonCircle(size: 40),
+          SizedBox(width: 12),
+          Expanded(child: SkeletonText(lines: 2, lastLineFraction: 0.45)),
+          SizedBox(width: 12),
+          SkeletonBox(width: 48, height: 14),
+        ],
+      ),
+    );
+  }
+
+  /// One section header placeholder: a title line + a shorter subtitle line.
+  Widget _header() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: const [
+        SkeletonBox(width: 150, height: 14),
+        SizedBox(height: 6),
+        SkeletonBox(width: 200, height: 11),
+      ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Hero rank card — tall rounded surface matching _RankHeroCard.
+        Container(
+          height: 188,
+          decoration: BoxDecoration(
+            color: elevated,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: border),
+          ),
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: const [
+              SkeletonBox(width: 120, height: 13),
+              SizedBox(height: 16),
+              SkeletonBox(width: 160, height: 30),
+              SizedBox(height: 14),
+              SkeletonBox(width: double.infinity, height: 10, radius: 5),
+              SizedBox(height: 18),
+              SkeletonText(lines: 2, lastLineFraction: 0.7),
+            ],
+          ),
+        ),
+        const SizedBox(height: 18),
+        // Rising Stars header + horizontal strip of star tiles.
+        _header(),
+        const SizedBox(height: 10),
+        SizedBox(
+          height: 132,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: 4,
+            separatorBuilder: (_, __) => const SizedBox(width: 12),
+            itemBuilder: (_, __) => Container(
+              width: 104,
+              decoration: BoxDecoration(
+                color: elevated,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: border),
+              ),
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                children: const [
+                  SkeletonCircle(size: 48),
+                  SizedBox(height: 10),
+                  SkeletonBox(width: 64, height: 11),
+                  SizedBox(height: 6),
+                  SkeletonBox(width: 40, height: 10),
+                ],
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 18),
+        // Near You section header + leaderboard rows.
+        _header(),
+        const SizedBox(height: 10),
+        for (var i = 0; i < 5; i++) ...[
+          if (i > 0) const SizedBox(height: 10),
+          _row(),
+        ],
+      ],
     );
   }
 }

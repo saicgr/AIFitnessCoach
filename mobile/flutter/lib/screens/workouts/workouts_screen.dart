@@ -61,6 +61,102 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
   final GlobalKey _planSectionKey = GlobalKey();
   int _activeOption = 0;
 
+  // ---- Weekly-progress memoization ----------------------------------------
+  // The day/count computation in _buildContent walks the whole workouts list
+  // and was re-running on EVERY rebuild (scroll, accent change, sheet open).
+  // Cache the result keyed by a cheap signature of its inputs so it only
+  // recomputes when the underlying data — or the current calendar day —
+  // actually changes.
+  String? _weeklyProgressSignature;
+  _WeeklyProgress? _weeklyProgressCache;
+
+  /// Cheap content signature of the inputs to the weekly-progress calc. Built
+  /// from the screen-summary counts (when present) plus each workout's
+  /// scheduled date + completion flag, and the local calendar day (so the
+  /// week window rolls over correctly across midnight).
+  String _weeklyProgressKey(
+    List<Workout> workouts,
+    WorkoutScreenSummary? summary,
+  ) {
+    final today = DateTime.now();
+    final buf = StringBuffer()
+      ..write('${today.year}-${today.month}-${today.day}|')
+      ..write('${summary?.completedThisWeek}/${summary?.plannedThisWeek}|');
+    for (final w in workouts) {
+      buf.write('${w.scheduledDate}:${w.isCompleted};');
+    }
+    return buf.toString();
+  }
+
+  /// Compute (or return the memoized) weekly-progress figures.
+  _WeeklyProgress _computeWeeklyProgress(
+    List<Workout> workouts,
+    WorkoutScreenSummary? summary,
+  ) {
+    final signature = _weeklyProgressKey(workouts, summary);
+    final cached = _weeklyProgressCache;
+    if (cached != null && _weeklyProgressSignature == signature) {
+      return cached;
+    }
+
+    final now = DateTime.now();
+
+    // Completed / planned counts — prefer the lightweight screen summary.
+    final int completedThisWeek;
+    final int plannedThisWeek;
+    if (summary != null) {
+      completedThisWeek = summary.completedThisWeek;
+      plannedThisWeek = summary.plannedThisWeek;
+    } else {
+      final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
+      final endOfWeek = startOfWeek.add(const Duration(days: 7));
+      completedThisWeek = workouts.where((w) {
+        if (w.isCompleted != true) return false;
+        if (w.scheduledDate == null) return false;
+        final scheduledDate = DateTime.tryParse(w.scheduledDate!);
+        if (scheduledDate == null) return false;
+        return scheduledDate.isAfter(startOfWeek) &&
+            scheduledDate.isBefore(endOfWeek);
+      }).length;
+      plannedThisWeek = workouts.where((w) {
+        if (w.scheduledDate == null) return false;
+        final scheduledDate = DateTime.tryParse(w.scheduledDate!);
+        if (scheduledDate == null) return false;
+        return scheduledDate.isAfter(startOfWeek) &&
+            scheduledDate.isBefore(startOfWeek.add(const Duration(days: 7)));
+      }).length;
+    }
+
+    // Per-day indicators for the ring row. Day indices are 0=Mon … 6=Sun.
+    final startOfWeek = DateTime(now.year, now.month, now.day)
+        .subtract(Duration(days: now.weekday - 1));
+    final endOfWeek = startOfWeek.add(const Duration(days: 7));
+    final completedDayIndices = <int>{};
+    final scheduledDayIndices = <int>{};
+    for (final w in workouts) {
+      if (w.scheduledDate == null) continue;
+      final scheduled = DateTime.tryParse(w.scheduledDate!);
+      if (scheduled == null) continue;
+      // Normalize to local calendar date so UTC-stored noon timestamps map
+      // to the right weekday in the user's zone.
+      final local = DateTime(scheduled.year, scheduled.month, scheduled.day);
+      if (local.isBefore(startOfWeek) || !local.isBefore(endOfWeek)) continue;
+      final dayIdx = local.weekday - 1;
+      scheduledDayIndices.add(dayIdx);
+      if (w.isCompleted == true) completedDayIndices.add(dayIdx);
+    }
+
+    final result = _WeeklyProgress(
+      completedThisWeek: completedThisWeek,
+      plannedThisWeek: plannedThisWeek,
+      completedDayIndices: completedDayIndices,
+      scheduledDayIndices: scheduledDayIndices,
+    );
+    _weeklyProgressSignature = signature;
+    _weeklyProgressCache = result;
+    return result;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -301,57 +397,15 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
     List<Workout> workouts,
     AsyncValue<WorkoutScreenSummary?> screenSummary,
   ) {
-    final now = DateTime.now();
-
-    // Calculate weekly progress - prefer screen summary if available
-    final summaryData = screenSummary.valueOrNull;
-    final int completedThisWeek;
-    final int plannedThisWeek;
-    if (summaryData != null) {
-      completedThisWeek = summaryData.completedThisWeek;
-      plannedThisWeek = summaryData.plannedThisWeek;
-    } else {
-      // Fallback to computing from workouts list
-      final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
-      final endOfWeek = startOfWeek.add(const Duration(days: 7));
-      completedThisWeek = workouts.where((w) {
-        if (w.isCompleted != true) return false;
-        if (w.scheduledDate == null) return false;
-        final scheduledDate = DateTime.tryParse(w.scheduledDate!);
-        if (scheduledDate == null) return false;
-        return scheduledDate.isAfter(startOfWeek) && scheduledDate.isBefore(endOfWeek);
-      }).length;
-      plannedThisWeek = workouts.where((w) {
-        if (w.scheduledDate == null) return false;
-        final scheduledDate = DateTime.tryParse(w.scheduledDate!);
-        if (scheduledDate == null) return false;
-        return scheduledDate.isAfter(startOfWeek) &&
-            scheduledDate.isBefore(startOfWeek.add(const Duration(days: 7)));
-      }).length;
-    }
-
-    // Per-day indicators for the ring row. Day indices are 0=Mon … 6=Sun.
-    // startOfWeek is the local Monday midnight for "this week".
-    final startOfWeek = DateTime(now.year, now.month, now.day)
-        .subtract(Duration(days: now.weekday - 1));
-    final endOfWeek = startOfWeek.add(const Duration(days: 7));
-    final completedDayIndices = <int>{};
-    final scheduledDayIndices = <int>{};
-    for (final w in workouts) {
-      if (w.scheduledDate == null) continue;
-      final scheduled = DateTime.tryParse(w.scheduledDate!);
-      if (scheduled == null) continue;
-      // Normalize to local calendar date so UTC-stored noon timestamps map
-      // to the right weekday in the user's zone.
-      final local =
-          DateTime(scheduled.year, scheduled.month, scheduled.day);
-      if (local.isBefore(startOfWeek) || !local.isBefore(endOfWeek)) continue;
-      final dayIdx = local.weekday - 1;
-      scheduledDayIndices.add(dayIdx);
-      if (w.isCompleted == true) {
-        completedDayIndices.add(dayIdx);
-      }
-    }
+    // Weekly progress — memoized so this whole-list walk only runs when the
+    // workouts data (or the calendar day) actually changes, not on every
+    // scroll / accent / sheet rebuild.
+    final weekly =
+        _computeWeeklyProgress(workouts, screenSummary.valueOrNull);
+    final completedThisWeek = weekly.completedThisWeek;
+    final plannedThisWeek = weekly.plannedThisWeek;
+    final completedDayIndices = weekly.completedDayIndices;
+    final scheduledDayIndices = weekly.scheduledDayIndices;
 
     return SliverList(
       delegate: SliverChildListDelegate([
@@ -1459,4 +1513,29 @@ class _ImportSourceTile extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Memoized result of the weekly-progress computation in
+/// `_WorkoutsScreenState._computeWeeklyProgress`. Holds the four figures the
+/// `WeeklyProgressCard` needs so the whole-list walk that produces them runs
+/// at most once per data/day change instead of once per rebuild.
+class _WeeklyProgress {
+  /// Workouts completed in the current Mon–Sun week.
+  final int completedThisWeek;
+
+  /// Workouts scheduled in the current Mon–Sun week.
+  final int plannedThisWeek;
+
+  /// Day indices (0=Mon … 6=Sun) with at least one completed workout.
+  final Set<int> completedDayIndices;
+
+  /// Day indices (0=Mon … 6=Sun) with at least one scheduled workout.
+  final Set<int> scheduledDayIndices;
+
+  const _WeeklyProgress({
+    required this.completedThisWeek,
+    required this.plannedThisWeek,
+    required this.completedDayIndices,
+    required this.scheduledDayIndices,
+  });
 }

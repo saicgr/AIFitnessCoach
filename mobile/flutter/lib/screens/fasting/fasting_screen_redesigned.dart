@@ -11,6 +11,7 @@ import '../../data/providers/fasting_provider.dart';
 import '../../data/providers/guest_mode_provider.dart';
 import '../../data/providers/guest_usage_limits_provider.dart';
 import '../../data/repositories/auth_repository.dart';
+import '../../data/services/data_cache_service.dart';
 import '../../data/services/fasting_timer_service.dart';
 import '../../data/services/haptic_service.dart';
 import '../../widgets/glass_back_button.dart';
@@ -64,6 +65,28 @@ class _FastingScreenRedesignedState
   /// user override is not clobbered on rebuild (Task G).
   bool _appliedScheduledProtocol = false;
 
+  /// SharedPreferences cache key for the fasting history/stats/streak
+  /// snapshot. The active-fast surface is already disk-cached inside
+  /// `fasting_provider.dart`; this complements it so the SECONDARY data
+  /// (completed history, aggregate stats, the streak chip) also renders
+  /// instantly on a cold start instead of flashing empty until the network
+  /// `initialize()` call resolves. The blob carries `DataCacheService`'s
+  /// default 1h TTL; staleness is harmless because the background
+  /// `initialize()` always silently revalidates on every screen open.
+  static const String _kFastingSummaryCacheKey = 'cache_fasting_summary';
+
+  /// Disk-hydrated snapshot of history/stats/streak. Used ONLY to back-fill
+  /// the UI while `fastingProvider` is still loading on a cold start; once the
+  /// provider yields real data we render straight from it. Null until the
+  /// `initState` disk read completes (or on a genuine first-ever open).
+  List<FastingRecord>? _cachedHistory;
+  FastingStats? _cachedStats;
+  FastingStreak? _cachedStreak;
+
+  /// Guards [_persistSummarySnapshot] so we only write through once per fresh
+  /// provider payload (the listener can fire repeatedly during a session).
+  String? _lastPersistedSnapshotSignature;
+
   /// Captured ProviderContainer — used in [dispose] to safely restore the
   /// floating nav bar. Reading the container off `context` in `dispose()`
   /// throws ("deactivated widget"), so we grab it in didChangeDependencies.
@@ -72,6 +95,10 @@ class _FastingScreenRedesignedState
   @override
   void initState() {
     super.initState();
+    // Cache-first: hydrate history/stats/streak from disk BEFORE the first
+    // network call so a cold start shows real content immediately. This is a
+    // non-blocking fire-and-forget read — the screen still paints this frame.
+    _hydrateSummaryFromCache();
     // Render immediately; do all heavy init off the first frame so the
     // screen never blocks on a spinner.
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -82,6 +109,73 @@ class _FastingScreenRedesignedState
       ref.read(floatingNavBarVisibleProvider.notifier).state = false;
       _initializeInBackground();
     });
+  }
+
+  /// Read the persisted history/stats/streak snapshot off disk and seed the
+  /// `_cached*` fields. Best-effort: any failure (miss, expiry, corruption,
+  /// schema drift) is swallowed and simply leaves the fields null — the
+  /// screen then renders empty sections until the background init resolves,
+  /// exactly as it did before this cache existed. Never throws.
+  Future<void> _hydrateSummaryFromCache() async {
+    final userId = ref.read(authStateProvider).user?.id;
+    if (userId == null || userId.isEmpty) return;
+    try {
+      final cached = await DataCacheService.instance.getCached(
+        _kFastingSummaryCacheKey,
+        userId: userId,
+      );
+      if (cached == null || !mounted) return;
+      final historyRaw = cached['history'] as List<dynamic>?;
+      final statsRaw = cached['stats'] as Map<String, dynamic>?;
+      final streakRaw = cached['streak'] as Map<String, dynamic>?;
+      final history = historyRaw
+          ?.map((e) => FastingRecord.fromJson(e as Map<String, dynamic>))
+          .toList();
+      setState(() {
+        _cachedHistory = history;
+        _cachedStats =
+            statsRaw != null ? FastingStats.fromJson(statsRaw) : null;
+        _cachedStreak =
+            streakRaw != null ? FastingStreak.fromJson(streakRaw) : null;
+      });
+    } catch (e) {
+      // Corrupt / schema-drifted blob — drop it so the next write is clean.
+      debugPrint('🕐 [Fasting] summary cache hydrate failed: $e');
+    }
+  }
+
+  /// Write the fresh history/stats/streak snapshot through to disk so the
+  /// NEXT cold start is instant. Called from the `ref.listen` in [build] each
+  /// time the provider yields a payload with genuine data. De-duplicated via
+  /// [_lastPersistedSnapshotSignature] so an unchanged payload is not
+  /// re-serialized on every rebuild. Best-effort — never throws.
+  void _persistSummarySnapshot(FastingState state) {
+    final userId = ref.read(authStateProvider).user?.id;
+    if (userId == null || userId.isEmpty) return;
+    // Nothing worth persisting yet (still loading) — skip.
+    if (state.history.isEmpty && state.stats == null && state.streak == null) {
+      return;
+    }
+    // Cheap change-signature so we only write when the data actually moved.
+    final signature =
+        '${state.history.length}:${state.stats?.completedFasts ?? -1}:'
+        '${state.streak?.currentStreak ?? -1}:'
+        '${state.history.isNotEmpty ? state.history.first.id : ''}';
+    if (signature == _lastPersistedSnapshotSignature) return;
+    _lastPersistedSnapshotSignature = signature;
+    try {
+      DataCacheService.instance.cache(
+        _kFastingSummaryCacheKey,
+        {
+          'history': state.history.map((r) => r.toJson()).toList(),
+          'stats': state.stats?.toJson(),
+          'streak': state.streak?.toJson(),
+        },
+        userId: userId,
+      );
+    } catch (e) {
+      debugPrint('🕐 [Fasting] summary cache write failed: $e');
+    }
   }
 
   @override
@@ -157,7 +251,21 @@ class _FastingScreenRedesignedState
       return _buildGuestLockScreen(context, colors);
     }
 
-    final fastingState = ref.watch(fastingProvider);
+    // Cache-first write-through: persist the history/stats/streak snapshot to
+    // disk whenever the provider yields a fresh payload, so the next cold
+    // start is instant. Registered as a listener (not in the build body) so
+    // the write happens exactly on data change, never on every rebuild.
+    ref.listen<FastingState>(fastingProvider, (_, next) {
+      _persistSummarySnapshot(next);
+    });
+
+    final liveState = ref.watch(fastingProvider);
+    // Overlay the disk snapshot while the live provider is still cold: if the
+    // network `initialize()` hasn't populated history/stats/streak yet, fall
+    // back to the cached values so the screen shows real content instantly.
+    // The active fast + preferences always come from the live provider (the
+    // active fast is already disk-seeded inside fasting_provider.dart).
+    final fastingState = _withCachedSummary(liveState);
     final userId = ref.watch(authStateProvider).user?.id;
 
     // Task G: pre-select today's scheduled protocol (once, non-overriding).
@@ -288,6 +396,24 @@ class _FastingScreenRedesignedState
           ),
         ],
       ),
+    );
+  }
+
+  /// Returns [live] with its history/stats/streak back-filled from the disk
+  /// snapshot WHEN AND ONLY WHEN the live provider has not produced that
+  /// field yet (cold start, mid-`initialize()`). Once the network call lands,
+  /// the live values win — so this never serves stale data over fresh data,
+  /// it only fills the gap before the first network payload arrives.
+  FastingState _withCachedSummary(FastingState live) {
+    final needHistory =
+        live.history.isEmpty && (_cachedHistory?.isNotEmpty ?? false);
+    final needStats = live.stats == null && _cachedStats != null;
+    final needStreak = live.streak == null && _cachedStreak != null;
+    if (!needHistory && !needStats && !needStreak) return live;
+    return live.copyWith(
+      history: needHistory ? _cachedHistory : null,
+      stats: needStats ? _cachedStats : null,
+      streak: needStreak ? _cachedStreak : null,
     );
   }
 

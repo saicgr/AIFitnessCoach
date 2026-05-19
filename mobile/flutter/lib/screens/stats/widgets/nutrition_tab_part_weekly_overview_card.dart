@@ -29,9 +29,22 @@ class _WeeklyOverviewCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
       ),
       child: weeklySummary.when(
-        loading: () => const SizedBox(
-          height: 80,
-          child: Center(child: CircularProgressIndicator.adaptive()),
+        // Layout-matched skeleton: title line + a row of 3 stat badges.
+        loading: () => Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: const [
+            SkeletonBox(width: 140, height: 16, radius: 6),
+            SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(child: SkeletonBox(height: 64, radius: 12)),
+                SizedBox(width: 8),
+                Expanded(child: SkeletonBox(height: 64, radius: 12)),
+                SizedBox(width: 8),
+                Expanded(child: SkeletonBox(height: 64, radius: 12)),
+              ],
+            ),
+          ],
         ),
         error: (_, __) => _errorRow('Could not load weekly summary'),
         data: (data) {
@@ -193,9 +206,14 @@ class _CalorieTrendCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
       ),
       child: weeklyNutrition.when(
-        loading: () => const SizedBox(
-          height: 200,
-          child: Center(child: CircularProgressIndicator.adaptive()),
+        // Layout-matched skeleton: title line + 180pt chart placeholder.
+        loading: () => Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: const [
+            SkeletonBox(width: 120, height: 16, radius: 6),
+            SizedBox(height: 16),
+            SkeletonBox(height: 180, radius: 12),
+          ],
         ),
         error: (_, __) => SizedBox(
           height: 80,
@@ -252,7 +270,7 @@ class _CalorieTrendCard extends StatelessWidget {
 }
 
 
-class _CalorieBarChart extends StatelessWidget {
+class _CalorieBarChart extends StatefulWidget {
   final List<DailyNutritionEntry> entries;
   final double avgCalories;
   final bool isDark;
@@ -264,13 +282,44 @@ class _CalorieBarChart extends StatelessWidget {
   });
 
   @override
+  State<_CalorieBarChart> createState() => _CalorieBarChartState();
+}
+
+class _CalorieBarChartState extends State<_CalorieBarChart> {
+  // Memoized fl_chart BarChartData. Building all 7 bar groups + tooltip
+  // closures on every unrelated rebuild of the NutritionTab (it is a
+  // ConsumerWidget that rebuilds on ANY watched provider change) is wasteful.
+  // We rebuild the BarChartData only when the entries/avg/theme change.
+  String? _memoKey;
+  BarChartData? _memoData;
+
+  /// Identifies the inputs that affect the chart's geometry. Daily entries
+  /// are immutable, so day label + calories per day fully describe them.
+  String _buildMemoKey() {
+    final buf = StringBuffer('${widget.isDark}|${widget.avgCalories}|');
+    for (final e in widget.entries) {
+      buf.write('${e.dayLabel}:${e.calories}:'
+          '${e.proteinG}:${e.carbsG}:${e.fatG};');
+    }
+    return buf.toString();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final memoKey = _buildMemoKey();
+    if (_memoKey == memoKey && _memoData != null) {
+      return BarChart(_memoData!);
+    }
+
+    final entries = widget.entries;
+    final avgCalories = widget.avgCalories;
+    final isDark = widget.isDark;
+
     final maxCal = entries
         .fold<double>(avgCalories, (m, e) => e.calories > m ? e.calories.toDouble() : m);
     final chartMax = maxCal > 0 ? (maxCal * 1.2).ceilToDouble() : 2000.0;
 
-    return BarChart(
-      BarChartData(
+    final chartData = BarChartData(
         maxY: chartMax,
         barTouchData: BarTouchData(
           touchTooltipData: BarTouchTooltipData(
@@ -379,8 +428,12 @@ class _CalorieBarChart extends StatelessWidget {
             ],
           );
         }),
-      ),
     );
+
+    // Cache the freshly-built chart data for the next rebuild.
+    _memoKey = memoKey;
+    _memoData = chartData;
+    return BarChart(chartData);
   }
 }
 
@@ -413,9 +466,20 @@ class _MacroBreakdownCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
       ),
       child: weeklyNutrition.when(
-        loading: () => const SizedBox(
-          height: 120,
-          child: Center(child: CircularProgressIndicator.adaptive()),
+        // Layout-matched skeleton: title + stacked bar + 3 macro rows.
+        loading: () => Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: const [
+            SkeletonBox(width: 150, height: 16, radius: 6),
+            SizedBox(height: 16),
+            SkeletonBox(height: 20, radius: 6),
+            SizedBox(height: 16),
+            SkeletonBox(height: 14, radius: 6),
+            SizedBox(height: 8),
+            SkeletonBox(height: 14, radius: 6),
+            SizedBox(height: 8),
+            SkeletonBox(height: 14, radius: 6),
+          ],
         ),
         error: (_, __) => SizedBox(
           height: 60,
@@ -616,9 +680,18 @@ class _TDEECard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
       ),
       child: detailedTDEE.when(
-        loading: () => const SizedBox(
-          height: 100,
-          child: Center(child: CircularProgressIndicator.adaptive()),
+        // Layout-matched skeleton: title + large TDEE figure + 2 detail rows.
+        loading: () => Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: const [
+            SkeletonBox(width: 180, height: 16, radius: 6),
+            SizedBox(height: 12),
+            SkeletonBox(width: 160, height: 32, radius: 8),
+            SizedBox(height: 12),
+            SkeletonBox(height: 14, radius: 6),
+            SizedBox(height: 8),
+            SkeletonBox(height: 14, radius: 6),
+          ],
         ),
         error: (_, __) => SizedBox(
           height: 60,

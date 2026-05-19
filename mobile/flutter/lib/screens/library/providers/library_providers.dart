@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/cache/cache_first_mixin.dart';
 import '../../../core/constants/api_constants.dart';
 import '../../../core/exceptions/app_exceptions.dart';
 import '../../../data/models/exercise.dart';
@@ -24,11 +27,43 @@ ExerciseFilterOptions? _filterOptionsCache;
 DateTime? _filterOptionsCacheTime;
 const _filterOptionsCacheDuration = Duration(hours: 24);
 
-/// Drop the cached filter-options snapshot. Call after creating or editing
-/// a custom exercise so the next watch picks up fresh counts.
+/// Cache-first slot name for the disk-persisted filter-options snapshot. The
+/// in-memory caches above are L1 (lost on a cold process start); this disk slot
+/// is L2 so the very first Library open after a cold start can render filter
+/// chips + the authoritative total instantly.
+const String _filterOptionsCacheKey = 'exercise_filter_options';
+
+/// Schema version for the filter-options disk envelope. Bump on a shape change.
+const int _filterOptionsSchemaVersion = 1;
+
+/// Filter options are GLOBAL reference data — identical for every account — so
+/// the disk slot is intentionally NOT user-scoped. An empty userId routes
+/// [CacheFirstMixin] to its deterministic `_global` slot, which lets
+/// [invalidateFilterOptionsCache] target it precisely without a user_id.
+const String _filterOptionsCacheUser = '';
+
+/// Host for [CacheFirstMixin] so the filter-options [FutureProvider] (which is
+/// not a `StateNotifier`) can still reuse the shared 24h-TTL, versioned
+/// disk-cache machinery instead of hand-rolling a SharedPreferences envelope.
+/// `mounted` is always true — a top-level provider has no lifecycle.
+class _FilterOptionsDiskCache with CacheFirstMixin {}
+
+final _filterOptionsDiskCache = _FilterOptionsDiskCache();
+
+/// Drop the cached filter-options snapshot (both in-memory and disk). Call
+/// after creating or editing a custom exercise so the next watch picks up
+/// fresh counts.
 void invalidateFilterOptionsCache() {
   _filterOptionsCache = null;
   _filterOptionsCacheTime = null;
+  // Best-effort disk invalidation — fire-and-forget so callers stay sync.
+  // The next watch then does a clean network read instead of serving a stale
+  // disk blob with pre-edit counts.
+  _filterOptionsDiskCache.invalidateCacheFirst(
+    cacheKey: _filterOptionsCacheKey,
+    userId: _filterOptionsCacheUser,
+    schemaVersion: _filterOptionsSchemaVersion,
+  );
 }
 
 // ============================================================================
@@ -69,11 +104,103 @@ final searchSuggestionProvider = StateProvider<String?>((ref) => null);
 // EXERCISES STATE NOTIFIER
 // ============================================================================
 
-/// State notifier for paginated exercises
-class ExercisesNotifier extends StateNotifier<ExercisesState> {
+/// Cache-first slot name for the first page of
+/// the *default* (unfiltered, unsearched) exercises list. Disk-caching only the
+/// default view keeps the cache small and deterministic — filtered/searched
+/// results are short-lived and not worth persisting.
+const String _exercisesFirstPageCacheKey = 'cache_exercises_first_page';
+
+/// State notifier for paginated exercises.
+///
+/// Mixes in [CacheFirstMixin] so the FIRST page of the default view is served
+/// disk-first (stale-while-revalidate): a returning user sees the cached grid
+/// instantly on cold start instead of a 2-3s blocking spinner, while a silent
+/// network refresh updates it in the background.
+class ExercisesNotifier extends StateNotifier<ExercisesState>
+    with CacheFirstMixin {
   final Ref _ref;
 
   ExercisesNotifier(this._ref) : super(const ExercisesState());
+
+  /// Whether the current filter providers represent the pristine default view
+  /// (no filters, no search). Only this view is disk-cached.
+  bool _isDefaultView() => _currentFilterSignature() == '|||||||';
+
+  /// Cold-start entry point. When the Library opens with no filters/search,
+  /// serve the first page disk-first then revalidate; otherwise defer to the
+  /// normal network path.
+  Future<void> loadFirstPageCacheFirst() async {
+    if (!_isDefaultView()) {
+      await loadExercises();
+      return;
+    }
+
+    final apiClient = _ref.read(apiClientProvider);
+    final userId = await apiClient.getUserId() ?? '';
+    final defaultSignature = _currentFilterSignature();
+
+    await loadCacheFirst<List<LibraryExercise>>(
+      cacheKey: _exercisesFirstPageCacheKey,
+      userId: userId,
+      ttl: const Duration(hours: 24),
+      // Bump if LibraryExercise's JSON shape changes.
+      schemaVersion: 1,
+      fetch: () async {
+        final url = '${ApiConstants.library}/exercises'
+            '?limit=$exercisesPageSize&offset=0';
+        final response = await apiClient.get(url);
+        // Surface the backend's "did you mean" suggestion just like
+        // loadExercises() does.
+        final suggestion = response.headers.value('x-search-suggestion');
+        _ref.read(searchSuggestionProvider.notifier).state = suggestion;
+        if (response.statusCode != 200) {
+          throw ApiException(
+            message: 'Failed to load exercises',
+            statusCode: response.statusCode,
+          );
+        }
+        return (response.data as List)
+            .map((e) => LibraryExercise.fromJson(e as Map<String, dynamic>))
+            .toList();
+      },
+      decode: (json) => (json['exercises'] as List)
+          .map((e) => LibraryExercise.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      encode: (list) => {
+        'exercises': list.map((e) => e.toJson()).toList(),
+      },
+      emit: (exercises, {required bool fromCache}) {
+        // A user-initiated filter/search may have raced ahead of a slow
+        // network fetch — never clobber a non-default state with default data.
+        if (_currentFilterSignature() != defaultSignature) return;
+        // Don't overwrite a fresh network result with a late cache emit.
+        if (fromCache && state.exercises.isNotEmpty &&
+            state.filterSignature == defaultSignature) {
+          return;
+        }
+        state = state.copyWith(
+          exercises: exercises,
+          isLoading: false,
+          error: null,
+          offset: exercises.length,
+          // A short first page means the catalog is fully loaded.
+          hasMore: exercises.length >= exercisesPageSize,
+          filterSignature: defaultSignature,
+        );
+      },
+      onError: (error, _) {
+        // Only surface the failure if we have nothing on screen — a cached
+        // grid keeps showing through a transient network blip.
+        if (state.exercises.isEmpty) {
+          final appException = ExceptionHandler.handle(error);
+          state = state.copyWith(
+            isLoading: false,
+            error: appException.userMessage,
+          );
+        }
+      },
+    );
+  }
 
   /// Build a deterministic signature from the current filter providers.
   /// Used by the skip-refetch guard so re-entering the Library tab with the
@@ -226,8 +353,9 @@ class ExercisesNotifier extends StateNotifier<ExercisesState> {
 final exercisesNotifierProvider =
     StateNotifierProvider<ExercisesNotifier, ExercisesState>((ref) {
   final notifier = ExercisesNotifier(ref);
-  // Auto-load on creation
-  notifier.loadExercises();
+  // Auto-load on creation — cache-first so a returning user sees the cached
+  // first page instantly instead of a blocking spinner.
+  notifier.loadFirstPageCacheFirst();
   return notifier;
 });
 
@@ -248,7 +376,7 @@ final exercisesProvider = Provider<AsyncValue<List<LibraryExercise>>>((ref) {
 /// Backed by a 24h in-memory cache so re-entering the Library tab is instant.
 final filterOptionsProvider =
     FutureProvider<ExerciseFilterOptions>((ref) async {
-  // Serve from cache when fresh.
+  // L1 — serve from the in-memory cache when fresh (warm process).
   if (_filterOptionsCache != null && _filterOptionsCacheTime != null) {
     final age = DateTime.now().difference(_filterOptionsCacheTime!);
     if (age < _filterOptionsCacheDuration) {
@@ -258,33 +386,58 @@ final filterOptionsProvider =
 
   final apiClient = ref.read(apiClientProvider);
 
-  try {
-    final response =
-        await apiClient.get('${ApiConstants.library}/exercises/filter-options');
+  // L2 — cache-first disk load (24h TTL, versioned, global slot). The first
+  // emit (cached OR fresh) completes this provider so the Library renders its
+  // filter chips + authoritative total instantly on a cold start; the network
+  // fetch keeps running in the background to revalidate the disk slot. The
+  // mixin never throws — `loadError` only carries a network failure when
+  // nothing was cached.
+  final completer = Completer<ExerciseFilterOptions>();
+  Object? loadError;
 
-    if (response.statusCode == 200) {
+  await _filterOptionsDiskCache.loadCacheFirst<ExerciseFilterOptions>(
+    cacheKey: _filterOptionsCacheKey,
+    userId: _filterOptionsCacheUser,
+    ttl: const Duration(hours: 24),
+    schemaVersion: _filterOptionsSchemaVersion,
+    fetch: () async {
+      final response = await apiClient
+          .get('${ApiConstants.library}/exercises/filter-options');
+      if (response.statusCode != 200) {
+        debugPrint('❌ [FilterOptions] API error: ${response.statusCode}');
+        throw ApiException(
+          message: 'Failed to load filter options',
+          statusCode: response.statusCode,
+        );
+      }
       try {
-        final options = ExerciseFilterOptions.fromJson(
+        return ExerciseFilterOptions.fromJson(
             response.data as Map<String, dynamic>);
-        _filterOptionsCache = options;
-        _filterOptionsCacheTime = DateTime.now();
-        return options;
       } catch (e) {
         debugPrint('❌ [FilterOptions] Parse error: $e');
         throw const ParseException();
       }
-    }
+    },
+    decode: ExerciseFilterOptions.fromJson,
+    encode: (options) => options.toJson(),
+    emit: (options, {required bool fromCache}) {
+      // Promote every value (cached or fresh) into L1 so subsequent watches
+      // this session skip both disk and network.
+      _filterOptionsCache = options;
+      _filterOptionsCacheTime = DateTime.now();
+      if (!completer.isCompleted) completer.complete(options);
+    },
+    onError: (error, _) {
+      // Network failed. If a cached value already completed the provider the
+      // screen keeps it; otherwise record the error to surface below.
+      loadError = error;
+    },
+  );
 
-    debugPrint('❌ [FilterOptions] API error: ${response.statusCode}');
-    throw ApiException(
-      message: 'Failed to load filter options',
-      statusCode: response.statusCode,
-    );
-  } catch (e) {
-    if (e is AppException) rethrow;
-    debugPrint('❌ [FilterOptions] Error: $e');
-    throw ExceptionHandler.handle(e);
-  }
+  if (completer.isCompleted) return completer.future;
+  // Cold cache AND the network failed — surface the error.
+  final err = loadError ?? const ApiException(message: 'Failed to load filter options');
+  throw err is AppException ? err : ExceptionHandler.handle(err);
 });
 
 // ============================================================================

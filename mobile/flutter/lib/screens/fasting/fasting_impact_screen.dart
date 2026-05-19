@@ -3,10 +3,12 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/widgets/skeleton/skeleton.dart';
 import '../../data/models/fasting_impact.dart';
 import '../../data/providers/fasting_impact_provider.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/services/context_logging_service.dart';
+import '../../data/services/data_cache_service.dart';
 import '../../widgets/pill_app_bar.dart';
 import 'widgets/fasting_calendar_widget.dart';
 import 'widgets/fasting_impact_card.dart';
@@ -24,21 +26,84 @@ class FastingImpactScreen extends ConsumerStatefulWidget {
 class _FastingImpactScreenState extends ConsumerState<FastingImpactScreen> {
   String? _userId;
 
+  /// Base SharedPreferences key for the cached impact analysis. The real key
+  /// is per-period (see [_cacheKeyFor]) so switching Week/Month/3-Months each
+  /// keeps its own instant-load snapshot.
+  static const String _kImpactCacheBaseKey = 'cache_fasting_impact';
+
+  /// Disk-hydrated impact snapshot for the CURRENTLY selected period. Used
+  /// only to render real content while `fastingImpactProvider` is still
+  /// loading on a cold start — once the network payload lands the provider's
+  /// `state.data` wins. Null on a genuine first-ever open / cache miss.
+  FastingImpactData? _cachedData;
+
+  /// De-dupes the write-through so an unchanged payload is not re-serialized
+  /// on every rebuild.
+  String? _lastPersistedSignature;
+
   @override
   void initState() {
     super.initState();
     _loadData();
   }
 
+  /// Per-period cache key — keeps Week / Month / 3-Months snapshots distinct.
+  String _cacheKeyFor(FastingImpactPeriod period) =>
+      '${_kImpactCacheBaseKey}_${period.apiValue}';
+
   Future<void> _loadData() async {
     final authState = ref.read(authStateProvider);
     final userId = authState.user?.id;
     if (userId != null) {
       setState(() => _userId = userId);
+      // Cache-first: hydrate the disk snapshot for the default period BEFORE
+      // the network call so a cold start renders real content instantly
+      // instead of a blocking spinner. Non-blocking, best-effort.
+      _hydrateImpactFromCache(ref.read(fastingImpactProvider).selectedPeriod);
       ref.read(fastingImpactProvider.notifier).loadImpactData(userId: userId);
 
       // Log screen view for context tracking
       _logScreenOpened();
+    }
+  }
+
+  /// Read the persisted [FastingImpactData] for [period] off disk and seed
+  /// [_cachedData]. Best-effort: any miss / expiry / corruption simply leaves
+  /// the field null and the screen shows its skeleton until the network
+  /// resolves. Never throws.
+  Future<void> _hydrateImpactFromCache(FastingImpactPeriod period) async {
+    final userId = _userId;
+    if (userId == null || userId.isEmpty) return;
+    try {
+      final cached = await DataCacheService.instance.getCached(
+        _cacheKeyFor(period),
+        userId: userId,
+      );
+      if (cached == null || !mounted) return;
+      final data = FastingImpactData.fromJson(cached);
+      setState(() => _cachedData = data);
+    } catch (e) {
+      debugPrint('🍽️ [FastingImpact] cache hydrate failed: $e');
+    }
+  }
+
+  /// Persist the fresh [FastingImpactData] so the next cold start is instant.
+  /// De-duplicated via [_lastPersistedSignature]. Best-effort — never throws.
+  void _persistImpactSnapshot(FastingImpactData data) {
+    final userId = _userId;
+    if (userId == null || userId.isEmpty) return;
+    final signature = '${data.period.apiValue}:${data.analysisDate}:'
+        '${data.dailyData.length}:${data.overallCorrelationScore}';
+    if (signature == _lastPersistedSignature) return;
+    _lastPersistedSignature = signature;
+    try {
+      DataCacheService.instance.cache(
+        _cacheKeyFor(data.period),
+        data.toJson(),
+        userId: userId,
+      );
+    } catch (e) {
+      debugPrint('🍽️ [FastingImpact] cache write failed: $e');
     }
   }
 
@@ -106,6 +171,21 @@ class _FastingImpactScreenState extends ConsumerState<FastingImpactScreen> {
 
     final state = ref.watch(fastingImpactProvider);
 
+    // Cache-first write-through: persist whenever the provider yields fresh
+    // data so the next cold start is instant.
+    ref.listen<FastingImpactState>(fastingImpactProvider, (_, next) {
+      final data = next.data;
+      if (data != null) _persistImpactSnapshot(data);
+    });
+
+    // The provider state is authoritative once it has data; otherwise fall
+    // back to the disk snapshot so a cold start renders real content rather
+    // than a blocking spinner.
+    final effectiveData = state.data ?? _cachedData;
+    // True first-ever open: loading, and nothing cached to show.
+    final showSkeleton =
+        state.data == null && _cachedData == null && state.error == null;
+
     return Scaffold(
       backgroundColor: backgroundColor,
       appBar: PillAppBar(
@@ -118,24 +198,81 @@ class _FastingImpactScreenState extends ConsumerState<FastingImpactScreen> {
           ),
         ],
       ),
-      body: state.isLoading
-          ? Center(child: CircularProgressIndicator(color: purple))
-          : state.error != null
+      body: showSkeleton
+          // Layout-matched skeleton instead of a blocking centered spinner.
+          ? _buildSkeleton(context)
+          : state.error != null && effectiveData == null
               ? _buildErrorState(state.error!, textPrimary, textMuted, purple)
-              : !state.hasData
+              : effectiveData == null || effectiveData.dailyData.isEmpty
                   ? _buildEmptyState(textPrimary, textMuted, purple)
-                  : _buildContent(context, state, isDark),
+                  : _buildContent(context, state, isDark, effectiveData),
+    );
+  }
+
+  /// Layout-matched loading placeholder — mirrors the period selector, the
+  /// correlation summary card, the weight-trend chart and a couple of impact
+  /// cards so the skeleton → content swap does not reflow. Shown only on a
+  /// genuine first-ever open (no cached snapshot yet).
+  Widget _buildSkeleton(BuildContext context) {
+    return SingleChildScrollView(
+      physics: const NeverScrollableScrollPhysics(),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Period selector row.
+            Row(
+              children: List.generate(
+                3,
+                (i) => Padding(
+                  padding: EdgeInsets.only(right: i == 2 ? 0 : 8),
+                  child: const SkeletonBox(width: 72, height: 32, radius: 16),
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            // Correlation summary card.
+            SkeletonBox(
+              height: 150,
+              radius: 16,
+              width: MediaQuery.of(context).size.width,
+            ),
+            const SizedBox(height: 24),
+            SkeletonText(lines: 1, lineHeight: 16, radius: 6),
+            const SizedBox(height: 12),
+            // Weight-trend chart placeholder.
+            SkeletonBox(
+              height: 180,
+              radius: 16,
+              width: MediaQuery.of(context).size.width,
+            ),
+            const SizedBox(height: 24),
+            // Impact comparison cards.
+            const SkeletonCard(showLeading: false, lines: 3, height: 96),
+            const SizedBox(height: 12),
+            const SkeletonCard(showLeading: false, lines: 3, height: 96),
+          ],
+        ),
+      ),
     );
   }
 
   Widget _buildContent(
-      BuildContext context, FastingImpactState state, bool isDark) {
+    BuildContext context,
+    FastingImpactState state,
+    bool isDark,
+    FastingImpactData data,
+  ) {
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final purple = isDark ? AppColors.purple : AppColorsLight.purple;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final data = state.data!;
+    // `data` is the effective payload — provider data when present, else the
+    // disk snapshot. `hasEnoughData` is derived from it directly so the
+    // not-enough-data banner is correct even while rendering from cache.
+    final hasEnoughData = data.comparison.fastingDaysCount >= 3;
 
     return SingleChildScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
@@ -146,7 +283,7 @@ class _FastingImpactScreenState extends ConsumerState<FastingImpactScreen> {
           _buildPeriodSelector(state, purple, textMuted, elevated, isDark),
 
           // Not enough data warning
-          if (!state.hasEnoughData)
+          if (!hasEnoughData)
             _buildNotEnoughDataBanner(isDark)
                 .animate()
                 .fadeIn(duration: 300.ms),

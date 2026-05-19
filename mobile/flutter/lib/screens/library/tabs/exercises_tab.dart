@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/constants/app_colors.dart';
+// Prefixed: `empty_state.dart` also exports a `SkeletonCard`, so the shared
+// instant-load skeleton kit is namespaced to disambiguate.
+import '../../../core/widgets/skeleton/skeleton.dart' as skel;
 import '../../../widgets/empty_state.dart';
 import '../providers/library_providers.dart';
 import '../widgets/exercise_search_bar.dart';
@@ -254,10 +257,23 @@ class _ExercisesTabState extends ConsumerState<ExercisesTab> {
     Color textMuted,
     bool isDark,
   ) {
-    // Handle loading state
+    // Handle loading state — show a layout-matched shimmer list instead of a
+    // blocking spinner. Each skeleton row mirrors an ExerciseCard (leading
+    // square thumbnail + two text lines) so the skeleton → content swap is
+    // reflow-free. A returning user is seeded from the disk cache and skips
+    // this entirely; this is purely the cold-install affordance.
     if (exercisesState.isLoading && exercisesState.exercises.isEmpty) {
-      return Center(
-        child: CircularProgressIndicator(color: cyan),
+      return skel.SkeletonList(
+        scrollable: true,
+        itemCount: 8,
+        spacing: 10,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        itemBuilder: (context, _) => const skel.SkeletonCard(
+          showLeading: true,
+          leadingSize: 56,
+          lines: 2,
+          height: 84,
+        ),
       );
     }
 

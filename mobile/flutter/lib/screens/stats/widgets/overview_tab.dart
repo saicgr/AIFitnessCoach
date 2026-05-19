@@ -2,18 +2,89 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import '../../../core/cache/cache_first_mixin.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/accent_color_provider.dart';
+import '../../../core/widgets/skeleton/skeleton.dart';
+import '../../../data/models/consistency.dart';
 import '../../../data/models/milestone.dart';
 import '../../../data/providers/consistency_provider.dart';
 import '../../../data/providers/milestones_provider.dart';
 import '../../../data/providers/scores_provider.dart';
+import '../../../data/repositories/consistency_repository.dart';
+import '../../../data/repositories/milestones_repository.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/services/api_client.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../widgets/activity_heatmap.dart';
 import '../../../widgets/exercise_search_results.dart';
 import '../../../widgets/workout_day_detail_sheet.dart';
+
+/// Disk-cached snapshots for the Overview tab.
+///
+/// The Overview-tab providers (`milestonesProvider`, `consistencyProvider`)
+/// are plain `StateNotifier`s with only a *process-lifetime* in-memory cache —
+/// nothing survives a cold app restart, so the first open after a restart
+/// always blocked on a spinner while the network fetch ran.
+///
+/// This holder gives those two providers a disk tier. It is owned entirely by
+/// `overview_tab.dart` (the provider files themselves must not be edited), so
+/// the disk warm runs from the tab's `State`: on `initState` it reads the
+/// last-known `MilestonesResponse` / `CalendarHeatmapResponse` off disk and
+/// renders them as a fallback while the provider's live fetch is in flight.
+/// The fresh value is written back through after every successful load.
+///
+/// `MilestonesResponse` and `CalendarHeatmapResponse` are both
+/// `json_serializable` models (they expose `toJson`/`fromJson`), which is what
+/// makes a disk round-trip safe here. `ScoresOverview` is intentionally NOT
+/// cached: that model has no `toJson`, so it can only be skeletonised.
+class _OverviewDiskCache with CacheFirstMixin {
+  /// Bump when the cached model shapes change so stale blobs are dropped.
+  static const int _schemaVersion = 1;
+
+  /// Milestones survive 12h on disk — achievements change slowly.
+  static const Duration _milestonesTtl = Duration(hours: 12);
+
+  /// The activity calendar survives 6h — it rolls as workouts complete.
+  static const Duration _calendarTtl = Duration(hours: 6);
+
+  /// Read the cached milestones blob, then fetch fresh via [fetch].
+  Future<void> warmMilestones({
+    required String userId,
+    required Future<MilestonesResponse> Function() fetch,
+    required void Function(MilestonesResponse, {required bool fromCache}) emit,
+  }) {
+    return loadCacheFirst<MilestonesResponse>(
+      cacheKey: 'stats_overview_milestones',
+      userId: userId,
+      ttl: _milestonesTtl,
+      schemaVersion: _schemaVersion,
+      fetch: fetch,
+      decode: MilestonesResponse.fromJson,
+      encode: (m) => m.toJson(),
+      emit: emit,
+    );
+  }
+
+  /// Read the cached 52-week calendar blob, then fetch fresh via [fetch].
+  Future<void> warmCalendar({
+    required String userId,
+    required Future<CalendarHeatmapResponse> Function() fetch,
+    required void Function(CalendarHeatmapResponse, {required bool fromCache})
+        emit,
+  }) {
+    return loadCacheFirst<CalendarHeatmapResponse>(
+      cacheKey: 'stats_overview_calendar_52w',
+      userId: userId,
+      ttl: _calendarTtl,
+      schemaVersion: _schemaVersion,
+      fetch: fetch,
+      decode: CalendarHeatmapResponse.fromJson,
+      encode: (c) => c.toJson(),
+      emit: emit,
+    );
+  }
+}
 
 // ═══════════════════════════════════════════════════════════════════
 // OVERVIEW TAB - Summary stats, recent achievements, weekly progress
@@ -29,6 +100,61 @@ class OverviewTab extends ConsumerStatefulWidget {
 class _OverviewTabState extends ConsumerState<OverviewTab> {
   Set<String> _highlightedDates = {};
   bool _showSearch = false;
+
+  /// Disk-cache host for the milestones + calendar providers (see
+  /// [_OverviewDiskCache]). Created once per tab lifetime.
+  final _OverviewDiskCache _diskCache = _OverviewDiskCache();
+
+  /// Last-known calendar read off disk. Used ONLY as a fallback for the
+  /// compact stats row while `consistencyProvider` has no live data yet —
+  /// once the provider resolves, its value always wins.
+  CalendarHeatmapResponse? _diskCalendar;
+
+  /// Last-known milestones read off disk. Fallback for `_AchievementsPreview`
+  /// during the provider's first (post-cold-start) fetch.
+  MilestonesResponse? _diskMilestones;
+
+  @override
+  void initState() {
+    super.initState();
+    // Warm the disk tier off the main build path. The provider network
+    // fetches are kicked off separately by ComprehensiveStatsScreen's
+    // `_loadTabData(0)`; this only fills the cold-start gap.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _warmDiskCache());
+  }
+
+  /// Read both Overview disk caches and (best-effort) refresh them. Never
+  /// throws — a miss simply leaves the skeleton/provider path in charge.
+  Future<void> _warmDiskCache() async {
+    final userId = await ref.read(apiClientProvider).getUserId();
+    if (userId == null || !mounted) return;
+
+    final consistencyRepo = ref.read(consistencyRepositoryProvider);
+    final milestonesRepo = ref.read(milestonesRepositoryProvider);
+
+    // Both warms run independently; a failure in one must not block the other.
+    await Future.wait<void>([
+      _diskCache.warmCalendar(
+        userId: userId,
+        // 52 weeks mirrors ComprehensiveStatsScreen's `loadCalendar(weeks: 52)`.
+        fetch: () => consistencyRepo.getCalendarHeatmap(userId: userId, weeks: 52),
+        emit: (data, {required bool fromCache}) {
+          if (!mounted) return;
+          // Only the cached value needs to flow into local state — the fresh
+          // value is already being delivered through `consistencyProvider`.
+          if (fromCache) setState(() => _diskCalendar = data);
+        },
+      ),
+      _diskCache.warmMilestones(
+        userId: userId,
+        fetch: () => milestonesRepo.getMilestoneProgress(userId),
+        emit: (data, {required bool fromCache}) {
+          if (!mounted) return;
+          if (fromCache) setState(() => _diskMilestones = data);
+        },
+      ),
+    ]);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -47,8 +173,10 @@ class _OverviewTabState extends ConsumerState<OverviewTab> {
     String totalDurationStr = '0m';
 
     // Read heatmap data synchronously via FutureBuilder in the widget tree
-    // For now, compute from the consistency calendar data
-    final calData = consistencyState.calendarData;
+    // For now, compute from the consistency calendar data. Fall back to the
+    // disk-cached calendar so a cold start shows real numbers (not zeros)
+    // before `consistencyProvider`'s network fetch resolves.
+    final calData = consistencyState.calendarData ?? _diskCalendar;
     if (calData != null) {
       completedCount = calData.totalCompleted;
       // Weekly: count completed/total this week from calendar data
@@ -201,7 +329,7 @@ class _OverviewTabState extends ConsumerState<OverviewTab> {
             onViewAll: () => context.push('/achievements'),
           ),
           const SizedBox(height: 12),
-          _AchievementsPreview(),
+          _AchievementsPreview(diskFallback: _diskMilestones),
 
           const SizedBox(height: 24),
 
@@ -379,13 +507,34 @@ class _StatDivider extends StatelessWidget {
 }
 
 class _AchievementsPreview extends ConsumerWidget {
+  /// Disk-cached milestones supplied by `_OverviewTabState`. Rendered while
+  /// the live `milestonesProvider` is still loading after a cold start, so
+  /// the badge row shows real achievements instead of a placeholder.
+  final MilestonesResponse? diskFallback;
+
+  const _AchievementsPreview({this.diskFallback});
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final elevatedColor = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final milestonesState = ref.watch(milestonesProvider);
 
-    if (milestonesState.isLoading) {
+    // Source of truth: the live provider. Fall back to the disk snapshot so a
+    // cold start renders content immediately; only show the skeleton when
+    // neither the provider nor the disk cache has anything yet.
+    final achieved = milestonesState.milestones != null
+        ? milestonesState.achieved
+        : (diskFallback?.achieved ?? const <MilestoneProgress>[]);
+    final upcoming = milestonesState.milestones != null
+        ? milestonesState.upcoming
+        : (diskFallback?.upcoming ?? const <MilestoneProgress>[]);
+
+    if (milestonesState.isLoading &&
+        milestonesState.milestones == null &&
+        diskFallback == null) {
+      // Layout-matched skeleton: 4 badge slots mirroring the real badge row,
+      // so the skeleton → content swap does not reflow the card.
       return Container(
         height: 120,
         padding: const EdgeInsets.all(16),
@@ -393,18 +542,22 @@ class _AchievementsPreview extends ConsumerWidget {
           color: elevatedColor,
           borderRadius: BorderRadius.circular(16),
         ),
-        child: const Center(
-          child: SizedBox(
-            width: 24,
-            height: 24,
-            child: CircularProgressIndicator(strokeWidth: 2),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: List.generate(
+            4,
+            (_) => Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: const [
+                SkeletonCircle(size: 48),
+                SizedBox(height: 8),
+                SkeletonBox(width: 48, height: 10),
+              ],
+            ),
           ),
         ),
       );
     }
-
-    final achieved = milestonesState.achieved;
-    final upcoming = milestonesState.upcoming;
 
     // Build display list: up to 4 UNIQUE items by name, achieved first then upcoming
     final displayItems = <MilestoneProgress>[];

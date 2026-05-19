@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/accent_color_provider.dart';
+import '../../../core/widgets/skeleton/skeleton.dart';
 import '../../../data/providers/mood_history_provider.dart';
-import '../../../widgets/app_loading.dart';
 import '../../../widgets/mood_picker_sheet.dart';
 import '../../mood/widgets/mood_weekly_chart.dart';
 import '../../mood/widgets/mood_streak_card.dart';
@@ -34,7 +34,24 @@ class _MoodTabState extends ConsumerState<MoodTab> {
     final teal = isDark ? AppColors.teal : AppColorsLight.teal;
 
     if (state.isLoading) {
-      return AppLoading.fullScreen();
+      // Layout-matched skeleton instead of a blocking spinner: weekly chart
+      // card, two analytics cards, then the calendar heatmap card.
+      return SingleChildScrollView(
+        physics: const NeverScrollableScrollPhysics(),
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: const [
+            SkeletonBox(height: 200, radius: 16), // Weekly mood chart
+            SizedBox(height: 16),
+            SkeletonBox(height: 96, radius: 16), // Mood streaks
+            SizedBox(height: 16),
+            SkeletonBox(height: 140, radius: 16), // Mood analytics
+            SizedBox(height: 16),
+            SkeletonBox(height: 180, radius: 16), // Calendar heatmap
+          ],
+        ),
+      );
     }
 
     final accentEnum = ref.watch(accentColorProvider);

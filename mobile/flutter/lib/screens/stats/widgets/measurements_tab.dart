@@ -5,10 +5,10 @@ import 'package:intl/intl.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/widgets/skeleton/skeleton.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/repositories/measurements_repository.dart';
 import '../../../data/services/haptic_service.dart';
-import '../../../widgets/app_loading.dart';
 
 part 'measurements_tab_ui.dart';
 
@@ -29,6 +29,30 @@ class _MeasurementsTabState extends ConsumerState<MeasurementsTab> {
   String _selectedPeriod = '30d';
   MeasurementType _selectedType = MeasurementType.weight;
   List<MeasurementType> _measurementOrder = [];
+
+  // ── fl_chart LineChartData memoization ──────────────────────────────
+  // The hero chart's `LineChartData` is rebuilt on every `build()` — but it
+  // only depends on the filtered entry list, the selected metric/period and
+  // the theme. Rebuilding the dozens of `FlSpot`s + the EWMA series on every
+  // unrelated rebuild (e.g. a FAB ripple, a heatmap repaint) is wasteful, so
+  // we cache the built `LineChartData` and reuse it until its inputs change.
+  // `_chartMemoKey` captures every input that affects the chart's geometry;
+  // when it is unchanged we hand back `_chartMemoData` verbatim.
+  String? _chartMemoKey;
+  LineChartData? _chartMemoData;
+
+  /// Build a memo key for the current chart inputs. Two builds with the same
+  /// key produce an identical `LineChartData`, so the cached one can be
+  /// reused. `isDark` is included because grid/dot colours depend on it.
+  String _buildChartMemoKey(List<MeasurementEntry> filtered, bool isDark) {
+    // The entry count + first/last id + first/last value fully identify the
+    // filtered window for charting purposes (entries are immutable rows).
+    final first = filtered.isNotEmpty ? filtered.first : null;
+    final last = filtered.isNotEmpty ? filtered.last : null;
+    return '${_selectedType.name}|$_selectedPeriod|$isDark|${filtered.length}'
+        '|${first?.id ?? ''}:${first?.value ?? ''}'
+        '|${last?.id ?? ''}:${last?.value ?? ''}';
+  }
 
   static const _defaultOrder = [
     MeasurementType.weight, MeasurementType.bodyFat,
@@ -178,7 +202,12 @@ class _MeasurementsTabState extends ConsumerState<MeasurementsTab> {
     final heightCm = auth.user?.heightCm;
     final gender = auth.user?.gender;
 
-    if (state.isLoading) return AppLoading.fullScreen();
+    if (state.isLoading) {
+      return _buildSkeleton(
+        elevated: elevated,
+        cardBorder: cardBorder,
+      );
+    }
 
     // Compute derived metrics - use profile weight as fallback
     Map<DerivedMetricType, DerivedMetricResult> derivedMetrics;
@@ -256,6 +285,30 @@ class _MeasurementsTabState extends ConsumerState<MeasurementsTab> {
           ),
         ),
       ],
+    );
+  }
+
+  /// Layout-matched skeleton for the Measurements tab: the hero chart card
+  /// (~300pt: title + period chips + 200pt chart area) followed by the
+  /// grouped measurement list card. Replaces the blocking spinner.
+  Widget _buildSkeleton({
+    required Color elevated,
+    required Color cardBorder,
+  }) {
+    return SingleChildScrollView(
+      physics: const NeverScrollableScrollPhysics(),
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: const [
+          // Hero chart card
+          SkeletonBox(height: 300, radius: 16),
+          SizedBox(height: 16),
+          // Grouped measurement list card
+          SkeletonBox(height: 420, radius: 16),
+          SizedBox(height: 80),
+        ],
+      ),
     );
   }
 
@@ -506,14 +559,20 @@ class _MeasurementsTabState extends ConsumerState<MeasurementsTab> {
     required Color textMuted,
     required bool isDark,
   }) {
+    // Memoize: reuse the cached LineChartData when the inputs are unchanged
+    // so an unrelated rebuild doesn't re-derive every FlSpot.
+    final memoKey = _buildChartMemoKey(data, isDark);
+    if (_chartMemoKey == memoKey && _chartMemoData != null) {
+      return LineChart(_chartMemoData!);
+    }
+
     final spots = data.asMap().entries.map((e) =>
       FlSpot(e.key.toDouble(), e.value.value)).toList();
     final values = spots.map((s) => s.y).toList();
     final minY = values.reduce((a, b) => a < b ? a : b) * 0.95;
     final maxY = values.reduce((a, b) => a > b ? a : b) * 1.05;
 
-    return LineChart(
-      LineChartData(
+    final chartData = LineChartData(
         gridData: FlGridData(
           show: true,
           drawVerticalLine: false,
@@ -587,8 +646,12 @@ class _MeasurementsTabState extends ConsumerState<MeasurementsTab> {
           ),
         ],
         lineTouchData: const LineTouchData(enabled: false),
-      ),
     );
+
+    // Cache the freshly-built chart data for the next rebuild.
+    _chartMemoKey = memoKey;
+    _chartMemoData = chartData;
+    return LineChart(chartData);
   }
 
   Widget _buildDerivedPills({

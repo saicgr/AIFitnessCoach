@@ -1,10 +1,14 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../core/cache/cache_first_mixin.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/accent_color_provider.dart';
 import '../../core/widgets/line_icon.dart';
+import '../../core/widgets/skeleton/skeleton.dart';
 import '../../data/providers/trend_series_provider.dart';
 import '../../data/models/habit.dart';
 import '../../data/providers/habits_provider.dart';
@@ -147,12 +151,15 @@ class HabitsScreen extends ConsumerWidget {
                     ),
                   ),
                 ),
-                // Show loading spinner while initial data is fetching
+                // Instant-load: a layout-matched skeleton list on a true cold
+                // start (no cached habits yet) instead of a blocking spinner.
+                // The cache-first provider seeds unifiedHabits from disk before
+                // first build for returning users, so this rarely shows.
                 if (habitsState.isLoading && habitsState.unifiedHabits.isEmpty)
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 48),
-                      child: Center(child: CircularProgressIndicator(color: accentColor)),
+                  const SliverPadding(
+                    padding: EdgeInsets.symmetric(horizontal: 16),
+                    sliver: SliverToBoxAdapter(
+                      child: SkeletonList(itemCount: 6, spacing: 12),
                     ),
                   ),
 

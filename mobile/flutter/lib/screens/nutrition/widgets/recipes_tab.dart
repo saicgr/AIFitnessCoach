@@ -22,7 +22,10 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/accent_color_provider.dart';
+import '../../../core/theme/theme_colors.dart';
+import '../../../core/widgets/skeleton/skeleton.dart';
 import '../../../data/models/recipe.dart';
+import '../../../data/services/data_cache_service.dart';
 import '../../../data/providers/recipe_providers.dart';
 import '../../../data/repositories/nutrition_repository.dart';
 import '../recipes/recipe_create_screen.dart';
@@ -114,17 +117,11 @@ class _RecipesTabState extends ConsumerState<RecipesTab>
               // toolbar + grid. No sticky header — search is inline with
               // filter + sort so every control that affects results lives in
               // a single bar.
+              // Header section — carousel + quick actions + search/filter
+              // toolbar. Stays a SliverList: these are a fixed handful of
+              // widgets, not a long lazy list.
               SliverPadding(
-                // Clearance for the floating tab bar + MainShell nav + FAB.
-                padding: EdgeInsets.fromLTRB(
-                  16,
-                  12,
-                  16,
-                  MediaQuery.of(context).viewPadding.bottom +
-                      76 +
-                      kLiquidGlassActionBarHeight +
-                      16,
-                ),
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
                 sliver: SliverList.list(
                   children: [
                     _ComingUpCarousel(
@@ -153,18 +150,34 @@ class _RecipesTabState extends ConsumerState<RecipesTab>
                           setState(() => _searchQuery = q),
                     ),
                     const SizedBox(height: 16),
-                    _MyRecipesGrid(
-                      userId: widget.userId,
-                      isDark: widget.isDark,
-                      accent: accent,
-                      category: _filterSort.mealType,
-                      searchQuery: _searchQuery,
-                      hasLeftovers: _filterSort.hasLeftoversOnly,
-                      favoritesOnly: _filterSort.favoritesOnly,
-                      sourceTypeIn: _filterSort.sourceTypeIn,
-                      sortBy: _filterSort.sortBy,
-                    ),
                   ],
+                ),
+              ),
+              // My Recipes grid — its own sliver so the recipe tiles are built
+              // lazily by a SliverGrid (only on-screen tiles are constructed)
+              // instead of a shrinkWrap GridView that builds every tile up
+              // front. Clearance for the floating tab bar + nav + FAB is
+              // applied as bottom padding here.
+              SliverPadding(
+                padding: EdgeInsets.fromLTRB(
+                  16,
+                  0,
+                  16,
+                  MediaQuery.of(context).viewPadding.bottom +
+                      76 +
+                      kLiquidGlassActionBarHeight +
+                      16,
+                ),
+                sliver: _MyRecipesGrid(
+                  userId: widget.userId,
+                  isDark: widget.isDark,
+                  accent: accent,
+                  category: _filterSort.mealType,
+                  searchQuery: _searchQuery,
+                  hasLeftovers: _filterSort.hasLeftoversOnly,
+                  favoritesOnly: _filterSort.favoritesOnly,
+                  sourceTypeIn: _filterSort.sourceTypeIn,
+                  sortBy: _filterSort.sortBy,
                 ),
               ),
             ],
@@ -1216,7 +1229,36 @@ class _ActivePill extends StatelessWidget {
 // My Recipes Grid
 // ============================================================
 
-class _MyRecipesGrid extends ConsumerWidget {
+/// Disk-cache key for the default-path My Recipes list. The category facet is
+/// folded in so each meal-type filter bucket is isolated. 24-hour TTL — the
+/// library changes only on explicit user edits, which invalidate the slot.
+const String _kMyRecipesCacheKey = 'cache_my_recipes_list';
+
+/// Build the faceted disk-cache key for [myRecipesListProvider].
+String _myRecipesCacheKey(String? category) =>
+    category == null ? _kMyRecipesCacheKey : '${_kMyRecipesCacheKey}_$category';
+
+/// The fixed-column grid layout for both the real recipe tiles and the
+/// loading skeleton — kept in one place so the skeleton → content swap is
+/// reflow-free.
+const SliverGridDelegateWithFixedCrossAxisCount _kRecipeGridDelegate =
+    SliverGridDelegateWithFixedCrossAxisCount(
+  crossAxisCount: 2,
+  mainAxisSpacing: 12,
+  crossAxisSpacing: 12,
+  childAspectRatio: 0.78,
+);
+
+/// Renders the My Recipes grid as a SLIVER (the parent CustomScrollView hosts
+/// it directly), so tiles are built lazily by a [SliverGrid] — only on-screen
+/// cards are constructed, unlike the old `shrinkWrap` GridView that built every
+/// tile up front.
+///
+/// Instant-load: on the default fast path (no search / advanced filter) the
+/// last-known recipe list is disk-cached via [DataCacheService]. A cold start
+/// reads that slot and renders the grid instantly; a true first-ever open with
+/// nothing cached shows a layout-matched shimmer grid instead of a spinner.
+class _MyRecipesGrid extends ConsumerStatefulWidget {
   final String userId;
   final bool isDark;
   final Color accent;
@@ -1238,36 +1280,89 @@ class _MyRecipesGrid extends ConsumerWidget {
     required this.sortBy,
   });
 
+  @override
+  ConsumerState<_MyRecipesGrid> createState() => _MyRecipesGridState();
+}
+
+class _MyRecipesGridState extends ConsumerState<_MyRecipesGrid> {
+  /// Disk-cached recipe list for the current category bucket (default path
+  /// only). Rendered instantly on cold start while the provider re-fetches.
+  List<RecipeSummary>? _cached;
+  bool _cacheChecked = false;
+  String? _cachedKey;
+
+  String get _cacheKey => _myRecipesCacheKey(widget.category);
+
   /// True when any non-default filter is active — used to decide whether the
   /// recipeSearchProvider should be used even when there's no search text.
   /// (The search provider is the one that understands the richer filter set.)
   bool get _hasAdvancedFilters =>
-      hasLeftovers ||
-      favoritesOnly ||
-      sourceTypeIn.isNotEmpty ||
-      sortBy != 'created_desc';
+      widget.hasLeftovers ||
+      widget.favoritesOnly ||
+      widget.sourceTypeIn.isNotEmpty ||
+      widget.sortBy != 'created_desc';
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final hasQuery = searchQuery.trim().length >= 2;
+  void initState() {
+    super.initState();
+    _loadCache();
+  }
+
+  @override
+  void didUpdateWidget(covariant _MyRecipesGrid old) {
+    super.didUpdateWidget(old);
+    // Category changed → re-read the new bucket's cached list.
+    if (old.category != widget.category) {
+      _cached = null;
+      _cacheChecked = false;
+      _loadCache();
+    }
+  }
+
+  Future<void> _loadCache() async {
+    final key = _cacheKey;
+    List<RecipeSummary>? items;
+    try {
+      final raw = await DataCacheService.instance
+          .getCachedList(key, userId: widget.userId);
+      if (raw != null) {
+        items = raw.map(RecipeSummary.fromJson).toList();
+      }
+    } catch (e) {
+      debugPrint('💾 [Recipes] my-recipes cache read failed: $e');
+    }
+    if (!mounted) return;
+    setState(() {
+      if (key == _cacheKey) {
+        _cached = items;
+        _cachedKey = key;
+      }
+      _cacheChecked = true;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final hasQuery = widget.searchQuery.trim().length >= 2;
 
     // Search provider is used when the user is typing OR any advanced filter
     // / non-default sort is active — the search endpoint is the one that
     // knows how to apply sourceTypeIn / isFavorite / sortBy.
     if (hasQuery || _hasAdvancedFilters) {
       final searchAsync = ref.watch(recipeSearchProvider(RecipeSearchArgs(
-        userId: userId,
-        query: hasQuery ? searchQuery : '',
+        userId: widget.userId,
+        query: hasQuery ? widget.searchQuery : '',
         scope: 'mine',
-        category: category,
-        hasLeftovers: hasLeftovers,
-        sourceTypeIn: sourceTypeIn,
-        isFavorite: favoritesOnly ? true : null,
-        sortBy: sortBy,
+        category: widget.category,
+        hasLeftovers: widget.hasLeftovers,
+        sourceTypeIn: widget.sourceTypeIn,
+        isFavorite: widget.favoritesOnly ? true : null,
+        sortBy: widget.sortBy,
       )));
       // Stale-while-refresh: render cached items the moment we have them,
-      // even if Riverpod is still re-fetching after an invalidation. Only
-      // show the spinner on the very first load for this arg combo.
+      // even if Riverpod is still re-fetching after an invalidation. The
+      // search path is not disk-cached (the filter space is unbounded) — but
+      // Riverpod's keepAlive still avoids a spinner on tab re-entry.
       final cached = searchAsync.valueOrNull;
       if (cached != null) {
         return _renderGrid(
@@ -1276,73 +1371,84 @@ class _MyRecipesGrid extends ConsumerWidget {
           isEmptyHint: hasQuery
               ? 'No matches in your recipes'
               : 'No recipes match these filters',
-          widgetRef: ref,
         );
       }
       if (searchAsync.hasError) {
-        return _ErrorView(
-            message: searchAsync.error.toString(), isDark: isDark);
+        return _ErrorSliver(
+            message: searchAsync.error.toString(), isDark: widget.isDark);
       }
-      return const Center(
-        child: Padding(
-            padding: EdgeInsets.all(40), child: CircularProgressIndicator()),
-      );
+      // No cached search result yet — layout-matched shimmer grid.
+      return const _RecipeGridSkeleton();
     }
 
     // Default fast path — cheap /recipes endpoint, cached via Riverpod so
-    // tab re-entry / filter-chip toggles don't re-fetch. Renders cached data
-    // immediately while any background refresh runs silently (no spinner
-    // flash on every rebuild like the old FutureBuilder had).
+    // tab re-entry / filter-chip toggles don't re-fetch. Disk-cache the
+    // payload too so a cold app start renders the grid instantly.
     final listAsync = ref.watch(myRecipesListProvider(
-      MyRecipesListArgs(userId: userId, category: category),
+      MyRecipesListArgs(userId: widget.userId, category: widget.category),
     ));
-    final cached = listAsync.valueOrNull;
-    if (cached != null) {
-      return _renderGrid(context, cached.items, widgetRef: ref);
+    final fresh = listAsync.valueOrNull;
+    if (fresh != null) {
+      // Write-through: persist the list so the next cold start is instant.
+      _cached = fresh.items;
+      _cachedKey = _cacheKey;
+      DataCacheService.instance.cacheList(
+        _cacheKey,
+        fresh.items.map((s) => s.toJson()).toList(),
+        userId: widget.userId,
+      );
     }
-    if (listAsync.hasError) {
-      return _ErrorView(message: listAsync.error.toString(), isDark: isDark);
+    // Cache-first: prefer fresh network data, fall back to the disk-cached
+    // list (only if it belongs to the current category bucket).
+    final items = fresh?.items ?? (_cachedKey == _cacheKey ? _cached : null);
+    if (items != null) {
+      return _renderGrid(context, items);
     }
-    return const Center(
-      child: Padding(
-          padding: EdgeInsets.all(40), child: CircularProgressIndicator()),
-    );
+    if (_cacheChecked && listAsync.hasError) {
+      return _ErrorSliver(
+          message: listAsync.error.toString(), isDark: widget.isDark);
+    }
+    // True first-ever open with nothing cached — shimmer grid skeleton.
+    return const _RecipeGridSkeleton();
   }
 
+  /// Render the recipe tiles as a lazy [SliverGrid]; empty list → empty-state
+  /// sliver. The grid delegate is shared with the skeleton so swaps don't
+  /// reflow.
   Widget _renderGrid(BuildContext context, List<RecipeSummary> items,
-      {String? isEmptyHint, WidgetRef? widgetRef}) {
+      {String? isEmptyHint}) {
     if (items.isEmpty) {
-      return _EmptyState(isDark: isDark, accent: accent, hint: isEmptyHint);
+      return SliverToBoxAdapter(
+        child: _EmptyState(
+            isDark: widget.isDark, accent: widget.accent, hint: isEmptyHint),
+      );
     }
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: items.length,
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        mainAxisSpacing: 12,
-        crossAxisSpacing: 12,
-        childAspectRatio: 0.78,
+    return SliverGrid(
+      gridDelegate: _kRecipeGridDelegate,
+      delegate: SliverChildBuilderDelegate(
+        (_, i) {
+          final s = items[i];
+          return RecipeCard(
+            summary: s,
+            isDark: widget.isDark,
+            accent: widget.accent,
+            // Surface the source pill whenever a recipe is anything other
+            // than plain "manual" — helps the user distinguish imported /
+            // cloned / improvized items at a glance inside their library.
+            showSourceBadge: _shouldShowSourceBadge(s),
+            onTap: () {
+              Navigator.of(context).push(MaterialPageRoute(
+                builder: (_) => RecipeDetailScreen(
+                    recipeId: s.id,
+                    userId: widget.userId,
+                    isDark: widget.isDark),
+              ));
+            },
+            onLongPress: () => _showRecipeContextMenu(context, ref, s),
+          );
+        },
+        childCount: items.length,
       ),
-      itemBuilder: (_, i) {
-        final s = items[i];
-        return RecipeCard(
-          summary: s,
-          isDark: isDark,
-          accent: accent,
-          // Surface the source pill whenever a recipe is anything other than
-          // plain "manual" — helps the user distinguish imported / cloned /
-          // improvized items at a glance inside their own library.
-          showSourceBadge: _shouldShowSourceBadge(s),
-          onTap: () {
-            Navigator.of(context).push(MaterialPageRoute(
-              builder: (_) => RecipeDetailScreen(
-                  recipeId: s.id, userId: userId, isDark: isDark),
-            ));
-          },
-          onLongPress: widgetRef != null ? () => _showRecipeContextMenu(context, widgetRef, s) : null,
-        );
-      },
     );
   }
 
@@ -1354,7 +1460,8 @@ class _MyRecipesGrid extends ConsumerWidget {
   }
 
   void _showRecipeContextMenu(BuildContext context, WidgetRef ref, RecipeSummary s) {
-    final muted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final muted =
+        widget.isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     showModalBottomSheet(
       context: context,
       builder: (ctx) => SafeArea(
@@ -1377,7 +1484,9 @@ class _MyRecipesGrid extends ConsumerWidget {
                 Navigator.of(ctx).pop();
                 Navigator.of(context).push(MaterialPageRoute(
                   builder: (_) => RecipeDetailScreen(
-                    recipeId: s.id, userId: userId, isDark: isDark),
+                      recipeId: s.id,
+                      userId: widget.userId,
+                      isDark: widget.isDark),
                 ));
               },
             ),
@@ -1416,12 +1525,17 @@ class _MyRecipesGrid extends ConsumerWidget {
 
     try {
       final repo = ref.read(nutritionRepositoryProvider);
-      await repo.deleteRecipe(userId: userId, recipeId: s.id);
+      await repo.deleteRecipe(userId: widget.userId, recipeId: s.id);
       if (!context.mounted) return;
       // Invalidate both the keep-alive list cache AND the search cache so
       // the deleted row disappears from the grid immediately.
       ref.invalidate(myRecipesListProvider);
       ref.invalidate(recipeSearchProvider);
+      // Drop the disk-cached list for this bucket so a cold restart doesn't
+      // resurrect the just-deleted recipe; the provider re-fetch above will
+      // write a fresh slot.
+      DataCacheService.instance
+          .invalidate(_cacheKey, userId: widget.userId);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Recipe deleted'), duration: Duration(seconds: 2)),
       );
@@ -1468,18 +1582,88 @@ class _EmptyState extends StatelessWidget {
   }
 }
 
-class _ErrorView extends StatelessWidget {
+/// Error affordance rendered as a sliver — the My Recipes grid is hosted
+/// directly inside the parent CustomScrollView, so its error / empty states
+/// must also be sliver-shaped.
+class _ErrorSliver extends StatelessWidget {
   final String message;
   final bool isDark;
-  const _ErrorView({required this.message, required this.isDark});
+  const _ErrorSliver({required this.message, required this.isDark});
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(24),
-      child: Text(
-        'Couldn\'t load recipes: $message',
-        style: TextStyle(
-            color: isDark ? AppColors.error : AppColorsLight.error),
+    return SliverToBoxAdapter(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Text(
+          'Couldn\'t load recipes: $message',
+          style: TextStyle(
+              color: isDark ? AppColors.error : AppColorsLight.error),
+        ),
+      ),
+    );
+  }
+}
+
+/// Layout-matched shimmer grid shown on a true first-ever open of the Recipes
+/// tab (nothing disk-cached, provider still loading). Uses the SAME grid
+/// delegate as the real [SliverGrid] so the skeleton → content swap never
+/// reflows the layout. Six tiles is enough to fill the first viewport.
+class _RecipeGridSkeleton extends StatelessWidget {
+  const _RecipeGridSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return SliverGrid(
+      gridDelegate: _kRecipeGridDelegate,
+      delegate: SliverChildBuilderDelegate(
+        (_, __) => const _RecipeCardSkeleton(),
+        childCount: 6,
+      ),
+    );
+  }
+}
+
+/// A single recipe-card placeholder — image block on top, title + meta lines
+/// below — mirroring the real [RecipeCard] geometry inside the 0.78-ratio
+/// grid tile.
+class _RecipeCardSkeleton extends StatelessWidget {
+  const _RecipeCardSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    final c = ThemeColors.of(context);
+    return Container(
+      decoration: BoxDecoration(
+        color: c.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: c.cardBorder),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: const [
+          // Hero image placeholder — fills the upper portion of the tile.
+          Expanded(
+            flex: 3,
+            child: SkeletonBox(radius: 0, height: double.infinity),
+          ),
+          // Title + meta placeholder.
+          Expanded(
+            flex: 2,
+            child: Padding(
+              padding: EdgeInsets.all(10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  SkeletonBox(width: double.infinity, height: 13),
+                  SizedBox(height: 8),
+                  SkeletonBox(width: 70, height: 11),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

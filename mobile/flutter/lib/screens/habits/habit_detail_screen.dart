@@ -1,12 +1,16 @@
+import 'dart:async';
+import 'dart:convert';
 import 'dart:ui';
 
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:simple_circular_progress_bar/simple_circular_progress_bar.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/accent_color_provider.dart';
+import '../../core/widgets/skeleton/skeleton.dart';
 import '../../data/models/habit.dart';
 import '../../data/providers/habits_provider.dart';
 import '../../data/repositories/auth_repository.dart';
@@ -152,6 +156,83 @@ class HabitDetailData {
     if (remaining <= 5) return remaining;
     return null;
   }
+
+  // ---- JSON codec for the cache-first disk cache --------------------------
+  //
+  // HabitDetailData is not a generated model, so it carries a hand-written
+  // codec. Non-JSON-native fields are encoded explicitly:
+  //  - IconData  -> codePoint + fontFamily (rebuilt as a const-free IconData)
+  //  - Color     -> 32-bit ARGB int
+  //  - DateTime  -> 'yyyy-MM-dd' (yearlyData is day-bucketed, time is noise)
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'name': name,
+        'iconCodePoint': icon.codePoint,
+        'iconFontFamily': icon.fontFamily,
+        'iconFontPackage': icon.fontPackage,
+        'color': color.toARGB32(),
+        'isAutoTracked': isAutoTracked,
+        'description': description,
+        'currentStreak': currentStreak,
+        'longestStreak': longestStreak,
+        'totalCompletions': totalCompletions,
+        'completionRate': completionRate,
+        'yearlyData': {
+          for (final e in yearlyData.entries)
+            _dateKey(e.key): e.value,
+        },
+        'recentLogs': recentLogs.map((l) => l.toJson()).toList(),
+        'route': route,
+        'last30Days': last30Days,
+      };
+
+  /// Rebuild from a persisted map. Throws on a malformed map — the caller
+  /// decodes inside a try and treats a throw as a cache miss.
+  factory HabitDetailData.fromJson(Map<String, dynamic> json) {
+    final yearly = <DateTime, bool>{};
+    final rawYearly = json['yearlyData'];
+    if (rawYearly is Map) {
+      rawYearly.forEach((k, v) {
+        final parsed = DateTime.tryParse(k as String);
+        if (parsed != null) {
+          yearly[DateTime(parsed.year, parsed.month, parsed.day)] = v == true;
+        }
+      });
+    }
+    return HabitDetailData(
+      id: json['id'] as String,
+      name: json['name'] as String,
+      icon: IconData(
+        (json['iconCodePoint'] as num).toInt(),
+        fontFamily: json['iconFontFamily'] as String?,
+        fontPackage: json['iconFontPackage'] as String?,
+      ),
+      color: Color((json['color'] as num).toInt()),
+      isAutoTracked: json['isAutoTracked'] == true,
+      description: json['description'] as String?,
+      currentStreak: (json['currentStreak'] as num?)?.toInt() ?? 0,
+      longestStreak: (json['longestStreak'] as num?)?.toInt() ?? 0,
+      totalCompletions: (json['totalCompletions'] as num?)?.toInt() ?? 0,
+      completionRate: (json['completionRate'] as num?)?.toInt() ?? 0,
+      yearlyData: yearly,
+      recentLogs: ((json['recentLogs'] as List?) ?? const [])
+          .whereType<Map>()
+          .map((m) =>
+              HabitLogEntry.fromJson(Map<String, dynamic>.from(m)))
+          .toList(),
+      route: json['route'] as String?,
+      last30Days: ((json['last30Days'] as List?) ?? const [])
+          .map((e) => e == true)
+          .toList(),
+    );
+  }
+
+  /// 'yyyy-MM-dd' for a date — zero-padded so string sort == chronological.
+  static String _dateKey(DateTime d) =>
+      '${d.year.toString().padLeft(4, '0')}-'
+      '${d.month.toString().padLeft(2, '0')}-'
+      '${d.day.toString().padLeft(2, '0')}';
 }
 
 class WeeklyBarData {
@@ -177,11 +258,92 @@ class HabitLogEntry {
   final double? value;
 
   const HabitLogEntry({required this.date, this.note, this.value});
+
+  Map<String, dynamic> toJson() => {
+        'date': date.toIso8601String(),
+        'note': note,
+        'value': value,
+      };
+
+  factory HabitLogEntry.fromJson(Map<String, dynamic> json) => HabitLogEntry(
+        date: DateTime.parse(json['date'] as String),
+        note: json['note'] as String?,
+        value: (json['value'] as num?)?.toDouble(),
+      );
 }
 
 // ============================================
 // PROVIDER
 // ============================================
+
+/// Per-habit refresh trigger. Bumped after a cache hit to drive a background
+/// revalidate, and incremented elsewhere to force a clean network read.
+final habitDetailRefreshProvider =
+    StateProvider.autoDispose.family<int, String>((ref, habitId) => 0);
+
+/// Schema version for the persisted habit-detail envelope.
+const int _kHabitDetailCacheVersion = 1;
+
+/// Disk-persisted stale-while-revalidate cache for [HabitDetailData].
+///
+/// Mirrors the schedule provider's `_ScheduleDiskCache`: a versioned + TTL
+/// SharedPreferences envelope, scoped by (user, habitId), so a habit-detail
+/// screen renders the last-known stats instantly on a cold start.
+class _HabitDetailDiskCache {
+  const _HabitDetailDiskCache._();
+
+  static const String _prefix = 'habit_detail_cache';
+
+  /// 24h TTL — a stale stats blob still beats a blocking spinner and the
+  /// background revalidate corrects it within the session.
+  static const Duration _ttl = Duration(hours: 24);
+
+  static String _key(String userId, String habitId) =>
+      '$_prefix::v$_kHabitDetailCacheVersion::$userId::$habitId';
+
+  /// Read + validate a cached blob. Null on miss / expiry / corruption.
+  static Future<HabitDetailData?> read(String userId, String habitId) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString(_key(userId, habitId));
+      if (raw == null || raw.isEmpty) return null;
+      final decoded = jsonDecode(raw);
+      if (decoded is! Map<String, dynamic>) return null;
+      if (decoded['v'] != _kHabitDetailCacheVersion) return null;
+      final cachedAt = decoded['cachedAt'];
+      if (cachedAt is! int) return null;
+      final age = DateTime.now().millisecondsSinceEpoch - cachedAt;
+      if (age < 0 || age >= _ttl.inMilliseconds) {
+        await prefs.remove(_key(userId, habitId));
+        return null;
+      }
+      final body = decoded['data'];
+      if (body is! Map<String, dynamic>) return null;
+      return HabitDetailData.fromJson(body);
+    } catch (e) {
+      debugPrint('💾 [HabitDetailCache] read failed: $e');
+      return null;
+    }
+  }
+
+  /// Persist a habit-detail blob in a versioned TTL envelope. Best-effort.
+  static Future<void> write(
+      String userId, String habitId, HabitDetailData data) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(
+        _key(userId, habitId),
+        jsonEncode({
+          'v': _kHabitDetailCacheVersion,
+          'cachedAt': DateTime.now().millisecondsSinceEpoch,
+          'data': data.toJson(),
+        }),
+      );
+    } catch (e) {
+      debugPrint('💾 [HabitDetailCache] write failed: $e');
+    }
+  }
+}
 
 final habitDetailProvider = FutureProvider.autoDispose
     .family<HabitDetailData?, String>((ref, habitId) async {
@@ -190,6 +352,10 @@ final habitDetailProvider = FutureProvider.autoDispose
   final userId = authState.user?.id ?? '';
 
   if (userId.isEmpty) return null;
+
+  // Watch the refresh trigger so a background revalidate / forced reload
+  // re-runs this provider.
+  ref.watch(habitDetailRefreshProvider(habitId));
 
   if (habitId.startsWith('auto_')) {
     final autoHabits = ref.watch(habitsProvider);
@@ -222,6 +388,26 @@ final habitDetailProvider = FutureProvider.autoDispose
     );
   }
 
+  // ---- Cache-first: serve the last-known detail instantly ----------------
+  // Skip the disk cache on an explicit refresh so a forced reload always hits
+  // the network instead of re-serving the just-served stale blob.
+  final isRefresh = ref.read(habitDetailRefreshProvider(habitId)) > 0;
+  if (!isRefresh) {
+    final cached = await _HabitDetailDiskCache.read(userId, habitId);
+    if (cached != null) {
+      debugPrint('✅ [HabitDetail] from cache: $habitId');
+      // Revalidate in the background — bumping the trigger re-runs this
+      // provider on the network path on the next microtask. Wrapped in a
+      // try/catch because the provider may have been disposed by then.
+      Future.microtask(() {
+        try {
+          ref.read(habitDetailRefreshProvider(habitId).notifier).state++;
+        } catch (_) {/* provider disposed — nothing to revalidate */}
+      });
+      return cached;
+    }
+  }
+
   try {
     final detail = await repository.getHabitDetail(userId, habitId);
     if (detail == null) return null;
@@ -249,7 +435,7 @@ final habitDetailProvider = FutureProvider.autoDispose
       }
     }
 
-    return HabitDetailData(
+    final result = HabitDetailData(
       id: detail.habit.id,
       name: detail.habit.name,
       icon: _getIconFromName(detail.habit.icon),
@@ -284,6 +470,9 @@ final habitDetailProvider = FutureProvider.autoDispose
           })
           .toList(),
     );
+    // Write-through so the next cold open of this habit is instant.
+    await _HabitDetailDiskCache.write(userId, habitId, result);
+    return result;
   } catch (e) {
     debugPrint('Error loading habit detail: $e');
     return null;
@@ -465,29 +654,40 @@ class _HabitDetailScreenState extends ConsumerState<HabitDetailScreen>
     return Scaffold(
       backgroundColor: backgroundColor,
       body: SafeArea(
-        child: habitDetailAsync.when(
-          loading: () => Center(
-            child: CircularProgressIndicator(color: accentColor),
-          ),
-          error: (e, _) => Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.error_outline, size: 48, color: textSecondary),
-                const SizedBox(height: 16),
-                Text('Failed to load habit details',
-                    style: TextStyle(color: textSecondary)),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () =>
-                      ref.invalidate(habitDetailProvider(widget.habitId)),
-                  child: const Text('Retry'),
+        child: Builder(
+          builder: (context) {
+            // Instant-load: keep the last-known detail visible while a silent
+            // revalidate runs, and show a layout-matched skeleton (never a
+            // blocking spinner) on a true cold open.
+            final data = habitDetailAsync.valueOrNull;
+
+            if (data == null && habitDetailAsync.hasError) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.error_outline, size: 48, color: textSecondary),
+                    const SizedBox(height: 16),
+                    Text('Failed to load habit details',
+                        style: TextStyle(color: textSecondary)),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: () =>
+                          ref.invalidate(habitDetailProvider(widget.habitId)),
+                      child: const Text('Retry'),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-          ),
-          data: (data) {
+              );
+            }
+
             if (data == null) {
+              // Still loading and nothing cached — layout-matched skeleton:
+              // a hero block, a tab-bar strip and a content list.
+              if (habitDetailAsync.isLoading) {
+                return _buildDetailSkeleton();
+              }
+              // Resolved to null → the habit genuinely doesn't exist.
               return Center(
                 child: Text('Habit not found',
                     style: TextStyle(color: textSecondary)),
@@ -591,6 +791,27 @@ class _HabitDetailScreenState extends ConsumerState<HabitDetailScreen>
           ),
         ],
       ),
+    );
+  }
+
+  /// Layout-matched skeleton for the habit-detail screen — a hero block, a
+  /// tab-bar strip and a stack of content placeholders. Mirrors the real
+  /// layout so the skeleton -> content cross-fade does not reflow. Cold-open
+  /// only; the cache-first provider serves a cached detail instantly for
+  /// returning users.
+  Widget _buildDetailSkeleton() {
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+      children: const [
+        // Hero block placeholder (ring + headline stats).
+        SkeletonBox(height: 200, radius: 20),
+        SizedBox(height: 16),
+        // Tab-bar strip placeholder.
+        SkeletonBox(height: 44, radius: 12),
+        SizedBox(height: 20),
+        // Content card placeholders.
+        SkeletonList(itemCount: 4, spacing: 14),
+      ],
     );
   }
 }

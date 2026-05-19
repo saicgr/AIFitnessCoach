@@ -205,6 +205,13 @@ extension _MeasurementsTabStateUI on _MeasurementsTabState {
     required Color textMuted,
     required bool isDark,
   }) {
+    // Memoize: the EWMA series + both FlSpot lists are expensive to rebuild;
+    // reuse the cached LineChartData when the chart inputs are unchanged.
+    final memoKey = _buildChartMemoKey(data, isDark);
+    if (_chartMemoKey == memoKey && _chartMemoData != null) {
+      return LineChart(_chartMemoData!);
+    }
+
     final rawValues = data.map((e) => e.value).toList();
     final ewmaValues = _computeEWMA(rawValues);
 
@@ -217,8 +224,7 @@ extension _MeasurementsTabStateUI on _MeasurementsTabState {
     final minY = allValues.reduce((a, b) => a < b ? a : b) * 0.98;
     final maxY = allValues.reduce((a, b) => a > b ? a : b) * 1.02;
 
-    return LineChart(
-      LineChartData(
+    final chartData = LineChartData(
         gridData: FlGridData(
           show: true,
           drawVerticalLine: false,
@@ -333,8 +339,12 @@ extension _MeasurementsTabStateUI on _MeasurementsTabState {
             },
           ),
         ),
-      ),
     );
+
+    // Cache the freshly-built chart data for the next rebuild.
+    _chartMemoKey = memoKey;
+    _chartMemoData = chartData;
+    return LineChart(chartData);
   }
 
 }

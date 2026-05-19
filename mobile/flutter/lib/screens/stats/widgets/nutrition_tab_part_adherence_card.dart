@@ -29,9 +29,30 @@ class _AdherenceCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
       ),
       child: adherence.when(
-        loading: () => const SizedBox(
-          height: 100,
-          child: Center(child: CircularProgressIndicator.adaptive()),
+        // Layout-matched skeleton: title + ring + 3 mini-stat rows.
+        loading: () => Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: const [
+            SkeletonBox(width: 200, height: 16, radius: 6),
+            SizedBox(height: 16),
+            Row(
+              children: [
+                SkeletonCircle(size: 56),
+                SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    children: [
+                      SkeletonBox(height: 12, radius: 6),
+                      SizedBox(height: 8),
+                      SkeletonBox(height: 12, radius: 6),
+                      SizedBox(height: 8),
+                      SkeletonBox(height: 12, radius: 6),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
         error: (_, __) => SizedBox(
           height: 60,

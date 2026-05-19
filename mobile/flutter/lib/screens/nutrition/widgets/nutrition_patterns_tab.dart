@@ -5,6 +5,8 @@ import 'package:fl_chart/fl_chart.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/theme_colors.dart';
+import '../../../core/widgets/skeleton/skeleton.dart';
+import '../../../data/services/data_cache_service.dart';
 import '../../../widgets/liquid_glass_action_bar.dart';
 import '../../../widgets/trends/trend_chart.dart';
 import '../../../widgets/trends/trend_correlation.dart';
@@ -12,6 +14,80 @@ import '../../../data/models/food_patterns.dart';
 import '../../../data/providers/food_patterns_provider.dart';
 import '../../../data/repositories/nutrition_repository.dart';
 import '../../../data/services/haptic_service.dart';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Disk-cache helper for the four blocking Patterns sections
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// The Patterns tab's section providers are plain `FutureProvider.autoDispose`
+// families (owned by other work — we may NOT rewire them onto CacheFirstMixin).
+// To still get the instant-load contract we apply the cache-first pattern at
+// the *widget* layer:
+//
+//   1. On first build a section reads its last-known payload from
+//      `DataCacheService` (SharedPreferences) — synchronously-fast — and shows
+//      it instantly while the provider's network fetch runs in the background.
+//   2. Whenever the provider yields fresh data the section write-throughs that
+//      payload to disk so the next cold start is instant too.
+//   3. Only a TRUE cold install (no cache + provider still loading) ever sees a
+//      placeholder — and that placeholder is a layout-matched skeleton, never a
+//      blocking spinner.
+//
+// Each of the four section payloads gets its own SharedPreferences slot, keyed
+// by user + range + anchor date so a value cached for "this week" is never
+// shown for "last month". The slots live under the `cache_nutrition_patterns_*`
+// prefix; `DataCacheService` applies its 1-hour default TTL (these keys are not
+// in its per-key TTL override map). A stale-but-instant render followed by a
+// silent provider refresh is the right trade-off for slow-moving aggregates.
+
+/// Base cache keys for the four Patterns sections. The range/date facet is
+/// appended by [_patternsCacheKey] so each (range, date) bucket is isolated.
+const String _kMacrosCacheKey = 'cache_nutrition_patterns_macros';
+const String _kTopFoodsCacheKey = 'cache_nutrition_patterns_topfoods';
+const String _kMoodCacheKey = 'cache_nutrition_patterns_mood';
+const String _kHistoryCacheKey = 'cache_nutrition_patterns_history';
+
+/// Build a fully-faceted cache key. The range + date (+ optional metric) are
+/// folded into the key so switching the sticky range picker never shows the
+/// wrong bucket's cached payload.
+String _patternsCacheKey(String base, {String? range, String? date, String? metric}) {
+  final buf = StringBuffer(base);
+  if (range != null) buf.write('_$range');
+  if (date != null) buf.write('_$date');
+  if (metric != null) buf.write('_$metric');
+  return buf.toString();
+}
+
+/// Read a single-object section payload from disk. Returns null on miss /
+/// expiry / decode failure — callers treat that as "no cache, show skeleton".
+Future<T?> _readPatternsCache<T>(
+  String key,
+  String userId,
+  T Function(Map<String, dynamic>) decode,
+) async {
+  try {
+    final raw = await DataCacheService.instance.getCached(key, userId: userId);
+    if (raw == null) return null;
+    return decode(raw);
+  } catch (e) {
+    debugPrint('💾 [Patterns] cache read failed for $key: $e');
+    return null;
+  }
+}
+
+/// Write-through a single-object section payload. Best-effort — a failed write
+/// only costs the next cold start its instant render.
+Future<void> _writePatternsCache(
+  String key,
+  String userId,
+  Map<String, dynamic> json,
+) async {
+  try {
+    await DataCacheService.instance.cache(key, json, userId: userId);
+  } catch (e) {
+    debugPrint('💾 [Patterns] cache write failed for $key: $e');
+  }
+}
 
 /// Full Nutrition > Patterns tab: four stacked sections + a sticky range
 /// picker. Built on the food_patterns_provider family so each section fires
@@ -318,7 +394,7 @@ class _RangeHeaderDelegate extends SliverPersistentHeaderDelegate {
 
 // ── Section 1: Macro / calorie trends ───────────────────────────────────────
 
-class _MacroChartsSection extends ConsumerWidget {
+class _MacroChartsSection extends ConsumerStatefulWidget {
   final String userId;
   final String range;
   final String date;
@@ -332,17 +408,80 @@ class _MacroChartsSection extends ConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_MacroChartsSection> createState() =>
+      _MacroChartsSectionState();
+}
+
+class _MacroChartsSectionState extends ConsumerState<_MacroChartsSection> {
+  /// Last-known payload read from disk — rendered instantly on cold start while
+  /// the provider's network fetch is still in flight.
+  MacrosSummaryResponse? _cached;
+
+  /// True until the very first disk read completes. While true (and the
+  /// provider has no data yet) the section shows its layout-matched skeleton.
+  bool _cacheChecked = false;
+
+  /// The (range, date) the current `_cached` value belongs to — guards against
+  /// showing a stale bucket after the sticky range picker changes.
+  String? _cachedKey;
+
+  String get _key => _patternsCacheKey(_kMacrosCacheKey,
+      range: widget.range, date: widget.date);
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCache();
+  }
+
+  @override
+  void didUpdateWidget(covariant _MacroChartsSection old) {
+    super.didUpdateWidget(old);
+    // Range / anchor changed → the old cached bucket is no longer valid.
+    if (old.range != widget.range || old.date != widget.date) {
+      _cached = null;
+      _cacheChecked = false;
+      _loadCache();
+    }
+  }
+
+  Future<void> _loadCache() async {
+    final key = _key;
+    final v = await _readPatternsCache(
+        key, widget.userId, MacrosSummaryResponse.fromJson);
+    if (!mounted) return;
+    setState(() {
+      // Only adopt the cached value if the range/date hasn't changed mid-read.
+      if (key == _key) {
+        _cached = v;
+        _cachedKey = key;
+      }
+      _cacheChecked = true;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final async = ref.watch(macrosSummaryProvider(
-      MacrosQuery(userId: userId, range: range, date: date),
+      MacrosQuery(userId: widget.userId, range: widget.range, date: widget.date),
     ));
+
+    // Write-through whenever the provider yields fresh data for this bucket.
+    final fresh = async.valueOrNull;
+    if (fresh != null) {
+      _writePatternsCache(_key, widget.userId, fresh.toJson());
+    }
+
+    // Cache-first resolution: prefer fresh network data, fall back to the
+    // disk-cached payload (only if it belongs to the current bucket).
+    final summary =
+        fresh ?? (_cachedKey == _key ? _cached : null);
+
     return _SectionContainer(
-      title: range == 'day' ? "Today's Macros" : 'Nutrition Trends',
-      isDark: isDark,
-      child: async.when(
-        loading: () => const _LoadingStub(height: 180),
-        error: (e, _) => _ErrorStub(message: 'Couldn\'t load macros'),
-        data: (summary) {
+      title: widget.range == 'day' ? "Today's Macros" : 'Nutrition Trends',
+      isDark: widget.isDark,
+      child: Builder(builder: (context) {
+        if (summary != null) {
           if (summary.daysCounted == 0) {
             return _EmptyStub(
               icon: Icons.pie_chart_outline,
@@ -356,22 +495,72 @@ class _MacroChartsSection extends ConsumerWidget {
                 height: 180,
                 child: Row(
                   children: [
+                    Expanded(child: _MacroPie(summary: summary)),
                     Expanded(
-                      child: _MacroPie(summary: summary),
-                    ),
-                    Expanded(
-                      child: _MacroLegend(summary: summary, isDark: isDark),
+                      child: _MacroLegend(
+                          summary: summary, isDark: widget.isDark),
                     ),
                   ],
                 ),
               ),
-              if (range != 'day') ...[
+              if (widget.range != 'day') ...[
                 const SizedBox(height: 16),
-                _CalorieTrend(summary: summary, isDark: isDark),
+                _CalorieTrend(summary: summary, isDark: widget.isDark),
               ],
             ],
           );
-        },
+        }
+        // No data anywhere yet. Surface a hard error only once the disk read
+        // has finished AND the network has failed (so a transient error never
+        // blanks a section that still has a cached value to show).
+        if (_cacheChecked && async.hasError) {
+          return _ErrorStub(message: 'Couldn\'t load macros');
+        }
+        // Cold start — layout-matched skeleton (pie + legend rows).
+        return const _MacroSkeleton();
+      }),
+    );
+  }
+}
+
+/// Layout-matched skeleton for [_MacroChartsSection] — a circular pie
+/// placeholder beside a stacked-line legend, sized to the real 180px row so
+/// the skeleton → content swap never reflows.
+class _MacroSkeleton extends StatelessWidget {
+  const _MacroSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 180,
+      child: Row(
+        children: [
+          // Pie chart placeholder — a centered shimmering circle.
+          const Expanded(
+            child: Center(child: SkeletonCircle(size: 120)),
+          ),
+          // Legend placeholder — title line + 4 short metric rows.
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.only(left: 8, right: 4),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: const [
+                  SkeletonBox(width: 110, height: 16),
+                  SizedBox(height: 8),
+                  SkeletonBox(width: 70, height: 11),
+                  SizedBox(height: 14),
+                  SkeletonBox(width: 130, height: 12),
+                  SizedBox(height: 10),
+                  SkeletonBox(width: 130, height: 12),
+                  SizedBox(height: 10),
+                  SkeletonBox(width: 130, height: 12),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -596,6 +785,43 @@ class _TopFoodsSection extends ConsumerStatefulWidget {
 class _TopFoodsSectionState extends ConsumerState<_TopFoodsSection> {
   String _metric = 'calories';
 
+  /// Per-(metric,range,date) disk-cached payloads. Keyed by the full cache key
+  /// so flipping the metric chip can rehydrate instantly from a previously
+  /// seen bucket while the network re-fetch runs silently.
+  final Map<String, TopFoodsResponse> _cache = {};
+
+  /// True once the first disk read for the *current* key has finished.
+  bool _cacheChecked = false;
+
+  String get _key => _patternsCacheKey(_kTopFoodsCacheKey,
+      range: widget.range, date: widget.date, metric: _metric);
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCache();
+  }
+
+  @override
+  void didUpdateWidget(covariant _TopFoodsSection old) {
+    super.didUpdateWidget(old);
+    if (old.range != widget.range || old.date != widget.date) {
+      _cacheChecked = false;
+      _loadCache();
+    }
+  }
+
+  Future<void> _loadCache() async {
+    final key = _key;
+    final v = await _readPatternsCache(
+        key, widget.userId, TopFoodsResponse.fromJson);
+    if (!mounted) return;
+    setState(() {
+      if (v != null) _cache[key] = v;
+      _cacheChecked = true;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final async = ref.watch(topFoodsProvider(
@@ -606,6 +832,15 @@ class _TopFoodsSectionState extends ConsumerState<_TopFoodsSection> {
         date: widget.date,
       ),
     ));
+
+    // Write-through fresh data for this (metric, range, date) bucket.
+    final fresh = async.valueOrNull;
+    if (fresh != null) {
+      _cache[_key] = fresh;
+      _writePatternsCache(_key, widget.userId, fresh.toJson());
+    }
+    // Cache-first: prefer fresh, fall back to a disk-cached bucket payload.
+    final data = fresh ?? _cache[_key];
 
     return _SectionContainer(
       title: 'Foods highest in…',
@@ -656,10 +891,8 @@ class _TopFoodsSectionState extends ConsumerState<_TopFoodsSection> {
             ),
           ),
           const SizedBox(height: 12),
-          async.when(
-            loading: () => const _LoadingStub(height: 160),
-            error: (e, _) => _ErrorStub(message: 'Couldn\'t load foods'),
-            data: (data) {
+          Builder(builder: (context) {
+            if (data != null) {
               if (data.items.isEmpty) {
                 return _EmptyStub(
                   icon: Icons.restaurant_menu_outlined,
@@ -667,10 +900,22 @@ class _TopFoodsSectionState extends ConsumerState<_TopFoodsSection> {
                   subtitle: 'Log meals to see your top ${_METRICS.firstWhere((e) => e.key == _metric).value.toLowerCase()} sources.',
                 );
               }
+              // Cap at 8 visible rows; the list is built lazily so off-screen
+              // rows aren't constructed until needed.
+              final visible = data.items.take(8).toList();
+              final unit = data.items.first.unit;
               return Column(
                 children: [
-                  for (final item in data.items.take(8))
-                    _TopFoodRow(item: item, unit: data.items.first.unit, isDark: widget.isDark),
+                  ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: visible.length,
+                    itemBuilder: (_, i) => _TopFoodRow(
+                      item: visible[i],
+                      unit: unit,
+                      isDark: widget.isDark,
+                    ),
+                  ),
                   if (data.items.length > 8)
                     TextButton(
                       onPressed: () {}, // Full-list screen tracked in follow-up
@@ -678,8 +923,13 @@ class _TopFoodsSectionState extends ConsumerState<_TopFoodsSection> {
                     ),
                 ],
               );
-            },
-          ),
+            }
+            if (_cacheChecked && async.hasError) {
+              return _ErrorStub(message: 'Couldn\'t load foods');
+            }
+            // Cold start — 5 layout-matched food-row skeletons.
+            return const _TopFoodsSkeleton();
+          }),
         ],
       ),
     );
@@ -772,27 +1022,95 @@ class _TopFoodRow extends StatelessWidget {
   }
 }
 
+/// Layout-matched skeleton for the top-foods list — 5 rows each mirroring a
+/// [_TopFoodRow] (36px leading tile + two stacked text lines + trailing value).
+class _TopFoodsSkeleton extends StatelessWidget {
+  const _TopFoodsSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: List.generate(5, (_) {
+        return Container(
+          margin: const EdgeInsets.only(bottom: 6),
+          padding: const EdgeInsets.all(10),
+          child: Row(
+            children: const [
+              SkeletonBox(width: 36, height: 36, radius: 8),
+              SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SkeletonBox(width: 140, height: 13),
+                    SizedBox(height: 6),
+                    SkeletonBox(width: 90, height: 11),
+                  ],
+                ),
+              ),
+              SizedBox(width: 8),
+              SkeletonBox(width: 44, height: 13),
+            ],
+          ),
+        );
+      }),
+    );
+  }
+}
+
 // ── Section 3: Mood / energy patterns ───────────────────────────────────────
 
-class _MoodSection extends ConsumerWidget {
+class _MoodSection extends ConsumerStatefulWidget {
   final String userId;
   final bool isDark;
   const _MoodSection({required this.userId, required this.isDark});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final async = ref.watch(foodPatternsMoodProvider(userId));
+  ConsumerState<_MoodSection> createState() => _MoodSectionState();
+}
+
+class _MoodSectionState extends ConsumerState<_MoodSection> {
+  /// Disk-cached mood payload — rendered instantly on cold start. The mood
+  /// query is always a fixed 90-day window so a single per-user slot suffices.
+  FoodPatternsMoodResponse? _cached;
+  bool _cacheChecked = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCache();
+  }
+
+  Future<void> _loadCache() async {
+    final v = await _readPatternsCache(
+        _kMoodCacheKey, widget.userId, FoodPatternsMoodResponse.fromJson);
+    if (!mounted) return;
+    setState(() {
+      _cached = v;
+      _cacheChecked = true;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final async = ref.watch(foodPatternsMoodProvider(widget.userId));
+
+    final fresh = async.valueOrNull;
+    if (fresh != null) {
+      _writePatternsCache(_kMoodCacheKey, widget.userId, fresh.toJson());
+    }
+    final data = fresh ?? _cached;
+    final isDark = widget.isDark;
+
     return _SectionContainer(
       title: 'Your body\'s responses',
       subtitle: 'Based on the last 90 days',
       isDark: isDark,
-      child: async.when(
-        loading: () => const _LoadingStub(height: 160),
-        error: (e, _) => _ErrorStub(message: 'Couldn\'t load patterns'),
-        data: (data) {
+      child: Builder(builder: (context) {
+        if (data != null) {
           if (data.checkinDisabled) {
             return _CheckinDisabledBanner(
-              userId: userId,
+              userId: widget.userId,
               isDark: isDark,
               ref: ref,
             );
@@ -827,8 +1145,56 @@ class _MoodSection extends ConsumerWidget {
               ],
             ],
           );
-        },
-      ),
+        }
+        if (_cacheChecked && async.hasError) {
+          return _ErrorStub(message: 'Couldn\'t load patterns');
+        }
+        // Cold start — header line + 3 tile skeletons matching _MoodFoodTile.
+        return const _MoodSkeleton();
+      }),
+    );
+  }
+}
+
+/// Layout-matched skeleton for [_MoodSection] — a short list header followed by
+/// three mood-food-tile placeholders (each: name line + detail line + trailing
+/// trend icon), mirroring the real [_MoodFoodTile] geometry.
+class _MoodSkeleton extends StatelessWidget {
+  const _MoodSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    Widget tile() => Container(
+          margin: const EdgeInsets.only(bottom: 8),
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            children: const [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SkeletonBox(width: 130, height: 13),
+                    SizedBox(height: 6),
+                    SkeletonBox(width: 180, height: 11),
+                  ],
+                ),
+              ),
+              SizedBox(width: 8),
+              SkeletonBox(width: 20, height: 20, radius: 10),
+            ],
+          ),
+        );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Padding(
+          padding: EdgeInsets.only(bottom: 8, top: 4),
+          child: SkeletonBox(width: 160, height: 13),
+        ),
+        tile(),
+        tile(),
+        tile(),
+      ],
     );
   }
 }
@@ -1009,7 +1375,7 @@ class _MoodFoodTile extends ConsumerWidget {
 
 // ── Section 4: Meal log history ─────────────────────────────────────────────
 
-class _HistorySection extends ConsumerWidget {
+class _HistorySection extends ConsumerStatefulWidget {
   final String userId;
   final String range;
   final String date;
@@ -1022,32 +1388,143 @@ class _HistorySection extends ConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_HistorySection> createState() => _HistorySectionState();
+}
+
+class _HistorySectionState extends ConsumerState<_HistorySection> {
+  /// Disk-cached meal-history rows for the current (range, date) bucket. The
+  /// provider returns a `List<Map>` which is already JSON-serializable, so it
+  /// is wrapped under a `{'rows': [...]}` envelope for [DataCacheService].
+  List<Map<String, dynamic>>? _cached;
+  bool _cacheChecked = false;
+  String? _cachedKey;
+
+  String get _key => _patternsCacheKey(_kHistoryCacheKey,
+      range: widget.range, date: widget.date);
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCache();
+  }
+
+  @override
+  void didUpdateWidget(covariant _HistorySection old) {
+    super.didUpdateWidget(old);
+    if (old.range != widget.range || old.date != widget.date) {
+      _cached = null;
+      _cacheChecked = false;
+      _loadCache();
+    }
+  }
+
+  Future<void> _loadCache() async {
+    final key = _key;
+    List<Map<String, dynamic>>? rows;
+    try {
+      final raw =
+          await DataCacheService.instance.getCached(key, userId: widget.userId);
+      final list = raw?['rows'];
+      if (list is List) {
+        rows = list
+            .whereType<Map>()
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList();
+      }
+    } catch (e) {
+      debugPrint('💾 [Patterns] history cache read failed: $e');
+    }
+    if (!mounted) return;
+    setState(() {
+      if (key == _key) {
+        _cached = rows;
+        _cachedKey = key;
+      }
+      _cacheChecked = true;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final async = ref.watch(patternsHistoryProvider(
-      HistoryQuery(userId: userId, range: range, date: date),
+      HistoryQuery(
+          userId: widget.userId, range: widget.range, date: widget.date),
     ));
+
+    final fresh = async.valueOrNull;
+    if (fresh != null) {
+      // Persist the (capped) rows under a JSON envelope. Cap mirrors the 25
+      // rows the UI actually renders so the blob stays small.
+      _writePatternsCache(_key, widget.userId,
+          {'rows': fresh.take(25).toList()});
+    }
+    final rows = fresh ?? (_cachedKey == _key ? _cached : null);
+
     return _SectionContainer(
       title: 'Meal history',
-      isDark: isDark,
-      child: async.when(
-        loading: () => const _LoadingStub(height: 200),
-        error: (e, _) => _ErrorStub(message: 'Couldn\'t load history'),
-        data: (rows) {
+      isDark: widget.isDark,
+      child: Builder(builder: (context) {
+        if (rows != null) {
           if (rows.isEmpty) {
             return _EmptyStub(
               icon: Icons.event_note_outlined,
-              title: 'No meals this $range',
+              title: 'No meals this ${widget.range}',
               subtitle: 'Logged meals will show up here as a timeline.',
             );
           }
-          return Column(
-            children: [
-              for (final r in rows.take(25))
-                _HistoryRow(row: r, isDark: isDark),
-            ],
+          // Cap at 25 visible rows, built lazily so off-screen rows are not
+          // constructed until the column is laid out.
+          final visible = rows.take(25).toList();
+          return ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: visible.length,
+            itemBuilder: (_, i) =>
+                _HistoryRow(row: visible[i], isDark: widget.isDark),
           );
-        },
-      ),
+        }
+        if (_cacheChecked && async.hasError) {
+          return _ErrorStub(message: 'Couldn\'t load history');
+        }
+        // Cold start — 4 layout-matched history-row skeletons.
+        return const _HistorySkeleton();
+      }),
+    );
+  }
+}
+
+/// Layout-matched skeleton for the meal-history list — 4 rows mirroring a
+/// [_HistoryRow] (48px leading thumbnail + three stacked text lines).
+class _HistorySkeleton extends StatelessWidget {
+  const _HistorySkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: List.generate(4, (_) {
+        return Container(
+          margin: const EdgeInsets.only(bottom: 8),
+          padding: const EdgeInsets.all(10),
+          child: Row(
+            children: const [
+              SkeletonBox(width: 48, height: 48, radius: 10),
+              SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SkeletonBox(width: 150, height: 13),
+                    SizedBox(height: 6),
+                    SkeletonBox(width: 90, height: 11),
+                    SizedBox(height: 6),
+                    SkeletonBox(width: 170, height: 11),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      }),
     );
   }
 }

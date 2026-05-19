@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart' show IconData, Icons, Color;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/cache/cache_first_mixin.dart';
 import '../models/consistency.dart';
 import '../models/progress_charts.dart';
 import '../repositories/auth_repository.dart';
@@ -524,6 +525,40 @@ class TrendSeries {
 
   bool get isEmpty => points.isEmpty;
   bool get hasEnoughForDelta => points.length >= 2;
+
+  /// Serialises to a JSON map for the Trends disk cache.
+  ///
+  /// `metric` and `range` are stored by their stable enum `name` so a catalog
+  /// reorder never corrupts a cached blob. The point list reuses
+  /// [TrendPoint.toJson]. `historyStart` is epoch-ms or null.
+  Map<String, dynamic> toJson() => {
+        'metric': metric.name,
+        'range': range.name,
+        'unit': unit,
+        'historyStart': historyStart?.millisecondsSinceEpoch,
+        'points': [for (final p in points) p.toJson()],
+      };
+
+  /// Rebuilds a [TrendSeries] from [toJson]. A missing/unknown metric or range
+  /// name throws — the cache layer treats that as a corrupt-blob miss and
+  /// falls back to a clean network fetch (no fabricated data).
+  factory TrendSeries.fromJson(Map<String, dynamic> j) {
+    final metric =
+        TrendMetric.values.firstWhere((m) => m.name == j['metric']);
+    final range = TrendRange.values.firstWhere((r) => r.name == j['range']);
+    final hs = j['historyStart'];
+    return TrendSeries(
+      metric: metric,
+      range: range,
+      unit: (j['unit'] as String?) ?? '',
+      historyStart:
+          hs == null ? null : DateTime.fromMillisecondsSinceEpoch(hs as int),
+      points: [
+        for (final raw in (j['points'] as List? ?? const []))
+          TrendPoint.fromJson(Map<String, dynamic>.from(raw as Map)),
+      ],
+    );
+  }
 }
 
 /// Immutable, hashable key for the [trendSeriesProvider] family.
@@ -544,14 +579,124 @@ class TrendSeriesKey {
   int get hashCode => Object.hash(metric, range);
 }
 
-/// Unified trend-series provider (G6/G8).
+/// Per-metric disk-cache TTL for the Trends instant-load layer.
+///
+/// Different metrics go stale at very different rates, so a single global TTL
+/// would either serve stale data for slow-moving metrics or thrash the network
+/// for fast ones. Buckets (all within the task's ~1–12h band):
+///  * ~1h  — fast intraday metrics: nutrition macros, micros, hydration,
+///           activity, glucose (logged many times a day; today's value moves).
+///  * ~3h  — readiness / wellbeing check-ins, workout feedback, cardio, NEAT
+///           (typically logged once a day).
+///  * ~12h — slow body metrics: measurements, derived composition, strength
+///           1RM, weekly workout volume, hormonal cycle, flexibility, habits
+///           (change over days/weeks — a long TTL is safe and very cheap).
+///
+/// The notifier still ALWAYS revalidates in the background after serving the
+/// cached value, so the TTL only governs whether the cached value is shown
+/// instantly on open — never whether fresh data is fetched.
+Duration _ttlFor(TrendMetric metric) {
+  switch (metric.source) {
+    case TrendSource.nutrition:
+    case TrendSource.micros:
+    case TrendSource.hydration:
+    case TrendSource.activity:
+    case TrendSource.glucose:
+      return const Duration(hours: 1);
+    case TrendSource.readiness:
+    case TrendSource.wellbeing:
+    case TrendSource.workoutFeedback:
+    case TrendSource.cardio:
+    case TrendSource.neat:
+      return const Duration(hours: 3);
+    case TrendSource.measurement:
+    case TrendSource.derivedMetric:
+    case TrendSource.strength:
+    case TrendSource.workoutVolume:
+    case TrendSource.hormonal:
+    case TrendSource.flexibility:
+    case TrendSource.habits:
+      return const Duration(hours: 12);
+  }
+}
+
+/// Disk-cache schema version for a persisted [TrendSeries] blob. Bump when
+/// [TrendSeries.toJson] / [TrendPoint.toJson] change shape so stale blobs are
+/// dropped rather than decoded into a wrong-shaped object.
+const int _kTrendSeriesSchema = 1;
+
+/// Unified trend-series provider (G6/G8 — instant-load Part 2).
 ///
 /// `ref.watch(trendSeriesProvider(TrendSeriesKey(metric, range)))` returns an
 /// `AsyncValue<TrendSeries>` of date-sorted [TrendPoint]s, regardless of which
 /// repository the metric actually comes from.
-final trendSeriesProvider = FutureProvider.family
-    .autoDispose<TrendSeries, TrendSeriesKey>((ref, key) async {
-  final auth = ref.watch(authStateProvider);
+///
+/// Instant-load: this is now a cache-first [StateNotifierProvider]. On open it
+/// emits the disk-cached series (if any, within [_ttlFor]) SYNCHRONOUSLY-fast,
+/// then revalidates over the network and emits the fresh value — so re-opening
+/// the Trends screen is instant instead of blocking on a spinner. The exposed
+/// type is still `AsyncValue<TrendSeries>`, so every `.watch(...).when(...)` /
+/// `.valueOrNull` call site keeps working unchanged.
+final trendSeriesProvider = StateNotifierProvider.family.autoDispose<
+    _TrendSeriesNotifier, AsyncValue<TrendSeries>, TrendSeriesKey>(
+  (ref, key) => _TrendSeriesNotifier(ref, key)..load(),
+);
+
+/// Cache-first notifier for one (metric, range) trend series.
+class _TrendSeriesNotifier extends StateNotifier<AsyncValue<TrendSeries>>
+    with CacheFirstMixin {
+  _TrendSeriesNotifier(this._ref, this._key)
+      : super(const AsyncValue.loading());
+
+  final Ref _ref;
+  final TrendSeriesKey _key;
+
+  /// Disposal flag tracked explicitly. [CacheFirstMixin] declares its own
+  /// concrete `mounted` getter, which (by Dart mixin linearization) shadows
+  /// `StateNotifier.mounted`; overriding it here with a real, dispose-aware
+  /// value is what makes the mixin's mounted-guards behave correctly — so a
+  /// late network response can never emit into a disposed notifier.
+  bool _disposed = false;
+
+  @override
+  bool get mounted => !_disposed;
+
+  @override
+  void dispose() {
+    _disposed = true;
+    super.dispose();
+  }
+
+  /// Run the cache-first load: emit the disk-cached series instantly (if
+  /// present + in-TTL), then fetch fresh and emit again. Never throws.
+  Future<void> load() => loadCacheFirst<TrendSeries>(
+        // Key base — the mixin appends user-scope + schema. Metric + range
+        // are part of the base so every (metric, range) pair has its own slot.
+        cacheKey: 'trend_series::${_key.metric.name}::${_key.range.name}',
+        userId: _ref.read(authStateProvider).user?.id ?? '',
+        ttl: _ttlFor(_key.metric),
+        schemaVersion: _kTrendSeriesSchema,
+        fetch: () => _fetchTrendSeries(_ref, _key),
+        decode: TrendSeries.fromJson,
+        encode: (s) => s.toJson(),
+        emit: (data, {required bool fromCache}) {
+          if (!mounted) return;
+          state = AsyncValue.data(data);
+        },
+        onError: (e, st) {
+          // Surface the network failure ONLY when nothing was served from
+          // cache — otherwise the cached series stays on screen (cache-first
+          // contract: a transient failure never blanks a populated chart).
+          if (!mounted) return;
+          if (state.valueOrNull == null) state = AsyncValue.error(e, st);
+        },
+      );
+}
+
+/// Network fetch for one trend series — the former `FutureProvider` body,
+/// extracted verbatim so the cache-first notifier can call it as its `fetch`.
+Future<TrendSeries> _fetchTrendSeries(Ref ref, TrendSeriesKey key) async {
+  final auth = ref.read(authStateProvider);
   final userId = auth.user?.id;
   if (userId == null) {
     return TrendSeries(
@@ -647,7 +792,7 @@ final trendSeriesProvider = FutureProvider.family
     unit: unit,
     historyStart: historyStart,
   );
-});
+}
 
 /// Collapses a series to exactly one [TrendPoint] per local calendar day.
 ///

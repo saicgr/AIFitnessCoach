@@ -8,7 +8,7 @@ import 'package:intl/intl.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/services/posthog_service.dart';
-import '../../widgets/app_loading.dart';
+import '../../core/widgets/skeleton/skeleton.dart';
 import '../../data/models/progress_photos.dart';
 import '../../core/animations/app_animations.dart';
 import '../../data/models/muscle_status.dart';
@@ -280,7 +280,11 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen>
           ],
         ),
         body: _isLoading || _userId == null
-            ? AppLoading.fullScreen()
+            // Instant-load: a layout-matched skeleton instead of a blocking
+            // full-screen spinner. `_userId` is resolved from a fast local
+            // SharedPreferences read, so this skeleton is on screen only for
+            // the brief moment before the first frame's microtask completes.
+            ? _buildLoadingSkeleton()
             : RepaintBoundary(
                 key: _reportKey,
                 child: Container(
@@ -311,6 +315,40 @@ class _ProgressScreenState extends ConsumerState<ProgressScreen>
                 ),
               ),
         floatingActionButton: _buildFAB(),
+      ),
+    );
+  }
+
+  /// Layout-matched first-open skeleton for the whole Progress screen —
+  /// mirrors the segmented tab bar plus the Scores tab's stack of cards so
+  /// the skeleton → content swap does not reflow. Replaces the old blocking
+  /// full-screen spinner.
+  Widget _buildLoadingSkeleton() {
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Segmented tab bar placeholder.
+            const SkeletonBox(height: 44, radius: 12),
+            const SizedBox(height: 16),
+            // Stacked content cards (readiness, strength, PRs, analytics).
+            const SkeletonBox(height: 120, radius: 16),
+            const SizedBox(height: 16),
+            const SkeletonBox(height: 160, radius: 16),
+            const SizedBox(height: 16),
+            const SkeletonBox(height: 120, radius: 16),
+            const SizedBox(height: 16),
+            Row(
+              children: const [
+                Expanded(child: SkeletonBox(height: 96, radius: 16)),
+                SizedBox(width: 12),
+                Expanded(child: SkeletonBox(height: 96, radius: 16)),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

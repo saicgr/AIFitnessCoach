@@ -181,8 +181,20 @@ extension _ProgressScreenStateUI on _ProgressScreenState {
 
           // Photo Grid
           if (state.isLoading)
-            const SliverFillRemaining(
-              child: Center(child: CircularProgressIndicator()),
+            // Instant-load: a layout-matched 3-column grid skeleton instead
+            // of a blocking centered spinner. Mirrors the real photo grid's
+            // column count / aspect ratio so the swap is reflow-free.
+            const SliverPadding(
+              padding: EdgeInsets.all(16),
+              sliver: SliverToBoxAdapter(
+                child: SkeletonGrid(
+                  itemCount: 6,
+                  crossAxisCount: 3,
+                  childAspectRatio: 0.75,
+                  spacing: 8,
+                  tileRadius: 12,
+                ),
+              ),
             )
           else if (state.photos.isEmpty)
             SliverFillRemaining(
@@ -603,7 +615,21 @@ extension _ProgressScreenStateUI on _ProgressScreenState {
     final colorScheme = Theme.of(context).colorScheme;
 
     if (measState.isLoading) {
-      return AppLoading.fullScreen();
+      // Instant-load: a layout-matched skeleton instead of a blocking
+      // full-screen spinner. The measurements provider is cache-first, so
+      // this is only ever seen on a genuine first-ever cold open.
+      return ListView(
+        padding: const EdgeInsets.all(16),
+        children: const [
+          SkeletonBox(height: 16, width: 160, radius: 6),
+          SizedBox(height: 16),
+          SkeletonList(itemCount: 3, spacing: 8),
+          SizedBox(height: 16),
+          SkeletonList(itemCount: 3, spacing: 8),
+          SizedBox(height: 16),
+          SkeletonList(itemCount: 3, spacing: 8),
+        ],
+      );
     }
 
     if (measState.error != null && measState.historyByType.isEmpty) {

@@ -8,6 +8,7 @@ import '../../widgets/app_snackbar.dart';
 import '../../widgets/pill_app_bar.dart';
 import '../../core/providers/user_provider.dart';
 import '../../core/theme/theme_colors.dart';
+import '../../core/widgets/skeleton/skeleton.dart';
 import '../../data/models/schedule_item.dart';
 import '../../data/models/workout.dart';
 import '../../data/providers/schedule_provider.dart';
@@ -114,35 +115,49 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
 
           // Content
           Expanded(
-            child: workoutsState.when(
-              loading: () => Center(
-                child: CircularProgressIndicator(color: colors.cyan),
-              ),
-              error: (e, _) => Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.error_outline, size: 48, color: colors.error),
-                    const SizedBox(height: 16),
-                    Text('Failed to load: $e', style: TextStyle(color: colors.textPrimary)),
-                    const SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: () => ref.read(workoutsProvider.notifier).refresh(),
-                      child: const Text('Retry'),
-                    ),
-                  ],
-                ),
-              ),
-              data: (workouts) {
-                switch (_viewMode) {
-                  case 'timeline':
-                    return _buildTimelineView(context, selectedWeek, colors);
-                  case 'week':
-                    return _buildWeekView(context, workouts, selectedWeek, colors);
-                  case 'agenda':
-                  default:
-                    return _buildAgendaView(context, workouts, selectedWeek, colors);
+            child: Builder(
+              builder: (context) {
+                // Instant-load: keep showing the last-known workouts while a
+                // silent revalidate runs, so a refresh never blanks the
+                // agenda back to a spinner.
+                final workouts = workoutsState.valueOrNull;
+                if (workouts != null) {
+                  switch (_viewMode) {
+                    case 'timeline':
+                      return _buildTimelineView(context, selectedWeek, colors);
+                    case 'week':
+                      return _buildWeekView(
+                          context, workouts, selectedWeek, colors);
+                    case 'agenda':
+                    default:
+                      return _buildAgendaView(
+                          context, workouts, selectedWeek, colors);
+                  }
                 }
+                // Error with no cached data to fall back to.
+                if (workoutsState.hasError) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.error_outline,
+                            size: 48, color: colors.error),
+                        const SizedBox(height: 16),
+                        Text('Failed to load: ${workoutsState.error}',
+                            style: TextStyle(color: colors.textPrimary)),
+                        const SizedBox(height: 16),
+                        ElevatedButton(
+                          onPressed: () =>
+                              ref.read(workoutsProvider.notifier).refresh(),
+                          child: const Text('Retry'),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+                // Cold start, nothing cached yet — layout-matched skeleton
+                // instead of a blocking spinner.
+                return _buildAgendaSkeleton(colors);
               },
             ),
           ),
@@ -330,20 +345,34 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
           ),
         ),
         Expanded(
-          child: scheduleAsync.when(
-            loading: () => Center(
-              child: CircularProgressIndicator(color: colors.cyan),
-            ),
-            error: (e, _) => Center(
-              child: Text('Failed to load timeline: $e',
-                  style: TextStyle(color: colors.error)),
-            ),
-            data: (schedule) => TimelineView(
-              items: schedule.items,
-              isDark: colors.isDark,
-              onItemTap: (item) => _showAddItemSheet(context, colors, prefilledTime: item.startTime),
-              onEmptyTap: (time) => _showAddItemSheet(context, colors, prefilledTime: time),
-            ),
+          child: Builder(
+            builder: (context) {
+              // Keep the timeline visible while a silent revalidate runs.
+              final schedule = scheduleAsync.valueOrNull;
+              if (schedule != null) {
+                return TimelineView(
+                  items: schedule.items,
+                  isDark: colors.isDark,
+                  onItemTap: (item) => _showAddItemSheet(context, colors,
+                      prefilledTime: item.startTime),
+                  onEmptyTap: (time) =>
+                      _showAddItemSheet(context, colors, prefilledTime: time),
+                );
+              }
+              if (scheduleAsync.hasError) {
+                return Center(
+                  child: Text(
+                      'Failed to load timeline: ${scheduleAsync.error}',
+                      style: TextStyle(color: colors.error)),
+                );
+              }
+              // Cold start — layout-matched skeleton list of time-slot rows.
+              return const SkeletonList(
+                scrollable: true,
+                itemCount: 8,
+                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              );
+            },
           ),
         ),
       ],
@@ -482,12 +511,12 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
               ),
             ),
 
-            // Schedule items for the day
-            scheduleAsync.when(
-              loading: () => const SizedBox.shrink(),
-              error: (_, __) => const SizedBox.shrink(),
-              data: (schedule) {
-                if (schedule.items.isNotEmpty) {
+            // Schedule items for the day. Read via valueOrNull so a silent
+            // background revalidate never blanks already-rendered items.
+            Builder(
+              builder: (context) {
+                final schedule = scheduleAsync.valueOrNull;
+                if (schedule != null && schedule.items.isNotEmpty) {
                   return Padding(
                     padding: EdgeInsets.only(
                       left: MediaQuery.of(context).size.width < 380 ? 40.0 : 60.0,
@@ -715,6 +744,52 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
       default:
         return const Color(0xFF6366F1);
     }
+  }
+
+  /// Layout-matched skeleton for the agenda view — a vertical list of
+  /// day-header + content placeholders, mirroring [_buildAgendaView] so the
+  /// skeleton -> content cross-fade does not reflow. Cold-start only; once
+  /// workouts are cached the real list renders instantly.
+  Widget _buildAgendaSkeleton(ThemeColors colors) {
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      itemCount: 7,
+      itemBuilder: (context, index) {
+        return Padding(
+          padding: const EdgeInsets.only(top: 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Day-header placeholder: 48x48 date chip + two text lines.
+              Row(
+                children: [
+                  const SkeletonBox(width: 48, height: 48, radius: 12),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: const [
+                        SkeletonBox(width: 120, height: 16),
+                        SizedBox(height: 6),
+                        SkeletonBox(width: 90, height: 12),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              // Day content placeholder card.
+              Padding(
+                padding: EdgeInsets.only(
+                  left: MediaQuery.of(context).size.width < 380 ? 40.0 : 60.0,
+                ),
+                child: const SkeletonBox(height: 56, radius: 12),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   Widget _buildEmptyDayTile(double leftMargin, Color dayAccent, bool isPast, ThemeColors colors) {

@@ -8,10 +8,10 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/accent_color_provider.dart';
 import '../../../core/animations/app_animations.dart';
+import '../../../core/widgets/skeleton/skeleton.dart';
 import '../../../data/models/progress_photos.dart';
 import '../../../data/repositories/progress_photos_repository.dart';
 import '../../../data/services/haptic_service.dart';
-import '../../../widgets/app_loading.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../progress/comparison_view.dart';
 import '../../progress/comparison_gallery.dart';
@@ -69,7 +69,9 @@ class _PhotosTabState extends ConsumerState<PhotosTab>
     super.build(context); // Required by AutomaticKeepAliveClientMixin
 
     if (widget.userId == null) {
-      return AppLoading.fullScreen();
+      // userId resolves a tick after the Stats screen mounts — show a
+      // photo-grid skeleton instead of a blocking spinner.
+      return _buildPhotosSkeleton();
     }
 
     final state = ref.watch(progressPhotosNotifierProvider(widget.userId!));
@@ -108,8 +110,22 @@ class _PhotosTabState extends ConsumerState<PhotosTab>
 
               // Photo Grid
               if (state.isLoading)
-                const SliverFillRemaining(
-                  child: Center(child: CircularProgressIndicator()),
+                // Layout-matched skeleton grid mirroring the 3-column photo
+                // grid below, instead of a centred blocking spinner.
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 80),
+                  sliver: SliverGrid(
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: _gridColumns,
+                      crossAxisSpacing: 8,
+                      mainAxisSpacing: 8,
+                      childAspectRatio: 0.8,
+                    ),
+                    delegate: SliverChildBuilderDelegate(
+                      (_, __) => const SkeletonBox(radius: 12),
+                      childCount: _gridColumns * 4,
+                    ),
+                  ),
                 )
               else if (state.photos.isEmpty)
                 SliverFillRemaining(
@@ -257,6 +273,30 @@ class _PhotosTabState extends ConsumerState<PhotosTab>
             foregroundColor: isDark ? Colors.black : Colors.white,
             child: const Icon(Icons.camera_alt),
           ),
+        ),
+      ],
+    );
+  }
+
+  /// Layout-matched skeleton shown while `widget.userId` is still null:
+  /// a view-type filter strip, a controls row, and a 3-column photo grid.
+  Widget _buildPhotosSkeleton() {
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 80),
+      children: [
+        // View-type filter chips strip
+        const SkeletonBox(height: 36, radius: 18),
+        const SizedBox(height: 16),
+        // Sort / grid controls row
+        const SkeletonBox(width: 200, height: 28, radius: 8),
+        const SizedBox(height: 16),
+        // Photo grid placeholder
+        SkeletonGrid(
+          itemCount: _gridColumns * 4,
+          crossAxisCount: _gridColumns,
+          childAspectRatio: 0.8,
+          spacing: 8,
+          tileRadius: 12,
         ),
       ],
     );

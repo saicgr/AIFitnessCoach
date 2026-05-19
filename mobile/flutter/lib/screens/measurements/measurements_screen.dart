@@ -11,6 +11,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../core/constants/api_constants.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/widgets/skeleton/skeleton.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/repositories/measurements_repository.dart';
 import '../../data/services/api_client.dart';
@@ -576,25 +577,35 @@ class _MeasurementsScreenState extends ConsumerState<MeasurementsScreen> {
           SizedBox(
             height: 180,
             child: state.isLoading
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        CircularProgressIndicator(color: cyan),
-                        if (_loadingTimedOut) ...[
-                          const SizedBox(height: 12),
-                          Text(
-                            'Taking longer than expected...',
-                            style: TextStyle(color: textMuted, fontSize: 12),
+                // Instant-load: a layout-matched chart skeleton instead of a
+                // blocking centered spinner. The measurements provider is
+                // cache-first, so this skeleton is only ever seen on a
+                // genuine first-ever cold open with no disk cache. The
+                // timeout retry affordance overlays the skeleton so a stuck
+                // load is still recoverable.
+                ? Stack(
+                    children: [
+                      const Positioned.fill(child: SkeletonBox(radius: 16)),
+                      if (_loadingTimedOut)
+                        Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                'Taking longer than expected...',
+                                style:
+                                    TextStyle(color: textMuted, fontSize: 12),
+                              ),
+                              const SizedBox(height: 8),
+                              TextButton(
+                                onPressed: _loadMeasurements,
+                                child: Text('Retry',
+                                    style: TextStyle(color: cyan)),
+                              ),
+                            ],
                           ),
-                          const SizedBox(height: 8),
-                          TextButton(
-                            onPressed: _loadMeasurements,
-                            child: Text('Retry', style: TextStyle(color: cyan)),
-                          ),
-                        ],
-                      ],
-                    ),
+                        ),
+                    ],
                   )
                 : state.error != null
                     ? Center(

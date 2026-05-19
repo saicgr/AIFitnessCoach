@@ -3,12 +3,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../core/cache/cache_first_mixin.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/providers/user_provider.dart';
 import '../../core/theme/accent_color_provider.dart';
+import '../../core/widgets/skeleton/skeleton.dart';
 import '../../data/models/scores.dart';
 import '../../data/models/training_intensity.dart';
 import '../../data/providers/scores_provider.dart';
+import '../../data/repositories/scores_repository.dart';
+import '../../data/services/api_client.dart';
 import '../../core/providers/training_intensity_provider.dart';
 import '../../data/services/haptic_service.dart';
 import '../../shareables/shareable_data.dart';
@@ -22,6 +26,48 @@ import '../../data/providers/trend_series_provider.dart';
 // ============================================================================
 
 enum _SortMode { name, oneRm, recentPr }
+
+// ============================================================================
+// Disk cache
+// ============================================================================
+
+/// Disk tier for the Personal Records screen's `PRStats`.
+///
+/// `scoresProvider` keeps PR data only in a process-lifetime in-memory cache,
+/// so the first open after a cold start blocked on a spinner while the
+/// `loadPersonalRecords` / `loadStrengthScores` network calls ran. `PRStats`
+/// is a `json_serializable` model (it exposes `toJson`/`fromJson`), so it can
+/// safely round-trip through disk and seed an instant render here.
+///
+/// This host is owned by `personal_records_screen.dart` — the provider file
+/// itself is out of scope, so the disk warm is driven from the screen's
+/// `State` via [CacheFirstMixin].
+class _PrDiskCache with CacheFirstMixin {
+  /// Bump when [PRStats]'s JSON shape changes so stale blobs are dropped.
+  static const int _schemaVersion = 1;
+
+  /// PRs change only when a workout is logged — a 12h disk TTL is safe; the
+  /// live provider fetch silently revalidates on every screen open anyway.
+  static const Duration _ttl = Duration(hours: 12);
+
+  Future<void> warmPrStats({
+    required String userId,
+    required Future<PRStats> Function() fetch,
+    required void Function(PRStats, {required bool fromCache}) emit,
+  }) {
+    return loadCacheFirst<PRStats>(
+      // periodDays=365 matches the screen's `loadPersonalRecords` call below.
+      cacheKey: 'personal_records_prstats_365d',
+      userId: userId,
+      ttl: _ttl,
+      schemaVersion: _schemaVersion,
+      fetch: fetch,
+      decode: PRStats.fromJson,
+      encode: (p) => p.toJson(),
+      emit: emit,
+    );
+  }
+}
 
 // ============================================================================
 // Personal Records Screen
@@ -42,6 +88,14 @@ class _PersonalRecordsScreenState extends ConsumerState<PersonalRecordsScreen> {
   _SortMode _sortMode = _SortMode.recentPr;
   bool _sortAscending = false;
 
+  /// Disk-cache host for `PRStats` (see [_PrDiskCache]).
+  final _PrDiskCache _diskCache = _PrDiskCache();
+
+  /// Last-known `PRStats` read off disk. Used as a fallback so a cold start
+  /// renders the real PR list instantly instead of a skeleton; once
+  /// `scoresProvider` resolves its `prStats`, that live value always wins.
+  PRStats? _diskPrStats;
+
   @override
   void initState() {
     super.initState();
@@ -52,6 +106,31 @@ class _PersonalRecordsScreenState extends ConsumerState<PersonalRecordsScreen> {
       ref.read(scoresProvider.notifier).loadDotsScore();
       ref.read(scoresProvider.notifier).loadStrengthScores();
     });
+    // Warm the disk tier in parallel with the provider fetches above. The
+    // cached blob renders content immediately on a cold start; the fresh
+    // value is written through for the next launch.
+    _warmDiskCache();
+  }
+
+  Future<void> _warmDiskCache() async {
+    final userId = await ref.read(apiClientProvider).getUserId();
+    if (userId == null || !mounted) return;
+    final repo = ref.read(scoresRepositoryProvider);
+    await _diskCache.warmPrStats(
+      userId: userId,
+      // Mirrors `loadPersonalRecords(limit: 50, periodDays: 365)` above.
+      fetch: () => repo.getPersonalRecords(
+        userId: userId,
+        limit: 50,
+        periodDays: 365,
+      ),
+      emit: (stats, {required bool fromCache}) {
+        if (!mounted) return;
+        // Only the cached value seeds local state — the fresh value already
+        // flows in through `scoresProvider`.
+        if (fromCache) setState(() => _diskPrStats = stats);
+      },
+    );
   }
 
   @override
@@ -68,13 +147,19 @@ class _PersonalRecordsScreenState extends ConsumerState<PersonalRecordsScreen> {
     final accentColor = accent.getColor(isDark);
 
     final scoresState = ref.watch(scoresProvider);
-    final prStats = scoresState.prStats;
+    // Live PR data wins; fall back to the disk snapshot so a cold start shows
+    // the real list immediately instead of blocking on a spinner.
+    final prStats = scoresState.prStats ?? _diskPrStats;
     final dotsScore = scoresState.dotsScore;
     final strengthScores = scoresState.strengthScores;
     final oneRMsState = ref.watch(userOneRMsProvider);
     final useKg = ref.watch(useKgForWorkoutProvider);
 
-    final isLoading = scoresState.isLoading || oneRMsState.isLoading;
+    // True first-ever cold load: no PR data from the provider OR disk, and a
+    // fetch is still running. Only then do we show a skeleton — a returning
+    // user always has the disk snapshot, so they never see one.
+    final showSkeleton = prStats == null &&
+        (scoresState.isLoading || oneRMsState.isLoading);
 
     // Build exercise → 1RM lookup
     final oneRmMap = <String, UserExercise1RM>{};
@@ -121,8 +206,8 @@ class _PersonalRecordsScreenState extends ConsumerState<PersonalRecordsScreen> {
           ),
         ],
       ),
-      body: isLoading
-          ? const Center(child: CircularProgressIndicator())
+      body: showSkeleton
+          ? _buildSkeleton(isDark)
           : RepaintBoundary(
               key: _reportKey,
               child: Container(
@@ -504,6 +589,51 @@ class _PersonalRecordsScreenState extends ConsumerState<PersonalRecordsScreen> {
   // ──────────────────────────────────────────────────────────────────────────
   // Empty State
   // ──────────────────────────────────────────────────────────────────────────
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // Skeleton — layout-matched cold-load placeholder
+  // ──────────────────────────────────────────────────────────────────────────
+
+  /// Mirrors the real body shape (summary row → search bar → sort row →
+  /// PR card list) so the skeleton → content cross-fade does not reflow.
+  /// Shown only on a genuine first-ever cold load (no disk snapshot yet).
+  Widget _buildSkeleton(bool isDark) {
+    final bg = isDark ? AppColors.pureBlack : AppColorsLight.pureWhite;
+    return Container(
+      color: bg,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Summary row card
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+            child: SkeletonBox(height: 72, radius: 14),
+          ),
+          // Search bar
+          const Padding(
+            padding: EdgeInsets.fromLTRB(16, 8, 16, 4),
+            child: SkeletonBox(height: 48, radius: 12),
+          ),
+          // Sort controls row
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: SkeletonBox(width: 220, height: 24, radius: 8),
+          ),
+          // PR card list — each card ~118pt tall to match _ExercisePRCard.
+          Expanded(
+            child: SkeletonList(
+              scrollable: true,
+              itemCount: 7,
+              spacing: 10,
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+              itemBuilder: (_, __) =>
+                  const SkeletonCard(showLeading: false, lines: 3, height: 118),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _buildEmptyState(bool isDark) {
     final textPrimary =

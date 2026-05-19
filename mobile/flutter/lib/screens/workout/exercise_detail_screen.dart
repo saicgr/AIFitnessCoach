@@ -5,10 +5,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:video_player/video_player.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import '../../core/cache/cache_first_mixin.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/services/posthog_service.dart';
 import '../../core/theme/theme_colors.dart';
 import '../../core/utils/exercise_name_format.dart';
+import '../../core/widgets/skeleton/skeleton.dart';
 import '../../core/providers/favorites_provider.dart';
 import '../../core/providers/staples_provider.dart';
 import '../../core/providers/exercise_queue_provider.dart';
@@ -53,7 +55,7 @@ class ExerciseDetailScreen extends ConsumerStatefulWidget {
 }
 
 class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, CacheFirstMixin {
   VideoPlayerController? _videoController;
   String? _imageUrl;
   String? _videoUrl;
@@ -133,6 +135,28 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen>
     );
   }
 
+  /// Slug for the per-exercise disk-cache keys. Uses the library UUID when
+  /// available (stable, variant-precise) and falls back to the lower-cased
+  /// name so name-only exercises still cache.
+  String get _cacheSlug {
+    final id = widget.exercise.exerciseId ?? widget.exercise.libraryId;
+    return id ?? widget.exercise.name.toLowerCase().trim();
+  }
+
+  /// Decode a list of [PreviousSetData] from a backend `sets` payload.
+  List<PreviousSetData> _parsePreviousSets(List<dynamic> sets) {
+    return sets
+        .map((s) => PreviousSetData(
+              setNumber: s['set_number'] ?? 0,
+              weightKg: (s['weight_kg'] as num?)?.toDouble(),
+              reps: s['reps_completed'] as int?,
+              setType: s['set_type'] ?? 'working',
+              rir: s['rir'] as int?,
+              rpe: s['rpe'] as int?,
+            ))
+        .toList();
+  }
+
   Future<void> _loadPreviousPerformance() async {
     final exerciseName = widget.exercise.name;
     if (exerciseName.isEmpty || exerciseName == 'Exercise') {
@@ -140,35 +164,49 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen>
       return;
     }
 
-    try {
-      final apiClient = ref.read(apiClientProvider);
-      final userId = await apiClient.getUserId();
+    final apiClient = ref.read(apiClientProvider);
+    final userId = await apiClient.getUserId() ?? '';
 
-      final response = await apiClient.get(
-        '/performance-db/exercise-last-performance/${Uri.encodeComponent(exerciseName)}',
-        queryParameters: {'user_id': userId},
-      );
-
-      if (response.statusCode == 200 && response.data != null) {
-        final sets = response.data['sets'] as List?;
-        if (sets != null && sets.isNotEmpty) {
-          _previousSets = sets.map((s) => PreviousSetData(
-            setNumber: s['set_number'] ?? 0,
-            weightKg: (s['weight_kg'] as num?)?.toDouble(),
-            reps: s['reps_completed'] as int?,
-            setType: s['set_type'] ?? 'working',
-            rir: s['rir'] as int?,
-            rpe: s['rpe'] as int?,
-          )).toList();
+    // Cache-first: a re-open of the same exercise paints the previous-set
+    // table instantly from disk, then revalidates against the network. The
+    // raw `sets` payload is what's persisted (24h TTL, user-scoped).
+    await loadCacheFirst<List<Map<String, dynamic>>>(
+      cacheKey: 'exercise_detail_last_perf_$_cacheSlug',
+      userId: userId,
+      ttl: const Duration(hours: 24),
+      schemaVersion: 1,
+      fetch: () async {
+        final response = await apiClient.get(
+          '/performance-db/exercise-last-performance/'
+          '${Uri.encodeComponent(exerciseName)}',
+          queryParameters: {'user_id': userId},
+        );
+        if (response.statusCode == 200 && response.data != null) {
+          final sets = response.data['sets'] as List?;
+          return (sets ?? const [])
+              .map((s) => Map<String, dynamic>.from(s as Map))
+              .toList();
         }
-      }
-    } catch (e) {
-      debugPrint('Error loading previous performance: $e');
-    }
-
-    if (mounted) {
-      setState(() => _isLoadingPrevious = false);
-    }
+        return const <Map<String, dynamic>>[];
+      },
+      decode: (json) => (json['sets'] as List)
+          .map((s) => Map<String, dynamic>.from(s as Map))
+          .toList(),
+      encode: (sets) => {'sets': sets},
+      emit: (sets, {required bool fromCache}) {
+        if (!mounted) return;
+        // Don't let a late cache emit overwrite a fresh network result.
+        if (fromCache && !_isLoadingPrevious) return;
+        setState(() {
+          if (sets.isNotEmpty) _previousSets = _parsePreviousSets(sets);
+          _isLoadingPrevious = false;
+        });
+      },
+      onError: (e, _) {
+        debugPrint('Error loading previous performance: $e');
+        if (mounted) setState(() => _isLoadingPrevious = false);
+      },
+    );
   }
 
   @override
@@ -179,6 +217,85 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen>
     super.dispose();
   }
 
+  /// Initialize + autoplay the looping muted video at [url]. Bounded so a dead
+  /// URL can't pin the spinner. Safe to call when [url] is null (no-op).
+  Future<void> _initVideo(String? url) async {
+    if (url == null || url.isEmpty) return;
+    try {
+      final controller =
+          VideoPlayerController.networkUrl(Uri.parse(url));
+      await controller.initialize().timeout(const Duration(seconds: 10));
+      if (!mounted) {
+        await controller.dispose();
+        return;
+      }
+      controller.setLooping(true);
+      controller.setVolume(0);
+      controller.play();
+      setState(() {
+        _videoController = controller;
+        _videoInitialized = true;
+      });
+    } catch (e) {
+      debugPrint('Video unavailable: $e');
+      try {
+        await _videoController?.dispose();
+      } catch (_) {}
+      if (mounted) {
+        setState(() {
+          _videoController = null;
+          _videoInitialized = false;
+        });
+      }
+    }
+  }
+
+  /// Resolve the image + video URLs from the backend. Pure network — the
+  /// caller (`_loadMediaAndAutoplay`) routes it through [loadCacheFirst].
+  Future<Map<String, dynamic>> _resolveMediaUrls(String exerciseName) async {
+    final apiClient = ref.read(apiClientProvider);
+    String? imageUrl;
+    String? videoUrl;
+
+    // Authoritative S3 illustration. Pass exercise_id so we hit the exact
+    // library row — without it the backend ilike-on-name path is
+    // non-deterministic when multiple rows share a display name.
+    try {
+      final libraryUuid =
+          widget.exercise.exerciseId ?? widget.exercise.libraryId;
+      final queryParams = <String, dynamic>{};
+      if (libraryUuid != null) queryParams['exercise_id'] = libraryUuid;
+      final imageResponse = await apiClient
+          .get(
+            '/exercise-images/${Uri.encodeComponent(exerciseName)}',
+            queryParameters: queryParams.isEmpty ? null : queryParams,
+          )
+          .timeout(const Duration(seconds: 10));
+      if (imageResponse.statusCode == 200 && imageResponse.data != null) {
+        imageUrl = imageResponse.data['url'] as String?;
+      }
+    } catch (_) {}
+
+    // Fall back to the exercise's own gifUrl if the API gave nothing.
+    if (imageUrl == null) {
+      final gif = widget.exercise.gifUrl;
+      if (gif != null && gif.isNotEmpty) imageUrl = gif;
+    }
+
+    try {
+      final videoResponse = await apiClient
+          .get('/videos/by-exercise/${Uri.encodeComponent(exerciseName)}')
+          .timeout(const Duration(seconds: 10));
+      if (videoResponse.statusCode == 200 && videoResponse.data != null) {
+        videoUrl = videoResponse.data['url'] as String?;
+      }
+    } catch (e) {
+      debugPrint('Video lookup failed for $exerciseName: $e');
+    }
+
+    return {'imageUrl': imageUrl, 'videoUrl': videoUrl};
+  }
+
   Future<void> _loadMediaAndAutoplay() async {
     final exerciseName = widget.exercise.name;
     if (exerciseName.isEmpty || exerciseName == 'Exercise') {
@@ -186,75 +303,51 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen>
       return;
     }
 
-    try {
-      final apiClient = ref.read(apiClientProvider);
+    final apiClient = ref.read(apiClientProvider);
+    final userId = await apiClient.getUserId() ?? '';
 
-      // Load authoritative S3 illustration from API first. Pass exercise_id
-      // so we hit the exact library row — without it, the backend ilike-on-name
-      // path is non-deterministic when multiple rows share a display name and
-      // the detail screen ends up rendering a different variant than the list
-      // tile. exerciseId is the library UUID; libraryId is the legacy alias.
-      try {
-        final libraryUuid =
-            widget.exercise.exerciseId ?? widget.exercise.libraryId;
-        final queryParams = <String, dynamic>{};
-        if (libraryUuid != null) {
-          queryParams['exercise_id'] = libraryUuid;
+    // Cache-first: a re-open paints the media header instantly from the
+    // disk-cached URLs (and starts the video init right away) instead of
+    // waiting on the two lookup round-trips. The network revalidate keeps the
+    // URLs fresh. URLs are stable per exercise, so a 24h TTL is generous.
+    var videoStarted = false;
+    await loadCacheFirst<Map<String, dynamic>>(
+      cacheKey: 'exercise_detail_media_$_cacheSlug',
+      userId: userId,
+      ttl: const Duration(hours: 24),
+      schemaVersion: 1,
+      fetch: () => _resolveMediaUrls(exerciseName),
+      decode: (json) => {
+        'imageUrl': json['imageUrl'] as String?,
+        'videoUrl': json['videoUrl'] as String?,
+      },
+      encode: (media) => {
+        'imageUrl': media['imageUrl'],
+        'videoUrl': media['videoUrl'],
+      },
+      emit: (media, {required bool fromCache}) {
+        if (!mounted) return;
+        final newImage = media['imageUrl'] as String?;
+        final newVideo = media['videoUrl'] as String?;
+        final videoUrlChanged = newVideo != _videoUrl;
+        setState(() {
+          _imageUrl = newImage;
+          _videoUrl = newVideo;
+          _isLoadingMedia = false;
+        });
+        // Initialize the video once. The cached emit fires first and gets us
+        // playing immediately; only re-init if the fresh network emit
+        // actually changed the resolved URL.
+        if (!videoStarted || videoUrlChanged) {
+          videoStarted = true;
+          _initVideo(newVideo);
         }
-        final imageResponse = await apiClient
-            .get(
-              '/exercise-images/${Uri.encodeComponent(exerciseName)}',
-              queryParameters: queryParams.isEmpty ? null : queryParams,
-            )
-            .timeout(const Duration(seconds: 10));
-        if (imageResponse.statusCode == 200 && imageResponse.data != null) {
-          _imageUrl = imageResponse.data['url'] as String?;
-        }
-      } catch (_) {}
-
-      // Fall back to gifUrl from exercise data if API failed
-      if (_imageUrl == null) {
-        final exerciseGifUrl = widget.exercise.gifUrl;
-        if (exerciseGifUrl != null && exerciseGifUrl.isNotEmpty) {
-          _imageUrl = exerciseGifUrl;
-        }
-      }
-
-      // Load and autoplay video. Both calls are bounded so a missing video
-      // (e.g. AI-generated variants not in the cleaned library) can't pin
-      // the spinner indefinitely.
-      try {
-        final videoResponse = await apiClient
-            .get('/videos/by-exercise/${Uri.encodeComponent(exerciseName)}')
-            .timeout(const Duration(seconds: 10));
-        if (videoResponse.statusCode == 200 && videoResponse.data != null) {
-          _videoUrl = videoResponse.data['url'] as String?;
-          if (_videoUrl != null) {
-            _videoController = VideoPlayerController.networkUrl(Uri.parse(_videoUrl!));
-            await _videoController!.initialize().timeout(
-                  const Duration(seconds: 10),
-                );
-            _videoController!.setLooping(true);
-            _videoController!.setVolume(0);
-            _videoController!.play();
-            _videoInitialized = true;
-          }
-        }
-      } catch (e) {
-        debugPrint('Video unavailable for $exerciseName: $e');
-        try {
-          await _videoController?.dispose();
-        } catch (_) {}
-        _videoController = null;
-        _videoInitialized = false;
-      }
-    } catch (e) {
-      debugPrint('Error loading media: $e');
-    }
-
-    if (mounted) {
-      setState(() => _isLoadingMedia = false);
-    }
+      },
+      onError: (e, _) {
+        debugPrint('Error loading media: $e');
+        if (mounted) setState(() => _isLoadingMedia = false);
+      },
+    );
   }
 
   void _toggleVideo() {
@@ -631,9 +724,6 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen>
   }
 
   Widget _buildVideoSection(Color elevated, Color textMuted) {
-    // Use dynamic accent color from provider
-    final accentColor = ref.colors(context).accent;
-
     return GestureDetector(
       onTap: _toggleVideo,
       child: Container(
@@ -642,8 +732,13 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen>
           fit: StackFit.expand,
           children: [
             if (_isLoadingMedia)
-              Center(
-                child: CircularProgressIndicator(color: accentColor),
+              // Layout-matched shimmer that fills the whole 300pt header so
+              // the media → skeleton swap is reflow-free. A re-open is seeded
+              // from the disk cache and skips this entirely.
+              const SkeletonBox(
+                width: double.infinity,
+                height: double.infinity,
+                radius: 0,
               )
             else if (_videoInitialized && _showVideo && _videoController != null)
               FittedBox(
@@ -658,8 +753,11 @@ class _ExerciseDetailScreenState extends ConsumerState<ExerciseDetailScreen>
               CachedNetworkImage(
                 imageUrl: _imageUrl!,
                 fit: BoxFit.cover,
-                placeholder: (_, __) => Center(
-                  child: CircularProgressIndicator(color: accentColor),
+                // Shimmer while the (already-resolved) image bytes download.
+                placeholder: (_, __) => const SkeletonBox(
+                  width: double.infinity,
+                  height: double.infinity,
+                  radius: 0,
                 ),
                 errorWidget: (_, __, ___) => _buildPlaceholder(elevated, textMuted),
               )

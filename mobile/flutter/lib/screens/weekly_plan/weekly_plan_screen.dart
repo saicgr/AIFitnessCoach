@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/models/weekly_plan.dart';
 import '../../data/providers/weekly_plan_provider.dart';
+import '../../core/widgets/skeleton/skeleton.dart';
 import '../../widgets/glass_sheet.dart';
 import 'widgets/day_card.dart';
 import 'widgets/plan_header.dart';
@@ -81,16 +82,11 @@ class _WeeklyPlanScreenState extends ConsumerState<WeeklyPlanScreen> {
 
   Widget _buildBody(WeeklyPlanState planState, ColorScheme colorScheme) {
     if (planState.isLoading) {
-      return const Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            CircularProgressIndicator(),
-            SizedBox(height: 16),
-            Text('Loading your plan...'),
-          ],
-        ),
-      );
+      // Instant-load: a layout-matched skeleton instead of a blocking spinner.
+      // The cache-first provider seeds currentPlan from disk before first
+      // build for returning users, so this skeleton is a cold-install-only
+      // affordance.
+      return _buildSkeleton(colorScheme);
     }
 
     if (planState.error != null && planState.currentPlan == null) {
@@ -187,6 +183,22 @@ class _WeeklyPlanScreenState extends ConsumerState<WeeklyPlanScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  /// Layout-matched skeleton for the plan view: a header block followed by a
+  /// vertical list of day-card placeholders. Mirrors [_buildPlanView] so the
+  /// skeleton -> content cross-fade does not reflow.
+  Widget _buildSkeleton(ColorScheme colorScheme) {
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
+      children: const [
+        // Plan header placeholder.
+        SkeletonBox(height: 132, radius: 16),
+        SizedBox(height: 16),
+        // Seven day-card placeholders (one per weekday).
+        SkeletonList(itemCount: 7, spacing: 12),
+      ],
     );
   }
 

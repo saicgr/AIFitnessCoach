@@ -14,6 +14,24 @@ class TrendPoint {
   final double value;
 
   const TrendPoint({required this.date, required this.value});
+
+  /// Serialises to a compact JSON map for the Trends disk cache.
+  ///
+  /// The date is stored as epoch-milliseconds (an `int`) rather than an ISO
+  /// string: it is both smaller on disk and unambiguous to round-trip — there
+  /// is no timezone/format parsing to get wrong. `value` is a plain double.
+  Map<String, dynamic> toJson() => {
+        'd': date.millisecondsSinceEpoch,
+        'v': value,
+      };
+
+  /// Rebuilds a [TrendPoint] from [toJson]. Tolerant of `num` for both fields
+  /// (JSON decode may yield `int` or `double`); a malformed entry throws, which
+  /// the cache layer treats as a corrupt-blob miss (never a silent fallback).
+  factory TrendPoint.fromJson(Map<String, dynamic> j) => TrendPoint(
+        date: DateTime.fromMillisecondsSinceEpoch((j['d'] as num).toInt()),
+        value: (j['v'] as num).toDouble(),
+      );
 }
 
 /// MacroFactor-style exponentially-weighted moving average ("trend weight").

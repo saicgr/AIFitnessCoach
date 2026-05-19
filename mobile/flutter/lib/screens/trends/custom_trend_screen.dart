@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/theme/theme_colors.dart';
+import '../../core/widgets/skeleton/skeleton.dart';
 import '../../data/providers/trend_series_provider.dart';
 import '../../data/services/haptic_service.dart';
 import '../../widgets/glass_back_button.dart';
@@ -94,11 +95,42 @@ class _CustomTrendScreenState extends ConsumerState<CustomTrendScreen> {
 
   List<_SavedTrend> _saved = const [];
 
+  /// CacheFirstView screen key — drives the skeleton-on-true-first-open
+  /// behaviour. The chart shows a skeleton ONLY the very first time this
+  /// screen is ever opened on the install; every later open renders the
+  /// cached series instantly (no skeleton, no spinner).
+  static const String _kScreenKey = 'custom_trends';
+
+  /// True only on a genuine first-ever open — resolved from SharedPreferences
+  /// in [initState]. Until it resolves it stays true so a cold first open
+  /// shows the skeleton rather than briefly flashing a non-skeleton state.
+  bool _isFirstEver = true;
+
+  // ── Memoised chart computation (the 60fps fix) ──────────────────────────
+  // Building the TrendChart + its TrendChartSeries lists (resolve / normalize
+  // / EWMA / X-Y bounds happen downstream of these) is recomputed ONLY when
+  // the inputs below actually change. A screen-level setState (an overlay
+  // landing, an event toggle, a saved-trend write) reuses the cached widget
+  // instance — and because an identical widget instance lets Flutter skip the
+  // child's rebuild entirely, TrendChart's own _buildChart no longer re-runs
+  // on every unrelated rebuild. Gesture (pan/zoom) frames stay inside
+  // TrendChart's private State and never reach this screen.
+  Widget? _cachedChart;
+  String? _cachedChartKey;
+
   @override
   void initState() {
     super.initState();
     _primary = widget.initialMetric ?? TrendMetric.weight;
     _loadSaved();
+    _resolveFirstEver();
+  }
+
+  /// Reads whether the Trends screen has been opened before. On a first-ever
+  /// open the chart slot shows a skeleton; afterwards it never does again.
+  Future<void> _resolveFirstEver() async {
+    final seen = await CacheFirstView.hasBeenSeen(_kScreenKey);
+    if (mounted && seen) setState(() => _isFirstEver = false);
   }
 
   // ── Persistence ─────────────────────────────────────────────────────────
@@ -247,6 +279,9 @@ class _CustomTrendScreenState extends ConsumerState<CustomTrendScreen> {
   Widget _chartCard(ThemeColors colors) {
     final primaryAsync =
         ref.watch(trendSeriesProvider(TrendSeriesKey(_primary, _range)));
+    // Overlay series resolve INDEPENDENTLY — the chart no longer blocks until
+    // every overlay has landed (progressive overlays, requirement 4). Each
+    // overlay is added to the chart the moment its own series resolves.
     final overlayAsyncs = [
       for (final m in _overlays)
         ref.watch(trendSeriesProvider(TrendSeriesKey(m, _range))),
@@ -262,26 +297,22 @@ class _CustomTrendScreenState extends ConsumerState<CustomTrendScreen> {
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: colors.cardBorder),
       ),
-      child: primaryAsync.when(
-        loading: () => const SizedBox(
-            height: 280,
-            child: Center(child: CircularProgressIndicator())),
-        error: (e, _) => _chartError(colors, _primary.displayName),
-        data: (primary) {
-          // Wait for all overlays to resolve.
-          if (overlayAsyncs.any((a) => a.isLoading)) {
-            return const SizedBox(
-                height: 280,
-                child: Center(child: CircularProgressIndicator()));
-          }
-          final overlayData = <TrendSeries>[];
-          for (var i = 0; i < overlayAsyncs.length; i++) {
-            final a = overlayAsyncs[i];
-            final value = a.valueOrNull;
-            if (value == null) {
-              return _chartError(colors, _overlays[i].displayName);
-            }
-            overlayData.add(value);
+      // CacheFirstView swaps a layout-matched SKELETON chart (true first-ever
+      // open only) for the real chart — never a blocking CircularProgress.
+      // On every later open the cached series renders instantly. After the
+      // first successful load it records the screen as seen.
+      child: CacheFirstView<TrendSeries>(
+        value: primaryAsync,
+        isFirstEver: _isFirstEver,
+        traceLabel: 'custom_trends_chart',
+        skeletonBuilder: (context) => _chartSkeleton(colors),
+        errorBuilder: (context, _, __) =>
+            _chartError(colors, _primary.displayName),
+        contentBuilder: (context, primary) {
+          // Mark the screen seen once real content has rendered, so future
+          // opens skip the skeleton entirely.
+          if (_isFirstEver) {
+            CacheFirstView.markSeen(_kScreenKey);
           }
 
           // Honest empty-state: nothing logged in this range at all.
@@ -289,45 +320,166 @@ class _CustomTrendScreenState extends ConsumerState<CustomTrendScreen> {
             return _honestEmpty(colors, primary);
           }
 
-          final chartOverlays = <TrendChartSeries>[
-            for (var i = 0; i < overlayData.length; i++)
-              TrendChartSeries(
-                id: _overlays[i].name,
-                label: overlayData[i].metric.displayName,
-                unit: overlayData[i].unit,
-                points: overlayData[i].points,
-                color: _kOverlayPalette[i % _kOverlayPalette.length],
-              ),
-          ];
-
-          final events = <TrendEventLayer>[];
-          if (eventsAsync != null) {
-            final ev = eventsAsync.valueOrNull;
-            if (ev != null) {
-              for (final kind in _activeEvents) {
-                events.add(TrendEventLayer(
-                  label: kind.label,
-                  color: _eventColor(colors, kind),
-                  days: ev.of(kind),
-                ));
-              }
-            }
-          }
-
-          return TrendChart(
-            showBuiltInChrome: false,
-            accent: colors.accent,
-            primary: TrendChartSeries(
-              id: _primary.name,
-              label: primary.metric.displayName,
-              unit: primary.unit,
-              points: primary.points,
-              color: colors.accent,
-            ),
-            overlays: chartOverlays,
-            events: events,
-          );
+          return _memoizedChart(colors, primary, overlayAsyncs, eventsAsync);
         },
+      ),
+    );
+  }
+
+  /// Builds the [TrendChart] from the resolved primary + whatever overlays /
+  /// events have landed so far, memoised on its inputs.
+  ///
+  /// THE 60FPS FIX (requirement 3): assembling the chart — and therefore the
+  /// resolve / normalize / EWMA / X-Y-bounds work that happens downstream of
+  /// these series objects — is recomputed ONLY when `_primary`, `_overlays`,
+  /// `_range`, the active event set, or the resolved data actually change. A
+  /// screen-level rebuild that does not touch any of those (e.g. an unrelated
+  /// setState) reuses the cached widget instance; passing an identical widget
+  /// lets Flutter skip TrendChart's rebuild, so its chart computation does not
+  /// re-run. Pan/zoom gesture frames live inside TrendChart's own State and
+  /// never rebuild this screen at all.
+  Widget _memoizedChart(
+    ThemeColors colors,
+    TrendSeries primary,
+    List<AsyncValue<TrendSeries>> overlayAsyncs,
+    AsyncValue<TrendEvents>? eventsAsync,
+  ) {
+    // Progressive overlays: include only overlays whose series has resolved.
+    // A still-loading overlay is simply absent until it lands — it never
+    // blocks the primary chart or the already-resolved overlays.
+    final overlayData = <({int index, TrendSeries series})>[];
+    for (var i = 0; i < overlayAsyncs.length; i++) {
+      final value = overlayAsyncs[i].valueOrNull;
+      if (value != null) overlayData.add((index: i, series: value));
+    }
+
+    final events = <TrendEventLayer>[];
+    final ev = eventsAsync?.valueOrNull;
+    if (ev != null) {
+      for (final kind in _activeEvents) {
+        events.add(TrendEventLayer(
+          label: kind.label,
+          color: _eventColor(colors, kind),
+          days: ev.of(kind),
+        ));
+      }
+    }
+
+    // Cache key: a stable fingerprint of every input that affects the chart.
+    // `points.length` + the metric/range/event identity is enough — the
+    // underlying series objects are immutable, so a same-length series for
+    // the same (metric, range) is the same data.
+    final key = StringBuffer()
+      ..write('${_primary.name}:${primary.points.length}:${primary.unit}')
+      ..write('|brightness=${colors.isDark}');
+    for (final o in overlayData) {
+      key.write('|ov${o.index}:${_overlays[o.index].name}'
+          ':${o.series.points.length}');
+    }
+    for (final kind in _activeEvents) {
+      key.write('|ev${kind.name}:${ev?.count(kind) ?? -1}');
+    }
+    final keyStr = key.toString();
+
+    // Cache hit → reuse the exact same widget instance (Flutter then skips
+    // TrendChart's rebuild). Cache miss → rebuild once and store.
+    if (_cachedChartKey == keyStr && _cachedChart != null) {
+      return _cachedChart!;
+    }
+
+    final chartOverlays = <TrendChartSeries>[
+      for (final o in overlayData)
+        TrendChartSeries(
+          id: _overlays[o.index].name,
+          label: o.series.metric.displayName,
+          unit: o.series.unit,
+          points: o.series.points,
+          color: _kOverlayPalette[o.index % _kOverlayPalette.length],
+        ),
+    ];
+
+    final chart = TrendChart(
+      showBuiltInChrome: false,
+      accent: colors.accent,
+      primary: TrendChartSeries(
+        id: _primary.name,
+        label: primary.metric.displayName,
+        unit: primary.unit,
+        points: primary.points,
+        color: colors.accent,
+      ),
+      overlays: chartOverlays,
+      events: events,
+    );
+    _cachedChart = chart;
+    _cachedChartKey = keyStr;
+    return chart;
+  }
+
+  /// A layout-matched skeleton chart — a ~280px box with placeholder grid
+  /// lines and an axis stub, mirroring [TrendChart]'s shape so the
+  /// skeleton→content cross-fade never reflows. Shown only on a true
+  /// first-ever open (see [CacheFirstView]); never a blocking spinner.
+  Widget _chartSkeleton(ThemeColors colors) {
+    const double chartHeight = 280;
+    return SizedBox(
+      height: chartHeight,
+      child: Stack(
+        children: [
+          // 4 evenly-spaced horizontal grid lines — matches TrendChart's
+          // FlGridData (4 horizontal intervals, no vertical lines).
+          Positioned.fill(
+            child: Padding(
+              // Leave room on the left for the value-axis labels and at the
+              // bottom for the date-axis labels, like the real chart.
+              padding: const EdgeInsets.only(left: 40, bottom: 26),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: List.generate(
+                  5,
+                  (_) => Container(
+                    height: 1,
+                    color: colors.cardBorder.withValues(alpha: 0.5),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          // Shimmering value-axis label stubs down the left edge.
+          Positioned(
+            left: 0,
+            top: 0,
+            bottom: 26,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: List.generate(
+                4,
+                (_) => const SkeletonBox(width: 26, height: 9),
+              ),
+            ),
+          ),
+          // Shimmering plot-area block standing in for the trend line itself.
+          const Positioned(
+            left: 40,
+            right: 0,
+            top: 60,
+            bottom: 26,
+            child: SkeletonBox(height: double.infinity, radius: 12),
+          ),
+          // Shimmering date-axis label stubs along the bottom.
+          Positioned(
+            left: 40,
+            right: 0,
+            bottom: 0,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: List.generate(
+                3,
+                (_) => const SkeletonBox(width: 38, height: 9),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
