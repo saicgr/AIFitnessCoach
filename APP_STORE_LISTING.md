@@ -1,6 +1,6 @@
 # Zealova App Store Listing — copy-paste source of truth
 
-Last updated: 2026-04-30
+Last updated: 2026-05-18
 
 These strings go into App Store Connect → your app → version page → App Information / Pricing and Availability / version-specific fields.
 
@@ -27,94 +27,95 @@ These strings go into App Store Connect → your app → version page → App In
 - `Personalized Plans + Vision AI` (30)
 
 ### Promotional Text — 170 chars max (editable anytime, doesn't trigger re-review)
-**Recommended:** `New: Snap any meal — our vision AI logs calories and macros instantly. Plus injury-aware workouts, adaptive TDEE, and a coach that actually answers back.` (168)
+**Recommended:** `New: Fasting tracker with live metabolic-stage ring. Plus custom Trends for 100+ metrics. Snap meals, build workouts, track it all in one app.` (145)
 
 ### Keywords — 100 chars max, comma-separated, NO SPACES between
 **Recommended:**
 ```
-fitness,workout,gym,AI,coach,meal,nutrition,calorie,macro,trainer,plan,strength,cardio,health
+fitness,workout,AI,coach,meal,nutrition,calorie,macro,fasting,fast,strength,plan,tracker,health
 ```
-(99 chars including commas)
+(96 chars including commas)
 
 Apple ranks keywords roughly equally — pack them tight, no duplicates of the App Name (those auto-index), prefer specific terms over generic ones. Don't include competitor names (Apple rejects) like "MyFitnessPal", "Fitbod", "Hevy".
 
 ### Description — 4000 chars max
 
 ```
-Zealova is the AI coach that builds your workouts and tracks your meals in one place — no spreadsheets, no guesswork.
+Zealova is the AI coach that builds your workouts, tracks your meals, and runs your fasting timer — all in one place. No spreadsheets. No guesswork.
 
-Type, snap, or scan. Our AI builds plans around your gym, your injuries, your schedule, and your real progress.
+Type, snap, or scan. Build plans around your gym, your injuries, your schedule, and your real progress. Fast on a schedule that actually fits your life.
 
 ▶ AI WORKOUT GENERATION
-Daily workouts personalized to your equipment (23+ types from dumbbells to commercial machines), goals, and recovery state. The plan adapts every week based on what you actually lifted.
+Daily workouts personalized to your equipment (23+ types), goals, and recovery. The plan adapts every week based on what you actually lifted.
 
 ▶ CONVERSATIONAL AI COACH
-Ask anything — "swap squats for my knee", "more chest volume this week", "what should I eat after legs". The coach edits your plan in real time, suggests meals, and answers in plain English. Unlimited chat on every tier.
+Ask anything — "swap squats for my knee", "more chest volume", "what should I eat after a 16-hour fast?" The coach edits your plan, suggests meals, and answers in plain English. Unlimited chat on every tier.
 
 ▶ VISION FOOD LOGGING
-Snap a photo of your plate. Zealova identifies foods, estimates portions, and logs calories + macros in seconds. No barcode hunting, no manual database digging. Restaurant menus, grocery labels, and food packaging all work.
+Snap a photo of your plate. Zealova identifies foods, estimates portions, and logs calories + macros in seconds. Restaurant menus and food packaging work too.
 
-▶ ADAPTIVE TDEE & MACRO TARGETING
-Our MacroFactor-style adaptive TDEE engine learns your real metabolism using EMA smoothing, detects metabolic adaptation, and recommends sustainable targets — not the generic 2000 calories from a calculator.
+▶ INTERMITTENT FASTING
+A full fasting tracker — not just a countdown clock.
+- Protocols: 14:10, 16:8, 18:6, 20:4, OMAD, 5:2, ADF, extended fasts, or a custom per-weekday schedule
+- Live metabolic-stage ring: Fed → Blood Sugar Drop → Fat Burning → Ketosis → Autophagy → Deep Autophagy, with times calculated from your last meal
+- Body Status stage-journey view so you always know where you are
+- Hydration logging and mood/energy check-ins during fasts
+- Pause and resume any fast without losing progress
+- iOS Live Activity with controls on your Lock Screen and Dynamic Island
+- Built-in Fasting Guide: what happens in your body from 0 hours to 30 days
+
+▶ TRENDS AND CORRELATIONS
+Chart 100+ metrics — weight, measurements, macros, micronutrients, calories, water, steps, sleep, mood, energy, glucose, fasting hours, workout volume, strength numbers, and more. Overlay any two on one chart to see their correlation. AI insights surface patterns you'd miss, with event overlays for workout days, fasts, and cycle phases.
+
+▶ ADAPTIVE TDEE AND MACRO TARGETING
+Our adaptive TDEE engine learns your real metabolism using trend-weight smoothing, detects metabolic adaptation, and recommends sustainable targets — not the generic 2,000 calories from a basic calculator.
 
 ▶ INJURY-AWARE TRAINING
-Tell us where it hurts. Workouts auto-exclude problem movements and substitute safer alternatives. Built-in 10% rule prevents overuse injuries before they happen.
+Tell us where it hurts. Workouts auto-exclude problem movements and substitute safer alternatives. Built-in load management prevents overuse before it happens.
 
-▶ MUSCLE & PROGRESS ANALYTICS
-Body heatmap shows training balance across 24+ muscles. Per-exercise history charts strength gains over time. Visual progress with weekly streaks and milestone trophies.
+▶ MUSCLE AND PROGRESS ANALYTICS
+Body heatmap across 24+ muscles. Per-exercise history charts strength gains over time. Streaks, personal bests, and milestone trophies.
 
 ▶ NUTRITION INTELLIGENCE
-- Inflammation analysis on any meal you log
-- Hormonal diet recommendations (testosterone, estrogen, PCOS, fertility, menopause)
+- Inflammation analysis on any logged meal
+- Hormonal diet recommendations
 - Cooked vs raw food converter
 - Frequent foods one-tap re-log
 - Voice-to-calories: "two slices pepperoni pizza" → logged
 
-▶ FASTING TIMER + STREAKS
-16:8, 18:6, OMAD, custom windows. Hydration tracking integrated. Streak system across workouts, meals, fasting, hydration, and habits.
-
-▶ GAMIFICATION THAT WORKS
-35+ achievements, daily crates, weekly progress reports, comeback bonuses for getting back on track after a break.
-
-▶ SENIOR-AWARE MODE
-Recovery scaling, injury caution, and joint-friendly progressions for users 55+.
-
-▶ HABITS, HORMONES, KEGELS
-Track 50+ positive habits, optimize hormonal health, dedicated pelvic floor training (16 gender-specific exercises).
+▶ GAMIFICATION THAT KEEPS YOU HONEST
+35+ achievements, daily crates, weekly progress reports, and comeback bonuses for getting back on track after a break.
 
 ▶ NO ADS. NO DATA SOLD. NO DARK PATTERNS.
 Cancel anytime in Settings. Real privacy policy at zealova.com/privacy.
 
 PRICING
-- Free tier: 2 workouts/month, 1 food photo/day, 3 voice-log/day, unlimited AI chat
-- Premium: $7.99/mo or $59.99/yr (7-day free trial)
+Premium: $7.99/mo or $59.99/yr — 7-day free trial, no charge until it ends.
 
 WORKS WITH
 - Apple Health (read + write)
-- Live Activity for active workouts (Dynamic Island + Lock Screen)
-- Universal Links for invite + workout shares
+- Live Activity for active workouts and active fasts (Dynamic Island + Lock Screen)
+- Universal Links for invite and workout shares
 
-Built by a small team that actually trains. Real responses on support@zealova.com — usually within 24h.
+Built solo by Sai. Real responses at support@zealova.com — usually within 24h.
 
-Privacy policy: https://zealova.com/privacy
-Support: https://zealova.com/support
-Terms: https://zealova.com/terms
+Privacy: https://zealova.com/privacy  |  Support: https://zealova.com/support
 ```
 
-(approx 3380 chars, well under 4000 cap)
+(3 416 chars, well under 4 000 cap)
 
 ### What's New in This Version — 4000 chars max
-**For first version (1.2.61):**
+**For first version (1.2.61) — update this block for each subsequent release:**
 ```
-Welcome to Zealova! Your AI workout & meal coach. Sign up for a 7-day free trial and get:
+Welcome to Zealova! Your AI workout, meal, and fasting coach. Sign up for a 7-day free trial and get:
 
 • Personalized daily workouts that adapt as you progress
 • A conversational AI coach that edits your plan on the fly
 • Photo-based food logging — no barcodes, no databases
-• MacroFactor-style adaptive metabolism tracking
-• Injury-aware exercise substitution
-• Body-part heatmap and per-exercise progress charts
-• Apple Health sync, Live Activity workouts, fasting timer
+• Intermittent fasting tracker with live metabolic-stage ring (14:10 through OMAD and beyond)
+• Custom Trends: chart 100+ metrics and see correlations between any two
+• Injury-aware exercise substitution and adaptive TDEE targeting
+• Apple Health sync and Live Activity for workouts and active fasts
 
 Real coach. Real food vision. No ads. Tap to get started.
 ```

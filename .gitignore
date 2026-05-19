@@ -107,6 +107,8 @@ guide/*.pdf
 trademark_evidence_*/
 .vercel
 
-# Load-test harness — generated artifacts
+# Load-test harness — generated artifacts (NEVER commit: tokens.txt holds live JWTs)
 backend/scripts/loadtest/tokens.json
+backend/scripts/loadtest/tokens.txt
+backend/scripts/loadtest/loadtest-summary.json
 backend/scripts/loadtest/results/

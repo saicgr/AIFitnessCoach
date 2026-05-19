@@ -135,6 +135,7 @@ All documented in detail in `docs/pricing/PRICING_ANALYSIS_2026.md`. Summary:
 |---|---|---|---|
 | **Hevy Pro** | $2.99 | $23.99 | ❌ tracker only |
 | **Zealova (current)** | **$7.99** | **$59.99** | ✅ Gemini + 5-agent swarm |
+| **Google Health Coach** | $9.99 | $99.00 | ✅ Gemini, wellness-generalist; Fitbit/Pixel-gated |
 | **Apple Fitness+** | $9.99 (India: ₹149) | $79.99 (India: ₹999) | ❌ pre-recorded classes |
 | **Strong** | $8.33 | $99.99 | ❌ |
 | **MacroFactor** | $11.99 | $71.99 | Rule-based nutrition |
@@ -193,6 +194,21 @@ Ranked by ROI (per PRICING_ANALYSIS_2026.md):
 
 ---
 
+## Competitive Response — Google Health Coach (May 2026)
+
+**Decision (2026-05-18): hold $7.99/mo · $59.99/yr. Do NOT cut price.**
+
+Trigger: Google launched a Gemini-powered Health Coach on **May 19, 2026** at **$9.99/mo or $99/yr**, rebranded the Fitbit app to "Google Health," and bundles the coach free into Google AI Pro/Ultra. Apple's competing AI coach ("Project Mulberry") was **shelved in Feb 2026** — no Apple competitor is launching.
+
+Rationale for holding:
+- **Can't undercut a $0 bundle.** Google Health Coach is free for Google AI Pro/Ultra subscribers — racing to $4.99 craters margin and moves no Google-bound users.
+- **Google's $9.99 re-anchors the category upward.** It makes Zealova's $7.99 read as the cheaper, focused alternative — cutting price discards that anchor. $4.99 against a validated $9.99 signals "inferior."
+- **The threat is distribution + bundling, not price** — a price cut neutralizes neither.
+- **Differentiate, don't discount.** Google's coach is a wellness generalist, Fitbit/Pixel-gated, text-input only, no form-video analysis, no structured monthly strength programming. Zealova wins on: any-phone, full monthly workout-plan generation, per-exercise/per-muscle history, form video analysis, food photo + menu scan, fasting.
+- **The price weapon is the annual.** $59.99/yr is ~40% under Google's $99/yr — lead with annual, push trial→annual conversion.
+
+Comparison page `/vs/google-health` is live and current with this positioning.
+
 ## Historical Notes
 
 - **Dec 2024:** Original PRICING.md wrote $5.99/$9.99/$79.99 + $99.99 lifetime — never shipped at those prices.
@@ -200,5 +216,6 @@ Ranked by ROI (per PRICING_ANALYSIS_2026.md):
 - **Apr 21, 2026:** Added India PPP (₹249), Apple Fitness+ India competitive context, Family Plan deferral rationale.
 - **Apr 30, 2026:** Price increase shipped in code — $7.99/mo and $59.99/yr (US). 7-day trial extended to BOTH SKUs (was yearly only). Retention popup at $47.99/yr added for cancel attempts.
 - **2026-05-14:** This refresh — confirmed live store rollout of the $7.99/$59.99 pricing. Regional PPP values flagged as stale and need proportional re-set in App Store Connect / Play Console.
+- **2026-05-18:** Google Health Coach launched at $9.99/$99 (Apple's coach shelved). Decision: hold $7.99/$59.99, differentiate rather than discount. See "Competitive Response" section above. Fasting added to the app as a feature.
 
 *Source of truth for all rationale: `docs/pricing/PRICING_ANALYSIS_2026.md`*

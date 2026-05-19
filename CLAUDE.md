@@ -293,6 +293,49 @@ Before considering code complete:
 - Deep nested widget trees in chat
 - State management with Riverpod
 
+## Deployment
+
+**Two separate services — they deploy differently:**
+
+| Service | Hosts | Deploy trigger |
+|---|---|---|
+| Render | `backend/` (FastAPI) | **Auto-deploys on push to `main`.** No action needed. |
+| Vercel | `frontend/` (marketing site: `/`, `/vs/*`, `/blog/*`, `/roadmap`, etc.) | **Manual only.** Pushing to `main` does NOT deploy it. |
+
+### Marketing site (Vercel) — manual deploy required
+
+Vercel's git auto-deploy is intentionally disabled (`frontend/vercel.json` → `git.deploymentEnabled.main: false`). Reason: Vercel's cloud build container OOMs on the ~110-route Puppeteer SSG prerender crawl, so a cloud build ships every `/vs/` and `/blog` page as an empty client-rendered shell — crawlers (ChatGPT/Perplexity) see no content, killing the GEO value of those pages.
+
+**So: after adding or editing ANY marketing page — a `/vs/<competitor>` comparison page, a `/blog/<slug>` post, the blog index, a free tool — committing is NOT enough. You must run:**
+
+```bash
+cd frontend && npm run deploy
+```
+
+This builds the SSG prerender locally (where there's enough memory) and ships the prebuilt HTML. A commit without this step = the page is in the repo but NOT live (it serves a blank app shell). Verify after deploy with `curl -s https://zealova.com/<path> | grep -o '<title>[^<]*</title>'`.
+
+`npm run deploy:preview` ships a preview build instead of production.
+
+## Exercise instruction quality
+
+The `exercise_library` `instructions` text is shown to users in the active-workout
+instructions tab. It must be specific and technique-correct — never generic
+filler ("hold the weight with the appropriate grip") or a template shared across
+many exercises. Migration `2084` rewrote 133 deficient instructions using the
+app's own vetted engine (`exercise_instruction_copy.dart`) routed by a correct
+deterministic classifier; originals are preserved in `exercise_instruction_backup`.
+
+**After any bulk exercise import or `add_exercises.py` run:**
+
+```bash
+python scripts/audit_exercise_instructions.py --check
+```
+
+If it fails, a new import reused a template or shipped empty instructions — run
+`backend/scripts/rewrite_exercise_instructions.py` (deterministic, NO LLM) before
+release. 18 templated instructions remain (the deliberately-skipped set awaiting
+a human/advisor pass) — that is the gate's baseline.
+
 ## Remember
 
 > "Test first, deploy later. A senior developer tests the API before touching the device."
@@ -303,6 +346,6 @@ Before considering code complete:
 
 ---
 
-**Version:** 1.1
-**Last Updated:** 2025-12-24
+**Version:** 1.2
+**Last Updated:** 2026-05-18
 **Maintained by:** Claude for Zealova Project

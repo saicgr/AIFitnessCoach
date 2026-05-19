@@ -312,6 +312,39 @@ Rationale: ship the simplest paywall possible, gather 2–3 months of cohort dat
 
 ---
 
+## Competitive Response: Google Health Coach (2026-05-18)
+
+**Decision: hold $7.99/mo · $59.99/yr. No price cut.**
+
+### What changed
+- **Google Health Coach** launched **May 19, 2026** — Gemini-powered AI health coach, **$9.99/mo or $99/yr**, Fitbit app rebranded to "Google Health," coach **bundled free into Google AI Pro/Ultra**. Global rollout.
+- **Apple's coach is shelved.** "Project Mulberry" was wound down in Feb 2026 (Eddy Cue: not compelling vs Oura/Whoop). No standalone Apple AI coach is launching — the iOS AI-coach lane is open.
+
+### Why not cut price
+1. **You can't undercut a $0 bundle.** Google's coach is free for AI Pro/Ultra subscribers. Dropping to $4.99 craters margin (memo §4 fragility) and converts no Google-bound users.
+2. **Google's $9.99 anchors the category upward.** The largest consumer-tech company just priced an AI health coach at $9.99 — that makes $7.99 read as a deal. $4.99 against a validated $9.99 signals "inferior," not "bargain."
+3. **The threat is distribution + bundling, not list price.** Pixel pre-install, Fitbit hardware tie-in, Gemini-subscription bundle, brand trust — a price cut touches none of these.
+
+### Why Zealova holds up on the merits
+Google Health Coach is a **wellness generalist** (fitness + sleep + nutrition + medical records + cycle). Its weaknesses are Zealova's moat:
+- Device-gated — "first for select Fitbit and Pixel Watch users." Zealova: any iOS/Android phone.
+- No full structured monthly strength programming (suggestions + natural-language custom workouts only).
+- No form-video analysis (Google's own roadmap defers camera input).
+- Text-only input — no food photo logging, menu scan, or app-screenshot OCR.
+- No fasting tracking. (Fasting added to Zealova ~May 2026.)
+
+### The price weapon: the annual
+Zealova's $59.99/yr is ~40% under Google's $99/yr. Lead with the annual, push trial→annual conversion — that wins on price without touching the $7.99 monthly anchor.
+
+### Contingencies to watch
+- Google bundles Health Premium into base Google One (not just AI Pro) → real danger; counter with depth + iOS + cross-platform, consider repositioning as a serious-lifter coach.
+- Conversion drops measurably after May 19 → *then* run a data-driven $7.99 vs $6.99 A/B on revenue-per-visitor.
+- Don't follow if Fitbod/MacroFactor cut price — the $9.99–$15.99 AI tier is holding.
+
+`/vs/google-health` comparison page is live and reflects this positioning.
+
+---
+
 ## Regional Pricing Matrix (PPP-Adjusted)
 
 ### Philosophy
