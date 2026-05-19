@@ -405,6 +405,17 @@ async def email_signup(request: Request, body: EmailSignupRequest,
     except Exception as e:
         import traceback
         full_traceback = traceback.format_exc()
+        # Email already has an account — a normal, expected case (not an
+        # error to retry). Return a specific 409 with a friendly, actionable
+        # message so the client can route the user to Sign In instead of
+        # surfacing a raw "Signup failed" / DioException blob.
+        msg = str(e).lower()
+        if "already registered" in msg or "already been registered" in msg:
+            logger.info(f"Email signup rejected — already registered: ...{str(body.email)[-10:]}")
+            raise HTTPException(
+                status_code=409,
+                detail="An account with this email already exists. Please sign in instead.",
+            )
         logger.error(f"Email signup failed: {e}", exc_info=True)
         logger.error(f"Full traceback: {full_traceback}", exc_info=True)
         raise HTTPException(status_code=400, detail="Signup failed. Please try again.")
