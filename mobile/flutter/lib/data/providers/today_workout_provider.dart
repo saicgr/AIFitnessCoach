@@ -191,20 +191,33 @@ class TodayWorkoutNotifier extends StateNotifier<AsyncValue<TodayWorkoutResponse
     }
   }
 
-  /// Load data with cache-first pattern:
-  /// 1. Load from cache instantly (no loading state)
-  /// 2. Fetch from API in background
-  /// 3. Update state silently when API returns
+  /// Load data with cache-first pattern — cache read and API fetch race in
+  /// PARALLEL:
+  /// 1. Fire the API fetch immediately (don't queue it behind the disk read)
+  /// 2. Paint stale cache the instant it's available, if the API hasn't
+  ///    already delivered fresh data
+  /// 3. The API result then overwrites silently when it returns
+  ///
+  /// Previously the SharedPreferences + Drift read sat IN FRONT of the
+  /// network call (`await _loadFromCache()` then `await _fetchFromApi()`),
+  /// so on a cold start the `/today` request didn't even leave the device
+  /// until the cold disk read finished — its latency was added directly to
+  /// the hero's loading-skeleton time. Racing them removes that from the
+  /// critical path.
   Future<void> _loadWithCacheFirst() async {
-    // Step 1: Try to load from cache first
+    // Step 1: fire the API fetch immediately, in parallel with the disk read.
+    final apiFuture = _fetchFromApi(showLoading: false);
+
+    // Step 2: paint stale cached data as soon as it's read — but only if the
+    // API hasn't already delivered fresh data (never clobber fresh w/ stale).
     final cachedData = await _loadFromCache();
-    if (cachedData != null) {
+    if (cachedData != null && !state.hasValue) {
       debugPrint('⚡ [TodayWorkout] Loaded from cache instantly');
       _safeSetState(AsyncValue.data(cachedData));
     }
 
-    // Step 2: Fetch fresh data from API in background
-    await _fetchFromApi(showLoading: cachedData == null);
+    // Step 3: await the fetch so callers (refresh paths) still sequence.
+    await apiFuture;
   }
 
   /// Load cached workout data from persistent storage
