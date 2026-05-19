@@ -5,21 +5,43 @@ import '../../core/theme/theme_colors.dart';
 import '../../core/providers/window_mode_provider.dart';
 import '../../core/services/posthog_service.dart';
 import '../onboarding/widgets/foldable_quiz_scaffold.dart';
+import 'paywall_experiments.dart';
+import 'widgets/credibility_strip.dart';
 
 /// Paywall Screen 1: Feature Highlights
 /// Shows the key features users get with premium
-class PaywallFeaturesScreen extends ConsumerWidget {
+class PaywallFeaturesScreen extends ConsumerStatefulWidget {
   const PaywallFeaturesScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    // Track paywall features screen view (fire-and-forget, runs once per build)
-    Future.microtask(() {
-      ref.read(posthogServiceProvider).capture(
-        eventName: 'paywall_features_viewed',
-      );
-    });
+  ConsumerState<PaywallFeaturesScreen> createState() =>
+      _PaywallFeaturesScreenState();
+}
 
+class _PaywallFeaturesScreenState
+    extends ConsumerState<PaywallFeaturesScreen> {
+  // A/B-experiment state. Starts at the shipped treatment default and is
+  // replaced once the PostHog flags resolve.
+  PaywallExperiments _experiments = PaywallExperiments.treatmentDefaults;
+
+  @override
+  void initState() {
+    super.initState();
+    // Track the screen view and resolve the paywall A/B experiments once
+    // (the old build-time microtask fired on every rebuild).
+    Future.microtask(() async {
+      final posthog = ref.read(posthogServiceProvider);
+      posthog.capture(eventName: 'paywall_features_viewed');
+      final exp = await loadPaywallExperiments(
+        posthog,
+        surface: 'soft_paywall',
+      );
+      if (mounted) setState(() => _experiments = exp);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final colors = ref.colors(context);
     final windowState = ref.watch(windowModeProvider);
     final isFoldable = FoldableQuizScaffold.shouldUseFoldableLayout(windowState);
@@ -92,6 +114,17 @@ class PaywallFeaturesScreen extends ConsumerWidget {
                 _FeatureItem(icon: Icons.bar_chart_rounded, iconColor: Colors.greenAccent, title: 'Progress tracking & analytics', subtitle: 'Charts, heatmaps, and detailed trends', colors: colors),
                 const SizedBox(height: 14),
                 _FeatureItem(icon: Icons.local_fire_department, iconColor: const Color(0xFFE74C3C), title: 'Hell Mode & skill progressions', subtitle: 'Push past every plateau', colors: colors),
+
+                // Credibility strip — methodology + technology trust that
+                // needs no traction data; auto-upgrades to real rating /
+                // testimonials once SocialProofConfig is populated.
+                if (_experiments.credibilityStrip) ...[
+                  const SizedBox(height: 22),
+                  PaywallCredibilityStrip(
+                    colors: colors,
+                    accent: colors.accent,
+                  ),
+                ],
 
                 const SizedBox(height: 24),
               ],

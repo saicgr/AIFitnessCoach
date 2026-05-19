@@ -160,6 +160,15 @@ class _BillingTab extends StatelessWidget {
   /// the price card where it competes with the price itself.
   final String? badge;
 
+  /// Phase C pricing-psychology lever: render [badge] larger / bolder to
+  /// pull the eye toward the discounted plan.
+  final bool prominentBadge;
+
+  /// Phase C pricing-psychology lever: when true and not selected, render
+  /// the tab visually quieter so the sibling (annual) tab is the obvious
+  /// default.
+  final bool deEmphasized;
+
   const _BillingTab({
     required this.label,
     required this.sublabel,
@@ -167,6 +176,8 @@ class _BillingTab extends StatelessWidget {
     required this.onTap,
     required this.colors,
     this.badge,
+    this.prominentBadge = false,
+    this.deEmphasized = false,
   });
 
   @override
@@ -189,27 +200,33 @@ class _BillingTab extends StatelessWidget {
                     label,
                     style: TextStyle(
                       fontSize: 14,
-                      fontWeight: FontWeight.w700,
+                      fontWeight: (deEmphasized && !isSelected)
+                          ? FontWeight.w600
+                          : FontWeight.w700,
                       color: isSelected
                           ? colors.accentContrast
-                          : colors.textSecondary,
+                          : (deEmphasized
+                              ? colors.textSecondary.withValues(alpha: 0.6)
+                              : colors.textSecondary),
                     ),
                   ),
                   if (badge != null && badge!.isNotEmpty) ...[
-                    const SizedBox(width: 6),
+                    SizedBox(width: prominentBadge ? 7 : 6),
                     Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 6, vertical: 2),
+                      padding: EdgeInsets.symmetric(
+                          horizontal: prominentBadge ? 8 : 6,
+                          vertical: prominentBadge ? 3 : 2),
                       decoration: BoxDecoration(
                         color: isSelected
                             ? Colors.white.withValues(alpha: 0.22)
                             : const Color(0xFF16A34A),
-                        borderRadius: BorderRadius.circular(4),
+                        borderRadius:
+                            BorderRadius.circular(prominentBadge ? 5 : 4),
                       ),
                       child: Text(
                         badge!,
                         style: TextStyle(
-                          fontSize: 9,
+                          fontSize: prominentBadge ? 10.5 : 9,
                           fontWeight: FontWeight.w800,
                           letterSpacing: 0.4,
                           color: isSelected

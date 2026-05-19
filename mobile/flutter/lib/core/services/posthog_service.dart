@@ -118,6 +118,22 @@ class PosthogService {
     }
   }
 
+  /// Get the raw feature flag value: a `bool` for boolean flags, a `String`
+  /// for multivariate variants, or `null` when the flag is not configured
+  /// (or on error). Unlike [isFeatureEnabled], this distinguishes "flag
+  /// absent" from "flag false" — which lets callers keep a baked-in default
+  /// instead of being silently flipped off by an unconfigured flag.
+  Future<Object?> getFeatureFlag(String flagKey) async {
+    try {
+      return await _posthog.getFeatureFlag(flagKey);
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('❌ [PostHog] getFeatureFlag failed: $e');
+      }
+      return null;
+    }
+  }
+
   /// Capture an error event with structured properties.
   Future<void> captureError({
     required String errorType,

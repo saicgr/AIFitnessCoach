@@ -21,6 +21,8 @@ import '../../data/services/api_client.dart';
 import '../../data/services/notification_service.dart';
 import '../../core/services/posthog_service.dart';
 import 'widgets/inline_referral_expander.dart';
+import 'widgets/credibility_strip.dart';
+import 'paywall_experiments.dart';
 import '../../screens/onboarding/pre_auth_quiz_data.dart';
 import '../../widgets/glass_back_button.dart';
 import '../onboarding/widgets/foldable_quiz_scaffold.dart';
@@ -57,6 +59,11 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
   String _selectedBillingCycle = 'yearly'; // 'yearly' or 'monthly'
   bool _hasShownDiscount = false;
 
+  // A/B-experiment state. Starts at the shipped treatment default so the
+  // first frame already shows the conversion levers; replaced once the
+  // PostHog flags resolve in initState.
+  PaywallExperiments _experiments = PaywallExperiments.treatmentDefaults;
+
   // Cal AI / BetterMe / Headway / Lose It-style 3-page intro flow.
   // Used only for non-subscribed users in the post-quiz funnel; subscribed
   // users coming from settings still see the legacy Change-Plan layout
@@ -69,11 +76,15 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
   void initState() {
     super.initState();
     _pageController = PageController();
-    // Track paywall pricing screen view
-    Future.microtask(() {
-      ref.read(posthogServiceProvider).capture(
-        eventName: 'paywall_pricing_viewed',
+    // Track the screen view and resolve the paywall A/B experiments.
+    Future.microtask(() async {
+      final posthog = ref.read(posthogServiceProvider);
+      posthog.capture(eventName: 'paywall_pricing_viewed');
+      final exp = await loadPaywallExperiments(
+        posthog,
+        surface: 'soft_paywall',
       );
+      if (mounted) setState(() => _experiments = exp);
     });
   }
 
@@ -353,6 +364,8 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                         label: 'Yearly',
                         sublabel: 'Best value',
                         badge: 'SAVE ${_getSavingsPercent(offerings: subscriptionState.offerings)}%',
+                        // Phase C: louder savings badge on the value plan.
+                        prominentBadge: _experiments.pricingPsychology,
                         isSelected: _selectedBillingCycle == 'yearly',
                         onTap: () {
                           setState(() {
@@ -369,6 +382,9 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                       _BillingTab(
                         label: 'Monthly',
                         sublabel: '${_getDynamicPrice(offerings: subscriptionState.offerings, productId: SubscriptionNotifier.premiumMonthlyId, fallback: '\$7.99')}/mo',
+                        // Phase C: quieter monthly tab so the annual + trial
+                        // path reads as the obvious default.
+                        deEmphasized: _experiments.pricingPsychology,
                         isSelected: _selectedBillingCycle == 'monthly',
                         onTap: () {
                           setState(() {
@@ -441,6 +457,86 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
 
                 SizedBox(height: isFoldable ? 12 : 16),
 
+                // Phase C: tangible value framing. The yearly plan works
+                // out to roughly $5 a month, comfortably less than one
+                // coffee a week — a concrete anchor lands harder than the
+                // raw number alone.
+                if (!isSubscribed &&
+                    _experiments.pricingPsychology &&
+                    _selectedBillingCycle == 'yearly') ...[
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.local_cafe_outlined,
+                        size: 14,
+                        color: colors.textMuted,
+                      ),
+                      const SizedBox(width: 6),
+                      Flexible(
+                        child: Text(
+                          'Less than the price of a coffee each week',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            color: colors.textSecondary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: isFoldable ? 8 : 12),
+                ],
+
+                // Credibility strip (compact) — methodology + technology
+                // trust that needs no traction data. Sits between the plan
+                // card and the CTA microcopy; auto-upgrades to a real
+                // rating once SocialProofConfig is populated.
+                if (!isSubscribed && _experiments.credibilityStrip) ...[
+                  PaywallCredibilityStrip(
+                    colors: colors,
+                    accent: _paywallAccent,
+                    compact: true,
+                  ),
+                  SizedBox(height: isFoldable ? 10 : 14),
+                ],
+
+                // "No payment due now" trust microcopy — placed DIRECTLY
+                // above the CTA. Reassurance read in the instant before
+                // the tap lifts trial-start conversion; the same line
+                // below the button is read far less. Shown only on the
+                // free-trial (yearly) path, where the claim is true — the
+                // monthly path charges on purchase and says "Subscribe
+                // Now", so no microcopy there (honesty over uplift).
+                if (!isSubscribed &&
+                    _experiments.noPaymentMicrocopy &&
+                    _selectedPlan.contains('yearly')) ...[
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.check_circle_rounded,
+                        size: 15,
+                        color: _paywallAccent,
+                      ),
+                      const SizedBox(width: 6),
+                      Flexible(
+                        child: Text(
+                          'No payment due now',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: colors.textPrimary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                ],
+
                 // Main action button with shimmer
                 _ShimmerOverlay(
                   child: SizedBox(
@@ -511,6 +607,36 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
                 ],
 
                 SizedBox(height: isFoldable ? 10 : 16),
+
+                // Secure-checkout reassurance — handles the payment-safety
+                // objection. Placed with the legal block so it reads as a
+                // fact, not a sales line. Platform-accurate wording.
+                if (_experiments.secureCheckoutBadge) ...[
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.lock_rounded,
+                        size: 13,
+                        color: colors.textMuted,
+                      ),
+                      const SizedBox(width: 6),
+                      Flexible(
+                        child: Text(
+                          Platform.isIOS
+                              ? 'Billed securely through the App Store'
+                              : 'Billed securely through Google Play',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: colors.textMuted,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: isFoldable ? 6 : 8),
+                ],
 
                 // App Store 3.1.2 + Google Play: auto-renewal must be
                 // disclosed adjacent to the purchase CTA.
@@ -1158,14 +1284,14 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
       properties: {'has_shown_discount': _hasShownDiscount},
     );
 
-    // 25% retention discount popup is gated on the `premium_yearly_25off`
-    // SKU existing in Play Console + RevenueCat. Until that's set up, the
-    // discount path crashes with "Product not found". Re-enable by flipping
-    // this flag back to true once the SKU is live.
-    // See plan: i-am-about-to-crystalline-bunny.md → B3.
-    const _retentionDiscountEnabled = false;
-    // ignore: dead_code
-    if (_retentionDiscountEnabled && !_hasShownDiscount) {
+    // 25% retention discount popup (soft-paywall exit intent). Gated on
+    // the `premium_yearly_25off` SKU existing in Play Console + RevenueCat
+    // — without it the discount path crashes with "Product not found".
+    // PaywallExperiments.softPaywallExitOffer defaults to false for exactly
+    // this reason; flip the PostHog flag `paywall_soft_exit_offer` on once
+    // the SKU is live and this path activates with no code change.
+    final retentionDiscountEnabled = _experiments.softPaywallExitOffer;
+    if (retentionDiscountEnabled && !_hasShownDiscount) {
       _hasShownDiscount = true;
       ref.read(posthogServiceProvider).capture(
         eventName: 'paywall_discount_shown',

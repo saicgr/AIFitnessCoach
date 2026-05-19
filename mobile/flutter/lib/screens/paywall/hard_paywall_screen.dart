@@ -7,6 +7,8 @@ import '../../core/providers/subscription_provider.dart';
 import '../../core/services/posthog_service.dart';
 import '../../data/services/api_client.dart';
 import '../../core/constants/api_constants.dart';
+import 'paywall_experiments.dart';
+import 'widgets/credibility_strip.dart';
 
 /// Hard paywall — shown when trial/subscription expires.
 /// Non-dismissible. User must subscribe or sign out.
@@ -21,14 +23,26 @@ class _HardPaywallScreenState extends ConsumerState<HardPaywallScreen> {
   Map<String, dynamic>? _progressStats;
   bool _loadingStats = true;
 
+  // A/B-experiment state. Starts at the shipped treatment default and is
+  // replaced once the PostHog flags resolve.
+  PaywallExperiments _experiments = PaywallExperiments.treatmentDefaults;
+
   @override
   void initState() {
     super.initState();
     _loadProgressStats();
-    ref.read(posthogServiceProvider).capture(
+    final posthog = ref.read(posthogServiceProvider);
+    posthog.capture(
       eventName: 'hard_paywall_viewed',
       properties: {},
     );
+    Future.microtask(() async {
+      final exp = await loadPaywallExperiments(
+        posthog,
+        surface: 'hard_paywall',
+      );
+      if (mounted) setState(() => _experiments = exp);
+    });
   }
 
   Future<void> _loadProgressStats() async {
@@ -131,6 +145,18 @@ class _HardPaywallScreenState extends ConsumerState<HardPaywallScreen> {
                 ),
                 const SizedBox(height: 32),
 
+                // Credibility strip (compact) — methodology + technology
+                // trust. Complements the personal FOMO progress stats
+                // below with app-level credibility.
+                if (_experiments.credibilityStrip) ...[
+                  PaywallCredibilityStrip(
+                    colors: colors,
+                    accent: colors.accent,
+                    compact: true,
+                  ),
+                  const SizedBox(height: 24),
+                ],
+
                 // Progress stats (FOMO section)
                 if (!_loadingStats && workouts > 0) ...[
                   Container(
@@ -205,6 +231,36 @@ class _HardPaywallScreenState extends ConsumerState<HardPaywallScreen> {
                     ),
                   ),
 
+                // Trust microcopy directly above the CTA. The hard paywall
+                // is post-trial, so "no payment now" would be false here —
+                // the honest reassurance that still lowers commitment fear
+                // is cancel-anytime.
+                if (_experiments.noPaymentMicrocopy) ...[
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.check_circle_rounded,
+                        size: 15,
+                        color: colors.accent,
+                      ),
+                      const SizedBox(width: 6),
+                      Flexible(
+                        child: Text(
+                          'Cancel anytime in Settings',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: colors.textPrimary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                ],
+
                 // Primary CTA — Subscribe
                 SizedBox(
                   width: double.infinity,
@@ -227,32 +283,39 @@ class _HardPaywallScreenState extends ConsumerState<HardPaywallScreen> {
                 ),
                 const SizedBox(height: 12),
 
-                // Secondary CTA — 25% discount
-                SizedBox(
-                  width: double.infinity,
-                  height: 52,
-                  child: OutlinedButton(
-                    onPressed: () {
-                      ref.read(posthogServiceProvider).capture(
-                        eventName: 'hard_paywall_discount_tapped',
-                        properties: {'discount_percent': 25},
-                      );
-                      context.push('/paywall-pricing');
-                    },
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: colors.accent,
-                      side: BorderSide(color: colors.accent.withOpacity(0.5)),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
+                // Secondary CTA — 25% discount. Flag-gated so its uplift
+                // can be measured. Safe to gate: the button only navigates
+                // to the pricing screen, it does not purchase directly.
+                if (_experiments.hardPaywallDiscount) ...[
+                  SizedBox(
+                    width: double.infinity,
+                    height: 52,
+                    child: OutlinedButton(
+                      onPressed: () {
+                        ref.read(posthogServiceProvider).capture(
+                          eventName: 'hard_paywall_discount_tapped',
+                          properties: {'discount_percent': 25},
+                        );
+                        context.push('/paywall-pricing');
+                      },
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: colors.accent,
+                        side:
+                            BorderSide(color: colors.accent.withOpacity(0.5)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                      child: const Text(
+                        'Get 25% Off — \$37.49/year',
+                        style: TextStyle(
+                            fontSize: 15, fontWeight: FontWeight.w600),
                       ),
                     ),
-                    child: const Text(
-                      'Get 25% Off — \$37.49/year',
-                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-                    ),
                   ),
-                ),
-                const SizedBox(height: 24),
+                  const SizedBox(height: 24),
+                ] else
+                  const SizedBox(height: 12),
 
                 // Restore purchases
                 GestureDetector(
