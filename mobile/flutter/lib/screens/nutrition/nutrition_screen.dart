@@ -19,7 +19,6 @@ import '../../data/repositories/nutrition_repository.dart';
 import '../../data/services/api_client.dart';
 import '../../data/services/data_cache_service.dart';
 import '../../data/services/haptic_service.dart';
-import '../../data/providers/xp_provider.dart';
 import '../../widgets/glass_sheet.dart';
 import 'widgets/glass_nutrition_tab_bar.dart';
 import '../../widgets/tooltips/tooltips.dart';
@@ -29,14 +28,12 @@ import '../../widgets/pill_swipe_navigation.dart';
 import 'log_meal_sheet.dart';
 import 'food_history_screen.dart';
 import 'nutrition_settings_screen.dart';
-import 'recipe_builder_sheet.dart';
 import 'weekly_checkin_sheet.dart';
 import 'widgets/daily_tab.dart';
 import 'widgets/edit_targets_sheet.dart';
 import 'widgets/schedule_meal_sheet.dart';
 import 'widgets/share_meal_sheet.dart';
 import 'widgets/nutrition_error_state.dart';
-import 'widgets/my_foods_sheet.dart';
 import 'widgets/nutrition_date_strip.dart';
 import 'widgets/share_nutrition_sheet.dart';
 import '../../shareables/shareable_sheet.dart';
@@ -865,27 +862,9 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
             ),
           ),
           const SizedBox(width: 6),
-          // My Foods (Saved Foods + Recipes). Anchor for step 3 of
-          // `nutrition_v1`.
-          _tourAnchor(
-            TooltipAnchors.nutritionMyFoods,
-            GestureDetector(
-            onTap: () => _showMyFoodsSheet(isDark),
-            child: Tooltip(
-              message: 'My Foods',
-              child: Container(
-                width: 32,
-                height: 32,
-                decoration: BoxDecoration(
-                  color: glassSurface,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Icon(Icons.bookmark_outline, size: 18, color: AppColors.yellow),
-              ),
-            ),
-            ),
-          ),
-          const SizedBox(width: 6),
+          // (Removed the My Foods bookmark icon — the Daily view's "Saved"
+          // card, alongside the Fasting card, is the single entry point to
+          // saved recipes/foods/menus now.)
           // Share
           GestureDetector(
             onTap: () async {
@@ -973,167 +952,6 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
   Future<void> _showLogMealSheet(bool isDark, {String? mealType, bool autoOpenCamera = false, bool autoOpenBarcode = false}) async {
     await showLogMealSheet(context, ref, initialMealType: mealType, autoOpenCamera: autoOpenCamera, autoOpenBarcode: autoOpenBarcode, selectedDate: _selectedDate);
     _refreshAfterLog();
-  }
-
-  void _showRecipeBuilder(BuildContext context, bool isDark) {
-    if (_userId == null || _userId!.isEmpty) {
-      debugPrint('Cannot show RecipeBuilderSheet: userId is null or empty');
-      return;
-    }
-
-    ref.read(floatingNavBarVisibleProvider.notifier).state = false;
-
-    // Use whenComplete (always runs, including on error) instead of .then
-    // (only runs on success). Otherwise a thrown future leaves the nav bar
-    // hidden forever — same disappearing-bar class fixed in weekly_checkin.
-    showGlassSheet(
-      context: context,
-      builder: (context) => GlassSheet(
-        child: RecipeBuilderSheet(userId: _userId!, isDark: isDark),
-      ),
-    ).whenComplete(() {
-      try {
-        ref.read(floatingNavBarVisibleProvider.notifier).state = true;
-      } catch (_) {/* container disposed mid-dismiss */}
-      _loadRecipes(_userId!);
-    });
-  }
-
-  void _showMyFoodsSheet(bool isDark) {
-    if (_userId == null || _userId!.isEmpty) return;
-
-    ref.read(floatingNavBarVisibleProvider.notifier).state = false;
-
-    showGlassSheet(
-      context: context,
-      builder: (context) => GlassSheet(
-        showHandle: false,
-        child: MyFoodsSheet(
-          userId: _userId!,
-          repository: ref.read(nutritionRepositoryProvider),
-          recipes: _recipes,
-          isDark: isDark,
-          onFoodLogged: () {
-            _refreshAfterLog();
-          },
-          getSuggestedMealType: _getSuggestedMealType,
-          onCreateRecipe: () {
-            Navigator.of(context).pop();
-            _showRecipeBuilder(context, isDark);
-          },
-          onLogRecipe: (recipe) {
-            Navigator.of(context).pop();
-            _logRecipe(recipe, isDark);
-          },
-          onRefreshRecipes: () => _loadRecipes(_userId!),
-          // L5 — Saved menus discoverable from the Nutrition tab.
-          onOpenSavedMenus: () => context.push('/menu-history'),
-        ),
-      ),
-    ).whenComplete(() {
-      ref.read(floatingNavBarVisibleProvider.notifier).state = true;
-    });
-  }
-
-  String _getSuggestedMealType() {
-    final hour = DateTime.now().hour;
-    if (hour < 10) return 'breakfast';
-    if (hour < 14) return 'lunch';
-    if (hour < 17) return 'snack';
-    return 'dinner';
-  }
-
-  Future<void> _logRecipe(RecipeSummary recipe, bool isDark) async {
-    if (_userId == null) return;
-
-    final mealType = await _selectMealType(context, isDark);
-    if (mealType == null) return;
-
-    try {
-      final repository = ref.read(nutritionRepositoryProvider);
-      final result = await repository.logRecipe(
-        userId: _userId!,
-        recipeId: recipe.id,
-        mealType: mealType.value,
-      );
-      if (mounted) {
-        ref.read(xpProvider.notifier).markMealLogged();
-        // Splice optimistic FoodLog so the recipe appears instantly
-        final now = DateTime.now();
-        ref.read(nutritionProvider.notifier).spliceRawLog(
-          FoodLog(
-            id: result.foodLogId,
-            userId: _userId!,
-            mealType: mealType.value,
-            loggedAt: now,
-            foodItems: [FoodItem(name: result.recipeName, calories: result.totalCalories)],
-            totalCalories: result.totalCalories,
-            proteinG: result.proteinG,
-            carbsG: result.carbsG,
-            fatG: result.fatG,
-            fiberG: result.fiberG,
-            sourceType: 'recipe',
-            userQuery: result.recipeName,
-            createdAt: now,
-          ),
-          _userId!,
-        );
-        _refreshAfterLog();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Logged ${recipe.name}'),
-            backgroundColor: isDark ? AppColors.success : AppColorsLight.success,
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to log recipe: $e')),
-        );
-      }
-    }
-  }
-
-  Future<MealType?> _selectMealType(BuildContext context, bool isDark) async {
-    final textPrimary =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-
-    return showGlassSheet<MealType>(
-      context: context,
-      builder: (context) => GlassSheet(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Log as...',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: textPrimary,
-                ),
-              ),
-              const SizedBox(height: 16),
-              ...MealType.values.map((type) => ListTile(
-                    leading: Text(type.emoji, style: const TextStyle(fontSize: 24)),
-                    title: Text(
-                      type.label,
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                        color: textPrimary,
-                      ),
-                    ),
-                    onTap: () => Navigator.pop(context, type),
-                  )),
-            ],
-          ),
-        ),
-      ),
-    );
   }
 
   Future<void> _deleteMeal(String mealId) async {
