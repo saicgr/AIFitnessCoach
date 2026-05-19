@@ -44,17 +44,17 @@ class NutritionTour {
         ),
       ];
 
+  // No SafeArea wrapper: it consumed the bottom inset, clipping the dim
+  // scrim short of the home indicator and leaving a grey->white band
+  // behind the floating bars during the tour.
   static Widget overlay() => Positioned.fill(
-        child: SafeArea(
-          top: false,
-          child: EmptyStateTipTour(
-            tourId: id,
-            tips: steps(),
-            hasMainNavBar: true,
-            // Nutrition floats the Daily/Recipes/Patterns/Fuel tab pill
-            // above the main nav — reserve clearance so the card clears it.
-            extraBottomClearance: 72,
-          ),
+        child: EmptyStateTipTour(
+          tourId: id,
+          tips: steps(),
+          hasMainNavBar: true,
+          // Nutrition floats the Daily/Recipes/Patterns/Fuel tab pill
+          // above the main nav — reserve clearance so the card clears it.
+          extraBottomClearance: 72,
         ),
       );
 }

@@ -53,17 +53,18 @@ class DiscoverTour {
   /// the entire screen — `Positioned(bottom: 90)` (the legacy form)
   /// clipped the painter to a thin bottom strip and broke the
   /// spotlight effect.
+  // No SafeArea wrapper: it consumed the bottom inset, clipping the dim
+  // scrim short of the home indicator and leaving a grey->white band
+  // behind the floating bars during the tour. EmptyStateTipTour does its
+  // own MediaQuery-padding math for card placement.
   static Widget overlay() => Positioned.fill(
-        child: SafeArea(
-          top: false,
-          child: EmptyStateTipTour(
-            tourId: id,
-            tips: steps(),
-            hasMainNavBar: true,
-            // Discover floats the XP/Volume/Streaks board switcher above
-            // the main nav — reserve clearance so the card clears it.
-            extraBottomClearance: 72,
-          ),
+        child: EmptyStateTipTour(
+          tourId: id,
+          tips: steps(),
+          hasMainNavBar: true,
+          // Discover floats the XP/Volume/Streaks board switcher above
+          // the main nav — reserve clearance so the card clears it.
+          extraBottomClearance: 72,
         ),
       );
 }
