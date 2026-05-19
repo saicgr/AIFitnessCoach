@@ -5,6 +5,7 @@ import '../../../data/models/home_layout.dart';
 import '../../../data/services/health_service.dart';
 import '../../../widgets/app_tour/app_tour_controller.dart';
 import '../../../data/repositories/workout_repository.dart';
+import '../../../data/providers/today_workout_provider.dart';
 // import '../../../widgets/xp_progress_card.dart'; // Coming soon
 import 'cards/cards.dart';
 // import 'cards/roi_summary_card.dart'; // Coming soon
@@ -215,10 +216,30 @@ class TileFactory {
     // M5: Use Consumer with selective read to avoid full provider rebuilds
     return Consumer(
       builder: (context, ref, child) {
-        // TODO: M5 - Ideally use ref.watch(workoutsProvider.select((s) => s.valueOrNull?.nextWorkout))
-        // but nextWorkout is a getter on the notifier, not on the state value.
-        final workoutsNotifier = ref.read(workoutsProvider.notifier);
-        final nextWorkout = workoutsNotifier.nextWorkout;
+        // Prefer the backend-resolved today workout — the SAME source the
+        // Workouts tab uses — so the home hero never disagrees with it.
+        // The notifier's generic `nextWorkout` getter is an unsorted
+        // fallback that can surface a future workout over today's
+        // ("Do this today" reschedules keep their original date).
+        var todayWorkout = ref
+            .watch(todayWorkoutProvider)
+            .valueOrNull
+            ?.todayWorkout
+            ?.toWorkout();
+        if (todayWorkout != null) {
+          // Pin to today so NextWorkoutCard badges it "Today" even when the
+          // workout's stored scheduled_date is a reschedule's original day.
+          final n = DateTime.now();
+          final todayKey = '${n.year.toString().padLeft(4, '0')}-'
+              '${n.month.toString().padLeft(2, '0')}-'
+              '${n.day.toString().padLeft(2, '0')}';
+          final raw = todayWorkout.scheduledDate;
+          if (raw == null || raw.length < 10 || raw.substring(0, 10) != todayKey) {
+            todayWorkout = todayWorkout.copyWith(scheduledDate: todayKey);
+          }
+        }
+        final nextWorkout =
+            todayWorkout ?? ref.read(workoutsProvider.notifier).nextWorkout;
 
         if (nextWorkout != null) {
           return NextWorkoutCard(
