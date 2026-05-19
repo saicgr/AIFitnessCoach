@@ -200,17 +200,26 @@ class _AppTourOverlayState extends ConsumerState<AppTourOverlay>
           Future.delayed(const Duration(milliseconds: 300), () {
             if (mounted) setState(() {});
           });
+        } else {
+          debugPrint(
+              '⚠️ [AppTour] step "${step.id}" target not found after '
+              '$_maxRetries retries — showing card without a spotlight');
         }
       }
     });
 
-    // Don't render spotlight or tooltip while the target is off-screen;
-    // the post-frame callback above will scroll it into view and rebuild.
-    // Return SizedBox.shrink() instead of an opaque overlay to avoid
-    // blocking all gestures while waiting for the target to appear.
-    if (isOffScreen || !isTargetFound) {
+    // Target found but scrolled off-screen → render nothing for this frame;
+    // the post-frame callback above scrolls it in and rebuilds. (Transient.)
+    if (isOffScreen) {
       return const SizedBox.shrink();
     }
+    // NOTE: when the target is genuinely not found we do NOT bail out — the
+    // build continues and renders the card CENTERED with a plain full dim
+    // (no cutout). Bailing with SizedBox.shrink() made the whole tour
+    // silently vanish the instant a step pointed at a missing widget — the
+    // user-reported "hit Next and it closes". The retry above still runs;
+    // if the target appears later the spotlight upgrades in on the next
+    // rebuild.
 
     const spotlightPadding = 10.0;
     // Generous estimate: longer descriptions (e.g. the Home / Nutrition nav
