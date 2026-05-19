@@ -130,6 +130,38 @@ class MoodHistoryRepository {
     }
   }
 
+  /// Log a standalone mood check-in (the "Just Log Mood" path).
+  ///
+  /// POSTs to `/workouts/{userId}/mood-checkins`, which inserts a row into
+  /// `mood_checkins` — the same table `mood-history` / `mood-today` /
+  /// `mood-weekly` read from — so a logged mood becomes visible on every mood
+  /// surface once those providers refresh.
+  ///
+  /// [idempotencyKey] rides on the request body. The backend stores it in the
+  /// check-in's `context` JSONB and returns the existing row on a replay, so a
+  /// rapid double-tap, or an offline-queued write replayed after reconnect,
+  /// cannot create two rows.
+  ///
+  /// Throws on any failure — the caller (optimistic notifier) relies on this
+  /// to roll back. Never silently swallows ([[feedback_no_silent_fallbacks]]).
+  Future<void> logMoodCheckin({
+    required String userId,
+    required String mood,
+    required String idempotencyKey,
+  }) async {
+    final response = await _apiClient.post(
+      '/workouts/$userId/mood-checkins',
+      data: {
+        'mood': mood,
+        'idempotency_key': idempotencyKey,
+      },
+    );
+    final status = response.statusCode ?? 0;
+    if (status < 200 || status >= 300) {
+      throw StateError('logMoodCheckin non-2xx for $mood: status=$status');
+    }
+  }
+
   /// Fetch monthly mood calendar data for a user.
   Future<MoodCalendarResponse?> getMoodCalendar({
     required String userId,

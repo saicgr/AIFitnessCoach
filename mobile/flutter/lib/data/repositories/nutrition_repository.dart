@@ -19,6 +19,7 @@ import '../services/api_client.dart';
 import '../../utils/tz.dart';
 import '../services/health_service.dart';
 import '../providers/xp_provider.dart';
+import '../providers/timeline_provider.dart';
 import '../../services/post_meal_checkin_reminder.dart';
 // Meal-suggestion widget — staged. Re-enable once widget feature ships.
 // import '../../services/meal_suggestion_widget_service.dart';

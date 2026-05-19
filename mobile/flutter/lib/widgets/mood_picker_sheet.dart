@@ -6,6 +6,7 @@ import '../core/constants/app_colors.dart';
 import '../core/theme/accent_color_provider.dart';
 import '../data/models/mood.dart';
 import '../data/models/workout_style.dart';
+import '../data/providers/mood_history_provider.dart';
 import '../data/providers/mood_workout_provider.dart';
 import '../data/providers/today_workout_provider.dart';
 import '../data/repositories/workout_repository.dart';
@@ -702,16 +703,27 @@ class _MoodPickerSheetState extends ConsumerState<MoodPickerSheet> {
   }
 
   Future<void> _logMoodOnly() async {
-    if (_selectedMood == null) return;
+    final mood = _selectedMood;
+    if (mood == null) return;
 
     setState(() => _isLogging = true);
     HapticService.medium();
 
-    try {
-      ref
-          .read(contextLoggingServiceProvider)
-          .logMoodSelection(mood: _selectedMood!);
+    // Fire-and-forget analytics event (separate from the persisted check-in
+    // below — this feeds the AI personalization event stream).
+    ref.read(contextLoggingServiceProvider).logMoodSelection(mood: mood);
 
+    // Persist the mood check-in OPTIMISTICALLY via moodHistoryProvider.
+    // logMood() applies the check-in to provider state within one frame —
+    // before the network POST — so the Stats Mood tab and the Mood History
+    // screen reflect it instantly with no manual refresh. The network write
+    // runs in the background; on failure logMood() rolls back the optimistic
+    // entry and rethrows so we can show a calm retry toast. Offline → the
+    // write is disk-queued and flushed on reconnect (idempotency-keyed).
+    try {
+      await ref.read(moodHistoryProvider.notifier).logMood(mood);
+
+      // Optimistic apply already landed → close + confirm immediately.
       if (mounted) {
         Navigator.pop(context);
         HapticService.success();
@@ -719,26 +731,28 @@ class _MoodPickerSheetState extends ConsumerState<MoodPickerSheet> {
           SnackBar(
             content: Row(
               children: [
-                Text(_selectedMood!.emoji,
-                    style: const TextStyle(fontSize: 20)),
+                Text(mood.emoji, style: const TextStyle(fontSize: 20)),
                 const SizedBox(width: 8),
-                Text('Mood logged: ${_selectedMood!.label}'),
+                Text('Mood logged: ${mood.label}'),
               ],
             ),
-            backgroundColor: _selectedMood!.color,
+            backgroundColor: mood.color,
             behavior: SnackBarBehavior.floating,
-            margin:
-                const EdgeInsets.only(bottom: 80, left: 16, right: 16),
+            margin: const EdgeInsets.only(bottom: 80, left: 16, right: 16),
             duration: const Duration(seconds: 2),
           ),
         );
       }
     } catch (e) {
+      // logMood() already rolled back the optimistic check-in — surface a
+      // calm retry message (never a fake success).
       if (mounted) {
         setState(() => _isLogging = false);
+        HapticService.error();
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to log mood: $e'),
+          const SnackBar(
+            content: Text(
+                "Couldn't save your mood. Please try again."),
             behavior: SnackBarBehavior.floating,
           ),
         );

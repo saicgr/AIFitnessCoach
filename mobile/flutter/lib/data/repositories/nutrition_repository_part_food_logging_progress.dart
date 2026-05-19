@@ -834,7 +834,11 @@ class NutritionNotifier extends StateNotifier<NutritionState> {
   /// before the network round-trip that `loadTodaySummary(forceRefresh)`
   /// would otherwise require. The background refresh that follows (still
   /// fired by the log sheet) reconciles server-derived fields.
-  void spliceLog(LogFoodResponse response, String mealType, String userId) {
+  ///
+  /// (Part 4 / WR1) Returns the optimistic [FoodLog] it spliced in so the
+  /// caller can pass its `id` to [optimisticRemoveLog] for a clean WR4
+  /// rollback if the background `/nutrition/log-direct` POST later fails.
+  FoodLog spliceLog(LogFoodResponse response, String mealType, String userId) {
     final now = DateTime.now();
     final foodItems = response.foodItems
         .map((r) => FoodItem(
@@ -914,6 +918,194 @@ class NutritionNotifier extends StateNotifier<NutritionState> {
 
     // Persist the updated totals so the next cold-start shows the new log
     unawaited(_NutritionDiskCache.write(userId, todayStr, newSummary));
+
+    // (WR1) Hand the optimistic row back so callers can roll it back by id.
+    return newLog;
+  }
+
+  /// (Part 4 / WR1) Build + splice an optimistic [FoodLog] for one menu /
+  /// buffet dish that the user ticked off a menu-analysis checklist.
+  ///
+  /// The menu / buffet log path posts via `/nutrition/log-selected-items`
+  /// (one food_log row per dish) — that endpoint returns only the new
+  /// `food_log_ids`, not the full rows. The client already holds every
+  /// dish's macros (the `selected` maps passed to `onLogItems`), so we build
+  /// the optimistic [FoodLog] here from those maps and the returned id.
+  ///
+  /// [item] is one entry of the `selected` list — keys mirror the backend
+  /// `LogSelectedItemsRequest` item shape: name / calories / protein_g /
+  /// carbs_g / fat_g / fiber_g / amount (macros already portion-scaled).
+  /// [logId] is the real server id when known (post-success reconcile is
+  /// then a no-op for this row); pass null pre-network for a synthetic id.
+  ///
+  /// Returns the spliced [FoodLog] so the caller can roll it back via
+  /// [optimisticRemoveLog] if the network write fails (WR4).
+  FoodLog spliceMenuItem({
+    required Map<String, dynamic> item,
+    required String mealType,
+    required String userId,
+    required String sourceType,
+    String? logId,
+    String? imageUrl,
+  }) {
+    final now = DateTime.now();
+    final calories = ((item['calories'] as num?) ?? 0).round();
+    final proteinG = ((item['protein_g'] as num?) ?? 0).toDouble();
+    final carbsG = ((item['carbs_g'] as num?) ?? 0).toDouble();
+    final fatG = ((item['fat_g'] as num?) ?? 0).toDouble();
+    final fiberG = (item['fiber_g'] as num?)?.toDouble();
+    final foodItem = FoodItem(
+      name: (item['name'] as String?) ?? 'Food',
+      amount: item['amount'] as String?,
+      calories: calories,
+      proteinG: proteinG,
+      carbsG: carbsG,
+      fatG: fatG,
+      fiberG: fiberG,
+      inflammationScore: (item['inflammation_score'] as num?)?.toInt(),
+      isUltraProcessed: item['is_ultra_processed'] as bool?,
+    );
+    final newLog = FoodLog(
+      // A real id when the POST already returned; otherwise a synthetic id
+      // unique enough that a rapid multi-item splice can't collide.
+      id: logId ??
+          'optimistic_${now.microsecondsSinceEpoch}_${state.recentLogs.length}',
+      userId: userId,
+      mealType: mealType,
+      loggedAt: now,
+      foodItems: [foodItem],
+      totalCalories: calories,
+      proteinG: proteinG,
+      carbsG: carbsG,
+      fatG: fatG,
+      fiberG: fiberG,
+      aiFeedback: item['coach_tip'] as String?,
+      imageUrl: imageUrl,
+      sourceType: sourceType,
+      inflammationScore: (item['inflammation_score'] as num?)?.toInt(),
+      isUltraProcessed: item['is_ultra_processed'] as bool?,
+      createdAt: now,
+    );
+    // Reuse spliceRawLog so totals + disk cache stay consistent (WR1).
+    spliceRawLog(newLog, userId);
+    return newLog;
+  }
+
+  /// (Part 4 / WR6) Refresh Home's "Today's Journal" timeline so a freshly
+  /// logged meal appears there without a manual pull-to-refresh.
+  ///
+  /// Home's timeline reads `timelineProvider`, which has its own cached
+  /// state. The backend already invalidates its server-side timeline cache
+  /// on a food-log write, but the Riverpod state needs an explicit refresh —
+  /// this mirrors what the hydration log path does after `/hydration/log`.
+  /// Best-effort and fire-and-forget — never blocks or fails a food log.
+  void refreshTimeline() {
+    try {
+      // ignore: unawaited_futures
+      _ref.read(timelineProvider.notifier).refresh();
+    } catch (e) {
+      debugPrint('🥗 [Nutrition] timeline refresh skipped: $e');
+    }
+  }
+
+  /// (Part 4 / WR4) Roll back a set of optimistic rows in one shot. Used when
+  /// a multi-dish menu log fails after several rows were already spliced.
+  void optimisticRemoveLogs(Iterable<String> logIds) {
+    for (final id in logIds) {
+      optimisticRemoveLog(id);
+    }
+  }
+
+  /// (Part 4 / WR5) Swap the local image path on an already-spliced optimistic
+  /// row for the remote URL once the photo upload finishes server-side.
+  ///
+  /// While a food photo is still uploading, the meal-list row is spliced with
+  /// `imageUrl` pointing at a `file://` path (the local capture). When the
+  /// background `/nutrition/log-direct` POST returns the real S3 URL, call
+  /// this so the row swaps to the remote image without a full refresh.
+  void updateLogImageUrl(String logId, String? remoteImageUrl) {
+    if (remoteImageUrl == null || remoteImageUrl.isEmpty) return;
+    // FoodLog has no copyWith (generated model, not owned here) — rebuild the
+    // row with every field preserved and only `imageUrl` swapped.
+    optimisticUpdateLog(
+      logId,
+      (m) => FoodLog(
+        id: m.id,
+        userId: m.userId,
+        mealType: m.mealType,
+        loggedAt: m.loggedAt,
+        foodItems: m.foodItems,
+        totalCalories: m.totalCalories,
+        proteinG: m.proteinG,
+        carbsG: m.carbsG,
+        fatG: m.fatG,
+        fiberG: m.fiberG,
+        healthScore: m.healthScore,
+        healthScoreReasons: m.healthScoreReasons,
+        aiFeedback: m.aiFeedback,
+        notes: m.notes,
+        moodBefore: m.moodBefore,
+        moodAfter: m.moodAfter,
+        energyLevel: m.energyLevel,
+        sodiumMg: m.sodiumMg,
+        sugarG: m.sugarG,
+        saturatedFatG: m.saturatedFatG,
+        cholesterolMg: m.cholesterolMg,
+        potassiumMg: m.potassiumMg,
+        calciumMg: m.calciumMg,
+        ironMg: m.ironMg,
+        vitaminAUg: m.vitaminAUg,
+        vitaminCMg: m.vitaminCMg,
+        vitaminDIu: m.vitaminDIu,
+        inflammationScore: m.inflammationScore,
+        isUltraProcessed: m.isUltraProcessed,
+        glycemicLoad: m.glycemicLoad,
+        fodmapRating: m.fodmapRating,
+        fodmapReason: m.fodmapReason,
+        imageUrl: remoteImageUrl, // ← the only swapped field (WR5)
+        sourceType: m.sourceType,
+        userQuery: m.userQuery,
+        createdAt: m.createdAt,
+      ),
+    );
+  }
+
+  /// (Part 4 / WR2) Commit a food-log EDIT optimistically.
+  ///
+  /// Applies [transform] to the in-memory row IMMEDIATELY (so the meal row +
+  /// rings update within one frame), then runs the network PUT in the
+  /// background. On network failure the original row is restored and a calm
+  /// error is exposed on `state.error` — no silent divergence.
+  ///
+  /// [networkUpdate] performs the actual `/nutrition/food-logs/{id}` PUT; it
+  /// is only awaited AFTER the optimistic mutation lands.
+  Future<void> commitUpdateLog(
+    String logId,
+    FoodLog Function(FoodLog) transform,
+    Future<void> Function() networkUpdate,
+  ) async {
+    final original = optimisticUpdateLog(logId, transform);
+    if (original == null) {
+      // Row isn't in todaySummary (e.g. viewing another date) — just run the
+      // network write so the server still gets the edit.
+      try {
+        await networkUpdate();
+      } catch (e) {
+        state = state.copyWith(error: e.toString());
+      }
+      return;
+    }
+    try {
+      await networkUpdate();
+    } catch (e) {
+      // Roll back to the pre-edit row so the UI never shows an edit the
+      // server rejected.
+      optimisticUpdateLog(logId, (_) => original);
+      state = state.copyWith(
+        error: 'Could not save your edit. Please try again.',
+      );
+      debugPrint('🥗 [Nutrition] optimistic edit rolled back: $e');
+    }
   }
 
   /// Fire-and-forget the network delete *after* the optimistic local

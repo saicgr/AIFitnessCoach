@@ -1,8 +1,11 @@
+import 'dart:async';
 import 'dart:ui' show Color;
 
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../core/cache/offline_write_queue.dart';
 import '../../core/constants/api_constants.dart';
 import '../services/api_client.dart';
 import '../services/data_cache_service.dart';
@@ -210,9 +213,34 @@ class MeasurementsNotifier extends StateNotifier<MeasurementsState> {
   // Static cache survives ref.invalidate() (which recreates the notifier instance)
   static MeasurementsState? _cache;
 
+  /// Part 4 (write→read consistency): disk-persisted offline queue of
+  /// body-measurement writes (weight, body-fat, circumferences) made while the
+  /// device had no connectivity. Flushed FIFO, idempotency-keyed, on the next
+  /// connectivity-restored event so a rapid double-tap or a replayed write can
+  /// never double-log. One instance per feature — see [OfflineWriteQueue].
+  final OfflineWriteQueue _writeQueue =
+      OfflineWriteQueue(feature: 'body_measurement');
+
+  /// Connectivity subscription that drains [_writeQueue] when the network
+  /// comes back. Bound lazily on the first write so we always have a userId.
+  StreamSubscription<List<ConnectivityResult>>? _connSub;
+
+  /// Last user we wrote for — needed by the connectivity flush callback.
+  String? _lastUserId;
+
+  /// Re-entrancy guard so a connectivity event racing a manual write can't
+  /// double-flush the same queued item.
+  bool _isFlushing = false;
+
   MeasurementsNotifier(this._repository) : super(
     _cache ?? const MeasurementsState(),
   );
+
+  @override
+  void dispose() {
+    _connSub?.cancel();
+    super.dispose();
+  }
 
   /// Load all measurement history for user with 3-tier cache.
   Future<void> loadAllMeasurements(String userId) async {
@@ -432,39 +460,18 @@ class MeasurementsNotifier extends StateNotifier<MeasurementsState> {
     }
   }
 
-  /// Record a new measurement.
+  /// Insert [entry] for [type] at the FRONT of its history and recompute the
+  /// summary. Pure state transition — used by both the optimistic apply and
+  /// (after a successful network write) the server-value reconcile.
   ///
-  /// Throws on any failure (network, non-2xx, parsing). The previous version
-  /// swallowed everything and returned `false`, which let the UI render a
-  /// fake "Weight Logged!" success state even when nothing reached Supabase
-  /// (caught 2026-05-12 — see [[feedback_no_silent_fallbacks]]).
-  Future<bool> recordMeasurement({
-    required String userId,
-    required MeasurementType type,
-    required double value,
-    required String unit,
-    String? notes,
-  }) async {
-    final entry = await _repository.recordMeasurement(
-      userId: userId,
-      type: type,
-      value: value,
-      unit: unit,
-      notes: notes,
-    );
-
-    if (entry == null) {
-      // Repository contract: non-null on success, throws on failure. A null
-      // here means the backend 2xx'd with an unparseable body — still a bug.
-      throw StateError('recordMeasurement returned null entry for ${type.apiValue}');
-    }
-
-    // Add to history
-    final newHistoryByType = Map<MeasurementType, List<MeasurementEntry>>.from(state.historyByType);
+  /// Returns the resulting [MeasurementsState] WITHOUT assigning it, so the
+  /// caller can also capture the pre-mutation state for rollback.
+  MeasurementsState _stateWithEntry(MeasurementType type, MeasurementEntry entry) {
+    final newHistoryByType =
+        Map<MeasurementType, List<MeasurementEntry>>.from(state.historyByType);
     final currentHistory = newHistoryByType[type] ?? [];
     newHistoryByType[type] = [entry, ...currentHistory];
 
-    // Update summary
     final latestByType = Map<MeasurementType, MeasurementEntry>.from(
       state.summary?.latestByType ?? {},
     );
@@ -478,7 +485,7 @@ class MeasurementsNotifier extends StateNotifier<MeasurementsState> {
       changeFromPrevious[type] = entry.value - previousValue;
     }
 
-    final newState = state.copyWith(
+    return state.copyWith(
       historyByType: newHistoryByType,
       summary: MeasurementsSummary(
         latestByType: latestByType,
@@ -488,10 +495,213 @@ class MeasurementsNotifier extends StateNotifier<MeasurementsState> {
         latestWaistToHeightRatio: state.summary?.latestWaistToHeightRatio,
       ),
     );
-    _cache = newState;
-    state = newState;
-    _saveToPersistentCache(newState, userId);
-    return true;
+  }
+
+  /// Whether the device currently has connectivity. Used to decide between a
+  /// live write and an offline-queued one. Assumes online on error — the
+  /// write itself will then fail-fast and roll back.
+  Future<bool> _isOnline() async {
+    try {
+      final results = await Connectivity().checkConnectivity();
+      return results.any((r) => r != ConnectivityResult.none);
+    } catch (_) {
+      return true;
+    }
+  }
+
+  /// Lazily subscribe to connectivity so [_writeQueue] drains when the network
+  /// returns. Bound on the first write (we need a userId). A short debounce is
+  /// already applied inside [OfflineWriteQueue.bindConnectivity] equivalents,
+  /// but we hand-roll here so the flush also reconciles provider state.
+  void _ensureConnectivityBound(String userId) {
+    if (_connSub != null) return;
+    _connSub = Connectivity().onConnectivityChanged.listen((results) {
+      final online = results.any((r) => r != ConnectivityResult.none);
+      if (online) {
+        // Defer so the radio + DNS settle before hitting the API.
+        Future.delayed(const Duration(milliseconds: 800), _flushQueue);
+      }
+    });
+  }
+
+  /// Drain the offline write queue, replaying each measurement write with its
+  /// original idempotency key so the server de-dupes anything that already
+  /// landed. After a successful drain, refresh from the source of truth so the
+  /// optimistic entries are reconciled with authoritative server rows.
+  Future<void> _flushQueue() async {
+    final userId = _lastUserId;
+    if (userId == null || _isFlushing) return;
+    if (await _writeQueue.isEmpty(userId)) return;
+    _isFlushing = true;
+    try {
+      final flushed = await _writeQueue.flush(
+        userId: userId,
+        sender: (body) async {
+          try {
+            final type = MeasurementType.fromApiValue(
+                  body['metric_type'] as String? ?? '',
+                ) ??
+                MeasurementType.weight;
+            await _repository.recordMeasurement(
+              userId: body['user_id'] as String,
+              type: type,
+              value: (body['value'] as num).toDouble(),
+              unit: body['unit'] as String,
+              notes: body['notes'] as String?,
+              idempotencyKey: body['idempotency_key'] as String?,
+            );
+            return true; // delivered — drop from queue
+          } catch (e) {
+            debugPrint('⚖️ [Measurements] queued flush item failed: $e');
+            return false; // transient — keep it (and the rest) queued
+          }
+        },
+      );
+      if (flushed > 0) {
+        // Reconcile optimistic entries with authoritative server rows.
+        await forceRefresh(userId);
+      }
+    } finally {
+      _isFlushing = false;
+    }
+  }
+
+  /// Record a new measurement — optimistic, offline-safe (Part 4).
+  ///
+  ///  • The new value is applied to provider state IMMEDIATELY (within one
+  ///    frame), before the network write — so every surface that watches
+  ///    [measurementsProvider] (Home weight tile, Measurements screen, Stats /
+  ///    Trends weight + body series) reflects it without a manual refresh.
+  ///  • A client-generated idempotency key rides on the request body so a
+  ///    rapid double-tap cannot double-log on the server.
+  ///  • Offline → the write is persisted to the disk queue and flushed on the
+  ///    next connectivity-restored event. The optimistic entry stays on screen.
+  ///  • Online failure → the optimistic entry is rolled back and the error is
+  ///    rethrown so the caller surfaces a calm retry toast
+  ///    ([[feedback_no_silent_fallbacks]] — never a fake success).
+  ///
+  /// Returns `true` once the optimistic apply has landed. Throws on an online
+  /// write failure (after rolling back) so callers keep their existing
+  /// "save returned false / threw" error handling.
+  Future<bool> recordMeasurement({
+    required String userId,
+    required MeasurementType type,
+    required double value,
+    required String unit,
+    String? notes,
+  }) async {
+    _lastUserId = userId;
+    _ensureConnectivityBound(userId);
+
+    final idempotencyKey = OfflineWriteQueue.idempotencyKey('bm');
+
+    // ---- Optimistic apply -------------------------------------------------
+    // Snapshot the pre-mutation state for rollback, then build a provisional
+    // entry. The provisional id is the idempotency key so the row is stable
+    // and de-dupable until the server row replaces it on the next refresh.
+    final snapshot = state;
+    final optimisticEntry = MeasurementEntry(
+      id: idempotencyKey,
+      userId: userId,
+      type: type,
+      value: value,
+      unit: unit,
+      recordedAt: DateTime.now(),
+      notes: notes,
+    );
+    final optimisticState = _stateWithEntry(type, optimisticEntry);
+    _cache = optimisticState;
+    state = optimisticState;
+    _saveToPersistentCache(optimisticState, userId);
+
+    // ---- Offline → queue and keep the optimistic entry --------------------
+    if (!await _isOnline()) {
+      await _writeQueue.enqueue(
+        userId: userId,
+        body: {
+          'user_id': userId,
+          'metric_type': type.apiValue,
+          'value': value,
+          'unit': unit,
+          if (notes != null && notes.isNotEmpty) 'notes': notes,
+          'idempotency_key': idempotencyKey,
+        },
+      );
+      debugPrint('⚖️ [Measurements] offline — ${type.apiValue} queued ($idempotencyKey)');
+      return true;
+    }
+
+    // ---- Online → write through, reconcile, roll back on failure ----------
+    try {
+      final entry = await _repository.recordMeasurement(
+        userId: userId,
+        type: type,
+        value: value,
+        unit: unit,
+        notes: notes,
+        idempotencyKey: idempotencyKey,
+      );
+      if (entry == null) {
+        // Repository contract: non-null on success, throws on failure. A null
+        // here means the backend 2xx'd with an unparseable body — still a bug.
+        throw StateError(
+            'recordMeasurement returned null entry for ${type.apiValue}');
+      }
+      // Reconcile: rebuild from the snapshot + the authoritative server entry
+      // so derived fields (bmi, change, server id/timestamp) are correct and
+      // we don't leave the provisional row alongside the real one.
+      final reconciled = _stateWithSnapshotEntry(snapshot, type, entry);
+      _cache = reconciled;
+      state = reconciled;
+      _saveToPersistentCache(reconciled, userId);
+      return true;
+    } catch (e) {
+      // Online but the write failed — roll back the optimistic entry so the
+      // UI never shows a value that was not persisted.
+      _cache = snapshot;
+      state = snapshot;
+      _saveToPersistentCache(snapshot, userId);
+      debugPrint('⚖️ [Measurements] optimistic write rolled back: $e');
+      rethrow; // caller shows a calm retry toast
+    }
+  }
+
+  /// Like [_stateWithEntry] but computed against an explicit [base] state
+  /// rather than the live `state` — used to reconcile after a network write
+  /// so the provisional optimistic row is not double-counted.
+  MeasurementsState _stateWithSnapshotEntry(
+    MeasurementsState base,
+    MeasurementType type,
+    MeasurementEntry entry,
+  ) {
+    final newHistoryByType =
+        Map<MeasurementType, List<MeasurementEntry>>.from(base.historyByType);
+    final currentHistory = newHistoryByType[type] ?? [];
+    newHistoryByType[type] = [entry, ...currentHistory];
+
+    final latestByType = Map<MeasurementType, MeasurementEntry>.from(
+      base.summary?.latestByType ?? {},
+    );
+    final changeFromPrevious = Map<MeasurementType, double>.from(
+      base.summary?.changeFromPrevious ?? {},
+    );
+
+    final previousValue = latestByType[type]?.value;
+    latestByType[type] = entry;
+    if (previousValue != null) {
+      changeFromPrevious[type] = entry.value - previousValue;
+    }
+
+    return base.copyWith(
+      historyByType: newHistoryByType,
+      summary: MeasurementsSummary(
+        latestByType: latestByType,
+        changeFromPrevious: changeFromPrevious,
+        latestBmi: base.summary?.latestBmi,
+        latestWaistToHipRatio: base.summary?.latestWaistToHipRatio,
+        latestWaistToHeightRatio: base.summary?.latestWaistToHeightRatio,
+      ),
+    );
   }
 
   /// Delete a measurement entry
@@ -647,12 +857,17 @@ class MeasurementsRepository {
   /// Returns a hydrated [MeasurementEntry] on success. Throws on any failure
   /// — never returns null silently. The Notifier wrapper relies on this
   /// contract to surface real errors to the user.
+  ///
+  /// [idempotencyKey] — a client-generated key that rides on the request
+  /// body. The backend de-dupes on it so a rapid double-tap, or an
+  /// offline-queued write replayed after reconnect, cannot create two rows.
   Future<MeasurementEntry?> recordMeasurement({
     required String userId,
     required MeasurementType type,
     required double value,
     required String unit,
     String? notes,
+    String? idempotencyKey,
   }) async {
     final response = await _client.post(
       '${ApiConstants.metrics}/body/record',
@@ -662,6 +877,7 @@ class MeasurementsRepository {
         'value': value,
         'unit': unit,
         if (notes != null && notes.isNotEmpty) 'notes': notes,
+        if (idempotencyKey != null) 'idempotency_key': idempotencyKey,
       },
     );
 

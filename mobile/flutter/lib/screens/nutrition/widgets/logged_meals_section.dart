@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -670,27 +672,49 @@ class LoggedMealsSection extends StatelessWidget {
                 shrinkWrap: true,
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 children: [
-                  // Photo thumbnail (for photo-logged meals) — tap to maximize
+                  // Photo thumbnail (for photo-logged meals) — tap to maximize.
+                  // (Part 4 / WR5) An optimistically-spliced row whose photo
+                  // is still uploading carries a LOCAL file path in imageUrl
+                  // (file:// or an absolute path); render it via Image.file
+                  // until the background save swaps in the remote S3 URL.
                   if (meal.imageUrl != null) ...[
-                    GestureDetector(
-                      onTap: () => showFullscreenImage(
-                        ctx,
-                        networkUrl: meal.imageUrl,
-                        heroTag: 'meal_image_${meal.id}',
-                      ),
+                    Builder(builder: (_) {
+                      final url = meal.imageUrl!;
+                      final isLocal = url.startsWith('file://') ||
+                          (!url.startsWith('http') && url.startsWith('/'));
+                      return GestureDetector(
+                      // Local-only photos can't be opened by the network
+                      // fullscreen viewer — skip the tap until upload lands.
+                      onTap: isLocal
+                          ? null
+                          : () => showFullscreenImage(
+                                ctx,
+                                networkUrl: meal.imageUrl,
+                                heroTag: 'meal_image_${meal.id}',
+                              ),
                       child: Stack(
                         children: [
                           ClipRRect(
                             borderRadius: BorderRadius.circular(12),
                             child: Hero(
                               tag: 'meal_image_${meal.id}',
-                              child: Image.network(
-                                meal.imageUrl!,
-                                height: 180,
-                                width: double.infinity,
-                                fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) => const SizedBox.shrink(),
-                              ),
+                              child: isLocal
+                                  ? Image.file(
+                                      File(url.replaceFirst('file://', '')),
+                                      height: 180,
+                                      width: double.infinity,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (_, __, ___) =>
+                                          const SizedBox.shrink(),
+                                    )
+                                  : Image.network(
+                                      url,
+                                      height: 180,
+                                      width: double.infinity,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (_, __, ___) =>
+                                          const SizedBox.shrink(),
+                                    ),
                             ),
                           ),
                           Positioned(
@@ -711,7 +735,8 @@ class LoggedMealsSection extends StatelessWidget {
                           ),
                         ],
                       ),
-                    ),
+                    );
+                    }),
                     const SizedBox(height: 12),
                   ],
                   // Food items — each field tap-to-edit; saves write

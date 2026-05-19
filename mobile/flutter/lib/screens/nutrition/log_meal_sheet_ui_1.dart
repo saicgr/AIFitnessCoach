@@ -585,13 +585,43 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
     // sees the meal where it actually lives.
     final loggedAtIso = _buildLoggedAtForSelectedDate();
 
+    // (WR9) Stable client-generated idempotency key — rides on the
+    // `/nutrition/log-direct` body so a rapid double-tap of "Log This Meal"
+    // (or an offline-queued write replayed on reconnect) can never create two
+    // food_log rows. The same key is reused for the lifetime of this save.
+    final idempotencyKey = NutritionRepository.newMealIdempotencyKey();
+
+    // (WR1) Splice the meal into nutritionProvider state IMMEDIATELY — before
+    // the network POST — so it appears in the Nutrition Daily meal list and
+    // the rings/pinned nutrients update within one frame. `spliceLog` returns
+    // the optimistic FoodLog so we can roll it back by id on failure (WR4).
+    final nutritionNotifier = ref.read(nutritionProvider.notifier);
+    final optimisticLog =
+        nutritionNotifier.spliceLog(response, mealType, userId);
+    final optimisticLogId = optimisticLog.id;
+
+    // (WR5) If the analyzed response carries no remote photo URL yet (the S3
+    // upload hasn't returned) but we captured a local photo, show the LOCAL
+    // image on the meal-list row immediately. The background save's success
+    // branch swaps it to the remote URL via `updateLogImageUrl`.
+    if ((response.imageUrl == null || response.imageUrl!.isEmpty) &&
+        _capturedImagePath != null &&
+        _capturedImagePath!.isNotEmpty) {
+      nutritionNotifier.updateLogImageUrl(optimisticLogId, _capturedImagePath);
+    }
+
+    // (WR6) Refresh Home's timeline so the new meal shows on Home without a
+    // manual pull-to-refresh — mirrors the hydration log path.
+    nutritionNotifier.refreshTimeline();
+
     // Start the save — capture the food_log_id for post-meal review.
     // Wrapped in an unawaited async IIFE (instead of `.then().catchError(...)`)
     // because catchError that returns void breaks the chained Future's type
     // contract — Dart 3 surfaces this as `'Null' is not a subtype of
     // 'LogFoodResponse'` when the chain rethrows. The IIFE pattern makes the
     // result type unambiguous (`Future<void>`) and keeps the same fire-and-
-    // forget behaviour: errors are debugPrinted, not surfaced to the UI.
+    // forget behaviour: errors are debugPrinted and surfaced via a calm
+    // retry snackbar (WR4) — never a silent failure.
     String? savedLogId;
     final Future<void> saveFuture = () async {
       try {
@@ -603,15 +633,63 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
           inputType: _inputType,
           loggedAt: loggedAtIso,
           itemEdits: pendingEdits,
+          idempotencyKey: idempotencyKey, // (WR9) double-tap / replay guard
         );
         savedLogId = savedResponse.foodLogId;
+        // (WR5) The photo's S3 upload finished as part of the POST — swap the
+        // optimistic row's (possibly local file://) image for the remote URL.
+        if (savedResponse.imageUrl != null &&
+            savedResponse.imageUrl!.isNotEmpty) {
+          nutritionNotifier.updateLogImageUrl(
+              optimisticLogId, savedResponse.imageUrl);
+        }
       } catch (e) {
         debugPrint('❌ [LogMeal] Background save failed: $e');
+        // (WR4) The write may have been offline-queued by logAdjustedFood
+        // (the _MealWriteQueue keeps the optimistic row + flushes on
+        // reconnect). Only a genuine ONLINE failure should roll back. Probe
+        // connectivity: offline → keep the optimistic row; online → roll back.
+        final stillOnline = await NutritionRepository.isOnline();
+        if (stillOnline) {
+          // Genuine failure — remove the optimistic row so the UI doesn't
+          // show a meal the server never stored, and surface a calm retry.
+          nutritionNotifier.optimisticRemoveLog(optimisticLogId);
+          _showLogFailedRetry(response);
+        }
+        // Offline branch: optimistic row stays; _MealWriteQueue replays it.
+        // Rethrow so `_logAnalyzedFood`'s reconcile-on-success path is skipped.
+        rethrow;
       }
     }();
-    unawaited(saveFuture);
+    // Swallow the rethrow at the top level — already handled above.
+    unawaited(saveFuture.catchError((_) {}));
 
-    _logAnalyzedFood(response, saveFuture, () => savedLogId);
+    _logAnalyzedFood(response, saveFuture, () => savedLogId, optimisticLogId);
+  }
+
+  /// (WR4) Surface a calm, non-blocking retry affordance when a food-log
+  /// network write genuinely fails while online. The optimistic row has
+  /// already been rolled back by the caller — tapping Retry re-runs the log.
+  void _showLogFailedRetry(LogFoodResponse response) {
+    final messenger = ScaffoldMessenger.maybeOf(
+      Navigator.of(context, rootNavigator: true).overlay?.context ?? context,
+    );
+    if (messenger == null) return;
+    messenger.showSnackBar(
+      SnackBar(
+        content: const Text("Couldn't save your meal. Check your connection."),
+        behavior: SnackBarBehavior.floating,
+        action: SnackBarAction(
+          label: 'Retry',
+          onPressed: () {
+            // Re-arm and re-run the log with the same analyzed response.
+            _hasLoggedThisSession = false;
+            _analyzedResponse = response;
+            _handleLog();
+          },
+        ),
+      ),
+    );
   }
 
 
@@ -1812,28 +1890,17 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
             userId: widget.userId,
             mealType: _selectedMealType.value,
             onLogItems: (selected) async {
-              try {
-                await repository.logSelectedMealItems(
-                  userId: widget.userId,
-                  mealType: _selectedMealType.value,
-                  analysisType: type,
-                  items: selected,
-                  inputType: type == 'menu' ? 'menu_scan' : 'buffet_scan',
+              // (WR1+WR4+WR6) Optimistic splice + background write + rollback.
+              final ok = await _logMenuSelectedItems(
+                selected: selected,
+                analysisType: type,
+              );
+              if (ok && mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Logged ${selected.length} item${selected.length == 1 ? '' : 's'}')),
                 );
-                if (mounted) {
-                  ref.read(nutritionProvider.notifier).loadTodaySummary(widget.userId);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Logged ${selected.length} item${selected.length == 1 ? '' : 's'}')),
-                  );
-                  Navigator.of(context).pop();
-                  Navigator.of(context).pop();
-                }
-              } catch (e) {
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Failed to log: $e')),
-                  );
-                }
+                Navigator.of(context).pop();
+                Navigator.of(context).pop();
               }
             },
           ),
@@ -2110,30 +2177,19 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
           mealType: _selectedMealType.value,
           restaurantName: restaurantName,
           onLogItems: (selected) async {
-            try {
-              await repository.logSelectedMealItems(
-                userId: widget.userId,
-                mealType: _selectedMealType.value,
-                analysisType: analysisType,
-                items: selected,
-                inputType: analysisType == 'menu' ? 'menu_scan' : 'buffet_scan',
-                imageUrl: imageUrls.isNotEmpty ? imageUrls.first : null,
-                imageStorageKey: storageKeys.isNotEmpty ? storageKeys.first : null,
+            // (WR1+WR4+WR6) Optimistic splice + background write + rollback.
+            final ok = await _logMenuSelectedItems(
+              selected: selected,
+              analysisType: analysisType,
+              imageUrl: imageUrls.isNotEmpty ? imageUrls.first : null,
+              imageStorageKey: storageKeys.isNotEmpty ? storageKeys.first : null,
+            );
+            if (ok && mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Logged ${selected.length} item${selected.length == 1 ? '' : 's'}')),
               );
-              if (mounted) {
-                ref.read(nutritionProvider.notifier).loadTodaySummary(widget.userId);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Logged ${selected.length} item${selected.length == 1 ? '' : 's'}')),
-                );
-                Navigator.of(context).pop(); // close MenuAnalysisSheet
-                Navigator.of(context).pop(); // close LogMealSheet
-              }
-            } catch (e) {
-              if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Failed to log: $e')),
-                );
-              }
+              Navigator.of(context).pop(); // close MenuAnalysisSheet
+              Navigator.of(context).pop(); // close LogMealSheet
             }
           },
         ),
@@ -2155,6 +2211,100 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
   /// urls, PATCHes them onto the saved row, then opens the refreshed
   /// MenuAnalysisSheet for that saved menu.
   ///
+  /// (Part 4 / WR1+WR4+WR6) Persist the dishes a user ticked off a
+  /// menu / buffet analysis checklist — optimistically.
+  ///
+  /// Shared by all three MenuAnalysisSheet `onLogItems` call sites (fresh
+  /// scan, progressive-streaming scan, re-scanned saved menu).
+  ///
+  /// Flow:
+  ///  1. (WR1) Splice every selected dish into nutritionProvider state
+  ///     IMMEDIATELY — one optimistic FoodLog per dish — so they appear in
+  ///     the Nutrition Daily meal list + rings within one frame.
+  ///  2. (WR6) Refresh Home's timeline.
+  ///  3. Fire `/nutrition/log-selected-items` in the background.
+  ///  4. On success: reconcile in place with a forced summary refresh (the
+  ///     server now holds the authoritative rows).
+  ///  5. (WR4) On failure: roll back every spliced row and surface a calm
+  ///     retry snackbar — never a silent divergence.
+  ///
+  /// Returns true when the optimistic splice + dispatch happened (the caller
+  /// closes the sheets); false only if there were no items to log.
+  Future<bool> _logMenuSelectedItems({
+    required List<Map<String, dynamic>> selected,
+    required String analysisType,
+    String? imageUrl,
+    String? imageStorageKey,
+  }) async {
+    if (selected.isEmpty) return false;
+    final repository = ref.read(nutritionRepositoryProvider);
+    final nutritionNotifier = ref.read(nutritionProvider.notifier);
+    final mealType = _selectedMealType.value;
+    // menu → 'menu', buffet → 'buffet' (mirrors the backend source_type map).
+    final sourceType = analysisType == 'buffet' ? 'buffet' : 'menu';
+    final inputType = analysisType == 'menu' ? 'menu_scan' : 'buffet_scan';
+
+    // (WR1) Splice each ticked dish before the network round-trip. Keep the
+    // optimistic ids so a failed write can roll every one of them back.
+    final optimisticIds = <String>[];
+    for (final item in selected) {
+      final spliced = nutritionNotifier.spliceMenuItem(
+        item: item,
+        mealType: mealType,
+        userId: widget.userId,
+        sourceType: sourceType,
+        imageUrl: imageUrl,
+      );
+      optimisticIds.add(spliced.id);
+    }
+    // (WR6) Show the new meals on Home's timeline too.
+    nutritionNotifier.refreshTimeline();
+
+    // Background write — UI already reflects the meals.
+    () async {
+      try {
+        await repository.logSelectedMealItems(
+          userId: widget.userId,
+          mealType: mealType,
+          analysisType: analysisType,
+          items: selected,
+          inputType: inputType,
+          imageUrl: imageUrl,
+          imageStorageKey: imageStorageKey,
+        );
+        // Reconcile: the server now holds the real rows. forceRefresh swaps
+        // the optimistic rows for authoritative data in place.
+        nutritionNotifier.loadTodaySummary(widget.userId, forceRefresh: true);
+      } catch (e) {
+        debugPrint('❌ [LogMeal] menu log-selected-items failed: $e');
+        // (WR4) Roll back every optimistic row so the meal list doesn't show
+        // dishes the server never stored.
+        nutritionNotifier.optimisticRemoveLogs(optimisticIds);
+        final messenger = ScaffoldMessenger.maybeOf(
+          Navigator.of(context, rootNavigator: true).overlay?.context ??
+              context,
+        );
+        messenger?.showSnackBar(
+          SnackBar(
+            content: const Text(
+                "Couldn't log those items. Check your connection."),
+            behavior: SnackBarBehavior.floating,
+            action: SnackBarAction(
+              label: 'Retry',
+              onPressed: () => _logMenuSelectedItems(
+                selected: selected,
+                analysisType: analysisType,
+                imageUrl: imageUrl,
+                imageStorageKey: imageStorageKey,
+              ),
+            ),
+          ),
+        );
+      }
+    }();
+    return true;
+  }
+
   /// On PATCH failure: surfaces a clear error and returns — the saved menu row
   /// on the server is left exactly as it was (PATCH is atomic server-side).
   Future<void> _completeMenuRescan({
@@ -2221,7 +2371,6 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
     });
 
     final api = ref.read(apiClientProvider);
-    final repository = ref.read(nutritionRepositoryProvider);
 
     Map<String, dynamic>? updatedRow;
     try {
@@ -2289,30 +2438,19 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
         savedMenuId: savedMenuId,
         savedTitle: savedTitle,
         onLogItems: (selected) async {
-          try {
-            await repository.logSelectedMealItems(
-              userId: widget.userId,
-              mealType: _selectedMealType.value,
-              analysisType: refreshedType,
-              items: selected,
-              inputType: refreshedType == 'menu' ? 'menu_scan' : 'buffet_scan',
-              imageUrl:
-                  refreshedPhotoUrls.isNotEmpty ? refreshedPhotoUrls.first : null,
+          // (WR1+WR4+WR6) Optimistic splice + background write + rollback.
+          final ok = await _logMenuSelectedItems(
+            selected: selected,
+            analysisType: refreshedType,
+            imageUrl:
+                refreshedPhotoUrls.isNotEmpty ? refreshedPhotoUrls.first : null,
+          );
+          if (ok && mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Logged ${selected.length} item${selected.length == 1 ? '' : 's'}')),
             );
-            if (mounted) {
-              ref.read(nutritionProvider.notifier).loadTodaySummary(widget.userId);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Logged ${selected.length} item${selected.length == 1 ? '' : 's'}')),
-              );
-              Navigator.of(context).pop(); // close MenuAnalysisSheet
-              Navigator.of(context).pop(); // close LogMealSheet
-            }
-          } catch (e) {
-            if (mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Failed to log: $e')),
-              );
-            }
+            Navigator.of(context).pop(); // close MenuAnalysisSheet
+            Navigator.of(context).pop(); // close LogMealSheet
           }
         },
       ),
@@ -2465,9 +2603,19 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
 
 
 
-  /// Log an already analyzed food response
-  void _logAnalyzedFood(LogFoodResponse response, [Future<void>? saveFuture, String? Function()? getSavedLogId]) async {
-    debugPrint('✅ [LogMeal] _logAnalyzedFood called | calories=${response.totalCalories} | protein=${response.proteinG}g | foodItems=${response.foodItems.length}');
+  /// Log an already analyzed food response.
+  ///
+  /// (Part 4) The optimistic splice into `nutritionProvider` now happens in
+  /// the caller [_handleLog] BEFORE the network POST starts (WR1) — this
+  /// method only handles the fast UI dismiss + post-meal review sheet and the
+  /// background reconcile. [optimisticLogId] is the id of the row [_handleLog]
+  /// spliced; it is passed through purely so this method does NOT splice a
+  /// second time.
+  void _logAnalyzedFood(LogFoodResponse response,
+      [Future<void>? saveFuture,
+      String? Function()? getSavedLogId,
+      String? optimisticLogId]) async {
+    debugPrint('✅ [LogMeal] _logAnalyzedFood called | calories=${response.totalCalories} | protein=${response.proteinG}g | foodItems=${response.foodItems.length} | optimisticLogId=$optimisticLogId');
 
     // Check if there's an active fast that should be ended
     final fastingState = ref.read(fastingProvider);
@@ -2502,16 +2650,23 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
     // Get the navigator's overlay context which survives the pop
     final overlay = Navigator.of(context).overlay;
 
-    // Optimistic update: splice the new log into local state immediately so
-    // the Nutrition tab shows the meal before the background refresh returns.
-    nutritionNotifier.spliceLog(response, _selectedMealType.value, userId);
+    // NOTE (Part 4 / WR1): the optimistic splice into nutritionProvider
+    // already happened in `_handleLog` BEFORE the network POST — the meal is
+    // in the Nutrition Daily list + rings within one frame. We must NOT
+    // splice again here or the row would be duplicated.
 
     // Close sheet immediately for snappy UX
     Navigator.pop(context);
 
-    // Fire-and-forget: refresh nutrition UI after save completes
+    // Fire-and-forget: reconcile nutrition UI after the save SUCCEEDS. On
+    // failure `saveFuture` rejects (handled in `_handleLog` — rollback +
+    // retry snackbar) so we deliberately do NOT reconcile on the error path:
+    // a forceRefresh there would just re-pull a server state that never had
+    // the row, which the rollback already reflects.
     if (saveFuture != null) {
       unawaited(saveFuture.then((_) {
+        // forceRefresh replaces the optimistic row with the authoritative
+        // server row in place (server-derived fields: streak, adherence).
         nutritionNotifier.loadTodaySummary(userId, forceRefresh: true);
         // Schedule the 45-min reminder after save completes (needs foodLogId)
         final logId = getSavedLogId?.call();
@@ -2522,6 +2677,8 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
             mealSummary: foodNames.isNotEmpty ? foodNames.first : null,
           );
         }
+      }, onError: (_) {
+        // Swallowed — `_handleLog` already rolled back / queued. No reconcile.
       }));
     } else {
       nutritionNotifier.loadTodaySummary(userId, forceRefresh: true);
@@ -2631,7 +2788,34 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
               foodLogId: response.foodLogId,
               dataSource: 'barcode',
             );
-            ref.read(nutritionProvider.notifier).loadTodaySummary(widget.userId);
+            // (WR1) Splice the barcode meal into nutritionProvider state so it
+            // appears in the Nutrition Daily meal list + rings within one
+            // frame. A plain loadTodaySummary() would hit the 5-min cache
+            // skip and the new meal wouldn't show until the TTL elapsed.
+            // logFoodFromBarcode already returns the real food_log_id, so the
+            // spliced row carries it and the forceRefresh below is an in-place
+            // reconcile, not a new insert.
+            final nutritionNotifier = ref.read(nutritionProvider.notifier);
+            nutritionNotifier.spliceMenuItem(
+              item: {
+                'name': product.productName,
+                'calories': response.totalCalories,
+                'protein_g': response.proteinG,
+                'carbs_g': response.carbsG,
+                'fat_g': response.fatG,
+                'amount': '1 serving',
+              },
+              mealType: _selectedMealType.value,
+              userId: widget.userId,
+              sourceType: 'barcode',
+              logId: response.foodLogId,
+              imageUrl: product.imageThumbUrl ?? product.imageUrl,
+            );
+            // (WR6) Reflect the new meal on Home's timeline.
+            nutritionNotifier.refreshTimeline();
+            // Reconcile server-derived fields in the background.
+            nutritionNotifier.loadTodaySummary(widget.userId,
+                forceRefresh: true);
           }
         } else {
           debugPrint('🔍 [LogMeal] User cancelled barcode confirmation');
