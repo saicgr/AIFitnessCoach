@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../core/widgets/skeleton/skeleton.dart';
 import '../../data/models/live_chat_session.dart';
 import '../../data/providers/live_chat_provider.dart';
 import '../../data/services/haptic_service.dart';
@@ -286,21 +287,13 @@ class _LiveChatScreenState extends ConsumerState<LiveChatScreen> {
               ),
             )
           else if (screenStatus == _ScreenStatus.connecting)
-            const Expanded(
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    CircularProgressIndicator(color: AppColors.cyan),
-                    SizedBox(height: 16),
-                    Text(
-                      'Connecting to support...',
-                      style: TextStyle(color: AppColors.textSecondary),
-                    ),
-                  ],
-                ),
-              ),
-            )
+            // Instant-load standard: while the session connects, render a
+            // layout-matched skeleton of the chat thread instead of a blocking
+            // centered spinner. The skeleton mirrors the real message list
+            // (alternating agent/user bubbles) so the skeleton → content swap
+            // doesn't reflow. The connection-status banner above already
+            // communicates "Connecting...".
+            Expanded(child: _buildConnectingSkeleton(isDark))
           else ...[
             // Messages list
             Expanded(
@@ -427,6 +420,68 @@ class _LiveChatScreenState extends ConsumerState<LiveChatScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  /// Layout-matched skeleton shown while the live-chat session is connecting.
+  ///
+  /// Mirrors the real message-list shape: alternating agent (left-aligned) and
+  /// user (right-aligned) shimmer bubbles, plus an input-bar placeholder at the
+  /// bottom. Replaces the old blocking centered spinner so the screen paints
+  /// its chat shell instantly. Theme-aware via [ThemeColors] inside the
+  /// skeleton primitives.
+  Widget _buildConnectingSkeleton(bool isDark) {
+    // Bubble specs: (isFromAgent, width fraction, line count).
+    const bubbles = <(bool, double, int)>[
+      (true, 0.62, 2),
+      (false, 0.45, 1),
+      (true, 0.74, 3),
+      (false, 0.55, 2),
+    ];
+
+    return Column(
+      children: [
+        Expanded(
+          child: ListView(
+            padding: const EdgeInsets.all(16),
+            // No interaction while connecting — non-scrollable placeholder.
+            physics: const NeverScrollableScrollPhysics(),
+            children: [
+              for (final (isFromAgent, widthFraction, lines) in bubbles)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: Align(
+                    alignment: isFromAgent
+                        ? Alignment.centerLeft
+                        : Alignment.centerRight,
+                    child: FractionallySizedBox(
+                      alignment: isFromAgent
+                          ? Alignment.centerLeft
+                          : Alignment.centerRight,
+                      widthFactor: widthFraction,
+                      child: SkeletonCard(
+                        showLeading: isFromAgent,
+                        leadingSize: 28,
+                        lines: lines,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+        // Input-bar placeholder so the bottom of the shell matches the
+        // connected layout and the swap doesn't shift content.
+        Padding(
+          padding: EdgeInsets.fromLTRB(
+            16,
+            8,
+            16,
+            16 + MediaQuery.of(context).padding.bottom,
+          ),
+          child: const SkeletonBox(height: 48, radius: 24),
+        ),
+      ],
     );
   }
 }
