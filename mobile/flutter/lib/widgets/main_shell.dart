@@ -12,6 +12,7 @@ import '../data/services/recipe_notification_router.dart';
 import '../core/theme/theme_colors.dart';
 import '../data/models/coach_persona.dart';
 import '../data/providers/admin_provider.dart';
+import '../data/providers/discover_provider.dart';
 import '../data/providers/guest_mode_provider.dart';
 import '../data/providers/guest_usage_limits_provider.dart';
 import '../data/services/deep_link_service.dart';
@@ -195,6 +196,13 @@ class MainShell extends ConsumerWidget {
     final isGuestMode = ref.watch(isGuestModeProvider);
     // Get dynamic accent color from provider
     final accentColor = ref.colors(context).accent;
+
+    // Warm the Discover leaderboard snapshot in the background so the first
+    // tap on the Discover tab paints instantly (cache-first) instead of a
+    // cold network fetch. discoverSnapshotProvider is a kept-alive
+    // StateNotifierProvider whose notifier load()s on creation — this one
+    // read creates it; the result then holds for when the tab opens.
+    ref.read(discoverSnapshotProvider);
 
     // Initialize widget action service (MethodChannel listener)
     // This allows Android widgets to trigger UI actions without navigation
