@@ -856,3 +856,74 @@ class _CircleButton extends StatelessWidget {
     );
   }
 }
+
+/// Mounts an [EmptyStateTipTour] into the ROOT [Overlay] for its lifetime.
+///
+/// Rendering the tour as a `Positioned.fill` child of a screen places its
+/// dim scrim BELOW the main nav bar / floating tab bars (those are drawn by
+/// the shell, above the screen) — so the bars and their fade-to-white
+/// gradients paint over the scrim, leaving a grey/white band during the
+/// tour. Inserting into the root overlay puts the scrim above everything,
+/// dimming the whole screen evenly.
+///
+/// Return an instance of this from a tour's `overlay()` and drop it into
+/// the screen's stack — it renders as a zero-size widget and tears the
+/// overlay entry down on dispose (i.e. when the user leaves the screen).
+class RootOverlayTipTourHost extends StatefulWidget {
+  final String tourId;
+  final List<EmptyStateTip> tips;
+  final bool hasMainNavBar;
+  final double extraBottomClearance;
+
+  const RootOverlayTipTourHost({
+    super.key,
+    required this.tourId,
+    required this.tips,
+    this.hasMainNavBar = false,
+    this.extraBottomClearance = 0,
+  });
+
+  @override
+  State<RootOverlayTipTourHost> createState() => _RootOverlayTipTourHostState();
+}
+
+class _RootOverlayTipTourHostState extends State<RootOverlayTipTourHost> {
+  OverlayEntry? _entry;
+
+  @override
+  void initState() {
+    super.initState();
+    final tourId = widget.tourId;
+    final tips = widget.tips;
+    final hasMainNavBar = widget.hasMainNavBar;
+    final extraBottomClearance = widget.extraBottomClearance;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      // rootOverlay: true → the app-level Overlay, above the shell route
+      // (and thus above the floating nav bar).
+      final overlay = Overlay.of(context, rootOverlay: true);
+      final entry = OverlayEntry(
+        builder: (_) => Positioned.fill(
+          child: EmptyStateTipTour(
+            tourId: tourId,
+            tips: tips,
+            hasMainNavBar: hasMainNavBar,
+            extraBottomClearance: extraBottomClearance,
+          ),
+        ),
+      );
+      _entry = entry;
+      overlay.insert(entry);
+    });
+  }
+
+  @override
+  void dispose() {
+    _entry?.remove();
+    _entry = null;
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => const SizedBox.shrink();
+}

@@ -42,14 +42,12 @@ class WorkoutsTour {
         ),
       ];
 
-  // No SafeArea wrapper: it consumed the bottom inset, clipping the dim
-  // scrim short of the home indicator and leaving a grey->white band
-  // behind the floating bars during the tour.
-  static Widget overlay() => Positioned.fill(
-        child: EmptyStateTipTour(
-          tourId: id,
-          tips: steps(),
-          hasMainNavBar: true,
-        ),
+  // Mount through the root overlay so the dim scrim sits ABOVE the main
+  // nav bar — rendering it inside the screen left the nav + its fade
+  // gradient painting over the scrim (the grey/white band).
+  static Widget overlay() => RootOverlayTipTourHost(
+        tourId: id,
+        tips: steps(),
+        hasMainNavBar: true,
       );
 }
