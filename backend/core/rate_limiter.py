@@ -30,7 +30,72 @@ import os
 from slowapi import Limiter
 from starlette.requests import Request
 
+from core.config import get_settings
+
 logger = logging.getLogger(__name__)
+
+
+def _resolve_rate_limit_storage_uri() -> str:
+    """Pick the storage backend for the slowapi limiters.
+
+    PROBLEM: slowapi's default in-memory store is PER-WORKER and
+    PER-INSTANCE. With N Gunicorn workers a "10/minute" limit really allows
+    ~N×10/min, and horizontal autoscaling loosens it further — at scale the
+    caps are effectively not enforced.
+
+    FIX: back the limiter with Redis (the same instance redis_cache.py uses,
+    via settings.redis_url) so counters aggregate across every worker and
+    instance. `limits` (slowapi's backend lib) speaks Redis natively given a
+    `redis://...` storage_uri.
+
+    GRACEFUL DEGRADATION: if REDIS_URL is unset, or Redis is unreachable at
+    startup, fall back to the in-memory store ("memory://") and log a
+    warning. The app must always start and serve — a degraded (per-worker)
+    limiter is acceptable; a crash because Redis is down is not.
+
+    Returns the storage URI string to hand to Limiter(storage_uri=...).
+    """
+    try:
+        redis_url = get_settings().redis_url
+    except Exception as e:  # config failure must not break the limiter
+        logger.warning(
+            f"Could not read settings for rate-limit storage ({e}) — "
+            "using in-memory store (per-worker, does not aggregate)"
+        )
+        return "memory://"
+
+    if not redis_url:
+        logger.info(
+            "No REDIS_URL configured — rate limiter using in-memory store "
+            "(per-worker, does not aggregate across workers/instances)"
+        )
+        return "memory://"
+
+    # Probe Redis reachability before committing to it. storage_from_string()
+    # is lazy and won't fail here even if Redis is down, so we explicitly
+    # check() and fall back to memory:// on any error.
+    try:
+        from limits.storage import storage_from_string
+
+        probe = storage_from_string(redis_url)
+        if not probe.check():
+            raise RuntimeError("Redis storage check() returned False")
+        logger.info(
+            "Rate limiter using Redis store — limits aggregate across all "
+            "workers and instances"
+        )
+        return redis_url
+    except Exception as e:
+        logger.warning(
+            f"Redis unreachable for rate limiting ({e}) — falling back to "
+            "in-memory store (per-worker, does not aggregate)"
+        )
+        return "memory://"
+
+
+# Resolved once at import time. Either a redis:// URI (shared, aggregating)
+# or "memory://" (per-worker fallback). Both limiters share this backend.
+_RATE_LIMIT_STORAGE_URI = _resolve_rate_limit_storage_uri()
 
 
 def get_real_client_ip(request: Request) -> str:
@@ -69,6 +134,7 @@ _BENCH_BYPASS = _os.environ.get("BENCH_BYPASS_RATELIMIT") == "1"
 limiter = Limiter(
     key_func=get_real_client_ip,
     default_limits=[] if _BENCH_BYPASS else ["1000/minute"],
+    storage_uri=_RATE_LIMIT_STORAGE_URI,
     swallow_errors=True,
     enabled=not _BENCH_BYPASS,
 )
@@ -113,6 +179,7 @@ def get_user_id_from_request(request: Request) -> str:
 user_limiter = Limiter(
     key_func=get_user_id_from_request,
     default_limits=[] if _BENCH_BYPASS else ["600/minute"],
+    storage_uri=_RATE_LIMIT_STORAGE_URI,
     swallow_errors=True,
     enabled=not _BENCH_BYPASS,
 )

@@ -83,13 +83,26 @@ class Settings(BaseSettings):
 
     # Database Connection Pool (only applies to PostgreSQL, ignored for SQLite)
     # Sized for Supavisor transaction-mode pooler (port 6543), which multiplexes
-    # client connections onto the small server-side pool.
-    # NOTE: this pool is PER GUNICORN WORKER. With -w 2 the effective ceiling is
-    # 2 × (pool_size + max_overflow). Kept deliberately modest — transaction-mode
-    # pooling means a large per-worker pool buys nothing and just risks Supavisor
-    # rejecting connections. 2 × (10 + 15) = 50 total, comfortably within limits.
-    db_pool_size: int = 10           # Base persistent connections per worker
-    db_max_overflow: int = 15        # Extra connections per worker under load
+    # short-lived client connections onto the small server-side pool.
+    #
+    # CONNECTION MATH AT SCALE (Phase D — horizontal autoscaling):
+    # This pool is PER GUNICORN WORKER. Total connections opened against the
+    # Supavisor pooler are:
+    #     instances × workers × (db_pool_size + db_max_overflow)
+    # At the autoscaling ceiling (render.yaml: maxInstances 8, -w 4):
+    #     8 instances × 4 workers × (5 + 10) = 480 client connections
+    # Because the app uses the TRANSACTION-mode pooler, connections are
+    # short-lived/multiplexed, so a large per-worker pool buys nothing and
+    # just risks Supavisor rejecting connections. The pool was therefore cut
+    # from 10/15 to 5/10 so the worst-case math stays bounded.
+    #
+    # ⚠️ OPS: 480 must stay UNDER the Supabase plan's pooler client-connection
+    # limit ("Pool Size" / max client connections in Dashboard → Database →
+    # Connection Pooling). VERIFY this against the current Supabase plan before
+    # deploying the autoscaled config — if the cap is below 480, either lower
+    # maxInstances/workers or raise the Supabase plan.
+    db_pool_size: int = 5            # Base persistent connections per worker
+    db_max_overflow: int = 10        # Extra connections per worker under load
     db_pool_timeout: int = 30        # Seconds to wait for a connection
     db_pool_recycle: int = 1800      # Recycle connections every 30 minutes
 

@@ -2,9 +2,10 @@
 Supabase client wrapper for Zealova.
 Provides database and auth functionality via Supabase.
 """
-from fastapi import Depends
+from fastapi import Depends, HTTPException
 from supabase import create_client, Client
 from supabase.lib.client_options import ClientOptions
+from sqlalchemy.exc import TimeoutError as SQLATimeoutError
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import declarative_base
 from contextlib import asynccontextmanager
@@ -18,6 +19,24 @@ import httpx
 logger = logging.getLogger(__name__)
 
 from core.config import get_settings
+from core.db_circuit_breaker import get_db_breaker
+
+# DB-RESILIENCE (Phase D): cap how long a request will wait to ACQUIRE a pooled
+# connection before failing fast. SQLAlchemy's pool_timeout (30s) is the hard
+# ceiling; a 30s hang under load is worse UX than a quick 503 the client can
+# retry. We lower the *effective* wait via asyncio.wait_for so a saturated pool
+# rejects fast. Retry-After tells the client when to come back.
+DB_ACQUIRE_TIMEOUT_SECONDS = 5.0
+DB_ACQUIRE_RETRY_AFTER = 5
+
+
+def _pool_exhausted_503() -> HTTPException:
+    """Clean FastAPI-friendly 503 for a saturated connection pool."""
+    return HTTPException(
+        status_code=503,
+        detail="Database connection pool exhausted. Please retry shortly.",
+        headers={"Retry-After": str(DB_ACQUIRE_RETRY_AFTER)},
+    )
 
 # SQLAlchemy Base
 Base = declarative_base()
@@ -192,6 +211,29 @@ class SupabaseManager:
         """Get a new database session (raw, without semaphore)."""
         return self._session_maker()
 
+    async def _acquire_connection_fast_fail(self):
+        """Acquire a pooled DB connection, failing FAST instead of hanging.
+
+        Wraps engine.connect() in asyncio.wait_for so a saturated pool rejects
+        within DB_ACQUIRE_TIMEOUT_SECONDS rather than blocking up to the full
+        pool_timeout (30s). A pool/acquire timeout surfaces as a clean HTTP 503
+        with a Retry-After header. The whole acquisition runs through the DB
+        circuit breaker so a sustained outage trips it and short-circuits.
+
+        Returns an AsyncConnection (caller owns closing it).
+        """
+        breaker = get_db_breaker()
+        try:
+            async with breaker.guard():
+                return await asyncio.wait_for(
+                    self._engine.connect(),
+                    timeout=DB_ACQUIRE_TIMEOUT_SECONDS,
+                )
+        except (asyncio.TimeoutError, SQLATimeoutError) as exc:
+            # Pool exhausted / acquisition timed out — fail fast with 503.
+            logger.warning("⚠️ [DB] connection acquisition timed out: %s", exc)
+            raise _pool_exhausted_503() from exc
+
     @asynccontextmanager
     async def get_managed_session(self):
         """Get a database session.
@@ -203,12 +245,23 @@ class SupabaseManager:
         level, causing requests to block at the semaphore even when the pool
         had capacity, and producing the observed "_phase1 timed out at 5s
         while asyncpg was still mid-handshake" pattern under burst load.
+
+        DB-RESILIENCE (Phase D): the connection is acquired via
+        _acquire_connection_fast_fail() so a saturated pool returns a fast 503
+        and a downstream outage trips the circuit breaker — instead of every
+        request hanging on a dead/slow database. The healthy path is
+        unchanged: a connection acquired in well under DB_ACQUIRE_TIMEOUT_SECONDS
+        proceeds exactly as before.
         """
-        session = self._session_maker()
+        conn = await self._acquire_connection_fast_fail()
+        # Bind the session to the pre-acquired connection so pool-wait latency
+        # is already paid (and fast-failed) before any session work begins.
+        session = self._session_maker(bind=conn)
         try:
             yield session
         finally:
             await session.close()
+            await conn.close()
 
     async def close(self):
         """Close database connections."""
@@ -231,7 +284,13 @@ def get_supabase() -> SupabaseManager:
 async def get_db_session():
     """
     Dependency for FastAPI endpoints to get database session.
-    Uses a semaphore to cap concurrent DB connections within Supabase limits.
+
+    DB-RESILIENCE (Phase D): the connection is acquired via
+    _acquire_connection_fast_fail(), so when the pool is exhausted the request
+    gets a fast HTTP 503 + Retry-After instead of hanging up to pool_timeout
+    (30s), and a sustained DB outage trips the shared circuit breaker. The 503
+    is a plain HTTPException, so FastAPI's exception handling / middleware
+    surfaces it cleanly to the caller. The healthy path is unchanged.
 
     Usage:
         @app.get("/users")
@@ -240,16 +299,17 @@ async def get_db_session():
             return result.scalars().all()
     """
     supabase_manager = get_supabase()
-    async with supabase_manager._db_semaphore:
-        session = supabase_manager.get_session()
-        try:
-            yield session
-            await session.commit()
-        except Exception:
-            await session.rollback()
-            raise
-        finally:
-            await session.close()
+    conn = await supabase_manager._acquire_connection_fast_fail()
+    session = supabase_manager._session_maker(bind=conn)
+    try:
+        yield session
+        await session.commit()
+    except Exception:
+        await session.rollback()
+        raise
+    finally:
+        await session.close()
+        await conn.close()
 
 
 class SupabaseAuth:

@@ -9,14 +9,16 @@ Cached in Redis for 30 minutes with explicit invalidation on data changes.
 """
 from core.db import get_supabase_db
 from datetime import datetime, date, timedelta
-from typing import Optional, List
+from typing import Optional, List, Dict
 import asyncio
+import random
 from concurrent.futures import ThreadPoolExecutor
 import json
 
 from fastapi import APIRouter, Depends, Request, Query
 from core.auth import get_current_user
 from core.exceptions import safe_internal_error
+from core.rate_limiter import user_limiter
 from pydantic import BaseModel
 
 from core.logger import get_logger
@@ -28,11 +30,59 @@ from api.v1.workouts.today import (
     _get_active_gym_profile_id,
     _extract_primary_muscles,
 )
-# Thread pool for running synchronous DB calls concurrently
-_db_executor = ThreadPoolExecutor(max_workers=10)
 
-# Redis cache — 30 minute TTL, invalidated explicitly on data changes
-_bootstrap_cache = RedisCache(prefix="home_bootstrap", ttl_seconds=1800, max_size=200)
+# -----------------------------------------------------------------------------
+# Thread pool for running the blocking Supabase PostgREST .execute() calls.
+#
+# Sizing rationale (to be confirmed by the Phase C load test):
+#   * Each bootstrap request issues 5 fetches concurrently, plus 2 pre-cache-key
+#     blocking calls (timezone DB lookup + active gym profile). Worst case a
+#     single request that fully cache-misses occupies ~7 threads briefly, but
+#     the 5 heavy fetches are the steady-state concurrency unit.
+#   * Single-flight (below) collapses duplicate misses for the SAME key onto one
+#     computation, and the 30-min Redis cache absorbs the vast majority of the
+#     ~10k concurrent users — only genuine cache misses ever touch this pool.
+#   * The Supabase connection pool / PostgREST is the real downstream limit, so
+#     this pool is deliberately bounded: an unbounded pool would just convert a
+#     request spike into a DB-connection storm.
+#   * 32 threads => up to ~6 fully-overlapping cache-missing requests per worker
+#     in flight at once (32 / 5), which comfortably covers a post-TTL-expiry
+#     burst after single-flight de-duplication, without overwhelming Postgres.
+# NOTE: this is a PER-WORKER pool; total DB concurrency = 32 * gunicorn workers.
+_DB_EXECUTOR_MAX_WORKERS = 32
+_db_executor = ThreadPoolExecutor(
+    max_workers=_DB_EXECUTOR_MAX_WORKERS,
+    thread_name_prefix="home_bootstrap_db",
+)
+
+# Bootstrap response TTL. Jittered per-write (see _jittered_ttl) so that many
+# users' entries do NOT expire in lockstep — synchronized expiry causes a
+# coordinated DB burst ("cache stampede") every 30 min.
+_BOOTSTRAP_TTL_SECONDS = 1800          # 30 min nominal
+_BOOTSTRAP_TTL_JITTER = 0.15           # +/- 15%
+
+# Redis cache — 30 minute nominal TTL, invalidated explicitly on data changes.
+_bootstrap_cache = RedisCache(
+    prefix="home_bootstrap", ttl_seconds=_BOOTSTRAP_TTL_SECONDS, max_size=200
+)
+
+# Per-key single-flight registry. When several concurrent requests miss the
+# cache for the SAME key, only the first one actually runs the 5 DB fetches;
+# the rest await its shared asyncio.Future. This collapses N duplicate
+# computations into 1 (e.g. a user reopening Home rapidly, or a thundering
+# herd right after the TTL expires). Per-worker — combined with the jittered
+# TTL above this keeps DB load flat under ~10k concurrent users.
+_inflight: Dict[str, "asyncio.Future"] = {}
+_inflight_lock = asyncio.Lock()
+
+
+def _jittered_ttl() -> int:
+    """Return the bootstrap TTL with +/- _BOOTSTRAP_TTL_JITTER random spread.
+
+    Spreading expiries prevents a synchronized cache-stampede every 30 minutes.
+    """
+    spread = _BOOTSTRAP_TTL_SECONDS * _BOOTSTRAP_TTL_JITTER
+    return int(_BOOTSTRAP_TTL_SECONDS + random.uniform(-spread, spread))
 
 router = APIRouter()
 logger = get_logger(__name__)
@@ -330,10 +380,46 @@ def _workout_row_to_summary(row: dict, today_str: str) -> WorkoutSummary:
 
 
 # =============================================================================
+# Cache-miss computation (wrapped by the single-flight guard)
+# =============================================================================
+
+async def _compute_bootstrap(
+    db, user_id: str, today_str: str, user_tz: str, active_profile_id: Optional[str]
+) -> BootstrapResponse:
+    """Run the 5 parallel DB fetches and assemble the BootstrapResponse.
+
+    This is the expensive path executed only on a genuine cache miss. It is
+    invoked through the single-flight guard so concurrent misses for the same
+    key share ONE invocation.
+    """
+    loop = asyncio.get_event_loop()
+    workout_row, nutrition_data, hydration_data, xp_data, gym_profile_data = await asyncio.gather(
+        loop.run_in_executor(_db_executor, lambda: _fetch_today_workout(db, user_id, today_str, user_tz, active_profile_id)),
+        loop.run_in_executor(_db_executor, lambda: _fetch_nutrition_summary(db, user_id, today_str, user_tz)),
+        loop.run_in_executor(_db_executor, lambda: _fetch_hydration(db, user_id, today_str, user_tz)),
+        loop.run_in_executor(_db_executor, lambda: _fetch_xp(db, user_id)),
+        loop.run_in_executor(_db_executor, lambda: _fetch_gym_profile(db, user_id)),
+    )
+
+    today_workout = None
+    if workout_row:
+        today_workout = _workout_row_to_summary(workout_row, today_str)
+
+    return BootstrapResponse(
+        today_workout=today_workout,
+        nutrition_summary=NutritionSummary(**nutrition_data) if nutrition_data else NutritionSummary(),
+        hydration=HydrationSummary(**hydration_data) if hydration_data else HydrationSummary(),
+        xp=XPSummary(**xp_data) if xp_data else XPSummary(),
+        gym_profile=GymProfileSummary(**gym_profile_data) if gym_profile_data else GymProfileSummary(),
+    )
+
+
+# =============================================================================
 # Main endpoint
 # =============================================================================
 
 @router.get("/bootstrap", response_model=BootstrapResponse)
+@user_limiter.limit("60/minute")
 async def home_bootstrap(
     request: Request,
     user_id: str = Query(..., description="User ID"),
@@ -350,17 +436,27 @@ async def home_bootstrap(
     - GET /gym-profiles (active)
 
     All queries run in parallel via asyncio.gather() for minimal latency.
-    Response is cached in Redis for 30 minutes.
+    Response is cached in Redis for ~30 minutes (jittered).
+
+    Rate limited to 60/minute per user: Home is opened and refreshed often,
+    but never dozens of times per second — 60/min absorbs rapid re-opens and
+    background refreshes while still capping a misbehaving client. Expensive
+    misses are further de-duplicated by the per-key single-flight guard below.
     """
     logger.info(f"[BOOTSTRAP] Fetching home bootstrap for user {user_id}")
 
     try:
         db = get_supabase_db()
-        user_tz = resolve_timezone(request, db, user_id)
-        today_str = get_user_today(user_tz)
+        loop = asyncio.get_event_loop()
 
-        # Get active gym profile (needed for cache key and workout filtering)
-        active_profile_id = _get_active_gym_profile_id(db, user_id)
+        # resolve_timezone and _get_active_gym_profile_id are blocking and may
+        # each issue a Supabase .execute(). Offload them to the DB executor so
+        # they never run on the event loop (critical under ~10k concurrency).
+        user_tz, active_profile_id = await asyncio.gather(
+            loop.run_in_executor(_db_executor, lambda: resolve_timezone(request, db, user_id)),
+            loop.run_in_executor(_db_executor, lambda: _get_active_gym_profile_id(db, user_id)),
+        )
+        today_str = get_user_today(user_tz)
         profile_part = active_profile_id or "none"
 
         # Check cache
@@ -370,34 +466,50 @@ async def home_bootstrap(
             logger.info(f"[BOOTSTRAP] CACHE HIT for user {user_id}")
             return BootstrapResponse(**cached)
 
-        # Run all 5 data fetches in parallel
-        loop = asyncio.get_event_loop()
-        workout_row, nutrition_data, hydration_data, xp_data, gym_profile_data = await asyncio.gather(
-            loop.run_in_executor(_db_executor, lambda: _fetch_today_workout(db, user_id, today_str, user_tz, active_profile_id)),
-            loop.run_in_executor(_db_executor, lambda: _fetch_nutrition_summary(db, user_id, today_str, user_tz)),
-            loop.run_in_executor(_db_executor, lambda: _fetch_hydration(db, user_id, today_str, user_tz)),
-            loop.run_in_executor(_db_executor, lambda: _fetch_xp(db, user_id)),
-            loop.run_in_executor(_db_executor, lambda: _fetch_gym_profile(db, user_id)),
-        )
+        # ---- Single-flight on cache miss --------------------------------
+        # Concurrent misses for the same cache_key collapse onto ONE shared
+        # computation instead of each running all 5 DB fetches.
+        async with _inflight_lock:
+            existing = _inflight.get(cache_key)
+            if existing is not None:
+                # Another request is already computing this key — await it.
+                leader_future = existing
+                is_leader = False
+            else:
+                leader_future = loop.create_future()
+                _inflight[cache_key] = leader_future
+                is_leader = True
 
-        # Build response
-        today_workout = None
-        if workout_row:
-            today_workout = _workout_row_to_summary(workout_row, today_str)
+        if not is_leader:
+            logger.info(f"[BOOTSTRAP] Single-flight WAIT for user {user_id} ({cache_key})")
+            response = await leader_future
+            return response
 
-        response = BootstrapResponse(
-            today_workout=today_workout,
-            nutrition_summary=NutritionSummary(**nutrition_data) if nutrition_data else NutritionSummary(),
-            hydration=HydrationSummary(**hydration_data) if hydration_data else HydrationSummary(),
-            xp=XPSummary(**xp_data) if xp_data else XPSummary(),
-            gym_profile=GymProfileSummary(**gym_profile_data) if gym_profile_data else GymProfileSummary(),
-        )
+        # This request is the leader: it actually computes the response.
+        try:
+            response = await _compute_bootstrap(
+                db, user_id, today_str, user_tz, active_profile_id
+            )
 
-        # Cache the response
-        await _bootstrap_cache.set(cache_key, response.dict())
-        logger.info(f"[BOOTSTRAP] CACHE SET for user {user_id} ({cache_key})")
+            # Cache the response with a jittered TTL to avoid lockstep expiry.
+            await _bootstrap_cache.set(
+                cache_key, response.dict(), ttl_override=_jittered_ttl()
+            )
+            logger.info(f"[BOOTSTRAP] CACHE SET for user {user_id} ({cache_key})")
 
-        return response
+            if not leader_future.done():
+                leader_future.set_result(response)
+            return response
+        except Exception as e:
+            # Propagate the failure to every waiter so they don't hang.
+            if not leader_future.done():
+                leader_future.set_exception(e)
+            raise
+        finally:
+            # Always clear the in-flight slot so future misses recompute.
+            async with _inflight_lock:
+                if _inflight.get(cache_key) is leader_future:
+                    del _inflight[cache_key]
 
     except Exception as e:
         logger.error(f"[BOOTSTRAP] Failed for user {user_id}: {e}", exc_info=True)
