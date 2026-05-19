@@ -1,38 +1,7 @@
 ---
 name: reddit-analyzer
 description: |
-  Use this agent when you have Reddit content (pasted text, screenshots, or a thread URL) that you want analyzed for themes, sentiment, competitor mentions, reply opportunities, viral patterns, and Zealova-relevant intelligence. Different from `reddit-agent` (which finds threads to engage and drafts replies) — this one is **inbound intelligence**: you bring the content, it extracts meaning.
-
-  Four modes:
-
-  1. **`analyze` mode** — you paste 1-N Reddit threads (text, screenshot, or URL) and the agent returns themed analysis (what users care about, sentiment, competitor mentions, opportunities, threats). 5-15 min.
-  2. **`competitor-mention-watch` mode** — scan a batch of threads specifically for competitor (Fitbod, MyFitnessPal, MacroFactor, etc.) mentions; rate sentiment per mention; surface threats and openings.
-  3. **`opportunity-extract` mode** — given a batch, surface only the threads where a Zealova reply would add real value (high engagement + on-topic + open question + sub allows promo); ranks them.
-  4. **`changelog` mode** — after analysis, append a dated entry to `docs/planning/marketing/reddit/analysis-log.md` with the headline findings + decisions made + follow-up actions.
-
-  Trigger phrases: "Analyze these Reddit threads I gathered" / "I copied 5 threads — what are users actually saying about Fitbod?" / "Here's a screenshot of an r/Fitness thread — what's the angle?" / "Watch for competitor mentions in these threads" / "Find reply opportunities in this batch" / "Log this week's Reddit analysis findings".
-
-  This agent reads native pasted text, processes image attachments (multimodal), and can WebFetch URLs the user passes in. Always reads `docs/planning/marketing/reddit/analysis-log.md` first to track recurring themes across runs.
-
-  Examples:
-
-  <example>
-  Context: User pasted 5 Reddit threads from r/loseit.
-  user: "Analyze these 5 r/loseit threads I copied — what should I know?"
-  assistant: "Launching reddit-analyzer in analyze mode — reads the pasted threads, runs live WebSearch for current r/loseit weekly hot topics + any competitor recent moves, returns themed findings (top 3 user concerns, sentiment toward MFP/Cal-AI/Noom, 2-3 reply opportunities, anything threatening Zealova's positioning)."
-  </example>
-
-  <example>
-  Context: User wants competitor watch.
-  user: "Here are 10 threads from r/Fitness and r/xxfitness. Any Fitbod mentions worth tracking?"
-  assistant: "Using reddit-analyzer in competitor-mention-watch mode — extracts every competitor mention, scores sentiment, flags any with engagement >20 comments where I should reply."
-  </example>
-
-  <example>
-  Context: Weekly logging.
-  user: "Log this week's Reddit analysis findings — main theme was MFP backlash, 3 reply opportunities flagged"
-  assistant: "Using reddit-analyzer in changelog mode — appends dated entry with key themes, decisions made, and what's queued for next week."
-  </example>
+  Inbound Reddit intelligence — you bring the content (pasted text, screenshots, thread URLs), it extracts meaning: themes, sentiment, competitor mentions, reply opportunities, viral patterns, threats. Different from reddit-agent (which finds threads + drafts replies). Modes: analyze (themed analysis of pasted threads), competitor-mention-watch (scan a batch for competitor mentions + per-mention sentiment), opportunity-extract (rank threads where a Zealova reply adds real value), changelog (append findings to marketing/reddit/analysis-log.md). Triggers: "analyze these Reddit threads I gathered", "what are users saying about Fitbod?", "here's a screenshot of an r/Fitness thread", "watch for competitor mentions in these threads", "find reply opportunities in this batch", "log this week's Reddit analysis findings". Multimodal (reads pasted text + images), can WebFetch passed URLs; reads analysis-log.md first to track recurring themes.
 model: sonnet
 color: red
 ---

@@ -1,30 +1,7 @@
 ---
 name: competitor-intel
 description: |
-  Use this agent for deep-dive intelligence on a specific competitor across the 4 categories Zealova competes in (full matrix in `_ZEALOVA_FACTS.md` §4):
-
-  - **4A Workout AI:** Fitbod · Future · Caliber · Freeletics · FitnessAI · Dr. Muscle · Alpha Progression · Centr · Nike Training Club · Ladder · **Gravl** · Trainiac
-  - **4B Workout tracking:** **Hevy** · Strong · JEFIT · Boostcamp · Just12Reps · Stronger
-  - **4C Nutrition / calorie:** **MyFitnessPal** (acquired Cal AI Mar 2026) · **MacroFactor** · **Cronometer** · Cal AI · Lose It! · Lifesum · Noom · YAZIO · FatSecret · MyNetDiary · PlateLens · Foodvisor · Carbon Diet Coach
-  - **4D AI form analysis:** Sculptor · Gymscore
-
-  Trigger phrases: "profile Fitbod", "deep dive on MacroFactor", "competitor research on Hevy", "what are users saying about Cronometer on Reddit", "refresh MyFitnessPal profile post-Cal-AI-acquisition", "research <competitor> for the comparison page".
-
-  This agent runs live WebSearch + WebFetch on the competitor's site, App Store/Play Store listing, recent reviews, Reddit sentiment, pricing pages, and any news from the past 90 days. Output is a single canonical profile appended to `docs/planning/marketing/competitors/intel.md` that downstream agents (comparison-page-writer especially) read before drafting.
-
-  Examples:
-
-  <example>
-  Context: comparison-page-writer needs intel before writing /vs/sculptor.
-  user: "Run competitor intel on Sculptor before I write the vs page"
-  assistant: "Launching competitor-intel — it'll pull Sculptor's site, App Store reviews, recent Reddit threads, pricing, feature list, and known weaknesses into a single profile in marketing/competitors/intel.md."
-  </example>
-
-  <example>
-  Context: User wants competitive monitoring.
-  user: "What's new with Fitbod in the past month?"
-  assistant: "Using competitor-intel on Fitbod with date filter past 30 days — checking changelog, pricing changes, App Store reviews, Reddit chatter."
-  </example>
+  Deep-dive intelligence on a specific competitor across the 4 categories Zealova competes in (full matrix in `_ZEALOVA_FACTS.md` §4): Workout AI (Fitbod, Future, Caliber, Freeletics, FitnessAI, Gravl…), Workout tracking (Hevy, Strong, JEFIT…), Nutrition/calorie (MyFitnessPal — acquired Cal AI Mar 2026 —, MacroFactor, Cronometer, Cal AI, Noom, YAZIO…), AI form analysis (Sculptor, Gymscore). Triggers: "profile Fitbod", "deep dive on MacroFactor", "competitor research on Hevy", "what are users saying about Cronometer on Reddit", "research <competitor> for the comparison page". Runs live WebSearch + WebFetch on the competitor's site, store listings, recent reviews, Reddit sentiment, pricing, and news from the past 90 days; appends one canonical profile to docs/planning/marketing/competitors/intel.md for downstream agents.
 model: sonnet
 color: orange
 ---

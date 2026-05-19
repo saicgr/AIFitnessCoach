@@ -1,35 +1,7 @@
 ---
 name: social-post-creator
 description: |
-  Use this agent ANY TIME the user asks you to draft, write, or create a social media post or update for Zealova — whether targeting all platforms ("post an update everywhere", "write social posts for the launch") or specific ones ("write a LinkedIn post about X", "give me a Twitter thread", "draft an Instagram Reel script"). This agent does fresh keyword + hashtag + algorithm + trending-topic WebSearch BEFORE drafting EVERY SINGLE TIME (no caching, no static reference files), reads every previous post in marketing/<platform>/posts.md to avoid repeating angles, follows the per-platform CLAUDE.md rules, and appends new drafts (never overwrites). It handles LinkedIn, X (Twitter), Reddit, Instagram (organic + ads), and TikTok.
-
-  Examples:
-
-  <example>
-  Context: User wants to announce launch progress across all socials.
-  user: "Write me social posts for all platforms about clearing Google Play production review"
-  assistant: "Launching the social-post-creator agent — it'll do live web research for current 2026 hashtags + algorithm rules + trending hooks for each platform, read past posts to pick fresh angles, and draft platform-specific posts (not copy-paste)."
-  </example>
-
-  <example>
-  Context: Single-platform request.
-  user: "Give me a LinkedIn post about the AI coach feature"
-  assistant: "I'll use the social-post-creator agent to research current LinkedIn algo + trending hashtags + viral hooks live, check past LinkedIn posts in marketing/linkedin/posts.md, and draft a post that doesn't repeat past angles."
-  </example>
-
-  <example>
-  Context: Recurring update.
-  user: "It's been a week since my last X thread, time for another"
-  assistant: "I'll launch the social-post-creator agent to live-research what's currently performing on X for #buildinpublic + the AI fitness niche, scan the past threads in marketing/x/posts.md, and draft a fresh-angle thread."
-  </example>
-
-  <example>
-  Context: Cross-platform launch announcement.
-  user: "App is live on Play Store! Make me posts for LinkedIn, X, Instagram, and Reddit"
-  assistant: "Launch announcement across 4 platforms — I'll use the social-post-creator agent which will reshape the same news into platform-native formats with this-week's hashtag intel and trending-hook angles per platform."
-  </example>
-
-  Also handles EDITS to existing posts in marketing/. Triggers: "tweak / change / refine / optimize / shorten / strengthen / fix / add the link to / move the hashtags / swap the hook in / replace the CTA / shorten the Reel script" an existing post block. In edit mode the agent runs targeted (not full-batch) WebSearches scoped to the specific change, applies the minimum-viable diff to the existing post block in `marketing/<platform>/posts.md`, appends a dated revision-log sub-section (never overwrites the original Research log), and re-runs the platform coherence checks (char count, hashtag count, no body links, CTA shape, trending-sound freshness for Reels/TikTok). Whenever the user asks to change anything in an existing post, the parent agent MUST route to social-post-creator in Edit mode rather than editing the file directly.
+  Use ANY TIME the user asks to draft/write/create a social media post or update for Zealova — all platforms ("post an update everywhere", "write social posts for the launch") or specific ones ("write a LinkedIn post about X", "give me a Twitter thread", "draft an Instagram Reel script"). Handles LinkedIn, X, Reddit, Instagram (organic + ads), TikTok. Does fresh keyword/hashtag/algorithm/trending WebSearch before drafting every time (no caching), reads past posts in marketing/<platform>/posts.md to avoid repeat angles, follows per-platform CLAUDE.md rules, appends (never overwrites). Also handles EDITS to existing posts — triggers: "tweak / change / refine / optimize / shorten / strengthen / fix / add the link to / move the hashtags / swap the hook in / replace the CTA" an existing post block. In edit mode: targeted WebSearches scoped to the change, minimum-viable diff to the post block, appends a dated revision-log sub-section, re-runs platform coherence checks (char/hashtag count, no body links, CTA shape, trending-sound freshness). Route here for ANY change to an existing post rather than editing the file directly.
 model: sonnet
 color: pink
 ---

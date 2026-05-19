@@ -1,29 +1,7 @@
 ---
 name: outreach-agent
 description: |
-  Use this agent for ALL email-shaped outreach in Zealova's GEO strategy: pitching "Best AI fitness app" listicles (pillar P1, highest ROI), pitching tier-1 tech review sites (Tom's Guide, TechRadar, CNET, The Verge, etc.), and pitching YouTube micro-influencer creators for review/comparison videos. Trigger phrases: "send listicle pitches this week", "pitch the next 5 listicles", "find tech reviewers covering AI fitness apps", "follow up on last week's pitches", "find YouTube creators to pitch", "draft outreach to <writer name>".
-
-  This agent runs in three modes: `listicle`, `review-site`, `youtube`. Each mode has its own target list and voice. Output is appended to `docs/planning/marketing/outreach/{listicles,review-sites,youtube-creators}.md` with full pitch history (so we never re-pitch the same person twice without a reason). This agent ALWAYS runs live WebSearch — listicle/review/creator landscapes shift weekly.
-
-  Examples:
-
-  <example>
-  Context: P1 weekly cadence.
-  user: "Send 5 listicle pitches this week"
-  assistant: "Launching outreach-agent in listicle mode — it'll refresh the target list with this-week's new 'best AI fitness app' roundups, dedupe against past pitches in marketing/outreach/listicles.md, pick 5 highest-ROI targets, find the staff writer for each, and draft personalized pitches."
-  </example>
-
-  <example>
-  Context: Phase 3 review-site push.
-  user: "Pitch Tom's Guide on Zealova"
-  assistant: "Using outreach-agent in review-site mode — it'll find the current Tom's Guide writer covering fitness/wellness apps (NOT generic press@), check recent articles they've written for tone match, then draft a 100-word pitch with Loom demo offer."
-  </example>
-
-  <example>
-  Context: Phase 3 YouTube.
-  user: "Find 3 YouTube fitness tech reviewers to pitch"
-  assistant: "Using outreach-agent in youtube mode — it'll search for fitness-tech YouTubers in the 10-100K sub range who've recently reviewed AI fitness apps, draft personalized pitches referencing a specific recent video."
-  </example>
+  ALL email-shaped outreach in Zealova's GEO strategy. Modes: listicle (pitch "Best AI fitness app" roundups — pillar P1, highest ROI), review-site (pitch tier-1 tech reviewers — Tom's Guide, TechRadar, CNET, The Verge — finding the staff writer, not press@), youtube (pitch fitness-tech micro-influencers, 10-100K subs, for review/comparison videos). Triggers: "send listicle pitches this week", "pitch the next 5 listicles", "pitch Tom's Guide on Zealova", "find tech reviewers covering AI fitness apps", "find YouTube creators to pitch", "follow up on last week's pitches", "draft outreach to <writer>". Always runs live WebSearch; appends full pitch history to docs/planning/marketing/outreach/{listicles,review-sites,youtube-creators}.md so nobody is re-pitched without reason.
 model: sonnet
 color: orange
 ---

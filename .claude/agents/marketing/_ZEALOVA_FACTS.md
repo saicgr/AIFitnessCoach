@@ -34,7 +34,7 @@ Never reference the Android applicationId in marketing — it's a legacy artifac
 
 ## 2. What Zealova actually does (use these — do not invent)
 
-**Audited 2026-05-14** against actual app router (`mobile/flutter/lib/router/`) and main shell nav (`widgets/main_shell_part_edge_panel_handle.dart`). User-stated exclusions (no merch storefront / no social feed / no challenges / no fasting marketing) are encoded in the "DO NOT MARKET" section below — directories or routes for these may exist in code but they are NOT to be referenced in any marketing surface.
+**Audited 2026-05-14** against actual app router (`mobile/flutter/lib/router/`) and main shell nav (`widgets/main_shell_part_edge_panel_handle.dart`). User-stated exclusions (no merch storefront / no social feed / no challenges) are encoded in the "DO NOT MARKET" section below — directories or routes for these may exist in code but they are NOT to be referenced in any marketing surface.
 
 ### 2A. Bottom-nav surfaces (the 5 user-facing tabs)
 
@@ -56,8 +56,10 @@ Never reference the Android applicationId in marketing — it's a legacy artifac
 - **Custom exercises** — user-created exercises with image/video upload, AI-assisted import, public/private sharing.
 - **Supersets** — antagonist pair mapping + AI superset suggestions + classic curated pairs.
 - **Gym equipment profiles** — multiple equipment loadouts per user (home / commercial gym / hotel) with environment-based defaults.
-- **Live Activity** (iOS) — workout-in-progress widget.
+- **Live Activity** (iOS) — workout-in-progress AND active-fast widget (Dynamic Island + Lock Screen).
 - **Health Connect integration** (Android, limited scope per 2026-05 resubmit).
+- **Intermittent Fasting** — full fasting tracker (shipped 2026-05-18). Protocols 14:10 / 16:8 / 18:6 / 20:4 / OMAD / 5:2 / ADF / extended fasts, plus a custom per-weekday schedule. Live metabolic-stage ring (Fed → Blood Sugar Drop → Fat Burning → Ketosis → Autophagy → Deep Autophagy) with times calculated from the last meal; Body Status stage-journey view; hydration + mood/energy check-ins during fasts; pause/resume; iOS Live Activity + Android actionable ongoing notification; built-in Fasting Guide (0h → 30-day educational timeline).
+- **Trends & correlations** — Custom Trends analytics (shipped 2026-05-18). Chart 100+ tracked metrics (weight, body measurements, all macros + micronutrients, calories, water, steps, sleep, mood, energy, glucose, fasting hours, workout volume, strength, and more), overlay any two metrics on one chart and see their correlation, AI-generated trend insights, event overlays (workout / fasting / cycle days).
 
 ### 2C. SECONDARY features (mention contextually, don't lead)
 
@@ -113,7 +115,6 @@ User explicitly excluded these on 2026-05-14. Do not reference in any marketing 
 - ❌ **Merch store** — no shippable physical-goods storefront. (Code in `merch/` is for cosmetic XP-reward artwork only — do NOT call out as "merchandise" or "store.")
 - ❌ **Social feed / community** — share-to-Instagram + plan-share-links exist but there's no real social feed. Do NOT market as "social" or "community."
 - ❌ **Community challenges** — challenge code/routes exist but are not shipped to end users for marketing purposes. Do NOT claim challenges as a feature.
-- ❌ **Fasting tracker** — fasting code/routes exist (and have active edits) but do NOT market as a shipped feature.
 - ❌ **Senior-specific UX** — `senior_home_screen.dart` deprecated and inactive.
 - ❌ **Offline mode** — local SQLite + on-device Gemma code exists, but Settings UI was REMOVED 2026-04-19. Do NOT cite as a privacy/offline feature.
 - ❌ **Body composition AI analysis** — code exists in `body_analyzer/` but until user confirms scope, market only "body measurement entry."
@@ -306,6 +307,8 @@ After any update, append a dated line to the changelog below.
 ---
 
 ## Changelog
+
+- **2026-05-18** — v1.4 — Intermittent Fasting and Trends & Correlations both shipped this development cycle. Added both to §2B Core features; removed "Fasting tracker" from §2E DO NOT MARKET and dropped "no fasting marketing" from the §2 audit note. Live Activity entry updated to cover the active-fast widget. Store listings (`PLAY_STORE_LISTING_COPY.md`, `APP_STORE_LISTING.md`) refreshed with both features.
 
 - **2026-05-14** — v1.4 — Pricing hedge removed. Confirmed live store rollout of $7.99/$59.99 on Google Play (US). PRICING.md updated to match (was stale at $4.99/$49.99). Regional PPP values flagged as stale and queued for re-set in stores. Net profit per US user now $6.09/mo (monthly SKU) vs $3.54/mo at old price. Breakeven shifts from ~20 subs to ~12 subs.
 - **2026-05-14** — v1.3 — Code-level reliability audit revealed gap between "code structurally exists" and "user-confirmed ship-grade." User flagged 8 features as not-properly-tested. Moved them to new §2G "Reliability hold" section: form analysis, in-workout chat, menu scan, recipe import, audio coach, MFP OCR, skill progressions, multi-exec UI tiers. §2B Core list trimmed from 15 → 11 items, with food-image-multi-input promoted to lead position. Workout generation softened (no specific reliability promises). Multi-exec tiers downgraded to "Easy tier only" per code audit.

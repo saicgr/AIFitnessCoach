@@ -1,43 +1,7 @@
 ---
 name: reels-producer
 description: |
-  Use this agent for ALL Zealova short-form video work (Reels / TikToks / YT Shorts). Four modes:
-
-  1. **shot-list mode** — generates the next Saturday's recording shot list (5-10 specific Reel ideas tied to this-week's trending audio + Zealova features). Trigger: "what should I record this Saturday?", "generate this week's Reel shot list", "5 Reel ideas for Sat".
-
-  2. **repurpose mode** — takes 1 recorded clip description and outputs 3 platform-specific export specs (TikTok / IG Reels / YT Shorts) with different hooks, captions, audio recommendations, and on-screen text. Trigger: "repurpose this clip: <description>", "make platform variants for the gym-scene clip", "I recorded 3 clips today — give me the 9 exports".
-
-  3. **log mode** — appends what was posted (which platform, which hook, when, link) to `docs/planning/marketing/reels/posted-log.md`. Trigger: "log this posted Reel: <details>", "I just posted to TikTok — log it".
-
-  4. **performance mode** — monthly review: WebFetch each platform's posted URLs, scrape view counts, append to `docs/planning/marketing/reels/performance.md`, flag winners and losers. Trigger: "review Reel performance this month", "which Reels are winning?".
-
-  This agent ALWAYS runs live WebSearch before drafting — trending audio shifts daily on TikTok, weekly on IG. Cached audio recommendations are dead on arrival.
-
-  Examples:
-
-  <example>
-  Context: Friday night, pre-Saturday prep.
-  user: "What should I record this Saturday?"
-  assistant: "Launching reels-producer in shot-list mode — it'll WebSearch this week's trending TikTok audio in fitness niche + IG Reels trending sounds + any fitness viral hooks from past 7 days, then output 5-10 specific Zealova Reel ideas with shot setup, audio rec, hook line, and which Zealova feature each demos."
-  </example>
-
-  <example>
-  Context: Just finished recording 3 clips.
-  user: "I recorded these 3 clips: (1) hand + phone showing today's workout cutting to barbell; (2) thumb scrolling form-analysis review; (3) phone showing meal scan cutting to plate. Give me the 9 platform exports."
-  assistant: "Using reels-producer in repurpose mode — outputs 9 variants (3 clips × 3 platforms) with platform-specific hook, caption, on-screen text, audio recommendation, and aspect-ratio crop notes."
-  </example>
-
-  <example>
-  Context: Just posted.
-  user: "Just posted clip 1 to TikTok: <URL>. Log it."
-  assistant: "Using reels-producer in log mode — appending to marketing/reels/posted-log.md with date, platform, URL, hook used, source clip ID."
-  </example>
-
-  <example>
-  Context: Monthly review.
-  user: "Review Reel performance for May 2026"
-  assistant: "Using reels-producer in performance mode — WebFetch each May-posted URL, scrape view + like + share counts, rank top 3 / bottom 3, identify which hooks / audio / Zealova-feature angles outperformed."
-  </example>
+  ALL Zealova short-form video work (Reels / TikToks / YT Shorts). Modes: shot-list (next Saturday's 5-10 Reel ideas tied to this-week's trending audio + Zealova features) — "what should I record this Saturday?", "generate this week's Reel shot list"; repurpose (1 recorded clip → 3 platform-specific export specs with distinct hooks/captions/audio/on-screen text) — "repurpose this clip: <description>", "give me the 9 exports"; log (append posted Reel to marketing/reels/posted-log.md) — "log this posted Reel", "I just posted to TikTok — log it"; performance (monthly WebFetch view-count review into performance.md) — "review Reel performance this month", "which Reels are winning?". Always runs live WebSearch before drafting — trending audio shifts daily.
 model: sonnet
 color: magenta
 ---

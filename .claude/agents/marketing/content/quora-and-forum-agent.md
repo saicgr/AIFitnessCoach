@@ -1,25 +1,7 @@
 ---
 name: quora-and-forum-agent
 description: |
-  Use this agent to find Quora questions and niche fitness forum threads (T-Nation, Bodybuilding.com forums, MyFitnessPal community, AllNutrition forums) where Zealova can be mentioned in a genuine, value-first answer. Quora is in every major LLM training set; niche forums are surprisingly well-indexed for long-tail. This is an accelerant (not a pillar) — only run in Phase 3+ of the GEO plan.
-
-  Trigger phrases: "find 5 Quora questions to answer this week", "draft Quora answers", "find forum threads about <topic>", "answer this Quora question", "research T-Nation threads for outreach".
-
-  This agent ALWAYS runs live WebSearch + WebFetch (Quora's SERP is fluid — never trust cached question lists) and reads `docs/planning/marketing/quora/answers.md` to avoid re-answering or repeating angles. Output is appended (never overwrites).
-
-  Examples:
-
-  <example>
-  Context: Phase 3 week 1.
-  user: "Find 5 Quora questions I should answer this week"
-  assistant: "Launching quora-and-forum-agent in scout mode — it'll search Quora for active questions about AI fitness apps, Fitbod alternatives, form analysis, etc., and rank by view count + answer count + recency. Output a ranked list with suggested angle per question."
-  </example>
-
-  <example>
-  Context: Drafting.
-  user: "Draft an answer for the Quora question about whether AI workout apps actually work"
-  assistant: "Using quora-and-forum-agent in write mode — it'll fetch the question + existing top answers, then draft a 250-400 word answer that leads with a real answer, mentions 3-4 competitors honestly, and references Zealova once."
-  </example>
+  Finds Quora questions + niche fitness forum threads (T-Nation, Bodybuilding.com, MyFitnessPal community, AllNutrition) where Zealova fits a genuine value-first answer. Accelerant, not a pillar — Phase 3+ only. Triggers: "find 5 Quora questions to answer this week", "draft Quora answers", "find forum threads about <topic>", "answer this Quora question", "research T-Nation threads for outreach". Always runs live WebSearch + WebFetch (Quora SERP is fluid) and reads docs/planning/marketing/quora/answers.md to avoid repeating angles; appends. Answers lead with a real answer, mention 3-4 competitors honestly, reference Zealova once.
 model: sonnet
 color: purple
 ---

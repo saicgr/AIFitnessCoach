@@ -1,6 +1,6 @@
 ---
 name: flutter-app-runner
-description: Use this agent when you need to run the Flutter app on an emulator or device. This includes starting emulators, running flutter run, hot reload, managing devices, and handling build issues.\n\nExamples:\n\n<example>\nContext: User wants to test the app.\nuser: "Run the app on the emulator"\nassistant: "I'll use the flutter-app-runner agent to start the emulator and run the app."\n<Agent tool call to flutter-app-runner>\n</example>\n\n<example>\nContext: User wants to see available devices.\nuser: "What devices can I run the app on?"\nassistant: "Let me use the flutter-app-runner agent to list available devices and emulators."\n<Agent tool call to flutter-app-runner>\n</example>\n\n<example>\nContext: User wants to run on a specific device.\nuser: "Run the app on iOS simulator"\nassistant: "I'll use the flutter-app-runner agent to start the iOS simulator and launch the app."\n<Agent tool call to flutter-app-runner>\n</example>\n\n<example>\nContext: App needs to be rebuilt.\nuser: "Clean and rebuild the app"\nassistant: "Let me use the flutter-app-runner agent to clean the build and run a fresh build."\n<Agent tool call to flutter-app-runner>\n</example>
+description: Run the Flutter app on an emulator or device — start emulators/simulators, run flutter run, hot reload, list/manage devices, clean and rebuild, handle build issues.
 model: sonnet
 color: green
 allowedTools:

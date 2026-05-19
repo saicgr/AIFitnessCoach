@@ -1,39 +1,7 @@
 ---
 name: creator-outreach
 description: |
-  Use this agent to find Instagram + TikTok creators under 80K followers in the fitness/nutrition niche, generate **distinctive personalized outreach DMs that never feel like a bot**, send weekly batches, log responses, and design retainer terms for proven performers. This is the Cal AI playbook: 150+ creators on retainer, each posting ~4×/month, paid UGC funneling into a single app. You're bootstrapping the same model.
-
-  Five modes:
-
-  1. **`find` mode** — search IG + TikTok for new creator candidates matching criteria (niche fitness / nutrition / weight loss / form analysis; 5K-80K followers; engagement rate ≥3%; recent posts in past 14 days). Returns ranked list with profile data + recent-post references for personalization.
-  2. **`draft-batch` mode** — generate N distinctive personalized DMs (each one references something SPECIFIC from the creator's last 5-10 posts; each opener is different; lengths vary; tone matches platform). Default batch size: 10-20.
-  3. **`payment-research` mode** — refresh current 2026 creator rate benchmarks for fitness niche (micro: 5K-30K; mid: 30K-80K). Run weekly to keep offers competitive.
-  4. **`log-response` mode** — track who replied + outcome (interested / declined / ghosted / posted / converting). Updates `marketing/creators/log.md`.
-  5. **`retainer-design` mode** — for creators who posted once and performed well, design retainer terms (frequency, monthly fee, deliverables, affiliate code, kill criteria).
-
-  Trigger phrases: "Find 20 fitness creators under 80K I should reach out to" / "Find IG creators for the form-analysis angle" / "Draft DMs for these 15 creators" / "Refresh creator payment benchmarks" / "Log responses from this week's outreach" / "Design a retainer for <creator> — they got 200K views and we got 80 installs".
-
-  **Anti-bot discipline (the prime directive):** every DM must read like a thoughtful founder personally wrote it after watching this creator's videos. No template openers. No "Hi [Name]" patterns. Different first sentence every time. Different ask format. Lengths vary 60-150 words. Reference at least one specific recent post by description (not just title). Match platform voice (IG slightly more polished; TikTok DMs can be casual). Use AT MOST 1 emoji per message, often zero. Sign off varies. The user will be auditing — if any two messages in a batch read alike, the batch failed.
-
-  Examples:
-
-  <example>
-  Context: Phase 3+ ramp.
-  user: "Find 20 fitness creators under 80K I should reach out to this week"
-  assistant: "Launching creator-outreach in find mode — searches IG + TikTok for fitness/nutrition creators 5K-80K, engagement ≥3%, posted in past 14 days, mixes niche clusters (general fitness, weight loss, form analysis, calorie tracking). Returns ranked table with profile + 3-5 recent post references for personalization."
-  </example>
-
-  <example>
-  Context: After find, ready to message.
-  user: "Draft DMs for those 20 creators"
-  assistant: "Using creator-outreach in draft-batch mode — pulls each creator's recent posts via WebFetch (live, this run), drafts a unique DM per creator with distinctive opener + specific post reference + varying ask format + 60-150 word length. Reads marketing/creators/sent.md to make sure none of these are duplicates of past outreach. Outputs 20 ready-to-paste DMs in marketing/creators/drafts-YYYY-MM-DD.md."
-  </example>
-
-  <example>
-  Context: Money question.
-  user: "How much should I be paying these creators?"
-  assistant: "Using creator-outreach in payment-research mode — runs live WebSearch on 2026 fitness UGC rates by follower tier, factors in fitness-niche premium (2-3x lifestyle), recommends Zealova's offer tier (flat-fee starter + affiliate code + retainer upgrade path). Output appended to marketing/creators/rate-card.md."
-  </example>
+  Find IG + TikTok fitness/nutrition creators under 80K followers, generate distinctive personalized outreach DMs (never bot-like), send weekly batches, log responses, design retainer terms — the Cal AI 150-creators-on-retainer playbook. Modes: find (search IG+TikTok; 5K-80K followers, engagement ≥3%, posted in past 14 days; ranked list + recent-post references), draft-batch (N unique DMs, each referencing a specific recent post, openers all different, lengths vary 60-150 words; batch 10-20), payment-research (refresh 2026 fitness UGC rate benchmarks), log-response (track replies/outcomes in marketing/creators/log.md), retainer-design (terms for proven performers). Triggers: "find 20 fitness creators under 80K", "draft DMs for these creators", "refresh creator payment benchmarks", "log responses from this week", "design a retainer for <creator>". Anti-bot prime directive: every DM reads like a founder personally wrote it — no template openers, no "Hi [Name]", different first sentence and ask format every time, ≤1 emoji; if any two DMs in a batch read alike, the batch failed.
 model: sonnet
 color: orange
 ---

@@ -1,23 +1,7 @@
 ---
 name: citation-tracker
 description: |
-  Use this agent monthly (or on demand) to snapshot how often Zealova is mentioned by ChatGPT, Claude, Gemini, Perplexity, and Google AI Overviews for the GEO plan's target queries. This is the only feedback loop on whether P1/P2/P3 are actually working. Trigger phrases: "snapshot LLM citations", "run citation tracker", "are we showing up in ChatGPT yet?", "monthly GEO measurement", "baseline LLM mentions".
-
-  This agent runs live WebSearch + WebFetch on the major LLM-search surfaces and any public citation-tracking tools, then appends a dated snapshot to `docs/planning/marketing/citations/tracker.md`. It compares against the previous snapshot to flag deltas and recommends plan adjustments if a tactic has shown zero movement after 60+ days.
-
-  Examples:
-
-  <example>
-  Context: Monthly check.
-  user: "Run the monthly citation snapshot"
-  assistant: "Launching citation-tracker — it'll query 8 target queries across ChatGPT/Claude/Gemini/Perplexity (via search + public tools), grep for Zealova mentions and competitor mentions, append a dated snapshot, and flag any tactic that's flat after 60+ days."
-  </example>
-
-  <example>
-  Context: Quick check.
-  user: "Are we showing up in ChatGPT for 'best AI fitness app' yet?"
-  assistant: "Using citation-tracker in spot-check mode — single query, single snapshot row, dated, in marketing/citations/tracker.md."
-  </example>
+  Monthly (or on-demand) snapshot of how often Zealova is mentioned by ChatGPT, Claude, Gemini, Perplexity, and Google AI Overviews for the GEO plan's target queries — the only feedback loop on whether P1/P2/P3 work. Triggers: "snapshot LLM citations", "run citation tracker", "are we showing up in ChatGPT yet?", "monthly GEO measurement", "baseline LLM mentions". Runs live WebSearch + WebFetch on LLM-search surfaces + public citation tools, appends a dated snapshot to docs/planning/marketing/citations/tracker.md, compares to the prior snapshot for deltas, and flags any tactic flat after 60+ days. Spot-check mode handles a single query.
 model: sonnet
 color: pink
 ---
