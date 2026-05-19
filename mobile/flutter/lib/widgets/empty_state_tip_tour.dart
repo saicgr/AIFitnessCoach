@@ -186,6 +186,24 @@ class _EmptyStateTipTourState extends State<EmptyStateTipTour> {
     super.dispose();
   }
 
+  /// Scroll the current step's target widget into view so its spotlight
+  /// cutout is actually on-screen. Without this, a step whose anchor sits
+  /// below the fold (e.g. Discover's Rising Stars under a tall hero card)
+  /// showed a card with no visible highlight box.
+  void _ensureTargetVisible() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_disposed || _step >= widget.tips.length) return;
+      final ctx = widget.tips[_step].targetKey?.currentContext;
+      if (ctx == null) return;
+      Scrollable.ensureVisible(
+        ctx,
+        duration: const Duration(milliseconds: 350),
+        curve: Curves.easeInOut,
+        alignment: 0.3, // target sits ~30% down the viewport
+      );
+    });
+  }
+
   void _scheduleNextPump() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_disposed) return;
@@ -226,6 +244,7 @@ class _EmptyStateTipTourState extends State<EmptyStateTipTour> {
         _visible = true;
         _ready = true;
       });
+      _ensureTargetVisible();
       return;
     }
     final prefs = await SharedPreferences.getInstance();
@@ -235,6 +254,7 @@ class _EmptyStateTipTourState extends State<EmptyStateTipTour> {
       _visible = !seen;
       _ready = true;
     });
+    if (!seen) _ensureTargetVisible();
     // If the tour just became visible to the user, schedule an auto-mark
     // so any exit path (tab switch, back gesture, tap-to-log via the
     // spotlit target, force-kill) counts as "seen". Without this, only
@@ -294,6 +314,7 @@ class _EmptyStateTipTourState extends State<EmptyStateTipTour> {
   void _next() {
     if (_step < widget.tips.length - 1) {
       setState(() => _step++);
+      _ensureTargetVisible();
     } else {
       // Fire-and-forget but propagate any errors via the debugPrint inside.
       // We can't await in this synchronous handler without delaying the
@@ -304,7 +325,10 @@ class _EmptyStateTipTourState extends State<EmptyStateTipTour> {
   }
 
   void _prev() {
-    if (_step > 0) setState(() => _step--);
+    if (_step > 0) {
+      setState(() => _step--);
+      _ensureTargetVisible();
+    }
   }
 
   @override
