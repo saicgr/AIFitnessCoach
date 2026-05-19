@@ -46,6 +46,21 @@ import '../data/models/user_xp.dart';
 import '../data/models/weekly_recap.dart';
 import 'weekly_recap_dialog.dart';
 import '../core/accessibility/accessibility_provider.dart';
+// Tab-prewarm provider imports — warmed in build() so each tab paints from
+// cache instead of a cold network skeleton on first open.
+import '../data/providers/today_workout_provider.dart' show todayWorkoutProvider;
+import '../data/repositories/workout_repository.dart'
+    show workoutsProvider, workoutScreenSummaryProvider;
+import '../data/repositories/nutrition_repository.dart' show nutritionProvider;
+import '../data/services/health_service.dart' show dailyActivityProvider;
+import '../data/repositories/hydration_repository.dart' show hydrationProvider;
+import '../data/providers/timeline_provider.dart' show timelineProvider;
+import '../data/providers/habit_provider.dart' show habitsProvider;
+import '../data/providers/consistency_provider.dart' show consistencyProvider;
+import '../data/providers/synced_workouts_provider.dart'
+    show syncedWorkoutsProvider;
+import '../data/providers/nutrition_preferences_provider.dart'
+    show nutritionPreferencesProvider;
 
 part 'main_shell_part_edge_panel_handle.dart';
 part 'main_shell_part_guest_mode_banner.dart';
@@ -201,22 +216,50 @@ class MainShell extends ConsumerWidget {
     // Get dynamic accent color from provider
     final accentColor = ref.colors(context).accent;
 
-    // Warm the Discover leaderboard snapshot in the background so the first
-    // tap on the Discover tab paints instantly (cache-first) instead of a
-    // cold network fetch. discoverSnapshotProvider is a kept-alive
-    // StateNotifierProvider whose notifier load()s on creation — this one
-    // read creates it; the result then holds for when the tab opens.
+    // ── Tab prewarm ──────────────────────────────────────────────────
+    // Warm every tab's first-paint data providers in the background so
+    // switching tabs (and landing on Home) paints from cache instead of a
+    // cold network skeleton. Each provider below is a StateNotifier / a
+    // derived Provider / an autoDispose provider that calls keepAlive(), so
+    // a bare `ref.read` constructs it, kicks off its fetch, and the result
+    // is retained for when the tab actually opens. `ref.read` is idempotent
+    // — re-running this block on every rebuild is a cheap no-op (no second
+    // notifier, no refetch), so no one-time guard is needed and a re-login
+    // (fresh MainShell) re-warms correctly.
+
+    // Home tab — hero workout, full workout list, daily nutrition, health
+    // activity, hydration, today's timeline, weekly consistency.
+    ref.read(todayWorkoutProvider);
+    ref.read(workoutsProvider);
+    ref.read(nutritionProvider);
+    ref.read(dailyActivityProvider);
+    ref.read(hydrationProvider);
+    ref.read(timelineProvider);
+    ref.read(consistencyProvider);
+    // Workouts tab — screen summary header + synced-workout history.
+    ref.read(workoutScreenSummaryProvider);
+    ref.read(syncedWorkoutsProvider);
+    // Nutrition tab — preferences gate the daily tab's first paint.
+    ref.read(nutritionPreferencesProvider);
+    // Discover tab — kept-alive leaderboard snapshot; its notifier load()s
+    // on creation.
     ref.read(discoverSnapshotProvider);
-    // Nutrition tab: warm the Fasting card's live state and the Saved
-    // card's favorites count so both paint instantly when the tab opens.
-    // fastingProvider's notifier needs an explicit initialize() — a bare
-    // read just constructs an empty notifier.
+    // You tab — XP / rewards state.
+    ref.read(xpProvider);
+
+    // Providers keyed by (or initialized with) the signed-in user id.
     final prewarmUserId = ref.read(authStateProvider).user?.id;
     if (prewarmUserId != null && prewarmUserId.isNotEmpty) {
+      // fastingProvider's notifier needs an explicit initialize() — a bare
+      // read just constructs an empty notifier.
       unawaited(ref.read(fastingProvider.notifier).initialize(prewarmUserId));
+      // Home habits section — userId-family StateNotifier.
+      ref.read(habitsProvider(prewarmUserId));
+      // Nutrition tab — batch-cook events + saved recipes/foods/menus.
+      // The Saved hub's lists all keepAlive(), so warming them here makes
+      // the first open of the Saved hub instant (no per-tab spinner).
+      ref.read(activeCookEventsProvider(prewarmUserId));
       ref.read(favoriteRecipesProvider(prewarmUserId));
-      // Saved hub's three lists — all keepAlive(), so warming them here
-      // makes the first open of the Saved hub instant (no per-tab spinner).
       ref.read(savedFoodsHubProvider(prewarmUserId));
       ref.read(savedMenusHubProvider);
     }
