@@ -429,21 +429,20 @@ class AuthRepository {
         throw Exception('Please check your email to verify your account.');
       }
 
-      debugPrint('✅ [Auth] Supabase signup success, creating user in backend...');
+      debugPrint('✅ [Auth] Supabase signup success, syncing user to backend...');
 
-      // Create user in backend
+      // Ensure the public.users row exists via /auth/sync. It is idempotent
+      // and, on first create, fires the verification email + Discord signup
+      // notify. We no longer call /auth/email/signup — it redundantly re-ran
+      // the Supabase signup and 409'd "already registered" on every attempt.
+      // /auth/sync reads name/quiz from the JWT user_metadata set by signUp.
       final backendResponse = await _apiClient.post(
-        '${ApiConstants.users}/auth/email/signup',
-        data: {
-          'email': email,
-          'password': password,
-          'name': name,
-        },
+        '${ApiConstants.users}/auth/sync',
       );
 
       if (backendResponse.statusCode == 200 || backendResponse.statusCode == 201) {
         final user = app_user.User.fromJson(backendResponse.data as Map<String, dynamic>);
-        debugPrint('✅ [Auth] Backend user created: ${user.id}');
+        debugPrint('✅ [Auth] Backend user synced: ${user.id}');
 
         // Save user ID and token
         await _apiClient.setUserId(user.id);

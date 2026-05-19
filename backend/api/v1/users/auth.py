@@ -491,11 +491,17 @@ async def auth_sync(request: Request,
         created = db.create_user(new_user_data)
         logger.info(f"auth_sync backfilled public.users row: id={created['id']}, email=...{email[-10:] if email else ''}")
 
-        # Mirror the email-signup Discord notify so growth funnel still tracks
-        # users who arrived via email-link confirmation.
+        # /auth/sync is now the single backend signup hook (the client no
+        # longer calls /auth/email/signup — it redundantly re-ran the
+        # Supabase signup). Fire the same background tasks email_signup did:
+        # the branded verification email + the Discord #growth notify.
+        background_tasks.add_task(
+            issue_and_send_verification,
+            user_id=created["id"], email=email or "", name=full_name,
+        )
         background_tasks.add_task(
             notify_signup, email=email or "", user_id=created["id"],
-            name=full_name, provider="email_confirm",
+            name=full_name, provider="email",
         )
 
         return row_to_user(created, is_new_user=True, support_friend_added=False)
