@@ -269,7 +269,12 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
               final board = ref.watch(discoverBoardProvider);
               final selectedIndex = DiscoverScreen._boardOptions
                   .indexWhere((opt) => opt.$1 == board);
-              return FloatingTabBar(
+              // Tour anchor for `discover_v1` step 3 — keyed on the real
+              // floating board switcher so the spotlight has a visible
+              // target (the old anchor was a 0x0 SizedBox placeholder).
+              return KeyedSubtree(
+                key: TooltipAnchors.discoverBoardTabs,
+                child: FloatingTabBar(
                 mode: FloatingTabBarMode.viewSwitcher,
                 accentColor: accent,
                 selectedIndex: selectedIndex < 0 ? 0 : selectedIndex,
@@ -289,6 +294,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
                       },
                     ),
                 ],
+                ),
               );
             }),
             ),
@@ -343,37 +349,37 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
           ),
         ),
         const SizedBox(height: 14),
-        // Board tabs (XP/Volume/Streaks) are now rendered as a floating
-        // iOS 26 Liquid Glass capsule bar at the bottom of the screen
-        // (see the `Positioned` in build()). The keyed subtree stays as
-        // a tour anchor placeholder so `discover_v1` step 3 still resolves.
+        // Rising Stars — the header is ALWAYS rendered (keyed as
+        // `discover_v1` step 1) so the first-run tour, which runs exactly
+        // when a new user has no movers yet, still has a spotlight target.
         KeyedSubtree(
-          key: TooltipAnchors.discoverBoardTabs,
-          child: const SizedBox.shrink(),
+          key: TooltipAnchors.discoverRisingStars,
+          child: _sectionHeader('🚀 Rising Stars', 'This week\'s biggest movers', textColor: textColor, textMuted: textMuted),
         ),
-        if (s.risingStars.isNotEmpty) ...[
-          // Tour anchor — Rising Stars header is step 1 of `discover_v1`.
-          KeyedSubtree(
-            key: TooltipAnchors.discoverRisingStars,
-            child: _sectionHeader('🚀 Rising Stars', 'This week\'s biggest movers', textColor: textColor, textMuted: textMuted),
-          ),
-          const SizedBox(height: 10),
-          _RisingStarsStrip(stars: s.risingStars, elevated: elevated, textColor: textColor, textMuted: textMuted, border: border, accent: accent),
-          const SizedBox(height: 18),
-        ],
-        if (s.nearYou.isEmpty)
+        const SizedBox(height: 10),
+        if (s.risingStars.isNotEmpty)
+          _RisingStarsStrip(stars: s.risingStars, elevated: elevated, textColor: textColor, textMuted: textMuted, border: border, accent: accent)
+        else
           _emptyState(
-            'No entries yet — your first workout this week puts you on the board.',
+            'No movers yet — log a workout this week to climb.',
             textMuted: textMuted,
             elevated: elevated,
             border: border,
-          )
-        else
-          // Tour anchor — Near You list is step 2 of `discover_v1`.
-          KeyedSubtree(
-            key: TooltipAnchors.discoverNearYou,
-            child: _NearYouList(entries: s.nearYou, elevated: elevated, border: border, textColor: textColor, textMuted: textMuted, accent: accent, metricLabel: s.metricLabel),
           ),
+        const SizedBox(height: 18),
+        // Near You — step 2 anchor wraps BOTH branches so the spotlight
+        // resolves whether or not the user is on the board yet.
+        KeyedSubtree(
+          key: TooltipAnchors.discoverNearYou,
+          child: s.nearYou.isEmpty
+              ? _emptyState(
+                  'No entries yet — your first workout this week puts you on the board.',
+                  textMuted: textMuted,
+                  elevated: elevated,
+                  border: border,
+                )
+              : _NearYouList(entries: s.nearYou, elevated: elevated, border: border, textColor: textColor, textMuted: textMuted, accent: accent, metricLabel: s.metricLabel),
+        ),
         const SizedBox(height: 18),
         _Top10Collapsible(entries: s.top10, elevated: elevated, border: border, textColor: textColor, textMuted: textMuted, metricLabel: s.metricLabel),
         const SizedBox(height: 14),
