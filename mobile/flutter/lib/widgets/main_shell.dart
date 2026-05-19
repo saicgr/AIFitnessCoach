@@ -13,6 +13,7 @@ import '../core/theme/theme_colors.dart';
 import '../data/models/coach_persona.dart';
 import '../data/providers/admin_provider.dart';
 import '../data/providers/discover_provider.dart';
+import '../data/providers/fasting_provider.dart';
 import '../data/providers/guest_mode_provider.dart';
 import '../data/providers/guest_usage_limits_provider.dart';
 import '../data/services/deep_link_service.dart';
@@ -203,6 +204,9 @@ class MainShell extends ConsumerWidget {
     // StateNotifierProvider whose notifier load()s on creation — this one
     // read creates it; the result then holds for when the tab opens.
     ref.read(discoverSnapshotProvider);
+    // Same idea for the Nutrition tab's Fasting card — warm fastingProvider
+    // so the live fast state is in hand before the tab opens.
+    ref.read(fastingProvider);
 
     // Initialize widget action service (MethodChannel listener)
     // This allows Android widgets to trigger UI actions without navigation

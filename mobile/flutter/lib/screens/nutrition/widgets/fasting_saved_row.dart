@@ -17,25 +17,40 @@ import '../../../core/theme/theme_colors.dart';
 import '../../../core/widgets/line_icon.dart';
 import '../../../data/providers/fasting_provider.dart';
 import '../../../data/providers/recipe_providers.dart';
+import '../../../widgets/tooltips/tooltip_anchors.dart';
 import '../saved_hub_screen.dart';
 
 class FastingSavedRow extends ConsumerWidget {
   final String userId;
   final bool isDark;
 
+  /// When true, the Fasting / Saved cards carry their `nutrition_v1` tour
+  /// anchor keys. Gated (rather than always-on) because the keys are
+  /// app-global statics — two NutritionScreen instances both holding them
+  /// would crash with "Duplicate GlobalKey". Only the first-run tour needs
+  /// them; see NutritionScreen._nutritionTourActive.
+  final bool tourActive;
+
   const FastingSavedRow({
     super.key,
     required this.userId,
     required this.isDark,
+    this.tourActive = false,
   });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    Widget fasting = _FastingCard(userId: userId, isDark: isDark);
+    Widget saved = _SavedCard(userId: userId, isDark: isDark);
+    if (tourActive) {
+      fasting = KeyedSubtree(key: TooltipAnchors.nutritionFasting, child: fasting);
+      saved = KeyedSubtree(key: TooltipAnchors.nutritionSaved, child: saved);
+    }
     return Row(
       children: [
-        Expanded(child: _FastingCard(userId: userId, isDark: isDark)),
+        Expanded(child: fasting),
         const SizedBox(width: 12),
-        Expanded(child: _SavedCard(userId: userId, isDark: isDark)),
+        Expanded(child: saved),
       ],
     );
   }

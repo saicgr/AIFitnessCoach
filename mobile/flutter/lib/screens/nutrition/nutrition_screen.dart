@@ -706,6 +706,7 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
                             TooltipAnchors.nutritionLogMeal,
                             DailyTab(
                             userId: _userId ?? '',
+                            tourActive: _nutritionTourActive,
                             summary: state.todaySummary,
                             targets: state.targets,
                             micronutrients: _micronutrientSummary,

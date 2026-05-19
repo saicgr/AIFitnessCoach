@@ -39,6 +39,10 @@ class TooltipAnchors {
       GlobalKey(debugLabel: 'tip.nutrition.myFoods');
   static final nutritionLogMeal =
       GlobalKey(debugLabel: 'tip.nutrition.logMeal');
+  static final nutritionFasting =
+      GlobalKey(debugLabel: 'tip.nutrition.fasting');
+  static final nutritionSaved =
+      GlobalKey(debugLabel: 'tip.nutrition.saved');
 
   // ─── Nav tour (AppTour: nav_tour) ────────────────────────────────
   static final topBar = GlobalKey(debugLabel: 'tour_topBar');

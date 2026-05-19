@@ -51,9 +51,14 @@ class DailyTab extends ConsumerStatefulWidget {
   /// is nonsensical.
   final bool isViewingToday;
 
+  /// Forwarded to [FastingSavedRow] so its cards carry the `nutrition_v1`
+  /// tour anchor keys only while the first-run tour is active.
+  final bool tourActive;
+
   const DailyTab({
     super.key,
     required this.userId,
+    this.tourActive = false,
     this.summary,
     this.targets,
     this.micronutrients,
@@ -395,6 +400,7 @@ class _DailyTabState extends ConsumerState<DailyTab>
                   FastingSavedRow(
                     userId: widget.userId,
                     isDark: widget.isDark,
+                    tourActive: widget.tourActive,
                   ),
                   const SizedBox(height: 12),
                 ],
