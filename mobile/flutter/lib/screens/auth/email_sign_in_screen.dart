@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:ui';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -174,7 +175,7 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen> {
       // it here would race with the GoRouter redirect and tear down under us.
     } catch (e) {
       debugPrint('🔴 [Auth] Sign-in threw exception: $e');
-      final errorMsg = e.toString().replaceAll('Exception: ', '');
+      final errorMsg = _extractErrorText(e).replaceAll('Exception: ', '');
       if (mounted) {
         setState(() {
           _errorMessage = _humanizeAuthError(errorMsg);
@@ -223,7 +224,7 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen> {
       // Supabase / repository may surface "User already registered" as
       // a thrown exception. Treat that as a fallback signal and let the
       // caller try sign-in instead.
-      if (_looksLikeAlreadyRegistered(e.toString())) {
+      if (_looksLikeAlreadyRegistered(_extractErrorText(e))) {
         return false;
       }
       rethrow;
@@ -238,6 +239,22 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen> {
     }
 
     return true;
+  }
+
+  /// Pull a human-readable message out of any thrown error. A raw
+  /// `DioException` stringifies to a multi-paragraph blob ("DioException
+  /// [bad response]: … RequestOptions.validateStatus …") — never show that.
+  /// FastAPI returns `{"detail": "..."}`; surface that instead.
+  String _extractErrorText(Object e) {
+    if (e is DioException) {
+      final data = e.response?.data;
+      if (data is Map) {
+        final detail = data['detail'] ?? data['message'];
+        if (detail is String && detail.trim().isNotEmpty) return detail;
+      }
+      return e.message ?? 'Request failed. Please try again.';
+    }
+    return e.toString();
   }
 
   bool _looksLikeCredentialsError(String raw) {
@@ -290,6 +307,18 @@ class _EmailSignInScreenState extends ConsumerState<EmailSignInScreen> {
     if (lower.contains('weak password') ||
         lower.contains('password is too short')) {
       return 'Use a stronger password — at least 8 characters with a letter and a number.';
+    }
+    // Never surface a raw exception / stack blob to the user (App Store
+    // reviewers were seeing the full "DioException [bad response]: …"
+    // dump). If the text still looks like one, fall back to generic copy.
+    if (lower.contains('dioexception') ||
+        lower.contains('requestoptions') ||
+        lower.contains('stacktrace') ||
+        lower.contains('status code of') ||
+        raw.length > 160) {
+      return _isSignUp
+          ? 'Could not create your account. Please try again.'
+          : 'Sign-in failed. Please try again.';
     }
     // Strip the most verbose decoration before showing raw text as a fallback.
     return raw
