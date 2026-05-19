@@ -373,47 +373,51 @@ class HomeWorkoutCard extends ConsumerWidget {
     );
   }
 
-  /// Small "viewing [date]" affordance with a tap-to-return-to-today action.
+  /// Compact "viewing [date]" chip with a tap-to-return-to-today action.
+  /// Content-width (not a full-width bar) and single-line so it barely
+  /// costs vertical space — the whole chip is the tap target back to today.
   Widget _viewingBanner(
       BuildContext context, WidgetRef ref, ThemeColors c, DateTime date) {
     final now = DateTime.now();
-    final isPast = date.isBefore(DateTime(now.year, now.month, now.day));
     final label = _friendlyDate(date);
     return Padding(
-      padding: const EdgeInsets.only(left: 16, right: 16, bottom: 8),
-      child: GestureDetector(
-        onTap: () {
-          HapticService.selection();
-          ref.read(selectedHomeDateProvider.notifier).state =
-              DateTime(now.year, now.month, now.day);
-        },
-        behavior: HitTestBehavior.opaque,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
-          decoration: BoxDecoration(
-            color: c.accent.withValues(alpha: 0.10),
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: c.accent.withValues(alpha: 0.30)),
-          ),
-          child: Row(
-            children: [
-              LineIcon(isPast ? 'refresh' : 'spark', size: 13, color: c.accent),
-              const SizedBox(width: 7),
-              Expanded(
-                child: Text(
-                  'Viewing $label',
-                  style: TextStyle(
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.w800,
-                      color: c.textPrimary),
-                ),
-              ),
-              Text('Back to today',
+      padding: const EdgeInsets.only(left: 16, right: 16, bottom: 6),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: GestureDetector(
+          onTap: () {
+            HapticService.selection();
+            ref.read(selectedHomeDateProvider.notifier).state =
+                DateTime(now.year, now.month, now.day);
+          },
+          behavior: HitTestBehavior.opaque,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+            decoration: BoxDecoration(
+              color: c.accent.withValues(alpha: 0.10),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: c.accent.withValues(alpha: 0.28)),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                LineIcon('refresh', size: 11, color: c.accent),
+                const SizedBox(width: 5),
+                Text(
+                  label,
                   style: TextStyle(
                       fontSize: 11,
-                      fontWeight: FontWeight.w800,
-                      color: c.accent)),
-            ],
+                      fontWeight: FontWeight.w700,
+                      color: c.textPrimary),
+                ),
+                const SizedBox(width: 6),
+                Text('Today',
+                    style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                        color: c.accent)),
+              ],
+            ),
           ),
         ),
       ),
