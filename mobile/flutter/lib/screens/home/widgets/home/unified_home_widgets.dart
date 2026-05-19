@@ -239,16 +239,14 @@ class HomeWorkoutCard extends ConsumerWidget {
         body = _workoutRow(context, ref, c, dayWorkout,
             isToday: false, completed: dayWorkout.isCompleted == true);
       }
-      return Column(
-        children: [
-          _viewingBanner(context, ref, c, selDay),
-          // Cross-fade the body so skeleton→content (and rest-day↔workout)
-          // never hard-pops as the user scrubs the week strip.
-          AnimatedSwitcher(
-            duration: kHomeCrossFade,
-            child: body,
-          ),
-        ],
+      // Cross-fade the body so skeleton→content (and rest-day↔workout)
+      // never hard-pops as the user scrubs the week strip. The hero's
+      // "SCHEDULED" badge + the highlighted today pill on the week strip
+      // already tell the user they're off today and how to get back — no
+      // separate "viewing past date" chip needed.
+      return AnimatedSwitcher(
+        duration: kHomeCrossFade,
+        child: body,
       );
     }
 
@@ -373,65 +371,6 @@ class HomeWorkoutCard extends ConsumerWidget {
     );
   }
 
-  /// Compact "viewing [date]" chip with a tap-to-return-to-today action.
-  /// Content-width (not a full-width bar) and single-line so it barely
-  /// costs vertical space — the whole chip is the tap target back to today.
-  Widget _viewingBanner(
-      BuildContext context, WidgetRef ref, ThemeColors c, DateTime date) {
-    final now = DateTime.now();
-    final label = _friendlyDate(date);
-    return Padding(
-      padding: const EdgeInsets.only(left: 16, right: 16, bottom: 6),
-      child: Align(
-        alignment: Alignment.centerLeft,
-        child: GestureDetector(
-          onTap: () {
-            HapticService.selection();
-            ref.read(selectedHomeDateProvider.notifier).state =
-                DateTime(now.year, now.month, now.day);
-          },
-          behavior: HitTestBehavior.opaque,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-            decoration: BoxDecoration(
-              color: c.accent.withValues(alpha: 0.10),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: c.accent.withValues(alpha: 0.28)),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                LineIcon('refresh', size: 11, color: c.accent),
-                const SizedBox(width: 5),
-                Text(
-                  label,
-                  style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      color: c.textPrimary),
-                ),
-                const SizedBox(width: 6),
-                Text('Today',
-                    style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w800,
-                        color: c.accent)),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  static String _friendlyDate(DateTime d) {
-    const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
-    ];
-    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    return '${days[d.weekday - 1]}, ${months[d.month - 1]} ${d.day}';
-  }
 
   /// The shared workout body — a compact image hero. Renders the first
   /// exercise's photo as a background behind an accent-tinted gradient scrim,
