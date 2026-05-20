@@ -660,41 +660,55 @@ class _WorkoutHeroBodyState extends ConsumerState<_WorkoutHeroBody> {
                           ),
                         ),
                         const SizedBox(width: 10),
-                        GestureDetector(
-                          // The inner tap is consumed before the outer card
-                          // GestureDetector sees it — so the button starts
-                          // the workout (or opens its summary if already
-                          // completed) while the rest of the card still
-                          // opens the workout detail screen.
-                          behavior: HitTestBehavior.opaque,
-                          onTap: () {
-                            HapticService.medium();
-                            if (widget.completed) {
-                              context.push(
-                                  '/workout-summary/${workout.id}?tab=summary');
-                            } else {
-                              context.push('/active-workout', extra: workout);
-                            }
-                          },
-                          child: Container(
-                            width: 48,
-                            height: 48,
-                            alignment: Alignment.center,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: Colors.white,
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.22),
-                                  blurRadius: 10,
-                                  offset: const Offset(0, 3),
-                                ),
-                              ],
+                        // Play button — Material+InkWell, NOT a nested
+                        // GestureDetector. Two nested GestureDetectors
+                        // with onTap both register tap recognizers in
+                        // the gesture arena, and the inner-deepest-wins
+                        // rule is not actually guaranteed across Flutter
+                        // versions / hit-test paths — in practice taps
+                        // here were bleeding to the outer card handler
+                        // and opening the detail screen instead of
+                        // starting the workout. InkWell claims taps via
+                        // the Material gesture system, which reliably
+                        // beats a parent GestureDetector (same pattern
+                        // the Workouts-tab HeroWorkoutCard uses for its
+                        // START button via ElevatedButton.icon).
+                        Container(
+                          width: 48,
+                          height: 48,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.white,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.22),
+                                blurRadius: 10,
+                                offset: const Offset(0, 3),
+                              ),
+                            ],
+                          ),
+                          child: Material(
+                            color: Colors.transparent,
+                            shape: const CircleBorder(),
+                            child: InkWell(
+                              customBorder: const CircleBorder(),
+                              onTap: () {
+                                HapticService.medium();
+                                if (widget.completed) {
+                                  context.push(
+                                      '/workout-summary/${workout.id}?tab=summary');
+                                } else {
+                                  context.push('/active-workout',
+                                      extra: workout);
+                                }
+                              },
+                              child: Center(
+                                child: LineIcon(
+                                    widget.completed ? 'check' : 'play',
+                                    color: accent,
+                                    size: 22),
+                              ),
                             ),
-                            child: LineIcon(
-                                widget.completed ? 'check' : 'play',
-                                color: accent,
-                                size: 22),
                           ),
                         ),
                       ],
