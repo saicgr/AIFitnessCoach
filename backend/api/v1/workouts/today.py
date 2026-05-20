@@ -258,7 +258,7 @@ def _row_to_summary(row: dict, user_today_str: Optional[str] = None) -> TodayWor
 
     # Check if today using user's local date
     if not user_today_str:
-        raise ValueError("user_today_str is required — never fall back to date.today() on a UTC server")
+        raise ValueError("user_today_str is required — never fall back to date.today() on a UTC server")  # tz-allowlist: error message references the forbidden pattern by name
     ref_today = user_today_str
     is_today = scheduled_date == ref_today
 
@@ -385,7 +385,7 @@ def _get_upcoming_dates_needing_generation(
     with the user's local timezone offset.
     """
     if not user_today_str:
-        raise ValueError("user_today_str is required — never fall back to date.today() on a UTC server")
+        raise ValueError("user_today_str is required — never fall back to date.today() on a UTC server")  # tz-allowlist: error message references the forbidden pattern by name
     today_date = datetime.strptime(user_today_str, "%Y-%m-%d").date()
     end_date = today_date + timedelta(days=14)
 
@@ -1013,19 +1013,61 @@ async def get_today_workout(
         days_until_next: Optional[int] = None
 
         if today_rows:
-            today_workout = _row_to_summary(today_rows[0], user_today_str=today_str)
-            has_workout_today = True
-            logger.debug(f"[TODAY DEBUG] Found today's workout: {today_workout.name}")
-            # Additional today workouts (quick workouts coexisting with scheduled)
-            if len(today_rows) > 1:
-                extra_today_workouts = [
-                    _row_to_summary(row, user_today_str=today_str)
-                    for row in today_rows[1:]
-                ]
-                logger.debug(f"[TODAY DEBUG] Found {len(extra_today_workouts)} extra today workouts")
+            # Safety net: today_rows is matched by tz-aware UTC range, which
+            # can catch a midnight-UTC stored row that actually belongs to
+            # tomorrow in the user's local timezone (legacy data from the
+            # bare-YYYY-MM-DD writer, fixed 2026-05-20). Validate every row
+            # against (a) the user's `selected_days` schedule and (b) the
+            # date prefix matching today_str. Anything failing both demotes
+            # to next_workout so it can't masquerade as TODAY.
+            _safe_today_rows = []
+            _demoted_rows = []
+            for row in today_rows:
+                row_sd = str(row.get("scheduled_date") or "")
+                row_date_prefix = row_sd[:10] if row_sd else ""
+                date_matches_today = row_date_prefix == today_str
+                day_is_scheduled = is_today_workout_day
+                if date_matches_today and day_is_scheduled:
+                    _safe_today_rows.append(row)
+                elif date_matches_today and not day_is_scheduled:
+                    # Date is today but today isn't a scheduled workout day.
+                    # Don't serve as TODAY — let it fall through to next_workout
+                    # (the row's actual scheduled_date is still today, so it
+                    # remains visible just without the TODAY badge).
+                    _demoted_rows.append(row)
+                else:
+                    # Date prefix doesn't match today — the tz window pulled
+                    # in a stored-as-midnight-UTC row for tomorrow.
+                    _demoted_rows.append(row)
+            if _demoted_rows:
+                logger.warning(
+                    f"[TODAY GATE] Demoted {len(_demoted_rows)} today_rows for "
+                    f"user {user_id} (today_str={today_str}, "
+                    f"is_today_workout_day={is_today_workout_day}); first "
+                    f"demoted: name={_demoted_rows[0].get('name')!r}, "
+                    f"scheduled_date={_demoted_rows[0].get('scheduled_date')!r}"
+                )
+            if _safe_today_rows:
+                today_workout = _row_to_summary(_safe_today_rows[0], user_today_str=today_str)
+                has_workout_today = True
+                logger.debug(f"[TODAY DEBUG] Found today's workout: {today_workout.name}")
+                if len(_safe_today_rows) > 1:
+                    extra_today_workouts = [
+                        _row_to_summary(row, user_today_str=today_str)
+                        for row in _safe_today_rows[1:]
+                    ]
+                    logger.debug(f"[TODAY DEBUG] Found {len(extra_today_workouts)} extra today workouts")
 
-        if future_rows:
-            next_workout = _row_to_summary(future_rows[0], user_today_str=today_str)
+        # Merge demoted today_rows (rows whose tz window matched today but were
+        # rejected as TODAY by the gate above) into the future candidates so
+        # they still surface as the next workout. Sort by scheduled_date so
+        # the earliest upcoming wins.
+        _candidate_future = list(future_rows or [])
+        if _demoted_rows:
+            _candidate_future.extend(_demoted_rows)
+            _candidate_future.sort(key=lambda r: str(r.get("scheduled_date") or ""))
+        if _candidate_future:
+            next_workout = _row_to_summary(_candidate_future[0], user_today_str=today_str)
             next_date = datetime.strptime(next_workout.scheduled_date, "%Y-%m-%d").date()
             user_today_date = datetime.strptime(today_str, "%Y-%m-%d").date()
             days_until_next = (next_date - user_today_date).days

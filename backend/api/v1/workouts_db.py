@@ -17,9 +17,10 @@ RATE LIMITS:
 - Other endpoints: default global limit
 """
 from core.db import get_supabase_db
-from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks, Request
 from core.auth import get_current_user
 from core.exceptions import safe_internal_error
+from core.timezone_utils import resolve_timezone, target_date_to_utc_iso
 from typing import List, Optional
 from datetime import datetime
 import json
@@ -66,7 +67,9 @@ router.include_router(versioning_router)
 
 
 @router.post("/", response_model=Workout)
-async def create_workout(workout: WorkoutCreate,
+async def create_workout(
+    workout: WorkoutCreate,
+    request: Request,
     current_user: dict = Depends(get_current_user),
 ):
     """Create a new workout."""
@@ -76,12 +79,17 @@ async def create_workout(workout: WorkoutCreate,
 
         exercises = json.loads(workout.exercises_json) if isinstance(workout.exercises_json, str) else workout.exercises_json
 
+        # Anchor scheduled_date at noon-user-local → UTC. A bare 'YYYY-MM-DD'
+        # is stored as midnight UTC, which reads back as "yesterday evening"
+        # for any user west of UTC and pollutes /today queries.
+        _user_tz = resolve_timezone(request, db, workout.user_id)
+        _sd_str = str(workout.scheduled_date)[:10]
         workout_data = {
             "user_id": workout.user_id,
             "name": workout.name,
             "type": workout.type,
             "difficulty": workout.difficulty,
-            "scheduled_date": str(workout.scheduled_date),
+            "scheduled_date": target_date_to_utc_iso(_sd_str, _user_tz),
             "exercises_json": exercises,
             "duration_minutes": workout.duration_minutes,
             "generation_method": workout.generation_method,

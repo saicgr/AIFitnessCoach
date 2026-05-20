@@ -1416,14 +1416,17 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
                 "🔧 [FieldOverride] description was empty — synthesized fallback"
             )
 
-        # scheduled_date: keep the user's requested YYYY-MM-DD verbatim. The
-        # old `target_date_to_utc_iso` conversion shifted the date across
-        # timezone boundaries (a CST user requesting 2026-05-27 was getting
-        # 2026-05-26T05:00:00Z stored, which read back as the wrong day).
-        _request_date = (
+        # scheduled_date: anchor to NOON in the user's local TZ, converted to
+        # UTC. Storing a bare 'YYYY-MM-DD' produced midnight UTC, which for any
+        # user west of UTC (CDT/PDT/EDT…) reads back as the PREVIOUS day's
+        # evening — so the /today endpoint's tz-aware [day_start, day_end]
+        # window catches tomorrow's workout as TODAY. Noon-local sits safely
+        # in the middle of the user's calendar day in every IANA zone.
+        _request_date_raw = (
             body.scheduled_date
-            or get_user_today(resolve_timezone(request, db, body.user_id))
+            or get_user_today(_gen_tz)
         )
+        _request_date = target_date_to_utc_iso(str(_request_date_raw)[:10], _gen_tz)
 
         # Last-mile type coercion (mirror /generate-stream — see
         # generation_streaming.py and generation_helpers.coerce_workout_type_from_focus).

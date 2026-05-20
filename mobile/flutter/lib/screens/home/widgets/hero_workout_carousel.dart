@@ -308,21 +308,50 @@ class _HeroWorkoutCarouselState extends ConsumerState<HeroWorkoutCarousel> {
         final nextWorkout = todayWorkoutResponse?.nextWorkout?.toWorkout();
 
         // Trust the backend's resolved today workout. /workouts/today already
-        // honours the active gym profile's schedule (today.py
-        // _resolve_workout_days).
+        // honours the active gym profile's schedule + tz-aware date window
+        // + the "today must be a scheduled workout day" gate (today.py
+        // _resolve_workout_days + the TODAY GATE safety net).
         //
-        // Pin it to today's calendar date: a "Do this today" reschedule
-        // keeps the workout's ORIGINAL scheduled_date, so the date-keyed
-        // carousel below would file it on the wrong (future/past) slot —
-        // the home hero then fell through to a future workout badged
-        // SCHEDULED while the Workouts tab showed it as TODAY. Pinning the
-        // date makes the carousel place + badge it as today's.
+        // Pin to today's calendar date ONLY when today is actually a
+        // scheduled workout day for this user AND the row's scheduled_date
+        // is close to today (within 1 day, to allow a "Do this today"
+        // reschedule that kept the original date). The old unconditional
+        // pin masked a backend bug where a midnight-UTC stored row for
+        // tomorrow looked like today's row to the tz window query — the
+        // hero then proudly relabeled tomorrow's workout as TODAY.
         var todayWorkout = todayWorkoutResponse?.todayWorkout?.toWorkout();
         if (todayWorkout != null) {
-          final todayKey = _dateKey(DateTime.now());
+          final now = DateTime.now();
+          final todayDate = DateTime(now.year, now.month, now.day);
+          final todayKey = _dateKey(todayDate);
           final raw = todayWorkout.scheduledDate;
-          if (raw == null || raw.length < 10 || raw.substring(0, 10) != todayKey) {
-            todayWorkout = todayWorkout.copyWith(scheduledDate: todayKey);
+
+          final todayIsScheduled = workoutDays.contains(todayDate.weekday - 1);
+
+          DateTime? rowDate;
+          if (raw != null && raw.length >= 10) {
+            try {
+              final p = raw.substring(0, 10).split('-');
+              if (p.length == 3) {
+                rowDate = DateTime(int.parse(p[0]), int.parse(p[1]), int.parse(p[2]));
+              }
+            } catch (_) {}
+          }
+          final daysOff = rowDate == null
+              ? 0
+              : rowDate.difference(todayDate).inDays.abs();
+
+          if (todayIsScheduled && daysOff <= 1) {
+            // Safe to pin to today (covers "Do this today" reschedule case).
+            if (raw == null || raw.length < 10 || raw.substring(0, 10) != todayKey) {
+              todayWorkout = todayWorkout.copyWith(scheduledDate: todayKey);
+            }
+          } else {
+            // Today isn't a scheduled day, or the row is too far off (legacy
+            // midnight-UTC bug). Don't impersonate as TODAY — let it slot in
+            // on its real date so the badge logic in hero_workout_card.dart
+            // shows TOMORROW / day-name instead of TODAY.
+            todayWorkout = null;
           }
         }
 

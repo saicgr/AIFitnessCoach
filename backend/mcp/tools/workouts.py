@@ -26,6 +26,7 @@ from typing import Any, Dict, List, Optional
 
 from core.db import get_supabase_db
 from core.logger import get_logger
+from core.timezone_utils import resolve_timezone, target_date_to_utc_iso, get_user_today
 from mcp.tools import run_tool
 
 logger = get_logger(__name__)
@@ -34,25 +35,27 @@ logger = get_logger(__name__)
 # ─── get_today_workout ───────────────────────────────────────────────────────
 
 async def _get_today_workout_impl(user: dict) -> Dict[str, Any]:
-    """Return the workout scheduled for today, if any.
+    """Return the workout scheduled for today in the user's local timezone.
 
-    Replicates the core query from `api/v1/workouts/today.py`: the most
-    recent non-cancelled workout whose `scheduled_date` falls on today
-    (UTC — the user's timezone-aware "today" is handled by the REST
-    endpoint; for MCP we return UTC-day results, which is close enough
-    for an AI assistant surface).
+    The phone-driven `users.timezone` column (kept fresh by the
+    `resolve_timezone` write-through) is the source of truth for "today".
+    Bare UTC `date.today()` would mis-day workouts for any user west of
+    UTC whose midnight-UTC-stored rows live in the previous local day.
     """
+    from core.timezone_utils import get_user_today, local_date_to_utc_range
+
     db = get_supabase_db()
     user_id = user["id"]
-    today = datetime.now(timezone.utc).date().isoformat()
-    tomorrow = (datetime.now(timezone.utc).date() + timedelta(days=1)).isoformat()
+    user_tz = (user.get("timezone") or "UTC")
+    today_local = get_user_today(user_tz)
+    window_start, window_end = local_date_to_utc_range(today_local, user_tz)
 
     try:
         result = db.client.table("workouts") \
             .select("*") \
             .eq("user_id", user_id) \
-            .gte("scheduled_date", today) \
-            .lt("scheduled_date", tomorrow) \
+            .gte("scheduled_date", window_start) \
+            .lte("scheduled_date", window_end) \
             .neq("status", "cancelled") \
             .order("scheduled_date", desc=False) \
             .limit(1) \
@@ -282,12 +285,17 @@ async def _modify_workout_impl(
         new_date = payload.get("new_date")
         if not new_date:
             return {"ok": False, "error": "missing_new_date"}
+        # Anchor at noon-user-local → UTC so a YYYY-MM-DD doesn't read back as
+        # the previous day's evening for users west of UTC (mirror the fix in
+        # generation_endpoints.py / workouts_db.py).
+        _user_tz = (user.get("timezone") or "UTC")
+        _new_date_iso = target_date_to_utc_iso(str(new_date)[:10], _user_tz)
         db.update_workout(workout_id, {
-            "scheduled_date": new_date,
+            "scheduled_date": _new_date_iso,
             "last_modified_at": datetime.now(timezone.utc).isoformat(),
             "last_modified_method": "mcp_reschedule",
         })
-        return {"ok": True, "action": "reschedule", "workout_id": workout_id, "new_date": new_date}
+        return {"ok": True, "action": "reschedule", "workout_id": workout_id, "new_date": _new_date_iso}
 
     # The rest operate on exercises_json.
     exercises = w.get("exercises_json") or []
@@ -392,10 +400,11 @@ async def _generate_workout_plan_impl(
     # Persist as today's workout if requested.
     saved_id = None
     try:
-        today = datetime.now(timezone.utc).date().isoformat()
+        _user_tz = (user.get("timezone") or "UTC")
+        today = get_user_today(_user_tz)
         row = {
             "user_id": user["id"],
-            "scheduled_date": today,
+            "scheduled_date": target_date_to_utc_iso(today, _user_tz),
             "name": (workout or {}).get("name") or "AI-generated workout",
             "type": (workout or {}).get("type") or constraints.get("workout_type", "strength"),
             "difficulty": (workout or {}).get("difficulty") or "medium",
