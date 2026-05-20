@@ -221,6 +221,20 @@ class _DraggableThumbnailState extends ConsumerState<_DraggableThumbnail>
       }
       return;
     }
+    // Persisted cross-session cache — populated by main_shell / the strip's
+    // _batchPrewarmImages / sibling screens. A hit here skips the
+    // /exercise-images GET entirely.
+    final persisted = ImageUrlCache.get(exerciseName);
+    if (persisted != null && persisted.isNotEmpty) {
+      _imageCache[cacheKey] = persisted;
+      if (mounted) {
+        setState(() {
+          _imageUrl = persisted;
+          _isLoadingImage = false;
+        });
+      }
+      return;
+    }
 
     try {
       final apiClient = ref.read(apiClientProvider);
@@ -232,6 +246,9 @@ class _DraggableThumbnailState extends ConsumerState<_DraggableThumbnail>
         final url = response.data['url'] as String?;
         if (url != null && mounted) {
           _imageCache[cacheKey] = url;
+          // Write through to the persisted cache so the next screen / next
+          // session doesn't re-resolve this URL.
+          unawaited(ImageUrlCache.set(exerciseName, url));
           setState(() {
             _imageUrl = url;
             _isLoadingImage = false;
@@ -616,6 +633,20 @@ class _ExerciseThumbnailState extends ConsumerState<_ExerciseThumbnail>
       }
       return;
     }
+    // Persisted cross-session cache — populated by main_shell / the strip's
+    // _batchPrewarmImages / sibling screens. A hit here skips the
+    // /exercise-images GET entirely.
+    final persisted = ImageUrlCache.get(exerciseName);
+    if (persisted != null && persisted.isNotEmpty) {
+      _imageCache[cacheKey] = persisted;
+      if (mounted) {
+        setState(() {
+          _imageUrl = persisted;
+          _isLoadingImage = false;
+        });
+      }
+      return;
+    }
 
     try {
       final apiClient = ref.read(apiClientProvider);
@@ -627,6 +658,9 @@ class _ExerciseThumbnailState extends ConsumerState<_ExerciseThumbnail>
         final url = response.data['url'] as String?;
         if (url != null && mounted) {
           _imageCache[cacheKey] = url;
+          // Write through to the persisted cache so the next screen / next
+          // session doesn't re-resolve this URL.
+          unawaited(ImageUrlCache.set(exerciseName, url));
           setState(() {
             _imageUrl = url;
             _isLoadingImage = false;

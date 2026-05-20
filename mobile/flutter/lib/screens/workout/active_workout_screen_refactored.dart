@@ -42,6 +42,7 @@ import '../../data/repositories/workout_repository.dart';
 import '../../data/services/api_client.dart';
 import '../../data/services/exercise_history_batch_service.dart';
 import '../../data/services/image_url_cache.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../data/services/live_activity_service.dart';
 import '../../data/services/pr_detection_service.dart';
 import '../../data/services/workout_notification_service.dart';
@@ -753,23 +754,38 @@ class _ActiveWorkoutScreenState
     }
   }
 
-  /// WF2 — fire-and-forget batch prefetch of the first ~3 exercises'
-  /// illustration URLs into the persisted [ImageUrlCache]. Without this the
-  /// opening exercises briefly render a blank image slot while their
-  /// `/exercise-images/` lookup is in flight. Reuses the existing batch
-  /// endpoint + disk-backed cache, so repeat workouts are instant.
+  /// Fire-and-forget batch prefetch of EVERY exercise's illustration URL
+  /// (was limited to the first 3, which left the rest of the thumbnail
+  /// strip + later-set exercise headers showing a blank slot during their
+  /// own `/exercise-images/` lookups). One POST /exercise-images/batch
+  /// resolves the lot; results land in the persisted ImageUrlCache so
+  /// repeat workouts and re-opens across app restarts are instant. The
+  /// resolved URLs are then precached into Flutter's ImageCache so the
+  /// decoded bytes are ready before the strip / header mounts them.
   void _prefetchExerciseIllustrations() {
     if (_exercises.isEmpty) return;
-    final names = _exercises
-        .take(3)
-        .map((e) => e.name)
-        .where((n) => n.isNotEmpty)
-        .toList(growable: false);
+    final names = <String>{};
+    for (final ex in _exercises) {
+      final n = ex.name;
+      if (n.isEmpty || n == 'Exercise') continue;
+      names.add(n);
+    }
     if (names.isEmpty) return;
     unawaited(() async {
       try {
         await ImageUrlCache.initialize();
-        await ImageUrlCache.batchPreFetch(names, ref.read(apiClientProvider));
+        await ImageUrlCache.batchPreFetch(
+            names.toList(growable: false), ref.read(apiClientProvider));
+        if (!mounted) return;
+        for (final name in names) {
+          final url = ImageUrlCache.get(name);
+          if (url == null || url.isEmpty) continue;
+          if (!mounted) return;
+          unawaited(precacheImage(
+            CachedNetworkImageProvider(url, maxWidth: 240, maxHeight: 240),
+            context,
+          ).catchError((_) {/* best-effort */}));
+        }
       } catch (e) {
         debugPrint('⚠️ [ActiveWorkout] illustration prefetch failed: $e');
       }

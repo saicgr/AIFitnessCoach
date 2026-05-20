@@ -42,12 +42,57 @@ extension __WorkoutDetailScreenStateExt1 on _WorkoutDetailScreenState {
   void _startSecondaryLoads() {
     if (_secondaryLoadsStarted || _workout == null) return;
     _secondaryLoadsStarted = true;
+    _prefetchExerciseImages();
     _loadWorkoutSummary();
     _loadTrainingSplit();
     _loadGenerationParams();
     if (_workout!.isCompleted == true) {
       _loadSaunaLog();
     }
+  }
+
+  /// Batch-resolve illustration URLs for EVERY exercise in this workout and
+  /// precache the decoded bytes BEFORE the exercise rows mount — so the
+  /// first paint hits cache instead of firing N parallel /exercise-images
+  /// GETs + N image-byte downloads as the list scrolls into view.
+  ///
+  /// One POST /exercise-images/batch replaces N GETs. Results are written
+  /// to the persisted ImageUrlCache, so the next open of any workout sharing
+  /// these exercises (including across app restarts) is also instant.
+  void _prefetchExerciseImages() {
+    final exercises = _workout?.exercises ?? const <Exercise>[];
+    if (exercises.isEmpty) return;
+    final names = <String>{};
+    for (final ex in exercises) {
+      final name = ex.name;
+      if (name.isEmpty || name == 'Exercise') continue;
+      // Skip if the model already carries a pre-resolved URL — those paint
+      // directly without hitting /exercise-images at all.
+      if ((ex.imageS3Path?.isNotEmpty ?? false)) continue;
+      if ((ex.gifUrl?.isNotEmpty ?? false)) continue;
+      names.add(name);
+    }
+    if (names.isEmpty) return;
+    unawaited(() async {
+      try {
+        await ImageUrlCache.initialize();
+        await ImageUrlCache.batchPreFetch(
+            names.toList(growable: false), ref.read(apiClientProvider));
+        if (!mounted) return;
+        // Warm the decoded image bytes too — fire-and-forget per URL.
+        for (final name in names) {
+          final url = ImageUrlCache.get(name);
+          if (url == null || url.isEmpty) continue;
+          if (!mounted) return;
+          unawaited(precacheImage(
+            CachedNetworkImageProvider(url, maxWidth: 240, maxHeight: 240),
+            context,
+          ).catchError((_) {/* best-effort */}));
+        }
+      } catch (e) {
+        debugPrint('⚠️ [WorkoutDetail] image prefetch failed: $e');
+      }
+    }());
   }
 
 

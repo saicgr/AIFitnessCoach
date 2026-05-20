@@ -9,6 +9,7 @@
 /// - Drag-to-reorder (drop in gaps) and drag-to-superset (drop on exercise)
 library;
 
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -18,6 +19,7 @@ import '../../../core/constants/workout_design.dart';
 import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/models/exercise.dart';
 import '../../../data/services/api_client.dart';
+import '../../../data/services/image_url_cache.dart';
 
 part 'exercise_thumbnail_strip_v2_part_gap_drop_target.dart';
 
@@ -98,15 +100,22 @@ class _ExerciseThumbnailStripV2State extends ConsumerState<ExerciseThumbnailStri
   /// Prewarm the strip's image cache via the batch endpoint.
   ///
   /// User reported the strip "never loads thumbnails" — root cause was N
-  /// parallel per-thumbnail GETs racing on workout open, with some stuck in
-  /// loading state long enough that users saw the dumbbell-icon fallback.
-  /// One batch call to /exercise-images/batch returns all resolved S3 URLs
-  /// in a single request and pre-fills the static cache shared by every
-  /// thumbnail child, so the children's _loadImage() short-circuits on the
-  /// cache hit instead of firing its own request.
+  /// parallel per-thumbnail GETs racing on workout open. One batch call to
+  /// /exercise-images/batch resolves the lot in a single request.
+  ///
+  /// Routes through the shared persisted [ImageUrlCache] (instead of a
+  /// per-class static map) so:
+  ///  - children's _loadImage() can short-circuit on the same cache the
+  ///    rest of the app uses (next_workout_card, home hero, etc. all warm
+  ///    it too — a re-open of any workout sharing these exercises is
+  ///    instant);
+  ///  - URLs survive across app restarts (SharedPreferences-backed),
+  ///    instead of being lost the moment the process dies.
+  /// The per-class static maps are still seeded from the cache so existing
+  /// containsKey() short-circuits in the children stay zero-cost.
   Future<void> _batchPrewarmImages() async {
     if (widget.exercises.isEmpty) return;
-    // Skip names already cached (most common case after workout-detail load).
+    await ImageUrlCache.initialize();
     final namesToFetch = <String>[];
     for (final ex in widget.exercises) {
       final name = ex.name;
@@ -114,27 +123,36 @@ class _ExerciseThumbnailStripV2State extends ConsumerState<ExerciseThumbnailStri
       // imageS3Path / gifUrl already on the model — children handle that.
       if (ex.imageS3Path != null && ex.imageS3Path!.isNotEmpty) continue;
       if (ex.gifUrl != null && ex.gifUrl!.isNotEmpty) continue;
-      final key = name.toLowerCase();
-      if (_DraggableThumbnailState._imageCache.containsKey(key)) continue;
+      // Hit in the shared cache? Mirror into the per-class static caches
+      // (still used by the children for synchronous short-circuit) and
+      // skip the fetch.
+      final cached = ImageUrlCache.get(name);
+      if (cached != null && cached.isNotEmpty) {
+        final key = name.toLowerCase();
+        _DraggableThumbnailState._imageCache[key] = cached;
+        _ExerciseThumbnailState._imageCache[key] = cached;
+        continue;
+      }
       namesToFetch.add(name);
     }
-    if (namesToFetch.isEmpty) return;
+    if (namesToFetch.isEmpty) {
+      if (mounted) setState(() {/* rebuild so seeded thumbs paint */});
+      return;
+    }
     try {
-      final apiClient = ref.read(apiClientProvider);
-      final response = await apiClient.post(
-        '/exercise-images/batch',
-        data: {'names': namesToFetch},
-      );
-      if (response.statusCode != 200 || response.data == null) return;
-      final urls = (response.data['urls'] as Map<String, dynamic>?) ?? {};
-      for (final entry in urls.entries) {
-        final url = entry.value as String?;
+      await ImageUrlCache.batchPreFetch(
+          namesToFetch, ref.read(apiClientProvider));
+      // Mirror the freshly-resolved URLs into the per-class static caches.
+      bool anyResolved = false;
+      for (final name in namesToFetch) {
+        final url = ImageUrlCache.get(name);
         if (url == null || url.isEmpty) continue;
-        final key = entry.key.toLowerCase();
+        final key = name.toLowerCase();
         _DraggableThumbnailState._imageCache[key] = url;
         _ExerciseThumbnailState._imageCache[key] = url;
+        anyResolved = true;
       }
-      if (mounted && urls.isNotEmpty) {
+      if (mounted && anyResolved) {
         setState(() {/* trigger rebuild so cached thumbs render */});
       }
     } catch (_) {
