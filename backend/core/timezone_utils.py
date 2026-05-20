@@ -121,19 +121,33 @@ def resolve_timezone(request, db=None, user_id: Optional[str] = None) -> str:
         1. X-User-Timezone request header (sent by the mobile app)
         2. users.timezone DB column (if db + user_id provided)
         3. Fallback to 'UTC'
+
+    Side effect (silent self-healing): when the header is present and valid
+    AND differs from the DB value, schedule a throttled write-through to
+    refresh users.timezone. This keeps cron / background jobs that can't see
+    the request from inheriting a stale value forever. Throttle is 24h per
+    user, fire-and-forget — never blocks the resolver.
     """
     # 1. Header (try IANA first, then map abbreviation)
     header_tz = request.headers.get("x-user-timezone") if request is not None else None
+    resolved_from_header: Optional[str] = None
     if header_tz:
         if _is_valid_tz(header_tz):
-            logger.debug(f"🕐 [TZ] Resolved timezone from header: {header_tz} (user={user_id})")
-            return header_tz
-        # Flutter fallback sends abbreviations like "IST" — map to IANA
-        mapped = _TZ_ABBREVIATION_MAP.get(header_tz.upper())
-        if mapped:
-            logger.info(f"🕐 [TZ] Mapped abbreviation '{header_tz}' -> '{mapped}' (user={user_id})")
-            return mapped
-        logger.warning(f"🕐 [TZ] Unknown timezone header '{header_tz}', trying DB (user={user_id})")
+            resolved_from_header = header_tz
+        else:
+            # Flutter fallback sends abbreviations like "IST" — map to IANA
+            mapped = _TZ_ABBREVIATION_MAP.get(header_tz.upper())
+            if mapped:
+                logger.info(f"🕐 [TZ] Mapped abbreviation '{header_tz}' -> '{mapped}' (user={user_id})")
+                resolved_from_header = mapped
+            else:
+                logger.warning(f"🕐 [TZ] Unknown timezone header '{header_tz}', trying DB (user={user_id})")
+
+    if resolved_from_header:
+        if db is not None and user_id:
+            _maybe_write_through_timezone(db, user_id, resolved_from_header)
+        logger.debug(f"🕐 [TZ] Resolved timezone from header: {resolved_from_header} (user={user_id})")
+        return resolved_from_header
 
     # 2. DB lookup
     if db is not None and user_id:
@@ -148,6 +162,58 @@ def resolve_timezone(request, db=None, user_id: Optional[str] = None) -> str:
 
     logger.warning(f"🕐 [TZ] Falling back to UTC — no timezone found (user={user_id}, header={header_tz})")
     return "UTC"
+
+
+# ── self-healing write-through ──────────────────────────────────────────
+# Phone sends X-User-Timezone on every request; users.timezone has historically
+# been stale (often 'UTC' for accounts created before the header existed).
+# When the live header disagrees with the DB column we update the DB once per
+# user per 24h so that cron, backfills, and any non-HTTP context eventually
+# converge on truth without manual intervention.
+_TIMEZONE_WRITETHROUGH_THROTTLE_SECONDS = 24 * 60 * 60
+_timezone_writethrough_last_ts: dict = {}
+
+
+def _maybe_write_through_timezone(db, user_id: str, tz_str: str) -> None:
+    """Refresh users.timezone if header value differs from DB and not throttled.
+
+    Fire-and-forget. Logs but never raises — the caller is in the hot path
+    of every authed request and must not be slowed or destabilized by this.
+    """
+    import time
+
+    now_ts = time.monotonic()
+    last_ts = _timezone_writethrough_last_ts.get(user_id)
+    if last_ts is not None and (now_ts - last_ts) < _TIMEZONE_WRITETHROUGH_THROTTLE_SECONDS:
+        return  # within 24h of last check — skip silently
+
+    try:
+        user = db.get_user(user_id)
+    except Exception as e:
+        logger.debug(f"🕐 [TZ writethrough] get_user failed for {user_id}: {e}")
+        return
+    if not user:
+        return
+    current = (user or {}).get("timezone")
+    if current == tz_str:
+        # DB already matches — record the timestamp so we don't re-check for
+        # another 24h, but don't issue an UPDATE.
+        _timezone_writethrough_last_ts[user_id] = now_ts
+        return
+
+    try:
+        # supabase-py update is synchronous; the resolver itself runs inside
+        # FastAPI dependency resolution where blocking the event loop briefly
+        # is acceptable. If this surfaces as a hot-path cost in profiling,
+        # wrap in BackgroundTasks at the caller site.
+        db.client.table("users").update({"timezone": tz_str}).eq("id", user_id).execute()
+        _timezone_writethrough_last_ts[user_id] = now_ts
+        logger.info(
+            f"🕐 [TZ writethrough] Refreshed users.timezone for {user_id}: "
+            f"{current!r} -> {tz_str!r}"
+        )
+    except Exception as e:
+        logger.warning(f"🕐 [TZ writethrough] UPDATE failed for {user_id}: {e}")
 
 
 # ── private helpers ─────────────────────────────────────────────────────

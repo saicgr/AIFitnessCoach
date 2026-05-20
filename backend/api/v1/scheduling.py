@@ -20,7 +20,7 @@ from core.db import get_supabase_db
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from core.auth import get_current_user
 from core.exceptions import safe_internal_error
-from core.timezone_utils import user_today_date
+from core.timezone_utils import user_today_date, resolve_timezone, target_date_to_utc_iso
 from typing import List, Optional
 from datetime import datetime, date, timedelta
 from pydantic import BaseModel, Field
@@ -333,6 +333,12 @@ async def reschedule_workout(request: RescheduleRequest,
             workout["scheduled_date"].replace("Z", "+00:00")
         ).date()
 
+        # Anchor every reschedule write at noon-user-local → UTC. A bare
+        # `f"{date}T00:00:00Z"` produced midnight UTC which reads back as
+        # the previous local day for users west of UTC (see
+        # generation_endpoints.py fix history).
+        _user_tz = resolve_timezone(http_request, db, user_id)
+
         swapped_workout_name = None
 
         # If swapping with another workout
@@ -353,14 +359,14 @@ async def reschedule_workout(request: RescheduleRequest,
 
             # Swap the dates
             db.client.table("workouts").update({
-                "scheduled_date": f"{original_date}T00:00:00Z",
+                "scheduled_date": target_date_to_utc_iso(str(original_date), _user_tz),
                 "last_modified_at": datetime.utcnow().isoformat(),
                 "last_modified_method": "reschedule_swap",
             }).eq("id", request.swap_with_workout_id).execute()
 
         # Update the main workout
         update_data = {
-            "scheduled_date": f"{new_date}T00:00:00Z",
+            "scheduled_date": target_date_to_utc_iso(str(new_date), _user_tz),
             "status": "rescheduled",
             "reschedule_count": workout.get("reschedule_count", 0) + 1,
             "last_modified_at": datetime.utcnow().isoformat(),

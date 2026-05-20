@@ -534,7 +534,7 @@ async def send_message(
     start_time = time.time()
 
     try:
-        response = await coach.process_message(chat_request)
+        response = await coach.process_message(chat_request, user_tz=_chat_tz)
         response_time_ms = int((time.time() - start_time) * 1000)
         # 🎯 Stable assistant_message_id generated up-front so the persisted
         # row PK matches what we hand back to the client. Mirrors the SSE
@@ -970,7 +970,7 @@ async def send_message_stream(
             # `async for` is closed by Starlette → the underlying Gemini stream
             # generator is `aclose()`d → the inflight call is cancelled and the
             # semaphore released. No leak.
-            async for evt in coach.process_message_stream(chat_request):
+            async for evt in coach.process_message_stream(chat_request, user_tz=_stream_tz):
                 # Bail out early if the client has gone away — stops the run
                 # and avoids burning Gemini tokens nobody will receive.
                 if await request.is_disconnected():

@@ -686,11 +686,19 @@ class LangGraphCoachService:
         similar_questions: list,
         beast_mode_config: Optional[Dict[str, Any]] = None,
         media_content_type: Optional[str] = None,
+        user_tz: Optional[str] = None,
     ) -> Dict[str, Any]:
-        """Build the state dictionary for the selected agent."""
+        """Build the state dictionary for the selected agent.
+
+        `user_tz` is the LIVE phone IANA timezone resolved at the HTTP
+        handler from X-User-Timezone. Carried through every agent state so
+        downstream MCP tools never have to fall back to the (often stale)
+        `users.timezone` DB column.
+        """
         base_state = {
             "user_message": cleaned_message,
             "user_id": request.user_id,
+            "user_tz": user_tz or "UTC",
             "user_profile": self._enrich_user_profile(request),
             "conversation_history": self._trim_conversation_history(request.conversation_history),
             "intent": intent,
@@ -748,7 +756,9 @@ class LangGraphCoachService:
                 _up_dict = _up
             else:
                 _up_dict = {}
-            user_tz = _up_dict.get("timezone") or "UTC"
+            # Live phone tz (Track A) wins over the user_profile column,
+            # which lacks a `timezone` field in many call sites.
+            user_tz = user_tz or _up_dict.get("timezone") or "UTC"
             daily_ctx, favs, today_wo = await asyncio.gather(
                 fetch_daily_nutrition_context(str(request.user_id), user_tz),
                 fetch_recent_favorites(str(request.user_id), limit=5, exclude_days=0),
@@ -817,9 +827,18 @@ class LangGraphCoachService:
 
         return base_state
 
-    async def process_message(self, request: ChatRequest) -> ChatResponse:
+    async def process_message(
+        self,
+        request: ChatRequest,
+        user_tz: Optional[str] = None,
+    ) -> ChatResponse:
         """
         Process a user message using dedicated domain agents.
+
+        `user_tz` is the LIVE phone IANA timezone resolved at the HTTP
+        handler. Required for every MCP tool that anchors a calendar day or
+        reads "today" — otherwise stale `users.timezone` (often 'UTC') leaks
+        through and produces off-by-one days for users west of UTC.
 
         Flow:
         0. Fast-path for simple messages (greetings, thanks, goodbye)
@@ -969,6 +988,7 @@ class LangGraphCoachService:
                 similar_questions,
                 beast_mode_config=beast_mode_config,
                 media_content_type=media_content_type,
+                user_tz=user_tz,
             )
 
             # 6. Execute agent with retry for thought_signature errors
@@ -1044,7 +1064,11 @@ class LangGraphCoachService:
             logger.error(f"Agent execution failed: {e}", exc_info=True)
             raise
 
-    async def process_message_stream(self, request: ChatRequest):
+    async def process_message_stream(
+        self,
+        request: ChatRequest,
+        user_tz: Optional[str] = None,
+    ):
         """Streaming counterpart of `process_message`.
 
         Runs the IDENTICAL pipeline (media validation, @mention detection,
@@ -1204,6 +1228,7 @@ class LangGraphCoachService:
             similar_questions,
             beast_mode_config=beast_mode_config,
             media_content_type=media_content_type,
+            user_tz=user_tz,
         )
 
         # 6. Decide: true token-streaming vs. buffered agent run.

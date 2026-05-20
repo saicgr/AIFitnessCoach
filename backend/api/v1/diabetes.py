@@ -1019,10 +1019,11 @@ async def get_diabetes_trends(
     start_user = (
         datetime.strptime(end_user, "%Y-%m-%d").date() - timedelta(days=span - 1)
     ).strftime("%Y-%m-%d")
-    start_utc = f"{start_user}T00:00:00+00:00"
-    end_utc = (
-        datetime.strptime(end_user, "%Y-%m-%d").date() + timedelta(days=1)
-    ).strftime("%Y-%m-%dT00:00:00+00:00")
+    # Use the tz-aware helper so users west of UTC don't lose 5h of data
+    # at the leading edge and gain a phantom 5h at the trailing edge.
+    from core.timezone_utils import local_date_to_utc_range
+    start_utc, _ = local_date_to_utc_range(start_user, user_tz)
+    _, end_utc = local_date_to_utc_range(end_user, user_tz)
 
     try:
         from zoneinfo import ZoneInfo
@@ -1041,14 +1042,14 @@ async def get_diabetes_trends(
             .select("timestamp,glucose_mg_dl")\
             .eq("user_id", user_id)\
             .gte("timestamp", start_utc)\
-            .lt("timestamp", end_utc)\
+            .lte("timestamp", end_utc)\
             .order("timestamp")\
             .execute()
         ins_resp = db.client.table("insulin_doses")\
             .select("timestamp,units")\
             .eq("user_id", user_id)\
             .gte("timestamp", start_utc)\
-            .lt("timestamp", end_utc)\
+            .lte("timestamp", end_utc)\
             .order("timestamp")\
             .execute()
 

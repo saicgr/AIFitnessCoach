@@ -727,10 +727,12 @@ async def get_cardio_trends(
     ).strftime("%Y-%m-%d")
     # cardio_sessions / cardio_metrics use created_at / measured_at — bound the
     # query on a wide UTC window, then bucket precisely by local date below.
-    start_utc = f"{start_user}T00:00:00+00:00"
-    end_utc = (
-        datetime.strptime(end_user, "%Y-%m-%d").date() + timedelta(days=1)
-    ).strftime("%Y-%m-%dT00:00:00+00:00")
+    # local_date_to_utc_range handles the per-tz offset correctly; bare
+    # `f"{date}T00:00:00+00:00"` concat anchored to UTC missed the
+    # leading/trailing 5h that fall outside CST/CDT day boundaries.
+    from core.timezone_utils import local_date_to_utc_range
+    start_utc, _ = local_date_to_utc_range(start_user, user_tz)
+    _, end_utc = local_date_to_utc_range(end_user, user_tz)
 
     try:
         from zoneinfo import ZoneInfo
@@ -751,7 +753,7 @@ async def get_cardio_trends(
                     "avg_heart_rate,max_heart_rate,calories_burned")\
             .eq("user_id", user_id)\
             .gte("created_at", start_utc)\
-            .lt("created_at", end_utc)\
+            .lte("created_at", end_utc)\
             .order("created_at")\
             .execute()
         rows = sess_resp.data or []
@@ -814,7 +816,7 @@ async def get_cardio_trends(
             .select("measured_at,vo2_max_estimate")\
             .eq("user_id", user_id)\
             .gte("measured_at", start_utc)\
-            .lt("measured_at", end_utc)\
+            .lte("measured_at", end_utc)\
             .order("measured_at")\
             .execute()
         vo2_map: dict[str, float] = {}
