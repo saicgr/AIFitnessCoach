@@ -1011,6 +1011,9 @@ async def get_today_workout(
         is_generating = generating_for_today
         generation_message: Optional[str] = "Generating your workout..." if generating_for_today else None
         days_until_next: Optional[int] = None
+        # Initialize before the today_rows branch so the future-merge below
+        # can always reference _demoted_rows even on the empty-today path.
+        _demoted_rows: list = []
 
         if today_rows:
             # Safety net: today_rows is matched by tz-aware UTC range, which
