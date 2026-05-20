@@ -28,7 +28,6 @@ import '../screens/nutrition/quick_log_overlay.dart';
 import '../screens/workout/widgets/quick_workout_sheet.dart';
 import 'coach_avatar.dart';
 import 'app_tour/app_tour_controller.dart';
-import 'app_tour/app_tour_overlay.dart';
 import 'floating_chat/floating_chat_bubble.dart';
 import 'floating_chat/floating_chat_overlay.dart';
 import 'level_up_dialog.dart';
@@ -539,9 +538,12 @@ class MainShell extends ConsumerWidget {
               ),
             ),
           ),
-          // Note: Workout mini player is now handled globally in app.dart
-          // App tour overlay (topmost — coach marks must render above nav)
-          const AppTourOverlay(),
+          // Note: Workout mini player is now handled globally in app.dart.
+          // App tour overlay is ALSO mounted globally now (in app.dart's
+          // MaterialApp.router builder Stack) — covering top-level routes
+          // outside the shell (active workout, workout complete, /chat,
+          // /stats, fasting body-status / guide). Removed from here to
+          // avoid double-rendering the same controller state.
         ],
       ),
     );

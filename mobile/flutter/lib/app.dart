@@ -10,6 +10,7 @@ import 'core/theme/app_theme.dart';
 import 'core/theme/theme_provider.dart';
 import 'data/providers/root_messenger.dart';
 import 'widgets/recipe_save_jobs_listener.dart';
+import 'widgets/app_tour/app_tour_overlay.dart';
 import 'data/providers/admin_provider.dart';
 import 'data/providers/gym_profile_provider.dart';
 import 'core/accessibility/accessibility_provider.dart';
@@ -211,19 +212,36 @@ class _AppRootState extends ConsumerState<AppRoot> {
           // via AccentColorScope InheritedWidget. context.colors.accent now
           // automatically uses the user's selected accent color.
           child: AccentColorScopeWrapper(
-            child: WindowModeObserver(
-              child: FloatingChatOverlay(
-                key: const ValueKey('floating_chat_overlay'),
-                child: _WorkoutMiniPlayerOverlay(
-                  // RecipeSaveJobsListener watches background Save-as-Recipe
-                  // jobs and surfaces toasts via rootScaffoldMessengerKey when
-                  // they complete — works regardless of which sub-route is
-                  // active when the AI enrichment finishes.
-                  child: RecipeSaveJobsListener(
-                    child: child ?? const SizedBox.shrink(),
+            child: Stack(
+              children: [
+                WindowModeObserver(
+                  child: FloatingChatOverlay(
+                    key: const ValueKey('floating_chat_overlay'),
+                    child: _WorkoutMiniPlayerOverlay(
+                      // RecipeSaveJobsListener watches background
+                      // Save-as-Recipe jobs and surfaces toasts via
+                      // rootScaffoldMessengerKey when they complete — works
+                      // regardless of which sub-route is active when the AI
+                      // enrichment finishes.
+                      child: RecipeSaveJobsListener(
+                        child: child ?? const SizedBox.shrink(),
+                      ),
+                    ),
                   ),
                 ),
-              ),
+                // App-tour overlay — mounted ONCE at the app root so it
+                // paints over every route, including top-level routes
+                // outside MainShell (active workout, workout complete,
+                // /chat, /stats, fasting body-status / guide). Previously
+                // mounted only inside MainShell, so any tour fired from a
+                // non-shell screen set the global state to visible=true
+                // but had no overlay to paint it — the leftover state then
+                // leaked back to the shell when the user popped to /home,
+                // rendering the wrong screen's tour card with no spotlight.
+                // Returns SizedBox.shrink() when no tour is visible, so
+                // the global mount costs nothing in steady state.
+                const AppTourOverlay(),
+              ],
             ),
           ),
         );
