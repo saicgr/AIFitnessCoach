@@ -543,8 +543,11 @@ class _WorkoutHeroBodyState extends ConsumerState<_WorkoutHeroBody> {
 
     return GestureDetector(
       onTap: () {
+        // Card tap → workout detail screen, matching the Workouts-tab hero
+        // carousel (HeroWorkoutCard inCarousel=true). Starting the workout
+        // is the play-button's job below; the rest of the card opens detail.
         HapticService.medium();
-        context.push('/active-workout', extra: workout);
+        context.push('/workout/${workout.id}', extra: workout);
       },
       // A5: the image-backed hero is the heaviest paint on Home (network
       // image + gradient scrim). Isolating it in a RepaintBoundary stops a
@@ -657,25 +660,42 @@ class _WorkoutHeroBodyState extends ConsumerState<_WorkoutHeroBody> {
                           ),
                         ),
                         const SizedBox(width: 10),
-                        Container(
-                          width: 48,
-                          height: 48,
-                          alignment: Alignment.center,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Colors.white,
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.22),
-                                blurRadius: 10,
-                                offset: const Offset(0, 3),
-                              ),
-                            ],
+                        GestureDetector(
+                          // The inner tap is consumed before the outer card
+                          // GestureDetector sees it — so the button starts
+                          // the workout (or opens its summary if already
+                          // completed) while the rest of the card still
+                          // opens the workout detail screen.
+                          behavior: HitTestBehavior.opaque,
+                          onTap: () {
+                            HapticService.medium();
+                            if (widget.completed) {
+                              context.push(
+                                  '/workout-summary/${workout.id}?tab=summary');
+                            } else {
+                              context.push('/active-workout', extra: workout);
+                            }
+                          },
+                          child: Container(
+                            width: 48,
+                            height: 48,
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.white,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.22),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 3),
+                                ),
+                              ],
+                            ),
+                            child: LineIcon(
+                                widget.completed ? 'check' : 'play',
+                                color: accent,
+                                size: 22),
                           ),
-                          child: LineIcon(
-                              widget.completed ? 'check' : 'play',
-                              color: accent,
-                              size: 22),
                         ),
                       ],
                     ),
