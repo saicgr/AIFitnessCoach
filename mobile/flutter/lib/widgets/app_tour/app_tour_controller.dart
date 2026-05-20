@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../data/repositories/auth_repository.dart' show authStateProvider;
 
 import '../tooltips/tooltip_anchors.dart';
 
@@ -165,7 +166,26 @@ class AppTourController extends StateNotifier<AppTourState> {
 
 final appTourControllerProvider =
     StateNotifierProvider<AppTourController, AppTourState>(
-  (ref) => AppTourController(),
+  (ref) {
+    final controller = AppTourController();
+    // Sign-out / sign-in-as-different-user: silently abort any in-flight
+    // tour so the new session doesn't inherit the previous user's tour
+    // step visibility. The "seen" flag is in SharedPreferences (per-
+    // device, not per-user) so it survives logout as before — only the
+    // ephemeral "currently visible" state is cleared.
+    ref.listen<String?>(
+      authStateProvider.select((s) => s.user?.id),
+      (prev, next) {
+        if (prev == next) return;
+        // Initial null → resolved-userId on first auth is NOT a user-
+        // change in the meaningful sense; don't clobber a tour that the
+        // app may have just shown.
+        if (prev == null && next != null) return;
+        controller.abort();
+      },
+    );
+    return controller;
+  },
 );
 
 /// Legacy registry — keys now live in `TooltipAnchors`. This class

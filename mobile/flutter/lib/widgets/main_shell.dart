@@ -191,7 +191,18 @@ class MainShell extends ConsumerWidget {
     return fullPath.startsWith('/fasting');
   }
 
-  void _onItemTapped(BuildContext context, int index) {
+  void _onItemTapped(WidgetRef ref, BuildContext context, int index) {
+    // Abort any in-flight AppTour on tab switch — the tour's anchor
+    // GlobalKeys belong to the outgoing tab. IndexedStack keeps that
+    // tab alive offscreen, so the renderbox still reports a screen
+    // rect; without aborting, the spotlight would draw over whatever
+    // happens to occupy those coordinates on the incoming tab. Silent
+    // abort (no "seen" flag) so the tour stays eligible to fire when
+    // the user returns to its host tab.
+    final tourState = ref.read(appTourControllerProvider);
+    if (tourState.isVisible) {
+      ref.read(appTourControllerProvider.notifier).abort();
+    }
     if (navigationShell != null) {
       navigationShell!.goBranch(index, initialLocation: index == navigationShell!.currentIndex);
       return;
@@ -532,7 +543,7 @@ class MainShell extends ConsumerWidget {
                   child: _FloatingNavBarWithAI(
                     selectedIndex: selectedIndex,
                     isSecondaryPage: _isSecondaryPage(context),
-                    onItemTapped: (index) => _onItemTapped(context, index),
+                    onItemTapped: (index) => _onItemTapped(ref, context, index),
                   ),
                 ),
               ),
