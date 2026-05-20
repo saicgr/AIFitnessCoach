@@ -22,6 +22,7 @@ from models.coach_review import (
     SwapSuggestion,
 )
 from services.gemini_text_helper import gemini_text
+from core.config import get_settings
 
 logger = logging.getLogger(__name__)
 
@@ -166,7 +167,9 @@ class CoachReviewService:
             "glycemic_load_score": ai.get("glycemic_load_score"),
             "swap_suggestions": ai.get("swap_suggestions") or [],
             "full_feedback": ai.get("full_feedback"),
-            "model_id": "gemini-3-flash",
+            # gemini_text() runs on the vision/Flash-Lite model — record what
+            # was actually used, not a hardcoded label.
+            "model_id": get_settings().gemini_vision_model,
             "reviewed_at": now_iso,
         }
         self.db.client.table("coach_reviews").insert(row).execute()

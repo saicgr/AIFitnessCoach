@@ -198,7 +198,11 @@ class SetRowVisuals {
     }
 
     if (widgets.isEmpty) return null;
-    return Row(mainAxisSize: MainAxisSize.min, children: widgets);
+    return FittedBox(
+      fit: BoxFit.scaleDown,
+      alignment: Alignment.centerLeft,
+      child: Row(mainAxisSize: MainAxisSize.min, children: widgets),
+    );
   }
 
   static Widget _rirPill({

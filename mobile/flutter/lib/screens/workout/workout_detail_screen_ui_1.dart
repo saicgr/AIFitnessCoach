@@ -60,7 +60,7 @@ extension __WorkoutDetailScreenStateExt1 on _WorkoutDetailScreenState {
   /// to the persisted ImageUrlCache, so the next open of any workout sharing
   /// these exercises (including across app restarts) is also instant.
   void _prefetchExerciseImages() {
-    final exercises = _workout?.exercises ?? const <Exercise>[];
+    final exercises = _workout?.exercises ?? const <WorkoutExercise>[];
     if (exercises.isEmpty) return;
     final names = <String>{};
     for (final ex in exercises) {

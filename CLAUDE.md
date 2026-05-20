@@ -321,9 +321,10 @@ This builds the SSG prerender locally (where there's enough memory) and ships th
 The `exercise_library` `instructions` text is shown to users in the active-workout
 instructions tab. It must be specific and technique-correct — never generic
 filler ("hold the weight with the appropriate grip") or a template shared across
-many exercises. Migration `2084` rewrote 133 deficient instructions using the
-app's own vetted engine (`exercise_instruction_copy.dart`) routed by a correct
-deterministic classifier; originals are preserved in `exercise_instruction_backup`.
+many exercises. Migrations `2084` + `2085` rewrote 164 deficient instructions —
+the app's own vetted engine (`exercise_instruction_copy.dart`) routed by a
+correct deterministic classifier, plus hand-authored cited templates for common
+isolation movements; originals preserved in `exercise_instruction_backup`.
 
 **After any bulk exercise import or `add_exercises.py` run:**
 
@@ -333,8 +334,8 @@ python scripts/audit_exercise_instructions.py --check
 
 If it fails, a new import reused a template or shipped empty instructions — run
 `backend/scripts/rewrite_exercise_instructions.py` (deterministic, NO LLM) before
-release. 18 templated instructions remain (the deliberately-skipped set awaiting
-a human/advisor pass) — that is the gate's baseline.
+release. 6 templated instructions remain (niche sandbag/tire/ladder/composite
+moves awaiting a human/advisor pass) — that is the gate's baseline.
 
 ## Remember
 

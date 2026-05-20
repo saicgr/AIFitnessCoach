@@ -2,6 +2,7 @@
 Configuration settings for the Zealova backend.
 Easy to modify - just update the Settings class or .env file.
 """
+from pydantic import model_validator
 from pydantic_settings import BaseSettings
 from functools import lru_cache
 from typing import Optional
@@ -19,11 +20,13 @@ class Settings(BaseSettings):
 
     # Gemini Configuration
     gemini_api_key: str = ""
-    gemini_model: str = "gemini-3-flash-preview"  # Can be overridden by GEMINI_MODEL env var
+    gemini_model: str = "gemini-3.1-flash-lite"  # Can be overridden by GEMINI_MODEL env var
     # Food-scan path (Vision Stage-1, food-text parse, coaching tips, recipe
-    # import) uses Flash Lite — cheaper + faster, and thinking-minimal. The
-    # full reasoning model (gemini_model) is kept for workout gen + chat.
-    gemini_vision_model: str = "gemini-3.1-flash-lite"  # override via GEMINI_VISION_MODEL
+    # import). When GEMINI_VISION_MODEL is unset, this mirrors gemini_model
+    # (see _mirror_vision_model_to_main below) so the single Render
+    # GEMINI_MODEL var controls every Gemini call. Set GEMINI_VISION_MODEL
+    # explicitly to decouple the vision path onto a separate (cheaper) model.
+    gemini_vision_model: str = ""  # override via GEMINI_VISION_MODEL
     gemini_embedding_model: str = "gemini-embedding-001"
     # Vertex AI (set GCP_PROJECT_ID and GCP_LOCATION env vars to enable)
     # Production deployments MUST configure Vertex AI — the developer Gemini
@@ -45,6 +48,15 @@ class Settings(BaseSettings):
     # Per-domain cache overrides (None = falls back to gemini_cache_enabled)
     form_cache_enabled: Optional[bool] = None
     nutrition_cache_enabled: Optional[bool] = None
+
+    @model_validator(mode="after")
+    def _mirror_vision_model_to_main(self) -> "Settings":
+        """If GEMINI_VISION_MODEL is not set, the vision path follows
+        gemini_model so a single Render GEMINI_MODEL var controls every
+        Gemini call. An explicit GEMINI_VISION_MODEL still wins."""
+        if not self.gemini_vision_model:
+            self.gemini_vision_model = self.gemini_model
+        return self
 
     # Key frame extraction for video analysis
     keyframe_extraction_enabled: bool = True

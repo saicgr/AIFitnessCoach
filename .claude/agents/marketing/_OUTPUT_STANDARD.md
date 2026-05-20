@@ -405,6 +405,67 @@ If ANY of these fail, rewrite.
 
 ---
 
+## ⚠️ Log-posted protocol — recording what actually went live (binding, all agents)
+
+`docs/planning/marketing/posted-log.md` is the **single canonical ledger** of what went
+live across every channel. Per-agent files (`reddit/posts.md`, `build-in-public/<date>.md`,
+`blogs/posts.md`, etc.) hold **drafts**. `posted-log.md` holds **posted items**.
+geo-strategist diffs it against `WEEKLY_SCHEDULE.md`; citation-tracker reads it for
+flat-tactic detection.
+
+### Trigger phrases (the user says one AFTER posting manually)
+
+| User says | Agent that logs it | What it does |
+|---|---|---|
+| `build-in-public posted — log it` | build-in-public-writer | Flip Status in that day's build-in-public file to Posted, AND append one block per channel posted (X / Threads / LinkedIn) to `posted-log.md` |
+| `Reddit posted — log it` | reddit-agent | Append one block per posted Reddit comment / post to `posted-log.md` |
+| `X posted — log it` | social-post-creator | Append one block per posted tweet / thread to `posted-log.md` |
+| `Zealova Reddit post posted — log it` | reddit-agent | Append the top-level post block |
+| `log a manual post` | whichever agent the user addresses | Append a hand-written entry (see below) |
+
+This is **log-posted mode: NO research, NO drafting.** Just read the draft file and write
+schema-compliant blocks. The full preamble standard relaxes — a one-line confirmation of
+what was logged is enough.
+
+### How a block gets populated
+
+Everything except the live URL is **auto-pulled from the draft file** the agent already
+wrote: date, channel, type, angle, pillar, `Drafted by`, `Source draft` path. The user
+supplies only:
+- **The live URL(s)** — the user posted manually, so the agent cannot know them. If the
+  draft already carried a hard thread URL (Reddit), reuse it; the user only pastes URLs
+  the agent does not already have.
+- **`Edited before posting`** — if the user changed the draft before posting, they say
+  what changed; otherwise `no`.
+- **`Thread sourced`** — `manual — Sai found it` if the user found the Reddit/forum thread
+  himself (even though an agent drafted the reply), else `scout/cadence`.
+
+### Manual / hand-written posts
+
+If the user posted something with NO agent draft behind it, record it with
+`Source draft: none — hand-written` and `Drafted by: hand-written`. The user supplies
+channel, URL, angle, and pillar by hand. A Reddit reply the user *found himself* but had
+an agent draft is NOT hand-written — it has a `Source draft`; it is just
+`Thread sourced: manual — Sai found it`.
+
+### Schema
+
+Every entry follows the entry-schema block at the top of `posted-log.md` exactly. Copy
+that structure. `URL` is mandatory; `Metrics` start as `—` and get filled at the 48h and
+1-week checkpoints.
+
+### Hard rule — every Reddit / Quora / forum reply draft MUST carry a hard thread URL
+
+Every Reddit comment draft (and Quora / forum reply draft) must include the **live URL of
+the thread being replied to**, WebFetched this run. NEVER hand the user a "search the sub
+for `<keyword>` and find a thread" recipe. A search-recipe draft cannot be logged — the
+agent never learns which thread the user chose — and cannot be diagnosed for traction
+later. This is already required by the Source traceability rule above; it is restated
+here because a search-recipe batch on 2026-05-17 produced 3 comments that could not be
+logged or diagnosed.
+
+---
+
 ## Hand-off / "what to do next" note (always last)
 
 Every output ends with a "what to do next" section, in plain English. Format:
@@ -429,9 +490,32 @@ Copy this into Claude Code:
 **Files updated this run:**
 - `docs/planning/marketing/<area>/<file>.md`
 - `<frontend path if applicable>`
+
+**Files to open this run:**
+- list the clickable path of EVERY dated file or ledger this output drafted to, logged to,
+  or cites — one per line, as a `backtick path` so it renders clickable in the IDE
 ```
 
 Never leave the user with abstract advice. Always end with a copy-paste prompt block.
+
+### Clickable-path rule (binding, every agent, every output)
+
+The user wants to click into the file, not hunt for it. So:
+
+1. **Whenever you create or update a dated file**, print its full clickable path on its own
+   line — e.g. `docs/planning/marketing/build-in-public/2026-05-19.md`. Not "saved the
+   draft" — show the path.
+2. **Whenever the output cites posting history, traction, or what shipped** (e.g.
+   geo-strategist saying "3 comments posted May 17"), it MUST point to
+   `docs/planning/marketing/posted-log.md` as a clickable path on the same line or the
+   next, so the user can click in and read the entry.
+3. **Whenever you log a posted item** (log-posted mode), the confirmation line includes
+   the clickable `docs/planning/marketing/posted-log.md` path.
+4. **Never** write "the draft", "the log", "the dated file", or "the ledger" without its
+   clickable `backtick path` next to it. A reference the user can't click is a failed
+   reference.
+
+This applies even to relaxed spot-check / quick-status outputs.
 
 ---
 
@@ -457,5 +541,6 @@ Otherwise: full three-section preamble, every run.
 
 ---
 
+**Version:** 1.2 — 2026-05-19 (added Log-posted protocol: trigger phrases, posted-log.md schema, hard-thread-URL rule for Reddit/forum reply drafts)
 **Version:** 1.1 — 2026-05-17 (added Evidence rule: every factual claim inside drafted content must be backed, hedged, or cut)
 **Applies to:** all 12 agents in `.claude/agents/marketing/{strategy,research,content,community,outreach}/`

@@ -550,7 +550,7 @@ class _AutoTargetCell extends StatelessWidget {
             // RIR pill with info icon - only ? icon is tappable
             if (targetRir != null)
               Padding(
-                padding: const EdgeInsets.only(top: 2),
+                padding: const EdgeInsets.only(top: 1),
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
                   decoration: BoxDecoration(

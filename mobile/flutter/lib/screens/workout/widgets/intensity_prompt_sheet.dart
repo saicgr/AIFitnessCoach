@@ -50,6 +50,7 @@ class IntensityResult {
 Future<IntensityResult?> showIntensityPromptSheet(
   BuildContext context, {
   int? previousRpe,
+  int? currentRir,
   required String exerciseName,
   required int setNumber,
 }) async {
@@ -63,6 +64,7 @@ Future<IntensityResult?> showIntensityPromptSheet(
       showHandle: true,
       child: _IntensityPromptSheet(
         previousRpe: previousRpe,
+        currentRir: currentRir,
         exerciseName: exerciseName,
         setNumber: setNumber,
       ),
@@ -72,11 +74,13 @@ Future<IntensityResult?> showIntensityPromptSheet(
 
 class _IntensityPromptSheet extends ConsumerStatefulWidget {
   final int? previousRpe;
+  final int? currentRir;
   final String exerciseName;
   final int setNumber;
 
   const _IntensityPromptSheet({
     required this.previousRpe,
+    required this.currentRir,
     required this.exerciseName,
     required this.setNumber,
   });
@@ -100,6 +104,14 @@ class _IntensityPromptSheetState extends ConsumerState<_IntensityPromptSheet> {
     final parsed = raw == null ? null : int.tryParse(raw);
     if (parsed != null && parsed >= 1 && parsed <= 10) {
       _lastUsedRpe = parsed;
+    }
+    // Pre-seed the sheet with the RIR the user already chose via the
+    // quick-select bar. Without this, opening the sheet wipes their
+    // choice and a one-tap mis-pick silently overwrites it (e.g. user
+    // picked RIR 0, sheet opens blank, they tap "Moderate" → logged RIR 2).
+    final cr = widget.currentRir;
+    if (cr != null && cr >= 0 && cr <= 9) {
+      _selectedRpe = (10 - cr).clamp(1, 10);
     }
   }
 

@@ -190,8 +190,8 @@ async def _call_gemini(
     if text is not None:
         parts.append(types.Part.from_text(text=text[:250_000]))  # cap input size
 
-    from core.config import settings  # type: ignore
-    model_name = getattr(settings, "GEMINI_MODEL", None) or "gemini-2.0-flash-exp"
+    from core.config import get_settings
+    model_name = get_settings().gemini_model
 
     try:
         response = await gemini_generate_with_retry(

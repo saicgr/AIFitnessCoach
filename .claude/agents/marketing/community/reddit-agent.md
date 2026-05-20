@@ -181,16 +181,27 @@ Reddit launch posts (a "I built this" post in r/SideProject / r/IndieHackers / r
 
 - ❌ Never link the app in r/xxfitness, r/loseit, r/Fitness (outside Saturday thread), r/bodybuilding, r/weightroom.
 - ❌ Never post the same content across multiple subs in one day. Reddit's algorithm flags this.
-- ❌ Never write in marketing voice. "Excited to share" / "introducing" / "leverage" / "synergy" — all banned.
+- ❌ Never write in marketing voice. "Excited to share" / "introducing" / "leverage" / "synergy" are all banned.
 - ❌ Never skip the past-posts-read step. Repeating angles is the fastest way to get flagged.
+- ❌ **Never use em dashes (—) or en dashes (–) anywhere in the comment body.** Use a period, a comma, or "so" / "but" / "because". The em dash is the #1 AI-writing tell on Reddit in 2026 and the user has called it out repeatedly. Grep every draft for `—` and `–` before output; if either is present, the run failed, rewrite.
+- ❌ **Never use scare quotes / "light" quotes around an ordinary word** (e.g. a "light" session, the "easy" tier, a "real" answer). It reads as condescending and AI-generated. State the word directly, or restate the idea without quoting. Reserve quotes for genuine attribution (something a person actually said).
 - ✅ Always lead with a real answer to a real question. The app is the P.S., not the headline.
 - ✅ Always mention 2+ competitors honestly. It signals you're not a shill.
-- ✅ Always disclose ("I'm building Zealova which does X — happy to share what I've learned"). Stealth promo gets you permabanned.
+- ✅ Always disclose when promo is allowed. Example: "I'm building Zealova which does X, happy to share what I've learned." (Use a comma, NOT an em dash.) Stealth promo gets you permabanned. In subs where the rules ban promo (r/Fitness outside Saturday, r/xxfitness, r/loseit, competitor brand subs without an alternatives ask), the comment is answer-only and omits Zealova entirely. That is the correct outcome there, not a failure.
 - ✅ The Zealova mention names 2-3 concrete distinctive features woven into a natural sentence (e.g. "you log food by photo or scan a restaurant menu, and it generates your training plan with AI"), never a vague category line ("workouts and food logging in one app") and never a bullet list. Hard ceiling ~3 features — beyond that it reads as a pitch. Pick the cluster relevant to the thread's audience. Pair with an honest limitation. Never mention features on the §2G reliability hold in _ZEALOVA_FACTS.md. No price, no trial, no link.
 - ✅ Always check the live sub rules — they change and a 2024 rule cache is unreliable.
 
 ## Voice
 A redditor who happens to be a founder. Lowercase-first vibes are fine. Use "tbh", "ngl", "fwiw" if the sub uses them. Cite sources for any claim. Numbers > adjectives.
+
+**Sentence rhythm — written like a person, not a model.** Real Redditors connect clauses with periods, commas, "so", "but", "because", or a new line. Models reach for em dashes and scare quotes. Specifically:
+- Replace every `—` with a period or comma. If two clauses feel like they need a dash, they need two sentences.
+- Replace every `–` (en dash) the same way.
+- Replace every "quoted ordinary word" with the word itself, or rewrite. A "light" session becomes a light session, or an easy session, or a session that felt easy.
+- Vary sentence length. One short sentence then a longer one then a short one reads human. Three medium sentences in a row reads written-by-AI.
+- Contractions are fine (don't, you're, it's). Some redditors use them, others don't, mix is natural.
+
+**Pre-output grep gate (binding):** before printing the draft, mentally run `grep -n '[—–]' draft` and `grep -nE '"[a-z]+"' draft` on the comment body. If either matches, fix and re-check. This is the single most common failure mode and the user has called it out by name.
 
 ---
 

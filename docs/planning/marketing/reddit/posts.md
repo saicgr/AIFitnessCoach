@@ -82,7 +82,7 @@ Is it OK to mention Zealova in r/Myfitnesspal? Then draft a comment for https://
 If you want to plant in r/loseit instead (answer-only, safest sub, no link ever):
 
 ```
-Draft a comment for r/loseit about MyFitnessPal alternatives — answer-only, no link, no "I built" disclosure, mention Zealova's screenshot OCR as one option among MacroFactor/Cronometer/Lose It
+Draft a comment for r/loseit about MyFitnessPal alternatives. Answer-only, no link, no "I built" disclosure, mention Zealova's screenshot OCR as one option among MacroFactor/Cronometer/Lose It
 ```
 
 ---
@@ -148,11 +148,11 @@ https://www.reddit.com/r/Myfitnesspal/comments/1t2nb7v/q_how_disconnected_can_yo
 
 > The pattern you're describing has a pretty consistent cause at growth-stage companies: the team optimizing for new-user activation and the team serving existing power users usually aren't the same people, and the activation team's metrics win because they're tied directly to subscriber growth numbers.
 >
-> MFP's diary was built for people who log every meal every day. The Today tab redesign reads like it was designed for someone opening the app for the first time — visible "progress" cards, big visual prompts to log, that sort of thing. That's genuinely useful for a new user in week one. For someone who's been logging for three years, it's friction on top of a workflow that was already optimized.
+> MFP's diary was built for people who log every meal every day. The Today tab redesign reads like it was designed for someone opening the app for the first time. Visible progress cards, big visual prompts to log, that sort of thing. That's genuinely useful for a new user in week one. For someone who's been logging for three years, it's friction on top of a workflow that was already optimized.
 >
-> For alternatives: MacroFactor is the honest answer if pure macro tracking is the goal — their adaptive TDEE algorithm is meaningfully better than MFP's static targets. Cronometer is the pick if micronutrients matter. Both are tracker-only though.
+> For alternatives: MacroFactor is the honest answer if pure macro tracking is the goal. Their adaptive TDEE algorithm is meaningfully better than MFP's static targets. Cronometer is the pick if micronutrients matter. Both are tracker-only though.
 >
-> I'm a solo founder and I built Zealova partly because of this exact dynamic — the screenshot feature specifically lets you photograph an MFP diary page and it parses the foods and macros automatically, so you're not re-entering years of data if you want to try something else.
+> I'm a solo founder and I built Zealova partly because of this exact dynamic. The screenshot feature specifically lets you photograph an MFP diary page and it parses the foods and macros automatically, so you're not re-entering years of data if you want to try something else.
 
 ### Pre-post checklist
 - [x] Did NOT include link (sub rules unverified; conservative default)
@@ -610,7 +610,7 @@ Google Play: [link to your Play Store listing]
 **Title (paste as post title):**
 
 ```
-[Launch] Zealova – AI fitness coach that generates workout plans, analyzes meals from photos, and lets you chat to modify your training
+[Launch] Zealova: AI fitness coach that generates workout plans, analyzes meals from photos, and lets you chat to modify your training
 ```
 
 **Body (paste into post body, 320 words):**
@@ -618,7 +618,7 @@ Google Play: [link to your Play Store listing]
 ```
 I've been building Zealova for about a year as a solo founder. It's an AI fitness coaching app for Android (iOS in review).
 
-Why I built it: I kept using two or three separate apps — one for workouts, one for food tracking, one to ask questions. None of them talked to each other and the workout ones just logged what I already did without any intelligence. I wanted one thing that generates the actual plan and lets me adapt it conversationally.
+Why I built it: I kept using two or three separate apps. One for workouts, one for food tracking, one to ask questions. None of them talked to each other and the workout ones just logged what I already did without any intelligence. I wanted one thing that generates the actual plan and lets me adapt it conversationally.
 
 What it does:
 
@@ -698,17 +698,17 @@ The honest version of the story:
 
 What I got wrong first: I tried to build a fitness app that did everything before it did anything well. Spent the first 3 months adding features nobody had asked for. First real users came when I stripped it to workout generation + a chat interface, shipped it, and started getting feedback.
 
-The core technical challenge: multi-agent routing. The app has 5 specialist sub-agents (workout, nutrition, injury, hydration, general coach) under a single chat interface. The user just types naturally. The router needs to figure out which agent handles "I have a shoulder thing, can we swap the pressing work this week?" — that's workout + injury simultaneously.
+The core technical challenge: multi-agent routing. The app has 5 specialist sub-agents (workout, nutrition, injury, hydration, general coach) under a single chat interface. The user just types naturally. The router needs to figure out which agent handles a message like "I have a shoulder thing, can we swap the pressing work this week?" because that's workout + injury simultaneously.
 
 I ended up using LangGraph for the routing layer. The key design decision: route by intent and media type, not by keywords. Early keyword-based routing was a disaster because people don't say "nutrition query" before asking about a meal. LangGraph let me build a graph where nodes could forward context to adjacent agents without the user seeing the handoff.
 
-The food side uses Gemini Vision for meal photo analysis. You photograph a plate or a restaurant menu and it extracts per-item calories and macros. The challenge here was accuracy on mixed dishes — I ended up building 4 analysis modes (auto, plate, menu, buffet) each with different prompt strategies.
+The food side uses Gemini Vision for meal photo analysis. You photograph a plate or a restaurant menu and it extracts per-item calories and macros. The challenge here was accuracy on mixed dishes, so I ended up building 4 analysis modes (auto, plate, menu, buffet) each with different prompt strategies.
 
 Stack: Flutter + Riverpod, FastAPI, Supabase, ChromaDB for exercise RAG, Gemini, LangGraph, Render, RevenueCat.
 
 Current metrics: live on Google Play, early stage, not sharing numbers yet.
 
-What actually worked: not trying to compete on nutrition tracking depth. MacroFactor's adaptive TDEE algorithm is better than anything I could build solo. Cronometer's food database is more verified. I'm not trying to win on macros. The wedge is: full-stack coaching in one app — plan generation + conversational adjustments + food logging — for less than Fitbod charges for workout AI alone.
+What actually worked: not trying to compete on nutrition tracking depth. MacroFactor's adaptive TDEE algorithm is better than anything I could build solo. Cronometer's food database is more verified. I'm not trying to win on macros. The wedge is full-stack coaching in one app: plan generation, conversational adjustments, and food logging, for less than Fitbod charges for workout AI alone.
 
 Happy to answer questions on: LangGraph multi-agent setup, Gemini prompt engineering for structured workout plans, Flutter + Riverpod patterns for complex state, or anything on the business side.
 
@@ -891,7 +891,7 @@ For the RR specifically, Fitloop has it built in with progression tracking and e
 
 For general bodyweight tracking beyond the RR, Hevy works well. You can build any custom routine, it's free, and the progress graphs are clear.
 
-If you want something that generates the plan for you instead of just logging it — so you're not programming it yourself — Zealova does this with AI and works for home gym / bodyweight setups too. I'm building it so full disclosure, but it's a different approach from the log-only tools.
+If you want something that generates the plan for you instead of just logging it, so you're not programming it yourself, Zealova does this with AI and works for home gym / bodyweight setups too. I'm building it so full disclosure, but it's a different approach from the log-only tools.
 ```
 
 ### Pre-post checklist
@@ -944,7 +944,7 @@ Fitbod is popular for home gym specifically because it's equipment-aware. You te
 
 JEFIT is solid if you want a bigger exercise library to pull from and build your own routines. Good free tier.
 
-I've been building Zealova which takes a slightly different approach — it generates your full monthly plan based on equipment, goals, and history and you can chat to modify it mid-cycle ("I got a trap bar this week, work it in"). Disclosure: I'm the developer. It's on Google Play if you want to check it out.
+I've been building Zealova which takes a slightly different approach. It generates your full monthly plan based on equipment, goals, and history and you can chat to modify it mid-cycle (you can say something like "I got a trap bar this week, work it in"). Disclosure: I'm the developer. It's on Google Play if you want to check it out.
 ```
 
 ### Pre-post checklist
@@ -1002,7 +1002,7 @@ Cronometer is the one for micronutrients. Their food database pulls from verifie
 
 Lose It is simpler and has a generous free tier if you're just starting out.
 
-If you want food logging with photo-based logging and workout planning in one app, Zealova does this — you photograph a plate and it extracts per-item macros.
+If you want food logging with photo-based logging and workout planning in one app, Zealova does this. You photograph a plate and it extracts per-item macros.
 ```
 
 ### Pre-post checklist

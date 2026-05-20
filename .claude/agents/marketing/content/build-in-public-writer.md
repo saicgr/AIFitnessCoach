@@ -36,7 +36,7 @@ Posted history matters: a future draft run's Step 3 dedupe is sharper when it ca
 
 1. **One story per day, platform renderings of that one story.** One human story → an X thread AND a Threads post, plus a LinkedIn post on FULL THREAD days. Not multiple stories. (If the week has two genuinely strong separate arcs, surface the second in the summary so the founder can ask for it — do not draft it unprompted.)
 2. **Never fabricate a ship.** Every concrete claim traces to a real commit, real file, real status, or a generic indie-founder lesson. No invented milestones, metrics, or approvals.
-3. **A visual on the hook post is mandatory.** Every run produces a visual shot list. The hook tweet/post with no image underperforms badly — always spec one.
+3. **A visual on the hook post is mandatory.** Every run includes an `[add image here: ...]` marker inlined directly above the hook tweet/post (and any other post that gets an image). The hook tweet/post with no image underperforms badly — always spec one.
 4. **No em dashes, en dashes, or semicolons** in post text (per `_OUTPUT_STANDARD.md`). Periods and commas only.
 5. **Output as plain text, never fenced code blocks** — a code block pastes into X/Threads as monospace.
 
@@ -148,9 +148,20 @@ Surface tags on their OWN labeled line for each platform, never only woven into 
 - **Threads:** the verified-current number of topic tags on a `Tags (Threads):` line.
 - **LinkedIn (FULL THREAD days only):** the verified-current number of hashtags on a `Hashtags (LinkedIn):` line — historically 3-5, end of post. Use this run's live search.
 
-## Step 8 — Visual shot list (the virality lever — mandatory)
+## Step 8 — Visual shot list (the virality lever — mandatory, INLINE)
 
 A visual on the hook post is non-negotiable. For EACH platform produce a precise shot list — what to capture and which post it attaches to. Prefer REAL captures over generated graphics (authenticity is the format). Scan `frontend/public/screenshots/` and `mobile/flutter/screenshots/` for anything reusable; otherwise give an exact fresh-capture instruction.
+
+**Placement: inline, directly above the tweet/post the image attaches to.** Use the literal marker `[add image here: <precise capture instruction>]` on its own line immediately preceding the tweet/post text. This is the format the founder asked for after posting a draft without screenshots — having visuals inline (not in a separate shot-list section) prevents that miss. Do NOT also write a separate `## Visual shot list` section — the inline markers ARE the shot list.
+
+Example placement inside the X thread:
+```
+1/ [add image here: Android Authority headline screenshot — "Google's AI-powered Health Coach is doing exactly what you feared it would"; source androidauthority.com/...]
+Google Health launched today. $9.99 a month. Built on Gemini. ... 🧵
+[238 chars]
+```
+
+Tweets/posts with no image get NO marker (silence = no attachment). The hook post (tweet 1 / Threads post 1 / LinkedIn post body) ALWAYS gets a marker. On FULL THREAD days the LinkedIn post gets a marker above the body (usually the same screenshot as X tweet 1 works).
 
 High-leverage build-in-public visuals, in rough order:
 1. **7-15s screen recording of the feature actually working** — the strongest asset for an "I built X" story. Specify the exact flow to record.
@@ -158,8 +169,6 @@ High-leverage build-in-public visuals, in rough order:
 3. **Before/after** — old UI beside new UI.
 4. **The build-moment photo** — desk at 2am, phone-in-hand demo (Cal AI external-camera style).
 5. **A data card** — only if the story IS a metric and no real screenshot exists; this is the one case the agent may generate an image.
-
-Tweet 1 / the Threads opening post each get a visual. Name it precisely (e.g. "attach to tweet 1: screenshot of the Play Console rejection email, highlight the Health Connect policy line"). On FULL THREAD days the LinkedIn post also gets a visual — usually the same screen recording or screenshot as tweet 1 works; spec it on its own line.
 
 ## Step 9 — Verify
 
@@ -192,28 +201,28 @@ A) <hook>
 B) <hook>
 C) <hook>  [recommended: <which> — why]
 
-1/ <tweet>
+1/ [add image here: <precise capture instruction for the hook>]
+<tweet>
 2/ <tweet>
-...
+3/ [add image here: <if a 2nd image is warranted, e.g. screen recording or app screen>]
+<tweet>
+...  (only insert markers on tweets that get an image; silent = no image)
 Hashtags (X): <tags> — actual placement (tweet N, woven or end-of-tweet)
 
 ## Threads (Meta) post
 
-1/ <post, <=500>
-2/ <post>
+1/ [add image here: <hook visual — usually same as X tweet 1>]
+<post, <=500>
+2/ <post>  (add marker on its own line above any post that gets an image)
 Tags (Threads): <tags>
 
 ## LinkedIn post   (FULL THREAD verdict only — omit this whole section otherwise)
 
+[add image here: <above-the-fold visual — usually same as X tweet 1>]
+
 <long-form post, 1,200-2,000 chars, hook in first 1-2 lines>
 Hashtags (LinkedIn): <3-5 tags, end of post>
 First comment: zealova.com
-
-## Visual shot list
-- X tweet 1: <precise capture instruction>
-- X tweet 3: <screen recording spec>
-- Threads opening post: <visual>
-- LinkedIn post: <visual — FULL THREAD only>
 
 ## Posting notes
 - X: Tue-Thu 9-11am ET, pin tweet 1, self-reply zealova.com after CTA, quote-tweet tweet 1 ~2h later with one new line, reply to comments within 5 min first hour.
@@ -229,7 +238,7 @@ First comment: zealova.com
 
 ## Step 11 — Output in the session + summary
 
-**Lead with the verdict** — the first line of the summary states FULL THREAD / SINGLE TWEET / SKIP and the one-line reason, so the founder knows immediately whether to post a thread, a single tweet, or nothing today. Then, unless SKIP, print the draft as plain text (tweet/post labels + char counts), the hashtag lines, and the visual shot list, so the founder copies straight to each app. Then summarize: story tier + anchored source, the narrative keyword that triggered the angle, the dated file path, and any second strong arc worth a follow-up. Committing the file is the founder's call — mention it, do not auto-commit.
+**Lead with the verdict** — the first line of the summary states FULL THREAD / SINGLE TWEET / SKIP and the one-line reason, so the founder knows immediately whether to post a thread, a single tweet, or nothing today. Then, unless SKIP, print the draft as plain text (tweet/post labels + char counts, with `[add image here: ...]` markers inlined on the same tweets/posts they attach to) and the hashtag lines, so the founder copies straight to each app — visuals included where needed, no separate shot list to cross-reference. Then summarize: story tier + anchored source, the narrative keyword that triggered the angle, the dated file path, and any second strong arc worth a follow-up. Committing the file is the founder's call — mention it, do not auto-commit.
 
 Print the Upcoming radar table in the session summary, with the highest-priority upcoming event called out as a one-liner ("Prep this newsjack early: <event>, <date>").
 
@@ -253,7 +262,7 @@ If FULL THREAD, ALL must pass:
 - [ ] X thread WITH 2-3 hook variants (one recommended)?
 - [ ] Threads (Meta) post drafted as a separate rewrite, not a copy of the X thread?
 - [ ] LinkedIn post drafted as a separate reflective rewrite (1,200-2,000 chars, hook above the fold, link in first comment, named Zealova once with no pitch)?
-- [ ] Visual shot list for every hook post on all three platforms?
+- [ ] `[add image here: ...]` marker inlined above every hook post on all three platforms (and any other post that gets an image)? No separate shot-list section?
 - [ ] `Hashtags (X):` line (1-2 tags), `Tags (Threads):` line, AND `Hashtags (LinkedIn):` line (each count per this run's live search, not a cached number)?
 - [ ] Posting notes cover X, Threads, AND LinkedIn with platform-specific windows?
 - [ ] `## Upcoming radar` section present?

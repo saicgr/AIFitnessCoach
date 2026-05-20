@@ -31,7 +31,7 @@ import psycopg2
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 FLUTTER_DIR = os.path.join(ROOT, "mobile", "flutter")
-REWRITE_BATCH = "2084-2026-05-18"
+REWRITE_BATCH = "2085-2026-05-18"
 
 # --- deficiency detection (identical to audit_exercise_instructions.py) -------
 RISKY = {
@@ -131,6 +131,201 @@ EXEMPLARS = {
     "stretch":             ("hamstring stretch", "Bodyweight"),
 }
 
+# --- authored templates: common isolation/accessory movements the Dart engine
+# has no branch for. Hand-written, technique-correct, cited (NASM EPFT 6th /
+# NSCA ESSC 4th / ACSM GETP 11th). Each: 5 setup steps, 3 breathing, 2 tips.
+AUTHORED = {
+    "back_extension": {
+        "setup": [
+            "Set the pad at your hip crease so you can hinge freely, ankles secured under the rollers.",
+            "Cross your arms on your chest (or place fingertips at your temples) and brace your core.",
+            "Hinge DOWN at the hips with a flat, neutral spine — this is a hip hinge, not a back bend.",
+            "Lower until you feel a stretch in the hamstrings, with the torso pointing toward the floor.",
+            "Raise back up by squeezing the glutes; stop in a straight line, do not arch past it.",
+        ],
+        "breathing": ["Inhale as you lower under control.",
+                      "Exhale as you raise back up.",
+                      "Keep the core braced throughout — do not hold your breath."],
+        "tips": ["Keep a neutral spine the whole rep — never round or yank the lower back.",
+                 "Finish in a straight line; hyperextending hard at the top stresses the spine."],
+    },
+    "lateral_raise": {
+        "setup": [
+            "Stand tall with a slight knee bend, a weight in each hand at your sides.",
+            "Keep a soft, fixed bend in the elbows of about 10 to 15 degrees.",
+            "Brace your core and keep your torso still — do not lean back.",
+            "Raise the weights out to the sides until your arms reach shoulder height.",
+            "Lower under control to the start, resisting the weight the whole way down.",
+        ],
+        "breathing": ["Inhale before the raise.",
+                      "Exhale as you lift the weights to shoulder height.",
+                      "Inhale on the controlled descent."],
+        "tips": ["Lead with the elbows, not the hands, and keep the wrists neutral.",
+                 "Stop at shoulder height — going higher shifts work off the side delts."],
+    },
+    "front_raise": {
+        "setup": [
+            "Stand tall, weights resting against the front of your thighs, palms facing you.",
+            "Keep a slight fixed bend in the elbows and brace your core.",
+            "Raise the weight straight in front of you up to shoulder height.",
+            "Pause briefly at the top with the arm parallel to the floor.",
+            "Lower slowly under control back to the thighs.",
+        ],
+        "breathing": ["Inhale before the raise.",
+                      "Exhale as you lift the weight.",
+                      "Inhale on the controlled descent."],
+        "tips": ["Do not swing or use the torso to heave the weight up.",
+                 "Stop at shoulder height — there is no need to go overhead."],
+    },
+    "rear_delt_fly": {
+        "setup": [
+            "Hinge forward at the hips with a flat back, or set up chest-supported on an incline bench.",
+            "Let the weights hang straight down with a soft, fixed bend in the elbows.",
+            "Brace your core and keep your head in line with your spine.",
+            "Raise the weights out to the sides, squeezing the shoulder blades lightly together.",
+            "Lower under control, keeping tension on the rear delts throughout.",
+        ],
+        "breathing": ["Inhale before the rep.",
+                      "Exhale as you raise the weights out.",
+                      "Inhale on the controlled descent."],
+        "tips": ["Lead with the elbows and stop at shoulder height.",
+                 "Keep the movement at the shoulder — do not bend the elbows and turn it into a row."],
+    },
+    "shrug": {
+        "setup": [
+            "Stand tall holding the weight at your sides (or in front), arms straight and relaxed.",
+            "Brace your core; your arms are just hooks, they do not lift.",
+            "Lift your shoulders straight UP toward your ears.",
+            "Pause briefly at the top and squeeze the upper traps.",
+            "Lower under control to a full stretch.",
+        ],
+        "breathing": ["Inhale before the shrug.",
+                      "Exhale as you lift the shoulders up.",
+                      "Inhale on the way down."],
+        "tips": ["Move straight up and down — rolling the shoulders adds no benefit and stresses the joint.",
+                 "Keep the chin level; do not crane the neck forward."],
+    },
+    "leg_curl": {
+        "setup": [
+            "Set up on the machine (or lie prone) with the pad just above your heels.",
+            "Press your hips down into the bench and keep your torso still.",
+            "Curl your heels toward your glutes through the full available range.",
+            "Pause and squeeze the hamstrings at the top.",
+            "Lower under control — never let the weight drop.",
+        ],
+        "breathing": ["Inhale at the start with the legs extended.",
+                      "Exhale as you curl the heels in.",
+                      "Inhale on the controlled return."],
+        "tips": ["Keep the hips pressed down — lifting them off the pad cheats the hamstrings.",
+                 "Control the negative; do not fully relax at the bottom."],
+    },
+    "wrist_curl": {
+        "setup": [
+            "Rest your forearms on your thighs or a bench with the wrists just past the edge, palms up.",
+            "Let the weight roll toward your fingertips for a full stretch.",
+            "Curl the weight up by flexing the wrists only.",
+            "Squeeze the forearms at the top of the range.",
+            "Lower slowly back to a full stretch.",
+        ],
+        "breathing": ["Inhale before the curl.",
+                      "Exhale as you curl the weight up.",
+                      "Inhale as you lower."],
+        "tips": ["Move only at the wrist — the forearms stay planted.",
+                 "Use a light load and a full range; forearms respond to control, not heavy weight."],
+    },
+    "ab_wheel": {
+        "setup": [
+            "Kneel on a mat (stand only if advanced), gripping the wheel directly under your shoulders.",
+            "Brace your core hard and tuck the pelvis so the lower back cannot arch.",
+            "Roll the wheel forward slowly, extending only as far as you keep the back flat.",
+            "Stop before the hips sag or the lower back arches — that point is your range.",
+            "Pull through your core to roll the wheel back to the start.",
+        ],
+        "breathing": ["Inhale and brace before rolling out.",
+                      "Exhale as you roll the wheel back in.",
+                      "Hold the brace the whole rep — do not hold your breath."],
+        "tips": ["Never let the lower back arch — shorten the range instead.",
+                 "Beginners: start with a short range or roll out toward a wall, then extend over time."],
+    },
+    "woodchop": {
+        "setup": [
+            "Set a cable high (or hold the weight) and stand side-on with feet shoulder-width.",
+            "Brace your core and grip the handle or weight with both hands.",
+            "Pull and rotate the weight down and across your body toward the opposite hip.",
+            "Let your hips and trunk rotate together while the arms stay fairly straight.",
+            "Return under control along the same path; finish all reps, then switch sides.",
+        ],
+        "breathing": ["Inhale before the chop.",
+                      "Exhale as you rotate and pull across.",
+                      "Inhale on the controlled return."],
+        "tips": ["Rotate through the trunk and hips, not just the arms.",
+                 "Keep the spine tall — do not crunch or round as you rotate."],
+    },
+    "external_rotation": {
+        "setup": [
+            "Anchor a band at elbow height, or lie on your side holding a light dumbbell.",
+            "Pin the working elbow to your side, bent at 90 degrees.",
+            "Keeping the elbow glued in place, rotate your forearm outward.",
+            "Move only as far as the shoulder rotates freely — a small range is normal.",
+            "Return slowly under control to the start.",
+        ],
+        "breathing": ["Inhale before the rep.",
+                      "Exhale as you rotate outward.",
+                      "Inhale on the controlled return."],
+        "tips": ["Keep the elbow pinned to your ribs the entire time.",
+                 "Use very light resistance — this trains rotator-cuff control, it is not a strength lift."],
+    },
+    "upright_row": {
+        "setup": [
+            "Stand tall holding the weight in front of your thighs with a shoulder-width grip.",
+            "Brace your core and keep your chest tall.",
+            "Pull the weight straight up along your body, leading with the elbows.",
+            "Stop when your elbows reach shoulder height — no higher.",
+            "Lower under control back to the start.",
+        ],
+        "breathing": ["Inhale before the pull.",
+                      "Exhale as you pull the weight up.",
+                      "Inhale as you lower."],
+        "tips": ["Do not pull the elbows above shoulder height — that can pinch the shoulder.",
+                 "Widen your grip if you feel any shoulder discomfort."],
+    },
+    "chest_press": {
+        "setup": [
+            "Set up with the weight at mid-chest, feet planted and core braced.",
+            "Position your elbows tucked at roughly 45 degrees from your torso.",
+            "Set your shoulder blades down and back against the bench or floor.",
+            "Press the weight away from your chest until your arms are nearly straight.",
+            "Lower under control back to the chest, stopping just short of a hard lockout.",
+        ],
+        "breathing": ["Inhale as the weight lowers and brace.",
+                      "Exhale as you press the weight up.",
+                      "Reset the breath between reps."],
+        "tips": ["Keep the shoulder blades set — do not let them round forward.",
+                 "Press in a smooth line; do not let the elbows flare wide."],
+    },
+    "floor_core": {
+        "setup": [
+            "Lie on your back with your lower back lightly pressed into the floor.",
+            "Brace your abs and lift your shoulders or legs only as far as the brace holds.",
+            "Move with control through the prescribed range — heel touch, toe tap, or leg movement.",
+            "Keep your lower back in contact with the floor for the whole set.",
+            "Lower under control; do not let the legs or shoulders crash down.",
+        ],
+        "breathing": ["Exhale as you contract the abs.",
+                      "Inhale as you return to the start.",
+                      "Breathe steadily — do not hold your breath."],
+        "tips": ["If your lower back lifts off the floor, reduce the range.",
+                 "Move from the abs — do not yank the neck or swing the legs."],
+    },
+}
+AUTHORED_FAMILY = {
+    "back_extension": "hinge", "lateral_raise": "isolation", "front_raise": "isolation",
+    "rear_delt_fly": "isolation", "shrug": "isolation", "leg_curl": "isolation",
+    "wrist_curl": "isolation", "ab_wheel": "core", "woodchop": "core",
+    "external_rotation": "isolation", "upright_row": "isolation",
+    "chest_press": "horiz_push", "floor_core": "core",
+}
+
 # class -> citation (authoritative technique standard)
 _CIT = {
     "squat": "NSCA Essentials of Strength Training & Conditioning 4th ed. (Haff & Triplett 2016) ch.13 — squat technique",
@@ -166,6 +361,7 @@ CLASS_FAMILY = {
     "jump_rope": "cardio", "rowing_erg": "cardio", "treadmill": "cardio", "cardio_bike": "cardio",
     "stretch": "stretch",
 }
+CLASS_FAMILY.update(AUTHORED_FAMILY)
 
 
 def classify_movement(name):
@@ -291,7 +487,7 @@ def classify_movement(name):
         return "renegade_row"
     if has(r"\brow\b", r"\brows\b"):
         if has(r"upright"):
-            return None  # upright row is a shoulder move; engine has no template
+            return "upright_row"
         if has(r"cable", r"seated row", r"machine row"):
             return "cable_row"
         if has(r"inverted", r"\btrx\b", r"australian"):
@@ -317,18 +513,48 @@ def classify_movement(name):
     if has(r"\bfly\b", r"\bflye\b", r"crossover", r"pec deck") and not has(r"rear delt", r"reverse fly"):
         return "fly"
 
-    return None  # leg extension, raises, shrugs, ab wheel, etc. -> skip
+    # --- authored-template classes (Dart engine had no branch) ---------------
+    if has(r"hyperextension", r"back[- ]extension"):
+        return "back_extension"
+    if has(r"rear delt", r"reverse fly", r"\by[- ]?raise\b", r"bent[- ]over.*(fly|raise)"):
+        return "rear_delt_fly"
+    if has(r"lateral raise", r"side raise"):
+        return "lateral_raise"
+    if has(r"front raise"):
+        return "front_raise"
+    if has(r"\bshrug"):
+        return "shrug"
+    if has(r"wrist curl", r"wrist extension"):
+        return "wrist_curl"
+    if has(r"leg curl", r"hamstring curl"):
+        return "leg_curl"
+    if has(r"ab wheel", r"ab roll", r"ab rollout"):
+        return "ab_wheel"
+    if has(r"wood ?chop", r"\bchop\b", r"chopper"):
+        return "woodchop"
+    if has(r"external rotation"):
+        return "external_rotation"
+    if has(r"chest press", r"svend press"):
+        return "chest_press"
+    if has(r"heel touch", r"toe tap", r"leg pull", r"flutter kick", r"toe touch"):
+        return "floor_core"
+
+    return None  # leg extension, niche / composite movements -> skip
 
 
 def fetch_inscope(conn):
     cur = conn.cursor()
+    # Exclude exercises already rewritten in an earlier batch — a re-run only
+    # targets the genuinely-still-deficient set, never re-touches fixed rows.
     cur.execute("""
         SELECT el.id, el.name, el.equipment, el.instructions, el.target_muscle,
                CASE WHEN b.id IS NOT NULL THEN 'exercise_library'
                     WHEN m.id IS NOT NULL THEN 'exercise_library_manual' END AS src
         FROM exercise_library_cleaned el
         LEFT JOIN exercise_library b ON b.id = el.id
-        LEFT JOIN exercise_library_manual m ON m.id = el.id;
+        LEFT JOIN exercise_library_manual m ON m.id = el.id
+        WHERE NOT EXISTS (SELECT 1 FROM public.exercise_instruction_backup eb
+                          WHERE eb.id = el.id);
     """)
     cols = [d.name for d in cur.description]
     rows = [dict(zip(cols, r)) for r in cur.fetchall()]
@@ -479,7 +705,7 @@ def main():
     ap.add_argument("--sample", type=int, default=0)
     ap.add_argument("--emit-sql", action="store_true")
     ap.add_argument("--out", default=os.path.join(ROOT, "backend", "migrations",
-                                                  "2084_rewrite_exercise_instructions.sql"))
+                                                  "2085_rewrite_exercise_instructions_batch2.sql"))
     args = ap.parse_args()
     if not args.dry_run and not args.emit_sql:
         args.dry_run = True
@@ -499,10 +725,16 @@ def main():
     rewrites, skipped, failures, batch_hashes = [], [], [], set()
     for row in inscope:
         cls = classify_movement(row["name"])
-        if cls is None or cls not in dart:
+        if cls is None:
             skipped.append(row)
             continue
-        sets = dart[cls]
+        if cls in AUTHORED:
+            sets = AUTHORED[cls]
+        elif cls in dart:
+            sets = dart[cls]
+        else:
+            skipped.append(row)
+            continue
         fam = CLASS_FAMILY[cls]
         text = assemble(row, sets)
         ok, reasons, h = validate(text, row, fam, batch_hashes)

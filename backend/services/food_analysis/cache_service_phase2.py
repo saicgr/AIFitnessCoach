@@ -32,6 +32,7 @@ import asyncpg
 from google.genai import types
 from sqlalchemy import text
 
+from core.config import get_settings
 from core.redis_cache import RedisCache
 from core.supabase_client import get_supabase
 from models.gemini_schemas import (
@@ -930,7 +931,7 @@ NO macros, NO calories, NO portions in grams — just identification + quantity 
 
         try:
             response = await gemini_generate_with_retry(
-                model="gemini-3.1-flash-lite",
+                model=get_settings().gemini_vision_model,
                 contents=[prompt],
                 config=types.GenerateContentConfig(
                     response_mime_type="application/json",

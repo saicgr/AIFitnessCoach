@@ -267,7 +267,7 @@ class NutritionDBPart2:
         self,
         food_description: str,
         analysis_result: Dict[str, Any],
-        model_version: str = "gemini-3-flash-preview",
+        model_version: Optional[str] = None,
         prompt_version: str = "v1"
     ) -> bool:
         """
@@ -283,6 +283,11 @@ class NutritionDBPart2:
             True if cached successfully
         """
         try:
+            if model_version is None:
+                # Food-analysis path runs on the vision/Flash-Lite model.
+                from core.config import get_settings
+                model_version = get_settings().gemini_vision_model
+
             normalized = self.normalize_food_query(food_description)
             query_hash = self.hash_query(normalized)
 

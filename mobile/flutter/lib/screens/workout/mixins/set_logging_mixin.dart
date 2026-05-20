@@ -161,6 +161,7 @@ mixin SetLoggingMixin<T extends StatefulWidget> on State<T> {
     final result = await showIntensityPromptSheet(
       context,
       previousRpe: lastSetRpe,
+      currentRir: lastSetRir,
       exerciseName: exercise.name,
       setNumber: currentSetNumber,
     );

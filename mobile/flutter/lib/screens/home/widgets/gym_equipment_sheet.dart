@@ -64,8 +64,10 @@ const Map<String, List<String>> gymEquipmentCategories = {
   ],
 };
 
-/// Equipment that supports weight customization
-const List<String> weightedGymEquipment = [
+/// Free-weight equipment that holds an inventory of individual weights
+/// (e.g. "you own pairs of 25, 30, 35 lb dumbbells"). Uses the
+/// rack-style picker in EditWeightsSheet.
+const List<String> freeWeightInventoryEquipment = [
   'bumper_plates',
   'dumbbells',
   'kettlebells',
@@ -74,7 +76,32 @@ const List<String> weightedGymEquipment = [
   'trap_bar',
   'weight_plates',
   'medicine_ball',
+];
+
+/// Stack-based machines where the user pins a weight on a stack. Configured
+/// by min / max / increment in EditWeightsSheet; the generated weight list
+/// is stored back into weightInventory with quantity 1 each so downstream
+/// pickers still see the full available weights.
+const List<String> stackMachineEquipment = [
   'cable_machine',
+  'smith_machine',
+  'leg_press',
+  'lat_pulldown',
+  'leg_curl_machine',
+  'leg_extension_machine',
+  'chest_fly_machine',
+  'shoulder_press_machine',
+  'hack_squat',
+  'seated_row_machine',
+  'chest_press_machine',
+  'assisted_pullup_machine',
+];
+
+/// Union of all equipment that supports the Edit Weights link. Kept as a
+/// single name for backwards-compat with the rest of the codebase.
+final List<String> weightedGymEquipment = [
+  ...freeWeightInventoryEquipment,
+  ...stackMachineEquipment,
 ];
 
 /// Equipment icons for visual display

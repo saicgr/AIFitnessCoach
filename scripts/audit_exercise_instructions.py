@@ -37,13 +37,13 @@ url = raw.replace("postgresql+asyncpg://", "postgresql://")
 # false-flag correct cues like "the appropriate angle" / "do not hold breath").
 if "--check" in sys.argv:
     import collections as _c
-    # Known baseline after migration 2084: 18 exercises remain templated —
-    # these are in the deliberately-skipped set (the engine had no reliable
-    # template; they await the human/advisor instruction pass). The gate fails
-    # if templating exceeds this baseline (a NEW bad import) or if ANY empty /
+    # Known baseline after migrations 2084 + 2085: 6 exercises remain templated
+    # — niche movements (sandbag/tire/agility-ladder/composite) with no reliable
+    # template, awaiting the human/advisor instruction pass. The gate fails if
+    # templating exceeds this baseline (a NEW bad import) or if ANY empty /
     # short instruction appears (always an unambiguous defect). Drop the
-    # baseline toward 0 as the skipped set is remediated.
-    BASELINE_TEMPLATED = 18
+    # baseline toward 0 as the remaining set is remediated.
+    BASELINE_TEMPLATED = 6
     conn = psycopg2.connect(url)
     cur = conn.cursor()
     cur.execute("SELECT id, name, instructions FROM exercise_library_cleaned;")

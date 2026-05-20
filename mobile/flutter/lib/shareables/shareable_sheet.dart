@@ -247,13 +247,15 @@ class _ShareableSheetState extends ConsumerState<ShareableSheet> {
         mainAxisSize: MainAxisSize.min,
         children: [
           _header(context),
-          _watermarkRow(accent),
-          _textScaleRow(accent),
+          // Preview moved to the TOP so the user sees their current pick
+          // first; all configuration controls (watermark, font, aspect,
+          // category, photo) sit below it. This frees ~80-120px for the
+          // gallery `Expanded` below to render one extra row of thumbnails.
+          _previewPane(accent, isDark),
+          // Watermark + font size merged into one inline row. Wins ~48px
+          // of vertical space vs the previous two-row layout.
+          _inlineControlsRow(accent),
           if (_isPhotoTemplate) _photoUploadRow(accent),
-          // Category pills + aspect ratio MOVED ABOVE the gallery to match
-          // the demo (progress_share_gallery_screen) layout: filters on top,
-          // grid below. Old layout had the pills under the preview which
-          // forced the user to scroll past the canvas to find them.
           NestedPillSelector(
             data: _currentData,
             aspect: _aspect,
@@ -286,7 +288,6 @@ class _ShareableSheetState extends ConsumerState<ShareableSheet> {
               // Same — only stamp on share success, not on browse tap.
             },
           ),
-          _previewPane(accent, isDark),
           _galleryHeaderRow(accent, isDark),
           Expanded(child: _gallery()),
           if (showLinkPill)
@@ -299,7 +300,14 @@ class _ShareableSheetState extends ConsumerState<ShareableSheet> {
               ),
             ),
           _actionRow(accent, isDark),
-          SizedBox(height: MediaQuery.of(context).padding.bottom + 12),
+          // Bottom spacer — use the device safe-area inset, but never less
+          // than 8px (older devices report padding.bottom == 0 and the
+          // action buttons would otherwise touch the screen edge).
+          SizedBox(
+            height: MediaQuery.of(context).padding.bottom > 8
+                ? MediaQuery.of(context).padding.bottom
+                : 8,
+          ),
         ],
       ),
     );
@@ -345,76 +353,76 @@ class _ShareableSheetState extends ConsumerState<ShareableSheet> {
     return a;
   }
 
-  Widget _watermarkRow(Color accent) {
+  /// Merged watermark toggle + font-size stepper on a single row. Replaces
+  /// the previous two-row layout (watermark above, font size below) so the
+  /// gallery `Expanded` below the controls gets a full extra row of space.
+  Widget _inlineControlsRow(Color accent) {
+    final canShrink = _textScale > _textScaleStops.first;
+    final canGrow = _textScale < _textScaleStops.last;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 2),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.branding_watermark_rounded,
-            size: 18,
-            color: _showWatermark ? accent : Colors.grey,
-          ),
-          const SizedBox(width: 8),
-          Text(
-            'Show Watermark',
-            style: TextStyle(
-              fontSize: 14,
-              color: _showWatermark ? null : Colors.grey,
+          // Watermark — compact: icon + adaptive switch. The text label is
+          // dropped to fit the row; semantic label preserved for screen
+          // readers via Semantics + Tooltip for the long-press hint.
+          Tooltip(
+            message: 'Show watermark',
+            child: Semantics(
+              label: 'Show watermark',
+              toggled: _showWatermark,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.branding_watermark_rounded,
+                    size: 18,
+                    color: _showWatermark ? accent : Colors.grey,
+                  ),
+                  const SizedBox(width: 6),
+                  Switch.adaptive(
+                    value: _showWatermark,
+                    onChanged: (v) {
+                      HapticFeedback.lightImpact();
+                      setState(() => _showWatermark = v);
+                    },
+                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    activeTrackColor: _switchTrackColor(accent),
+                    activeThumbColor: Colors.white,
+                    inactiveTrackColor: Colors.white.withValues(alpha: 0.10),
+                    inactiveThumbColor: Colors.white.withValues(alpha: 0.55),
+                    trackOutlineColor: WidgetStateProperty.resolveWith(
+                      (states) => Colors.white.withValues(alpha: 0.20),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
-          const SizedBox(width: 8),
-          Switch.adaptive(
-            value: _showWatermark,
-            onChanged: (v) {
-              HapticFeedback.lightImpact();
-              setState(() => _showWatermark = v);
-            },
-            // When the share's accent is near-white (default workout share)
-            // we'd render an invisible track. Force a vivid track and use a
-            // high-contrast thumb regardless of accent.
-            activeTrackColor: _switchTrackColor(accent),
-            activeThumbColor: Colors.white,
-            inactiveTrackColor: Colors.white.withValues(alpha: 0.10),
-            inactiveThumbColor: Colors.white.withValues(alpha: 0.55),
-            trackOutlineColor: WidgetStateProperty.resolveWith(
-              (states) => Colors.white.withValues(alpha: 0.20),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// Discrete font-scale stepper — bumps every Text in the template via
-  /// a MediaQuery TextScaler override. Doesn't require any per-template
-  /// changes; templates that use `Text` honor the scaler automatically.
-  Widget _textScaleRow(Color accent) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.format_size_rounded, size: 18, color: accent),
-          const SizedBox(width: 8),
-          const Text('Font size',
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
           const Spacer(),
-          IconButton(
-            visualDensity: VisualDensity.compact,
-            tooltip: 'Smaller',
-            onPressed: _textScale <= _textScaleStops.first
-                ? null
-                : () {
-                    HapticFeedback.lightImpact();
-                    final i = _textScaleStops.indexOf(_textScale);
-                    setState(() {
-                      _textScale = _textScaleStops[
-                          (i - 1).clamp(0, _textScaleStops.length - 1)];
-                    });
-                  },
-            icon: const Icon(Icons.remove_rounded, size: 20),
+          // Font size stepper.
+          Icon(Icons.format_size_rounded, size: 18, color: accent),
+          const SizedBox(width: 4),
+          Semantics(
+            label: 'Decrease font size',
+            child: IconButton(
+              visualDensity: VisualDensity.compact,
+              padding: EdgeInsets.zero,
+              constraints:
+                  const BoxConstraints(minWidth: 36, minHeight: 36),
+              tooltip: 'Smaller',
+              onPressed: !canShrink
+                  ? null
+                  : () {
+                      HapticFeedback.lightImpact();
+                      final i = _textScaleStops.indexOf(_textScale);
+                      setState(() {
+                        _textScale = _textScaleStops[
+                            (i - 1).clamp(0, _textScaleStops.length - 1)];
+                      });
+                    },
+              icon: const Icon(Icons.remove_rounded, size: 18),
+            ),
           ),
           SizedBox(
             width: 44,
@@ -423,24 +431,30 @@ class _ShareableSheetState extends ConsumerState<ShareableSheet> {
               textAlign: TextAlign.center,
               style: const TextStyle(
                 fontSize: 13,
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.w700,
               ),
             ),
           ),
-          IconButton(
-            visualDensity: VisualDensity.compact,
-            tooltip: 'Larger',
-            onPressed: _textScale >= _textScaleStops.last
-                ? null
-                : () {
-                    HapticFeedback.lightImpact();
-                    final i = _textScaleStops.indexOf(_textScale);
-                    setState(() {
-                      _textScale = _textScaleStops[
-                          (i + 1).clamp(0, _textScaleStops.length - 1)];
-                    });
-                  },
-            icon: const Icon(Icons.add_rounded, size: 20),
+          Semantics(
+            label: 'Increase font size',
+            child: IconButton(
+              visualDensity: VisualDensity.compact,
+              padding: EdgeInsets.zero,
+              constraints:
+                  const BoxConstraints(minWidth: 36, minHeight: 36),
+              tooltip: 'Larger',
+              onPressed: !canGrow
+                  ? null
+                  : () {
+                      HapticFeedback.lightImpact();
+                      final i = _textScaleStops.indexOf(_textScale);
+                      setState(() {
+                        _textScale = _textScaleStops[
+                            (i + 1).clamp(0, _textScaleStops.length - 1)];
+                      });
+                    },
+              icon: const Icon(Icons.add_rounded, size: 18),
+            ),
           ),
         ],
       ),
@@ -991,8 +1005,11 @@ class _ShareableSheetState extends ConsumerState<ShareableSheet> {
   }
 
   Widget _actionRow(Color accent, bool isDark) {
+    // Tightened vertical padding: was (8, 8); now (4, 0). The bottom
+    // safe-area SizedBox already handles the home-indicator gap, so this
+    // padding shouldn't add another ~16px on top.
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
+      padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
       child: Row(
         children: [
           Expanded(
