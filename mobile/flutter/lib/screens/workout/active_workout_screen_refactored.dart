@@ -1097,6 +1097,19 @@ class _ActiveWorkoutScreenState
     _weightController.dispose();
     _tourSeenSub?.close();
     _tierSwitchSub?.close();
+    // The active-workout tour was fired into the global AppTourController
+    // from initState, but AppTourOverlay only mounts inside MainShell — this
+    // screen is a top-level route OUTSIDE the shell, so the tour state was
+    // set but never painted here. Without this abort, the leftover visible
+    // state pops back to /home and MainShell's overlay renders the active-
+    // workout tour copy on home with no spotlight (targets aren't on the
+    // shell). Abort silently (no "seen" flag) so the tour stays eligible to
+    // fire on the next workout open.
+    try {
+      WorkoutTourService.abortIfTierTourRunning(ref);
+    } catch (e) {
+      debugPrint('⚠️ [ActiveWorkout] tour-abort skipped (ref unavailable): $e');
+    }
     super.dispose();
   }
 

@@ -26,30 +26,49 @@ extension __WorkoutCompleteScreenStateExt2 on _WorkoutCompleteScreenState {
 
     if (shouldSkip != true || !mounted) return;
 
-    // Submit subjective feedback (mood/energy) if provided, even when skipping star rating
-    if (_moodAfter != null && widget.workout.id != null) {
-      try {
-        debugPrint('📝 [Skip Rating] Submitting subjective feedback only: mood=$_moodAfter, energy=$_energyAfter');
-        final notifier = ref.read(subjectiveFeedbackProvider.notifier);
-        await notifier.createPostCheckin(
-          workoutId: widget.workout.id!,
-          moodAfter: _moodAfter!,
-          energyAfter: _energyAfter,
-          confidenceLevel: _confidenceLevel,
-          feelingStronger: _feelingStronger,
-        );
-        debugPrint('✅ [Skip Rating] Subjective feedback submitted');
-      } catch (e) {
-        debugPrint('⚠️ [Skip Rating] Subjective feedback error (non-blocking): $e');
+    // Navigate home IMMEDIATELY, then fire the post-checkin POST and the
+    // workouts silent refresh as unawaited futures. Previously this awaited
+    // a Supabase write + a /workouts silent refresh BEFORE pushing /home,
+    // which made the Skip tap feel slow (multi-hundred-ms freeze on the
+    // dialog dismiss). Both background calls are independent of the home
+    // screen's first paint — the workoutsProvider StateNotifier emits the
+    // refreshed list whenever it lands and home re-renders silently.
+
+    // Snapshot the data so the in-flight work isn't affected by widget
+    // disposal (same pattern as _submitFeedback's _runFeedbackBackground).
+    final workoutId = widget.workout.id;
+    final moodAfter = _moodAfter;
+    final energyAfter = _energyAfter;
+    final confidenceLevel = _confidenceLevel;
+    final feelingStronger = _feelingStronger;
+    final subjectiveNotifier = ref.read(subjectiveFeedbackProvider.notifier);
+    final workoutsNotifier = ref.read(workoutsProvider.notifier);
+
+    unawaited(() async {
+      // Subjective feedback (mood/energy) if provided, even when skipping
+      // the star rating.
+      if (moodAfter != null && workoutId != null) {
+        try {
+          await subjectiveNotifier.createPostCheckin(
+            workoutId: workoutId,
+            moodAfter: moodAfter,
+            energyAfter: energyAfter,
+            confidenceLevel: confidenceLevel,
+            feelingStronger: feelingStronger,
+          );
+          debugPrint('✅ [Skip Rating] Subjective feedback submitted (bg)');
+        } catch (e) {
+          debugPrint('⚠️ [Skip Rating] Subjective feedback error: $e');
+        }
       }
-    }
+      try {
+        await workoutsNotifier.silentRefresh();
+      } catch (e) {
+        debugPrint('⚠️ [Skip Rating] silentRefresh error: $e');
+      }
+    }());
 
-    // Refresh workouts silently and navigate home
-    await ref.read(workoutsProvider.notifier).silentRefresh();
-
-    if (mounted) {
-      context.go('/home');
-    }
+    context.go('/home');
   }
 
 
