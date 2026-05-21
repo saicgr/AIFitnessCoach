@@ -47,6 +47,8 @@ class LoggedMealsSection extends StatelessWidget {
   final void Function(FoodLog meal, {SchedulePreset initialPreset, int? itemIndex}) onScheduleMeal;
   final void Function(FoodLog meal, {int? itemIndex}) onAddToShoppingList;
   final void Function(FoodLog meal) onShareMeal;
+  /// Share every food logged under one meal-type (all of breakfast, etc.).
+  final void Function(String mealType) onShareMealGroup;
   final void Function(String? mealType) onLogMeal;
   /// Fetch existing per-field edit history for a given log.
   final Future<List<FoodLogEditRecord>> Function(String logId)? onFetchItemEdits;
@@ -83,6 +85,7 @@ class LoggedMealsSection extends StatelessWidget {
     required this.onScheduleMeal,
     required this.onAddToShoppingList,
     required this.onShareMeal,
+    required this.onShareMealGroup,
     required this.onLogMeal,
     this.onFetchItemEdits,
     this.apiClient,
@@ -631,6 +634,16 @@ class LoggedMealsSection extends StatelessWidget {
                     ),
                   ),
                   IconButton(
+                    visualDensity: VisualDensity.compact,
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      onShareMeal(meal);
+                    },
+                    icon: Icon(Icons.ios_share_rounded, color: teal, size: 20),
+                    tooltip: 'Share',
+                  ),
+                  IconButton(
+                    visualDensity: VisualDensity.compact,
                     onPressed: () {
                       Navigator.pop(ctx);
                       _showEditPortionSheet(context, meal);
@@ -4116,6 +4129,16 @@ class _MealSectionState extends State<_MealSection> {
                   ),
                 ),
                 const SizedBox(width: 4),
+                if (widget.typeMeals.isNotEmpty)
+                  IconButton(
+                    onPressed: () => owner.onShareMealGroup(widget.mealId),
+                    icon: Icon(Icons.ios_share_rounded, size: 18, color: accent),
+                    visualDensity: VisualDensity.compact,
+                    padding: EdgeInsets.zero,
+                    constraints:
+                        const BoxConstraints(minWidth: 32, minHeight: 36),
+                    tooltip: 'Share ${widget.label}',
+                  ),
                 IconButton(
                   onPressed: () => owner.onLogMeal(widget.mealId),
                   icon: Icon(Icons.add_rounded, size: 20, color: accent),

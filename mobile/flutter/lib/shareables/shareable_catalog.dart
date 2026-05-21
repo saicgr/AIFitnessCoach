@@ -48,10 +48,26 @@ import 'templates/passport_template.dart';
 import 'templates/one_rm_template.dart';
 import 'templates/trading_card_gold_template.dart';
 import 'templates/workout_details_template.dart';
+import 'templates/workout_muscle_card_template.dart';
 import 'templates/workout_program_template.dart';
 import 'templates/workout_score_template.dart';
 import 'templates/workout_summary_template.dart';
 import 'templates/wrapped_template.dart';
+// --- Food / nutrition share templates ---
+import 'templates/food_collage_template.dart';
+import 'templates/food_magazine_template.dart';
+import 'templates/food_photo_macros_template.dart';
+import 'templates/food_polaroid_template.dart';
+import 'templates/food_receipt_template.dart';
+import 'templates/food_score_card_template.dart';
+import 'templates/macro_bars_card_template.dart';
+import 'templates/macro_numbers_card_template.dart';
+import 'templates/macro_pie_card_template.dart';
+import 'templates/macro_plate_card_template.dart';
+import 'templates/macro_rings_card_template.dart';
+import 'templates/macro_waffle_card_template.dart';
+import 'templates/nutrition_facts_card_template.dart';
+import 'templates/what_i_ate_card_template.dart';
 
 /// Every template the unified sheet can render. Order here is also the
 /// default render order in the gallery.
@@ -69,6 +85,7 @@ enum ShareableTemplate {
   levelUp,
   elite,
   workoutDetails,
+  workoutMuscleCard,
   workoutProgram,
   workoutSummary,
   dailyWorkoutCard,
@@ -111,6 +128,21 @@ enum ShareableTemplate {
   passport,
   oneRm,
   tradingCardGold,
+  // --- Food / nutrition (ShareableKind.foodLog) ---
+  foodPhotoMacros,
+  foodPolaroid,
+  foodMagazine,
+  foodCollage,
+  macroRingsCard,
+  macroNumbersCard,
+  macroPieCard,
+  macroPlateCard,
+  whatIAteCard,
+  macroWaffleCard,
+  macroBarsCard,
+  nutritionFactsCard,
+  foodReceipt,
+  foodScoreCard,
 }
 
 /// User-facing grouping (Tier 3 in the nested pill selector).
@@ -195,6 +227,12 @@ class ShareableTemplateSpec {
   final bool requiresStreak;
   final bool requiresWeeklyVector;
   final bool cosmeticGated;
+
+  /// Minimum number of `foodImageUrls` the payload must carry for this
+  /// template to be offered — photo food templates set this so a barcode /
+  /// text log (no photo) never shows a blank-photo card. 0 = no requirement.
+  final int requiresPhotoCount;
+
   final ShareableTemplateBuilder builder;
 
   const ShareableTemplateSpec({
@@ -213,11 +251,18 @@ class ShareableTemplateSpec {
     this.requiresStreak = false,
     this.requiresWeeklyVector = false,
     this.cosmeticGated = false,
+    this.requiresPhotoCount = 0,
   });
 
   bool isAvailableFor(Shareable data, {bool ownsCosmetic = false}) {
     if (cosmeticGated && !ownsCosmetic) return false;
-    if (!kinds.contains(data.kind) &&
+    // Food shares are a closed gallery — only templates that explicitly
+    // list `foodLog` (the 14 food templates) qualify. Without this branch
+    // the `statsOverview`-wildcard below would leak every generic
+    // workout-shaped template into the food gallery.
+    if (data.kind == ShareableKind.foodLog) {
+      if (!kinds.contains(ShareableKind.foodLog)) return false;
+    } else if (!kinds.contains(data.kind) &&
         !kinds.contains(ShareableKind.statsOverview)) {
       // Templates whose kinds set lists explicit allowlist must match,
       // unless the catalog entry uses an "all kinds" wildcard via
@@ -243,6 +288,10 @@ class ShareableTemplateSpec {
     if (requiresWeeklyVector) {
       final hasWeekly = data.subMetrics.length >= 7;
       if (!hasWeekly) return false;
+    }
+    if (requiresPhotoCount > 0) {
+      final photos = data.foodImageUrls?.length ?? 0;
+      if (photos < requiresPhotoCount) return false;
     }
     return true;
   }
@@ -408,6 +457,15 @@ class ShareableCatalog {
         aspects: const {ShareableAspect.story, ShareableAspect.portrait},
         requiresExercises: true,
         builder: (d, w) => WorkoutDetailsTemplate(data: d, showWatermark: w),
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.workoutMuscleCard,
+        name: 'Muscles',
+        category: ShareableCategory.rich,
+        kinds: const {ShareableKind.workoutComplete},
+        requiresExercises: true,
+        builder: (d, w) =>
+            WorkoutMuscleCardTemplate(data: d, showWatermark: w),
       ),
       ShareableTemplateSpec(
         template: ShareableTemplate.workoutProgram,
@@ -790,6 +848,110 @@ class ShareableCatalog {
         builder: (d, w) =>
             TradingCardGoldTemplate(data: d, showWatermark: w),
       ),
+      // ─────────── Food / nutrition (ShareableKind.foodLog) ───────────
+      ShareableTemplateSpec(
+        template: ShareableTemplate.foodPhotoMacros,
+        name: 'Photo',
+        category: ShareableCategory.studio,
+        kinds: const {ShareableKind.foodLog},
+        requiresPhotoCount: 1,
+        builder: (d, w) => FoodPhotoMacrosTemplate(data: d, showWatermark: w),
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.foodPolaroid,
+        name: 'Polaroid',
+        category: ShareableCategory.playful,
+        kinds: const {ShareableKind.foodLog},
+        requiresPhotoCount: 1,
+        builder: (d, w) => FoodPolaroidTemplate(data: d, showWatermark: w),
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.foodMagazine,
+        name: 'Cover',
+        category: ShareableCategory.editorial,
+        kinds: const {ShareableKind.foodLog},
+        requiresPhotoCount: 1,
+        builder: (d, w) => FoodMagazineTemplate(data: d, showWatermark: w),
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.foodCollage,
+        name: 'Collage',
+        category: ShareableCategory.studio,
+        kinds: const {ShareableKind.foodLog},
+        requiresPhotoCount: 2,
+        builder: (d, w) => FoodCollageTemplate(data: d, showWatermark: w),
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.macroRingsCard,
+        name: 'Rings',
+        category: ShareableCategory.classic,
+        kinds: const {ShareableKind.foodLog},
+        builder: (d, w) => MacroRingsCardTemplate(data: d, showWatermark: w),
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.macroNumbersCard,
+        name: 'Numbers',
+        category: ShareableCategory.classic,
+        kinds: const {ShareableKind.foodLog},
+        builder: (d, w) => MacroNumbersCardTemplate(data: d, showWatermark: w),
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.macroPieCard,
+        name: 'Pie',
+        category: ShareableCategory.classic,
+        kinds: const {ShareableKind.foodLog},
+        builder: (d, w) => MacroPieCardTemplate(data: d, showWatermark: w),
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.macroPlateCard,
+        name: 'Plate',
+        category: ShareableCategory.classic,
+        kinds: const {ShareableKind.foodLog},
+        builder: (d, w) => MacroPlateCardTemplate(data: d, showWatermark: w),
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.whatIAteCard,
+        name: 'What I Ate',
+        category: ShareableCategory.classic,
+        kinds: const {ShareableKind.foodLog},
+        builder: (d, w) => WhatIAteCardTemplate(data: d, showWatermark: w),
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.macroWaffleCard,
+        name: 'Waffle',
+        category: ShareableCategory.graph,
+        kinds: const {ShareableKind.foodLog},
+        builder: (d, w) => MacroWaffleCardTemplate(data: d, showWatermark: w),
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.macroBarsCard,
+        name: 'Bars',
+        category: ShareableCategory.graph,
+        kinds: const {ShareableKind.foodLog},
+        builder: (d, w) => MacroBarsCardTemplate(data: d, showWatermark: w),
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.nutritionFactsCard,
+        name: 'Facts',
+        category: ShareableCategory.editorial,
+        kinds: const {ShareableKind.foodLog},
+        builder: (d, w) =>
+            NutritionFactsCardTemplate(data: d, showWatermark: w),
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.foodReceipt,
+        name: 'Receipt',
+        category: ShareableCategory.editorial,
+        kinds: const {ShareableKind.foodLog},
+        builder: (d, w) => FoodReceiptTemplate(data: d, showWatermark: w),
+      ),
+      ShareableTemplateSpec(
+        template: ShareableTemplate.foodScoreCard,
+        name: 'Score',
+        category: ShareableCategory.playful,
+        kinds: const {ShareableKind.foodLog},
+        builder: (d, w) => FoodScoreCardTemplate(data: d, showWatermark: w),
+      ),
     ];
   }
 
@@ -884,6 +1046,8 @@ class ShareableCatalog {
         return ShareableTemplate.weeklyPlanGrid;
       case ShareableKind.monthlyPlan:
         return ShareableTemplate.monthlyPlanGrid;
+      case ShareableKind.foodLog:
+        return ShareableTemplate.foodPhotoMacros;
     }
   }
 }

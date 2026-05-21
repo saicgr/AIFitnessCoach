@@ -1,10 +1,13 @@
+import 'dart:io';
+import 'dart:ui' as ui;
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
-import 'dart:ui' as ui;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:video_player/video_player.dart';
 
 import '../core/constants/app_colors.dart';
 import '../data/providers/cosmetics_provider.dart';
@@ -14,6 +17,8 @@ import '../widgets/glass_sheet.dart';
 import 'recent_templates_store.dart';
 import 'shareable_canvas.dart';
 import 'shareable_catalog.dart';
+import 'editor/food_editor_screen.dart';
+import 'editor/food_montage_screen.dart';
 import 'shareable_data.dart';
 import 'widgets/nested_pill_selector.dart';
 import 'widgets/share_link_pill.dart';
@@ -85,6 +90,12 @@ class _ShareableSheetState extends ConsumerState<ShareableSheet> {
   late ShareableCategory _category;
   late ShareableTemplate _template;
   bool _showWatermark = true;
+
+  /// Canvas background mode — themed (default) / dark / light / transparent.
+  /// Read by every template's [ShareableCanvas] via the [ShareSurface]
+  /// inherited widget the preview + gallery wrap their builds in.
+  ShareBackground _background = ShareBackground.themed;
+
   bool _isCapturing = false;
   String? _shareLink;
   bool _generatingLink = false;
@@ -112,9 +123,20 @@ class _ShareableSheetState extends ConsumerState<ShareableSheet> {
   String? _customPhotoPathSecondary;
   final ImagePicker _picker = ImagePicker();
 
+  /// User-picked clip for [ShareBackground.video]. The captured card is a
+  /// transparent sticker; Instagram composites this video behind it. Only
+  /// the preview pane plays it (one controller — gallery tiles don't).
+  String? _videoPath;
+  VideoPlayerController? _videoController;
+
   /// One capture key per template — keys are stable across rebuilds so
   /// the laid-out RenderRepaintBoundary persists.
   late final Map<ShareableTemplate, GlobalKey> _captureKeys;
+
+  /// Resolves once every network food photo has been pre-decoded. The
+  /// capture path awaits this so `toImage` snapshots the real photo, not a
+  /// half-loaded blank. Null when the share carries no network food images.
+  Future<void>? _warmImagesFuture;
 
   /// Recently-used template IDs (most recent first, max 5). Loaded from
   /// SharedPreferences on init, updated on every template selection.
@@ -134,6 +156,10 @@ class _ShareableSheetState extends ConsumerState<ShareableSheet> {
     _captureKeys = {
       for (final spec in ShareableCatalog.all()) spec.template: GlobalKey(),
     };
+    // Pre-decode network food photos so the first capture isn't blank.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _warmFoodImages();
+    });
     final available =
         ShareableCatalog.availableFor(widget.data, ownsCosmetic: _ownsElite);
     if (available.isEmpty) {
@@ -205,6 +231,12 @@ class _ShareableSheetState extends ConsumerState<ShareableSheet> {
     });
   }
 
+  @override
+  void dispose() {
+    _videoController?.dispose();
+    super.dispose();
+  }
+
   void _recordTemplateUsed(ShareableTemplate t) {
     // Local optimistic update so the badge re-paints instantly.
     final next = <String>[
@@ -255,6 +287,8 @@ class _ShareableSheetState extends ConsumerState<ShareableSheet> {
           // Watermark + font size merged into one inline row. Wins ~48px
           // of vertical space vs the previous two-row layout.
           _inlineControlsRow(accent),
+          _backgroundRow(accent, isDark),
+          if (_background == ShareBackground.video) _videoRow(accent),
           if (_isPhotoTemplate) _photoUploadRow(accent),
           NestedPillSelector(
             data: _currentData,
@@ -299,6 +333,8 @@ class _ShareableSheetState extends ConsumerState<ShareableSheet> {
                 onGenerate: _onGenerateLink,
               ),
             ),
+          if (widget.data.kind == ShareableKind.foodLog)
+            _customizeRow(accent),
           _actionRow(accent, isDark),
           // Bottom spacer — use the device safe-area inset, but never less
           // than 8px (older devices report padding.bottom == 0 and the
@@ -457,6 +493,75 @@ class _ShareableSheetState extends ConsumerState<ShareableSheet> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  /// Background-mode selector — Themed / Dark / Light / Transparent.
+  /// Mirrors Hevy's background picker. Themed keeps each template's
+  /// signature gradient; Light/Transparent inset the template as a rounded
+  /// card; Transparent exports an alpha PNG you can drop onto a photo or
+  /// story as a sticker. Uses a [Wrap] so the four chips never overflow on
+  /// a narrow phone.
+  Widget _backgroundRow(Color accent, bool isDark) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+      child: Wrap(
+        alignment: WrapAlignment.center,
+        spacing: 8,
+        runSpacing: 6,
+        children: [
+          for (final mode in ShareBackground.values)
+            _bgChip(mode, accent, isDark),
+        ],
+      ),
+    );
+  }
+
+  Widget _bgChip(ShareBackground mode, Color accent, bool isDark) {
+    final selected = _background == mode;
+    final mutedBorder =
+        (isDark ? Colors.white : Colors.black).withValues(alpha: 0.14);
+    final fg = selected
+        ? accent
+        : (isDark ? Colors.white : Colors.black).withValues(alpha: 0.7);
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.selectionClick();
+        setState(() => _background = mode);
+        // Selecting Video with no clip yet jumps straight to the picker.
+        if (mode == ShareBackground.video && _videoPath == null) {
+          _pickVideo();
+        }
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
+        decoration: BoxDecoration(
+          color: selected
+              ? accent.withValues(alpha: isDark ? 0.16 : 0.10)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(
+            color: selected ? accent : mutedBorder,
+            width: selected ? 1.6 : 1,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _BgSwatch(mode: mode, accent: accent),
+            const SizedBox(width: 6),
+            Text(
+              mode.label,
+              style: TextStyle(
+                color: fg,
+                fontSize: 12,
+                fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -620,6 +725,62 @@ class _ShareableSheetState extends ConsumerState<ShareableSheet> {
     }
   }
 
+  Future<void> _pickVideo() async {
+    HapticFeedback.lightImpact();
+    try {
+      final picked = await _picker.pickVideo(
+        source: ImageSource.gallery,
+        maxDuration: const Duration(seconds: 60),
+      );
+      if (picked == null || !mounted) return;
+      await _videoController?.dispose();
+      final controller = VideoPlayerController.file(File(picked.path));
+      await controller.initialize();
+      await controller.setLooping(true);
+      await controller.setVolume(0);
+      await controller.play();
+      if (!mounted) {
+        controller.dispose();
+        return;
+      }
+      setState(() {
+        _videoPath = picked.path;
+        _videoController = controller;
+      });
+    } catch (e) {
+      debugPrint('❌ [ShareableSheet] video pick failed: $e');
+      if (mounted) _toast('Couldn\'t open that video');
+    }
+  }
+
+  void _clearVideo() {
+    _videoController?.dispose();
+    setState(() {
+      _videoController = null;
+      _videoPath = null;
+    });
+  }
+
+  /// Video-background picker row — shown only while the Video background
+  /// mode is active. Reuses the photo-chip styling.
+  Widget _videoRow(Color accent) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          _photoChip(
+            accent: accent,
+            label: _videoPath == null ? 'Choose video background' : 'Video',
+            path: _videoPath,
+            onPick: _pickVideo,
+            onClear: _clearVideo,
+          ),
+        ],
+      ),
+    );
+  }
+
   /// **Vertical scrollable gallery** — every available template renders as
   /// a real preview tile in a ListView, all visible at once via scrolling.
   /// Replaces the previous `IndexedStack` carousel pattern that only showed
@@ -678,19 +839,43 @@ class _ShareableSheetState extends ConsumerState<ShareableSheet> {
                   ],
                 ),
                 clipBehavior: Clip.antiAlias,
-                child: FittedBox(
-                  fit: BoxFit.contain,
-                  alignment: Alignment.center,
-                  child: SizedBox(
-                    width: designSize.width,
-                    height: designSize.height,
-                    child: MediaQuery(
-                      data: mq.copyWith(
-                        textScaler: TextScaler.linear(_textScale),
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    // Video background — only the preview plays the clip;
+                    // the captured sticker stays transparent so Instagram
+                    // composites the real video behind it.
+                    if (_background == ShareBackground.video &&
+                        _videoController != null &&
+                        _videoController!.value.isInitialized)
+                      FittedBox(
+                        fit: BoxFit.cover,
+                        clipBehavior: Clip.hardEdge,
+                        child: SizedBox(
+                          width: _videoController!.value.size.width,
+                          height: _videoController!.value.size.height,
+                          child: VideoPlayer(_videoController!),
+                        ),
                       ),
-                      child: spec.builder(_currentData, _showWatermark),
+                    FittedBox(
+                      fit: BoxFit.contain,
+                      alignment: Alignment.center,
+                      child: SizedBox(
+                        width: designSize.width,
+                        height: designSize.height,
+                        child: MediaQuery(
+                          data: mq.copyWith(
+                            textScaler: TextScaler.linear(_textScale),
+                          ),
+                          child: ShareSurface(
+                            background: _background,
+                            child:
+                                spec.builder(_currentData, _showWatermark),
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
                 ),
               ),
             ),
@@ -904,10 +1089,13 @@ class _ShareableSheetState extends ConsumerState<ShareableSheet> {
                                   data: MediaQuery.of(context).copyWith(
                                     textScaler: TextScaler.linear(_textScale),
                                   ),
-                                  child: RepaintBoundary(
-                                    key: _captureKeys[spec.template],
-                                    child: spec.builder(
-                                        _currentData, _showWatermark),
+                                  child: ShareSurface(
+                                    background: _background,
+                                    child: RepaintBoundary(
+                                      key: _captureKeys[spec.template],
+                                      child: spec.builder(
+                                          _currentData, _showWatermark),
+                                    ),
                                   ),
                                 ),
                               ),
@@ -1004,6 +1192,48 @@ class _ShareableSheetState extends ConsumerState<ShareableSheet> {
     );
   }
 
+  /// Food-share extras: the layer editor (draggable text / stickers / GIFs /
+  /// macro overlays on the photo) and, when the share has 2+ photos, a
+  /// montage-video export.
+  Widget _customizeRow(Color accent) {
+    final photoCount = widget.data.foodImageUrls?.length ?? 0;
+    final style = OutlinedButton.styleFrom(
+      minimumSize: const Size.fromHeight(44),
+      foregroundColor: accent,
+      side: BorderSide(color: accent.withValues(alpha: 0.5)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+      ),
+    );
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 6, 20, 0),
+      child: Row(
+        children: [
+          Expanded(
+            child: OutlinedButton.icon(
+              onPressed: () => FoodEditorScreen.open(context, _currentData),
+              icon: const Icon(Icons.tune_rounded, size: 18),
+              label: const Text('Customize'),
+              style: style,
+            ),
+          ),
+          if (photoCount >= 2) ...[
+            const SizedBox(width: 10),
+            Expanded(
+              child: OutlinedButton.icon(
+                onPressed: () =>
+                    FoodMontageScreen.open(context, _currentData),
+                icon: const Icon(Icons.movie_creation_rounded, size: 18),
+                label: const Text('Video'),
+                style: style,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
   Widget _actionRow(Color accent, bool isDark) {
     // Tightened vertical padding: was (8, 8); now (4, 0). The bottom
     // safe-area SizedBox already handles the home-indicator gap, so this
@@ -1066,6 +1296,11 @@ class _ShareableSheetState extends ConsumerState<ShareableSheet> {
 
   Future<void> _onShareInstagram() async {
     if (_isCapturing) return;
+    // Video mode needs a clip before there's anything to share.
+    if (_background == ShareBackground.video && _videoPath == null) {
+      _toast('Choose a video background first');
+      return;
+    }
     HapticFeedback.mediumImpact();
     setState(() => _isCapturing = true);
     try {
@@ -1076,9 +1311,23 @@ class _ShareableSheetState extends ConsumerState<ShareableSheet> {
         _toast('Couldn\'t render preview — try another template');
         return;
       }
-      final result = await ShareService.shareToInstagramStories(captured);
+      final isVideo =
+          _background == ShareBackground.video && _videoPath != null;
+      final ShareResult result;
+      if (isVideo) {
+        // `captured` is a transparent sticker (video canvas mode); the
+        // clip becomes the story background, composited by Instagram.
+        result = await ShareService.shareVideoToInstagramStories(
+          videoPath: _videoPath!,
+          stickerBytes: captured,
+        );
+      } else {
+        result = await ShareService.shareToInstagramStories(captured);
+      }
       if (result.success) {
-        await ShareService.saveToGallery(captured);
+        // A still card is also dropped in the gallery; a video-mode capture
+        // is just a transparent sticker, so skip the gallery copy there.
+        if (!isVideo) await ShareService.saveToGallery(captured);
         // Only mark as RECENT after a SUCCESSFUL share — not on browse tap.
         _recordTemplateUsed(_template);
         if (mounted) Navigator.pop(context);
@@ -1158,6 +1407,18 @@ class _ShareableSheetState extends ConsumerState<ShareableSheet> {
   /// guard so the first tap doesn't hit a 0×0 boundary on a freshly-mounted
   /// template (Fix #11).
   Future<Uint8List?> _captureWithGuard() async {
+    // In video mode the card renders as a transparent sticker (Instagram
+    // composites the clip behind it). A plain Save / system-share wants a
+    // finished still though — so capture those on a solid dark surface
+    // instead of handing back a transparent PNG.
+    if (_background == ShareBackground.video) {
+      final prev = _background;
+      setState(() => _background = ShareBackground.dark);
+      await WidgetsBinding.instance.endOfFrame;
+      final bytes = await _captureForAspect(_aspect);
+      if (mounted) setState(() => _background = prev);
+      return bytes;
+    }
     return _captureForAspect(_aspect);
   }
 
@@ -1176,8 +1437,30 @@ class _ShareableSheetState extends ConsumerState<ShareableSheet> {
     return _captureKey(_captureKeys[_template]!, aspect);
   }
 
+  /// Pre-decode every network food photo referenced by the payload so the
+  /// `RepaintBoundary.toImage` snapshot captures the actual image rather
+  /// than a half-loaded blank (`toImage` paints only decoded pixels).
+  void _warmFoodImages() {
+    final urls = <String>{
+      ...?widget.data.foodImageUrls,
+      if (widget.data.customPhotoPath != null) widget.data.customPhotoPath!,
+      if (widget.data.heroImageUrl != null) widget.data.heroImageUrl!,
+    }.where((u) => u.startsWith('http')).toList();
+    if (urls.isEmpty) return;
+    _warmImagesFuture = Future.wait(
+      urls.map(
+        (u) => precacheImage(NetworkImage(u), context).catchError((_) {}),
+      ),
+    );
+  }
+
   Future<Uint8List?> _captureKey(GlobalKey key, ShareableAspect aspect) async {
     try {
+      // Make sure network food photos are decoded before snapshotting —
+      // `toImage` captures painted pixels only.
+      if (_warmImagesFuture != null) {
+        await _warmImagesFuture;
+      }
       // Up to 2 attempts — the first frame after a template switch may not
       // have laid out yet.
       for (var attempt = 0; attempt < 2; attempt++) {
@@ -1293,6 +1576,95 @@ class _PreviewDialog extends StatelessWidget {
       ),
     );
   }
+}
+
+/// 16×16 swatch previewing a [ShareBackground] mode inside a picker chip.
+class _BgSwatch extends StatelessWidget {
+  final ShareBackground mode;
+  final Color accent;
+
+  const _BgSwatch({required this.mode, required this.accent});
+
+  @override
+  Widget build(BuildContext context) {
+    const size = 16.0;
+    final radius = BorderRadius.circular(5);
+    switch (mode) {
+      case ShareBackground.themed:
+        return Container(
+          width: size,
+          height: size,
+          decoration: BoxDecoration(
+            borderRadius: radius,
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [accent, Color.lerp(accent, Colors.black, 0.55)!],
+            ),
+          ),
+        );
+      case ShareBackground.dark:
+        return Container(
+          width: size,
+          height: size,
+          decoration: BoxDecoration(
+            borderRadius: radius,
+            color: const Color(0xFF0B0B0D),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
+          ),
+        );
+      case ShareBackground.light:
+        return Container(
+          width: size,
+          height: size,
+          decoration: BoxDecoration(
+            borderRadius: radius,
+            color: const Color(0xFFF4F5F7),
+            border: Border.all(color: Colors.black.withValues(alpha: 0.20)),
+          ),
+        );
+      case ShareBackground.transparent:
+        return ClipRRect(
+          borderRadius: radius,
+          child: CustomPaint(
+            size: const Size(size, size),
+            painter: _CheckerPainter(),
+          ),
+        );
+      case ShareBackground.video:
+        return Container(
+          width: size,
+          height: size,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            borderRadius: radius,
+            color: const Color(0xFF0B0B0D),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
+          ),
+          child: const Icon(
+            Icons.play_arrow_rounded,
+            size: 11,
+            color: Colors.white,
+          ),
+        );
+    }
+  }
+}
+
+/// 2×2 checkerboard — the universal "transparent" affordance.
+class _CheckerPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final light = Paint()..color = const Color(0xFFE8E8E8);
+    final dark = Paint()..color = const Color(0xFF9AA0A6);
+    final c = size.width / 2;
+    canvas.drawRect(Offset.zero & size, light);
+    canvas.drawRect(Rect.fromLTWH(0, 0, c, c), dark);
+    canvas.drawRect(Rect.fromLTWH(c, c, c, c), dark);
+  }
+
+  @override
+  bool shouldRepaint(_CheckerPainter oldDelegate) => false;
 }
 
 // Keep this referenced so analyzer doesn't drop the import — capture sizes

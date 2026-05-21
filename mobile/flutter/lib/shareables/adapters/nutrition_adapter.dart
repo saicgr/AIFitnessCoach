@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
 
 import '../../core/theme/accent_color_provider.dart';
+import '../../data/models/nutrition.dart';
 import '../shareable_data.dart';
 
-/// Adapter that maps backend nutrition report payloads (daily / weekly /
-/// monthly) onto the unified `Shareable` payload so the same gallery
-/// (`ShareableSheet`) handles every nutrition share. Replaces the
-/// stand-alone `ShareNutritionSheet` carousel.
+/// Adapter that maps nutrition data onto the unified `Shareable` payload so
+/// the same gallery (`ShareableSheet`) handles every nutrition share —
+/// backend report payloads (daily / weekly / monthly) and individual
+/// `FoodLog`s / meals (`fromFoodLog` / `fromMeal` / `fromFoodLogs`).
 class NutritionAdapter {
   /// Build a `Shareable` from `POST /nutrition/reports/daily`.
   static Shareable? fromDailyReport({
@@ -234,5 +236,242 @@ class NutritionAdapter {
       ],
       accentColor: accent,
     );
+  }
+
+  // ─── Food-log shares (ShareableKind.foodLog) ───────────────────────────
+  //
+  // Phase A: these build photo-LESS data cards (Nutrition Facts panel, food
+  // receipt, "what I ate" quote card, food score dial) plus a photo card
+  // when the log carries an `image_url`. Unlike the report adapters above,
+  // food shares carry their data in `nutrition` / `foodItems` (not
+  // `highlights`), so `ShareableKind.foodLog.minHighlights` is 0.
+
+  /// Build a `Shareable` from a single logged meal/food entry.
+  ///
+  /// Returns null when the log is genuinely empty (0 calories AND no food
+  /// items) — same validation contract as the report adapters: an adapter
+  /// returns a fully-populated payload or null, never a half-empty card.
+  static Shareable? fromFoodLog(FoodLog log, {required Color accent}) {
+    if (log.totalCalories == 0 && log.foodItems.isEmpty) return null;
+
+    final items = _mapFoodItems(log.foodItems);
+    return Shareable(
+      kind: ShareableKind.foodLog,
+      title: _dishTitle(log),
+      mealLabel: _mealLabel(log.mealType),
+      periodLabel: _shortDate(log.loggedAt),
+      nutrition: _nutritionOf(
+        calories: log.totalCalories,
+        proteinG: log.proteinG,
+        carbsG: log.carbsG,
+        fatG: log.fatG,
+        fiberG: log.fiberG,
+      ),
+      foodItems: items,
+      healthScore: log.healthScore,
+      logText: _nonEmpty(log.userQuery),
+      foodImageUrls: _imageList([log]),
+      accentColor: accent,
+    );
+  }
+
+  /// Build a `Shareable` from every log of one meal type on a day (e.g. all
+  /// of today's "lunch" entries) — macros are summed across the logs.
+  ///
+  /// Returns null when the collection is empty or every log is empty.
+  static Shareable? fromMeal(
+    List<FoodLog> sameMealType, {
+    required Color accent,
+  }) {
+    final logs = _sortedByLoggedAt(sameMealType);
+    if (logs.isEmpty) return null;
+
+    final allItems = <FoodItem>[
+      for (final l in logs) ...l.foodItems,
+    ];
+    final totalCalories = logs.fold<int>(0, (s, l) => s + l.totalCalories);
+    if (totalCalories == 0 && allItems.isEmpty) return null;
+
+    // Title: a single-log meal reads as the dish; a multi-log meal reads as
+    // the meal name itself (e.g. "Lunch") since there is no one dish.
+    final title = logs.length == 1
+        ? _dishTitle(logs.first)
+        : _mealLabel(logs.first.mealType);
+
+    return Shareable(
+      kind: ShareableKind.foodLog,
+      title: title,
+      mealLabel: _mealLabel(logs.first.mealType),
+      periodLabel: _shortDate(logs.first.loggedAt),
+      nutrition: _nutritionOf(
+        calories: totalCalories,
+        proteinG: logs.fold<double>(0, (s, l) => s + l.proteinG),
+        carbsG: logs.fold<double>(0, (s, l) => s + l.carbsG),
+        fatG: logs.fold<double>(0, (s, l) => s + l.fatG),
+        fiberG: _sumFiber(logs),
+      ),
+      foodItems: _mapFoodItems(allItems),
+      healthScore: _averageScore(logs),
+      logText: logs.length == 1 ? _nonEmpty(logs.first.userQuery) : null,
+      foodImageUrls: _imageList(logs),
+      accentColor: accent,
+    );
+  }
+
+  /// Build a `Shareable` spanning many logs across meal types (e.g. a full
+  /// day) — macros summed, meal label is the generic "All meals".
+  ///
+  /// Returns null when the collection is empty or every log is empty.
+  static Shareable? fromFoodLogs(List<FoodLog> logs, {required Color accent}) {
+    final sorted = _sortedByLoggedAt(logs);
+    if (sorted.isEmpty) return null;
+
+    final allItems = <FoodItem>[
+      for (final l in sorted) ...l.foodItems,
+    ];
+    final totalCalories = sorted.fold<int>(0, (s, l) => s + l.totalCalories);
+    if (totalCalories == 0 && allItems.isEmpty) return null;
+
+    return Shareable(
+      kind: ShareableKind.foodLog,
+      title: _dayTitle(sorted),
+      mealLabel: 'All meals',
+      periodLabel: _shortDate(sorted.first.loggedAt),
+      nutrition: _nutritionOf(
+        calories: totalCalories,
+        proteinG: sorted.fold<double>(0, (s, l) => s + l.proteinG),
+        carbsG: sorted.fold<double>(0, (s, l) => s + l.carbsG),
+        fatG: sorted.fold<double>(0, (s, l) => s + l.fatG),
+        fiberG: _sumFiber(sorted),
+      ),
+      foodItems: _mapFoodItems(allItems),
+      healthScore: _averageScore(sorted),
+      // A multi-meal day has no single natural-language log to quote.
+      logText: null,
+      foodImageUrls: _imageList(sorted),
+      accentColor: accent,
+    );
+  }
+
+  // ─── Food-log mapping helpers ──────────────────────────────────────────
+
+  /// Logs in chronological order, with nulls defensively dropped.
+  static List<FoodLog> _sortedByLoggedAt(List<FoodLog> logs) {
+    final copy = List<FoodLog>.from(logs)
+      ..sort((a, b) => a.loggedAt.compareTo(b.loggedAt));
+    return copy;
+  }
+
+  /// Maps `FoodItem` (nullable macro fields) → `ShareableFood` (non-null).
+  /// Items with a blank name are dropped so the receipt/panel never shows an
+  /// empty line.
+  static List<ShareableFood> _mapFoodItems(List<FoodItem> items) {
+    return [
+      for (final it in items)
+        if (it.name.trim().isNotEmpty)
+          ShareableFood(
+            name: it.name.trim(),
+            amount: _nonEmpty(it.amount),
+            calories: it.calories ?? 0,
+            proteinG: it.proteinG ?? 0,
+            carbsG: it.carbsG ?? 0,
+            fatG: it.fatG ?? 0,
+          ),
+    ];
+  }
+
+  /// Aggregate macro totals. Goals stay null in Phase A (a logged meal has
+  /// no per-meal goal); fiber is null when no log carried fiber data.
+  static ShareableNutrition _nutritionOf({
+    required int calories,
+    required double proteinG,
+    required double carbsG,
+    required double fatG,
+    required double? fiberG,
+  }) {
+    return ShareableNutrition(
+      calories: calories,
+      proteinG: proteinG,
+      carbsG: carbsG,
+      fatG: fatG,
+      fiberG: fiberG,
+    );
+  }
+
+  /// Sum of fiber across logs — null when no log reported any fiber (so
+  /// templates can hide the fiber row rather than show a fake 0g).
+  static double? _sumFiber(List<FoodLog> logs) {
+    final withFiber = logs.where((l) => l.fiberG != null);
+    if (withFiber.isEmpty) return null;
+    return withFiber.fold<double>(0, (s, l) => s + (l.fiberG ?? 0));
+  }
+
+  /// Rounded average of the present health scores — null when none of the
+  /// logs carry a score.
+  static int? _averageScore(List<FoodLog> logs) {
+    final scores = [
+      for (final l in logs)
+        if (l.healthScore != null) l.healthScore!,
+    ];
+    if (scores.isEmpty) return null;
+    return (scores.reduce((a, b) => a + b) / scores.length).round();
+  }
+
+  /// Every non-empty `image_url` in chronological order — null when none
+  /// (photo templates require a non-empty list).
+  static List<String>? _imageList(List<FoodLog> logs) {
+    final urls = [
+      for (final l in logs)
+        if ((l.imageUrl ?? '').trim().isNotEmpty) l.imageUrl!.trim(),
+    ];
+    return urls.isEmpty ? null : urls;
+  }
+
+  /// Dish name for a single log: the user's own words → else the first food
+  /// item → else the joined item names → else a meal-type fallback.
+  static String _dishTitle(FoodLog log) {
+    final query = _nonEmpty(log.userQuery);
+    if (query != null) return query;
+
+    final named = log.foodItems
+        .map((it) => it.name.trim())
+        .where((n) => n.isNotEmpty)
+        .toList();
+    if (named.length == 1) return named.first;
+    if (named.isNotEmpty) return named.join(', ');
+    return _mealLabel(log.mealType);
+  }
+
+  /// Title for a multi-meal day — the count of distinct items eaten, with a
+  /// graceful singular/empty form.
+  static String _dayTitle(List<FoodLog> logs) {
+    final names = <String>{
+      for (final l in logs)
+        for (final it in l.foodItems)
+          if (it.name.trim().isNotEmpty) it.name.trim().toLowerCase(),
+    };
+    if (names.isEmpty) return "What I Ate";
+    if (names.length == 1) return "What I Ate";
+    return "What I Ate Today";
+  }
+
+  /// Capitalized meal-type label ("breakfast" → "Breakfast"). Unknown/blank
+  /// values fall back to "Meal" rather than rendering an empty eyebrow.
+  static String _mealLabel(String mealType) {
+    final t = mealType.trim();
+    if (t.isEmpty) return 'Meal';
+    return t[0].toUpperCase() + t.substring(1).toLowerCase();
+  }
+
+  /// Short calendar date, e.g. "May 21". Uses the same `intl` formatting the
+  /// rest of the codebase relies on.
+  static String _shortDate(DateTime dt) => DateFormat('MMM d').format(dt);
+
+  /// Returns the trimmed string, or null when it is null/blank — so callers
+  /// can use `??` chains without re-checking `isEmpty`.
+  static String? _nonEmpty(String? s) {
+    if (s == null) return null;
+    final t = s.trim();
+    return t.isEmpty ? null : t;
   }
 }

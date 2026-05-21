@@ -40,6 +40,7 @@ class DailyTab extends ConsumerStatefulWidget {
   final void Function(FoodLog meal, {SchedulePreset initialPreset, int? itemIndex}) onScheduleMeal;
   final void Function(FoodLog meal, {int? itemIndex}) onAddToShoppingList;
   final void Function(FoodLog meal) onShareMeal;
+  final void Function(String mealType) onShareMealGroup;
   final Future<List<FoodLogEditRecord>> Function(String logId)? onFetchItemEdits;
   final ApiClient? apiClient;
   final VoidCallback? onSwitchToNutrientsTab;
@@ -79,6 +80,7 @@ class DailyTab extends ConsumerStatefulWidget {
     required this.onScheduleMeal,
     required this.onAddToShoppingList,
     required this.onShareMeal,
+    required this.onShareMealGroup,
     this.onFetchItemEdits,
     this.apiClient,
     this.onSwitchToNutrientsTab,
@@ -442,6 +444,7 @@ class _DailyTabState extends ConsumerState<DailyTab>
                     onScheduleMeal: widget.onScheduleMeal,
                     onAddToShoppingList: widget.onAddToShoppingList,
                     onShareMeal: widget.onShareMeal,
+                    onShareMealGroup: widget.onShareMealGroup,
                     onLogMeal: widget.onLogMeal,
                     onFetchItemEdits: widget.onFetchItemEdits,
                     apiClient: widget.apiClient,
