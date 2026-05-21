@@ -44,6 +44,43 @@ List<RouteBase> _workoutRoutes() => [
         builder: (context, state) => const CustomWorkoutBuilderScreen(),
       ),
 
+      // Exercise Progressions — leverage-based progression chains + mastery
+      // tracking. Declared BEFORE `/workout/:id` so `exercise-progressions`
+      // is treated as a static path, not a workoutId param.
+      GoRoute(
+        path: '/workout/exercise-progressions',
+        builder: (context, state) => const ExerciseProgressionsScreen(),
+      ),
+
+      // === Multi-day program-template importer (Phase B) ===
+      // All three declared BEFORE `/workout/:id` so their static segments
+      // ("program-library" etc.) aren't matched as a workoutId param.
+
+      // Program library — browse the 259-program curated library.
+      GoRoute(
+        path: '/workout/program-library',
+        builder: (context, state) => const ProgramLibraryScreen(),
+      ),
+
+      // Program builder — three entry tabs converging on one editable
+      // builder. `extra` accepts an optional pre-loaded ProgramTemplate
+      // (used by "Import & customize" and "Edit") to open straight into
+      // edit mode.
+      GoRoute(
+        path: '/workout/program-builder',
+        builder: (context, state) {
+          final initial =
+              state.extra is ProgramTemplate ? state.extra as ProgramTemplate : null;
+          return ProgramTemplateBuilderScreen(initialTemplate: initial);
+        },
+      ),
+
+      // Saved program templates + the schedule sheet.
+      GoRoute(
+        path: '/workout/templates',
+        builder: (context, state) => const TemplateListScreen(),
+      ),
+
       GoRoute(
         path: '/workout/:id',
         builder: (context, state) {

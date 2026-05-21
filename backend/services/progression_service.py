@@ -49,6 +49,8 @@ class ProgressionService:
         last_performance: Optional[ExercisePerformance],
         performance_history: List[ExercisePerformance],
         progression_pace: str = "medium",
+        template_id: Optional[str] = None,
+        progression_strategy: Optional[str] = None,
     ) -> ProgressionRecommendation:
         """
         Generate a progression recommendation for an exercise.
@@ -62,12 +64,38 @@ class ProgressionService:
                 - slow: 3-4 weeks same weight before increase
                 - medium: 1-2 weeks same weight before increase
                 - fast: increase every session when ready
+            template_id: When the workout this exercise belongs to was expanded
+                from a `user_program_templates` row, its template id. When
+                present the recommendation is driven by `progression_strategy`
+                (the template's authored strategy) rather than auto-detection
+                (plan B.2 wiring + B.6 Group 4 #47/#48).
+            progression_strategy: The template's `progression_strategy` -
+                "linear" | "wave" | "double" | "none". Only honored when
+                `template_id` is set.
 
         Returns:
             ProgressionRecommendation with weight/rep suggestions
         """
         if not last_performance:
             return self._get_initial_recommendation(exercise_id, exercise_name)
+
+        # === Template-driven progression =================================
+        # When the workout came from a user-authored / imported template, the
+        # template's own strategy wins over RPE-based auto-detection. The
+        # user's progression_pace still gates HOW OFTEN a linear increase
+        # fires (#49 - pace changes apply to future weeks only).
+        if template_id and progression_strategy:
+            strategy = self._strategy_for_template(
+                progression_strategy,
+                performance_history,
+                progression_pace,
+            )
+            if strategy is not None:
+                reason = self._template_reason(progression_strategy, strategy)
+                return self._calculate_progression(
+                    exercise_id, exercise_name, last_performance,
+                    strategy, reason,
+                )
 
         avg_rpe = self._calculate_average_rpe(performance_history[-3:])
         is_plateau = self._detect_plateau(performance_history)
@@ -100,6 +128,56 @@ class ProgressionService:
         return self._calculate_progression(
             exercise_id, exercise_name, last_performance, strategy, reason
         )
+
+    # ------------------------------------------------------------------
+    # Template-driven progression helpers (Phase B wiring)
+    # ------------------------------------------------------------------
+    def _strategy_for_template(
+        self,
+        progression_strategy: str,
+        performance_history: List[ExercisePerformance],
+        progression_pace: str,
+    ) -> Optional[ProgressionStrategy]:
+        """Map a template's authored `progression_strategy` to a concrete
+        ProgressionStrategy for the next session.
+
+        - "none"   -> None: caller leaves weights exactly as authored (#48).
+        - "wave"   -> WAVE: apply the template's wave/5-3-1 loading (#47).
+        - "double" -> DOUBLE_PROGRESSION.
+        - "linear" -> LINEAR once the user clears their pace threshold,
+          otherwise DOUBLE_PROGRESSION so weight only moves when earned (#43).
+        """
+        strat = (progression_strategy or "").lower()
+        if strat == "none":
+            return None  # weights stay as authored
+        if strat == "wave":
+            return ProgressionStrategy.WAVE
+        if strat == "double":
+            return ProgressionStrategy.DOUBLE_PROGRESSION
+        # Linear (default). Gate the actual weight bump on the user's pace
+        # using the SAME consecutive-ready counter as the auto path so
+        # progression_pace changes only affect future weeks (#49).
+        consecutive_ready = self._count_consecutive_ready_sessions(
+            performance_history
+        )
+        pace_threshold = PROGRESSION_PACE_THRESHOLDS.get(progression_pace, 2)
+        if consecutive_ready >= pace_threshold:
+            return ProgressionStrategy.LINEAR
+        return ProgressionStrategy.DOUBLE_PROGRESSION
+
+    @staticmethod
+    def _template_reason(
+        progression_strategy: str, strategy: ProgressionStrategy
+    ) -> str:
+        """Human-readable reason for a template-driven recommendation."""
+        strat = (progression_strategy or "").lower()
+        if strat == "wave":
+            return "Following your program's wave progression"
+        if strat == "double":
+            return "Following your program's double-progression scheme"
+        if strategy == ProgressionStrategy.LINEAR:
+            return "Program progression: earned a linear weight increase"
+        return "Program progression: build consistency before adding weight"
 
     def _get_initial_recommendation(
         self,

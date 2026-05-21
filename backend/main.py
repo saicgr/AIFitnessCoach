@@ -41,6 +41,10 @@ from core.metrics import request_metrics as _request_metrics
 _record_request_metric = _request_metrics.record
 from api.v1 import router as v1_router
 from api.v1 import chat as chat_module
+# Phase B: multi-day program-template importer router. Mounted explicitly at
+# /api/v1/program-templates (kept out of api/v1/__init__.py per the Phase B
+# exclusive-file split).
+from api.v1.program_templates import router as program_templates_router
 from services.gemini_service import GeminiService
 from services.rag_service import RAGService
 from services.langgraph_service import LangGraphCoachService
@@ -937,6 +941,13 @@ app.add_middleware(MetricsMiddleware)
 
 # Include API routes
 app.include_router(v1_router, prefix="/api")
+
+# Phase B: program-template importer. Mounted at /api/v1/program-templates.
+app.include_router(
+    program_templates_router,
+    prefix="/api/v1/program-templates",
+    tags=["Program Templates"],
+)
 
 # Public (no-auth) shareable resources — short links like zealova.com/r/{slug}
 from api.public import router as public_router  # noqa: E402

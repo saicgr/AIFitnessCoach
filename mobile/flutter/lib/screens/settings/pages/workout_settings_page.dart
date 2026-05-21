@@ -134,6 +134,14 @@ class _WorkoutSettingsPageState extends ConsumerState<WorkoutSettingsPage> {
                     isVariationSlider: true,
                     iconColor: isDark ? AppColors.purple : AppColorsLight.purple,
                   ),
+                  SettingItemData(
+                    icon: Icons.replay_circle_filled_outlined,
+                    title: 'Progression & Deload',
+                    subtitle: 'Auto-deload, deload frequency & weeks to progress',
+                    onTap: () =>
+                        GoRouter.of(context).push('/settings/progression-pace'),
+                    iconColor: isDark ? AppColors.cyan : AppColorsLight.cyan,
+                  ),
                 ],
               ),
 

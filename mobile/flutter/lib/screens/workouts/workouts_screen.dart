@@ -177,7 +177,8 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
   /// 0 Plan      → scroll back to the planner section.
   /// 1 Gym       → open the manage-gym-profiles sheet.
   /// 2 Library   → exercise library.
-  /// 3 History   → schedule / history screen.
+  /// 3 Programs  → multi-week program library (B.3.1 — replaced History,
+  ///               which moved into the quick-actions row).
   void _onOptionSelected(int index) {
     switch (index) {
       case 0:
@@ -201,7 +202,7 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
         context.push('/library');
         break;
       case 3:
-        context.push('/schedule');
+        context.push('/workout/program-library');
         break;
     }
   }
@@ -278,8 +279,11 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
                     WorkoutsOptionItem(
                         label: 'Library',
                         icon: Icons.menu_book_outlined),
+                    // B.3.1 — "Programs" replaces "History" here. History
+                    // moved into the quick-actions row; Programs opens the
+                    // multi-week program library beside the exercise Library.
                     WorkoutsOptionItem(
-                        label: 'History', icon: Icons.history_rounded),
+                        label: 'Programs', icon: Icons.list_alt_rounded),
                   ],
                 ),
               ),
@@ -545,6 +549,24 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
               onTap: () {
                 HapticService.light();
                 showFavoriteWorkoutsSheet(context, ref);
+              },
+            ),
+          ),
+          const SizedBox(width: 8),
+          // B.3.1 — History moved in from the floating bar. Opens the same
+          // /schedule (history) screen the floating "History" pill used to.
+          // Four Expanded buttons fit on iPhone SE (320pt wide); five would
+          // overflow, so History is the cap.
+          Expanded(
+            child: _buildQuickActionButton(
+              context,
+              icon: Icons.history_rounded,
+              label: 'History',
+              color: accentColor,
+              isDark: isDark,
+              onTap: () {
+                HapticService.light();
+                context.push('/schedule');
               },
             ),
           ),

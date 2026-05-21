@@ -53,6 +53,13 @@ class ExerciseInsightInput {
   final String todayIso; // YYYY-MM-DD in user-local time
   final int workoutStartEpochMs; // used for variant seeding
 
+  /// When true, the active mesocycle is in its deload week. Overload-positive
+  /// patterns (readyToProgress / earnedOverload / trendingUp / the
+  /// "above-target → add weight" mismatches) are suppressed in favour of a
+  /// deload-specific message — pushing more load during a deload defeats its
+  /// purpose. Defaults to false so existing callers are unaffected.
+  final bool isDeloadWeek;
+
   /// Newest session first.
   final List<SessionSummary> history;
 
@@ -66,6 +73,7 @@ class ExerciseInsightInput {
     required this.todayIso,
     required this.workoutStartEpochMs,
     required this.history,
+    this.isDeloadWeek = false,
   });
 }
 
@@ -86,6 +94,8 @@ enum PatternCode {
   skipSpecialtyPattern,
   skipNoRepTarget,
   skipSteadyInRange,
+  freshLift,
+  deloadWeek,
   returnAfterGap,
   brutalLastSession,
   intraSessionFalloff,
@@ -255,8 +265,14 @@ class PreSetInsightEngine {
         if (_validWorkingSets(s).isNotEmpty)
           SessionSummary(dateIso: s.dateIso, workingSets: _validWorkingSets(s)),
     ];
+
+    // Fresh-user fallback — brand-new lift, never logged. Rather than the old
+    // blank-banner `skipNewExercise` path, give a concrete starting cue. The
+    // 1-session case is handled below by the richer single-session patterns
+    // (rep-miss / top-of-range); only when that single session is
+    // unremarkable does it fall through to a fresh-lift cue too.
     if (sessions.isEmpty) {
-      return const PatternResult(PatternCode.skipNewExercise);
+      return const PatternResult(PatternCode.freshLift, {'sessionCount': 0});
     }
 
     final last = sessions.first;
@@ -315,6 +331,22 @@ class PreSetInsightEngine {
       }
     }
 
+    // ── Progression-pattern selection (Phase A.3) ──
+    //
+    // Strict priority order — the FIRST match wins, so order is the policy:
+    //   readyToProgress > earnedOverload > trendingUp > plateau
+    //   > trendingDown > targetMismatchAbove > targetMismatchBelow
+    //
+    // This deliberately foregrounds the overload-positive patterns
+    // (readyToProgress / earnedOverload / trendingUp) ahead of plateau and
+    // the mismatch cases — a user who has earned a weight bump should hear
+    // that before a "you're plateaued" or "recalibrate your target" message.
+    //
+    // Each detected code is run through `_applyDeloadGuard`: during a deload
+    // week the overload-positive + above-target codes are swapped for a
+    // single `deloadWeek` message so the engine never tells the user to add
+    // load mid-deload.
+
     // 8. Ready to progress — 2+ sessions at top of range with reps in reserve
     if (sessions.length >= 2) {
       final twoAtCeiling = sessions.take(2).every((s) {
@@ -325,14 +357,49 @@ class PreSetInsightEngine {
             top.rir! >= 2;
       });
       if (twoAtCeiling && _sameTopWeight(sessions.take(2))) {
-        return PatternResult(PatternCode.readyToProgress, {
-          'reps': lastTop.reps,
-          'weightKg': lastTop.weightKg,
-        });
+        return _applyDeloadGuard(
+          PatternResult(PatternCode.readyToProgress, {
+            'reps': lastTop.reps,
+            'weightKg': lastTop.weightKg,
+          }),
+          i,
+        );
       }
     }
 
-    // 9. Plateau — same weight, reps within ±1 across 3+ sessions, below ceiling
+    // 9. Earned overload — single session at ceiling with room to spare
+    if (lastTop.reps >= i.targetMaxReps &&
+        ((lastTop.rir != null && lastTop.rir! >= 1) ||
+            (lastTop.rpe != null && lastTop.rpe! <= 8))) {
+      return _applyDeloadGuard(
+        PatternResult(PatternCode.earnedOverload, {
+          'reps': lastTop.reps,
+          'weightKg': lastTop.weightKg,
+        }),
+        i,
+      );
+    }
+
+    // 10. Trending up (reps ↑ at same weight across 3 sessions, newest→oldest)
+    if (sessions.length >= 3) {
+      final last3 = sessions.take(3).toList();
+      if (_sameTopWeight(last3)) {
+        final reps = last3
+            .map((s) => _topBy(s.workingSets, (x) => x.reps).reps)
+            .toList();
+        if (reps[0] > reps[1] && reps[1] > reps[2]) {
+          return _applyDeloadGuard(
+            PatternResult(PatternCode.trendingUp, {
+              'from': reps.last,
+              'to': reps.first,
+            }),
+            i,
+          );
+        }
+      }
+    }
+
+    // 11. Plateau — same weight, reps within ±1 across 3+ sessions, below ceiling
     if (sessions.length >= 3) {
       final last3 = sessions.take(3).toList();
       if (_sameTopWeight(last3)) {
@@ -342,37 +409,14 @@ class PreSetInsightEngine {
         final mn = reps.reduce(math.min);
         final mx = reps.reduce(math.max);
         if (mx - mn <= 1 && mx < i.targetMaxReps) {
-          return PatternResult(PatternCode.plateau, {
-            'reps': lastTop.reps,
-            'weightKg': lastTop.weightKg,
-            'sessionCount': last3.length,
-          });
-        }
-      }
-    }
-
-    // 10. Earned overload — single session at ceiling with room to spare
-    if (lastTop.reps >= i.targetMaxReps &&
-        ((lastTop.rir != null && lastTop.rir! >= 1) ||
-            (lastTop.rpe != null && lastTop.rpe! <= 8))) {
-      return PatternResult(PatternCode.earnedOverload, {
-        'reps': lastTop.reps,
-        'weightKg': lastTop.weightKg,
-      });
-    }
-
-    // 11. Trending up (reps ↑ at same weight across 3 sessions, newest→oldest)
-    if (sessions.length >= 3) {
-      final last3 = sessions.take(3).toList();
-      if (_sameTopWeight(last3)) {
-        final reps = last3
-            .map((s) => _topBy(s.workingSets, (x) => x.reps).reps)
-            .toList();
-        if (reps[0] > reps[1] && reps[1] > reps[2]) {
-          return PatternResult(PatternCode.trendingUp, {
-            'from': reps.last,
-            'to': reps.first,
-          });
+          return _applyDeloadGuard(
+            PatternResult(PatternCode.plateau, {
+              'reps': lastTop.reps,
+              'weightKg': lastTop.weightKg,
+              'sessionCount': last3.length,
+            }),
+            i,
+          );
         }
       }
     }
@@ -382,26 +426,32 @@ class PreSetInsightEngine {
       final a = _topBy(sessions.elementAt(0).workingSets, (x) => x.reps).reps;
       final b = _topBy(sessions.elementAt(1).workingSets, (x) => x.reps).reps;
       if (b - a >= 2) {
+        // trendingDown is recovery-oriented — safe to keep during a deload.
         return PatternResult(PatternCode.trendingDown, {'from': b, 'to': a});
       }
     }
 
-    // 13/14. Target mismatch — chronic under/over shoot
+    // 13/14. Target mismatch — chronic under/over shoot. Above is checked
+    // before below per the Phase A.3 priority order.
     if (sessions.length >= 3) {
       final avg = sessions
               .take(3)
               .map((s) => _topBy(s.workingSets, (x) => x.reps).reps)
               .fold<int>(0, (a, b) => a + b) /
           3.0;
-      if (avg <= i.targetMinReps - 2) {
-        return PatternResult(PatternCode.targetMismatchBelow, {
-          'avgReps': avg.round(),
-          'tmin': i.targetMinReps,
-          'tmax': i.targetMaxReps,
-        });
-      }
       if (avg >= i.targetMaxReps + 2) {
-        return PatternResult(PatternCode.targetMismatchAbove, {
+        return _applyDeloadGuard(
+          PatternResult(PatternCode.targetMismatchAbove, {
+            'avgReps': avg.round(),
+            'tmin': i.targetMinReps,
+            'tmax': i.targetMaxReps,
+          }),
+          i,
+        );
+      }
+      if (avg <= i.targetMinReps - 2) {
+        // targetMismatchBelow tells the user to LIGHTEN — safe in a deload.
+        return PatternResult(PatternCode.targetMismatchBelow, {
           'avgReps': avg.round(),
           'tmin': i.targetMinReps,
           'tmax': i.targetMaxReps,
@@ -430,6 +480,10 @@ class PreSetInsightEngine {
           'tmax': i.targetMaxReps,
         });
       }
+      // Logged exactly once and the session was unremarkable (in-range) —
+      // still early on this lift. Give the fresh-lift cue rather than going
+      // silent (old `skipSteadyInRange` returned null copy).
+      return const PatternResult(PatternCode.freshLift, {'sessionCount': 1});
     }
 
     return const PatternResult(PatternCode.skipSteadyInRange);
@@ -463,6 +517,28 @@ int _daysBetween(String todayIso, String dateIso) {
   final today = DateTime.parse(todayIso);
   final date = DateTime.parse(dateIso);
   return today.difference(date).inDays;
+}
+
+/// Overload-positive codes — telling the user to add load / progress. During
+/// a deload week these are swapped for a `deloadWeek` message.
+const Set<PatternCode> _overloadPositiveCodes = {
+  PatternCode.readyToProgress,
+  PatternCode.earnedOverload,
+  PatternCode.trendingUp,
+  PatternCode.targetMismatchAbove,
+};
+
+/// Deload-week guard (Phase A.3). When the active mesocycle is in its deload
+/// week, any overload-positive verdict is replaced by a single deload-pool
+/// message — pushing more load mid-deload defeats the recovery block. Codes
+/// that already point toward backing off (trendingDown, targetMismatchBelow,
+/// returnAfterGap, brutalLastSession) pass through untouched.
+PatternResult _applyDeloadGuard(PatternResult result, ExerciseInsightInput i) {
+  if (!i.isDeloadWeek) return result;
+  if (!_overloadPositiveCodes.contains(result.code)) return result;
+  // Carry forward weight/reps where present so the deload copy can reference
+  // them; the deloadWeek pool only uses {weightDisplay} when available.
+  return PatternResult(PatternCode.deloadWeek, result.data);
 }
 
 // ─── Copy rendering ──────────────────────────────────────────────────────────
@@ -624,6 +700,18 @@ String _formatWeight(double kg, bool useKg) {
 // Placeholders are validated at fill time — any typo explodes immediately.
 
 const Map<PatternCode, List<String>> _weightedPools = {
+  PatternCode.freshLift: [
+    'First time on this lift — pick a weight that leaves 2-3 reps in the tank.',
+    'New movement for you. Start conservative; you should finish set 1 with 2-3 reps to spare.',
+    "No history here yet — go a touch lighter than you think and leave 2-3 reps in reserve.",
+    'Fresh lift. Find a weight you control for every rep, stopping 2-3 reps before failure.',
+  ],
+  PatternCode.deloadWeek: [
+    "Deload week — your numbers say push, but hold back. Keep the weight light and the reps crisp.",
+    'This is a recovery week. Resist adding load even though you could — easy reps now pay off later.',
+    'Deload in progress. Stay well shy of failure; the goal this week is to recover, not to grind.',
+    "You've earned a bump, but it's deload week. Bank the readiness — keep it light and clean today.",
+  ],
   PatternCode.returnAfterGap: [
     'First time back in {daysSince} days. Start around {eightyPctWeight} — earn the top set.',
     "It's been {daysSince} days. Open light, build into {lastWeightDisplay} if it feels good.",
@@ -713,6 +801,12 @@ const Map<PatternCode, List<String>> _weightedPools = {
 
 /// Bodyweight overrides — replace "lighten up / add weight" with tempo cues.
 const Map<PatternCode, List<String>> _bodyweightPools = {
+  PatternCode.freshLift: [
+    'First time on this movement — aim to stop 2-3 reps before your form slips.',
+    'New exercise for you. Pick a variation you control cleanly and leave 2-3 reps in reserve.',
+    "No history here yet — keep set 1 well within your limit, 2-3 clean reps to spare.",
+    'Fresh movement. Master the form first; stop each set with 2-3 good reps still in you.',
+  ],
   PatternCode.weightJumpTooAggressive: [
     // Rare for bodyweight; fall back to weighted copy if encountered.
   ],

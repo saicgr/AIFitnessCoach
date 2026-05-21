@@ -1396,6 +1396,9 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
       'library': '/library',
       'schedule': '/schedule',
       'workout_builder': '/workout/build',
+      // Multi-day program-template importer (Phase B) — lets the AI coach
+      // route a user straight into the program builder.
+      'program_builder': '/workout/program-builder',
       // Nutrition features — hydration handled below with params.
       'fasting': '/fasting',
       'food_history': '/nutrition',

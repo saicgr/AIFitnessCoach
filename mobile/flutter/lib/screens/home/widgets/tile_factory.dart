@@ -8,6 +8,7 @@ import '../../../data/repositories/workout_repository.dart';
 import '../../../data/providers/today_workout_provider.dart';
 // import '../../../widgets/xp_progress_card.dart'; // Coming soon
 import 'cards/cards.dart';
+import 'cards/deload_recommendation_card.dart';
 // import 'cards/roi_summary_card.dart'; // Coming soon
 // import 'cards/weekly_plan_card.dart'; // Coming soon
 // import 'daily_activity_card.dart'; // Coming soon
@@ -73,7 +74,20 @@ class TileFactory {
         // Deprecated - return empty widget
         return const SizedBox.shrink();
       case TileType.personalRecords:
-        return PersonalRecordsCard(size: tile.size, isDark: isDark);
+        // The deload recommendation card (Phase A.1) has no dedicated
+        // TileType — adding an enum value would require regenerating the
+        // committed `home_layout.g.dart` (build_runner is forbidden, see
+        // project_codegen_gotcha). Instead it is registered as a sibling
+        // rendered ABOVE the Personal Records tile: it self-hides whenever
+        // the user does not need a deload, so attaching it here costs
+        // nothing when there's nothing to show.
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            DeloadRecommendationCard(isDark: isDark),
+            PersonalRecordsCard(size: tile.size, isDark: isDark),
+          ],
+        );
       case TileType.aiCoachTip:
         return AICoachTipCard(size: tile.size, isDark: isDark);
       case TileType.challengeProgress:

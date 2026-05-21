@@ -1,20 +1,44 @@
 """
-Exercise Progressions API - Leverage-based exercise progressions for adaptive difficulty.
+Exercise Progressions API - Skill-based exercise progressions for adaptive difficulty.
 
 This module provides endpoints to:
 1. Track exercise mastery levels based on user feedback
 2. Suggest progression to harder variants when exercises become too easy
-3. Manage progression chains (e.g., Push-up -> Diamond Push-up -> Archer Push-up)
+3. Manage progression chains (e.g., Wall Pushups -> Standard Pushups -> One-Arm Pushups)
 4. Allow users to customize rep range preferences and progression style
 
 The key insight: Instead of just adding more reps when an exercise is too easy,
-we suggest progressing to a harder variant (leverage-based progression).
+we suggest progressing to a harder variant (skill-based progression).
 
-Example chains:
-- Push-up: Wall -> Incline -> Knee -> Standard -> Diamond -> Archer -> One-arm
-- Row: Inverted Row (high) -> Inverted Row (low) -> Pull-up -> Weighted Pull-up
-- Squat: Assisted -> Bodyweight -> Split -> Bulgarian -> Pistol
+This module is aligned to the REAL deployed schema (migrations 081 + 089):
+  - exercise_progression_chains  (id, name, description, category, created_at)
+  - exercise_progression_steps   (id, chain_id, exercise_name, step_order,
+                                  difficulty_level, prerequisites, unlock_criteria,
+                                  tips, video_url, created_at)
+  - user_exercise_mastery        (id, user_id, exercise_name, consecutive_easy_sessions,
+                                  consecutive_hard_sessions, total_sessions,
+                                  ready_for_progression, suggested_next_variant,
+                                  progression_chain_id, last_progression_suggested_at,
+                                  progression_declined_at, decline_reason,
+                                  progression_accepted_count, progression_declined_count,
+                                  first_performed_at, last_performed_at, created_at,
+                                  updated_at, current_max_reps, current_max_weight_kg,
+                                  current_difficulty_level, current_max_weight,
+                                  mastery_level, progression_status)
+
+NOTE on the progression chain "step order":
+  exercise_progression_steps.step_order is the canonical position of a variant in its
+  chain (1 = easiest). user_exercise_mastery has NO stored current_variant_order column,
+  so the current step is always DERIVED by looking up the user's exercise_name in
+  exercise_progression_steps.
+
+Example chains (deployed seed data):
+- Pushup Mastery: Wall Pushups -> ... -> One-Arm Pushups
+- Pullup Journey: Dead Hang -> ... -> One-Arm Pullups
+- Squat Progressions: Assisted Squats -> ... -> Pistol Squats
 """
+import json
+
 from core.db import get_supabase_db
 
 from .exercise_progressions_models import *  # noqa: F401, F403
@@ -39,298 +63,203 @@ router = APIRouter()
 
 
 # =============================================================================
-# Enums and Constants
-# =============================================================================
-
-class ChainType(str, Enum):
-    """Types of progression chains."""
-    LEVERAGE = "leverage"  # Body position changes (push-up variants)
-    LOAD = "load"  # Weight progression (dumbbells to barbells)
-    STABILITY = "stability"  # Stability challenges (bilateral to unilateral)
-    RANGE = "range"  # Range of motion (partial to full)
-    TEMPO = "tempo"  # Speed/time under tension
-
-
-class MuscleGroup(str, Enum):
-    """Primary muscle groups for filtering chains."""
-    CHEST = "chest"
-    BACK = "back"
-    SHOULDERS = "shoulders"
-    BICEPS = "biceps"
-    TRICEPS = "triceps"
-    CORE = "core"
-    QUADRICEPS = "quadriceps"
-    HAMSTRINGS = "hamstrings"
-    GLUTES = "glutes"
-    CALVES = "calves"
-    FULL_BODY = "full_body"
-
-
-class DifficultyFeedback(str, Enum):
-    """User feedback on exercise difficulty."""
-    TOO_EASY = "too_easy"
-    JUST_RIGHT = "just_right"
-    TOO_HARD = "too_hard"
-
-
-class MasteryStatus(str, Enum):
-    """Mastery status for an exercise."""
-    LEARNING = "learning"  # Still building proficiency
-    PROFICIENT = "proficient"  # Comfortable with the exercise
-    MASTERED = "mastered"  # Ready to progress
-    PROGRESSED = "progressed"  # Moved to a harder variant
-
-
-class ProgressionStyle(str, Enum):
-    """User's preferred progression style."""
-    CONSERVATIVE = "conservative"  # Slow, steady progression
-    MODERATE = "moderate"  # Balanced approach
-    AGGRESSIVE = "aggressive"  # Push to harder variants quickly
-
-
-class TrainingFocus(str, Enum):
-    """User's training focus affecting rep ranges."""
-    STRENGTH = "strength"  # Lower reps, higher intensity (1-5)
-    HYPERTROPHY = "hypertrophy"  # Moderate reps (6-12)
-    ENDURANCE = "endurance"  # Higher reps (12-20+)
-    MIXED = "mixed"  # Varied rep ranges
-
-
-# =============================================================================
-# Request/Response Models
-# =============================================================================
-
-class ProgressionVariant(BaseModel):
-    """A single variant in a progression chain."""
-    id: str
-    name: str
-    order: int = Field(..., ge=0, description="Order in the chain (0 = easiest)")
-    difficulty_score: float = Field(..., ge=1.0, le=10.0, description="1-10 difficulty rating")
-    description: Optional[str] = None
-    cues: List[str] = Field(default_factory=list, description="Form cues for this variant")
-    common_mistakes: List[str] = Field(default_factory=list)
-    video_url: Optional[str] = None
-    prerequisites: List[str] = Field(default_factory=list, description="What user should master first")
-    recommended_reps: str = Field(default="8-12", description="Recommended rep range")
-    library_exercise_id: Optional[str] = None
-
-
-class ProgressionChainResponse(BaseModel):
-    """A progression chain with all its variants."""
-    id: str
-    name: str
-    muscle_group: MuscleGroup
-    chain_type: ChainType
-    description: Optional[str] = None
-    total_variants: int
-    variants: List[ProgressionVariant] = Field(default_factory=list)
-    created_at: Optional[datetime] = None
-
-
-class ExerciseMastery(BaseModel):
-    """User's mastery status for a specific exercise."""
-    id: str
-    user_id: str
-    exercise_name: str
-    chain_id: Optional[str] = None
-    current_variant_order: Optional[int] = None
-    status: MasteryStatus
-    total_sessions: int = 0
-    consecutive_easy_sessions: int = 0
-    consecutive_hard_sessions: int = 0
-    current_max_reps: int = 0
-    current_max_weight: Optional[float] = None
-    average_difficulty_rating: Optional[float] = None
-    ready_for_progression: bool = False
-    suggested_next_variant: Optional[str] = None
-    last_performed_at: Optional[datetime] = None
-    mastered_at: Optional[datetime] = None
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
-
-
-class ExerciseMasteryWithChain(ExerciseMastery):
-    """Exercise mastery with chain details."""
-    chain_name: Optional[str] = None
-    next_variant: Optional[ProgressionVariant] = None
-
-
-class ProgressionSuggestion(BaseModel):
-    """A suggestion to progress to a harder exercise variant."""
-    exercise_name: str
-    current_difficulty_score: float
-    suggested_exercise: str
-    suggested_difficulty_score: float
-    chain_id: str
-    chain_name: str
-    reason: str
-    confidence: float = Field(..., ge=0.0, le=1.0, description="Confidence in this suggestion")
-    stats: Dict[str, Any] = Field(default_factory=dict)
-
-
-class UpdateMasteryRequest(BaseModel):
-    """Request to update mastery after a workout."""
-    exercise_name: str = Field(..., min_length=1, max_length=200)
-    reps_performed: int = Field(..., ge=0, le=1000)
-    weight_used: Optional[float] = Field(default=None, ge=0, le=2000)
-    difficulty_felt: DifficultyFeedback
-    sets_completed: int = Field(default=3, ge=1, le=20)
-    notes: Optional[str] = Field(default=None, max_length=500)
-
-
-class UpdateMasteryResponse(BaseModel):
-    """Response from updating mastery."""
-    success: bool
-    mastery: ExerciseMastery
-    progression_unlocked: bool = False
-    suggested_next: Optional[str] = None
-    message: str
-
-
-class AcceptProgressionRequest(BaseModel):
-    """Request to accept a progression suggestion."""
-    current_exercise: str = Field(..., min_length=1, max_length=200)
-    new_exercise: str = Field(..., min_length=1, max_length=200)
-
-
-class AcceptProgressionResponse(BaseModel):
-    """Response from accepting a progression."""
-    success: bool
-    old_exercise: str
-    old_status: MasteryStatus
-    new_exercise: str
-    new_status: MasteryStatus
-    message: str
-
-
-class RepPreferences(BaseModel):
-    """User's rep range preferences."""
-    training_focus: TrainingFocus = TrainingFocus.HYPERTROPHY
-    preferred_min_reps: int = Field(default=6, ge=1, le=50)
-    preferred_max_reps: int = Field(default=12, ge=1, le=100)
-    avoid_high_reps: bool = False
-    progression_style: ProgressionStyle = ProgressionStyle.MODERATE
-
-
-class RepPreferencesResponse(BaseModel):
-    """Response with rep preferences."""
-    training_focus: TrainingFocus
-    preferred_min_reps: int
-    preferred_max_reps: int
-    avoid_high_reps: bool
-    progression_style: ProgressionStyle
-    description: str
-
-
-# =============================================================================
 # Helper Functions
 # =============================================================================
 
-def _parse_variant(data: dict) -> ProgressionVariant:
-    """Parse a progression variant from database row."""
-    return ProgressionVariant(
+# Mapping of difficulty feedback -> numeric weight, used for status/score logic.
+_DIFFICULTY_WEIGHT = {
+    DifficultyFeedback.TOO_EASY: 3.0,
+    DifficultyFeedback.JUST_RIGHT: 2.0,
+    DifficultyFeedback.TOO_HARD: 1.0,
+}
+
+
+def _parse_prerequisites(raw: Any) -> List[str]:
+    """Parse the prerequisites column.
+
+    In the deployed schema (migration 081) prerequisites is a TEXT column holding a
+    JSON-encoded array string, e.g. '["Wall Pushups: 20 reps x 3 sets"]'. Older or
+    alternate rows may already be a Python list. Handle both robustly.
+    """
+    if raw is None:
+        return []
+    if isinstance(raw, list):
+        return [str(item) for item in raw]
+    if isinstance(raw, str):
+        text = raw.strip()
+        if not text:
+            return []
+        try:
+            parsed = json.loads(text)
+            if isinstance(parsed, list):
+                return [str(item) for item in parsed]
+            return [str(parsed)]
+        except (json.JSONDecodeError, ValueError):
+            # Not JSON — treat the whole string as a single prerequisite.
+            return [text]
+    return []
+
+
+def _recommended_reps_from_criteria(unlock_criteria: Any) -> str:
+    """Derive a human-readable recommended rep range from the unlock_criteria JSONB.
+
+    unlock_criteria looks like {"reps": 12, "sets": 3, "consecutive_sessions": 3} or,
+    for isometric holds, {"hold_seconds": 30, "sets": 3, ...}. There is no dedicated
+    recommended_reps column in the real schema, so we synthesize one.
+    """
+    if not isinstance(unlock_criteria, dict):
+        return "8-12"
+    if "reps" in unlock_criteria:
+        reps = unlock_criteria["reps"]
+        try:
+            reps_int = int(reps)
+            # Present as a small range around the target for a natural rep prescription.
+            low = max(1, reps_int - 2)
+            return f"{low}-{reps_int}"
+        except (TypeError, ValueError):
+            return str(reps)
+    if "min_reps" in unlock_criteria:
+        low = unlock_criteria.get("min_reps")
+        high = unlock_criteria.get("max_reps", low)
+        return f"{low}-{high}"
+    if "hold_seconds" in unlock_criteria:
+        return f"{unlock_criteria['hold_seconds']}s hold"
+    return "8-12"
+
+
+def _parse_step(data: dict) -> ProgressionStep:
+    """Parse a progression step from an exercise_progression_steps database row."""
+    unlock_criteria = data.get("unlock_criteria") or {}
+    if not isinstance(unlock_criteria, dict):
+        unlock_criteria = {}
+    return ProgressionStep(
         id=str(data["id"]),
-        name=data["name"],
-        order=data.get("variant_order", 0),
-        difficulty_score=data.get("difficulty_score", 5.0),
-        description=data.get("description"),
-        cues=data.get("cues", []) or [],
-        common_mistakes=data.get("common_mistakes", []) or [],
+        name=data["exercise_name"],
+        order=data.get("step_order", 0) or 0,
+        difficulty_level=data.get("difficulty_level") or 5,
+        tips=data.get("tips"),
         video_url=data.get("video_url"),
-        prerequisites=data.get("prerequisites", []) or [],
-        recommended_reps=data.get("recommended_reps", "8-12"),
-        library_exercise_id=data.get("library_exercise_id"),
+        prerequisites=_parse_prerequisites(data.get("prerequisites")),
+        unlock_criteria=unlock_criteria,
+        recommended_reps=_recommended_reps_from_criteria(unlock_criteria),
     )
 
 
 def _parse_chain(data: dict) -> ProgressionChainResponse:
-    """Parse a progression chain from database row."""
+    """Parse a progression chain from an exercise_progression_chains database row."""
     return ProgressionChainResponse(
         id=str(data["id"]),
         name=data["name"],
-        muscle_group=data.get("muscle_group", MuscleGroup.FULL_BODY),
-        chain_type=data.get("chain_type", ChainType.LEVERAGE),
+        category=data.get("category"),
         description=data.get("description"),
-        total_variants=data.get("total_variants", 0),
+        total_steps=0,
         created_at=data.get("created_at"),
     )
 
 
 def _parse_mastery(data: dict) -> ExerciseMastery:
-    """Parse exercise mastery from database row."""
+    """Parse exercise mastery from a user_exercise_mastery database row.
+
+    The real table stores the chain reference in `progression_chain_id` and the
+    status string in `progression_status`. There is no current_variant_order column
+    (current_step_order is derived elsewhere), no mastered_at, and no
+    average_difficulty_rating column.
+    """
+    # progression_status may be NULL on legacy rows — fall back to LEARNING.
+    raw_status = data.get("progression_status")
+    try:
+        status = MasteryStatus(raw_status) if raw_status else MasteryStatus.LEARNING
+    except ValueError:
+        status = MasteryStatus.LEARNING
+
+    # current_max_weight may live in either current_max_weight or current_max_weight_kg.
+    max_weight = data.get("current_max_weight")
+    if max_weight is None:
+        max_weight = data.get("current_max_weight_kg")
+
     return ExerciseMastery(
         id=str(data["id"]),
-        user_id=data["user_id"],
+        user_id=str(data["user_id"]),
         exercise_name=data["exercise_name"],
-        chain_id=data.get("chain_id"),
-        current_variant_order=data.get("current_variant_order"),
-        status=data.get("status", MasteryStatus.LEARNING),
-        total_sessions=data.get("total_sessions", 0),
-        consecutive_easy_sessions=data.get("consecutive_easy_sessions", 0),
-        consecutive_hard_sessions=data.get("consecutive_hard_sessions", 0),
-        current_max_reps=data.get("current_max_reps", 0),
-        current_max_weight=data.get("current_max_weight"),
-        average_difficulty_rating=data.get("average_difficulty_rating"),
-        ready_for_progression=data.get("ready_for_progression", False),
+        chain_id=str(data["progression_chain_id"]) if data.get("progression_chain_id") else None,
+        current_step_order=None,  # derived by caller via exercise_progression_steps lookup
+        status=status,
+        total_sessions=data.get("total_sessions", 0) or 0,
+        consecutive_easy_sessions=data.get("consecutive_easy_sessions", 0) or 0,
+        consecutive_hard_sessions=data.get("consecutive_hard_sessions", 0) or 0,
+        current_max_reps=data.get("current_max_reps", 0) or 0,
+        current_max_weight=float(max_weight) if max_weight is not None else None,
+        ready_for_progression=data.get("ready_for_progression", False) or False,
         suggested_next_variant=data.get("suggested_next_variant"),
+        progression_accepted_count=data.get("progression_accepted_count", 0) or 0,
+        progression_declined_count=data.get("progression_declined_count", 0) or 0,
+        first_performed_at=data.get("first_performed_at"),
         last_performed_at=data.get("last_performed_at"),
-        mastered_at=data.get("mastered_at"),
         created_at=data.get("created_at"),
         updated_at=data.get("updated_at"),
     )
+
+
+def _lookup_step_order(db, exercise_name: str, chain_id: Optional[str] = None) -> Optional[int]:
+    """Find the step_order of an exercise within its progression chain.
+
+    user_exercise_mastery does not store the step order, so we derive it from
+    exercise_progression_steps by matching the exercise name. If chain_id is known we
+    scope the lookup to that chain to disambiguate exercises that appear in multiple
+    chains.
+    """
+    try:
+        query = db.client.table("exercise_progression_steps").select(
+            "step_order, chain_id"
+        ).ilike("exercise_name", exercise_name)
+        if chain_id:
+            query = query.eq("chain_id", chain_id)
+        result = query.limit(1).execute()
+        if result.data:
+            return result.data[0].get("step_order")
+        return None
+    except Exception as e:
+        logger.error(f"Error looking up step order for {exercise_name}: {e}", exc_info=True)
+        return None
 
 
 def calculate_mastery_score(exercise_data: dict) -> float:
     """
     Calculate a mastery score based on exercise performance data.
 
-    Factors:
-    - Total sessions performed (more practice = higher score)
-    - Consistency (consecutive easy sessions indicate mastery)
-    - Max reps achieved relative to typical rep ranges
-    - Difficulty feedback history
+    Factors (the real schema has no average_difficulty_rating column, so the score
+    is built from session count, consistency, and max reps only):
+    - Total sessions performed (more practice = higher score)  -> up to 0.4
+    - Consistency (consecutive easy sessions indicate mastery)  -> up to 0.35
+    - Max reps achieved relative to typical rep ranges          -> up to 0.25
 
     Returns a score from 0.0 to 1.0
     """
     score = 0.0
 
-    # Total sessions factor (up to 0.3)
-    total_sessions = exercise_data.get("total_sessions", 0)
-    session_score = min(total_sessions / 10, 1.0) * 0.3
-    score += session_score
+    # Total sessions factor (up to 0.4)
+    total_sessions = exercise_data.get("total_sessions", 0) or 0
+    score += min(total_sessions / 10, 1.0) * 0.4
 
-    # Consecutive easy sessions factor (up to 0.3)
-    consecutive_easy = exercise_data.get("consecutive_easy_sessions", 0)
+    # Consecutive easy sessions factor (up to 0.35)
+    consecutive_easy = exercise_data.get("consecutive_easy_sessions", 0) or 0
     if consecutive_easy >= 3:
-        score += 0.3
+        score += 0.35
     elif consecutive_easy == 2:
-        score += 0.2
+        score += 0.23
     elif consecutive_easy == 1:
-        score += 0.1
+        score += 0.12
 
-    # Max reps factor (up to 0.2)
-    max_reps = exercise_data.get("current_max_reps", 0)
+    # Max reps factor (up to 0.25)
+    max_reps = exercise_data.get("current_max_reps", 0) or 0
     if max_reps >= 15:
-        score += 0.2
+        score += 0.25
     elif max_reps >= 12:
-        score += 0.15
+        score += 0.18
     elif max_reps >= 8:
-        score += 0.1
+        score += 0.12
     elif max_reps >= 5:
-        score += 0.05
-
-    # Average difficulty rating factor (up to 0.2)
-    # Lower average difficulty = more mastery
-    avg_difficulty = exercise_data.get("average_difficulty_rating")
-    if avg_difficulty is not None:
-        # Scale from 1 (hard) to 3 (easy)
-        # 3 = too_easy, 2 = just_right, 1 = too_hard
-        if avg_difficulty >= 2.5:
-            score += 0.2
-        elif avg_difficulty >= 2.0:
-            score += 0.15
-        elif avg_difficulty >= 1.5:
-            score += 0.1
+        score += 0.06
 
     return min(score, 1.0)
 
@@ -349,7 +278,7 @@ async def check_progression_readiness(user_id: str, exercise_name: str) -> dict:
         db = get_supabase_db()
 
         # Get user's mastery data for this exercise
-        mastery_result = db.client.table("exercise_mastery").select("*").eq(
+        mastery_result = db.client.table("user_exercise_mastery").select("*").eq(
             "user_id", user_id
         ).eq("exercise_name", exercise_name).execute()
 
@@ -364,9 +293,9 @@ async def check_progression_readiness(user_id: str, exercise_name: str) -> dict:
         mastery = mastery_result.data[0]
 
         # Calculate readiness based on criteria
-        consecutive_easy = mastery.get("consecutive_easy_sessions", 0)
-        total_sessions = mastery.get("total_sessions", 0)
-        max_reps = mastery.get("current_max_reps", 0)
+        consecutive_easy = mastery.get("consecutive_easy_sessions", 0) or 0
+        total_sessions = mastery.get("total_sessions", 0) or 0
+        max_reps = mastery.get("current_max_reps", 0) or 0
 
         # Primary criterion: 2+ consecutive "too easy" sessions
         if consecutive_easy >= 2:
@@ -414,15 +343,15 @@ async def get_next_variant(exercise_name: str) -> Optional[dict]:
     """
     Find the next harder variant in the progression chain.
 
-    Returns dict with variant info or None if no progression exists.
+    Returns dict with step info or None if no progression exists.
     """
     try:
         db = get_supabase_db()
 
-        # Find the current variant in any chain
-        current_result = db.client.table("progression_variants").select(
-            "id, chain_id, variant_order"
-        ).eq("name", exercise_name).execute()
+        # Find the current step in any chain (case-insensitive match on exercise name).
+        current_result = db.client.table("exercise_progression_steps").select(
+            "id, chain_id, step_order"
+        ).ilike("exercise_name", exercise_name).execute()
 
         if not current_result.data:
             # Exercise not in a progression chain
@@ -430,28 +359,28 @@ async def get_next_variant(exercise_name: str) -> Optional[dict]:
 
         current = current_result.data[0]
         chain_id = current["chain_id"]
-        current_order = current["variant_order"]
+        current_order = current["step_order"]
 
-        # Get the next variant in the same chain
-        next_result = db.client.table("progression_variants").select("*").eq(
+        # Get the next step in the same chain
+        next_result = db.client.table("exercise_progression_steps").select("*").eq(
             "chain_id", chain_id
-        ).eq("variant_order", current_order + 1).execute()
+        ).eq("step_order", current_order + 1).execute()
 
         if not next_result.data:
             # Already at the top of the chain
             return None
 
-        next_variant = next_result.data[0]
+        next_step = next_result.data[0]
 
         # Get chain info
-        chain_result = db.client.table("progression_chains").select(
+        chain_result = db.client.table("exercise_progression_chains").select(
             "name"
         ).eq("id", chain_id).execute()
 
         chain_name = chain_result.data[0]["name"] if chain_result.data else "Unknown Chain"
 
         return {
-            "variant": _parse_variant(next_variant),
+            "step": _parse_step(next_step),
             "chain_id": chain_id,
             "chain_name": chain_name,
         }
@@ -467,40 +396,47 @@ async def get_next_variant(exercise_name: str) -> Optional[dict]:
 
 @router.get("/chains", response_model=List[ProgressionChainResponse])
 async def get_progression_chains(
-    muscle_group: Optional[MuscleGroup] = None,
-    chain_type: Optional[ChainType] = None,
+    category: Optional[str] = Query(
+        default=None,
+        description="Filter by chain category (e.g. pushup, pullup, squat, handstand)",
+    ),
+    muscle_group: Optional[str] = Query(
+        default=None,
+        description="Deprecated alias for `category` (chains have no muscle_group column)",
+    ),
     current_user: dict = Depends(get_current_user),
 ):
     """
-    Get all progression chains.
+    Get all progression chains with their steps.
 
-    Optionally filter by muscle group or chain type.
+    Optionally filter by category. The legacy `muscle_group` query parameter is
+    accepted as an alias for `category` for backward compatibility — the real
+    exercise_progression_chains table has no muscle_group column.
     """
-    logger.info(f"Getting progression chains: muscle_group={muscle_group}, chain_type={chain_type}")
+    # muscle_group is a legacy alias; category takes precedence if both are provided.
+    effective_category = category or muscle_group
+    logger.info(f"Getting progression chains: category={effective_category}")
 
     try:
         db = get_supabase_db()
-        query = db.client.table("progression_chains").select("*")
+        query = db.client.table("exercise_progression_chains").select("*")
 
-        if muscle_group:
-            query = query.eq("muscle_group", muscle_group.value)
+        if effective_category:
+            query = query.eq("category", effective_category)
 
-        if chain_type:
-            query = query.eq("chain_type", chain_type.value)
-
-        result = query.order("muscle_group").order("name").execute()
+        result = query.order("category").order("name").execute()
 
         chains = []
         for row in result.data or []:
             chain = _parse_chain(row)
 
-            # Get variants for this chain
-            variants_result = db.client.table("progression_variants").select("*").eq(
+            # Get steps for this chain
+            steps_result = db.client.table("exercise_progression_steps").select("*").eq(
                 "chain_id", row["id"]
-            ).order("variant_order").execute()
+            ).order("step_order").execute()
 
-            chain.variants = [_parse_variant(v) for v in variants_result.data or []]
-            chain.total_variants = len(chain.variants)
+            chain.steps = [_parse_step(s) for s in steps_result.data or []]
+            chain.total_steps = len(chain.steps)
             chains.append(chain)
 
         return chains
@@ -513,7 +449,7 @@ async def get_progression_chains(
 @router.get("/chains/{chain_id}", response_model=ProgressionChainResponse)
 async def get_progression_chain(chain_id: str, current_user: dict = Depends(get_current_user)):
     """
-    Get a specific progression chain with all its variants.
+    Get a specific progression chain with all its steps.
     """
     logger.info(f"Getting progression chain: {chain_id}")
 
@@ -521,7 +457,7 @@ async def get_progression_chain(chain_id: str, current_user: dict = Depends(get_
         db = get_supabase_db()
 
         # Get the chain
-        chain_result = db.client.table("progression_chains").select("*").eq(
+        chain_result = db.client.table("exercise_progression_chains").select("*").eq(
             "id", chain_id
         ).execute()
 
@@ -530,13 +466,13 @@ async def get_progression_chain(chain_id: str, current_user: dict = Depends(get_
 
         chain = _parse_chain(chain_result.data[0])
 
-        # Get all variants
-        variants_result = db.client.table("progression_variants").select("*").eq(
+        # Get all steps
+        steps_result = db.client.table("exercise_progression_steps").select("*").eq(
             "chain_id", chain_id
-        ).order("variant_order").execute()
+        ).order("step_order").execute()
 
-        chain.variants = [_parse_variant(v) for v in variants_result.data or []]
-        chain.total_variants = len(chain.variants)
+        chain.steps = [_parse_step(s) for s in steps_result.data or []]
+        chain.total_steps = len(chain.steps)
 
         return chain
 
@@ -561,7 +497,7 @@ async def get_user_mastery(
     Get user's exercise mastery levels for all exercises they've performed.
 
     Returns exercises with mastery status, including whether they're ready
-    to progress and what the suggested next variant is.
+    to progress and what the suggested next step is.
     """
     if str(current_user["id"]) != str(user_id):
         raise HTTPException(status_code=403, detail="Access denied")
@@ -570,7 +506,7 @@ async def get_user_mastery(
     try:
         db = get_supabase_db()
 
-        query = db.client.table("exercise_mastery").select("*").eq("user_id", user_id)
+        query = db.client.table("user_exercise_mastery").select("*").eq("user_id", user_id)
 
         if ready_only:
             query = query.eq("ready_for_progression", True)
@@ -581,31 +517,35 @@ async def get_user_mastery(
         for row in result.data or []:
             mastery = _parse_mastery(row)
 
-            # Get chain info if available
             chain_name = None
-            next_variant = None
+            next_step = None
+            chain_id = mastery.chain_id
 
-            if row.get("chain_id"):
-                chain_result = db.client.table("progression_chains").select(
+            if chain_id:
+                chain_result = db.client.table("exercise_progression_chains").select(
                     "name"
-                ).eq("id", row["chain_id"]).execute()
+                ).eq("id", chain_id).execute()
 
                 if chain_result.data:
                     chain_name = chain_result.data[0]["name"]
 
-                # Get next variant if ready for progression
-                if mastery.ready_for_progression and mastery.current_variant_order is not None:
-                    next_result = db.client.table("progression_variants").select("*").eq(
-                        "chain_id", row["chain_id"]
-                    ).eq("variant_order", mastery.current_variant_order + 1).execute()
+            # Derive the current step order from the steps table (no stored column).
+            current_step_order = _lookup_step_order(db, mastery.exercise_name, chain_id)
+            mastery.current_step_order = current_step_order
 
-                    if next_result.data:
-                        next_variant = _parse_variant(next_result.data[0])
+            # Get next step if ready for progression and we know the current position.
+            if mastery.ready_for_progression and current_step_order is not None and chain_id:
+                next_result = db.client.table("exercise_progression_steps").select("*").eq(
+                    "chain_id", chain_id
+                ).eq("step_order", current_step_order + 1).execute()
+
+                if next_result.data:
+                    next_step = _parse_step(next_result.data[0])
 
             mastery_with_chain = ExerciseMasteryWithChain(
                 **mastery.model_dump(),
                 chain_name=chain_name,
-                next_variant=next_variant,
+                next_step=next_step,
             )
             mastery_list.append(mastery_with_chain)
 
@@ -633,47 +573,52 @@ async def get_progression_suggestions(user_id: str, current_user: dict = Depends
         db = get_supabase_db()
 
         # Get exercises ready for progression
-        ready_result = db.client.table("exercise_mastery").select("*").eq(
+        ready_result = db.client.table("user_exercise_mastery").select("*").eq(
             "user_id", user_id
         ).eq("ready_for_progression", True).execute()
 
         suggestions = []
         for row in ready_result.data or []:
-            # Get chain and variant info
-            if not row.get("chain_id"):
+            chain_id = row.get("progression_chain_id")
+            if not chain_id:
                 continue
 
-            # Get current variant
-            current_result = db.client.table("progression_variants").select("*").eq(
-                "chain_id", row["chain_id"]
-            ).eq("variant_order", row.get("current_variant_order", 0)).execute()
+            # Derive the user's current step order from the steps table.
+            current_order = _lookup_step_order(db, row["exercise_name"], chain_id)
+            if current_order is None:
+                continue
+
+            # Get current step (for its difficulty level)
+            current_result = db.client.table("exercise_progression_steps").select("*").eq(
+                "chain_id", chain_id
+            ).eq("step_order", current_order).execute()
 
             if not current_result.data:
                 continue
 
             current = current_result.data[0]
 
-            # Get next variant
-            next_result = db.client.table("progression_variants").select("*").eq(
-                "chain_id", row["chain_id"]
-            ).eq("variant_order", row.get("current_variant_order", 0) + 1).execute()
+            # Get next step
+            next_result = db.client.table("exercise_progression_steps").select("*").eq(
+                "chain_id", chain_id
+            ).eq("step_order", current_order + 1).execute()
 
             if not next_result.data:
                 continue  # Already at top of chain
 
-            next_variant = next_result.data[0]
+            next_step = next_result.data[0]
 
             # Get chain name
-            chain_result = db.client.table("progression_chains").select(
+            chain_result = db.client.table("exercise_progression_chains").select(
                 "name"
-            ).eq("id", row["chain_id"]).execute()
+            ).eq("id", chain_id).execute()
 
             chain_name = chain_result.data[0]["name"] if chain_result.data else "Unknown"
 
             # Build suggestion
-            consecutive_easy = row.get("consecutive_easy_sessions", 0)
-            total_sessions = row.get("total_sessions", 0)
-            max_reps = row.get("current_max_reps", 0)
+            consecutive_easy = row.get("consecutive_easy_sessions", 0) or 0
+            total_sessions = row.get("total_sessions", 0) or 0
+            max_reps = row.get("current_max_reps", 0) or 0
 
             if consecutive_easy >= 2:
                 reason = f"Rated 'too easy' {consecutive_easy} times in a row"
@@ -684,10 +629,10 @@ async def get_progression_suggestions(user_id: str, current_user: dict = Depends
 
             suggestions.append(ProgressionSuggestion(
                 exercise_name=row["exercise_name"],
-                current_difficulty_score=current.get("difficulty_score", 5.0),
-                suggested_exercise=next_variant["name"],
-                suggested_difficulty_score=next_variant.get("difficulty_score", 6.0),
-                chain_id=row["chain_id"],
+                current_difficulty_level=current.get("difficulty_level") or 5,
+                suggested_exercise=next_step["exercise_name"],
+                suggested_difficulty_level=next_step.get("difficulty_level") or 6,
+                chain_id=str(chain_id),
                 chain_name=chain_name,
                 reason=reason,
                 confidence=confidence,
@@ -728,27 +673,22 @@ async def update_exercise_mastery(user_id: str, request: UpdateMasteryRequest, c
         now = datetime.utcnow().isoformat()
 
         # Get existing mastery record
-        existing_result = db.client.table("exercise_mastery").select("*").eq(
+        existing_result = db.client.table("user_exercise_mastery").select("*").eq(
             "user_id", user_id
         ).eq("exercise_name", request.exercise_name).execute()
-
-        # Difficulty mapping for average calculation
-        difficulty_map = {
-            DifficultyFeedback.TOO_EASY: 3.0,
-            DifficultyFeedback.JUST_RIGHT: 2.0,
-            DifficultyFeedback.TOO_HARD: 1.0,
-        }
 
         if existing_result.data:
             # Update existing record
             existing = existing_result.data[0]
 
             # Calculate new values
-            total_sessions = existing.get("total_sessions", 0) + 1
-            current_max_reps = max(existing.get("current_max_reps", 0), request.reps_performed)
+            total_sessions = (existing.get("total_sessions", 0) or 0) + 1
+            current_max_reps = max(existing.get("current_max_reps", 0) or 0, request.reps_performed)
 
             # Update max weight
             current_max_weight = existing.get("current_max_weight")
+            if current_max_weight is None:
+                current_max_weight = existing.get("current_max_weight_kg")
             if request.weight_used:
                 if current_max_weight is None:
                     current_max_weight = request.weight_used
@@ -757,24 +697,14 @@ async def update_exercise_mastery(user_id: str, request: UpdateMasteryRequest, c
 
             # Update consecutive easy/hard sessions
             if request.difficulty_felt == DifficultyFeedback.TOO_EASY:
-                consecutive_easy = existing.get("consecutive_easy_sessions", 0) + 1
+                consecutive_easy = (existing.get("consecutive_easy_sessions", 0) or 0) + 1
                 consecutive_hard = 0
             elif request.difficulty_felt == DifficultyFeedback.TOO_HARD:
                 consecutive_easy = 0
-                consecutive_hard = existing.get("consecutive_hard_sessions", 0) + 1
+                consecutive_hard = (existing.get("consecutive_hard_sessions", 0) or 0) + 1
             else:
                 consecutive_easy = 0
                 consecutive_hard = 0
-
-            # Update average difficulty rating
-            prev_avg = existing.get("average_difficulty_rating")
-            prev_total = existing.get("total_sessions", 0)
-            new_rating = difficulty_map[request.difficulty_felt]
-
-            if prev_avg is not None and prev_total > 0:
-                avg_difficulty = ((prev_avg * prev_total) + new_rating) / total_sessions
-            else:
-                avg_difficulty = new_rating
 
             # Determine if ready for progression
             ready_for_progression = (
@@ -795,27 +725,25 @@ async def update_exercise_mastery(user_id: str, request: UpdateMasteryRequest, c
             if ready_for_progression:
                 next_info = await get_next_variant(request.exercise_name)
                 if next_info:
-                    suggested_next = next_info["variant"].name
+                    suggested_next = next_info["step"].name
 
-            # Update record
+            # Update record — only columns that exist on user_exercise_mastery.
             update_data = {
                 "total_sessions": total_sessions,
                 "consecutive_easy_sessions": consecutive_easy,
                 "consecutive_hard_sessions": consecutive_hard,
                 "current_max_reps": current_max_reps,
                 "current_max_weight": current_max_weight,
-                "average_difficulty_rating": avg_difficulty,
                 "ready_for_progression": ready_for_progression,
                 "suggested_next_variant": suggested_next,
-                "status": status.value,
+                "progression_status": status.value,
                 "last_performed_at": now,
                 "updated_at": now,
             }
+            if ready_for_progression:
+                update_data["last_progression_suggested_at"] = now
 
-            if ready_for_progression and not existing.get("mastered_at"):
-                update_data["mastered_at"] = now
-
-            result = db.client.table("exercise_mastery").update(update_data).eq(
+            result = db.client.table("user_exercise_mastery").update(update_data).eq(
                 "id", existing["id"]
             ).execute()
 
@@ -823,17 +751,14 @@ async def update_exercise_mastery(user_id: str, request: UpdateMasteryRequest, c
 
         else:
             # Create new mastery record
-            # First, check if exercise is in a progression chain
+            # First, check if exercise is in a progression chain.
             chain_id = None
-            variant_order = None
+            current_step = db.client.table("exercise_progression_steps").select(
+                "chain_id"
+            ).ilike("exercise_name", request.exercise_name).limit(1).execute()
 
-            variant_result = db.client.table("progression_variants").select(
-                "chain_id, variant_order"
-            ).eq("name", request.exercise_name).execute()
-
-            if variant_result.data:
-                chain_id = variant_result.data[0]["chain_id"]
-                variant_order = variant_result.data[0]["variant_order"]
+            if current_step.data:
+                chain_id = current_step.data[0]["chain_id"]
 
             # Determine initial values
             consecutive_easy = 1 if request.difficulty_felt == DifficultyFeedback.TOO_EASY else 0
@@ -843,22 +768,21 @@ async def update_exercise_mastery(user_id: str, request: UpdateMasteryRequest, c
                 "id": str(uuid.uuid4()),
                 "user_id": user_id,
                 "exercise_name": request.exercise_name,
-                "chain_id": chain_id,
-                "current_variant_order": variant_order,
-                "status": MasteryStatus.LEARNING.value,
+                "progression_chain_id": chain_id,
+                "progression_status": MasteryStatus.LEARNING.value,
                 "total_sessions": 1,
                 "consecutive_easy_sessions": consecutive_easy,
                 "consecutive_hard_sessions": consecutive_hard,
                 "current_max_reps": request.reps_performed,
                 "current_max_weight": request.weight_used,
-                "average_difficulty_rating": difficulty_map[request.difficulty_felt],
                 "ready_for_progression": False,
+                "first_performed_at": now,
                 "last_performed_at": now,
                 "created_at": now,
                 "updated_at": now,
             }
 
-            result = db.client.table("exercise_mastery").insert(insert_data).execute()
+            result = db.client.table("user_exercise_mastery").insert(insert_data).execute()
             mastery = _parse_mastery(result.data[0])
 
         # Build response message
@@ -915,8 +839,8 @@ async def accept_progression(user_id: str, request: AcceptProgressionRequest, cu
 
     This:
     1. Marks the old exercise as "progressed" (mastered)
-    2. Creates a new mastery record for the new exercise
-    3. Logs the activity for user context service
+    2. Creates or resets a mastery record for the new exercise
+    3. Logs the activity for the user context service
     """
     if str(current_user["id"]) != str(user_id):
         raise HTTPException(status_code=403, detail="Access denied")
@@ -927,7 +851,7 @@ async def accept_progression(user_id: str, request: AcceptProgressionRequest, cu
         now = datetime.utcnow().isoformat()
 
         # Get current mastery record
-        current_result = db.client.table("exercise_mastery").select("*").eq(
+        current_result = db.client.table("user_exercise_mastery").select("*").eq(
             "user_id", user_id
         ).eq("exercise_name", request.current_exercise).execute()
 
@@ -939,35 +863,38 @@ async def accept_progression(user_id: str, request: AcceptProgressionRequest, cu
 
         current = current_result.data[0]
 
-        # Verify new exercise exists in the progression chain
-        new_variant_result = db.client.table("progression_variants").select(
-            "chain_id, variant_order"
-        ).eq("name", request.new_exercise).execute()
+        # Verify new exercise exists in a progression chain.
+        new_step_result = db.client.table("exercise_progression_steps").select(
+            "chain_id, step_order"
+        ).ilike("exercise_name", request.new_exercise).execute()
 
-        if not new_variant_result.data:
+        if not new_step_result.data:
             raise HTTPException(
                 status_code=400,
                 detail=f"{request.new_exercise} is not in a progression chain"
             )
 
-        new_variant = new_variant_result.data[0]
+        new_step = new_step_result.data[0]
 
-        # Update old exercise to "progressed"
-        db.client.table("exercise_mastery").update({
-            "status": MasteryStatus.PROGRESSED.value,
+        # Update old exercise to "progressed", and bump the accepted counter.
+        prev_accepted = current.get("progression_accepted_count", 0) or 0
+        db.client.table("user_exercise_mastery").update({
+            "progression_status": MasteryStatus.PROGRESSED.value,
             "ready_for_progression": False,
+            "progression_accepted_count": prev_accepted + 1,
             "updated_at": now,
         }).eq("id", current["id"]).execute()
 
         # Check if new exercise already has a mastery record
-        existing_new = db.client.table("exercise_mastery").select("id").eq(
+        existing_new = db.client.table("user_exercise_mastery").select("id").eq(
             "user_id", user_id
         ).eq("exercise_name", request.new_exercise).execute()
 
         if existing_new.data:
             # Reset existing record for the new exercise
-            db.client.table("exercise_mastery").update({
-                "status": MasteryStatus.LEARNING.value,
+            db.client.table("user_exercise_mastery").update({
+                "progression_status": MasteryStatus.LEARNING.value,
+                "progression_chain_id": new_step["chain_id"],
                 "total_sessions": 0,
                 "consecutive_easy_sessions": 0,
                 "consecutive_hard_sessions": 0,
@@ -983,19 +910,19 @@ async def accept_progression(user_id: str, request: AcceptProgressionRequest, cu
                 "id": str(uuid.uuid4()),
                 "user_id": user_id,
                 "exercise_name": request.new_exercise,
-                "chain_id": new_variant["chain_id"],
-                "current_variant_order": new_variant["variant_order"],
-                "status": MasteryStatus.LEARNING.value,
+                "progression_chain_id": new_step["chain_id"],
+                "progression_status": MasteryStatus.LEARNING.value,
                 "total_sessions": 0,
                 "consecutive_easy_sessions": 0,
                 "consecutive_hard_sessions": 0,
                 "current_max_reps": 0,
                 "ready_for_progression": False,
+                "first_performed_at": now,
                 "created_at": now,
                 "updated_at": now,
             }
 
-            db.client.table("exercise_mastery").insert(insert_data).execute()
+            db.client.table("user_exercise_mastery").insert(insert_data).execute()
 
         # Log activity
         await log_user_activity(
@@ -1006,7 +933,7 @@ async def accept_progression(user_id: str, request: AcceptProgressionRequest, cu
             metadata={
                 "old_exercise": request.current_exercise,
                 "new_exercise": request.new_exercise,
-                "chain_id": new_variant["chain_id"],
+                "chain_id": str(new_step["chain_id"]),
             },
             status_code=200
         )

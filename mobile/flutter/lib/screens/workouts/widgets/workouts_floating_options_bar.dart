@@ -16,9 +16,12 @@ class WorkoutsOptionItem {
 /// while delegating all chrome to the one canonical floating bar.
 ///
 /// Runs in [FloatingTabBarMode.launcher]: each item fires a real action
-/// (scroll to planner, open the gym sheet, navigate to preferences /
-/// library / history) rather than switching a TabController. The active
-/// index is still reflected as a momentary highlight.
+/// (scroll to planner, open the gym sheet, navigate to the exercise
+/// library / the multi-week program library) rather than switching a
+/// TabController. The active index is still reflected as a momentary
+/// highlight. The bar is item-count agnostic — [items] currently carries
+/// four entries (Plan / Manage Gym / Library / Programs); History moved
+/// to the Workouts-tab quick-actions row in B.3.1.
 class WorkoutsFloatingOptionsBar extends StatelessWidget {
   final List<WorkoutsOptionItem> items;
   final int activeIndex;

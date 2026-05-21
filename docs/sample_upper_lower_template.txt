@@ -1,0 +1,23 @@
+Name: Upper/Lower Split
+Progression: linear (+2.5kg compounds, +1.25kg isolations when last week RIR>=2 across all working sets)
+Deload: every 5 weeks (week 5 = 60% load, same sets/reps)
+
+Mon: Upper A
+  - Bench Press, 4x6, RIR 2
+  - Barbell Row, 4x6, RIR 2
+  - Overhead Press, 3x8, RIR 2
+  - Pull-up, 3xAMRAP
+  - Tricep Extension, 3x12, RIR 1
+  - Bicep Curl, 3x12, RIR 1
+
+Tue: Lower A
+  - Back Squat, 4x6, RIR 2
+  - Romanian Deadlift, 3x8, RIR 2
+  - Leg Press, 3x10, RIR 2
+  - Standing Calf, 4x12, RIR 1
+
+Wed: Rest
+Thu: Upper B (same as A, swap Bench for Incline Bench, swap Row for Chest-Supported Row)
+Fri: Lower B (same as A, swap Squat for Front Squat, swap RDL for Good Morning)
+Sat: Rest
+Sun: Rest
