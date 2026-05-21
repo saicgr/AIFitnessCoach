@@ -46,6 +46,7 @@ const STATIC_ROUTES = [
   { path: '/best-workout-generator-apps-2026', priority: '0.7', changefreq: 'monthly' },
   { path: '/best-fitbit-alternatives-2026', priority: '0.7', changefreq: 'monthly' },
   { path: '/best-myfitnesspal-alternatives-2026', priority: '0.7', changefreq: 'monthly' },
+  { path: '/android-ai-fitness-coach', priority: '0.8', changefreq: 'monthly' },
 ];
 
 const GLOSSARY_SLUGS = [

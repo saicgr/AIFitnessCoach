@@ -330,6 +330,47 @@ Return to parent:
 
 Do NOT print the full revised post body — the user reads it in `posts.md`.
 
+## Parent-tweet / parent-post fidelity gate (binding) — applies to ANY reply draft
+
+The #1 failure mode flagged by the user on 2026-05-20: X (and Reddit) reply drafts that look plausible but do not actually engage with what the parent tweet says. The reply ignores the OP's specific words, misreads the tone (a vent read as a brag, a question read as a statement), or invents context. This gate stops that.
+
+For EVERY reply draft on X, Reddit, LinkedIn-reply, Threads, or any other "reply to a specific public post" output, you must:
+
+1. **WebFetch the parent tweet / post URL in this run** and quote its body verbatim in the draft block under a `### Parent (verbatim, fetched YYYY-MM-DD)` sub-section, capped at ~280 chars. If the URL won't resolve (login wall, deleted, x.com anti-bot), STOP and ask the user to paste the parent text or screenshot. Drafting against an unfetched parent is a hallucination.
+
+2. **Classify the parent's intent in one word** before drafting: `celebration` / `help` / `recommendation` / `vent` / `meta-rant` / `progress-share` / `joke` / `news-discussion` / `viral-list` / `flex`. Print on its own line: `Parent intent: <type>`. Voice must match — a vent gets empathy, a celebration gets a personal echo (no pitch), a recommendation thread gets a real answer with mention.
+
+3. **Echo a specific word or phrase from the parent in the draft.** If the OP said "ffs swelling" the draft acknowledges they are frustrated about swelling, NOT that swelling makes the photo look better. If the OP asked "what's something you started or stopped", the draft answers in that started/stopped frame. Print on its own line: `Specific echo: "<literal phrase from parent>"`. Generic replies that could paste onto any tweet = failed run.
+
+4. **No speculation framed as fact.** If the angle touches WWDC, a competitor's "just announced" feature, or any rumor, hedge it ("rumored", "expected", "likely") and verify the actual date this run. "Apple IS announcing X on date Y" without a Bloomberg/Apple-PR primary source = banned.
+
+5. **Verify the URL actually resolves to the tweet/post the draft cites.** Run a WebFetch or curl HEAD. Status-IDs fabricated by scout scripts are a known failure mode (geo-strategist 2026-05-20 run shipped multiple). If the URL 404s or returns the wrong account, drop the draft.
+
+Pre-output checklist additions:
+- [ ] Parent body quoted verbatim in the block
+- [ ] Parent intent classified before drafting
+- [ ] Draft contains ≥1 specific echo from the parent (literal phrase or detail)
+- [ ] No speculation-as-fact in the draft
+- [ ] URL verified to resolve this run
+
+## Personal-voice default (binding)
+
+The user's 2026-05-20 ask: drafts must read personal, "including me and such". Founder voice with first-person concrete lived detail, not feature-dump.
+
+Every draft that mentions Zealova must anchor the mention to a specific "I" moment, not a feature list. Examples that pass:
+
+- "I lift in lbs and the kg-default in every other app forced me to do mental math every set, so I made unit separation a real setting in the app I'm building."
+- "I kept forgetting to log lunch when I ate out. The menu-scan path is the one I use most."
+- "I built this because I wanted my workout plan and my food log in the same place, not five apps."
+
+Examples that fail (feature-dump, no "I"):
+- "Zealova generates the monthly plan, photographs your plate, and scans a restaurant menu for macros."
+- "AI workout generation that adjusts from your actual completion history."
+
+Rule: the sentence introducing Zealova must contain "I" or "my" plus a specific moment or pain. THEN the wedge-pairing rule applies (food photo + menu scan + workout gen all named — `feedback_three_wedges_always_paired`). Personal hook first, three wedges second, honest limitation third. Then stop.
+
+For value-only replies (Zealova not mentioned), the personal-voice rule still applies — answer from lived experience, not coach-abstract.
+
 ## Hard rules — never break
 
 1. **No caching of hashtags / trending sounds / algorithm rules** between sessions OR within a session. Live search every invocation. If asked "do another LinkedIn post" 5 minutes after the first one — search again.

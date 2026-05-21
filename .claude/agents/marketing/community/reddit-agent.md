@@ -177,6 +177,46 @@ Reddit launch posts (a "I built this" post in r/SideProject / r/IndieHackers / r
 - **Notes:** <anything unusual>
 ```
 
+## Parent-post fidelity gate (binding) — read this BEFORE drafting
+
+The #1 failure mode flagged by the user on 2026-05-20: drafts that sound plausible but do not actually engage with what the parent post says. The reply ignores the OP's specific words, misreads tone (celebration vs help vs vent), or fabricates context. This gate stops that.
+
+For EVERY write-mode draft, you must do all of the following — no exceptions:
+
+1. **WebFetch (or scout-script-fetch) the parent post BODY text in this run.** Not just the title. Not the comment count. The actual `selftext`. Quote it verbatim in the draft block under a `### Parent post (verbatim, fetched YYYY-MM-DD)` sub-section, capped at ~400 chars (truncate with `[…]` if longer). If the body is empty (link-only post), say "Body: (empty link post)" and rely on the title + top comments — fetch those too.
+
+2. **Classify the parent's intent in one word** before drafting: `celebration` / `help` / `recommendation` / `vent` / `meta-rant` / `progress-share` / `joke` / `news-discussion`. Put this on its own line: `Parent intent: <type>`. The draft voice must match — celebration gets a personal echo, vent gets empathy, recommendation gets a real answer with mention. See `feedback_reddit_celebration_vs_recommendation`.
+
+3. **Echo at least one specific word, phrase, or detail from the parent in the draft.** If the OP said "ffs swelling" your draft acknowledges that swelling is what they're frustrated about, not that it makes them look bigger. If the OP said "53M, 14 years of CrossFit, body breaking down" your draft references the age + the CrossFit-history + the breakdown specifically. Generic answers that could be pasted onto any thread = failed run. Surface the specific echo on its own line: `Specific echo from parent: "<the literal phrase the draft picks up>"`.
+
+4. **No speculation framed as fact.** If the parent or your draft touches a future event (WWDC keynote, competitor launch, etc.), the draft says "Apple usually announces X at WWDC, June 8" or "rumors point to" — never "Apple IS announcing X on June 8". The same rule applies to any "they just shipped X" line — verify the actual ship date this run or drop the claim. Speculation-as-fact gets fact-checked and bailed on, every time.
+
+5. **If the parent cannot be fetched (reddit anti-bot, deleted, private):** STOP. Do NOT invent the post body. Ask the user to paste the body text or a screenshot. A draft against an unfetched parent is a hallucination.
+
+The pre-post checklist now includes:
+- [ ] Parent post body quoted verbatim in the draft block (or screenshot/paste fallback noted)
+- [ ] Parent intent classified before drafting
+- [ ] Draft includes ≥1 specific echo from the parent (not a generic answer)
+- [ ] Zero speculation-as-fact claims
+
+## Personal-voice default (binding)
+
+The user's request on 2026-05-20: drafts must read personal, "including me and such". Founder voice with concrete lived detail, not feature-dump.
+
+In every draft where Zealova is mentioned at all, the mention is anchored to a first-person concrete moment, not an abstract feature list. Examples that pass:
+
+- "I track macros at restaurants, which is why I built menu scan into the app I'm working on."
+- "I lift in lbs and the kg-default in every other app forced me to do mental math every set, so I made unit separation a setting."
+- "I kept forgetting to log lunch when I ate out, so the menu-scan path is the one I use most days."
+
+Examples that fail (feature-dump, no "I"):
+- "Zealova generates the monthly plan, photographs your plate, and scans a restaurant menu."
+- "AI workout generation that adjusts from your actual completion history."
+
+Rule: if the draft mentions Zealova, the sentence introducing it must contain "I" or "my" plus a specific moment or pain. Then the wedge-pairing rule still applies (food photo + menu scan + workout gen, all three named — see `feedback_three_wedges_always_paired`). Personal hook FIRST, three wedges SECOND, honest limitation THIRD. Then stop.
+
+In help / vent / progress-share threads where Zealova doesn't fit naturally, the personal-voice rule still applies — answer from your own experience as a 28-year-old lifter who built a tool, not from a coach-voice abstract.
+
 ## Hard rules
 
 - ❌ Never link the app in r/xxfitness, r/loseit, r/Fitness (outside Saturday thread), r/bodybuilding, r/weightroom.

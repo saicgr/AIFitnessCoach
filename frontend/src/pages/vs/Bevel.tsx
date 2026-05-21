@@ -1,14 +1,21 @@
 /**
  * /vs/bevel — Zealova vs Bevel comparison page
+ * v2 — 2026-05-20 (updated: Bevel 3.0.5 release, training plan accuracy, pricing section, free-tier corrections)
  * v1 — 2026-05-17
  *
- * Research done live 2026-05-17:
+ * Research done live 2026-05-20:
  *  - Bevel 3.0 shipped 2026-05-16 (gadgetsandwearables.com/2026/05/16/bevel-3/)
- *  - Bevel Pro pricing confirmed: $14.99/mo or $99.99/yr (App Store, verified 2026-05-17)
- *  - Bevel App Store rating: 4.8/5 (9.3K ratings), version 3.0.4 (verified 2026-05-17)
+ *  - Bevel 3.0.5 released 2026-05-20 (App Store verified 2026-05-20)
+ *  - Bevel Pro pricing confirmed: $14.99/mo or $99.99/yr (App Store, verified 2026-05-20)
+ *  - Bevel App Store rating: 4.8/5 (9,400+ ratings), version 3.0.5 (verified 2026-05-20)
  *  - Bevel is iOS-only — no Android app (feedback.bevel.health/feature-requests/p/android-version)
  *  - Bevel 3.0 adds: Biological Age, Health Records vault, rebuilt Intelligence coaching layer,
- *    training plan generation (goal-based, e.g. 10K/half marathon)
+ *    training plan generation (goal-based, cardio-oriented: 10K/half marathon per gadgetsandwearables.com)
+ *  - CORRECTION 2026-05-20: Biological Age and Health Records are in the FREE tier (App Store listing
+ *    confirmed free tier includes both). Only Bevel Intelligence AI coaching is behind the Pro paywall.
+ *  - CORRECTION 2026-05-20: AI strength plan adjustments (RIR, auto weight recommendations) are still
+ *    "planned (tbd)" per feedback.bevel.health/feature-requests/p/strength-trainer-available-weights-rir-automatic-adjustments
+ *    (staff reply Nov 2024, no ship date). Not confirmed shipped in 3.0.
  *  - Bevel wearable integrations: Apple Watch, Apple Health, Dexcom, Libre CGMs, Garmin via Health
  *  - Bevel raised $10M Series A from General Catalyst (October 2025)
  *  - Founders: ex-Dropbox CTO Aditya Agarwal, ex-Campus product lead Grey Nguyen, ex-Opendoor ML Ben Yang
@@ -58,6 +65,7 @@ const SECTIONS = [
   { id: 'tldr', label: 'TL;DR' },
   { id: 'comparison', label: 'Feature comparison' },
   { id: 'pricing', label: 'Pricing' },
+  { id: 'price-vs-capability', label: 'Price vs. capability' },
   { id: 'zealova-wins', label: 'Where Zealova wins' },
   { id: 'bevel-wins', label: 'Where Bevel wins' },
   { id: 'which-to-pick', label: 'Which to pick' },
@@ -75,15 +83,15 @@ const FAQData = [
   },
   {
     q: 'What is Bevel 3.0 and what did it add?',
-    a: 'Bevel 3.0 shipped on May 16, 2026. It added a rebuilt Bevel Intelligence coaching layer with training plan generation, a Biological Age metric (updates weekly using physiological and lifestyle data), a Health Records vault for uploading blood tests and lab results, and coach Personalities (Data Nerd, Guardian, Friend, Commander). Version 3.0.4 is the current release as of May 17, 2026.',
+    a: 'Bevel 3.0 shipped on May 16, 2026. It added a rebuilt Bevel Intelligence coaching layer with training plan generation (goal-based, cardio-oriented: 10K, half marathon), a Biological Age metric (updates weekly using physiological, lifestyle, and blood biomarker data), a Health Records vault for uploading blood tests and lab results, and coach Personalities (Data Nerd, Guardian, Friend, Commander). The app is now on version 3.0.5 as of May 20, 2026.',
   },
   {
     q: 'How much does Bevel cost vs Zealova?',
-    a: 'Bevel Pro (which includes Bevel Intelligence AI coaching) costs $14.99/month or $99.99/year. The base app is free with core tracking. Zealova costs $7.99/month or $59.99/year with a 7-day free trial that includes all premium features. On the annual plan, Zealova is about 40% cheaper than Bevel Pro. Pricing verified at the Apple App Store on May 17, 2026.',
+    a: 'Bevel Pro (which includes Bevel Intelligence AI coaching) costs $14.99/month or $99.99/year. The core app is free with no expiry: recovery scores, Strength Builder, nutrition tracking, Biological Age, and Health Records are all in the free tier. Zealova costs $7.99/month or $59.99/year with a 7-day free trial that includes all premium features. On the annual plan, Zealova ($59.99) is $40 per year cheaper than Bevel Pro ($99.99). Pricing verified at the Apple App Store on May 20, 2026.',
   },
   {
     q: 'Does Bevel generate workout plans?',
-    a: 'Bevel 3.0 added training plan generation, but it is goal-based and oriented toward cardio events like 10Ks and half marathons. For strength training, Bevel offers a Strength Builder with 700+ exercises and preset routines, but AI-generated personalized strength programming is not a stated feature. Zealova generates full monthly strength training plans that adapt based on your completion rate and feedback.',
+    a: 'Bevel 3.0 added training plan generation, but it is goal-based and oriented toward cardio events like 10Ks and half marathons. For strength training, Bevel offers a Strength Builder with 700+ exercises and preset routines. AI-generated strength adjustments based on RIR and progressive overload are marked "planned (tbd)" on the Bevel feedback forum with no confirmed ship date as of May 2026. Zealova generates full monthly strength training plans that adapt based on your completion rate and feedback.',
   },
   {
     q: 'Does Bevel have food photo logging?',
@@ -107,7 +115,7 @@ const FAQData = [
   },
   {
     q: 'Does Bevel track per-exercise and per-muscle history?',
-    a: "Bevel tracks muscular strain load at a high level through its Strength Builder. Zealova tracks workout history per individual exercise and per muscle group. You can pull up the history for any specific lift — bench press, squat, Romanian deadlift — and see volume, weight, and reps across every session. This level of granularity is core to Zealova's workout coaching.",
+    a: "Bevel tracks muscular strain load at a high level through its Strength Builder. Zealova tracks workout history per individual exercise and per muscle group. You can pull up the history for any specific lift (bench press, squat, Romanian deadlift) and see volume, weight, and reps across every session. This level of granularity is core to Zealova's workout coaching.",
   },
   {
     q: 'Is Bevel better for health tracking or workout coaching?',
@@ -122,15 +130,15 @@ const FAQData = [
 const comparisonRows = [
   { feature: 'Monthly price', zealova: '$7.99/mo', bevel: '$14.99/mo (Pro)' },
   { feature: 'Annual price', zealova: '$59.99/yr ($5/mo)', bevel: '$99.99/yr' },
-  { feature: 'Free tier available', zealova: 'no', bevel: 'yes (core tracking)' },
+  { feature: 'Free tier available', zealova: 'no', bevel: 'yes (core tracking + Biological Age + Health Records)' },
   { feature: 'Free trial', zealova: '7 days (all features)', bevel: 'Free tier permanent' },
   { feature: 'Platforms', zealova: 'Android (iOS coming)', bevel: 'iOS only' },
-  { feature: 'AI workout plan generation (monthly)', zealova: 'yes', bevel: 'partial (goal-based cardio plans)' },
-  { feature: 'Strength training plan generation', zealova: 'yes', bevel: 'no (preset routines only)' },
-  { feature: 'Food photo logging (AI calorie estimate)', zealova: 'yes', bevel: 'partial (barcode + nutrition score, limited photo)' },
+  { feature: 'AI workout plan generation', zealova: 'yes (monthly strength plans)', bevel: 'partial (cardio goal plans: 10K, half marathon)' },
+  { feature: 'AI strength plan adjustments (RIR, progressive overload)', zealova: 'yes', bevel: 'no (planned, no ship date as of May 2026)' },
+  { feature: 'Food photo logging (AI calorie + macro extract)', zealova: 'yes', bevel: 'no (barcode scan + nutritional score only)' },
   { feature: 'Multi-image meal input (up to 10 photos, 4 modes)', zealova: 'yes', bevel: 'no' },
   { feature: 'Restaurant menu scan', zealova: 'yes', bevel: 'no' },
-  { feature: 'Multi-agent chat (5 specialist sub-agents)', zealova: 'yes', bevel: 'no (single Bevel Intelligence)' },
+  { feature: 'Multi-agent chat (5 specialist sub-agents)', zealova: 'yes', bevel: 'no (single Bevel Intelligence coach)' },
   { feature: 'Chat-based workout modification + injury swaps', zealova: 'yes', bevel: 'partial' },
   { feature: 'Per-exercise + per-muscle workout history', zealova: 'yes', bevel: 'partial (strain load only)' },
   { feature: '3rd-party workout export (10 formats)', zealova: 'yes', bevel: 'no' },
@@ -140,8 +148,8 @@ const comparisonRows = [
   { feature: 'Personal bests + 1RM calculator', zealova: 'yes', bevel: 'no' },
   { feature: 'Recovery + readiness score', zealova: 'no', bevel: 'yes' },
   { feature: 'Sleep tracking + sleep stages', zealova: 'no', bevel: 'yes' },
-  { feature: 'Biological Age metric', zealova: 'no', bevel: 'yes (added 3.0, May 2026)' },
-  { feature: 'Health Records vault (blood tests, labs)', zealova: 'no', bevel: 'yes (added 3.0, May 2026)' },
+  { feature: 'Biological Age metric', zealova: 'no', bevel: 'yes (added 3.0, May 2026, free tier)' },
+  { feature: 'Health Records vault (blood tests, labs)', zealova: 'no', bevel: 'yes (added 3.0, May 2026, free tier)' },
   { feature: 'CGM integration (Dexcom, Libre)', zealova: 'no', bevel: 'yes' },
   { feature: 'Apple Health integration', zealova: 'no', bevel: 'yes' },
   { feature: 'Garmin integration (direct)', zealova: 'no', bevel: 'partial (via Apple Health)' },
@@ -163,6 +171,7 @@ function getCellDisplay(val: string) {
   return val;
 }
 
+// FAQPage schema auto-derives from FAQData — update FAQData above, not here
 const jsonLdFaq = {
   '@context': 'https://schema.org',
   '@type': 'FAQPage',
@@ -287,7 +296,7 @@ export default function BevelVs() {
             <span className="text-zinc-400">Zealova vs Bevel</span>
           </nav>
 
-          {/* Answer capsule — first ~200 words, LLM-quote target */}
+          {/* Answer capsule: first ~200 words, LLM-quote target */}
           <motion.section
             id="answer"
             initial="hidden"
@@ -308,10 +317,10 @@ export default function BevelVs() {
             >
               <div className="flex-1">
                 <p className="text-zinc-300 text-lg leading-relaxed mb-4">
-                  Bevel and Zealova both use AI to help you get healthier, but they solve different problems. Bevel (4.8 stars, 9.3K App Store ratings) is a passive health intelligence platform. It reads your Apple Watch, tracks sleep and recovery, added Biological Age in its 3.0 update on May 16, 2026, and connects to Dexcom CGMs. Bevel Pro costs $14.99/month or $99.99/year. Zealova is an active fitness coach. It generates personalized monthly strength training plans, logs food from photos and restaurant menus, and routes your questions through 5 specialist AI sub-agents. Zealova costs $7.99/month or $59.99/year with a 7-day free trial.
+                  Bevel and Zealova both use AI to help you get healthier, but they solve different problems. Bevel (4.8 stars, 9,400+ App Store ratings, version 3.0.5) is a passive health intelligence platform. It reads your Apple Watch, tracks sleep and recovery, added Biological Age and a Health Records vault in its 3.0 update on May 16, 2026, and connects to Dexcom and Libre CGMs. Bevel Pro costs $14.99/month or $99.99/year. The core app, including Biological Age and Health Records, is free. Zealova is a workout and nutrition coach in one app. It generates personalized monthly strength training plans, logs meals from food photos and restaurant menus, and routes your questions through 5 specialist AI sub-agents. Zealova costs $7.99/month or $59.99/year with a 7-day free trial.
                 </p>
                 <p className="text-zinc-300 text-lg leading-relaxed mb-6">
-                  The clearest split: Bevel wins on biometric depth and longevity tracking. Zealova wins on workout generation, food photo logging, and AI coaching depth.
+                  The clearest split: Bevel wins on biometric depth and longevity tracking. Zealova wins on workout generation, food photo logging with restaurant menu scan, and active AI coaching.
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="bg-zinc-800 border border-zinc-700 rounded-xl p-4">
@@ -386,7 +395,7 @@ export default function BevelVs() {
             variants={fadeUp}
             className="mb-12 bg-zinc-900 border border-zinc-800 rounded-xl px-5 py-4 text-sm text-zinc-400"
           >
-            <strong className="text-zinc-300">How this comparison was made:</strong> Bevel pricing verified at the Apple App Store on 2026-05-17 (version 3.0.4, 9.3K ratings). Bevel 3.0 feature details sourced from gadgetsandwearables.com coverage (published 2026-05-16). Zealova pricing and features verified from internal documentation (2026-05-14, live on Google Play). Feature claims for Bevel sourced from the App Store listing, gadgetsandwearables.com, neura.health review, and autonomous.ai review — all live-fetched 2026-05-17.
+            <strong className="text-zinc-300">How this comparison was made:</strong> Bevel pricing verified at the Apple App Store on 2026-05-20 (version 3.0.5, 9,400+ ratings). Bevel 3.0 feature details sourced from gadgetsandwearables.com coverage (published 2026-05-16). Bevel free-tier scope (Biological Age, Health Records) verified from App Store listing 2026-05-20. Bevel strength AI adjustment status verified at feedback.bevel.health (status: "planned (tbd)", November 2024). Zealova pricing and features verified from internal documentation (2026-05-14, live on Google Play). Feature claims for Bevel sourced from the App Store listing, gadgetsandwearables.com, neura.health review, and feedback.bevel.health -- all verified 2026-05-20.
           </motion.div>
 
           {/* Feature comparison table */}
@@ -453,14 +462,57 @@ export default function BevelVs() {
                 <div className="text-zinc-200 text-3xl font-bold mb-1">$14.99<span className="text-zinc-400 text-base font-normal">/mo</span></div>
                 <div className="text-zinc-400 text-sm mb-4">or $99.99/yr (Pro tier with Bevel Intelligence)</div>
                 <ul className="text-zinc-300 text-sm space-y-2">
-                  <li>Free core tier (permanent, no trial cutoff)</li>
-                  <li>Pro unlocks Bevel Intelligence AI coaching</li>
+                  <li>Free tier: recovery, sleep, Strength Builder, nutrition, Biological Age, Health Records</li>
+                  <li>Pro unlocks Bevel Intelligence AI coaching only</li>
                   <li>iOS only (Apple Watch recommended)</li>
-                  <li>App Store rating: 4.8/5 (9.3K ratings)</li>
+                  <li>App Store rating: 4.8/5 (9,400+ ratings), version 3.0.5</li>
                 </ul>
-                <div className="text-zinc-500 text-xs mt-4">Pricing verified on Apple App Store, 2026-05-17</div>
+                <div className="text-zinc-500 text-xs mt-4">Pricing verified on Apple App Store, 2026-05-20</div>
               </div>
             </motion.div>
+          </motion.section>
+
+          {/* Price vs. capability */}
+          <motion.section
+            id="price-vs-capability"
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={stagger}
+            className="mb-16 scroll-mt-24"
+          >
+            <motion.h2 variants={fadeUp} className="text-2xl font-bold text-white mb-4">
+              Price vs. capability: what you actually get for each dollar
+            </motion.h2>
+            <motion.p variants={fadeUp} className="text-zinc-400 text-sm mb-6 leading-relaxed">
+              Bevel 3.0 added AI training plans to its Pro tier on May 16, 2026. Here is what each paid plan buys you at its annual rate:
+            </motion.p>
+            <motion.div variants={fadeUp} className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
+              <div className="bg-zinc-900 border border-emerald-800/40 rounded-xl p-5">
+                <div className="text-emerald-400 font-bold text-sm mb-2">Zealova Pro: $59.99/yr ($5/mo)</div>
+                <ul className="text-zinc-300 text-sm space-y-1.5">
+                  <li>AI-generated monthly strength training plans</li>
+                  <li>Food photo logging with calorie and macro extraction</li>
+                  <li>Restaurant menu scan: log a meal from a photo of the menu</li>
+                  <li>Multi-agent chat coach (5 specialists: Workout, Nutrition, Injury, Hydration, Coach)</li>
+                  <li>Per-exercise and per-muscle workout history</li>
+                  <li>Workout export in 10 formats</li>
+                  <li>Custom exercises, supersets, gym equipment profiles</li>
+                </ul>
+              </div>
+              <div className="bg-zinc-900 border border-blue-800/40 rounded-xl p-5">
+                <div className="text-blue-400 font-bold text-sm mb-2">Bevel Pro: $99.99/yr (~$8.33/mo)</div>
+                <ul className="text-zinc-300 text-sm space-y-1.5">
+                  <li>Bevel Intelligence AI coach (proactive check-ins, data analysis, chart generation)</li>
+                  <li>AI training plans: goal-based, cardio-oriented (10K, half marathon)</li>
+                  <li>Strength AI adjustments (RIR, progressive overload): still "planned (tbd)" as of May 2026</li>
+                  <li className="text-zinc-500 text-xs pt-1">Free tier already includes: recovery scores, Strength Builder, nutrition tracking, Biological Age, Health Records vault, sleep tracking</li>
+                </ul>
+              </div>
+            </motion.div>
+            <motion.p variants={fadeUp} className="text-zinc-400 text-sm leading-relaxed">
+              The gap that matters for gym-first users: Bevel Pro does not yet generate AI-tailored strength programs or extract calories from meal photos and restaurant menus. Zealova does all three at $40/yr less. If you train with weights and track food, the capability-per-dollar math is straightforward. If you wear an Apple Watch and want passive biometric coaching above all else, Bevel's free tier alone gives you recovery, sleep, and Biological Age for $0 and the Pro add-on is specifically the AI conversation layer.
+            </motion.p>
           </motion.section>
 
           {/* Where Zealova wins */}
@@ -480,9 +532,9 @@ export default function BevelVs() {
               <div className="flex gap-4">
                 <div className="text-emerald-400 text-xl mt-0.5 shrink-0">1.</div>
                 <div>
-                  <div className="text-white font-semibold mb-1">AI-generated strength training plans</div>
+                  <div className="text-white font-semibold mb-1">Workout and nutrition in one app</div>
                   <p className="text-zinc-400 text-sm leading-relaxed">
-                    Zealova generates full monthly strength training plans personalized to your equipment, history, and goals. Bevel 3.0 added goal-based training plans, but the focus is cardio events (10K, half marathon). Bevel's strength offering is preset routines and a 700-exercise library, not AI-generated periodized programming.
+                    Bevel is a workout tracker with biometric depth. Zealova is a workout coach plus a nutrition coach in a single app. You get AI-generated strength plans, food photo logging for home meals and restaurant menus, and a multi-agent chat that covers all three in one conversation. Bevel does not offer food photo AI, restaurant menu scanning, or an equivalent nutrition coaching layer. If you train and track food, Zealova handles both without switching apps.
                   </p>
                 </div>
               </div>
@@ -497,9 +549,9 @@ export default function BevelVs() {
                   className="rounded-xl w-24 h-auto shrink-0 object-cover shadow-lg hidden sm:block"
                 />
                 <div>
-                  <div className="text-white font-semibold mb-1">Food photo logging that actually works</div>
+                  <div className="text-white font-semibold mb-1">Food photo logging and restaurant menu scan</div>
                   <p className="text-zinc-400 text-sm leading-relaxed">
-                    Photograph a plated meal, a buffet spread, or a restaurant menu. Zealova extracts individual food items, calories, macros, and micronutrients per item across up to 10 photos. It supports 4 analysis modes: auto, plate, menu, and buffet. Bevel has nutrition tracking with barcode scanning and a nutritional score, but no equivalent food-photo AI stack.
+                    Photograph a plated meal or a buffet spread and Zealova extracts individual food items, calories, macros, and micronutrients per item across up to 10 photos. Photograph a restaurant menu and it identifies dishes and estimates macros per dish. Bevel has barcode scanning and a nutritional score, but no food-photo AI and no menu scan. Eating out is where most people's calorie tracking breaks. Zealova solves that directly.
                   </p>
                 </div>
               </div>
@@ -526,7 +578,7 @@ export default function BevelVs() {
                 <div>
                   <div className="text-white font-semibold mb-1">Per-exercise and per-muscle workout history</div>
                   <p className="text-zinc-400 text-sm leading-relaxed">
-                    Pull up any lift — bench press, Romanian deadlift, lateral raise — and see your complete history: weight, reps, sets, volume, across every session. Per-muscle volume tracking shows how hard you've hit each muscle group this week. Bevel tracks strain load in aggregate, not at the individual exercise level.
+                    Pull up any lift (bench press, Romanian deadlift, lateral raise) and see your complete history: weight, reps, sets, volume, across every session. Per-muscle volume tracking shows how hard you've hit each muscle group this week. Bevel tracks strain load in aggregate, not at the individual exercise level.
                   </p>
                 </div>
               </div>
@@ -574,9 +626,9 @@ export default function BevelVs() {
               <div className="flex gap-4">
                 <div className="text-blue-400 text-xl mt-0.5 shrink-0">2.</div>
                 <div>
-                  <div className="text-white font-semibold mb-1">Biological Age (added in 3.0, May 2026)</div>
+                  <div className="text-white font-semibold mb-1">Biological Age (added in 3.0, May 2026, available free)</div>
                   <p className="text-zinc-400 text-sm leading-relaxed">
-                    Bevel's Biological Age metric estimates whether your body is aging faster or slower than your calendar age, updating weekly using physiological, lifestyle, and blood biomarker data. Zealova does not have a Biological Age metric. If longevity tracking matters to you, this is a genuine Bevel differentiator.
+                    Bevel's Biological Age metric estimates whether your body is aging faster or slower than your calendar age, updating weekly using physiological, lifestyle, and blood biomarker data. This is in Bevel's free tier. Zealova does not have a Biological Age metric. If longevity tracking matters to you, this is a genuine Bevel differentiator, and you do not need a paid plan to access it.
                   </p>
                 </div>
               </div>
@@ -594,9 +646,9 @@ export default function BevelVs() {
               <div className="flex gap-4">
                 <div className="text-blue-400 text-xl mt-0.5 shrink-0">4.</div>
                 <div>
-                  <div className="text-white font-semibold mb-1">Health Records vault</div>
+                  <div className="text-white font-semibold mb-1">Health Records vault (added in 3.0, available free)</div>
                   <p className="text-zinc-400 text-sm leading-relaxed">
-                    Bevel 3.0 added a Health Records vault where you upload blood tests, lab results, and clinical notes as PDFs or photos. The app extracts key biomarkers and integrates them into your health analysis. If you want your lab work connected to your fitness data, Bevel has this. Zealova does not.
+                    Bevel 3.0 added a Health Records vault where you upload blood tests, lab results, and clinical notes as PDFs or photos. The app extracts key biomarkers and integrates them into your health analysis. This is in Bevel's free tier. If you want your lab work connected to your fitness data, Bevel has this. Zealova does not.
                   </p>
                 </div>
               </div>
@@ -740,7 +792,7 @@ export default function BevelVs() {
             className="border-t border-zinc-800 pt-8 text-xs text-zinc-500 leading-relaxed"
           >
             <p>
-              Last updated 2026-05-17 by Sai. Bevel pricing verified at the Apple App Store on 2026-05-17 (Bevel: AI Health Coach App, version 3.0.4, ID 6456176249). Bevel 3.0 feature details sourced from gadgetsandwearables.com (published 2026-05-16). Android availability status sourced from feedback.bevel.health and askvora.com/compare/bevel (verified 2026-05-17). Zealova pricing and features verified from internal documentation and Google Play Store listing (2026-05-14). Wearable accuracy research: Shcherbina et al., 2017, Journal of Personalized Medicine — tested 7 wrist-worn devices and found calorie burn error ranged 27–93% across devices. Feature claims without live source are drawn from the Bevel App Store listing as of 2026-05-17.
+              Last updated 2026-05-20 by Sai. Bevel pricing verified at the Apple App Store on 2026-05-20 (Bevel: AI Health Coach App, version 3.0.5, ID 6456176249, 9,400+ ratings). Bevel 3.0 feature details sourced from gadgetsandwearables.com (published 2026-05-16). Bevel free-tier contents (Biological Age, Health Records) verified from App Store listing 2026-05-20. Bevel strength AI adjustment status verified at feedback.bevel.health/feature-requests/p/strength-trainer-available-weights-rir-automatic-adjustments (status: "planned (tbd)", staff reply November 2024). Android availability status sourced from feedback.bevel.health and askvora.com/compare/bevel (verified 2026-05-17). Zealova pricing and features verified from internal documentation and Google Play Store listing (2026-05-14). Wearable accuracy research: Shcherbina et al., 2017, Journal of Personalized Medicine -- tested 7 wrist-worn devices and found calorie burn error ranged 27-93% across devices. Feature claims without live source are drawn from the Bevel App Store listing as of 2026-05-20.
             </p>
           </motion.footer>
 

@@ -1089,3 +1089,180 @@ A: Yes. Zealova runs full-featured on any Android phone. No wearable required.
 - Strong organic search opportunity: "Bevel alternative Android" has zero competition from existing pages. Android users literally cannot use Bevel. This page is the answer.
 - Outreach: pitch to any reviewer who has published "Bevel review 2026" and doesn't have a Zealova comparison — the 3 identified are autonomous.ai, neura.health, oreateai.com (410 Gone, gap in SERPs).
 - Do NOT link directly in Apple Watch subreddits. Mention Zealova by name in context of "does Bevel work on Android" threads.
+
+---
+
+### Update log — 2026-05-20
+
+**Trigger:** Bevel 3.0 shipped 2026-05-16 with AI training plan generation. Page written 2026-05-17 already covered that release. This update corrects two factual errors discovered during live re-verification on 2026-05-20, adds a new "Price vs. capability" section, and tightens the differentiation copy to the "workout + nutrition in one app" framing.
+
+**Live research done 2026-05-20:**
+- [https://gadgetsandwearables.com/2026/05/16/bevel-3/](https://gadgetsandwearables.com/2026/05/16/bevel-3/) — Bevel 3.0 training plans confirmed goal-based, cardio-oriented (10K, half marathon). No strength AI adjustments confirmed shipped. (published 2026-05-16)
+- [https://apps.apple.com/us/app/bevel-all-in-one-health-app/id6456176249](https://apps.apple.com/us/app/bevel-all-in-one-health-app/id6456176249) — CORRECTION: Biological Age and Health Records are in the FREE tier, not Pro-only. Free tier confirmed: recovery scores, Strength Builder, nutrition, Biological Age, Health Records. Pro = Bevel Intelligence AI coaching only. Version now 3.0.5 (updated 2026-05-20). Ratings now 9,400+. (verified 2026-05-20)
+- [https://feedback.bevel.health/feature-requests/p/strength-trainer-available-weights-rir-automatic-adjustments](https://feedback.bevel.health/feature-requests/p/strength-trainer-available-weights-rir-automatic-adjustments) — AI strength adjustments (RIR, progressive overload) are "planned (tbd)", staff reply November 2024, no ship date. Not in 3.0. (verified 2026-05-20)
+
+**Changes made to Bevel.tsx:**
+1. Feature comparison table: corrected Bevel free tier note for Biological Age and Health Records rows. Added new row "AI strength plan adjustments (RIR, progressive overload)" — Zealova yes, Bevel no (planned, no ship date). Updated "AI workout plan generation" row copy to be more specific.
+2. New section added: "Price vs. capability" (id: price-vs-capability) — breaks down what $59.99/yr Zealova vs $99.99/yr Bevel Pro buys. All three Zealova wedges (food photo logging, menu scan, workout gen) paired together in the capability breakdown. Honest about what Bevel Pro adds vs its free tier.
+3. "Where Zealova wins" point 1: reframed from "AI strength plans" to "Workout and nutrition in one app" to lead with the combined differentiator. All three wedges now appear together in one paragraph.
+4. "Where Zealova wins" point 2: reframed "Food photo logging" to "Food photo logging and restaurant menu scan" to pair both wedges per feedback_three_wedges_always_paired.md.
+5. "Where Bevel wins" point 2 and 4: clarified Biological Age and Health Records are in the free tier, not Pro.
+6. Answer capsule: updated version (3.0.5), ratings (9,400+), free tier note for Biological Age and Health Records, menu scan added to wedge summary.
+7. FAQ "Does Bevel generate workout plans?": added sentence about strength AI adjustments being "planned (tbd)" per feedback forum.
+8. FAQ "How much does Bevel cost?": clarified what the free tier includes, changed "40% cheaper" framing to "$40/yr less" (absolute, not percentage) per pricing-discount-consistency rule.
+9. Methodology note and footnote: updated to 2026-05-20, version 3.0.5, 9,400+ ratings, added strength AI source.
+10. SECTIONS array: added price-vs-capability entry.
+11. Zero em dashes in all new/updated copy. Verified.
+
+**Claim to proof map (new/corrected claims):**
+- "Bevel 3.0.5 released 2026-05-20" → Apple App Store listing, verified 2026-05-20
+- "Biological Age and Health Records in free tier" → Apple App Store listing, verified 2026-05-20
+- "AI strength adjustments planned (tbd)" → feedback.bevel.health/feature-requests/p/strength-trainer-available-weights-rir-automatic-adjustments, staff reply November 2024, verified 2026-05-20
+- "9,400+ ratings" → Apple App Store listing, verified 2026-05-20
+- "$6/mo Bevel price" (user-provided in prompt) → NOT verified. Live price is $14.99/mo. Did not use $6/mo anywhere.
+
+
+---
+
+## 2026-05-20 — /android-ai-fitness-coach
+
+### Research log
+
+- [https://techcrunch.com/2026/05/07/googles-9-99-per-month-ai-health-coach-launches-may-19/] (published 2026-05-07) — Google Health Coach launches May 19, 2026 at $9.99/mo or $99/yr; Fitbit+Pixel Watch users first; broad device support coming; Gemini-powered
+- [https://www.droid-life.com/2026/05/19/fitbit-becomes-google-health-today/] (published 2026-05-19) — Fitbit app permanently became Google Health on May 19, 2026; price up from $79.99/yr to $99/yr
+- [https://www.androidauthority.com/google-health-premium-price-inclusions-features-3664507/] (published 2026-05-07) — Google Health Premium feature breakdown; replaces Fitbit Premium
+- [https://store.google.com/product/google_health_premium] (verified 2026-05-19) — $9.99/mo or $99/yr confirmed live
+- [https://www.wareable.com/apple/apple-quartz-health-plus-ai-coaching-service-2026-launch-rumor] (published 2026-04) — Apple Health+ (Quartz) tied to iPhone + Apple Watch; expected 2026; not yet launched; no Android
+- [https://www.macrumors.com/roundup/wwdc/] (checked 2026-05-20) — WWDC 2026 keynote June 8; Apple Health+ expected preview; iOS 27 + watchOS 27; not yet confirmed
+- [https://arvo.guru/best-ai-workout-apps] (checked 2026-05-15) — Fitbod pricing $15.99/mo or $95.99/yr confirmed; ranked #1 for strength-focused AI workout apps
+- [https://www.bestaifitnessapp.com/blog/best-fitness-apps] (checked 2026-05-20) — "best AI fitness apps 2026" roundup; Zealova not yet mentioned; gap this page fills
+- [https://loadmuscle.com/blog/best-workout-app-2026] (checked 2026-05-20) — "best workout apps 2026" roundup; no Zealova; opportunity for outreach
+- [https://www.dcrainmaker.com/2026/05/fitbit-air-whoop-competitor-everything-details.html] (published 2026-05) — Fitbit Air $99.99 hardware; adds to Google Health year-one cost; key "hidden cost" wedge
+
+### Target keywords
+
+- Primary: "AI fitness coach Android" (est. 5,000-15,000/mo, confirmed competitive via bestaifitnessapp.com + loadmuscle.com roundups)
+- Primary: "best AI fitness app Android 2026" (confirmed roundup traffic; Zealova absent from all current results)
+- Secondary: "AI workout app Android no Apple Watch" (strong intent; zero direct competition)
+- Secondary: "Android alternative to Apple Health+" (timing play; WWDC news cycle imminent)
+- Secondary: "AI workout app without wearable" (broader intent, low competition)
+- Long-tail: "AI fitness app Android no wearable"
+- Long-tail: "Google Health vs Zealova Android"
+- Long-tail: "best Android fitness app 2026 no Fitbit"
+
+### Competitive comparison-page intel (Step 2.5)
+
+Pages studied before drafting:
+
+1. **bestaifitnessapp.com/blog/best-fitness-apps** (checked 2026-05-20, est. 2,500 words, listicle format)
+   - Ranks 10 apps; Zealova absent. Fitbod, Future, Caliber, Freeletics, Hevy lead.
+   - Structure: brief intro, quick-pick table, per-app paragraphs, no FAQ, no schema.
+   - Gap: no Android-specific angle, no wearable-requirement callout, no research citations, no Apple Health+ mention.
+
+2. **loadmuscle.com/blog/best-workout-app-2026** (checked 2026-05-20, est. 1,800 words)
+   - Ranks "11 best workout apps." Zealova absent. Fitbod, Hevy, Nike Training Club lead.
+   - Structure: numbered list, per-app pros/cons, no comparison table, no FAQ schema.
+   - Gap: no Android-specific filter, no nutrition tracking comparison, no wearable angle.
+
+3. **fitbod.me/blog/best-ai-fitness-apps-2026-the-complete-guide** (published 2026, est. 3,000+ words)
+   - Written by competitor (Fitbod); Fitbod ranks itself #1. Acknowledges Android.
+   - Structure: intro, per-app sections, comparison table, no FAQ schema, strong SEO metadata.
+   - Gap: naturally skips Zealova; frames competition as Fitbod vs Future vs FitnessAI. No Apple Health+ or Google Health angle.
+
+4. **sensai.fit/blog/best-ai-fitness-apps-2026-fitbod-freeletics-future-trainiac-alternatives** (published 2026)
+   - 5-app test format. No Zealova. No Android-specific section. No wearable callout.
+   - Gap: no 4-way comparison table including Google Health and Apple Health+.
+
+**Gap this Zealova page exploits:** No existing top-ranking page answers "what Android users should do when Apple Health+ (iPhone-only) and Google Health (Fitbit/Pixel Watch-first) both require hardware you don't own." This is the only page in search results that:
+(a) addresses the Apple Health+ Android gap before WWDC (timing play),
+(b) includes a 4-way comparison table across Zealova, Google Health, Apple Health+, and Fitbod,
+(c) cites peer-reviewed research on wearable calorie accuracy and logging adherence,
+(d) is honest about Zealova's iOS-pending status and no-wearable limits.
+
+### Page draft
+
+**Title tag:** Best AI Fitness Coach for Android (2026): No Apple Watch Needed | Zealova
+**Meta description (152 chars):** Apple Health+ requires iPhone and Apple Watch. Google Health needs Fitbit or Pixel Watch. Zealova is the AI fitness coach built for Android, no wearable required.
+**Canonical:** https://zealova.com/android-ai-fitness-coach
+**Route:** /android-ai-fitness-coach (matches existing /best-* pattern in App.tsx)
+**TSX file:** frontend/src/pages/best/AndroidAiFitnessCoach.tsx
+**Preview file:** frontend/src/pages/best/android-ai-fitness-coach.preview.html
+
+---
+
+### Answer capsule (200 words)
+
+Most AI fitness apps in 2026 require hardware you don't own. Apple Health+ (expected at WWDC June 8, 2026) ties AI coaching to iPhone and Apple Watch. It will not run on Android. Google Health Premium launched May 19, 2026 at $9.99/month and is built around Fitbit and Pixel Watch. Without one of those devices, its AI Coach works in a limited mode. Fitbod ($15.99/month) is strong for workout programming but has no nutrition tracking.
+
+Zealova is built for Android and requires only your phone. No tracker purchase required. It generates personalized monthly workout plans, logs food from photos of meals and restaurant menus, and routes your questions through 5 specialist AI sub-agents: Workout, Nutrition, Injury, Hydration, and Coach. It costs $7.99/month or $59.99/year, with a 7-day free trial.
+
+The short verdict: if you own an Android phone and don't plan to buy a wearable, Zealova covers workout generation, food photo logging, and menu scan in one app, at a price below every alternative here.
+
+Pick Zealova if you use Android and want AI workout plans, food photo logging, and menu scan with no hardware requirement.
+Pick Google Health if you already own a Fitbit or Pixel Watch and want continuous biometrics and sleep tracking.
+
+---
+
+### TL;DR
+
+| | Zealova | Google Health | Apple Health+ | Fitbod |
+|---|---|---|---|---|
+| Monthly price | $7.99 | $9.99 | TBA | $15.99 |
+| Annual price | $59.99 | $99 | TBA | $95.99 |
+| Free trial | 7 days | 3 months (new) | Unknown | 3 workouts |
+| Android | Yes (live) | Yes (live) | No | Yes |
+| Wearable required | No | Fitbit / Pixel Watch | Apple Watch | No |
+| AI workout plans | Full monthly | Suggestions only | Expected | Yes |
+| Food photo logging | Yes (multi-image) | Yes (single image) | Via integrations | No |
+| Restaurant menu scan | Yes | No | Unknown | No |
+
+Zealova pricing verified Google Play 2026-05-14. Google Health verified store.google.com 2026-05-19. Fitbod verified arvo.guru/vs/fitbod 2026-05-15. Apple Health+ not yet launched as of 2026-05-20.
+
+---
+
+*Full page content in frontend/src/pages/best/AndroidAiFitnessCoach.tsx*
+
+*Last updated 2026-05-20 by Sai. Google Health pricing verified at store.google.com on 2026-05-19. Apple Health+ details from Wareable (published 2026-04) and MacRumors WWDC roundup (checked 2026-05-20). Fitbod pricing verified arvo.guru/vs/fitbod (2026-05-15). Zealova pricing and features current as of 2026-05-14 per _ZEALOVA_FACTS.md v1.4.*
+
+---
+
+### Claim to proof map
+
+- "Google Health Premium launched May 19, 2026" → Droid Life, published 2026-05-19 | TechCrunch, published 2026-05-07
+- "Google Health Premium = $9.99/mo or $99/yr" → store.google.com, verified 2026-05-19
+- "Fitbit Premium was $79.99/yr; Google Health is $99/yr (24% increase)" → Android Authority, published 2026-05-07
+- "Google Health AI Coach optimized for Fitbit and Pixel Watch users first" → TechCrunch, published 2026-05-07
+- "Apple Health+ expected at WWDC June 8, 2026; tied to iPhone + Apple Watch" → HEDGED (Wareable reporting 2026-04 + MacRumors roundup 2026-05-20; not confirmed by Apple)
+- "Apple Health+ will not be available for Android" → HEDGED (based on pre-launch reporting describing iPhone + Apple Watch requirement; no Apple confirmation yet)
+- "Fitbod = $15.99/mo or $95.99/yr" → arvo.guru/vs/fitbod, verified 2026-05-15
+- "Zealova $7.99/mo or $59.99/yr, 7-day trial, Android only" → _ZEALOVA_FACTS.md §3, Google Play, verified 2026-05-14
+- "Wearable calorie burn error 27-93%; no device within 20%" → Shcherbina A et al., 2017, Journal of Personalized Medicine, doi:10.3390/jpm7020003
+- "More frequent self-monitoring associated with weight loss" → Burke LE, Wang J, Sevick MA, 2011, Journal of the American Dietetic Association 111:1
+- "Dose-response between weekly training volume and muscle growth" → Schoenfeld BJ, Ogborn D, Krieger JW, 2017, Journal of Sports Science 35:11, doi:10.1080/02640414.2016.1210197
+- "Fitbit Air = $99.99" → DC Rainmaker, published 2026-05
+- "Menu scan is §2B Core confirmed" → _ZEALOVA_FACTS.md §2B, verified 2026-05-14
+
+### JSON-LD schema (in TSX file)
+
+FAQPage + SoftwareApplication + BreadcrumbList blocks embedded in AndroidAiFitnessCoach.tsx.
+
+### Asset manifest
+
+| Slot | Status | Path |
+|---|---|---|
+| hero_og | NEEDS NEW (1200x630) | /screenshots/og-android-ai-fitness-coach.png |
+| answer_capsule | use intro_phone_1 | /screenshots/intro_phone_1.png |
+| food_logging | use intro_phone_2 | /screenshots/intro_phone_2.png |
+| workout_ai | use intro_phone_3 | /screenshots/intro_phone_3.png |
+| multiagent_chat | use intro_phone_4 | /screenshots/intro_phone_4.png |
+| workout_history | use intro_phone_5 | /screenshots/intro_phone_5.png |
+| cta_visual | use intro_phone_6 | /screenshots/intro_phone_6.png |
+
+NEEDS NEW: `og-android-ai-fitness-coach.png` (1200x630, green Android phone silhouette + Zealova logo). Flag for Sai.
+
+### Distribution plan
+
+- Once live, search for Reddit threads asking "AI fitness app Android" or "Android alternative to Apple Health+" — post Zealova mention only in recommendation-intent threads. Do not mention in WWDC hype threads (celebration/announcement threads only, no Zealova).
+- Outreach to bestaifitnessapp.com + loadmuscle.com + sensai.fit editors once the page is indexed (2-4 weeks post-deploy); pitch inclusion in their "best Android fitness app" sections.
+- After WWDC June 8: if Apple Health+ is announced as iPhone/Watch-only (expected), update the Apple Health+ rows in the comparison table with confirmed specs and republish. This is the freshness pass that will lift this page's LLM citation rate.
+- Internal link from /vs/google-health ("Looking for an Android-first option with no wearable? See our Android AI fitness coach comparison.") — add this link to GoogleHealth.tsx CTA section in a future edit.

@@ -31,6 +31,55 @@ If any of 1-7 did not happen, the run is a FAILURE. Do not paper over it with a 
 
 **BANNED output shape:** a chat reply titled "GEO status —" or "status brief" that contains prose paragraphs of "what's on track / what's slipping" WITHOUT a `docs/planning/marketing/landscape/YYYY-MM-DD.md` file having been written this run. That shape = failed run. The only valid `daily-status` chat output is Floor 5 Output B (≤30 lines, cites the file path).
 
+### Floor 0a — Pre-flight Bash commitment marker (binding for daily-status)
+
+**The 2026-05-20 run failed because the agent shortcut to a 200-word brief in 1m 20s with 15 tool uses — it never wrote a landscape file, never ran the scout scripts, never produced any of the 50 drafts.** Floor 0's prose-form requirements were ignored. Floor 0a fixes the enforcement gap with a mechanical pre-flight commitment: the agent cannot proceed without writing a run-marker file that Floor 6 then verifies.
+
+**The FIRST tool call of every `daily-status` run MUST be this Bash command.** No file reads first, no WebSearch first — this is literally the first thing the agent does after parsing the trigger phrase:
+
+```bash
+RUN_TS=$(date +%Y-%m-%d-%H%M%S)
+RUN_ID="daily-status-$RUN_TS"
+mkdir -p docs/planning/marketing/.runs
+cat > docs/planning/marketing/.runs/$RUN_ID.start <<EOF
+mode: daily-status
+started: $(date -u +%Y-%m-%dT%H:%M:%SZ)
+trigger_phrase: <copy the user's exact trigger phrase here>
+commit:
+  - target_landscape: docs/planning/marketing/landscape/$(date +%Y-%m-%d).md
+  - target_tool_uses_min: 25
+  - target_base_websearches: 22
+  - target_reddit_drafts: 25
+  - target_x_drafts: 25
+  - target_landscape_sections: 19
+  - eta_minutes: 10-15
+EOF
+echo "RUN_MARKER=docs/planning/marketing/.runs/$RUN_ID.start"
+echo "Committing to full daily-status run. Will write landscape to docs/planning/marketing/landscape/$(date +%Y-%m-%d).md after 22+ WebSearches, reddit_scout.py ×2, x_scout.py ×2, and 50 drafts. ETA 10-15 min."
+```
+
+**If the user has explicitly narrowed scope** ("just give me a quick 60-second readout, no landscape file") and the agent is converting the run to a time-boxed brief, the agent MUST instead write a `.skip` marker before any other tool call:
+
+```bash
+RUN_TS=$(date +%Y-%m-%d-%H%M%S)
+mkdir -p docs/planning/marketing/.runs
+cat > docs/planning/marketing/.runs/daily-status-$RUN_TS.skip <<EOF
+mode: declined-daily-status
+started: $(date -u +%Y-%m-%dT%H:%M:%SZ)
+trigger_phrase: <user's phrase>
+reason: <one-line justification — must quote the user's explicit narrowing>
+fallback_mode: <time-boxed | progress-diff | log-posted>
+EOF
+echo "DECLINED full daily-status. Running <fallback_mode> instead because: <reason>"
+```
+
+**Hard rule:** Returning ANY chat response for a `daily-status` trigger without either a `.start` or `.skip` marker in `docs/planning/marketing/.runs/` from this run = failed run. Floor 6 verifies the marker exists. The marker is the agent's binding contract with itself — once written, the work shape is locked.
+
+**Banned shortcuts that this floor prevents:**
+- ❌ "I'll just give a quick brief from what I already know" — no, you must commit first via the marker.
+- ❌ "I'll write the landscape after I give the chat reply" — no, the landscape is the output; the chat is the summary.
+- ❌ "The user said quick, so I'll skip the scout scripts" — "Quick" means fast-to-scan output, not abbreviated work (see Floor 1). If genuinely time-boxed, write a `.skip` marker.
+
 ### Floor 1 — Mode selection
 The word "Quick" in "Quick GEO status check" means **fast to scan**, not **abbreviated content**. It triggers `daily-status` mode, which produces COMPREHENSIVE landscape coverage (TL;DR + time-buckets + 12 channel sections + feature-ideas + 3 next-action options). It does NOT mean a 3-bullet triage. NEVER conflate "Quick" with "time-boxed" mode.
 
@@ -77,7 +126,8 @@ If your total tool-use count is under **25** on a normal week or under **30** on
 | 🔬 Launch deep-dive | CONDITIONAL — required IF a major platform launch is within ±14 days. Includes confirmed launch date + features list + Reddit sentiment + HN thread + implications. |
 | 🏗️ Brand-operated channels + builder communities | Required summary of MacroFactor / Gravl / Fitbod brand-sub activity + Hacker News + Product Hunt this week (2-4 entries total) |
 | 📈 Movement vs prior 7 days (NEW — trend continuity) | Required. Compares today's findings against the last 7 daily-landscape files. Identifies: NEW items (first surfaced today), SUSTAINED items (Day N of M, with N≥2), ESCALATED items (engagement growing), RESOLVED items (no longer hot), DROPPED items (gone). At least 4 sub-sections; bullets cite the prior-day landscape file(s) that mentioned each item. |
-| 👇 What to do next | 3 numbered options, each with copy-paste prompt block |
+| 🩹 Posting performance review (NEW — 2026-05-20) | Required. Reviews `docs/planning/marketing/posted-log.md` for entries posted in the last 14 days. For every entry with Status:live and metrics indicating underperformance (downvoted, removed by mod, zero traction after 48h+, deleted) → surface with a one-paragraph diagnosis citing the relevant feedback memory and a corrective rule for future drafts. Also flag any posted entry past its 48h or 1wk metric checkpoint that hasn't been updated. If no underperformance in window: "No underperforming posts in the last 14 days." See Step 6.5 below. |
+| 👇 What to do next | 3 numbered options, each with copy-paste prompt block. **Every option that recommends a listicle pitch must reference a publisher-type tagged `independent-publisher` or `independent-niche-blog`, never `competitor-operated`. Floor 6a Check 8 enforces this.** |
 
 ### Floor 4 — Copy-paste prompt format
 Every "what to do next" option MUST include a literal copy-paste prompt in a plain triple-backtick code block (NOT blockquoted, NOT `<agent> in <mode>` jargon). Example of correct format:
@@ -150,16 +200,18 @@ That's it. Chat stays under 30 lines. File contains everything.
 
 ### Floor 6 — Pre-submit validation
 Before returning anything, verify:
+- [ ] **Floor 0a marker exists** — `ls docs/planning/marketing/.runs/daily-status-*.start` returns a marker file timestamped from THIS run. If missing, the run never committed and is invalid.
 - [ ] The file at `docs/planning/marketing/landscape/YYYY-MM-DD.md` was written successfully
-- [ ] The file contains ALL 19 sections with entries meeting Floor 3 minimums
+- [ ] The file contains ALL 20 sections with entries meeting Floor 3 minimums (19 original sections + the new 🩹 Posting performance review section)
 - [ ] The chat response is under 30 lines
 - [ ] The chat response cites the file path explicitly
 - [ ] Every "What to do next" option has a triple-backtick code block with a copy-paste prompt (NO `<agent> in <mode>` jargon, NO "Say '1' and I'll dispatch")
+- [ ] **No `competitor-operated` domain appears in any "What to do next" option.** Floor 6a Check 8 enforces this; the agent must also self-verify before the gate runs.
 - [ ] Tool uses ≥ 25 normal week / 30 launch week
 - [ ] First 3 lines after the header are the TL;DR (actual content, not preamble)
 - [ ] Completeness footer at the BOTTOM of the file: `✓ Ran <N> queries / <M> WebFetches. <K> entries across <S> sections.`
 - [ ] Floor 7 — every file written or referenced this run has its full repo-relative path printed in the chat response
-- [ ] **Floor 6a — URL gate (MANDATORY for daily-status mode).** Run the verification protocol below before declaring the run complete. Any failure = retry, do not return.
+- [ ] **Floor 6a — URL gate + Check 8 publisher-type gate + Check 9 posting-performance gate + Check 10 subreddit-of-record gate (MANDATORY for daily-status mode).** Run the full verification protocol below before declaring the run complete. Any failure = retry, do not return.
 
 **Floor 6a — URL gate verification protocol (binding for daily-status).**
 
@@ -220,9 +272,194 @@ for m in re.finditer(r'\nDraft \(paste into [^\n]+\):\n\n---\n(.*?)\n---\n', tex
     if re.search(r'"[a-z][a-z ]*"', body):
         print(f"WARN: possible scare quote in draft body: {body[:80]}...")
 PY
+
+# Check 8: publisher-type gate on listicle entries + recommended P1 target (NEW — 2026-05-20 enforcement).
+# The 2026-05-20 run recommended arvo.guru as the highest-leverage P1 pitch target. arvo.guru is
+# competitor-operated (Arvo sells its own AI workout app, rates itself 4.9/5 in the roundup) — a
+# disqualified target per Floor 6 §"Listicle target scoring" (lines 550-555). The agent ignored
+# the rule. This check mechanically enforces it.
+#
+# Every entry in the "🔎 SERP / Listicles" section of the landscape file MUST have an explicit
+# publisher-type tag, AND the "Most leveraged" / "Option 1" recommendation cannot reference a
+# competitor-operated target.
+python3 - <<'PY'
+import re, sys
+text = open('$LANDSCAPE').read()
+
+# Extract the SERP / Listicles section (between its header and the next ## or ** section header).
+serp = re.search(r'(\*\*🔎 SERP[^\n]*\*\*[^\n]*\n)(.*?)(?=\n\*\*[🏢📅🚀🤖🌱📜📈💡🎯👇📊]|\Z)', text, re.S)
+if not serp:
+    print("FAIL Check 8: SERP / Listicles section missing from landscape file")
+    sys.exit(1)
+
+entries = re.findall(r'^\s*[-*]\s+.*', serp.group(2), re.M)
+missing_tag = [e for e in entries if not re.search(r'publisher[- ]type\s*:\s*(independent-publisher|independent-niche-blog|competitor-operated)', e, re.I)]
+if missing_tag:
+    print(f"FAIL Check 8: {len(missing_tag)} SERP/Listicle entries missing publisher-type tag:")
+    for m in missing_tag[:5]:
+        print(f"  - {m[:120]}")
+    sys.exit(1)
+
+# Extract recommended actions from the "What to do next" section (Options 1-3).
+actions = re.search(r'(\*\*👇 What to do next[^\n]*\*\*)(.*?)(?=\Z)', text, re.S)
+if not actions:
+    print("FAIL Check 8: 'What to do next' section missing")
+    sys.exit(1)
+
+# Per-option scan: if an option mentions a domain, that domain's classification in the SERP
+# section must not be competitor-operated. Pull domains from each Option block.
+options = re.split(r'\*\*Option \d+[^\n]*\*\*', actions.group(2))[1:]
+banned = []
+for i, opt in enumerate(options, start=1):
+    domains = re.findall(r'(?:https?://)?([a-z0-9.-]+\.(?:com|guru|io|ai|fit|me|app|co|net|blog))', opt, re.I)
+    for d in domains:
+        d = d.lower()
+        # Look up classification in the SERP section.
+        ent_for_domain = [e for e in entries if d in e.lower()]
+        if ent_for_domain and re.search(r'publisher[- ]type\s*:\s*competitor-operated', ent_for_domain[0], re.I):
+            banned.append((i, d, ent_for_domain[0][:160]))
+
+if banned:
+    print(f"FAIL Check 8: {len(banned)} recommended action(s) reference a competitor-operated domain:")
+    for i, d, line in banned:
+        print(f"  Option {i}: {d}")
+        print(f"    classified as: {line}")
+    print("  Fix: pick an independent-publisher or independent-niche-blog target instead.")
+    sys.exit(1)
+
+print("Check 8 PASS: all listicle entries tagged; no competitor-operated targets in recommended actions.")
+PY
+
+# Check 9: posting-performance section exists and references posted-log entries (NEW).
+# Every daily-status run audits the last 14 days of posted-log.md for underperforming posts
+# and surfaces them. This catches the 2026-05-17 flat Reddit batch and 2026-05-20 downvote
+# that previously had no review mechanism.
+grep -qE '^\*\*🩹 Posting performance review' "$LANDSCAPE" || { echo "FAIL Check 9: '🩹 Posting performance review' section missing from landscape file. See Step 6.5 in workflow."; exit 1; }
+
+# Check 10: subreddit-of-record verification (NEW — 2026-05-20 enforcement).
+# Reddit post IDs are globally unique. reddit.com/r/<anything>/comments/<id>/ returns 200
+# regardless of whether <anything> matches the real subreddit — Reddit silently redirects
+# to the actual host sub. Check 1 only banned placeholder strings; it cannot detect
+# fabricated-but-real-looking permalinks. The 2026-05-20 run shipped 4 such URLs, all
+# sourced from third-party SEO blogs (setgraph.app, hootfitness.com, corahealth.app,
+# pontefuerteai.com); they resolved to r/Barotrauma, r/ColoradoSpringsNSFW, r/BlackmailGay,
+# and a 403. Posting the drafts as written would have put Zealova promo in NSFW subs.
+#
+# This check extracts every reddit.com permalink in the landscape file, calls Reddit's
+# public JSON endpoint (reddit.com/comments/<id>.json — no auth needed, paced for the
+# ~10 req/min unauth limit), and confirms the API-returned `subreddit` field matches the
+# `r/<sub>` slug in the URL. Any mismatch = fail.
+python3 - <<'PY'
+import re, sys, time, json, urllib.request, urllib.error
+text = open('$LANDSCAPE').read()
+ua = 'zealova-geo-scout/0.2 (Zealova GEO research; contact digithat123@gmail.com)'
+urls = re.findall(r'https?://(?:www\.)?reddit\.com/r/([A-Za-z0-9_]+)/comments/([a-z0-9]+)/', text)
+if not urls:
+    print("Check 10 PASS (no reddit URLs in landscape — vacuous pass).")
+    sys.exit(0)
+seen = set(); checked = []
+for sub, pid in urls:
+    if pid in seen: continue
+    seen.add(pid)
+    try:
+        req = urllib.request.Request(f'https://www.reddit.com/comments/{pid}.json?limit=1',
+                                     headers={'User-Agent': ua})
+        with urllib.request.urlopen(req, timeout=15) as r:
+            data = json.loads(r.read())
+            real_sub = data[0]['data']['children'][0]['data']['subreddit']
+            ok = real_sub.lower() == sub.lower()
+            checked.append((sub, pid, real_sub, ok))
+    except urllib.error.HTTPError as e:
+        # 403/404 = post removed or quarantined — also a fail; can't draft against it.
+        checked.append((sub, pid, f'HTTP {e.code}', False))
+    except Exception as e:
+        checked.append((sub, pid, f'ERROR {e}', False))
+    time.sleep(7)  # pace under unauth ~10 req/min
+fails = [c for c in checked if not c[3]]
+if fails:
+    print(f"FAIL Check 10: {len(fails)}/{len(checked)} reddit URLs do not match their claimed subreddit:")
+    for sub, pid, real, _ in fails:
+        print(f"  claimed r/{sub} | id {pid} | real: {real}")
+    print("  Fix: drop these URLs from the landscape file. Re-run reddit_scout.py for real threads,")
+    print("  or use WebSearch where the SERP result URL itself is on reddit.com (never trust URLs cited")
+    print("  inside third-party 'best of Reddit' blog articles — those are AI-fabricated).")
+    sys.exit(1)
+print(f"Check 10 PASS: {len(checked)} reddit URL(s) verified subreddit-of-record.")
+PY
+
+# Check 11: parent-fidelity gate (NEW 2026-05-20 — the bug that shipped today).
+# Every Reddit + X reply draft must include a Parent-body quote + Parent intent + Specific echo,
+# and (when Zealova is mentioned) a personal "I/my" hook in the body. The 2026-05-20 run shipped
+# X drafts that misread parent tweets (e.g. "ffs swelling" parsed as a brag instead of a vent)
+# and feature-dump Zealova mentions with no first-person anchor.
+python3 - <<'PY'
+import re, sys
+text = open('$LANDSCAPE').read()
+fails = []
+# Reddit reply drafts.
+for m in re.finditer(r'\n### \d+\. r/[^\n]+\n(.*?)(?=\n### \d+\. |\n### X \(Twitter\)|\Z)', text, re.S):
+    block = m.group(1)
+    header = m.group(0).split('\n')[1] if '\n' in m.group(0) else m.group(0)
+    if not re.search(r'(Parent post \(verbatim|Parent \(verbatim)', block, re.I):
+        fails.append(f"Reddit draft missing 'Parent (verbatim, fetched ...)' block: {header[:90]}")
+    if not re.search(r'Parent intent\s*:', block, re.I):
+        fails.append(f"Reddit draft missing 'Parent intent:' line: {header[:90]}")
+    if not re.search(r'Specific echo', block, re.I):
+        fails.append(f"Reddit draft missing 'Specific echo' line: {header[:90]}")
+    # If Zealova mentioned in draft body, require I/my in the same body.
+    body_m = re.search(r'Draft \(paste into Reddit[^\n]*\):\n\n---\n(.*?)\n---', block, re.S)
+    if body_m:
+        body = body_m.group(1)
+        if re.search(r'Zealova', body, re.I) and not re.search(r'\b(I|I\'m|I\'ve|my)\b', body):
+            fails.append(f"Reddit draft mentions Zealova with NO first-person anchor (I/my): {header[:90]}")
+# X reply drafts (skip "Original tweet").
+for m in re.finditer(r'\n### \d+\. Reply to @[^\n]+\n(.*?)(?=\n### \d+\. |\Z)', text, re.S):
+    block = m.group(1)
+    header = m.group(0).split('\n')[1] if '\n' in m.group(0) else m.group(0)
+    if not re.search(r'Parent \(verbatim', block, re.I):
+        fails.append(f"X reply draft missing 'Parent (verbatim, fetched ...)' block: {header[:90]}")
+    if not re.search(r'Parent intent\s*:', block, re.I):
+        fails.append(f"X reply draft missing 'Parent intent:' line: {header[:90]}")
+    if not re.search(r'Specific echo', block, re.I):
+        fails.append(f"X reply draft missing 'Specific echo' line: {header[:90]}")
+    body_m = re.search(r'Draft \(paste into X[^\n]*\):\n\n---\n(.*?)\n---', block, re.S)
+    if body_m:
+        body = body_m.group(1)
+        if re.search(r'Zealova', body, re.I) and not re.search(r'\b(I|I\'m|I\'ve|my)\b', body):
+            fails.append(f"X reply draft mentions Zealova with NO first-person anchor (I/my): {header[:90]}")
+if fails:
+    print(f"FAIL Check 11: {len(fails)} draft(s) failed parent-fidelity / personal-voice gate:")
+    for f in fails[:20]:
+        print(f"  - {f}")
+    print("  Fix: for each draft, WebFetch the parent URL, quote the body verbatim under 'Parent (verbatim, fetched YYYY-MM-DD):',")
+    print("  classify intent, name the specific echo from the parent, and anchor any Zealova mention with an 'I/my' lived moment.")
+    sys.exit(1)
+print("Check 11 PASS: parent-fidelity + personal-voice gates clear on all reply drafts.")
+PY
+
+# Check 12: speculation-as-fact in draft bodies.
+# Drafts cannot state future events as fact. Hedging language required for any "Apple is X-ing on date".
+python3 - <<'PY'
+import re, sys
+text = open('$LANDSCAPE').read()
+fails = []
+for m in re.finditer(r'\nDraft \(paste into (?:Reddit|X|Threads|LinkedIn)[^\n]*\):\n\n---\n(.*?)\n---', text, re.S):
+    body = m.group(1)
+    # Pattern: "Apple is announcing|launching|releasing|shipping ... on <date>" without a hedge.
+    spec = re.search(r'\b(Apple|Google|Meta|MyFitnessPal|MFP|OpenAI)\s+(is|are)\s+(announcing|launching|releasing|shipping|unveiling|introducing|adding)\s+[^.]*\b(on|at)\s+\w+\s*\d', body, re.I)
+    if spec and not re.search(r'\b(rumored|expected|likely|reportedly|probably|may|might|could|usually|typically)\b', body, re.I):
+        fails.append(body[:140].replace('\n', ' '))
+if fails:
+    print(f"FAIL Check 12: {len(fails)} draft(s) state future events as fact without hedging:")
+    for f in fails[:10]:
+        print(f"  - {f}...")
+    print("  Fix: add 'rumored', 'expected', 'likely', or cite a primary-source link verified this run.")
+    sys.exit(1)
+print("Check 12 PASS: no unhedged future-event claims in draft bodies.")
+PY
 ```
 
-If ANY hard-fail check (1, 2, 3, 4, 5, 7) reports FAIL, the run has failed Floor 6a — go back, fix the specific drafts, rewrite the file, and re-run the gate. If only WARN lines fire (6 + scare-quote warn in 7), include them in the chat response so the founder can decide.
+If ANY hard-fail check (1, 2, 3, 4, 5, 7, 8, 9, 10, 11, 12) reports FAIL, the run has failed Floor 6a — go back, fix the specific drafts/entries/sections, rewrite the file, and re-run the gate. If only WARN lines fire (6 + scare-quote warn in 7), include them in the chat response so the founder can decide.
 
 If any check fails — especially the file write — you've failed. Retry.
 
@@ -500,13 +737,31 @@ Format each of the 25 like this:
 - URL line: link · posted YYYY-MM-DD (Nd ago) · N comments / N upvotes
 - Promo rule: answer-only / Saturday-only / link-OK / brand-sub answer-only
 - Why it fits: one line
+- **Parent post (verbatim, fetched YYYY-MM-DD):** the actual `selftext` from `reddit_scout.py` output, quoted verbatim, capped at ~400 chars (truncate with `[…]`). If empty link-post, write "Body: (empty link post)" and quote the title + top comment instead. REQUIRED — Floor 6a Check 11 fails the run without it.
+- **Parent intent:** one of `celebration` / `help` / `recommendation` / `vent` / `meta-rant` / `progress-share` / `joke` / `news-discussion`. Voice MUST match (celebration → 1-2 sentence personal echo, no pitch, no founder disclosure; vent → empathy first; recommendation → real answer with mention). See `feedback_reddit_celebration_vs_recommendation`.
+- **Specific echo from parent:** the literal phrase or detail from the parent post the draft picks up. Generic answers that could be pasted onto any thread = failed run.
+- **Personal hook (when Zealova is mentioned):** the introducing sentence must contain `I` or `my` plus a specific lived moment — NEVER a feature-dump. Three-wedge rule applies AFTER the personal hook (food photo + menu scan + workout gen, all named).
+- **No speculation framed as fact.** Future-event claims (WWDC, "they just shipped") must be hedged or carry a primary-source link verified this run.
 - Then the full ready-to-post comment as **plain text, NOT a fenced code block** (rich-text editors render a pasted code block as monospace — see `_OUTPUT_STANDARD.md`). Label it `Draft (paste into Reddit, N words):`, then the comment prose between two `---` horizontal rules, each `---` with a blank line above AND below it.
 
 **🛑 REAL THREADS ONLY — via `reddit_scout.py` (binding).** The 25 threads MUST come from `scripts/reddit_scout.py` output (see Pass 2A). Every thread has a real permalink, real date, real engagement numbers, and real post body — all verified live this run. NEVER invent a "representative" or "aggregated" thread, NEVER write `URL to verify: search r/X for...`, NEVER write `URL: search r/<sub> for "<query>"` or `Bucket B Google-indexed`, NEVER list a thread the script did not return. Draft each comment against the real `selftext`. If a niche can't yield 10 usable threads even after widening the scout arguments, list ONLY the real ones and state the shortfall plainly at the top of the section. Drafting comments for hypothetical threads is a failed run.
 
 **Banned URL patterns (will fail QA):** any URL field that contains `search r/`, `search reddit for`, `Bucket B`, `representative`, `aggregated`, `to verify`, `live thread` (as a placeholder), or any text that is not an actual reddit.com permalink ending in a thread ID. The 2026-05-19 run shipped 5 such placeholder URLs (#11-15, all marked `sourced from Bucket B`) which the user could not act on. This is a recurring failure mode — guard against it explicitly:
-- If `reddit_scout.py` returns 429-rate-limited on a sub, the FIX is to retry the script after a cooldown OR run a per-sub `WebSearch site:reddit.com/r/<sub> "<topic>" past:7d` to get real permalinks. The FIX is NEVER to write a placeholder URL.
+- **Default invocation pattern (do this FIRST, every run):** call `reddit_scout.py` in **chunks of 2-3 subs**, with `sleep 90` between calls. Unauth limit is ~10 req/min; wide single calls trip 429. Example:
+  ```bash
+  python3 scripts/reddit_scout.py --subs Fitness,xxfitness --queries "tracker,app,recommend" --window week --limit 30 > /tmp/r1.json
+  sleep 90
+  python3 scripts/reddit_scout.py --subs loseit,CICO --queries "MFP,alternative,photo" --window week --limit 30 > /tmp/r2.json
+  sleep 90
+  python3 scripts/reddit_scout.py --subs nutrition,EatCheapAndHealthy --queries "tracker,calorie" --window week --limit 30 > /tmp/r3.json
+  ```
+  Then `jq -s 'add' /tmp/r*.json` to merge. No 429s, no auth needed. Save merged JSON to `docs/planning/marketing/.runs/reddit-$(date +%Y-%m-%d).json` so the same run can re-read without re-hitting Reddit.
+- **If a chunked call still 429s on a single sub:** use `WebSearch site:reddit.com/r/<sub> "<topic>" past:7d`. **The hit URL itself must be on `reddit.com`** — URLs that appear *inside the body* of a third-party blog article (`setgraph.app`, `hootfitness.com`, `corahealth.app`, `pontefuerteai.com`, `arvo.guru`, `bestapps.guru`, any `/best-X-reddit-threads/` style aggregator) are AI-fabricated ~100% of the time. The 2026-05-20 run trusted 4 such URLs; all resolved to wrong subreddits incl. NSFW.
+- **Reddit OAuth auth mode is NOT available** (founder's account/browser combination can't complete the `/prefs/apps` create-app flow as of 2026-05-20). Treat `REDDIT_CLIENT_ID` / `REDDIT_CLIENT_SECRET` as absent. Do not propose auth mode as a fix.
+- **The FIX is NEVER** to write a placeholder URL, NEVER to trust a URL cited inside a non-reddit blog, NEVER to invent a `reddit.com/r/X/comments/<id>/` permalink. Every Reddit URL written into the landscape file is subsequently verified subreddit-of-record by Floor 6a Check 10 — fabrications will fail the gate.
 - If after retries the section is short, ship FEWER drafts with real URLs rather than padding with placeholders.
+
+**Banned URL-source domains for Reddit threads (any URL cited inside one of these is presumed fabricated):** `setgraph.app`, `hootfitness.com`, `corahealth.app`, `pontefuerteai.com`, `arvo.guru`, `bestapps.guru`, and any other `/best-X-reddit-threads/`, `/top-reddit-discussions-on-Y/`, `/most-cited-reddit-threads-Z/` style aggregator. These are LLM-generated SEO spam whose Reddit URLs are hallucinated. If a SERP returns one of these as a hit, ignore the cited URL and search reddit.com directly instead.
 
 If fewer than 25 qualifying recent threads exist, widen the script's `--subs` / `--queries` / `--window` — never pad with stale threads or placeholder URLs. All real threads found also get appended to `marketing/reddit/posts.md`.
 
@@ -531,6 +786,11 @@ Format each of the 25 like this:
 - Header: `### N. <Reply to @handle> or <Original tweet>` — <one-line topic>
 - For replies: target tweet URL · posted YYYY-MM-DD (Nd ago) · author handle · engagement
 - Why it fits: one line
+- **Parent (verbatim, fetched YYYY-MM-DD):** the actual parent-tweet body, quoted verbatim, ≤280 chars (truncate with `[…]`). REQUIRED for every reply draft. If `x_scout.py` returned the tweet text use that; otherwise WebFetch the URL this run. NEVER omit this line — without it the draft is a hallucination. (Original tweets skip this and use `Reply-target search log:` instead.)
+- **Parent intent:** one of `celebration` / `help` / `recommendation` / `vent` / `meta-rant` / `progress-share` / `joke` / `news-discussion` / `viral-list` / `flex`. Voice must match (vent gets empathy, celebration gets a personal echo with no pitch, recommendation thread gets a real answer with mention).
+- **Specific echo from parent:** the literal phrase from the parent that the draft picks up (e.g. `"ffs swelling"`, `"started or stopped"`, `"53M, 14 years of CrossFit"`). Generic-sounding drafts that could be pasted onto any tweet are auto-rejected — the echo proves the draft engages with THIS parent.
+- **Personal hook (when Zealova is mentioned):** the sentence that introduces Zealova must contain `I` or `my` plus a specific lived moment, NOT a feature-dump. Examples that pass: "I track macros at restaurants which is why I built menu scan", "I lift in lbs and the kg-default forced me to do mental math every set". The three-wedge rule still applies AFTER the personal hook.
+- **No speculation framed as fact.** Future-event claims (WWDC, "Apple is announcing", a competitor "just shipped") must be hedged ("Apple usually announces at WWDC", "rumored", "expected") OR carry a primary-source link verified this run. "Apple IS announcing X on date Y" without an Apple PR / Bloomberg primary source = banned.
 - Then the draft as **plain text, NOT a fenced code block**. Label it `Draft (paste into X, N chars):`, then the tweet text between two `---` horizontal rules, each `---` with a blank line above AND below it.
 
 **🛑 REAL TARGETS ONLY (binding).** Every reply target MUST be a real tweet with a verifiable URL found this run. NEVER invent a "representative" tweet. All drafts get appended to `marketing/x/posts.md`.
@@ -876,6 +1136,57 @@ For `daily-status` mode specifically, before composing the chat response:
 4. **Then return the CHAT response per Floor 5 Output B** — concise, ≤30 lines, pointing to the file path. Never paste the full landscape into chat — it WILL truncate and the file is now the canonical complete view.
 
 Hard rule: if Step 6 doesn't execute (file not written), the run failed. The chat response without the file is worthless because the user can't act on the missing data.
+
+### Step 6.5 — Posting-performance audit (DAILY-STATUS MODE ONLY, mandatory; produces the "🩹 Posting performance review" section)
+
+The 2026-05-17 Reddit batch flatlined and the 2026-05-20 r/workout comment got downvoted. Both were noticed by the founder, not the agent. Step 6.5 closes that loop — every daily-status run includes an automated review of the posted trail so underperformance is surfaced and rule-corrected the same day it shows up.
+
+Workflow:
+
+1. **Read** `docs/planning/marketing/posted-log.md` in full.
+2. **Filter** entries posted in the last 14 days (parse the `### YYYY-MM-DD · …` headers).
+3. **For each entry, classify against the underperformance heuristics:**
+   - `Status: removed by mod` → CRITICAL (sub-rule violation, fix the per-sub rules file)
+   - `Status: deleted` → CRITICAL (something went wrong; needs investigation)
+   - `Metrics — 48h: downvoted` / `negative score` → HIGH (voice or context mismatch — diagnose)
+   - `Metrics — 48h: no traction` / `0 upvotes` / `0 replies` (only if 48h+ has elapsed since posting) → MEDIUM (angle or sub fit weak — diagnose)
+   - Status:live AND posted ≥48h ago AND `Metrics — 48h:` is still `—` → FLAG (missed checkpoint; agent fills it now from any available evidence or notes "no data captured")
+   - Status:live AND posted ≥7d ago AND `Metrics — 1wk:` is still `—` → FLAG (same)
+4. **For every HIGH and CRITICAL entry, write a one-paragraph diagnosis** with:
+   - Parent-context summary (what was the thread / what type — celebration / help / recommendation / build-in-public / etc.)
+   - Probable root cause(s), each tied to an existing feedback memory (`[[feedback-name]]`) when one applies
+   - Corrective rule for future drafts on the same channel + sub
+   - Decision on the live post: leave / delete / edit (with rationale — usually leave; deleting Reddit comments draws more attention)
+5. **For every MEDIUM entry, write a 1-2 sentence note** with the most likely cause and whether the channel/angle should be retired or retried with a tweak.
+6. **For every FLAG entry, prompt the founder** to fill metrics if they have data, OR note `"no engagement data captured this run"` so it's recorded.
+7. **Output the section** to the landscape file with this exact header and shape:
+
+```markdown
+**🩹 Posting performance review (last 14 days — read from docs/planning/marketing/posted-log.md):**
+
+*Entries reviewed: N posts across <channels list>. Window: YYYY-MM-DD to YYYY-MM-DD.*
+
+**CRITICAL (N):**
+- (each entry with link, parent-context, diagnosis, corrective rule, decision)
+
+**HIGH (N):**
+- (same shape)
+
+**MEDIUM (N):**
+- (1-2 sentence notes)
+
+**Flagged (missing metric checkpoints, N):**
+- (each entry needing 48h or 1wk metric update)
+
+**New voice/rule changes to apply going forward:**
+- (bullet per new rule, with the feedback memory slug to save it under)
+```
+
+If the window is empty (no underperformance) the section still appears with the single line: `No underperforming posts in the last 14 days. Metrics gate: <N entries on schedule, M needing checkpoint update>.`
+
+8. **If a new corrective rule is identified that doesn't yet exist as a feedback memory**, surface it in the chat response so the user can confirm before the agent (or the user) saves it. Do not auto-write memory files — that's the founder's call.
+
+Hard rule: Floor 6a Check 9 verifies this section exists. A daily-status run without it = failed run.
 
 ## Hard rules
 

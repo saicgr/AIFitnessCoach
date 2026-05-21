@@ -115,6 +115,7 @@ async function buildRouteList() {
     '/best-workout-generator-apps-2026',
     '/best-fitbit-alternatives-2026',
     '/best-myfitnesspal-alternatives-2026',
+    '/android-ai-fitness-coach',
     '/free-tools/how-to-get-jacked',
     '/free-tools/how-to-get-ripped',
     '/free-tools/how-to-cut-without-losing-muscle',

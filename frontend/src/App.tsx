@@ -47,6 +47,7 @@ import BestCalorieTrackerApps2026 from './pages/best/CalorieTrackerApps2026';
 import BestWorkoutGeneratorApps2026 from './pages/best/WorkoutGeneratorApps2026';
 import BestFitbitAlternatives2026 from './pages/best/FitbitAlternatives2026';
 import BestMyFitnessPalAlternatives2026 from './pages/best/MyFitnessPalAlternatives2026';
+import AndroidAiFitnessCoach from './pages/best/AndroidAiFitnessCoach';
 import ToolsIndex from './pages/tools';
 import Blog from './pages/Blog';
 import OneRmCalculator from './pages/tools/OneRmCalculator';
@@ -205,6 +206,7 @@ function App() {
         <Route path="/best-workout-generator-apps-2026" element={<BestWorkoutGeneratorApps2026 />} />
         <Route path="/best-fitbit-alternatives-2026" element={<BestFitbitAlternatives2026 />} />
         <Route path="/best-myfitnesspal-alternatives-2026" element={<BestMyFitnessPalAlternatives2026 />} />
+        <Route path="/android-ai-fitness-coach" element={<AndroidAiFitnessCoach />} />
         {/* Free calculator tools — SEO + acquisition funnel */}
         <Route path="/free-tools" element={<ToolsIndex />} />
         <Route path="/blog" element={<Blog />} />
