@@ -84,6 +84,9 @@ class SetRowData {
   final bool isFirstSetEver;
   /// Easy mode hides the RIR pill entirely.
   final bool isEasyMode;
+  /// Raw set type string ('working' | 'warmup' | 'failure' | 'amrap').
+  /// A 'failure' set renders the target-effort pill as "Push to failure".
+  final String setType;
   /// Previous set's target (in kg, internal unit) for trend delta.
   /// Null on the first set of the exercise.
   final double? previousSetTargetWeight;
@@ -116,6 +119,7 @@ class SetRowData {
     this.isAmrap = false,
     this.isFirstSetEver = false,
     this.isEasyMode = false,
+    this.setType = 'working',
     this.previousSetTargetWeight,
     this.previousSetTargetReps,
     this.previousSetTargetSeconds,
@@ -895,6 +899,7 @@ class _SetTrackingTableState extends State<SetTrackingTable> {
                 isEasyMode: set.isEasyMode,
                 isAmrap: set.isAmrap,
                 actualRir: set.actualRir,
+                setType: set.setType,
               ),
             ),
 

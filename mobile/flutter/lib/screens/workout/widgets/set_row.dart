@@ -184,13 +184,20 @@ class _SetRowState extends State<SetRow> {
     return SetRowVisuals.buildEditedChip(isEdited: widget.setData.isEdited);
   }
 
-  Widget? _buildRirPills() {
+  /// [sheetContext] is the live BuildContext from the enclosing [Builder] —
+  /// passing it makes the target-effort pill tappable and opens the
+  /// plain-English RIR / "push to failure" explainer sheet. The set's raw
+  /// [ActiveSetData.setType] is forwarded so a 'failure' set reads
+  /// "Push to failure" instead of a numeric RIR target.
+  Widget? _buildRirPills(BuildContext sheetContext) {
     final data = widget.setData;
     return SetRowVisuals.buildRirPills(
       isEasyMode: data.isEasyMode,
       isAmrap: data.isAmrap,
       targetRir: data.targetRir,
       actualRir: data.actualRir,
+      setType: data.setType,
+      context: sheetContext,
     );
   }
 
@@ -480,7 +487,7 @@ class _SetRowState extends State<SetRow> {
           // complete button off-screen on narrow phones; renders empty when
           // Easy mode is on or no target/actual RIR data is present.
           Builder(builder: (context) {
-            final pills = _buildRirPills();
+            final pills = _buildRirPills(context);
             if (pills == null) return const SizedBox.shrink();
             return Padding(
               padding: const EdgeInsets.only(right: 4),

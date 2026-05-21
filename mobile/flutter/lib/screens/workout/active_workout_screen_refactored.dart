@@ -26,6 +26,7 @@ import '../../core/providers/workout_ui_mode_provider.dart';
 import '../../core/services/fatigue_service.dart';
 import '../../core/services/posthog_service.dart';
 import '../../core/services/pre_set_insight_engine.dart';
+import '../../services/mesocycle_planner.dart';
 import '../../core/services/weight_suggestion_service.dart';
 import '../../core/services/workout_tour_steps.dart';
 import '../../core/theme/accent_color_provider.dart';
@@ -421,6 +422,12 @@ class _ActiveWorkoutScreenState
   // Cached computed copy per exercise index (memoized so rebuilds don't
   // re-run the pattern engine unnecessarily).
   final Map<int, String?> _cachedPreSetCopy = {};
+  // True when the active mesocycle is in its deload week. Loaded once at
+  // workout start from `MesocyclePlanner.getCurrentContext()` and fed into
+  // `ExerciseInsightInput.isDeloadWeek` so the engine's deload guard swaps
+  // overload-positive cues for deload-appropriate copy. Defaults false (no
+  // active plan / load not yet finished → guard simply doesn't fire).
+  bool _isDeloadWeek = false;
 
   // Pre-computed superset indices cache (groupId -> sorted exercise indices)
   // Built once in initState and when exercises change, avoids repeated iteration/sorting
@@ -614,6 +621,7 @@ class _ActiveWorkoutScreenState
       _attachTierTourListeners();
       triggerWorkoutTour();
       _prefetchPreSetHistory();
+      _loadDeloadState();
     });
   }
 
@@ -695,6 +703,26 @@ class _ActiveWorkoutScreenState
       // pretending we're waiting — banner just won't render.
       if (!mounted) return;
       setState(() => _preSetHistoryLoaded = true);
+    }
+  }
+
+  /// Loads the active mesocycle's deload state once per workout so the
+  /// pre-set insight engine can suppress overload-positive cues during a
+  /// deload week (`_applyDeloadGuard`). Best-effort: if there's no active
+  /// plan or the lookup fails, `_isDeloadWeek` stays false and the guard
+  /// simply never fires — no banner regression.
+  Future<void> _loadDeloadState() async {
+    try {
+      final context = await MesocyclePlanner.getCurrentContext();
+      if (!mounted) return;
+      final isDeload = context?.isDeload ?? false;
+      if (isDeload == _isDeloadWeek) return;
+      setState(() {
+        _isDeloadWeek = isDeload;
+        _cachedPreSetCopy.clear(); // invalidate so banners re-compute
+      });
+    } catch (_) {
+      // Non-fatal — leave _isDeloadWeek=false; the guard just won't fire.
     }
   }
 
@@ -1616,6 +1644,9 @@ class _ActiveWorkoutScreenState
       rows.add(SetRowData(
         setNumber: i + 1,
         isWarmup: setTarget?.isWarmup ?? false,
+        // Raw set type so the TARGET cell can render "Push to failure" for
+        // failure sets (parity with set_row.dart's effort pill).
+        setType: setTarget?.setType ?? 'working',
         isCompleted: isCompleted,
         isActive: isActive,
         isTimedExercise: isTimedEx,
@@ -1765,6 +1796,7 @@ class _ActiveWorkoutScreenState
       todayIso: todayIso,
       workoutStartEpochMs: _workoutStartEpochMs,
       history: sessions,
+      isDeloadWeek: _isDeloadWeek,
     );
 
     // Supply current focal-set context for the PR-near signal when available.

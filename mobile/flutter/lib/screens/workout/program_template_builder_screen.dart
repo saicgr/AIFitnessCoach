@@ -7,6 +7,7 @@ import '../../core/theme/accent_color_provider.dart';
 import '../../data/models/program_template.dart';
 import '../../data/repositories/program_template_repository.dart';
 import '../../data/services/haptic_service.dart';
+import 'program_builder_part_exercise_picker.dart';
 import 'program_builder_part_template_meta.dart';
 import 'program_library_screen.dart';
 import 'template_list_screen.dart';
@@ -407,9 +408,17 @@ class _ProgramTemplateBuilderScreenState
                   day: day,
                   isDark: isDark,
                   accent: accent,
+                  // Copy-day is only offered when there is at least one
+                  // other day to copy into and this day has work to copy.
+                  canCopyToOtherDay:
+                      draft.days.length > 1 && day.exercises.isNotEmpty,
                   onToggleRest: () => _toggleRest(day),
                   onRename: (name) => _renameDay(day, name),
                   onRemoveExercise: (idx) => _removeExercise(day, idx),
+                  onAddExercise: () => _addExercise(day),
+                  onReorderExercise: (oldI, newI) =>
+                      _reorderExercise(day, oldI, newI),
+                  onCopyToOtherDay: () => _copyDayToDay(day),
                 ),
             ],
           ),
@@ -549,6 +558,96 @@ class _ProgramTemplateBuilderScreenState
     _update(_draft!.copyWith(days: days));
   }
 
+  /// Opens the exercise picker and appends the chosen exercise to [day].
+  /// Adding to a day that was a rest day silently promotes it to a training
+  /// day — an empty rest day with one exercise is no longer a rest day, and
+  /// [ProgramDay.effectivelyRest] would otherwise still count it as rest.
+  Future<void> _addExercise(ProgramDay day) async {
+    HapticService.light();
+    final picked = await ProgramBuilderExercisePicker.show(
+      context,
+      dayName: day.isRest ? 'Day ${day.dayIndex + 1}' : day.dayName,
+      existingNames: day.exercises.map((e) => e.name).toSet(),
+    );
+    if (picked == null || !mounted) return;
+    final days = [..._draft!.days];
+    final i = days.indexWhere((d) => d.dayIndex == day.dayIndex);
+    if (i < 0) return;
+    final current = days[i];
+    final ex = [...current.exercises, picked];
+    days[i] = current.copyWith(
+      exercises: ex,
+      // First exercise on a rest day flips it to a training day with a
+      // real name so the save gate ("has training days") passes.
+      isRest: false,
+      dayName: current.isRest && current.exercises.isEmpty
+          ? 'Day ${current.dayIndex + 1}'
+          : current.dayName,
+    );
+    _update(_draft!.copyWith(days: days));
+  }
+
+  /// Reorders the exercises within a single day after a drag.
+  void _reorderExercise(ProgramDay day, int oldIndex, int newIndex) {
+    final days = [..._draft!.days];
+    final i = days.indexWhere((d) => d.dayIndex == day.dayIndex);
+    if (i < 0) return;
+    final ex = [...days[i].exercises];
+    if (oldIndex < 0 || oldIndex >= ex.length) return;
+    // ReorderableListView reports newIndex assuming the dragged item is
+    // still in the list — compensate when moving an item downward.
+    if (newIndex > oldIndex) newIndex -= 1;
+    newIndex = newIndex.clamp(0, ex.length - 1);
+    final moved = ex.removeAt(oldIndex);
+    ex.insert(newIndex, moved);
+    days[i] = days[i].copyWith(exercises: ex);
+    _update(_draft!.copyWith(days: days));
+  }
+
+  /// Deep-copies every exercise from [from] into the day picked in a sheet.
+  /// The destination's existing exercises are kept — copied exercises are
+  /// appended — so this works as "also do day X's work here".
+  Future<void> _copyDayToDay(ProgramDay from) async {
+    HapticService.light();
+    final draft = _draft!;
+    // Candidate destinations: any other day in the cycle.
+    final targets = draft.days.where((d) => d.dayIndex != from.dayIndex).toList();
+    if (targets.isEmpty) return;
+    final target = await showModalBottomSheet<ProgramDay>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _CopyDayTargetSheet(
+        sourceName: from.isRest ? 'Day ${from.dayIndex + 1}' : from.dayName,
+        targets: targets,
+      ),
+    );
+    if (target == null || !mounted) return;
+    final days = [...draft.days];
+    final i = days.indexWhere((d) => d.dayIndex == target.dayIndex);
+    if (i < 0) return;
+    final dest = days[i];
+    // copyWith on each exercise yields fresh immutable instances.
+    final copied = from.exercises.map((e) => e.copyWith()).toList();
+    days[i] = dest.copyWith(
+      exercises: [...dest.exercises, ...copied],
+      isRest: false,
+      dayName: dest.isRest && dest.exercises.isEmpty
+          ? 'Day ${dest.dayIndex + 1}'
+          : dest.dayName,
+    );
+    _update(draft.copyWith(days: days));
+    if (!mounted) return;
+    final destLabel = days[i].dayName;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Copied ${copied.length} exercise${copied.length == 1 ? '' : 's'} '
+          'to $destLabel',
+        ),
+      ),
+    );
+  }
+
   Future<void> _save() async {
     final draft = _draft!;
     if (!draft.hasTrainingDays) {
@@ -685,17 +784,30 @@ class _DayEditorCard extends StatelessWidget {
   final ProgramDay day;
   final bool isDark;
   final Color accent;
+
+  /// Whether the copy-to-other-day shortcut should be offered.
+  final bool canCopyToOtherDay;
+
   final VoidCallback onToggleRest;
   final ValueChanged<String> onRename;
   final ValueChanged<int> onRemoveExercise;
+  final VoidCallback onAddExercise;
+
+  /// (oldIndex, newIndex) — raw indices straight from [ReorderableListView].
+  final void Function(int oldIndex, int newIndex) onReorderExercise;
+  final VoidCallback onCopyToOtherDay;
 
   const _DayEditorCard({
     required this.day,
     required this.isDark,
     required this.accent,
+    required this.canCopyToOtherDay,
     required this.onToggleRest,
     required this.onRename,
     required this.onRemoveExercise,
+    required this.onAddExercise,
+    required this.onReorderExercise,
+    required this.onCopyToOtherDay,
   });
 
   @override
@@ -705,6 +817,11 @@ class _DayEditorCard extends StatelessWidget {
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary =
         isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+
+    // A day is shown as "rest" only when it is flagged rest AND empty —
+    // once it has exercises the editor always shows the exercise list so
+    // the user can manage them (true for all three entry tabs).
+    final showAsRest = day.isRest && day.exercises.isEmpty;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
@@ -720,9 +837,7 @@ class _DayEditorCard extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  day.effectivelyRest && day.exercises.isEmpty
-                      ? day.dayName
-                      : day.dayName,
+                  day.dayName,
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w800,
@@ -732,6 +847,18 @@ class _DayEditorCard extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
+              // Copy this day's exercises into another day.
+              if (canCopyToOtherDay)
+                IconButton(
+                  tooltip: 'Copy day to another day',
+                  visualDensity: VisualDensity.compact,
+                  padding: EdgeInsets.zero,
+                  constraints:
+                      const BoxConstraints(minWidth: 32, minHeight: 32),
+                  icon: Icon(Icons.copy_all_rounded,
+                      size: 17, color: textSecondary),
+                  onPressed: onCopyToOtherDay,
+                ),
               TextButton(
                 style: TextButton.styleFrom(
                   padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -745,31 +872,68 @@ class _DayEditorCard extends StatelessWidget {
               ),
             ],
           ),
-          if (day.isRest && day.exercises.isEmpty)
+          if (showAsRest)
             Padding(
-              padding: const EdgeInsets.only(top: 4),
+              padding: const EdgeInsets.only(top: 4, bottom: 6),
               child: Text(
-                'Rest day — no workout scheduled.',
-                style: TextStyle(fontSize: 12, color: textSecondary),
+                'Rest day — no workout scheduled. Add an exercise to turn '
+                'this into a training day.',
+                style: TextStyle(
+                    fontSize: 12, height: 1.35, color: textSecondary),
               ),
             )
           else ...[
             const SizedBox(height: 6),
-            for (int i = 0; i < day.exercises.length; i++)
-              _ExerciseRow(
-                exercise: day.exercises[i],
-                isDark: isDark,
-                onRemove: () => onRemoveExercise(i),
-              ),
             if (day.exercises.isEmpty)
               Padding(
-                padding: const EdgeInsets.symmetric(vertical: 4),
+                padding: const EdgeInsets.only(bottom: 4),
                 child: Text(
-                  'No exercises yet — an empty day becomes a rest day.',
-                  style: TextStyle(fontSize: 12, color: textSecondary),
+                  'No exercises yet — add at least one so this day counts '
+                  'as a training day.',
+                  style: TextStyle(
+                      fontSize: 12, height: 1.35, color: textSecondary),
                 ),
+              )
+            else
+              // Drag-to-reorder exercises within this day. Nested inside a
+              // scrolling parent, so shrink-wrapped + non-scrollable.
+              ReorderableListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                buildDefaultDragHandles: false,
+                itemCount: day.exercises.length,
+                onReorder: onReorderExercise,
+                itemBuilder: (context, i) {
+                  return _ExerciseRow(
+                    key: ValueKey('day${day.dayIndex}_ex$i'),
+                    index: i,
+                    exercise: day.exercises[i],
+                    isDark: isDark,
+                    onRemove: () => onRemoveExercise(i),
+                  );
+                },
               ),
           ],
+          // Add-exercise affordance — available on every day (rest days
+          // included; the first add promotes the day to a training day).
+          const SizedBox(height: 4),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton.icon(
+              style: TextButton.styleFrom(
+                foregroundColor: accent,
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                minimumSize: const Size(0, 36),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              onPressed: onAddExercise,
+              icon: const Icon(Icons.add_rounded, size: 18),
+              label: const Text(
+                'Add exercise',
+                style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700),
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -778,11 +942,16 @@ class _DayEditorCard extends StatelessWidget {
 
 class _ExerciseRow extends StatelessWidget {
   final ProgramExercise exercise;
+
+  /// Position in the day's list — needed to anchor the drag listener.
+  final int index;
   final bool isDark;
   final VoidCallback onRemove;
 
   const _ExerciseRow({
+    super.key,
     required this.exercise,
+    required this.index,
     required this.isDark,
     required this.onRemove,
   });
@@ -794,9 +963,18 @@ class _ExerciseRow extends StatelessWidget {
     final textSecondary =
         isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 3),
+      padding: const EdgeInsets.symmetric(vertical: 1),
       child: Row(
         children: [
+          // Drag handle — buildDefaultDragHandles is off so the row owns it.
+          ReorderableDragStartListener(
+            index: index,
+            child: Padding(
+              padding: const EdgeInsets.only(right: 4),
+              child: Icon(Icons.drag_indicator_rounded,
+                  size: 18, color: textSecondary.withValues(alpha: 0.7)),
+            ),
+          ),
           if (exercise.unresolved)
             const Padding(
               padding: EdgeInsets.only(right: 6),
@@ -833,6 +1011,119 @@ class _ExerciseRow extends StatelessWidget {
             onPressed: onRemove,
           ),
         ],
+      ),
+    );
+  }
+}
+
+// ===========================================================================
+// Copy-day target picker — a small bottom sheet listing the other days the
+// current day's exercises can be copied into.
+// ===========================================================================
+
+class _CopyDayTargetSheet extends StatelessWidget {
+  final String sourceName;
+  final List<ProgramDay> targets;
+
+  const _CopyDayTargetSheet({
+    required this.sourceName,
+    required this.targets,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bg = isDark ? AppColors.background : AppColorsLight.background;
+    final textPrimary =
+        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textSecondary =
+        isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final accent = AccentColorScope.of(context).getColor(isDark);
+
+    return SafeArea(
+      top: false,
+      child: Container(
+        decoration: BoxDecoration(
+          color: bg,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(top: 8, bottom: 4),
+              child: Container(
+                width: 36,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: textSecondary.withValues(alpha: 0.3),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+              child: Text(
+                'Copy "$sourceName" into…',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
+                  color: textPrimary,
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+              child: Text(
+                'Its exercises are appended to the day you pick. Existing '
+                'exercises there are kept.',
+                style: TextStyle(
+                    fontSize: 12, height: 1.35, color: textSecondary),
+              ),
+            ),
+            // Bounded so a long cycle (e.g. a 14-day program) still scrolls.
+            Flexible(
+              child: ListView.builder(
+                shrinkWrap: true,
+                padding: const EdgeInsets.fromLTRB(8, 0, 8, 12),
+                itemCount: targets.length,
+                itemBuilder: (context, i) {
+                  final d = targets[i];
+                  final label =
+                      d.isRest && d.exercises.isEmpty ? 'Rest' : d.dayName;
+                  final exCount = d.exercises.length;
+                  return ListTile(
+                    leading: Icon(
+                      d.isRest && d.exercises.isEmpty
+                          ? Icons.bedtime_outlined
+                          : Icons.fitness_center_rounded,
+                      size: 20,
+                      color: accent,
+                    ),
+                    title: Text(
+                      'Day ${d.dayIndex + 1} · $label',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: textPrimary,
+                      ),
+                    ),
+                    subtitle: Text(
+                      exCount == 0
+                          ? 'Empty'
+                          : '$exCount exercise${exCount == 1 ? '' : 's'}',
+                      style:
+                          TextStyle(fontSize: 12, color: textSecondary),
+                    ),
+                    trailing: Icon(Icons.chevron_right_rounded,
+                        size: 20, color: textSecondary),
+                    onTap: () => Navigator.of(context).pop(d),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

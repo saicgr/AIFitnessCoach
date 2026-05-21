@@ -88,6 +88,9 @@ class _AutoTargetCell extends StatelessWidget {
   final bool isEasyMode;
   final bool isAmrap;
   final int? actualRir;
+  /// Raw set type string ('working' | 'warmup' | 'failure' | 'amrap'). When
+  /// it equals 'failure' the target-effort pill reads "Push to failure".
+  final String setType;
 
   const _AutoTargetCell({
     this.targetWeight,
@@ -112,6 +115,7 @@ class _AutoTargetCell extends StatelessWidget {
     this.isEasyMode = false,
     this.isAmrap = false,
     this.actualRir,
+    this.setType = 'working',
   });
 
   /// Format seconds as "45s" or "1:30" for ≥60s, "5 min" for clean minutes.
@@ -593,15 +597,22 @@ class _AutoTargetCell extends StatelessWidget {
             // Suppressed in Easy mode by the helper itself.
             Builder(builder: (context) {
               // Avoid duplicating the existing colored target-RIR pill: the
-              // helper renders an outline "Target RIR N" only when AMRAP (so
-              // the AMRAP override surfaces) or the logged value is set, in
-              // which case the filled chip is what we really need.
-              final showTargetCopy = isAmrap; // surfaces the "· AMRAP" override
+              // helper renders an outline target-effort pill only when AMRAP
+              // or a 'failure' set (so the "Push to failure" override
+              // surfaces) or the logged value is set, in which case the
+              // filled chip is what we really need.
+              final isFailureSet = setType.toLowerCase() == 'failure';
+              // surfaces the "· AMRAP" / "Push to failure" override
+              final showTargetCopy = isAmrap || isFailureSet;
               final pills = SetRowVisuals.buildRirPills(
                 isEasyMode: isEasyMode,
                 isAmrap: isAmrap,
                 targetRir: showTargetCopy ? targetRir : null,
                 actualRir: actualRir,
+                setType: setType,
+                // Live BuildContext from the Builder — makes the target-effort
+                // pill tappable and opens the plain-English explainer sheet.
+                context: context,
               );
               if (pills == null) return const SizedBox.shrink();
               return Padding(

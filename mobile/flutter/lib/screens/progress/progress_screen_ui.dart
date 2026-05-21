@@ -72,6 +72,8 @@ extension _ProgressScreenStateUI on _ProgressScreenState {
   Widget _buildAnalyticsNavigationSection() {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final isDark = theme.brightness == Brightness.dark;
+    final accent = AccentColorScope.of(context).getColor(isDark);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -105,6 +107,16 @@ extension _ProgressScreenStateUI on _ProgressScreenState {
               ),
             ),
           ],
+        ),
+        const SizedBox(height: 12),
+        // Full-width row beneath the 2-up grid — a third card squeezed into the
+        // Row above would be too narrow on small phones (iPhone SE).
+        _AnalyticsNavCard(
+          icon: Icons.trending_up,
+          title: 'Exercise Progressions',
+          subtitle: 'Master easier variants, then advance to harder ones',
+          color: accent,
+          onTap: () => context.push('/workout/exercise-progressions'),
         ),
       ],
     );
