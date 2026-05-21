@@ -486,7 +486,10 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
           _ => Icons.favorite_rounded,
         },
         title: hi.title,
-        subtitle: hi.message,
+        // The banner carries the BRIEF one-line version of the cross-domain
+        // game plan (Phase E4) — the full multi-part plan lives on the home
+        // [HealthInsightCard] and the deep-linked /health/sleep screen.
+        subtitle: hi.briefMessage,
         accentColor: AppColors.cyan,
         onTap: () {
           HapticService.light();

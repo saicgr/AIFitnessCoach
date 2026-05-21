@@ -67,20 +67,44 @@ class HealthInsight {
   /// Backend pattern key (e.g. `poor_night`, `rhr_elevated`, `behind`).
   final String pattern;
 
-  /// The human, grounded coaching message — rendered verbatim.
+  /// The full human, grounded coaching message — rendered verbatim on the
+  /// home card. For a `daily_briefing` this is the Phase-E4 multi-part
+  /// cross-domain game plan (sleep readout + workout + nutrition + one swap).
   final String message;
+
+  /// The brief one-line version of [message] — what the notification banner
+  /// carries (e.g. "Recovery 41 — lighter session planned, protein +15g. Tap
+  /// for today's plan."). Backend `brief_message`; falls back to [message]
+  /// for older payloads / non-briefing types where the two are identical.
+  final String briefMessage;
+
+  /// The domains the Phase-E4 game plan narrates (`workout`, `nutrition`).
+  /// Empty for a good-night briefing, an anomaly, or an activity nudge.
+  final List<String> domains;
 
   const HealthInsight({
     required this.type,
     required this.pattern,
     required this.message,
-  });
+    String? briefMessage,
+    this.domains = const [],
+  }) : briefMessage = briefMessage ?? message;
 
   factory HealthInsight.fromJson(Map<String, dynamic> json) {
+    final message = json['message'] as String? ?? '';
+    final brief = json['brief_message'] as String?;
+    final rawDomains = json['domains'];
     return HealthInsight(
       type: json['type'] as String? ?? '',
       pattern: json['pattern'] as String? ?? '',
-      message: json['message'] as String? ?? '',
+      message: message,
+      // Fall back to the full message when the backend omits brief_message
+      // (older payload, or a type that has no separate brief line).
+      briefMessage:
+          (brief != null && brief.trim().isNotEmpty) ? brief : message,
+      domains: rawDomains is List
+          ? rawDomains.map((e) => e.toString()).toList(growable: false)
+          : const [],
     );
   }
 
@@ -88,6 +112,8 @@ class HealthInsight {
         'type': type,
         'pattern': pattern,
         'message': message,
+        'brief_message': briefMessage,
+        'domains': domains,
       };
 
   /// Priority for picking the day's single message — lower wins.

@@ -66,7 +66,11 @@ class HealthInsightCard extends ConsumerWidget {
                 NotificationItem(
                   id: insight.notifId,
                   title: insight.title,
-                  body: insight.message,
+                  // The bell is a compact inbox — it carries the BRIEF
+                  // one-line version of the game plan, matching the coaching
+                  // push (Phase E4). The full multi-part plan is on this card
+                  // and the deep-linked /health/sleep screen.
+                  body: insight.briefMessage,
                   type: BannerNotificationMapper.healthCoachingType,
                   timestamp: DateTime.now(),
                 ),
@@ -96,6 +100,30 @@ class _HealthInsightCardBody extends ConsumerWidget {
         return Icons.directions_walk_rounded;
       default:
         return Icons.favorite_rounded;
+    }
+  }
+
+  /// Icon for one Phase-E4 game-plan domain chip.
+  static IconData _domainIcon(String domain) {
+    switch (domain) {
+      case 'workout':
+        return Icons.fitness_center_rounded;
+      case 'nutrition':
+        return Icons.restaurant_rounded;
+      default:
+        return Icons.insights_rounded;
+    }
+  }
+
+  /// Human label for one Phase-E4 game-plan domain chip.
+  static String _domainLabel(String domain) {
+    switch (domain) {
+      case 'workout':
+        return 'Training';
+      case 'nutrition':
+        return 'Nutrition';
+      default:
+        return domain;
     }
   }
 
@@ -173,7 +201,9 @@ class _HealthInsightCardBody extends ConsumerWidget {
               ],
             ),
             const SizedBox(height: 10),
-            // ── Body: the coaching message, verbatim ──
+            // ── Body: the full coaching message, verbatim. For a poor-night
+            //    daily briefing this is the Phase-E4 cross-domain game plan
+            //    (sleep readout + workout + nutrition + one concrete swap). ──
             Text(
               insight.message,
               style: TextStyle(
@@ -182,6 +212,31 @@ class _HealthInsightCardBody extends ConsumerWidget {
                 color: textMuted,
               ),
             ),
+            // ── Game-plan domain chips — only when the briefing narrates a
+            //    cross-domain plan (Phase E4). Shows Sleep + each narrated
+            //    domain so the card reads as one connected plan, not a tip. ──
+            if (insight.domains.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _DomainChip(
+                    icon: Icons.bedtime_rounded,
+                    label: 'Sleep',
+                    accent: accent,
+                    isDark: isDark,
+                  ),
+                  for (final domain in insight.domains)
+                    _DomainChip(
+                      icon: _domainIcon(domain),
+                      label: _domainLabel(domain),
+                      accent: accent,
+                      isDark: isDark,
+                    ),
+                ],
+              ),
+            ],
             const SizedBox(height: 12),
             // ── Footer: deep-link affordance ──
             Row(
@@ -189,7 +244,11 @@ class _HealthInsightCardBody extends ConsumerWidget {
                 Text(
                   insight.type == 'health_anomaly'
                       ? 'View health details'
-                      : 'View your readiness',
+                      // A cross-domain game plan deep-links to the expanded
+                      // plan on /health/sleep (Phase E4).
+                      : insight.domains.isNotEmpty
+                          ? 'View your full plan'
+                          : 'View your readiness',
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
@@ -202,6 +261,52 @@ class _HealthInsightCardBody extends ConsumerWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// A small labeled chip for one domain of the Phase-E4 cross-domain game plan
+/// (Sleep / Training / Nutrition) — surfaces, at a glance, that the briefing
+/// is one connected plan spanning several domains.
+class _DomainChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color accent;
+  final bool isDark;
+
+  const _DomainChip({
+    required this.icon,
+    required this.label,
+    required this.accent,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final textColor =
+        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: accent.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: accent.withValues(alpha: 0.25)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 13, color: accent),
+          const SizedBox(width: 5),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: textColor,
+            ),
+          ),
+        ],
       ),
     );
   }

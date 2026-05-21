@@ -5,12 +5,29 @@ Turns the deterministic health snapshot from Phase B1
 (``services/user_context/health_activity.py``) into three kinds of *proactive*
 coaching messages:
 
-  1. ``build_daily_briefing``   — the morning readiness briefing. Adapts to a
-     good vs poor night, the recovery tier, and today's scheduled workout.
+  1. ``build_daily_briefing``   — the morning readiness briefing, upgraded by
+     Phase E4 into ONE cross-domain daily game plan. It adapts to a good vs
+     poor night and, on a recovery-relevant day, NARRATES today's deterministic
+     workout adjustment (``readiness_utils.get_recovery_workout_signal``) AND
+     the deterministic nutrition adjustment
+     (``sleep_aware_nutrition.adjust_targets_for_recovery``) plus one concrete
+     swap suggestion — all in a single connected plan. It produces BOTH a full
+     multi-part ``message`` (for the home card) and a brief one-line
+     ``brief_message`` (for the notification banner).
   2. ``build_health_anomaly``   — a resting-HR anomaly alert (informs, never
      diagnoses).
   3. ``build_activity_nudge``   — an activity / step-goal nudge (behind, almost
      there, or goal met).
+
+Phase E4 — the cross-domain game plan (edge case G38):
+  * The briefing does NOT re-derive the workout or nutrition adjustment — those
+    are produced deterministically upstream (Phase B3 + E1). The briefing only
+    NARRATES the numbers they already computed.
+  * A user missing a domain (no scheduled workout, or no nutrition targets) =>
+    the plan covers only the domains with data, with NO empty section.
+  * The plan never narrates a prospective workout change for a workout the user
+    has already manually started or completed today — it acknowledges it
+    instead (the deterministic generation never touched a started workout).
 
 Design rules (per CLAUDE.md + the approved plan + the feedback memory):
 
@@ -111,6 +128,63 @@ _BRIEFING_NO_SLEEP: List[str] = [
     "plan — go with {workout_phrase} and stop early if it feels off.",
     "No sleep data this morning. Your {workout_phrase} is unchanged; the "
     "Sleep Foundation's advice still holds — aim for 7+ hours tonight.",
+]
+
+
+# --- Cross-domain game plan (Phase E4) ---------------------------------------
+# These render the SECOND part of a poor-night briefing — the connected
+# workout + nutrition plan. The first part (the poor-night sleep readout) still
+# comes from _BRIEFING_POOR_NIGHT; this part narrates the two deterministic
+# adjustments. {plan_body} is assembled from the per-domain fragments below.
+_GAME_PLAN_INTRO: List[str] = [
+    "Here's today's plan: {plan_body}",
+    "So today's game plan: {plan_body}",
+    "Here's how we've adapted today: {plan_body}",
+    "Today's adjusted plan: {plan_body}",
+]
+
+# Workout-domain fragment — narrates Phase B3's deterministic adjustment.
+# {volume_pct} is the integer % volume trimmed (e.g. 30 for a 0.70x multiplier).
+_GAME_PLAN_WORKOUT: List[str] = [
+    "we've trimmed today's session about {volume_pct}%",
+    "today's session is eased by roughly {volume_pct}%",
+    "we've pulled today's training volume down ~{volume_pct}%",
+    "today's workout is dialed back about {volume_pct}%",
+]
+
+# Workout fragment when the session is swapped toward mobility (low tier).
+_GAME_PLAN_WORKOUT_MOBILITY: List[str] = [
+    "we've swapped today's session toward mobility and light recovery work",
+    "today's training leans into mobility and easy recovery movement",
+    "we've shifted today to gentle mobility and recovery work",
+    "today's plan favors mobility and light, joint-friendly movement",
+]
+
+# Nutrition-domain fragment — narrates Phase E1's deterministic target shift.
+# {protein_delta} is the grams of protein added.
+_GAME_PLAN_NUTRITION: List[str] = [
+    "protein is up {protein_delta}g with calories front-loaded earlier in the day",
+    "we've added {protein_delta}g of protein and shifted calories toward earlier meals",
+    "protein target rises {protein_delta}g and the day's calories lean earlier",
+    "today's targets add {protein_delta}g of protein and front-load your calories",
+]
+
+# Nutrition fragment when there is no protein target to scale but recovery is
+# still low — only the timing guidance applies.
+_GAME_PLAN_NUTRITION_TIMING_ONLY: List[str] = [
+    "lean on protein and front-load your calories earlier in the day",
+    "keep protein high and shift more of the day's food to earlier meals",
+    "favor protein and eat the bulk of your calories before mid-afternoon",
+    "prioritize protein and push your calories toward breakfast and lunch",
+]
+
+# One concrete swap suggestion — the actionable single change. Caffeine-timing
+# is the highest-leverage swap on a poor-recovery day (Sleep Foundation).
+_GAME_PLAN_SWAP: List[str] = [
+    "One easy win: skip the afternoon coffee so tonight's sleep can recover the deficit.",
+    "One concrete swap: trade the afternoon caffeine for water — it protects tonight's sleep.",
+    "Smallest high-impact change: cut the late-day coffee and let tonight's sleep rebound.",
+    "One thing to swap: hold off on afternoon caffeine so you can bank a better night.",
 ]
 
 
@@ -226,6 +300,150 @@ def _extract_numbers(text: str) -> List[str]:
     return re.findall(r"\d+", text or "")
 
 
+def _workout_already_engaged(workout: Optional[Dict[str, Any]]) -> bool:
+    """True when today's workout has been manually started or completed.
+
+    Edge case G38 — the briefing must never narrate a *prospective* workout
+    change ("we've trimmed today's session") for a workout the user has
+    already begun or finished: the deterministic generation never touched it.
+    When this is True the briefing acknowledges the workout instead of
+    claiming an adjustment to it.
+    """
+    if not workout:
+        return False
+    if workout.get("is_completed"):
+        return True
+    status = str(workout.get("status") or "").strip().lower()
+    return status in ("completed", "in_progress")
+
+
+def _build_game_plan(
+    recovery_signal: Optional[Dict[str, Any]],
+    nutrition_adjustment: Optional[Dict[str, Any]],
+    workout: Optional[Dict[str, Any]],
+    seed: int,
+) -> Dict[str, Any]:
+    """Assemble the Phase-E4 cross-domain game plan from the two deterministic
+    upstream adjustments.
+
+    The briefing does NOT compute either adjustment — Phase B3
+    (``get_recovery_workout_signal``) and Phase E1
+    (``adjust_targets_for_recovery``) already did. This only NARRATES them.
+
+    Edge case G38: a missing domain is simply omitted — no empty section. A
+    workout the user already started/completed is acknowledged, never narrated
+    as a prospective change.
+
+    Returns:
+        ``{"plan_sentence": str, "brief_clauses": [str], "domains": [str],
+        "facts": {...}}``. ``plan_sentence`` is the multi-part plan paragraph
+        for the home card (empty string when no domain has an adjustment);
+        ``brief_clauses`` are the short clauses the one-line banner version
+        is built from; ``domains`` lists which domains were narrated.
+    """
+    workout_engaged = _workout_already_engaged(workout)
+    fragments: List[str] = []
+    brief_clauses: List[str] = []
+    domains: List[str] = []
+    facts: Dict[str, Any] = {}
+
+    # --- workout domain ------------------------------------------------------
+    # Narrated only when (a) the recovery signal applies AND (b) the user has
+    # not already started/completed today's session (edge case G38).
+    rs = recovery_signal or {}
+    if rs.get("applies") and not workout_engaged:
+        adjustment = rs.get("adjustment") or {}
+        volume_mult = adjustment.get("volume_multiplier", rs.get("volume_multiplier"))
+        swap_to_mobility = bool(adjustment.get("swap_to_mobility"))
+        if swap_to_mobility:
+            fragments.append(_pick(_GAME_PLAN_WORKOUT_MOBILITY, seed, salt=4))
+            brief_clauses.append("mobility-focused day")
+        else:
+            # volume_pct = how much volume was REMOVED, e.g. 0.70x -> 30%.
+            try:
+                volume_pct = int(round((1.0 - float(volume_mult)) * 100))
+            except (TypeError, ValueError):
+                volume_pct = 0
+            if volume_pct > 0:
+                fragments.append(
+                    _pick(_GAME_PLAN_WORKOUT, seed, salt=4).format(
+                        volume_pct=volume_pct
+                    )
+                )
+                brief_clauses.append("lighter session planned")
+                facts["workout_volume_pct"] = volume_pct
+        domains.append("workout")
+        facts["recovery_tier"] = rs.get("tier")
+    elif rs.get("applies") and workout_engaged:
+        # The workout is already underway/done — acknowledge, never re-plan it.
+        fragments.append(
+            "today's session is already underway, so listen to your body and "
+            "keep the effort easy"
+        )
+        brief_clauses.append("ease back on today's session")
+        domains.append("workout")
+
+    # --- nutrition domain ----------------------------------------------------
+    na = nutrition_adjustment or {}
+    na_reason = na.get("reason")
+    if na_reason == "low_recovery":
+        protein_delta = na.get("protein_delta_g") or 0
+        if na.get("adjusted") and protein_delta > 0:
+            fragments.append(
+                _pick(_GAME_PLAN_NUTRITION, seed, salt=5).format(
+                    protein_delta=protein_delta
+                )
+            )
+            brief_clauses.append(f"protein +{protein_delta}g")
+            facts["protein_delta_g"] = protein_delta
+        else:
+            # Recovery is low but there was no protein target to scale (or a
+            # dietary restriction suppressed the bump) — only timing guidance.
+            fragments.append(_pick(_GAME_PLAN_NUTRITION_TIMING_ONLY, seed, salt=5))
+            brief_clauses.append("front-load your calories")
+        domains.append("nutrition")
+
+    if not fragments:
+        return {
+            "plan_sentence": "",
+            "brief_clauses": [],
+            "domains": [],
+            "facts": facts,
+        }
+
+    # Join the per-domain fragments into one natural sentence + the swap line.
+    # The fragments carry no terminal punctuation, so the joined plan body is
+    # closed with a period before the (already-punctuated) swap line.
+    plan_body = _join_clauses(fragments)
+    plan_intro = _pick(_GAME_PLAN_INTRO, seed, salt=6).format(plan_body=plan_body)
+    plan_intro = plan_intro.rstrip()
+    if not plan_intro.endswith((".", "!", "?")):
+        plan_intro += "."
+    # The concrete swap is appended only when at least one real adjustment was
+    # narrated — it is the actionable single change tying the plan together.
+    swap = _pick(_GAME_PLAN_SWAP, seed, salt=7)
+    plan_sentence = f"{plan_intro} {swap}"
+
+    return {
+        "plan_sentence": plan_sentence,
+        "brief_clauses": brief_clauses,
+        "domains": domains,
+        "facts": facts,
+    }
+
+
+def _join_clauses(clauses: List[str]) -> str:
+    """Join 1-N clauses into a natural list ("a", "a and b", "a, b and c")."""
+    clauses = [c for c in clauses if c]
+    if not clauses:
+        return ""
+    if len(clauses) == 1:
+        return clauses[0]
+    if len(clauses) == 2:
+        return f"{clauses[0]} and {clauses[1]}"
+    return ", ".join(clauses[:-1]) + f" and {clauses[-1]}"
+
+
 # =============================================================================
 # Message builders — each returns a dict; ``has_message: False`` is a CLEAN
 # empty state, never an error.
@@ -240,19 +458,42 @@ def build_daily_briefing(
     snapshot: Dict[str, Any],
     today_workout: Optional[Dict[str, Any]] = None,
     day: Optional[date] = None,
+    recovery_signal: Optional[Dict[str, Any]] = None,
+    nutrition_adjustment: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
-    """Build the morning readiness briefing from a Phase-B1 health snapshot.
+    """Build the morning readiness briefing — a cross-domain daily game plan.
+
+    Phase E4: on a poor-recovery day the briefing is ONE connected plan — the
+    sleep readout, then today's workout adjustment, the nutrition adjustment,
+    and one concrete swap. It NARRATES the two deterministic upstream
+    adjustments (``recovery_signal`` from Phase B3, ``nutrition_adjustment``
+    from Phase E1); it never re-derives them.
 
     Args:
         snapshot: the dict from ``get_health_activity_snapshot``.
-        today_workout: today's scheduled workout row (``{name, type, ...}``) or
-            None for a rest day.
+        today_workout: today's scheduled workout row
+            (``{name, type, is_completed, status, ...}``) or None for a rest
+            day.
         day: the date to seed variant choice with (defaults to today UTC).
+        recovery_signal: the dict from
+            ``readiness_utils.get_recovery_workout_signal`` — its ``adjustment``
+            payload drives the workout part of the game plan. ``None`` or
+            ``{"applies": False}`` => no workout section (edge case G38).
+        nutrition_adjustment: the dict from
+            ``sleep_aware_nutrition.adjust_targets_for_recovery`` — drives the
+            nutrition part. ``None`` or a non-``low_recovery`` reason => no
+            nutrition section (edge case G38).
 
     Returns:
         ``{"has_message": True, "type": "daily_briefing", "pattern": ...,
-        "message": str, "facts": {...}}`` — or ``_no_message(reason)`` when
-        there is no usable data (no wearable / no consent).
+        "message": str, "brief_message": str, "facts": {...}, "domains":
+        [...]}`` — or ``_no_message(reason)`` when there is no usable data
+        (no wearable / no consent).
+
+        ``message`` is the full multi-part game plan for the home card;
+        ``brief_message`` is a one-line version for the notification banner.
+        Both are present for every pattern (for a good night they are the
+        same single sentence — there is no game plan to narrate).
 
     Patterns: ``good_night`` | ``poor_night`` | ``no_sleep`` (edge case F31 —
     a no-sleep day still gets a lighter activity-only briefing, never skipped).
@@ -271,11 +512,15 @@ def build_daily_briefing(
     if not sleep_usable:
         template = _pick(_BRIEFING_NO_SLEEP, seed, salt=0)
         message = template.format(workout_phrase=workout_phrase)
+        # No sleep => no recovery read => no recovery-driven workout/nutrition
+        # adjustment to narrate. The brief version is the same single line.
         return {
             "has_message": True,
             "type": "daily_briefing",
             "pattern": "no_sleep",
             "message": message,
+            "brief_message": message,
+            "domains": [],
             "facts": {
                 "workout": workout_phrase,
                 "recovery_score": None,
@@ -303,11 +548,15 @@ def build_daily_briefing(
             recovery=recovery_score if recovery_score is not None else 80,
             workout_phrase=workout_phrase,
         )
+        # A good night needs no cross-domain adjustment — there is nothing to
+        # trim or re-allocate. The brief version is the same single sentence.
         return {
             "has_message": True,
             "type": "daily_briefing",
             "pattern": "good_night",
             "message": message,
+            "brief_message": message,
+            "domains": [],
             "facts": {
                 "sleep_minutes": total,
                 "recovery_score": recovery_score,
@@ -317,9 +566,40 @@ def build_daily_briefing(
 
     # --- poor night ----------------------------------------------------------
     # Short sleep OR a low recovery score -> trim-the-session briefing.
-    # Build the workout sentence from the recovery adjustment so the briefing
-    # names a concrete change, not just "go easy".
-    if adjustment and recovery_score is not None and recovery_score <= 60:
+    safe_adjustment = adjustment or "keep today's effort easy and rest longer"
+    recovery_display = (
+        recovery_score
+        if recovery_score is not None
+        else _poor_recovery_fallback(total)
+    )
+
+    # --- Phase E4: the cross-domain game plan --------------------------------
+    # Narrate today's deterministic workout + nutrition adjustments as ONE
+    # connected plan. A domain with no adjustment is simply omitted (G38).
+    # Computed BEFORE the sleep readout so the {workout_sentence} placeholder
+    # can defer the concrete numbers to the game plan when one will follow.
+    game_plan = _build_game_plan(
+        recovery_signal=recovery_signal,
+        nutrition_adjustment=nutrition_adjustment,
+        workout=today_workout,
+        seed=seed,
+    )
+
+    # Build the workout sentence. When the game plan will narrate a concrete
+    # workout adjustment below, keep this a soft lead-in (the numbers come in
+    # the plan); otherwise name a lighter session here so the readout stands
+    # alone.
+    workout_section_in_plan = "workout" in game_plan["domains"]
+    nutrition_section_in_plan = "nutrition" in game_plan["domains"]
+    if workout_section_in_plan:
+        # A soft lead-in — the concrete numbers are narrated in the game plan.
+        if nutrition_section_in_plan:
+            workout_sentence = (
+                f"We've adapted {workout_phrase} and your nutrition to match."
+            )
+        else:
+            workout_sentence = f"We've adapted {workout_phrase} to match."
+    elif adjustment and recovery_score is not None and recovery_score <= 60:
         workout_sentence = (
             f"For {workout_phrase}, expect a lighter session today."
         )
@@ -328,27 +608,62 @@ def build_daily_briefing(
             f"Take {workout_phrase} at a comfortable effort and stop early "
             f"if you need to."
         )
-    safe_adjustment = adjustment or "keep today's effort easy and rest longer"
+
     template = _pick(_BRIEFING_POOR_NIGHT, seed, salt=1)
-    message = template.format(
+    sleep_part = template.format(
         sleep_h=sleep_h,
         sleep_m=sleep_m,
-        recovery=recovery_score if recovery_score is not None else _poor_recovery_fallback(total),
+        recovery=recovery_display,
         adjustment=safe_adjustment,
         workout_sentence=workout_sentence,
     )
+
+    facts: Dict[str, Any] = {
+        "sleep_minutes": total,
+        "recovery_score": recovery_score,
+        "adjustment": safe_adjustment,
+        "workout": workout_phrase,
+    }
+    facts.update(game_plan.get("facts") or {})
+
+    if game_plan["plan_sentence"]:
+        # Full home-card message: sleep readout + the connected game plan.
+        message = f"{sleep_part} {game_plan['plan_sentence']}"
+        # Brief one-line banner version: "Recovery 41 — lighter day planned,
+        # protein +15g, tap for your plan". Built from the short clauses, so
+        # it never just truncates the long copy.
+        brief_message = _build_brief_line(
+            recovery_display, game_plan["brief_clauses"]
+        )
+    else:
+        # No upstream adjustment to narrate (e.g. recovery scored low from
+        # sleep but no wearable recovery signal / no nutrition targets) — the
+        # briefing is still the poor-night readout. Brief == full.
+        message = sleep_part
+        brief_message = sleep_part
+
     return {
         "has_message": True,
         "type": "daily_briefing",
         "pattern": "poor_night",
         "message": message,
-        "facts": {
-            "sleep_minutes": total,
-            "recovery_score": recovery_score,
-            "adjustment": safe_adjustment,
-            "workout": workout_phrase,
-        },
+        "brief_message": brief_message,
+        "domains": game_plan["domains"],
+        "facts": facts,
     }
+
+
+def _build_brief_line(recovery_display: int, brief_clauses: List[str]) -> str:
+    """Build the one-line banner version of the cross-domain game plan.
+
+    e.g. ``"Recovery 41 — lighter session planned, protein +15g. Tap for
+    today's plan."`` The clauses come straight from ``_build_game_plan`` so
+    the brief line is a real summary, not a truncation of the long copy.
+    """
+    if not brief_clauses:
+        return f"Recovery {recovery_display}. Tap for today's plan."
+    body = _join_clauses(brief_clauses)
+    return f"Recovery {recovery_display} — {body}. Tap for today's plan."
 
 
 def _poor_recovery_fallback(total_minutes: int) -> int:

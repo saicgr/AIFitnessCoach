@@ -1053,16 +1053,20 @@ async def _health_snapshot(request: Request, db, user_id: str) -> Dict[str, Any]
 
 
 def _today_workout_for(request: Request, db, user_id: str) -> Optional[Dict[str, Any]]:
-    """Return today's scheduled workout row (``{name, type, ...}``) or None.
+    """Return today's scheduled workout row (``{name, type, status, ...}``) or
+    None.
 
-    Used to make the daily briefing name the actual session. A rest day (no
-    row) is fine — the builder falls back to a generic phrase.
+    Used to make the daily briefing name the actual session. ``status`` and
+    ``is_completed`` let the Phase-E4 game plan tell whether the user has
+    already started/completed today's workout — it must not narrate a
+    prospective adjustment for a session already underway (edge case G38). A
+    rest day (no row) is fine — the builder falls back to a generic phrase.
     """
     try:
         today = user_today_date(request, db, user_id)
         rows = (
             db.client.table("workouts")
-            .select("id, name, type, is_completed, scheduled_date")
+            .select("id, name, type, is_completed, status, scheduled_date")
             .eq("user_id", user_id)
             .eq("scheduled_date", today.isoformat())
             .limit(1)
@@ -1071,6 +1075,76 @@ def _today_workout_for(request: Request, db, user_id: str) -> Optional[Dict[str,
         return rows.data[0] if rows.data else None
     except Exception as e:
         logger.warning(f"insights: today-workout lookup failed for {user_id}: {e}")
+        return None
+
+
+async def _recovery_signal_for(user_id: str) -> Optional[Dict[str, Any]]:
+    """Resolve the Phase-B3 deterministic recovery workout signal for the user.
+
+    The Phase-E4 game plan NARRATES this signal — it never re-derives the
+    adjustment. Any failure yields ``None`` and the briefing simply omits the
+    workout section (edge case G38), never an error.
+    """
+    try:
+        from api.v1.workouts.readiness_utils import get_recovery_workout_signal
+
+        return await get_recovery_workout_signal(user_id)
+    except Exception as e:
+        logger.warning(f"insights: recovery signal lookup failed for {user_id}: {e}")
+        return None
+
+
+def _nutrition_adjustment_for(
+    db, user_id: str, recovery_signal: Optional[Dict[str, Any]]
+) -> Optional[Dict[str, Any]]:
+    """Resolve the Phase-E1 deterministic recovery-adjusted nutrition targets.
+
+    Reuses the recovery snapshot's ``recovery`` sub-dict (carried on the Phase-
+    B3 ``recovery_signal``'s ``adjustment`` payload) so the briefing narrates
+    the SAME numbers ``adjust_targets_for_recovery`` produced — it does not
+    re-derive them. Any failure / no targets yields ``None`` and the briefing
+    omits the nutrition section (edge case G38).
+    """
+    try:
+        from services.sleep_aware_nutrition import adjust_targets_for_recovery
+
+        # The recovery sub-dict adjust_targets_for_recovery expects is
+        # {"score", "tier", ...}; the Phase-B3 signal carries tier + score on
+        # its top level and inside `adjustment`. Build the minimal dict here.
+        if not recovery_signal or not recovery_signal.get("applies"):
+            recovery = None
+        else:
+            recovery = {
+                "score": recovery_signal.get("recovery_score"),
+                "tier": recovery_signal.get("tier"),
+                "volume_multiplier": recovery_signal.get("volume_multiplier"),
+                "adjustment": (recovery_signal.get("adjustment") or {}).get(
+                    "adjustment_text"
+                ),
+            }
+
+        base_targets = db.get_user_nutrition_targets(user_id)
+
+        # Dietary restrictions gate the protein bump (renal / low-protein).
+        dietary_restrictions: Optional[list] = None
+        try:
+            user = db.get_user(user_id)
+            if user:
+                dr = user.get("dietary_restrictions") or (
+                    user.get("preferences") or {}
+                ).get("dietary_restrictions")
+                if isinstance(dr, list):
+                    dietary_restrictions = dr
+        except Exception:
+            dietary_restrictions = None
+
+        return adjust_targets_for_recovery(
+            base_targets, recovery, dietary_restrictions=dietary_restrictions
+        )
+    except Exception as e:
+        logger.warning(
+            f"insights: nutrition adjustment lookup failed for {user_id}: {e}"
+        )
         return None
 
 
@@ -1086,21 +1160,44 @@ async def get_daily_briefing(
     ),
     current_user: dict = Depends(get_current_user),
 ):
-    """Morning readiness briefing — adapts to a good vs poor night, the recovery
-    tier, and today's scheduled workout.
+    """Morning readiness briefing — the Phase-E4 cross-domain daily game plan.
+
+    On a poor-recovery day this is ONE connected plan: the sleep readout, then
+    today's deterministic workout adjustment (Phase B3) and nutrition
+    adjustment (Phase E1) plus one concrete swap — the briefing NARRATES those
+    two upstream adjustments, it never re-derives them.
 
     Returns ``{"has_message": True, "type": "daily_briefing", "pattern": ...,
-    "message": str, "facts": {...}}`` — or ``{"has_message": False, "reason":
-    ...}`` for a user with no wearable / no consent (a clean empty state)."""
+    "message": str, "brief_message": str, "domains": [...], "facts": {...}}``.
+    ``message`` is the full multi-part game plan for the home card;
+    ``brief_message`` is the one-line version for the notification banner.
+    A user with no wearable / no consent gets a clean ``{"has_message": False,
+    "reason": ...}`` empty state."""
     try:
         from services.health_coaching import build_daily_briefing, rephrase_with_gemini
 
         db = get_supabase_db()
         snapshot = await _health_snapshot(request, db, user_id)
         today_workout = _today_workout_for(request, db, user_id)
-        result = build_daily_briefing(snapshot, today_workout=today_workout)
+
+        # The two deterministic upstream adjustments the game plan narrates.
+        # Both degrade to None cleanly — the briefing then omits that domain
+        # (edge case G38: no empty section).
+        recovery_signal = await _recovery_signal_for(user_id)
+        nutrition_adjustment = _nutrition_adjustment_for(
+            db, user_id, recovery_signal
+        )
+
+        result = build_daily_briefing(
+            snapshot,
+            today_workout=today_workout,
+            recovery_signal=recovery_signal,
+            nutrition_adjustment=nutrition_adjustment,
+        )
 
         if result.get("has_message") and rephrase:
+            # Smooth the full message; the brief banner line stays
+            # deterministic (it is a structured one-liner, not prose).
             result["message"] = await rephrase_with_gemini(
                 result["message"], gemini_service
             )

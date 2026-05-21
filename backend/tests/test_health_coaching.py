@@ -144,6 +144,226 @@ class TestDailyBriefing:
         }
         assert len(variants) > 1
 
+    def test_briefing_always_carries_brief_message(self):
+        """Every pattern returns both a full message and a brief_message."""
+        for snap, kwargs in (
+            (_snapshot(sleep_minutes=470, recovery_score=85), {}),
+            (_snapshot(sleep_minutes=240, recovery_score=38,
+                       recovery_adjustment="-10% load"), {}),
+            (_snapshot(steps_today=3000), {}),
+        ):
+            r = build_daily_briefing(snap, day=_DAY, **kwargs)
+            assert r["has_message"] is True
+            assert isinstance(r["message"], str) and r["message"]
+            assert isinstance(r["brief_message"], str) and r["brief_message"]
+            assert "domains" in r
+
+
+# =============================================================================
+# Phase E4 — cross-domain daily game plan
+# =============================================================================
+
+def _recovery_signal(
+    *, tier="compromised", recovery_score=41, volume_multiplier=0.70,
+    swap_to_mobility=False, applies=True,
+):
+    """Build a Phase-B3 get_recovery_workout_signal-shaped dict."""
+    if not applies:
+        return {"applies": False}
+    return {
+        "applies": True,
+        "tier": tier,
+        "recovery_score": recovery_score,
+        "volume_multiplier": volume_multiplier,
+        "adjustment": {
+            "tier": tier,
+            "recovery_score": recovery_score,
+            "volume_multiplier": volume_multiplier,
+            "swap_to_mobility": swap_to_mobility,
+            "adjustment_text": "-10% load, no failure/drop/AMRAP sets",
+        },
+        "prompt_context": "...",
+    }
+
+
+def _nutrition_adjustment(
+    *, reason="low_recovery", adjusted=True, protein_delta_g=15, tier="compromised",
+):
+    """Build a Phase-E1 adjust_targets_for_recovery-shaped dict."""
+    return {
+        "adjusted": adjusted,
+        "reason": reason,
+        "tier": tier,
+        "targets": {"daily_protein_target_g": 165},
+        "calorie_floored": False,
+        "craving_heads_up": "...",
+        "protein_delta_g": protein_delta_g,
+    }
+
+
+class TestCrossDomainGamePlan:
+    def test_low_recovery_plan_names_all_three_domains(self):
+        """A low-recovery user's briefing narrates sleep + workout + nutrition."""
+        snap = _snapshot(sleep_minutes=300, recovery_score=41,
+                         recovery_adjustment="-10% load")
+        r = build_daily_briefing(
+            snap,
+            today_workout={"name": "Push Day", "status": "scheduled"},
+            day=_DAY,
+            recovery_signal=_recovery_signal(),
+            nutrition_adjustment=_nutrition_adjustment(),
+        )
+        assert r["pattern"] == "poor_night"
+        assert sorted(r["domains"]) == ["nutrition", "workout"]
+        msg = r["message"]
+        # Sleep domain — the recovery score is narrated.
+        assert "41" in msg
+        # Workout domain — a volume % is narrated (0.70x -> 30%).
+        assert "30%" in msg
+        # Nutrition domain — the protein delta is narrated.
+        assert "15g" in msg
+        # One concrete swap is appended.
+        assert "coffee" in msg.lower() or "caffeine" in msg.lower()
+
+    def test_brief_message_is_one_line_with_key_numbers(self):
+        snap = _snapshot(sleep_minutes=300, recovery_score=41)
+        r = build_daily_briefing(
+            snap,
+            today_workout={"name": "Push Day"},
+            day=_DAY,
+            recovery_signal=_recovery_signal(),
+            nutrition_adjustment=_nutrition_adjustment(protein_delta_g=15),
+        )
+        brief = r["brief_message"]
+        # Brief carries recovery + protein delta and is shorter than the full.
+        assert "41" in brief
+        assert "15g" in brief
+        assert len(brief) < len(r["message"])
+        assert "\n" not in brief
+
+    def test_missing_nutrition_data_no_empty_section(self):
+        """Edge case G38 — no nutrition data => plan covers only the domains
+        with data, no empty section."""
+        snap = _snapshot(sleep_minutes=300, recovery_score=41)
+        r = build_daily_briefing(
+            snap,
+            today_workout={"name": "Push Day"},
+            day=_DAY,
+            recovery_signal=_recovery_signal(),
+            nutrition_adjustment=None,
+        )
+        assert r["domains"] == ["workout"]
+        msg = r["message"].lower()
+        # No nutrition wording leaks in.
+        assert "protein" not in msg
+        # Workout section is still present.
+        assert "30%" in r["message"]
+
+    def test_missing_workout_data_no_empty_section(self):
+        """No scheduled workout / no recovery signal => no workout section."""
+        snap = _snapshot(sleep_minutes=300, recovery_score=41)
+        r = build_daily_briefing(
+            snap,
+            today_workout=None,
+            day=_DAY,
+            recovery_signal=_recovery_signal(applies=False),
+            nutrition_adjustment=_nutrition_adjustment(),
+        )
+        assert r["domains"] == ["nutrition"]
+        assert "15g" in r["message"]
+
+    def test_no_upstream_adjustments_falls_back_to_sleep_readout(self):
+        """Neither domain has an adjustment => plain poor-night readout, and
+        brief == full."""
+        snap = _snapshot(sleep_minutes=300, recovery_score=41,
+                         recovery_adjustment="-10% load")
+        r = build_daily_briefing(
+            snap,
+            today_workout={"name": "Push Day"},
+            day=_DAY,
+            recovery_signal=None,
+            nutrition_adjustment=None,
+        )
+        assert r["domains"] == []
+        assert r["pattern"] == "poor_night"
+        assert r["message"] == r["brief_message"]
+        assert "41" in r["message"]
+
+    def test_manually_started_workout_is_not_re_planned(self):
+        """Edge case G38 — a workout already started/completed is acknowledged,
+        never narrated as a prospective trim."""
+        snap = _snapshot(sleep_minutes=300, recovery_score=41)
+        for workout in (
+            {"name": "Push Day", "status": "in_progress"},
+            {"name": "Push Day", "is_completed": True},
+        ):
+            r = build_daily_briefing(
+                snap,
+                today_workout=workout,
+                day=_DAY,
+                recovery_signal=_recovery_signal(),
+                nutrition_adjustment=_nutrition_adjustment(),
+            )
+            # The workout domain is still acknowledged...
+            assert "workout" in r["domains"]
+            # ...but no prospective "trimmed 30%" claim is made.
+            assert "30%" not in r["message"]
+            assert "underway" in r["message"].lower()
+
+    def test_mobility_swap_workout_narration(self):
+        """A low-tier mobility swap is narrated as a mobility day, not a %."""
+        snap = _snapshot(sleep_minutes=240, recovery_score=22)
+        r = build_daily_briefing(
+            snap,
+            today_workout={"name": "Leg Day"},
+            day=_DAY,
+            recovery_signal=_recovery_signal(
+                tier="low", recovery_score=22, volume_multiplier=0.55,
+                swap_to_mobility=True,
+            ),
+            nutrition_adjustment=_nutrition_adjustment(tier="low",
+                                                       protein_delta_g=22),
+        )
+        assert "workout" in r["domains"]
+        assert "mobility" in r["message"].lower()
+
+    def test_nutrition_timing_only_when_no_protein_target(self):
+        """A low-recovery nutrition adjustment with reason=low_recovery but
+        adjusted=False (no protein target) still narrates timing guidance."""
+        snap = _snapshot(sleep_minutes=300, recovery_score=41)
+        r = build_daily_briefing(
+            snap,
+            today_workout=None,
+            day=_DAY,
+            recovery_signal=_recovery_signal(applies=False),
+            nutrition_adjustment=_nutrition_adjustment(
+                adjusted=False, protein_delta_g=0,
+            ),
+        )
+        assert r["domains"] == ["nutrition"]
+        # No fabricated protein number; timing guidance instead.
+        assert "+0g" not in r["message"]
+        assert (
+            "calorie" in r["message"].lower()
+            or "protein" in r["message"].lower()
+        )
+
+    def test_good_night_has_no_game_plan(self):
+        """A good night never produces a cross-domain plan even if signals are
+        passed (they would not apply on a good night)."""
+        snap = _snapshot(sleep_minutes=470, recovery_score=85)
+        r = build_daily_briefing(
+            snap,
+            today_workout={"name": "Upper Body"},
+            day=_DAY,
+            recovery_signal=_recovery_signal(applies=False),
+            nutrition_adjustment=_nutrition_adjustment(reason="recovery_ok",
+                                                       adjusted=False),
+        )
+        assert r["pattern"] == "good_night"
+        assert r["domains"] == []
+        assert r["message"] == r["brief_message"]
+
 
 # =============================================================================
 # Health anomaly
