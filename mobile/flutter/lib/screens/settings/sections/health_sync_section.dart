@@ -9,6 +9,7 @@ import '../../../widgets/app_dialog.dart';
 import '../widgets/section_header.dart';
 import '../../../widgets/glass_sheet.dart';
 import 'package:fitwiz/core/constants/branding.dart';
+import '../../ai_settings/ai_settings_screen.dart';
 
 /// Health sync preferences model.
 class HealthSyncPreferences {
@@ -610,6 +611,8 @@ class _HealthConnectSettingsCardState extends ConsumerState<_HealthConnectSettin
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          _buildConsentCard(isDark, textPrimary, textMuted),
+          const SizedBox(height: 8),
           Divider(color: cardBorder),
           const SizedBox(height: 8),
           Text(
@@ -765,6 +768,125 @@ class _HealthConnectSettingsCardState extends ConsumerState<_HealthConnectSettin
     );
   }
 
+  /// GDPR Art. 9 explicit opt-in for storing health data on Zealova's
+  /// servers. Without it the backend rejects every activity sync (403),
+  /// so the AI coach, the sleep/health history screens and the proactive
+  /// insights all stay empty. Surfaced here — right where users connect
+  /// their wearable — because the canonical toggle buried in AI Settings
+  /// was too easy to miss.
+  Widget _buildConsentCard(bool isDark, Color textPrimary, Color textMuted) {
+    final consent =
+        ref.watch(aiSettingsProvider.select((s) => s.healthDataConsent));
+    final accent = consent ? AppColors.success : AppColors.orange;
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: accent.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: accent.withValues(alpha: 0.30)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                consent
+                    ? Icons.verified_user_rounded
+                    : Icons.cloud_off_rounded,
+                size: 18,
+                color: accent,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  consent
+                      ? 'AI health coaching is on'
+                      : 'Turn on AI health coaching',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: textPrimary,
+                  ),
+                ),
+              ),
+              Switch(
+                value: consent,
+                onChanged: (v) => ref
+                    .read(aiSettingsProvider.notifier)
+                    .updateHealthDataConsent(v),
+                activeThumbColor: AppColors.success,
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            consent
+                ? 'Zealova securely stores your Health data so your AI coach '
+                    'can give recovery-aware workouts, sleep coaching and '
+                    'proactive insights. Turn this off anytime.'
+                : 'Connecting alone only shows data on this device. Allow '
+                    'Zealova to securely store it so your AI coach, sleep '
+                    'history and proactive insights can use it. Off by '
+                    'default — entirely your choice.',
+            style: TextStyle(fontSize: 12, color: textMuted, height: 1.4),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Post-connection Art. 9 opt-in prompt. Connecting Health only surfaces
+  /// data on-device; storing it server-side (so the AI coach / history /
+  /// insights can use it) is a separate, explicit choice.
+  Future<void> _promptHealthDataConsent() async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final enable = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor:
+            isDark ? AppColors.elevated : AppColorsLight.elevated,
+        title: Text(
+          'Enable AI health coaching?',
+          style: TextStyle(
+            color:
+                isDark ? AppColors.textPrimary : AppColorsLight.textPrimary,
+          ),
+        ),
+        content: Text(
+          'Your health data is now connected and shows on this device.\n\n'
+          'To let your AI coach use it for recovery-aware workouts, sleep '
+          'coaching and proactive insights, Zealova needs to securely store '
+          'it on our servers. This is a separate, explicit choice — you can '
+          'turn it off anytime in Settings.',
+          style: TextStyle(
+            color: isDark
+                ? AppColors.textSecondary
+                : AppColorsLight.textSecondary,
+            height: 1.5,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text('Not now',
+                style: TextStyle(color: AppColors.textMuted)),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            style:
+                FilledButton.styleFrom(backgroundColor: AppColors.success),
+            child: const Text('Enable'),
+          ),
+        ],
+      ),
+    );
+    if (enable == true) {
+      ref.read(aiSettingsProvider.notifier).updateHealthDataConsent(true);
+    }
+  }
+
   String _formatLastSync(DateTime time) {
     final now = DateTime.now();
     final diff = now.difference(time);
@@ -822,6 +944,12 @@ class _HealthConnectSettingsCardState extends ConsumerState<_HealthConnectSettin
       );
       // Refresh daily activity after connecting
       ref.read(dailyActivityProvider.notifier).loadTodayActivity();
+      // Connecting only surfaces data on-device. Prompt the separate
+      // Art. 9 opt-in to also store it server-side so the AI coach,
+      // history and insights can use it — unless already granted.
+      if (mounted && !ref.read(aiSettingsProvider).healthDataConsent) {
+        await _promptHealthDataConsent();
+      }
     } else if (mounted) {
       // Show helpful message about granting permissions manually
       ScaffoldMessenger.of(context).showSnackBar(

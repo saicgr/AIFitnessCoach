@@ -46,12 +46,23 @@ extension HealthServiceExt on HealthService {
     HealthDataType.BLOOD_GLUCOSE,
   ];
 
-  // Data types we want to write to Health Connect
+  // Data types we want to write to Health Connect / HealthKit.
+  //
+  // WATER + NUTRITION added 2026-05-21: the app already writes a logged
+  // meal (`writeMealToHealth`) and water (`writeHydrationToHealth`) back
+  // to the platform, but those two types were missing here — so the
+  // write-permission grant never covered them and every meal / hydration
+  // write-back silently failed. WATER maps to the `WRITE_HYDRATION`
+  // Android manifest permission (already declared); NUTRITION required
+  // adding `WRITE_NUTRITION` to AndroidManifest.xml to match. On iOS the
+  // single `NSHealthUpdateUsageDescription` string already covers them.
   static final List<HealthDataType> _writeTypes = [
     HealthDataType.WEIGHT,
     HealthDataType.BODY_FAT_PERCENTAGE,
     HealthDataType.WORKOUT,
     HealthDataType.ACTIVE_ENERGY_BURNED,
+    HealthDataType.WATER,
+    HealthDataType.NUTRITION,
   ];
 
   /// Check if Health Connect is available on the device
