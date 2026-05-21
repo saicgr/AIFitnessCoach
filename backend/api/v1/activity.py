@@ -72,6 +72,22 @@ class DailyActivityInput(BaseModel):
     light_sleep_minutes: Optional[int] = Field(None, ge=0, le=1440)
     awake_sleep_minutes: Optional[int] = Field(None, ge=0, le=1440)
     rem_sleep_minutes: Optional[int] = Field(None, ge=0, le=1440)
+    # Sleep-window fields (migration 2088). All Optional so older app builds
+    # that pre-date the sleep-window sync still upsert cleanly.
+    sleep_start: Optional[datetime] = Field(
+        None, description="Nightly sleep onset timestamp (ISO-8601)",
+    )
+    sleep_end: Optional[datetime] = Field(
+        None, description="Nightly wake timestamp (ISO-8601)",
+    )
+    sleep_latency_minutes: Optional[int] = Field(
+        None, ge=0, le=1440,
+        description="Minutes in bed before falling asleep",
+    )
+    sleep_efficiency: Optional[float] = Field(
+        None, ge=0, le=1,
+        description="asleep_time / time_in_bed, a 0.0-1.0 fraction",
+    )
     water_ml: Optional[int] = Field(default=0, ge=0)
     source: str = Field(default="health_connect", description="health_connect or apple_health")
 
@@ -100,9 +116,54 @@ class DailyActivityResponse(BaseModel):
     light_sleep_minutes: Optional[int]
     awake_sleep_minutes: Optional[int]
     rem_sleep_minutes: Optional[int]
+    sleep_start: Optional[datetime]
+    sleep_end: Optional[datetime]
+    sleep_latency_minutes: Optional[int]
+    sleep_efficiency: Optional[float]
     water_ml: int
     source: str
     synced_at: datetime
+
+
+class HealthGoalsInput(BaseModel):
+    """Input for the per-user health_goals row (migration 2088).
+
+    All fields Optional so a PUT can patch a single target without resending
+    the others — the PUT handler fills any missing field from the existing
+    row (or the contract default) before upserting.
+    """
+    step_goal: Optional[int] = Field(
+        None, ge=0, le=200000, description="Daily step target",
+    )
+    active_minutes_goal: Optional[int] = Field(
+        None, ge=0, le=1440, description="Daily active/exercise minute target",
+    )
+    sleep_duration_goal_minutes: Optional[int] = Field(
+        None, ge=0, le=1440, description="Nightly sleep duration target in minutes",
+    )
+    bedtime_goal: Optional[str] = Field(
+        None, description="Target bedtime as a HH:MM[:SS] user-local time string",
+    )
+
+
+class HealthGoalsResponse(BaseModel):
+    """The per-user health_goals row, or the contract defaults when no row
+    exists yet (step 10000 / active 30 / sleep 480 / bedtime null)."""
+    user_id: str
+    step_goal: int
+    active_minutes_goal: int
+    sleep_duration_goal_minutes: int
+    bedtime_goal: Optional[str]
+
+
+# Contract defaults — mirror the DEFAULTs in migration 2088 so a user who has
+# never saved goals still gets a sensible payload from GET /health-goals.
+_HEALTH_GOAL_DEFAULTS = {
+    "step_goal": 10000,
+    "active_minutes_goal": 30,
+    "sleep_duration_goal_minutes": 480,
+    "bedtime_goal": None,
+}
 
 
 class ActivitySummaryResponse(BaseModel):
@@ -148,6 +209,10 @@ def row_to_activity_response(row: dict) -> DailyActivityResponse:
         light_sleep_minutes=row.get("light_sleep_minutes"),
         awake_sleep_minutes=row.get("awake_sleep_minutes"),
         rem_sleep_minutes=row.get("rem_sleep_minutes"),
+        sleep_start=row.get("sleep_start"),
+        sleep_end=row.get("sleep_end"),
+        sleep_latency_minutes=row.get("sleep_latency_minutes"),
+        sleep_efficiency=row.get("sleep_efficiency"),
         water_ml=row.get("water_ml") or 0,
         source=row.get("source") or "health_connect",
         synced_at=row.get("synced_at"),
@@ -187,6 +252,10 @@ async def sync_daily_activity(input: DailyActivityInput, current_user: dict = De
         "light_sleep_minutes": input.light_sleep_minutes,
         "awake_sleep_minutes": input.awake_sleep_minutes,
         "rem_sleep_minutes": input.rem_sleep_minutes,
+        "sleep_start": input.sleep_start.isoformat() if input.sleep_start else None,
+        "sleep_end": input.sleep_end.isoformat() if input.sleep_end else None,
+        "sleep_latency_minutes": input.sleep_latency_minutes,
+        "sleep_efficiency": input.sleep_efficiency,
         "water_ml": input.water_ml or 0,
         "source": input.source,
     }
@@ -381,6 +450,104 @@ async def get_activity_summary(user_id: str, days: int = 7, current_user: dict =
     )
 
 
+def _row_to_health_goals_response(user_id: str, row: Optional[dict]) -> HealthGoalsResponse:
+    """Build a HealthGoalsResponse from a health_goals row, falling back to the
+    contract defaults for any missing row / NULL column."""
+    row = row or {}
+    bedtime = row.get("bedtime_goal")
+    return HealthGoalsResponse(
+        user_id=user_id,
+        step_goal=row.get("step_goal") if row.get("step_goal") is not None
+        else _HEALTH_GOAL_DEFAULTS["step_goal"],
+        active_minutes_goal=row.get("active_minutes_goal")
+        if row.get("active_minutes_goal") is not None
+        else _HEALTH_GOAL_DEFAULTS["active_minutes_goal"],
+        sleep_duration_goal_minutes=row.get("sleep_duration_goal_minutes")
+        if row.get("sleep_duration_goal_minutes") is not None
+        else _HEALTH_GOAL_DEFAULTS["sleep_duration_goal_minutes"],
+        bedtime_goal=str(bedtime) if bedtime is not None else None,
+    )
+
+
+@router.get("/health-goals/{user_id}", response_model=HealthGoalsResponse)
+async def get_health_goals(user_id: str, current_user: dict = Depends(get_current_user)):
+    """Get the user's activity/sleep goals.
+
+    Returns the saved health_goals row, or the contract defaults
+    (step 10000 / active 30 / sleep 480 / bedtime null) when the user has
+    never saved goals.
+    """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
+    logger.info(f"Fetching health goals for user {user_id}")
+
+    db = get_supabase_db()
+    row = db.get_health_goals(user_id=user_id)
+    return _row_to_health_goals_response(str(user_id), row)
+
+
+@router.put("/health-goals/{user_id}", response_model=HealthGoalsResponse)
+async def update_health_goals(
+    user_id: str,
+    input: HealthGoalsInput,
+    current_user: dict = Depends(get_current_user),
+):
+    """Upsert the user's activity/sleep goals.
+
+    Any field omitted from the request is left as-is — it is filled from the
+    existing row, or the contract default if no row exists — so a PUT can
+    patch a single target without clobbering the others.
+    """
+    if str(current_user["id"]) != str(user_id):
+        raise HTTPException(status_code=403, detail="Access denied")
+    logger.info(f"Updating health goals for user {user_id}")
+
+    db = get_supabase_db()
+    existing = db.get_health_goals(user_id=user_id) or {}
+
+    def _pick(field: str):
+        sent = getattr(input, field)
+        if sent is not None:
+            return sent
+        if existing.get(field) is not None:
+            return existing[field]
+        return _HEALTH_GOAL_DEFAULTS[field]
+
+    data = {
+        "user_id": str(user_id),
+        "step_goal": _pick("step_goal"),
+        "active_minutes_goal": _pick("active_minutes_goal"),
+        "sleep_duration_goal_minutes": _pick("sleep_duration_goal_minutes"),
+        "bedtime_goal": _pick("bedtime_goal"),
+    }
+
+    result = db.upsert_health_goals(data)
+    if not result:
+        raise safe_internal_error(ValueError("Failed to save health goals"), "activity")
+
+    # Log goal update (wrapped to never prevent response delivery)
+    try:
+        await log_user_activity(
+            user_id=str(user_id),
+            action="health_goals_updated",
+            endpoint=f"/api/v1/activity/health-goals/{user_id}",
+            message="Updated health goals",
+            metadata={
+                "step_goal": data["step_goal"],
+                "active_minutes_goal": data["active_minutes_goal"],
+                "sleep_duration_goal_minutes": data["sleep_duration_goal_minutes"],
+            },
+            status_code=200,
+        )
+    except Exception as e:
+        logger.error(
+            f"Activity logging failed: {e}", exc_info=True,
+            extra={"user_id_full": str(user_id), "failed_action": "health_goals_updated"},
+        )
+
+    return _row_to_health_goals_response(str(user_id), result)
+
+
 @router.delete("/{user_id}/{activity_date}")
 async def delete_activity(user_id: str, activity_date: date, current_user: dict = Depends(get_current_user)):
     """Delete activity for a specific date."""
@@ -447,6 +614,10 @@ async def sync_batch_activity(activities: List[DailyActivityInput], current_user
                 "light_sleep_minutes": activity.light_sleep_minutes,
                 "awake_sleep_minutes": activity.awake_sleep_minutes,
                 "rem_sleep_minutes": activity.rem_sleep_minutes,
+                "sleep_start": activity.sleep_start.isoformat() if activity.sleep_start else None,
+                "sleep_end": activity.sleep_end.isoformat() if activity.sleep_end else None,
+                "sleep_latency_minutes": activity.sleep_latency_minutes,
+                "sleep_efficiency": activity.sleep_efficiency,
                 "water_ml": activity.water_ml,
                 "source": activity.source,
             }

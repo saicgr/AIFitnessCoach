@@ -36,26 +36,36 @@ class LastNightSleepCard extends ConsumerWidget {
     final deep = activity?.deepSleepMinutes ?? 0;
     final rem = activity?.remSleepMinutes ?? 0;
     final awake = activity?.awakeSleepMinutes ?? 0;
-    int light = activity?.lightSleepMinutes ?? 0;
-    // If the underlying source only gave us total + deep + rem, infer light
-    // as the remainder so the bar isn't empty. Negative residuals (sources
-    // that double-count) get clamped.
-    if (light <= 0) {
-      final inferred = total - deep - rem - awake;
-      light = inferred > 0 ? inferred : 0;
-    }
+    // `total` (sleepMinutes) is time ASLEEP — deep + light + REM + any
+    // generic un-staged sleep (e.g. a nap a source logged without a
+    // breakdown). Show the light band as everything asleep that isn't deep
+    // or REM, so the stage bar always spans the full headline total even
+    // when one of the night's sessions had no deep/light/REM staging.
+    final reportedLight = activity?.lightSleepMinutes ?? 0;
+    final residualLight = total - deep - rem;
+    int light = residualLight > reportedLight ? residualLight : reportedLight;
+    if (light < 0) light = 0;
 
     final hours = total ~/ 60;
     final minutes = total % 60;
-
-    final now = DateTime.now();
-    // We don't have the precise start/end here without re-querying the
-    // session — approximate by walking back `total` minutes from a typical
-    // 8 AM wake-up so the card always shows a believable window. The full
-    // detailed session view lives in the Health screen.
-    final wake = DateTime(now.year, now.month, now.day, 8, 18);
-    final bedtime = wake.subtract(Duration(minutes: total));
     final fmt = DateFormat('HH:mm');
+
+    // Prefer the real session window from Health Connect / HealthKit. Only
+    // when the precise bounds are missing (coarse summary path) do we fall
+    // back to walking back `total` minutes from a typical wake-up so the
+    // card still shows a believable window.
+    final realStart = activity?.sleepStart;
+    final realEnd = activity?.sleepEnd;
+    final DateTime bedtime;
+    final DateTime wake;
+    if (realStart != null && realEnd != null) {
+      bedtime = realStart;
+      wake = realEnd;
+    } else {
+      final now = DateTime.now();
+      wake = DateTime(now.year, now.month, now.day, 8, 18);
+      bedtime = wake.subtract(Duration(minutes: total));
+    }
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),

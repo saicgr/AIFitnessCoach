@@ -766,6 +766,14 @@ class SupabaseDB:
         """Delete all daily activity for a user."""
         return self._activity_db.delete_daily_activity_by_user(user_id)
 
+    def get_health_goals(self, user_id: str) -> Optional[Dict[str, Any]]:
+        """Get the per-user activity/sleep goals row (table health_goals)."""
+        return self._activity_db.get_health_goals(user_id)
+
+    def upsert_health_goals(self, data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """Upsert the per-user activity/sleep goals row (table health_goals)."""
+        return self._activity_db.upsert_health_goals(data)
+
     # ==================== FULL USER RESET ====================
 
     def full_user_reset(self, user_id: str, skip_storage: bool = False, auth_id: Optional[str] = None) -> bool:

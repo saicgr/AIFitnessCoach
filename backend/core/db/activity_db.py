@@ -191,3 +191,43 @@ class ActivityDB(BaseDB):
         """
         self.client.table("daily_activity").delete().eq("user_id", user_id).execute()
         return True
+
+    # ==================== HEALTH GOALS ====================
+
+    def get_health_goals(self, user_id: str) -> Optional[Dict[str, Any]]:
+        """
+        Get the per-user activity/sleep goals row (table `health_goals`).
+
+        One row per user, keyed by user_id (migration 2088).
+
+        Args:
+            user_id: User's UUID
+
+        Returns:
+            health_goals record or None when the user has never saved goals
+        """
+        result = (
+            self.client.table("health_goals")
+            .select("*")
+            .eq("user_id", user_id)
+            .execute()
+        )
+        return result.data[0] if result.data else None
+
+    def upsert_health_goals(self, data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """
+        Upsert the per-user activity/sleep goals row (table `health_goals`).
+
+        Uses user_id as the unique key — one row per user (migration 2088).
+
+        Args:
+            data: Goal data including user_id, step_goal, active_minutes_goal,
+                  sleep_duration_goal_minutes, bedtime_goal.
+
+        Returns:
+            Upserted health_goals record or None
+        """
+        result = self.client.table("health_goals").upsert(
+            data, on_conflict="user_id"
+        ).execute()
+        return result.data[0] if result.data else None

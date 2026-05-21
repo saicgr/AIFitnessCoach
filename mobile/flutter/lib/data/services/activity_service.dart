@@ -111,6 +111,10 @@ class ActivityService {
           'max_heart_rate': activity.maxHeartRate,
           'light_sleep_minutes': activity.lightSleepMinutes,
           'awake_sleep_minutes': activity.awakeSleepMinutes,
+          'sleep_start': activity.sleepStart?.toIso8601String(),
+          'sleep_end': activity.sleepEnd?.toIso8601String(),
+          'sleep_latency_minutes': activity.sleepLatencyMinutes,
+          'sleep_efficiency': activity.sleepEfficiency,
           'water_ml': activity.waterMl,
           // Active/exercise minutes — populated by the Apple Watch companion
           // sync (watch_sync). The phone Health Connect read does NOT request
@@ -272,6 +276,10 @@ class ActivityService {
         'max_heart_rate': a.maxHeartRate,
         'light_sleep_minutes': a.lightSleepMinutes,
         'awake_sleep_minutes': a.awakeSleepMinutes,
+        'sleep_start': a.sleepStart?.toIso8601String(),
+        'sleep_end': a.sleepEnd?.toIso8601String(),
+        'sleep_latency_minutes': a.sleepLatencyMinutes,
+        'sleep_efficiency': a.sleepEfficiency,
         'water_ml': a.waterMl,
         'source': Platform.isAndroid ? 'health_connect' : 'apple_health',
       }).toList();
@@ -320,6 +328,10 @@ class ActivityService {
       maxHeartRate: json['max_heart_rate'] as int?,
       lightSleepMinutes: json['light_sleep_minutes'] as int?,
       awakeSleepMinutes: json['awake_sleep_minutes'] as int?,
+      sleepStart: json['sleep_start'] != null ? DateTime.tryParse(json['sleep_start'] as String) : null,
+      sleepEnd: json['sleep_end'] != null ? DateTime.tryParse(json['sleep_end'] as String) : null,
+      sleepLatencyMinutes: json['sleep_latency_minutes'] as int?,
+      sleepEfficiency: (json['sleep_efficiency'] as num?)?.toDouble(),
       waterMl: json['water_ml'] as int?,
     );
   }

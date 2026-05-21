@@ -28,6 +28,10 @@ class DailyActivity {
   final int? awakeSleepMinutes;   // time awake during sleep
   final int? waterMl;             // hydration in ml
   final int? activeMinutes;       // active/exercise minutes (watch-synced)
+  final DateTime? sleepStart;     // bed time — earliest stage/session start
+  final DateTime? sleepEnd;       // wake time — latest stage/session end
+  final int? sleepLatencyMinutes; // minutes from getting into bed to first asleep stage
+  final double? sleepEfficiency;  // 0.0-1.0 = total asleep / time-in-bed
 
   const DailyActivity({
     this.steps = 0,
@@ -46,6 +50,10 @@ class DailyActivity {
     this.awakeSleepMinutes,
     this.waterMl,
     this.activeMinutes,
+    this.sleepStart,
+    this.sleepEnd,
+    this.sleepLatencyMinutes,
+    this.sleepEfficiency,
   });
 }
 
@@ -60,6 +68,22 @@ class SleepSummary {
   final DateTime? bedTime;
   final DateTime? wakeTime;
 
+  /// Total time inside the session envelope(s) — asleep + awake-in-bed.
+  /// Summed across the kept sessions (after the multi-source overlap
+  /// pre-pass drops duplicate-night sessions). Null when no session
+  /// contributed an envelope or stage span at all.
+  final int? timeInBedMinutes;
+
+  /// Sleep efficiency 0.0-1.0 = total asleep minutes / time-in-bed minutes.
+  /// Null when time-in-bed is unknown or zero (can't divide).
+  final double? efficiency;
+
+  /// Sleep latency — minutes from the start of the session to the first
+  /// ASLEEP/DEEP/LIGHT/REM stage. When several sessions are kept, this is
+  /// the longest kept session's latency. Null when it can't be computed
+  /// (no staged asleep point, or no known session start).
+  final int? latencyMinutes;
+
   const SleepSummary({
     this.totalMinutes = 0,
     this.deepMinutes = 0,
@@ -68,6 +92,9 @@ class SleepSummary {
     this.awakeMinutes = 0,
     this.bedTime,
     this.wakeTime,
+    this.timeInBedMinutes,
+    this.efficiency,
+    this.latencyMinutes,
   });
 
   /// Sleep quality based on duration and composition
@@ -96,6 +123,39 @@ class SleepSummary {
   }
 
   bool get hasData => totalMinutes > 0;
+}
+
+
+/// One night of sleep, split into a main sleep + any daytime naps.
+///
+/// A "night" is keyed by its WAKE date — the local calendar date the
+/// longest (main) session ended on — so a sleep that crosses midnight
+/// (e.g. 11pm Mon -> 6am Tue) is filed under Tuesday. The [mainSleep] is
+/// the longest session of that night; every other session of the same
+/// wake date is a [nap]. [totalAsleepMinutes] is the sum of asleep
+/// minutes across the main sleep and all naps.
+class DailySleep {
+  /// The wake date this night is filed under (local calendar date, time
+  /// component zeroed).
+  final DateTime date;
+
+  /// The night's primary sleep — the longest session of the night.
+  final SleepSummary mainSleep;
+
+  /// Daytime / secondary sleeps of the same wake date, longest first.
+  final List<SleepSummary> naps;
+
+  /// Asleep minutes across the main sleep AND every nap.
+  final int totalAsleepMinutes;
+
+  const DailySleep({
+    required this.date,
+    required this.mainSleep,
+    required this.naps,
+    required this.totalAsleepMinutes,
+  });
+
+  bool get hasData => totalAsleepMinutes > 0;
 }
 
 
@@ -260,6 +320,10 @@ class DailyActivityNotifier extends StateNotifier<DailyActivityState> {
         lightSleepMinutes: sleepData.hasData ? sleepData.lightMinutes : null,
         awakeSleepMinutes: sleepData.hasData && sleepData.awakeMinutes > 0 ? sleepData.awakeMinutes : null,
         waterMl: vitalsData['waterMl'] as int?,
+        sleepStart: sleepData.hasData ? sleepData.bedTime : null,
+        sleepEnd: sleepData.hasData ? sleepData.wakeTime : null,
+        sleepLatencyMinutes: sleepData.hasData ? sleepData.latencyMinutes : null,
+        sleepEfficiency: sleepData.hasData ? sleepData.efficiency : null,
       );
 
       // Stamp the cache AFTER a successful fetch — failed fetches must not
@@ -307,8 +371,12 @@ class DailyActivityNotifier extends StateNotifier<DailyActivityState> {
         return;
       }
 
-      // Only sync if there's actual data
-      if (activity.steps == 0 && activity.caloriesBurned == 0) {
+      // Only sync if there's actual data. Sleep counts as data: a user who
+      // opens the app in the morning has 0 steps so far but may have slept
+      // 8h — that sleep must still sync, not wait until they walk.
+      if (activity.steps == 0 &&
+          activity.caloriesBurned == 0 &&
+          (activity.sleepMinutes ?? 0) == 0) {
         debugPrint('⚠️ [Activity] No activity data to sync');
         return;
       }
@@ -366,6 +434,24 @@ class DailyActivityNotifier extends StateNotifier<DailyActivityState> {
       // local-midnight bounds). We do this serially to avoid hammering
       // the platform channel; small N (≤30) keeps total time well under 1s.
       final now = DateTime.now();
+
+      // Sleep is fetched for the WHOLE window ONCE and bucketed by wake
+      // date in our own code — NOT per day. A sleep that crosses midnight
+      // (11pm Mon -> 6am Tue) overlaps two per-day windows; a per-day
+      // `getSleepForRange` loop would either double-count it or file it
+      // under the bed day. `getDailySleepByWakeDate` attributes each night
+      // to its wake date (the morning it ended) exactly once. Keyed by
+      // local-midnight `DateTime`, so `dayStart` is a direct lookup key.
+      Map<DateTime, SleepSummary> sleepByDate = const {};
+      try {
+        sleepByDate =
+            await _healthService.getDailySleepByWakeDate(days: days);
+      } catch (e) {
+        // Non-fatal — a sleep-fetch failure must not abort the steps
+        // backfill; days simply get null sleep fields.
+        debugPrint('⚠️ [Activity] Backfill sleep fetch failed: $e');
+      }
+
       final perDay = <DailyActivity>[];
       for (int i = 1; i <= days; i++) {
         final dayStart =
@@ -374,12 +460,29 @@ class DailyActivityNotifier extends StateNotifier<DailyActivityState> {
         try {
           final steps =
               await _healthService.getStepsForRange(dayStart, dayEnd) ?? 0;
-          if (steps <= 0) continue; // skip empty days — nothing to backfill
+          // Sleep attributed to this calendar day by WAKE date — looked up
+          // from the single pre-fetched, wake-date-bucketed map.
+          final sleep = sleepByDate[dayStart];
+          final hasSleep = sleep != null && sleep.hasData;
+          // Skip a day only when it has NEITHER steps NOR sleep — a
+          // wearable-only sleep night (phone left at home, 0 steps) must
+          // still be backfilled.
+          if (steps <= 0 && !hasSleep) continue;
           perDay.add(DailyActivity(
             date: dayStart,
             steps: steps,
             caloriesBurned: 0,
             isFromHealthConnect: true,
+            sleepMinutes: hasSleep ? sleep.totalMinutes : null,
+            deepSleepMinutes: hasSleep ? sleep.deepMinutes : null,
+            remSleepMinutes: hasSleep ? sleep.remMinutes : null,
+            lightSleepMinutes: hasSleep ? sleep.lightMinutes : null,
+            awakeSleepMinutes:
+                hasSleep && sleep.awakeMinutes > 0 ? sleep.awakeMinutes : null,
+            sleepStart: hasSleep ? sleep.bedTime : null,
+            sleepEnd: hasSleep ? sleep.wakeTime : null,
+            sleepLatencyMinutes: hasSleep ? sleep.latencyMinutes : null,
+            sleepEfficiency: hasSleep ? sleep.efficiency : null,
           ));
         } catch (e) {
           // Non-fatal — Health may reject some days; keep going.
@@ -436,6 +539,10 @@ class DailyActivityNotifier extends StateNotifier<DailyActivityState> {
       awakeSleepMinutes: current?.awakeSleepMinutes,
       waterMl: current?.waterMl,
       activeMinutes: activeMinutes ?? current?.activeMinutes,
+      sleepStart: current?.sleepStart,
+      sleepEnd: current?.sleepEnd,
+      sleepLatencyMinutes: current?.sleepLatencyMinutes,
+      sleepEfficiency: current?.sleepEfficiency,
     );
 
     state = state.copyWith(today: updated);
