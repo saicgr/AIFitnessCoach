@@ -386,6 +386,10 @@ class LogFoodResponse(BaseModel):
     glycemic_load: Optional[int] = None
     fodmap_rating: Optional[str] = None
     fodmap_reason: Optional[str] = None
+    # Phase E1 — sleep-aware nutrition. Present only when a caffeine / alcohol
+    # / heavy-meal item was logged inside the user's wind-down window vs their
+    # bedtime goal; None otherwise (unknown content is never flagged).
+    sleep_risk: Optional[dict] = None
 
 
 class FoodReviewRequest(BaseModel):

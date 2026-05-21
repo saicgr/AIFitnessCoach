@@ -123,6 +123,28 @@ def format_day_context_block(state: Dict[str, Any]) -> str:
         if dnc.get("over_budget"):
             lines.append("• ⚠️ User is OVER the calorie budget today — prefer low-cal swaps.")
 
+        # Phase E1 — sleep-aware nutrition. Present only on a low-recovery day;
+        # the deterministic engine shifts macro emphasis toward protein and
+        # nudges calories earlier, WITHOUT raising the calorie total (the
+        # cutting deficit is preserved). The coach should weave this into its
+        # picks, not narrate it as a metric dump.
+        rec_adj = dnc.get("recovery_adjusted_targets")
+        if rec_adj:
+            tier = rec_adj.get("tier")
+            adj_targets = rec_adj.get("targets") or {}
+            if rec_adj.get("adjusted") and adj_targets.get("daily_protein_target_g"):
+                delta = rec_adj.get("protein_delta_g") or 0
+                lines.append(
+                    f"• 🛌 Low recovery today ({tier}): protein target raised to "
+                    f"{adj_targets.get('daily_protein_target_g')}g "
+                    f"(+{delta}g), calories held at "
+                    f"{adj_targets.get('daily_calorie_target')} kcal — favor "
+                    f"protein-forward picks; deficit is unchanged."
+                )
+            heads_up = rec_adj.get("craving_heads_up")
+            if heads_up:
+                lines.append(f"• 🛌 Craving heads-up: {heads_up}")
+
     if workout:
         sched = workout.get("scheduled_time_local") or ""
         muscles = ", ".join(workout.get("primary_muscles") or []) if workout.get("primary_muscles") else ""

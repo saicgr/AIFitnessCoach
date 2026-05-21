@@ -73,6 +73,45 @@ router = APIRouter()
 logger = get_logger(__name__)
 
 
+def _compute_sleep_risk_flag(
+    user_id: str,
+    food_items: List[dict],
+    user_tz: str,
+) -> Optional[dict]:
+    """Phase E1 — flag a logged food for sleep-disrupting content.
+
+    Caffeine / alcohol / heavy-meal items logged inside the user's wind-down
+    window (vs the ``health_goals`` bedtime goal) are flagged. Returns the
+    flag dict (``{has_flag, flags, message}``) when something fired, else
+    ``None``. Best-effort: unknown content is never flagged (no false alarms)
+    and any failure simply yields ``None`` — sleep flagging never blocks a log.
+    """
+    try:
+        from services.sleep_aware_nutrition import flag_food_items_for_sleep
+        import pytz
+
+        db = get_supabase_db()
+        goals = db.get_health_goals(user_id) or {}
+        bedtime_goal = goals.get("bedtime_goal")
+        if not bedtime_goal:
+            return None  # no bedtime goal => cannot place a wind-down window
+
+        # The log's wall-clock time in the user's local timezone.
+        try:
+            tz = pytz.timezone(user_tz)
+        except Exception:
+            tz = pytz.UTC
+        logged_at_local = datetime.now(tz)
+
+        result = flag_food_items_for_sleep(
+            food_items, logged_at_local, bedtime_goal
+        )
+        return result if result.get("has_flag") else None
+    except Exception as e:
+        logger.warning(f"sleep-risk flag skipped for {user_id}: {e}")
+        return None
+
+
 def _update_nutrition_streak(user_id: str, user_tz: str) -> None:
     """Recalculate and persist the nutrition streak after any food log.
 
@@ -317,6 +356,9 @@ async def log_food_from_image(
 
         confidence_level = "high" if confidence_score >= 0.75 else "medium" if confidence_score >= 0.5 else "low"
 
+        # Phase E1 — flag caffeine/alcohol/heavy-meal logged near bedtime.
+        sleep_risk = _compute_sleep_risk_flag(user_id, food_items, user_tz)
+
         return LogFoodResponse(
             success=True,
             food_log_id=food_log_id,
@@ -329,6 +371,7 @@ async def log_food_from_image(
             confidence_score=confidence_score,
             confidence_level=confidence_level,
             source_type="image",
+            sleep_risk=sleep_risk,
         )
 
     except HTTPException:
@@ -606,6 +649,11 @@ async def log_food_from_text(body: LogTextRequest, background_tasks: BackgroundT
 
         confidence_level = "high" if confidence_score >= 0.75 else "medium" if confidence_score >= 0.5 else "low"
 
+        # Phase E1 — flag caffeine/alcohol/heavy-meal logged near bedtime.
+        sleep_risk = _compute_sleep_risk_flag(
+            body.user_id, food_items, resolve_timezone(request, db, body.user_id)
+        )
+
         return LogFoodResponse(
             success=True,
             food_log_id=food_log_id,
@@ -626,6 +674,7 @@ async def log_food_from_text(body: LogTextRequest, background_tasks: BackgroundT
             confidence_score=confidence_score,
             confidence_level=confidence_level,
             source_type="text",
+            sleep_risk=sleep_risk,
         )
 
     except HTTPException:
@@ -870,6 +919,14 @@ async def log_food_direct(
         confidence_score = 0.6 if body.source_type == "restaurant" else 0.9
         confidence_level = "medium" if body.source_type == "restaurant" else "high"
 
+        # Phase E1 — flag caffeine/alcohol/heavy-meal logged near bedtime.
+        # Covers menu-scan and direct logging (input_type="menu_scan" etc.).
+        sleep_risk = _compute_sleep_risk_flag(
+            body.user_id,
+            body.food_items,
+            resolve_timezone(request, get_supabase_db(), body.user_id),
+        )
+
         return LogFoodResponse(
             success=True,
             food_log_id=food_log_id,
@@ -886,6 +943,7 @@ async def log_food_direct(
             confidence_score=confidence_score,
             confidence_level=confidence_level,
             source_type=body.source_type,
+            sleep_risk=sleep_risk,
             inflammation_score=body.inflammation_score,
             is_ultra_processed=body.is_ultra_processed,
             inflammation_triggers=body.inflammation_triggers,

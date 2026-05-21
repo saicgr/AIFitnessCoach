@@ -84,6 +84,23 @@ async def fetch_daily_nutrition_context(
         1 for m in meals if m.get("is_ultra_processed") is True
     )
 
+    # ── Sleep-aware nutrition (Phase E1) ──────────────────────────────────
+    # On a low-recovery day the macro EMPHASIS shifts toward protein and the
+    # day's calories are nudged earlier. The adjustment is deterministic and
+    # calorie-neutral (it never raises the total => the cutting deficit is
+    # preserved); when there is no recovery data the targets are returned
+    # unchanged (edge case G35). Best-effort: any failure leaves the base
+    # targets untouched so the nutrition context still ships.
+    recovery_adjustment = await _recovery_target_adjustment(
+        user_id,
+        {
+            "daily_calorie_target": cal_target,
+            "daily_protein_target_g": p_target,
+            "daily_carbs_target_g": c_target,
+            "daily_fat_target_g": f_target,
+        },
+    )
+
     return {
         "date": today,
         "timezone": timezone_str,
@@ -106,7 +123,68 @@ async def fetch_daily_nutrition_context(
         "meal_types_logged": meal_types_logged,
         "ultra_processed_count_today": ultra_processed_count,
         "over_budget": over_budget,
+        # Phase E1 — present only on a low-recovery day; absent (None) when
+        # recovery data is missing or recovery is fine, so downstream callers
+        # can treat its presence as "the day's targets were recovery-adjusted".
+        "recovery_adjusted_targets": recovery_adjustment,
     }
+
+
+async def _recovery_target_adjustment(
+    user_id: str,
+    base_targets: Dict[str, Any],
+) -> Optional[Dict[str, Any]]:
+    """Compute the sleep-aware (recovery-driven) macro-target adjustment.
+
+    Reads Phase B1's recovery snapshot and the user's dietary restrictions,
+    then delegates to the deterministic ``sleep_aware_nutrition`` engine.
+
+    Returns the adjustment dict ONLY when the day's targets were actually
+    shifted (a low-recovery day) or a craving heads-up applies; returns
+    ``None`` when there is no recovery data or recovery is fine — so the
+    field's presence cleanly signals "today is recovery-adjusted". Any error
+    is swallowed (returns ``None``) — the nutrition context must still ship.
+    """
+    try:
+        from services.user_context import user_context_service
+        from services.sleep_aware_nutrition import adjust_targets_for_recovery
+
+        snapshot = await user_context_service.get_health_activity_snapshot(
+            user_id, days=7
+        )
+        if not snapshot or not snapshot.get("has_data"):
+            return None  # edge case G35 — no recovery data => no adjustment
+        recovery = snapshot.get("recovery")
+
+        # Dietary restrictions gate the protein bump (renal / low-protein).
+        dietary_restrictions: Optional[List[str]] = None
+        try:
+            db = get_supabase_db()
+            prefs = db.get_nutrition_preferences(user_id) or {}
+            raw = prefs.get("dietary_restrictions")
+            if isinstance(raw, list):
+                dietary_restrictions = [str(x) for x in raw if x]
+            elif isinstance(raw, str) and raw.strip():
+                dietary_restrictions = [raw.strip()]
+        except Exception as e:
+            logger.warning(
+                f"recovery target adj: dietary restrictions lookup "
+                f"failed for {user_id}: {e}"
+            )
+
+        result = adjust_targets_for_recovery(
+            base_targets, recovery, dietary_restrictions
+        )
+        # Only surface it when it actually changes something the caller acts
+        # on — an adjusted target set or a craving heads-up.
+        if result.get("adjusted") or result.get("craving_heads_up"):
+            return result
+        return None
+    except Exception as e:
+        logger.warning(
+            f"recovery target adjustment skipped for {user_id}: {e}"
+        )
+        return None
 
 
 # ── Recent favorites ───────────────────────────────────────────────────────
