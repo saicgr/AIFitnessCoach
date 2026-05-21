@@ -32,12 +32,12 @@ import 'weekly_checkin_sheet.dart';
 import 'widgets/daily_tab.dart';
 import 'widgets/edit_targets_sheet.dart';
 import 'widgets/schedule_meal_sheet.dart';
-import 'widgets/share_meal_sheet.dart';
 import 'widgets/nutrition_error_state.dart';
-import 'widgets/nutrition_date_strip.dart';
-import 'widgets/share_nutrition_sheet.dart';
+import '../../widgets/date_strip.dart';
 import '../../shareables/shareable_sheet.dart';
+import '../../shareables/shareable_catalog.dart';
 import '../../shareables/adapters/nutrition_adapter.dart';
+import '../../core/theme/accent_color_provider.dart';
 import 'widgets/fuel_tab.dart';
 // `my_foods_sheet.dart` happens to export an internal helper called RecipesTab
 // for the saved-foods grid; alias our real Recipes tab to disambiguate.
@@ -658,7 +658,7 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
             // a-glance density.
             _tourAnchor(
               TooltipAnchors.nutritionDateNav,
-              NutritionDateStrip(
+              DateStrip(
                 selectedDate: _selectedDate,
                 loggedDateKeys: _loggedDateKeys,
                 onDaySelected: _jumpToDate,
@@ -728,6 +728,8 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
                             onAddToShoppingList: (meal, {int? itemIndex}) =>
                                 _addMealToShoppingList(meal, itemIndex: itemIndex),
                             onShareMeal: (meal) => _shareMeal(meal),
+                            onShareMealGroup: (mealType) =>
+                                _shareMealGroup(mealType),
                             onFetchItemEdits: _fetchItemEdits,
                             apiClient: ref.read(apiClientProvider),
                             // Fuel tab (index 3) now hosts both Nutrients and Water pill toggles
@@ -1242,15 +1244,63 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
     );
   }
 
-  /// Open the single-meal share sheet (renders meal card, save / share via
-  /// share_plus). Reuses the same Instagram-Stories capture pipeline as the
-  /// 4-template `ShareNutritionSheet` — see share_meal_sheet.dart.
+  /// Share one logged food/meal — routes through the unified `ShareableSheet`
+  /// (the same gallery, preview, controls and Instagram/Share/Save row as
+  /// workout shares). A text/barcode log (no photo) opens on `whatIAteCard`;
+  /// a photo log opens on the catalog default (`foodPhotoMacros`).
   Future<void> _shareMeal(FoodLog meal) async {
     ref.read(posthogServiceProvider).capture(
       eventName: 'food_log_shared_invoked',
       properties: <String, Object>{'food_log_id': meal.id},
     );
-    await ShareSingleMealSheet.show(context, meal);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final accent = AccentColorScope.of(context).getColor(isDark);
+    final shareable = NutritionAdapter.fromFoodLog(meal, accent: accent);
+    if (shareable == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Log some food first to share')),
+      );
+      return;
+    }
+    final hasPhoto = meal.imageUrl?.isNotEmpty ?? false;
+    await ShareableSheet.show(
+      context,
+      data: shareable,
+      initialTemplate: hasPhoto ? null : ShareableTemplate.whatIAteCard,
+    );
+  }
+
+  /// Share every food logged under one meal-type (all of breakfast, etc.) —
+  /// the per-meal-section share affordance. Pulls the day's logs for that
+  /// meal type from `nutritionProvider` and routes through `ShareableSheet`.
+  Future<void> _shareMealGroup(String mealType) async {
+    final meals = (ref.read(nutritionProvider).todaySummary?.meals ??
+            const <FoodLog>[])
+        .where((m) => m.mealType == mealType)
+        .toList();
+    if (meals.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Log some food first to share')),
+      );
+      return;
+    }
+    ref.read(posthogServiceProvider).capture(
+      eventName: 'meal_group_shared_invoked',
+      properties: <String, Object>{
+        'meal_type': mealType,
+        'log_count': meals.length,
+      },
+    );
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final accent = AccentColorScope.of(context).getColor(isDark);
+    final shareable = NutritionAdapter.fromMeal(meals, accent: accent);
+    if (shareable == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Log some food first to share')),
+      );
+      return;
+    }
+    await ShareableSheet.show(context, data: shareable);
   }
 
   /// Add a logged meal (or one item from it) to the user's active grocery

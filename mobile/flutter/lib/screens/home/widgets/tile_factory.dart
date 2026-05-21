@@ -173,11 +173,21 @@ class TileFactory {
         // a richer composite. We now render the composite when the user is
         // connected and fall back to the original tile (which owns the
         // "Connect" CTA) when they aren't.
+        //
+        // CombinedHealthCard is stacked ABOVE the composite as a self-hiding
+        // sibling (the DeloadRecommendationCard pattern — no new TileType,
+        // build_runner is forbidden): it collapses to SizedBox.shrink when
+        // Health isn't connected, so it costs nothing in that case.
         return Consumer(builder: (context, ref, _) {
           final connected = ref.watch(healthSyncProvider).isConnected;
-          return connected
-              ? const TodaysHealthCard()
-              : const DailyStepsTile();
+          if (!connected) return const DailyStepsTile();
+          return const Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CombinedHealthCard(),
+              TodaysHealthCard(),
+            ],
+          );
         });
       case TileType.nutritionPatterns:
         return const _NutritionPatternsTile();

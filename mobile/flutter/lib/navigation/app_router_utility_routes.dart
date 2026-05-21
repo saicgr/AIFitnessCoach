@@ -40,6 +40,22 @@ List<RouteBase> _utilityRoutes() => [
         builder: (context, state) => const BodyAnalyzerScreen(),
       ),
 
+      // Sleep detail — date strip, hypnogram, sleep score, debt/regularity,
+      // 7-night + 30-day charts, monthly summary, coaching, sleep goal.
+      // Reached by tapping the "Last Night's Sleep" card.
+      GoRoute(
+        path: '/health/sleep',
+        builder: (context, state) => const SleepDetailScreen(),
+      ),
+
+      // Combined Health hub — date strip, recovery hero, per-metric history
+      // sections, step/active-minute goal setting, activity streak.
+      // Reached by tapping the "Today's Health" card body.
+      GoRoute(
+        path: '/health/combined',
+        builder: (context, state) => const CombinedHealthScreen(),
+      ),
+
       // Cycle-aware reminder settings
       GoRoute(
         path: '/settings/cycle',

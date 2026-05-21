@@ -87,6 +87,8 @@ import '../screens/notifications/notifications_screen.dart';
 import '../screens/measurements/measurements_screen.dart';
 import '../screens/measurements/measurement_detail_screen.dart';
 import '../screens/body_analyzer/body_analyzer_screen.dart';
+import '../screens/health/sleep_detail_screen.dart';
+import '../screens/health/combined_health_screen.dart';
 import '../screens/settings/cycle_settings_screen.dart';
 import '../screens/measurements/derived_metric_detail_screen.dart';
 import '../screens/trends/custom_trend_screen.dart';

@@ -2,34 +2,50 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
-import '../../../core/constants/app_colors.dart';
-import '../../../core/providers/week_start_provider.dart';
-import '../../../core/theme/accent_color_provider.dart';
-import '../../../data/services/haptic_service.dart';
+import '../core/constants/app_colors.dart';
+import '../core/providers/week_start_provider.dart';
+import '../core/theme/accent_color_provider.dart';
+import '../data/services/haptic_service.dart';
 
-/// Horizontal scrolling week-paginated date strip for the Nutrition tab.
+/// Horizontal, week-paginated date strip shared by the Nutrition tab and the
+/// Sleep / Combined-Health detail screens.
 ///
-/// Models the home `WeekCalendarStrip` visually but scrolls back through
-/// up to one year of weeks, with a calendar icon for jumping further. Days
-/// with logged meals get an accent dot under the date number; today and the
-/// currently-selected day are highlighted distinctly. Future days are
-/// rendered dim and tap-disabled.
-class NutritionDateStrip extends ConsumerStatefulWidget {
+/// Originally `NutritionDateStrip`; lifted to `lib/widgets/` so the health
+/// detail screens can reuse the exact same scrub affordance (one source of
+/// truth for the visual + the future-day disabling + the calendar jump).
+///
+/// Behaviour (edge cases B from the Sleep & Health plan):
+///   * Days the caller flags via [loggedDateKeys] get an accent dot — for the
+///     health screens this is "a night with sleep data" / "a day with
+///     activity". A day with no key just renders no dot (per-day empty state
+///     surfaces inside the screen body — case 12).
+///   * Today and the currently-selected day are highlighted distinctly; today
+///     is always reachable even before the morning sync lands (case 13 — the
+///     screen body shows the most-recent night when today has no data yet).
+///   * Future days are rendered dim and tap-disabled (case 14).
+///   * [weeksBack] bounds how far the strip scrolls; callers cap it to the
+///     real backfill window so the strip never implies data older than the
+///     app has (case 15). The calendar icon still jumps anywhere in range.
+///   * DST day cells render correctly — each cell is `weekStart + N days`
+///     constructed at local midnight, so a 23h / 25h DST day is still one
+///     cell (case 16).
+class DateStrip extends ConsumerStatefulWidget {
   /// Currently selected date (driven by the parent).
   final DateTime selectedDate;
 
-  /// Set of `yyyy-MM-dd` (local timezone) keys for days the user logged
-  /// food. Empty set is allowed; cells without a key just don't show a dot.
+  /// Set of `yyyy-MM-dd` (local timezone) keys for days that have data —
+  /// cells with a key show an accent dot. Empty set is allowed.
   final Set<String> loggedDateKeys;
 
   /// Tap callback. The returned [DateTime] is normalized to local midnight.
   final ValueChanged<DateTime> onDaySelected;
 
-  /// How many weeks back the strip can scroll before the user has to use
-  /// the calendar icon. Defaults to 53 (≈1 year).
+  /// How many weeks back the strip can scroll before the user has to use the
+  /// calendar icon. Defaults to 53 (≈1 year) for the nutrition tab; the
+  /// health screens pass a smaller value matching their backfill window.
   final int weeksBack;
 
-  const NutritionDateStrip({
+  const DateStrip({
     super.key,
     required this.selectedDate,
     required this.loggedDateKeys,
@@ -38,10 +54,10 @@ class NutritionDateStrip extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<NutritionDateStrip> createState() => _NutritionDateStripState();
+  ConsumerState<DateStrip> createState() => _DateStripState();
 }
 
-class _NutritionDateStripState extends ConsumerState<NutritionDateStrip> {
+class _DateStripState extends ConsumerState<DateStrip> {
   late final PageController _controller;
 
   @override
@@ -51,7 +67,7 @@ class _NutritionDateStripState extends ConsumerState<NutritionDateStrip> {
   }
 
   @override
-  void didUpdateWidget(NutritionDateStrip oldWidget) {
+  void didUpdateWidget(DateStrip oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.selectedDate != widget.selectedDate) {
       _scrollToSelectedWeek();
@@ -187,14 +203,14 @@ class _WeekRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final selKey = _NutritionDateStripState._dateKey(selectedDate);
-    final todayKey = _NutritionDateStripState._dateKey(today);
+    final selKey = _DateStripState._dateKey(selectedDate);
+    final todayKey = _DateStripState._dateKey(today);
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceAround,
       children: List.generate(7, (displayIndex) {
         final date = weekStart.add(Duration(days: displayIndex));
-        final dateKey = _NutritionDateStripState._dateKey(date);
+        final dateKey = _DateStripState._dateKey(date);
         final isToday = dateKey == todayKey;
         final isSelected = dateKey == selKey;
         final isFuture = date.isAfter(today);
@@ -332,8 +348,8 @@ class _DayCell extends StatelessWidget {
     );
   }
 
-  /// Today cell: filled solid accent-green rounded-rect pill (matching the
-  /// home screen's WeekCalendarStrip style) with white label + white number.
+  /// Today cell: filled solid accent rounded-rect pill (matching the home
+  /// screen's WeekCalendarStrip style) with white label + white number.
   Widget _buildTodayPill() {
     return Expanded(
       child: GestureDetector(
@@ -398,9 +414,9 @@ class _DayCell extends StatelessWidget {
 }
 
 /// Helper exposed for parents that want to derive the date-key set from a
-/// list of `FoodLog` (or any objects with a `loggedAt` DateTime). Keeps the
-/// "yyyy-MM-dd" format consistent with the strip's internal keying.
-String nutritionDateKey(DateTime d) {
+/// list of objects with a DateTime. Keeps the "yyyy-MM-dd" format consistent
+/// with the strip's internal keying.
+String dateStripKey(DateTime d) {
   final local = d.isUtc ? d.toLocal() : d;
   return DateFormat('yyyy-MM-dd').format(local);
 }

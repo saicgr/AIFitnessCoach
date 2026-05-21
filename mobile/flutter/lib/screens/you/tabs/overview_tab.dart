@@ -32,6 +32,7 @@ import '../../../data/services/health_service.dart';
 import '../../../data/services/you_overview_prewarmer.dart';
 import '../../../widgets/liquid_glass_action_bar.dart';
 import '../../../widgets/xp_hero_tile.dart';
+import '../../home/widgets/cards/combined_health_card.dart';
 import '../../home/widgets/cards/last_night_sleep_card.dart';
 import '../../home/widgets/cards/todays_health_card.dart';
 import '../widgets/weight_tracking_card.dart';
@@ -343,6 +344,11 @@ class _YouOverviewTabState extends ConsumerState<YouOverviewTab>
           ),
           const SizedBox(height: 12),
           const LastNightSleepCard(),
+          const SizedBox(height: 12),
+          // Self-hiding sibling — collapses when Health isn't connected, so
+          // first-day users see no gap. Entry point into the Combined
+          // Health hub (recovery + per-metric history + goals).
+          const CombinedHealthCard(),
           const SizedBox(height: 12),
           // WeightTrackingCard has no built-in horizontal padding (unlike
           // the two health cards above which self-pad for reuse on the

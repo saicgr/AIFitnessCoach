@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/constants/app_colors.dart';
+import '../../../../data/services/haptic_service.dart';
 import '../../../../data/services/health_service.dart';
 
 /// "Last Night's Sleep" card matching the GymBeat / FitOn reference: large
@@ -69,41 +71,52 @@ class LastNightSleepCard extends ConsumerWidget {
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-      child: Container(
-        decoration: BoxDecoration(
-          color: elevated,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: cardBorder, width: 1),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    width: 36,
-                    height: 36,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: AppColors.purple.withValues(alpha: 0.18),
-                      borderRadius: BorderRadius.circular(10),
+      child: GestureDetector(
+        // Tapping the card opens the full Sleep detail screen — date strip,
+        // hypnogram, sleep score, debt/regularity, charts, coaching.
+        onTap: () {
+          HapticService.light();
+          context.push('/health/sleep');
+        },
+        behavior: HitTestBehavior.opaque,
+        child: Container(
+          decoration: BoxDecoration(
+            color: elevated,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: cardBorder, width: 1),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 36,
+                      height: 36,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: AppColors.purple.withValues(alpha: 0.18),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(Icons.bedtime_rounded,
+                          color: AppColors.purple, size: 18),
                     ),
-                    child: Icon(Icons.bedtime_rounded,
-                        color: AppColors.purple, size: 18),
-                  ),
-                  const SizedBox(width: 10),
-                  Text(
-                    "Last Night's Sleep",
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                      color: textPrimary,
+                    const SizedBox(width: 10),
+                    Text(
+                      "Last Night's Sleep",
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: textPrimary,
+                      ),
                     ),
-                  ),
-                ],
-              ),
+                    const Spacer(),
+                    Icon(Icons.chevron_right_rounded,
+                        size: 20, color: textMuted),
+                  ],
+                ),
               const SizedBox(height: 14),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.end,
@@ -166,7 +179,8 @@ class LastNightSleepCard extends ConsumerWidget {
                         textMuted),
                 ],
               ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

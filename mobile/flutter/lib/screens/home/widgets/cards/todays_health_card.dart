@@ -205,116 +205,130 @@ class _TodaysHealthCardState extends ConsumerState<TodaysHealthCard> {
               ),
               const SizedBox(height: 16),
 
-              // ─── Hero: steps + progress + gap-to-goal
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    _formatSteps(steps),
-                    style: TextStyle(
-                      fontSize: 38,
-                      fontWeight: FontWeight.w800,
-                      color: textPrimary,
-                      height: 1.0,
-                      letterSpacing: -1.2,
+              // ─── Body — tapping it opens the Combined Health hub
+              // (`/health/combined`): recovery, per-metric history, goal
+              // setting, activity streak. The header's cog / refresh keep
+              // their own taps; only the body below routes to the hub.
+              GestureDetector(
+                onTap: () {
+                  HapticService.light();
+                  context.push('/health/combined');
+                },
+                behavior: HitTestBehavior.opaque,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // ─── Hero: steps + progress + gap-to-goal
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          _formatSteps(steps),
+                          style: TextStyle(
+                            fontSize: 38,
+                            fontWeight: FontWeight.w800,
+                            color: textPrimary,
+                            height: 1.0,
+                            letterSpacing: -1.2,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 6),
+                          child: Text(
+                            'steps',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: textMuted,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                        const Spacer(),
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: Icon(Icons.chevron_right_rounded,
+                              size: 20, color: textMuted),
+                        ),
+                      ],
                     ),
-                  ),
-                  const SizedBox(width: 6),
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 6),
-                    child: Text(
-                      'steps',
+                    const SizedBox(height: 6),
+                    Text(
+                      remaining > 0
+                          ? '${_formatSteps(remaining)} to go of ${_formatSteps(stepGoal)}'
+                          : 'Goal hit — ${_formatSteps(steps - stepGoal)} over target',
                       style: TextStyle(
-                        fontSize: 13,
+                        fontSize: 12,
                         color: textMuted,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 6),
-              Text(
-                remaining > 0
-                    ? '${_formatSteps(remaining)} to go of ${_formatSteps(stepGoal)}'
-                    : 'Goal hit — ${_formatSteps(steps - stepGoal)} over target',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: textMuted,
-                  fontWeight: FontWeight.w500,
+                    const SizedBox(height: 10),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: LinearProgressIndicator(
+                        value: progress,
+                        minHeight: 6,
+                        backgroundColor: cardBorder.withValues(alpha: 0.4),
+                        valueColor:
+                            AlwaysStoppedAnimation<Color>(AppColors.success),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    // ─── Metric tiles in a 2×2 grid (4 equal-width slots).
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _MetricTile(
+                            icon: Icons.local_fire_department_rounded,
+                            iconColor: AppColors.orange,
+                            value: activeCal != null ? '$activeCal' : '—',
+                            unit: 'cal',
+                            label: 'Active Energy',
+                            isDark: isDark,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: _MetricTile(
+                            icon: Icons.favorite_rounded,
+                            iconColor: AppColors.error,
+                            value: avgHr != null ? '$avgHr' : '—',
+                            unit: 'bpm',
+                            label: 'Avg HR',
+                            isDark: isDark,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _MetricTile(
+                            icon: Icons.show_chart_rounded,
+                            iconColor: AppColors.purple,
+                            value: hasHrRange ? '$minHr–$maxHr' : '—',
+                            unit: 'bpm',
+                            label: 'HR Range',
+                            isDark: isDark,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: _MetricTile(
+                            icon: Icons.bedtime_outlined,
+                            iconColor: AppColors.teal,
+                            value: restingHr != null ? '$restingHr' : '—',
+                            unit: 'bpm',
+                            label: 'Resting HR',
+                            isDark: isDark,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
-              ),
-              const SizedBox(height: 10),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: LinearProgressIndicator(
-                  value: progress,
-                  minHeight: 6,
-                  backgroundColor: cardBorder.withValues(alpha: 0.4),
-                  valueColor:
-                      AlwaysStoppedAnimation<Color>(AppColors.success),
-                ),
-              ),
-
-              const SizedBox(height: 14),
-
-              // ─── Metric tiles in a 2×2 grid (4 equal-width slots). Using
-              // `Expanded` inside two `Row`s guarantees every tile is the
-              // same width regardless of value length — previously the
-              // HR-Range full-width tile sat under two narrower tiles,
-              // which read as misaligned. The second row's right slot
-              // shows Resting HR when available, or a placeholder so the
-              // grid stays symmetric.
-              Row(
-                children: [
-                  Expanded(
-                    child: _MetricTile(
-                      icon: Icons.local_fire_department_rounded,
-                      iconColor: AppColors.orange,
-                      value: activeCal != null ? '$activeCal' : '—',
-                      unit: 'cal',
-                      label: 'Active Energy',
-                      isDark: isDark,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: _MetricTile(
-                      icon: Icons.favorite_rounded,
-                      iconColor: AppColors.error,
-                      value: avgHr != null ? '$avgHr' : '—',
-                      unit: 'bpm',
-                      label: 'Avg HR',
-                      isDark: isDark,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Expanded(
-                    child: _MetricTile(
-                      icon: Icons.show_chart_rounded,
-                      iconColor: AppColors.purple,
-                      value: hasHrRange ? '$minHr–$maxHr' : '—',
-                      unit: 'bpm',
-                      label: 'HR Range',
-                      isDark: isDark,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: _MetricTile(
-                      icon: Icons.bedtime_outlined,
-                      iconColor: AppColors.teal,
-                      value: restingHr != null ? '$restingHr' : '—',
-                      unit: 'bpm',
-                      label: 'Resting HR',
-                      isDark: isDark,
-                    ),
-                  ),
-                ],
               ),
             ],
           ),
