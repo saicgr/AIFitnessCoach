@@ -7,7 +7,7 @@ to estimate recovery and training readiness WITHOUT requiring wearables.
 Research shows subjective wellness questionnaires are often MORE sensitive to daily
 fluctuations than objective markers like HRV.
 """
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 from datetime import datetime, date, timedelta
 from dataclasses import dataclass
 from enum import Enum
@@ -528,6 +528,109 @@ class ReadinessService:
             ]
 
         return modifications
+
+
+# =============================================================================
+# Recovery -> training-volume tiers (Phase B1)
+# =============================================================================
+#
+# Maps an objective recovery score (0-100, derived from wearable sleep data —
+# see services/user_context/health_activity.py) onto a discrete training tier.
+# Recovery-aware workout generation (Phase B3) consumes `volume_multiplier`
+# and surfaces `adjustment` to the user / prompt.
+#
+# This is DELIBERATELY deterministic — no LLM is ever involved in safety- or
+# load-affecting classification. The bands and multipliers come directly from
+# the approved plan's Phase B1 tier table:
+#
+#   | Recovery | Tier        | Volume | Adjustment                              |
+#   |----------|-------------|--------|-----------------------------------------|
+#   | 81-100   | optimal     | 1.0x   | as planned                              |
+#   | 61-80    | good        | 1.0x   | as planned                              |
+#   | 46-60    | moderate    | 0.85x  | longer rest, trim 1 accessory set       |
+#   | 31-45    | compromised | 0.70x  | -10% load, no failure/drop/AMRAP sets   |
+#   | 0-30     | low         | 0.55x  | swap to mobility/recovery, -15% load    |
+#
+# Each entry is keyed by tier name and carries:
+#   - min_score / max_score : inclusive recovery-score band
+#   - volume_multiplier     : factor applied to planned working-set volume
+#   - adjustment            : short human-readable description of the change
+
+RECOVERY_TIERS: Dict[str, Dict[str, Any]] = {
+    "optimal": {
+        "min_score": 81,
+        "max_score": 100,
+        "volume_multiplier": 1.0,
+        "adjustment": "as planned",
+    },
+    "good": {
+        "min_score": 61,
+        "max_score": 80,
+        "volume_multiplier": 1.0,
+        "adjustment": "as planned",
+    },
+    "moderate": {
+        "min_score": 46,
+        "max_score": 60,
+        "volume_multiplier": 0.85,
+        "adjustment": "longer rest, trim 1 accessory set",
+    },
+    "compromised": {
+        "min_score": 31,
+        "max_score": 45,
+        "volume_multiplier": 0.70,
+        "adjustment": "-10% load, no failure/drop/AMRAP sets",
+    },
+    "low": {
+        "min_score": 0,
+        "max_score": 30,
+        "volume_multiplier": 0.55,
+        "adjustment": "swap to mobility/recovery, -15% load",
+    },
+}
+
+
+def map_recovery_to_tier(recovery_score: Optional[int]) -> Optional[Dict[str, Any]]:
+    """Map a 0-100 recovery score onto a training-volume tier.
+
+    Deterministic — never calls an LLM. Used by recovery-aware workout
+    generation (Phase B3) and the AI-coach health snapshot (Phase B1).
+
+    Args:
+        recovery_score: Objective recovery score in 0-100, or None when the
+            user has no wearable / no recent sleep data.
+
+    Returns:
+        A dict ``{"tier": str, "volume_multiplier": float, "adjustment": str,
+        "recovery_score": int}`` for a valid score, or ``None`` when
+        ``recovery_score`` is ``None`` — signalling "no adaptation, train as
+        planned" to every caller.
+
+    Boundary behaviour (inclusive bands, no gaps):
+        30 -> low, 31 -> compromised, 45 -> compromised, 46 -> moderate,
+        60 -> moderate, 61 -> good, 80 -> good, 81 -> optimal.
+        Scores are clamped to 0-100 so an out-of-range input still resolves.
+    """
+    if recovery_score is None:
+        return None
+
+    # Clamp defensively — an upstream miscalculation must still resolve to a
+    # tier rather than silently returning None (which means "no adaptation").
+    score = max(0, min(100, int(recovery_score)))
+
+    for tier_name, band in RECOVERY_TIERS.items():
+        if band["min_score"] <= score <= band["max_score"]:
+            return {
+                "tier": tier_name,
+                "volume_multiplier": band["volume_multiplier"],
+                "adjustment": band["adjustment"],
+                "recovery_score": score,
+            }
+
+    # Unreachable: the five bands cover 0-100 contiguously. Kept as a guard so
+    # a future edit that leaves a gap fails loudly in tests rather than here.
+    logger.error(f"map_recovery_to_tier: score {score} matched no tier band")
+    return None
 
 
 # Singleton instance
