@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Zealova — Z, Abstracted</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+    background: #0a0a0b; color: #e9e9ec;
+    -webkit-font-smoothing: antialiased; line-height: 1.55;
+    padding: 56px 24px 96px;
+  }
+  .wrap { max-width: 1120px; margin: 0 auto; }
+  header { margin-bottom: 44px; max-width: 720px; }
+  .kicker {
+    font-size: 12px; font-weight: 700; letter-spacing: 2.4px;
+    text-transform: uppercase; color: #f9892f; margin-bottom: 14px;
+  }
+  h1 { font-size: 33px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 14px; }
+  header p { color: #9b9ba2; font-size: 15px; }
+  header b { color: #cdcdd2; font-weight: 600; }
+
+  .grid { display: grid; gap: 22px; grid-template-columns: repeat(auto-fit, minmax(316px, 1fr)); }
+  .card {
+    background: #141416; border: 1px solid #242427; border-radius: 20px;
+    padding: 24px 22px 26px; display: flex; flex-direction: column;
+  }
+  .name { font-size: 21px; font-weight: 700; letter-spacing: -0.3px; }
+  .desc { color: #9b9ba2; font-size: 13px; margin: 6px 0 20px; min-height: 76px; }
+  .desc b { color: #cdcdd2; }
+
+  .hero {
+    width: 100%; max-width: 240px; margin: 0 auto 22px; aspect-ratio: 1;
+    filter: drop-shadow(0 16px 30px rgba(0,0,0,0.55));
+  }
+  .hero svg, .ic { width: 100%; height: 100%; display: block; }
+
+  .label {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.8px;
+    text-transform: uppercase; color: #76767e; margin-bottom: 10px;
+  }
+  .squint {
+    background: linear-gradient(135deg, #4b4668 0%, #6f5b78 48%, #2f3f55 100%);
+    border-radius: 14px; padding: 18px 16px 12px;
+    display: flex; align-items: flex-end; justify-content: space-around; gap: 8px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.10);
+  }
+  .squint .col { display: flex; flex-direction: column; align-items: center; gap: 7px; }
+  .squint .cap { font-size: 10px; color: rgba(255,255,255,0.80); font-weight: 600; }
+  .s120 { width: 120px; height: 120px; }
+  .s60 { width: 60px; height: 60px; }
+  .s40 { width: 40px; height: 40px; }
+
+  footer {
+    margin-top: 44px; padding: 26px 28px;
+    background: #141416; border: 1px solid #242427; border-radius: 20px;
+  }
+  footer h3 { font-size: 16px; margin-bottom: 12px; }
+  footer p { color: #a6a6ac; font-size: 14px; margin-bottom: 9px; }
+  footer b { color: #e4e4e8; font-weight: 600; }
+  footer .pick b { color: #f9892f; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+      <mask id="maskFacetZ">
+        <rect x="0" y="0" width="1024" height="1024" fill="white"/>
+        <path d="M392 372 L632 372 L632 452 L500 572 L632 572 L632 652 L392 652 L392 572 L524 452 L392 452 Z" fill="black"/>
+      </mask>
+
+      <!-- BOLT: the Z abstracted into a chunky angular lightning bolt -->
+      <symbol id="zBolt" viewBox="0 0 1024 1024">
+        <g transform="translate(512,512) skewX(-11) translate(-512,-512)">
+          <path d="M290 374 L704 316 L704 432 L508 592 L734 650 L320 708 L320 592 L516 432 Z"
+                fill="#F97316" stroke="#F97316" stroke-width="18" stroke-linejoin="round"/>
+        </g>
+      </symbol>
+
+      <!-- FACET: chunky faceted badge with the Z carved out (the Gravl move) -->
+      <symbol id="zFacet" viewBox="0 0 1024 1024">
+        <path d="M367 256 L657 256 L802 512 L657 768 L367 768 L222 512 Z"
+              fill="#F97316" stroke="#F97316" stroke-width="62" stroke-linejoin="round"
+              mask="url(#maskFacetZ)"/>
+      </symbol>
+
+      <!-- TWIN: the Z split into two interlocking chunky forms (the Hevy move) -->
+      <symbol id="zTwin" viewBox="0 0 1024 1024">
+        <path d="M338 374 L660 374 L432 560" fill="none" stroke="#F97316"
+              stroke-width="128" stroke-linejoin="round" stroke-linecap="round"/>
+        <path d="M590 466 L362 650 L686 650" fill="none" stroke="#F97316"
+              stroke-width="128" stroke-linejoin="round" stroke-linecap="round"/>
+      </symbol>
+    </defs>
+  </svg>
+
+  <header>
+    <div class="kicker">Zealova · App Icon — round 2</div>
+    <h1>The Z, abstracted</h1>
+    <p>Three takes that try to do what <b>Gravl and Hevy</b> do — push the letter until it reads as a <b>shape first</b>: chunky weight, abstracted form, the negative space doing work. Not a typeset Z. Shown big, then at 60&nbsp;px and 40&nbsp;px on a home screen.</p>
+  </header>
+
+  <div class="grid">
+
+    <!-- BOLT -->
+    <div class="card">
+      <div class="name">Bolt</div>
+      <div class="desc">The Z pushed until it reads as a <b>lightning bolt</b> — chunky, angular, sharp terminals, leaned forward. A Z and a bolt are nearly the same shape; this leans all the way in. Energy = "zeal".</div>
+      <div class="hero">
+        <svg viewBox="0 0 1024 1024">
+          <rect width="1024" height="1024" rx="224" fill="#080809"/>
+          <rect width="1024" height="1024" rx="224" fill="none" stroke="#ffffff" stroke-opacity="0.05"/>
+          <use href="#zBolt" width="1024" height="1024"/>
+        </svg>
+      </div>
+      <div class="label">Home-screen size test</div>
+      <div class="squint">
+        <div class="col"><svg class="s120" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="224" fill="#080809"/><use href="#zBolt" width="1024" height="1024"/></svg><span class="cap">large</span></div>
+        <div class="col"><svg class="s60" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="224" fill="#080809"/><use href="#zBolt" width="1024" height="1024"/></svg><span class="cap">60 px</span></div>
+        <div class="col"><svg class="s40" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="224" fill="#080809"/><use href="#zBolt" width="1024" height="1024"/></svg><span class="cap">40 px</span></div>
+      </div>
+    </div>
+
+    <!-- FACET -->
+    <div class="card">
+      <div class="name">Facet</div>
+      <div class="desc">The Gravl move: a <b>chunky faceted badge</b> with the Z carved out as negative space. The letter and the container are one solid object — the badge reads first, the Z second.</div>
+      <div class="hero">
+        <svg viewBox="0 0 1024 1024">
+          <rect width="1024" height="1024" rx="224" fill="#080809"/>
+          <rect width="1024" height="1024" rx="224" fill="none" stroke="#ffffff" stroke-opacity="0.05"/>
+          <use href="#zFacet" width="1024" height="1024"/>
+        </svg>
+      </div>
+      <div class="label">Home-screen size test</div>
+      <div class="squint">
+        <div class="col"><svg class="s120" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="224" fill="#080809"/><use href="#zFacet" width="1024" height="1024"/></svg><span class="cap">large</span></div>
+        <div class="col"><svg class="s60" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="224" fill="#080809"/><use href="#zFacet" width="1024" height="1024"/></svg><span class="cap">60 px</span></div>
+        <div class="col"><svg class="s40" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="224" fill="#080809"/><use href="#zFacet" width="1024" height="1024"/></svg><span class="cap">40 px</span></div>
+      </div>
+    </div>
+
+    <!-- TWIN -->
+    <div class="card">
+      <div class="name">Twin</div>
+      <div class="desc">The Hevy move: the Z broken into <b>two interlocking chunky forms</b> with a gap between them. You read two shapes first; the Z assembles in your eye second.</div>
+      <div class="hero">
+        <svg viewBox="0 0 1024 1024">
+          <rect width="1024" height="1024" rx="224" fill="#080809"/>
+          <rect width="1024" height="1024" rx="224" fill="none" stroke="#ffffff" stroke-opacity="0.05"/>
+          <use href="#zTwin" width="1024" height="1024"/>
+        </svg>
+      </div>
+      <div class="label">Home-screen size test</div>
+      <div class="squint">
+        <div class="col"><svg class="s120" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="224" fill="#080809"/><use href="#zTwin" width="1024" height="1024"/></svg><span class="cap">large</span></div>
+        <div class="col"><svg class="s60" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="224" fill="#080809"/><use href="#zTwin" width="1024" height="1024"/></svg><span class="cap">60 px</span></div>
+        <div class="col"><svg class="s40" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="224" fill="#080809"/><use href="#zTwin" width="1024" height="1024"/></svg><span class="cap">40 px</span></div>
+      </div>
+    </div>
+
+  </div>
+
+  <footer>
+    <h3>My honest read — after rendering them</h3>
+    <p class="pick"><b>Bolt</b> is the one. It stopped being a typeset letter — it is a chunky, angular lightning bolt that happens to be a Z, with real energy ("zeal" turned into a shape). The strongest Z-mark in this whole exploration, and genuinely shippable.</p>
+    <p><b>Facet</b> is competent but I did not land the Gravl move — it is a Z sitting inside a hexagon, not a mark where the letter and the shape are one idea. <b>Twin</b> did not work: it reads as a broken Z, not two intentional forms.</p>
+    <p style="margin-top:13px;">Pick Bolt and I refine it — tune the lean, balance the weight, sharpen the terminals, give you 2-3 variations — then export to PNG and wire it into the iOS and Android icon sets.</p>
+  </footer>
+
+</div>
+</body>
+</html>

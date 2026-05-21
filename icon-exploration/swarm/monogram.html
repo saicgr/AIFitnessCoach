@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Zealova — Monogram Icon Exploration</title>
+<style>
+  :root {
+    --bg: #0e0e10;
+    --panel: #161618;
+    --ink: #e7e7ea;
+    --muted: #8a8a92;
+    --green: #10B981;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 48px 32px 96px;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  header { max-width: 980px; margin: 0 auto 56px; }
+  h1 { font-size: 22px; font-weight: 650; letter-spacing: -0.01em; margin: 0 0 6px; }
+  header p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.6; }
+  .concept {
+    max-width: 980px;
+    margin: 0 auto 40px;
+    background: var(--panel);
+    border: 1px solid #232326;
+    border-radius: 18px;
+    padding: 32px;
+  }
+  .concept-head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 4px; }
+  .concept-num { font-size: 12px; font-weight: 700; color: var(--green); letter-spacing: 0.08em; }
+  .concept-name { font-size: 18px; font-weight: 650; letter-spacing: -0.01em; }
+  .rationale {
+    color: var(--muted);
+    font-size: 13.5px;
+    line-height: 1.6;
+    margin: 0 0 28px;
+    max-width: 760px;
+  }
+  .row { display: flex; align-items: flex-end; gap: 36px; flex-wrap: wrap; }
+  .size-block { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+  .size-label { font-size: 11px; color: var(--muted); letter-spacing: 0.04em; }
+  .large { width: 200px; height: 200px; }
+  .px60  { width: 60px;  height: 60px;  }
+  .px40  { width: 40px;  height: 40px;  }
+  .icon  { display: block; }
+  .strip {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-top: 28px;
+    padding: 14px 16px;
+    background: #0e0e10;
+    border-radius: 12px;
+  }
+  .strip .icon { width: 28px; height: 28px; }
+  .strip span { font-size: 12px; color: var(--muted); }
+  footer {
+    max-width: 980px;
+    margin: 64px auto 0;
+    color: var(--muted);
+    font-size: 12.5px;
+    line-height: 1.7;
+    border-top: 1px solid #232326;
+    padding-top: 24px;
+  }
+  code { color: #b9b9c0; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Zealova — App Icon Exploration: Monogram Territory</h1>
+  <p>Three lettermark concepts. Flat, solid green (#10B981 / #34D399 / #059669) on near-black #080809.
+     Each abstracts the Z far enough to read as a <em>shape</em> first — built to dodge the Zwift trap
+     (a plain block Z) and the negative-space-letter-in-a-square stock trope.</p>
+</header>
+
+<!-- =================================================================
+     SVG DEFS — reusable <symbol> marks (extractable, viewBox 0 0 1024 1024)
+     ================================================================= -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+
+    <!-- ---------------------------------------------------------------
+         CONCEPT 1 — "NOTCH"
+         The most reductive of the three: ONE cut, TWO masses. A bold
+         green tile — contained inside the icon's safe area with even
+         margin, its four outer corners rounded to echo the squircle —
+         is split by a single Z-shaped channel into two interlocking
+         slabs. Upper-left slab light green; lower-right slab deep green;
+         they slot together like a two-piece puzzle, the near-black
+         channel between them tracing a thick zig. FIRST read: a split
+         badge / a shutter / two stacked plates. The Z lives entirely in
+         the negative channel and only surfaces on a second look. Two big
+         shapes, one gap — bulletproof at 40px. Each slab is a clipped
+         quadrant of one rounded square: it carries the two OUTER rounded
+         corners of its side and a sharp inner edge along the channel.
+         The training+nutrition duality is the two-slab split itself.
+         --------------------------------------------------------------- -->
+    <symbol id="mark-notch" viewBox="0 0 1024 1024">
+      <!-- upper-left slab — light green. Outer corners (top-left,
+           top-right) rounded r=64; lower-right boundary is the Z
+           channel: along the top, a step DOWN, a diagonal, then the
+           lower-left edge back up. Sits within a 168..856 safe box. -->
+      <path fill="#34D399" d="
+        M232 168
+        h560
+        a64 64 0 0 1 64 64
+        v158
+        h-322
+        l-150 196
+        H168
+        v-354
+        a64 64 0 0 1 64 -64
+        Z"/>
+      <!-- lower-right slab — deep green. Point-symmetric counterpart;
+           outer corners (bottom-right, bottom-left) rounded r=64; its
+           upper-left boundary mirrors the channel exactly so a constant
+           near-black gap holds between the two slabs. -->
+      <path fill="#059669" d="
+        M792 856
+        h-560
+        a64 64 0 0 1 -64 -64
+        v-158
+        h322
+        l150 -196
+        h288
+        v354
+        a64 64 0 0 1 -64 64
+        Z"/>
+    </symbol>
+
+    <!-- ---------------------------------------------------------------
+         CONCEPT 2 — "KEYSTONE"
+         A single solid faceted block. A bold notch is carved from the
+         upper-right and a matching notch from the lower-left; the carved
+         near-black voids interlock so the SOLID green that survives is a
+         thick zig set into a gem. Chamfered corners = faceted-badge feel
+         (the Gravl move). The block also reads as an abstract arrowhead
+         driving up-right. Multi-readable: badge / zig / arrow. The notch
+         depth is tuned so the gem mass — not a letter — lands first.
+         Single bold green; one lighter facet on the top bar for the
+         flat 2-step palette and to reinforce the cut-gem read.
+         --------------------------------------------------------------- -->
+    <symbol id="mark-keystone" viewBox="0 0 1024 1024">
+      <!-- one continuous solid path: a faceted block whose silhouette
+           IS the zig. Top bar, deep step down on the right, bottom bar,
+           deep step up on the left. All corners chamfered. -->
+      <path fill="#10B981" d="
+        M260 188
+        h504
+        a44 44 0 0 1 44 44
+        v150
+        a44 44 0 0 1 -44 44
+        h-196
+        l196 230
+        v126
+        a44 44 0 0 1 -44 44
+        h-504
+        a44 44 0 0 1 -44 -44
+        v-150
+        a44 44 0 0 1 44 -44
+        h196
+        l-196 -230
+        v-126
+        a44 44 0 0 1 44 -44
+        Z"/>
+      <!-- lighter-green inner facet on the top bar: a parallelogram
+           that catches the eye, adds the 2-step palette, and sells the
+           "this is a cut gem" read rather than a flat letter -->
+      <path fill="#34D399" d="
+        M300 232
+        h424
+        l-150 132
+        h-274
+        Z"/>
+    </symbol>
+
+    <!-- ---------------------------------------------------------------
+         CONCEPT 3 — "CLASP"
+         The "two" of Zealova made structural: training + nutrition,
+         clasped into one. Two identical thick L-brackets — each a single
+         clean elbow — reach in from opposite corners and hook PAST each
+         other, the way two interlaced fingers lock. Each bracket: one
+         long arm + one shorter arm at a right angle, fully rounded ends.
+         They never touch — a constant near-black gap runs the seam — and
+         their two short arms frame a bold square void dead centre.
+         FIRST read: an interlock / a link / two clasped hooks — strength
+         through union. The Z surfaces only if you trace the seam. Just
+         two fat shapes and one big central hole — clean at 40px. Light
+         bracket over deep bracket = flat 2-step depth, zero gradient.
+         --------------------------------------------------------------- -->
+    <symbol id="mark-clasp" viewBox="0 0 1024 1024">
+      <!-- bracket A — deep green. Enters upper-left: a long horizontal
+           top arm, then a right angle into a shorter vertical arm that
+           drops toward the centre. Stroke ~150 thick, rounded caps. -->
+      <path fill="none" stroke="#059669" stroke-width="152"
+            stroke-linecap="round" stroke-linejoin="round" d="
+        M268 268
+        h392
+        v300"/>
+      <!-- bracket B — light green. Point-symmetric twin: enters
+           lower-right with a long horizontal bottom arm, right angle up
+           into a shorter vertical arm rising toward the centre. Offset
+           so a clean near-black gap holds between the two short arms. -->
+      <path fill="none" stroke="#34D399" stroke-width="152"
+            stroke-linecap="round" stroke-linejoin="round" d="
+        M756 756
+        h-392
+        v-300"/>
+    </symbol>
+
+  </defs>
+</svg>
+
+<!-- =================================================================
+     CONCEPT 1
+     ================================================================= -->
+<section class="concept">
+  <div class="concept-head">
+    <span class="concept-num">CONCEPT 01</span>
+    <span class="concept-name">Notch</span>
+  </div>
+  <p class="rationale">
+    One cut, two masses. A bold solid tile split by a single Z-shaped channel into two
+    interlocking slabs — light above, deep below — slotting together like a two-piece puzzle.
+    Reads as a split badge; the Z lives only in the near-black gap. The training+nutrition split.
+  </p>
+  <div class="row">
+    <div class="size-block">
+      <div class="large">
+        <svg class="icon" width="200" height="200" viewBox="0 0 1024 1024">
+          <rect width="1024" height="1024" rx="224" fill="#080809"/>
+          <use href="#mark-notch"/>
+        </svg>
+      </div>
+      <span class="size-label">200 px</span>
+    </div>
+    <div class="size-block">
+      <div class="px60">
+        <svg class="icon" width="60" height="60" viewBox="0 0 1024 1024">
+          <rect width="1024" height="1024" rx="224" fill="#080809"/>
+          <use href="#mark-notch"/>
+        </svg>
+      </div>
+      <span class="size-label">60 px</span>
+    </div>
+    <div class="size-block">
+      <div class="px40">
+        <svg class="icon" width="40" height="40" viewBox="0 0 1024 1024">
+          <rect width="1024" height="1024" rx="224" fill="#080809"/>
+          <use href="#mark-notch"/>
+        </svg>
+      </div>
+      <span class="size-label">40 px</span>
+    </div>
+  </div>
+  <div class="strip">
+    <svg class="icon" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="224" fill="#080809"/><use href="#mark-notch"/></svg>
+    <svg class="icon" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="224" fill="#080809"/><use href="#mark-notch"/></svg>
+    <svg class="icon" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="224" fill="#080809"/><use href="#mark-notch"/></svg>
+    <span>home-screen density check (28 px)</span>
+  </div>
+</section>
+
+<!-- =================================================================
+     CONCEPT 2
+     ================================================================= -->
+<section class="concept">
+  <div class="concept-head">
+    <span class="concept-num">CONCEPT 02</span>
+    <span class="concept-name">Keystone</span>
+  </div>
+  <p class="rationale">
+    A solid faceted block — a deep notch carved from the upper-right and the lower-left so
+    the surviving green is a thick zig set into a cut gem. Chamfered corners; also reads as
+    an arrowhead driving up-right. One bold green, one lighter facet on the top bar.
+  </p>
+  <div class="row">
+    <div class="size-block">
+      <div class="large">
+        <svg class="icon" width="200" height="200" viewBox="0 0 1024 1024">
+          <rect width="1024" height="1024" rx="224" fill="#080809"/>
+          <use href="#mark-keystone"/>
+        </svg>
+      </div>
+      <span class="size-label">200 px</span>
+    </div>
+    <div class="size-block">
+      <div class="px60">
+        <svg class="icon" width="60" height="60" viewBox="0 0 1024 1024">
+          <rect width="1024" height="1024" rx="224" fill="#080809"/>
+          <use href="#mark-keystone"/>
+        </svg>
+      </div>
+      <span class="size-label">60 px</span>
+    </div>
+    <div class="size-block">
+      <div class="px40">
+        <svg class="icon" width="40" height="40" viewBox="0 0 1024 1024">
+          <rect width="1024" height="1024" rx="224" fill="#080809"/>
+          <use href="#mark-keystone"/>
+        </svg>
+      </div>
+      <span class="size-label">40 px</span>
+    </div>
+  </div>
+  <div class="strip">
+    <svg class="icon" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="224" fill="#080809"/><use href="#mark-keystone"/></svg>
+    <svg class="icon" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="224" fill="#080809"/><use href="#mark-keystone"/></svg>
+    <svg class="icon" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="224" fill="#080809"/><use href="#mark-keystone"/></svg>
+    <span>home-screen density check (28 px)</span>
+  </div>
+</section>
+
+<!-- =================================================================
+     CONCEPT 3
+     ================================================================= -->
+<section class="concept">
+  <div class="concept-head">
+    <span class="concept-num">CONCEPT 03</span>
+    <span class="concept-name">Clasp</span>
+  </div>
+  <p class="rationale">
+    Two identical thick hooks reach in from opposite corners and lock past each other, the
+    way two carabiners clasp — never touching, a near-black seam between them, a square void
+    framed at the centre. Reads as an interlock: training + nutrition, strength through union.
+  </p>
+  <div class="row">
+    <div class="size-block">
+      <div class="large">
+        <svg class="icon" width="200" height="200" viewBox="0 0 1024 1024">
+          <rect width="1024" height="1024" rx="224" fill="#080809"/>
+          <use href="#mark-clasp"/>
+        </svg>
+      </div>
+      <span class="size-label">200 px</span>
+    </div>
+    <div class="size-block">
+      <div class="px60">
+        <svg class="icon" width="60" height="60" viewBox="0 0 1024 1024">
+          <rect width="1024" height="1024" rx="224" fill="#080809"/>
+          <use href="#mark-clasp"/>
+        </svg>
+      </div>
+      <span class="size-label">60 px</span>
+    </div>
+    <div class="size-block">
+      <div class="px40">
+        <svg class="icon" width="40" height="40" viewBox="0 0 1024 1024">
+          <rect width="1024" height="1024" rx="224" fill="#080809"/>
+          <use href="#mark-clasp"/>
+        </svg>
+      </div>
+      <span class="size-label">40 px</span>
+    </div>
+  </div>
+  <div class="strip">
+    <svg class="icon" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="224" fill="#080809"/><use href="#mark-clasp"/></svg>
+    <svg class="icon" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="224" fill="#080809"/><use href="#mark-clasp"/></svg>
+    <svg class="icon" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="224" fill="#080809"/><use href="#mark-clasp"/></svg>
+    <span>home-screen density check (28 px)</span>
+  </div>
+</section>
+
+<footer>
+  Palette: #10B981 primary · #34D399 light · #059669 deep · #080809 background. Flat solid fills only —
+  no gradients, 3D, gloss, or shadow. Each mark is an extractable <code>&lt;symbol&gt;</code> on a
+  1024×1024 canvas. Collision-checked against Zwift (orange block Z), Zing Coach (bolt), Hevy and Gravl.
+</footer>
+
+</body>
+</html>

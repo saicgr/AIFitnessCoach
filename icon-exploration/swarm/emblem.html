@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Zealova — Emblem Concepts</title>
+<style>
+  :root {
+    --bg: #0f0f10;
+    --panel: #18181b;
+    --ink: #ededee;
+    --muted: #9a9a9f;
+    --green: #10B981;
+    --line: #2a2a2e;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    padding: 56px 40px 96px;
+  }
+  header { max-width: 1100px; margin: 0 auto 48px; }
+  h1 { font-size: 26px; font-weight: 650; letter-spacing: -0.02em; margin: 0 0 8px; }
+  header p { color: var(--muted); font-size: 14px; line-height: 1.6; margin: 0; max-width: 720px; }
+  .grid { max-width: 1100px; margin: 0 auto; display: flex; flex-direction: column; gap: 28px; }
+  .concept {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    padding: 32px;
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 36px;
+    align-items: center;
+  }
+  .hero { display: flex; flex-direction: column; gap: 16px; align-items: center; }
+  .hero svg { width: 280px; height: 280px; border-radius: 60px; }
+  .sizes { display: flex; align-items: flex-end; gap: 28px; }
+  .size-block { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .size-block span { color: var(--muted); font-size: 11px; letter-spacing: 0.04em; }
+  .meta h2 { font-size: 19px; margin: 0 0 4px; letter-spacing: -0.01em; }
+  .meta .tag { color: var(--green); font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
+  .meta p { color: var(--muted); font-size: 13.5px; line-height: 1.65; margin: 12px 0 0; }
+  .meta .read { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); }
+  .meta .read strong { color: var(--ink); font-weight: 600; }
+  .pixrow { display: flex; gap: 40px; margin-top: 6px; }
+  @media (max-width: 760px) {
+    .concept { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Zealova — App Icon: Emblem Concepts</h1>
+  <p>
+    Chunky faceted badges in the Gravl school. Flat, solid green (#10B981 / #34D399 / #059669)
+    on near-black #080809. Each mark uses negative space as a deliberate secondary image.
+    Shown at hero size, then 60&nbsp;px and 40&nbsp;px to verify small-scale legibility.
+  </p>
+</header>
+
+<!-- ============================================================= -->
+<!-- SYMBOL DEFINITIONS — each mark is a reusable, extractable symbol -->
+<!-- viewBox 0 0 1024 1024; mark only (no background rect)           -->
+<!-- ============================================================= -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+
+  <!-- ----------------------------------------------------------- -->
+  <!-- CONCEPT 1 — RISE                                             -->
+  <!-- A solid faceted slab whose TOP edge is cut into an upward    -->
+  <!-- peak, and a bold open chevron is carved clean through the    -->
+  <!-- centre. The chevron void and the peaked silhouette both      -->
+  <!-- point up: the leftover positive mass below the void reads as -->
+  <!-- one thick upward arrow. Two synchronized up-reads = momentum.-->
+  <!-- Built as ONE even-odd path: peaked slab + chevron void.      -->
+  <!-- ----------------------------------------------------------- -->
+  <symbol id="mark-rise" viewBox="0 0 1024 1024">
+    <path fill-rule="evenodd" clip-rule="evenodd"
+      d="M512 132
+         L852 472
+         L852 752
+         Q852 836 768 836
+         L256 836
+         Q172 836 172 752
+         L172 472 Z
+         M512 360
+         L268 604
+         L420 604
+         L512 512
+         L604 604
+         L756 604 Z"
+      fill="#10B981" />
+    <!-- right facet plane, lighter — the lit face of the wedge -->
+    <path d="M512 132 L852 472 L852 752 Q852 836 768 836 L604 836 L604 604 L512 512 Z"
+      fill="#34D399" />
+    <!-- left base block, deeper green — grounds the upward mass -->
+    <path d="M268 604 L420 604 L512 512 L512 836 L256 836 Q172 836 172 752 L172 604 Z"
+      fill="#059669" />
+  </symbol>
+
+  <!-- ----------------------------------------------------------- -->
+  <!-- CONCEPT 2 — LIFT-GATE                                        -->
+  <!-- A heavy faceted slab. A tall hard-edged void is carved UP    -->
+  <!-- from the base edge; the void is a clean upward arrowhead.    -->
+  <!-- The two thick legs flanking the void converge to a single   -->
+  <!-- faceted apex at the top. Two legs lifting one peak = the two -->
+  <!-- disciplines driving one ascent. Negative space = the rising  -->
+  <!-- arrow; positive space = a gateway you move up through.       -->
+  <!-- ----------------------------------------------------------- -->
+  <symbol id="mark-liftgate" viewBox="0 0 1024 1024">
+    <!-- outer faceted shield: peaked top, flat shoulders, V base.  -->
+    <!-- A fat upward arrowhead is carved from the base; the two    -->
+    <!-- chunky legs flanking it carry the eye up to the apex.      -->
+    <path fill-rule="evenodd" clip-rule="evenodd"
+      d="M512 152
+         L840 340
+         L840 712
+         L512 872
+         L184 712
+         L184 340 Z
+         M512 360
+         L320 690
+         L420 690
+         L512 534
+         L604 690
+         L704 690 Z"
+      fill="#10B981" />
+    <!-- right facet plane, lighter — the lit face of the apex -->
+    <path d="M512 152 L840 340 L840 712 L604 690 L512 534 Z"
+      fill="#34D399" />
+    <!-- left foot, deeper green — anchors the gate to its base -->
+    <path d="M320 690 L420 690 L512 534 L512 872 L184 712 L184 600 Z"
+      fill="#059669" />
+  </symbol>
+
+  <!-- ----------------------------------------------------------- -->
+  <!-- CONCEPT 3 — KEYSTONE                                         -->
+  <!-- A chunky hexagonal badge split by a hard horizontal seam     -->
+  <!-- into a wide base block and a smaller crowning block. A sharp -->
+  <!-- triangular void is wedged at the seam's center — a keystone  -->
+  <!-- locking the two halves, and an upward spark at the joint.    -->
+  <!-- Two locked blocks = train + nutrition fused; spark = zeal.   -->
+  <!-- ----------------------------------------------------------- -->
+  <symbol id="mark-keystone" viewBox="0 0 1024 1024">
+    <!-- CROWN block: top half of a chunky hexagon. A V-channel is  -->
+    <!-- cut up into its underside — the void where a keystone      -->
+    <!-- would seat. Thin seam (~36u) keeps the badge reading whole.-->
+    <path fill-rule="evenodd" clip-rule="evenodd"
+      d="M512 156
+         L820 336
+         L820 494
+         L204 494
+         L204 336 Z
+         M404 494
+         L512 330
+         L620 494 Z"
+      fill="#10B981" />
+    <!-- BASE block: bottom half of the hexagon — deepest green.    -->
+    <path d="M204 530
+         L820 530
+         L820 688
+         L512 868
+         L204 688 Z"
+      fill="#059669" />
+    <!-- KEYSTONE wedge: the BRIGHTEST tone so it reads as the hero -->
+    <!-- element — base seats on the base block, apex plugs the     -->
+    <!-- crown's V-channel, physically locking the two halves.      -->
+    <path d="M512 360 L640 530 L384 530 Z" fill="#34D399" />
+  </symbol>
+
+</svg>
+
+<!-- ============================================================= -->
+<!-- RENDERED CONCEPTS                                              -->
+<!-- ============================================================= -->
+<main class="grid">
+
+  <!-- CONCEPT 1 -->
+  <section class="concept">
+    <div class="hero">
+      <svg viewBox="0 0 1024 1024" role="img" aria-label="Concept 1 — Rise">
+        <rect width="1024" height="1024" rx="224" fill="#080809" />
+        <use href="#mark-rise" />
+      </svg>
+      <div class="pixrow">
+        <div class="size-block">
+          <svg width="60" height="60" viewBox="0 0 1024 1024" aria-label="Rise at 60px">
+            <rect width="1024" height="1024" rx="224" fill="#080809" />
+            <use href="#mark-rise" />
+          </svg>
+          <span>60 px</span>
+        </div>
+        <div class="size-block">
+          <svg width="40" height="40" viewBox="0 0 1024 1024" aria-label="Rise at 40px">
+            <rect width="1024" height="1024" rx="224" fill="#080809" />
+            <use href="#mark-rise" />
+          </svg>
+          <span>40 px</span>
+        </div>
+      </div>
+    </div>
+    <div class="meta">
+      <div class="tag">Concept 1</div>
+      <h2>Rise</h2>
+      <p>
+        A solid faceted slab cut to an upward peak, with a bold open chevron
+        carved clean through its centre. Peak and chevron point the same way, so
+        the whole badge pushes up in one beat.
+      </p>
+      <p class="read">
+        <strong>Negative space:</strong> the chevron void leaves the lower
+        positive mass reading as one thick upward arrowhead — the empty space and
+        the solid both resolve to ascent.
+      </p>
+    </div>
+  </section>
+
+  <!-- CONCEPT 2 -->
+  <section class="concept">
+    <div class="hero">
+      <svg viewBox="0 0 1024 1024" role="img" aria-label="Concept 2 — Lift-Gate">
+        <rect width="1024" height="1024" rx="224" fill="#080809" />
+        <use href="#mark-liftgate" />
+      </svg>
+      <div class="pixrow">
+        <div class="size-block">
+          <svg width="60" height="60" viewBox="0 0 1024 1024" aria-label="Lift-Gate at 60px">
+            <rect width="1024" height="1024" rx="224" fill="#080809" />
+            <use href="#mark-liftgate" />
+          </svg>
+          <span>60 px</span>
+        </div>
+        <div class="size-block">
+          <svg width="40" height="40" viewBox="0 0 1024 1024" aria-label="Lift-Gate at 40px">
+            <rect width="1024" height="1024" rx="224" fill="#080809" />
+            <use href="#mark-liftgate" />
+          </svg>
+          <span>40 px</span>
+        </div>
+      </div>
+    </div>
+    <div class="meta">
+      <div class="tag">Concept 2</div>
+      <h2>Lift-Gate</h2>
+      <p>
+        A heavy faceted shield. A tall hard-edged void is carved up from the base;
+        the two thick legs flanking it converge to one peaked apex — two
+        disciplines driving a single ascent.
+      </p>
+      <p class="read">
+        <strong>Negative space:</strong> the carved void is a clean upward
+        arrowhead; the positive frame doubles as a gateway you move up through.
+      </p>
+    </div>
+  </section>
+
+  <!-- CONCEPT 3 -->
+  <section class="concept">
+    <div class="hero">
+      <svg viewBox="0 0 1024 1024" role="img" aria-label="Concept 3 — Keystone">
+        <rect width="1024" height="1024" rx="224" fill="#080809" />
+        <use href="#mark-keystone" />
+      </svg>
+      <div class="pixrow">
+        <div class="size-block">
+          <svg width="60" height="60" viewBox="0 0 1024 1024" aria-label="Keystone at 60px">
+            <rect width="1024" height="1024" rx="224" fill="#080809" />
+            <use href="#mark-keystone" />
+          </svg>
+          <span>60 px</span>
+        </div>
+        <div class="size-block">
+          <svg width="40" height="40" viewBox="0 0 1024 1024" aria-label="Keystone at 40px">
+            <rect width="1024" height="1024" rx="224" fill="#080809" />
+            <use href="#mark-keystone" />
+          </svg>
+          <span>40 px</span>
+        </div>
+      </div>
+    </div>
+    <div class="meta">
+      <div class="tag">Concept 3</div>
+      <h2>Keystone</h2>
+      <p>
+        A chunky hexagonal badge split by a hard seam into a crowning block and a
+        wider base. A triangular keystone wedge locks the seam — two halves fused
+        into one structure.
+      </p>
+      <p class="read">
+        <strong>Negative space:</strong> the mirrored V-bites top and bottom carve
+        an upward spark at the joint — the keystone reads as both a lock and a
+        flare of zeal.
+      </p>
+    </div>
+  </section>
+
+</main>
+
+</body>
+</html>

@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Zealova — App Icon Concepts (Zeal)</title>
+<style>
+  :root {
+    --bg: #0d0d0f;
+    --panel: #161618;
+    --ink: #e8e8ea;
+    --muted: #8a8a90;
+    --green: #10B981;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    padding: 48px 32px 88px;
+    -webkit-font-smoothing: antialiased;
+  }
+  header { max-width: 1000px; margin: 0 auto 40px; }
+  h1 { font-size: 24px; font-weight: 650; margin: 0 0 10px; letter-spacing: -0.01em; }
+  header p { color: var(--muted); font-size: 14px; line-height: 1.65; margin: 5px 0; max-width: 760px; }
+  header code { color: #b8b8bc; background: #1d1d20; padding: 1px 6px; border-radius: 5px; font-size: 12.5px; }
+  .concepts { max-width: 1000px; margin: 0 auto; display: flex; flex-direction: column; gap: 28px; }
+  .concept {
+    background: var(--panel);
+    border: 1px solid #232326;
+    border-radius: 16px;
+    padding: 30px;
+  }
+  .concept-head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 4px; flex-wrap: wrap; }
+  .concept-head h2 { font-size: 19px; font-weight: 650; margin: 0; letter-spacing: -0.01em; }
+  .concept-head .tag {
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--green); border: 1px solid #1f3d33; border-radius: 999px; padding: 3px 10px;
+  }
+  .rationale { color: var(--muted); font-size: 13.5px; line-height: 1.65; margin: 8px 0 24px; max-width: 800px; }
+  .render-row { display: flex; align-items: flex-end; gap: 40px; flex-wrap: wrap; }
+  .render-large svg { display: block; width: 240px; height: 240px; }
+  .sizes { display: flex; align-items: flex-end; gap: 30px; }
+  .size-cell { display: flex; flex-direction: column; align-items: center; gap: 9px; }
+  .size-cell span { font-size: 11px; color: var(--muted); }
+  .s60 svg { width: 60px; height: 60px; display: block; }
+  .s40 svg { width: 40px; height: 40px; display: block; }
+  .grid-strip {
+    margin-top: 28px; padding-top: 24px; border-top: 1px solid #232326;
+    display: flex; gap: 18px; align-items: center;
+  }
+  .grid-strip .glabel { font-size: 11px; color: var(--muted); width: 110px; line-height: 1.5; }
+  .home-mock {
+    display: flex; gap: 16px; padding: 16px 18px; border-radius: 16px;
+    background: linear-gradient(155deg, #34324a, #1d2e33);
+  }
+  .home-mock svg { width: 54px; height: 54px; display: block; }
+  footer { max-width: 1000px; margin: 36px auto 0; color: var(--muted); font-size: 12.5px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Zealova — App Icon Concepts</h1>
+  <p>Creative territory: <strong>zeal</strong> — contained energy, drive, the inner spark that makes someone show up and push. Forbidden and avoided: literal flame, lightning bolt, block letter Z, negative-space-letter-in-a-square, dumbbells, human figures, gradients/3D/gloss.</p>
+  <p>Flat, solid colors only. Palette: <code>#34D399</code> light &middot; <code>#10B981</code> primary &middot; <code>#059669</code> deep, on a near-black <code>#080809</code> rounded square. Each mark is built as a reusable <code>&lt;symbol&gt;</code> and shown at display size plus 60&nbsp;px and 40&nbsp;px for legibility.</p>
+</header>
+
+<!-- ================================================================= -->
+<!-- SHARED SYMBOL DEFINITIONS                                          -->
+<!-- Each mark is one self-contained, extractable <symbol>.             -->
+<!-- viewBox is 0 0 1024 1024 so a symbol drops onto any icon canvas.   -->
+<!-- ================================================================= -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+
+    <!-- ===== CONCEPT 1 : UPDRAFT =====================================
+         Two thick crescent blades with flat-cut faceted ends, the
+         upper one offset up-and-right of the lower. Together they
+         imply a single upward thrust; the dark gap between them is a
+         clean rising channel. Energy in motion - no flame, no bolt.
+         Lower blade primary green, upper blade light green for a
+         flat two-step depth read.                                   -->
+    <symbol id="mark-updraft" viewBox="0 0 1024 1024">
+      <!-- lower blade: 322r outer arc, 200r inner arc, flat-cut ends -->
+      <path fill="#10B981" d="
+        M 286 742
+        A 322 322 0 0 1 742 286
+        L 628 372
+        A 200 200 0 0 0 372 628 Z" />
+      <!-- upper blade: identical wedge translated +160,-160 -->
+      <path fill="#34D399" d="
+        M 446 602
+        A 322 322 0 0 1 902 146
+        L 788 232
+        A 200 200 0 0 0 532 488 Z" />
+    </symbol>
+
+    <!-- ===== CONCEPT 2 : CORE PULSE ==================================
+         A charged nucleus. A solid hot core (primary disc + lighter
+         inner spark) with three chunky arrowhead shards orbiting it,
+         each pitched the same rotational way - a pinwheel of force,
+         energy radiating without literal rays. Symmetrical but kept
+         kinetic by the directional shards.                          -->
+    <symbol id="mark-corepulse" viewBox="0 0 1024 1024">
+      <g fill="#10B981">
+        <!-- shard at 12 o'clock, then 120 deg + 240 deg copies -->
+        <path transform="translate(512 512)"
+              d="M 0 -312 L 132 -150 L 0 -196 L -132 -150 Z" />
+        <path transform="translate(512 512) rotate(120)"
+              d="M 0 -312 L 132 -150 L 0 -196 L -132 -150 Z" />
+        <path transform="translate(512 512) rotate(240)"
+              d="M 0 -312 L 132 -150 L 0 -196 L -132 -150 Z" />
+      </g>
+      <!-- core: primary disc + lighter hot centre -->
+      <circle cx="512" cy="512" r="128" fill="#10B981" />
+      <circle cx="512" cy="512" r="66" fill="#34D399" />
+    </symbol>
+
+    <!-- ===== CONCEPT 3 : VAULT =======================================
+         One bold solid wedge thrusting upward, with a chevron notch
+         bitten out of its base. Multi-readable: the negative-space
+         notch reads as an upward chevron / forward arrow, while the
+         green mass reads as a body mid-leap or an apex. A right-half
+         light facet gives flat dimension. Drive expressed as one
+         confident shape - no flame, no bolt, no letterform.         -->
+    <symbol id="mark-vault" viewBox="0 0 1024 1024">
+      <!-- the wedge: pointed rounded apex, two feet, chevron notch -->
+      <path fill="#10B981" d="
+        M 512 232
+        Q 540 232 556 262
+        L 792 718
+        Q 812 760 766 760
+        L 600 760
+        Q 560 760 540 724
+        L 512 668
+        L 484 724
+        Q 464 760 424 760
+        L 258 760
+        Q 212 760 232 718
+        L 468 262
+        Q 484 232 512 232 Z" />
+      <!-- light facet: the right half of the same wedge -->
+      <path fill="#34D399" d="
+        M 512 232
+        Q 540 232 556 262
+        L 792 718
+        Q 812 760 766 760
+        L 600 760
+        Q 560 760 540 724
+        L 512 668 Z" />
+    </symbol>
+
+  </defs>
+</svg>
+
+<div class="concepts">
+
+  <!-- ============================ CONCEPT 1 ============================ -->
+  <section class="concept">
+    <div class="concept-head">
+      <h2>1 &middot; Updraft</h2>
+      <span class="tag">Energy in motion</span>
+    </div>
+    <p class="rationale">Two thick crescent blades with flat-cut ends, the upper offset up-and-right of the lower, so the pair reads as one upward thrust. The dark channel between them is a clean rising gap; the two-step green gives flat depth. It captures the lift of zeal without a flame or a bolt, and the hard-cut edges keep it faceted and energetic rather than soft.</p>
+    <div class="render-row">
+      <div class="render-large">
+        <svg viewBox="0 0 1024 1024" role="img" aria-label="Updraft concept, display size">
+          <rect width="1024" height="1024" rx="224" fill="#080809" />
+          <use href="#mark-updraft" />
+        </svg>
+      </div>
+      <div class="sizes">
+        <div class="size-cell">
+          <div class="s60">
+            <svg viewBox="0 0 1024 1024" role="img" aria-label="Updraft at 60 pixels">
+              <rect width="1024" height="1024" rx="224" fill="#080809" />
+              <use href="#mark-updraft" />
+            </svg>
+          </div>
+          <span>60 px</span>
+        </div>
+        <div class="size-cell">
+          <div class="s40">
+            <svg viewBox="0 0 1024 1024" role="img" aria-label="Updraft at 40 pixels">
+              <rect width="1024" height="1024" rx="224" fill="#080809" />
+              <use href="#mark-updraft" />
+            </svg>
+          </div>
+          <span>40 px</span>
+        </div>
+      </div>
+    </div>
+    <div class="grid-strip">
+      <span class="glabel">On a home screen</span>
+      <div class="home-mock">
+        <svg viewBox="0 0 1024 1024" aria-hidden="true">
+          <rect width="1024" height="1024" rx="224" fill="#080809" />
+          <use href="#mark-updraft" />
+        </svg>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================ CONCEPT 2 ============================ -->
+  <section class="concept">
+    <div class="concept-head">
+      <h2>2 &middot; Core Pulse</h2>
+      <span class="tag">Charged nucleus</span>
+    </div>
+    <p class="rationale">A solid hot core with three chunky arrowhead shards orbiting it, each pitched the same rotational way: a pinwheel of force, energy held at the centre and pushing outward. The lighter inner dot is the spark. Symmetrical and badge-like for instant recognition, but the directional shards keep it spinning rather than static.</p>
+    <div class="render-row">
+      <div class="render-large">
+        <svg viewBox="0 0 1024 1024" role="img" aria-label="Core Pulse concept, display size">
+          <rect width="1024" height="1024" rx="224" fill="#080809" />
+          <use href="#mark-corepulse" />
+        </svg>
+      </div>
+      <div class="sizes">
+        <div class="size-cell">
+          <div class="s60">
+            <svg viewBox="0 0 1024 1024" role="img" aria-label="Core Pulse at 60 pixels">
+              <rect width="1024" height="1024" rx="224" fill="#080809" />
+              <use href="#mark-corepulse" />
+            </svg>
+          </div>
+          <span>60 px</span>
+        </div>
+        <div class="size-cell">
+          <div class="s40">
+            <svg viewBox="0 0 1024 1024" role="img" aria-label="Core Pulse at 40 pixels">
+              <rect width="1024" height="1024" rx="224" fill="#080809" />
+              <use href="#mark-corepulse" />
+            </svg>
+          </div>
+          <span>40 px</span>
+        </div>
+      </div>
+    </div>
+    <div class="grid-strip">
+      <span class="glabel">On a home screen</span>
+      <div class="home-mock">
+        <svg viewBox="0 0 1024 1024" aria-hidden="true">
+          <rect width="1024" height="1024" rx="224" fill="#080809" />
+          <use href="#mark-corepulse" />
+        </svg>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================ CONCEPT 3 ============================ -->
+  <section class="concept">
+    <div class="concept-head">
+      <h2>3 &middot; Vault</h2>
+      <span class="tag">Drive in one shape</span>
+    </div>
+    <p class="rationale">One bold solid wedge thrusting upward, with a chevron notch bitten from its base. It is multi-readable: the negative-space notch is an upward chevron and forward arrow, while the green mass reads as a body mid-leap or a peak being summited. A light facet on the right half adds flat dimension. The single confident form is the most legible of the three and survives hardest at small sizes.</p>
+    <div class="render-row">
+      <div class="render-large">
+        <svg viewBox="0 0 1024 1024" role="img" aria-label="Vault concept, display size">
+          <rect width="1024" height="1024" rx="224" fill="#080809" />
+          <use href="#mark-vault" />
+        </svg>
+      </div>
+      <div class="sizes">
+        <div class="size-cell">
+          <div class="s60">
+            <svg viewBox="0 0 1024 1024" role="img" aria-label="Vault at 60 pixels">
+              <rect width="1024" height="1024" rx="224" fill="#080809" />
+              <use href="#mark-vault" />
+            </svg>
+          </div>
+          <span>60 px</span>
+        </div>
+        <div class="size-cell">
+          <div class="s40">
+            <svg viewBox="0 0 1024 1024" role="img" aria-label="Vault at 40 pixels">
+              <rect width="1024" height="1024" rx="224" fill="#080809" />
+              <use href="#mark-vault" />
+            </svg>
+          </div>
+          <span>40 px</span>
+        </div>
+      </div>
+    </div>
+    <div class="grid-strip">
+      <span class="glabel">On a home screen</span>
+      <div class="home-mock">
+        <svg viewBox="0 0 1024 1024" aria-hidden="true">
+          <rect width="1024" height="1024" rx="224" fill="#080809" />
+          <use href="#mark-vault" />
+        </svg>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<footer>
+  Recommended direction: <strong>Vault</strong> &mdash; the boldest silhouette, the strongest second read, and the most reliable at 40&ndash;60&nbsp;px. Updraft is the most distinctive gesture if a softer, more kinetic mark is preferred.
+</footer>
+
+</body>
+</html>

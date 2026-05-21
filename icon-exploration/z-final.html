@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Zealova — Z as Shape</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+    background: #0a0a0b; color: #e9e9ec;
+    -webkit-font-smoothing: antialiased; line-height: 1.55;
+    padding: 56px 24px 96px;
+  }
+  .wrap { max-width: 900px; margin: 0 auto; }
+  header { margin-bottom: 40px; max-width: 700px; }
+  .kicker {
+    font-size: 12px; font-weight: 700; letter-spacing: 2.4px;
+    text-transform: uppercase; color: #f9892f; margin-bottom: 14px;
+  }
+  h1 { font-size: 32px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 13px; }
+  header p { color: #9b9ba2; font-size: 15px; }
+  header b { color: #cdcdd2; font-weight: 600; }
+
+  .grid { display: grid; gap: 22px; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); }
+  .card {
+    background: #141416; border: 1px solid #242427; border-radius: 20px;
+    padding: 26px 24px 28px; display: flex; flex-direction: column;
+  }
+  .name { font-size: 22px; font-weight: 700; letter-spacing: -0.3px; }
+  .feel { color: #f9892f; font-size: 13px; font-weight: 600; margin: 5px 0 4px; }
+  .desc { color: #9b9ba2; font-size: 13px; margin: 0 0 22px; }
+  .desc b { color: #cdcdd2; }
+
+  .hero {
+    width: 100%; max-width: 256px; margin: 0 auto 24px; aspect-ratio: 1;
+    filter: drop-shadow(0 16px 32px rgba(0,0,0,0.55));
+  }
+  .hero svg, .ic { width: 100%; height: 100%; display: block; }
+
+  .label {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.8px;
+    text-transform: uppercase; color: #76767e; margin-bottom: 10px;
+  }
+  .squint {
+    background: linear-gradient(135deg, #4b4668 0%, #6f5b78 48%, #2f3f55 100%);
+    border-radius: 14px; padding: 18px 16px 12px;
+    display: flex; align-items: flex-end; justify-content: space-around; gap: 8px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.10);
+  }
+  .squint .col { display: flex; flex-direction: column; align-items: center; gap: 7px; }
+  .squint .cap { font-size: 10px; color: rgba(255,255,255,0.80); font-weight: 600; }
+  .s120 { width: 120px; height: 120px; }
+  .s60 { width: 60px; height: 60px; }
+  .s40 { width: 40px; height: 40px; }
+
+  footer {
+    margin-top: 42px; padding: 26px 28px;
+    background: #141416; border: 1px solid #242427; border-radius: 20px;
+  }
+  footer h3 { font-size: 16px; margin-bottom: 12px; }
+  footer p { color: #a6a6ac; font-size: 14px; margin-bottom: 9px; }
+  footer b { color: #e4e4e8; font-weight: 600; }
+  footer .pick b { color: #f9892f; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+      <mask id="splitMask">
+        <rect x="0" y="0" width="1024" height="1024" fill="white"/>
+        <path d="M188 408 L648 408 L376 616 L836 616" stroke="black"
+              stroke-width="92" fill="none" stroke-linejoin="round" stroke-linecap="round"/>
+      </mask>
+
+      <!-- SPLIT: the Z is the negative-space river between two interlocking forms -->
+      <symbol id="zSplit" viewBox="0 0 1024 1024">
+        <rect x="224" y="224" width="576" height="576" rx="134" fill="#F97316" mask="url(#splitMask)"/>
+      </symbol>
+
+      <!-- FOLD: the Z as a single folded ribbon, three planes catching light -->
+      <symbol id="zFold" viewBox="0 0 1024 1024">
+        <path d="M300 300 L724 300 L724 450 L300 450 Z" fill="#FBB35A"/>
+        <path d="M724 450 L510 574 L300 574 L514 450 Z" fill="#F97316"/>
+        <path d="M300 574 L724 574 L724 724 L300 724 Z" fill="#DE6206"/>
+      </symbol>
+    </defs>
+  </svg>
+
+  <header>
+    <div class="kicker">Zealova · App Icon — the Z as a shape</div>
+    <h1>Two takes where the Z isn't a letter</h1>
+    <p>Not the Z styled. The Z turned <b>into something</b> — so you read a shape first and find the letter second. That is the move in Gravl and Hevy. Shown big, then at 60&nbsp;px and 40&nbsp;px.</p>
+  </header>
+
+  <div class="grid">
+
+    <!-- SPLIT -->
+    <div class="card">
+      <div class="name">Split</div>
+      <div class="feel">Two interlocking forms — the Z is the gap</div>
+      <div class="desc">A solid orange tile cleaved by a dark river into <b>two chunky interlocking shapes</b>. The Z is the negative space between them, not a drawn letter. You see two forms lock together; the Z arrives a beat later. The FedEx-arrow move.</div>
+      <div class="hero">
+        <svg viewBox="0 0 1024 1024">
+          <rect width="1024" height="1024" rx="224" fill="#080809"/>
+          <rect width="1024" height="1024" rx="224" fill="none" stroke="#ffffff" stroke-opacity="0.05"/>
+          <use href="#zSplit" width="1024" height="1024"/>
+        </svg>
+      </div>
+      <div class="label">Home-screen size test</div>
+      <div class="squint">
+        <div class="col"><svg class="s120" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="224" fill="#080809"/><use href="#zSplit" width="1024" height="1024"/></svg><span class="cap">large</span></div>
+        <div class="col"><svg class="s60" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="224" fill="#080809"/><use href="#zSplit" width="1024" height="1024"/></svg><span class="cap">60 px</span></div>
+        <div class="col"><svg class="s40" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="224" fill="#080809"/><use href="#zSplit" width="1024" height="1024"/></svg><span class="cap">40 px</span></div>
+      </div>
+    </div>
+
+    <!-- FOLD -->
+    <div class="card">
+      <div class="name">Fold</div>
+      <div class="feel">A folded ribbon — the Z is an object</div>
+      <div class="desc">The Z as a single strip of material <b>folded twice</b> — three planes, each catching a different amount of light. It reads as a physical folded object, not a typed character. Origami logic.</div>
+      <div class="hero">
+        <svg viewBox="0 0 1024 1024">
+          <rect width="1024" height="1024" rx="224" fill="#080809"/>
+          <rect width="1024" height="1024" rx="224" fill="none" stroke="#ffffff" stroke-opacity="0.05"/>
+          <use href="#zFold" width="1024" height="1024"/>
+        </svg>
+      </div>
+      <div class="label">Home-screen size test</div>
+      <div class="squint">
+        <div class="col"><svg class="s120" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="224" fill="#080809"/><use href="#zFold" width="1024" height="1024"/></svg><span class="cap">large</span></div>
+        <div class="col"><svg class="s60" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="224" fill="#080809"/><use href="#zFold" width="1024" height="1024"/></svg><span class="cap">60 px</span></div>
+        <div class="col"><svg class="s40" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="224" fill="#080809"/><use href="#zFold" width="1024" height="1024"/></svg><span class="cap">40 px</span></div>
+      </div>
+    </div>
+
+  </div>
+
+  <footer>
+    <h3>My honest read — after rendering them</h3>
+    <p class="pick"><b>Split</b> works. It is the best mark in this whole exploration. The Z stopped being a letter you read — it is the negative-space river cleaving one bold tile into two interlocking forms. You read a designed shape first, the Z second. It holds at 40&nbsp;px and sits credibly next to Hevy and Gravl. This is the one.</p>
+    <p><b>Fold</b> did not land — the three shades read as a tricolour Z, not a convincing folded object. That illusion needs real shadow craft; flat planes do not get there.</p>
+    <p style="margin-top:13px;">If Split is right, I refine it — balance the two halves, tune the river width and elbow radius, try a few proportions — then export to PNG and wire it into the iOS + Android icon sets.</p>
+  </footer>
+
+</div>
+</body>
+</html>

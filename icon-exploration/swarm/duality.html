@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Zealova — App Icon Concepts — DUALITY territory</title>
+<style>
+  :root {
+    --bg: #0d0d0f;
+    --panel: #161618;
+    --ink: #e8e8ea;
+    --muted: #8a8a90;
+    --line: #2a2a2e;
+    --green: #10B981;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    padding: 56px 32px 96px;
+    -webkit-font-smoothing: antialiased;
+  }
+  header { max-width: 920px; margin: 0 auto 48px; }
+  h1 { font-size: 26px; font-weight: 700; letter-spacing: -0.02em; }
+  header p { color: var(--muted); font-size: 14px; margin-top: 8px; line-height: 1.55; }
+  .tag {
+    display: inline-block; margin-top: 14px; padding: 4px 12px;
+    border: 1px solid var(--green); color: var(--green);
+    border-radius: 999px; font-size: 11px; font-weight: 600;
+    letter-spacing: 0.08em; text-transform: uppercase;
+  }
+  .concept {
+    max-width: 920px; margin: 0 auto 32px;
+    background: var(--panel); border: 1px solid var(--line);
+    border-radius: 20px; padding: 32px;
+  }
+  .concept-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+  .concept-num {
+    font-size: 12px; font-weight: 700; color: var(--green);
+    letter-spacing: 0.1em;
+  }
+  .concept-name { font-size: 20px; font-weight: 700; letter-spacing: -0.01em; }
+  .rationale { color: var(--muted); font-size: 13.5px; margin-top: 8px; line-height: 1.6; max-width: 680px; }
+  .row {
+    margin-top: 28px; display: flex; align-items: flex-end;
+    gap: 40px; flex-wrap: wrap;
+  }
+  .specimen { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+  .specimen .label { font-size: 11px; color: var(--muted); letter-spacing: 0.04em; }
+  .big { width: 232px; height: 232px; border-radius: 52px; overflow: hidden; }
+  .mid { width: 60px; height: 60px; border-radius: 13.4px; overflow: hidden; }
+  .sml { width: 40px; height: 40px; border-radius: 9px; overflow: hidden; }
+  .grid-on-light {
+    margin-left: auto; display: flex; gap: 14px; padding: 14px;
+    background: #ececef; border-radius: 16px; align-items: center;
+  }
+  .grid-on-light .label { color: #6a6a70; }
+  svg { display: block; }
+  footer {
+    max-width: 920px; margin: 40px auto 0; color: var(--muted);
+    font-size: 12px; line-height: 1.7; border-top: 1px solid var(--line); padding-top: 24px;
+  }
+  footer b { color: var(--ink); }
+</style>
+</head>
+<body>
+
+<!-- =================================================================== -->
+<!-- SVG SYMBOL DEFINITIONS — each mark is a clean, extractable <symbol>   -->
+<!-- viewBox 0 0 1024 1024. Background rect rx=224. Flat green on #080809. -->
+<!-- =================================================================== -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+
+    <!-- ============================================================ -->
+    <!-- CONCEPT 1 — CLASP                                              -->
+    <!-- Two thick rings genuinely interlocked — woven over-and-under   -->
+    <!-- like two links of one clasp. Training (deep green) and         -->
+    <!-- nutrition (light green) are inseparable: pull one and the      -->
+    <!-- other comes with it. One mark, two locked parts.               -->
+    <!-- BUILD (geometrically exact — only circles + a mask):           -->
+    <!--  - Ring A: annulus, centre (430,512), outer r 220, hole r 96.  -->
+    <!--  - Ring B: annulus, centre (594,512), outer r 220, hole r 96.  -->
+    <!--  - Draw A fully. Draw B fully on top — B now sits OVER A.      -->
+    <!--  - Then redraw the ONE quadrant of A that must pass over B,    -->
+    <!--    masked to B's body => true over-under weave, not a Venn.    -->
+    <!-- Vertical centres are equal and the two are only 164px apart,   -->
+    <!-- so the pair reads as a single horizontal knot, not two coins.  -->
+    <!-- Not a letter, not a yin-yang, not a literal chain (rings are   -->
+    <!-- thick and concentric-tight, reading as a unified emblem).      -->
+    <!-- ============================================================ -->
+    <symbol id="knot" viewBox="0 0 1024 1024">
+      <rect width="1024" height="1024" rx="224" fill="#080809"/>
+      <defs>
+        <!-- Ring A — chunky annulus: outer r 224, hole r 118, so the  -->
+        <!-- band is 106 thick (survives 40px). The mask also bites a   -->
+        <!-- thin near-black "knot gap" where ring B's body crosses, so -->
+        <!-- the over-under weave reads crisply instead of muddy.       -->
+        <mask id="knot-ringA-hole">
+          <rect width="1024" height="1024" fill="#fff"/>
+          <circle cx="430" cy="512" r="118" fill="#000"/>
+          <!-- knot gap: erase a B-shaped band from A at the lower      -->
+          <!-- crossing, so B clearly passes in front there.            -->
+          <circle cx="594" cy="512" r="262" fill="none" stroke="#000" stroke-width="44"/>
+        </mask>
+        <!-- Ring B — same chunky annulus. Its mask bites a knot gap    -->
+        <!-- where ring A's body crosses at the UPPER crossing.         -->
+        <mask id="knot-ringB-hole">
+          <rect width="1024" height="1024" fill="#fff"/>
+          <circle cx="594" cy="512" r="118" fill="#000"/>
+          <circle cx="430" cy="512" r="262" fill="none" stroke="#000" stroke-width="44"/>
+        </mask>
+        <clipPath id="knot-ringB-body">
+          <circle cx="594" cy="512" r="224"/>
+        </clipPath>
+      </defs>
+      <!-- RING A — training, deep green. Chunky annulus with knot gap. -->
+      <circle cx="430" cy="512" r="224" fill="#059669" mask="url(#knot-ringA-hole)"/>
+      <!-- RING B — nutrition, light green. Drawn over A.               -->
+      <circle cx="594" cy="512" r="224" fill="#34D399" mask="url(#knot-ringB-hole)"/>
+      <!-- WEAVE — redraw ring A's TOP arc over ring B's body so A      -->
+      <!-- crosses in front at the top; the knot gaps in the masks      -->
+      <!-- keep both crossings crisp => a true, legible interlock.      -->
+      <g clip-path="url(#knot-ringB-body)">
+        <circle cx="430" cy="512" r="224" fill="#059669" mask="url(#knot-ringA-hole)"
+                clip-path="inset(0 0 50% 0)"/>
+      </g>
+    </symbol>
+
+    <!-- ============================================================ -->
+    <!-- CONCEPT 2 — THE SEED SPLIT                                    -->
+    <!-- One chunky rounded-droplet badge. A single S-curved seam of    -->
+    <!-- negative space (the near-black bg) splits it into two          -->
+    <!-- interlocking comma/paisley forms. Left comma = a flexed-arm    -->
+    <!-- curve (training). Right comma = a leaf curve (nutrition).      -->
+    <!-- They nest head-to-tail like a yin-yang but inside a seed       -->
+    <!-- silhouette => growth. Gravl-grade multi-readable badge.        -->
+    <!-- ============================================================ -->
+    <symbol id="seed" viewBox="0 0 1024 1024">
+      <rect width="1024" height="1024" rx="224" fill="#080809"/>
+      <!-- Outer seed silhouette: a soft droplet/leaf. Pointed top,     -->
+      <!-- round bottom. This whole shape is the unified mark.          -->
+      <!-- LEFT HALF — training comma (deeper green).                   -->
+      <path fill="#059669" d="
+        M 512 168
+        C 372 300 300 410 300 540
+        C 300 690 410 800 512 800
+        C 452 730 430 660 470 596
+        C 506 540 596 520 596 408
+        C 596 318 560 232 512 168
+        Z"/>
+      <!-- RIGHT HALF — nutrition comma (lighter green). Mirror-ish but -->
+      <!-- the inner curve is rotated so the two commas interlock: the  -->
+      <!-- left comma's tail tucks under the right comma's head.        -->
+      <path fill="#34D399" d="
+        M 512 168
+        C 560 232 596 318 596 408
+        C 596 520 506 540 470 596
+        C 430 660 452 730 512 800
+        C 614 800 724 690 724 540
+        C 724 410 652 300 512 168
+        Z"/>
+      <!-- SEAM HIGHLIGHT removed — the colour step IS the seam.        -->
+      <!-- SPROUT NICK — a small negative-space wedge bitten from the   -->
+      <!-- pointed top makes the silhouette unmistakably a seed/leaf    -->
+      <!-- rather than a plain teardrop, and gives the two halves a     -->
+      <!-- shared, legible meeting point at the apex.                   -->
+      <path fill="#080809" d="
+        M 512 168
+        C 498 210 486 248 486 286
+        C 486 330 538 330 538 286
+        C 538 248 526 210 512 168
+        Z"/>
+    </symbol>
+
+    <!-- ============================================================ -->
+    <!-- CONCEPT 3 — TWO-STEP                                          -->
+    <!-- Two interlocking L-slabs mesh into one chunky badge that reads -->
+    <!-- as a staircase climbing right — a base and a climb, neither    -->
+    <!-- whole alone. Lower-left slab (deep green) = the foundation,    -->
+    <!-- training; upper-right slab (light green) = the gain, nutrition.-->
+    <!-- BUILD: NO arcs. Each L-slab = two plain rounded <rect>s in a   -->
+    <!-- group; the group is clipped to the rounded-square badge field  -->
+    <!-- so outer corners inherit the icon radius and only the inner    -->
+    <!-- step seam shows. A thin near-black gap between the slabs is    -->
+    <!-- the negative-space channel. Multi-readable like Gravl: badge,  -->
+    <!-- staircase, two locked tiles. No letter, figure, or food trope. -->
+    <!-- Badge field: square 232..792 on each axis (560 wide).          -->
+    <!-- ============================================================ -->
+    <symbol id="lock" viewBox="0 0 1024 1024">
+      <rect width="1024" height="1024" rx="224" fill="#080809"/>
+      <defs>
+        <clipPath id="lock-badge">
+          <rect x="232" y="232" width="560" height="560" rx="150"/>
+        </clipPath>
+      </defs>
+      <g clip-path="url(#lock-badge)">
+        <!-- Whole badge filled light green first; the deep-green L is  -->
+        <!-- then painted on top, and a near-black step channel is cut  -->
+        <!-- last. Result: two equal-mass interlocking L-slabs.         -->
+        <!-- Badge field: x/y 232..792. Step corner at the centre       -->
+        <!-- (512,512); channel width 28.                               -->
+        <!-- LIGHT-GREEN L (nutrition / the climb) — fills top band     -->
+        <!-- full width + right column down. = base layer.              -->
+        <rect x="232" y="232" width="560" height="560" fill="#34D399"/>
+        <!-- DEEP-GREEN L (training / the base) — bottom-left L painted -->
+        <!-- over: bottom bar from x232 to x512, plus left column from  -->
+        <!-- y232 down. Equal area to the light L.                       -->
+        <rect x="232" y="232" width="280" height="560" fill="#059669"/>
+        <rect x="232" y="512" width="560" height="280" fill="#059669"/>
+        <!-- STEP CHANNEL — a near-black L cut along the seam: a        -->
+        <!-- horizontal arm across the lower half and a vertical arm    -->
+        <!-- up the right half, meeting at centre => one clean diagonal -->
+        <!-- staircase splitting the two interlocking slabs.            -->
+        <rect x="232" y="498" width="294" height="28" fill="#080809"/>
+        <rect x="498" y="498" width="28" height="294" fill="#080809"/>
+      </g>
+    </symbol>
+
+  </defs>
+</svg>
+
+
+<header>
+  <h1>Zealova — App Icon Concepts</h1>
+  <p>
+    Three flat, single-mark concepts in the <b style="color:#e8e8ea">DUALITY</b> territory:
+    one shape built from two parts that lock into a unified whole — expressing an AI coach
+    that trains <i>and</i> feeds. Green on near-black (#080809). No orange, no Z, no bolt,
+    no figures. Each mark shown large, at 60px, and at 40px; and on a light home screen.
+  </p>
+  <span class="tag">Territory: Duality — two halves of one coach</span>
+</header>
+
+
+<!-- ===================== CONCEPT 1 ===================== -->
+<section class="concept">
+  <div class="concept-head">
+    <span class="concept-num">CONCEPT 01</span>
+    <span class="concept-name">Clasp</span>
+  </div>
+  <p class="rationale">
+    Two thick rounded hooks, point-symmetric twins, interlock jaw-into-jaw through a solid
+    core — training and nutrition clasped into one locked-in unit. Grip, commitment, two-as-one.
+  </p>
+  <div class="row">
+    <div class="specimen">
+      <div class="big"><svg viewBox="0 0 1024 1024" width="232" height="232"><use href="#knot"/></svg></div>
+      <span class="label">1024 px</span>
+    </div>
+    <div class="specimen">
+      <div class="mid"><svg viewBox="0 0 1024 1024" width="60" height="60"><use href="#knot"/></svg></div>
+      <span class="label">60 px</span>
+    </div>
+    <div class="specimen">
+      <div class="sml"><svg viewBox="0 0 1024 1024" width="40" height="40"><use href="#knot"/></svg></div>
+      <span class="label">40 px</span>
+    </div>
+    <div class="grid-on-light">
+      <div class="specimen">
+        <div class="mid"><svg viewBox="0 0 1024 1024" width="60" height="60"><use href="#knot"/></svg></div>
+        <span class="label">on light</span>
+      </div>
+      <div class="specimen">
+        <div class="sml"><svg viewBox="0 0 1024 1024" width="40" height="40"><use href="#knot"/></svg></div>
+        <span class="label">on light</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ===================== CONCEPT 2 ===================== -->
+<section class="concept">
+  <div class="concept-head">
+    <span class="concept-num">CONCEPT 02</span>
+    <span class="concept-name">The Seed Split</span>
+  </div>
+  <p class="rationale">
+    One chunky seed/leaf badge split by a single S-seam into two interlocking commas — a
+    flexed-arm curve and a leaf curve nested head-to-tail. Growth, made of strength and fuel.
+  </p>
+  <div class="row">
+    <div class="specimen">
+      <div class="big"><svg viewBox="0 0 1024 1024" width="232" height="232"><use href="#seed"/></svg></div>
+      <span class="label">1024 px</span>
+    </div>
+    <div class="specimen">
+      <div class="mid"><svg viewBox="0 0 1024 1024" width="60" height="60"><use href="#seed"/></svg></div>
+      <span class="label">60 px</span>
+    </div>
+    <div class="specimen">
+      <div class="sml"><svg viewBox="0 0 1024 1024" width="40" height="40"><use href="#seed"/></svg></div>
+      <span class="label">40 px</span>
+    </div>
+    <div class="grid-on-light">
+      <div class="specimen">
+        <div class="mid"><svg viewBox="0 0 1024 1024" width="60" height="60"><use href="#seed"/></svg></div>
+        <span class="label">on light</span>
+      </div>
+      <div class="specimen">
+        <div class="sml"><svg viewBox="0 0 1024 1024" width="40" height="40"><use href="#seed"/></svg></div>
+        <span class="label">on light</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ===================== CONCEPT 3 ===================== -->
+<section class="concept">
+  <div class="concept-head">
+    <span class="concept-num">CONCEPT 03</span>
+    <span class="concept-name">Two-Step</span>
+  </div>
+  <p class="rationale">
+    One chunky badge cut by a diagonal channel into two interlocking L-slabs that step upward —
+    a base and a climb, tessellated so neither is whole alone. Badge, staircase, progress.
+  </p>
+  <div class="row">
+    <div class="specimen">
+      <div class="big"><svg viewBox="0 0 1024 1024" width="232" height="232"><use href="#lock"/></svg></div>
+      <span class="label">1024 px</span>
+    </div>
+    <div class="specimen">
+      <div class="mid"><svg viewBox="0 0 1024 1024" width="60" height="60"><use href="#lock"/></svg></div>
+      <span class="label">60 px</span>
+    </div>
+    <div class="specimen">
+      <div class="sml"><svg viewBox="0 0 1024 1024" width="40" height="40"><use href="#lock"/></svg></div>
+      <span class="label">40 px</span>
+    </div>
+    <div class="grid-on-light">
+      <div class="specimen">
+        <div class="mid"><svg viewBox="0 0 1024 1024" width="60" height="60"><use href="#lock"/></svg></div>
+        <span class="label">on light</span>
+      </div>
+      <div class="specimen">
+        <div class="sml"><svg viewBox="0 0 1024 1024" width="40" height="40"><use href="#lock"/></svg></div>
+        <span class="label">on light</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<footer>
+  <b>Palette:</b> #34D399 (light) · #10B981 (primary) · #059669 (deep) · #080809 (bg). Flat, solid fills only.<br/>
+  <b>Avoid-list compliance:</b> no block-letter Z, no lightning bolt, no negative-space-letter-in-square, no dumbbell / flame / figure / mascot, no gradient / 3D / gloss / shadow.<br/>
+  <b>Extraction:</b> each mark is a self-contained <code>&lt;symbol&gt;</code> — <code>#knot</code>, <code>#seed</code>, <code>#lock</code> — copy the symbol plus its viewBox to reuse.
+</footer>
+
+</body>
+</html>

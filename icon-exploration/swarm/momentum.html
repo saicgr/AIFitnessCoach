@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Zealova — Icon Exploration: MOMENTUM territory</title>
+<style>
+  :root {
+    --bg: #0e0e10;
+    --panel: #161618;
+    --ink: #e7e7ea;
+    --muted: #8a8a92;
+    --line: #262629;
+    --green: #10B981;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: var(--bg); }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: var(--ink);
+    padding: 56px 40px 96px;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1080px; margin: 0 auto; }
+  header { margin-bottom: 56px; }
+  h1 {
+    font-size: 26px; font-weight: 700; letter-spacing: -0.02em;
+  }
+  h1 .accent { color: var(--green); }
+  .lede {
+    margin-top: 12px; color: var(--muted); font-size: 14.5px; line-height: 1.6;
+    max-width: 720px;
+  }
+  .palette { display: flex; gap: 10px; margin-top: 22px; }
+  .swatch {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 11.5px; color: var(--muted);
+    background: var(--panel); border: 1px solid var(--line);
+    padding: 7px 11px 7px 8px; border-radius: 8px;
+  }
+  .chip { width: 16px; height: 16px; border-radius: 4px; }
+
+  .concept {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 34px 34px 38px;
+    margin-bottom: 30px;
+  }
+  .concept-head { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
+  .concept-num {
+    font-size: 12px; font-weight: 700; color: var(--green);
+    letter-spacing: 0.14em;
+  }
+  .concept-name { font-size: 21px; font-weight: 700; letter-spacing: -0.01em; }
+  .concept-rationale {
+    margin-top: 10px; color: var(--muted); font-size: 13.5px; line-height: 1.6;
+    max-width: 760px;
+  }
+
+  .stage {
+    margin-top: 28px;
+    display: flex; align-items: flex-end; gap: 40px; flex-wrap: wrap;
+  }
+  .icon-big { width: 240px; height: 240px; display: block; border-radius: 52px; }
+  .sizes { display: flex; align-items: flex-end; gap: 28px; }
+  .size-cell { display: flex; flex-direction: column; align-items: center; gap: 9px; }
+  .size-label { font-size: 11px; color: var(--muted); letter-spacing: 0.04em; }
+  .icon-60 { width: 60px; height: 60px; display: block; }
+  .icon-40 { width: 40px; height: 40px; display: block; }
+
+  .readout {
+    margin-top: 26px; padding-top: 22px; border-top: 1px solid var(--line);
+    display: grid; grid-template-columns: 1fr 1fr; gap: 18px 36px;
+  }
+  .readout h4 {
+    font-size: 11px; font-weight: 700; color: var(--green);
+    letter-spacing: 0.1em; margin-bottom: 7px;
+  }
+  .readout p { font-size: 12.8px; color: var(--muted); line-height: 1.6; }
+
+  footer {
+    margin-top: 14px; color: var(--muted); font-size: 12px; line-height: 1.7;
+    border-top: 1px solid var(--line); padding-top: 26px;
+  }
+  footer strong { color: var(--ink); font-weight: 600; }
+  @media (max-width: 720px) {
+    .readout { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- =================================================================
+       MASTER SYMBOL LIBRARY
+       Each mark is a self-contained <symbol> on a 1024x1024 canvas with
+       the rounded-square background baked in, so a concept can be
+       extracted whole. Marks use only flat solid greens. No gradients,
+       no strokes-as-effects, no shadows.
+       Palette: #34D399 light · #10B981 primary · #059669 deep
+       ================================================================= -->
+  <svg width="0" height="0" aria-hidden="true" style="position:absolute">
+    <defs>
+
+      <!-- ===========================================================
+           CONCEPT 1 — "CREST"
+           A solid wave frozen at the instant of breaking: one chunky mass
+           pitched forward at its apex, the curl already thrown past its
+           own base. Momentum carrying you beyond your starting point.
+           Built as ONE primary-green body; the lighter green is a single
+           crescent of the curl's underside, so the break reads as depth,
+           not a seam. Sized to fill the canvas and optically centred.
+           =========================================================== -->
+      <symbol id="crest" viewBox="0 0 1024 1024">
+        <rect width="1024" height="1024" rx="224" fill="#080809"/>
+        <!-- the wave: one continuous mass. rises from a chunky rounded
+             foot at lower-left, sweeps up and curls hard right at the top,
+             hooks a thick lip back down. The base is one clean rounded
+             heel; the inner (right) edge of the trunk is a smooth concave
+             curve so the curl reads as a single fluid motion. -->
+        <path fill="#10B981" d="
+          M 232 700
+          C 232 452, 388 286, 616 256
+          C 760 237, 848 300, 854 414
+          C 858 508, 800 566, 714 566
+          C 760 540, 778 486, 744 444
+          C 708 400, 628 400, 566 450
+          C 496 506, 458 596, 454 690
+          C 452 744, 414 778, 344 778
+          C 278 778, 234 744, 232 690
+          Z"/>
+        <!-- the curl's underside: a single light crescent tucked inside the
+             hook. Its lower-left tail stops well above the trunk's heel and
+             rounds off cleanly, so it never juts past the base. -->
+        <path fill="#34D399" d="
+          M 454 690
+          C 458 600, 496 510, 566 454
+          C 628 404, 708 404, 744 448
+          C 762 470, 764 500, 752 526
+          C 726 494, 672 492, 622 528
+          C 566 572, 532 648, 524 720
+          C 522 752, 498 740, 480 722
+          C 462 704, 454 696, 454 690
+          Z"/>
+      </symbol>
+
+      <!-- ===========================================================
+           CONCEPT 2 — "QUICKEN"
+           One bold bar sheared hard and sliced into three plates that
+           tear apart as they accelerate. The plates share one common
+           steep shear angle and their tops descend along a single
+           implied diagonal, so they read as ONE object speeding up and
+           fragmenting — not three chart bars (chart bars sit on a flat
+           baseline and grow upward; these ride a downward diagonal and
+           shrink forward). Trailing plate is tallest + deep green;
+           leading plate is shortest + light green = a streak thinning
+           out ahead. Biggest gap is frontmost = fastest.
+           =========================================================== -->
+      <symbol id="quicken" viewBox="0 0 1024 1024">
+        <rect width="1024" height="1024" rx="224" fill="#080809"/>
+        <!-- plate 1: trailing, tallest, deep green. steep right shear. -->
+        <path fill="#059669" d="
+          M 300 300
+          L 470 300
+          L 330 724
+          L 160 724
+          Z"/>
+        <!-- plate 2: middle, primary green. top steps down the diagonal,
+             base lifts: the object is contracting as it speeds up. -->
+        <path fill="#10B981" d="
+          M 548 366
+          L 690 366
+          L 576 652
+          L 434 652
+          Z"/>
+        <!-- plate 3: leading, shortest, light green. widest gap behind it. -->
+        <path fill="#34D399" d="
+          M 760 430
+          L 872 430
+          L 786 586
+          L 674 586
+          Z"/>
+      </symbol>
+
+      <!-- ===========================================================
+           CONCEPT 3 — "SURGE"
+           Two chunky comma-blades swept the SAME rotational direction and
+           offset in scale — a heavy trailing blade and a smaller leading
+           blade thrown out ahead of it. Not a symmetric pinwheel and not
+           an infinity loop: the unequal blades + shared spin give the
+           figure one clear direction of travel and acceleration. Reads as
+           a kinetic two-part form gaining speed; the pair also quietly
+           carries Zealova's two-into-one (training + nutrition). A clean
+           near-black gap separates the blades so negative space works.
+           =========================================================== -->
+      <symbol id="surge" viewBox="0 0 1024 1024">
+        <rect width="1024" height="1024" rx="224" fill="#080809"/>
+        <!-- trailing blade: heavy, primary green. fat head lower-left,
+             tail sweeps up and curls toward centre-top. anchors the form. -->
+        <path fill="#10B981" d="
+          M 250 690
+          C 214 566, 270 444, 396 404
+          C 470 380, 540 408, 566 470
+          C 528 452, 476 460, 438 502
+          C 392 552, 384 628, 408 690
+          C 372 712, 300 716, 250 690
+          Z"/>
+        <!-- leading blade: lighter, smaller, thrown out ahead top-right.
+             same clockwise sweep, scaled down = the form accelerating. -->
+        <path fill="#34D399" d="
+          M 774 334
+          C 810 458, 754 580, 628 620
+          C 554 644, 484 616, 458 554
+          C 496 572, 548 564, 586 522
+          C 632 472, 640 396, 616 334
+          C 652 312, 724 308, 774 334
+          Z"/>
+      </symbol>
+
+    </defs>
+  </svg>
+
+  <header>
+    <h1>Zealova — Icon Exploration · <span class="accent">MOMENTUM</span></h1>
+    <p class="lede">
+      Three letterless abstract marks. The brief: express forward / upward
+      momentum and measurable transformation without the chevron, arrow,
+      or lightning-bolt cliche. Each is one chunky, multi-readable shape on
+      near-black, built as an extractable <code>&lt;symbol&gt;</code>. Flat
+      solid greens only.
+    </p>
+    <div class="palette">
+      <span class="swatch"><span class="chip" style="background:#34D399"></span>#34D399 light</span>
+      <span class="swatch"><span class="chip" style="background:#10B981"></span>#10B981 primary</span>
+      <span class="swatch"><span class="chip" style="background:#059669"></span>#059669 deep</span>
+      <span class="swatch"><span class="chip" style="background:#080809"></span>#080809 ground</span>
+    </div>
+  </header>
+
+  <!-- ================= CONCEPT 1 ================= -->
+  <section class="concept">
+    <div class="concept-head">
+      <span class="concept-num">CONCEPT 01</span>
+      <span class="concept-name">Crest</span>
+    </div>
+    <p class="concept-rationale">
+      A solid wave frozen at the instant of breaking — a heavy mass pitched
+      forward at its peak, the curl already thrown ahead of the base. It is
+      momentum made into a sculpture: a wave, a body cresting a jump, a
+      growth curve that has gained mass. Asymmetric and right-leaning, so it
+      always reads as moving forward.
+    </p>
+    <div class="stage">
+      <svg class="icon-big" viewBox="0 0 1024 1024" role="img" aria-label="Crest icon, large">
+        <use href="#crest" />
+      </svg>
+      <div class="sizes">
+        <div class="size-cell">
+          <svg class="icon-60" viewBox="0 0 1024 1024" role="img" aria-label="Crest icon at 60 pixels"><use href="#crest" /></svg>
+          <span class="size-label">60 px</span>
+        </div>
+        <div class="size-cell">
+          <svg class="icon-40" viewBox="0 0 1024 1024" role="img" aria-label="Crest icon at 40 pixels"><use href="#crest" /></svg>
+          <span class="size-label">40 px</span>
+        </div>
+      </div>
+    </div>
+    <div class="readout">
+      <div>
+        <h4>READS AT 60PX</h4>
+        <p>Mostly. The two-tone break holds and the silhouette is one bold
+        blob. Risk: at 40px the curl can flatten into a generic leaf — the
+        forward lean survives, the "wave" specificity weakens.</p>
+      </div>
+      <div>
+        <h4>COLLISION CHECK</h4>
+        <p>Searched "wave logo app icon", "abstract wave fitness logo",
+        "motion blur teardrop logo". Waves are common in surf / water / spa
+        brands but rare as a chunky two-tone fitness mark; no direct
+        collision. Stays clear of arrow + bolt families.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= CONCEPT 2 ================= -->
+  <section class="concept">
+    <div class="concept-head">
+      <span class="concept-num">CONCEPT 02</span>
+      <span class="concept-name">Quicken</span>
+    </div>
+    <p class="concept-rationale">
+      One bold form cut into three leaning plates. The acceleration is
+      carried by spacing and scale — each plate is shorter, lighter and
+      thrown further forward than the last — so the eye reads a single
+      object speeding up, not a static bar chart. The deep-to-bright palette
+      makes the motion also a build of energy: week over week, faster.
+    </p>
+    <div class="stage">
+      <svg class="icon-big" viewBox="0 0 1024 1024" role="img" aria-label="Quicken icon, large">
+        <use href="#quicken" />
+      </svg>
+      <div class="sizes">
+        <div class="size-cell">
+          <svg class="icon-60" viewBox="0 0 1024 1024" role="img" aria-label="Quicken icon at 60 pixels"><use href="#quicken" /></svg>
+          <span class="size-label">60 px</span>
+        </div>
+        <div class="size-cell">
+          <svg class="icon-40" viewBox="0 0 1024 1024" role="img" aria-label="Quicken icon at 40 pixels"><use href="#quicken" /></svg>
+          <span class="size-label">40 px</span>
+        </div>
+      </div>
+    </div>
+    <div class="readout">
+      <div>
+        <h4>READS AT 60PX</h4>
+        <p>Yes — three high-contrast leaning slabs survive cleanly and the
+        rhythm reads. Honest risk: three separated plates is structurally a
+        "progress bars" layout; it is closer to a known visual idiom than
+        the others, even though the shear and unequal gaps push it past a
+        plain chart.</p>
+      </div>
+      <div>
+        <h4>COLLISION CHECK</h4>
+        <p>Searched "ascending steps logo fitness app", "accelerating shapes
+        speed lines logo", "three bars logo". The literal staircase idiom is
+        heavily used and was rejected; this skewed-plate variant has no
+        direct brand collision but lives near a common pattern.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= CONCEPT 3 ================= -->
+  <section class="concept">
+    <div class="concept-head">
+      <span class="concept-num">CONCEPT 03</span>
+      <span class="concept-name">Surge</span>
+    </div>
+    <p class="concept-rationale">
+      Two chunky comma-blades swept the same rotational direction — a heavy
+      trailing blade and a smaller, lighter blade thrown out ahead of it.
+      The blades are deliberately unequal and offset, not a symmetric
+      pinwheel, so the figure has one clear direction and reads as a kinetic
+      form accelerating. The pair also quietly carries Zealova's two-into-one
+      story. Negative near-black between the blades does the work.
+    </p>
+    <div class="stage">
+      <svg class="icon-big" viewBox="0 0 1024 1024" role="img" aria-label="Surge icon, large">
+        <use href="#surge" />
+      </svg>
+      <div class="sizes">
+        <div class="size-cell">
+          <svg class="icon-60" viewBox="0 0 1024 1024" role="img" aria-label="Surge icon at 60 pixels"><use href="#surge" /></svg>
+          <span class="size-label">60 px</span>
+        </div>
+        <div class="size-cell">
+          <svg class="icon-40" viewBox="0 0 1024 1024" role="img" aria-label="Surge icon at 40 pixels"><use href="#surge" /></svg>
+          <span class="size-label">40 px</span>
+        </div>
+      </div>
+    </div>
+    <div class="readout">
+      <div>
+        <h4>READS AT 60PX</h4>
+        <p>Adequate. The two-blade silhouette and the spin direction hold,
+        and the unequal blades keep it from collapsing into a symmetric loop.
+        Honest risk: at 40px the gap between the blades narrows and the form
+        can read as a single rounded swoosh rather than two blades — the
+        two-part idea is the first thing to soften.</p>
+      </div>
+      <div>
+        <h4>COLLISION CHECK</h4>
+        <p>Searched "two halves merging logo abstract", "vortex pinwheel
+        spiral logo app icon", "yin yang fitness logo". Symmetric pinwheels
+        and infinity loops are common stock tropes; the unequal-blade,
+        single-direction sweep deliberately breaks that symmetry to dodge
+        both. No direct brand collision found.</p>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <p>
+      <strong>Recommendation — Concept 01, "Crest", is the strongest.</strong>
+      It is the only one of the three that is a genuinely single, indivisible
+      shape: Quicken is three pieces a viewer can still read as a chart, and
+      Surge is two blades that can soften into one swoosh at small sizes.
+      Crest is one chunky asymmetric mass with the forward lean and the
+      forward-thrown curl built into its silhouette, it owns the green, and
+      it sidesteps every item on the avoid list. It is not as conceptually
+      loaded as Surge and not as instantly "motion" as a chart-like Quicken,
+      which is an honest trade, but it is the most ownable and the most
+      robust mark at 60px.
+    </p>
+  </footer>
+
+</div>
+</body>
+</html>

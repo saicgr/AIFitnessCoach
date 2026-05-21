@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Zealova — Abstract Mark Concepts</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+    background: #0a0a0b;
+    color: #e9e9ec;
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.55;
+    padding: 56px 24px 96px;
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; }
+
+  header { margin-bottom: 48px; max-width: 720px; }
+  .kicker {
+    font-size: 12px; font-weight: 700; letter-spacing: 2.4px;
+    text-transform: uppercase; color: #f9892f; margin-bottom: 14px;
+  }
+  h1 { font-size: 34px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 14px; }
+  header p { color: #9b9ba2; font-size: 15.5px; }
+  header p + p { margin-top: 10px; }
+  header b { color: #cdcdd2; font-weight: 600; }
+
+  .grid {
+    display: grid; gap: 24px;
+    grid-template-columns: repeat(auto-fit, minmax(330px, 1fr));
+  }
+
+  .card {
+    background: #141416;
+    border: 1px solid #242427;
+    border-radius: 20px;
+    padding: 26px 24px 28px;
+    display: flex; flex-direction: column;
+  }
+  .rank {
+    font-size: 11px; font-weight: 700; letter-spacing: 1.6px;
+    text-transform: uppercase; color: #6f6f78; margin-bottom: 10px;
+  }
+  .card h2 { font-size: 22px; font-weight: 700; letter-spacing: -0.3px; }
+  .feel { color: #f9892f; font-size: 13px; font-weight: 600; margin: 4px 0 22px; }
+
+  .hero {
+    width: 100%; max-width: 252px; margin: 0 auto 26px;
+    aspect-ratio: 1; display: block;
+    filter: drop-shadow(0 18px 34px rgba(0,0,0,0.55));
+  }
+  .hero svg, .ic { width: 100%; height: 100%; display: block; }
+
+  .label {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.8px;
+    text-transform: uppercase; color: #76767e; margin-bottom: 10px;
+  }
+
+  .squint {
+    background: linear-gradient(135deg, #4b4668 0%, #6f5b78 48%, #2f3f55 100%);
+    border-radius: 14px;
+    padding: 18px 16px 12px;
+    display: flex; align-items: flex-end; justify-content: space-around; gap: 8px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.10);
+  }
+  .squint .col { display: flex; flex-direction: column; align-items: center; gap: 7px; }
+  .squint .cap { font-size: 10px; color: rgba(255,255,255,0.78); font-weight: 600; }
+  .s84 { width: 84px; height: 84px; }
+  .s56 { width: 56px; height: 56px; }
+  .s40 { width: 40px; height: 40px; }
+
+  .row2 { display: flex; gap: 22px; margin-top: 20px; }
+  .row2 > div { flex: 1; }
+  .lightbox {
+    background: #ebebee; border-radius: 14px;
+    padding: 16px; display: flex; align-items: center; justify-content: center;
+  }
+  .lightbox .ic { width: 88px; height: 88px; }
+  .meaningbox {
+    background: #1c1c1f; border: 1px solid #2a2a2e; border-radius: 14px;
+    padding: 14px 15px; font-size: 12.5px;
+  }
+  .meaningbox .m-says { color: #cfcfd4; }
+  .meaningbox .m-risk { color: #9a9aa0; margin-top: 8px; }
+  .meaningbox b { color: #f9892f; font-weight: 600; }
+
+  .note { color: #8d8d94; font-size: 13px; margin-top: 22px; }
+
+  footer {
+    margin-top: 52px; padding: 30px 28px;
+    background: #141416; border: 1px solid #242427; border-radius: 20px;
+  }
+  footer h3 { font-size: 16px; margin-bottom: 14px; }
+  footer ol, footer ul { margin: 0 0 4px 20px; }
+  footer li { color: #a6a6ac; font-size: 14px; margin-bottom: 7px; }
+  footer li b { color: #e4e4e8; font-weight: 600; }
+  footer .pick b { color: #f9892f; }
+  .divider { height: 1px; background: #242427; margin: 22px 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ===== shared SVG definitions ===== -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+      <linearGradient id="og" gradientUnits="userSpaceOnUse" x1="230" y1="180" x2="800" y2="850">
+        <stop offset="0%"  stop-color="#FFC56E"/>
+        <stop offset="38%" stop-color="#FB9A3E"/>
+        <stop offset="68%" stop-color="#F4760F"/>
+        <stop offset="100%" stop-color="#D7560A"/>
+      </linearGradient>
+      <radialGradient id="bgd" cx="50%" cy="34%" r="82%">
+        <stop offset="0%"  stop-color="#1f1f23"/>
+        <stop offset="55%" stop-color="#0c0c0e"/>
+        <stop offset="100%" stop-color="#060607"/>
+      </radialGradient>
+      <filter id="glow" x="-60%" y="-60%" width="220%" height="220%">
+        <feGaussianBlur stdDeviation="72"/>
+      </filter>
+      <mask id="emberCarve">
+        <rect x="0" y="0" width="1024" height="1024" fill="white"/>
+        <path d="M366 656 C 446 612 470 556 506 506 C 548 448 596 404 690 360"
+              stroke="black" stroke-width="92" fill="none"
+              stroke-linecap="round" stroke-linejoin="round"/>
+      </mask>
+
+      <!-- Mark 1: Ember — orange disc with a carved rising stroke -->
+      <symbol id="markEmber" viewBox="0 0 1024 1024">
+        <circle cx="512" cy="512" r="300" fill="url(#og)" mask="url(#emberCarve)"/>
+      </symbol>
+
+      <!-- Mark 2: Focus — open ring with an energized node -->
+      <symbol id="markFocus" viewBox="0 0 1024 1024">
+        <path d="M374 347 A215 215 0 1 1 650 347" fill="none"
+              stroke="url(#og)" stroke-width="112" stroke-linecap="round"/>
+        <circle cx="650" cy="347" r="92" fill="url(#og)"/>
+        <ellipse cx="624" cy="320" rx="30" ry="19" fill="#ffffff" opacity="0.22"/>
+      </symbol>
+
+      <!-- Mark 3: Ascent — three rising blocks -->
+      <symbol id="markAscent" viewBox="0 0 1024 1024">
+        <rect x="272" y="520" width="140" height="180" rx="34" fill="url(#og)"/>
+        <rect x="288" y="534" width="108" height="22" rx="11" fill="#ffffff" opacity="0.16"/>
+        <rect x="442" y="420" width="140" height="280" rx="34" fill="url(#og)"/>
+        <rect x="458" y="434" width="108" height="22" rx="11" fill="#ffffff" opacity="0.16"/>
+        <rect x="612" y="320" width="140" height="380" rx="34" fill="url(#og)"/>
+        <rect x="628" y="334" width="108" height="22" rx="11" fill="#ffffff" opacity="0.16"/>
+      </symbol>
+    </defs>
+  </svg>
+
+  <header>
+    <div class="kicker">Zealova · App Icon</div>
+    <h1>Three distinctive abstract marks</h1>
+    <p>Every literal attempt (the feature collage, the mascot, the comet) failed the one test that matters: <b>does it still read at 60&nbsp;px?</b> So these are abstract marks instead — each one a single bold form, hand-built as a precise vector (no AI image generator), in the brand orange <b>#F97316</b> on a near-black background.</p>
+    <p>Each is shown big, then shrunk onto a home screen at <b>84 / 56 / 40&nbsp;px</b> — the real squint test — plus a light-background check. Pick the one that feels right and I'll refine and ship it.</p>
+  </header>
+
+  <div class="grid">
+
+    <!-- ============ EMBER ============ -->
+    <div class="card">
+      <div class="rank">01 · Most distinctive</div>
+      <h2>Ember</h2>
+      <div class="feel">Energy &amp; drive — built from "zeal"</div>
+
+      <div class="hero">
+        <svg viewBox="0 0 1024 1024">
+          <rect width="1024" height="1024" rx="224" fill="url(#bgd)"/>
+          <rect width="1024" height="1024" rx="224" fill="none" stroke="#ffffff" stroke-opacity="0.05"/>          <use href="#markEmber" width="1024" height="1024"/>
+        </svg>
+      </div>
+
+      <div class="label">Home-screen size test</div>
+      <div class="squint">
+        <div class="col">
+          <svg class="s84" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="224" fill="url(#bgd)"/><use href="#markEmber" width="1024" height="1024"/></svg>
+          <span class="cap">84 px</span>
+        </div>
+        <div class="col">
+          <svg class="s56" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="224" fill="url(#bgd)"/><use href="#markEmber" width="1024" height="1024"/></svg>
+          <span class="cap">56 px</span>
+        </div>
+        <div class="col">
+          <svg class="s40" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="224" fill="url(#bgd)"/><use href="#markEmber" width="1024" height="1024"/></svg>
+          <span class="cap">40 px</span>
+        </div>
+      </div>
+
+      <div class="row2">
+        <div>
+          <div class="label">On light</div>
+          <div class="lightbox">
+            <svg class="ic" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="224" fill="#ebebee"/><use href="#markEmber" width="1024" height="1024"/></svg>
+          </div>
+        </div>
+        <div>
+          <div class="label">Read</div>
+          <div class="meaningbox">
+            <div class="m-says"><b>Says:</b> a solid ember of energy with a rising stroke cut clean through it.</div>
+            <div class="m-risk"><b>Risk:</b> the most ambitious — the carved curve has to feel intentional, not accidental.</div>
+          </div>
+        </div>
+      </div>
+
+      <p class="note">A negative-space cut is the hallmark of a designed logo, not a generated one. Most ownable of the three.</p>
+    </div>
+
+    <!-- ============ FOCUS ============ -->
+    <div class="card">
+      <div class="rank">02 · Safest</div>
+      <h2>Focus</h2>
+      <div class="feel">Calm, premium — the coaching loop</div>
+
+      <div class="hero">
+        <svg viewBox="0 0 1024 1024">
+          <rect width="1024" height="1024" rx="224" fill="url(#bgd)"/>
+          <rect width="1024" height="1024" rx="224" fill="none" stroke="#ffffff" stroke-opacity="0.05"/>          <use href="#markFocus" width="1024" height="1024"/>
+        </svg>
+      </div>
+
+      <div class="label">Home-screen size test</div>
+      <div class="squint">
+        <div class="col">
+          <svg class="s84" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="224" fill="url(#bgd)"/><use href="#markFocus" width="1024" height="1024"/></svg>
+          <span class="cap">84 px</span>
+        </div>
+        <div class="col">
+          <svg class="s56" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="224" fill="url(#bgd)"/><use href="#markFocus" width="1024" height="1024"/></svg>
+          <span class="cap">56 px</span>
+        </div>
+        <div class="col">
+          <svg class="s40" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="224" fill="url(#bgd)"/><use href="#markFocus" width="1024" height="1024"/></svg>
+          <span class="cap">40 px</span>
+        </div>
+      </div>
+
+      <div class="row2">
+        <div>
+          <div class="label">On light</div>
+          <div class="lightbox">
+            <svg class="ic" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="224" fill="#ebebee"/><use href="#markFocus" width="1024" height="1024"/></svg>
+          </div>
+        </div>
+        <div>
+          <div class="label">Read</div>
+          <div class="meaningbox">
+            <div class="m-says"><b>Says:</b> a continuous loop with a leading node — progress that circles back, a coach in orbit.</div>
+            <div class="m-risk"><b>Risk:</b> open-ring marks exist elsewhere; the gap + node are what make it specific.</div>
+          </div>
+        </div>
+      </div>
+
+      <p class="note">The most timeless. Ages well, never looks dated, reads cleanly at every size. Lowest-risk choice.</p>
+    </div>
+
+    <!-- ============ ASCENT ============ -->
+    <div class="card">
+      <div class="rank">03 · Clearest meaning</div>
+      <h2>Ascent</h2>
+      <div class="feel">Progress, structured</div>
+
+      <div class="hero">
+        <svg viewBox="0 0 1024 1024">
+          <rect width="1024" height="1024" rx="224" fill="url(#bgd)"/>
+          <rect width="1024" height="1024" rx="224" fill="none" stroke="#ffffff" stroke-opacity="0.05"/>          <use href="#markAscent" width="1024" height="1024"/>
+        </svg>
+      </div>
+
+      <div class="label">Home-screen size test</div>
+      <div class="squint">
+        <div class="col">
+          <svg class="s84" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="224" fill="url(#bgd)"/><use href="#markAscent" width="1024" height="1024"/></svg>
+          <span class="cap">84 px</span>
+        </div>
+        <div class="col">
+          <svg class="s56" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="224" fill="url(#bgd)"/><use href="#markAscent" width="1024" height="1024"/></svg>
+          <span class="cap">56 px</span>
+        </div>
+        <div class="col">
+          <svg class="s40" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="224" fill="url(#bgd)"/><use href="#markAscent" width="1024" height="1024"/></svg>
+          <span class="cap">40 px</span>
+        </div>
+      </div>
+
+      <div class="row2">
+        <div>
+          <div class="label">On light</div>
+          <div class="lightbox">
+            <svg class="ic" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="224" fill="#ebebee"/><use href="#markAscent" width="1024" height="1024"/></svg>
+          </div>
+        </div>
+        <div>
+          <div class="label">Read</div>
+          <div class="meaningbox">
+            <div class="m-says"><b>Says:</b> three steps rising — measurable progress, leveling up, getting stronger week over week.</div>
+            <div class="m-risk"><b>Risk:</b> the most literal; can read as a bar chart / signal-strength glyph.</div>
+          </div>
+        </div>
+      </div>
+
+      <p class="note">The clearest story. If you want the icon to instantly say "this app makes you better," it's this one.</p>
+    </div>
+
+  </div>
+
+  <footer>
+    <h3>My honest read — after rendering them</h3>
+    <ul>
+      <li><b>Ember</b> renders as a coffee bean. A round disc plus one curved cut reads as coffee, full stop. It does not work.</li>
+      <li><b>Focus</b> renders as a pair of headphones, and sits uncomfortably close to the Threads logo. It does not work.</li>
+      <li class="pick"><b>Ascent</b> is the only one that holds up — clean and legible down to 40&nbsp;px. But it is, plainly, a bar chart. Usable, generic.</li>
+    </ul>
+
+    <div class="divider"></div>
+
+    <h3>If you pick one</h3>
+    <ol>
+      <li>Tell me the name. I'll refine that exact mark — weight, proportions, curve, and 2-3 variations of it so you can compare.</li>
+      <li>I export it to PNG at every required size and drop it into <b>ios/Runner/Assets.xcassets/AppIcon.appiconset</b> + the Android <b>mipmap-*</b> set (one 1024 master → all sizes via <b>flutter_launcher_icons</b>).</li>
+      <li>Done — it ships with the next build, replacing the orbit-Z that's live now.</li>
+    </ol>
+    <p style="color:#8d8d94;font-size:13px;margin-top:14px;">If none of the three land, the honest fallback stands: a $30-150 designer (Fiverr / 99designs) or a tool like Looka. But these are real, controllable starting points — not generator guesses.</p>
+  </footer>
+
+</div>
+</body>
+</html>

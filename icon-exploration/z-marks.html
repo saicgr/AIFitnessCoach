@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Zealova — Custom Z Marks</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+    background: #0a0a0b; color: #e9e9ec;
+    -webkit-font-smoothing: antialiased; line-height: 1.55;
+    padding: 56px 24px 96px;
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; }
+  header { margin-bottom: 44px; max-width: 740px; }
+  .kicker {
+    font-size: 12px; font-weight: 700; letter-spacing: 2.4px;
+    text-transform: uppercase; color: #f9892f; margin-bottom: 14px;
+  }
+  h1 { font-size: 33px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 14px; }
+  header p { color: #9b9ba2; font-size: 15px; }
+  header b { color: #cdcdd2; font-weight: 600; }
+
+  .grid { display: grid; gap: 22px; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
+  .card {
+    background: #141416; border: 1px solid #242427; border-radius: 20px;
+    padding: 24px 22px 26px; display: flex; flex-direction: column;
+  }
+  .name { font-size: 21px; font-weight: 700; letter-spacing: -0.3px; }
+  .desc { color: #9b9ba2; font-size: 13px; margin: 6px 0 20px; min-height: 54px; }
+
+  .hero {
+    width: 100%; max-width: 232px; margin: 0 auto 22px; aspect-ratio: 1;
+    filter: drop-shadow(0 16px 30px rgba(0,0,0,0.55));
+  }
+  .hero svg, .ic { width: 100%; height: 100%; display: block; }
+
+  .label {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.8px;
+    text-transform: uppercase; color: #76767e; margin-bottom: 10px;
+  }
+  .squint {
+    background: linear-gradient(135deg, #4b4668 0%, #6f5b78 48%, #2f3f55 100%);
+    border-radius: 14px; padding: 18px 16px 12px;
+    display: flex; align-items: flex-end; justify-content: space-around; gap: 8px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.10);
+  }
+  .squint .col { display: flex; flex-direction: column; align-items: center; gap: 7px; }
+  .squint .cap { font-size: 10px; color: rgba(255,255,255,0.80); font-weight: 600; }
+  .s120 { width: 120px; height: 120px; }
+  .s60 { width: 60px; height: 60px; }
+  .s40 { width: 40px; height: 40px; }
+
+  .note { color: #8d8d94; font-size: 12.5px; margin-top: 18px; }
+  .note b { color: #f9892f; font-weight: 600; }
+
+  footer {
+    margin-top: 48px; padding: 28px 28px;
+    background: #141416; border: 1px solid #242427; border-radius: 20px;
+  }
+  footer h3 { font-size: 16px; margin-bottom: 13px; }
+  footer p { color: #a6a6ac; font-size: 14px; margin-bottom: 9px; }
+  footer b { color: #e4e4e8; font-weight: 600; }
+  footer .pick b { color: #f9892f; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+      <mask id="maskZ">
+        <rect x="0" y="0" width="1024" height="1024" fill="white"/>
+        <path d="M356 350 L668 350 L668 434 L506 590 L668 590 L668 674 L356 674 L356 590 L518 434 L356 434 Z" fill="black"/>
+      </mask>
+
+      <!-- Bold: true letterform, parallelogram diagonal, rounded corners -->
+      <symbol id="zBold" viewBox="0 0 1024 1024">
+        <path d="M320 316 L704 316 L704 432 L508 592 L704 592 L704 708 L320 708 L320 592 L516 432 L320 432 Z"
+              fill="#F97316" stroke="#F97316" stroke-width="34" stroke-linejoin="round"/>
+      </symbol>
+
+      <!-- Curve: straight bars, swept curved diagonal -->
+      <symbol id="zCurve" viewBox="0 0 1024 1024">
+        <rect x="320" y="316" width="384" height="116" rx="30" fill="#F97316"/>
+        <rect x="320" y="592" width="384" height="116" rx="30" fill="#F97316"/>
+        <path d="M628 420 Q 444 452 404 600" fill="none" stroke="#F97316"
+              stroke-width="116" stroke-linecap="round"/>
+      </symbol>
+
+      <!-- Ribbon: one uniform stroke, round elbows -->
+      <symbol id="zRibbon" viewBox="0 0 1024 1024">
+        <path d="M378 374 L646 374 L378 650 L646 650" fill="none" stroke="#F97316"
+              stroke-width="116" stroke-linejoin="round" stroke-linecap="round"/>
+      </symbol>
+
+      <!-- Speed: skewed, miter joins, sliced terminals -->
+      <symbol id="zSpeed" viewBox="0 0 1024 1024">
+        <g transform="translate(512,512) skewX(-12) translate(-512,-512)">
+          <path d="M372 372 L648 372 L372 652 L648 652" fill="none" stroke="#F97316"
+                stroke-width="118" stroke-linejoin="miter" stroke-linecap="butt"/>
+        </g>
+      </symbol>
+
+      <!-- Knockout: Z punched out of a solid orange tile -->
+      <symbol id="zKnockout" viewBox="0 0 1024 1024">
+        <rect x="236" y="236" width="552" height="552" rx="150" fill="#F97316" mask="url(#maskZ)"/>
+      </symbol>
+    </defs>
+  </svg>
+
+  <header>
+    <div class="kicker">Zealova · App Icon</div>
+    <h1>Five custom Z marks</h1>
+    <p>Built the way <b>Hevy, MacroFactor, Gravl and GymBeat</b> are built: one custom letterform, flat, two colours, high contrast. Brand orange <b>#F97316</b> on near-black — never orange-background, because GymBeat already owns that. None of these is a font Z dropped on a square; each is a constructed mark. Shown big, then at <b>60&nbsp;px and 40&nbsp;px</b> on a home screen.</p>
+  </header>
+
+  <div class="grid">
+
+    <!-- BOLD -->
+    <div class="card">
+      <div class="name">Bold</div>
+      <div class="desc">A true letterform — weighty, geometric, rounded corners. The orange Z you saw earlier, but built with actual craft instead of a typeface.</div>
+      <div class="hero">
+        <svg viewBox="0 0 1024 1024">
+          <rect width="1024" height="1024" rx="224" fill="#080809"/>
+          <rect width="1024" height="1024" rx="224" fill="none" stroke="#ffffff" stroke-opacity="0.05"/>
+          <use href="#zBold" width="1024" height="1024"/>
+        </svg>
+      </div>
+      <div class="label">Home-screen size test</div>
+      <div class="squint">
+        <div class="col"><svg class="s120" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="224" fill="#080809"/><use href="#zBold" width="1024" height="1024"/></svg><span class="cap">large</span></div>
+        <div class="col"><svg class="s60" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="224" fill="#080809"/><use href="#zBold" width="1024" height="1024"/></svg><span class="cap">60 px</span></div>
+        <div class="col"><svg class="s40" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="224" fill="#080809"/><use href="#zBold" width="1024" height="1024"/></svg><span class="cap">40 px</span></div>
+      </div>
+      <p class="note">Safest. Reads instantly at any size. Closest to GymBeat's school, so leans on weight and the orange to stand apart.</p>
+    </div>
+
+    <!-- CURVE -->
+    <div class="card">
+      <div class="name">Curve</div>
+      <div class="desc">Straight bars, but the diagonal is swept into a curve. The Z, in motion — a coaching trajectory, a progress line.</div>
+      <div class="hero">
+        <svg viewBox="0 0 1024 1024">
+          <rect width="1024" height="1024" rx="224" fill="#080809"/>
+          <rect width="1024" height="1024" rx="224" fill="none" stroke="#ffffff" stroke-opacity="0.05"/>
+          <use href="#zCurve" width="1024" height="1024"/>
+        </svg>
+      </div>
+      <div class="label">Home-screen size test</div>
+      <div class="squint">
+        <div class="col"><svg class="s120" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="224" fill="#080809"/><use href="#zCurve" width="1024" height="1024"/></svg><span class="cap">large</span></div>
+        <div class="col"><svg class="s60" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="224" fill="#080809"/><use href="#zCurve" width="1024" height="1024"/></svg><span class="cap">60 px</span></div>
+        <div class="col"><svg class="s40" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="224" fill="#080809"/><use href="#zCurve" width="1024" height="1024"/></svg><span class="cap">40 px</span></div>
+      </div>
+      <p class="note">Most distinctive while still clearly a Z. The curve is what makes it a designed mark, not a typed letter.</p>
+    </div>
+
+    <!-- RIBBON -->
+    <div class="card">
+      <div class="name">Ribbon</div>
+      <div class="desc">One uniform stroke with round elbows — drawn in a single gesture. Minimal and modern, the Hevy school.</div>
+      <div class="hero">
+        <svg viewBox="0 0 1024 1024">
+          <rect width="1024" height="1024" rx="224" fill="#080809"/>
+          <rect width="1024" height="1024" rx="224" fill="none" stroke="#ffffff" stroke-opacity="0.05"/>
+          <use href="#zRibbon" width="1024" height="1024"/>
+        </svg>
+      </div>
+      <div class="label">Home-screen size test</div>
+      <div class="squint">
+        <div class="col"><svg class="s120" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="224" fill="#080809"/><use href="#zRibbon" width="1024" height="1024"/></svg><span class="cap">large</span></div>
+        <div class="col"><svg class="s60" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="224" fill="#080809"/><use href="#zRibbon" width="1024" height="1024"/></svg><span class="cap">60 px</span></div>
+        <div class="col"><svg class="s40" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="224" fill="#080809"/><use href="#zRibbon" width="1024" height="1024"/></svg><span class="cap">40 px</span></div>
+      </div>
+      <p class="note">Cleanest and most current. Uniform weight is the modern look — but it is the simplest, so least "ownable".</p>
+    </div>
+
+    <!-- SPEED -->
+    <div class="card">
+      <div class="name">Speed</div>
+      <div class="desc">Leaned forward, sharp mitred joins, sliced terminals. A Z is already a lightning bolt — this leans into it.</div>
+      <div class="hero">
+        <svg viewBox="0 0 1024 1024">
+          <rect width="1024" height="1024" rx="224" fill="#080809"/>
+          <rect width="1024" height="1024" rx="224" fill="none" stroke="#ffffff" stroke-opacity="0.05"/>
+          <use href="#zSpeed" width="1024" height="1024"/>
+        </svg>
+      </div>
+      <div class="label">Home-screen size test</div>
+      <div class="squint">
+        <div class="col"><svg class="s120" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="224" fill="#080809"/><use href="#zSpeed" width="1024" height="1024"/></svg><span class="cap">large</span></div>
+        <div class="col"><svg class="s60" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="224" fill="#080809"/><use href="#zSpeed" width="1024" height="1024"/></svg><span class="cap">60 px</span></div>
+        <div class="col"><svg class="s40" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="224" fill="#080809"/><use href="#zSpeed" width="1024" height="1024"/></svg><span class="cap">40 px</span></div>
+      </div>
+      <p class="note">Most energy — "zeal" in shape form. Sharp terminals read as athletic and fast.</p>
+    </div>
+
+    <!-- KNOCKOUT -->
+    <div class="card">
+      <div class="name">Knockout</div>
+      <div class="desc">The Z punched out of a solid orange tile — the letter is the negative space. Maximum contrast. The Gravl move.</div>
+      <div class="hero">
+        <svg viewBox="0 0 1024 1024">
+          <rect width="1024" height="1024" rx="224" fill="#080809"/>
+          <rect width="1024" height="1024" rx="224" fill="none" stroke="#ffffff" stroke-opacity="0.05"/>
+          <use href="#zKnockout" width="1024" height="1024"/>
+        </svg>
+      </div>
+      <div class="label">Home-screen size test</div>
+      <div class="squint">
+        <div class="col"><svg class="s120" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="224" fill="#080809"/><use href="#zKnockout" width="1024" height="1024"/></svg><span class="cap">large</span></div>
+        <div class="col"><svg class="s60" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="224" fill="#080809"/><use href="#zKnockout" width="1024" height="1024"/></svg><span class="cap">60 px</span></div>
+        <div class="col"><svg class="s40" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="224" fill="#080809"/><use href="#zKnockout" width="1024" height="1024"/></svg><span class="cap">40 px</span></div>
+      </div>
+      <p class="note">Boldest presence on a home screen — a solid orange block stands out. Inverts the convention: tile is the colour, Z is the dark.</p>
+    </div>
+
+  </div>
+
+  <footer>
+    <h3>My honest read — after rendering them</h3>
+    <p class="pick"><b>Speed</b> and <b>Knockout</b> are the standouts. Speed has the most character — a forward lean and sliced terminals, athletic, still unmistakably a Z. Knockout has the most presence on a home screen — a solid orange block pulls the eye in the grid.</p>
+    <p><b>Ribbon</b> is the clean, modern, safe pick. <b>Bold</b> is the dependable workhorse. <b>Curve</b> has the best idea — a Z in motion — but the swept diagonal renders slightly lumpy; it would need a refinement pass to sit right.</p>
+    <p style="margin-top:14px;">Pick one. I refine that exact mark — proportions, curve tension, corner weight, 2-3 variations — then export to PNG and wire it into the iOS <b>AppIcon.appiconset</b> + Android <b>mipmap</b> set. It ships with the next build.</p>
+  </footer>
+
+</div>
+</body>
+</html>

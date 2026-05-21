@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Zealova — Swarm Icon Board (15 concepts)</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+    background: #0a0a0b; color: #e9e9ec; padding: 52px 28px 80px;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1200px; margin: 0 auto; }
+  h1 { font-size: 27px; font-weight: 700; letter-spacing: -0.4px; margin-bottom: 8px; }
+  .sub { color: #8e8e96; font-size: 14px; margin-bottom: 36px; }
+  .terr { font-size: 12px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
+          color: #10B981; margin: 30px 0 14px; }
+  .row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+  .cell { background: #141416; border: 1px solid #242427; border-radius: 16px;
+          padding: 20px; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+  .big { width: 188px; height: 188px; }
+  .mini-row { display: flex; align-items: flex-end; gap: 14px; }
+  .m60 { width: 60px; height: 60px; }
+  .m40 { width: 40px; height: 40px; }
+  .nm { font-size: 14px; font-weight: 600; }
+  .nm span { color: #76767e; font-weight: 400; }
+  svg { display: block; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Zealova icon — swarm output</h1>
+  <div class="sub">15 concepts, 5 territories, all green-on-near-black. Each shown at 188px, 60px, 40px.</div>
+
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+
+    <symbol id="c-crest" viewBox="0 0 1024 1024">
+      <path fill="#10B981" d="M 232 700 C 232 452, 388 286, 616 256 C 760 237, 848 300, 854 414 C 858 508, 800 566, 714 566 C 760 540, 778 486, 744 444 C 708 400, 628 400, 566 450 C 496 506, 458 596, 454 690 C 452 744, 414 778, 344 778 C 278 778, 234 744, 232 690 Z"/>
+      <path fill="#34D399" d="M 454 690 C 458 600, 496 510, 566 454 C 628 404, 708 404, 744 448 C 762 470, 764 500, 752 526 C 726 494, 672 492, 622 528 C 566 572, 532 648, 524 720 C 522 752, 498 740, 480 722 C 462 704, 454 696, 454 690 Z"/>
+    </symbol>
+
+    <symbol id="c-quick" viewBox="0 0 1024 1024">
+      <path fill="#059669" d="M 300 300 L 470 300 L 330 724 L 160 724 Z"/>
+      <path fill="#10B981" d="M 548 366 L 690 366 L 576 652 L 434 652 Z"/>
+      <path fill="#34D399" d="M 760 430 L 872 430 L 786 586 L 674 586 Z"/>
+    </symbol>
+
+    <symbol id="c-surge" viewBox="0 0 1024 1024">
+      <path fill="#10B981" d="M 250 690 C 214 566, 270 444, 396 404 C 470 380, 540 408, 566 470 C 528 452, 476 460, 438 502 C 392 552, 384 628, 408 690 C 372 712, 300 716, 250 690 Z"/>
+      <path fill="#34D399" d="M 774 334 C 810 458, 754 580, 628 620 C 554 644, 484 616, 458 554 C 496 572, 548 564, 586 522 C 632 472, 640 396, 616 334 C 652 312, 724 308, 774 334 Z"/>
+    </symbol>
+
+    <symbol id="c-knot" viewBox="0 0 1024 1024">
+      <defs>
+        <mask id="knot-ringA-hole"><rect width="1024" height="1024" fill="#fff"/><circle cx="430" cy="512" r="118" fill="#000"/><circle cx="594" cy="512" r="262" fill="none" stroke="#000" stroke-width="44"/></mask>
+        <mask id="knot-ringB-hole"><rect width="1024" height="1024" fill="#fff"/><circle cx="594" cy="512" r="118" fill="#000"/><circle cx="430" cy="512" r="262" fill="none" stroke="#000" stroke-width="44"/></mask>
+        <clipPath id="knot-ringB-body"><circle cx="594" cy="512" r="224"/></clipPath>
+      </defs>
+      <circle cx="430" cy="512" r="224" fill="#059669" mask="url(#knot-ringA-hole)"/>
+      <circle cx="594" cy="512" r="224" fill="#34D399" mask="url(#knot-ringB-hole)"/>
+      <g clip-path="url(#knot-ringB-body)"><circle cx="430" cy="512" r="224" fill="#059669" mask="url(#knot-ringA-hole)" clip-path="inset(0 0 50% 0)"/></g>
+    </symbol>
+
+    <symbol id="c-seed" viewBox="0 0 1024 1024">
+      <path fill="#059669" d="M 512 168 C 372 300 300 410 300 540 C 300 690 410 800 512 800 C 452 730 430 660 470 596 C 506 540 596 520 596 408 C 596 318 560 232 512 168 Z"/>
+      <path fill="#34D399" d="M 512 168 C 560 232 596 318 596 408 C 596 520 506 540 470 596 C 430 660 452 730 512 800 C 614 800 724 690 724 540 C 724 410 652 300 512 168 Z"/>
+      <path fill="#080809" d="M 512 168 C 498 210 486 248 486 286 C 486 330 538 330 538 286 C 538 248 526 210 512 168 Z"/>
+    </symbol>
+
+    <symbol id="c-lock" viewBox="0 0 1024 1024">
+      <defs><clipPath id="lock-badge"><rect x="232" y="232" width="560" height="560" rx="150"/></clipPath></defs>
+      <g clip-path="url(#lock-badge)">
+        <rect x="232" y="232" width="560" height="560" fill="#34D399"/>
+        <rect x="232" y="232" width="280" height="560" fill="#059669"/>
+        <rect x="232" y="512" width="560" height="280" fill="#059669"/>
+        <rect x="232" y="498" width="294" height="28" fill="#080809"/>
+        <rect x="498" y="498" width="28" height="294" fill="#080809"/>
+      </g>
+    </symbol>
+
+    <symbol id="c-notch" viewBox="0 0 1024 1024">
+      <path fill="#34D399" d="M232 168 h560 a64 64 0 0 1 64 64 v158 h-322 l-150 196 H168 v-354 a64 64 0 0 1 64 -64 Z"/>
+      <path fill="#059669" d="M792 856 h-560 a64 64 0 0 1 -64 -64 v-158 h322 l150 -196 h288 v354 a64 64 0 0 1 -64 64 Z"/>
+    </symbol>
+
+    <symbol id="c-monok" viewBox="0 0 1024 1024">
+      <path fill="#10B981" d="M260 188 h504 a44 44 0 0 1 44 44 v150 a44 44 0 0 1 -44 44 h-196 l196 230 v126 a44 44 0 0 1 -44 44 h-504 a44 44 0 0 1 -44 -44 v-150 a44 44 0 0 1 44 -44 h196 l-196 -230 v-126 a44 44 0 0 1 44 -44 Z"/>
+      <path fill="#34D399" d="M300 232 h424 l-150 132 h-274 Z"/>
+    </symbol>
+
+    <symbol id="c-clasp" viewBox="0 0 1024 1024">
+      <path fill="none" stroke="#059669" stroke-width="152" stroke-linecap="round" stroke-linejoin="round" d="M268 268 h392 v300"/>
+      <path fill="none" stroke="#34D399" stroke-width="152" stroke-linecap="round" stroke-linejoin="round" d="M756 756 h-392 v-300"/>
+    </symbol>
+
+    <symbol id="c-rise" viewBox="0 0 1024 1024">
+      <path fill-rule="evenodd" clip-rule="evenodd" d="M512 132 L852 472 L852 752 Q852 836 768 836 L256 836 Q172 836 172 752 L172 472 Z M512 360 L268 604 L420 604 L512 512 L604 604 L756 604 Z" fill="#10B981"/>
+      <path d="M512 132 L852 472 L852 752 Q852 836 768 836 L604 836 L604 604 L512 512 Z" fill="#34D399"/>
+      <path d="M268 604 L420 604 L512 512 L512 836 L256 836 Q172 836 172 752 L172 604 Z" fill="#059669"/>
+    </symbol>
+
+    <symbol id="c-gate" viewBox="0 0 1024 1024">
+      <path fill-rule="evenodd" clip-rule="evenodd" d="M512 152 L840 340 L840 712 L512 872 L184 712 L184 340 Z M512 360 L320 690 L420 690 L512 534 L604 690 L704 690 Z" fill="#10B981"/>
+      <path d="M512 152 L840 340 L840 712 L604 690 L512 534 Z" fill="#34D399"/>
+      <path d="M320 690 L420 690 L512 534 L512 872 L184 712 L184 600 Z" fill="#059669"/>
+    </symbol>
+
+    <symbol id="c-embk" viewBox="0 0 1024 1024">
+      <path fill-rule="evenodd" clip-rule="evenodd" d="M512 156 L820 336 L820 494 L204 494 L204 336 Z M404 494 L512 330 L620 494 Z" fill="#10B981"/>
+      <path d="M204 530 L820 530 L820 688 L512 868 L204 688 Z" fill="#059669"/>
+      <path d="M512 360 L640 530 L384 530 Z" fill="#34D399"/>
+    </symbol>
+
+    <symbol id="c-updraft" viewBox="0 0 1024 1024">
+      <path fill="#10B981" d="M 286 742 A 322 322 0 0 1 742 286 L 628 372 A 200 200 0 0 0 372 628 Z"/>
+      <path fill="#34D399" d="M 446 602 A 322 322 0 0 1 902 146 L 788 232 A 200 200 0 0 0 532 488 Z"/>
+    </symbol>
+
+    <symbol id="c-pulse" viewBox="0 0 1024 1024">
+      <g fill="#10B981">
+        <path transform="translate(512 512)" d="M 0 -312 L 132 -150 L 0 -196 L -132 -150 Z"/>
+        <path transform="translate(512 512) rotate(120)" d="M 0 -312 L 132 -150 L 0 -196 L -132 -150 Z"/>
+        <path transform="translate(512 512) rotate(240)" d="M 0 -312 L 132 -150 L 0 -196 L -132 -150 Z"/>
+      </g>
+      <circle cx="512" cy="512" r="128" fill="#10B981"/>
+      <circle cx="512" cy="512" r="66" fill="#34D399"/>
+    </symbol>
+
+    <symbol id="c-vault" viewBox="0 0 1024 1024">
+      <path fill="#10B981" d="M 512 232 Q 540 232 556 262 L 792 718 Q 812 760 766 760 L 600 760 Q 560 760 540 724 L 512 668 L 484 724 Q 464 760 424 760 L 258 760 Q 212 760 232 718 L 468 262 Q 484 232 512 232 Z"/>
+      <path fill="#34D399" d="M 512 232 Q 540 232 556 262 L 792 718 Q 812 760 766 760 L 600 760 Q 560 760 540 724 L 512 668 Z"/>
+    </symbol>
+
+  </defs></svg>
+
+  <div class="terr">Momentum</div>
+  <div class="row">
+    <div class="cell"><svg class="big" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="224" fill="#080809"/><use href="#c-crest"/></svg><div class="mini-row"><svg class="m60" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="224" fill="#080809"/><use href="#c-crest"/></svg><svg class="m40" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="224" fill="#080809"/><use href="#c-crest"/></svg></div><div class="nm">Crest <span>· momentum</span></div></div>
+    <div class="cell"><svg class="big" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="224" fill="#080809"/><use href="#c-quick"/></svg><div class="mini-row"><svg class="m60" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="224" fill="#080809"/><use href="#c-quick"/></svg><svg class="m40" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="224" fill="#080809"/><use href="#c-quick"/></svg></div><div class="nm">Quicken <span>· momentum</span></div></div>
+    <div class="cell"><svg class="big" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="224" fill="#080809"/><use href="#c-surge"/></svg><div class="mini-row"><svg class="m60" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="224" fill="#080809"/><use href="#c-surge"/></svg><svg class="m40" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="224" fill="#080809"/><use href="#c-surge"/></svg></div><div class="nm">Surge <span>· momentum</span></div></div>
+  </div>
+
+  <div class="terr">Duality</div>
+  <div class="row">
+    <div class="cell"><svg class="big" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="224" fill="#080809"/><use href="#c-knot"/></svg><div class="mini-row"><svg class="m60" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="224" fill="#080809"/><use href="#c-knot"/></svg><svg class="m40" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="224" fill="#080809"/><use href="#c-knot"/></svg></div><div class="nm">Clasp <span>· duality</span></div></div>
+    <div class="cell"><svg class="big" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="224" fill="#080809"/><use href="#c-seed"/></svg><div class="mini-row"><svg class="m60" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="224" fill="#080809"/><use href="#c-seed"/></svg><svg class="m40" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="224" fill="#080809"/><use href="#c-seed"/></svg></div><div class="nm">Seed Split <span>· duality</span></div></div>
+    <div class="cell"><svg class="big" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="224" fill="#080809"/><use href="#c-lock"/></svg><div class="mini-row"><svg class="m60" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="224" fill="#080809"/><use href="#c-lock"/></svg><svg class="m40" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="224" fill="#080809"/><use href="#c-lock"/></svg></div><div class="nm">Two-Step <span>· duality</span></div></div>
+  </div>
+
+  <div class="terr">Monogram</div>
+  <div class="row">
+    <div class="cell"><svg class="big" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="224" fill="#080809"/><use href="#c-notch"/></svg><div class="mini-row"><svg class="m60" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="224" fill="#080809"/><use href="#c-notch"/></svg><svg class="m40" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="224" fill="#080809"/><use href="#c-notch"/></svg></div><div class="nm">Notch <span>· monogram</span></div></div>
+    <div class="cell"><svg class="big" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="224" fill="#080809"/><use href="#c-monok"/></svg><div class="mini-row"><svg class="m60" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="224" fill="#080809"/><use href="#c-monok"/></svg><svg class="m40" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="224" fill="#080809"/><use href="#c-monok"/></svg></div><div class="nm">Keystone <span>· monogram</span></div></div>
+    <div class="cell"><svg class="big" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="224" fill="#080809"/><use href="#c-clasp"/></svg><div class="mini-row"><svg class="m60" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="224" fill="#080809"/><use href="#c-clasp"/></svg><svg class="m40" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="224" fill="#080809"/><use href="#c-clasp"/></svg></div><div class="nm">Clasp <span>· monogram</span></div></div>
+  </div>
+
+  <div class="terr">Emblem</div>
+  <div class="row">
+    <div class="cell"><svg class="big" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="224" fill="#080809"/><use href="#c-rise"/></svg><div class="mini-row"><svg class="m60" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="224" fill="#080809"/><use href="#c-rise"/></svg><svg class="m40" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="224" fill="#080809"/><use href="#c-rise"/></svg></div><div class="nm">Rise <span>· emblem</span></div></div>
+    <div class="cell"><svg class="big" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="224" fill="#080809"/><use href="#c-gate"/></svg><div class="mini-row"><svg class="m60" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="224" fill="#080809"/><use href="#c-gate"/></svg><svg class="m40" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="224" fill="#080809"/><use href="#c-gate"/></svg></div><div class="nm">Lift-Gate <span>· emblem</span></div></div>
+    <div class="cell"><svg class="big" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="224" fill="#080809"/><use href="#c-embk"/></svg><div class="mini-row"><svg class="m60" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="224" fill="#080809"/><use href="#c-embk"/></svg><svg class="m40" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="224" fill="#080809"/><use href="#c-embk"/></svg></div><div class="nm">Keystone <span>· emblem</span></div></div>
+  </div>
+
+  <div class="terr">Zeal</div>
+  <div class="row">
+    <div class="cell"><svg class="big" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="224" fill="#080809"/><use href="#c-updraft"/></svg><div class="mini-row"><svg class="m60" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="224" fill="#080809"/><use href="#c-updraft"/></svg><svg class="m40" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="224" fill="#080809"/><use href="#c-updraft"/></svg></div><div class="nm">Updraft <span>· zeal</span></div></div>
+    <div class="cell"><svg class="big" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="224" fill="#080809"/><use href="#c-pulse"/></svg><div class="mini-row"><svg class="m60" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="224" fill="#080809"/><use href="#c-pulse"/></svg><svg class="m40" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="224" fill="#080809"/><use href="#c-pulse"/></svg></div><div class="nm">Core Pulse <span>· zeal</span></div></div>
+    <div class="cell"><svg class="big" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="224" fill="#080809"/><use href="#c-vault"/></svg><div class="mini-row"><svg class="m60" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="224" fill="#080809"/><use href="#c-vault"/></svg><svg class="m40" viewBox="0 0 1024 1024"><rect width="1024" height="1024" rx="224" fill="#080809"/><use href="#c-vault"/></svg></div><div class="nm">Vault <span>· zeal</span></div></div>
+  </div>
+
+</div>
+</body>
+</html>
