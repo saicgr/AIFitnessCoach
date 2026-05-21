@@ -52,6 +52,14 @@ class NotificationPreferences {
   final bool dailyCrateReminders;
   final String dailyCrateReminderTime;
 
+  // Proactive health coaching (Phase C2) — synced to backend
+  // notification_preferences JSON; each type drives one cron nudge job.
+  final bool dailyBriefingNudge;   // morning readiness briefing (anchor push)
+  final String dailyBriefingTime;  // local delivery time, e.g. "08:00"
+  final bool healthAnomalyNudge;   // resting-HR anomaly alert (event-driven)
+  final bool activityGoalNudge;    // afternoon step-goal nudge
+  final String activityNudgeTime;  // local delivery time for the step nudge
+
   // Frequency preset
   final String frequencyPreset; // 'minimal', 'balanced', 'full_coach'
   // Bundle times
@@ -125,6 +133,12 @@ class NotificationPreferences {
     // Daily crate reminder
     this.dailyCrateReminders = true,
     this.dailyCrateReminderTime = '10:00',
+    // Proactive health coaching (Phase C2)
+    this.dailyBriefingNudge = true,
+    this.dailyBriefingTime = '08:00',
+    this.healthAnomalyNudge = true,
+    this.activityGoalNudge = true,
+    this.activityNudgeTime = '15:00',
     // Frequency preset
     this.frequencyPreset = 'balanced',
     // Bundle times
@@ -196,6 +210,12 @@ class NotificationPreferences {
     // Daily crate reminder
     bool? dailyCrateReminders,
     String? dailyCrateReminderTime,
+    // Proactive health coaching (Phase C2)
+    bool? dailyBriefingNudge,
+    String? dailyBriefingTime,
+    bool? healthAnomalyNudge,
+    bool? activityGoalNudge,
+    String? activityNudgeTime,
     // Frequency preset
     String? frequencyPreset,
     // Bundle times
@@ -266,6 +286,12 @@ class NotificationPreferences {
       // Daily crate reminder
       dailyCrateReminders: dailyCrateReminders ?? this.dailyCrateReminders,
       dailyCrateReminderTime: dailyCrateReminderTime ?? this.dailyCrateReminderTime,
+      // Proactive health coaching (Phase C2)
+      dailyBriefingNudge: dailyBriefingNudge ?? this.dailyBriefingNudge,
+      dailyBriefingTime: dailyBriefingTime ?? this.dailyBriefingTime,
+      healthAnomalyNudge: healthAnomalyNudge ?? this.healthAnomalyNudge,
+      activityGoalNudge: activityGoalNudge ?? this.activityGoalNudge,
+      activityNudgeTime: activityNudgeTime ?? this.activityNudgeTime,
       // Frequency preset
       frequencyPreset: frequencyPreset ?? this.frequencyPreset,
       // Bundle times
@@ -338,6 +364,13 @@ class NotificationPreferences {
         // Daily crate reminder
         'daily_crate_reminders': dailyCrateReminders,
         'daily_crate_reminder_time': dailyCrateReminderTime,
+        // Proactive health coaching (Phase C2) — keys consumed by the
+        // push_nudge_cron daily_readiness / health_anomaly / activity_goal jobs.
+        'daily_briefing_nudge': dailyBriefingNudge,
+        'daily_briefing_time': dailyBriefingTime,
+        'health_anomaly_nudge': healthAnomalyNudge,
+        'activity_goal_nudge': activityGoalNudge,
+        'activity_nudge_time': activityNudgeTime,
         // Frequency preset
         'frequency_preset': frequencyPreset,
         // Bundle times

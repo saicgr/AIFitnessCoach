@@ -555,6 +555,100 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
                   ),
                 ),
                 Divider(height: 1, color: cardBorder, indent: 50),
+                // ─── Proactive Health Coaching (Phase C2) ───────────
+                // Daily Briefing — morning readiness push, with a delivery
+                // time control (the time the cron sends it, user-local).
+                _buildNotificationToggleWithTime(
+                  sectionKey: 'daily_briefing',
+                  icon: Icons.wb_twilight,
+                  iconColor: const Color(0xFFFB923C),
+                  title: 'Daily Briefing',
+                  subtitle: 'Morning readiness check-in',
+                  value: notifPrefs.dailyBriefingNudge,
+                  onChanged: (value) {
+                    ref.read(notificationPreferencesProvider.notifier)
+                        .setDailyBriefingNudge(value);
+                  },
+                  textSecondary: textSecondary,
+                  textMuted: textMuted,
+                  isDark: isDark,
+                  timeWidget: TimePickerTile(
+                    label: 'Delivery time',
+                    time: notifPrefs.dailyBriefingTime,
+                    onTimeChanged: (time) {
+                      ref.read(notificationPreferencesProvider.notifier)
+                          .setDailyBriefingTime(time);
+                    },
+                    isDark: isDark,
+                  ),
+                ),
+                Divider(height: 1, color: cardBorder, indent: 50),
+                // Anomaly Alerts — event-driven (resting-HR), so no time
+                // control; a plain toggle row.
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.monitor_heart_outlined,
+                        color: notifPrefs.healthAnomalyNudge
+                            ? const Color(0xFFEF4444)
+                            : textMuted,
+                        size: 22,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text('Anomaly Alerts',
+                                style: TextStyle(fontSize: 15)),
+                            Text(
+                              'Heads-up when resting heart rate runs high',
+                              style: TextStyle(fontSize: 12, color: textMuted),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Switch(
+                        value: notifPrefs.healthAnomalyNudge,
+                        onChanged: (value) => ref
+                            .read(notificationPreferencesProvider.notifier)
+                            .setHealthAnomalyNudge(value),
+                        activeThumbColor: accent,
+                        activeTrackColor: activeTrack,
+                      ),
+                    ],
+                  ),
+                ),
+                Divider(height: 1, color: cardBorder, indent: 50),
+                // Activity Nudges — afternoon step-goal nudge, with a
+                // delivery time control.
+                _buildNotificationToggleWithTime(
+                  sectionKey: 'activity_nudge',
+                  icon: Icons.directions_walk_outlined,
+                  iconColor: const Color(0xFF34D399),
+                  title: 'Activity Nudges',
+                  subtitle: 'Reminder when you\'re behind your step goal',
+                  value: notifPrefs.activityGoalNudge,
+                  onChanged: (value) {
+                    ref.read(notificationPreferencesProvider.notifier)
+                        .setActivityGoalNudge(value);
+                  },
+                  textSecondary: textSecondary,
+                  textMuted: textMuted,
+                  isDark: isDark,
+                  timeWidget: TimePickerTile(
+                    label: 'Nudge time',
+                    time: notifPrefs.activityNudgeTime,
+                    onTimeChanged: (time) {
+                      ref.read(notificationPreferencesProvider.notifier)
+                          .setActivityNudgeTime(time);
+                    },
+                    isDark: isDark,
+                  ),
+                ),
+                Divider(height: 1, color: cardBorder, indent: 50),
                 // Guilt Notifications (moved here from the always-visible section)
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),

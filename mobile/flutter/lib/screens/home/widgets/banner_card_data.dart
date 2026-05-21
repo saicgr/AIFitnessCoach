@@ -10,6 +10,7 @@ enum BannerType {
   week1Tip,
   contextual,
   wrapped,
+  healthCoaching,  // Phase C3: proactive readiness briefing / anomaly / activity nudge
 }
 
 /// Unified data model for all home screen banner cards.
@@ -31,6 +32,15 @@ class BannerCardData {
   /// Optional: extra data needed by specific banner actions (e.g. MissedWorkout object)
   final dynamic payload;
 
+  /// Optional shared deterministic notification id, e.g. `<type>_<localdate>`.
+  ///
+  /// When set, [BannerNotificationMapper.toNotification] uses this verbatim as
+  /// the bell-entry id instead of the `banner_<id>` default — so a push and
+  /// the same-day banner that share this id dedupe to ONE notification-bell
+  /// entry (Phase C3). Banners without a server-side push counterpart leave
+  /// this null and keep the default `banner_<id>` scheme.
+  final String? notifId;
+
   const BannerCardData({
     required this.type,
     required this.id,
@@ -43,5 +53,6 @@ class BannerCardData {
     this.onTap,
     this.onAction,
     this.payload,
+    this.notifId,
   });
 }

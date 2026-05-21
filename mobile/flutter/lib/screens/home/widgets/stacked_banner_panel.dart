@@ -10,6 +10,7 @@ import '../../../core/utils/banner_notification_mapper.dart';
 import '../../notifications/notifications_screen.dart';
 import '../../../data/providers/billing_reminder_provider.dart';
 import '../../../data/providers/discover_provider.dart';
+import '../../../data/providers/health_insight_provider.dart';
 import '../../../data/providers/scheduling_provider.dart';
 import '../../../data/providers/scores_provider.dart';
 import '../../../data/providers/week1_tips_provider.dart';
@@ -460,6 +461,38 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
           ));
         }
       }
+    }
+
+    // 8. Health-coaching insight (Phase C3) — the day's readiness briefing /
+    //    resting-HR anomaly / activity nudge, resolved by
+    //    [healthInsightProvider] (briefing has priority). Self-hides when
+    //    there is no message, the message was dismissed today, or on any API
+    //    error — so this branch costs nothing for a healthy / no-wearable
+    //    user. The card surface (HealthInsightCard) and this banner share the
+    //    same provider; the banner carries the shared deterministic
+    //    `<type>_<localdate>` notif id so it, the card, and the coaching push
+    //    all dedupe to ONE notification-bell entry.
+    final healthInsight = ref.watch(healthInsightProvider).valueOrNull;
+    if (healthInsight != null && healthInsight.shouldShow) {
+      final hi = healthInsight.insight!;
+      banners.add(BannerCardData(
+        type: BannerType.healthCoaching,
+        id: 'health_coaching_${hi.notifId}',
+        notifId: hi.notifId,
+        icon: switch (hi.type) {
+          'daily_briefing' => Icons.wb_sunny_rounded,
+          'health_anomaly' => Icons.monitor_heart_rounded,
+          'activity_nudge' => Icons.directions_walk_rounded,
+          _ => Icons.favorite_rounded,
+        },
+        title: hi.title,
+        subtitle: hi.message,
+        accentColor: AppColors.cyan,
+        onTap: () {
+          HapticService.light();
+          context.push(hi.route);
+        },
+      ));
     }
 
     // Filter out session-dismissed banners
@@ -1024,6 +1057,13 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
       final todayKey = '${today.year}-${today.month}-${today.day}';
       await prefs.setBool('daily_crate_dismissed_$todayKey', true);
       if (mounted) setState(() => _dailyCrateDismissedToday = true);
+    } else if (banner.type == BannerType.healthCoaching) {
+      // Per-day dismissal — shared with the HealthInsightCard via
+      // [healthInsightProvider]. Swiping the banner away also hides the home
+      // card for the rest of the day; tomorrow's briefing returns because the
+      // dismissal key is date-scoped. The bell entry recorded on appearance
+      // is intentionally kept.
+      await dismissHealthInsight(ref);
     } else if (banner.type == BannerType.missedWorkout) {
       final prefs = await SharedPreferences.getInstance();
       _dismissedMissedWorkoutIds.add(banner.id);
@@ -1170,13 +1210,24 @@ class _StackedBannerPanelState extends ConsumerState<StackedBannerPanel>
 
     final banners = _collectBanners();
 
-    // Report active banner IDs so other widgets can read them
+    // Report active banner IDs so other widgets can read them, AND record
+    // every banner in the universal notification bell the moment it appears
+    // (Phase C3) — not only on dismissal. NotificationsNotifier.addNotification
+    // ignores a duplicate id, so re-running this on every home rebuild is
+    // safe; a banner with a shared deterministic notifId dedupes against its
+    // coaching push into a single bell entry.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         final ids = banners.map((b) => b.id).toList();
         final current = ref.read(activeBannerIdsProvider);
         if (ids.length != current.length || !ids.every(current.contains)) {
           ref.read(activeBannerIdsProvider.notifier).state = ids;
+        }
+        final notifier = ref.read(notificationsProvider.notifier);
+        for (final banner in banners) {
+          notifier.addNotification(
+            BannerNotificationMapper.toNotification(banner),
+          );
         }
       }
     });

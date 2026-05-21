@@ -9,6 +9,7 @@ import '../../../data/providers/today_workout_provider.dart';
 // import '../../../widgets/xp_progress_card.dart'; // Coming soon
 import 'cards/cards.dart';
 import 'cards/deload_recommendation_card.dart';
+import 'cards/health_insight_card.dart';
 import 'cards/smart_insight_card.dart';
 // import 'cards/roi_summary_card.dart'; // Coming soon
 // import 'cards/weekly_plan_card.dart'; // Coming soon
@@ -138,7 +139,19 @@ class TileFactory {
         // dailyActivityProvider already collects but had no UI for. Renders
         // nothing when no sleep was tracked last night, so layouts that
         // include this tile stay clean for users without a wearable.
-        return const LastNightSleepCard();
+        //
+        // HealthInsightCard (Phase C3) is stacked ABOVE it as a self-hiding
+        // sibling — the DeloadRecommendationCard / SmartInsightCard pattern,
+        // no new TileType (build_runner is forbidden). It collapses to
+        // SizedBox.shrink when there is no proactive coaching message for the
+        // day (or it was dismissed), so it costs nothing in that case.
+        return const Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            HealthInsightCard(),
+            LastNightSleepCard(),
+          ],
+        );
       case TileType.restDayTip:
         // Coming soon
         return const SizedBox.shrink();

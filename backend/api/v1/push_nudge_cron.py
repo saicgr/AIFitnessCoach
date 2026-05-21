@@ -176,6 +176,26 @@ def _user_account_age_days(user: dict) -> int:
         return 999
 
 
+def _is_dst_transition_night(timezone_str: str) -> bool:
+    """True if the user's location had a DST clock change overnight.
+
+    Compares the UTC offset at noon yesterday-local against noon today-local.
+    A spring-forward / fall-back shifts the offset, which means last night's
+    sleep window is computed from a clock that changed mid-night — the
+    readiness briefing must not lead with a "poor sleep" tone on such a night
+    (plan edge case E24 / F30). Falls back to False (no suppression) on any
+    parsing error so a tz glitch never silently mutes a whole day of nudges.
+    """
+    tz = _safe_zone(timezone_str)
+    try:
+        now_local = datetime.now(tz)
+        noon_today = now_local.replace(hour=12, minute=0, second=0, microsecond=0)
+        noon_yesterday = noon_today - timedelta(days=1)
+        return noon_today.utcoffset() != noon_yesterday.utcoffset()
+    except Exception:
+        return False
+
+
 # ─── Deduplication ───────────────────────────────────────────────────────────
 
 def _try_dedup_insert(supabase, user_id: str, nudge_type: str, nudge_date: str,
@@ -1978,6 +1998,520 @@ async def _job_daily_crate_available(supabase, notif_svc, users: List[dict]) -> 
     return sent
 
 
+# ─── Proactive Health Coaching Nudges (Phase C2) ─────────────────────────────
+#
+# Three timezone-aware proactive coaching nudges built on the Phase-B1 health
+# snapshot (services/user_context/health_activity.py) and the Phase-C1 content
+# engine (services/health_coaching.py):
+#
+#   - daily_readiness  — the anchor MORNING push. Carries the readiness
+#                        briefing; adapts to a good vs poor night + recovery +
+#                        today's workout. Sent once per day.
+#   - health_anomaly   — EVENT-DRIVEN. Resting HR elevated >= 2 consecutive days
+#                        vs a >= 14-day baseline; suppressed during a hard
+#                        training block; informs, never diagnoses.
+#   - activity_goal    — user-local AFTERNOON. Fires when the user is behind
+#                        their step goal; congratulates when already met.
+#
+# Each nudge — unlike the template-pool accountability nudges — carries
+# DETERMINISTIC content already composed by health_coaching.build_*. So instead
+# of routing through _send_nudge (which regenerates copy from template pools),
+# they use _send_health_coaching_nudge below, which still enforces every gate:
+# vacation/comeback suppression, daily cap, once/day dedup, and FCM delivery,
+# and still mirrors the message into chat_history so it appears in the coach
+# chat — exactly like the other proactive nudges.
+#
+# Shared gating (mirrors the existing jobs):
+#   data exists (snapshot has_data + a usable message) · per-type preference on
+#   · account >= 3 days · quiet hours · vacation/comeback · once/day dedup ·
+#   daily cap · not a DST-transition night (briefing tone safety).
+
+# RHR is treated as "elevated" for the anomaly job at or above this many bpm
+# over the personal baseline — kept in lockstep with health_coaching's
+# _RHR_ANOMALY_DELTA so the cron's consecutive-day pre-check and the message
+# builder agree on what counts as elevated.
+_ANOMALY_RHR_DELTA_BPM = 7.0
+
+# A "hard training block" suppresses the anomaly alert: an elevated RHR right
+# after heavy training is expected fatigue, not a warning sign (edge case F30).
+# We treat >= this many completed workouts in the trailing 3 days as a hard
+# block.
+_HARD_BLOCK_WORKOUTS_3D = 3
+
+# Account must be at least this old before any proactive health nudge fires —
+# gives the wearable a few days to sync a usable baseline and avoids nagging a
+# brand-new user (plan Phase C2 gate).
+_HEALTH_NUDGE_MIN_ACCOUNT_DAYS = 3
+
+
+def _user_context_service():
+    """Lazily build a UserContextService for the Phase-B1 health snapshot.
+
+    Imported lazily (not at module load) so the nudge cron has no hard import
+    dependency on the user-context package — matching how the other jobs pull
+    in heavy services only when their job actually runs.
+    """
+    from services.user_context.service import UserContextService
+
+    return UserContextService()
+
+
+async def _send_health_coaching_nudge(
+    supabase,
+    notif_svc,
+    user: dict,
+    nudge_type: str,
+    title: str,
+    message: str,
+    route: str,
+    facts: dict,
+) -> bool:
+    """Send a proactive health-coaching nudge with PRE-BUILT deterministic copy.
+
+    Unlike ``_send_nudge``, the message text here is already composed by the
+    Phase-C1 ``health_coaching`` engine (deterministic, number-safe), so this
+    helper does NOT regenerate copy from a template pool. It still enforces the
+    full gate stack and mirrors the message into the coach chat.
+
+    Order of gates (identical reasoning to ``_send_nudge``):
+      1. vacation/comeback suppression — before dedup so suppressed nudges
+         don't burn a dedup slot;
+      2. daily cap — before the dedup insert;
+      3. atomic once/day dedup via the push_nudge_log UNIQUE constraint;
+      4. mirror into chat_history (best-effort — a failed mirror still pushes);
+      5. FCM push.
+
+    Args:
+        nudge_type: 'daily_readiness' | 'health_anomaly' | 'activity_goal'.
+        title: push title (coach persona name when available).
+        message: the deterministic message body from health_coaching.build_*.
+        route: deep-link route for the tap action (the in-app surface, C3).
+        facts: the builder's ``facts`` dict — persisted on the chat context.
+
+    Returns:
+        True when an FCM push was sent, False on any gate miss / no token.
+    """
+    user_id = str(user["id"])
+    tz_str = user.get("timezone") or "UTC"
+    local_date = _get_user_local_date(tz_str)
+    prefs = user.get("notification_preferences") or {}
+
+    # 1. Global suppression gate (vacation + comeback). Checked BEFORE dedup so
+    #    a suppressed nudge doesn't consume its once/day dedup slot.
+    suppression = should_suppress_notification(user, nudge_type, channel="push")
+    if suppression:
+        logger.debug(
+            f"🔕 [HealthNudge] Suppressed {nudge_type} for {user_id}: {suppression}"
+        )
+        return False
+
+    # 2. Daily cap (shared across ALL nudge types via push_nudge_log).
+    daily_limit = prefs.get("daily_nudge_limit", 2)
+    if _count_nudges_today(supabase, user_id, local_date) >= daily_limit:
+        return False
+
+    # 3. Atomic once/day dedup. A cron retry / overlap is a no-op.
+    if not _try_dedup_insert(supabase, user_id, nudge_type, local_date):
+        return False
+
+    # 4. Mirror into chat_history so the coach chat shows the proactive message
+    #    (same pattern as _send_nudge — best-effort, never blocks the push).
+    coach_name = (user.get("_ai_settings") or {}).get("coach_name") or "Your Coach"
+    chat_message_id = None
+    try:
+        chat_msg = supabase.client.table("chat_history").insert({
+            "user_id": user_id,
+            "user_message": "",
+            "ai_response": message,
+            "context_json": {
+                "nudge_type": nudge_type,
+                "proactive": True,
+                "coach_name": coach_name,
+                **{k: v for k, v in facts.items()
+                   if isinstance(v, (str, int, float, bool))},
+            },
+        }).execute()
+        if chat_msg.data:
+            chat_message_id = chat_msg.data[0].get("id")
+    except Exception as e:
+        logger.warning(
+            f"⚠️ [HealthNudge] chat_history insert failed for {user_id}: {e}",
+            exc_info=True,
+        )
+
+    if chat_message_id:
+        try:
+            supabase.client.table("push_nudge_log") \
+                .update({"chat_message_id": str(chat_message_id)}) \
+                .eq("user_id", user_id) \
+                .eq("nudge_type", nudge_type) \
+                .eq("nudge_date", local_date) \
+                .execute()
+        except Exception:
+            pass  # Non-critical.
+
+    # 5. FCM push. A shared deterministic notif_id (<type>_<localdate>) lets
+    #    Phase C3 dedupe a push + its in-app banner into ONE notification-bell
+    #    entry (plan edge case E29).
+    fcm_token = user.get("fcm_token")
+    if not fcm_token:
+        logger.debug(f"⏭️ [HealthNudge] {user_id} — no FCM token")
+        return False
+
+    from services.notification_service_helpers import NotificationService
+
+    try:
+        success = await notif_svc.send_notification(
+            fcm_token=fcm_token,
+            title=title,
+            body=message,
+            notification_type=NotificationService.TYPE_AI_COACH,
+            data={
+                "nudge_type": nudge_type,
+                "notif_id": f"{nudge_type}_{local_date}",
+                "route": route,
+                "chat_message_id": str(chat_message_id) if chat_message_id else "",
+                "proactive": "true",
+            },
+        )
+    except Exception as e:
+        logger.error(
+            f"❌ [HealthNudge] send failed for {user_id} ({nudge_type}): {e}",
+            exc_info=True,
+        )
+        return False
+
+    if success:
+        logger.info(f"✅ [HealthNudge] {nudge_type} sent to {user_id}")
+    return bool(success)
+
+
+def _today_workout_row(supabase, user_id: str, user_today: str) -> Optional[dict]:
+    """Today's scheduled workout row (``{name, type, ...}``) or None.
+
+    Used so the readiness briefing can name the actual session. A rest day
+    (no row) is fine — the C1 builder falls back to a generic phrase.
+    """
+    try:
+        rows = supabase.client.table("workouts") \
+            .select("id, name, type, is_completed, scheduled_date") \
+            .eq("user_id", user_id) \
+            .eq("scheduled_date", user_today) \
+            .limit(1) \
+            .execute()
+        return rows.data[0] if rows.data else None
+    except Exception:
+        return None
+
+
+async def _job_daily_readiness(supabase, notif_svc, users: List[dict]) -> int:
+    """Anchor MORNING readiness briefing — the proactive coaching push.
+
+    Fires once per day at the user's local briefing hour (the
+    ``daily_briefing_time`` preference, default 08:00). Carries the Phase-C1
+    ``build_daily_briefing`` message, which adapts to a good vs poor night, the
+    recovery tier, and today's scheduled workout.
+
+    Gates:
+      - per-type pref ``daily_briefing_nudge`` on (default True);
+      - account >= 3 days old;
+      - local hour == the user's briefing hour;
+      - not in quiet hours;
+      - NOT a DST-transition night — on such a night last night's sleep window
+        was computed across a clock change, so a "poor sleep" tone could be
+        spurious; we skip the briefing entirely that morning (edge case E24).
+      - the snapshot yields a usable briefing (``has_message``). A no-wearable
+        / no-consent user is skipped SILENTLY — never a fabricated briefing.
+        Note: a no-SLEEP (but has activity) day still gets a lighter
+        activity-only briefing from the C1 builder — it is NOT skipped (F31).
+    """
+    sent = 0
+    svc = None
+    for user in users:
+        prefs = user.get("notification_preferences") or {}
+        if not prefs.get("daily_briefing_nudge", True):
+            continue
+        if _user_account_age_days(user) < _HEALTH_NUDGE_MIN_ACCOUNT_DAYS:
+            continue
+
+        tz_str = user.get("timezone") or "UTC"
+        local_hour = _get_user_local_hour(tz_str)
+        briefing_hour = _parse_time_hour(prefs.get("daily_briefing_time", "08:00"))
+        if local_hour != briefing_hour:
+            continue
+        if _is_in_quiet_hours(prefs, local_hour):
+            continue
+        # DST-transition night → skip the briefing (tone-safety, edge case E24).
+        if _is_dst_transition_night(tz_str):
+            logger.debug(
+                f"🔕 [HealthNudge] daily_readiness skipped for {user['id']} — "
+                f"DST-transition night"
+            )
+            continue
+
+        user_id = str(user["id"])
+        user_today = _get_user_local_date(tz_str)
+
+        # Build the snapshot + briefing. Any failure → skip silently.
+        try:
+            if svc is None:
+                svc = _user_context_service()
+            from services.health_coaching import build_daily_briefing
+
+            snapshot = await svc.get_health_activity_snapshot(user_id, days=7)
+            today_workout = _today_workout_row(supabase, user_id, user_today)
+            briefing = build_daily_briefing(snapshot, today_workout=today_workout)
+        except Exception as e:
+            logger.warning(
+                f"⚠️ [HealthNudge] daily_readiness build failed for {user_id}: {e}"
+            )
+            continue
+
+        if not briefing.get("has_message"):
+            continue  # No wearable / no consent — skip silently (no mock data).
+
+        coach_name = (user.get("_ai_settings") or {}).get("coach_name") or "Your Coach"
+        success = await _send_health_coaching_nudge(
+            supabase, notif_svc, user, "daily_readiness",
+            title=f"{coach_name}'s morning briefing",
+            message=briefing["message"],
+            route="/health/sleep",
+            facts=briefing.get("facts") or {},
+        )
+        if success:
+            sent += 1
+
+    return sent
+
+
+def _is_in_hard_training_block(supabase, user_id: str) -> bool:
+    """True if the user completed >= 3 workouts in the trailing 3 days.
+
+    Used to suppress the resting-HR anomaly alert: an elevated RHR right after
+    a heavy training stretch is expected training fatigue, not a warning sign
+    (edge case F30). Fails OPEN (returns False → alert may proceed) on any
+    query error, since the anomaly copy informs rather than diagnoses.
+    """
+    try:
+        cutoff = (datetime.utcnow() - timedelta(days=3)).isoformat()
+        res = supabase.client.table("workout_logs") \
+            .select("id", count="exact") \
+            .eq("user_id", user_id) \
+            .eq("status", "completed") \
+            .gte("completed_at", cutoff) \
+            .execute()
+        return (res.count or 0) >= _HARD_BLOCK_WORKOUTS_3D
+    except Exception:
+        return False
+
+
+def _rhr_elevated_consecutive_days(supabase, user_id: str) -> bool:
+    """True if resting HR has been elevated for 2-3 CONSECUTIVE recent days.
+
+    The Phase-C1 ``build_health_anomaly`` builder only checks TODAY's RHR vs
+    the baseline. The plan additionally requires the elevation to PERSIST for
+    2-3 consecutive days before the cron fires the alert — a single elevated
+    morning is normal day-to-day variation (edge case F30). This pre-check
+    reads the trailing daily_activity rows directly and confirms the streak.
+
+    Logic:
+      - pull the last ~30 activity rows (newest-first);
+      - need >= 14 RHR readings for a trustworthy baseline (matches B1);
+      - baseline = mean of all available RHR readings;
+      - require the 2 MOST RECENT days both >= baseline + delta, and treat a
+        3-day streak the same (2-3 consecutive elevated days).
+    Returns False (no alert) on insufficient data or any error.
+    """
+    try:
+        rows = supabase.client.table("daily_activity") \
+            .select("activity_date, resting_heart_rate") \
+            .eq("user_id", user_id) \
+            .order("activity_date", desc=True) \
+            .limit(30) \
+            .execute()
+    except Exception:
+        return False
+
+    data = rows.data or []
+    rhr_values = [
+        r.get("resting_heart_rate")
+        for r in data
+        if r.get("resting_heart_rate") is not None
+    ]
+    # Need a >= 14-reading baseline (mirrors the B1 snapshot's threshold).
+    if len(rhr_values) < 14:
+        return False
+
+    try:
+        baseline = sum(float(v) for v in rhr_values) / len(rhr_values)
+    except (TypeError, ValueError):
+        return False
+    threshold = baseline + _ANOMALY_RHR_DELTA_BPM
+
+    # The two most recent days must BOTH be elevated. data is newest-first.
+    recent = [
+        r.get("resting_heart_rate")
+        for r in data[:3]
+        if r.get("resting_heart_rate") is not None
+    ]
+    if len(recent) < 2:
+        return False
+    try:
+        return all(float(recent[i]) >= threshold for i in range(2))
+    except (TypeError, ValueError):
+        return False
+
+
+async def _job_health_anomaly(supabase, notif_svc, users: List[dict]) -> int:
+    """EVENT-DRIVEN resting-HR anomaly alert.
+
+    Fires when ALL of these hold (edge case F30):
+      - per-type pref ``health_anomaly_nudge`` on (default True);
+      - account >= 3 days old;
+      - resting HR has been elevated for 2-3 CONSECUTIVE days vs a >= 14-day
+        baseline (``_rhr_elevated_consecutive_days``);
+      - the user is NOT in a hard training block (>= 3 workouts / 3 days), where
+        an elevated RHR is expected fatigue, not a warning;
+      - the Phase-C1 ``build_health_anomaly`` builder also confirms the
+        elevation against the snapshot (so the message numbers are consistent).
+
+    Being event-driven it has no fixed hour — but to avoid an inbox-jarring
+    overnight ping it only sends during waking local hours (08:00-21:00) and
+    never inside quiet hours. The copy informs, never diagnoses.
+    """
+    sent = 0
+    svc = None
+    for user in users:
+        prefs = user.get("notification_preferences") or {}
+        if not prefs.get("health_anomaly_nudge", True):
+            continue
+        if _user_account_age_days(user) < _HEALTH_NUDGE_MIN_ACCOUNT_DAYS:
+            continue
+
+        tz_str = user.get("timezone") or "UTC"
+        local_hour = _get_user_local_hour(tz_str)
+        # Event-driven, but keep it to waking hours so an anomaly that becomes
+        # true overnight is delivered in the morning, not at 3 AM.
+        if not (8 <= local_hour <= 21):
+            continue
+        if _is_in_quiet_hours(prefs, local_hour):
+            continue
+
+        user_id = str(user["id"])
+
+        # Consecutive-day elevation pre-check (the cron-side gate).
+        if not _rhr_elevated_consecutive_days(supabase, user_id):
+            continue
+        # Suppress during a hard training block — expected fatigue, not a flag.
+        if _is_in_hard_training_block(supabase, user_id):
+            logger.debug(
+                f"🔕 [HealthNudge] health_anomaly suppressed for {user_id} — "
+                f"hard training block"
+            )
+            continue
+
+        # Confirm with the C1 builder so the message numbers match the snapshot.
+        try:
+            if svc is None:
+                svc = _user_context_service()
+            from services.health_coaching import build_health_anomaly
+
+            snapshot = await svc.get_health_activity_snapshot(user_id, days=7)
+            anomaly = build_health_anomaly(snapshot)
+        except Exception as e:
+            logger.warning(
+                f"⚠️ [HealthNudge] health_anomaly build failed for {user_id}: {e}"
+            )
+            continue
+
+        if not anomaly.get("has_message"):
+            continue  # Builder disagrees (no baseline / within normal) — skip.
+
+        coach_name = (user.get("_ai_settings") or {}).get("coach_name") or "Your Coach"
+        success = await _send_health_coaching_nudge(
+            supabase, notif_svc, user, "health_anomaly",
+            title=f"A note from {coach_name}",
+            message=anomaly["message"],
+            route="/health/combined",
+            facts=anomaly.get("facts") or {},
+        )
+        if success:
+            sent += 1
+
+    return sent
+
+
+async def _job_activity_goal(supabase, notif_svc, users: List[dict]) -> int:
+    """Activity / step-goal nudge — fires in the user's local AFTERNOON.
+
+    Carries the Phase-C1 ``build_activity_nudge`` message: a "close the gap"
+    nudge when behind the step goal, an "almost there" nudge when within reach,
+    or a congratulation when the goal is already met.
+
+    Gates:
+      - per-type pref ``activity_goal_nudge`` on (default True);
+      - account >= 3 days old;
+      - local hour == the user's activity-nudge hour (the
+        ``activity_nudge_time`` preference, default 15:00 — afternoon);
+      - not in quiet hours;
+      - the snapshot yields a step count today (``has_message``). No wearable /
+        no step data → skipped SILENTLY (no fabricated steps). A goal-less user
+        still gets a nudge against a CDC-derived default goal (edge case F32).
+    """
+    sent = 0
+    svc = None
+    for user in users:
+        prefs = user.get("notification_preferences") or {}
+        if not prefs.get("activity_goal_nudge", True):
+            continue
+        if _user_account_age_days(user) < _HEALTH_NUDGE_MIN_ACCOUNT_DAYS:
+            continue
+
+        tz_str = user.get("timezone") or "UTC"
+        local_hour = _get_user_local_hour(tz_str)
+        nudge_hour = _parse_time_hour(prefs.get("activity_nudge_time", "15:00"))
+        if local_hour != nudge_hour:
+            continue
+        if _is_in_quiet_hours(prefs, local_hour):
+            continue
+
+        user_id = str(user["id"])
+
+        try:
+            if svc is None:
+                svc = _user_context_service()
+            from services.health_coaching import build_activity_nudge
+
+            snapshot = await svc.get_health_activity_snapshot(user_id, days=7)
+            nudge = build_activity_nudge(snapshot)
+        except Exception as e:
+            logger.warning(
+                f"⚠️ [HealthNudge] activity_goal build failed for {user_id}: {e}"
+            )
+            continue
+
+        if not nudge.get("has_message"):
+            continue  # No step data — skip silently (no mock data).
+
+        coach_name = (user.get("_ai_settings") or {}).get("coach_name") or "Your Coach"
+        # Goal-met → a congratulation; behind / almost → a step nudge.
+        if nudge.get("pattern") == "goal_met":
+            title = "Step goal cleared"
+        else:
+            title = f"{coach_name}: step check-in"
+        success = await _send_health_coaching_nudge(
+            supabase, notif_svc, user, "activity_goal",
+            title=title,
+            message=nudge["message"],
+            route="/health/combined",
+            facts=nudge.get("facts") or {},
+        )
+        if success:
+            sent += 1
+
+    return sent
+
+
 # ─── Main Cron Endpoint ─────────────────────────────────────────────────────
 
 @router.post("/cron")
@@ -2052,6 +2586,10 @@ async def run_push_nudge_cron(
         ("week1_day7", _job_week1_day7(supabase, notif_svc, users)),
         # ── Gamification ──
         ("daily_crate", _job_daily_crate_available(supabase, notif_svc, users)),
+        # ── Proactive health coaching (Phase C2) ──
+        ("daily_readiness", _job_daily_readiness(supabase, notif_svc, users)),
+        ("health_anomaly", _job_health_anomaly(supabase, notif_svc, users)),
+        ("activity_goal", _job_activity_goal(supabase, notif_svc, users)),
     ]
 
     job_names = [j[0] for j in jobs]
@@ -2126,9 +2664,94 @@ async def test_nudge(
         "level_milestone_celebration",
         # Week-1 ladder (W4)
         "week1_day1", "week1_day3_completed", "week1_day3_stalled", "week1_day5", "week1_day7",
+        # Proactive health coaching (Phase C2)
+        "daily_readiness", "health_anomaly", "activity_goal",
     }
     if nudge_type not in allowed_nudge_types:
         raise HTTPException(status_code=400, detail=f"Invalid nudge_type. Allowed: {sorted(allowed_nudge_types)}")
+
+    # ── Proactive health-coaching nudges have PRE-BUILT deterministic content
+    #    from the Phase-C1 engine, so they bypass _send_nudge's template path.
+    #    Each is exercised here against the real Phase-B1 snapshot — no mock
+    #    data; if the test user has no wearable / no consent the builder
+    #    returns has_message=False and the test reports that honestly.
+    if nudge_type in ("daily_readiness", "health_anomaly", "activity_goal"):
+        supabase = get_supabase()
+        notif_svc = get_notification_service()
+        try:
+            result = supabase.client.table("users") \
+                .select(
+                    "id, name, email, fcm_token, timezone, notification_preferences, "
+                    "created_at, in_vacation_mode, vacation_start_date, "
+                    "vacation_end_date, in_comeback_mode, comeback_week"
+                ) \
+                .eq("id", user_id) \
+                .limit(1) \
+                .execute()
+            if not result.data:
+                raise HTTPException(status_code=404, detail="User not found")
+            user = result.data[0]
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise safe_internal_error(e, "push_nudge_cron")
+
+        user["_ai_settings"] = _fetch_ai_settings_batch(supabase, [user_id]).get(user_id, {})
+
+        svc = _user_context_service()
+        snapshot = await svc.get_health_activity_snapshot(user_id, days=7)
+        coach_name = (user.get("_ai_settings") or {}).get("coach_name") or "Your Coach"
+
+        if nudge_type == "daily_readiness":
+            from services.health_coaching import build_daily_briefing
+
+            tz_str = user.get("timezone") or "UTC"
+            today_workout = _today_workout_row(
+                supabase, user_id, _get_user_local_date(tz_str)
+            )
+            built = build_daily_briefing(snapshot, today_workout=today_workout)
+            title, route = f"{coach_name}'s morning briefing", "/health/sleep"
+        elif nudge_type == "health_anomaly":
+            from services.health_coaching import build_health_anomaly
+
+            built = build_health_anomaly(snapshot)
+            title, route = f"A note from {coach_name}", "/health/combined"
+        else:  # activity_goal
+            from services.health_coaching import build_activity_nudge
+
+            built = build_activity_nudge(snapshot)
+            title, route = f"{coach_name}: step check-in", "/health/combined"
+
+        if not built.get("has_message"):
+            return {
+                "success": False,
+                "nudge_type": nudge_type,
+                "coach_name": coach_name,
+                "user_name": user.get("name"),
+                "message": (
+                    f"No message — health snapshot unusable "
+                    f"(reason: {built.get('reason', 'no_data')}). This is the "
+                    f"correct empty state for a user with no wearable/consent."
+                ),
+            }
+
+        success = await _send_health_coaching_nudge(
+            supabase, notif_svc, user, nudge_type,
+            title=title,
+            message=built["message"],
+            route=route,
+            facts=built.get("facts") or {},
+        )
+        return {
+            "success": success,
+            "nudge_type": nudge_type,
+            "coach_name": coach_name,
+            "user_name": user.get("name"),
+            "pattern": built.get("pattern"),
+            "preview": built["message"],
+            "message": "Nudge sent successfully" if success
+            else "Nudge not sent (dedup/cap/suppression/no token)",
+        }
 
     logger.info(f"🧪 [Nudge Test] Sending {nudge_type} to {user_id}")
 

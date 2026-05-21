@@ -82,6 +82,12 @@ class NotificationPrefsKeys {
   // Daily crate reminder
   static const dailyCrateReminders = 'notif_daily_crate_reminders';
   static const dailyCrateReminderTime = 'notif_daily_crate_reminder_time';
+  // Proactive health coaching (Phase C2) — per-type toggles + delivery times
+  static const dailyBriefingNudge = 'notif_daily_briefing_nudge';
+  static const dailyBriefingTime = 'notif_daily_briefing_time';
+  static const healthAnomalyNudge = 'notif_health_anomaly_nudge';
+  static const activityGoalNudge = 'notif_activity_goal_nudge';
+  static const activityNudgeTime = 'notif_activity_nudge_time';
   // Frequency preset
   static const frequencyPreset = 'notif_frequency_preset';
   // Bundle times
@@ -494,6 +500,12 @@ class NotificationPreferencesNotifier extends StateNotifier<NotificationPreferen
       // Daily crate reminder
       dailyCrateReminders: _prefs.getBool(NotificationPrefsKeys.dailyCrateReminders) ?? true,
       dailyCrateReminderTime: _prefs.getString(NotificationPrefsKeys.dailyCrateReminderTime) ?? '10:00',
+      // Proactive health coaching (Phase C2)
+      dailyBriefingNudge: _prefs.getBool(NotificationPrefsKeys.dailyBriefingNudge) ?? true,
+      dailyBriefingTime: _prefs.getString(NotificationPrefsKeys.dailyBriefingTime) ?? '08:00',
+      healthAnomalyNudge: _prefs.getBool(NotificationPrefsKeys.healthAnomalyNudge) ?? true,
+      activityGoalNudge: _prefs.getBool(NotificationPrefsKeys.activityGoalNudge) ?? true,
+      activityNudgeTime: _prefs.getString(NotificationPrefsKeys.activityNudgeTime) ?? '15:00',
       // Frequency preset
       frequencyPreset: _prefs.getString(NotificationPrefsKeys.frequencyPreset) ?? 'balanced',
       // Bundle times
@@ -782,6 +794,40 @@ class NotificationPreferencesNotifier extends StateNotifier<NotificationPreferen
   Future<void> setDailyCrateReminderTime(String time) async {
     await _prefs.setString(NotificationPrefsKeys.dailyCrateReminderTime, time);
     state = state.copyWith(dailyCrateReminderTime: time);
+    await _syncPreferencesToBackend();
+  }
+
+  // ─── Proactive Health Coaching Setters (Phase C2) ───────────────
+  // All four are server-side cron nudges, so syncing to the backend
+  // notification_preferences JSON is what actually toggles them.
+
+  Future<void> setDailyBriefingNudge(bool value) async {
+    await _prefs.setBool(NotificationPrefsKeys.dailyBriefingNudge, value);
+    state = state.copyWith(dailyBriefingNudge: value);
+    await _syncPreferencesToBackend();
+  }
+
+  Future<void> setDailyBriefingTime(String time) async {
+    await _prefs.setString(NotificationPrefsKeys.dailyBriefingTime, time);
+    state = state.copyWith(dailyBriefingTime: time);
+    await _syncPreferencesToBackend();
+  }
+
+  Future<void> setHealthAnomalyNudge(bool value) async {
+    await _prefs.setBool(NotificationPrefsKeys.healthAnomalyNudge, value);
+    state = state.copyWith(healthAnomalyNudge: value);
+    await _syncPreferencesToBackend();
+  }
+
+  Future<void> setActivityGoalNudge(bool value) async {
+    await _prefs.setBool(NotificationPrefsKeys.activityGoalNudge, value);
+    state = state.copyWith(activityGoalNudge: value);
+    await _syncPreferencesToBackend();
+  }
+
+  Future<void> setActivityNudgeTime(String time) async {
+    await _prefs.setString(NotificationPrefsKeys.activityNudgeTime, time);
+    state = state.copyWith(activityNudgeTime: time);
     await _syncPreferencesToBackend();
   }
 

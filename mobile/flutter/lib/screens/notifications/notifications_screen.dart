@@ -111,15 +111,24 @@ class NotificationsNotifier extends StateNotifier<List<NotificationItem>> {
     _saveNotifications();
   }
 
-  /// Add notification from push message data
+  /// Add notification from push message data.
+  ///
+  /// Id resolution: when the push payload carries a `notif_id` (a shared
+  /// deterministic id such as `<type>_<localdate>`), it is used verbatim so
+  /// the push and the in-app banner / home card for the same event dedupe to
+  /// ONE bell entry (Phase C3 — [addNotification] ignores a duplicate id).
+  /// Otherwise a unique timestamp id is used, as before.
   void addFromPushMessage({
     required String title,
     required String body,
     String? type,
     Map<String, dynamic>? data,
   }) {
+    final sharedId = data?['notif_id']?.toString();
     final notification = NotificationItem(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      id: (sharedId != null && sharedId.isNotEmpty)
+          ? sharedId
+          : DateTime.now().millisecondsSinceEpoch.toString(),
       title: title,
       body: body,
       type: type ?? data?['type'] ?? 'ai_coach',
@@ -165,10 +174,17 @@ class NotificationsScreen extends ConsumerStatefulWidget {
 class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
   String _selectedFilter = 'All';
 
+  // Filter taxonomy. Every notification `type` produced anywhere in the app —
+  // including every banner type via [BannerNotificationMapper] — must appear
+  // in exactly one bucket here so the filter pills never silently drop an
+  // entry. `rank_percentile` (the leaderboard banner) lives under Workouts;
+  // `health_coaching` (Phase C3 proactive coaching) lives under Coach.
   static const _filterCategories = <String, Set<String>>{
     'All': {},
-    'Workouts': {'missed_workout', 'workout_reminder'},
-    'Coach': {'ai_coach', 'ai_coach_accountability', 'week1_tip', 'contextual'},
+    'Workouts': {'missed_workout', 'workout_reminder', 'rank_percentile'},
+    'Coach': {'ai_coach', 'ai_coach_accountability', 'week1_tip', 'contextual',
+              'health_coaching', 'nutrition_reminder', 'hydration_reminder',
+              'weekly_summary'},
     'Rewards': {'daily_crate', 'double_xp', 'streak_alert', 'achievement', 'wrapped'},
     'Social': {'friend_request', 'friend_accepted', 'reaction', 'comment', 'mention',
                'challenge_received', 'challenge_accepted', 'challenge_completed', 'challenge_beaten'},
@@ -189,6 +205,12 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
         break;
       case 'hydration_reminder':
         context.go('/nutrition?tab=2');
+        break;
+      case 'health_coaching':
+        // Phase C3 proactive coaching (readiness briefing / anomaly /
+        // activity nudge). The Sleep detail screen carries the expanded
+        // readiness view that all four coaching surfaces deep-link into.
+        context.push('/health/sleep');
         break;
       case 'streak_alert':
       case 'achievement':
@@ -229,7 +251,9 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
       case 'test':
         // Test notifications stay on this screen
         break;
-      // Banner-originated notification types
+      // Banner-originated notification types — every BannerType mapped by
+      // [BannerNotificationMapper] routes here so a bell tap lands somewhere
+      // sensible.
       case 'missed_workout':
       case 'daily_crate':
       case 'double_xp':
@@ -239,6 +263,10 @@ class _NotificationsScreenState extends ConsumerState<NotificationsScreen> {
         break;
       case 'wrapped':
         context.go('/home');
+        break;
+      case 'rank_percentile':
+        // The leaderboard percentile banner — its tap target is Discover.
+        context.go('/discover');
         break;
       case 'renewal':
         context.push('/settings/subscription');
