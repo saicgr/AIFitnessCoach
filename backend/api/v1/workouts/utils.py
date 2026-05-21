@@ -845,6 +845,8 @@ from .readiness_utils import (
     apply_comeback_adjustments_to_exercises,
     start_comeback_mode_if_needed,
     get_comeback_prompt_context,
+    get_recovery_workout_signal,
+    apply_recovery_adjustment,
 )
 
 # progression_utils

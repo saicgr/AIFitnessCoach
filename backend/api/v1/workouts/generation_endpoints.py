@@ -384,6 +384,7 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
             favorite_exercises,
             exercise_queue,
             favorite_workouts,
+            recovery_signal,
         ) = await asyncio.gather(
             get_user_avoided_exercises(body.user_id),
             get_user_avoided_muscles(body.user_id),
@@ -400,6 +401,10 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
             get_user_favorite_exercises(body.user_id),
             get_user_exercise_queue(body.user_id),
             get_user_favorite_workouts(body.user_id),
+            # Phase B3: recovery-aware generation. {"applies": False} for
+            # no-wearable / no-consent / stale / optimal+good users — in which
+            # case generation stays byte-identical to a pre-B3 run.
+            get_recovery_workout_signal(body.user_id),
         )
         logger.info(f"✅ [Workout Generation] All user preferences fetched in parallel")
         # Scale lookback: higher variation → longer lookback to catch more recently used exercises
@@ -487,6 +492,23 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
             combined_context = progression_philosophy or ""
             if hormonal_ai_context:
                 combined_context = f"{combined_context}\n\nHORMONAL HEALTH CONTEXT:\n{hormonal_ai_context}" if combined_context else f"HORMONAL HEALTH CONTEXT:\n{hormonal_ai_context}"
+
+            # Phase B3: append the recovery prompt block when a wearable
+            # recovery signal applies. Informational only — the load-affecting
+            # scaling is applied deterministically post-generation. When
+            # recovery_signal["applies"] is False this is a no-op, so the
+            # prompt is byte-identical to a pre-B3 run.
+            recovery_prompt_context = (
+                recovery_signal.get("prompt_context", "")
+                if isinstance(recovery_signal, dict) and recovery_signal.get("applies")
+                else ""
+            )
+            if recovery_prompt_context:
+                combined_context = (
+                    f"{combined_context}\n{recovery_prompt_context}"
+                    if combined_context
+                    else recovery_prompt_context
+                )
 
             # Equipment guard: filter out "All Profiles" staples whose equipment isn't available
             if equipment and staple_exercises:
@@ -686,6 +708,9 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
                     avoid_name_words=avoid_name_words,
                     user_dob=user.get("date_of_birth") if user else None,
                     injuries=injury_names if injury_names else None,
+                    # Phase B3: informational recovery block for the prompt.
+                    # None when no recovery signal applies → no-op (byte-identical).
+                    recovery_context=recovery_prompt_context or None,
                 )
             else:
                 # Fallback to free-form generation if RAG returns no exercises
@@ -1235,6 +1260,15 @@ async def generate_workout(request: Request, *, body: GenerateWorkoutRequest, ba
                     difficulty=intensity_preference
                 )
                 logger.info(f"🛡️ [Safety] Validated exercise parameters (fitness={fitness_level}, age={user_age}, comeback={is_comeback}, difficulty={intensity_preference})")
+
+                # Phase B3: deterministic recovery-aware adjustment. Runs AFTER
+                # validate-and-cap so it composes ONCE on top of the comeback /
+                # age caps. No-op when no recovery signal applies → output is
+                # byte-identical to a pre-B3 run.
+                if isinstance(recovery_signal, dict) and recovery_signal.get("applies"):
+                    exercises = apply_recovery_adjustment(
+                        exercises, recovery_signal.get("adjustment")
+                    )
 
                 # CRITICAL: Enforce user's set/rep limits as final validation
                 # This ensures AI-generated workouts NEVER exceed user preferences

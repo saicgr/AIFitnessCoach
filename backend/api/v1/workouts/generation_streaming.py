@@ -44,6 +44,9 @@ from .utils import (
     # Exercise parameter validation (safety net)
     validate_and_cap_exercise_parameters,
     get_user_comeback_status,
+    # Phase B3: recovery-aware generation
+    get_recovery_workout_signal,
+    apply_recovery_adjustment,
     # Progression philosophy helpers
     get_user_rep_preferences,
     get_user_progression_context,
@@ -363,6 +366,7 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
                 strength_history,
                 favorite_exercises,
                 exercise_queue,
+                recovery_signal,
             ) = await asyncio.gather(
                 get_user_avoided_exercises(body.user_id),
                 get_user_avoided_muscles(body.user_id),
@@ -374,6 +378,10 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
                 get_user_strength_history(body.user_id),
                 get_user_favorite_exercises(body.user_id),
                 get_user_exercise_queue(body.user_id),
+                # Phase B3: recovery-aware generation. {"applies": False} for
+                # no-wearable / no-consent / stale / optimal+good users — in
+                # which case generation stays byte-identical to a pre-B3 run.
+                get_recovery_workout_signal(body.user_id),
             )
 
             # Log fetched preferences
@@ -405,6 +413,23 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
             combined_context = progression_philosophy or ""
             if hormonal_ai_context:
                 combined_context = f"{combined_context}\n\nHORMONAL HEALTH CONTEXT:\n{hormonal_ai_context}" if combined_context else f"HORMONAL HEALTH CONTEXT:\n{hormonal_ai_context}"
+
+            # Phase B3: append the recovery prompt block when a wearable
+            # recovery signal applies. Informational only — the load-affecting
+            # scaling is applied deterministically post-generation. No-op when
+            # recovery_signal["applies"] is False, so the prompt stays
+            # byte-identical to a pre-B3 run.
+            recovery_prompt_context = (
+                recovery_signal.get("prompt_context", "")
+                if isinstance(recovery_signal, dict) and recovery_signal.get("applies")
+                else ""
+            )
+            if recovery_prompt_context:
+                combined_context = (
+                    f"{combined_context}\n{recovery_prompt_context}"
+                    if combined_context
+                    else recovery_prompt_context
+                )
 
             gemini_service = GeminiService()
 
@@ -1024,6 +1049,14 @@ async def generate_workout_streaming(request: Request, body: GenerateWorkoutRequ
                         is_comeback=is_comeback,
                         difficulty=intensity_preference
                     )
+                    # Phase B3: deterministic recovery-aware adjustment. Runs
+                    # AFTER validate-and-cap so it composes ONCE on top of the
+                    # comeback / age caps. No-op when no recovery signal
+                    # applies → output is byte-identical to a pre-B3 run.
+                    if isinstance(recovery_signal, dict) and recovery_signal.get("applies"):
+                        exercises = apply_recovery_adjustment(
+                            exercises, recovery_signal.get("adjustment")
+                        )
                     # Density cap: drop exercises beyond ~1 per 7 min (or 1 per 4
                     # min for cardio/HIIT). Validation harness 2026-05-08 found
                     # workouts with 8 ex / 30 min (3.8 min/ex) — too crowded to

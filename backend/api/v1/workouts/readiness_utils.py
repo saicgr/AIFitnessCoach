@@ -558,3 +558,352 @@ def get_comeback_prompt_context(
             ])
 
     return "\n".join(context_parts)
+
+
+# =============================================================================
+# Recovery-aware workout generation (Phase B3)
+# =============================================================================
+#
+# Turns the objective wearable recovery score (Phase B1's
+# `get_health_activity_snapshot` → `recovery.score`, mapped to a tier by
+# `map_recovery_to_tier`) into a concrete, DETERMINISTIC workout adjustment.
+#
+# Hard rules (per the approved plan + CLAUDE.md):
+#   * The recovery → volume scaling is deterministic — never an LLM. The LLM
+#     only receives a short prompt block as informational context; the actual
+#     set/weight/rest scaling is applied by `apply_recovery_adjustment` here.
+#   * It NEVER rejects, blocks, or guilts the user. A low-recovery day still
+#     produces a real workout — a gentler one.
+#   * No-data / stale (>36h) recovery → `{"applies": False}` so generation is
+#     byte-identical to a pre-Phase-B3 run.
+#   * Composes ONCE, ordered after the comeback / age multipliers (it runs in
+#     the post-generation block, right after `validate_and_cap_exercise_parameters`).
+
+# A recovery snapshot older than this many hours does NOT drive adaptation
+# (edge case D21). `get_health_activity_snapshot` already nulls `recovery.score`
+# for stale sleep; this is a belt-and-braces guard on the staleness block.
+_RECOVERY_STALENESS_HOURS = 36
+
+# Set types stripped from the workout on a compromised / low recovery day.
+# These deliberately push the user past technical failure — inappropriate when
+# the body has not recovered (the tier `adjustment` text says "no failure/drop/
+# AMRAP sets"). Stripping is deterministic: any truthy flag clears.
+_FATIGUE_SET_FLAGS = ("is_failure_set", "is_drop_set", "is_amrap_set")
+
+# Tiers for which fatigue-pushing set types are stripped.
+_STRIP_FATIGUE_SET_TIERS = {"compromised", "low"}
+
+# Tier whose workout is swapped toward mobility/recovery work.
+_MOBILITY_SWAP_TIER = "low"
+
+# Weight / load reduction per tier (fraction removed from weight_kg). Mirrors
+# the tier `adjustment` text: compromised "-10% load", low "-15% load".
+_TIER_LOAD_REDUCTION = {
+    "moderate": 0.0,
+    "compromised": 0.10,
+    "low": 0.15,
+}
+
+# Rest-period multiplier per tier — a lower-recovery day gets longer rest so
+# the trimmed volume is still executed with good form. Mirrors the tier text
+# ("longer rest"). Only tiers below `good` extend rest.
+_TIER_REST_MULTIPLIER = {
+    "moderate": 1.20,
+    "compromised": 1.30,
+    "low": 1.40,
+}
+
+
+async def get_recovery_workout_signal(user_id: str) -> Dict[str, Any]:
+    """Resolve the user's recovery state into a workout-generation signal.
+
+    Reads the Phase B1 health/activity snapshot, maps its objective recovery
+    score onto a training tier, and packages everything the two generation
+    endpoints need: a short LLM prompt block plus the deterministic
+    `adjustment` payload consumed by `apply_recovery_adjustment`.
+
+    Args:
+        user_id: User's UUID.
+
+    Returns:
+        ``{"applies": False}`` when there is no usable recovery signal — no
+        wearable / no consent / sleep can't be scored / data is stale (>36h),
+        or the resolved tier needs no change (optimal / good). In this case
+        workout generation must behave byte-identically to a pre-Phase-B3 run.
+
+        Otherwise ``{"applies": True, "tier": str, "recovery_score": int,
+        "volume_multiplier": float, "adjustment": <dict>, "prompt_context":
+        <str>}`` where ``adjustment`` is the dict passed straight to
+        ``apply_recovery_adjustment`` and ``prompt_context`` is an
+        informational block to append to the generation prompt.
+    """
+    try:
+        # Import here (not at module load) to avoid a circular import:
+        # user_context.service imports from the workouts package.
+        from services.user_context.health_activity import HealthActivityMixin
+
+        snapshot = await HealthActivityMixin().get_health_activity_snapshot(
+            user_id, days=7
+        )
+    except Exception as e:
+        # Any failure → no adaptation. Recovery awareness is additive; it must
+        # never break or degrade generation (CLAUDE.md: no silent bad data, but
+        # a missing signal is a normal state, not an error to surface).
+        logger.error(
+            f"❌ [Recovery] get_recovery_workout_signal failed for {user_id}: {e}",
+            exc_info=True,
+        )
+        return {"applies": False}
+
+    if not snapshot.get("has_data"):
+        # No wearable / no consent — a normal state for non-wearable users.
+        return {"applies": False}
+
+    # --- staleness guard (edge case D21) -------------------------------------
+    # `get_health_activity_snapshot` already nulls recovery.score for stale
+    # sleep, but re-check the sleep row's own staleness flag explicitly so a
+    # future snapshot change can't silently re-enable adaptation on old data.
+    sleep = snapshot.get("last_night_sleep") or {}
+    if sleep.get("is_stale"):
+        logger.info(
+            f"🔍 [Recovery] User {user_id} sleep data is stale "
+            f"(>{_RECOVERY_STALENESS_HOURS}h) — no recovery adaptation"
+        )
+        return {"applies": False}
+
+    recovery = snapshot.get("recovery") or {}
+    recovery_score = recovery.get("score")
+    if recovery_score is None:
+        # Sleep present but unscoreable (partial data) — no adaptation.
+        return {"applies": False}
+
+    tier_info = map_recovery_to_tier(recovery_score)
+    if not tier_info:
+        return {"applies": False}
+
+    tier = tier_info["tier"]
+    volume_multiplier = tier_info["volume_multiplier"]
+
+    # optimal / good both carry volume_multiplier 1.0 and "as planned" — there
+    # is nothing to change, so signal "no adaptation" and keep generation
+    # byte-identical to a pre-Phase-B3 run.
+    if tier in ("optimal", "good") or volume_multiplier >= 1.0:
+        logger.info(
+            f"✅ [Recovery] User {user_id} recovery {recovery_score}/100 "
+            f"({tier}) — train as planned, no adaptation"
+        )
+        return {"applies": False}
+
+    adjustment = {
+        "tier": tier,
+        "recovery_score": recovery_score,
+        "volume_multiplier": volume_multiplier,
+        "load_reduction": _TIER_LOAD_REDUCTION.get(tier, 0.0),
+        "rest_multiplier": _TIER_REST_MULTIPLIER.get(tier, 1.0),
+        "strip_fatigue_sets": tier in _STRIP_FATIGUE_SET_TIERS,
+        "swap_to_mobility": tier == _MOBILITY_SWAP_TIER,
+        "adjustment_text": tier_info["adjustment"],
+    }
+
+    prompt_context = _build_recovery_prompt_context(adjustment)
+
+    logger.info(
+        f"🛌 [Recovery] User {user_id} recovery {recovery_score}/100 ({tier}) — "
+        f"applying x{volume_multiplier:.2f} volume, "
+        f"-{int(adjustment['load_reduction'] * 100)}% load, "
+        f"strip_fatigue_sets={adjustment['strip_fatigue_sets']}, "
+        f"swap_to_mobility={adjustment['swap_to_mobility']}"
+    )
+
+    return {
+        "applies": True,
+        "tier": tier,
+        "recovery_score": recovery_score,
+        "volume_multiplier": volume_multiplier,
+        "adjustment": adjustment,
+        "prompt_context": prompt_context,
+    }
+
+
+def _build_recovery_prompt_context(adjustment: Dict[str, Any]) -> str:
+    """Build a short, informational recovery block for the generation prompt.
+
+    The LLM uses this only as context for naming / framing — the actual
+    set/weight/rest scaling is applied deterministically by
+    `apply_recovery_adjustment` after generation. The block never instructs
+    the model to reject the workout; it asks for a gentler session.
+    """
+    tier = adjustment["tier"]
+    score = adjustment["recovery_score"]
+    parts = [
+        "",
+        "## RECOVERY-AWARE ADJUSTMENT",
+        f"- User's objective recovery score is {score}/100 ({tier}) based on "
+        f"last night's tracked sleep.",
+        f"- Plan a GENTLER session today: {adjustment['adjustment_text']}.",
+        "- Keep it a real, productive workout — do not skip or cancel it.",
+        "- Favor controlled tempo and solid technique over intensity.",
+    ]
+    if adjustment["strip_fatigue_sets"]:
+        parts.append(
+            "- Avoid training-to-failure, drop sets, and AMRAP finishers today."
+        )
+    if adjustment["swap_to_mobility"]:
+        parts.append(
+            "- Lean toward mobility, light recovery, and joint-friendly movements."
+        )
+    return "\n".join(parts)
+
+
+def _scale_int(value: Any, multiplier: float, minimum: int) -> Optional[int]:
+    """Scale a numeric set/rep field by `multiplier`, flooring at `minimum`.
+
+    Returns None when the input is not a usable number, so a missing field is
+    left untouched rather than fabricated."""
+    num = _coerce_number(value)
+    if num is None:
+        return None
+    return max(minimum, int(round(num * multiplier)))
+
+
+def _coerce_number(value: Any) -> Optional[float]:
+    """Best-effort numeric coercion. Handles ints, floats, numeric strings, and
+    rep ranges like "8-12" (uses the range midpoint). Returns None otherwise."""
+    if value is None:
+        return None
+    if isinstance(value, (int, float)):
+        return float(value)
+    if isinstance(value, str):
+        s = value.strip()
+        if not s:
+            return None
+        if "-" in s:
+            try:
+                low, high = s.split("-", 1)
+                return (float(low) + float(high)) / 2.0
+            except (ValueError, TypeError):
+                return None
+        try:
+            return float(s)
+        except (ValueError, TypeError):
+            return None
+    return None
+
+
+def apply_recovery_adjustment(
+    exercises: List[dict],
+    adjustment: Optional[Dict[str, Any]],
+) -> List[dict]:
+    """Deterministically scale a generated workout for the user's recovery tier.
+
+    This is the load-affecting half of Phase B3 — it is intentionally pure
+    Python with NO LLM involvement. It runs in the post-generation block,
+    AFTER `validate_and_cap_exercise_parameters`, so it composes once on top of
+    the comeback / age caps rather than fighting them.
+
+    For the resolved tier it:
+      * scales each exercise's ``sets`` by ``volume_multiplier`` (floor 1 set),
+      * reduces ``weight_kg`` by ``load_reduction`` (rounded to 2.5 kg),
+      * extends ``rest_seconds`` by ``rest_multiplier``,
+      * strips failure / drop / AMRAP set flags for the compromised + low tiers
+        (and removes the now-misleading drop-set parameters),
+      * tags every exercise ``recovery_adjusted: True`` with the tier + score so
+        the client / analytics can surface the adaptation,
+      * for the LOW tier only, marks the workout as a mobility/recovery swap via
+        ``recovery_mobility_swap`` and lengthens rest further — the actual
+        exercise pool was already biased toward mobility by the prompt block.
+
+    Args:
+        exercises: The generated exercise list (post validate-and-cap).
+        adjustment: The ``adjustment`` dict from ``get_recovery_workout_signal``;
+            ``None`` (or an empty list of exercises) is a no-op — the list is
+            returned unchanged so a no-data run is byte-identical.
+
+    Returns:
+        The adjusted exercise list (a new list of shallow-copied dicts) when an
+        adjustment applies, otherwise the original list unchanged.
+    """
+    if not adjustment or not exercises:
+        return exercises
+
+    volume_multiplier = float(adjustment.get("volume_multiplier", 1.0))
+    load_reduction = float(adjustment.get("load_reduction", 0.0))
+    rest_multiplier = float(adjustment.get("rest_multiplier", 1.0))
+    strip_fatigue_sets = bool(adjustment.get("strip_fatigue_sets", False))
+    swap_to_mobility = bool(adjustment.get("swap_to_mobility", False))
+    tier = adjustment.get("tier", "moderate")
+    recovery_score = adjustment.get("recovery_score")
+
+    # Nothing to do — guards against a malformed "applies" adjustment.
+    if (
+        volume_multiplier >= 1.0
+        and load_reduction <= 0.0
+        and rest_multiplier <= 1.0
+        and not strip_fatigue_sets
+    ):
+        return exercises
+
+    adjusted: List[dict] = []
+    sets_scaled = 0
+    weights_scaled = 0
+    fatigue_sets_stripped = 0
+
+    for ex in exercises:
+        mod = dict(ex)  # shallow copy — never mutate the caller's dicts
+
+        # --- sets: scale by volume multiplier, floor at 1 -------------------
+        if "sets" in mod:
+            new_sets = _scale_int(mod.get("sets"), volume_multiplier, minimum=1)
+            if new_sets is not None and new_sets != _coerce_number(ex.get("sets")):
+                mod["sets"] = new_sets
+                sets_scaled += 1
+
+        # --- weight: reduce load (rounded to a 2.5 kg plate increment) ------
+        if load_reduction > 0.0 and mod.get("weight_kg"):
+            base_weight = _coerce_number(mod.get("weight_kg"))
+            if base_weight is not None and base_weight > 0:
+                reduced = base_weight * (1.0 - load_reduction)
+                # Round to the nearest 2.5 kg, mirroring the comeback path.
+                rounded = round(reduced / 2.5) * 2.5
+                # Never round a real working weight down to 0.
+                mod["weight_kg"] = rounded if rounded > 0 else round(reduced, 1)
+                weights_scaled += 1
+
+        # --- rest: extend recovery between sets -----------------------------
+        if rest_multiplier > 1.0:
+            base_rest = _coerce_number(mod.get("rest_seconds"))
+            if base_rest is None:
+                base_rest = 60.0  # same default the readiness path uses
+            mod["rest_seconds"] = int(round(base_rest * rest_multiplier))
+
+        # --- strip fatigue-pushing set types (compromised / low) ------------
+        if strip_fatigue_sets:
+            stripped_here = False
+            for flag in _FATIGUE_SET_FLAGS:
+                if mod.get(flag):
+                    mod[flag] = False
+                    stripped_here = True
+            # Drop-set parameters are meaningless once is_drop_set is cleared.
+            if stripped_here:
+                for drop_param in ("drop_set_count", "drop_set_percentage"):
+                    mod.pop(drop_param, None)
+                fatigue_sets_stripped += 1
+
+        # --- recovery tag ---------------------------------------------------
+        mod["recovery_adjusted"] = True
+        mod["recovery_tier"] = tier
+        if recovery_score is not None:
+            mod["recovery_score"] = recovery_score
+        if swap_to_mobility:
+            mod["recovery_mobility_swap"] = True
+
+        adjusted.append(mod)
+
+    logger.info(
+        f"🛌 [Recovery] Applied recovery adjustment (tier={tier}, "
+        f"score={recovery_score}): scaled sets on {sets_scaled} exercise(s), "
+        f"reduced load on {weights_scaled}, stripped fatigue sets on "
+        f"{fatigue_sets_stripped}, swap_to_mobility={swap_to_mobility}"
+    )
+
+    return adjusted

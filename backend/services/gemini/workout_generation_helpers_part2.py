@@ -185,6 +185,7 @@ class WorkoutGenerationMixinPart2:
         personal_bests: Optional[Dict[str, Dict]] = None,
         user_dob: Optional[str] = None,
         injuries: Optional[List[str]] = None,
+        recovery_context: Optional[str] = None,
     ) -> Dict:
         """
         Generate a workout plan using exercises from the exercise library.
@@ -274,6 +275,15 @@ class WorkoutGenerationMixinPart2:
             logger.info(f"🔄 [Gemini Service] Library workout - user in comeback mode")
             comeback_instruction = f"\n\n🔄 COMEBACK NOTE: User is returning from an extended break. Include comeback/return-to-training themes in the name (e.g., 'Comeback', 'Return', 'Fresh Start')."
 
+        # Phase B3: recovery-aware context. Informational only — the actual
+        # set/weight/rest scaling is applied deterministically post-generation
+        # (api/v1/workouts/readiness_utils.apply_recovery_adjustment). This
+        # block just steers the workout name + notes toward a gentler session.
+        recovery_instruction = ""
+        if recovery_context and recovery_context.strip():
+            logger.info("🛌 [Gemini Service] Library workout - recovery-aware adjustment applies")
+            recovery_instruction = f"\n{recovery_context}"
+
         # Build performance context from strength history and personal bests
         performance_context = ""
         if strength_history or personal_bests:
@@ -325,7 +335,7 @@ Examples of good names:
 - "Phoenix Power Chest"
 - "Savage Wolf Back"
 - "Iron Storm Arms"
-{holiday_instruction}{avoid_instruction}{comeback_instruction}
+{holiday_instruction}{avoid_instruction}{comeback_instruction}{recovery_instruction}
 
 Return a JSON object with:
 {{
