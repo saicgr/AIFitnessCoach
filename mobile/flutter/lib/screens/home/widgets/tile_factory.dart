@@ -9,6 +9,7 @@ import '../../../data/providers/today_workout_provider.dart';
 // import '../../../widgets/xp_progress_card.dart'; // Coming soon
 import 'cards/cards.dart';
 import 'cards/deload_recommendation_card.dart';
+import 'cards/smart_insight_card.dart';
 // import 'cards/roi_summary_card.dart'; // Coming soon
 // import 'cards/weekly_plan_card.dart'; // Coming soon
 // import 'daily_activity_card.dart'; // Coming soon
@@ -89,7 +90,21 @@ class TileFactory {
           ],
         );
       case TileType.aiCoachTip:
-        return AICoachTipCard(size: tile.size, isDark: isDark);
+        // The smart-insight card (Phase D1) has no dedicated TileType —
+        // adding an enum value would require regenerating the committed
+        // `home_layout.g.dart` (build_runner is forbidden, see
+        // project_codegen_gotcha). Like DeloadRecommendationCard, it is
+        // registered as a self-hiding sibling rendered ABOVE the AI Coach
+        // Tip card: it collapses to SizedBox.shrink whenever the backend
+        // correlation engine has nothing to surface (no wearable, <14
+        // paired days), so attaching it here costs nothing in that case.
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SmartInsightCard(isDark: isDark),
+            AICoachTipCard(size: tile.size, isDark: isDark),
+          ],
+        );
       case TileType.challengeProgress:
         // Coming soon
         return const SizedBox.shrink();

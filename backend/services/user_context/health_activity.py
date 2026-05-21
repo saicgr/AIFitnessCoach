@@ -602,7 +602,78 @@ class HealthActivityMixin:
                 f"- Note: latest sync is {staleness['days_old']} day(s) old."
             )
 
+        # --- top cross-metric smart insight (Phase D1) -----------------------
+        # Append at most ONE correlation insight so the coach can mention an
+        # observed pattern in the user's own data. Best-effort and bounded:
+        # any failure is swallowed (the health block must still ship) and the
+        # engine itself returns nothing below 14 paired days, so this line is
+        # simply absent for users without enough history.
+        try:
+            insight_line = await self._top_smart_insight(user_id)
+            if insight_line:
+                lines.append(f"- Pattern: {insight_line}")
+        except Exception as e:  # never let an insight failure drop the block
+            logger.warning(
+                f"health_activity: smart-insight append skipped for {user_id}: {e}"
+            )
+
         return "\n".join(lines)
+
+    async def _top_smart_insight(self, user_id: str) -> str:
+        """Return the single best cross-metric correlation insight sentence for
+        the coach prompt, or "" when there is not enough data (Phase D1).
+
+        Reuses ``health_insights_engine`` over the same ``daily_activity``
+        history. Body weight (stored in ``user_metrics``) is merged onto the
+        matching activity dates so the weight metric has data to correlate.
+        Returns "" cleanly on <14 paired days or any error — never a fabricated
+        pattern.
+        """
+        from services.health_insights_engine import (
+            compute_smart_insights,
+            top_insight_sentence,
+        )
+
+        try:
+            db = get_supabase_db()
+        except Exception:
+            return ""
+
+        to_date = _utc_now().date()
+        from_date = to_date - timedelta(days=90)
+        try:
+            activities = db.list_daily_activity(
+                user_id=user_id,
+                from_date=from_date.isoformat(),
+                to_date=to_date.isoformat(),
+                limit=91,
+            )
+        except Exception:
+            return ""
+        if not activities:
+            return ""
+
+        # Merge body weight onto matching activity dates (latest per day).
+        try:
+            metrics = db.list_user_metrics(user_id=user_id, limit=120) or []
+            by_date: Dict[str, float] = {}
+            for m in metrics:
+                recorded = m.get("recorded_at")
+                wkg = _safe_num(m.get("weight_kg"))
+                if not recorded or wkg is None:
+                    continue
+                day_key = str(recorded)[:10]
+                by_date.setdefault(day_key, wkg)
+            for row in activities:
+                day_key = str(row.get("activity_date"))[:10]
+                if day_key in by_date:
+                    row["weight_kg"] = by_date[day_key]
+        except Exception:
+            # Weight merge is optional — proceed without it.
+            pass
+
+        insights = compute_smart_insights(activities, window_days=60)
+        return top_insight_sentence(insights)
 
 
 def _opt_int(value: Any) -> Optional[int]:

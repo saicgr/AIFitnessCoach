@@ -1018,6 +1018,283 @@ async def analyze_fasting(
         raise safe_internal_error(e, "insights")
 
 
+# ==================== PROACTIVE HEALTH COACHING (Phase C1) ====================
+#
+# These three endpoints turn the Phase-B1 health snapshot
+# (services/user_context/health_activity.py) into the proactive coaching
+# messages defined in services/health_coaching.py — a daily readiness briefing,
+# a resting-HR anomaly alert, and an activity/step-goal nudge.
+#
+# All three:
+#   * reuse get_health_activity_snapshot (consent-gated, no-wearable safe);
+#   * return {"has_message": False, "reason": ...} cleanly when there is no
+#     usable data — a NORMAL state, never an error;
+#   * never fabricate a number — the message engine is deterministic and the
+#     optional Gemini rephrase is number-integrity guarded.
+
+
+async def _health_snapshot(request: Request, db, user_id: str) -> Dict[str, Any]:
+    """Fetch the Phase-B1 health snapshot for ``user_id``.
+
+    Isolated so the three coaching endpoints share one code path. On any
+    failure it returns a clean ``{"has_data": False}`` rather than raising —
+    the message builders treat that as an honest empty state.
+    """
+    try:
+        from services.user_context.service import UserContextService
+
+        svc = UserContextService()
+        return await svc.get_health_activity_snapshot(user_id, days=7)
+    except Exception as e:
+        logger.error(
+            f"insights: health snapshot failed for {user_id}: {e}", exc_info=True
+        )
+        return {"has_data": False, "reason": "no_activity_data"}
+
+
+def _today_workout_for(request: Request, db, user_id: str) -> Optional[Dict[str, Any]]:
+    """Return today's scheduled workout row (``{name, type, ...}``) or None.
+
+    Used to make the daily briefing name the actual session. A rest day (no
+    row) is fine — the builder falls back to a generic phrase.
+    """
+    try:
+        today = user_today_date(request, db, user_id)
+        rows = (
+            db.client.table("workouts")
+            .select("id, name, type, is_completed, scheduled_date")
+            .eq("user_id", user_id)
+            .eq("scheduled_date", today.isoformat())
+            .limit(1)
+            .execute()
+        )
+        return rows.data[0] if rows.data else None
+    except Exception as e:
+        logger.warning(f"insights: today-workout lookup failed for {user_id}: {e}")
+        return None
+
+
+@router.get("/{user_id}/daily-briefing")
+@limiter.limit("20/minute")
+async def get_daily_briefing(
+    request: Request,
+    user_id: str,
+    rephrase: bool = Query(
+        default=False,
+        description="When true, smooth the wording with Gemini (numbers are "
+        "integrity-checked and the deterministic draft is kept on any doubt).",
+    ),
+    current_user: dict = Depends(get_current_user),
+):
+    """Morning readiness briefing — adapts to a good vs poor night, the recovery
+    tier, and today's scheduled workout.
+
+    Returns ``{"has_message": True, "type": "daily_briefing", "pattern": ...,
+    "message": str, "facts": {...}}`` — or ``{"has_message": False, "reason":
+    ...}`` for a user with no wearable / no consent (a clean empty state)."""
+    try:
+        from services.health_coaching import build_daily_briefing, rephrase_with_gemini
+
+        db = get_supabase_db()
+        snapshot = await _health_snapshot(request, db, user_id)
+        today_workout = _today_workout_for(request, db, user_id)
+        result = build_daily_briefing(snapshot, today_workout=today_workout)
+
+        if result.get("has_message") and rephrase:
+            result["message"] = await rephrase_with_gemini(
+                result["message"], gemini_service
+            )
+        return result
+    except Exception as e:
+        logger.error(f"Failed to build daily briefing for {user_id}: {e}", exc_info=True)
+        raise safe_internal_error(e, "insights")
+
+
+@router.get("/{user_id}/health-anomaly")
+@limiter.limit("20/minute")
+async def get_health_anomaly(
+    request: Request,
+    user_id: str,
+    rephrase: bool = Query(default=False),
+    current_user: dict = Depends(get_current_user),
+):
+    """Resting-HR anomaly alert. Fires only with a >= 14-day RHR baseline and a
+    notable elevation; informs, never diagnoses.
+
+    Returns ``{"has_message": False, "reason": "no_baseline"|"within_normal"|
+    "no_data"}`` when there is nothing to flag — a clean state, not an error."""
+    try:
+        from services.health_coaching import build_health_anomaly, rephrase_with_gemini
+
+        db = get_supabase_db()
+        snapshot = await _health_snapshot(request, db, user_id)
+        result = build_health_anomaly(snapshot)
+
+        if result.get("has_message") and rephrase:
+            result["message"] = await rephrase_with_gemini(
+                result["message"], gemini_service
+            )
+        return result
+    except Exception as e:
+        logger.error(f"Failed to build health anomaly for {user_id}: {e}", exc_info=True)
+        raise safe_internal_error(e, "insights")
+
+
+@router.get("/{user_id}/activity-nudge")
+@limiter.limit("20/minute")
+async def get_activity_nudge(
+    request: Request,
+    user_id: str,
+    rephrase: bool = Query(default=False),
+    current_user: dict = Depends(get_current_user),
+):
+    """Activity / step-goal nudge — behind, almost there, or goal met. Uses the
+    user's saved step goal or a CDC-derived default when unset.
+
+    Returns ``{"has_message": False, "reason": "no_steps_data"|"no_data"}``
+    when there is no step count to nudge on."""
+    try:
+        from services.health_coaching import build_activity_nudge, rephrase_with_gemini
+
+        db = get_supabase_db()
+        snapshot = await _health_snapshot(request, db, user_id)
+        result = build_activity_nudge(snapshot)
+
+        if result.get("has_message") and rephrase:
+            result["message"] = await rephrase_with_gemini(
+                result["message"], gemini_service
+            )
+        return result
+    except Exception as e:
+        logger.error(f"Failed to build activity nudge for {user_id}: {e}", exc_info=True)
+        raise safe_internal_error(e, "insights")
+
+
+# ==================== CROSS-METRIC SMART INSIGHTS (Phase D1) ====================
+#
+# A deterministic Pearson-correlation engine over the user's own daily_activity
+# history (services/health_insights_engine.py). Surfaces patterns like "on
+# nights you slept more, your resting HR ran lower" — correlation only, never
+# causation. Recomputed weekly and cached via ai_insight_cache.
+
+# Activity-history window for the smart-insights correlation engine. 90 days is
+# the engine's max window; we always pull the full span and let the engine clamp.
+_SMART_INSIGHT_MAX_DAYS = 90
+
+
+@router.get("/{user_id}/smart-insights")
+@limiter.limit("20/minute")
+async def get_smart_insights(
+    request: Request,
+    user_id: str,
+    window_days: int = Query(
+        default=60, ge=30, le=90,
+        description="Correlation window in days (30-90).",
+    ),
+    force_refresh: bool = False,
+    current_user: dict = Depends(get_current_user),
+):
+    """Cross-metric correlation insights from the user's daily_activity history.
+
+    Pairs sleep, steps, active calories, resting HR, training load, and body
+    weight; keeps pairs with >= 14 paired days and |r| >= 0.30; ranks by
+    actionability. Recomputed weekly (cached 7 days).
+
+    Returns ``{"insights": [...], "cached": bool}``. ``insights`` is empty —
+    cleanly, with no spurious output — when the user has fewer than 14 paired
+    days or no wearable data (edge case F33)."""
+    try:
+        from services.health_insights_engine import compute_smart_insights
+
+        db = get_supabase_db()
+
+        # Weekly cache. The shape is stable per user + window so the key is too.
+        cache_key = f"smart_insights_{user_id}_w{window_days}"
+        if not force_refresh:
+            cached = db.client.table("ai_insight_cache").select("*").eq(
+                "cache_key", cache_key
+            ).gt("expires_at", datetime.utcnow().isoformat()).limit(1).execute()
+            if cached.data:
+                try:
+                    return {
+                        "insights": json.loads(cached.data[0]["insight"]),
+                        "cached": True,
+                    }
+                except (json.JSONDecodeError, ValueError) as e:
+                    logger.debug(f"smart-insights: bad cache, recomputing: {e}")
+
+        # Consent gate — health data is Art. 9 sensitive (mirror B1's gate).
+        from services.consent_guard import has_health_data_consent
+
+        try:
+            if not has_health_data_consent(user_id):
+                return {"insights": [], "cached": False, "reason": "no_consent"}
+        except Exception:
+            return {"insights": [], "cached": False, "reason": "no_consent"}
+
+        # Pull up to 90 days of activity, newest-first.
+        today = user_today_date(request, db, user_id)
+        from_date = (today - timedelta(days=_SMART_INSIGHT_MAX_DAYS)).isoformat()
+        activities = db.list_daily_activity(
+            user_id=user_id,
+            from_date=from_date,
+            to_date=today.isoformat(),
+            limit=_SMART_INSIGHT_MAX_DAYS + 1,
+        )
+
+        # Merge body-weight metrics onto the matching activity-date rows so the
+        # weight metric has data to correlate (weight lives in user_metrics).
+        _merge_weight_into_activities(db, user_id, activities)
+
+        insights = compute_smart_insights(activities or [], window_days=window_days)
+
+        # Cache for a week — the engine is meant to recompute weekly.
+        _cache_insight(db, cache_key, json.dumps(insights), hours=168)
+        return {"insights": insights, "cached": False}
+
+    except Exception as e:
+        logger.error(f"Failed to compute smart insights for {user_id}: {e}", exc_info=True)
+        raise safe_internal_error(e, "insights")
+
+
+def _merge_weight_into_activities(db, user_id: str, activities: List[Dict]) -> None:
+    """Annotate each activity row with the day's ``weight_kg`` (in place).
+
+    Body weight lives in ``user_metrics``, not ``daily_activity``; the
+    correlation engine reads ``weight_kg`` off the activity row, so we attach
+    the most recent weight logged on each activity date. Days with no weight
+    log simply keep no ``weight_kg`` key — the engine drops them from the
+    weight pairs, which is correct.
+    """
+    if not activities:
+        return
+    try:
+        metrics = db.list_user_metrics(user_id=user_id, limit=120) or []
+    except Exception as e:
+        logger.warning(f"smart-insights: weight merge skipped for {user_id}: {e}")
+        return
+
+    # Map activity_date(YYYY-MM-DD) -> weight_kg, keeping the latest per day
+    # (list_user_metrics is recorded_at DESC, so the first seen wins).
+    by_date: Dict[str, float] = {}
+    for m in metrics:
+        recorded = m.get("recorded_at")
+        wkg = m.get("weight_kg")
+        if not recorded or wkg is None:
+            continue
+        day_key = str(recorded)[:10]
+        if day_key not in by_date:
+            try:
+                by_date[day_key] = float(wkg)
+            except (TypeError, ValueError):
+                continue
+
+    for row in activities:
+        day_key = str(row.get("activity_date"))[:10]
+        if day_key in by_date:
+            row["weight_kg"] = by_date[day_key]
+
+
 # ==================== HELPER FUNCTIONS ====================
 
 def _cache_insight(db, cache_key: str, insight: str, hours: int = 24):
