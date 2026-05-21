@@ -45,6 +45,8 @@ class InstagramSharePlugin: NSObject {
     switch call.method {
     case "shareToInstagramStories":
       shareToInstagramStories(call: call, result: result)
+    case "shareVideoToInstagramStories":
+      shareVideoToInstagramStories(call: call, result: result)
     default:
       result(FlutterMethodNotImplemented)
     }
@@ -75,6 +77,51 @@ class InstagramSharePlugin: NSObject {
 
     let pasteboardItems: [[String: Any]] = [[
       "com.instagram.sharedSticker.backgroundImage": imageData
+    ]]
+    let pasteboardOptions: [UIPasteboard.OptionsKey: Any] = [
+      .expirationDate: Date(timeIntervalSinceNow: 60 * 5)
+    ]
+    UIPasteboard.general.setItems(pasteboardItems, options: pasteboardOptions)
+
+    UIApplication.shared.open(storyURL, options: [:]) { success in
+      result(success)
+    }
+  }
+
+  /// Share a transparent workout-card sticker over a user-picked clip.
+  ///
+  /// Stages the video on the `com.instagram.sharedSticker.backgroundVideo`
+  /// pasteboard key and the card PNG on `...stickerImage`, then opens the
+  /// Stories composer. Instagram composites the sticker over the video — no
+  /// on-device encoding required.
+  private func shareVideoToInstagramStories(call: FlutterMethodCall, result: @escaping FlutterResult) {
+    guard let args = call.arguments as? [String: Any],
+          let videoPath = args["videoPath"] as? String,
+          let stickerPath = args["stickerImagePath"] as? String else {
+      result(FlutterError(code: "INVALID_ARGUMENTS",
+                          message: "videoPath + stickerImagePath required",
+                          details: nil))
+      return
+    }
+
+    guard let videoData = try? Data(contentsOf: URL(fileURLWithPath: videoPath)),
+          let stickerData = try? Data(contentsOf: URL(fileURLWithPath: stickerPath)) else {
+      result(FlutterError(code: "READ_FAILED",
+                          message: "Could not read video or sticker",
+                          details: nil))
+      return
+    }
+
+    let urlString = "instagram-stories://share?source_application=\(InstagramSharePlugin.sourceApplication)"
+    guard let storyURL = URL(string: urlString),
+          UIApplication.shared.canOpenURL(storyURL) else {
+      result(false)
+      return
+    }
+
+    let pasteboardItems: [[String: Any]] = [[
+      "com.instagram.sharedSticker.backgroundVideo": videoData,
+      "com.instagram.sharedSticker.stickerImage": stickerData
     ]]
     let pasteboardOptions: [UIPasteboard.OptionsKey: Any] = [
       .expirationDate: Date(timeIntervalSinceNow: 60 * 5)

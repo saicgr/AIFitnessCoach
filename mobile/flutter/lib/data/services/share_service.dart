@@ -159,6 +159,92 @@ class ShareService {
     }
   }
 
+  /// Share a workout-card sticker over a user-picked video to Instagram
+  /// Stories.
+  ///
+  /// The card is handed over as a transparent PNG sticker and [videoPath]
+  /// becomes the story background — Instagram composites the two natively,
+  /// so there is no on-device video encoding. Routes through the same
+  /// `com.fitwiz/instagram_share` MethodChannel as the image path, via the
+  /// `shareVideoToInstagramStories` method. Falls back to a plain system
+  /// share of the video if the native handler or Instagram is unavailable.
+  static Future<ShareResult> shareVideoToInstagramStories({
+    required String videoPath,
+    required Uint8List stickerBytes,
+  }) async {
+    try {
+      final tempDir = await getTemporaryDirectory();
+      final ts = DateTime.now().millisecondsSinceEpoch;
+
+      // Stage the sticker PNG in our cache dir.
+      final stickerFile = File('${tempDir.path}/workout_sticker_$ts.png');
+      await stickerFile.writeAsBytes(stickerBytes);
+
+      // Copy the picked video into our cache dir so the Android FileProvider
+      // can serve it (the picker's path can sit outside the exposed paths).
+      final ext = videoPath.split('.').last.toLowerCase();
+      final videoExt = (ext == 'mov' || ext == 'mp4') ? ext : 'mp4';
+      final videoCopy = File('${tempDir.path}/workout_bg_$ts.$videoExt');
+      await File(videoPath).copy(videoCopy.path);
+
+      if (!Platform.isIOS && !Platform.isAndroid) {
+        return await _shareVideoGeneric(videoCopy.path);
+      }
+
+      const platform = MethodChannel('com.fitwiz/instagram_share');
+      try {
+        final result = await platform.invokeMethod(
+          'shareVideoToInstagramStories',
+          {
+            'videoPath': videoCopy.path,
+            'stickerImagePath': stickerFile.path,
+          },
+        );
+        if (result == true) {
+          debugPrint('✅ [Share] Shared video to Instagram Stories');
+          return const ShareResult(
+            success: true,
+            destination: ShareDestination.instagramStories,
+          );
+        }
+        debugPrint('⚠️ [Share] video IG handler returned false');
+      } on MissingPluginException {
+        debugPrint('⚠️ [Share] video IG MethodChannel not registered');
+      }
+
+      // Native path failed (Instagram missing / channel absent) — surface
+      // the system share sheet with the video so the user still has a path.
+      return await _shareVideoGeneric(videoCopy.path);
+    } catch (e) {
+      debugPrint('❌ [Share] Instagram video share error: $e');
+      return ShareResult(
+        success: false,
+        destination: ShareDestination.instagramStories,
+        error: e.toString(),
+      );
+    }
+  }
+
+  static Future<ShareResult> _shareVideoGeneric(String videoPath) async {
+    try {
+      await Share.shareXFiles(
+        [XFile(videoPath)],
+        text: 'Check out my workout!',
+      );
+      return const ShareResult(
+        success: true,
+        destination: ShareDestination.systemShare,
+      );
+    } catch (e) {
+      debugPrint('❌ [Share] system video share error: $e');
+      return ShareResult(
+        success: false,
+        destination: ShareDestination.systemShare,
+        error: e.toString(),
+      );
+    }
+  }
+
   /// Generic share using system share sheet
   static Future<ShareResult> shareGeneric(
     Uint8List imageBytes, {

@@ -110,6 +110,70 @@ class MainActivity : FlutterFragmentActivity() {
                     result.error("LAUNCH_FAILED", e.message, null)
                 }
             }
+            "shareVideoToInstagramStories" -> {
+                val videoPath = call.argument<String>("videoPath")
+                val stickerPath = call.argument<String>("stickerImagePath")
+                if (videoPath.isNullOrEmpty() || stickerPath.isNullOrEmpty()) {
+                    result.error(
+                        "INVALID_ARGUMENTS",
+                        "videoPath + stickerImagePath required",
+                        null,
+                    )
+                    return
+                }
+                val videoFile = File(videoPath)
+                val stickerFile = File(stickerPath)
+                if (!videoFile.exists() || !stickerFile.exists()) {
+                    result.error("FILE_NOT_FOUND", "Video or sticker missing", null)
+                    return
+                }
+                val authority = "${packageName}.instagramshare.fileprovider"
+                val videoUri: Uri
+                val stickerUri: Uri
+                try {
+                    videoUri = FileProvider.getUriForFile(this, authority, videoFile)
+                    stickerUri = FileProvider.getUriForFile(this, authority, stickerFile)
+                } catch (e: IllegalArgumentException) {
+                    Log.e("MainActivity", "FileProvider rejected a path: ${e.message}")
+                    result.error("FILEPROVIDER_FAILED", e.message, null)
+                    return
+                }
+
+                // Background = the user's clip; sticker = the workout card.
+                val intent = Intent(INSTAGRAM_STORY_ACTION).apply {
+                    setDataAndType(videoUri, "video/*")
+                    setPackage(INSTAGRAM_PACKAGE)
+                    putExtra("interactive_asset_uri", stickerUri)
+                    putExtra("source_application", packageName)
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+                // FLAG_GRANT_READ_URI_PERMISSION covers the data (video) URI;
+                // the sticker passed as an extra must be granted explicitly.
+                grantUriPermission(
+                    INSTAGRAM_PACKAGE,
+                    stickerUri,
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION,
+                )
+                grantUriPermission(
+                    INSTAGRAM_PACKAGE,
+                    videoUri,
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION,
+                )
+
+                if (intent.resolveActivity(packageManager) == null) {
+                    Log.w("MainActivity", "Instagram missing or no ADD_TO_STORY support")
+                    result.success(false)
+                    return
+                }
+                try {
+                    startActivity(intent)
+                    result.success(true)
+                } catch (e: Exception) {
+                    Log.e("MainActivity", "Failed to launch IG video story: ${e.message}")
+                    result.error("LAUNCH_FAILED", e.message, null)
+                }
+            }
             else -> result.notImplemented()
         }
     }

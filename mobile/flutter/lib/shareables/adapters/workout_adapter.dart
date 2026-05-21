@@ -165,12 +165,133 @@ class WorkoutAdapter {
       highlights: highlights,
       subMetrics: const [],
       exercises: exercises,
-      musclesWorked: musclesWorked,
+      // Fall back to muscles derived from the exercises' primary-muscle
+      // tags when the caller didn't supply a count map — without this the
+      // MuscleMap + Muscles share cards render empty ghost silhouettes for
+      // every caller except the workout-complete screen.
+      musclesWorked:
+          musclesWorked ?? _muscleSetCounts(plannedExercises, exercises),
+      secondaryMusclesWorked:
+          _secondaryMuscleSetCounts(plannedExercises, exercises),
       userDisplayName: userDisplayName,
       userAvatarUrl: userAvatarUrl,
       heroImageUrl: heroImage,
       accentColor: accent,
     );
+  }
+
+  /// Per-muscle working-set count derived from each exercise's primary
+  /// muscle tag. Index-parallel: `built[i]` is the ShareableExercise built
+  /// from `planned[i]`, so the actual logged set count is used when
+  /// available (falling back to the planned set count). Keys are
+  /// normalized to the vocabulary the anatomical heat-map understands.
+  /// Returns null when no exercise carries a recognizable muscle tag.
+  static Map<String, int>? _muscleSetCounts(
+    List<WorkoutExercise> planned,
+    List<ShareableExercise> built,
+  ) {
+    final counts = <String, int>{};
+    for (var i = 0; i < planned.length; i++) {
+      final ex = planned[i];
+      final raw = ex.primaryMuscle ?? ex.muscleGroup;
+      if (raw == null || raw.trim().isEmpty) continue;
+      final key = _normalizeMuscleKey(raw);
+      if (key == null) continue;
+      final loggedSets =
+          i < built.length ? built[i].sets.length : 0;
+      final setCount = loggedSets > 0 ? loggedSets : (ex.sets ?? 1);
+      counts[key] = (counts[key] ?? 0) + (setCount > 0 ? setCount : 1);
+    }
+    return counts.isEmpty ? null : counts;
+  }
+
+  /// Per-muscle working-set count for *secondary* (synergist) muscles,
+  /// derived from each exercise's `secondaryMuscles` tag. Same index-
+  /// parallel set-count logic as [_muscleSetCounts]; an exercise can list
+  /// several secondary muscles and contributes its set count to each.
+  /// Returns null when no exercise carries a recognizable secondary tag.
+  static Map<String, int>? _secondaryMuscleSetCounts(
+    List<WorkoutExercise> planned,
+    List<ShareableExercise> built,
+  ) {
+    final counts = <String, int>{};
+    for (var i = 0; i < planned.length; i++) {
+      final ex = planned[i];
+      final names = _secondaryMuscleNames(ex.secondaryMuscles);
+      if (names.isEmpty) continue;
+      final loggedSets = i < built.length ? built[i].sets.length : 0;
+      final setCount = loggedSets > 0 ? loggedSets : (ex.sets ?? 1);
+      final add = setCount > 0 ? setCount : 1;
+      for (final raw in names) {
+        final key = _normalizeMuscleKey(raw);
+        if (key == null) continue;
+        counts[key] = (counts[key] ?? 0) + add;
+      }
+    }
+    return counts.isEmpty ? null : counts;
+  }
+
+  /// Coerce the dynamic `secondary_muscles` field (a `List`, a
+  /// `List<String>`, or a comma/semicolon/slash-separated string) into a
+  /// clean list of muscle-name tokens. Empty list on null or any other
+  /// shape.
+  static List<String> _secondaryMuscleNames(dynamic raw) {
+    if (raw == null) return const [];
+    if (raw is List) {
+      return raw
+          .map((e) => (e?.toString() ?? '').trim())
+          .where((s) => s.isNotEmpty)
+          .toList();
+    }
+    if (raw is String) {
+      return raw
+          .split(RegExp(r'[,;/]'))
+          .map((s) => s.trim())
+          .where((s) => s.isNotEmpty)
+          .toList();
+    }
+    return const [];
+  }
+
+  /// Map a free-form muscle name onto a key the anatomical figure's
+  /// heat-map resolves (`chest`, `lats`, `quadriceps`, …). Returns null for
+  /// unrecognized input so it never pollutes the map with an empty bucket.
+  /// Order matters — narrower aliases ("abductor", "upper back") are tested
+  /// before the broad ones ("ab", "back") they would otherwise be eaten by.
+  static String? _normalizeMuscleKey(String raw) {
+    final s = raw.toLowerCase().trim();
+    if (s.contains('chest') || s.contains('pec')) return 'chest';
+    if (s.contains('lat')) return 'lats';
+    if (s.contains('trap')) return 'traps';
+    if (s.contains('upper back') ||
+        s.contains('upper_back') ||
+        s.contains('rhomboid')) {
+      return 'upper_back';
+    }
+    if (s.contains('lower back') ||
+        s.contains('lower_back') ||
+        s.contains('erector')) {
+      return 'lower_back';
+    }
+    if (s.contains('delt') || s.contains('shoulder')) return 'shoulders';
+    if (s.contains('bicep')) return 'biceps';
+    if (s.contains('tricep')) return 'triceps';
+    if (s.contains('forearm')) return 'forearms';
+    if (s.contains('oblique')) return 'obliques';
+    if (s.contains('abductor')) return 'abductors';
+    if (s.contains('adductor')) return 'adductors';
+    if (s.contains('abs') || s.contains('abdominal') || s.contains('core')) {
+      return 'abs';
+    }
+    if (s.contains('glute')) return 'glutes';
+    if (s.contains('quad')) return 'quadriceps';
+    if (s.contains('hamstring')) return 'hamstrings';
+    if (s.contains('calf') || s.contains('calves') || s.contains('gastro')) {
+      return 'calves';
+    }
+    if (s.contains('back')) return 'lats';
+    if (s.contains('leg')) return 'quadriceps';
+    return null;
   }
 
   static double? _resolveVolumeKg({
