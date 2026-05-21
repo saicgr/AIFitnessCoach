@@ -825,6 +825,23 @@ class LangGraphCoachService:
             base_state["media_ref"] = request.media_ref.model_dump() if hasattr(request, "media_ref") and request.media_ref else None
             base_state["media_refs"] = media_refs_dicts
 
+            # Pre-fetch the user's wearable health & activity context (Phase B2)
+            # so the coach prompt can cite real sleep / steps / recovery / HR
+            # numbers without a tool round-trip. `get_health_context_for_ai`
+            # returns "" cleanly when there is no consent or no wearable data
+            # (a NORMAL state); any error here also yields "" so the coach
+            # path is never broken by an absent or failing health snapshot.
+            health_context = ""
+            try:
+                from services.user_context.service import UserContextService
+                health_context = await UserContextService().get_health_context_for_ai(
+                    str(request.user_id), days=7
+                )
+            except Exception as e:
+                logger.warning(f"[CoachState] health_context pre-fetch failed: {e}")
+                health_context = ""
+            base_state["health_context"] = health_context
+
         return base_state
 
     async def process_message(

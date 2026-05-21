@@ -24,6 +24,7 @@ from services.user_context.neat_logging import NeatLoggingMixin
 from services.user_context.health_logging import HealthLoggingMixin
 from services.user_context.nutrition_logging import NutritionLoggingMixin
 from services.user_context.watch_logging import WatchLoggingMixin
+from services.user_context.health_activity import HealthActivityMixin
 
 logger = logging.getLogger(__name__)
 
@@ -36,6 +37,7 @@ class UserContextService(
     HealthLoggingMixin,
     NutritionLoggingMixin,
     WatchLoggingMixin,
+    HealthActivityMixin,
 ):
     """Service for logging and analyzing user context."""
 
@@ -345,6 +347,20 @@ class UserContextService(
                 diabetes_ai_context = diabetes_patterns.get_ai_context()
                 if diabetes_ai_context:
                     ai_context_parts.append(diabetes_ai_context)
+
+        # Get the wearable health & activity context (Phase B2).
+        # `get_health_context_for_ai` returns "" cleanly when the user has no
+        # consent or no wearable data — a NORMAL state — so nothing is added
+        # and the coach answers generally without fabricating numbers.
+        try:
+            health_context = await self.get_health_context_for_ai(user_id, days=7)
+            if health_context:
+                ai_context_parts.append(health_context)
+        except Exception as e:
+            # Health context is best-effort; never let it break the aggregate.
+            logger.error(
+                f"Failed to get health activity context: {e}", exc_info=True
+            )
 
         # Combine all AI context into a single string
         result["ai_personalization_context"] = " ".join(ai_context_parts)

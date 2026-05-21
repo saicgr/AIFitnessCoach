@@ -39,6 +39,13 @@ class CoachAgentState(TypedDict):
     rag_documents: List[Dict[str, Any]]
     rag_context_formatted: str
 
+    # Wearable health & activity context (Phase B2) — a compact prompt string
+    # of the user's sleep / recovery / steps / heart-rate picture, pre-fetched
+    # in `_build_agent_state`. Empty string when the user has no wearable data
+    # or has not consented (a NORMAL state — the coach must then never invent
+    # numbers).
+    health_context: Optional[str]
+
     # Response generation
     ai_response: str
     final_response: str

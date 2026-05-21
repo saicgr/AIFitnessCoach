@@ -811,6 +811,27 @@ def _build_coach_response_prompt(state: CoachAgentState):
     if state.get("rag_context_formatted"):
         context_parts.append(f"\nPrevious context:\n{state['rag_context_formatted']}")
 
+    # === Wearable health & activity context (Phase B2) ===
+    # IMPORTANT: this snippet is byte-for-byte identical to the one in
+    # `coach_response_node` — the streamed and buffered coach replies MUST
+    # build the same prompt. Edit both together.
+    health_context = state.get("health_context")
+    if health_context:
+        context_parts.append(
+            f"\nWEARABLE HEALTH & ACTIVITY:\n{health_context}\n"
+            "You can see this user's wearable health data — answer sleep, "
+            "recovery, step, heart-rate, water, and activity questions using "
+            "ONLY the numbers above. If a metric is absent here, the user has "
+            "no wearable for it — say so plainly and never invent numbers."
+        )
+    else:
+        context_parts.append(
+            "\nWEARABLE HEALTH & ACTIVITY:\nNone — this user has no connected "
+            "wearable or health data. Answer health questions with general "
+            "guidance and never invent sleep, step, heart-rate, or recovery "
+            "numbers."
+        )
+
     context = "\n".join(context_parts)
 
     ai_settings = state.get("ai_settings")
@@ -883,6 +904,27 @@ async def coach_response_node(state: CoachAgentState) -> Dict[str, Any]:
 
     if state.get("rag_context_formatted"):
         context_parts.append(f"\nPrevious context:\n{state['rag_context_formatted']}")
+
+    # === Wearable health & activity context (Phase B2) ===
+    # IMPORTANT: this snippet is byte-for-byte identical to the one in
+    # `_build_coach_response_prompt` — the streamed and buffered coach replies
+    # MUST build the same prompt. Edit both together.
+    health_context = state.get("health_context")
+    if health_context:
+        context_parts.append(
+            f"\nWEARABLE HEALTH & ACTIVITY:\n{health_context}\n"
+            "You can see this user's wearable health data — answer sleep, "
+            "recovery, step, heart-rate, water, and activity questions using "
+            "ONLY the numbers above. If a metric is absent here, the user has "
+            "no wearable for it — say so plainly and never invent numbers."
+        )
+    else:
+        context_parts.append(
+            "\nWEARABLE HEALTH & ACTIVITY:\nNone — this user has no connected "
+            "wearable or health data. Answer health questions with general "
+            "guidance and never invent sleep, step, heart-rate, or recovery "
+            "numbers."
+        )
 
     context = "\n".join(context_parts)
 

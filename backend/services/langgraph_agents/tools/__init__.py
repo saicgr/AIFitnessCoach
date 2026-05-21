@@ -77,6 +77,15 @@ from .equipment_tools import (
     ISSUE_2_EQUIPMENT_TOOLS,
 )
 
+# === Phase B2: wearable health & activity ===
+# On-demand snapshot of the user's sleep / recovery / steps / heart-rate
+# picture. Delegates to HealthActivityMixin.get_health_activity_snapshot;
+# the coach also gets a pre-fetched compact version in its prompt context.
+from .health_tools import (
+    get_health_activity_summary,
+    HEALTH_TOOLS,
+)
+
 from .base import get_vision_service, get_form_analysis_service
 
 # Registry of all available tools
@@ -115,6 +124,8 @@ ALL_TOOLS = [
     *ISSUE_2_EQUIPMENT_TOOLS,
     # === Wellness logging (2026-05-10): generalized log_event tool ===
     *WELLNESS_TOOLS,
+    # === Phase B2: wearable health & activity snapshot ===
+    *HEALTH_TOOLS,
 ]
 
 # Tool name to function mapping
@@ -159,6 +170,9 @@ __all__ = [
     # Issue 2: equipment identify tool
     "identify_equipment",
     "ISSUE_2_EQUIPMENT_TOOLS",
+    # Phase B2: wearable health & activity
+    "get_health_activity_summary",
+    "HEALTH_TOOLS",
     # Utilities
     "get_vision_service",
     "get_form_analysis_service",
