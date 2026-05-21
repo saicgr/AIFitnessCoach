@@ -16,6 +16,8 @@ import pytest
 
 from services.health_insights_engine import (
     compute_smart_insights,
+    compute_food_sleep_insights,
+    compute_training_sleep_insights,
     pearson_r,
     top_insight_sentence,
 )
@@ -181,6 +183,285 @@ class TestTopInsight:
 
     def test_empty_list_returns_empty_string(self):
         assert top_insight_sentence([]) == ""
+
+
+# =============================================================================
+# Phase E2 — food-to-sleep correlation
+# =============================================================================
+
+def _activity_day(i: int, sleep_minutes, **extra):
+    """A daily_activity row for day i (March 2026), bucketed by wake date."""
+    row = {"activity_date": _day(i), "sleep_minutes": sleep_minutes}
+    row.update(extra)
+    return row
+
+
+def _food_log(day_index: int, hour: int, item_name: str, calories: int = 300):
+    """A food_logs row logged at `hour` UTC on day `day_index` (March 2026).
+
+    Tests run with utc_offset_hours=0 so the UTC hour IS the local hour."""
+    return {
+        "logged_at": f"2026-03-{day_index + 1:02d}T{hour:02d}:30:00+00:00",
+        "food_items": [{"name": item_name, "calories": calories}],
+        "total_calories": calories,
+    }
+
+
+class TestFoodSleepInsights:
+    def test_planted_caffeine_timing_to_sleep_correlation(self):
+        """20 food-days: even days log a 9pm coffee, odd days log a 9pm water.
+        Sleep the FOLLOWING night is short after a coffee day, long otherwise.
+        The engine must surface a late_caffeine -> sleep_duration pattern with
+        the correct (negative) sign — more evening caffeine, less next-night
+        sleep."""
+        food_logs = []
+        activities = []
+        for i in range(22):
+            caffeinated = i % 2 == 0
+            # Evening (21:00) drink — coffee on even days, water on odd days.
+            food_logs.append(
+                _food_log(i, 21, "Brewed Coffee" if caffeinated else "Water")
+            )
+            # The NEXT night's sleep (wake date i+1): short after caffeine.
+            next_sleep = 360 if caffeinated else 460
+            activities.append(_activity_day(i + 1, next_sleep))
+
+        insights = compute_food_sleep_insights(
+            food_logs, activities, window_days=60, utc_offset_hours=0.0
+        )
+        assert insights, "expected a planted food->sleep insight"
+
+        caffeine = next(
+            (
+                c
+                for c in insights
+                if c["food_signal"] == "late_caffeine"
+                and c["sleep_metric"] == "sleep_duration"
+            ),
+            None,
+        )
+        assert caffeine is not None, "late_caffeine->sleep_duration not surfaced"
+        # More evening caffeine lines up with LESS next-night sleep => r < 0.
+        assert caffeine["r"] < 0
+        assert abs(caffeine["r"]) >= 0.30
+        assert caffeine["n"] >= 14
+        assert caffeine["association_only"] is True
+        assert caffeine["category"] == "food_sleep"
+        # Association-only copy, never a causal claim.
+        assert "association" in caffeine["insight"].lower()
+        assert "cause" in caffeine["insight"].lower()
+
+    def test_sparse_food_data_returns_empty(self):
+        """Fewer than 14 paired (food-day, next-night) days -> no output."""
+        food_logs = [_food_log(i, 21, "Coffee") for i in range(8)]
+        activities = [_activity_day(i + 1, 400) for i in range(8)]
+        assert (
+            compute_food_sleep_insights(
+                food_logs, activities, window_days=60, utc_offset_hours=0.0
+            )
+            == []
+        )
+
+    def test_no_food_logs_returns_empty(self):
+        activities = [_activity_day(i + 1, 400) for i in range(30)]
+        assert (
+            compute_food_sleep_insights(
+                [], activities, window_days=60, utc_offset_hours=0.0
+            )
+            == []
+        )
+
+    def test_unknown_foods_never_flag_caffeine(self):
+        """An evening meal of plain unknown food must never be treated as a
+        caffeine day — only keyword-matched items count (edge case G36)."""
+        food_logs = []
+        activities = []
+        for i in range(22):
+            food_logs.append(_food_log(i, 21, "Grilled Chicken Salad"))
+            activities.append(_activity_day(i + 1, 400 + (i % 5) * 10))
+        insights = compute_food_sleep_insights(
+            food_logs, activities, window_days=60, utc_offset_hours=0.0
+        )
+        # late_caffeine is a flat 0 for every day => zero variance => the
+        # caffeine pair is undefined and never surfaces a spurious insight.
+        for c in insights:
+            assert c["food_signal"] != "late_caffeine"
+
+    def test_alcohol_correlation_surfaces(self):
+        """Planted: evening alcohol days -> lower next-night efficiency."""
+        food_logs = []
+        activities = []
+        for i in range(24):
+            drank = i % 2 == 0
+            food_logs.append(
+                _food_log(i, 20, "Red Wine" if drank else "Sparkling Water")
+            )
+            eff = 0.78 if drank else 0.93
+            activities.append(_activity_day(i + 1, 420, sleep_efficiency=eff))
+        insights = compute_food_sleep_insights(
+            food_logs, activities, window_days=60, utc_offset_hours=0.0
+        )
+        alcohol = next(
+            (c for c in insights if c["food_signal"] == "evening_alcohol"), None
+        )
+        assert alcohol is not None
+        assert alcohol["association_only"] is True
+
+
+# =============================================================================
+# Phase E3 — sleep x training-data insights
+# =============================================================================
+
+def _perf_log(day_index: int, weight_kg, reps=8, rpe=8.0, exercise="Bench Press"):
+    """A performance_logs row recorded on day `day_index` (March 2026)."""
+    return {
+        "exercise_name": exercise,
+        "set_number": 1,
+        "reps_completed": reps,
+        "weight_kg": weight_kg,
+        "rpe": rpe,
+        "recorded_at": f"2026-03-{day_index + 1:02d}T17:00:00+00:00",
+    }
+
+
+def _form_job(day_index: int, form_score):
+    """A completed media_analysis_jobs form-analysis row for day `day_index`."""
+    return {
+        "id": f"job-{day_index}",
+        "job_type": "form_analysis",
+        "status": "completed",
+        "result": {"content_type": "exercise", "form_score": form_score},
+        "completed_at": f"2026-03-{day_index + 1:02d}T18:00:00+00:00",
+        "created_at": f"2026-03-{day_index + 1:02d}T17:55:00+00:00",
+    }
+
+
+class TestTrainingSleepInsights:
+    def test_planted_sleep_to_top_set_correlation(self):
+        """20 paired days. Sleep alternates long/short; the top set the SAME
+        day is heavier after a long night. The engine must surface a
+        sleep_duration -> top_set_load pattern with a positive sign."""
+        activities = []
+        performance_logs = []
+        for i in range(22):
+            well_rested = i % 2 == 0
+            sleep = 470 if well_rested else 330
+            top_set = 100.0 if well_rested else 90.0
+            activities.append(_activity_day(i, sleep))
+            performance_logs.append(_perf_log(i, top_set))
+
+        insights = compute_training_sleep_insights(
+            activities, performance_logs, window_days=60, utc_offset_hours=0.0
+        )
+        assert insights, "expected a planted sleep->training insight"
+
+        top = next(
+            (c for c in insights if c["training_metric"] == "top_set_load"), None
+        )
+        assert top is not None, "sleep_duration->top_set_load not surfaced"
+        # More sleep lines up with a heavier top set => r > 0.
+        assert top["r"] > 0
+        assert abs(top["r"]) >= 0.30
+        assert top["n"] >= 14
+        assert top["association_only"] is True
+        assert top["category"] == "sleep_training"
+        assert "association" in top["insight"].lower()
+        assert "cause" in top["insight"].lower()
+
+    def test_planted_sleep_to_form_score_correlation(self):
+        """Form data is sparse, but with >= 8 paired (night, scored-lift)
+        days a planted sleep->form-score pattern still surfaces."""
+        activities = []
+        performance_logs = []
+        form_jobs = []
+        for i in range(20):
+            well_rested = i % 2 == 0
+            sleep = 470 if well_rested else 320
+            activities.append(_activity_day(i, sleep))
+            performance_logs.append(_perf_log(i, 80.0))
+            # Score: better form after a long night.
+            form_jobs.append(_form_job(i, 9 if well_rested else 6))
+
+        insights = compute_training_sleep_insights(
+            activities,
+            performance_logs,
+            form_jobs=form_jobs,
+            window_days=60,
+            utc_offset_hours=0.0,
+        )
+        form = next(
+            (c for c in insights if c["training_metric"] == "form_score"), None
+        )
+        assert form is not None, "sleep->form_score not surfaced"
+        assert form["r"] > 0  # more sleep, higher form score
+        assert form["n"] >= 8
+        assert form["association_only"] is True
+
+    def test_sparse_form_data_absent_gracefully(self):
+        """Only 4 form-scored days (< the 8-day form minimum) -> the form
+        pair is simply absent, never extrapolated (edge case G37). Lift
+        correlations still work."""
+        activities = []
+        performance_logs = []
+        form_jobs = []
+        for i in range(22):
+            well_rested = i % 2 == 0
+            activities.append(_activity_day(i, 470 if well_rested else 330))
+            performance_logs.append(
+                _perf_log(i, 100.0 if well_rested else 90.0)
+            )
+            if i < 4:  # only 4 form videos ever submitted
+                form_jobs.append(_form_job(i, 8))
+
+        insights = compute_training_sleep_insights(
+            activities,
+            performance_logs,
+            form_jobs=form_jobs,
+            window_days=60,
+            utc_offset_hours=0.0,
+        )
+        # No form_score insight — too sparse.
+        assert all(c["training_metric"] != "form_score" for c in insights)
+        # But the lift correlations are unaffected.
+        assert any(c["training_metric"] == "top_set_load" for c in insights)
+
+    def test_not_exercise_form_jobs_skipped(self):
+        """A 'not_exercise' upload must never be scored as a real form day."""
+        activities = [_activity_day(i, 400) for i in range(20)]
+        performance_logs = [_perf_log(i, 80.0) for i in range(20)]
+        form_jobs = []
+        for i in range(20):
+            job = _form_job(i, 1)
+            job["result"]["content_type"] = "not_exercise"
+            form_jobs.append(job)
+        insights = compute_training_sleep_insights(
+            activities,
+            performance_logs,
+            form_jobs=form_jobs,
+            window_days=60,
+            utc_offset_hours=0.0,
+        )
+        assert all(c["training_metric"] != "form_score" for c in insights)
+
+    def test_no_performance_logs_returns_empty(self):
+        activities = [_activity_day(i, 400) for i in range(30)]
+        assert (
+            compute_training_sleep_insights(
+                activities, [], window_days=60, utc_offset_hours=0.0
+            )
+            == []
+        )
+
+    def test_sparse_sleep_returns_empty(self):
+        """Fewer than 14 sleep nights -> no output even with rich lift data."""
+        activities = [_activity_day(i, 400) for i in range(8)]
+        performance_logs = [_perf_log(i, 90.0) for i in range(20)]
+        assert (
+            compute_training_sleep_insights(
+                activities, performance_logs, window_days=60, utc_offset_hours=0.0
+            )
+            == []
+        )
 
 
 if __name__ == "__main__":

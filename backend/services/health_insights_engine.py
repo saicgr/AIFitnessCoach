@@ -28,12 +28,23 @@ Public surface:
   * ``compute_smart_insights(activities, window_days=...)`` — the pure engine.
   * ``top_insight_sentence(insights)`` — the single best line for the coach
     prompt (consumed by ``health_activity.get_health_context_for_ai``).
+  * ``compute_food_sleep_insights(food_logs, activities, ...)`` — Phase E2:
+    food-log-derived signals (evening caffeine, alcohol, large late meals,
+    how late the user ate) correlated against the *next night's* sleep.
+  * ``compute_training_sleep_insights(activities, performance_logs,
+    form_jobs=..., ...)`` — Phase E3: a night's sleep correlated against the
+    next day's logged lift performance (top-set load, reps, RPE) and AI
+    form-analysis scores.
+
+All three correlation engines share the same hard rules (>= 14 paired days —
+8 for the sparse form-score pair — |r| >= 0.30, association-only copy, clean
+empty output when data is sparse).
 """
 
 from __future__ import annotations
 
 import logging
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from math import sqrt
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -331,3 +342,811 @@ def top_insight_sentence(insights: List[Dict[str, Any]]) -> str:
     if not insights:
         return ""
     return insights[0].get("insight", "")
+
+
+# =============================================================================
+# Phase E2 — Food-to-sleep correlation
+# =============================================================================
+# Extends the engine with food-log derived signals correlated against the
+# *next night's* sleep. ``daily_activity`` carries no caffeine/alcohol/meal-
+# timing columns, so every food signal here is DERIVED deterministically from
+# the ``food_logs`` rows the user already has: the ``food_items`` name array,
+# the ``logged_at`` timestamp, and ``total_calories``.
+#
+# Hard rules (same as the Part-D engine):
+#   * Only DETECTABLE signals are correlated. Caffeine/alcohol are flagged only
+#     when an item name clearly matches a known keyword — an unknown food never
+#     produces a false caffeine/alcohol day (edge case G36/G37).
+#   * Minimum evidence: a signal needs >= ``_MIN_PAIRED_DAYS`` paired
+#     (food-day, next-night-sleep) days and |r| >= ``_MIN_ABS_R``.
+#   * Association only, never causation — every emitted string says so.
+#   * Sparse data => empty list, never a fabricated insight.
+
+# Caffeine content estimate per matched item, in milligrams. Deliberately
+# conservative single-serving figures (USDA / FDA "Spilling the Beans" 2018):
+# a brewed coffee ~95 mg, espresso shot ~64 mg, tea ~47 mg, cola ~34 mg,
+# energy drink ~80 mg. The exact dose is an estimate, so the engine only ever
+# correlates it as an ordinal "how much / how late" signal, never a claim.
+_CAFFEINE_MG: Dict[str, float] = {
+    "espresso": 64.0,
+    "cold brew": 200.0,
+    "coffee": 95.0,
+    "latte": 128.0,
+    "cappuccino": 128.0,
+    "americano": 128.0,
+    "macchiato": 128.0,
+    "mocha": 152.0,
+    "energy drink": 80.0,
+    "red bull": 80.0,
+    "monster": 160.0,
+    "celsius": 200.0,
+    "pre-workout": 200.0,
+    "pre workout": 200.0,
+    "matcha": 70.0,
+    "green tea": 28.0,
+    "black tea": 47.0,
+    "tea": 47.0,
+    "cola": 34.0,
+    "coke": 34.0,
+    "pepsi": 38.0,
+    "diet coke": 46.0,
+    "mountain dew": 54.0,
+    "yerba mate": 85.0,
+    "caffeine": 100.0,
+}
+
+# Alcohol keywords. Presence-only (a binary "drank alcohol that evening"
+# signal) — the engine never estimates a blood-alcohol figure.
+_ALCOHOL_KEYWORDS: Tuple[str, ...] = (
+    "beer", "wine", "whiskey", "whisky", "vodka", "rum", "tequila", "gin",
+    "cocktail", "margarita", "martini", "champagne", "prosecco", "cider",
+    "bourbon", "brandy", "liqueur", "sangria", "mojito", "spritz", "ipa",
+    "lager", "ale", "hard seltzer", "white claw", "alcohol",
+)
+
+# A "large late meal" is a meal whose calorie total clears this bar. ~800 kcal
+# is a reasonable "heavy meal" threshold for a single eating occasion.
+_LARGE_MEAL_KCAL = 800.0
+
+# The food-log day is bucketed by the user's local calendar date. Late-evening
+# food (caffeine/large meal eaten after this hour, user-local) is the part the
+# correlation cares about — it is what could disrupt *that night's* sleep.
+_EVENING_HOUR = 17  # 5pm — start of the "evening / wind-down adjacent" window
+
+# Sentinel for "no caffeine logged after the evening cutoff that day".
+_NO_LATE_CAFFEINE = 0.0
+
+# How many ranked food->sleep insights to emit at most.
+_MAX_FOOD_INSIGHTS = 4
+
+
+def _parse_ts(raw: Any) -> Optional[datetime]:
+    """Parse an ISO-8601 timestamp string to an aware datetime, or None.
+
+    ``food_logs.logged_at`` is stored as a UTC ISO string with offset. We keep
+    it as-is (instant-based) — the local-hour bucketing applies a fixed UTC
+    offset supplied by the caller, never wall-clock subtraction (edge case A5).
+    """
+    if raw is None:
+        return None
+    try:
+        s = str(raw).replace("Z", "+00:00")
+        return datetime.fromisoformat(s)
+    except (ValueError, TypeError):
+        return None
+
+
+def _item_names(food_items: Any) -> List[str]:
+    """Lower-cased name strings from a ``food_logs.food_items`` JSON array.
+
+    Each element is a dict like ``{"name": "Latte", "calories": 128, ...}``.
+    Non-dict / nameless elements are skipped — never guessed."""
+    names: List[str] = []
+    if not isinstance(food_items, (list, tuple)):
+        return names
+    for it in food_items:
+        if isinstance(it, dict):
+            name = it.get("name")
+            if isinstance(name, str) and name.strip():
+                names.append(name.strip().lower())
+    return names
+
+
+def _caffeine_mg_for_names(names: List[str]) -> float:
+    """Estimated caffeine in mg for a list of lower-cased food-item names.
+
+    Deterministic keyword scan. A name contributes the FIRST keyword it
+    matches (longest keywords checked first so "cold brew" beats "coffee").
+    Unknown names contribute 0 — never a false positive (edge case G36)."""
+    if not names:
+        return 0.0
+    keywords = sorted(_CAFFEINE_MG.keys(), key=len, reverse=True)
+    total = 0.0
+    for name in names:
+        for kw in keywords:
+            if kw in name:
+                total += _CAFFEINE_MG[kw]
+                break
+    return total
+
+
+def _has_alcohol(names: List[str]) -> bool:
+    """True when any item name clearly contains an alcohol keyword."""
+    for name in names:
+        for kw in _ALCOHOL_KEYWORDS:
+            if kw in name:
+                return True
+    return False
+
+
+def _local_hour(ts: datetime, utc_offset_hours: float) -> int:
+    """User-local hour-of-day (0-23) for an aware UTC timestamp."""
+    shifted = ts + timedelta(hours=utc_offset_hours)
+    return shifted.hour
+
+
+def _local_date(ts: datetime, utc_offset_hours: float) -> date:
+    """User-local calendar date for an aware UTC timestamp."""
+    return (ts + timedelta(hours=utc_offset_hours)).date()
+
+
+def _build_food_day_signals(
+    food_logs: List[Dict[str, Any]],
+    utc_offset_hours: float,
+) -> Dict[date, Dict[str, Any]]:
+    """Collapse raw ``food_logs`` rows into one signal bundle per local date.
+
+    Each bundle:
+      ``late_caffeine_mg``  — caffeine (mg) from items logged at/after
+                              ``_EVENING_HOUR`` local; 0 when none.
+      ``had_alcohol_evening`` — True if any alcohol item was logged in the
+                              evening window.
+      ``had_large_late_meal`` — True if a meal logged in the evening window
+                              cleared ``_LARGE_MEAL_KCAL``.
+      ``last_meal_hour``    — the latest local hour any food was logged that
+                              day (a "how late did you eat" proxy), or None.
+
+    Only days with at least one parseable food row appear. Days with no
+    detectable evening food still appear with zero/False signals — that is a
+    legitimate "ate nothing late" data point for the correlation.
+    """
+    by_day: Dict[date, Dict[str, Any]] = {}
+    for row in food_logs or []:
+        ts = _parse_ts(row.get("logged_at"))
+        if ts is None:
+            continue
+        day = _local_date(ts, utc_offset_hours)
+        hour = _local_hour(ts, utc_offset_hours)
+        names = _item_names(row.get("food_items"))
+
+        bundle = by_day.setdefault(
+            day,
+            {
+                "late_caffeine_mg": 0.0,
+                "had_alcohol_evening": False,
+                "had_large_late_meal": False,
+                "last_meal_hour": None,
+            },
+        )
+
+        # "Last meal hour" tracks the latest eating occasion of the day.
+        prev = bundle["last_meal_hour"]
+        if prev is None or hour > prev:
+            bundle["last_meal_hour"] = hour
+
+        is_evening = hour >= _EVENING_HOUR
+        if is_evening:
+            bundle["late_caffeine_mg"] += _caffeine_mg_for_names(names)
+            if _has_alcohol(names):
+                bundle["had_alcohol_evening"] = True
+            kcal = _num(row.get("total_calories"))
+            if kcal is not None and kcal >= _LARGE_MEAL_KCAL:
+                bundle["had_large_late_meal"] = True
+
+    return by_day
+
+
+# Sleep-quality getters for a ``daily_activity`` row — the *outcome* side of
+# the food->sleep correlation. Each returns None when the metric is absent.
+def _sleep_minutes(row: Dict[str, Any]) -> Optional[float]:
+    return _num(row.get("sleep_minutes"))
+
+
+def _sleep_latency(row: Dict[str, Any]) -> Optional[float]:
+    return _num(row.get("sleep_latency_minutes"))
+
+
+def _sleep_efficiency(row: Dict[str, Any]) -> Optional[float]:
+    return _num(row.get("sleep_efficiency"))
+
+
+# Each food signal: key -> (human label, getter, "higher value" phrasing).
+# ``getter`` maps a food-day bundle to a daily scalar (None => drop the day).
+def _fs_late_caffeine(b: Dict[str, Any]) -> Optional[float]:
+    return _num(b.get("late_caffeine_mg"))
+
+
+def _fs_alcohol(b: Dict[str, Any]) -> Optional[float]:
+    v = b.get("had_alcohol_evening")
+    return 1.0 if v else 0.0
+
+
+def _fs_large_meal(b: Dict[str, Any]) -> Optional[float]:
+    v = b.get("had_large_late_meal")
+    return 1.0 if v else 0.0
+
+
+def _fs_last_meal_hour(b: Dict[str, Any]) -> Optional[float]:
+    return _num(b.get("last_meal_hour"))
+
+
+# (label, getter, units-noun) — units-noun is used purely for copy.
+_FOOD_SIGNALS: Dict[str, Tuple[str, Any, str]] = {
+    "late_caffeine": ("evening caffeine", _fs_late_caffeine, "mg"),
+    "evening_alcohol": ("evening alcohol", _fs_alcohol, ""),
+    "large_late_meal": ("a large late meal", _fs_large_meal, ""),
+    "late_eating": ("eating later in the day", _fs_last_meal_hour, "h"),
+}
+
+# (label, getter, higher_is_better) for the sleep-outcome side.
+_SLEEP_OUTCOMES: Dict[str, Tuple[str, Any, bool]] = {
+    "sleep_duration": ("sleep duration", _sleep_minutes, True),
+    "sleep_latency": ("how long it took to fall asleep", _sleep_latency, False),
+    "sleep_efficiency": ("sleep efficiency", _sleep_efficiency, True),
+}
+
+
+def _food_sleep_sentence(
+    food_key: str,
+    outcome_key: str,
+    r: float,
+    n: int,
+    mean_diff: Optional[float],
+) -> str:
+    """Association-only insight for a food-signal <-> next-night-sleep pair.
+
+    When a concrete contrast figure is available (``mean_diff`` — the average
+    gap in the sleep metric between the higher-signal and lower-signal nights)
+    the sentence quotes it; otherwise it falls back to a strength/direction
+    phrasing. Either way it is framed as an observed pattern, never a cause."""
+    food_label = _FOOD_SIGNALS[food_key][0]
+    outcome_label = _SLEEP_OUTCOMES[outcome_key][0]
+    strength = _strength_word(abs(r))
+
+    if mean_diff is not None and abs(mean_diff) >= 1.0:
+        if outcome_key == "sleep_duration":
+            return (
+                f"On days with more {food_label}, you slept about "
+                f"{abs(mean_diff):.0f} min {'less' if mean_diff < 0 else 'more'} "
+                f"the following night, on average ({n} nights compared). "
+                f"This is an association in your own data, not proof of cause."
+            )
+        if outcome_key == "sleep_latency":
+            return (
+                f"On days with more {food_label}, you took about "
+                f"{abs(mean_diff):.0f} min "
+                f"{'longer' if mean_diff > 0 else 'less time'} to fall asleep "
+                f"that night, on average ({n} nights compared). "
+                f"This is an association, not proof of cause."
+            )
+        # efficiency — mean_diff is a 0-1 fraction; show points.
+        pts = abs(mean_diff) * 100.0
+        return (
+            f"On days with more {food_label}, your sleep efficiency ran about "
+            f"{pts:.0f} points {'lower' if mean_diff < 0 else 'higher'} that "
+            f"night, on average ({n} nights compared). This is an "
+            f"association, not proof of cause."
+        )
+
+    direction = (
+        "tends to line up with worse sleep"
+        if (r > 0) != _SLEEP_OUTCOMES[outcome_key][2]
+        else "tends to line up with better sleep"
+    )
+    return (
+        f"There's {strength} pattern in your data: {food_label} {direction} "
+        f"the following night (r = {r:+.2f}, {n} nights). This is an "
+        f"association, not proof of cause — but it's worth noticing."
+    )
+
+
+def _mean(values: List[float]) -> Optional[float]:
+    return sum(values) / len(values) if values else None
+
+
+def compute_food_sleep_insights(
+    food_logs: List[Dict[str, Any]],
+    activities: List[Dict[str, Any]],
+    window_days: int = _DEFAULT_WINDOW_DAYS,
+    utc_offset_hours: float = 0.0,
+) -> List[Dict[str, Any]]:
+    """Correlate food-log signals against the *next night's* sleep (Phase E2).
+
+    A food-day's signals (evening caffeine dose, evening alcohol, a large late
+    meal, how late the last meal was) are paired with the sleep recorded for
+    the FOLLOWING calendar date — the night that food could have affected.
+
+    Args:
+        food_logs: ``food_logs`` rows (any order) — ``logged_at``,
+            ``food_items``, ``total_calories``.
+        activities: ``daily_activity`` rows (any order) — the sleep side.
+            Sleep is attributed to its wake date (edge case A2), which is the
+            ``activity_date``, so "the night after food-day D" is the row with
+            ``activity_date == D + 1``.
+        window_days: correlation window, clamped to 30-90 days.
+        utc_offset_hours: the user's UTC offset (e.g. -5 for CDT) used to
+            bucket ``logged_at`` into local calendar days / evening hours.
+
+    Returns:
+        Ranked list (best-first, at most ``_MAX_FOOD_INSIGHTS``) of dicts:
+          ``{"category": "food_sleep", "food_signal", "sleep_metric", "r",
+          "n", "strength", "association_only": True, "insight"}``.
+        Empty when there is not enough paired data — a clean, non-fabricated
+        empty state (edge case G37).
+    """
+    if not food_logs or not activities:
+        return []
+
+    window_days = max(_MIN_WINDOW_DAYS, min(_MAX_WINDOW_DAYS, int(window_days)))
+
+    # Sleep rows keyed by wake (activity) date, kept within the window.
+    sleep_by_date: Dict[date, Dict[str, Any]] = {}
+    for row in _within_window(activities, window_days):
+        raw = row.get("activity_date")
+        try:
+            d = datetime.fromisoformat(str(raw)[:10]).date()
+        except (ValueError, TypeError):
+            continue
+        sleep_by_date[d] = row
+    if len(sleep_by_date) < _MIN_PAIRED_DAYS:
+        return []
+
+    food_by_day = _build_food_day_signals(food_logs, utc_offset_hours)
+    if not food_by_day:
+        return []
+
+    candidates: List[Dict[str, Any]] = []
+
+    for food_key, (_, food_getter, _) in _FOOD_SIGNALS.items():
+        for outcome_key, (_, sleep_getter, _) in _SLEEP_OUTCOMES.items():
+            xs: List[float] = []  # food signal on day D
+            ys: List[float] = []  # sleep metric on night D+1
+            for food_day, bundle in food_by_day.items():
+                x = food_getter(bundle)
+                if x is None:
+                    continue
+                next_night = sleep_by_date.get(food_day + timedelta(days=1))
+                if next_night is None:
+                    continue
+                y = sleep_getter(next_night)
+                if y is None:
+                    continue
+                xs.append(x)
+                ys.append(y)
+
+            n = len(xs)
+            if n < _MIN_PAIRED_DAYS:
+                continue
+
+            r = pearson_r(xs, ys)
+            if r is None or abs(r) < _MIN_ABS_R:
+                continue
+
+            # Concrete contrast: split nights into the days whose food signal
+            # was above vs at-or-below the median, and report the gap in the
+            # sleep metric. Reproducible and easy to phrase honestly.
+            mean_diff = _high_low_mean_diff(xs, ys)
+
+            candidates.append(
+                {
+                    "category": "food_sleep",
+                    "food_signal": food_key,
+                    "sleep_metric": outcome_key,
+                    "r": round(r, 3),
+                    "n": n,
+                    "strength": _strength_word(abs(r)).replace("a ", ""),
+                    "association_only": True,
+                    "insight": _food_sleep_sentence(
+                        food_key, outcome_key, r, n, mean_diff
+                    ),
+                }
+            )
+
+    # Rank by strength then sample size — every pair is equally actionable
+    # (all food signals are things the user can change), so |r| leads.
+    candidates.sort(key=lambda c: (abs(c["r"]), c["n"]), reverse=True)
+    return candidates[:_MAX_FOOD_INSIGHTS]
+
+
+def _high_low_mean_diff(
+    xs: List[float], ys: List[float]
+) -> Optional[float]:
+    """Mean of ``ys`` on the high-``xs`` days minus the mean on the low days.
+
+    "High" = strictly above the median of ``xs``; "low" = at or below it. When
+    the signal is binary (0/1) this cleanly splits the 1-days from the 0-days.
+    Returns None when one side is empty (a flat signal — no contrast to draw).
+    """
+    if len(xs) != len(ys) or not xs:
+        return None
+    ordered = sorted(xs)
+    mid = len(ordered) // 2
+    median = (
+        ordered[mid]
+        if len(ordered) % 2 == 1
+        else (ordered[mid - 1] + ordered[mid]) / 2.0
+    )
+    high = [y for x, y in zip(xs, ys) if x > median]
+    low = [y for x, y in zip(xs, ys) if x <= median]
+    high_mean = _mean(high)
+    low_mean = _mean(low)
+    if high_mean is None or low_mean is None:
+        return None
+    return high_mean - low_mean
+
+
+# =============================================================================
+# Phase E3 — Sleep x training-data insights
+# =============================================================================
+# Correlates a night's sleep against the user's ACTUAL logged lift performance
+# the next day (top-set load, average reps, average RPE from ``performance_logs``)
+# and against AI form-analysis scores (from ``media_analysis_jobs`` rows whose
+# ``job_type == 'form_analysis'``).
+#
+# Hard rules (same gates):
+#   * Performance is paired with the PRECEDING night's sleep — that night is
+#     what could affect today's training. Sleep is attributed to its wake date.
+#   * Minimum evidence: >= ``_MIN_PAIRED_DAYS`` paired days, |r| >= ``_MIN_ABS_R``.
+#   * Form-analysis data is sparse (only submitted videos). The form-score
+#     correlation is simply ABSENT when there are too few scored days — never
+#     extrapolated (edge case G37).
+#   * Association only, never causation.
+
+# How many ranked sleep x training insights to emit at most.
+_MAX_TRAINING_INSIGHTS = 4
+
+# Form-score correlations get their own (smaller) minimum: form videos are
+# rare, so requiring a full 14 paired days would silently drop every real
+# user. 8 is still enough paired (night, scored-lift-day) points for a
+# defensible direction; below it the form pair is omitted, not faked.
+_MIN_FORM_PAIRED_DAYS = 8
+
+
+def _performance_day_signals(
+    performance_logs: List[Dict[str, Any]],
+    utc_offset_hours: float,
+) -> Dict[date, Dict[str, Any]]:
+    """Collapse ``performance_logs`` rows into one bundle per local date.
+
+    Each bundle:
+      ``top_set_kg``  — the heaviest single working set logged that day.
+      ``avg_reps``    — mean reps across the day's sets.
+      ``avg_rpe``     — mean RPE across the day's sets that recorded one.
+
+    A day with no parseable set rows does not appear. ``avg_rpe`` is None when
+    no set that day recorded an RPE — RPE logging is optional, so its absence
+    is normal and that day is simply dropped from the RPE pair.
+    """
+    raw_by_day: Dict[date, Dict[str, List[float]]] = {}
+    for row in performance_logs or []:
+        ts = _parse_ts(row.get("recorded_at"))
+        if ts is None:
+            continue
+        day = _local_date(ts, utc_offset_hours)
+        bucket = raw_by_day.setdefault(day, {"loads": [], "reps": [], "rpes": []})
+        load = _num(row.get("weight_kg"))
+        if load is not None and load > 0:
+            bucket["loads"].append(load)
+        reps = _num(row.get("reps_completed"))
+        if reps is not None and reps > 0:
+            bucket["reps"].append(reps)
+        rpe = _num(row.get("rpe"))
+        if rpe is not None and rpe > 0:
+            bucket["rpes"].append(rpe)
+
+    out: Dict[date, Dict[str, Any]] = {}
+    for day, bucket in raw_by_day.items():
+        out[day] = {
+            "top_set_kg": max(bucket["loads"]) if bucket["loads"] else None,
+            "avg_reps": _mean(bucket["reps"]),
+            "avg_rpe": _mean(bucket["rpes"]),
+        }
+    return out
+
+
+def _form_score_day_signals(
+    form_jobs: List[Dict[str, Any]],
+    utc_offset_hours: float,
+) -> Dict[date, float]:
+    """Mean AI form-analysis score (1-10) per local date.
+
+    ``form_jobs`` are ``media_analysis_jobs`` rows with ``job_type ==
+    'form_analysis'``. The 1-10 ``form_score`` lives in the ``result`` JSONB;
+    a job is used only when it ``completed`` and its result is a real exercise
+    analysis (``content_type == 'exercise'``) with a positive score — a
+    "not_exercise" upload or a failed job is skipped, never scored as 0.
+    """
+    by_day: Dict[date, List[float]] = {}
+    for job in form_jobs or []:
+        if str(job.get("status")) != "completed":
+            continue
+        result = job.get("result")
+        if not isinstance(result, dict):
+            continue
+        if result.get("content_type") not in (None, "exercise"):
+            # An explicit "not_exercise" classification — skip it.
+            continue
+        score = _num(result.get("form_score"))
+        if score is None or score <= 0:
+            continue
+        ts = _parse_ts(job.get("completed_at") or job.get("created_at"))
+        if ts is None:
+            continue
+        day = _local_date(ts, utc_offset_hours)
+        by_day.setdefault(day, []).append(score)
+
+    return {d: _mean(v) for d, v in by_day.items() if v}  # type: ignore[misc]
+
+
+# Training-performance getters over a performance-day bundle.
+def _tr_top_set(b: Dict[str, Any]) -> Optional[float]:
+    return _num(b.get("top_set_kg"))
+
+
+def _tr_avg_reps(b: Dict[str, Any]) -> Optional[float]:
+    return _num(b.get("avg_reps"))
+
+
+def _tr_avg_rpe(b: Dict[str, Any]) -> Optional[float]:
+    return _num(b.get("avg_rpe"))
+
+
+# (label, getter, higher_is_better) for the training-outcome side.
+_TRAINING_METRICS: Dict[str, Tuple[str, Any, bool]] = {
+    "top_set_load": ("your heaviest set", _tr_top_set, True),
+    "avg_reps": ("your average reps per set", _tr_avg_reps, True),
+    # Higher RPE for the same work means it felt harder — lower is "better"
+    # only loosely; polarity is used purely for phrasing.
+    "avg_rpe": ("how hard your sets felt (RPE)", _tr_avg_rpe, False),
+}
+
+
+def _training_sleep_sentence(
+    metric_key: str,
+    r: float,
+    n: int,
+    pct_diff: Optional[float],
+    is_form: bool = False,
+) -> str:
+    """Association-only insight for a sleep <-> next-day-training pair.
+
+    ``pct_diff`` (when present) is ``(long_sleep_mean - short_sleep_mean) /
+    short_sleep_mean * 100`` — the gap in the training metric between the
+    longer-sleep and shorter-sleep days, as a percent of the short-sleep
+    baseline. So a POSITIVE ``pct_diff`` means the metric ran higher after
+    long sleep, i.e. it was LOWER by that same magnitude after short sleep.
+    All copy below is phrased from the "after shorter sleep" point of view,
+    so the short-sleep change is the *negation* of ``pct_diff``."""
+    strength = _strength_word(abs(r))
+
+    if is_form:
+        if pct_diff is not None and abs(pct_diff) >= 3.0:
+            # Change in form score AFTER SHORT SLEEP = -pct_diff.
+            lower_after_short = pct_diff > 0
+            return (
+                f"After shorter nights of sleep, your AI form score tended to "
+                f"run about {abs(pct_diff):.0f}% "
+                f"{'lower' if lower_after_short else 'higher'} the next day, "
+                f"on average ({n} sessions compared). This is an association "
+                f"in your data, not proof of cause — favoring technique work "
+                f"on low-sleep days may still be worth a try."
+            )
+        return (
+            f"There's {strength} pattern in your data: sleep and your next-day "
+            f"AI form score move together (r = {r:+.2f}, {n} sessions). "
+            f"This is an association, not proof of cause."
+        )
+
+    metric_label = _TRAINING_METRICS[metric_key][0]
+    if pct_diff is not None and abs(pct_diff) >= 2.0:
+        # pct_diff > 0  => metric ran HIGHER after long sleep
+        #              => metric ran LOWER after short sleep.
+        lower_after_short = pct_diff > 0
+        if metric_key == "avg_rpe":
+            # RPE: "lower after short sleep" means the work felt EASIER; the
+            # notable, plan-named pattern is RPE running HIGHER after short
+            # sleep (the same training felt harder).
+            if lower_after_short:
+                return (
+                    f"After shorter nights of sleep, {metric_label} tended to "
+                    f"be about {abs(pct_diff):.0f}% lower the next day "
+                    f"({n} days compared). This is an association, not proof "
+                    f"of cause."
+                )
+            return (
+                f"After shorter nights of sleep, {metric_label} tended to be "
+                f"about {abs(pct_diff):.0f}% higher the next day — the same "
+                f"training felt harder ({n} days compared). This is an "
+                f"association, not proof of cause."
+            )
+        # top_set_load / avg_reps — both are "more is better" lifts.
+        if lower_after_short:
+            change_word = "lighter" if metric_key == "top_set_load" else "lower"
+        else:
+            change_word = "heavier" if metric_key == "top_set_load" else "higher"
+        return (
+            f"After shorter nights of sleep, {metric_label} tended to be about "
+            f"{abs(pct_diff):.0f}% {change_word} the next day, on average "
+            f"({n} days compared). This is an association in your own data, "
+            f"not proof of cause."
+        )
+
+    direction = (
+        "tend to rise together" if r > 0 else "tend to move in opposite directions"
+    )
+    return (
+        f"There's {strength} pattern in your data: sleep and {metric_label} "
+        f"{direction} the next day (r = {r:+.2f}, {n} days). This is an "
+        f"association, not proof of cause — but it's worth noticing."
+    )
+
+
+def _high_low_pct_diff(
+    sleep_xs: List[float], metric_ys: List[float]
+) -> Optional[float]:
+    """Percentage gap in ``metric_ys`` between long-sleep and short-sleep days.
+
+    Splits the paired days at the median sleep duration: the metric mean on
+    the longer-sleep days vs the shorter-sleep days, expressed as a percentage
+    of the shorter-sleep mean. A NEGATIVE result means the metric was lower
+    after short sleep (e.g. lighter top sets). Returns None when a side is
+    empty or the baseline mean is zero."""
+    if len(sleep_xs) != len(metric_ys) or not sleep_xs:
+        return None
+    ordered = sorted(sleep_xs)
+    mid = len(ordered) // 2
+    median = (
+        ordered[mid]
+        if len(ordered) % 2 == 1
+        else (ordered[mid - 1] + ordered[mid]) / 2.0
+    )
+    long_sleep = [y for x, y in zip(sleep_xs, metric_ys) if x > median]
+    short_sleep = [y for x, y in zip(sleep_xs, metric_ys) if x <= median]
+    long_mean = _mean(long_sleep)
+    short_mean = _mean(short_sleep)
+    if long_mean is None or short_mean is None or short_mean == 0:
+        return None
+    # Gap as a % of the short-sleep baseline: (long - short) / short * 100.
+    # Positive => metric higher after long sleep (i.e. lower after short).
+    return (long_mean - short_mean) / abs(short_mean) * 100.0
+
+
+def compute_training_sleep_insights(
+    activities: List[Dict[str, Any]],
+    performance_logs: List[Dict[str, Any]],
+    form_jobs: Optional[List[Dict[str, Any]]] = None,
+    window_days: int = _DEFAULT_WINDOW_DAYS,
+    utc_offset_hours: float = 0.0,
+) -> List[Dict[str, Any]]:
+    """Correlate a night's sleep with next-day training output (Phase E3).
+
+    A night's sleep (attributed to its wake date) is paired with the lift
+    performance logged on THAT SAME calendar date — the training the night
+    fueled. Three performance metrics (top-set load, average reps, average
+    RPE) come from ``performance_logs``; an optional fourth correlation pairs
+    sleep with the AI form-analysis score from ``media_analysis_jobs``.
+
+    Args:
+        activities: ``daily_activity`` rows — the sleep side.
+        performance_logs: ``performance_logs`` rows — ``weight_kg``,
+            ``reps_completed``, ``rpe``, ``recorded_at``.
+        form_jobs: optional ``media_analysis_jobs`` rows with
+            ``job_type == 'form_analysis'``. Sparse by nature — when too few
+            scored days exist the form pair is omitted, not faked.
+        window_days: correlation window, clamped to 30-90 days.
+        utc_offset_hours: the user's UTC offset for local-day bucketing.
+
+    Returns:
+        Ranked list (best-first, at most ``_MAX_TRAINING_INSIGHTS``) of dicts:
+          ``{"category": "sleep_training", "sleep_metric": "sleep_duration",
+          "training_metric", "r", "n", "strength", "association_only": True,
+          "insight"}``.
+        Empty when there is not enough paired data — a clean empty state.
+    """
+    if not activities or not performance_logs:
+        return []
+
+    window_days = max(_MIN_WINDOW_DAYS, min(_MAX_WINDOW_DAYS, int(window_days)))
+
+    # Sleep duration keyed by wake date, within the window. Only the duration
+    # is used as the sleep side here — it is the metric with the broadest
+    # coverage (latency/efficiency are often null).
+    sleep_by_date: Dict[date, float] = {}
+    for row in _within_window(activities, window_days):
+        raw = row.get("activity_date")
+        try:
+            d = datetime.fromisoformat(str(raw)[:10]).date()
+        except (ValueError, TypeError):
+            continue
+        mins = _num(row.get("sleep_minutes"))
+        if mins is not None and mins > 0:
+            sleep_by_date[d] = mins
+    if len(sleep_by_date) < _MIN_PAIRED_DAYS:
+        return []
+
+    perf_by_day = _performance_day_signals(performance_logs, utc_offset_hours)
+    if not perf_by_day:
+        return []
+
+    candidates: List[Dict[str, Any]] = []
+
+    # --- sleep <-> logged lift performance ----------------------------------
+    for metric_key, (_, getter, _) in _TRAINING_METRICS.items():
+        sleep_xs: List[float] = []
+        metric_ys: List[float] = []
+        for perf_day, bundle in perf_by_day.items():
+            sleep_mins = sleep_by_date.get(perf_day)
+            if sleep_mins is None:
+                continue
+            y = getter(bundle)
+            if y is None:
+                continue
+            sleep_xs.append(sleep_mins)
+            metric_ys.append(y)
+
+        n = len(sleep_xs)
+        if n < _MIN_PAIRED_DAYS:
+            continue
+        r = pearson_r(sleep_xs, metric_ys)
+        if r is None or abs(r) < _MIN_ABS_R:
+            continue
+        pct_diff = _high_low_pct_diff(sleep_xs, metric_ys)
+        candidates.append(
+            {
+                "category": "sleep_training",
+                "sleep_metric": "sleep_duration",
+                "training_metric": metric_key,
+                "r": round(r, 3),
+                "n": n,
+                "strength": _strength_word(abs(r)).replace("a ", ""),
+                "association_only": True,
+                "insight": _training_sleep_sentence(
+                    metric_key, r, n, pct_diff, is_form=False
+                ),
+            }
+        )
+
+    # --- sleep <-> AI form-analysis score (sparse — separate lower gate) ----
+    form_by_day = _form_score_day_signals(form_jobs or [], utc_offset_hours)
+    if form_by_day:
+        sleep_xs = []
+        score_ys: List[float] = []
+        for form_day, score in form_by_day.items():
+            sleep_mins = sleep_by_date.get(form_day)
+            if sleep_mins is None:
+                continue
+            sleep_xs.append(sleep_mins)
+            score_ys.append(score)
+        n = len(sleep_xs)
+        # Sparse-data gate: a smaller minimum, and absent (not faked) below it.
+        if n >= _MIN_FORM_PAIRED_DAYS:
+            r = pearson_r(sleep_xs, score_ys)
+            if r is not None and abs(r) >= _MIN_ABS_R:
+                pct_diff = _high_low_pct_diff(sleep_xs, score_ys)
+                candidates.append(
+                    {
+                        "category": "sleep_training",
+                        "sleep_metric": "sleep_duration",
+                        "training_metric": "form_score",
+                        "r": round(r, 3),
+                        "n": n,
+                        "strength": _strength_word(abs(r)).replace("a ", ""),
+                        "association_only": True,
+                        "insight": _training_sleep_sentence(
+                            "form_score", r, n, pct_diff, is_form=True
+                        ),
+                    }
+                )
+
+    candidates.sort(key=lambda c: (abs(c["r"]), c["n"]), reverse=True)
+    return candidates[:_MAX_TRAINING_INSIGHTS]

@@ -1196,28 +1196,50 @@ async def get_smart_insights(
 ):
     """Cross-metric correlation insights from the user's daily_activity history.
 
-    Pairs sleep, steps, active calories, resting HR, training load, and body
-    weight; keeps pairs with >= 14 paired days and |r| >= 0.30; ranks by
-    actionability. Recomputed weekly (cached 7 days).
+    Three correlation families, all deterministic and association-only:
+      * cross-metric (Phase D1) — sleep, steps, active calories, resting HR,
+        training load, body weight paired against each other.
+      * food -> sleep (Phase E2) — evening caffeine, alcohol, large late
+        meals and how late the user ate, paired against the *next night's*
+        sleep duration / latency / efficiency.
+      * sleep -> training (Phase E3) — a night's sleep paired against the
+        next day's logged lift performance (top-set load, reps, RPE) and AI
+        form-analysis scores.
 
-    Returns ``{"insights": [...], "cached": bool}``. ``insights`` is empty —
-    cleanly, with no spurious output — when the user has fewer than 14 paired
-    days or no wearable data (edge case F33)."""
+    Every family keeps pairs with >= 14 paired days (8 for the sparse
+    form-score pair) and |r| >= 0.30. Recomputed weekly (cached 7 days).
+
+    Returns ``{"insights": [...], "food_sleep_insights": [...],
+    "training_sleep_insights": [...], "cached": bool}``. Each list is empty —
+    cleanly, with no spurious output — when the user has fewer than the
+    minimum paired days or no data (edge cases F33 / G37)."""
     try:
-        from services.health_insights_engine import compute_smart_insights
+        from services.health_insights_engine import (
+            compute_smart_insights,
+            compute_food_sleep_insights,
+            compute_training_sleep_insights,
+        )
 
         db = get_supabase_db()
 
         # Weekly cache. The shape is stable per user + window so the key is too.
-        cache_key = f"smart_insights_{user_id}_w{window_days}"
+        # v2 key — the payload now carries the E2/E3 lists, so a stale v1 cache
+        # entry (cross-metric only) must not be served as if complete.
+        cache_key = f"smart_insights_v2_{user_id}_w{window_days}"
         if not force_refresh:
             cached = db.client.table("ai_insight_cache").select("*").eq(
                 "cache_key", cache_key
             ).gt("expires_at", datetime.utcnow().isoformat()).limit(1).execute()
             if cached.data:
                 try:
+                    payload = json.loads(cached.data[0]["insight"])
+                    if isinstance(payload, dict):
+                        return {**payload, "cached": True}
+                    # Legacy bare-list cache — treat as cross-metric only.
                     return {
-                        "insights": json.loads(cached.data[0]["insight"]),
+                        "insights": payload,
+                        "food_sleep_insights": [],
+                        "training_sleep_insights": [],
                         "cached": True,
                     }
                 except (json.JSONDecodeError, ValueError) as e:
@@ -1228,9 +1250,21 @@ async def get_smart_insights(
 
         try:
             if not has_health_data_consent(user_id):
-                return {"insights": [], "cached": False, "reason": "no_consent"}
+                return {
+                    "insights": [],
+                    "food_sleep_insights": [],
+                    "training_sleep_insights": [],
+                    "cached": False,
+                    "reason": "no_consent",
+                }
         except Exception:
-            return {"insights": [], "cached": False, "reason": "no_consent"}
+            return {
+                "insights": [],
+                "food_sleep_insights": [],
+                "training_sleep_insights": [],
+                "cached": False,
+                "reason": "no_consent",
+            }
 
         # Pull up to 90 days of activity, newest-first.
         today = user_today_date(request, db, user_id)
@@ -1248,13 +1282,133 @@ async def get_smart_insights(
 
         insights = compute_smart_insights(activities or [], window_days=window_days)
 
+        # --- Phase E2 / E3 inputs --------------------------------------------
+        # The food / performance / form correlations bucket their timestamped
+        # rows into the user's LOCAL calendar day, so resolve the user's UTC
+        # offset once (a fixed offset is fine — instant-based, edge case A5).
+        utc_offset_hours = _user_utc_offset_hours(request, db, user_id)
+
+        food_logs = _fetch_food_logs(db, user_id, from_date, today.isoformat())
+        food_sleep = compute_food_sleep_insights(
+            food_logs,
+            activities or [],
+            window_days=window_days,
+            utc_offset_hours=utc_offset_hours,
+        )
+
+        performance_logs = _fetch_performance_logs(db, user_id)
+        form_jobs = _fetch_form_analysis_jobs(db, user_id)
+        training_sleep = compute_training_sleep_insights(
+            activities or [],
+            performance_logs,
+            form_jobs=form_jobs,
+            window_days=window_days,
+            utc_offset_hours=utc_offset_hours,
+        )
+
+        payload = {
+            "insights": insights,
+            "food_sleep_insights": food_sleep,
+            "training_sleep_insights": training_sleep,
+        }
+
         # Cache for a week — the engine is meant to recompute weekly.
-        _cache_insight(db, cache_key, json.dumps(insights), hours=168)
-        return {"insights": insights, "cached": False}
+        _cache_insight(db, cache_key, json.dumps(payload), hours=168)
+        return {**payload, "cached": False}
 
     except Exception as e:
         logger.error(f"Failed to compute smart insights for {user_id}: {e}", exc_info=True)
         raise safe_internal_error(e, "insights")
+
+
+def _user_utc_offset_hours(request: Request, db, user_id: str) -> float:
+    """The user's current UTC offset in hours (e.g. -5.0 for US Central CDT).
+
+    Used to bucket ``food_logs.logged_at`` / ``performance_logs.recorded_at``
+    into the user's LOCAL calendar day for the E2/E3 correlations. Resolves
+    the user's IANA timezone and reads the live offset; any failure falls back
+    to 0.0 (UTC) — a safe, deterministic default that never raises.
+    """
+    try:
+        from zoneinfo import ZoneInfo
+
+        tz_str = resolve_timezone(request, db, user_id)
+        offset = datetime.now(ZoneInfo(tz_str)).utcoffset()
+        return offset.total_seconds() / 3600.0 if offset is not None else 0.0
+    except Exception as e:
+        logger.debug(f"smart-insights: UTC offset resolve failed for {user_id}: {e}")
+        return 0.0
+
+
+def _fetch_food_logs(
+    db, user_id: str, from_date: str, to_date: str
+) -> List[Dict[str, Any]]:
+    """Food-log rows for the correlation window (Phase E2 input).
+
+    Pulls up to 90 days of ``food_logs`` — multiple meals/day means the row
+    count far exceeds the day count, so the limit is generous. Any failure
+    yields ``[]`` and the food->sleep family is simply absent (never an
+    error)."""
+    try:
+        return (
+            db.list_food_logs(
+                user_id=user_id,
+                from_date=from_date,
+                to_date=to_date,
+                limit=_SMART_INSIGHT_MAX_DAYS * 8,
+            )
+            or []
+        )
+    except Exception as e:
+        logger.warning(f"smart-insights: food-log fetch skipped for {user_id}: {e}")
+        return []
+
+
+def _fetch_performance_logs(db, user_id: str) -> List[Dict[str, Any]]:
+    """Logged lift sets for the correlation window (Phase E3 input).
+
+    ``list_performance_logs`` returns ``recorded_at DESC``; a 90-day window
+    with several sets per session needs a high limit. Any failure yields
+    ``[]`` and the sleep->training family is simply absent."""
+    try:
+        return (
+            db.list_performance_logs(
+                user_id=user_id,
+                limit=_SMART_INSIGHT_MAX_DAYS * 12,
+            )
+            or []
+        )
+    except Exception as e:
+        logger.warning(
+            f"smart-insights: performance-log fetch skipped for {user_id}: {e}"
+        )
+        return []
+
+
+def _fetch_form_analysis_jobs(db, user_id: str) -> List[Dict[str, Any]]:
+    """Completed AI form-analysis jobs for the user (Phase E3 input).
+
+    Form scores live in ``media_analysis_jobs.result`` (JSONB) on rows with
+    ``job_type == 'form_analysis'``. This data is sparse (only submitted
+    videos) — the engine has a lower minimum n for it and is absent gracefully
+    when there are too few. Any failure yields ``[]``."""
+    try:
+        result = (
+            db.client.table("media_analysis_jobs")
+            .select("id, job_type, status, result, created_at, completed_at")
+            .eq("user_id", user_id)
+            .eq("job_type", "form_analysis")
+            .eq("status", "completed")
+            .order("completed_at", desc=True)
+            .limit(_SMART_INSIGHT_MAX_DAYS + 30)
+            .execute()
+        )
+        return result.data or []
+    except Exception as e:
+        logger.warning(
+            f"smart-insights: form-analysis fetch skipped for {user_id}: {e}"
+        )
+        return []
 
 
 def _merge_weight_into_activities(db, user_id: str, activities: List[Dict]) -> None:
