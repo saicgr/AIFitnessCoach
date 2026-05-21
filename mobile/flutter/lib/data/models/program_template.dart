@@ -678,7 +678,10 @@ class ProgramLibraryResult {
 }
 
 // ---------------------------------------------------------------------------
-// ScheduleResult — `POST /{id}/schedule` response.
+// ScheduleResult — response for both `POST /{id}/schedule` and
+// `POST /{id}/regenerate-future`. Schedule populates workoutsCreated/
+// skippedExisting/deloadWeeks; regenerate-future populates
+// workoutsUpdated/workoutsRemoved. The other group stays null/0.
 // ---------------------------------------------------------------------------
 
 class ScheduleResult {
@@ -688,6 +691,8 @@ class ScheduleResult {
   final int workoutsCreated;
   final int skippedExisting;
   final List<int> deloadWeeks;
+  final int? workoutsUpdated;
+  final int? workoutsRemoved;
 
   const ScheduleResult({
     required this.success,
@@ -696,6 +701,8 @@ class ScheduleResult {
     this.workoutsCreated = 0,
     this.skippedExisting = 0,
     this.deloadWeeks = const [],
+    this.workoutsUpdated,
+    this.workoutsRemoved,
   });
 
   factory ScheduleResult.fromJson(Map<String, dynamic> json) {
@@ -714,6 +721,8 @@ class ScheduleResult {
       workoutsCreated: _asInt(json['workouts_created']) ?? 0,
       skippedExisting: _asInt(json['skipped_existing']) ?? 0,
       deloadWeeks: weeks,
+      workoutsUpdated: _asInt(json['workouts_updated']),
+      workoutsRemoved: _asInt(json['workouts_removed']),
     );
   }
 }
