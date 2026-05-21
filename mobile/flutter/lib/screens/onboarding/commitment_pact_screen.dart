@@ -68,11 +68,10 @@ class _CommitmentPactScreenState extends ConsumerState<CommitmentPactScreen> {
       await FounderNoteSheet.showAfterConversion(context);
     }
 
-    // Unified pre-permission primer (camera + photos + microphone +
-    // notifications). Replaces the previous chain that went
-    // notifications-prime → home → permissions-primer → notifications-prime
-    // and showed users the notification screen twice.
-    if (mounted) context.go('/permissions-primer');
+    // Health Connect onboarding next — connect the wearable + capture the
+    // health-data consent before the unified permissions primer
+    // (this screen → health-connect → permissions-primer → home).
+    if (mounted) context.go('/health-connect-onboarding');
   }
 
   /// First Maybe-later tap → soft-friction confirmation modal.
@@ -234,11 +233,10 @@ class _CommitmentPactScreenState extends ConsumerState<CommitmentPactScreen> {
       },
     );
 
-    // Unified pre-permission primer (camera + photos + microphone +
-    // notifications). Replaces the previous chain that went
-    // notifications-prime → home → permissions-primer → notifications-prime
-    // and showed users the notification screen twice.
-    if (mounted) context.go('/permissions-primer');
+    // Health Connect onboarding next — connect the wearable + capture the
+    // health-data consent before the unified permissions primer
+    // (this screen → health-connect → permissions-primer → home).
+    if (mounted) context.go('/health-connect-onboarding');
   }
 
   /// Compose the personalized commit-pact body — dot strip for the

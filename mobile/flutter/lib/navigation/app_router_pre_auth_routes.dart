@@ -347,6 +347,15 @@ List<RouteBase> _preAuthRoutes() => [
         builder: (context, state) => const PermissionsPrimerScreen(),
       ),
 
+      // Health Connect / Apple Health onboarding — post-paywall, before the
+      // permissions primer (commitment-pact → health-connect → primer →
+      // home). Connects the platform health store + captures the GDPR Art. 9
+      // server-storage consent that unlocks the AI health-coaching features.
+      GoRoute(
+        path: HealthConnectOnboardingScreen.routePath,
+        builder: (context, state) => const HealthConnectOnboardingScreen(),
+      ),
+
       // Notification pre-permission screen — shown once after onboarding/paywall
       // before the user lands on /home. The OS notification prompt only fires
       // if the user opts in here (soft prompt → hard prompt pattern).

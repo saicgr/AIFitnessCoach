@@ -31,6 +31,7 @@ import '../screens/stats/comprehensive_stats_screen.dart';
 import '../screens/onboarding/pre_auth_quiz_screen.dart';
 import '../screens/onboarding/notification_prime_screen.dart';
 import '../screens/onboarding/permissions_primer_screen.dart';
+import '../screens/onboarding/health_connect_onboarding_screen.dart';
 import '../screens/onboarding/coach_selection_screen.dart';
 import '../screens/onboarding/personal_info_screen.dart';
 import '../screens/onboarding/fitness_assessment_screen.dart';
