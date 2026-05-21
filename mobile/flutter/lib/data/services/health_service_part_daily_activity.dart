@@ -213,6 +213,14 @@ class DailyActivityNotifier extends StateNotifier<DailyActivityState> {
   final ApiClient _apiClient;
   final PosthogService _posthog;
 
+  /// Disclosed App Store / Play reviewer demo flag. True ONLY for the
+  /// reviewer account in `demoHealthModeProvider`'s allowlist. When true,
+  /// `loadTodayActivity` sources today's row from the seeded backend data
+  /// (`ActivityService.getTodayActivity`) instead of the platform Health
+  /// store. For every real account this is false and the load path is
+  /// byte-identical to before.
+  final bool _demoMode;
+
   /// Timestamp of the last successful `loadTodayActivity()`. Used to enforce
   /// a 60-second TTL on today's bucket so rapid tab switches don't hammer
   /// Health Connect, but stale caches (>60s, e.g. after a walk) re-query.
@@ -235,6 +243,7 @@ class DailyActivityNotifier extends StateNotifier<DailyActivityState> {
     this._activityService,
     this._apiClient,
     this._posthog,
+    this._demoMode,
   ) : super(const DailyActivityState()) {
     // Auto-load if connected
     if (_syncState.isConnected) {
@@ -284,6 +293,49 @@ class DailyActivityNotifier extends StateNotifier<DailyActivityState> {
     // what caused the 905 vs 32 step mismatch (a stale bucket from earlier
     // in the session was being shown instead of re-querying).
     if (!force && _isCacheFresh()) {
+      return;
+    }
+
+    // Disclosed reviewer demo: source today's activity from the seeded
+    // backend row instead of the platform Health store. Reviewers cannot
+    // pair a wearable and Health Connect / HealthKit do not run on an
+    // emulator, so the real path below would always yield empty for them.
+    // This branch is entered ONLY for the allowlisted reviewer account
+    // (`demoHealthModeProvider`); every real account skips it entirely.
+    if (_demoMode) {
+      state = state.copyWith(isLoading: true, error: null);
+      try {
+        final userId = await _apiClient.getUserId();
+        DailyActivity? today;
+        if (userId != null) {
+          today = await _activityService.getTodayActivity(userId);
+        }
+        // The most recent seeded `daily_activity` row ends yesterday, so a
+        // demo "today" may be absent. Fall back to the latest history row
+        // so the cards still render real seeded numbers for the reviewer.
+        if (today == null && userId != null) {
+          final history = await _activityService.getActivityHistory(
+            userId,
+            limit: 1,
+          );
+          if (history.isNotEmpty) today = history.first;
+        }
+        final stampNow = DateTime.now();
+        _lastFetchAt = stampNow;
+        _lastFetchDay = DateTime(stampNow.year, stampNow.month, stampNow.day);
+        state = state.copyWith(
+          isLoading: false,
+          today: today ??
+              DailyActivity(date: DateTime.now(), isFromHealthConnect: false),
+        );
+      } catch (e) {
+        debugPrint('❌ [Demo] Error loading reviewer demo activity: $e');
+        state = state.copyWith(
+          isLoading: false,
+          error: e.toString(),
+          today: DailyActivity(date: DateTime.now(), isFromHealthConnect: false),
+        );
+      }
       return;
     }
 
@@ -592,7 +644,22 @@ class HealthSyncState {
 class HealthSyncNotifier extends StateNotifier<HealthSyncState> {
   final HealthService _healthService;
 
-  HealthSyncNotifier(this._healthService) : super(const HealthSyncState()) {
+  /// Disclosed App Store / Play reviewer demo flag. True ONLY for the
+  /// reviewer account in `demoHealthModeProvider`'s allowlist. When true the
+  /// notifier reports `isConnected: true` immediately (and skips the real
+  /// platform permission probe) so the health cards render against the
+  /// seeded backend data. For every real account this is false and the
+  /// notifier behaves byte-identically to before.
+  final bool _demoMode;
+
+  HealthSyncNotifier(this._healthService, this._demoMode)
+      : super(HealthSyncState(isConnected: _demoMode)) {
+    if (_demoMode) {
+      // Reviewer demo: skip the real Health Connect / HealthKit probe
+      // entirely — `isConnected` is already true and there is no platform
+      // store to verify against on a reviewer's emulator.
+      return;
+    }
     _loadSyncState();
   }
 

@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'api_client.dart';
 import 'activity_service.dart';
 import '../../core/services/posthog_service.dart';
+import '../providers/demo_health_mode_provider.dart';
 
 part 'health_service_part_daily_activity.dart';
 
@@ -17,6 +18,68 @@ final healthServiceProvider = Provider<HealthService>((ref) {
   return HealthService();
 });
 
+// ===========================================================================
+// Disclosed reviewer-demo converters
+// ===========================================================================
+//
+// These convert a backend `DailyActivity` row (one per calendar day, from
+// the seeded `daily_activity` table) into the in-memory `SleepSummary` /
+// `DailySleep` shapes the sleep UI normally builds from raw Health Connect
+// / HealthKit data points. They are used ONLY by the reviewer-demo branches
+// of the health providers — see `demoHealthModeProvider`. Real accounts
+// never reach this code.
+
+/// Build a [SleepSummary] from a backend [DailyActivity] row's stored sleep
+/// totals. Returns `null` when the row carries no usable sleep duration
+/// (mirrors the `!sleep.hasData` guards on the real path).
+SleepSummary? sleepSummaryFromActivity(DailyActivity a) {
+  final total = a.sleepMinutes ?? 0;
+  if (total <= 0) return null;
+  final deep = a.deepSleepMinutes ?? 0;
+  final rem = a.remSleepMinutes ?? 0;
+  final awake = a.awakeSleepMinutes ?? 0;
+  // Light = remainder when not explicitly stored (the seed always stores it,
+  // but stay defensive against older rows).
+  final light = a.lightSleepMinutes ?? (total - deep - rem).clamp(0, total);
+  final bed = a.sleepStart;
+  final wake = a.sleepEnd;
+  int? timeInBed;
+  if (bed != null && wake != null) {
+    final span = wake.difference(bed).inMinutes;
+    if (span > 0) timeInBed = span;
+  }
+  return SleepSummary(
+    totalMinutes: total,
+    deepMinutes: deep,
+    remMinutes: rem,
+    lightMinutes: light,
+    awakeMinutes: awake,
+    bedTime: bed,
+    wakeTime: wake,
+    timeInBedMinutes: timeInBed,
+    efficiency: a.sleepEfficiency,
+    latencyMinutes: a.sleepLatencyMinutes,
+  );
+}
+
+/// Build a [DailySleep] (one main sleep, no naps) from a backend
+/// [DailyActivity] row. A `daily_activity` row stores a single combined
+/// sleep value per calendar day, so there is exactly one sleep session and
+/// the naps list is always empty. Returns `null` when the row has no sleep.
+DailySleep? dailySleepFromActivity(DailyActivity a) {
+  final main = sleepSummaryFromActivity(a);
+  if (main == null) return null;
+  // Bucket by the row's activity_date (the wake date), local-midnight key —
+  // matches `getNightlySleepHistory`'s wake-date keying.
+  final wakeDate = DateTime(a.date.year, a.date.month, a.date.day);
+  return DailySleep(
+    date: wakeDate,
+    mainSleep: main,
+    naps: const [],
+    totalAsleepMinutes: main.totalMinutes,
+  );
+}
+
 /// Daily activity provider
 final dailyActivityProvider = StateNotifierProvider<DailyActivityNotifier, DailyActivityState>((ref) {
   return DailyActivityNotifier(
@@ -25,12 +88,21 @@ final dailyActivityProvider = StateNotifierProvider<DailyActivityNotifier, Daily
     ref.watch(activityServiceProvider),
     ref.watch(apiClientProvider),
     ref.watch(posthogServiceProvider),
+    // Disclosed reviewer demo: when true, today's activity is loaded from
+    // the seeded backend row instead of the platform Health store. False
+    // for every real account — see `demoHealthModeProvider`.
+    ref.watch(demoHealthModeProvider),
   );
 });
 
 /// Health sync state provider
 final healthSyncProvider = StateNotifierProvider<HealthSyncNotifier, HealthSyncState>((ref) {
-  return HealthSyncNotifier(ref.watch(healthServiceProvider));
+  return HealthSyncNotifier(
+    ref.watch(healthServiceProvider),
+    // Reviewer demo accounts read as connected so the health cards render
+    // without a paired wearable. False for every real account.
+    ref.watch(demoHealthModeProvider),
+  );
 });
 
 /// AI / chat / manually-logged calories burned TODAY (Phase 6).

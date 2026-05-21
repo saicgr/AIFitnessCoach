@@ -2,7 +2,10 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:health/health.dart';
+import '../services/activity_service.dart';
+import '../services/api_client.dart';
 import '../services/health_service.dart';
+import 'demo_health_mode_provider.dart';
 
 // ============================================
 // Sleep Provider (merged from sleep_provider.dart)
@@ -13,6 +16,27 @@ import '../services/health_service.dart';
 final sleepProvider = FutureProvider.autoDispose<SleepSummary?>((ref) async {
   final syncState = ref.watch(healthSyncProvider);
   if (!syncState.isConnected) return null;
+
+  // Disclosed reviewer demo: source last night's sleep from the most recent
+  // seeded backend `daily_activity` row. Entered ONLY for the allowlisted
+  // reviewer account; real accounts skip this branch.
+  if (ref.watch(demoHealthModeProvider)) {
+    final apiClient = ref.watch(apiClientProvider);
+    final userId = await apiClient.getUserId();
+    if (userId == null) return null;
+    try {
+      final rows = await ref
+          .watch(activityServiceProvider)
+          .getActivityHistory(userId, limit: 1);
+      if (rows.isEmpty) return null;
+      final sleep = sleepSummaryFromActivity(rows.first);
+      if (sleep == null || !sleep.hasData) return null;
+      return sleep;
+    } catch (e) {
+      debugPrint('❌ [SleepProvider][Demo] Error fetching demo sleep: $e');
+      return null;
+    }
+  }
 
   final healthService = ref.watch(healthServiceProvider);
   try {
@@ -56,6 +80,71 @@ final recoveryProvider =
     FutureProvider.autoDispose<ObjectiveRecoveryScore?>((ref) async {
   final syncState = ref.watch(healthSyncProvider);
   if (!syncState.isConnected) return null;
+
+  // Disclosed reviewer demo: compute the recovery score from the seeded
+  // backend rows — today's resting HR vs a 7-day RHR baseline, plus the
+  // seeded sleep quality. Entered ONLY for the allowlisted reviewer
+  // account; real accounts skip this branch.
+  if (ref.watch(demoHealthModeProvider)) {
+    final apiClient = ref.watch(apiClientProvider);
+    final userId = await apiClient.getUserId();
+    if (userId == null) return null;
+    try {
+      final rows = await ref
+          .watch(activityServiceProvider)
+          .getActivityHistory(userId, limit: 7);
+      if (rows.isEmpty) return null;
+      final latest = rows.first; // newest-first from the backend
+      final restingHR = latest.restingHeartRate;
+      final sleep = sleepSummaryFromActivity(latest);
+
+      double totalPoints = 0;
+      double totalWeight = 0;
+
+      // --- Resting HR scoring (weight 30) — today vs 7-day baseline ---
+      if (restingHR != null) {
+        final baseline = <int>[
+          for (final r in rows)
+            if (r.restingHeartRate != null) r.restingHeartRate!,
+        ];
+        double hrPoints = 20; // moderate default when no baseline
+        if (baseline.isNotEmpty) {
+          final avg =
+              baseline.reduce((a, b) => a + b) / baseline.length;
+          final diff = restingHR - avg;
+          if (diff < -5) {
+            hrPoints = 30;
+          } else if (diff <= 5) {
+            hrPoints = 20;
+          } else {
+            hrPoints = 10;
+          }
+        }
+        totalPoints += hrPoints;
+        totalWeight += 30;
+      }
+
+      // --- Sleep quality scoring (weight 25) ---
+      if (sleep != null && sleep.hasData) {
+        totalPoints += _scoreSleepQuality(sleep.quality);
+        totalWeight += 25;
+      }
+
+      int finalScore = 0;
+      if (totalWeight > 0) {
+        finalScore =
+            ((totalPoints / totalWeight) * 100).round().clamp(0, 100);
+      }
+      return ObjectiveRecoveryScore(
+        score: finalScore,
+        restingHR: restingHR,
+        sleepSummary: sleep,
+      );
+    } catch (e) {
+      debugPrint('❌ [RecoveryProvider][Demo] Error computing demo score: $e');
+      return null;
+    }
+  }
 
   final healthService = ref.watch(healthServiceProvider);
 

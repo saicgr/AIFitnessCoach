@@ -3,7 +3,10 @@ import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../services/activity_service.dart';
+import '../services/api_client.dart';
 import '../services/health_service.dart';
+import 'demo_health_mode_provider.dart';
 
 /// How far back the Sleep detail screen loads nightly history.
 ///
@@ -192,6 +195,34 @@ final sleepHistoryProvider =
     FutureProvider.autoDispose<SleepHistory>((ref) async {
   final syncState = ref.watch(healthSyncProvider);
   if (!syncState.isConnected) return SleepHistory.empty;
+
+  // Disclosed reviewer demo: build nightly history from the seeded backend
+  // `daily_activity` rows (one combined main sleep per day, no naps)
+  // instead of raw Health Connect / HealthKit data points. Entered ONLY for
+  // the allowlisted reviewer account; real accounts skip this branch.
+  if (ref.watch(demoHealthModeProvider)) {
+    final apiClient = ref.watch(apiClientProvider);
+    final userId = await apiClient.getUserId();
+    if (userId == null) return SleepHistory.empty;
+    try {
+      final now = DateTime.now();
+      final from = now.subtract(const Duration(days: kSleepHistoryDays));
+      final rows = await ref.watch(activityServiceProvider).getActivityHistory(
+            userId,
+            limit: kSleepHistoryDays + 2,
+            fromDate: from,
+            toDate: now,
+          );
+      final nights = <DailySleep>[
+        for (final row in rows)
+          if (dailySleepFromActivity(row) case final DailySleep n) n,
+      ]..sort((a, b) => b.date.compareTo(a.date));
+      return SleepHistory(nights: nights);
+    } catch (e) {
+      debugPrint('❌ [SleepHistory][Demo] Error loading demo history: $e');
+      return SleepHistory.empty;
+    }
+  }
 
   final healthService = ref.watch(healthServiceProvider);
   try {

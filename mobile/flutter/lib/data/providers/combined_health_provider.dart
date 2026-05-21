@@ -95,6 +95,13 @@ class CombinedHealthHistory {
 /// fabricated rows.
 final combinedHealthHistoryProvider =
     FutureProvider.autoDispose<CombinedHealthHistory>((ref) async {
+  // This provider already sources from the backend `/activity/history`
+  // endpoint, so the disclosed reviewer demo needs no separate code path:
+  // `healthSyncProvider` reports `isConnected: true` for the allowlisted
+  // reviewer account (see `demoHealthModeProvider`), which lets this gate
+  // through, and the seeded `daily_activity` rows are then loaded exactly
+  // like a real account's synced rows. Behaviour is unchanged for real
+  // accounts.
   final syncState = ref.watch(healthSyncProvider);
   if (!syncState.isConnected) return CombinedHealthHistory.empty;
 
