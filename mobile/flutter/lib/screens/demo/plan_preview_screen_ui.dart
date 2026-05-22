@@ -397,6 +397,50 @@ extension _PlanPreviewScreenStateUI on _PlanPreviewScreenState {
 
 
   Widget _buildBottomCTAs(bool isDark, Color textPrimary) {
+    // Onboarding conversion v6: inside the funnel this screen is a
+    // personalized pre-paywall reveal, so it gets a single forward CTA
+    // into the value screen — not the guest-timer's subscribe / continue-
+    // free fork.
+    if (widget.fromOnboarding) {
+      return Container(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.elevated : AppColorsLight.elevated,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 10,
+              offset: const Offset(0, -2),
+            ),
+          ],
+        ),
+        child: SafeArea(
+          top: false,
+          child: SizedBox(
+            width: double.infinity,
+            height: 54,
+            child: ElevatedButton(
+              onPressed: () {
+                HapticFeedback.mediumImpact();
+                context.go('/onboarding-value');
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.onboardingAccent,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                elevation: 0,
+              ),
+              child: const Text(
+                'Continue',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(

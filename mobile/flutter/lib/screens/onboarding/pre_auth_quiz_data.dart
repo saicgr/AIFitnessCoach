@@ -86,6 +86,17 @@ class PreAuthQuizData {
   // Anchored throughout trial (home header, coach messages, trial summary).
   final String? goalTargetDate;          // ISO date YYYY-MM-DD
 
+  // ── Onboarding conversion v6 — engagement-only fields ──────────────
+  // Collected by standalone route screens (onboarding_why / _blocker /
+  // _confidence), NOT the quiz step machine. They do not feed workout
+  // generation — they exist to build emotional commitment and to
+  // personalize later copy (reflect screen, paywall headline). All three
+  // are optional; the "why" screen is skippable so every consumer must
+  // tolerate a null value.
+  final String? primaryWhy;    // emotional "why" answer id (e.g. 'keep_up')
+  final String? pastBlocker;   // "what held you back" answer id (e.g. 'no_time')
+  final int? goalConfidence;   // self-reported confidence, 1-10
+
   /// Computed age from dateOfBirth
   int? get age {
     if (dateOfBirth == null) return null;
@@ -152,6 +163,9 @@ class PreAuthQuizData {
     this.referralCode,
     this.coachName,
     this.goalTargetDate,
+    this.primaryWhy,
+    this.pastBlocker,
+    this.goalConfidence,
   });
 
   String? get goal => goals?.isNotEmpty == true ? goals!.first : null;
@@ -223,6 +237,9 @@ class PreAuthQuizData {
     String? referralCode,
     String? coachName,
     String? goalTargetDate,
+    String? primaryWhy,
+    String? pastBlocker,
+    int? goalConfidence,
   }) {
     return PreAuthQuizData(
       goals: goals ?? this.goals,
@@ -278,6 +295,9 @@ class PreAuthQuizData {
       referralCode: referralCode ?? this.referralCode,
       coachName: coachName ?? this.coachName,
       goalTargetDate: goalTargetDate ?? this.goalTargetDate,
+      primaryWhy: primaryWhy ?? this.primaryWhy,
+      pastBlocker: pastBlocker ?? this.pastBlocker,
+      goalConfidence: goalConfidence ?? this.goalConfidence,
     );
   }
 
@@ -336,6 +356,9 @@ class PreAuthQuizData {
         'referralCode': referralCode,
         'coachName': coachName,
         'goalTargetDate': goalTargetDate,
+        'primaryWhy': primaryWhy,
+        'pastBlocker': pastBlocker,
+        'goalConfidence': goalConfidence,
       };
 
   factory PreAuthQuizData.fromJson(Map<String, dynamic> json) => PreAuthQuizData(
@@ -397,6 +420,9 @@ class PreAuthQuizData {
         referralCode: json['referralCode'] as String?,
         coachName: json['coachName'] as String?,
         goalTargetDate: json['goalTargetDate'] as String?,
+        primaryWhy: json['primaryWhy'] as String?,
+        pastBlocker: json['pastBlocker'] as String?,
+        goalConfidence: (json['goalConfidence'] as num?)?.toInt(),
       );
 }
 
@@ -535,6 +561,9 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
     final referralCode = prefs.getString('preAuth_referralCode');
     final coachName = prefs.getString('preAuth_coachName');
     final goalTargetDate = prefs.getString('preAuth_goalTargetDate');
+    final primaryWhy = prefs.getString('preAuth_primaryWhy');
+    final pastBlocker = prefs.getString('preAuth_pastBlocker');
+    final goalConfidence = prefs.getInt('preAuth_goalConfidence');
 
     _suppressTouch = true;
     try {
@@ -592,6 +621,9 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
         referralCode: referralCode,
         coachName: coachName,
         goalTargetDate: goalTargetDate,
+        primaryWhy: primaryWhy,
+        pastBlocker: pastBlocker,
+        goalConfidence: goalConfidence,
       );
     } finally {
       _suppressTouch = false;
@@ -1033,6 +1065,8 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
       'preAuth_referralSource', 'preAuth_priorAppsTried',
       'preAuth_referralCode', 'preAuth_coachName',
       'preAuth_goalTargetDate',
+      // Onboarding conversion v6 — engagement-only fields
+      'preAuth_primaryWhy', 'preAuth_pastBlocker', 'preAuth_goalConfidence',
     ];
     for (final key in keysToRemove) {
       await prefs.remove(key);
@@ -1122,5 +1156,32 @@ class PreAuthQuizNotifier extends StateNotifier<PreAuthQuizData> {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('preAuth_goalTargetDate', isoDate);
     state = state.copyWith(goalTargetDate: isoDate);
+  }
+
+  // ── Onboarding conversion v6 setters ──────────────────────────────
+
+  /// Persist the emotional "why" answer. Pass null when the user skips the
+  /// screen so a stale value from an earlier attempt does not linger.
+  Future<void> setPrimaryWhy(String? why) async {
+    final prefs = await SharedPreferences.getInstance();
+    if (why == null || why.isEmpty) {
+      await prefs.remove('preAuth_primaryWhy');
+      state = state.copyWith(primaryWhy: null);
+    } else {
+      await prefs.setString('preAuth_primaryWhy', why);
+      state = state.copyWith(primaryWhy: why);
+    }
+  }
+
+  Future<void> setPastBlocker(String blocker) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('preAuth_pastBlocker', blocker);
+    state = state.copyWith(pastBlocker: blocker);
+  }
+
+  Future<void> setGoalConfidence(int confidence) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('preAuth_goalConfidence', confidence);
+    state = state.copyWith(goalConfidence: confidence);
   }
 }

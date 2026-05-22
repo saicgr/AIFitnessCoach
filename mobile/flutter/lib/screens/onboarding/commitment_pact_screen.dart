@@ -8,6 +8,7 @@ import '../../core/services/posthog_service.dart';
 import '../../data/services/api_client.dart';
 import 'pre_auth_quiz_data.dart';
 import 'founder_note_sheet.dart';
+import '../../widgets/hold_to_confirm_button.dart';
 
 /// Commitment Pact Screen — Onboarding v5
 ///
@@ -614,64 +615,45 @@ class _CommitmentPactScreenState extends ConsumerState<CommitmentPactScreen> {
                 child: _buildCommitBody(),
               ),
 
-              // Pact CTA
-              GestureDetector(
-                onTap: _submitting ? null : _commit,
-                child: Container(
-                  width: double.infinity,
-                  height: 60,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: _submitting
-                          ? [
-                              AppColors.onboardingAccent.withValues(alpha: 0.6),
-                              AppColors.onboardingAccent.withValues(alpha: 0.4),
-                            ]
-                          : const [
-                              AppColors.onboardingAccent,
-                              Color(0xFFFF6B00)
-                            ],
-                    ),
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color:
-                            AppColors.onboardingAccent.withValues(alpha: 0.35),
-                        blurRadius: 18,
-                        offset: const Offset(0, 8),
-                      ),
-                    ],
-                  ),
-                  child: Center(
-                    child: _submitting
-                        ? const SizedBox(
-                            width: 22,
-                            height: 22,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2.5,
-                              color: Colors.white,
+              // Pact CTA — a press-and-hold commitment gesture. Holding
+              // makes committing feel chosen, not tapped past (and a
+              // screen reader gets a plain tap button instead). While the
+              // commit request is in flight it shows a spinner.
+              (_submitting
+                      ? Container(
+                          width: double.infinity,
+                          height: 60,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                AppColors.onboardingAccent
+                                    .withValues(alpha: 0.6),
+                                AppColors.onboardingAccent
+                                    .withValues(alpha: 0.4),
+                              ],
                             ),
-                          )
-                        : Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: const [
-                              Text(
-                                "I'm in",
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w800,
-                                  color: Colors.white,
-                                  letterSpacing: 0.5,
-                                ),
-                              ),
-                              SizedBox(width: 10),
-                              Icon(Icons.arrow_forward_rounded,
-                                  color: Colors.white, size: 22),
-                            ],
+                            borderRadius: BorderRadius.circular(16),
                           ),
-                  ),
-                ),
-              ).animate(delay: 1400.ms).fadeIn().slideY(begin: 0.1),
+                          child: const Center(
+                            child: SizedBox(
+                              width: 22,
+                              height: 22,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.5,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        )
+                      : HoldToConfirmButton(
+                          label: 'Hold to commit',
+                          accessibleLabel: "I'm in",
+                          enabled: !_submitting,
+                          onConfirmed: _commit,
+                        ))
+                  .animate(delay: 1400.ms)
+                  .fadeIn()
+                  .slideY(begin: 0.1),
 
               const SizedBox(height: 16),
 

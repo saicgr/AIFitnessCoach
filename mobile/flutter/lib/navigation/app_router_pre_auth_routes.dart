@@ -84,7 +84,12 @@ List<RouteBase> _preAuthRoutes() => [
         path: '/plan-preview',
         pageBuilder: (context, state) => CustomTransitionPage(
           key: state.pageKey,
-          child: const PlanPreviewScreen(),
+          // `?from=onboarding` switches the screen into funnel mode: no
+          // back button, a single forward CTA into /onboarding-value.
+          child: PlanPreviewScreen(
+            fromOnboarding:
+                state.uri.queryParameters['from'] == 'onboarding',
+          ),
           transitionDuration: const Duration(milliseconds: 500),
           reverseTransitionDuration: const Duration(milliseconds: 300),
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
@@ -99,6 +104,36 @@ List<RouteBase> _preAuthRoutes() => [
             );
           },
         ),
+      ),
+
+      // Onboarding conversion v6 — "What's your why" emotional anchor,
+      // shown between /intro and the pre-auth quiz.
+      GoRoute(
+        path: OnboardingWhyScreen.routePath,
+        builder: (context, state) => const OnboardingWhyScreen(),
+      ),
+
+      // Onboarding conversion v6 — acknowledgment interstitial + "what's
+      // held you back", shown between the quiz and /trust-and-expectations.
+      GoRoute(
+        path: OnboardingReflectScreen.routePath,
+        builder: (context, state) => const OnboardingReflectScreen(),
+      ),
+      GoRoute(
+        path: OnboardingBlockerScreen.routePath,
+        builder: (context, state) => const OnboardingBlockerScreen(),
+      ),
+
+      // Onboarding conversion v6 — confidence slider + price-anchor value
+      // stack, shown post-coach between /capability-and-community and the
+      // paywall (with /plan-preview wired between confidence and value).
+      GoRoute(
+        path: OnboardingConfidenceScreen.routePath,
+        builder: (context, state) => const OnboardingConfidenceScreen(),
+      ),
+      GoRoute(
+        path: OnboardingValueScreen.routePath,
+        builder: (context, state) => const OnboardingValueScreen(),
       ),
 
       // Pre-Auth Quiz - 5 questions before sign-in

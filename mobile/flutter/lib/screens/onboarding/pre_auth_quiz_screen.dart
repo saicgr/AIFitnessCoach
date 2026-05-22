@@ -542,6 +542,96 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
     }
   }
 
+  /// Onboarding conversion v6 — inline micro-acknowledgment.
+  ///
+  /// A one-line, selection-specific reaction shown once the user has
+  /// answered the current step (Noom reciprocity: give value back, do not
+  /// just extract). Honest and concrete, no stats, no filler. Each line is
+  /// keyed to the actual answer so it never reads as a shared template.
+  /// Returns null for steps without a tailored line.
+  String? _getAcknowledgment(int step) {
+    switch (step) {
+      case 0: // Goals (multi-select)
+        final g = _selectedGoals;
+        if (g.contains('lose_weight') && g.contains('build_muscle')) {
+          return 'Lose fat and build muscle at once. The plan periodizes '
+              'for exactly that recomposition.';
+        }
+        if (g.contains('lose_weight')) {
+          return 'Fat loss noted. The plan keeps the lifting that protects '
+              'muscle while you cut.';
+        }
+        if (g.contains('build_muscle')) {
+          return 'Muscle it is. Progressive overload starts from week one.';
+        }
+        if (g.contains('increase_strength')) {
+          return 'Strength goal locked in. Expect real load, programmed '
+              'week to week.';
+        }
+        return 'Goals saved. Every session gets built around them.';
+      case 1: // Fitness level
+        switch (_selectedLevel) {
+          case 'beginner':
+            return 'Beginner is the best place to start. The plan ramps '
+                'you up, it never throws you in.';
+          case 'intermediate':
+            return 'Intermediate. The plan picks up where your training '
+                'left off.';
+          case 'advanced':
+            return 'Advanced. Expect real loading, not a watered-down plan.';
+        }
+        return null;
+      case 4: // Equipment
+        final e = _selectedEquipment;
+        if (e.contains('full_gym')) {
+          return 'Full gym unlocked. The plan can draw on every machine '
+              'you picked.';
+        }
+        final bodyweightOnly = e.isNotEmpty &&
+            e.every((x) => const {'bodyweight', 'yoga_mat', 'jump_rope'}
+                .contains(x));
+        if (bodyweightOnly) {
+          return 'Bodyweight is plenty. The plan never pads with machines '
+              'you do not have.';
+        }
+        if (e.contains('dumbbells')) {
+          return 'Dumbbells noted. They carry a surprising amount of a '
+              'strong plan.';
+        }
+        if (e.isNotEmpty || _otherSelectedEquipment.isNotEmpty) {
+          return 'Got your equipment. Every exercise will fit what you have.';
+        }
+        return null;
+      case 5: // Injuries / limitations
+        if (_selectedLimitations.length == 1 &&
+            _selectedLimitations.contains('none')) {
+          return 'No limitations flagged. The plan still cues safe form on '
+              'every move.';
+        }
+        if (_selectedLimitations.isNotEmpty) {
+          return 'Noted. The plan swaps anything that would stress those '
+              'areas.';
+        }
+        return null;
+      case 6: // Primary training goal
+        switch (_selectedPrimaryGoal) {
+          case 'muscle_hypertrophy':
+            return 'Hypertrophy. Your rep ranges land in the 8 to 12 sweet '
+                'spot.';
+          case 'muscle_strength':
+            return 'Strength. Expect heavier loads and lower reps.';
+          case 'strength_hypertrophy':
+            return 'Balanced. Size and strength, programmed together.';
+          case 'endurance':
+            return 'Endurance. Higher reps and shorter rest, built for '
+                'stamina.';
+        }
+        return null;
+      default:
+        return null;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -610,11 +700,29 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
                     child: _buildCurrentQuestion(showHeader: !isFoldableOpen),
                   ),
                 ),
-                if (_getDidYouKnowHint(_currentQuestion) != null)
-                  DidYouKnowChip(
-                    key: ValueKey('hint_$_currentQuestion'),
-                    text: _getDidYouKnowHint(_currentQuestion)!,
-                  ),
+                // Onboarding conversion v6: once the step is answered,
+                // swap the static "Did you know?" hint for a selection-
+                // specific micro-acknowledgment (Noom reciprocity). Before
+                // an answer, the educational hint still shows.
+                Builder(builder: (_) {
+                  final ack = _canProceed
+                      ? _getAcknowledgment(_currentQuestion)
+                      : null;
+                  if (ack != null) {
+                    return _AckChip(
+                      key: ValueKey('ack_${_currentQuestion}_$ack'),
+                      text: ack,
+                    );
+                  }
+                  final hint = _getDidYouKnowHint(_currentQuestion);
+                  if (hint != null) {
+                    return DidYouKnowChip(
+                      key: ValueKey('hint_$_currentQuestion'),
+                      text: hint,
+                    );
+                  }
+                  return const SizedBox.shrink();
+                }),
               ],
             ),
             button: _buildActionButton(isDark),
@@ -895,5 +1003,59 @@ class _PreAuthQuizScreenState extends ConsumerState<PreAuthQuizScreen>
         ),
       ),
     );
+  }
+}
+
+/// Inline micro-acknowledgment chip (onboarding conversion v6).
+///
+/// Mirrors [DidYouKnowChip]'s compact glass styling, but reads as positive
+/// reinforcement: a green check instead of a lightbulb. Shown once a quiz
+/// step is answered, carrying a selection-specific one-liner.
+class _AckChip extends StatelessWidget {
+  final String text;
+  const _AckChip({super.key, required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    final t = OnboardingTheme.of(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 4, 24, 6),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(10),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+            decoration: BoxDecoration(
+              color: t.selectionAccent.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                  color: t.selectionAccent.withValues(alpha: 0.30)),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.check_circle_rounded,
+                    size: 14, color: t.selectionAccent),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    text,
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: t.textSecondary,
+                      height: 1.25,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    ).animate().fadeIn(duration: 350.ms).slideY(
+        begin: 0.3, end: 0, duration: 320.ms, curve: Curves.easeOutCubic);
   }
 }

@@ -47,6 +47,11 @@ import '../screens/onboarding/nutrition_showcase_screen.dart';
 import '../screens/onboarding/founder_note_sheet.dart';
 import '../screens/onboarding/capability_and_community_screen.dart';
 import '../screens/onboarding/commitment_pact_screen.dart';
+import '../screens/onboarding/onboarding_why_screen.dart';
+import '../screens/onboarding/onboarding_reflect_screen.dart';
+import '../screens/onboarding/onboarding_blocker_screen.dart';
+import '../screens/onboarding/onboarding_confidence_screen.dart';
+import '../screens/onboarding/onboarding_value_screen.dart';
 import '../screens/you/you_hub_screen.dart';
 import '../screens/reports/reports_hub_screen.dart';
 import '../screens/summaries/insights_screen.dart';
@@ -263,9 +268,11 @@ String? _handleLoadingState(GoRouterState state, AuthState authState, LanguageSt
 
   // Allow pre-auth screens to stay during loading (don't interrupt sign-in flow)
   const preAuthScreens = {
+    '/onboarding-why',
     '/pre-auth-quiz', '/sign-in', '/email-sign-in',
     '/demo-workout', '/plan-preview', '/intro',
     // Onboarding v5.1 pre-signup screens
+    '/onboarding-reflect', '/onboarding-blocker',
     '/trust-and-expectations', '/plan-analyzing',
     '/weight-projection', '/demo-tasks',
     '/demo-workout-showcase', '/demo-nutrition-showcase',
@@ -284,8 +291,10 @@ String? _handleAuthError(GoRouterState state, AuthState authState) {
   if (loc == '/sign-in' || loc == '/email-sign-in') return null;
   // Allow other pre-auth pages to stay
   const preAuthScreens = {
+    '/onboarding-why',
     '/pre-auth-quiz', '/demo-workout', '/plan-preview', '/intro',
     // Onboarding v5.1 pre-signup screens
+    '/onboarding-reflect', '/onboarding-blocker',
     '/trust-and-expectations', '/plan-analyzing',
     '/weight-projection', '/demo-tasks',
     '/demo-workout-showcase', '/demo-nutrition-showcase',
@@ -398,7 +407,9 @@ String? _handleAuthRedirect(
 
   // Pre-auth flow screens — Onboarding v5.1 pre-signup funnel
   const preAuthFlowScreens = {
+    '/onboarding-why',
     '/pre-auth-quiz', '/sign-in', '/email-sign-in',
+    '/onboarding-reflect', '/onboarding-blocker',
     '/trust-and-expectations', '/plan-analyzing',
     '/weight-projection', '/demo-tasks',
     '/demo-workout-showcase', '/demo-nutrition-showcase',
@@ -408,7 +419,9 @@ String? _handleAuthRedirect(
       final user = authState.user;
       // Allow replay of pre-signup flow for users starting over (no coach selected)
       const replayableForReturningUser = {
+        '/onboarding-why',
         '/pre-auth-quiz',
+        '/onboarding-reflect', '/onboarding-blocker',
         '/trust-and-expectations', '/plan-analyzing',
         '/weight-projection', '/demo-tasks',
         '/demo-workout-showcase', '/demo-nutrition-showcase',

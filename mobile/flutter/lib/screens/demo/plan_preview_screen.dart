@@ -4,6 +4,8 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/services/posthog_service.dart';
+import '../onboarding/onboarding_experiments.dart';
 import '../onboarding/pre_auth_quiz_screen.dart';
 
 part 'plan_preview_screen_ui.dart';
@@ -12,8 +14,17 @@ part 'plan_preview_screen_ui.dart';
 /// Full Plan Preview Screen
 /// Shows the user's complete personalized 4-week workout plan BEFORE asking them to subscribe
 /// This addresses the user complaint: "After giving all the personal information, it requires subscription to see the personal plan."
+///
+/// Two entry contexts:
+///  - Guest-session timer (default): browsing, can subscribe or continue free.
+///  - Onboarding funnel ([fromOnboarding] = true, route `?from=onboarding`):
+///    a personalized pre-paywall reveal — single forward CTA into the
+///    value screen, no back button, honors its PostHog kill-switch.
 class PlanPreviewScreen extends ConsumerStatefulWidget {
-  const PlanPreviewScreen({super.key});
+  /// True when reached from the onboarding funnel (`/plan-preview?from=onboarding`).
+  final bool fromOnboarding;
+
+  const PlanPreviewScreen({super.key, this.fromOnboarding = false});
 
   @override
   ConsumerState<PlanPreviewScreen> createState() => _PlanPreviewScreenState();
@@ -33,12 +44,33 @@ class _PlanPreviewScreenState extends ConsumerState<PlanPreviewScreen>
       duration: const Duration(milliseconds: 1500),
     )..repeat(reverse: true);
 
+    // Onboarding conversion v6: inside the funnel, honor the remote
+    // kill-switch and log the view.
+    if (widget.fromOnboarding) {
+      _maybeSkipForOnboarding();
+      ref.read(posthogServiceProvider).capture(
+            eventName: 'onboarding_plan_preview_viewed',
+          );
+    }
+
     // Simulate loading the personalized plan
     Future.delayed(const Duration(milliseconds: 1200), () {
       if (mounted) {
         setState(() => _isLoading = false);
       }
     });
+  }
+
+  /// Remote kill-switch for the onboarding plan-preview step. Absent flag
+  /// keeps it on; an explicit disable jumps straight to the value screen.
+  Future<void> _maybeSkipForOnboarding() async {
+    final enabled = await OnboardingExperiments.isEnabled(
+      ref.read(posthogServiceProvider),
+      OnboardingExperiments.flagPlanPreview,
+    );
+    if (!enabled && mounted) {
+      context.go('/onboarding-value');
+    }
   }
 
   @override
@@ -151,23 +183,28 @@ class _PlanPreviewScreenState extends ConsumerState<PlanPreviewScreen>
       padding: const EdgeInsets.all(16),
       child: Row(
         children: [
-          GestureDetector(
-            onTap: () => context.pop(),
-            child: Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: isDark ? AppColors.elevated : AppColorsLight.elevated,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(
-                Icons.arrow_back_ios_new,
-                color: textSecondary,
-                size: 18,
+          // No back button inside the onboarding funnel — it is a
+          // forward-only flow reached via context.go (nothing to pop to).
+          if (!widget.fromOnboarding) ...[
+            GestureDetector(
+              onTap: () => context.pop(),
+              child: Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color:
+                      isDark ? AppColors.elevated : AppColorsLight.elevated,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  Icons.arrow_back_ios_new,
+                  color: textSecondary,
+                  size: 18,
+                ),
               ),
             ),
-          ),
-          const SizedBox(width: 16),
+            const SizedBox(width: 16),
+          ],
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

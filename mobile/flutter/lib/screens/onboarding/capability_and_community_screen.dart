@@ -167,7 +167,10 @@ class CapabilityAndCommunityScreen extends ConsumerWidget {
                   ref.read(posthogServiceProvider).capture(
                         eventName: 'onboarding_capability_community_completed',
                       );
-                  context.go('/paywall-pricing');
+                  // Onboarding conversion v6: confidence slider → plan
+                  // preview → value stack → paywall. Each new screen
+                  // self-skips via its PostHog kill-switch if disabled.
+                  context.go('/onboarding-confidence');
                 },
                 child: Container(
                   width: double.infinity,

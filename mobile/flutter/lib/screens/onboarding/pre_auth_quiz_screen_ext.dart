@@ -297,14 +297,13 @@ extension __PreAuthQuizScreenStateExt on _PreAuthQuizScreenState {
         },
       );
 
-      // Onboarding v5 flow: Pre-Auth Quiz → Honest Expectations →
-      //                     Privacy Trust → Plan Analyzing → Weight Projection
-      //                     → Demo Tasks → Sign In → Setup → Capability →
-      //                     Paywall → Commitment Pact → Home
-      // Sign-in is now AFTER the aha moment (Duolingo pattern), so the
-      // quiz flows into honest-expectations before reaching sign-in.
+      // Onboarding conversion v6 flow: Pre-Auth Quiz → Reflect (echo) →
+      //   Blocker (obstacle + acknowledgment) → Trust & Expectations →
+      //   Plan Analyzing → Weight Projection → Demo Tasks → Sign In → ...
+      // The quiz now flows into the v6 acknowledgment interstitial first;
+      // each new screen self-skips via its PostHog kill-switch if disabled.
       if (mounted) {
-        context.go('/trust-and-expectations');
+        context.go('/onboarding-reflect');
       }
     } catch (e) {
       debugPrint('❌ [Onboarding] Failed to finish onboarding: $e');
