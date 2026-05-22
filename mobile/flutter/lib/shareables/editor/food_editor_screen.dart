@@ -13,22 +13,50 @@ import '../widgets/macro_viz.dart';
 import 'editor_layer.dart';
 import 'giphy_picker.dart';
 
-/// Full-screen layer editor for a food share — the photo as a fixed
-/// background, with draggable / resizable / rotatable layers on top
-/// (macro viz, custom text, emoji stickers, score badge, date, watermark).
+/// Full-screen layer editor for a share — a fixed background with
+/// draggable / resizable / rotatable layers on top (macro viz, custom
+/// text, emoji stickers, score badge, date, watermark).
+///
+/// The background is either the raw food photo (legacy) OR, when
+/// [canvasBackground] is supplied, the share sheet's currently-selected
+/// TEMPLATE rendered as a card — so any template (Rings, Numbers, Pie …)
+/// can be customized with layers, not just photos.
 ///
 /// Launched from the `ShareableSheet` "Customize" action. Self-contained:
 /// it captures its own canvas and shares via [ShareService].
 class FoodEditorScreen extends StatefulWidget {
   final Shareable data;
 
-  const FoodEditorScreen({super.key, required this.data});
+  /// When provided, the editor canvas is this widget (the selected share
+  /// template rendered as a card) instead of the raw food photo.
+  final Widget? canvasBackground;
 
-  static Future<void> open(BuildContext context, Shareable data) {
+  /// Aspect to lock the canvas to (chosen in the share sheet). When
+  /// [canvasBackground] is set the in-editor aspect toggle is hidden —
+  /// the template was already rendered at this aspect.
+  final ShareableAspect? canvasAspect;
+
+  const FoodEditorScreen({
+    super.key,
+    required this.data,
+    this.canvasBackground,
+    this.canvasAspect,
+  });
+
+  static Future<void> open(
+    BuildContext context,
+    Shareable data, {
+    Widget? canvasBackground,
+    ShareableAspect? canvasAspect,
+  }) {
     return Navigator.of(context, rootNavigator: true).push<void>(
       MaterialPageRoute(
         fullscreenDialog: true,
-        builder: (_) => FoodEditorScreen(data: data),
+        builder: (_) => FoodEditorScreen(
+          data: data,
+          canvasBackground: canvasBackground,
+          canvasAspect: canvasAspect,
+        ),
       ),
     );
   }
@@ -58,25 +86,30 @@ class _FoodEditorScreenState extends State<FoodEditorScreen> {
   @override
   void initState() {
     super.initState();
-    _aspect = widget.data.aspect == ShareableAspect.story
-        ? ShareableAspect.story
-        : widget.data.aspect;
-    // Seed: a macro coin + the dish title, tastefully pre-placed.
-    _layers.add(EditorLayer(
-      id: _id(),
-      kind: EditorLayerKind.macroViz,
-      position: const Offset(0.74, 0.80),
-      macroStyle: MacroVizStyle.coin,
-    ));
-    final title = widget.data.title.trim();
-    if (title.isNotEmpty) {
+    _aspect = widget.canvasAspect ??
+        (widget.data.aspect == ShareableAspect.story
+            ? ShareableAspect.story
+            : widget.data.aspect);
+    // Seed default layers ONLY in raw-photo mode. When customizing a
+    // template the card already shows the title + macros, so seeding the
+    // same things again would just duplicate them.
+    if (widget.canvasBackground == null) {
       _layers.add(EditorLayer(
         id: _id(),
-        kind: EditorLayerKind.text,
-        position: const Offset(0.5, 0.16),
-        text: title,
-        fontIndex: 1,
+        kind: EditorLayerKind.macroViz,
+        position: const Offset(0.74, 0.80),
+        macroStyle: MacroVizStyle.coin,
       ));
+      final title = widget.data.title.trim();
+      if (title.isNotEmpty) {
+        _layers.add(EditorLayer(
+          id: _id(),
+          kind: EditorLayerKind.text,
+          position: const Offset(0.5, 0.16),
+          text: title,
+          fontIndex: 1,
+        ));
+      }
     }
   }
 
@@ -332,17 +365,22 @@ class _FoodEditorScreenState extends State<FoodEditorScreen> {
             onPressed: () => Navigator.of(context).pop(),
           ),
           const Spacer(),
-          IconButton(
-            tooltip: 'Aspect ratio',
-            icon: const Icon(Icons.aspect_ratio_rounded, color: Colors.white),
-            onPressed: () {
-              HapticFeedback.selectionClick();
-              const order = ShareableAspect.values;
-              setState(() => _aspect =
-                  order[(order.indexOf(_aspect) + 1) % order.length]);
-            },
-          ),
-          const SizedBox(width: 4),
+          // Aspect toggle only in raw-photo mode — when customizing a
+          // template the aspect is fixed (set in the share sheet).
+          if (widget.canvasBackground == null) ...[
+            IconButton(
+              tooltip: 'Aspect ratio',
+              icon:
+                  const Icon(Icons.aspect_ratio_rounded, color: Colors.white),
+              onPressed: () {
+                HapticFeedback.selectionClick();
+                const order = ShareableAspect.values;
+                setState(() => _aspect =
+                    order[(order.indexOf(_aspect) + 1) % order.length]);
+              },
+            ),
+            const SizedBox(width: 4),
+          ],
           FilledButton.icon(
             onPressed: _busy ? null : _share,
             icon: _busy
@@ -389,24 +427,26 @@ class _FoodEditorScreenState extends State<FoodEditorScreen> {
           onTap: () => setState(() => _selectedId = null),
           child: Stack(
             children: [
-              // Background — the food photo, or an accent gradient.
+              // Background — the selected TEMPLATE card when customizing a
+              // template, otherwise the raw food photo / accent gradient.
               Positioned.fill(
-                child: FoodImage(
-                  url: photoUrl,
-                  fit: BoxFit.cover,
-                  fallbackBuilder: () => DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          Color.lerp(accent, Colors.black, 0.35)!,
-                          Color.lerp(accent, Colors.black, 0.78)!,
-                        ],
+                child: widget.canvasBackground ??
+                    FoodImage(
+                      url: photoUrl,
+                      fit: BoxFit.cover,
+                      fallbackBuilder: () => DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              Color.lerp(accent, Colors.black, 0.35)!,
+                              Color.lerp(accent, Colors.black, 0.78)!,
+                            ],
+                          ),
+                        ),
                       ),
                     ),
-                  ),
-                ),
               ),
               for (final layer in _layers) _positioned(layer, size),
             ],
@@ -576,7 +616,11 @@ class _FoodEditorScreenState extends State<FoodEditorScreen> {
             scrollDirection: Axis.horizontal,
             child: Row(
               children: [
-                _toolBtn('Photo', Icons.image_rounded, _changePhoto),
+                // "Photo" swaps the background photo — only meaningful in
+                // raw-photo mode; a template card is the background when
+                // customizing a template.
+                if (widget.canvasBackground == null)
+                  _toolBtn('Photo', Icons.image_rounded, _changePhoto),
                 _toolBtn('Text', Icons.text_fields_rounded,
                     () => _addLayer(EditorLayerKind.text)),
                 _toolBtn('Sticker', Icons.emoji_emotions_rounded,

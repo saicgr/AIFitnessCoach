@@ -207,6 +207,7 @@ class MacroViz extends StatelessWidget {
     }
     final stroke = (showFiber ? 16.0 : 19.0) * scale;
     return _SquareViz(
+      fallbackExtent: 300 * scale,
       child: Stack(
         alignment: Alignment.center,
         children: [
@@ -1120,14 +1121,34 @@ class MacroViz extends StatelessWidget {
 
 /// Wraps a child in a 1:1 box so ring/pie painters get a square to paint in
 /// regardless of the parent's aspect.
+///
+/// `AspectRatio` *asserts* when handed unbounded constraints on BOTH axes
+/// (it has no side to derive the square from). That happens whenever a
+/// MacroViz ring/pie style is dropped into a fully-unconstrained parent —
+/// e.g. a horizontally-scrolling format strip, or a `Positioned` with no
+/// width/height. To stay crash-proof on every screen size and every host,
+/// fall back to a fixed square ([fallbackExtent]) in that case; otherwise
+/// behave exactly like a plain `AspectRatio`.
 class _SquareViz extends StatelessWidget {
   final Widget child;
 
-  const _SquareViz({required this.child});
+  /// Edge length used ONLY when the parent gives unbounded width AND height.
+  /// Callers pass their `scale`-adjusted value so the fallback still looks
+  /// proportionate.
+  final double fallbackExtent;
+
+  const _SquareViz({required this.child, this.fallbackExtent = 300});
 
   @override
   Widget build(BuildContext context) {
-    return AspectRatio(aspectRatio: 1, child: child);
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (!constraints.hasBoundedWidth && !constraints.hasBoundedHeight) {
+          return SizedBox.square(dimension: fallbackExtent, child: child);
+        }
+        return AspectRatio(aspectRatio: 1, child: child);
+      },
+    );
   }
 }
 

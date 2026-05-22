@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:video_player/video_player.dart';
 
@@ -15,13 +16,15 @@ import '../data/services/share_service.dart';
 import '../utils/image_capture_utils.dart';
 import '../widgets/glass_sheet.dart';
 import 'recent_templates_store.dart';
+import 'share_settings_store.dart';
 import 'shareable_canvas.dart';
 import 'shareable_catalog.dart';
-import 'editor/food_editor_screen.dart';
+import 'doc/card_doc.dart';
+import 'editor/card_editor_screen.dart';
 import 'editor/food_montage_screen.dart';
 import 'shareable_data.dart';
-import 'widgets/nested_pill_selector.dart';
 import 'widgets/share_link_pill.dart';
+import 'widgets/template_view.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
 /// THE unified share sheet. Every entry point in the app delegates to this
@@ -85,11 +88,19 @@ enum _GallerySort {
   const _GallerySort(this.label);
 }
 
+/// Which secondary-control panel is currently expanded under the preview.
+/// `none` keeps the options strip collapsed (0px) — the default state.
+enum _ShareTool { none, ratio, background, style, watermark, photo }
+
 class _ShareableSheetState extends ConsumerState<ShareableSheet> {
   late ShareableAspect _aspect;
   late ShareableCategory _category;
   late ShareableTemplate _template;
   bool _showWatermark = true;
+
+  /// One-tap photo on/off — when false the card's food photo is stripped
+  /// (`CardDoc.withoutPhoto()`), for users who want a data-only card.
+  bool _showPhoto = true;
 
   /// Canvas background mode — themed (default) / dark / light / transparent.
   /// Read by every template's [ShareableCanvas] via the [ShareSurface]
@@ -103,18 +114,9 @@ class _ShareableSheetState extends ConsumerState<ShareableSheet> {
   /// Text scaler applied to every Text inside the templates via a
   /// MediaQuery override. Default 1.5 — combined with the per-aspect
   /// `bodyFontMultiplier` baked into every template, this produces saved
-  /// PNGs that read boldly at full output resolution without users
-  /// having to crank the slider. Range 1.0×–2.0× in 6 stops; users
-  /// who want minimal aesthetics can step down.
+  /// PNGs that read boldly at full output resolution. Adjusted via the
+  /// Style tool's slider (1.0×–2.0×) and persisted across shares.
   double _textScale = 1.5;
-  static const List<double> _textScaleStops = [
-    1.0,
-    1.2,
-    1.4,
-    1.6,
-    1.8,
-    2.0,
-  ];
 
   /// Local state for user-uploaded backdrop photos. Photo-category
   /// templates render these full-bleed under a darkening scrim. Other
@@ -129,9 +131,12 @@ class _ShareableSheetState extends ConsumerState<ShareableSheet> {
   String? _videoPath;
   VideoPlayerController? _videoController;
 
-  /// One capture key per template — keys are stable across rebuilds so
-  /// the laid-out RenderRepaintBoundary persists.
-  late final Map<ShareableTemplate, GlobalKey> _captureKeys;
+  /// Capture boundary wrapping the live preview's full-resolution card.
+  /// A single key (not per-template): the preview always renders the
+  /// current `_template` at `_aspect`, so the export pipeline snapshots it
+  /// directly — independent of the gallery, whose thumbnails are now a
+  /// fixed shape and no longer the capture source.
+  final GlobalKey _previewCaptureKey = GlobalKey();
 
   /// Resolves once every network food photo has been pre-decoded. The
   /// capture path awaits this so `toImage` snapshots the real photo, not a
@@ -149,13 +154,26 @@ class _ShareableSheetState extends ConsumerState<ShareableSheet> {
   /// the user's pinned favorites. Default keeps the catalog order.
   _GallerySort _gallerySort = _GallerySort.defaultOrder;
 
+  /// Whether the live preview pane is expanded to the full card (default)
+  /// or collapsed to a slim bar. The preview is a FIXED-height region, so
+  /// expanding/collapsing it — and switching aspect ratio — never reflows
+  /// the gallery below.
+  bool _previewExpanded = true;
+
+  /// The expanded secondary-control panel. `none` keeps the options strip
+  /// at 0px (the default) so the preview and gallery sit adjacent.
+  _ShareTool _activeTool = _ShareTool.none;
+
+  /// The user's customized card document, returned from the Customize
+  /// editor. When set (and for the matching template) the preview, gallery
+  /// tile and capture render this instead of the preset. Cleared whenever
+  /// the user switches template.
+  CardDoc? _editedDoc;
+
   @override
   void initState() {
     super.initState();
     _aspect = widget.data.aspect;
-    _captureKeys = {
-      for (final spec in ShareableCatalog.all()) spec.template: GlobalKey(),
-    };
     // Pre-decode network food photos so the first capture isn't blank.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) _warmFoodImages();
@@ -199,6 +217,36 @@ class _ShareableSheetState extends ConsumerState<ShareableSheet> {
       respectExplicit: wantedExplicit != null,
       available: available,
     );
+    // Restore the user's last-used visual settings (aspect / background /
+    // text scale / watermark). Async — applies once SharedPreferences
+    // resolves; until then the initState defaults render.
+    _loadShareSettings();
+  }
+
+  /// Restore the persisted visual settings (see [ShareSettingsStore]).
+  Future<void> _loadShareSettings() async {
+    final saved = await ShareSettingsStore.load();
+    if (saved == null || !mounted) return;
+    setState(() {
+      _aspect = saved.aspect;
+      _background = saved.background;
+      _textScale = saved.textScale;
+      _showWatermark = saved.showWatermark;
+      _showPhoto = saved.showPhoto;
+    });
+  }
+
+  /// Persist the current visual settings so the next share opens with the
+  /// same look. Fire-and-forget — called from every control's handler.
+  void _persistShareSettings() {
+    // ignore: unawaited_futures
+    ShareSettingsStore.save(ShareSettings(
+      aspect: _aspect,
+      background: _background,
+      textScale: _textScale,
+      showWatermark: _showWatermark,
+      showPhoto: _showPhoto,
+    ));
   }
 
   Future<void> _loadRecents({
@@ -265,6 +313,12 @@ class _ShareableSheetState extends ConsumerState<ShareableSheet> {
   /// True for the before/after template, which needs two slots.
   bool get _isBeforeAfter => _template == ShareableTemplate.photoBeforeAfter;
 
+  /// Fixed aspect of every gallery thumbnail (4:5 — Instagram portrait).
+  /// Deliberately independent of the selected export `_aspect` so picking
+  /// a ratio never changes the gallery's row height (user requirement:
+  /// "gallery shows >= 2 rows irrespective of the ratio").
+  static const double _kGalleryThumbRatio = 4 / 5;
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -275,78 +329,99 @@ class _ShareableSheetState extends ConsumerState<ShareableSheet> {
 
     return GlassSheet(
       maxHeightFraction: 0.92,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _header(context),
-          // Preview moved to the TOP so the user sees their current pick
-          // first; all configuration controls (watermark, font, aspect,
-          // category, photo) sit below it. This frees ~80-120px for the
-          // gallery `Expanded` below to render one extra row of thumbnails.
-          _previewPane(accent, isDark),
-          // Watermark + font size merged into one inline row. Wins ~48px
-          // of vertical space vs the previous two-row layout.
-          _inlineControlsRow(accent),
-          _backgroundRow(accent, isDark),
-          if (_background == ShareBackground.video) _videoRow(accent),
-          if (_isPhotoTemplate) _photoUploadRow(accent),
-          NestedPillSelector(
-            data: _currentData,
-            aspect: _aspect,
-            category: _category,
-            template: _template,
-            ownsCosmetic: _ownsElite,
-            recentTemplateIds: _recentTemplateIds,
-            showWatermark: _showWatermark,
-            onAspectChanged: (a) => setState(() => _aspect = a),
-            onCategoryChanged: (c) {
-              setState(() {
-                _category = c;
-                final inCat = ShareableCatalog.templatesInCategory(
-                  _currentData,
-                  c,
-                  ownsCosmetic: _ownsElite,
-                );
-                if (inCat.isNotEmpty) {
-                  _template = inCat.first.template;
-                }
-              });
-              // NOTE: _recordTemplateUsed intentionally NOT called here.
-              // Browsing categories must not mark templates as RECENT —
-              // user complaint: "clicking everything is showing as recent".
-              // RECENT is now stamped only on actual share-success
-              // (_onShareInstagram / _onShareGeneric / _onSave / _onPreviewTapped).
-            },
-            onTemplateChanged: (t) {
-              setState(() => _template = t);
-              // Same — only stamp on share success, not on browse tap.
-            },
-          ),
-          _galleryHeaderRow(accent, isDark),
-          Expanded(child: _gallery()),
-          if (showLinkPill)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-              child: ShareLinkPill(
-                url: _shareLink,
-                isGenerating: _generatingLink,
-                onGenerate: _onGenerateLink,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          // `constraints.maxHeight` is the room GlassSheet hands the body
+          // (sheet height minus drag handle + bottom safe-area pad). Budget
+          // it so the gallery ALWAYS keeps >= 2 thumbnail rows, then give
+          // the preview the remainder (clamped). Because the preview height
+          // is decided HERE, switching aspect ratio never reflows anything.
+          final previewH = _resolvePreviewHeight(constraints.maxHeight);
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _header(context),
+              // Preview + its right-gutter tool rail (Ratio/Background/
+              // Style). Fixed height — ratio changes only restyle the card.
+              _previewSection(accent, isDark, previewH),
+              // Options strip for whichever tool is open — 0px when none,
+              // so by default the preview and gallery sit adjacent.
+              _toolOptionsPanel(accent, isDark),
+              if (_background == ShareBackground.video) _videoRow(accent),
+              if (_isPhotoTemplate) _photoUploadRow(accent),
+              // Gallery filter (category pills).
+              _galleryHeader(accent, isDark),
+              if (showLinkPill)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
+                  child: ShareLinkPill(
+                    url: _shareLink,
+                    isGenerating: _generatingLink,
+                    onGenerate: _onGenerateLink,
+                  ),
+                ),
+              // The template gallery + the action bar that FLOATS over its
+              // bottom — the gallery scrolls behind the frosted bar, so the
+              // bar reads as real glass instead of a pinned white panel.
+              Expanded(
+                child: Stack(
+                  children: [
+                    Positioned.fill(child: _gallery()),
+                    // Near-full-width floating bar.
+                    Positioned(
+                      left: 14,
+                      right: 14,
+                      bottom: 10,
+                      child: _floatingActionBar(isDark),
+                    ),
+                  ],
+                ),
               ),
-            ),
-          if (widget.data.kind == ShareableKind.foodLog)
-            _customizeRow(accent),
-          _actionRow(accent, isDark),
-          // Bottom spacer — use the device safe-area inset, but never less
-          // than 8px (older devices report padding.bottom == 0 and the
-          // action buttons would otherwise touch the screen edge).
-          SizedBox(
-            height: MediaQuery.of(context).padding.bottom > 8
-                ? MediaQuery.of(context).padding.bottom
-                : 8,
-          ),
-        ],
+            ],
+          );
+        },
       ),
     );
+  }
+
+  /// Height for the expanded preview region. Reserves >= 2 rows of gallery
+  /// thumbnails that stay VISIBLE above the floating action bar, plus all
+  /// chrome that will actually render (incl. the conditional video / photo
+  /// / share-link rows), and hands the preview the remainder, clamped.
+  /// Returns 0 when collapsed (the slim bar sizes itself).
+  double _resolvePreviewHeight(double sheetBodyHeight) {
+    if (!_previewExpanded) return 0;
+    final w = MediaQuery.of(context).size.width;
+    // Mirror `_gallery()` geometry: 3 columns, fixed 4:5 thumbnails.
+    const cols = 3;
+    const spacing = 8.0;
+    const hPad = 12.0;
+    final tileW = (w - hPad * 2 - spacing * (cols - 1)) / cols;
+    final tileH = tileW / _kGalleryThumbRatio;
+    // 2 rows + the inter-row gap + the GridView's own top padding.
+    final twoRows = tileH * 2 + spacing + 12;
+    // The action bar FLOATS over the gallery's bottom — reserve its
+    // footprint so 2 thumbnail rows stay clear ABOVE it.
+    const floatingBarReserve = 88.0;
+
+    // Always-present chrome.
+    var chrome = 56.0 /*header*/ + 48.0 /*gallery header*/;
+    // Conditional rows that DO take Column space above the gallery.
+    if (_background == ShareBackground.video) {
+      chrome += 54; // video-picker row
+    }
+    if (_isPhotoTemplate) {
+      chrome += 54; // photo-upload row
+    }
+    if (widget.data.kind == ShareableKind.workoutComplete &&
+        widget.onGenerateShareLink != null) {
+      chrome += 58; // share-link pill
+    }
+
+    final budget = sheetBodyHeight - chrome - twoRows - floatingBarReserve;
+    // Floor low enough that, on a normal phone, a single conditional row
+    // can be absorbed by shrinking the preview rather than the gallery.
+    return budget.clamp(120.0, 320.0);
   }
 
   Widget _header(BuildContext context) {
@@ -389,135 +464,6 @@ class _ShareableSheetState extends ConsumerState<ShareableSheet> {
     return a;
   }
 
-  /// Merged watermark toggle + font-size stepper on a single row. Replaces
-  /// the previous two-row layout (watermark above, font size below) so the
-  /// gallery `Expanded` below the controls gets a full extra row of space.
-  Widget _inlineControlsRow(Color accent) {
-    final canShrink = _textScale > _textScaleStops.first;
-    final canGrow = _textScale < _textScaleStops.last;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 2),
-      child: Row(
-        children: [
-          // Watermark — compact: icon + adaptive switch. The text label is
-          // dropped to fit the row; semantic label preserved for screen
-          // readers via Semantics + Tooltip for the long-press hint.
-          Tooltip(
-            message: 'Show watermark',
-            child: Semantics(
-              label: 'Show watermark',
-              toggled: _showWatermark,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.branding_watermark_rounded,
-                    size: 18,
-                    color: _showWatermark ? accent : Colors.grey,
-                  ),
-                  const SizedBox(width: 6),
-                  Switch.adaptive(
-                    value: _showWatermark,
-                    onChanged: (v) {
-                      HapticFeedback.lightImpact();
-                      setState(() => _showWatermark = v);
-                    },
-                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    activeTrackColor: _switchTrackColor(accent),
-                    activeThumbColor: Colors.white,
-                    inactiveTrackColor: Colors.white.withValues(alpha: 0.10),
-                    inactiveThumbColor: Colors.white.withValues(alpha: 0.55),
-                    trackOutlineColor: WidgetStateProperty.resolveWith(
-                      (states) => Colors.white.withValues(alpha: 0.20),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const Spacer(),
-          // Font size stepper.
-          Icon(Icons.format_size_rounded, size: 18, color: accent),
-          const SizedBox(width: 4),
-          Semantics(
-            label: 'Decrease font size',
-            child: IconButton(
-              visualDensity: VisualDensity.compact,
-              padding: EdgeInsets.zero,
-              constraints:
-                  const BoxConstraints(minWidth: 36, minHeight: 36),
-              tooltip: 'Smaller',
-              onPressed: !canShrink
-                  ? null
-                  : () {
-                      HapticFeedback.lightImpact();
-                      final i = _textScaleStops.indexOf(_textScale);
-                      setState(() {
-                        _textScale = _textScaleStops[
-                            (i - 1).clamp(0, _textScaleStops.length - 1)];
-                      });
-                    },
-              icon: const Icon(Icons.remove_rounded, size: 18),
-            ),
-          ),
-          SizedBox(
-            width: 44,
-            child: Text(
-              '${(_textScale * 100).round()}%',
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-          Semantics(
-            label: 'Increase font size',
-            child: IconButton(
-              visualDensity: VisualDensity.compact,
-              padding: EdgeInsets.zero,
-              constraints:
-                  const BoxConstraints(minWidth: 36, minHeight: 36),
-              tooltip: 'Larger',
-              onPressed: !canGrow
-                  ? null
-                  : () {
-                      HapticFeedback.lightImpact();
-                      final i = _textScaleStops.indexOf(_textScale);
-                      setState(() {
-                        _textScale = _textScaleStops[
-                            (i + 1).clamp(0, _textScaleStops.length - 1)];
-                      });
-                    },
-              icon: const Icon(Icons.add_rounded, size: 18),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// Background-mode selector — Themed / Dark / Light / Transparent.
-  /// Mirrors Hevy's background picker. Themed keeps each template's
-  /// signature gradient; Light/Transparent inset the template as a rounded
-  /// card; Transparent exports an alpha PNG you can drop onto a photo or
-  /// story as a sticker. Uses a [Wrap] so the four chips never overflow on
-  /// a narrow phone.
-  Widget _backgroundRow(Color accent, bool isDark) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
-      child: Wrap(
-        alignment: WrapAlignment.center,
-        spacing: 8,
-        runSpacing: 6,
-        children: [
-          for (final mode in ShareBackground.values)
-            _bgChip(mode, accent, isDark),
-        ],
-      ),
-    );
-  }
-
   Widget _bgChip(ShareBackground mode, Color accent, bool isDark) {
     final selected = _background == mode;
     final mutedBorder =
@@ -529,6 +475,7 @@ class _ShareableSheetState extends ConsumerState<ShareableSheet> {
       onTap: () {
         HapticFeedback.selectionClick();
         setState(() => _background = mode);
+        _persistShareSettings();
         // Selecting Video with no clip yet jumps straight to the picker.
         if (mode == ShareBackground.video && _videoPath == null) {
           _pickVideo();
@@ -781,102 +728,90 @@ class _ShareableSheetState extends ConsumerState<ShareableSheet> {
     );
   }
 
-  /// **Vertical scrollable gallery** — every available template renders as
-  /// a real preview tile in a ListView, all visible at once via scrolling.
-  /// Replaces the previous `IndexedStack` carousel pattern that only showed
-  /// one template at a time and required pill navigation to switch.
-  ///
-  /// Per project memory `feedback_share_gallery_viral_templates.md`:
-  ///   "Share UIs — use a gallery (all visible at once), not a carousel.
-  ///    Default to 15+ viral formats."
-  ///
-  /// Each tile keeps the same `RepaintBoundary(key: _captureKeys[template])`
-  /// wrapper so the capture pipeline (which keys by template enum) keeps
-  /// working — the keyed boundary just lives inside a tile in the list
-  /// instead of inside an IndexedStack child. Because every tile is in the
-  /// tree AND visible (vs the old Offstage trick), the white-screen-on-
-  /// first-capture bug is also gone — RepaintBoundaries always have real
-  /// pixels.
-  ///
-  /// The tile that matches `_template` gets an accent border + ~1.04x scale
-  /// so the user sees clearly which one the action buttons (Instagram /
-  /// Share / Save) will target.
-  /// Live preview of the currently-selected template at the active
-  /// aspect ratio. Sits above the gallery — tapping any tile in the
-  /// gallery updates this pane (and vice-versa). Replaces the old
-  /// horizontal subcategory thumbnail strip, which duplicated the
-  /// gallery and gave no real preview affordance.
-  Widget _previewPane(Color accent, bool isDark) {
-    final spec = ShareableCatalog.all()
-        .cast<ShareableTemplateSpec?>()
-        .firstWhere((s) => s?.template == _template, orElse: () => null);
+  /// Spec for the currently-selected template, or null if it vanished
+  /// from the catalog (defensive).
+  ShareableTemplateSpec? _currentSpec() => ShareableCatalog.all()
+      .cast<ShareableTemplateSpec?>()
+      .firstWhere((s) => s?.template == _template, orElse: () => null);
+
+  /// Selects a template, discarding any in-progress customization (the
+  /// `_editedDoc` belongs to the previously-selected template).
+  void _selectTemplate(ShareableTemplate t) {
+    if (_template == t) return;
+    setState(() {
+      _template = t;
+      _editedDoc = null;
+    });
+  }
+
+  /// Opens the Canva-style card editor on the selected template's editable
+  /// document; the returned customized document becomes `_editedDoc`.
+  Future<void> _openCardEditor() async {
+    final spec = _currentSpec();
+    final docBuilder = spec?.docBuilder;
+    if (docBuilder == null) return;
+    HapticFeedback.selectionClick();
+    final startDoc = _editedDoc ?? docBuilder(_currentData, _aspect);
+    final edited = await CardEditorScreen.open(
+      context,
+      doc: startDoc,
+      data: _currentData,
+      showWatermark: _showWatermark,
+      textScale: _textScale,
+    );
+    if (edited != null && mounted) {
+      setState(() => _editedDoc = edited);
+    }
+  }
+
+  /// Live preview of the selected template. Fixed-height region so that
+  /// switching aspect ratio (or collapsing it) never reflows the gallery.
+  /// Expanded → the card + a vertical tool rail in the right gutter.
+  /// Collapsed → a slim bar with a mini render + inline tool icons.
+  Widget _previewSection(Color accent, bool isDark, double previewH) {
+    final spec = _currentSpec();
     if (spec == null) return const SizedBox.shrink();
+    return AnimatedSize(
+      duration: const Duration(milliseconds: 240),
+      curve: Curves.easeInOutCubic,
+      alignment: Alignment.topCenter,
+      child: _previewExpanded
+          ? _expandedPreview(spec, accent, isDark, previewH)
+          : _collapsedPreviewBar(spec, accent, isDark),
+    );
+  }
+
+  /// Renders the selected template's card at its full design size, scaled
+  /// with a `FittedBox` to whatever box the caller gives it. The card is
+  /// wrapped in the single capture `RepaintBoundary` — so the export
+  /// pipeline always snapshots this, at full resolution, regardless of how
+  /// small the preview is displayed.
+  Widget _previewCard(ShareableTemplateSpec spec, MediaQueryData mq) {
     final designSize = _aspect.size;
-    final ratio = _aspect.ratio; // width / height
-    // Cap the preview height so the gallery still has room. Tall 9:16
-    // aspect uses ~38% of the sheet, square/4:5 uses less.
-    final mq = MediaQuery.of(context);
-    final maxH = mq.size.height * (ratio < 0.7 ? 0.32 : 0.26);
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: BoxConstraints(maxHeight: maxH),
-          child: AspectRatio(
-            aspectRatio: ratio,
-            child: GestureDetector(
-              onTap: _onPreviewTapped,
-              child: Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: accent.withValues(alpha: 0.4), width: 1.5),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: isDark ? 0.45 : 0.18),
-                      blurRadius: 24,
-                      offset: const Offset(0, 8),
-                    ),
-                  ],
-                ),
-                clipBehavior: Clip.antiAlias,
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    // Video background — only the preview plays the clip;
-                    // the captured sticker stays transparent so Instagram
-                    // composites the real video behind it.
-                    if (_background == ShareBackground.video &&
-                        _videoController != null &&
-                        _videoController!.value.isInitialized)
-                      FittedBox(
-                        fit: BoxFit.cover,
-                        clipBehavior: Clip.hardEdge,
-                        child: SizedBox(
-                          width: _videoController!.value.size.width,
-                          height: _videoController!.value.size.height,
-                          child: VideoPlayer(_videoController!),
-                        ),
-                      ),
-                    FittedBox(
-                      fit: BoxFit.contain,
-                      alignment: Alignment.center,
-                      child: SizedBox(
-                        width: designSize.width,
-                        height: designSize.height,
-                        child: MediaQuery(
-                          data: mq.copyWith(
-                            textScaler: TextScaler.linear(_textScale),
-                          ),
-                          child: ShareSurface(
-                            background: _background,
-                            child:
-                                spec.builder(_currentData, _showWatermark),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+    return FittedBox(
+      fit: BoxFit.contain,
+      alignment: Alignment.center,
+      child: RepaintBoundary(
+        key: _previewCaptureKey,
+        child: SizedBox(
+          width: designSize.width,
+          height: designSize.height,
+          child: MediaQuery(
+            data: mq.copyWith(textScaler: TextScaler.linear(_textScale)),
+            child: ShareSurface(
+              background: _background,
+              // TemplateView renders a migrated template via the editable
+              // CardDocRenderer (and the user's edits via `overrideDoc`),
+              // falling back to the legacy builder for un-migrated templates.
+              child: TemplateView(
+                spec: spec,
+                data: _currentData,
+                aspect: _aspect,
+                showWatermark: _showWatermark,
+                showPhoto: _showPhoto,
+                textScale: _textScale,
+                overrideDoc:
+                    spec.template == _template ? _editedDoc : null,
               ),
             ),
           ),
@@ -885,65 +820,577 @@ class _ShareableSheetState extends ConsumerState<ShareableSheet> {
     );
   }
 
-  /// Row above the gallery — count of available templates + a Sort
-  /// dropdown (Default / Recents / Favorites). Mirrors the
-  /// progress_share_gallery_screen.dart layout the user referenced.
-  Widget _galleryHeaderRow(Color accent, bool isDark) {
-    final inCategory = ShareableCatalog.templatesInCategory(
-      _currentData,
-      _category,
-      ownsCosmetic: _ownsElite,
-    );
-    final textMuted = (isDark ? Colors.white : Colors.black)
-        .withValues(alpha: 0.55);
+
+  /// Slim collapsed preview — a live mini card + the template name + the
+  /// 3 tool icons + an expand affordance.
+  Widget _collapsedPreviewBar(
+      ShareableTemplateSpec spec, Color accent, bool isDark) {
+    final mq = MediaQuery.of(context);
+    final ratio = _aspect.ratio; // width / height
+    const thumbH = 54.0;
+    final thumbW = thumbH * ratio;
+    void expand() {
+      HapticFeedback.selectionClick();
+      setState(() => _previewExpanded = true);
+    }
+
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 8, 16, 4),
-      child: Row(
-        children: [
-          Icon(Icons.auto_awesome, size: 14, color: accent),
-          const SizedBox(width: 6),
-          Text(
-            '${inCategory.length} viral formats',
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              color: isDark ? Colors.white : Colors.black87,
-              letterSpacing: 0.2,
-            ),
-          ),
-          const Spacer(),
-          PopupMenuButton<_GallerySort>(
-            initialValue: _gallerySort,
-            tooltip: 'Sort',
-            position: PopupMenuPosition.under,
-            onSelected: (v) => setState(() => _gallerySort = v),
-            itemBuilder: (_) => const [
-              PopupMenuItem(
-                value: _GallerySort.defaultOrder,
-                child: Text('Default'),
-              ),
-              PopupMenuItem(
-                value: _GallerySort.recents,
-                child: Text('Recents first'),
-              ),
-              PopupMenuItem(
-                value: _GallerySort.favorites,
-                child: Text('Favorites first'),
-              ),
-            ],
-            child: Row(
-              children: [
-                Icon(Icons.sort_rounded, size: 16, color: textMuted),
-                const SizedBox(width: 4),
-                Text(
-                  _gallerySort.label,
-                  style: TextStyle(fontSize: 12, color: textMuted),
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+      child: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color:
+              (isDark ? Colors.white : Colors.black).withValues(alpha: 0.04),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: accent.withValues(alpha: 0.28)),
+        ),
+        child: Row(
+          children: [
+            GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: expand,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(9),
+                child: Container(
+                  width: thumbW,
+                  height: thumbH,
+                  color: Colors.black,
+                  child: _previewCard(spec, mq),
                 ),
-                Icon(Icons.arrow_drop_down_rounded, size: 18, color: textMuted),
-              ],
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: expand,
+                child: Text(
+                  spec.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                    color: isDark ? Colors.white : Colors.black87,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 4),
+            // Tool icons stay reachable even while collapsed.
+            _toolButton(_ShareTool.ratio, accent, isDark),
+            _toolButton(_ShareTool.background, accent, isDark),
+            _toolButton(_ShareTool.style, accent, isDark),
+            const SizedBox(width: 2),
+            GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: expand,
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                decoration: BoxDecoration(
+                  color: accent.withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(11),
+                ),
+                child: Icon(Icons.unfold_more_rounded, size: 16, color: accent),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Expanded preview — a fixed-height region: the card centered, with the
+  /// 3-tool rail docked in the right gutter (mirrored by an empty left
+  /// gutter so the card stays centered). Height is fixed by the caller, so
+  /// changing aspect ratio only restyles the card silhouette.
+  Widget _expandedPreview(ShareableTemplateSpec spec, Color accent,
+      bool isDark, double previewH) {
+    final ratio = _aspect.ratio; // width / height
+    final mq = MediaQuery.of(context);
+    const railWidth = 48.0;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+      child: SizedBox(
+        height: previewH,
+        child: Row(
+          children: [
+            // Empty left gutter — mirrors the rail to keep the card centered.
+            const SizedBox(width: railWidth),
+            Expanded(
+              child: Center(
+                child: AspectRatio(
+                  aspectRatio: ratio,
+                  child: _previewCardFrame(spec, accent, isDark, mq),
+                ),
+              ),
+            ),
+            SizedBox(
+              width: railWidth,
+              child: Center(child: _toolRail(accent, isDark)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// The bordered card frame inside the expanded preview — video backdrop
+  /// (if any), the live card, and the collapse chip.
+  Widget _previewCardFrame(ShareableTemplateSpec spec, Color accent,
+      bool isDark, MediaQueryData mq) {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        border:
+            Border.all(color: accent.withValues(alpha: 0.4), width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.45 : 0.18),
+            blurRadius: 24,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          // Video background — only the preview plays the clip; the
+          // captured sticker stays transparent so Instagram composites the
+          // real video behind it.
+          if (_background == ShareBackground.video &&
+              _videoController != null &&
+              _videoController!.value.isInitialized)
+            FittedBox(
+              fit: BoxFit.cover,
+              clipBehavior: Clip.hardEdge,
+              child: SizedBox(
+                width: _videoController!.value.size.width,
+                height: _videoController!.value.size.height,
+                child: VideoPlayer(_videoController!),
+              ),
+            ),
+          GestureDetector(
+            onTap: _onPreviewTapped,
+            child: _previewCard(spec, mq),
+          ),
+          // Collapse chip — folds the preview into the slim bar.
+          Positioned(
+            top: 8,
+            left: 8,
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () {
+                HapticFeedback.selectionClick();
+                setState(() => _previewExpanded = false);
+              },
+              child: Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.55),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.unfold_less_rounded,
+                    size: 16, color: Colors.white),
+              ),
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  // ─── Secondary-control tools ──────────────────────────────────────────
+  // Ratio / Background / Style are tucked into a 3-icon rail in the
+  // preview's right gutter (or inline in the collapsed bar). Tapping one
+  // opens its options in `_toolOptionsPanel` below the preview; tapping it
+  // again — or picking the same tool — closes the panel.
+
+  /// Vertical 3-icon tool rail for the expanded preview's right gutter.
+  Widget _toolRail(Color accent, bool isDark) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _toolButton(_ShareTool.ratio, accent, isDark),
+        _toolButton(_ShareTool.background, accent, isDark),
+        _toolButton(_ShareTool.style, accent, isDark),
+        _toolButton(_ShareTool.watermark, accent, isDark),
+        _toolButton(_ShareTool.photo, accent, isDark),
+      ],
+    );
+  }
+
+  /// One tool button. Ratio is a one-tap CYCLE (9:16 → 4:5 → 1:1 → …) and
+  /// shows the current ratio as text — no panel. Background and Style open
+  /// their options panel. Active panel tool = accent fill.
+  Widget _toolButton(_ShareTool tool, Color accent, bool isDark) {
+    // watermark + photo are one-tap toggles — "active" = the toggle is ON.
+    final isToggle = tool == _ShareTool.watermark || tool == _ShareTool.photo;
+    final active = isToggle
+        ? (tool == _ShareTool.watermark ? _showWatermark : _showPhoto)
+        : _activeTool == tool;
+    final (IconData icon, String label) = switch (tool) {
+      _ShareTool.ratio => (Icons.aspect_ratio_rounded, 'Tap to cycle ratio'),
+      _ShareTool.background => (Icons.gradient_rounded, 'Background'),
+      _ShareTool.style => (Icons.text_fields_rounded, 'Text & watermark'),
+      _ShareTool.watermark => (
+          _showWatermark
+              ? Icons.branding_watermark_rounded
+              : Icons.branding_watermark_outlined,
+          _showWatermark ? 'Watermark on' : 'Watermark off',
+        ),
+      _ShareTool.photo => (
+          _showPhoto ? Icons.image_rounded : Icons.hide_image_rounded,
+          _showPhoto ? 'Photo on' : 'Photo off',
+        ),
+      _ShareTool.none => (Icons.tune_rounded, ''),
+    };
+    final onAccent =
+        ThemeData.estimateBrightnessForColor(accent) == Brightness.dark
+            ? Colors.white
+            : Colors.black;
+    final restFg =
+        (isDark ? Colors.white : Colors.black).withValues(alpha: 0.78);
+    return Tooltip(
+      message: label,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () {
+          HapticFeedback.selectionClick();
+          if (tool == _ShareTool.ratio) {
+            // Cycle the aspect in place — no options panel.
+            setState(() {
+              final order = ShareableAspect.values;
+              _aspect =
+                  order[(order.indexOf(_aspect) + 1) % order.length];
+            });
+            _persistShareSettings();
+          } else if (tool == _ShareTool.watermark) {
+            setState(() => _showWatermark = !_showWatermark);
+            _persistShareSettings();
+          } else if (tool == _ShareTool.photo) {
+            setState(() => _showPhoto = !_showPhoto);
+            _persistShareSettings();
+          } else {
+            setState(() => _activeTool = active ? _ShareTool.none : tool);
+          }
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          width: 38,
+          height: 38,
+          margin: const EdgeInsets.all(2),
+          decoration: BoxDecoration(
+            color: active
+                ? accent
+                : (isDark ? Colors.white : Colors.black)
+                    .withValues(alpha: isDark ? 0.08 : 0.05),
+            borderRadius: BorderRadius.circular(11),
+          ),
+          alignment: Alignment.center,
+          child: tool == _ShareTool.ratio
+              ? Text(
+                  _aspect.label,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                    color: active ? onAccent : restFg,
+                  ),
+                )
+              : Icon(icon, size: 18, color: active ? onAccent : restFg),
+        ),
+      ),
+    );
+  }
+
+  /// Inline options strip for the open tool — 0px when `_activeTool` is
+  /// `none`, so by default the preview and gallery sit adjacent.
+  Widget _toolOptionsPanel(Color accent, bool isDark) {
+    return AnimatedSize(
+      duration: const Duration(milliseconds: 220),
+      curve: Curves.easeInOutCubic,
+      alignment: Alignment.topCenter,
+      child: _activeTool == _ShareTool.none
+          ? const SizedBox(width: double.infinity, height: 0)
+          : Container(
+              width: double.infinity,
+              margin: const EdgeInsets.fromLTRB(12, 2, 12, 2),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: (isDark ? Colors.white : Colors.black)
+                    .withValues(alpha: 0.04),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: (isDark ? Colors.white : Colors.black)
+                      .withValues(alpha: 0.06),
+                ),
+              ),
+              // Ratio / watermark / photo never open a panel (they act on
+              // tap) — those cases exist only for switch exhaustiveness.
+              child: switch (_activeTool) {
+                _ShareTool.background => _backgroundOptions(accent, isDark),
+                _ShareTool.style => _styleOptions(accent, isDark),
+                _ShareTool.ratio ||
+                _ShareTool.watermark ||
+                _ShareTool.photo ||
+                _ShareTool.none =>
+                  const SizedBox.shrink(),
+              },
+            ),
+    );
+  }
+
+  /// Background-mode options — reuses the existing `_bgChip` chips.
+  Widget _backgroundOptions(Color accent, bool isDark) {
+    return Wrap(
+      alignment: WrapAlignment.center,
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        for (final mode in ShareBackground.values)
+          _bgChip(mode, accent, isDark),
+      ],
+    );
+  }
+
+  /// Style options — the (now clearly labeled) watermark switch and the
+  /// text-size slider. Both persist on change.
+  Widget _styleOptions(Color accent, bool isDark) {
+    final textPrimary =
+        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Row(
+          children: [
+            Icon(Icons.branding_watermark_rounded,
+                size: 18,
+                color: _showWatermark ? accent : Colors.grey),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                'Show ${Branding.appName} watermark',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: textPrimary,
+                ),
+              ),
+            ),
+            Switch.adaptive(
+              value: _showWatermark,
+              onChanged: (v) {
+                HapticFeedback.lightImpact();
+                setState(() => _showWatermark = v);
+                _persistShareSettings();
+              },
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              activeTrackColor: _switchTrackColor(accent),
+              activeThumbColor: Colors.white,
+            ),
+          ],
+        ),
+        const SizedBox(height: 2),
+        Row(
+          children: [
+            Icon(Icons.format_size_rounded, size: 18, color: accent),
+            const SizedBox(width: 10),
+            Text(
+              'Text size',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: textPrimary,
+              ),
+            ),
+            Expanded(
+              child: Slider(
+                value: _textScale,
+                min: 1.0,
+                max: 2.0,
+                divisions: 10,
+                activeColor: accent,
+                label: '${(_textScale * 100).round()}%',
+                onChanged: (v) => setState(() => _textScale = v),
+                onChangeEnd: (_) => _persistShareSettings(),
+              ),
+            ),
+            SizedBox(
+              width: 46,
+              child: Text(
+                '${(_textScale * 100).round()}%',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: textPrimary,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  /// One category pill — built equal-width (`Expanded`) so every category
+  /// fits on a single row regardless of count or screen size. The label is
+  /// in a scale-down `FittedBox`, so the longest name ("Editorial") shrinks
+  /// to fit its slot rather than wrapping or clipping.
+  Widget _categoryPill(ShareableCategory c, Color accent, bool isDark) {
+    final selected = c == _category;
+    final onAccent =
+        ThemeData.estimateBrightnessForColor(accent) == Brightness.dark
+            ? Colors.white
+            : Colors.black;
+    final restBg = (isDark ? Colors.white : Colors.black)
+        .withValues(alpha: isDark ? 0.10 : 0.06);
+    final restFg = (isDark ? Colors.white : Colors.black)
+        .withValues(alpha: isDark ? 0.85 : 0.72);
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.selectionClick();
+        _selectCategory(c);
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        height: 34,
+        alignment: Alignment.center,
+        padding: const EdgeInsets.symmetric(horizontal: 6),
+        decoration: BoxDecoration(
+          color: selected ? accent : restBg,
+          borderRadius: BorderRadius.circular(17),
+        ),
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            c.label,
+            maxLines: 1,
+            style: TextStyle(
+              fontSize: 12.5,
+              fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+              color: selected ? onAccent : restFg,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Switch the active template category and land on its first template.
+  void _selectCategory(ShareableCategory c) {
+    setState(() {
+      _category = c;
+      final inCat = ShareableCatalog.templatesInCategory(
+        _currentData,
+        c,
+        ownsCosmetic: _ownsElite,
+      );
+      if (inCat.isNotEmpty) _template = inCat.first.template;
+      _editedDoc = null;
+    });
+    // RECENT is stamped only on share-success, never on browse — see
+    // _onShareInstagram / _onShareGeneric / _onSave / _onPreviewTapped.
+  }
+
+  /// Gallery header — the category filter. Every category sits on ONE row
+  /// as an equal-width pill (`Row` of `Expanded`s), so nothing wraps to a
+  /// second line or scrolls off. The Sort control is NOT here — it floats
+  /// over the gallery's top-right corner (see `_sortFloatingButton`).
+  Widget _galleryHeader(Color accent, bool isDark) {
+    final categories = ShareableCatalog.categoriesFor(
+      _currentData,
+      ownsCosmetic: _ownsElite,
+    );
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 2, 12, 4),
+      child: Row(
+        children: [
+          for (var i = 0; i < categories.length; i++) ...[
+            if (i > 0) const SizedBox(width: 6),
+            Expanded(child: _categoryPill(categories[i], accent, isDark)),
+          ],
+        ],
+      ),
+    );
+  }
+
+  /// Compact floating Sort control — hovers over the gallery's top-right
+  /// corner (a rounded, shadowed pill) so the category row keeps the full
+  /// width. Tapping it opens the sort menu.
+  Widget _sortFloatingButton(bool isDark) {
+    final fg = (isDark ? Colors.white : Colors.black).withValues(alpha: 0.82);
+    return PopupMenuButton<_GallerySort>(
+      initialValue: _gallerySort,
+      tooltip: 'Sort templates',
+      position: PopupMenuPosition.under,
+      onSelected: (v) => setState(() => _gallerySort = v),
+      itemBuilder: (_) => const [
+        PopupMenuItem(
+          value: _GallerySort.defaultOrder,
+          child: Text('Default'),
+        ),
+        PopupMenuItem(
+          value: _GallerySort.recents,
+          child: Text('Recents first'),
+        ),
+        PopupMenuItem(
+          value: _GallerySort.favorites,
+          child: Text('Favorites first'),
+        ),
+      ],
+      // Glassmorphic, not a solid white pill — a real `BackdropFilter`
+      // frosts the gallery thumbnails behind it. Shadow lives on an outer
+      // Container so the ClipRRect doesn't clip it away.
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isDark ? 0.42 : 0.18),
+              blurRadius: 12,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(20),
+          child: BackdropFilter(
+            filter: ui.ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+            child: Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
+              decoration: BoxDecoration(
+                color: (isDark ? Colors.black : Colors.white)
+                    .withValues(alpha: isDark ? 0.42 : 0.55),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: (isDark ? Colors.white : Colors.black)
+                      .withValues(alpha: 0.14),
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.sort_rounded, size: 15, color: fg),
+                  const SizedBox(width: 5),
+                  Text(
+                    _gallerySort.label,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: fg,
+                    ),
+                  ),
+                  Icon(Icons.arrow_drop_down_rounded, size: 16, color: fg),
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -1002,30 +1449,31 @@ class _ShareableSheetState extends ConsumerState<ShareableSheet> {
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 4, 12, 4),
-      child: LayoutBuilder(
+      child: Stack(
+        children: [
+          LayoutBuilder(
         builder: (context, constraints) {
-          // 4-column grid matches the onboarding `workout_showcase_screen.dart`
-          // demo layout — a true gallery where the user sees a row of
-          // previews at a glance instead of two giant scrollable tiles.
-          // Per-tile zoom button (top-right) opens the full-screen preview
-          // viewer; tapping the tile body just selects it as the active
-          // template (the one the action buttons target).
-          final designSize = _aspect.size;
-          final ratio = _aspect.ratio; // width / height
-          const cols = 4;
+          // 3-column grid of FIXED 4:5 thumbnails. 3 (not 4) columns so
+          // each tile — and the template artwork inside it — is ~38%
+          // bigger and more legible. The thumbnail shape is fixed (not the
+          // selected export ratio) so the gallery's row height never
+          // changes when the user switches 9:16 / 4:5 / 1:1, and >= 2 rows
+          // always fit (see `_resolvePreviewHeight`).
+          const designSize = Size(1080, 1350); // fixed 4:5 thumbnail
+          const cols = 3;
           const spacing = 8.0;
           final tileW = (constraints.maxWidth - spacing * (cols - 1)) / cols;
-          final tileH = tileW / ratio;
+          final tileH = tileW / _kGalleryThumbRatio;
 
           return GridView.builder(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            // Bottom padding clears the floating action bar so the last
+            // row can scroll fully into view above it.
+            padding: const EdgeInsets.only(top: 8, bottom: 84),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: cols,
               crossAxisSpacing: spacing,
               mainAxisSpacing: spacing,
-              // Add a hair of headroom for the RECENT badge / label so the
-              // tile content doesn't clip.
-              childAspectRatio: ratio * 0.97,
+              childAspectRatio: _kGalleryThumbRatio,
             ),
             itemCount: renderList.length,
             itemBuilder: (ctx, i) {
@@ -1039,13 +1487,13 @@ class _ShareableSheetState extends ConsumerState<ShareableSheet> {
                   behavior: HitTestBehavior.opaque,
                   onTap: () {
                     HapticFeedback.selectionClick();
-                    setState(() => _template = spec.template);
+                    _selectTemplate(spec.template);
                   },
                   // Long-press = expand to full-screen preview viewer
                   // (replaces the previous tap-to-zoom corner button).
                   onLongPress: () {
                     HapticFeedback.mediumImpact();
-                    setState(() => _template = spec.template);
+                    _selectTemplate(spec.template);
                     _onPreviewTapped();
                   },
                   child: AnimatedScale(
@@ -1089,28 +1537,36 @@ class _ShareableSheetState extends ConsumerState<ShareableSheet> {
                                   data: MediaQuery.of(context).copyWith(
                                     textScaler: TextScaler.linear(_textScale),
                                   ),
+                                  // Thumbnails are display-only — the
+                                  // export pipeline captures the preview's
+                                  // own RepaintBoundary, not these tiles.
                                   child: ShareSurface(
                                     background: _background,
-                                    child: RepaintBoundary(
-                                      key: _captureKeys[spec.template],
-                                      child: spec.builder(
-                                          _currentData, _showWatermark),
+                                    child: TemplateView(
+                                      spec: spec,
+                                      data: _currentData,
+                                      aspect: _aspect,
+                                      showWatermark: _showWatermark,
+                                      showPhoto: _showPhoto,
+                                      textScale: _textScale,
                                     ),
                                   ),
                                 ),
                               ),
                             ),
-                            // Template-name label — sized down for the
-                            // 4-up grid so it doesn't crowd the preview.
+                            // Template-name label — the text the user
+                            // actually reads to pick. Kept clearly legible
+                            // (the card art inside the thumbnail is small
+                            // by nature; the name is what must read well).
                             Positioned(
-                              left: 4,
-                              right: 4,
-                              bottom: 4,
+                              left: 5,
+                              right: 5,
+                              bottom: 5,
                               child: Container(
                                 padding: const EdgeInsets.symmetric(
-                                    horizontal: 6, vertical: 2),
+                                    horizontal: 8, vertical: 3),
                                 decoration: BoxDecoration(
-                                  color: Colors.black.withValues(alpha: 0.55),
+                                  color: Colors.black.withValues(alpha: 0.62),
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Text(
@@ -1120,9 +1576,9 @@ class _ShareableSheetState extends ConsumerState<ShareableSheet> {
                                   textAlign: TextAlign.center,
                                   style: const TextStyle(
                                     color: Colors.white,
-                                    fontSize: 9,
+                                    fontSize: 11,
                                     fontWeight: FontWeight.w800,
-                                    letterSpacing: 0.3,
+                                    letterSpacing: 0.2,
                                   ),
                                 ),
                               ),
@@ -1150,34 +1606,11 @@ class _ShareableSheetState extends ConsumerState<ShareableSheet> {
                                   ),
                                 ),
                               ),
-                            // Zoom icon — top-right. Tap = expand THIS tile
-                            // (without committing it as the action target).
-                            // Discoverable affordance the user explicitly asked
-                            // for in the gallery review (#5).
-                            Positioned(
-                              top: 2,
-                              right: 2,
-                              child: GestureDetector(
-                                behavior: HitTestBehavior.opaque,
-                                onTap: () {
-                                  HapticFeedback.selectionClick();
-                                  setState(() => _template = spec.template);
-                                  _onPreviewTapped();
-                                },
-                                child: Container(
-                                  padding: const EdgeInsets.all(4),
-                                  decoration: BoxDecoration(
-                                    color: Colors.black.withValues(alpha: 0.55),
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: const Icon(
-                                    Icons.zoom_out_map_rounded,
-                                    color: Colors.white,
-                                    size: 12,
-                                  ),
-                                ),
-                              ),
-                            ),
+                            // (Per-tile zoom button removed — it cluttered
+                            // every tile and collided with the floating
+                            // Sort control. Full-screen preview is still
+                            // reachable: tap the main preview, or
+                            // long-press a tile.)
                           ],
                         ),
                       ),
@@ -1188,97 +1621,178 @@ class _ShareableSheetState extends ConsumerState<ShareableSheet> {
             },
           );
         },
+          ),
+          // Floating Sort control — hovers over the gallery's top-right.
+          Positioned(
+            top: 4,
+            right: 2,
+            child: _sortFloatingButton(isDark),
+          ),
+        ],
       ),
     );
   }
 
-  /// Food-share extras: the layer editor (draggable text / stickers / GIFs /
-  /// macro overlays on the photo) and, when the share has 2+ photos, a
-  /// montage-video export.
-  Widget _customizeRow(Color accent) {
+  /// Instagram's brand gradient — used to paint the glyph (via a
+  /// ShaderMask) so the logo reads in the real Instagram colors instead
+  /// of a flat monochrome mark.
+  static const _instagramGradient = LinearGradient(
+    begin: Alignment.bottomLeft,
+    end: Alignment.topRight,
+    colors: [
+      Color(0xFFFEDA75), // warm yellow
+      Color(0xFFFA7E1E), // orange
+      Color(0xFFD62976), // magenta
+      Color(0xFF962FBF), // purple
+      Color(0xFF4F5BD5), // indigo
+    ],
+  );
+
+  /// The single FLOATING action bar — one UNIFORM frosted-glass capsule
+  /// that hovers over the gallery's bottom (the gallery scrolls behind it,
+  /// so the `BackdropFilter` frosts real content). Styled after iOS 26
+  /// Liquid Glass / One UI 8.5 floating bars.
+  ///
+  /// Every action is the SAME button — an icon over a label — on one
+  /// uniform glass surface. No contrasting slab, no nested pill. Instagram
+  /// simply leads: it is first and carries the full-colour brand glyph,
+  /// which draws the eye without breaking the bar into two zones. The bar
+  /// is content-width, centered, and capped to the screen so it can't
+  /// overflow.
+  Widget _floatingActionBar(bool isDark) {
+    final isFood = widget.data.kind == ShareableKind.foodLog;
     final photoCount = widget.data.foodImageUrls?.length ?? 0;
-    final style = OutlinedButton.styleFrom(
-      minimumSize: const Size.fromHeight(44),
-      foregroundColor: accent,
-      side: BorderSide(color: accent.withValues(alpha: 0.5)),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(14),
+    final busy = _isCapturing;
+    final fg = (isDark ? Colors.white : Colors.black).withValues(alpha: 0.88);
+    const barHeight = 66.0;
+
+    final actions = <Widget>[
+      // Instagram leads — the brand glyph painted with the real Instagram
+      // gradient. Slightly larger glyph than the rest for a touch of lead.
+      _barAction(
+        label: 'Instagram',
+        fg: fg,
+        onTap: busy ? null : _onShareInstagram,
+        iconBuilder: (size) => ShaderMask(
+          blendMode: BlendMode.srcIn,
+          shaderCallback: _instagramGradient.createShader,
+          child: FaIcon(FontAwesomeIcons.instagram,
+              size: size, color: Colors.white),
+        ),
       ),
-    );
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 6, 20, 0),
-      child: Row(
-        children: [
-          Expanded(
-            child: OutlinedButton.icon(
-              onPressed: () => FoodEditorScreen.open(context, _currentData),
-              icon: const Icon(Icons.tune_rounded, size: 18),
-              label: const Text('Customize'),
-              style: style,
+      // Customize — opens the Canva-style card editor on the selected
+      // template's editable document, so every element (title, macros,
+      // chips, photo, score …) can be moved / restyled / edited. Shown only
+      // for templates migrated to the editable-card engine.
+      if (_currentSpec()?.isEditable ?? false)
+        _barAction(
+          label: 'Customize',
+          icon: Icons.tune_rounded,
+          fg: fg,
+          onTap: _openCardEditor,
+        ),
+      if (isFood && photoCount >= 2)
+        _barAction(
+          label: 'Video',
+          icon: Icons.movie_creation_rounded,
+          fg: fg,
+          onTap: () => FoodMontageScreen.open(context, _currentData),
+        ),
+      _barAction(
+        label: 'Share',
+        icon: Icons.ios_share_rounded,
+        fg: fg,
+        onTap: busy ? null : _onShareGeneric,
+      ),
+      _barAction(
+        label: 'Save',
+        icon: Icons.download_rounded,
+        fg: fg,
+        onTap: busy ? null : _onSave,
+      ),
+    ];
+
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(barHeight / 2),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.45 : 0.22),
+            blurRadius: 24,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(barHeight / 2),
+        child: BackdropFilter(
+          filter: ui.ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+          child: Container(
+            height: barHeight,
+            padding: const EdgeInsets.symmetric(horizontal: 6),
+            decoration: BoxDecoration(
+              // Translucent so the frosted gallery shows through — a
+              // glass bar, not a white panel.
+              color: (isDark ? Colors.black : Colors.white)
+                  .withValues(alpha: isDark ? 0.42 : 0.62),
+              border: Border.all(
+                color: (isDark ? Colors.white : Colors.black)
+                    .withValues(alpha: 0.14),
+              ),
+            ),
+            // Equal-width buttons spread across the full bar width.
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                for (final a in actions) Expanded(child: a),
+              ],
             ),
           ),
-          if (photoCount >= 2) ...[
-            const SizedBox(width: 10),
-            Expanded(
-              child: OutlinedButton.icon(
-                onPressed: () =>
-                    FoodMontageScreen.open(context, _currentData),
-                icon: const Icon(Icons.movie_creation_rounded, size: 18),
-                label: const Text('Video'),
-                style: style,
+        ),
+      ),
+    );
+  }
+
+  /// One uniform action button in the floating bar — an icon over a small
+  /// label. Pass [icon] for a plain glyph, or [iconBuilder] for a custom
+  /// one (e.g. the gradient-painted Instagram mark).
+  Widget _barAction({
+    required String label,
+    required Color fg,
+    required VoidCallback? onTap,
+    IconData? icon,
+    Widget Function(double size)? iconBuilder,
+  }) {
+    final enabled = onTap != null;
+    final color = enabled ? fg : fg.withValues(alpha: 0.4);
+    Widget glyph = iconBuilder != null
+        ? iconBuilder(22)
+        : Icon(icon, size: 20, color: color);
+    if (!enabled) glyph = Opacity(opacity: 0.45, child: glyph);
+    return Tooltip(
+      message: label,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        // Width comes from the bar's Expanded; height from its stretch.
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            SizedBox(height: 26, child: Center(child: glyph)),
+            const SizedBox(height: 4),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: color,
+                ),
               ),
             ),
           ],
-        ],
-      ),
-    );
-  }
-
-  Widget _actionRow(Color accent, bool isDark) {
-    // Tightened vertical padding: was (8, 8); now (4, 0). The bottom
-    // safe-area SizedBox already handles the home-indicator gap, so this
-    // padding shouldn't add another ~16px on top.
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
-      child: Row(
-        children: [
-          Expanded(
-            child: ElevatedButton.icon(
-              onPressed: _isCapturing ? null : _onShareInstagram,
-              icon: const Icon(Icons.camera_alt_rounded, size: 18),
-              label: const Text('Instagram'),
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                backgroundColor: accent,
-                foregroundColor:
-                    isDark ? AppColors.accentContrast : AppColorsLight.accentContrast,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: OutlinedButton.icon(
-              onPressed: _isCapturing ? null : _onShareGeneric,
-              icon: const Icon(Icons.share_rounded, size: 18),
-              label: const Text('Share'),
-              style: OutlinedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 10),
-          IconButton.filledTonal(
-            onPressed: _isCapturing ? null : _onSave,
-            icon: const Icon(Icons.save_alt_rounded),
-            tooltip: 'Save to gallery',
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -1430,11 +1944,11 @@ class _ShareableSheetState extends ConsumerState<ShareableSheet> {
       final prev = _aspect;
       setState(() => _aspect = aspect);
       await WidgetsBinding.instance.endOfFrame;
-      final bytes = await _captureKey(_captureKeys[_template]!, aspect);
+      final bytes = await _captureKey(_previewCaptureKey, aspect);
       if (mounted) setState(() => _aspect = prev);
       return bytes;
     }
-    return _captureKey(_captureKeys[_template]!, aspect);
+    return _captureKey(_previewCaptureKey, aspect);
   }
 
   /// Pre-decode every network food photo referenced by the payload so the

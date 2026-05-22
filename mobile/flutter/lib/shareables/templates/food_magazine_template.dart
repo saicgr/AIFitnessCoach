@@ -377,28 +377,41 @@ class _ScoreFlag extends StatelessWidget {
           ),
         ],
       ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            '$score',
-            style: TextStyle(
-              color: _onAccent(accent),
-              fontSize: 30 * mul,
-              fontWeight: FontWeight.w900,
-              height: 0.92,
+      // The score + HEALTH label sit inside a fixed-diameter circle. The
+      // share sheet's font-size slider (up to 150%) scales all Text via
+      // MediaQuery.textScaler, which pushed the two lines past the circle.
+      // A scale-down FittedBox keeps the badge content inside the disc no
+      // matter the text-scale factor.
+      child: Center(
+        child: Padding(
+          padding: EdgeInsets.all(size * 0.14),
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  '$score',
+                  style: TextStyle(
+                    color: _onAccent(accent),
+                    fontSize: 30 * mul,
+                    fontWeight: FontWeight.w900,
+                    height: 0.92,
+                  ),
+                ),
+                Text(
+                  'HEALTH',
+                  style: TextStyle(
+                    color: _onAccent(accent).withValues(alpha: 0.85),
+                    fontSize: 8 * mul,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 1.4,
+                  ),
+                ),
+              ],
             ),
           ),
-          Text(
-            'HEALTH',
-            style: TextStyle(
-              color: _onAccent(accent).withValues(alpha: 0.85),
-              fontSize: 8 * mul,
-              fontWeight: FontWeight.w900,
-              letterSpacing: 1.4,
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
