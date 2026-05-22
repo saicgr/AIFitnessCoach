@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Zealova home — complete mockup</title>
+<style>
+  :root {
+    --accent:#EC8B2C; --accent-deep:#D2741A; --accent-tint:#FDF1E3;
+    --protein:#8B5CF6; --carbs:#2BB6C4; --fat:#E0883C;
+    --train:#EC8B2C; --fuel:#3FA66B; --move:#3E8FD0; --sleep:#6B6FCE;
+    --ink:#1A1A1C; --ink-2:#6B6B70; --ink-3:#9A9AA0;
+    --line:#ECECEE; --surface:#F6F6F7;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-font-smoothing:antialiased; }
+  body {
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",sans-serif;
+    background:radial-gradient(1300px 800px at 50% -3%, #2c2c32 0%, transparent 56%), #111114;
+    min-height:100vh; padding:46px 26px 90px;
+    display:flex; flex-direction:column; align-items:center; gap:10px;
+  }
+  h1 { color:#ededf2; font-size:23px; font-weight:800; text-align:center; }
+  .lede { color:#9a9aa3; font-size:13px; max-width:680px; text-align:center; line-height:1.6; }
+  .lede b { color:#d7d7dd; }
+  .seclabel { color:var(--accent); font-size:11px; font-weight:800; letter-spacing:1.3px; margin-top:38px; }
+
+  .stage { display:flex; gap:44px; flex-wrap:wrap; justify-content:center; align-items:flex-start; margin-top:22px; }
+
+  /* phone */
+  .phone { width:386px; border-radius:50px; position:relative; overflow:hidden; background:#fff;
+    box-shadow:0 0 0 12px #1d1d20, 0 0 0 14px #3a3a3f, 0 34px 66px -20px rgba(0,0,0,.7); }
+  .phone.tall { height:1248px; }
+  .phone.mini { height:430px; }
+  .island { position:absolute; top:11px; left:50%; transform:translateX(-50%); width:116px; height:32px; background:#000; border-radius:19px; z-index:50; }
+  .sb { position:absolute; top:0; left:0; right:0; height:50px; z-index:40; display:flex; align-items:flex-end; justify-content:space-between; padding:0 28px 5px; font-size:14px; font-weight:600; color:var(--ink); }
+  .sb .r { display:flex; gap:5px; align-items:center; }
+  .scr { position:absolute; top:50px; left:0; right:0; bottom:0; overflow:hidden; }
+  .pad { padding:0 16px; }
+
+  /* header */
+  .hd { display:flex; align-items:flex-start; justify-content:space-between; padding:7px 16px 10px; }
+  .hd .gs { font-size:13px; color:var(--ink-2); font-weight:500; }
+  .hd .gl { font-size:23px; font-weight:800; color:var(--ink); letter-spacing:-.5px; }
+  .hd-r { display:flex; align-items:center; gap:6px; padding-top:3px; }
+  .streak { display:flex; align-items:center; gap:6px; background:var(--surface); border:1px solid var(--line); border-radius:999px; padding:4px 9px 4px 5px; }
+  .sr { width:21px; height:21px; border-radius:50%; background:conic-gradient(var(--accent) 0 64%,#E4E4E6 64% 100%); display:flex; align-items:center; justify-content:center; }
+  .sr span { width:14px; height:14px; border-radius:50%; background:#fff; display:flex; align-items:center; justify-content:center; font-size:8.5px; font-weight:800; }
+  .streak .l { font-size:10px; font-weight:700; color:var(--ink); line-height:1.15; }
+  .streak .l small { font-weight:500; color:var(--ink-3); }
+  .streak .f { font-size:11px; font-weight:800; color:var(--accent-deep); }
+  .ib { width:29px; height:29px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:var(--ink-2); }
+
+  /* banner */
+  .bn { margin:0 16px 12px; background:linear-gradient(135deg,#fff,var(--accent-tint) 150%); border:1px solid #F2DFC7; border-radius:13px; padding:8px 10px; display:flex; align-items:center; gap:9px; }
+  .bn-i { flex:0 0 30px; width:30px; height:30px; border-radius:9px; background:var(--accent-tint); border:1px solid #F2DFC7; display:flex; align-items:center; justify-content:center; font-size:15px; }
+  .bn-b { flex:1; min-width:0; }
+  .bn-t { font-size:12px; font-weight:800; color:var(--ink); }
+  .bn-s { font-size:10px; color:var(--ink-2); }
+  .bn-cta { font-size:10.5px; font-weight:800; color:#fff; background:var(--accent); padding:5px 9px; border-radius:999px; }
+  .bn-x { width:20px; height:20px; border-radius:50%; background:var(--surface); color:var(--ink-3); display:flex; align-items:center; justify-content:center; font-size:9px; font-weight:700; }
+
+  /* quick actions — CURRENT ICONS */
+  .qa { display:flex; justify-content:space-between; padding:0 13px; margin-bottom:13px; }
+  .qi { display:flex; flex-direction:column; align-items:center; gap:4px; flex:1; }
+  .qt { width:44px; height:44px; border-radius:13px; background:var(--surface); border:1px solid var(--line); display:flex; align-items:center; justify-content:center; font-size:18px; }
+  .qi.p .qt { background:var(--accent); border-color:var(--accent); }
+  .ql { font-size:9px; font-weight:600; color:var(--ink-2); }
+
+  /* section label */
+  .sl { font-size:9.5px; font-weight:800; letter-spacing:.7px; color:var(--ink-3); text-transform:uppercase; padding:0 18px; margin-bottom:7px; display:flex; justify-content:space-between; align-items:center; }
+  .sl .lk { color:var(--accent-deep); font-size:10px; }
+
+  /* SCORE CARD */
+  .score { margin:0 16px 13px; background:#fff; border:1px solid var(--line); border-radius:18px; }
+  .score-hd { display:flex; align-items:center; justify-content:space-between; padding:11px 13px 4px; }
+  .score-hd .t { font-size:9.5px; font-weight:800; letter-spacing:.6px; color:var(--ink-3); }
+  .score-edit { display:flex; align-items:center; gap:4px; font-size:9.5px; font-weight:700; color:var(--ink-2); background:var(--surface); border:1px solid var(--line); border-radius:999px; padding:4px 9px; }
+  .score-main { display:flex; gap:9px; padding:6px 13px 4px; align-items:center; }
+  .ringbox { position:relative; flex:0 0 140px; width:140px; height:140px; filter:drop-shadow(0 9px 16px rgba(0,0,0,.16)); }
+  .ringbox svg { display:block; }
+  .ring-center { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+  .rc-e { font-size:6.5px; font-weight:800; letter-spacing:.6px; color:var(--ink-3); }
+  .rc-n { font-size:40px; font-weight:850; color:var(--ink); letter-spacing:-2px; line-height:.92; }
+  .rc-s { font-size:7px; font-weight:800; color:var(--accent-deep); }
+  .ring-badge { position:absolute; top:4px; right:-4px; background:#fff; border:1px solid var(--line); box-shadow:0 4px 10px -3px rgba(0,0,0,.2); border-radius:999px; padding:3px 7px; font-size:7.5px; font-weight:800; color:#3FA66B; }
+  .legend { flex:1; }
+  .lg-e { font-size:8px; font-weight:800; letter-spacing:.4px; color:var(--ink-3); margin-bottom:7px; }
+  .lg-row { display:flex; align-items:center; gap:6px; margin-bottom:8px; }
+  .lg-row:last-child { margin-bottom:0; }
+  .lg-dot { width:8px; height:8px; border-radius:3px; flex:0 0 8px; }
+  .lg-name { font-size:11px; font-weight:800; color:var(--ink); flex:0 0 34px; }
+  .lg-pct { font-size:11px; font-weight:800; color:var(--ink); flex:0 0 30px; }
+  .lg-note { font-size:8.5px; font-weight:600; color:var(--ink-3); line-height:1.2; }
+  .score-dots { display:flex; gap:5px; justify-content:center; padding:8px 0 11px; }
+  .score-dots i { width:5px; height:5px; border-radius:50%; background:#D8D8DC; }
+  .score-dots i.on { width:16px; border-radius:99px; background:var(--accent); }
+
+  /* COACH CARD */
+  .coach { margin:0 16px 13px; background:#fff; border:1px solid var(--line); border-radius:18px; padding:12px; }
+  .coach-hd { display:flex; align-items:center; gap:9px; margin-bottom:9px; }
+  .coach-av { position:relative; flex:0 0 38px; width:38px; height:38px; border-radius:50%;
+    background:linear-gradient(150deg,#F6B45C,#C96E18); display:flex; align-items:center; justify-content:center;
+    color:#fff; font-size:16px; font-weight:800; }
+  .coach-av .on-dot { position:absolute; right:0; bottom:0; width:10px; height:10px; border-radius:50%; background:#3FA66B; border:2px solid #fff; }
+  .coach-nm { font-size:13px; font-weight:800; color:var(--ink); }
+  .coach-rl { font-size:9px; font-weight:600; color:var(--ink-3); }
+  .coach-msg { font-size:12px; line-height:1.45; color:var(--ink); font-weight:500; }
+  .coach-msg b { font-weight:800; }
+  .coach-input { margin-top:10px; display:flex; align-items:center; gap:8px; background:var(--surface); border:1px solid var(--line); border-radius:999px; padding:8px 8px 8px 13px; }
+  .coach-input span { flex:1; font-size:11px; color:var(--ink-3); font-weight:500; }
+  .coach-send { width:27px; height:27px; border-radius:50%; background:var(--accent); color:#fff; display:flex; align-items:center; justify-content:center; font-size:13px; }
+
+  /* PLAN */
+  .plan-strip { margin:0 16px 9px; background:#fff; border:1px solid var(--line); border-radius:13px; padding:10px 12px; }
+  .plan-top { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:7px; }
+  .plan-nm { font-size:11.5px; font-weight:800; color:var(--ink); }
+  .plan-nm span { color:var(--ink-3); font-weight:700; }
+  .plan-pct { font-size:10px; font-weight:800; color:var(--accent-deep); }
+  .plan-bar { height:6px; border-radius:99px; background:#E7E8EA; overflow:hidden; }
+  .plan-bar i { display:block; height:100%; background:linear-gradient(90deg,var(--accent),var(--accent-deep)); border-radius:99px; }
+
+  /* workout */
+  .wo { margin:0 16px 14px; height:128px; border-radius:17px; position:relative; overflow:hidden;
+    background:linear-gradient(180deg,rgba(20,12,2,.05),rgba(20,12,2,.8)),linear-gradient(125deg,#E89A3E,#C96E18); }
+  .wo-f { position:absolute; right:0; bottom:-10px; font-size:92px; opacity:.15; filter:grayscale(1); transform:rotate(-8deg); }
+  .wo-tags { position:absolute; top:10px; left:11px; right:11px; display:flex; justify-content:space-between; }
+  .wo-bg { background:rgba(255,255,255,.22); color:#fff; font-size:8.5px; font-weight:800; padding:3px 7px; border-radius:999px; }
+  .wo-k { color:#fff; opacity:.85; font-size:15px; }
+  .wo-b { position:absolute; left:12px; right:12px; bottom:11px; }
+  .wo-n { color:#fff; font-size:18px; font-weight:800; }
+  .wo-m { color:rgba(255,255,255,.92); font-size:9.5px; font-weight:700; margin-top:1px; }
+  .wo-p { position:absolute; right:12px; bottom:11px; width:40px; height:40px; border-radius:50%; background:#fff; display:flex; align-items:center; justify-content:center; }
+  .wo-p::after { content:""; width:0; height:0; border-left:12px solid var(--accent-deep); border-top:8px solid transparent; border-bottom:8px solid transparent; margin-left:3px; }
+
+  /* timeline */
+  .tl { margin:0 16px 14px; background:var(--surface); border:1px solid var(--line); border-radius:16px; padding:12px; }
+  .tl-h { font-size:9.5px; font-weight:800; letter-spacing:.5px; color:var(--ink-3); margin-bottom:10px; display:flex; align-items:center; gap:5px; }
+  .tl-row { display:flex; gap:10px; align-items:center; margin-bottom:10px; position:relative; }
+  .tl-row:last-child { margin-bottom:0; }
+  .tl-line { position:absolute; left:6px; top:14px; bottom:-16px; width:2px; background:var(--line); }
+  .tl-node { flex:0 0 13px; width:13px; height:13px; border-radius:50%; z-index:2; }
+  .tl-node.done { background:var(--fuel); }
+  .tl-node.next { background:#fff; border:2.5px solid var(--ink-3); }
+  .tl-ic { width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:16px; }
+  .tl-tx .a { font-size:12.5px; font-weight:800; color:var(--ink); }
+  .tl-tx .b { font-size:10px; color:var(--ink-2); margin-top:1px; }
+
+  /* habits */
+  .habits { display:flex; gap:10px; padding:0 16px; overflow:hidden; }
+  .hab { flex:0 0 150px; background:#fff; border:1px solid var(--line); border-radius:15px; padding:11px; }
+  .hab.sel { border-color:var(--accent); box-shadow:0 0 0 3px rgba(236,139,44,.13); }
+  .hab-t { font-size:12px; font-weight:800; color:var(--ink); }
+  .hab-s { font-size:9px; color:var(--ink-3); font-weight:600; margin-bottom:8px; }
+  .hab-grid { display:grid; grid-template-columns:repeat(10,1fr); gap:2.5px; }
+  .hab-grid i { aspect-ratio:1; border-radius:2px; background:#E9E9EB; }
+  .hab-grid i.on { background:var(--accent); }
+  .hab-f { display:flex; justify-content:space-between; align-items:center; margin-top:8px; }
+  .hab-f .c { font-size:10px; font-weight:700; color:var(--ink-2); }
+  .hab-f .b { width:24px; height:24px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; }
+
+  /* nav */
+  .nav { position:absolute; left:13px; right:13px; bottom:14px; z-index:45; height:60px; background:rgba(255,255,255,.95); backdrop-filter:blur(16px) saturate(1.6); border:1px solid var(--line); border-radius:24px; display:flex; align-items:center; justify-content:space-around; box-shadow:0 13px 28px -12px rgba(0,0,0,.3); }
+  .ni { display:flex; flex-direction:column; align-items:center; gap:3px; flex:1; color:var(--ink-3); }
+  .ni .nl { font-size:8.5px; font-weight:700; }
+  .ni.on { color:var(--accent-deep); }
+  .hi { position:absolute; bottom:6px; left:50%; transform:translateX(-50%); width:116px; height:5px; border-radius:99px; background:#1a1a1c; opacity:.82; z-index:46; }
+  .foldline { position:relative; margin:4px 16px 0; border-top:1.5px dashed rgba(236,139,44,.6); }
+  .foldline::after { content:"FOLD"; position:absolute; right:0; top:-7px; font-size:8px; font-weight:800; color:var(--accent-deep); background:var(--accent-tint); padding:2px 6px; border-radius:5px; }
+
+  /* annotation */
+  .annot { width:300px; color:#bdbdc4; font-size:12.5px; line-height:1.6; }
+  .annot h3 { color:#ededf2; font-size:14.5px; margin-bottom:11px; }
+  .annot .ai { margin-bottom:13px; }
+  .annot b { color:#ededf2; }
+  .annot .k { color:var(--accent); font-weight:800; }
+  .pcap { margin-top:13px; text-align:center; }
+  .pcap .n { font-size:14px; font-weight:800; color:#ededf2; }
+  .pcap .d { font-size:11.5px; color:#9a9aa3; margin-top:4px; line-height:1.5; }
+
+  .formula { background:#1b1b1f; border:1px solid #2c2c33; border-radius:14px; padding:14px; margin-top:14px; }
+  .formula .fl { font-family:ui-monospace,Menlo,monospace; font-size:11.5px; color:#cfcfd4; line-height:1.7; }
+  .formula .fl b { color:var(--accent); }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute;"><defs>
+  <linearGradient id="gTrain" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F4B068"/><stop offset="1" stop-color="#CE6F18"/></linearGradient>
+  <linearGradient id="gFuel" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#67C690"/><stop offset="1" stop-color="#2C8A54"/></linearGradient>
+  <linearGradient id="gMove" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#76B7E7"/><stop offset="1" stop-color="#2E72B8"/></linearGradient>
+</defs></svg>
+
+<h1>Zealova home — complete mockup</h1>
+<p class="lede">Every note addressed: current icons, a real coach card, a
+swipeable + editable score card, full step counts, a home for your plan,
+sleep from Health Connect, and Timeline / Habits moved lower.</p>
+
+<div class="stage">
+
+  <!-- ===================== MAIN COMPLETE PHONE ===================== -->
+  <div>
+  <div class="phone tall">
+    <div class="island"></div>
+    <div class="sb"><span>12:52</span><span class="r">
+      <svg width="16" height="10" viewBox="0 0 17 11" fill="currentColor"><rect x="0" y="6" width="3" height="5" rx="1"/><rect x="4.5" y="4" width="3" height="7" rx="1"/><rect x="9" y="2" width="3" height="9" rx="1"/><rect x="13.5" y="0" width="3" height="11" rx="1"/></svg>
+      <svg width="15" height="10" viewBox="0 0 16 11" fill="currentColor"><path d="M8 2.2C10.4 2.2 12.6 3.1 14.3 4.7L15.7 3.2C13.6 1.2 10.9 0 8 0S2.4 1.2 .3 3.2L1.7 4.7C3.4 3.1 5.6 2.2 8 2.2Z"/></svg>
+      <svg width="25" height="11" viewBox="0 0 26 12"><rect x="1" y="1.5" width="21" height="9" rx="2.6" fill="none" stroke="currentColor" stroke-opacity=".4"/><rect x="3" y="3.5" width="16" height="5" rx="1.3" fill="currentColor"/></svg>
+    </span></div>
+    <div class="scr">
+
+      <!-- header -->
+      <div class="hd"><div><div class="gs">Good afternoon,</div><div class="gl">Sai</div></div>
+        <div class="hd-r"><div class="streak"><div class="sr"><span>2</span></div><div class="l">Lv 2<br><small>64%</small></div><div class="f">🔥3</div></div>
+          <div class="ib"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg></div></div></div>
+
+      <!-- banner -->
+      <div class="bn"><div class="bn-i">🎁</div><div class="bn-b"><div class="bn-t">3 crates ready to open</div><div class="bn-s">Tap to claim your streak rewards</div></div><div class="bn-cta">Open all</div><div class="bn-x">✕</div></div>
+
+      <!-- quick actions — CURRENT ICONS (apple for Log food) -->
+      <div class="qa">
+        <div class="qi p"><div class="qt">✦</div><div class="ql">Coach</div></div>
+        <div class="qi"><div class="qt">🍎</div><div class="ql">Log food</div></div>
+        <div class="qi"><div class="qt">📖</div><div class="ql">Scan menu</div></div>
+        <div class="qi"><div class="qt">💧</div><div class="ql">Water</div></div>
+        <div class="qi"><div class="qt">⚖️</div><div class="ql">Weight</div></div>
+        <div class="qi"><div class="qt">⋯</div><div class="ql">More</div></div>
+      </div>
+
+      <!-- SCORE CARD : swipeable + editable -->
+      <div class="score">
+        <div class="score-hd">
+          <div class="t">TODAY SCORE</div>
+          <div class="score-edit">✎ Edit</div>
+        </div>
+        <div class="score-main">
+          <div class="ringbox">
+            <svg viewBox="0 0 220 220" width="140" height="140">
+              <circle cx="110" cy="110" r="84" fill="none" stroke="#F4E7D6" stroke-width="20" stroke-dasharray="241.9 528" transform="rotate(-90 110 110)"/>
+              <circle cx="110" cy="110" r="84" fill="none" stroke="#E2EFE8" stroke-width="20" stroke-dasharray="169.3 528" transform="rotate(85 110 110)"/>
+              <circle cx="110" cy="110" r="84" fill="none" stroke="#E1ECF6" stroke-width="20" stroke-dasharray="72.6 528" transform="rotate(210.5 110 110)"/>
+              <circle cx="110" cy="110" r="84" fill="none" stroke="url(#gTrain)" stroke-width="20" stroke-linecap="round" stroke-dasharray="9 528" transform="rotate(-90 110 110)"/>
+              <circle cx="110" cy="110" r="84" fill="none" stroke="url(#gFuel)" stroke-width="20" stroke-linecap="round" stroke-dasharray="71 528" transform="rotate(85 110 110)"/>
+              <circle cx="110" cy="110" r="84" fill="none" stroke="url(#gMove)" stroke-width="20" stroke-linecap="round" stroke-dasharray="53.7 528" transform="rotate(210.5 110 110)"/>
+            </svg>
+            <div class="ring-center"><div class="rc-e">TODAY SCORE</div><div class="rc-n">27</div><div class="rc-s">LEG DAY AHEAD</div></div>
+            <div class="ring-badge">▲ 12 today</div>
+          </div>
+          <div class="legend">
+            <div class="lg-e">SO FAR TODAY</div>
+            <div class="lg-row"><span class="lg-dot" style="background:var(--train)"></span><span class="lg-name">Train</span><span class="lg-pct">0%</span><span class="lg-note">leg day ahead</span></div>
+            <div class="lg-row"><span class="lg-dot" style="background:var(--fuel)"></span><span class="lg-name">Fuel</span><span class="lg-pct">42%</span><span class="lg-note">89g protein to go</span></div>
+            <div class="lg-row"><span class="lg-dot" style="background:var(--move)"></span><span class="lg-name">Move</span><span class="lg-pct">74%</span><span class="lg-note">7,412 / 10,000 steps</span></div>
+          </div>
+        </div>
+        <div class="score-dots"><i class="on"></i><i></i></div>
+      </div>
+
+      <!-- COACH CARD : real coach -->
+      <div class="coach">
+        <div class="coach-hd">
+          <div class="coach-av">J<span class="on-dot"></span></div>
+          <div style="flex:1;"><div class="coach-nm">Jordan</div><div class="coach-rl">Your AI coach · now</div></div>
+        </div>
+        <div class="coach-msg">Morning was light on protein, Sai, and leg day's
+          coming up. Get a solid lunch in and you'll have the fuel to actually
+          push tonight. <b>Want me to pull 3 high-protein lunches?</b></div>
+        <div class="coach-input"><span>Ask Jordan anything…</span><div class="coach-send">➤</div></div>
+      </div>
+
+      <!-- YOUR PLAN -->
+      <div class="sl">YOUR PLAN<span class="lk">Full plan ›</span></div>
+      <div class="plan-strip">
+        <div class="plan-top"><div class="plan-nm">Lean Summer <span>· Week 3 of 8</span></div><div class="plan-pct">62% on track</div></div>
+        <div class="plan-bar"><i style="width:62%"></i></div>
+      </div>
+      <div class="wo">
+        <div class="wo-f">🏋️</div>
+        <div class="wo-tags"><div class="wo-bg">▦ TODAY · WK3 D4</div><div class="wo-k">⋯</div></div>
+        <div class="wo-b"><div class="wo-n">Birthday Blitz Lower</div><div class="wo-m">LEGS · 60 MIN · 7 EXERCISES</div></div>
+        <div class="wo-p"></div>
+      </div>
+
+      <div class="foldline"></div>
+
+      <!-- TIMELINE (moved lower) -->
+      <div class="sl" style="margin-top:14px;">TODAY'S TIMELINE</div>
+      <div class="tl">
+        <div class="tl-row"><div class="tl-line"></div><div class="tl-node done"></div>
+          <div class="tl-ic" style="background:#E3F2E9;">🍎</div>
+          <div class="tl-tx"><div class="a">Lunch</div><div class="b">612 kcal · P 13g · 11:13 AM</div></div></div>
+        <div class="tl-row"><div class="tl-node next"></div>
+          <div class="tl-ic" style="background:var(--accent-tint);">🏋️</div>
+          <div class="tl-tx"><div class="a">Birthday Blitz Lower</div><div class="b">7 exercises · 60m · Scheduled</div></div></div>
+      </div>
+
+      <!-- HABITS (moved lower, swipeable) -->
+      <div class="sl">YOUR HABITS<span class="lk">View all ›</span></div>
+      <div class="habits">
+        <div class="hab">
+          <div class="hab-t">Workouts</div><div class="hab-s">Last 30 days</div>
+          <div class="hab-grid"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="on"></i><i></i><i></i><i></i></div>
+          <div class="hab-f"><span class="c">1 / 30</span><div class="b" style="border:1.5px solid var(--accent);color:var(--accent);">+</div></div>
+        </div>
+        <div class="hab sel">
+          <div class="hab-t">Food Log</div><div class="hab-s">Last 30 days</div>
+          <div class="hab-grid"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="on"></i><i></i><i></i><i></i></div>
+          <div class="hab-f"><span class="c">1 / 30</span><div class="b" style="background:var(--accent);color:#fff;">✓</div></div>
+        </div>
+        <div class="hab">
+          <div class="hab-t">Water</div><div class="hab-s">Last 30 days</div>
+          <div class="hab-grid"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+          <div class="hab-f"><span class="c">0 / 30</span><div class="b" style="border:1.5px solid var(--line);color:var(--ink-3);">+</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="nav">
+      <div class="ni on"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20h14V9.5"/></svg><span class="nl">Home</span></div>
+      <div class="ni"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 9v6M4 10.5v3M17.5 9v6M20 10.5v3M6.5 12h11"/></svg><span class="nl">Workouts</span></div>
+      <div class="ni"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3v7a2 2 0 0 0 4 0V3M7 12v9M16 3c-1.6 0-2.8 2.2-2.8 5.5 0 2.2 1.1 3.3 2.8 3.5v9"/></svg><span class="nl">Nutrition</span></div>
+      <div class="ni"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M15.6 8.4l-2.1 5.1-5.1 2.1z"/></svg><span class="nl">Discover</span></div>
+      <div class="ni"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.6"/><path d="M5.5 20c0-3.7 3-6 6.5-6s6.5 2.3 6.5 6"/></svg><span class="nl">You</span></div>
+    </div>
+    <div class="hi"></div>
+  </div>
+  <div class="pcap"><div class="n">Complete home (full scroll)</div>
+    <div class="d">Above the fold: header, banner, quick actions, score, coach,
+    plan + workout. Timeline &amp; Habits sit below as you asked.</div></div>
+  </div>
+
+  <!-- ===================== ANNOTATIONS + SWIPE STATES ===================== -->
+  <div style="display:flex;flex-direction:column;gap:26px;">
+
+    <div class="annot">
+      <h3>Every note, handled</h3>
+      <div class="ai"><b>1 · Icons</b> — quick actions use your current icons:
+        🍎 apple for Log food (not a plate), 📖 book, 💧 droplet, ⚖️ Weight.</div>
+      <div class="ai"><b>2 · Score card</b> — <span class="k">Edit</span> button
+        top-right, page <span class="k">dots</span> = swipeable, steps shown
+        full: <span class="k">7,412 / 10,000</span>.</div>
+      <div class="ai"><b>3 · Coach</b> — now its own card: avatar, persona name
+        (Jordan, your chosen coach), warm human voice, and a real reply bar.
+        Feels like a person, not a game stat.</div>
+      <div class="ai"><b>4 · Your plan</b> — the "Lean Summer · Week 3 of 8"
+        strip + "Full plan ›". The workout is tagged WK3 D4 — your consolidated
+        plan now has a home.</div>
+      <div class="ai"><b>5 · Sleep</b> — lives on swipe page 2 (below), with
+        the rest of the Health Connect body metrics.</div>
+    </div>
+
+    <!-- score card — PAGE 2 -->
+    <div>
+    <div class="phone mini">
+      <div class="sb" style="position:relative;height:auto;padding-top:14px;"><span>Score card · swipe page 2</span></div>
+      <div style="padding:8px 16px 16px;">
+        <div class="score" style="margin:0;">
+          <div class="score-hd"><div class="t">BODY · FROM HEALTH CONNECT</div><div class="score-edit">✎ Edit</div></div>
+          <div style="padding:8px 13px 4px;display:grid;grid-template-columns:1fr 1fr;gap:9px;">
+            <div style="background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px;">
+              <div style="font-size:8.5px;font-weight:800;color:var(--sleep);">🌙 SLEEP</div>
+              <div style="font-size:19px;font-weight:850;color:var(--ink);margin-top:3px;">7h 12m</div>
+              <div style="font-size:8.5px;color:var(--ink-3);font-weight:600;">Good · last night</div>
+            </div>
+            <div style="background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px;">
+              <div style="font-size:8.5px;font-weight:800;color:var(--accent-deep);">🔥 ENERGY</div>
+              <div style="font-size:19px;font-weight:850;color:var(--ink);margin-top:3px;">486 <small style="font-size:9px;color:var(--ink-3);">kcal</small></div>
+              <div style="font-size:8.5px;color:var(--ink-3);font-weight:600;">Active today</div>
+            </div>
+            <div style="background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px;">
+              <div style="font-size:8.5px;font-weight:800;color:var(--move);">📍 DISTANCE</div>
+              <div style="font-size:19px;font-weight:850;color:var(--ink);margin-top:3px;">3.2 <small style="font-size:9px;color:var(--ink-3);">mi</small></div>
+            </div>
+            <div style="background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px;">
+              <div style="font-size:8.5px;font-weight:800;color:#C0476B;">❤️ RESTING HR</div>
+              <div style="font-size:19px;font-weight:850;color:var(--ink);margin-top:3px;">58 <small style="font-size:9px;color:var(--ink-3);">bpm</small></div>
+            </div>
+          </div>
+          <div class="score-dots"><i></i><i class="on"></i></div>
+        </div>
+      </div>
+    </div>
+    <div class="pcap"><div class="n">Swipe page 2 — Sleep &amp; body metrics</div>
+      <div class="d">Sleep from Health Connect lives here. Edit reorders or
+      adds metrics across both pages.</div></div>
+    </div>
+
+    <!-- HC NOT CONNECTED -->
+    <div>
+    <div class="phone mini">
+      <div class="sb" style="position:relative;height:auto;padding-top:14px;"><span>If Health Connect isn't connected</span></div>
+      <div style="padding:8px 16px 16px;">
+        <div class="score" style="margin:0;">
+          <div class="score-hd"><div class="t">TODAY SCORE</div><div class="score-edit">✎ Edit</div></div>
+          <div class="score-main">
+            <div class="ringbox" style="flex:0 0 120px;width:120px;height:120px;">
+              <svg viewBox="0 0 220 220" width="120" height="120">
+                <circle cx="110" cy="110" r="84" fill="none" stroke="#F4E7D6" stroke-width="20" stroke-dasharray="287 528" transform="rotate(-90 110 110)"/>
+                <circle cx="110" cy="110" r="84" fill="none" stroke="#E2EFE8" stroke-width="20" stroke-dasharray="200 528" transform="rotate(108 110 110)"/>
+                <circle cx="110" cy="110" r="84" fill="none" stroke="url(#gTrain)" stroke-width="20" stroke-linecap="round" stroke-dasharray="10 528" transform="rotate(-90 110 110)"/>
+                <circle cx="110" cy="110" r="84" fill="none" stroke="url(#gFuel)" stroke-width="20" stroke-linecap="round" stroke-dasharray="84 528" transform="rotate(108 110 110)"/>
+              </svg>
+              <div class="ring-center"><div class="rc-e">TODAY SCORE</div><div class="rc-n" style="font-size:34px;">19</div></div>
+            </div>
+            <div class="legend">
+              <div class="lg-e">SO FAR TODAY</div>
+              <div class="lg-row"><span class="lg-dot" style="background:var(--train)"></span><span class="lg-name">Train</span><span class="lg-pct">0%</span><span class="lg-note">leg day ahead</span></div>
+              <div class="lg-row"><span class="lg-dot" style="background:var(--fuel)"></span><span class="lg-name">Fuel</span><span class="lg-pct">42%</span><span class="lg-note">89g protein to go</span></div>
+              <div class="lg-row" style="opacity:.95;"><span class="lg-dot" style="background:#D8D8DC"></span><span class="lg-name" style="color:var(--ink-3);">Move</span>
+                <span style="font-size:9px;font-weight:800;color:var(--accent-deep);">Connect Health →</span></div>
+            </div>
+          </div>
+          <div style="margin:2px 13px 12px;background:var(--accent-tint);border:1px solid #F2DFC7;border-radius:10px;padding:8px 10px;font-size:9.5px;font-weight:600;color:var(--ink);">
+            Steps aren't syncing. Score counts <b>Train + Fuel only</b> until you connect.
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="pcap"><div class="n">Health Connect not connected</div>
+      <div class="d">No fake data. Move shows a Connect prompt; the score
+      honestly recomputes from Train + Fuel (reweighted 59 / 41).</div></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- score explainer -->
+<div class="annot" style="width:680px;margin-top:20px;">
+  <h3 style="text-align:center;">How the score is determined</h3>
+  <p style="text-align:center;color:#bdbdc4;">It is <b>not</b> a Health Connect
+  "health score" — HC only gives raw numbers. Today Score is Zealova's own
+  deterministic calculation. <b>85% of it is your own data.</b></p>
+  <div class="formula">
+    <div class="fl">
+      <b>Train 50%</b> &nbsp;= today's workout complete? &nbsp;→ from <b>your plan</b><br>
+      <b>Fuel&nbsp; 35%</b> &nbsp;= calorie + protein on target? &nbsp;→ from <b>your food log</b><br>
+      <b>Move 15%</b> &nbsp;= steps vs goal &nbsp;→ from <b>Health Connect</b> (the only HC part)<br><br>
+      score = round( (0.50·Train + 0.35·Fuel + 0.15·Move) × 100 )<br>
+      <span style="color:#7d7d86;">no Health Connect → reweight to Train 59% / Fuel 41%</span>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

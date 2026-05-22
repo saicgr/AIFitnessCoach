@@ -82,6 +82,14 @@ class EmptyStateTipTour extends StatefulWidget {
   /// the card visually collides with it.
   final double extraBottomClearance;
 
+  /// Fired once when the tour is *actively* dismissed by the user — the X
+  /// button, the final-step Next, or a tap on the dim scrim. It is NOT
+  /// fired by the 1s auto-mark-seen impression (which only persists the
+  /// `has_seen_` flag and leaves the tour on screen). A host screen uses
+  /// this to sequence a follow-up modal so it never overlaps a tour that
+  /// is still on screen.
+  final VoidCallback? onDismissed;
+
   const EmptyStateTipTour({
     super.key,
     required this.tourId,
@@ -91,6 +99,7 @@ class EmptyStateTipTour extends StatefulWidget {
     this.padding = const EdgeInsets.fromLTRB(16, 0, 16, 24),
     this.hasMainNavBar = false,
     this.extraBottomClearance = 0,
+    this.onDismissed,
   });
 
   /// Height of the floating main navigation bar plus the gap between it and
@@ -309,6 +318,10 @@ class _EmptyStateTipTourState extends State<EmptyStateTipTour> {
     }
     if (!mounted) return;
     setState(() => _visible = false);
+    // Let the host screen know the tour is genuinely gone (not just
+    // marked-seen) so any deferred follow-up modal can show without
+    // landing on top of a still-visible tour card.
+    widget.onDismissed?.call();
   }
 
   void _next() {
@@ -435,10 +448,33 @@ class _EmptyStateTipTourState extends State<EmptyStateTipTour> {
             (safeBottom - safeTop).clamp(80.0, double.infinity);
         final effectiveCardH = cardH.clamp(0.0, maxCardH);
 
+        // Spotlight (cutout) rect including the tip's padding — only
+        // meaningful once a target rect has resolved.
+        final spotTop =
+            rect == null ? null : rect.top - tip.targetPadding.top;
+        final spotBottom =
+            rect == null ? null : rect.bottom + tip.targetPadding.bottom;
+
+        // A target that spans most of the usable band (e.g. an entire
+        // tab haloed as one anchor) has no meaningful "spotlight": the
+        // cutout just dims thin margins, and there is nowhere adjacent to
+        // place the card so it ends up clamped under the status bar.
+        // Treat such a target as targetless — an even full-screen dim
+        // plus a clean bottom-anchored card that clears the nav.
+        final usableBand = safeBottom - safeTop;
+        final targetTooLarge = rect != null &&
+            usableBand > 0 &&
+            (spotBottom! - spotTop!) >= usableBand * 0.7;
+        // Whether to punch a cutout: only for a real, reasonably-sized
+        // target. `false` → the painter draws an even dim.
+        final showCutout = rect != null && !targetTooLarge;
+
         Widget positionedCard;
-        if (rect == null) {
-          // No layout yet — fall back to a bottom-anchored card sitting
-          // inside the safe band.
+        if (rect == null || targetTooLarge) {
+          // No usable target (layout not resolved yet, or the target is
+          // too large to spotlight) — bottom-anchor the card inside the
+          // safe band so it clears the nav and never jams under the
+          // status bar.
           positionedCard = Positioned(
             left: sideInset,
             right: sideInset,
@@ -451,13 +487,13 @@ class _EmptyStateTipTourState extends State<EmptyStateTipTour> {
             ),
           );
         } else {
-          // Spotlight (cutout) rect including the tip's padding.
-          final spotTop = rect.top - tip.targetPadding.top;
-          final spotBottom = rect.bottom + tip.targetPadding.bottom;
-
+          // Reached only when `rect`/`spotTop`/`spotBottom` are non-null
+          // (a real, reasonably-sized target).
+          final spotTopV = spotTop!;
+          final spotBottomV = spotBottom!;
           // Room on each side BETWEEN the spotlight and the safe edge.
-          final spaceBelow = safeBottom - (spotBottom + gap);
-          final spaceAbove = (spotTop - gap) - safeTop;
+          final spaceBelow = safeBottom - (spotBottomV + gap);
+          final spaceAbove = (spotTopV - gap) - safeTop;
 
           // Prefer the side that can fully contain the card; if neither
           // can, prefer the side with more room (the card will then be
@@ -477,8 +513,8 @@ class _EmptyStateTipTourState extends State<EmptyStateTipTour> {
 
           // Desired top of the card before clamping.
           final desiredTop = placeBelow
-              ? spotBottom + gap
-              : spotTop - gap - effectiveCardH;
+              ? spotBottomV + gap
+              : spotTopV - gap - effectiveCardH;
 
           // Clamp the card fully inside the safe band. If the band is
           // shorter than the card (extreme small screen), top pins to
@@ -536,7 +572,10 @@ class _EmptyStateTipTourState extends State<EmptyStateTipTour> {
                     return CustomPaint(
                       size: Size(constraints.maxWidth, constraints.maxHeight),
                       painter: _SpotlightPainter(
-                        target: rect,
+                        // Suppress the cutout for an unresolved or
+                        // oversized target — an even dim reads cleaner
+                        // than a near-full-screen ring.
+                        target: showCutout ? rect : null,
                         padding: tip.targetPadding,
                         radius: tip.targetRadius,
                         accent: isDark ? AppColors.cyan : AppColorsLight.cyan,
@@ -899,12 +938,17 @@ class RootOverlayTipTourHost extends StatefulWidget {
   final bool hasMainNavBar;
   final double extraBottomClearance;
 
+  /// Forwarded to [EmptyStateTipTour.onDismissed] — fires when the user
+  /// actively dismisses the tour (X / final Next / scrim tap).
+  final VoidCallback? onDismissed;
+
   const RootOverlayTipTourHost({
     super.key,
     required this.tourId,
     required this.tips,
     this.hasMainNavBar = false,
     this.extraBottomClearance = 0,
+    this.onDismissed,
   });
 
   @override
@@ -921,6 +965,7 @@ class _RootOverlayTipTourHostState extends State<RootOverlayTipTourHost> {
     final tips = widget.tips;
     final hasMainNavBar = widget.hasMainNavBar;
     final extraBottomClearance = widget.extraBottomClearance;
+    final onDismissed = widget.onDismissed;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       // rootOverlay: true → the app-level Overlay, above the shell route
@@ -933,6 +978,7 @@ class _RootOverlayTipTourHostState extends State<RootOverlayTipTourHost> {
             tips: tips,
             hasMainNavBar: hasMainNavBar,
             extraBottomClearance: extraBottomClearance,
+            onDismissed: onDismissed,
           ),
         ),
       );

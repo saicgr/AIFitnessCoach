@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Zealova — My Space: Customize + Discover</title>
+<style>
+  :root {
+    --accent:#EC8B2C; --accent-deep:#D2741A; --accent-tint:#FDF1E3;
+    --protein:#8B5CF6; --carbs:#2BB6C4; --fat:#E0883C;
+    --ink:#1A1A1C; --ink-2:#6B6B70; --ink-3:#9A9AA0;
+    --line:#ECECEE; --surface:#F6F6F7;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-font-smoothing:antialiased; }
+  body {
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",sans-serif;
+    background:radial-gradient(1200px 760px at 50% -4%, #2c2c32 0%, transparent 58%), #111114;
+    min-height:100vh; padding:46px 26px 80px;
+    display:flex; flex-direction:column; align-items:center; gap:10px;
+  }
+  h1 { color:#ededf2; font-size:22px; font-weight:800; text-align:center; }
+  .lede { color:#9a9aa3; font-size:13px; max-width:660px; text-align:center; line-height:1.6; }
+  .lede b { color:#d7d7dd; }
+  .stage { display:flex; gap:44px; flex-wrap:wrap; justify-content:center; align-items:flex-start; margin-top:26px; }
+
+  .phone { width:374px; height:884px; border-radius:50px; position:relative; overflow:hidden; background:#fff;
+    box-shadow:0 0 0 12px #1d1d20, 0 0 0 14px #3a3a3f, 0 34px 66px -20px rgba(0,0,0,.7); }
+  .island { position:absolute; top:11px; left:50%; transform:translateX(-50%); width:114px; height:32px; background:#000; border-radius:19px; z-index:50; }
+  .sb { position:absolute; top:0; left:0; right:0; height:50px; z-index:40; display:flex; align-items:flex-end; justify-content:space-between; padding:0 28px 5px; font-size:14px; font-weight:600; color:var(--ink); }
+  .sb .r { display:flex; gap:5px; align-items:center; }
+  .scr { position:absolute; top:50px; left:0; right:0; bottom:0; overflow:hidden; }
+
+  .abar { display:flex; align-items:center; justify-content:space-between; padding:8px 14px 8px; }
+  .abar .back { width:34px; height:34px; border-radius:50%; background:var(--surface); display:flex; align-items:center; justify-content:center; color:var(--ink); font-size:17px; }
+  .abar .ttl { font-size:16px; font-weight:800; color:var(--ink); }
+  .abar .reset { font-size:12.5px; font-weight:700; color:var(--accent-deep); }
+
+  /* FLOATING tab bar — bottom */
+  .tabs {
+    position:absolute; bottom:18px; left:50%; transform:translateX(-50%); z-index:45;
+    display:flex; gap:3px; width:248px;
+    background:rgba(255,255,255,.92); backdrop-filter:blur(14px) saturate(1.5);
+    border:1px solid var(--line); border-radius:999px; padding:5px;
+    box-shadow:0 14px 30px -10px rgba(0,0,0,.4);
+  }
+  .tab {
+    flex:1; text-align:center; padding:9px 0 10px;
+    font-size:12.5px; font-weight:800; color:var(--ink-3);
+    border-radius:999px;
+  }
+  .tab.on { color:#fff; background:var(--accent); box-shadow:0 4px 10px -3px rgba(236,139,44,.6); }
+
+  .hint { font-size:11px; color:var(--ink-3); font-weight:600; padding:4px 18px 8px; }
+  .grp { font-size:9.5px; font-weight:800; letter-spacing:.7px; color:var(--ink-3); padding:6px 18px 7px; }
+
+  /* customize rows */
+  .rowItem { display:flex; align-items:center; gap:10px; margin:0 14px 8px; padding:10px 12px; border:1px solid var(--line); border-radius:14px; background:#fff; }
+  .rowItem.core { background:#FFFBF4; border-color:#F1DEC0; }
+  .rowItem.off { background:var(--surface); }
+  .drag { color:#C6C6CC; font-size:16px; }
+  .drag.dim { color:#E2E2E5; }
+  .ic { width:34px; height:34px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:16px; flex:0 0 34px; }
+  .ic.on { background:var(--accent-tint); }
+  .ic.off { background:#EAEAEC; opacity:.7; }
+  .rtx { flex:1; min-width:0; }
+  .rtx .lab { font-size:12.5px; font-weight:800; color:var(--ink); display:flex; align-items:center; gap:6px; }
+  .rtx .lab.dim { color:var(--ink-3); }
+  .rtx .desc { font-size:10px; color:var(--ink-3); font-weight:500; margin-top:1px; }
+  .corepill { font-size:7px; font-weight:800; letter-spacing:.3px; color:var(--accent-deep); background:var(--accent-tint); border:1px solid #F1DEC0; padding:2px 5px; border-radius:99px; }
+  .hcpill { font-size:7px; font-weight:800; letter-spacing:.3px; color:#3A7BD0; background:#E7F0FB; padding:2px 5px; border-radius:99px; }
+  .sw { width:40px; height:24px; border-radius:99px; background:#E2E2E5; position:relative; flex:0 0 40px; }
+  .sw.on { background:var(--accent); }
+  .sw::after { content:""; position:absolute; top:2.5px; left:2.5px; width:19px; height:19px; border-radius:50%; background:#fff; box-shadow:0 1px 4px rgba(0,0,0,.32); }
+  .sw.on::after { left:18.5px; }
+  .lockic { width:24px; text-align:center; color:var(--accent-deep); font-size:12px; flex:0 0 24px; }
+  .hiddenbar { display:flex; align-items:center; gap:8px; padding:10px 18px 7px; }
+  .hiddenbar .hl { font-size:9px; font-weight:800; letter-spacing:.6px; color:var(--ink-3); }
+  .hiddenbar .ln { flex:1; height:1px; background:var(--line); }
+
+  /* discover */
+  .disc-pad { padding:0 14px; }
+  .mydefault { display:flex; gap:12px; align-items:center; background:linear-gradient(135deg,#fff,var(--accent-tint) 160%); border:1px solid #F1DEC0; border-radius:16px; padding:11px; margin-bottom:14px; }
+  .mydefault .md-tx { flex:1; }
+  .mydefault .md-t { font-size:13px; font-weight:800; color:var(--ink); }
+  .mydefault .md-s { font-size:10px; color:var(--ink-2); margin-top:1px; }
+  .apply { font-size:11px; font-weight:800; padding:7px 14px; border-radius:999px; }
+  .apply.ghost { color:var(--accent-deep); background:var(--accent-tint); border:1px solid #F1DEC0; }
+
+  .pgrid { display:grid; grid-template-columns:1fr 1fr; gap:11px; }
+  .pcard { border:1px solid var(--line); border-radius:15px; padding:11px; background:#fff; }
+  .pcard.cur { border-color:var(--accent); box-shadow:0 0 0 3px rgba(236,139,44,.13); }
+  .pcard .thead { display:flex; align-items:center; gap:9px; margin-bottom:8px; }
+  .pcard .pname { font-size:12px; font-weight:800; color:var(--ink); }
+  .pcard .pcount { font-size:8.5px; font-weight:700; color:var(--ink-3); }
+  .pcard .pdesc { font-size:9.5px; color:var(--ink-2); font-weight:500; line-height:1.35; margin:0 0 9px; min-height:38px; }
+  .pcard .papply { display:flex; align-items:center; justify-content:space-between; border-top:1px solid var(--line); padding-top:8px; }
+  .pcard .ppreview { font-size:9.5px; font-weight:700; color:var(--ink-3); }
+  .pcard .papplybtn { font-size:9.5px; font-weight:800; color:var(--accent-deep); }
+  .curtag { font-size:8.5px; font-weight:800; color:var(--accent-deep); }
+
+  /* ===== detailed mini-tile thumbnails ===== */
+  .thumb { width:66px; height:94px; border-radius:9px; background:#FAFAFB; border:1px solid var(--line);
+    padding:6px; display:flex; flex-direction:column; gap:4px; flex:0 0 66px; box-shadow:0 2px 7px -3px rgba(0,0,0,.18); }
+  /* status-bar hint — makes it read as a screen */
+  .mt-sb { flex:0 0 4px; display:flex; align-items:center; justify-content:space-between; }
+  .mt-sb::before { content:""; width:13px; height:3px; border-radius:2px; background:#D6D6DB; }
+  .mt-sb::after { content:""; width:8px; height:3px; border-radius:2px; background:#E2E2E6; }
+  /* score ring — 3 real segments + hole */
+  .mt-ring { width:21px; height:21px; border-radius:50%; align-self:center; flex:0 0 21px; position:relative;
+    background:conic-gradient(var(--accent) 0 116deg,#FAFAFB 116deg 124deg,#3FA66B 124deg 236deg,#FAFAFB 236deg 244deg,#3E8FD0 244deg 318deg,#E3E3E7 318deg 360deg); }
+  .mt-ring::after { content:""; position:absolute; inset:5.5px; border-radius:50%; background:#FAFAFB; }
+  /* quick actions row */
+  .mt-act { display:flex; gap:2.5px; flex:0 0 9px; }
+  .mt-act i { flex:1; border-radius:2.5px; background:#E5E5E9; }
+  .mt-act i.a { background:var(--accent); }
+  /* workout block — name line + play dot */
+  .mt-wo { height:17px; border-radius:4px; background:linear-gradient(120deg,#E89A3E,#C96E18); position:relative; flex:0 0 17px; }
+  .mt-wo::before { content:""; position:absolute; left:4px; bottom:4px; width:50%; height:3px; border-radius:2px; background:rgba(255,255,255,.92); }
+  .mt-wo::after { content:""; position:absolute; right:4px; top:50%; transform:translateY(-50%); width:9px; height:9px; border-radius:50%; background:#fff; }
+  /* nutrition — card with macro bars */
+  .mt-nut { background:#fff; border:1px solid var(--line); border-radius:4px; padding:4px; display:flex; flex-direction:column; gap:2.5px; flex:0 0 auto; }
+  .mt-nut i { height:3px; border-radius:2px; }
+  /* habit grid */
+  .mt-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:1.6px; flex:0 0 auto; }
+  .mt-grid i { aspect-ratio:1; border-radius:1.5px; background:#E6E6EA; }
+  .mt-grid i.a { background:var(--accent); }
+  /* coach — sparkle dot + text line */
+  .mt-coach { height:15px; border-radius:4px; background:var(--accent-tint); border:1px solid #F2DFC7; position:relative; flex:0 0 15px; }
+  .mt-coach::before { content:""; position:absolute; left:4px; top:50%; transform:translateY(-50%); width:7px; height:7px; border-radius:50%; background:var(--accent); }
+  .mt-coach::after { content:""; position:absolute; left:15px; top:50%; transform:translateY(-50%); width:52%; height:3px; border-radius:2px; background:#E4C99F; }
+  /* generic stat block — value + label lines */
+  .mt-block { height:16px; border-radius:4px; background:#fff; border:1px solid var(--line); position:relative; flex:0 0 16px; }
+  .mt-block::before { content:""; position:absolute; left:4px; top:4px; width:36%; height:4px; border-radius:2px; background:#C6C6CC; }
+  .mt-block::after { content:""; position:absolute; left:4px; bottom:4px; width:58%; height:2.5px; border-radius:2px; background:#E4E4E8; }
+  /* metric ring grid */
+  .mt-mgrid { display:grid; grid-template-columns:repeat(3,1fr); gap:3px; }
+  .mt-mgrid i { border-radius:50%; position:relative; }
+  .mt-mgrid i::after { content:""; position:absolute; inset:33%; border-radius:50%; background:#FAFAFB; }
+  .mt-mgrid i:nth-child(1) { background:conic-gradient(var(--accent) 0 230deg,#DFDFE3 230deg); }
+  .mt-mgrid i:nth-child(2) { background:conic-gradient(#6B6FCE 0 300deg,#DFDFE3 300deg); }
+  .mt-mgrid i:nth-child(3) { background:conic-gradient(#3FA66B 0 180deg,#DFDFE3 180deg); }
+  .mt-mgrid i:nth-child(4) { background:conic-gradient(#3E8FD0 0 260deg,#DFDFE3 260deg); }
+  .mt-mgrid i:nth-child(5) { background:conic-gradient(#C0476B 0 150deg,#DFDFE3 150deg); }
+  .mt-mgrid i:nth-child(6) { background:conic-gradient(#E8703A 0 280deg,#DFDFE3 280deg); }
+
+  .botpad { height:108px; }
+
+  .cap { margin-top:13px; text-align:center; }
+  .cap .n { font-size:14px; font-weight:800; color:#ededf2; }
+  .cap .d { font-size:11.5px; color:#9a9aa3; margin-top:4px; max-width:340px; line-height:1.5; }
+</style>
+</head>
+<body>
+
+<h1>My Space — Customize &amp; Discover</h1>
+<p class="lede">Floating tab bar at the bottom (like the rest of the app). The
+Discover previews now show <b>the actual tiles</b> in each layout — a real
+mini-render, not blank bars.</p>
+
+<div class="stage">
+
+  <!-- ============ CUSTOMIZE TAB ============ -->
+  <div>
+  <div class="phone">
+    <div class="island"></div>
+    <div class="sb"><span>12:52</span><span class="r">
+      <svg width="16" height="10" viewBox="0 0 17 11" fill="currentColor"><rect x="0" y="6" width="3" height="5" rx="1"/><rect x="4.5" y="4" width="3" height="7" rx="1"/><rect x="9" y="2" width="3" height="9" rx="1"/><rect x="13.5" y="0" width="3" height="11" rx="1"/></svg>
+      <svg width="15" height="10" viewBox="0 0 16 11" fill="currentColor"><path d="M8 2.2C10.4 2.2 12.6 3.1 14.3 4.7L15.7 3.2C13.6 1.2 10.9 0 8 0S2.4 1.2 .3 3.2L1.7 4.7C3.4 3.1 5.6 2.2 8 2.2Z"/></svg>
+      <svg width="25" height="11" viewBox="0 0 26 12"><rect x="1" y="1.5" width="21" height="9" rx="2.6" fill="none" stroke="currentColor" stroke-opacity=".4"/><rect x="3" y="3.5" width="16" height="5" rx="1.3" fill="currentColor"/></svg>
+    </span></div>
+    <div class="scr">
+      <div class="abar"><div class="back">‹</div><div class="ttl">My Space</div><div class="reset">Reset</div></div>
+      <div class="hint">Drag to reorder · tap a switch to show or hide. Saves instantly.</div>
+
+      <div class="grp">ON YOUR HOME</div>
+      <div class="rowItem core">
+        <div class="drag">⠿</div><div class="ic on">◴</div>
+        <div class="rtx"><div class="lab">Today Score <span class="corepill">CORE</span></div><div class="desc">Your Train + Fuel + Move ring</div></div>
+        <div class="lockic">🔒</div>
+      </div>
+      <div class="rowItem">
+        <div class="drag">⠿</div><div class="ic on">✦</div>
+        <div class="rtx"><div class="lab">Quick Actions</div><div class="desc">Coach, Log food, Scan menu…</div></div>
+        <div class="sw on"></div>
+      </div>
+      <div class="rowItem">
+        <div class="drag">⠿</div><div class="ic on">🏋️</div>
+        <div class="rtx"><div class="lab">Next Workout</div><div class="desc">Today's training session</div></div>
+        <div class="sw on"></div>
+      </div>
+      <div class="rowItem">
+        <div class="drag">⠿</div><div class="ic on">🍎</div>
+        <div class="rtx"><div class="lab">Nutrition</div><div class="desc">Calories left and macros</div></div>
+        <div class="sw on"></div>
+      </div>
+      <div class="rowItem">
+        <div class="drag">⠿</div><div class="ic on">🌙</div>
+        <div class="rtx"><div class="lab">Sleep <span class="hcpill">HEALTH CONNECT</span></div><div class="desc">Last night · 7h 12m</div></div>
+        <div class="sw on"></div>
+      </div>
+      <div class="rowItem">
+        <div class="drag">⠿</div><div class="ic on">🗓️</div>
+        <div class="rtx"><div class="lab">Today's Timeline</div><div class="desc">Meals and workouts, in order</div></div>
+        <div class="sw on"></div>
+      </div>
+      <div class="rowItem">
+        <div class="drag">⠿</div><div class="ic on">▦</div>
+        <div class="rtx"><div class="lab">Habits</div><div class="desc">Your 30-day habit grids</div></div>
+        <div class="sw on"></div>
+      </div>
+
+      <div class="hiddenbar"><span class="hl">HIDDEN — TAP A SWITCH TO ADD</span><span class="ln"></span></div>
+      <div class="rowItem off">
+        <div class="drag dim">⠿</div><div class="ic off">👟</div>
+        <div class="rtx"><div class="lab dim">Steps <span class="hcpill">HEALTH CONNECT</span></div><div class="desc">Daily steps · 7,412</div></div>
+        <div class="sw"></div>
+      </div>
+      <div class="rowItem off">
+        <div class="drag dim">⠿</div><div class="ic off">❤️</div>
+        <div class="rtx"><div class="lab dim">Resting HR <span class="hcpill">HEALTH CONNECT</span></div><div class="desc">From Health Connect</div></div>
+        <div class="sw"></div>
+      </div>
+      <div class="botpad"></div>
+    </div>
+    <div class="tabs"><div class="tab on">Customize</div><div class="tab">Discover</div></div>
+  </div>
+  <div class="cap"><div class="n">Tab 1 · Customize</div><div class="d">The drag &amp; toggle list. Floating tab bar now sits at the bottom.</div></div>
+  </div>
+
+  <!-- ============ DISCOVER TAB ============ -->
+  <div>
+  <div class="phone">
+    <div class="island"></div>
+    <div class="sb"><span>12:52</span><span class="r">
+      <svg width="16" height="10" viewBox="0 0 17 11" fill="currentColor"><rect x="0" y="6" width="3" height="5" rx="1"/><rect x="4.5" y="4" width="3" height="7" rx="1"/><rect x="9" y="2" width="3" height="9" rx="1"/><rect x="13.5" y="0" width="3" height="11" rx="1"/></svg>
+      <svg width="15" height="10" viewBox="0 0 16 11" fill="currentColor"><path d="M8 2.2C10.4 2.2 12.6 3.1 14.3 4.7L15.7 3.2C13.6 1.2 10.9 0 8 0S2.4 1.2 .3 3.2L1.7 4.7C3.4 3.1 5.6 2.2 8 2.2Z"/></svg>
+      <svg width="25" height="11" viewBox="0 0 26 12"><rect x="1" y="1.5" width="21" height="9" rx="2.6" fill="none" stroke="currentColor" stroke-opacity=".4"/><rect x="3" y="3.5" width="16" height="5" rx="1.3" fill="currentColor"/></svg>
+    </span></div>
+    <div class="scr">
+      <div class="abar"><div class="back">‹</div><div class="ttl">My Space</div><div class="reset">Reset</div></div>
+      <div class="hint">Pick a ready-made layout — the preview shows its real tiles.</div>
+
+      <div class="disc-pad">
+        <div class="grp" style="padding-left:4px;">YOUR SAVED LAYOUT</div>
+        <div class="mydefault">
+          <div class="thumb"><div class="mt-ring"></div><div class="mt-act"><i class="a"></i><i></i><i></i><i></i></div><div class="mt-wo"></div><div class="mt-nut"><i style="background:var(--protein)"></i><i style="background:var(--carbs)"></i><i style="background:var(--fat)"></i></div></div>
+          <div class="md-tx"><div class="md-t">My Default</div><div class="md-s">7 tiles · last edited today</div></div>
+          <div class="apply ghost">Apply</div>
+        </div>
+
+        <div class="grp" style="padding-left:4px;">PRESETS</div>
+        <div class="pgrid">
+
+          <div class="pcard cur">
+            <div class="thead">
+              <div class="thumb"><div class="mt-ring"></div><div class="mt-act"><i class="a"></i><i></i><i></i><i></i></div><div class="mt-wo"></div><div class="mt-nut"><i style="background:var(--protein)"></i><i style="background:var(--carbs)"></i></div><div class="mt-grid"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="a"></i></div></div>
+              <div><div class="pname">Balanced</div><div class="pcount">7 tiles</div></div>
+            </div>
+            <div class="pdesc">Score, quick actions, workout, nutrition &amp; habits. The default mix.</div>
+            <div class="papply"><span class="curtag">● Current</span><span class="ppreview">Preview</span></div>
+          </div>
+
+          <div class="pcard">
+            <div class="thead">
+              <div class="thumb"><div class="mt-ring"></div><div class="mt-act"><i class="a"></i><i></i><i></i><i></i></div><div class="mt-wo"></div></div>
+              <div><div class="pname">Minimalist</div><div class="pcount">3 tiles</div></div>
+            </div>
+            <div class="pdesc">Just the essentials — score, quick actions, today's workout.</div>
+            <div class="papply"><span class="ppreview">Preview</span><span class="papplybtn">Apply</span></div>
+          </div>
+
+          <div class="pcard">
+            <div class="thead">
+              <div class="thumb"><div class="mt-ring"></div><div class="mt-wo"></div><div class="mt-coach"></div><div class="mt-block"></div><div class="mt-block"></div></div>
+              <div><div class="pname">Gym Focused</div><div class="pcount">5 tiles</div></div>
+            </div>
+            <div class="pdesc">Training front and center — PRs, coach tip, next workouts.</div>
+            <div class="papply"><span class="ppreview">Preview</span><span class="papplybtn">Apply</span></div>
+          </div>
+
+          <div class="pcard">
+            <div class="thead">
+              <div class="thumb"><div class="mt-ring"></div><div class="mt-block"></div><div class="mt-nut"><i style="background:var(--protein)"></i><i style="background:var(--carbs)"></i><i style="background:var(--fat)"></i></div><div class="mt-grid"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="a"></i></div></div>
+              <div><div class="pname">Fat Loss</div><div class="pcount">5 tiles</div></div>
+            </div>
+            <div class="pdesc">Daily weigh-in, calories, steps &amp; habit streaks.</div>
+            <div class="papply"><span class="ppreview">Preview</span><span class="papplybtn">Apply</span></div>
+          </div>
+
+          <div class="pcard">
+            <div class="thead">
+              <div class="thumb"><div class="mt-nut" style="gap:3px;"><i style="height:5px;background:var(--protein)"></i><i style="height:5px;background:var(--carbs)"></i><i style="height:5px;background:var(--fat)"></i></div><div class="mt-mgrid" style="flex:0 0 auto;grid-template-columns:repeat(3,1fr);"><i style="aspect-ratio:1"></i><i style="aspect-ratio:1"></i><i style="aspect-ratio:1"></i></div><div class="mt-coach"></div></div>
+              <div><div class="pname">Nutrition</div><div class="pcount">6 tiles</div></div>
+            </div>
+            <div class="pdesc">Macros, fasting &amp; meal patterns up top.</div>
+            <div class="papply"><span class="ppreview">Preview</span><span class="papplybtn">Apply</span></div>
+          </div>
+
+          <div class="pcard">
+            <div class="thead">
+              <div class="thumb"><div class="mt-ring"></div><div class="mt-mgrid"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+              <div><div class="pname">Tracker</div><div class="pcount">6 tiles</div></div>
+            </div>
+            <div class="pdesc">Every Health Connect metric — sleep, HR, energy, steps.</div>
+            <div class="papply"><span class="ppreview">Preview</span><span class="papplybtn">Apply</span></div>
+          </div>
+
+        </div>
+      </div>
+      <div class="botpad"></div>
+    </div>
+    <div class="tabs"><div class="tab">Customize</div><div class="tab on">Discover</div></div>
+  </div>
+  <div class="cap"><div class="n">Tab 2 · Discover</div><div class="d">Each preview is a real mini-render — you see the tiles you'd get.</div></div>
+  </div>
+
+</div>
+
+<p class="lede" style="margin-top:36px;max-width:680px;">
+The preview thumbnails now compose real mini-tiles — a score ring, a workout
+block, macro bars, a habit grid, metric rings — so a glance tells you exactly
+what each preset puts on your home.</p>
+
+</body>
+</html>

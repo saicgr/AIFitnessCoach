@@ -145,64 +145,77 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Action row redesigned: 5 LABELED capture chips (Photo / Barcode /
-          // Menu / Scan / Coach) replace the old 6 bare icons. Photo and Scan
-          // open a small chooser; Barcode, Menu and Coach act in one tap. The
-          // chips are laid out with a Wrap so labels never overflow on an
-          // iPhone SE — they flow onto a second line if width is tight.
+          // Action row: 5 LABELED capture chips (Photo / Barcode / Menu /
+          // Scan / Coach). Laid out as a single Row of equal-width Expanded
+          // columns — icon stacked over a label — so all five always fit on
+          // one line, from iPhone SE up to iPad. Photo and Scan open a small
+          // chooser; Barcode, Menu and Coach act in one tap.
           //
           // Analyze stays the clear primary CTA: a filled accent pill on its
           // own full-width row below the lighter capture chips.
-          Wrap(
-            spacing: 6,
-            runSpacing: 6,
-            alignment: WrapAlignment.center,
+          Row(
             children: [
               // Photo — opens a 2-option chooser (camera / library).
-              _CaptureChip(
-                icon: Icons.photo_camera_outlined,
-                label: 'Photo',
-                color: const Color(0xFF3B82F6), // blue
-                isDark: isDark,
-                onTap: _openPhotoChooser,
+              Expanded(
+                child: _CaptureChip(
+                  icon: Icons.photo_camera_outlined,
+                  label: 'Photo',
+                  color: const Color(0xFF3B82F6), // blue
+                  isDark: isDark,
+                  onTap: _openPhotoChooser,
+                ),
               ),
+              const SizedBox(width: 6),
 
               // Barcode — fastest, most-common scan; promoted to its own
               // top-level chip. One tap straight to the live scanner.
-              _CaptureChip(
-                icon: Icons.qr_code_scanner,
-                label: 'Barcode',
-                color: const Color(0xFF10B981), // green
-                isDark: isDark,
-                onTap: _openBarcodeScanner,
+              Expanded(
+                child: _CaptureChip(
+                  icon: CupertinoIcons.barcode,
+                  label: 'Barcode',
+                  color: const Color(0xFF10B981), // green
+                  isDark: isDark,
+                  onTap: _openBarcodeScanner,
+                ),
               ),
+              const SizedBox(width: 6),
 
               // Menu scan — signature feature, one tap straight to _scanMenu.
-              _CaptureChip(
-                icon: Icons.menu_book_outlined,
-                label: 'Menu',
-                color: const Color(0xFFF59E0B), // amber
-                isDark: isDark,
-                onTap: _scanMenu,
+              Expanded(
+                child: _CaptureChip(
+                  icon: Icons.menu_book_outlined,
+                  label: 'Menu',
+                  color: const Color(0xFFF59E0B), // amber
+                  isDark: isDark,
+                  onTap: _scanMenu,
+                ),
               ),
+              const SizedBox(width: 6),
 
               // Scan — opens a 2-option chooser (nutrition label / app
               // screenshot).
-              _CaptureChip(
-                icon: Icons.qr_code_scanner,
-                label: 'Scan',
-                color: const Color(0xFF10B981), // green
-                isDark: isDark,
-                onTap: _openScanChooser,
+              Expanded(
+                child: _CaptureChip(
+                  icon: Icons.document_scanner_outlined,
+                  label: 'Scan',
+                  color: const Color(0xFF8B5CF6), // violet
+                  isDark: isDark,
+                  onTap: _openScanChooser,
+                ),
               ),
+              const SizedBox(width: 6),
 
-              // Coach — context-aware AI meal-suggestion popup.
-              _CaptureChip(
-                icon: Icons.chat_bubble_outline_rounded,
-                label: 'Coach',
-                color: orange,
-                isDark: isDark,
-                onTap: _openAiCoachSheet,
+              // Coach — context-aware AI meal-suggestion popup. Fixed rose so
+              // it never collides with the (orange-ish) accent / amber Menu
+              // chip.
+              Expanded(
+                child: _CaptureChip(
+                  icon: Icons.auto_awesome_outlined,
+                  label: 'Coach',
+                  color: const Color(0xFFEC4899), // rose
+                  isDark: isDark,
+                  onTap: _openAiCoachSheet,
+                ),
               ),
             ],
           ),
@@ -295,7 +308,7 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
   /// route through the existing label/screenshot OCR flows. Barcode is now a
   /// dedicated top-level chip and no longer appears here.
   Future<void> _openScanChooser() async {
-    const green = Color(0xFF10B981);
+    const violet = Color(0xFF8B5CF6);
     final choice = await showGlassSheet<String>(
       context: context,
       builder: (ctx) {
@@ -310,13 +323,13 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _chooserHeader(
-                      colors, green, Icons.qr_code_scanner, 'Scan & Import'),
+                  _chooserHeader(colors, violet,
+                      Icons.document_scanner_outlined, 'Scan & Import'),
                   _GlassMenuOption(
                     icon: Icons.qr_code_2_outlined,
                     label: 'Nutrition label',
                     subtitle: 'Read macros off a packaged food label',
-                    color: green,
+                    color: violet,
                     isDark: isDark,
                     onTap: () => Navigator.pop(ctx, 'label'),
                   ),
@@ -325,7 +338,7 @@ extension _LogMealSheetStateUI on _LogMealSheetState {
                     icon: Icons.screenshot_outlined,
                     label: 'Screenshot',
                     subtitle: 'Import a log from MyFitnessPal, Cronometer…',
-                    color: green,
+                    color: violet,
                     isDark: isDark,
                     onTap: () => Navigator.pop(ctx, 'screenshot'),
                   ),
@@ -1523,13 +1536,17 @@ class _CaptureChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final textPrimary =
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    // Vertical layout (icon over label) so five equal-width chips fit on a
+    // single Row. The label is wrapped in a FittedBox(scaleDown) so even on
+    // the narrowest device ('Barcode' on an iPhone SE) it shrinks to fit
+    // rather than overflowing or wrapping.
     return Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(14),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
           decoration: BoxDecoration(
             color: color.withValues(alpha: isDark ? 0.14 : 0.10),
             borderRadius: BorderRadius.circular(14),
@@ -1538,17 +1555,21 @@ class _CaptureChip extends StatelessWidget {
               width: 0.8,
             ),
           ),
-          child: Row(
+          child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, size: 17, color: color),
-              const SizedBox(width: 6),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: textPrimary,
+              Icon(icon, size: 19, color: color),
+              const SizedBox(height: 4),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: textPrimary,
+                  ),
                 ),
               ),
             ],

@@ -1,13 +1,22 @@
 /**
- * /vs/bevel — Zealova vs Bevel comparison page
- * v2 — 2026-05-20 (updated: Bevel 3.0.5 release, training plan accuracy, pricing section, free-tier corrections)
- * v1 — 2026-05-17
+ * /vs/bevel -- Zealova vs Bevel comparison page
+ * v3 -- 2026-05-21 (refresh: rating count updated to 9,500+; 3.0.5 patch notes added to Bevel wins;
+ *        training-plan framing shifted to all-three-wedge positioning; last-updated dates refreshed;
+ *        confirmed training plans remain cardio-only via gadgetsandwearables + feedback.bevel.health)
+ * v2 -- 2026-05-20 (updated: Bevel 3.0.5 release, training plan accuracy, pricing section, free-tier corrections)
+ * v1 -- 2026-05-17
  *
- * Research done live 2026-05-20:
+ * Research done live 2026-05-21:
  *  - Bevel 3.0 shipped 2026-05-16 (gadgetsandwearables.com/2026/05/16/bevel-3/)
- *  - Bevel 3.0.5 released 2026-05-20 (App Store verified 2026-05-20)
- *  - Bevel Pro pricing confirmed: $14.99/mo or $99.99/yr (App Store, verified 2026-05-20)
- *  - Bevel App Store rating: 4.8/5 (9,400+ ratings), version 3.0.5 (verified 2026-05-20)
+ *  - Bevel 3.0.5 released 2026-05-20 (App Store verified 2026-05-21 -- "released 1 day ago")
+ *  - 3.0.5 adds: "This Week's Changes" for Biological Age, enhanced Health Records (doc preview/edit/delete),
+ *    improved Bevel Intelligence image rendering + selectable code blocks, faster Journal loading
+ *  - Bevel Pro pricing confirmed: $14.99/mo or $99.99/yr (App Store, verified 2026-05-21)
+ *  - Bevel App Store rating: 4.8/5 (9,500+ ratings / 9.5K shown), version 3.0.5 (verified 2026-05-21)
+ *  - Training plans confirmed cardio-only (10K, half marathon) per gadgetsandwearables.com and
+ *    feedback.bevel.health/feature-requests/p/cardio-training-plans-marathons-triathlons-etc
+ *    (staff reply April 27, 2026: "Available in Bevel 3.0")
+ *  - Strength AI plan adjustments still "planned (tbd)" per feedback.bevel.health (no update since Nov 2024)
  *  - Bevel is iOS-only — no Android app (feedback.bevel.health/feature-requests/p/android-version)
  *  - Bevel 3.0 adds: Biological Age, Health Records vault, rebuilt Intelligence coaching layer,
  *    training plan generation (goal-based, cardio-oriented: 10K/half marathon per gadgetsandwearables.com)
@@ -83,7 +92,7 @@ const FAQData = [
   },
   {
     q: 'What is Bevel 3.0 and what did it add?',
-    a: 'Bevel 3.0 shipped on May 16, 2026. It added a rebuilt Bevel Intelligence coaching layer with training plan generation (goal-based, cardio-oriented: 10K, half marathon), a Biological Age metric (updates weekly using physiological, lifestyle, and blood biomarker data), a Health Records vault for uploading blood tests and lab results, and coach Personalities (Data Nerd, Guardian, Friend, Commander). The app is now on version 3.0.5 as of May 20, 2026.',
+    a: 'Bevel 3.0 shipped on May 16, 2026. It added a rebuilt Bevel Intelligence coaching layer with training plan generation (goal-based, cardio-oriented: 10K, half marathon), a Biological Age metric (updates weekly using physiological, lifestyle, and blood biomarker data), a Health Records vault for uploading blood tests and lab results, and coach Personalities (Data Nerd, Guardian, Friend, Commander). Version 3.0.5 followed on May 20, 2026, adding a "This Week\'s Changes" view for Biological Age, enhanced Health Records with document preview and editing, and improved Bevel Intelligence image rendering.',
   },
   {
     q: 'How much does Bevel cost vs Zealova?',
@@ -317,7 +326,7 @@ export default function BevelVs() {
             >
               <div className="flex-1">
                 <p className="text-zinc-300 text-lg leading-relaxed mb-4">
-                  Bevel and Zealova both use AI to help you get healthier, but they solve different problems. Bevel (4.8 stars, 9,400+ App Store ratings, version 3.0.5) is a passive health intelligence platform. It reads your Apple Watch, tracks sleep and recovery, added Biological Age and a Health Records vault in its 3.0 update on May 16, 2026, and connects to Dexcom and Libre CGMs. Bevel Pro costs $14.99/month or $99.99/year. The core app, including Biological Age and Health Records, is free. Zealova is a workout and nutrition coach in one app. It generates personalized monthly strength training plans, logs meals from food photos and restaurant menus, and routes your questions through 5 specialist AI sub-agents. Zealova costs $7.99/month or $59.99/year with a 7-day free trial.
+                  Bevel and Zealova both use AI to help you get healthier, but they solve different problems. Bevel (4.8 stars, 9,500+ App Store ratings, version 3.0.5) is a passive health intelligence platform. It reads your Apple Watch, tracks sleep and recovery, added Biological Age and a Health Records vault in its 3.0 update on May 16, 2026, and connects to Dexcom and Libre CGMs. Version 3.0.5 (May 20, 2026) added a "This Week's Changes" view for Biological Age and enhanced Health Records. Bevel's training plans cover cardio goals like 10Ks and half marathons. Bevel Pro costs $14.99/month or $99.99/year. The core app, including Biological Age and Health Records, is free. Zealova is a workout and nutrition coach in one app. It generates personalized monthly strength training plans, logs meals from food photos and restaurant menus, and routes your questions through 5 specialist AI sub-agents. Zealova costs $7.99/month or $59.99/year with a 7-day free trial.
                 </p>
                 <p className="text-zinc-300 text-lg leading-relaxed mb-6">
                   The clearest split: Bevel wins on biometric depth and longevity tracking. Zealova wins on workout generation, food photo logging with restaurant menu scan, and active AI coaching.
@@ -395,7 +404,7 @@ export default function BevelVs() {
             variants={fadeUp}
             className="mb-12 bg-zinc-900 border border-zinc-800 rounded-xl px-5 py-4 text-sm text-zinc-400"
           >
-            <strong className="text-zinc-300">How this comparison was made:</strong> Bevel pricing verified at the Apple App Store on 2026-05-20 (version 3.0.5, 9,400+ ratings). Bevel 3.0 feature details sourced from gadgetsandwearables.com coverage (published 2026-05-16). Bevel free-tier scope (Biological Age, Health Records) verified from App Store listing 2026-05-20. Bevel strength AI adjustment status verified at feedback.bevel.health (status: "planned (tbd)", November 2024). Zealova pricing and features verified from internal documentation (2026-05-14, live on Google Play). Feature claims for Bevel sourced from the App Store listing, gadgetsandwearables.com, neura.health review, and feedback.bevel.health -- all verified 2026-05-20.
+            <strong className="text-zinc-300">How this comparison was made:</strong> Bevel pricing verified at the Apple App Store on 2026-05-21 (version 3.0.5, 9,500+ ratings). Bevel 3.0 feature details sourced from gadgetsandwearables.com (published 2026-05-16). Bevel 3.0.5 patch notes verified from App Store listing 2026-05-21. Bevel free-tier scope (Biological Age, Health Records) verified from App Store listing. Bevel training plan scope confirmed cardio-only via feedback.bevel.health/feature-requests/p/cardio-training-plans-marathons-triathlons-etc (staff reply April 27, 2026). Bevel strength AI adjustment status: "planned (tbd)", no update since November 2024 per feedback.bevel.health. Zealova pricing and features verified from internal documentation (2026-05-14, live on Google Play). Feature claims for Bevel sourced from the App Store listing, gadgetsandwearables.com, neura.health review, autonomous.ai review, and feedback.bevel.health -- all verified 2026-05-21.
           </motion.div>
 
           {/* Feature comparison table */}
@@ -465,9 +474,9 @@ export default function BevelVs() {
                   <li>Free tier: recovery, sleep, Strength Builder, nutrition, Biological Age, Health Records</li>
                   <li>Pro unlocks Bevel Intelligence AI coaching only</li>
                   <li>iOS only (Apple Watch recommended)</li>
-                  <li>App Store rating: 4.8/5 (9,400+ ratings), version 3.0.5</li>
+                  <li>App Store rating: 4.8/5 (9,500+ ratings), version 3.0.5</li>
                 </ul>
-                <div className="text-zinc-500 text-xs mt-4">Pricing verified on Apple App Store, 2026-05-20</div>
+                <div className="text-zinc-500 text-xs mt-4">Pricing verified on Apple App Store, 2026-05-21</div>
               </div>
             </motion.div>
           </motion.section>
@@ -485,7 +494,7 @@ export default function BevelVs() {
               Price vs. capability: what you actually get for each dollar
             </motion.h2>
             <motion.p variants={fadeUp} className="text-zinc-400 text-sm mb-6 leading-relaxed">
-              Bevel 3.0 added AI training plans to its Pro tier on May 16, 2026. Here is what each paid plan buys you at its annual rate:
+              Bevel 3.0 added cardio training plans (10K, half marathon, triathlon) to its Pro tier on May 16, 2026. Strength-specific AI plan generation is still marked "planned (tbd)" on the Bevel feedback forum as of May 2026. Here is what each paid plan buys you at its annual rate:
             </motion.p>
             <motion.div variants={fadeUp} className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
               <div className="bg-zinc-900 border border-emerald-800/40 rounded-xl p-5">
@@ -626,9 +635,9 @@ export default function BevelVs() {
               <div className="flex gap-4">
                 <div className="text-blue-400 text-xl mt-0.5 shrink-0">2.</div>
                 <div>
-                  <div className="text-white font-semibold mb-1">Biological Age (added in 3.0, May 2026, available free)</div>
+                  <div className="text-white font-semibold mb-1">Biological Age (added in 3.0, expanded in 3.0.5, available free)</div>
                   <p className="text-zinc-400 text-sm leading-relaxed">
-                    Bevel's Biological Age metric estimates whether your body is aging faster or slower than your calendar age, updating weekly using physiological, lifestyle, and blood biomarker data. This is in Bevel's free tier. Zealova does not have a Biological Age metric. If longevity tracking matters to you, this is a genuine Bevel differentiator, and you do not need a paid plan to access it.
+                    Bevel's Biological Age metric estimates whether your body is aging faster or slower than your calendar age, updating weekly using physiological, lifestyle, and blood biomarker data. Version 3.0.5 (May 20, 2026) added a "This Week's Changes" view that breaks down which specific biomarkers moved your biological age up or down. This is in Bevel's free tier. Zealova does not have a Biological Age metric. If longevity tracking matters to you, this is a genuine Bevel differentiator, and you do not need a paid plan to access it.
                   </p>
                 </div>
               </div>
@@ -646,9 +655,9 @@ export default function BevelVs() {
               <div className="flex gap-4">
                 <div className="text-blue-400 text-xl mt-0.5 shrink-0">4.</div>
                 <div>
-                  <div className="text-white font-semibold mb-1">Health Records vault (added in 3.0, available free)</div>
+                  <div className="text-white font-semibold mb-1">Health Records vault (added in 3.0, enhanced in 3.0.5, available free)</div>
                   <p className="text-zinc-400 text-sm leading-relaxed">
-                    Bevel 3.0 added a Health Records vault where you upload blood tests, lab results, and clinical notes as PDFs or photos. The app extracts key biomarkers and integrates them into your health analysis. This is in Bevel's free tier. If you want your lab work connected to your fitness data, Bevel has this. Zealova does not.
+                    Bevel 3.0 added a Health Records vault where you upload blood tests, lab results, and clinical notes as PDFs or photos. The app extracts key biomarkers and integrates them into your health analysis. Version 3.0.5 added document preview, editing, and deletion so you can manage records without leaving the app. This is in Bevel's free tier. If you want your lab work connected to your fitness data, Bevel has this. Zealova does not.
                   </p>
                 </div>
               </div>
@@ -792,7 +801,7 @@ export default function BevelVs() {
             className="border-t border-zinc-800 pt-8 text-xs text-zinc-500 leading-relaxed"
           >
             <p>
-              Last updated 2026-05-20 by Sai. Bevel pricing verified at the Apple App Store on 2026-05-20 (Bevel: AI Health Coach App, version 3.0.5, ID 6456176249, 9,400+ ratings). Bevel 3.0 feature details sourced from gadgetsandwearables.com (published 2026-05-16). Bevel free-tier contents (Biological Age, Health Records) verified from App Store listing 2026-05-20. Bevel strength AI adjustment status verified at feedback.bevel.health/feature-requests/p/strength-trainer-available-weights-rir-automatic-adjustments (status: "planned (tbd)", staff reply November 2024). Android availability status sourced from feedback.bevel.health and askvora.com/compare/bevel (verified 2026-05-17). Zealova pricing and features verified from internal documentation and Google Play Store listing (2026-05-14). Wearable accuracy research: Shcherbina et al., 2017, Journal of Personalized Medicine -- tested 7 wrist-worn devices and found calorie burn error ranged 27-93% across devices. Feature claims without live source are drawn from the Bevel App Store listing as of 2026-05-20.
+              Last updated 2026-05-21 by Sai. Bevel pricing verified at the Apple App Store on 2026-05-21 (Bevel: AI Health Coach App, version 3.0.5, ID 6456176249, 9,500+ ratings). Bevel 3.0 feature details sourced from gadgetsandwearables.com (published 2026-05-16). Bevel 3.0.5 patch notes verified from App Store listing 2026-05-21. Bevel free-tier contents (Biological Age, Health Records) verified from App Store listing 2026-05-21. Bevel training plan scope (cardio-only: 10K, half marathon, triathlon) confirmed via feedback.bevel.health/feature-requests/p/cardio-training-plans-marathons-triathlons-etc (staff reply April 27, 2026). Bevel strength AI adjustment status verified at feedback.bevel.health/feature-requests/p/strength-trainer-available-weights-rir-automatic-adjustments (status: "planned (tbd)", staff reply November 2024). Android availability status sourced from feedback.bevel.health and askvora.com/compare/bevel (verified 2026-05-17). Zealova pricing and features verified from internal documentation and Google Play Store listing (2026-05-14). Wearable accuracy research: Shcherbina et al., 2017, Journal of Personalized Medicine -- tested 7 wrist-worn devices and found calorie burn error ranged 27-93% across devices. Feature claims without live source are drawn from the Bevel App Store listing as of 2026-05-21.
             </p>
           </motion.footer>
 

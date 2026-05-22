@@ -1,6 +1,8 @@
 # App Tour System
 
-Contextual, one-time tooltip overlay tours that teach new users about each screen the first time they visit it. One reusable engine powers all 5 tours.
+Contextual, one-time tooltip overlay tours that teach new users about each screen the first time they visit it.
+
+> **Two tour systems exist.** This `AppTour` engine (`lib/widgets/app_tour/`) powers the nav tour, the tier active-workout tours, and the log-meal tour. A separate **`EmptyStateTipTour`** engine (`lib/widgets/empty_state_tip_tour.dart`, tours in `lib/widgets/tooltips/tours/`) powers the first-run spotlight tours on the Discover, Nutrition, Workouts, and Menu-Analysis screens. They are independent — don't confuse the two.
 
 ---
 
@@ -78,71 +80,43 @@ AppTourStep({
 
 ---
 
-## The 5 Tours
+## Tours
 
-### Tour 1 — App Navigation (`nav_tour`)
-**Trigger:** Home screen `initState` → `_triggerNavTour()`
+### Wired tours (live)
+
+#### App Navigation (`nav_tour`)
+**Trigger:** Home screen `initState` post-frame → `_triggerNavTour()` (`home_screen.dart`), fired ~800 ms after critical data loads. Skipped this session if Home has navigated away (e.g. the post-onboarding permissions primer) — it re-fires on the next Home visit.
 **SharedPrefs key:** `has_seen_nav_tour`
 
-| Step | Target widget | Key | Title |
-|------|--------------|-----|-------|
-| 1 | Hero workout carousel | `AppTourKeys.heroCarouselKey` | Your AI Workout |
-| 2 | Quick Log trends section | `AppTourKeys.quickLogKey` | Quick Log |
-| 3 | Workout nav tab | `AppTourKeys.workoutNavKey` | Exercise Library |
-| 4 | Floating AI chat bubble | `AppTourKeys.aiChatKey` | Your AI Coach |
-| 5 | Nutrition nav tab | `AppTourKeys.nutritionNavKey` | Track Nutrition |
-| 6 | Profile nav tab | `AppTourKeys.profileNavKey` | Your Progress |
+| Step | Key | Title |
+|------|-----|-------|
+| 1 | `AppTourKeys.topBarKey` | Your Command Center |
+| 2 | `AppTourKeys.heroCarouselKey` | Your AI Workout |
+| 3 | `AppTourKeys.quickLogKey` | Quick Actions |
+| 4 | `AppTourKeys.workoutNavKey` | Workouts |
+| 5 | `AppTourKeys.nutritionNavKey` | Track Nutrition |
+| 6 | `AppTourKeys.profileNavKey` | Your Progress |
 
----
+#### Active Workout — tier-aware (`workout_tour_advanced` / `workout_tour_easy`)
+**Trigger:** `triggerWorkoutTour()` in `workout_flow_mixin.dart`. Fired from the active-workout screen's `initState` AND re-fired by `handleWarmupComplete()` — it is **gated on `currentPhase == WorkoutPhase.active`** so it never burns against the warmup/stretch screens.
+**Step lists:** tier-dependent, defined in `lib/core/services/workout_tour_steps.dart` (`stepsForTier` — Easy = 3, Advanced = 7; Simple currently reuses the Easy id).
+**SharedPrefs keys:** canonical per-tier flags `tour_seen_easy` / `tour_seen_advanced` (the controller's `has_seen_<tourId>` flags are mirrored into these). Tier switches mid-tour abort and re-fire for the new tier.
 
-### Tour 2 — Active Workout (`workout_tour`)
-**Trigger:** `ActiveWorkoutScreen` `initState` → `_triggerWorkoutTour()`
-**SharedPrefs key:** `has_seen_workout_tour`
+#### Log-Meal (`nutrition_log_tour`)
+**Trigger:** `log_meal_sheet` — fired once a meal analysis completes, anchored on the always-present Log button.
+**SharedPrefs key:** `has_seen_nutrition_log_tour`
 
-| Step | Target widget | Key | Title |
-|------|--------------|-----|-------|
-| 1 | Exercise card area | `AppTourKeys.exerciseCardKey` | Current Exercise |
-| 2 | Set tracking table | `AppTourKeys.setLoggingKey` | Log Your Sets |
-| 3 | Rest timer | `AppTourKeys.restTimerKey` | Rest Timer |
-| 4 | Swap exercise chip | `AppTourKeys.swapExerciseKey` | Can't Do This? |
-| 5 | AI coach chip | `AppTourKeys.workoutAiKey` | Mid-Workout Help |
+### Planned tours — scaffolded, NOT wired
 
----
+`AppTourKeys` declares GlobalKeys for three more tours, but **no trigger method exists** for them and the keys are **not attached to any widget** — they are placeholders for future work. Do not assume these run:
 
-### Tour 3 — Nutrition (`nutrition_tour`)
-**Trigger:** `NutritionScreen` `initState` → `_triggerNutritionTour()`
-**SharedPrefs key:** `has_seen_nutrition_tour`
+| Tour id | Scaffolded keys | Status |
+|---------|-----------------|--------|
+| `nutrition_tour` | `macroGoals`, `addMeal`, `nutritionTabs`, `nutritionHistory` | Not wired. Nutrition's first-run tour is currently the `EmptyStateTipTour` `nutrition_v1`, not this. |
+| `schedule_tour` | `weeklyCalendar`, `scheduleWorkoutCard`, `viewModeToggle` | Not wired — no `_triggerScheduleTour()`. |
+| `profile_tour` | `viewStats`, `syncedWorkouts`, `wrapped` | Not wired — no `_triggerProfileTour()`. |
 
-| Step | Target widget | Key | Title |
-|------|--------------|-----|-------|
-| 1 | Nutrition goals card | `AppTourKeys.macroGoalsKey` | Your Daily Targets |
-| 2 | Meal log section | `AppTourKeys.addMealKey` | Log a Meal |
-| 3 | Tab bar | `AppTourKeys.nutritionTabsKey` | More Detail |
-| 4 | History button | `AppTourKeys.nutritionHistoryKey` | Track Over Time |
-
----
-
-### Tour 4 — Schedule (`schedule_tour`)
-**Trigger:** `ScheduleScreen` `initState` → `_triggerScheduleTour()`
-**SharedPrefs key:** `has_seen_schedule_tour`
-
-| Step | Target widget | Key | Title |
-|------|--------------|-----|-------|
-| 1 | Week selector | `AppTourKeys.weeklyCalendarKey` | Your Week |
-| 2 | First workout card | `AppTourKeys.scheduleWorkoutCardKey` | Reschedule Easily |
-| 3 | View mode toggle | `AppTourKeys.viewModeToggleKey` | Three Views |
-
----
-
-### Tour 5 — Profile (`profile_tour`)
-**Trigger:** `ProfileScreen` `initState` → `_triggerProfileTour()`
-**SharedPrefs key:** `has_seen_profile_tour`
-
-| Step | Target widget | Key | Title |
-|------|--------------|-----|-------|
-| 1 | View Stats button | `AppTourKeys.viewStatsKey` | Track Your Progress |
-| 2 | Synced workouts row | `AppTourKeys.syncedWorkoutsKey` | Connect Health Apps |
-| 3 | My Wrapped section | `AppTourKeys.wrappedKey` | Your Fitness Story |
+The Easy/Simple tier-screen keys (`easyExerciseHeader`, `easyStepper`, `simpleRail`, …) are likewise scaffolding — attached once those tier screens ship; until then the tier tours spotlight the nearest Advanced-screen widgets.
 
 ---
 
@@ -210,11 +184,12 @@ To force a tour to show again, clear its SharedPrefs flag:
 
 ```dart
 final prefs = await SharedPreferences.getInstance();
-await prefs.remove('has_seen_nav_tour');      // re-shows Tour 1
-await prefs.remove('has_seen_workout_tour');  // re-shows Tour 2
-await prefs.remove('has_seen_nutrition_tour');
-await prefs.remove('has_seen_schedule_tour');
-await prefs.remove('has_seen_profile_tour');
+await prefs.remove('has_seen_nav_tour');            // re-shows the nav tour
+await prefs.remove('has_seen_nutrition_log_tour');  // re-shows the log-meal tour
+await prefs.remove('tour_seen_easy');               // re-shows the Easy tier tour
+await prefs.remove('tour_seen_advanced');           // re-shows the Advanced tier tour
+// (the tier tours also write has_seen_workout_tour_<tier> — clear those too
+//  if you reset via the controller's own flag rather than the canonical keys)
 ```
 
 Or clear all app data / reinstall to reset all flags at once.

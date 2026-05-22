@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Layout rhythm — Google Health vs Zealova v5 (grouped)</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-font-smoothing:antialiased; }
+  body {
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",sans-serif;
+    background:radial-gradient(1100px 700px at 50% -8%, #2a2a2e 0%, transparent 62%), #141417;
+    min-height:100vh; padding:44px 24px 70px;
+    display:flex; flex-direction:column; align-items:center; gap:28px;
+  }
+  .page-title { text-align:center; color:#e6e6ea; }
+  .page-title h1 { font-size:20px; font-weight:800; letter-spacing:-.3px; }
+  .page-title p { font-size:13px; color:#8d8d96; margin-top:6px; max-width:620px; line-height:1.55; }
+
+  .stage { display:flex; gap:42px; align-items:flex-start; flex-wrap:wrap; justify-content:center; }
+  .col { display:flex; flex-direction:column; align-items:center; gap:14px; }
+  .col-cap { text-align:center; max-width:392px; }
+  .col-cap .name { font-size:14px; font-weight:800; color:#e6e6ea; }
+  .col-cap .desc { font-size:12px; color:#8d8d96; margin-top:4px; line-height:1.5; }
+
+  /* ===== phone frame ===== */
+  .phone {
+    width:392px; height:858px; border-radius:56px; position:relative; overflow:hidden;
+    box-shadow:0 0 0 13px #1d1d20, 0 0 0 15px #3a3a3f, 0 40px 80px -22px rgba(0,0,0,.7);
+  }
+  .island {
+    position:absolute; top:11px; left:50%; transform:translateX(-50%);
+    width:122px; height:35px; background:#000; border-radius:20px; z-index:50;
+  }
+  .statusbar {
+    position:absolute; top:0; left:0; right:0; height:54px; z-index:40;
+    display:flex; align-items:flex-end; justify-content:space-between;
+    padding:0 30px 6px; font-size:15px; font-weight:600;
+  }
+  .statusbar .right { display:flex; gap:6px; align-items:center; }
+  .screen { position:absolute; inset:0; padding-top:54px; overflow:hidden; }
+
+  /* fold line shared */
+  .fold {
+    position:relative; z-index:39;
+    border-top:1.5px dashed rgba(236,139,44,.7); pointer-events:none;
+  }
+  .fold::after {
+    content:"FOLD"; position:absolute; right:14px; top:-7px;
+    font-size:8px; font-weight:800; letter-spacing:1px;
+    color:#D2741A; background:#FDF1E3; padding:2px 7px; border-radius:5px;
+  }
+
+  /* ============================================================
+     LEFT — GOOGLE HEALTH  (gh-)
+     ============================================================ */
+  .gh { background:#fff; }
+  .gh .statusbar { color:#1c1c1e; }
+  .gh-header {
+    display:flex; align-items:center; justify-content:space-between; padding:6px 20px 12px;
+  }
+  .gh-batt {
+    display:flex; align-items:center; gap:5px; background:#EEF0F1;
+    border-radius:999px; padding:5px 10px; font-size:12px; font-weight:700; color:#3c4043;
+  }
+  .gh-title { font-size:20px; font-weight:600; color:#202124; }
+  .gh-avatar {
+    width:34px; height:34px; border-radius:50%;
+    background:conic-gradient(#EA4335,#FBBC04,#34A853,#4285F4,#EA4335);
+    padding:2px;
+  }
+  .gh-avatar i { display:block; width:100%; height:100%; border-radius:50%; background:#C9A27E; }
+
+  /* zone 1 — activity (white) */
+  .gh-zone-tag {
+    font-size:9.5px; font-weight:800; letter-spacing:1px; color:#9aa0a6;
+    padding:0 22px; margin:2px 0 6px;
+  }
+  .gh-activity { display:flex; gap:12px; padding:4px 18px 0; }
+  .gh-ring {
+    flex:0 0 158px; width:158px; height:158px; border-radius:50%;
+    background:conic-gradient(#49C5B1 0deg 186deg, #E4F4F1 186deg 360deg);
+    display:flex; align-items:center; justify-content:center;
+  }
+  .gh-ring-in {
+    width:120px; height:120px; border-radius:50%; background:#fff;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+  }
+  .gh-ring-in .lab { font-size:11px; font-weight:700; color:#5f6368; font-style:italic; }
+  .gh-ring-in .big { font-size:34px; font-weight:700; color:#202124; letter-spacing:-1px; line-height:1; }
+  .gh-ring-in .of { font-size:10.5px; font-weight:700; color:#9aa0a6; font-style:italic; }
+  .gh-pills { flex:1; display:flex; flex-direction:column; gap:8px; }
+  .gh-pill {
+    flex:1; background:#D9F0EC; border-radius:16px; padding:9px 12px;
+    display:flex; flex-direction:column; justify-content:center;
+  }
+  .gh-pill .pl { font-size:11px; font-weight:600; color:#3c4043; display:flex; align-items:center; gap:5px; }
+  .gh-pill .pv { font-size:18px; font-weight:700; color:#202124; }
+  .gh-dots { display:flex; gap:5px; justify-content:center; margin:11px 0 12px; }
+  .gh-dots i { width:6px; height:6px; border-radius:50%; background:#DADCE0; }
+  .gh-dots i.on { width:18px; border-radius:99px; background:#9aa0a6; }
+  .gh-acts { display:flex; gap:10px; padding:0 18px 16px; }
+  .gh-btn {
+    flex:1; background:#E8F0FE; color:#1a73e8; border-radius:14px;
+    padding:13px; font-size:14px; font-weight:600; text-align:center;
+  }
+  .gh-btn.sm { flex:0 0 48px; background:#EEF0F1; color:#5f6368; }
+
+  /* zone 2 — sleep (elevated white card sliding up) */
+  .gh-sleep {
+    background:#fff; border-radius:26px 26px 0 0; margin-top:2px;
+    box-shadow:0 -8px 24px -10px rgba(0,0,0,.14);
+    padding:18px 20px 16px; min-height:340px;
+  }
+  .gh-sleep-time { display:flex; align-items:center; gap:7px; font-size:12px; font-weight:600; color:#5f6368; }
+  .gh-sleep-h { font-size:24px; font-weight:600; color:#202124; margin:8px 0 6px; letter-spacing:-.3px; }
+  .gh-sleep-p { font-size:13.5px; color:#5f6368; line-height:1.5; }
+  .gh-sleep-stats { display:flex; gap:11px; margin-top:14px; }
+  .gh-stat { flex:1; background:#F1F3F4; border-radius:16px; padding:12px; }
+  .gh-stat .sl { font-size:12px; font-weight:600; color:#5f6368; }
+  .gh-stat .sv { font-size:24px; font-weight:700; color:#202124; margin:3px 0 7px; }
+  .gh-chip { display:inline-block; font-size:11px; font-weight:700; padding:3px 9px; border-radius:999px; }
+  .gh-chip.b { background:#D2E3FC; color:#1967d2; }
+  .gh-chip.g { background:#CEEAD6; color:#188038; }
+  .gh-stage { margin-top:16px; }
+  .gh-stage .row { font-size:12px; font-weight:600; color:#3c4043; margin-bottom:6px; }
+  .gh-stage .track { height:22px; display:flex; gap:3px; align-items:flex-end; margin-bottom:12px; }
+  .gh-stage .track b { flex:1; background:#BBDEFB; border-radius:3px; height:60%; display:block; }
+  .gh-stage .track b.tall { height:100%; background:#90CAF9; }
+  .gh-stage .track b.awake { height:100%; background:#EF9A9A; flex:0 0 6px; }
+
+  .gh-nav {
+    position:absolute; left:0; right:0; bottom:0; height:78px; z-index:45;
+    background:#fff; border-top:1px solid #ECECEE;
+    display:flex; align-items:flex-start; justify-content:space-around; padding-top:11px;
+  }
+  .gh-nav .it { display:flex; flex-direction:column; align-items:center; gap:4px; color:#5f6368; }
+  .gh-nav .it.on { color:#1a73e8; }
+  .gh-nav .it .l { font-size:10.5px; font-weight:600; }
+
+  /* ============================================================
+     RIGHT — ZEALOVA v5  (zv-)
+     ============================================================ */
+  .zv {
+    --accent:#EC8B2C; --accent-deep:#D2741A; --accent-tint:#FDF1E3;
+    --protein:#8B5CF6; --carbs:#2BB6C4; --fat:#E0883C;
+    --ink:#1A1A1C; --ink-2:#6B6B70; --ink-3:#9A9AA0;
+    --line:#ECECEE; --surface:#F6F6F7;
+    background:#fff;
+  }
+  .zv .statusbar { color:#1A1A1C; }
+
+  .zv-header {
+    display:flex; align-items:flex-start; justify-content:space-between; padding:6px 18px 9px;
+  }
+  .zv-greet-sm { font-size:14px; color:var(--ink-2); font-weight:500; }
+  .zv-greet-lg { font-size:25px; font-weight:800; color:var(--ink); letter-spacing:-.5px; }
+  .zv-hr { display:flex; align-items:center; gap:6px; padding-top:3px; }
+  .zv-streak {
+    display:flex; align-items:center; gap:7px;
+    background:var(--surface); border:1px solid var(--line);
+    border-radius:999px; padding:5px 9px 5px 6px;
+  }
+  .zv-ring {
+    width:23px; height:23px; border-radius:50%;
+    background:conic-gradient(var(--accent) 0 64%, #E4E4E6 64% 100%);
+    display:flex; align-items:center; justify-content:center;
+  }
+  .zv-ring span {
+    width:16px; height:16px; border-radius:50%; background:#fff;
+    display:flex; align-items:center; justify-content:center;
+    font-size:9.5px; font-weight:800; color:var(--ink);
+  }
+  .zv-streak .lbl { font-size:11px; font-weight:700; color:var(--ink); line-height:1.2; }
+  .zv-streak .lbl small { font-weight:500; color:var(--ink-3); }
+  .zv-streak .fire { font-size:12px; font-weight:800; color:var(--accent-deep); }
+  .zv-ib { width:31px; height:31px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:var(--ink-2); }
+
+  /* banner */
+  .zv-banner-stack { position:relative; margin:0 18px 11px; }
+  .zv-bl { position:absolute; left:8px; right:8px; height:20px; background:#fff; border:1px solid var(--line); border-radius:14px; bottom:-5px; }
+  .zv-bl.l2 { left:15px; right:15px; bottom:-9px; opacity:.55; }
+  .zv-banner {
+    position:relative; z-index:2;
+    background:linear-gradient(135deg,#fff 0%, var(--accent-tint) 140%);
+    border:1px solid #F2DFC7; border-radius:14px;
+    padding:9px 11px; display:flex; align-items:center; gap:9px;
+  }
+  .zv-bico {
+    flex:0 0 33px; width:33px; height:33px; border-radius:10px;
+    background:var(--accent-tint); border:1px solid #F2DFC7;
+    display:flex; align-items:center; justify-content:center; font-size:16px;
+  }
+  .zv-bbody { flex:1; min-width:0; }
+  .zv-btitle { font-size:12.5px; font-weight:800; color:var(--ink); }
+  .zv-bsub { font-size:10.5px; color:var(--ink-2); margin-top:1px; }
+  .zv-bcta {
+    flex:0 0 auto; font-size:11px; font-weight:800; color:#fff;
+    background:var(--accent); padding:6px 10px; border-radius:999px;
+  }
+  .zv-bx {
+    flex:0 0 21px; width:21px; height:21px; border-radius:50%;
+    background:var(--surface); color:var(--ink-3);
+    display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:700;
+  }
+  .zv-bcount {
+    position:absolute; right:13px; bottom:-8px; z-index:3;
+    background:var(--ink); color:#fff; font-size:8.5px; font-weight:800;
+    line-height:1; padding:3px 6px; border-radius:999px;
+  }
+
+  /* quick actions */
+  .zv-qa { display:flex; justify-content:space-between; padding:0 14px; margin-bottom:13px; }
+  .zv-qi { display:flex; flex-direction:column; align-items:center; gap:5px; flex:1; }
+  .zv-qt {
+    width:45px; height:45px; border-radius:14px;
+    background:var(--surface); border:1px solid var(--line);
+    display:flex; align-items:center; justify-content:center; font-size:18px; color:var(--ink);
+  }
+  .zv-qi.primary .zv-qt {
+    background:var(--accent); border-color:var(--accent); color:#fff;
+    box-shadow:0 5px 12px -5px rgba(236,139,44,.75);
+  }
+  .zv-ql { font-size:9.5px; font-weight:600; color:var(--ink-2); text-align:center; }
+
+  /* ===== ZONE band ===== */
+  .zv-zone {
+    border-radius:24px 24px 0 0; padding:13px 18px 16px; margin-top:2px;
+  }
+  .zv-zone.today { background:#FBF4EA; box-shadow:0 -6px 18px -12px rgba(120,80,20,.25); }
+  .zv-zone.track { background:#F2F3F5; box-shadow:0 -7px 18px -10px rgba(0,0,0,.12); }
+  .zv-zone-head {
+    display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;
+  }
+  .zv-zone-title {
+    font-size:12px; font-weight:800; letter-spacing:.6px; color:var(--ink);
+    display:flex; align-items:center; gap:6px;
+  }
+  .zv-zone-title .pip { width:6px; height:6px; border-radius:50%; }
+  .zv-zone.today .pip { background:var(--accent); }
+  .zv-zone.track .pip { background:#7C8A99; }
+  .zv-zone-link { font-size:11px; font-weight:700; color:var(--accent-deep); }
+  .zv-zone.track .zv-zone-link { color:#5d6b7a; }
+
+  /* coach strip */
+  .zv-coach {
+    background:#fff; border:1px solid #F2DFC7; border-radius:14px;
+    padding:9px 9px 9px 11px; display:flex; align-items:center; gap:9px; margin-bottom:9px;
+  }
+  .zv-cav {
+    flex:0 0 27px; width:27px; height:27px; border-radius:50%;
+    background:linear-gradient(145deg,var(--accent),var(--accent-deep));
+    display:flex; align-items:center; justify-content:center; color:#fff; font-size:12px;
+    box-shadow:0 3px 7px -2px rgba(210,116,26,.5);
+  }
+  .zv-cb { flex:1; min-width:0; }
+  .zv-ctag { font-size:8px; font-weight:800; letter-spacing:.6px; color:var(--accent-deep); text-transform:uppercase; }
+  .zv-ctext { font-size:11.5px; line-height:1.32; color:var(--ink); font-weight:600; }
+  .zv-ctext b { font-weight:800; }
+  .zv-cchat {
+    flex:0 0 32px; width:32px; height:32px; border-radius:10px;
+    background:var(--accent); color:#fff;
+    display:flex; align-items:center; justify-content:center;
+    box-shadow:0 4px 10px -4px rgba(236,139,44,.7);
+  }
+
+  /* calendar */
+  .zv-week { display:flex; justify-content:space-between; margin-bottom:10px; }
+  .zv-day { flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; padding:5px 0 6px; border-radius:12px; }
+  .zv-day .dw { font-size:10px; font-weight:700; color:var(--ink-3); }
+  .zv-day .nm { font-size:13.5px; font-weight:700; color:var(--ink-2); }
+  .zv-day .dt { width:4.5px; height:4.5px; border-radius:50%; background:transparent; }
+  .zv-day.has .dt { background:var(--ink-3); }
+  .zv-day.today { background:var(--accent); box-shadow:0 6px 13px -6px rgba(236,139,44,.8); }
+  .zv-day.today .dw, .zv-day.today .nm { color:#fff; }
+  .zv-day.today .dt { background:rgba(255,255,255,.85); }
+
+  /* workout hero */
+  .zv-hero {
+    height:140px; border-radius:20px; position:relative; overflow:hidden;
+    background:
+      linear-gradient(180deg, rgba(20,12,2,.05) 0%, rgba(20,12,2,.78) 100%),
+      linear-gradient(125deg,#E89A3E 0%, #C96E18 100%);
+    box-shadow:0 10px 22px -14px rgba(201,110,24,.6);
+  }
+  .zv-hfig { position:absolute; right:4px; bottom:-6px; font-size:106px; opacity:.16; filter:grayscale(1); transform:rotate(-8deg); }
+  .zv-htop { position:absolute; top:11px; left:12px; right:12px; display:flex; justify-content:space-between; }
+  .zv-hbadge {
+    background:rgba(255,255,255,.22); color:#fff; font-size:9.5px; font-weight:800;
+    letter-spacing:.5px; padding:4px 8px; border-radius:999px;
+  }
+  .zv-hkebab { color:#fff; opacity:.85; font-size:16px; }
+  .zv-hbot { position:absolute; left:14px; right:14px; bottom:13px; }
+  .zv-hname { color:#fff; font-size:21px; font-weight:800; letter-spacing:-.3px; }
+  .zv-hmeta { color:rgba(255,255,255,.92); font-size:10.5px; font-weight:700; letter-spacing:.4px; margin-top:2px; }
+  .zv-hplay {
+    position:absolute; right:14px; bottom:13px; width:46px; height:46px; border-radius:50%;
+    background:#fff; display:flex; align-items:center; justify-content:center;
+    box-shadow:0 8px 18px -6px rgba(0,0,0,.5);
+  }
+  .zv-hplay::after {
+    content:""; width:0; height:0;
+    border-left:13px solid var(--accent-deep);
+    border-top:9px solid transparent; border-bottom:9px solid transparent; margin-left:3px;
+  }
+
+  /* nutrition */
+  .zv-card { background:#fff; border:1px solid var(--line); border-radius:16px; padding:13px; }
+  .zv-ntop { display:flex; align-items:center; justify-content:space-between; margin-bottom:11px; }
+  .zv-ntitle { font-size:10.5px; font-weight:800; letter-spacing:.6px; color:var(--ink-3); text-transform:uppercase; }
+  .zv-nkcal { display:flex; align-items:baseline; gap:5px; }
+  .zv-nkcal b { font-size:19px; font-weight:800; color:var(--ink); }
+  .zv-nkcal span { font-size:11px; color:var(--ink-3); font-weight:600; }
+  .zv-nadd {
+    width:27px; height:27px; border-radius:9px; background:var(--accent); color:#fff;
+    font-size:17px; line-height:1; display:flex; align-items:center; justify-content:center;
+    box-shadow:0 4px 10px -4px rgba(236,139,44,.7);
+  }
+  .zv-macro { margin-bottom:9px; }
+  .zv-macro:last-child { margin-bottom:0; }
+  .zv-mrow { display:flex; justify-content:space-between; margin-bottom:4px; font-size:11.5px; }
+  .zv-mrow .nn { font-weight:700; color:var(--ink); }
+  .zv-mrow .vv { font-weight:600; color:var(--ink-3); }
+  .zv-mrow .vv b { color:var(--ink); font-weight:700; }
+  .zv-bar { height:6.5px; border-radius:99px; background:#E7E8EA; overflow:hidden; }
+  .zv-bar i { display:block; height:100%; border-radius:99px; }
+
+  .zv-duo { display:flex; gap:10px; margin-top:11px; }
+  .zv-mini { flex:1; background:#fff; border:1px solid var(--line); border-radius:14px; padding:11px; }
+  .zv-mtop { display:flex; align-items:center; justify-content:space-between; margin-bottom:7px; }
+  .zv-mico { width:25px; height:25px; border-radius:8px; background:var(--surface); display:flex; align-items:center; justify-content:center; font-size:12px; }
+  .zv-madd { width:23px; height:23px; border-radius:7px; border:1px solid var(--line); color:var(--ink-2); font-size:14px; display:flex; align-items:center; justify-content:center; }
+  .zv-mlabel { font-size:12px; font-weight:700; color:var(--ink); }
+  .zv-mval { font-size:15px; font-weight:800; color:var(--ink); margin-top:2px; }
+  .zv-msub { font-size:11px; font-weight:600; color:var(--accent-deep); margin-top:2px; }
+
+  .zv-nav {
+    position:absolute; left:14px; right:14px; bottom:16px; z-index:45;
+    height:62px; background:rgba(255,255,255,.92);
+    backdrop-filter:blur(18px) saturate(1.6);
+    border:1px solid var(--line); border-radius:25px;
+    display:flex; align-items:center; justify-content:space-around;
+    box-shadow:0 14px 32px -12px rgba(0,0,0,.28);
+  }
+  .zv-ni { display:flex; flex-direction:column; align-items:center; gap:3px; color:var(--ink-3); flex:1; }
+  .zv-ni .nl { font-size:9px; font-weight:700; }
+  .zv-ni.on { color:var(--accent-deep); }
+  .zv-home-ind {
+    position:absolute; bottom:7px; left:50%; transform:translateX(-50%);
+    width:124px; height:5px; border-radius:99px; background:#1a1a1c; opacity:.85; z-index:46;
+  }
+</style>
+</head>
+<body>
+
+  <div class="page-title">
+    <h1>Layout rhythm — Google Health vs Zealova v5</h1>
+    <p>Same question, two answers. Google groups its home screen into 2 zones.
+    Zealova v5 now groups its denser content into 3: a white Utility strip, a
+    warm <b>Today</b> zone, and a grey <b>Track</b> zone — so 7 cards read as
+    rooms, not a checklist.</p>
+  </div>
+
+  <div class="stage">
+
+    <!-- ============ LEFT: GOOGLE HEALTH ============ -->
+    <div class="col">
+      <div class="phone gh">
+        <div class="island"></div>
+        <div class="statusbar">
+          <span>9:30</span>
+          <span class="right">
+            <svg width="17" height="11" viewBox="0 0 17 11" fill="currentColor"><rect x="0" y="6" width="3" height="5" rx="1"/><rect x="4.5" y="4" width="3" height="7" rx="1"/><rect x="9" y="2" width="3" height="9" rx="1"/><rect x="13.5" y="0" width="3" height="11" rx="1"/></svg>
+            <svg width="16" height="11" viewBox="0 0 16 11" fill="currentColor"><path d="M8 2.2C10.4 2.2 12.6 3.1 14.3 4.7L15.7 3.2C13.6 1.2 10.9 0 8 0S2.4 1.2 .3 3.2L1.7 4.7C3.4 3.1 5.6 2.2 8 2.2Z"/></svg>
+            <svg width="26" height="12" viewBox="0 0 26 12"><rect x="1" y="1.5" width="21" height="9" rx="2.6" fill="none" stroke="currentColor" stroke-opacity=".4"/><rect x="3" y="3.5" width="17" height="5" rx="1.3" fill="currentColor"/></svg>
+          </span>
+        </div>
+        <div class="screen">
+          <div class="gh-header">
+            <div class="gh-batt">🔋 96%</div>
+            <div class="gh-title">Google Health</div>
+            <div class="gh-avatar"><i></i></div>
+          </div>
+
+          <div class="gh-zone-tag">ZONE 1 · ACTIVITY</div>
+          <div class="gh-activity">
+            <div class="gh-ring">
+              <div class="gh-ring-in">
+                <div class="lab">steps</div>
+                <div class="big">5,170</div>
+                <div class="of">of 10,000</div>
+              </div>
+            </div>
+            <div class="gh-pills">
+              <div class="gh-pill"><div class="pl">📍 Distance</div><div class="pv">1.14 mi</div></div>
+              <div class="gh-pill"><div class="pl">🔥 Cal burned</div><div class="pv">859</div></div>
+              <div class="gh-pill"><div class="pl">🪜 Floors</div><div class="pv">1</div></div>
+            </div>
+          </div>
+          <div class="gh-dots"><i class="on"></i><i></i></div>
+          <div class="gh-acts">
+            <div class="gh-btn">+ Log</div>
+            <div class="gh-btn">🏃 Start</div>
+            <div class="gh-btn sm">✎</div>
+          </div>
+
+          <!-- zone 2 — sleep card slides up -->
+          <div class="gh-sleep">
+            <div class="gh-zone-tag" style="padding:0;margin:0 0 8px;">ZONE 2 · SLEEP</div>
+            <div class="gh-sleep-time">🌙 8:03 AM</div>
+            <div class="gh-sleep-h">A good night's sleep</div>
+            <div class="gh-sleep-p">You got the quality sleep needed to build a strong foundation for your day</div>
+            <div class="gh-sleep-stats">
+              <div class="gh-stat">
+                <div class="sl">Sleep score</div>
+                <div class="sv">85</div>
+                <div class="gh-chip b">Good</div>
+              </div>
+              <div class="gh-stat">
+                <div class="sl">Sleep duration</div>
+                <div class="sv">8h 2m</div>
+                <div class="gh-chip g">Goal met</div>
+              </div>
+            </div>
+            <div class="gh-stage">
+              <div class="row">Total awake · 31 min</div>
+              <div class="track"><b></b><b></b><b class="awake"></b><b></b><b></b><b></b><b></b><b class="awake"></b><b></b><b></b></div>
+              <div class="row">REM · 1h 29m</div>
+              <div class="track"><b class="tall"></b><b></b><b class="tall"></b><b></b><b></b><b class="tall"></b><b></b><b class="tall"></b><b></b><b></b></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="gh-nav">
+          <div class="it on"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/></svg><span class="l">Today</span></div>
+          <div class="it"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 18L9 6l3 8 3-5 4 9"/></svg><span class="l">Fitness</span></div>
+          <div class="it"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg><span class="l">Sleep</span></div>
+          <div class="it"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 8.6a5 5 0 0 0-8.8-3 5 5 0 0 0-8.8 3c0 5 8.8 11 8.8 11s8.8-6 8.8-11z"/></svg><span class="l">Health</span></div>
+        </div>
+      </div>
+      <div class="col-cap">
+        <div class="name">Google Health — 2 zones</div>
+        <div class="desc">Hero ring anchors the eye. One activity zone, one
+        sleep card sliding up underneath. Calm, because a tracker has less to say.</div>
+      </div>
+    </div>
+
+    <!-- ============ RIGHT: ZEALOVA v5 ============ -->
+    <div class="col">
+      <div class="phone zv">
+        <div class="island"></div>
+        <div class="statusbar">
+          <span>12:52</span>
+          <span class="right">
+            <svg width="17" height="11" viewBox="0 0 17 11" fill="currentColor"><rect x="0" y="6" width="3" height="5" rx="1"/><rect x="4.5" y="4" width="3" height="7" rx="1"/><rect x="9" y="2" width="3" height="9" rx="1"/><rect x="13.5" y="0" width="3" height="11" rx="1"/></svg>
+            <svg width="16" height="11" viewBox="0 0 16 11" fill="currentColor"><path d="M8 2.2C10.4 2.2 12.6 3.1 14.3 4.7L15.7 3.2C13.6 1.2 10.9 0 8 0S2.4 1.2 .3 3.2L1.7 4.7C3.4 3.1 5.6 2.2 8 2.2Z"/></svg>
+            <svg width="26" height="12" viewBox="0 0 26 12"><rect x="1" y="1.5" width="21" height="9" rx="2.6" fill="none" stroke="currentColor" stroke-opacity=".4"/><rect x="3" y="3.5" width="17" height="5" rx="1.3" fill="currentColor"/></svg>
+          </span>
+        </div>
+        <div class="screen">
+
+          <!-- UTILITY (white) -->
+          <div class="zv-header">
+            <div>
+              <div class="zv-greet-sm">Good afternoon,</div>
+              <div class="zv-greet-lg">Sai</div>
+            </div>
+            <div class="zv-hr">
+              <div class="zv-streak">
+                <div class="zv-ring"><span>2</span></div>
+                <div class="lbl">Lv 2<br><small>64% to Lv 3</small></div>
+                <div class="fire">🔥3</div>
+              </div>
+              <div class="zv-ib"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg></div>
+            </div>
+          </div>
+
+          <div class="zv-banner-stack">
+            <div class="zv-bl l2"></div>
+            <div class="zv-bl l1"></div>
+            <div class="zv-banner">
+              <div class="zv-bico">🎁</div>
+              <div class="zv-bbody">
+                <div class="zv-btitle">3 crates ready to open</div>
+                <div class="zv-bsub">Tap to claim your streak rewards</div>
+              </div>
+              <div class="zv-bcta">Open all</div>
+              <div class="zv-bx">✕</div>
+            </div>
+            <div class="zv-bcount">3</div>
+          </div>
+
+          <div class="zv-qa">
+            <div class="zv-qi primary"><div class="zv-qt">✦</div><div class="zv-ql">Coach</div></div>
+            <div class="zv-qi"><div class="zv-qt">🍽️</div><div class="zv-ql">Log food</div></div>
+            <div class="zv-qi"><div class="zv-qt">📖</div><div class="zv-ql">Scan menu</div></div>
+            <div class="zv-qi"><div class="zv-qt">💧</div><div class="zv-ql">Water</div></div>
+            <div class="zv-qi"><div class="zv-qt">⚖️</div><div class="zv-ql">Weight</div></div>
+            <div class="zv-qi"><div class="zv-qt">⋯</div><div class="zv-ql">More</div></div>
+          </div>
+
+          <!-- ZONE: TODAY (warm) -->
+          <div class="zv-zone today">
+            <div class="zv-zone-head">
+              <div class="zv-zone-title"><span class="pip"></span>TODAY · THU 21</div>
+              <div class="zv-zone-link">This week</div>
+            </div>
+
+            <div class="zv-coach">
+              <div class="zv-cav">✦</div>
+              <div class="zv-cb">
+                <div class="zv-ctag">Your coach</div>
+                <div class="zv-ctext">You're <b>89g protein</b> behind with <b>leg day</b> ahead. Eat protein-forward at lunch.</div>
+              </div>
+              <div class="zv-cchat"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-8.5 8.5 8.5 8.5 0 0 1-3.8-.9L3 21l1.9-5.7A8.38 8.38 0 0 1 4 11.5 8.5 8.5 0 0 1 12.5 3 8.38 8.38 0 0 1 21 11.5z"/></svg></div>
+            </div>
+
+            <div class="zv-week">
+              <div class="zv-day"><div class="dw">M</div><div class="nm">18</div><div class="dt"></div></div>
+              <div class="zv-day has"><div class="dw">T</div><div class="nm">19</div><div class="dt"></div></div>
+              <div class="zv-day"><div class="dw">W</div><div class="nm">20</div><div class="dt"></div></div>
+              <div class="zv-day today"><div class="dw">T</div><div class="nm">21</div><div class="dt"></div></div>
+              <div class="zv-day"><div class="dw">F</div><div class="nm">22</div><div class="dt"></div></div>
+              <div class="zv-day has"><div class="dw">S</div><div class="nm">23</div><div class="dt"></div></div>
+              <div class="zv-day has"><div class="dw">S</div><div class="nm">24</div><div class="dt"></div></div>
+            </div>
+
+            <div class="zv-hero">
+              <div class="zv-hfig">🏋️</div>
+              <div class="zv-htop">
+                <div class="zv-hbadge">▦ TODAY</div>
+                <div class="zv-hkebab">⋯</div>
+              </div>
+              <div class="zv-hbot">
+                <div class="zv-hname">Birthday Blitz Lower</div>
+                <div class="zv-hmeta">LEGS · 60 MIN · 7 EXERCISES</div>
+              </div>
+              <div class="zv-hplay"></div>
+            </div>
+          </div>
+
+          <!-- ZONE: TRACK (grey) -->
+          <div class="zv-zone track">
+            <div class="zv-zone-head">
+              <div class="zv-zone-title"><span class="pip"></span>TODAY'S PROGRESS</div>
+              <div class="zv-zone-link">Details</div>
+            </div>
+
+            <div class="zv-card">
+              <div class="zv-ntop">
+                <div class="zv-ntitle">🍎 Nutrition</div>
+                <div style="display:flex;align-items:center;gap:9px;">
+                  <div class="zv-nkcal"><b>1,088</b><span>kcal left</span></div>
+                  <div class="zv-nadd">+</div>
+                </div>
+              </div>
+              <div class="zv-macro">
+                <div class="zv-mrow"><span class="nn">Protein</span><span class="vv"><b>13</b> / 102 g</span></div>
+                <div class="zv-bar"><i style="width:13%;background:var(--protein);"></i></div>
+              </div>
+              <div class="zv-macro">
+                <div class="zv-mrow"><span class="nn">Carbs</span><span class="vv"><b>104</b> / 193 g</span></div>
+                <div class="zv-bar"><i style="width:54%;background:var(--carbs);"></i></div>
+              </div>
+              <div class="zv-macro">
+                <div class="zv-mrow"><span class="nn">Fat</span><span class="vv"><b>15</b> / 50 g</span></div>
+                <div class="zv-bar"><i style="width:30%;background:var(--fat);"></i></div>
+              </div>
+            </div>
+
+            <!-- FOLD falls about here -->
+            <div class="fold" style="margin:13px -18px 0;"></div>
+
+            <div class="zv-duo" style="margin-top:17px;">
+              <div class="zv-mini">
+                <div class="zv-mtop"><div class="zv-mico">💧</div><div class="zv-madd">+</div></div>
+                <div class="zv-mlabel">Water</div>
+                <div class="zv-mval">0 <span style="font-size:11px;color:var(--ink-3);font-weight:600;">/ 10 cups</span></div>
+              </div>
+              <div class="zv-mini">
+                <div class="zv-mtop"><div class="zv-mico">⏱️</div></div>
+                <div class="zv-mlabel">Fasting</div>
+                <div class="zv-msub">Start a fast →</div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="zv-nav">
+          <div class="zv-ni on"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20h14V9.5"/></svg><span class="nl">Home</span></div>
+          <div class="zv-ni"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 9v6M4 10.5v3M17.5 9v6M20 10.5v3M6.5 12h11"/></svg><span class="nl">Workouts</span></div>
+          <div class="zv-ni"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3v7a2 2 0 0 0 4 0V3M7 12v9M16 3c-1.6 0-2.8 2.2-2.8 5.5 0 2.2 1.1 3.3 2.8 3.5v9"/></svg><span class="nl">Nutrition</span></div>
+          <div class="zv-ni"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M15.6 8.4l-2.1 5.1-5.1 2.1 2.1-5.1z"/></svg><span class="nl">Discover</span></div>
+          <div class="zv-ni"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.6"/><path d="M5.5 20c0-3.7 3-6 6.5-6s6.5 2.3 6.5 6"/></svg><span class="nl">You</span></div>
+        </div>
+        <div class="zv-home-ind"></div>
+      </div>
+      <div class="col-cap">
+        <div class="name">Zealova v5 — 3 zones</div>
+        <div class="desc">Utility strip (white) → Today zone (warm) → Track zone
+        (grey). Each zone is a labelled band that slides up like Google's sleep
+        card. Denser than Google by design — it's a coach, not a tracker — but
+        now grouped, so it reads as rooms.</div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="page-title" style="margin-top:4px;">
+    <p><b>How they compare:</b> Google anchors with one hero and uses 2 zones.
+    Zealova carries more (it's an action app) so it uses 3 — but the move that
+    closes the rhythm gap is the same: full-bleed labelled bands with a
+    background-color change between them, each with a slight rounded top so it
+    reads as a stacked sheet. Quick actions + workout + nutrition all still land
+    above the fold; water &amp; fasting are the scroll reward.</p>
+  </div>
+
+</body>
+</html>

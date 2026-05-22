@@ -81,6 +81,18 @@ extension __HomeScreenStateExt on _HomeScreenState {
         if (!mounted) return;
         // Don't trigger tour when returning from a minimized workout
         if (ref.read(isWorkoutMinimizedProvider)) return;
+        // Don't fire the nav tour if we've navigated away from Home — on
+        // first launch `_maybeShowNotificationPrime()` routes to the
+        // full-screen permissions primer, and the tour would otherwise
+        // spotlight Home's nav items on top of that screen. The tour is
+        // gated by `has_seen_nav_tour`, so skipping here simply defers it
+        // to the next Home visit once the primer is done.
+        final route = GoRouter.of(context)
+            .routerDelegate
+            .currentConfiguration
+            .uri
+            .toString();
+        if (route != '/home' && route != '/senior-home') return;
         _triggerNavTour();
       });
     });

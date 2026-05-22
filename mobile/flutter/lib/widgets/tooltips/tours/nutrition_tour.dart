@@ -57,12 +57,17 @@ class NutritionTour {
   // Mount through the root overlay so the dim scrim sits ABOVE the main
   // nav bar — rendering it inside the screen left the nav + its fade
   // gradient painting over the scrim (the grey/white band).
-  static Widget overlay() => RootOverlayTipTourHost(
+  //
+  // [onDismissed] fires when the user actively closes the tour (X / final
+  // Next / scrim tap) — NutritionScreen uses it to sequence the weekly
+  // check-in sheet so it never lands on top of a still-visible tour card.
+  static Widget overlay({VoidCallback? onDismissed}) => RootOverlayTipTourHost(
         tourId: id,
         tips: steps(),
         hasMainNavBar: true,
         // Nutrition floats the Daily/Recipes/Patterns/Fuel tab pill above
         // the main nav — reserve clearance so the card clears it.
         extraBottomClearance: 72,
+        onDismissed: onDismissed,
       );
 }

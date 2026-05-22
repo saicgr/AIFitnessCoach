@@ -52,7 +52,9 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
   // KeyedSubtree wraps below stay readable.
   GlobalKey get _quickActionsKey => TooltipAnchors.workoutsQuickActions;
   GlobalKey get _exercisePreferencesKey => TooltipAnchors.workoutsExercisePrefs;
-  GlobalKey get _todayWorkoutKey => TooltipAnchors.workoutsToday;
+  // `workoutsToday` (tour step 1) is now anchored inside WorkoutPlannerSection,
+  // scoped to the workout card rather than the whole date-strip + carousel
+  // block — see workout_planner_section.dart.
 
   // Scroll controller + planner anchor key. The floating launcher bar's
   // "Plan" item jumps the scroll view back to the planner section; the
@@ -439,10 +441,7 @@ class _WorkoutsScreenState extends ConsumerState<WorkoutsScreen>
         // Date strip + workout carousel — moved here from the home screen.
         KeyedSubtree(
           key: _planSectionKey,
-          child: KeyedSubtree(
-            key: _todayWorkoutKey,
-            child: const WorkoutPlannerSection(),
-          ),
+          child: const WorkoutPlannerSection(),
         ),
 
         const SizedBox(height: 20),

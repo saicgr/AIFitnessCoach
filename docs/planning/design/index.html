@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Zealova — current home redesign</title>
+<style>
+  :root { --accent:#EC8B2C; --accent-deep:#D2741A; }
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-font-smoothing:antialiased; }
+  body {
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",sans-serif;
+    background:radial-gradient(1100px 640px at 50% -4%, #2d2d33 0%, transparent 58%), #101013;
+    min-height:100vh; padding:60px 24px 90px; color:#cfcfd6;
+  }
+  .wrap { max-width:680px; margin:0 auto; }
+  h1 { color:#fff; font-size:26px; font-weight:850; letter-spacing:-.5px; text-align:center; }
+  .sub { color:#9a9aa3; font-size:13.5px; text-align:center; margin-top:9px; line-height:1.6; }
+
+  .card { display:flex; gap:17px; align-items:center; background:#1a1a1e; border:1px solid #2a2a30; border-radius:16px; padding:18px 19px; margin-top:16px; text-decoration:none; transition:border-color .14s ease, background .14s ease; }
+  .card:hover { border-color:var(--accent-deep); background:#201f24; }
+  .num { flex:0 0 38px; width:38px; height:38px; border-radius:11px; background:var(--accent); color:#fff; font-size:17px; font-weight:850; display:flex; align-items:center; justify-content:center; }
+  .cbody { flex:1; min-width:0; }
+  .ctitle { color:#fff; font-size:16px; font-weight:800; }
+  .cdesc { font-size:12.5px; color:#a2a2a9; line-height:1.55; margin-top:4px; }
+  .cfile { font-family:ui-monospace,Menlo,monospace; font-size:10.5px; color:#c5a06f; margin-top:7px; }
+  .open { flex:0 0 auto; font-size:12px; font-weight:800; color:var(--accent); border:1px solid #4a3a22; border-radius:99px; padding:9px 15px; }
+
+  .foot { margin-top:34px; text-align:center; font-size:11.5px; color:#6f6f78; line-height:1.7; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>Zealova — the home redesign</h1>
+  <p class="sub">The current design, three screens. Everything else was
+  exploration that led here.</p>
+
+  <a class="card" href="zealova-score-card.html">
+    <div class="num">1</div>
+    <div class="cbody">
+      <div class="ctitle">The score card</div>
+      <div class="cdesc">The final score card: segmented Train / Fuel / Move ring with the tinted track, labels around the ring, the score as the hero. This is the home's centerpiece.</div>
+      <div class="cfile">zealova-score-card.html</div>
+    </div>
+    <div class="open">Open ›</div>
+  </a>
+
+  <a class="card" href="zealova-myspace.html">
+    <div class="num">2</div>
+    <div class="cbody">
+      <div class="ctitle">The home screen layout</div>
+      <div class="cdesc">How the home is composed — score card, quick actions, workout. (Left phone is the home; right is My Space. The card here predates the final one above.)</div>
+      <div class="cfile">zealova-myspace.html</div>
+    </div>
+    <div class="open">Open ›</div>
+  </a>
+
+  <a class="card" href="zealova-score-system.html">
+    <div class="num">3</div>
+    <div class="cbody">
+      <div class="ctitle">How the score works</div>
+      <div class="cdesc">The adaptive scoring rules — what happens on a rest day, with no plan, or no Health Connect. The renormalization logic behind the number.</div>
+      <div class="cfile">zealova-score-system.html</div>
+    </div>
+    <div class="open">Open ›</div>
+  </a>
+
+  <a class="card" href="zealova-myspace-tabs.html">
+    <div class="num">4</div>
+    <div class="cbody">
+      <div class="ctitle">My Space — the editor</div>
+      <div class="cdesc">Customize tab (drag &amp; toggle every tile) + Discover tab (preset layouts with real mini-previews). Floating tab bar at the bottom.</div>
+      <div class="cfile">zealova-myspace-tabs.html</div>
+    </div>
+    <div class="open">Open ›</div>
+  </a>
+
+  <div class="foot">
+    These three are the canonical design. The 9 earlier exploration files are
+    still in this folder if the reasoning is ever needed.
+  </div>
+
+</div>
+</body>
+</html>

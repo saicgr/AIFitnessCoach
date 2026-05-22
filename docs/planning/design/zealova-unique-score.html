@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Zealova — the unique score (not a WHOOP clone)</title>
+<style>
+  :root {
+    --accent:#EC8B2C; --accent-deep:#D2741A; --accent-tint:#FDF1E3;
+    --protein:#8B5CF6; --carbs:#2BB6C4; --fat:#E0883C;
+    --train:#EC8B2C; --fuel:#3FA66B; --move:#3E8FD0;
+    --ink:#1A1A1C; --ink-2:#6B6B70; --ink-3:#9A9AA0;
+    --line:#ECECEE; --surface:#F6F6F7;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-font-smoothing:antialiased; }
+  body {
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",sans-serif;
+    background:radial-gradient(1200px 760px at 50% -6%, #2c2c32 0%, transparent 60%), #121215;
+    min-height:100vh; padding:46px 26px 90px;
+    display:flex; flex-direction:column; align-items:center; gap:10px;
+  }
+  h1 { color:#ededf2; font-size:22px; font-weight:800; text-align:center; }
+  .lede { color:#9a9aa3; font-size:13.5px; max-width:680px; text-align:center; line-height:1.6; }
+  .lede b { color:#d7d7dd; }
+  .seclabel { color:var(--accent); font-size:11.5px; font-weight:800; letter-spacing:1.4px; margin-top:40px; }
+
+  .row { display:flex; gap:40px; flex-wrap:wrap; justify-content:center; align-items:flex-start; margin-top:22px; }
+
+  /* ---- compare cards ---- */
+  .cmp { width:340px; border-radius:22px; padding:20px; }
+  .cmp.bad { background:#1b1b1f; border:1px solid #3a2020; }
+  .cmp.good { background:#fff; }
+  .cmp-tag { font-size:11px; font-weight:800; letter-spacing:.6px; margin-bottom:14px; display:flex; align-items:center; gap:7px; }
+  .cmp.bad .cmp-tag { color:#e0796b; }
+  .cmp.good .cmp-tag { color:#1faa5a; }
+  .cmp-x { width:18px; height:18px; border-radius:50%; background:#e0796b; color:#1b1b1f; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:900; }
+  .cmp-c { width:18px; height:18px; border-radius:50%; background:#1faa5a; color:#fff; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:900; }
+
+  /* generic 3-ring (the trap) */
+  .rings3 { display:flex; justify-content:space-around; }
+  .gring { display:flex; flex-direction:column; align-items:center; gap:7px; }
+  .gring .rr { width:78px; height:78px; border-radius:50%; display:flex; align-items:center; justify-content:center; }
+  .gring .rr.a { background:conic-gradient(#cfcfd4 0 290deg,#333 290deg 360deg); }
+  .gring .rr.b { background:conic-gradient(#e8c14e 0 215deg,#333 215deg 360deg); }
+  .gring .rr.c { background:conic-gradient(#5fa9e0 0 250deg,#333 250deg 360deg); }
+  .gring .rr .hh { width:60px; height:60px; border-radius:50%; background:#1b1b1f; display:flex; align-items:center; justify-content:center; color:#fff; font-size:17px; font-weight:800; }
+  .gring .gl { font-size:10px; font-weight:700; color:#888; letter-spacing:.5px; }
+  .cmp-note { font-size:11.5px; line-height:1.55; margin-top:15px; }
+  .cmp.bad .cmp-note { color:#9a8a88; }
+  .cmp.good .cmp-note { color:var(--ink-2); }
+  .cmp.good .cmp-note b { color:var(--ink); }
+
+  /* ============ the Zealova score component ============ */
+  .tscore { background:#fff; border:1px solid var(--line); border-radius:18px; overflow:hidden; }
+  .tscore-main { padding:14px; display:flex; gap:15px; }
+  .ts-left { flex:0 0 96px; display:flex; flex-direction:column; align-items:flex-start; justify-content:center; }
+  .ts-eyebrow { font-size:8.5px; font-weight:800; letter-spacing:.8px; color:var(--ink-3); }
+  .ts-num { font-size:46px; font-weight:850; color:var(--ink); letter-spacing:-2px; line-height:.95; }
+  .ts-num small { font-size:17px; font-weight:800; color:var(--ink-3); }
+  .ts-state { font-size:11px; font-weight:800; color:var(--accent-deep); margin-top:3px; }
+  .ts-rise { font-size:9px; font-weight:700; color:#3FA66B; margin-top:3px; }
+  .ts-bars { flex:1; display:flex; flex-direction:column; justify-content:center; gap:9px; }
+  .tsb { }
+  .tsb-top { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:3px; }
+  .tsb-l { font-size:10px; font-weight:800; letter-spacing:.4px; color:var(--ink); }
+  .tsb-l span { font-weight:700; color:var(--ink-3); font-size:8.5px; }
+  .tsb-v { font-size:9.5px; font-weight:700; color:var(--ink-2); }
+  .tsb-track { height:7px; border-radius:99px; background:#EBEBED; overflow:hidden; }
+  .tsb-track i { display:block; height:100%; border-radius:99px; }
+  .tscore-coach {
+    background:linear-gradient(135deg,var(--accent-tint) 0%,#fff 130%);
+    border-top:1px solid #F2DFC7; padding:9px 12px;
+    display:flex; align-items:center; gap:8px;
+  }
+  .tsc-av { flex:0 0 22px; width:22px; height:22px; border-radius:50%; background:linear-gradient(145deg,var(--accent),var(--accent-deep)); color:#fff; display:flex; align-items:center; justify-content:center; font-size:10px; }
+  .tsc-tx { flex:1; font-size:11px; font-weight:600; color:var(--ink); line-height:1.3; }
+  .tsc-tx b { font-weight:800; }
+  .tsc-go { font-size:13px; color:var(--accent-deep); }
+
+  /* annotation list */
+  .annot { width:330px; color:#bdbdc4; font-size:12.5px; line-height:1.6; }
+  .annot h3 { color:#ededf2; font-size:14px; margin-bottom:10px; }
+  .annot .ai { display:flex; gap:9px; margin-bottom:11px; }
+  .annot .dot { flex:0 0 9px; width:9px; height:9px; border-radius:50%; margin-top:4px; }
+  .annot b { color:#e6e6ea; }
+
+  /* ============ phone ============ */
+  .phone {
+    width:384px; height:812px; border-radius:54px; position:relative; overflow:hidden; background:#fff;
+    box-shadow:0 0 0 12px #1d1d20, 0 0 0 14px #3a3a3f, 0 36px 70px -22px rgba(0,0,0,.7);
+  }
+  .island { position:absolute; top:11px; left:50%; transform:translateX(-50%); width:118px; height:33px; background:#000; border-radius:20px; z-index:50; }
+  .sb { position:absolute; top:0; left:0; right:0; height:52px; z-index:40; display:flex; align-items:flex-end; justify-content:space-between; padding:0 28px 6px; font-size:14px; font-weight:600; color:var(--ink); }
+  .sb .r { display:flex; gap:6px; align-items:center; }
+  .screen { position:absolute; inset:0; padding-top:52px; overflow:hidden; }
+
+  .hd { display:flex; align-items:flex-start; justify-content:space-between; padding:6px 17px 10px; }
+  .hd .gs { font-size:13.5px; color:var(--ink-2); font-weight:500; }
+  .hd .gl { font-size:24px; font-weight:800; color:var(--ink); letter-spacing:-.5px; }
+  .hd-r { display:flex; align-items:center; gap:6px; padding-top:3px; }
+  .streak { display:flex; align-items:center; gap:7px; background:var(--surface); border:1px solid var(--line); border-radius:999px; padding:5px 9px 5px 6px; }
+  .sr { width:22px; height:22px; border-radius:50%; background:conic-gradient(var(--accent) 0 64%,#E4E4E6 64% 100%); display:flex; align-items:center; justify-content:center; }
+  .sr span { width:15px; height:15px; border-radius:50%; background:#fff; display:flex; align-items:center; justify-content:center; font-size:9px; font-weight:800; }
+  .streak .l { font-size:10.5px; font-weight:700; color:var(--ink); line-height:1.15; }
+  .streak .l small { font-weight:500; color:var(--ink-3); }
+  .streak .f { font-size:11.5px; font-weight:800; color:var(--accent-deep); }
+  .ib { width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:var(--ink-2); }
+
+  .bn { position:relative; margin:0 17px 12px; }
+  .bn-l { position:absolute; left:8px; right:8px; height:18px; background:#fff; border:1px solid var(--line); border-radius:13px; bottom:-5px; }
+  .bn-l.l2 { left:15px; right:15px; bottom:-9px; opacity:.5; }
+  .bn-c { position:relative; z-index:2; background:linear-gradient(135deg,#fff 0%,var(--accent-tint) 140%); border:1px solid #F2DFC7; border-radius:13px; padding:8px 10px; display:flex; align-items:center; gap:9px; }
+  .bn-i { flex:0 0 31px; width:31px; height:31px; border-radius:9px; background:var(--accent-tint); border:1px solid #F2DFC7; display:flex; align-items:center; justify-content:center; font-size:15px; }
+  .bn-b { flex:1; min-width:0; }
+  .bn-t { font-size:12px; font-weight:800; color:var(--ink); }
+  .bn-s { font-size:10px; color:var(--ink-2); }
+  .bn-cta { font-size:10.5px; font-weight:800; color:#fff; background:var(--accent); padding:5px 9px; border-radius:999px; }
+  .bn-x { width:20px; height:20px; border-radius:50%; background:var(--surface); color:var(--ink-3); display:flex; align-items:center; justify-content:center; font-size:9px; font-weight:700; }
+  .bn-n { position:absolute; right:12px; bottom:-7px; z-index:3; background:var(--ink); color:#fff; font-size:8px; font-weight:800; padding:2px 6px; border-radius:999px; }
+
+  .sl { font-size:9.5px; font-weight:800; letter-spacing:.7px; color:var(--ink-3); text-transform:uppercase; padding:0 18px; margin-bottom:7px; display:flex; justify-content:space-between; }
+  .sl .lk { color:var(--accent-deep); }
+
+  .qa { display:flex; justify-content:space-between; padding:0 13px; }
+  .qi { display:flex; flex-direction:column; align-items:center; gap:4px; flex:1; }
+  .qt { width:43px; height:43px; border-radius:13px; background:var(--surface); border:1px solid var(--line); display:flex; align-items:center; justify-content:center; font-size:17px; }
+  .qi.p .qt { background:var(--accent); border-color:var(--accent); color:#fff; box-shadow:0 5px 11px -5px rgba(236,139,44,.7); }
+  .ql { font-size:9px; font-weight:600; color:var(--ink-2); }
+
+  .wo { height:128px; border-radius:18px; position:relative; overflow:hidden; background:linear-gradient(180deg,rgba(20,12,2,.05) 0%,rgba(20,12,2,.78) 100%),linear-gradient(125deg,#E89A3E 0%,#C96E18 100%); box-shadow:0 9px 20px -14px rgba(201,110,24,.6); }
+  .wo-f { position:absolute; right:2px; bottom:-8px; font-size:94px; opacity:.15; filter:grayscale(1); transform:rotate(-8deg); }
+  .wo-t { position:absolute; top:10px; left:11px; right:11px; display:flex; justify-content:space-between; }
+  .wo-bg { background:rgba(255,255,255,.22); color:#fff; font-size:9px; font-weight:800; padding:4px 7px; border-radius:999px; }
+  .wo-k { color:#fff; opacity:.85; font-size:15px; }
+  .wo-b { position:absolute; left:13px; right:13px; bottom:11px; }
+  .wo-n { color:#fff; font-size:19px; font-weight:800; }
+  .wo-m { color:rgba(255,255,255,.92); font-size:10px; font-weight:700; margin-top:1px; }
+  .wo-p { position:absolute; right:13px; bottom:11px; width:42px; height:42px; border-radius:50%; background:#fff; display:flex; align-items:center; justify-content:center; box-shadow:0 7px 16px -6px rgba(0,0,0,.5); }
+  .wo-p::after { content:""; width:0; height:0; border-left:12px solid var(--accent-deep); border-top:8px solid transparent; border-bottom:8px solid transparent; margin-left:3px; }
+
+  .nut { background:#fff; border:1px solid var(--line); border-radius:15px; padding:12px; }
+  .nut-t { display:flex; align-items:center; justify-content:space-between; margin-bottom:9px; }
+  .nut-l { font-size:9.5px; font-weight:800; letter-spacing:.5px; color:var(--ink-3); }
+  .nut-k b { font-size:17px; font-weight:800; color:var(--ink); }
+  .nut-k span { font-size:10px; color:var(--ink-3); font-weight:600; }
+  .nut-a { width:25px; height:25px; border-radius:8px; background:var(--accent); color:#fff; font-size:15px; display:inline-flex; align-items:center; justify-content:center; vertical-align:middle; }
+  .mc { margin-bottom:7px; } .mc:last-child { margin-bottom:0; }
+  .mr { display:flex; justify-content:space-between; margin-bottom:3px; font-size:10.5px; }
+  .mr .n { font-weight:700; color:var(--ink); } .mr .v { font-weight:600; color:var(--ink-3); } .mr .v b { color:var(--ink); }
+  .bar { height:5.5px; border-radius:99px; background:#E7E8EA; overflow:hidden; }
+  .bar i { display:block; height:100%; border-radius:99px; }
+
+  .nav { position:absolute; left:13px; right:13px; bottom:14px; z-index:45; height:60px; background:rgba(255,255,255,.93); backdrop-filter:blur(18px) saturate(1.6); border:1px solid var(--line); border-radius:24px; display:flex; align-items:center; justify-content:space-around; box-shadow:0 13px 30px -12px rgba(0,0,0,.28); }
+  .ni { display:flex; flex-direction:column; align-items:center; gap:3px; color:var(--ink-3); flex:1; }
+  .ni .nl { font-size:8.5px; font-weight:700; }
+  .ni.on { color:var(--accent-deep); }
+  .hi { position:absolute; bottom:6px; left:50%; transform:translateX(-50%); width:118px; height:5px; border-radius:99px; background:#1a1a1c; opacity:.85; z-index:46; }
+  .pcap { text-align:center; margin-top:13px; }
+  .pcap .n { font-size:15px; font-weight:800; color:#ededf2; }
+  .pcap .d { font-size:12px; color:#9a9aa3; margin-top:5px; max-width:360px; line-height:1.55; }
+</style>
+</head>
+<body>
+
+  <h1>Zealova's score — built on what only you have</h1>
+  <p class="lede">Every recovery app shows three rings of biometric scores from
+  a 24/7 sensor. You have no sensor — and that layout is so generic
+  <b>WHOOP is suing Bevel over it</b>. So Zealova's score measures something
+  none of them can: <b>how well you're executing your coach's plan.</b></p>
+
+  <!-- ===== THE TRAP vs THE FIX ===== -->
+  <div class="seclabel">1 · WHY NOT THREE RINGS</div>
+  <div class="row">
+
+    <div class="cmp bad">
+      <div class="cmp-tag"><span class="cmp-x">✕</span>WHAT EVERYONE SHIPS</div>
+      <div class="rings3">
+        <div class="gring"><div class="rr a"><div class="hh">81%</div></div><div class="gl">SLEEP</div></div>
+        <div class="gring"><div class="rr b"><div class="hh">60%</div></div><div class="gl">RECOVERY</div></div>
+        <div class="gring"><div class="rr c"><div class="hh">14.6</div></div><div class="gl">STRAIN</div></div>
+      </div>
+      <div class="cmp-note">WHOOP · Bevel · Amazfit · Samsung · Oura all ship
+      this. Powered by HRV + resting HR + temperature from a sensor worn 24/7.
+      Zealova has no sensor — this score would be hollow, and you'd be the
+      5th identical app.</div>
+    </div>
+
+    <div class="cmp good">
+      <div class="cmp-tag"><span class="cmp-c">✓</span>WHAT ONLY ZEALOVA CAN SHIP</div>
+      <div class="tscore">
+        <div class="tscore-main">
+          <div class="ts-left">
+            <div class="ts-eyebrow">TODAY</div>
+            <div class="ts-num">27</div>
+            <div class="ts-state">Leg day ahead</div>
+            <div class="ts-rise">▲ fills as you go</div>
+          </div>
+          <div class="ts-bars">
+            <div class="tsb">
+              <div class="tsb-top"><div class="tsb-l">TRAIN <span>·50%</span></div><div class="tsb-v">Not started</div></div>
+              <div class="tsb-track"><i style="width:3%;background:var(--train)"></i></div>
+            </div>
+            <div class="tsb">
+              <div class="tsb-top"><div class="tsb-l">FUEL <span>·35%</span></div><div class="tsb-v">13/102g protein</div></div>
+              <div class="tsb-track"><i style="width:42%;background:var(--fuel)"></i></div>
+            </div>
+            <div class="tsb">
+              <div class="tsb-top"><div class="tsb-l">MOVE <span>·15%</span></div><div class="tsb-v">7,412 / 10k steps</div></div>
+              <div class="tsb-track"><i style="width:74%;background:var(--move)"></i></div>
+            </div>
+          </div>
+        </div>
+        <div class="tscore-coach">
+          <div class="tsc-av">✦</div>
+          <div class="tsc-tx">Your workout's worth <b>50 points</b>. Knock out leg day and you jump to <b>77</b>.</div>
+          <div class="tsc-go">›</div>
+        </div>
+      </div>
+      <div class="cmp-note"><b>Glass box, not black box.</b> Every input is
+      visible and tappable. Built from your workout plan + food log + steps —
+      data WHOOP doesn't have. And it <b>rises</b> when you train, where
+      WHOOP's drops.</div>
+    </div>
+
+  </div>
+
+  <!-- ===== HOW IT'S BUILT ===== -->
+  <div class="seclabel">2 · WHAT DECIDES THE NUMBER</div>
+  <div class="row">
+    <div class="annot">
+      <h3>The formula — deterministic, no sensor, no LLM</h3>
+      <div class="ai"><span class="dot" style="background:var(--train)"></span><div><b>Train · 50%</b> — today's scheduled workout, 0% until done → 100% when complete. The heaviest weight, because you're a coach first.</div></div>
+      <div class="ai"><span class="dot" style="background:var(--fuel)"></span><div><b>Fuel · 35%</b> — adherence to your calorie + protein targets so far today, from your food log.</div></div>
+      <div class="ai"><span class="dot" style="background:var(--move)"></span><div><b>Move · 15%</b> — steps vs goal, from Apple Health / Health Connect. The one commodity metric, kept small.</div></div>
+      <div style="margin-top:14px; padding:11px 13px; background:#1b1b1f; border-radius:11px; font-family:ui-monospace,Menlo,monospace; font-size:11.5px; color:#cfcfd4;">
+        score = round( (0.50·Train<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+ 0.35·Fuel + 0.15·Move) × 100 )
+      </div>
+      <div style="margin-top:13px;">It starts low each morning and <b>fills as
+      you act</b> — like Apple's rings, but the inputs are your coach's
+      instructions, not raw biometrics. Naming is open: "Today Score",
+      "Plan Score", "Coach Score".</div>
+    </div>
+
+    <!-- ===== FULL PHONE ===== -->
+    <div>
+    <div class="phone">
+      <div class="island"></div>
+      <div class="sb"><span>12:52</span><span class="r">
+        <svg width="16" height="10" viewBox="0 0 17 11" fill="currentColor"><rect x="0" y="6" width="3" height="5" rx="1"/><rect x="4.5" y="4" width="3" height="7" rx="1"/><rect x="9" y="2" width="3" height="9" rx="1"/><rect x="13.5" y="0" width="3" height="11" rx="1"/></svg>
+        <svg width="15" height="10" viewBox="0 0 16 11" fill="currentColor"><path d="M8 2.2C10.4 2.2 12.6 3.1 14.3 4.7L15.7 3.2C13.6 1.2 10.9 0 8 0S2.4 1.2 .3 3.2L1.7 4.7C3.4 3.1 5.6 2.2 8 2.2Z"/></svg>
+        <svg width="25" height="11" viewBox="0 0 26 12"><rect x="1" y="1.5" width="21" height="9" rx="2.6" fill="none" stroke="currentColor" stroke-opacity=".4"/><rect x="3" y="3.5" width="16" height="5" rx="1.3" fill="currentColor"/></svg>
+      </span></div>
+      <div class="screen">
+        <div class="hd">
+          <div><div class="gs">Good afternoon,</div><div class="gl">Sai</div></div>
+          <div class="hd-r">
+            <div class="streak"><div class="sr"><span>2</span></div><div class="l">Lv 2<br><small>64%</small></div><div class="f">🔥3</div></div>
+            <div class="ib"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg></div>
+          </div>
+        </div>
+        <div class="bn"><div class="bn-l l2"></div><div class="bn-l l1"></div>
+          <div class="bn-c"><div class="bn-i">🎁</div><div class="bn-b"><div class="bn-t">3 crates ready to open</div><div class="bn-s">Tap to claim your streak rewards</div></div><div class="bn-cta">Open all</div><div class="bn-x">✕</div></div>
+          <div class="bn-n">3</div>
+        </div>
+
+        <div class="sl">TODAY SCORE<span class="lk">How it works</span></div>
+        <div style="padding:0 17px 13px;">
+          <div class="tscore">
+            <div class="tscore-main">
+              <div class="ts-left">
+                <div class="ts-eyebrow">TODAY</div>
+                <div class="ts-num">27</div>
+                <div class="ts-state">Leg day ahead</div>
+                <div class="ts-rise">▲ fills as you go</div>
+              </div>
+              <div class="ts-bars">
+                <div class="tsb">
+                  <div class="tsb-top"><div class="tsb-l">TRAIN <span>·50%</span></div><div class="tsb-v">Not started</div></div>
+                  <div class="tsb-track"><i style="width:3%;background:var(--train)"></i></div>
+                </div>
+                <div class="tsb">
+                  <div class="tsb-top"><div class="tsb-l">FUEL <span>·35%</span></div><div class="tsb-v">13/102g protein</div></div>
+                  <div class="tsb-track"><i style="width:42%;background:var(--fuel)"></i></div>
+                </div>
+                <div class="tsb">
+                  <div class="tsb-top"><div class="tsb-l">MOVE <span>·15%</span></div><div class="tsb-v">7,412 / 10k steps</div></div>
+                  <div class="tsb-track"><i style="width:74%;background:var(--move)"></i></div>
+                </div>
+              </div>
+            </div>
+            <div class="tscore-coach">
+              <div class="tsc-av">✦</div>
+              <div class="tsc-tx">Your workout's worth <b>50 points</b>. Knock out leg day and you jump to <b>77</b>.</div>
+              <div class="tsc-go">›</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="qa" style="margin-bottom:13px;">
+          <div class="qi p"><div class="qt">✦</div><div class="ql">Coach</div></div>
+          <div class="qi"><div class="qt">🍽️</div><div class="ql">Log food</div></div>
+          <div class="qi"><div class="qt">📖</div><div class="ql">Scan menu</div></div>
+          <div class="qi"><div class="qt">💧</div><div class="ql">Water</div></div>
+          <div class="qi"><div class="qt">⚖️</div><div class="ql">Weight</div></div>
+          <div class="qi"><div class="qt">⋯</div><div class="ql">More</div></div>
+        </div>
+
+        <div class="sl">TODAY'S TRAINING<span class="lk">This week</span></div>
+        <div style="padding:0 17px;">
+          <div class="wo">
+            <div class="wo-f">🏋️</div>
+            <div class="wo-t"><div class="wo-bg">▦ TODAY</div><div class="wo-k">⋯</div></div>
+            <div class="wo-b"><div class="wo-n">Birthday Blitz Lower</div><div class="wo-m">LEGS · 60 MIN · 7 EXERCISES</div></div>
+            <div class="wo-p"></div>
+          </div>
+        </div>
+
+        <div style="padding:13px 17px 0;">
+          <div class="nut">
+            <div class="nut-t"><div class="nut-l">🍎 NUTRITION</div><div><span class="nut-k"><b>1,088</b> <span>kcal left</span></span> <span class="nut-a">+</span></div></div>
+            <div class="mc"><div class="mr"><span class="n">Protein</span><span class="v"><b>13</b>/102g</span></div><div class="bar"><i style="width:13%;background:var(--protein)"></i></div></div>
+            <div class="mc"><div class="mr"><span class="n">Carbs</span><span class="v"><b>104</b>/193g</span></div><div class="bar"><i style="width:54%;background:var(--carbs)"></i></div></div>
+            <div class="mc"><div class="mr"><span class="n">Fat</span><span class="v"><b>15</b>/50g</span></div><div class="bar"><i style="width:30%;background:var(--fat)"></i></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="nav">
+        <div class="ni on"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20h14V9.5"/></svg><span class="nl">Home</span></div>
+        <div class="ni"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 9v6M4 10.5v3M17.5 9v6M20 10.5v3M6.5 12h11"/></svg><span class="nl">Workouts</span></div>
+        <div class="ni"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3v7a2 2 0 0 0 4 0V3M7 12v9M16 3c-1.6 0-2.8 2.2-2.8 5.5 0 2.2 1.1 3.3 2.8 3.5v9"/></svg><span class="nl">Nutrition</span></div>
+        <div class="ni"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M15.6 8.4l-2.1 5.1-5.1 2.1z"/></svg><span class="nl">Discover</span></div>
+        <div class="ni"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.6"/><path d="M5.5 20c0-3.7 3-6 6.5-6s6.5 2.3 6.5 6"/></svg><span class="nl">You</span></div>
+      </div>
+      <div class="hi"></div>
+    </div>
+    <div class="pcap">
+      <div class="n">B, fixed — score-led but unmistakably Zealova</div>
+      <div class="d">You liked B. This is B with its fatal flaw removed: the
+      WHOOP-clone rings are gone. The hero is now an execution score only you
+      can compute, in your own bar-based visual language.</div>
+    </div>
+    </div>
+
+  </div>
+
+  <p class="lede" style="margin-top:42px; max-width:720px;">
+  <b>The one-line pitch:</b> WHOOP tells you how recovered your body is, so you
+  know how hard to train. Zealova tells you how well you executed the plan, so
+  you know if you actually did the work. One needs a $239 sensor. The other
+  needs the plan and the food log you already own — and it's a number no
+  recovery app can ever show.</p>
+
+</body>
+</html>

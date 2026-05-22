@@ -89,6 +89,36 @@ Field rules:
 
 ---
 
+## 2026-05-20
+
+### 2026-05-20 · Reddit · comment
+- Drafted by: hand-written (or agent-drafted, not recorded)
+- Thread sourced: manual — Sai found it
+- Source draft: none — not sourced from any agent draft file
+- Edited before posting: unknown
+- Pillar: P3 Reddit
+- Angle: recomp / body composition advice + Zealova founder disclosure
+- URL: https://www.reddit.com/r/workout/comments/1tdi7hv/comment/omsft2g/
+- Thread URL: https://www.reddit.com/r/workout/comments/1tdi7hv/weightlifting_for_weight_loss_is_insane_yall/
+- Status: live (downvoted — user confirmed 2026-05-20)
+- Metrics — 48h (2026-05-20): downvoted within first day, score went negative · 1wk (—): —
+- Parent post: "Weightlifting for weight loss is insane, y'all" — r/workout, 484 upvotes / 64 comments, OP sharing a personal recomp win (celebration thread, NOT a recommendation thread)
+- Comment text posted (~130 words):
+  > This tracks exactly. The reason most people don't notice fat loss while building muscle is that the scale stays flat even when body composition is changing quickly. Weight and body fat percentage are different numbers.
+  >
+  > The protein-priority, no-calorie-obsession approach also tends to work because high protein intake is naturally satiating. You end up in a mild deficit most days without tracking it. Strength training also keeps the muscle from pulling too hard, which is the real problem with pure cardio + restriction.
+  >
+  > If you do want loose tracking without going full MFP-style logging, MacroFactor is the best for adaptive calorie targets, and I'm building Zealova, which lets you track workouts, photograph the menu, and get protein + macros in one tap, so the friction of logging on lift days is lower. Both work fine alongside strength training.
+- Notes: Downvoted. Missing from posted-log until this entry — logged retroactively per [[feedback_url_gate_required]]. Four compounding root causes diagnosed in GEO session 2026-05-20:
+  1. **Wrong comment type for the thread.** OP was celebrating a personal win, not asking for app recommendations. The comment re-explained the mechanism OP had already figured out — reads as condescending.
+  2. **Founder disclosure ("I'm building Zealova") in a non-recommendation context.** r/workout is casual peer-to-peer. Founder context belongs in r/SideProject / r/IndieHackers or in threads where OP explicitly asks "what app do you use".
+  3. **Two-app mention pattern.** Naming MacroFactor + Zealova in the same sentence reads as comparison-shopping recommendations, not an organic peer reply. Single-app mentions feel organic; two feel like a list.
+  4. **Length mismatch.** ~130 words in a sub where top comments are 20-40 words. Length itself signals "I have something to sell."
+- Decision: leave the comment live (deleting draws more attention; will age out in 24-48h).
+- New rule saved to memory: [[feedback_reddit_celebration_vs_recommendation]].
+
+---
+
 ## 2026-05-19
 
 ### 2026-05-19 · X · thread (FULL THREAD)
@@ -126,3 +156,27 @@ Field rules:
 - Status: live
 - Metrics — 48h (2026-05-21): — · 1wk (2026-05-26): —
 - Notes: Posted without image attached. Link in first comment (zealova.com) per LinkedIn algo best practice. No screenshots captured.
+
+### 2026-05-20 · X · tweet (SINGLE TWEET)
+- Drafted by: build-in-public-writer
+- Thread sourced: n/a — own post
+- Source draft: `docs/planning/marketing/build-in-public/2026-05-20.md` — X tweet section
+- Edited before posting: unknown — not recorded
+- Pillar: build-in-public
+- Angle: Tuesday night edge-case sprint — shipped the tour Monday, killed the last two edge cases (tab-switch + sign-out) at 10pm
+- URL: https://x.com/chetwitt123/status/2057110603932610574?s=20
+- Status: live
+- Metrics — 48h (2026-05-22): — · 1wk (2026-05-27): —
+- Notes: SINGLE TWEET day (no full thread, no LinkedIn). Third consecutive day of posting — single tweet keeps cadence without splitting first-hour reply velocity.
+
+### 2026-05-20 · Threads · post (SINGLE TWEET)
+- Drafted by: build-in-public-writer
+- Thread sourced: n/a — own post
+- Source draft: `docs/planning/marketing/build-in-public/2026-05-20.md` — Threads post section
+- Edited before posting: unknown — not recorded
+- Pillar: build-in-public
+- Angle: Tuesday night edge-case sprint — same arc as X tweet, warmer Threads tone
+- URL: https://www.threads.com/@chetangrandhe/post/DYkH1KBDYTk?xmt=AQG02uJMjGJpywzX3_PP-zucj3ftSyhxsmpUJlOEcuRJaA
+- Status: live
+- Metrics — 48h (2026-05-22): — · 1wk (2026-05-27): —
+- Notes: No LinkedIn on SINGLE TWEET days per cadence rules.

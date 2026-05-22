@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Zealova — ring: how to show what's left</title>
+<style>
+  :root {
+    --accent:#EC8B2C; --accent-deep:#D2741A;
+    --train:#EC8B2C; --fuel:#3FA66B; --move:#3E8FD0;
+    --ink:#1A1A1C; --ink-2:#6B6B70; --ink-3:#9A9AA0;
+    --line:#ECECEE; --surface:#F6F6F7;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-font-smoothing:antialiased; }
+  body {
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",sans-serif;
+    background:radial-gradient(1200px 760px at 50% -4%, #2c2c32 0%, transparent 58%), #111114;
+    min-height:100vh; padding:50px 26px 90px;
+    display:flex; flex-direction:column; align-items:center; gap:10px;
+  }
+  h1 { color:#ededf2; font-size:22px; font-weight:800; text-align:center; }
+  .lede { color:#9a9aa3; font-size:13px; max-width:640px; text-align:center; line-height:1.6; }
+  .lede b { color:#d7d7dd; }
+
+  .grid { display:flex; gap:26px; flex-wrap:wrap; justify-content:center; margin-top:30px; }
+  .opt { width:248px; background:#fff; border:1px solid #e6e6e8; border-radius:20px; padding:18px 16px 16px;
+    box-shadow:0 22px 46px -24px rgba(0,0,0,.55); position:relative; }
+  .opt.pick { border-color:var(--accent); box-shadow:0 0 0 3px rgba(236,139,44,.16), 0 22px 46px -24px rgba(0,0,0,.55); }
+  .ribbon { position:absolute; top:-11px; left:50%; transform:translateX(-50%); background:#1faa5a; color:#fff;
+    font-size:9px; font-weight:800; letter-spacing:.5px; padding:4px 11px; border-radius:99px; }
+  .ringwrap { position:relative; width:216px; height:216px; margin:4px auto 0; }
+  .ringwrap svg { position:absolute; inset:0; }
+  .rc { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+  .rc .e { font-size:7px; font-weight:800; letter-spacing:.8px; color:var(--ink-3); }
+  .rc .n { font-size:46px; font-weight:850; color:var(--ink); letter-spacing:-2px; line-height:.9; }
+  .oname { font-size:14.5px; font-weight:800; color:var(--ink); text-align:center; margin-top:12px; }
+  .odesc { font-size:11px; color:var(--ink-2); text-align:center; line-height:1.45; margin-top:5px; }
+  .ometa { font-size:10px; text-align:center; margin-top:7px; line-height:1.5; }
+  .ometa .pro { color:#2C8A54; } .ometa .con { color:#C26A4A; }
+
+  .cap { margin-top:40px; color:#9a9aa3; font-size:13px; max-width:680px; text-align:center; line-height:1.65; }
+  .cap b { color:#d7d7dd; }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute;"><defs>
+  <linearGradient id="gT" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F4B068"/><stop offset="1" stop-color="#CE6F18"/></linearGradient>
+  <linearGradient id="gF" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#67C690"/><stop offset="1" stop-color="#2C8A54"/></linearGradient>
+  <linearGradient id="gM" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#76B7E7"/><stop offset="1" stop-color="#2E72B8"/></linearGradient>
+</defs></svg>
+
+<h1>How to show "what's left"</h1>
+<p class="lede">No dots. Four cleaner treatments for the unfilled part of each
+arc — same segmented Train / Fuel / Move ring. Pick one.</p>
+
+<div class="grid">
+
+  <!-- A — TINTED TRACK -->
+  <div class="opt pick">
+    <div class="ribbon">RECOMMENDED</div>
+    <div class="ringwrap">
+      <svg viewBox="0 0 240 240">
+        <!-- tracks: pale tint of each segment's own colour -->
+        <circle cx="120" cy="120" r="92" fill="none" stroke="#F7DCBC" stroke-width="16" stroke-linecap="round" stroke-dasharray="250.5 999" transform="rotate(-168 120 120)"/>
+        <circle cx="120" cy="120" r="92" fill="none" stroke="#CCE9D8" stroke-width="16" stroke-linecap="round" stroke-dasharray="175.4 999" transform="rotate(4 120 120)"/>
+        <circle cx="120" cy="120" r="92" fill="none" stroke="#CDE2F3" stroke-width="16" stroke-linecap="round" stroke-dasharray="75.2 999" transform="rotate(129.2 120 120)"/>
+        <!-- done -->
+        <circle cx="120" cy="120" r="92" fill="none" stroke="url(#gT)" stroke-width="16" stroke-linecap="round" stroke-dasharray="10 999" transform="rotate(-168 120 120)"/>
+        <circle cx="120" cy="120" r="92" fill="none" stroke="url(#gF)" stroke-width="16" stroke-linecap="round" stroke-dasharray="73.7 999" transform="rotate(4 120 120)"/>
+        <circle cx="120" cy="120" r="92" fill="none" stroke="url(#gM)" stroke-width="16" stroke-linecap="round" stroke-dasharray="55.6 999" transform="rotate(129.2 120 120)"/>
+      </svg>
+      <div class="rc"><div class="e">TODAY</div><div class="n">27</div></div>
+    </div>
+    <div class="oname">A · Tinted track</div>
+    <div class="odesc">The remaining arc is a pale version of that segment's own colour.</div>
+    <div class="ometa"><span class="pro">+ calm, premium, colour-coded even when empty</span><br><span class="con">– closest to "normal", but a step up from grey</span></div>
+  </div>
+
+  <!-- B — HAIRLINE -->
+  <div class="opt">
+    <div class="ringwrap">
+      <svg viewBox="0 0 240 240">
+        <!-- hairline path in segment colour -->
+        <circle cx="120" cy="120" r="92" fill="none" stroke="var(--train)" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="250.5 999" transform="rotate(-168 120 120)"/>
+        <circle cx="120" cy="120" r="92" fill="none" stroke="var(--fuel)" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="175.4 999" transform="rotate(4 120 120)"/>
+        <circle cx="120" cy="120" r="92" fill="none" stroke="var(--move)" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="75.2 999" transform="rotate(129.2 120 120)"/>
+        <!-- done thick -->
+        <circle cx="120" cy="120" r="92" fill="none" stroke="url(#gT)" stroke-width="16" stroke-linecap="round" stroke-dasharray="10 999" transform="rotate(-168 120 120)"/>
+        <circle cx="120" cy="120" r="92" fill="none" stroke="url(#gF)" stroke-width="16" stroke-linecap="round" stroke-dasharray="73.7 999" transform="rotate(4 120 120)"/>
+        <circle cx="120" cy="120" r="92" fill="none" stroke="url(#gM)" stroke-width="16" stroke-linecap="round" stroke-dasharray="55.6 999" transform="rotate(129.2 120 120)"/>
+      </svg>
+      <div class="rc"><div class="e">TODAY</div><div class="n">27</div></div>
+    </div>
+    <div class="oname">B · Hairline path</div>
+    <div class="odesc">Remaining is a thin same-colour line; done is the thick arc.</div>
+    <div class="ometa"><span class="pro">+ elegant, minimal, very distinctive</span><br><span class="con">– the thin line is subtle on a busy screen</span></div>
+  </div>
+
+  <!-- C — OUTLINE CHANNEL -->
+  <div class="opt">
+    <div class="ringwrap">
+      <svg viewBox="0 0 240 240">
+        <!-- outline: colour band then white inner = hollow capsule -->
+        <circle cx="120" cy="120" r="92" fill="none" stroke="#E7B98A" stroke-width="17" stroke-linecap="round" stroke-dasharray="250.5 999" transform="rotate(-168 120 120)"/>
+        <circle cx="120" cy="120" r="92" fill="none" stroke="#9FD4B6" stroke-width="17" stroke-linecap="round" stroke-dasharray="175.4 999" transform="rotate(4 120 120)"/>
+        <circle cx="120" cy="120" r="92" fill="none" stroke="#A6CBE8" stroke-width="17" stroke-linecap="round" stroke-dasharray="75.2 999" transform="rotate(129.2 120 120)"/>
+        <circle cx="120" cy="120" r="92" fill="none" stroke="#fff" stroke-width="11" stroke-linecap="round" stroke-dasharray="250.5 999" transform="rotate(-168 120 120)"/>
+        <circle cx="120" cy="120" r="92" fill="none" stroke="#fff" stroke-width="11" stroke-linecap="round" stroke-dasharray="175.4 999" transform="rotate(4 120 120)"/>
+        <circle cx="120" cy="120" r="92" fill="none" stroke="#fff" stroke-width="11" stroke-linecap="round" stroke-dasharray="75.2 999" transform="rotate(129.2 120 120)"/>
+        <!-- done solid -->
+        <circle cx="120" cy="120" r="92" fill="none" stroke="url(#gT)" stroke-width="17" stroke-linecap="round" stroke-dasharray="10 999" transform="rotate(-168 120 120)"/>
+        <circle cx="120" cy="120" r="92" fill="none" stroke="url(#gF)" stroke-width="17" stroke-linecap="round" stroke-dasharray="73.7 999" transform="rotate(4 120 120)"/>
+        <circle cx="120" cy="120" r="92" fill="none" stroke="url(#gM)" stroke-width="17" stroke-linecap="round" stroke-dasharray="55.6 999" transform="rotate(129.2 120 120)"/>
+      </svg>
+      <div class="rc"><div class="e">TODAY</div><div class="n">27</div></div>
+    </div>
+    <div class="oname">C · Outline channel</div>
+    <div class="odesc">Remaining is a hollow outlined capsule; done fills it solid.</div>
+    <div class="ometa"><span class="pro">+ clearly reads as "container to fill"</span><br><span class="con">– busier; the double edge can look technical</span></div>
+  </div>
+
+  <!-- D — NOTCHED -->
+  <div class="opt">
+    <div class="ringwrap">
+      <svg viewBox="0 0 240 240">
+        <!-- notched track pale -->
+        <circle cx="120" cy="120" r="92" fill="none" stroke="#EAD7C2" stroke-width="16" stroke-dasharray="3 7" transform="rotate(-168 120 120)" pathLength="250.5" stroke-dashoffset="0"/>
+        <circle cx="120" cy="120" r="92" fill="none" stroke="#EAD7C2" stroke-width="16" stroke-dasharray="9 6" transform="rotate(-168 120 120)"/>
+        <circle cx="120" cy="120" r="92" fill="none" stroke="#D7E7DD" stroke-width="16" stroke-dasharray="9 6" transform="rotate(4 120 120)"/>
+        <circle cx="120" cy="120" r="92" fill="none" stroke="#D5E3EF" stroke-width="16" stroke-dasharray="9 6" transform="rotate(129.2 120 120)"/>
+        <!-- mask the non-segment areas with white -->
+        <circle cx="120" cy="120" r="92" fill="none" stroke="#fff" stroke-width="20" stroke-dasharray="0.1 250.5 327.5" transform="rotate(-168 120 120)"/>
+        <!-- done notches -->
+        <circle cx="120" cy="120" r="92" fill="none" stroke="var(--train)" stroke-width="16" stroke-dasharray="9 6" transform="rotate(-168 120 120)" pathLength="578"/>
+        <circle cx="120" cy="120" r="92" fill="none" stroke="var(--fuel)" stroke-width="16" stroke-dasharray="9 6" transform="rotate(4 120 120)"/>
+        <circle cx="120" cy="120" r="92" fill="none" stroke="var(--move)" stroke-width="16" stroke-dasharray="9 6" transform="rotate(129.2 120 120)"/>
+      </svg>
+      <div class="rc"><div class="e">TODAY</div><div class="n">27</div></div>
+    </div>
+    <div class="oname">D · Notched segments</div>
+    <div class="odesc">Each arc is a row of notches — filled vs empty, countable.</div>
+    <div class="ometa"><span class="pro">+ progress is countable, energetic</span><br><span class="con">– the most decorative; can feel gauge-y</span></div>
+  </div>
+
+</div>
+
+<p class="cap">
+<b>My pick: A — Tinted track.</b> Each segment's empty part is a soft tint of
+its <i>own</i> colour, so the ring is colour-coded even before you do anything,
+and it stays calm and instantly legible — the job of a thing you check five
+times a day. <b>B</b> is the most beautiful if you want minimal. <b>C</b> and
+<b>D</b> are bolder but busier. Tell me which, and I'll drop it into the score
+card.</p>
+
+</body>
+</html>

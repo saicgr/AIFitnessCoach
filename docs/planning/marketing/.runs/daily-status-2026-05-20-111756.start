@@ -1,0 +1,11 @@
+mode: daily-status
+started: 2026-05-20T16:17:56Z
+trigger_phrase: Quick GEO status check — daily ritual. Read WEEKLY_SCHEDULE.md + citations/tracker.md + posted-log.md, scan what's shipped vs planned for this week, flag the single most leveraged next action for today. Keep it tight: status, blockers, today's #1 move. Today is 2026-05-20.
+commit:
+  - target_landscape: docs/planning/marketing/landscape/2026-05-20.md
+  - target_tool_uses_min: 25
+  - target_base_websearches: 22
+  - target_reddit_drafts: 25
+  - target_x_drafts: 25
+  - target_landscape_sections: 19
+  - eta_minutes: 10-15

@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Zealova home — 10 full-screen mockups</title>
+<style>
+  :root {
+    --accent:#EC8B2C; --accent-deep:#D2741A; --accent-tint:#FDF1E3;
+    --protein:#8B5CF6; --carbs:#2BB6C4; --fat:#E0883C;
+    --train:#EC8B2C; --fuel:#3FA66B; --move:#3E8FD0;
+    --ink:#1A1A1C; --ink-2:#6B6B70; --ink-3:#9A9AA0;
+    --line:#ECECEE; --surface:#F6F6F7;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-font-smoothing:antialiased; }
+  body {
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",sans-serif;
+    background:radial-gradient(1400px 800px at 50% -4%, #2c2c32 0%, transparent 58%), #111114;
+    min-height:100vh; padding:46px 22px 80px;
+  }
+  .head { text-align:center; margin-bottom:8px; }
+  .head h1 { color:#ededf2; font-size:23px; font-weight:800; }
+  .head p { color:#9a9aa3; font-size:13.5px; max-width:680px; margin:8px auto 0; line-height:1.6; }
+  .head p b { color:#d7d7dd; }
+
+  .grid { display:flex; flex-wrap:wrap; gap:48px 34px; justify-content:center; margin-top:34px; }
+  .cell { width:348px; display:flex; flex-direction:column; align-items:center; }
+
+  /* phone */
+  .phone {
+    width:348px; height:734px; border-radius:48px; position:relative; overflow:hidden; background:#fff;
+    box-shadow:0 0 0 11px #1d1d20, 0 0 0 13px #3a3a3f, 0 30px 60px -20px rgba(0,0,0,.7);
+  }
+  .phone.dark { background:#0E0E11; }
+  .island { position:absolute; top:10px; left:50%; transform:translateX(-50%); width:104px; height:30px; background:#000; border-radius:18px; z-index:50; }
+  .sb { position:absolute; top:0; left:0; right:0; height:48px; z-index:40; display:flex; align-items:flex-end; justify-content:space-between; padding:0 25px 5px; font-size:13px; font-weight:600; color:var(--ink); }
+  .dark .sb { color:#fff; }
+  .scr { position:absolute; inset:0; padding-top:48px; overflow:hidden; }
+
+  /* header */
+  .hd { display:flex; align-items:flex-start; justify-content:space-between; padding:6px 15px 9px; }
+  .hd .gs { font-size:12.5px; color:var(--ink-2); font-weight:500; }
+  .dark .hd .gs { color:#8b8b93; }
+  .hd .gl { font-size:22px; font-weight:800; color:var(--ink); letter-spacing:-.5px; }
+  .dark .hd .gl { color:#fff; }
+  .hd-r { display:flex; align-items:center; gap:5px; padding-top:3px; }
+  .streak { display:flex; align-items:center; gap:6px; background:var(--surface); border:1px solid var(--line); border-radius:999px; padding:4px 8px 4px 5px; }
+  .dark .streak { background:#1c1c20; border-color:#2a2a30; }
+  .sr { width:20px; height:20px; border-radius:50%; background:conic-gradient(var(--accent) 0 64%,#E4E4E6 64% 100%); display:flex; align-items:center; justify-content:center; }
+  .sr span { width:13px; height:13px; border-radius:50%; background:#fff; display:flex; align-items:center; justify-content:center; font-size:8px; font-weight:800; }
+  .dark .sr span { background:#1c1c20; color:#fff; }
+  .streak .l { font-size:9.5px; font-weight:700; color:var(--ink); line-height:1.1; }
+  .dark .streak .l { color:#fff; }
+  .streak .l small { font-weight:500; color:var(--ink-3); }
+  .streak .f { font-size:10.5px; font-weight:800; color:var(--accent-deep); }
+  .ib { width:27px; height:27px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:var(--ink-2); font-size:13px; }
+  .dark .ib { color:#8b8b93; }
+
+  /* banner (compact) */
+  .bn { margin:0 15px 11px; background:linear-gradient(135deg,#fff,var(--accent-tint) 150%); border:1px solid #F2DFC7; border-radius:12px; padding:7px 9px; display:flex; align-items:center; gap:8px; }
+  .dark .bn { background:linear-gradient(135deg,#231c12,#1c1c20); border-color:#3a2f1c; }
+  .bn-i { font-size:14px; }
+  .bn-b { flex:1; min-width:0; }
+  .bn-t { font-size:11px; font-weight:800; color:var(--ink); }
+  .dark .bn-t { color:#fff; }
+  .bn-cta { font-size:9.5px; font-weight:800; color:#fff; background:var(--accent); padding:4px 8px; border-radius:999px; }
+  .bn-x { color:var(--ink-3); font-size:10px; font-weight:700; }
+
+  /* section label */
+  .sl { font-size:9px; font-weight:800; letter-spacing:.6px; color:var(--ink-3); text-transform:uppercase; padding:0 16px; margin-bottom:6px; display:flex; justify-content:space-between; }
+  .sl .lk { color:var(--accent-deep); }
+  .dark .sl { color:#6f6f78; }
+
+  /* quick actions */
+  .qa { display:flex; justify-content:space-between; padding:0 11px; }
+  .qi { display:flex; flex-direction:column; align-items:center; gap:4px; flex:1; }
+  .qt { width:40px; height:40px; border-radius:12px; background:var(--surface); border:1px solid var(--line); display:flex; align-items:center; justify-content:center; font-size:16px; }
+  .dark .qt { background:#1c1c20; border-color:#2a2a30; }
+  .qi.p .qt { background:var(--accent); border-color:var(--accent); }
+  .ql { font-size:8.5px; font-weight:600; color:var(--ink-2); }
+  .dark .ql { color:#8b8b93; }
+
+  /* workout hero */
+  .wo { height:120px; border-radius:16px; position:relative; overflow:hidden; background:linear-gradient(180deg,rgba(20,12,2,.05),rgba(20,12,2,.78)),linear-gradient(125deg,#E89A3E,#C96E18); }
+  .wo.sm { height:96px; }
+  .wo-f { position:absolute; right:0; bottom:-10px; font-size:88px; opacity:.15; filter:grayscale(1); transform:rotate(-8deg); }
+  .wo-bg { position:absolute; top:9px; left:10px; background:rgba(255,255,255,.22); color:#fff; font-size:8.5px; font-weight:800; padding:3px 7px; border-radius:999px; }
+  .wo-b { position:absolute; left:12px; right:12px; bottom:10px; }
+  .wo-n { color:#fff; font-size:17px; font-weight:800; }
+  .wo-m { color:rgba(255,255,255,.9); font-size:9px; font-weight:700; margin-top:1px; }
+  .wo-p { position:absolute; right:12px; bottom:10px; width:38px; height:38px; border-radius:50%; background:#fff; display:flex; align-items:center; justify-content:center; }
+  .wo-p::after { content:""; width:0; height:0; border-left:11px solid var(--accent-deep); border-top:7px solid transparent; border-bottom:7px solid transparent; margin-left:3px; }
+
+  /* nutrition mini */
+  .nut { background:#fff; border:1px solid var(--line); border-radius:14px; padding:11px; }
+  .dark .nut { background:#1c1c20; border-color:#2a2a30; }
+  .nut-t { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px; }
+  .nut-l { font-size:9px; font-weight:800; letter-spacing:.4px; color:var(--ink-3); }
+  .nut-k b { font-size:15px; font-weight:800; color:var(--ink); }
+  .dark .nut-k b { color:#fff; }
+  .nut-k span { font-size:9px; color:var(--ink-3); font-weight:600; }
+  .mc { margin-bottom:6px; } .mc:last-child { margin-bottom:0; }
+  .mr { display:flex; justify-content:space-between; font-size:9.5px; margin-bottom:3px; }
+  .mr .n { font-weight:700; color:var(--ink); } .dark .mr .n { color:#d7d7dd; }
+  .mr .v { font-weight:600; color:var(--ink-3); }
+  .bar { height:5px; border-radius:99px; background:#E7E8EA; overflow:hidden; }
+  .dark .bar { background:#2a2a30; }
+  .bar i { display:block; height:100%; border-radius:99px; }
+
+  /* coach strip */
+  .coach { background:#fff; border:1px solid #F2DFC7; border-radius:12px; padding:7px 8px; display:flex; align-items:center; gap:8px; }
+  .dark .coach { background:#231c12; border-color:#3a2f1c; }
+  .cav { width:24px; height:24px; border-radius:50%; background:linear-gradient(145deg,var(--accent),var(--accent-deep)); color:#fff; display:flex; align-items:center; justify-content:center; font-size:11px; flex:0 0 24px; }
+  .ctx { flex:1; font-size:10px; font-weight:600; color:var(--ink); line-height:1.3; }
+  .dark .ctx { color:#d7d7dd; }
+  .ctx b { font-weight:800; }
+  .cc { width:27px; height:27px; border-radius:8px; background:var(--accent); color:#fff; display:flex; align-items:center; justify-content:center; font-size:13px; flex:0 0 27px; }
+
+  /* RINGS */
+  .ring { border-radius:50%; display:flex; align-items:center; justify-content:center; flex:0 0 auto; }
+  .ring .h { border-radius:50%; background:#fff; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+  .dark .ring .h { background:#0E0E11; }
+
+  /* concentric */
+  .conc { position:relative; flex:0 0 auto; }
+  .conc .cr { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); border-radius:50%; }
+  .conc .ch { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); border-radius:50%; background:#fff; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+  .dark .conc .ch { background:#0E0E11; }
+
+  /* nav */
+  .nav { position:absolute; left:11px; right:11px; bottom:12px; z-index:45; height:56px; background:rgba(255,255,255,.94); backdrop-filter:blur(16px); border:1px solid var(--line); border-radius:22px; display:flex; align-items:center; justify-content:space-around; box-shadow:0 12px 26px -12px rgba(0,0,0,.3); }
+  .dark .nav { background:rgba(28,28,32,.94); border-color:#2a2a30; }
+  .ni { display:flex; flex-direction:column; align-items:center; gap:2px; flex:1; color:var(--ink-3); font-size:15px; }
+  .ni .nl { font-size:8px; font-weight:700; }
+  .ni.on { color:var(--accent-deep); }
+  .dark .ni.on { color:var(--accent); }
+  .hi { position:absolute; bottom:5px; left:50%; transform:translateX(-50%); width:108px; height:4px; border-radius:99px; background:#1a1a1c; opacity:.8; z-index:46; }
+  .dark .hi { background:#fff; opacity:.5; }
+
+  /* caption */
+  .cap { margin-top:13px; text-align:center; }
+  .cap .num { display:inline-block; font-size:10px; font-weight:800; color:var(--accent); background:#2a2118; border:1px solid #4a3a22; padding:2px 9px; border-radius:999px; margin-bottom:6px; }
+  .cap .n { font-size:14.5px; font-weight:800; color:#ededf2; }
+  .cap .d { font-size:11.5px; color:#9a9aa3; margin-top:4px; line-height:1.5; }
+  .cap .ring-tag { font-size:10px; color:#d99a52; margin-top:4px; font-weight:700; }
+
+  /* generic helpers */
+  .pad { padding:0 15px; }
+  .mt8{margin-top:8px;} .mt10{margin-top:10px;} .mt11{margin-top:11px;} .mt13{margin-top:13px;}
+</style>
+</head>
+<body>
+
+<div class="head">
+  <h1>Zealova home — 10 full-screen mockups</h1>
+  <p>Same content, ten layouts. <b>7 of 10 use circles</b> — but for Zealova's
+  own Train / Fuel / Move execution metrics, never copied recovery scores.
+  Score shown is 27 (morning, leg day still ahead). Pick a number.</p>
+</div>
+
+<div class="grid">
+
+<!-- ============ 01 — SINGLE BIG SCORE RING ============ -->
+<div class="cell">
+  <div class="phone">
+    <div class="island"></div>
+    <div class="sb"><span>12:52</span><span>📶 🔋</span></div>
+    <div class="scr">
+      <div class="hd"><div><div class="gs">Good afternoon,</div><div class="gl">Sai</div></div>
+        <div class="hd-r"><div class="streak"><div class="sr"><span>2</span></div><div class="l">Lv 2<br><small>64%</small></div><div class="f">🔥3</div></div><div class="ib">🔔</div></div></div>
+      <div class="bn"><div class="bn-i">🎁</div><div class="bn-b"><div class="bn-t">3 crates ready to open</div></div><div class="bn-cta">Open all</div><div class="bn-x">✕</div></div>
+      <div class="pad" style="display:flex;gap:14px;align-items:center;margin-bottom:12px;">
+        <div class="ring" style="width:128px;height:128px;background:conic-gradient(var(--accent) 0 97deg,#EAEAEC 97deg 360deg);">
+          <div class="h" style="width:100px;height:100px;">
+            <div style="font-size:9px;font-weight:800;color:var(--ink-3);letter-spacing:.5px;">TODAY SCORE</div>
+            <div style="font-size:38px;font-weight:850;color:var(--ink);letter-spacing:-2px;line-height:1;">27</div>
+            <div style="font-size:8.5px;font-weight:700;color:var(--accent-deep);">Leg day ahead</div>
+          </div>
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;gap:7px;">
+          <div style="font-size:10px;"><b style="color:var(--train);">●</b> <b style="color:var(--ink);">Train</b> <span style="color:var(--ink-3);font-weight:600;float:right;">0%</span></div>
+          <div class="bar"><i style="width:3%;background:var(--train)"></i></div>
+          <div style="font-size:10px;"><b style="color:var(--fuel);">●</b> <b style="color:var(--ink);">Fuel</b> <span style="color:var(--ink-3);font-weight:600;float:right;">42%</span></div>
+          <div class="bar"><i style="width:42%;background:var(--fuel)"></i></div>
+          <div style="font-size:10px;"><b style="color:var(--move);">●</b> <b style="color:var(--ink);">Move</b> <span style="color:var(--ink-3);font-weight:600;float:right;">74%</span></div>
+          <div class="bar"><i style="width:74%;background:var(--move)"></i></div>
+        </div>
+      </div>
+      <div class="pad" style="margin-bottom:12px;"><div class="coach"><div class="cav">✦</div><div class="ctx">Your workout's worth <b>50 pts</b> — finish leg day to hit <b>77</b>.</div><div class="cc">›</div></div></div>
+      <div class="sl">TODAY'S TRAINING</div>
+      <div class="pad"><div class="wo"><div class="wo-f">🏋️</div><div class="wo-bg">▦ TODAY</div><div class="wo-b"><div class="wo-n">Birthday Blitz Lower</div><div class="wo-m">LEGS · 60 MIN · 7 EX</div></div><div class="wo-p"></div></div></div>
+    </div>
+    <div class="nav"><div class="ni on">🏠<span class="nl">Home</span></div><div class="ni">🏋️<span class="nl">Workouts</span></div><div class="ni">🍎<span class="nl">Nutrition</span></div><div class="ni">🧭<span class="nl">Discover</span></div><div class="ni">👤<span class="nl">You</span></div></div>
+    <div class="hi"></div>
+  </div>
+  <div class="cap"><div class="num">01</div><div class="n">Single score ring</div><div class="d">One big ring = your Today Score, breakdown bars beside it.</div><div class="ring-tag">● uses circles</div></div>
+</div>
+
+<!-- ============ 02 — THREE RINGS (Train/Fuel/Move) ============ -->
+<div class="cell">
+  <div class="phone">
+    <div class="island"></div>
+    <div class="sb"><span>12:52</span><span>📶 🔋</span></div>
+    <div class="scr">
+      <div class="hd"><div><div class="gs">Good afternoon,</div><div class="gl">Sai</div></div>
+        <div class="hd-r"><div class="streak"><div class="sr"><span>2</span></div><div class="l">Lv 2<br><small>64%</small></div><div class="f">🔥3</div></div><div class="ib">🔔</div></div></div>
+      <div class="bn"><div class="bn-i">🎁</div><div class="bn-b"><div class="bn-t">3 crates ready to open</div></div><div class="bn-cta">Open all</div><div class="bn-x">✕</div></div>
+      <div class="sl">TODAY · SCORE 27</div>
+      <div class="pad" style="display:flex;justify-content:space-around;margin-bottom:12px;">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
+          <div class="ring" style="width:84px;height:84px;background:conic-gradient(var(--train) 0 11deg,#EAEAEC 11deg 360deg);"><div class="h" style="width:64px;height:64px;"><div style="font-size:15px;">🏋️</div><div style="font-size:11px;font-weight:800;color:var(--ink);">0%</div></div></div>
+          <div style="font-size:9.5px;font-weight:800;color:var(--ink);">TRAIN</div>
+          <div style="font-size:8px;color:var(--ink-3);font-weight:600;">leg day ahead</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
+          <div class="ring" style="width:84px;height:84px;background:conic-gradient(var(--fuel) 0 151deg,#EAEAEC 151deg 360deg);"><div class="h" style="width:64px;height:64px;"><div style="font-size:15px;">🍎</div><div style="font-size:11px;font-weight:800;color:var(--ink);">42%</div></div></div>
+          <div style="font-size:9.5px;font-weight:800;color:var(--ink);">FUEL</div>
+          <div style="font-size:8px;color:var(--ink-3);font-weight:600;">89g protein to go</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
+          <div class="ring" style="width:84px;height:84px;background:conic-gradient(var(--move) 0 266deg,#EAEAEC 266deg 360deg);"><div class="h" style="width:64px;height:64px;"><div style="font-size:15px;">👟</div><div style="font-size:11px;font-weight:800;color:var(--ink);">74%</div></div></div>
+          <div style="font-size:9.5px;font-weight:800;color:var(--ink);">MOVE</div>
+          <div style="font-size:8px;color:var(--ink-3);font-weight:600;">7.4k / 10k</div>
+        </div>
+      </div>
+      <div class="pad" style="margin-bottom:12px;"><div class="coach"><div class="cav">✦</div><div class="ctx">Two rings nearly closed — <b>Train</b> is the big one left today.</div><div class="cc">›</div></div></div>
+      <div class="sl">TODAY'S TRAINING</div>
+      <div class="pad"><div class="wo"><div class="wo-f">🏋️</div><div class="wo-bg">▦ TODAY</div><div class="wo-b"><div class="wo-n">Birthday Blitz Lower</div><div class="wo-m">LEGS · 60 MIN · 7 EX</div></div><div class="wo-p"></div></div></div>
+    </div>
+    <div class="nav"><div class="ni on">🏠<span class="nl">Home</span></div><div class="ni">🏋️<span class="nl">Workouts</span></div><div class="ni">🍎<span class="nl">Nutrition</span></div><div class="ni">🧭<span class="nl">Discover</span></div><div class="ni">👤<span class="nl">You</span></div></div>
+    <div class="hi"></div>
+  </div>
+  <div class="cap"><div class="num">02</div><div class="n">Three rings</div><div class="d">The WHOOP layout — but Train/Fuel/Move, not recovery scores.</div><div class="ring-tag">● uses circles · closest to competitors</div></div>
+</div>
+
+<!-- ============ 03 — CONCENTRIC RINGS ============ -->
+<div class="cell">
+  <div class="phone dark">
+    <div class="island"></div>
+    <div class="sb"><span>12:52</span><span>📶 🔋</span></div>
+    <div class="scr">
+      <div class="hd"><div><div class="gs">Good afternoon,</div><div class="gl">Sai</div></div>
+        <div class="hd-r"><div class="streak"><div class="sr"><span>2</span></div><div class="l">Lv 2<br><small>64%</small></div><div class="f">🔥3</div></div><div class="ib">🔔</div></div></div>
+      <div class="bn"><div class="bn-i">🎁</div><div class="bn-b"><div class="bn-t">3 crates ready to open</div></div><div class="bn-cta">Open all</div><div class="bn-x">✕</div></div>
+      <div style="display:flex;flex-direction:column;align-items:center;margin:6px 0 12px;">
+        <div class="conc" style="width:150px;height:150px;">
+          <div class="cr" style="width:150px;height:150px;background:conic-gradient(var(--train) 0 11deg,#26262c 11deg 360deg);"></div>
+          <div class="cr" style="width:122px;height:122px;background:#0E0E11;"></div>
+          <div class="cr" style="width:118px;height:118px;background:conic-gradient(var(--fuel) 0 151deg,#26262c 151deg 360deg);"></div>
+          <div class="cr" style="width:90px;height:90px;background:#0E0E11;"></div>
+          <div class="cr" style="width:86px;height:86px;background:conic-gradient(var(--move) 0 266deg,#26262c 266deg 360deg);"></div>
+          <div class="ch" style="width:58px;height:58px;"><div style="font-size:24px;font-weight:850;color:#fff;letter-spacing:-1px;">27</div></div>
+        </div>
+        <div style="display:flex;gap:14px;margin-top:10px;">
+          <div style="font-size:9px;font-weight:700;color:#aaa;"><b style="color:var(--train);">●</b> Train 0%</div>
+          <div style="font-size:9px;font-weight:700;color:#aaa;"><b style="color:var(--fuel);">●</b> Fuel 42%</div>
+          <div style="font-size:9px;font-weight:700;color:#aaa;"><b style="color:var(--move);">●</b> Move 74%</div>
+        </div>
+      </div>
+      <div class="pad" style="margin-bottom:12px;"><div class="coach"><div class="cav">✦</div><div class="ctx">Outer ring's barely started — <b>leg day</b> closes it.</div><div class="cc">›</div></div></div>
+      <div class="sl">TODAY'S TRAINING</div>
+      <div class="pad"><div class="wo"><div class="wo-f">🏋️</div><div class="wo-bg">▦ TODAY</div><div class="wo-b"><div class="wo-n">Birthday Blitz Lower</div><div class="wo-m">LEGS · 60 MIN · 7 EX</div></div><div class="wo-p"></div></div></div>
+    </div>
+    <div class="nav"><div class="ni on">🏠<span class="nl">Home</span></div><div class="ni">🏋️<span class="nl">Workouts</span></div><div class="ni">🍎<span class="nl">Nutrition</span></div><div class="ni">🧭<span class="nl">Discover</span></div><div class="ni">👤<span class="nl">You</span></div></div>
+    <div class="hi"></div>
+  </div>
+  <div class="cap"><div class="num">03</div><div class="n">Concentric rings (dark)</div><div class="d">Apple-Activity style — 3 nested arcs, score in the core.</div><div class="ring-tag">● uses circles</div></div>
+</div>
+
+<!-- ============ 04 — RING + STACKED STATS (Amazfit layout) ============ -->
+<div class="cell">
+  <div class="phone dark">
+    <div class="island"></div>
+    <div class="sb"><span>12:52</span><span>📶 🔋</span></div>
+    <div class="scr">
+      <div class="hd"><div><div class="gs">Good afternoon,</div><div class="gl">Sai</div></div>
+        <div class="hd-r"><div class="streak"><div class="sr"><span>2</span></div><div class="l">Lv 2<br><small>64%</small></div><div class="f">🔥3</div></div><div class="ib">🔔</div></div></div>
+      <div class="bn"><div class="bn-i">🎁</div><div class="bn-b"><div class="bn-t">3 crates ready to open</div></div><div class="bn-cta">Open all</div><div class="bn-x">✕</div></div>
+      <div class="pad" style="display:flex;align-items:center;gap:6px;margin:6px 0 13px;">
+        <div style="flex:1;display:flex;flex-direction:column;gap:13px;">
+          <div style="display:flex;align-items:center;gap:9px;"><div style="width:34px;height:34px;border-radius:50%;background:#2a2012;display:flex;align-items:center;justify-content:center;font-size:15px;">🏋️</div><div><div style="font-size:19px;font-weight:850;color:#fff;line-height:1;">0<small style="font-size:11px;color:#888;">%</small></div><div style="font-size:8.5px;font-weight:800;color:var(--train);letter-spacing:.5px;">TRAIN</div></div></div>
+          <div style="display:flex;align-items:center;gap:9px;"><div style="width:34px;height:34px;border-radius:50%;background:#13261b;display:flex;align-items:center;justify-content:center;font-size:15px;">🍎</div><div><div style="font-size:19px;font-weight:850;color:#fff;line-height:1;">42<small style="font-size:11px;color:#888;">%</small></div><div style="font-size:8.5px;font-weight:800;color:var(--fuel);letter-spacing:.5px;">FUEL</div></div></div>
+          <div style="display:flex;align-items:center;gap:9px;"><div style="width:34px;height:34px;border-radius:50%;background:#122230;display:flex;align-items:center;justify-content:center;font-size:15px;">👟</div><div><div style="font-size:19px;font-weight:850;color:#fff;line-height:1;">74<small style="font-size:11px;color:#888;">%</small></div><div style="font-size:8.5px;font-weight:800;color:var(--move);letter-spacing:.5px;">MOVE</div></div></div>
+        </div>
+        <div class="conc" style="width:140px;height:140px;">
+          <div class="cr" style="width:140px;height:140px;background:conic-gradient(var(--train) 0 11deg,#26262c 11deg 360deg);"></div>
+          <div class="cr" style="width:116px;height:116px;background:#0E0E11;"></div>
+          <div class="cr" style="width:112px;height:112px;background:conic-gradient(var(--fuel) 0 151deg,#26262c 151deg 360deg);"></div>
+          <div class="cr" style="width:88px;height:88px;background:#0E0E11;"></div>
+          <div class="cr" style="width:84px;height:84px;background:conic-gradient(var(--move) 0 266deg,#26262c 266deg 360deg);"></div>
+          <div class="ch" style="width:58px;height:58px;"><div style="font-size:9px;color:#888;font-weight:700;">SCORE</div><div style="font-size:21px;font-weight:850;color:#fff;">27</div></div>
+        </div>
+      </div>
+      <div class="pad" style="margin-bottom:12px;"><div class="coach"><div class="cav">✦</div><div class="ctx">Leg day will move all three — it's <b>50 points</b>.</div><div class="cc">›</div></div></div>
+      <div class="sl">TODAY'S TRAINING</div>
+      <div class="pad"><div class="wo"><div class="wo-f">🏋️</div><div class="wo-bg">▦ TODAY</div><div class="wo-b"><div class="wo-n">Birthday Blitz Lower</div><div class="wo-m">LEGS · 60 MIN · 7 EX</div></div><div class="wo-p"></div></div></div>
+    </div>
+    <div class="nav"><div class="ni on">🏠<span class="nl">Home</span></div><div class="ni">🏋️<span class="nl">Workouts</span></div><div class="ni">🍎<span class="nl">Nutrition</span></div><div class="ni">🧭<span class="nl">Discover</span></div><div class="ni">👤<span class="nl">You</span></div></div>
+    <div class="hi"></div>
+  </div>
+  <div class="cap"><div class="num">04</div><div class="n">Ring + stacked stats</div><div class="d">Amazfit/Zepp layout — stats stacked left, big ring right.</div><div class="ring-tag">● uses circles</div></div>
+</div>
+
+<!-- ============ 05 — ZONED (no big ring) ============ -->
+<div class="cell">
+  <div class="phone">
+    <div class="island"></div>
+    <div class="sb"><span>12:52</span><span>📶 🔋</span></div>
+    <div class="scr">
+      <div class="hd"><div><div class="gs">Good afternoon,</div><div class="gl">Sai</div></div>
+        <div class="hd-r"><div class="streak"><div class="sr"><span>2</span></div><div class="l">Lv 2<br><small>64%</small></div><div class="f">🔥3</div></div><div class="ib">🔔</div></div></div>
+      <div class="bn"><div class="bn-i">🎁</div><div class="bn-b"><div class="bn-t">3 crates ready to open</div></div><div class="bn-cta">Open all</div><div class="bn-x">✕</div></div>
+      <div class="qa" style="margin-bottom:12px;">
+        <div class="qi p"><div class="qt">✦</div><div class="ql">Coach</div></div><div class="qi"><div class="qt">🍽️</div><div class="ql">Log</div></div><div class="qi"><div class="qt">📖</div><div class="ql">Scan</div></div><div class="qi"><div class="qt">💧</div><div class="ql">Water</div></div><div class="qi"><div class="qt">⚖️</div><div class="ql">Weight</div></div><div class="qi"><div class="qt">⋯</div><div class="ql">More</div></div>
+      </div>
+      <div style="background:#FBF4EA;border-radius:20px 20px 0 0;padding:11px 15px;">
+        <div class="sl" style="padding:0;margin-bottom:8px;color:var(--accent-deep);">● TODAY · THU 21</div>
+        <div class="coach" style="margin-bottom:9px;"><div class="cav">✦</div><div class="ctx">You're <b>89g protein</b> behind with <b>leg day</b> ahead.</div><div class="cc">›</div></div>
+        <div class="wo"><div class="wo-f">🏋️</div><div class="wo-bg">▦ TODAY</div><div class="wo-b"><div class="wo-n">Birthday Blitz Lower</div><div class="wo-m">LEGS · 60 MIN · 7 EX</div></div><div class="wo-p"></div></div>
+      </div>
+      <div style="background:#F2F3F5;border-radius:20px 20px 0 0;padding:11px 15px;margin-top:2px;">
+        <div class="sl" style="padding:0;margin-bottom:8px;color:#5d6b7a;">● TODAY'S PROGRESS</div>
+        <div class="nut">
+          <div class="nut-t"><div class="nut-l">🍎 NUTRITION</div><div class="nut-k"><b>1,088</b> <span>kcal left</span></div></div>
+          <div class="mc"><div class="mr"><span class="n">Protein</span><span class="v">13/102g</span></div><div class="bar"><i style="width:13%;background:var(--protein)"></i></div></div>
+          <div class="mc"><div class="mr"><span class="n">Carbs</span><span class="v">104/193g</span></div><div class="bar"><i style="width:54%;background:var(--carbs)"></i></div></div>
+          <div class="mc"><div class="mr"><span class="n">Fat</span><span class="v">15/50g</span></div><div class="bar"><i style="width:30%;background:var(--fat)"></i></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="nav"><div class="ni on">🏠<span class="nl">Home</span></div><div class="ni">🏋️<span class="nl">Workouts</span></div><div class="ni">🍎<span class="nl">Nutrition</span></div><div class="ni">🧭<span class="nl">Discover</span></div><div class="ni">👤<span class="nl">You</span></div></div>
+    <div class="hi"></div>
+  </div>
+  <div class="cap"><div class="num">05</div><div class="n">Zoned</div><div class="d">Three labelled rooms, no score ring. Most organised.</div></div>
+</div>
+
+<!-- ============ 06 — COACH BRIEFING ============ -->
+<div class="cell">
+  <div class="phone">
+    <div class="island"></div>
+    <div class="sb"><span>12:52</span><span>📶 🔋</span></div>
+    <div class="scr">
+      <div class="hd"><div><div class="gs">Good afternoon,</div><div class="gl">Sai</div></div>
+        <div class="hd-r"><div class="streak"><div class="sr"><span>2</span></div><div class="l">Lv 2<br><small>64%</small></div><div class="f">🔥3</div></div><div class="ib">🔔</div></div></div>
+      <div class="bn"><div class="bn-i">🎁</div><div class="bn-b"><div class="bn-t">3 crates ready to open</div></div><div class="bn-cta">Open all</div><div class="bn-x">✕</div></div>
+      <div class="pad" style="margin-bottom:12px;">
+        <div style="background:linear-gradient(160deg,#fff,var(--accent-tint) 165%);border:1px solid #F2DFC7;border-radius:18px;padding:13px;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+            <div class="cav" style="width:32px;height:32px;flex:0 0 32px;font-size:14px;">✦</div>
+            <div><div style="font-size:7.5px;font-weight:800;letter-spacing:.5px;color:var(--accent-deep);text-transform:uppercase;">Your coach · score 27</div><div style="font-size:14px;font-weight:800;color:var(--ink);">Here's your day, Sai</div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:9px;padding:7px 0;border-top:1px solid #F1E2CC;">
+            <div style="width:27px;height:27px;border-radius:8px;background:#fff;border:1px solid #F1E2CC;display:flex;align-items:center;justify-content:center;">🏋️</div>
+            <div style="flex:1;"><div style="font-size:11px;font-weight:800;color:var(--ink);">Leg day — Birthday Blitz Lower</div><div style="font-size:9.5px;color:var(--ink-2);">60 min · worth 50 score points</div></div>
+            <div style="font-size:9px;font-weight:800;color:#fff;background:var(--accent);padding:5px 9px;border-radius:999px;">Start</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:9px;padding:7px 0;border-top:1px solid #F1E2CC;">
+            <div style="width:27px;height:27px;border-radius:8px;background:#fff;border:1px solid #F1E2CC;display:flex;align-items:center;justify-content:center;">🍎</div>
+            <div style="flex:1;"><div style="font-size:11px;font-weight:800;color:var(--ink);">89g protein to go</div><div style="font-size:9.5px;color:var(--ink-2);">1,088 kcal left — protein-forward lunch</div></div>
+            <div style="font-size:9px;font-weight:800;color:#fff;background:var(--accent);padding:5px 9px;border-radius:999px;">Log</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:9px;padding:7px 0;border-top:1px solid #F1E2CC;">
+            <div style="width:27px;height:27px;border-radius:8px;background:#fff;border:1px solid #F1E2CC;display:flex;align-items:center;justify-content:center;">👟</div>
+            <div style="flex:1;"><div style="font-size:11px;font-weight:800;color:var(--ink);">7,412 steps · on pace</div><div style="font-size:9.5px;color:var(--ink-2);">Move's nearly handled for the day</div></div>
+            <div style="font-size:13px;">✅</div>
+          </div>
+        </div>
+      </div>
+      <div class="qa" style="margin-bottom:12px;">
+        <div class="qi p"><div class="qt">✦</div><div class="ql">Coach</div></div><div class="qi"><div class="qt">🍽️</div><div class="ql">Log</div></div><div class="qi"><div class="qt">📖</div><div class="ql">Scan</div></div><div class="qi"><div class="qt">💧</div><div class="ql">Water</div></div><div class="qi"><div class="qt">⚖️</div><div class="ql">Weight</div></div><div class="qi"><div class="qt">⋯</div><div class="ql">More</div></div>
+      </div>
+      <div class="sl">TODAY'S TRAINING</div>
+      <div class="pad"><div class="wo sm"><div class="wo-f">🏋️</div><div class="wo-bg">▦ TODAY</div><div class="wo-b"><div class="wo-n">Birthday Blitz Lower</div><div class="wo-m">LEGS · 60 MIN</div></div><div class="wo-p"></div></div></div>
+    </div>
+    <div class="nav"><div class="ni on">🏠<span class="nl">Home</span></div><div class="ni">🏋️<span class="nl">Workouts</span></div><div class="ni">🍎<span class="nl">Nutrition</span></div><div class="ni">🧭<span class="nl">Discover</span></div><div class="ni">👤<span class="nl">You</span></div></div>
+    <div class="hi"></div>
+  </div>
+  <div class="cap"><div class="num">06</div><div class="n">Coach briefing</div><div class="d">AI narrates the whole day in one card, each row actionable.</div></div>
+</div>
+
+<!-- ============ 07 — CARD FEED (customizable) ============ -->
+<div class="cell">
+  <div class="phone">
+    <div class="island"></div>
+    <div class="sb"><span>12:52</span><span>📶 🔋</span></div>
+    <div class="scr">
+      <div class="hd"><div><div class="gs">Good afternoon,</div><div class="gl">Sai</div></div>
+        <div class="hd-r"><div style="font-size:9.5px;font-weight:700;color:var(--ink-2);background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:5px 9px;">⚙ Customize</div><div class="ib">🔔</div></div></div>
+      <div class="pad" style="display:flex;flex-direction:column;gap:10px;">
+        <div style="background:linear-gradient(135deg,#fff,var(--accent-tint) 150%);border:1px solid #F2DFC7;border-radius:14px;padding:10px;display:flex;align-items:center;gap:8px;position:relative;">
+          <div style="position:absolute;top:7px;right:9px;color:#D2D2D6;font-size:11px;">⠿</div>
+          <div class="cav">✦</div><div class="ctx">You're <b>89g protein</b> behind, <b>leg day</b> ahead.</div><div class="cc">💬</div>
+        </div>
+        <div style="position:relative;border-radius:14px;overflow:hidden;"><div style="position:absolute;top:7px;right:9px;color:#fff;opacity:.6;font-size:11px;z-index:3;">⠿</div>
+          <div class="wo" style="border-radius:14px;"><div class="wo-f">🏋️</div><div class="wo-bg">▦ TODAY</div><div class="wo-b"><div class="wo-n">Birthday Blitz Lower</div><div class="wo-m">LEGS · 60 MIN · 7 EX</div></div><div class="wo-p"></div></div>
+        </div>
+        <div class="nut" style="position:relative;"><div style="position:absolute;top:9px;right:11px;color:#D2D2D6;font-size:11px;">⠿</div>
+          <div class="nut-t"><div class="nut-l">📊 TODAY SCORE</div></div>
+          <div style="display:flex;align-items:center;gap:11px;">
+            <div class="ring" style="width:62px;height:62px;background:conic-gradient(var(--accent) 0 97deg,#EAEAEC 97deg 360deg);"><div class="h" style="width:48px;height:48px;"><div style="font-size:17px;font-weight:850;color:var(--ink);">27</div></div></div>
+            <div style="flex:1;display:flex;flex-direction:column;gap:5px;">
+              <div class="bar"><i style="width:3%;background:var(--train)"></i></div>
+              <div class="bar"><i style="width:42%;background:var(--fuel)"></i></div>
+              <div class="bar"><i style="width:74%;background:var(--move)"></i></div>
+            </div>
+          </div>
+        </div>
+        <div class="nut" style="position:relative;"><div style="position:absolute;top:9px;right:11px;color:#D2D2D6;font-size:11px;">⠿</div>
+          <div class="nut-t"><div class="nut-l">🍎 NUTRITION</div><div class="nut-k"><b>1,088</b> <span>kcal left</span></div></div>
+          <div class="mc"><div class="mr"><span class="n">Protein</span><span class="v">13/102g</span></div><div class="bar"><i style="width:13%;background:var(--protein)"></i></div></div>
+          <div class="mc"><div class="mr"><span class="n">Carbs</span><span class="v">104/193g</span></div><div class="bar"><i style="width:54%;background:var(--carbs)"></i></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="nav"><div class="ni on">🏠<span class="nl">Home</span></div><div class="ni">🏋️<span class="nl">Workouts</span></div><div class="ni">🍎<span class="nl">Nutrition</span></div><div class="ni">🧭<span class="nl">Discover</span></div><div class="ni">👤<span class="nl">You</span></div></div>
+    <div class="hi"></div>
+  </div>
+  <div class="cap"><div class="num">07</div><div class="n">Customizable card feed</div><div class="d">Drag (⠿) to reorder. Score is one card among many.</div><div class="ring-tag">● small ring inside score card</div></div>
+</div>
+
+<!-- ============ 08 — BIG RING FRAMING THE WORKOUT ============ -->
+<div class="cell">
+  <div class="phone dark">
+    <div class="island"></div>
+    <div class="sb"><span>12:52</span><span>📶 🔋</span></div>
+    <div class="scr">
+      <div class="hd"><div><div class="gs">Good afternoon,</div><div class="gl">Sai</div></div>
+        <div class="hd-r"><div class="streak"><div class="sr"><span>2</span></div><div class="l">Lv 2<br><small>64%</small></div><div class="f">🔥3</div></div><div class="ib">🔔</div></div></div>
+      <div class="bn"><div class="bn-i">🎁</div><div class="bn-b"><div class="bn-t">3 crates ready to open</div></div><div class="bn-cta">Open all</div><div class="bn-x">✕</div></div>
+      <div style="display:flex;flex-direction:column;align-items:center;margin:8px 0 14px;">
+        <div class="ring" style="width:208px;height:208px;background:conic-gradient(var(--accent) 0 97deg,#26262c 97deg 360deg);">
+          <div class="h" style="width:182px;height:182px;background:#0E0E11;padding:14px;">
+            <div style="font-size:9px;font-weight:800;color:#888;letter-spacing:.5px;">TODAY SCORE 27</div>
+            <div style="width:148px;height:80px;border-radius:14px;background:linear-gradient(125deg,#E89A3E,#C96E18);position:relative;overflow:hidden;margin:8px 0;">
+              <div style="position:absolute;left:9px;top:8px;font-size:7.5px;font-weight:800;color:#fff;background:rgba(255,255,255,.25);padding:2px 6px;border-radius:99px;">▦ TODAY</div>
+              <div style="position:absolute;left:9px;bottom:7px;"><div style="color:#fff;font-size:12.5px;font-weight:800;">Leg Day</div><div style="color:rgba(255,255,255,.85);font-size:7.5px;font-weight:700;">60 MIN · 7 EX</div></div>
+            </div>
+            <div style="width:54px;height:54px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;"><div style="width:0;height:0;border-left:15px solid var(--accent-deep);border-top:10px solid transparent;border-bottom:10px solid transparent;margin-left:4px;"></div></div>
+          </div>
+        </div>
+        <div style="display:flex;gap:12px;margin-top:10px;">
+          <div style="font-size:9px;font-weight:700;color:#aaa;"><b style="color:var(--train);">●</b> Train 0%</div>
+          <div style="font-size:9px;font-weight:700;color:#aaa;"><b style="color:var(--fuel);">●</b> Fuel 42%</div>
+          <div style="font-size:9px;font-weight:700;color:#aaa;"><b style="color:var(--move);">●</b> Move 74%</div>
+        </div>
+      </div>
+      <div class="pad"><div class="coach"><div class="cav">✦</div><div class="ctx">Hit play — leg day closes most of that ring.</div><div class="cc">›</div></div></div>
+    </div>
+    <div class="nav"><div class="ni on">🏠<span class="nl">Home</span></div><div class="ni">🏋️<span class="nl">Workouts</span></div><div class="ni">🍎<span class="nl">Nutrition</span></div><div class="ni">🧭<span class="nl">Discover</span></div><div class="ni">👤<span class="nl">You</span></div></div>
+    <div class="hi"></div>
+  </div>
+  <div class="cap"><div class="num">08</div><div class="n">Ring around the workout</div><div class="d">One giant ring; today's workout + play button sit inside it.</div><div class="ring-tag">● uses circles · boldest</div></div>
+</div>
+
+<!-- ============ 09 — BENTO DASHBOARD GRID ============ -->
+<div class="cell">
+  <div class="phone">
+    <div class="island"></div>
+    <div class="sb"><span>12:52</span><span>📶 🔋</span></div>
+    <div class="scr">
+      <div class="hd"><div><div class="gs">Good afternoon,</div><div class="gl">Sai</div></div>
+        <div class="hd-r"><div class="streak"><div class="sr"><span>2</span></div><div class="l">Lv 2<br><small>64%</small></div><div class="f">🔥3</div></div><div class="ib">🔔</div></div></div>
+      <div class="pad" style="display:flex;flex-direction:column;gap:9px;">
+        <div style="display:flex;gap:9px;">
+          <div style="flex:1.05;background:#fff;border:1px solid var(--line);border-radius:15px;padding:11px;display:flex;flex-direction:column;align-items:center;">
+            <div style="font-size:8.5px;font-weight:800;color:var(--ink-3);align-self:flex-start;">TODAY SCORE</div>
+            <div class="ring" style="width:92px;height:92px;background:conic-gradient(var(--accent) 0 97deg,#EAEAEC 97deg 360deg);margin:6px 0 4px;"><div class="h" style="width:72px;height:72px;"><div style="font-size:27px;font-weight:850;color:var(--ink);">27</div></div></div>
+            <div style="font-size:8.5px;font-weight:700;color:var(--accent-deep);">Leg day ahead</div>
+          </div>
+          <div style="flex:1;display:flex;flex-direction:column;gap:9px;">
+            <div style="flex:1;background:#fff;border:1px solid var(--line);border-radius:15px;padding:10px;">
+              <div style="font-size:8.5px;font-weight:800;color:var(--ink-3);">👟 STEPS</div>
+              <div style="font-size:20px;font-weight:850;color:var(--ink);margin-top:3px;">7,412</div>
+              <div class="bar" style="margin-top:5px;"><i style="width:74%;background:var(--move)"></i></div>
+            </div>
+            <div style="flex:1;background:#fff;border:1px solid var(--line);border-radius:15px;padding:10px;">
+              <div style="font-size:8.5px;font-weight:800;color:var(--ink-3);">🔥 ENERGY</div>
+              <div style="font-size:20px;font-weight:850;color:var(--ink);margin-top:3px;">486<small style="font-size:10px;color:var(--ink-3);"> kcal</small></div>
+            </div>
+          </div>
+        </div>
+        <div style="position:relative;border-radius:15px;overflow:hidden;">
+          <div class="wo" style="border-radius:15px;height:108px;"><div class="wo-f">🏋️</div><div class="wo-bg">▦ TODAY</div><div class="wo-b"><div class="wo-n">Birthday Blitz Lower</div><div class="wo-m">LEGS · 60 MIN · 7 EX</div></div><div class="wo-p"></div></div>
+        </div>
+        <div style="display:flex;gap:9px;">
+          <div style="flex:1;background:#fff;border:1px solid var(--line);border-radius:15px;padding:10px;">
+            <div style="font-size:8.5px;font-weight:800;color:var(--ink-3);">🍎 NUTRITION</div>
+            <div style="font-size:17px;font-weight:850;color:var(--ink);margin:3px 0 6px;">1,088<small style="font-size:9px;color:var(--ink-3);"> left</small></div>
+            <div class="mc"><div class="bar"><i style="width:13%;background:var(--protein)"></i></div></div>
+            <div class="mc"><div class="bar"><i style="width:54%;background:var(--carbs)"></i></div></div>
+            <div class="mc"><div class="bar"><i style="width:30%;background:var(--fat)"></i></div></div>
+          </div>
+          <div style="flex:1;background:#fff;border:1px solid var(--line);border-radius:15px;padding:10px;">
+            <div style="font-size:8.5px;font-weight:800;color:var(--ink-3);">💧 WATER</div>
+            <div style="font-size:17px;font-weight:850;color:var(--ink);margin:3px 0;">0<small style="font-size:9px;color:var(--ink-3);"> / 10 cups</small></div>
+            <div style="display:flex;gap:3px;margin-top:6px;">
+              <div style="flex:1;height:14px;border-radius:4px;background:var(--surface);border:1px solid var(--line);"></div><div style="flex:1;height:14px;border-radius:4px;background:var(--surface);border:1px solid var(--line);"></div><div style="flex:1;height:14px;border-radius:4px;background:var(--surface);border:1px solid var(--line);"></div><div style="flex:1;height:14px;border-radius:4px;background:var(--surface);border:1px solid var(--line);"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="nav"><div class="ni on">🏠<span class="nl">Home</span></div><div class="ni">🏋️<span class="nl">Workouts</span></div><div class="ni">🍎<span class="nl">Nutrition</span></div><div class="ni">🧭<span class="nl">Discover</span></div><div class="ni">👤<span class="nl">You</span></div></div>
+    <div class="hi"></div>
+  </div>
+  <div class="cap"><div class="num">09</div><div class="n">Bento dashboard grid</div><div class="d">2-column tile grid; the score ring is the anchor tile.</div><div class="ring-tag">● ring as one tile</div></div>
+</div>
+
+<!-- ============ 10 — MINIMAL / CALM ============ -->
+<div class="cell">
+  <div class="phone">
+    <div class="island"></div>
+    <div class="sb"><span>12:52</span><span>📶 🔋</span></div>
+    <div class="scr">
+      <div class="hd" style="padding-top:14px;"><div><div class="gs">Thursday, May 21</div><div class="gl">Hi, Sai</div></div>
+        <div class="hd-r"><div class="ib" style="font-size:15px;">🔔</div><div class="ib" style="font-size:15px;">👤</div></div></div>
+      <div style="display:flex;flex-direction:column;align-items:center;margin:26px 0 8px;">
+        <div class="ring" style="width:184px;height:184px;background:conic-gradient(var(--accent) 0 97deg,#F0F0F1 97deg 360deg);">
+          <div class="h" style="width:160px;height:160px;">
+            <div style="font-size:9px;font-weight:700;color:var(--ink-3);letter-spacing:1px;">TODAY SCORE</div>
+            <div style="font-size:62px;font-weight:850;color:var(--ink);letter-spacing:-3px;line-height:1;">27</div>
+            <div style="font-size:10px;font-weight:700;color:var(--accent-deep);">Leg day ahead</div>
+          </div>
+        </div>
+      </div>
+      <div style="text-align:center;font-size:12px;color:var(--ink-2);font-weight:500;padding:0 36px;line-height:1.5;margin-bottom:22px;">
+        Finish today's workout to reach <b style="color:var(--ink);">77</b>. That's your one move that matters.
+      </div>
+      <div class="pad"><div class="wo sm"><div class="wo-f">🏋️</div><div class="wo-bg">▦ TODAY</div><div class="wo-b"><div class="wo-n">Birthday Blitz Lower</div><div class="wo-m">LEGS · 60 MIN</div></div><div class="wo-p"></div></div></div>
+      <div class="pad" style="margin-top:9px;display:flex;gap:9px;">
+        <div style="flex:1;text-align:center;background:var(--surface);border-radius:12px;padding:9px;"><div style="font-size:14px;font-weight:800;color:var(--ink);">42%</div><div style="font-size:8px;font-weight:700;color:var(--ink-3);">FUEL</div></div>
+        <div style="flex:1;text-align:center;background:var(--surface);border-radius:12px;padding:9px;"><div style="font-size:14px;font-weight:800;color:var(--ink);">74%</div><div style="font-size:8px;font-weight:700;color:var(--ink-3);">MOVE</div></div>
+        <div style="flex:1;text-align:center;background:var(--surface);border-radius:12px;padding:9px;"><div style="font-size:14px;font-weight:800;color:var(--ink);">🔥3</div><div style="font-size:8px;font-weight:700;color:var(--ink-3);">STREAK</div></div>
+      </div>
+    </div>
+    <div class="nav"><div class="ni on">🏠<span class="nl">Home</span></div><div class="ni">🏋️<span class="nl">Workouts</span></div><div class="ni">🍎<span class="nl">Nutrition</span></div><div class="ni">🧭<span class="nl">Discover</span></div><div class="ni">👤<span class="nl">You</span></div></div>
+    <div class="hi"></div>
+  </div>
+  <div class="cap"><div class="num">10</div><div class="n">Minimal / calm</div><div class="d">Oura-style restraint — one ring, one sentence, lots of air.</div><div class="ring-tag">● uses circles</div></div>
+</div>
+
+</div>
+
+<div class="head" style="margin-top:48px;">
+  <p style="max-width:720px;"><b>Quick guide:</b> 01 / 09 / 10 are the safest
+  ring picks (one clear score circle). 02 is closest to the competitors — fine,
+  since the metrics are yours. 03 / 04 / 08 are the boldest. 05 / 06 / 07 skip
+  the big ring. Tell me a number (or two to blend) and I'll build it to a
+  final, build-ready screen.</p>
+</div>
+
+</body>
+</html>

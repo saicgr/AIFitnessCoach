@@ -1082,3 +1082,218 @@ If you want food logging with photo-based logging and workout planning in one ap
 - **Source:** [indiehackers.com — self-promotion guide](https://www.indiehackers.com/post/hacking-reddit-how-to-self-promote-without-getting-banned-753396554b) + [saascity.io/blog/best-subreddits-promote-startup-2026](https://saascity.io/blog/best-subreddits-promote-startup-2026), verified 2026-05-17
 - **Notes:** Technical depth expected. Honest "here's what I got wrong" angle outperforms feature lists. Concede where competitors are better.
 - **Zealova angle:** Build-story post: LangGraph routing architecture + Gemini Vision + honest competitor concessions.
+
+---
+
+## 2026-05-20 — r/HowToMen [Promo] post — all 3 wedges, Android-only, real-device screenshots
+
+**Status: Draft**
+**Post type:** Top-level [Promo] OP
+**Sub:** r/HowToMen
+**Play Store URL verified:** https://play.google.com/store/apps/details?id=com.aifitnesscoach.app — HTTP 200 confirmed 2026-05-20
+
+### §1 Current trends — researched live 2026-05-20
+
+**Platform / channel trends (Android app subs + r/HowToMen, last 7-14 days)**
+
+- [mediafa.st/how-to-promote/mobile-app-on-reddit](https://www.mediafa.st/how-to-promote/mobile-app-on-reddit) (2026) — Reddit Android-app communities respond best to founder-built apps with real device screenshots, a working Play Store link, and an honest story. Sterile emulator screenshots are called out in comments and reduce engagement.
+- [themanual.com/fitness/the-best-fitness-apps-in-2026-smarter-training-starts-here/](https://www.themanual.com/fitness/the-best-fitness-apps-in-2026-smarter-training-starts-here/) (2026) — "Best fitness apps in 2026" editorial coverage confirms AI personalization and food-photo logging are now the primary differentiators reviewers lead with. Fitbod and Hevy dominate workout; MFP and MacroFactor dominate nutrition. No single-app product spans both confidently in coverage.
+- [androidcentral.com/apps-software/best-health-fitness-diet-apps-for-hitting-your-resolutions-and-getting-healthier](https://www.androidcentral.com/apps-software/best-health-fitness-diet-apps-for-hitting-your-resolutions-and-getting-healthier) (2026) — Android Central's 2026 fitness/health roundup: Fitbod, Hevy, MFP, MacroFactor, and Strava are the dominant recommendations. No full-stack AI app (workout gen + food photo + menu scan in one product) appears in the list. Gap confirmed.
+- [techradar.com/phones/android/best-fitness-apps-for-android](https://www.techradar.com/phones/android/best-fitness-apps-for-android) (2026) — TechRadar "best fitness apps for Android" (2026): lists Strava, Fitbod, MyFitnessPal, Hevy as top picks. AI-generated plans are mentioned as a category but no single app spans both workout generation and food photo logging in one product per editorial coverage.
+- [netmaxims.com/blog/top-10-most-popular-fitness-apps-in-2026/](https://netmaxims.com/blog/top-10-most-popular-fitness-apps-in-2026/) (2026) — Top 10 popular fitness apps in 2026: category split between workout trackers and nutrition trackers continues. No app bridging both categories with AI plan generation + photo logging appears.
+
+**Fitness industry trends (last 7-30 days)**
+
+- [setgraph.app/ai-blog/best-free-apps-for-tracking-workouts](https://setgraph.app/ai-blog/best-free-apps-for-tracking-workouts) (2026) — "Best free apps for tracking workouts 2026": Hevy and Strong lead for logging. Fitbod for AI. No food tracking integration mentioned. Users on these subs still run separate apps for food and workouts.
+- [androidcentral.com/wearables/fitbit/fitbit-features-missing-in-the-google-health-app](https://www.androidcentral.com/wearables/fitbit/fitbit-features-missing-in-the-google-health-app) (published 2026-05-08) — Google Health replaces Fitbit permanently from 2026-05-19. Badges, community, social, group features all removed. 29M+ Fitbit users displaced, actively shopping for alternatives on Android. This is an active switching window.
+- MFP acquired Cal AI (March 2026, ongoing) — confirmed in _ZEALOVA_FACTS.md §4C. "AI food photo logging without MFP" is a gap. Zealova fills it as an independent alternative.
+
+**Competitor moves (last 30 days)**
+
+- Fitbod: $15.99/mo on Android (confirmed _ZEALOVA_FACTS.md §4A, verified 2026-05-15). Workout-only, no nutrition.
+- Hevy: free with Pro tier, workout tracker only. No plan generation, no nutrition.
+- MacroFactor: nutrition-only, no workout generation. $5.99-$11.99/mo depending on plan length (verified _ZEALOVA_FACTS.md §4C).
+- Google Health ($9.99/mo) launched 2026-05-19 as Fitbit replacement. Bundles Fitbit Air tracker ($99.99 hardware). Device-dependent.
+
+### §2 Why these matter
+
+- No single "best fitness apps for Android 2026" roundup includes an app that does workout generation + food photo logging + menu scan in one product. r/HowToMen audience discovers apps — they are the editorial layer. A well-shot [Promo] post here has a real path to a YouTube feature and organic discovery.
+- Fitbod is workout-only at $15.99/mo. Hevy is tracker-only (free). Neither competes on nutrition. This means honest comparison in the post reads as genuinely useful, not a dismissal.
+- Google Health / Fitbit migration (active since 2026-05-19, 1 day ago) means Android users are actively switching their health app stack right now. A full-stack alternative posting this week catches the window.
+- Real device screenshots rule (Rule 5) means emulator captures get called out. All shots must be on a real Android device.
+- r/HowToMen Rule 8 bans YouTube/social/giveaway in [Promo] posts. YouTube shoutout comes from the mods, not from the post author. Do not reference or solicit it.
+- Past angles used in posts.md: all prior posts were r/Myfitnesspal community comments, r/SideProject/r/IndieHackers builder-audience posts, r/Fitness Saturday thread. None were Android-specific consumer audience posts. No angle overlap.
+
+### §3 What I'm generating
+
+- 3 title variants (A/B/C) for founder to pick from — because [Promo] titles that signal all 3 wedges concisely tend to get more clicks and are harder to dismiss as one-dimensional.
+- Post body with explicit founder disclosure, one paragraph per wedge, Android + Play Store link, AMA close — because Rule 8 requires [Promo] tag + disclosure, and the AMA close matches the sub's dev-curious culture better than a CTA.
+- Shot list with 7 shots (4 required, 3 optional) and caption suggestions, including a new Shot 7 for the AI Coach chat screen. Reference post u/aryanbaidya noted: clean dark-mode carousel, no bezels needed.
+- Top-level comment with tech stack and "AMA on the AI pipeline" — because the sub runs a YouTube series on Android apps and the dev-curious comment signals this is founder-made, not a marketing account.
+- All 3 wedges present in body: food photo logging, menu scan, AI workout generation from equipment.
+
+### Zealova grounding check
+- Features referenced (§2B): AI workout plan generation, food photo logging (multi-image), menu scan, multi-agent chat, gym equipment profiles
+- Pricing claims: none in body (Rule 8 spirit: no price/trial/marketing voice)
+- Wedges used: food photo logging (1), menu scan (2), AI workout generation from equipment (3) — all three present
+- Banned phrases avoided: no "game-changer," no "leverage," no "replaces your trainer," no HIPAA, no "excited to share," no "introducing," zero em dashes, zero scare quotes, zero ellipses for drama. Grep result: 0 matches for — or scare quotes. ✅
+- §2G features excluded: no form video analysis, no in-workout chat, no MFP screenshot OCR, no skill progressions. ✅
+
+---
+
+### Sub-rule check
+- Rule 3: Play Store link required + under 1M downloads. Zealova is new, well under 1M. Play Store URL confirmed: https://play.google.com/store/apps/details?id=com.aifitnesscoach.app (HTTP 200, 2026-05-20).
+- Rule 5: Real screenshots required, no stock or emulator captures, title cannot be just the tag.
+- Rule 6: Play Store link only, no APK.
+- Rule 8: [Promo] tag required, founder must disclose own-app, once per month max, no YouTube/social/giveaway promotion.
+- Promo allowed: Yes ([Promo] tag required by rule — this IS a promo post, tag is mandatory).
+- Link allowed: Yes (Play Store link explicitly required by Rule 3).
+
+### Research log
+- [mediafa.st/how-to-promote/mobile-app-on-reddit](https://www.mediafa.st/how-to-promote/mobile-app-on-reddit) (2026) — real-device screenshots requirement confirmed; founder story outperforms marketing tone
+- [themanual.com/fitness/the-best-fitness-apps-in-2026-smarter-training-starts-here/](https://www.themanual.com/fitness/the-best-fitness-apps-in-2026-smarter-training-starts-here/) (2026) — AI fitness app landscape: no full-stack (workout gen + food photo + menu scan) app in top editorial picks
+- [androidcentral.com/apps-software/best-health-fitness-diet-apps-for-hitting-your-resolutions-and-getting-healthier](https://www.androidcentral.com/apps-software/best-health-fitness-diet-apps-for-hitting-your-resolutions-and-getting-healthier) (2026) — confirms Fitbod/Hevy/MFP gap: no single app does workout gen + food photo + menu scan
+- [androidcentral.com/wearables/fitbit/fitbit-features-missing-in-the-google-health-app](https://www.androidcentral.com/wearables/fitbit/fitbit-features-missing-in-the-google-health-app) (published 2026-05-08) — Google Health / Fitbit migration confirmed; 29M Android users switching stacks now
+- Play Store URL curl result: HTTP 200, 2026-05-20
+- Past Zealova-on-Reddit count: 0 (brand baseline is zero)
+
+### Claim to proof map
+- "Fitbod is workout-only" → BACKED: _ZEALOVA_FACTS.md §4A — Fitbod specialty: strength AI, no nutrition
+- "Hevy is a tracker, not a plan generator" → BACKED: _ZEALOVA_FACTS.md §4B — "Hevy logs what you already do"
+- "Zealova generates AI workout plans from equipment" → BACKED: _ZEALOVA_FACTS.md §2B confirmed shipped 2026-05-14
+- "Zealova food photo logging" → BACKED: _ZEALOVA_FACTS.md §2B — "currently Zealova's strongest, most-tested AI feature"
+- "Zealova menu scan" → BACKED: _ZEALOVA_FACTS.md §2B — "confirmed shipped and reliable as of 2026-05-14"
+- "No AI form video claim" → confirmed excluded per §2G hold
+
+### Past angles I'm avoiding
+- MFP comparison / product-org reasoning (all prior r/Myfitnesspal drafts)
+- Builder/technical build-story (r/IndieHackers + r/SideProject drafts)
+- r/Fitness Saturday thread gym-audience format (2026-05-17 draft)
+- This post is an Android consumer audience post — different voice, different framing
+
+---
+
+### Cost research log (live, 2026-05-20)
+- Personal trainer per session: $50-90/session nationally, $40-120/session range (published 2026, bark.com/en/us/personal-trainer/personal-trainer-cost/ + fitbudd.com/insights/how-much-does-a-personal-trainer-cost-complete-pricing-breakdown)
+- 2x/week monthly at $60/session average: $480/month
+- Online coach monthly retainer: $100-300/month standard, $400-800/month premium (published 2026, wod.guru/blog/how-much-do-online-personal-trainers-charge/ + warriorbabe.com/read/average-cost-of-online-personal-trainer-per-month)
+- MFP Premium: $19.99/month (verified 2026, nutriscan.app/blog/posts/myfitnesspal-pricing-2026-guide-2ff09c399a)
+- Fitbod: $15.99/month (verified 2026, subger.com/en/es/service/fitbod + fitbod.me)
+- Hevy Pro: $2.99/month (verified 2026, hevy.com/pricing + getpulsesignal.com/pricing/hevy)
+- Stack total: $19.99 + $15.99 + $2.99 = $38.97/month, rounded to "nearly $40/month" in copy
+- Zealova price: NOT stated in body per founder's standing rule. Play Store link is in the post.
+
+---
+
+### Title
+
+[Promo] Zealova: photograph your meal, scan a restaurant menu, generate a workout from your equipment, all in one Android app
+
+---
+
+### Body
+
+Post body (paste into r/HowToMen, 410 words):
+
+---
+
+I built Zealova, an AI fitness coaching app for Android. I'm the solo founder, so this is an official [Promo] post per Rule 8.
+
+The four things it actually does:
+
+**Food photo logging.** You photograph a plate, or up to 10 photos if it's a buffet or multi-dish meal, and the AI breaks it down into individual items with calories and macros per item. No barcode, no manual search. It handles mixed dishes. This is the most-tested part of the app and what most people end up using daily.
+
+**Restaurant menu scan.** You photograph a physical menu at a restaurant and it reads the dishes, estimates calories and macros per item, and ranks them. Useful for eating out without guessing.
+
+**AI coach chat.** There's a chat interface with specialist sub-agents routing behind it, one for workouts, one for nutrition, one for injury, one for hydration. You just type naturally. Ask why a lift feels weak, ask for a meal swap because you're out of an ingredient, ask for an exercise replacement because your shoulder is sore. It routes to the right context automatically, so the answer isn't a generic LLM response, it's coming from the agent that actually knows your plan and your history.
+
+**AI workout generation from your equipment.** You tell it what gear you have, your goals, and your training history, and it builds a personalized monthly strength plan. You can also just ask the coach chat to modify mid-cycle if something changes.
+
+Getting this elsewhere is expensive. In-person personal trainers run $50-90 per session in 2026, which puts two sessions a week at roughly $400-720 a month. An online coaching retainer runs $100-300 a month for a standard plan. If you try to stack apps to cover the same ground, MFP Premium is $19.99/month, Fitbod is $15.99/month, and Hevy Pro is $2.99/month. That's nearly $40/month just in subscriptions, and none of them talk to each other. This is one app.
+
+It's lighter on pure macro accuracy than MacroFactor's adaptive algorithm, and Hevy is faster for pure logging. But for people who want one place that handles both sides, this is what I built.
+
+Live on Android now. Screenshots below are from real device.
+
+Google Play: https://play.google.com/store/apps/details?id=com.aifitnesscoach.app
+
+Happy to answer questions in the comments.
+
+---
+
+### Shot list
+
+Reference post: u/aryanbaidya's clean weather app carousel. Clean styled app screenshots, dark theme, real data, no phone bezels needed. Shoot in dark mode for sub-culture fit. Phone-in-hand is optional bonus, not required.
+
+7 shots total. Shots 1-4 required. Shots 5-7 optional.
+
+**Shot 1 (required): Food photo log result**
+Screen: the nutrition detail screen after logging a real meal from a photo. Per-item macro breakdown visible, e.g. chicken breast 245 cal, brown rice 210 cal, broccoli 55 cal. Real food you actually photographed, not a staged empty plate.
+Caption: "Photographed a plate. AI broke it down per item, no manual entry."
+
+**Shot 2 (required): Menu scan result**
+Screen: the menu scan output after photographing a real restaurant menu. Ranked dish list with calorie/macro estimates per dish visible. Use an actual restaurant menu you scanned.
+Caption: "Scanned a restaurant menu. Ranked the dishes by macros."
+
+**Shot 3 (required): Workout generation screen**
+Screen: the AI-generated monthly workout plan showing a week of sessions. Equipment tag visible if possible, e.g. "Home gym". Full day view with exercises, sets, reps.
+Caption: "Told it I have a barbell and a pull-up bar. It built the month."
+
+**Shot 4 (required): Home / today screen**
+Screen: the home dashboard with today's workout card and nutrition summary visible. Real day with data in it, not empty state.
+Caption: "The daily view. Workout for the day and nutrition side by side."
+
+**Shot 5 (optional but strong): Per-exercise progress chart**
+Screen: history chart for one lift over 8 weeks, e.g. bench press. Proves the app tracks over time, not just today.
+Caption: "Bench history. It tracks per exercise, not just total volume."
+
+**Shot 6 (optional): Phone in hand**
+A real-world photo of your Android phone held in hand showing the food logging screen or home screen. Some of the sub's top posts include hand-held shots and it reads native. Clean carousel screenshots like the reference post also work fine without this.
+Caption: "Real phone. The food logging screen mid-scan."
+
+**Shot 7 (optional but recommended): AI Coach chat screen**
+Screen: the chat interface showing a real exchange where you asked for an exercise swap due to a sore shoulder (or a meal swap because you were out of an ingredient) and the AI Coach's reply is visible. Shows the routing intelligence, not just a static plan screen.
+Caption: "Asked for a swap because of a sore shoulder. It picked an alternative from its exercise library."
+
+---
+
+### Top-level comment (post immediately after as first comment)
+
+Top-level comment (paste as first comment on the post, ~130 words):
+
+---
+
+Tech stack for anyone curious: Flutter on the frontend, FastAPI backend, Google Gemini for the AI (workout generation, food photo analysis, menu scan), LangGraph for the multi-agent routing, ChromaDB for the exercise RAG that finds safe alternatives when you ask for a swap.
+
+The chat routes to specialist sub-agents based on what you're asking. Workout questions go to the workout agent that has your plan context. Nutrition questions go to the nutrition agent that has your diary. Early versions used keyword-based routing and it was a mess. LangGraph's graph structure lets the router use media type and semantic intent instead, so "my shoulder is sore, what should I swap" hits the right agent without the user specifying.
+
+Built solo over about a year. AMA on the Gemini pipeline, how menu scan handles mixed dishes, how the exercise alternatives work, or anything else.
+
+---
+
+### Pre-post checklist
+- [x] [Promo] tag in title
+- [x] Title is not just the tag (Rule 5)
+- [x] Founder disclosure in first line of body
+- [x] Play Store link present and verified HTTP 200 (Rule 3 + Rule 6): https://play.google.com/store/apps/details?id=com.aifitnesscoach.app
+- [x] No APK link (Rule 6)
+- [x] No YouTube/social/giveaway reference (Rule 8)
+- [x] All 4 wedges present in body: food photo logging (para 2), menu scan (para 3), AI coach chat (para 4), workout generation (para 5)
+- [x] Cost paragraph present with live 2026 sourced numbers. Zealova price NOT stated.
+- [x] 2+ competitors named honestly with real strengths: MacroFactor (adaptive macro algorithm), Hevy (faster pure logging)
+- [x] Cost sources cited in research log with dates: bark.com 2026, fitbudd.com 2026, wod.guru 2026, nutriscan.app 2026, fitbod.me 2026, hevy.com 2026
+- [x] No "check out my app" phrasing
+- [x] No "excited to share" / "introducing" / "leverage" / "synergy"
+- [x] Zero em dashes
+- [x] Zero en dashes
+- [x] Zero standalone --
+- [x] Zero scare quotes around ordinary words
+- [x] Zero fasting mentions
+- [x] Zero iOS mentions
+- [x] No form video analysis (§2G hold)
+- [x] No in-workout / mid-session chat claim (§2G hold)
+- [x] No MFP screenshot OCR claim (§2G hold)
+- [x] Shot list updated: clean dark-mode screenshots sufficient, phone-in-hand optional, Shot 7 AI chat added
+- [x] Body: 410 words (within 200-450 top-level post target, at ceiling — acceptable given 4 wedges + cost paragraph)
+- [x] Top-level comment: ~130 words
+- [x] No iOS mention in top-level comment

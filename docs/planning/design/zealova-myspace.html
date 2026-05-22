@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Zealova — fixed score card + My Space</title>
+<style>
+  :root {
+    --accent:#EC8B2C; --accent-deep:#D2741A; --accent-tint:#FDF1E3;
+    --train:#EC8B2C; --fuel:#3FA66B; --move:#3E8FD0; --sleep:#6B6FCE;
+    --energy:#E8703A; --hr:#C0476B;
+    --ink:#1A1A1C; --ink-2:#6B6B70; --ink-3:#9A9AA0;
+    --line:#ECECEE; --surface:#F6F6F7; --rim:#A6A6AD;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-font-smoothing:antialiased; }
+  body {
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",sans-serif;
+    background:radial-gradient(1300px 800px at 50% -3%, #2c2c32 0%, transparent 56%), #111114;
+    min-height:100vh; padding:46px 26px 90px;
+    display:flex; flex-direction:column; align-items:center; gap:8px;
+  }
+  h1 { color:#ededf2; font-size:23px; font-weight:800; text-align:center; }
+  .lede { color:#9a9aa3; font-size:13px; max-width:680px; text-align:center; line-height:1.6; }
+  .lede b { color:#d7d7dd; }
+  .seclabel { color:var(--accent); font-size:11px; font-weight:800; letter-spacing:1.3px; margin-top:42px; text-transform:uppercase; }
+  .row { display:flex; gap:42px; flex-wrap:wrap; justify-content:center; align-items:flex-start; margin-top:22px; }
+
+  /* ===== score card ===== */
+  .score { width:316px; background:#fff; border:1px solid #e6e6e8; border-radius:20px; overflow:hidden; box-shadow:0 22px 46px -22px rgba(0,0,0,.55); }
+  .score-hd { display:flex; align-items:center; justify-content:space-between; padding:13px 15px 4px; }
+  .score-hd .t { font-size:9.5px; font-weight:800; letter-spacing:.6px; color:var(--ink-3); }
+  .score-edit { display:flex; align-items:center; gap:4px; font-size:9.5px; font-weight:700; color:var(--ink-2); background:var(--surface); border:1px solid var(--line); border-radius:999px; padding:5px 10px; }
+  .score-body { display:flex; gap:10px; padding:7px 15px 6px; align-items:center; }
+  .ringbox { position:relative; flex:0 0 140px; width:140px; height:140px; }
+  .ringbox svg { display:block; }
+  .ring-center { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+  .rc-e { font-size:7px; font-weight:800; letter-spacing:.7px; color:var(--ink-3); }
+  .rc-n { font-size:44px; font-weight:850; color:var(--ink); letter-spacing:-2px; line-height:.88; }
+  .rc-s { font-size:7.5px; font-weight:800; color:var(--accent-deep); margin-top:1px; }
+  .legend { flex:1; }
+  .lg-row { display:flex; align-items:center; gap:8px; margin-bottom:10px; }
+  .lg-row:last-child { margin-bottom:0; }
+  .lg-dot { width:9px; height:9px; border-radius:3px; flex:0 0 9px; }
+  .lg-tx { flex:1; }
+  .lg-name { font-size:11px; font-weight:800; color:var(--ink); }
+  .lg-sub { font-size:9.5px; font-weight:600; color:var(--ink-2); margin-top:1px; }
+  .lg-chev { color:var(--ink-3); font-size:12px; }
+  .score-coach { background:linear-gradient(135deg,var(--accent-tint),#fff 135%); border-top:1px solid #F2DFC7; padding:9px 13px; display:flex; align-items:center; gap:8px; }
+  .sc-av { flex:0 0 22px; width:22px; height:22px; border-radius:50%; background:linear-gradient(145deg,var(--accent),var(--accent-deep)); color:#fff; display:flex; align-items:center; justify-content:center; font-size:10px; }
+  .sc-tx { flex:1; font-size:10.5px; font-weight:600; color:var(--ink); }
+  .sc-tx b { font-weight:800; }
+  .myspace-link { display:flex; align-items:center; justify-content:center; gap:5px; padding:9px; border-top:1px solid var(--line); font-size:10.5px; font-weight:800; color:var(--accent-deep); }
+
+  .annot { width:290px; color:#bdbdc4; font-size:12.5px; line-height:1.6; }
+  .annot h3 { color:#ededf2; font-size:14.5px; margin-bottom:12px; }
+  .annot .ai { display:flex; gap:9px; margin-bottom:13px; }
+  .annot .dot { flex:0 0 11px; width:11px; height:11px; border-radius:4px; margin-top:3px; }
+  .annot b { color:#ededf2; }
+  .cap { margin-top:13px; text-align:center; }
+  .cap .n { font-size:14px; font-weight:800; color:#ededf2; }
+  .cap .d { font-size:11.5px; color:#9a9aa3; margin-top:4px; max-width:330px; line-height:1.5; }
+
+  /* ===== phone ===== */
+  .phone { width:372px; border-radius:50px; position:relative; overflow:hidden; background:#fff;
+    box-shadow:0 0 0 12px #1d1d20, 0 0 0 14px #3a3a3f, 0 34px 66px -20px rgba(0,0,0,.7); }
+  .phone.home { height:812px; }
+  .phone.space { height:1016px; }
+  .island { position:absolute; top:11px; left:50%; transform:translateX(-50%); width:114px; height:32px; background:#000; border-radius:19px; z-index:50; }
+  .sb { position:absolute; top:0; left:0; right:0; height:50px; z-index:40; display:flex; align-items:flex-end; justify-content:space-between; padding:0 28px 5px; font-size:14px; font-weight:600; color:var(--ink); }
+  .sb .r { display:flex; gap:5px; align-items:center; }
+  .scr { position:absolute; top:50px; left:0; right:0; bottom:0; overflow:hidden; }
+  .pad { padding:0 16px; }
+
+  .hd { display:flex; align-items:flex-start; justify-content:space-between; padding:7px 16px 10px; }
+  .hd .gs { font-size:13px; color:var(--ink-2); font-weight:500; }
+  .hd .gl { font-size:23px; font-weight:800; color:var(--ink); letter-spacing:-.5px; }
+  .hd-r { display:flex; align-items:center; gap:6px; padding-top:3px; }
+  .streak { display:flex; align-items:center; gap:6px; background:var(--surface); border:1px solid var(--line); border-radius:999px; padding:4px 9px 4px 5px; }
+  .sr { width:21px; height:21px; border-radius:50%; background:conic-gradient(var(--accent) 0 64%,#E4E4E6 64% 100%); display:flex; align-items:center; justify-content:center; }
+  .sr span { width:14px; height:14px; border-radius:50%; background:#fff; display:flex; align-items:center; justify-content:center; font-size:8.5px; font-weight:800; }
+  .streak .l { font-size:10px; font-weight:700; color:var(--ink); line-height:1.15; }
+  .streak .l small { font-weight:500; color:var(--ink-3); }
+  .streak .f { font-size:11px; font-weight:800; color:var(--accent-deep); }
+  .ib { width:29px; height:29px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:var(--ink-2); }
+
+  .bn { margin:0 16px 12px; background:linear-gradient(135deg,#fff,var(--accent-tint) 150%); border:1px solid #F2DFC7; border-radius:13px; padding:8px 10px; display:flex; align-items:center; gap:9px; }
+  .bn-i { flex:0 0 30px; width:30px; height:30px; border-radius:9px; background:var(--accent-tint); border:1px solid #F2DFC7; display:flex; align-items:center; justify-content:center; font-size:15px; }
+  .bn-b { flex:1; min-width:0; }
+  .bn-t { font-size:12px; font-weight:800; color:var(--ink); }
+  .bn-s { font-size:10px; color:var(--ink-2); }
+  .bn-cta { font-size:10.5px; font-weight:800; color:#fff; background:var(--accent); padding:5px 9px; border-radius:999px; }
+  .bn-x { width:20px; height:20px; border-radius:50%; background:var(--surface); color:var(--ink-3); display:flex; align-items:center; justify-content:center; font-size:9px; font-weight:700; }
+
+  .qa { display:flex; justify-content:space-between; padding:0 13px; margin-bottom:13px; }
+  .qi { display:flex; flex-direction:column; align-items:center; gap:4px; flex:1; }
+  .qt { width:44px; height:44px; border-radius:13px; background:var(--surface); border:1px solid var(--line); display:flex; align-items:center; justify-content:center; font-size:18px; }
+  .qi.p .qt { background:var(--accent); border-color:var(--accent); }
+  .ql { font-size:9px; font-weight:600; color:var(--ink-2); }
+
+  .sl { font-size:9.5px; font-weight:800; letter-spacing:.7px; color:var(--ink-3); text-transform:uppercase; padding:0 18px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center; }
+  .sl .lk { color:var(--accent-deep); font-size:10px; }
+
+  .wo { margin:0 16px 14px; height:120px; border-radius:17px; position:relative; overflow:hidden; background:linear-gradient(180deg,rgba(20,12,2,.05),rgba(20,12,2,.8)),linear-gradient(125deg,#E89A3E,#C96E18); }
+  .wo-f { position:absolute; right:0; bottom:-10px; font-size:86px; opacity:.15; filter:grayscale(1); transform:rotate(-8deg); }
+  .wo-bg { position:absolute; top:10px; left:11px; background:rgba(255,255,255,.22); color:#fff; font-size:8.5px; font-weight:800; padding:3px 7px; border-radius:999px; }
+  .wo-b { position:absolute; left:12px; right:12px; bottom:11px; }
+  .wo-n { color:#fff; font-size:18px; font-weight:800; }
+  .wo-m { color:rgba(255,255,255,.92); font-size:9.5px; font-weight:700; margin-top:1px; }
+  .wo-p { position:absolute; right:12px; bottom:11px; width:40px; height:40px; border-radius:50%; background:#fff; display:flex; align-items:center; justify-content:center; }
+  .wo-p::after { content:""; width:0; height:0; border-left:12px solid var(--accent-deep); border-top:8px solid transparent; border-bottom:8px solid transparent; margin-left:3px; }
+
+  /* My Space */
+  .ms-hd { padding:10px 18px 12px; }
+  .ms-hd .t { font-size:25px; font-weight:850; color:var(--ink); letter-spacing:-.6px; }
+  .ms-hd .s { font-size:12px; color:var(--ink-2); font-weight:500; margin-top:1px; }
+  .mgrid { display:grid; grid-template-columns:1fr 1fr; gap:9px; padding:0 16px; }
+  .mcell { background:#fff; border:1px solid var(--line); border-radius:14px; padding:10px; display:flex; gap:9px; align-items:center; }
+  .mring { flex:0 0 46px; width:46px; height:46px; border-radius:50%; display:flex; align-items:center; justify-content:center; }
+  .mring .mh { width:34px; height:34px; border-radius:50%; background:#fff; display:flex; align-items:center; justify-content:center; font-size:13px; }
+  .mtx .mv { font-size:14px; font-weight:850; color:var(--ink); line-height:1; }
+  .mtx .mv small { font-size:8.5px; color:var(--ink-3); font-weight:700; }
+  .mtx .ml { font-size:8px; font-weight:800; letter-spacing:.3px; color:var(--ink-3); margin-top:3px; }
+  .mtx .ms2 { font-size:8px; font-weight:600; color:var(--ink-3); }
+  .mcell.tile { flex-direction:column; align-items:flex-start; gap:3px; }
+  .mcell.tile .ml { font-size:8px; font-weight:800; color:var(--ink-3); }
+  .mcell.tile .mv { font-size:18px; }
+  .spark { display:flex; align-items:flex-end; gap:2px; height:16px; margin-top:2px; }
+  .spark i { width:4px; border-radius:2px; background:#CBD9CF; }
+  .ms-edit { margin:13px 16px 0; border:1.5px dashed #D7D7DB; border-radius:14px; padding:12px; text-align:center; font-size:11.5px; font-weight:800; color:var(--accent-deep); }
+
+  .nav { position:absolute; left:13px; right:13px; bottom:14px; z-index:45; height:60px; background:rgba(255,255,255,.95); backdrop-filter:blur(16px) saturate(1.6); border:1px solid var(--line); border-radius:24px; display:flex; align-items:center; justify-content:space-around; box-shadow:0 13px 28px -12px rgba(0,0,0,.3); }
+  .ni { display:flex; flex-direction:column; align-items:center; gap:3px; flex:1; color:var(--ink-3); }
+  .ni .nl { font-size:8.5px; font-weight:700; }
+  .ni.on { color:var(--accent-deep); }
+  .hi { position:absolute; bottom:6px; left:50%; transform:translateX(-50%); width:116px; height:5px; border-radius:99px; background:#1a1a1c; opacity:.82; z-index:46; }
+  .pcap { margin-top:13px; text-align:center; }
+  .pcap .n { font-size:14px; font-weight:800; color:#ededf2; }
+  .pcap .d { font-size:11.5px; color:#9a9aa3; margin-top:4px; max-width:372px; line-height:1.55; }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute;"><defs>
+  <linearGradient id="gTrain" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F4B068"/><stop offset="1" stop-color="#CE6F18"/></linearGradient>
+  <linearGradient id="gFuel" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#67C690"/><stop offset="1" stop-color="#2C8A54"/></linearGradient>
+  <linearGradient id="gMove" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#76B7E7"/><stop offset="1" stop-color="#2E72B8"/></linearGradient>
+</defs></svg>
+
+<h1>The fixed score card + My Space</h1>
+<p class="lede">No more percentages — the ring's <b>segment size</b> shows
+weight, the legend says plain things. The incomplete arc now has a visible
+<b>rim</b> so you see what's left. And the home card is now a fixed size —
+deep metrics live in <b>My Space</b>.</p>
+
+<!-- ===== SECTION 1 — the redesigned card ===== -->
+<div class="seclabel">1 · The score card — no percentages, visible rim</div>
+<div class="row">
+  <div>
+    <div class="score">
+      <div class="score-hd"><div class="t">TODAY</div><div class="score-edit">✎ Edit</div></div>
+      <div class="score-body">
+        <div class="ringbox">
+          <svg viewBox="0 0 220 220" width="140" height="140">
+            <!-- RIM (boundary) -->
+            <circle cx="110" cy="110" r="84" fill="none" stroke="var(--rim)" stroke-width="23" stroke-linecap="round" stroke-dasharray="241.9 528" transform="rotate(-90 110 110)"/>
+            <circle cx="110" cy="110" r="84" fill="none" stroke="var(--rim)" stroke-width="23" stroke-linecap="round" stroke-dasharray="169.3 528" transform="rotate(85 110 110)"/>
+            <circle cx="110" cy="110" r="84" fill="none" stroke="var(--rim)" stroke-width="23" stroke-linecap="round" stroke-dasharray="72.6 528" transform="rotate(210.5 110 110)"/>
+            <!-- hollow fill (the 'empty' look) -->
+            <circle cx="110" cy="110" r="84" fill="none" stroke="#EFEFF2" stroke-width="17" stroke-linecap="round" stroke-dasharray="241.9 528" transform="rotate(-90 110 110)"/>
+            <circle cx="110" cy="110" r="84" fill="none" stroke="#EFEFF2" stroke-width="17" stroke-linecap="round" stroke-dasharray="169.3 528" transform="rotate(85 110 110)"/>
+            <circle cx="110" cy="110" r="84" fill="none" stroke="#EFEFF2" stroke-width="17" stroke-linecap="round" stroke-dasharray="72.6 528" transform="rotate(210.5 110 110)"/>
+            <!-- progress -->
+            <circle cx="110" cy="110" r="84" fill="none" stroke="url(#gTrain)" stroke-width="17" stroke-linecap="round" stroke-dasharray="9 528" transform="rotate(-90 110 110)"/>
+            <circle cx="110" cy="110" r="84" fill="none" stroke="url(#gFuel)" stroke-width="17" stroke-linecap="round" stroke-dasharray="71 528" transform="rotate(85 110 110)"/>
+            <circle cx="110" cy="110" r="84" fill="none" stroke="url(#gMove)" stroke-width="17" stroke-linecap="round" stroke-dasharray="53.7 528" transform="rotate(210.5 110 110)"/>
+          </svg>
+          <div class="ring-center"><div class="rc-e">TODAY</div><div class="rc-n">27</div><div class="rc-s">JUST GETTING STARTED</div></div>
+        </div>
+        <div class="legend">
+          <div class="lg-row"><span class="lg-dot" style="background:var(--train)"></span><div class="lg-tx"><div class="lg-name">Train</div><div class="lg-sub">Leg day · tap to start</div></div><span class="lg-chev">›</span></div>
+          <div class="lg-row"><span class="lg-dot" style="background:var(--fuel)"></span><div class="lg-tx"><div class="lg-name">Fuel</div><div class="lg-sub">89g protein to go</div></div><span class="lg-chev">›</span></div>
+          <div class="lg-row"><span class="lg-dot" style="background:var(--move)"></span><div class="lg-tx"><div class="lg-name">Move</div><div class="lg-sub">2,588 steps to go</div></div><span class="lg-chev">›</span></div>
+        </div>
+      </div>
+      <div class="score-coach"><div class="sc-av">✦</div><div class="sc-tx">Knock out leg day and your score jumps to <b>77</b>.</div></div>
+      <div class="myspace-link">View all your metrics in My Space ›</div>
+    </div>
+  </div>
+  <div class="annot">
+    <h3>What changed</h3>
+    <div class="ai"><span class="dot" style="background:#A6A6AD"></span><div><b>The rim.</b> Every segment is a capsule with a grey rim, so the empty part is clearly visible — you see the whole goal, not just the filled bit.</div></div>
+    <div class="ai"><span class="dot" style="background:var(--train)"></span><div><b>No weight %.</b> Train's arc is just visibly the biggest — its size <i>is</i> the weight. No "50%" to decode.</div></div>
+    <div class="ai"><span class="dot" style="background:var(--fuel)"></span><div><b>No completion %.</b> "89g protein to go" beats "42% done" — it's the actual thing to do next.</div></div>
+    <div class="ai"><span class="dot" style="background:var(--accent)"></span><div><b>One number only:</b> the score (27), with a plain state under it ("Just getting started"). That's the only number you read.</div></div>
+  </div>
+</div>
+
+<!-- ===== SECTION 2 + 3 — HOME (fixed) and MY SPACE ===== -->
+<div class="seclabel">2 · Home keeps a fixed card &nbsp;·&nbsp; 3 · My Space holds the rest</div>
+<div class="row">
+
+  <!-- HOME -->
+  <div>
+  <div class="phone home">
+    <div class="island"></div>
+    <div class="sb"><span>12:52</span><span class="r">
+      <svg width="16" height="10" viewBox="0 0 17 11" fill="currentColor"><rect x="0" y="6" width="3" height="5" rx="1"/><rect x="4.5" y="4" width="3" height="7" rx="1"/><rect x="9" y="2" width="3" height="9" rx="1"/><rect x="13.5" y="0" width="3" height="11" rx="1"/></svg>
+      <svg width="15" height="10" viewBox="0 0 16 11" fill="currentColor"><path d="M8 2.2C10.4 2.2 12.6 3.1 14.3 4.7L15.7 3.2C13.6 1.2 10.9 0 8 0S2.4 1.2 .3 3.2L1.7 4.7C3.4 3.1 5.6 2.2 8 2.2Z"/></svg>
+      <svg width="25" height="11" viewBox="0 0 26 12"><rect x="1" y="1.5" width="21" height="9" rx="2.6" fill="none" stroke="currentColor" stroke-opacity=".4"/><rect x="3" y="3.5" width="16" height="5" rx="1.3" fill="currentColor"/></svg>
+    </span></div>
+    <div class="scr">
+      <div class="hd"><div><div class="gs">Good afternoon,</div><div class="gl">Sai</div></div>
+        <div class="hd-r"><div class="streak"><div class="sr"><span>2</span></div><div class="l">Lv 2<br><small>64%</small></div><div class="f">🔥3</div></div>
+          <div class="ib"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg></div></div></div>
+      <div class="bn"><div class="bn-i">🎁</div><div class="bn-b"><div class="bn-t">3 crates ready to open</div><div class="bn-s">Tap to claim your streak rewards</div></div><div class="bn-cta">Open all</div><div class="bn-x">✕</div></div>
+      <div class="qa">
+        <div class="qi p"><div class="qt">✦</div><div class="ql">Coach</div></div>
+        <div class="qi"><div class="qt">🍎</div><div class="ql">Log food</div></div>
+        <div class="qi"><div class="qt">📖</div><div class="ql">Scan menu</div></div>
+        <div class="qi"><div class="qt">💧</div><div class="ql">Water</div></div>
+        <div class="qi"><div class="qt">⚖️</div><div class="ql">Weight</div></div>
+        <div class="qi"><div class="qt">⋯</div><div class="ql">More</div></div>
+      </div>
+      <!-- FIXED score card -->
+      <div style="margin:0 16px 13px;">
+        <div class="score" style="width:auto;box-shadow:none;">
+          <div class="score-hd"><div class="t">TODAY SCORE</div><div class="score-edit">✎ Edit</div></div>
+          <div class="score-body">
+            <div class="ringbox" style="flex:0 0 124px;width:124px;height:124px;">
+              <svg viewBox="0 0 220 220" width="124" height="124">
+                <circle cx="110" cy="110" r="84" fill="none" stroke="var(--rim)" stroke-width="23" stroke-linecap="round" stroke-dasharray="241.9 528" transform="rotate(-90 110 110)"/>
+                <circle cx="110" cy="110" r="84" fill="none" stroke="var(--rim)" stroke-width="23" stroke-linecap="round" stroke-dasharray="169.3 528" transform="rotate(85 110 110)"/>
+                <circle cx="110" cy="110" r="84" fill="none" stroke="var(--rim)" stroke-width="23" stroke-linecap="round" stroke-dasharray="72.6 528" transform="rotate(210.5 110 110)"/>
+                <circle cx="110" cy="110" r="84" fill="none" stroke="#EFEFF2" stroke-width="17" stroke-linecap="round" stroke-dasharray="241.9 528" transform="rotate(-90 110 110)"/>
+                <circle cx="110" cy="110" r="84" fill="none" stroke="#EFEFF2" stroke-width="17" stroke-linecap="round" stroke-dasharray="169.3 528" transform="rotate(85 110 110)"/>
+                <circle cx="110" cy="110" r="84" fill="none" stroke="#EFEFF2" stroke-width="17" stroke-linecap="round" stroke-dasharray="72.6 528" transform="rotate(210.5 110 110)"/>
+                <circle cx="110" cy="110" r="84" fill="none" stroke="url(#gTrain)" stroke-width="17" stroke-linecap="round" stroke-dasharray="9 528" transform="rotate(-90 110 110)"/>
+                <circle cx="110" cy="110" r="84" fill="none" stroke="url(#gFuel)" stroke-width="17" stroke-linecap="round" stroke-dasharray="71 528" transform="rotate(85 110 110)"/>
+                <circle cx="110" cy="110" r="84" fill="none" stroke="url(#gMove)" stroke-width="17" stroke-linecap="round" stroke-dasharray="53.7 528" transform="rotate(210.5 110 110)"/>
+              </svg>
+              <div class="ring-center"><div class="rc-e">TODAY</div><div class="rc-n" style="font-size:38px;">27</div></div>
+            </div>
+            <div class="legend">
+              <div class="lg-row"><span class="lg-dot" style="background:var(--train)"></span><div class="lg-tx"><div class="lg-name">Train</div><div class="lg-sub">Leg day · not started</div></div><span class="lg-chev">›</span></div>
+              <div class="lg-row"><span class="lg-dot" style="background:var(--fuel)"></span><div class="lg-tx"><div class="lg-name">Fuel</div><div class="lg-sub">89g protein to go</div></div><span class="lg-chev">›</span></div>
+              <div class="lg-row"><span class="lg-dot" style="background:var(--move)"></span><div class="lg-tx"><div class="lg-name">Move</div><div class="lg-sub">2,588 steps to go</div></div><span class="lg-chev">›</span></div>
+            </div>
+          </div>
+          <div class="score-coach"><div class="sc-av">✦</div><div class="sc-tx">Knock out leg day and your score jumps to <b>77</b>.</div></div>
+          <div class="myspace-link">Open My Space ›</div>
+        </div>
+      </div>
+      <div class="sl">TODAY'S TRAINING<span class="lk">This week</span></div>
+      <div class="wo"><div class="wo-f">🏋️</div><div class="wo-bg">▦ TODAY</div><div class="wo-b"><div class="wo-n">Birthday Blitz Lower</div><div class="wo-m">LEGS · 60 MIN · 7 EXERCISES</div></div><div class="wo-p"></div></div>
+    </div>
+    <div class="nav">
+      <div class="ni on"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20h14V9.5"/></svg><span class="nl">Home</span></div>
+      <div class="ni"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 9v6M4 10.5v3M17.5 9v6M20 10.5v3M6.5 12h11"/></svg><span class="nl">Workouts</span></div>
+      <div class="ni"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3v7a2 2 0 0 0 4 0V3M7 12v9M16 3c-1.6 0-2.8 2.2-2.8 5.5 0 2.2 1.1 3.3 2.8 3.5v9"/></svg><span class="nl">Nutrition</span></div>
+      <div class="ni"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M15.6 8.4l-2.1 5.1-5.1 2.1z"/></svg><span class="nl">Discover</span></div>
+      <div class="ni"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.6"/><path d="M5.5 20c0-3.7 3-6 6.5-6s6.5 2.3 6.5 6"/></svg><span class="nl">You</span></div>
+    </div>
+    <div class="hi"></div>
+  </div>
+  <div class="pcap"><div class="n">Home — one fixed card</div><div class="d">The score card never changes size. Tapping it (or "Open My Space ›") goes deeper.</div></div>
+  </div>
+
+  <!-- MY SPACE -->
+  <div>
+  <div class="phone space">
+    <div class="island"></div>
+    <div class="sb"><span>12:52</span><span class="r">
+      <svg width="16" height="10" viewBox="0 0 17 11" fill="currentColor"><rect x="0" y="6" width="3" height="5" rx="1"/><rect x="4.5" y="4" width="3" height="7" rx="1"/><rect x="9" y="2" width="3" height="9" rx="1"/><rect x="13.5" y="0" width="3" height="11" rx="1"/></svg>
+      <svg width="15" height="10" viewBox="0 0 16 11" fill="currentColor"><path d="M8 2.2C10.4 2.2 12.6 3.1 14.3 4.7L15.7 3.2C13.6 1.2 10.9 0 8 0S2.4 1.2 .3 3.2L1.7 4.7C3.4 3.1 5.6 2.2 8 2.2Z"/></svg>
+      <svg width="25" height="11" viewBox="0 0 26 12"><rect x="1" y="1.5" width="21" height="9" rx="2.6" fill="none" stroke="currentColor" stroke-opacity=".4"/><rect x="3" y="3.5" width="16" height="5" rx="1.3" fill="currentColor"/></svg>
+    </span></div>
+    <div class="scr">
+      <div class="ms-hd"><div class="t">My Space</div><div class="s">Everything you track, in one place.</div></div>
+
+      <!-- big score -->
+      <div style="display:flex;flex-direction:column;align-items:center;margin:6px 0 16px;">
+        <div class="ringbox" style="width:180px;height:180px;">
+          <svg viewBox="0 0 220 220" width="180" height="180">
+            <circle cx="110" cy="110" r="84" fill="none" stroke="var(--rim)" stroke-width="23" stroke-linecap="round" stroke-dasharray="241.9 528" transform="rotate(-90 110 110)"/>
+            <circle cx="110" cy="110" r="84" fill="none" stroke="var(--rim)" stroke-width="23" stroke-linecap="round" stroke-dasharray="169.3 528" transform="rotate(85 110 110)"/>
+            <circle cx="110" cy="110" r="84" fill="none" stroke="var(--rim)" stroke-width="23" stroke-linecap="round" stroke-dasharray="72.6 528" transform="rotate(210.5 110 110)"/>
+            <circle cx="110" cy="110" r="84" fill="none" stroke="#EFEFF2" stroke-width="17" stroke-linecap="round" stroke-dasharray="241.9 528" transform="rotate(-90 110 110)"/>
+            <circle cx="110" cy="110" r="84" fill="none" stroke="#EFEFF2" stroke-width="17" stroke-linecap="round" stroke-dasharray="169.3 528" transform="rotate(85 110 110)"/>
+            <circle cx="110" cy="110" r="84" fill="none" stroke="#EFEFF2" stroke-width="17" stroke-linecap="round" stroke-dasharray="72.6 528" transform="rotate(210.5 110 110)"/>
+            <circle cx="110" cy="110" r="84" fill="none" stroke="url(#gTrain)" stroke-width="17" stroke-linecap="round" stroke-dasharray="9 528" transform="rotate(-90 110 110)"/>
+            <circle cx="110" cy="110" r="84" fill="none" stroke="url(#gFuel)" stroke-width="17" stroke-linecap="round" stroke-dasharray="71 528" transform="rotate(85 110 110)"/>
+            <circle cx="110" cy="110" r="84" fill="none" stroke="url(#gMove)" stroke-width="17" stroke-linecap="round" stroke-dasharray="53.7 528" transform="rotate(210.5 110 110)"/>
+          </svg>
+          <div class="ring-center"><div class="rc-e">TODAY SCORE</div><div class="rc-n" style="font-size:56px;">27</div><div class="rc-s">JUST GETTING STARTED</div></div>
+        </div>
+        <div style="display:flex;gap:14px;margin-top:8px;">
+          <span style="font-size:9.5px;font-weight:700;color:var(--ink-2);"><b style="color:var(--train);">●</b> Train</span>
+          <span style="font-size:9.5px;font-weight:700;color:var(--ink-2);"><b style="color:var(--fuel);">●</b> Fuel</span>
+          <span style="font-size:9.5px;font-weight:700;color:var(--ink-2);"><b style="color:var(--move);">●</b> Move</span>
+        </div>
+      </div>
+
+      <div class="sl">BODY · HEALTH CONNECT</div>
+      <div class="mgrid">
+        <div class="mcell"><div class="mring" style="background:conic-gradient(var(--sleep) 0 324deg,#E7E7EA 324deg);"><div class="mh">🌙</div></div><div class="mtx"><div class="ml">SLEEP</div><div class="mv">7h 12m</div><div class="ms2">Good</div></div></div>
+        <div class="mcell"><div class="mring" style="background:conic-gradient(var(--energy) 0 292deg,#E7E7EA 292deg);"><div class="mh">🔥</div></div><div class="mtx"><div class="ml">ENERGY</div><div class="mv">486<small> kcal</small></div></div></div>
+        <div class="mcell"><div class="mring" style="background:conic-gradient(var(--accent) 0 304deg,#E7E7EA 304deg);"><div class="mh">⏱️</div></div><div class="mtx"><div class="ml">EXERCISE</div><div class="mv">38<small> min</small></div></div></div>
+        <div class="mcell"><div class="mring" style="background:conic-gradient(var(--move) 0 266deg,#E7E7EA 266deg);"><div class="mh">👟</div></div><div class="mtx"><div class="ml">STEPS</div><div class="mv">7,412</div></div></div>
+        <div class="mcell tile"><div class="ml">❤️ RESTING HR</div><div class="mv">58<small style="font-size:9px;color:var(--ink-3);"> bpm</small></div><div class="spark"><i style="height:8px"></i><i style="height:11px"></i><i style="height:7px"></i><i style="height:10px"></i><i style="height:6px"></i><i style="height:9px"></i></div></div>
+        <div class="mcell tile"><div class="ml">📈 HRV</div><div class="mv">62<small style="font-size:9px;color:var(--ink-3);"> ms</small></div><div class="spark"><i style="height:7px"></i><i style="height:10px"></i><i style="height:8px"></i><i style="height:12px"></i><i style="height:11px"></i><i style="height:13px"></i></div></div>
+      </div>
+
+      <div class="sl" style="margin-top:15px;">PROGRESS · ZEALOVA</div>
+      <div class="mgrid">
+        <div class="mcell"><div class="mring" style="background:conic-gradient(var(--train) 0 216deg,#E7E7EA 216deg);"><div class="mh">🏋️</div></div><div class="mtx"><div class="ml">WORKOUTS</div><div class="mv">3<small> / 5 wk</small></div></div></div>
+        <div class="mcell"><div class="mring" style="background:conic-gradient(var(--fuel) 0 295deg,#E7E7EA 295deg);"><div class="mh">🍗</div></div><div class="mtx"><div class="ml">PROTEIN</div><div class="mv">82<small>% avg</small></div></div></div>
+        <div class="mcell tile"><div class="ml">⚖️ WEIGHT TREND</div><div class="mv">−0.8<small style="font-size:9px;color:var(--ink-3);"> lb / 2wk</small></div><div class="spark"><i style="height:13px;background:#D7C9E6"></i><i style="height:12px;background:#D7C9E6"></i><i style="height:11px;background:#D7C9E6"></i><i style="height:10px;background:#D7C9E6"></i><i style="height:9px;background:#D7C9E6"></i><i style="height:8px;background:#D7C9E6"></i></div></div>
+        <div class="mcell tile"><div class="ml">🔥 LOG STREAK</div><div class="mv">6<small style="font-size:9px;color:var(--ink-3);"> days</small></div></div>
+      </div>
+
+      <div class="ms-edit">✎ &nbsp;Customize your metrics</div>
+    </div>
+    <div class="nav">
+      <div class="ni"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20h14V9.5"/></svg><span class="nl">Home</span></div>
+      <div class="ni"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 9v6M4 10.5v3M17.5 9v6M20 10.5v3M6.5 12h11"/></svg><span class="nl">Workouts</span></div>
+      <div class="ni"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3v7a2 2 0 0 0 4 0V3M7 12v9M16 3c-1.6 0-2.8 2.2-2.8 5.5 0 2.2 1.1 3.3 2.8 3.5v9"/></svg><span class="nl">Nutrition</span></div>
+      <div class="ni"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M15.6 8.4l-2.1 5.1-5.1 2.1z"/></svg><span class="nl">Discover</span></div>
+      <div class="ni on"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.6"/><path d="M5.5 20c0-3.7 3-6 6.5-6s6.5 2.3 6.5 6"/></svg><span class="nl">My Space</span></div>
+    </div>
+    <div class="hi"></div>
+  </div>
+  <div class="pcap"><div class="n">My Space — the metrics hub</div><div class="d">A full screen, so it just scrolls — no swipe, no height jump. Lives on the "You" tab, renamed My Space.</div></div>
+  </div>
+
+</div>
+
+<p class="lede" style="margin-top:40px;max-width:720px;">
+<b>Why this is the right call:</b> a swipeable card with different-height pages
+would make the home screen reflow every swipe — exactly what you spotted. A
+fixed home card + a dedicated My Space screen fixes it cleanly: the home stays
+calm and stable, and My Space becomes the "focus" place to study your
+numbers. It also gives the <b>You</b> tab a real job — rename it
+<b>My Space</b>.</p>
+
+</body>
+</html>

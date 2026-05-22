@@ -10,6 +10,7 @@ import '../../../data/providers/gym_profile_provider.dart';
 import '../../../data/providers/today_workout_provider.dart';
 import '../../../data/repositories/workout_repository.dart';
 import '../../../data/services/haptic_service.dart';
+import '../../../widgets/tooltips/tooltip_anchors.dart';
 import '../../home/widgets/hero_workout_carousel.dart';
 import '../../home/widgets/hero_workout_card.dart' show GeneratingHeroCard;
 import '../../home/widgets/week_calendar_strip.dart';
@@ -60,9 +61,16 @@ class _WorkoutPlannerSectionState
         // strip sits directly under the switcher with no wasted gap.
         _buildWeekCalendarStrip(),
         const SizedBox(height: 8),
-        SizedBox(
-          height: HeroWorkoutCarousel.cardHeight,
-          child: _buildContent(todayWorkoutState),
+        // `workouts_v1` tour step 1 ("Start a workout") anchors here — the
+        // today/hero workout card only, NOT the date strip above. Keying
+        // the whole section made the spotlight ring the strip + card as one
+        // oversized block; this scopes it to the card the copy refers to.
+        KeyedSubtree(
+          key: TooltipAnchors.workoutsToday,
+          child: SizedBox(
+            height: HeroWorkoutCarousel.cardHeight,
+            child: _buildContent(todayWorkoutState),
+          ),
         ),
       ],
     );

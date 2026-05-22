@@ -79,7 +79,13 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
     // Track the screen view and resolve the paywall A/B experiments.
     Future.microtask(() async {
       final posthog = ref.read(posthogServiceProvider);
-      posthog.capture(eventName: 'paywall_pricing_viewed');
+      // Onboarding conversion v6: attribute the view to the user's "why"
+      // so the personalized-headline variant can be measured.
+      final primaryWhy = ref.read(preAuthQuizProvider).primaryWhy;
+      posthog.capture(
+        eventName: 'paywall_pricing_viewed',
+        properties: primaryWhy != null ? {'primary_why': primaryWhy} : null,
+      );
       final exp = await loadPaywallExperiments(
         posthog,
         surface: 'soft_paywall',
@@ -970,6 +976,25 @@ class _PaywallPricingScreenState extends ConsumerState<PaywallPricingScreen> {
   String _heroHeadline() {
     try {
       final quizData = ref.read(preAuthQuizProvider);
+
+      // Onboarding conversion v6: when the user told us their "why" on the
+      // first onboarding screen, echo it back here — the emotional anchor
+      // lands harder than a goal label right before the price. The
+      // concrete weight delta still shows on the weight-projection screen
+      // earlier in the funnel.
+      const whyHeadlines = {
+        'feel_confident': 'Your plan to feel confident in your body',
+        'keep_up': 'Your plan to keep up with your family',
+        'event': 'Your plan to be ready for your event',
+        'health': 'Your plan to take charge of your health',
+        'feel_strong': 'Your plan to feel strong and capable',
+        'energy': 'Your plan for more energy, less stress',
+      };
+      final why = quizData.primaryWhy;
+      if (why != null && whyHeadlines.containsKey(why)) {
+        return whyHeadlines[why]!;
+      }
+
       final cur = quizData.weightKg;
       final goal = quizData.goalWeightKg;
       final useMetric = quizData.useMetricUnits;

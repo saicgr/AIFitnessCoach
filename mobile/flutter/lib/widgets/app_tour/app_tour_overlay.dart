@@ -134,13 +134,28 @@ class _AppTourOverlayState extends ConsumerState<AppTourOverlay>
     final targetRect = _getTargetRect(step.targetKey);
     final isTargetFound = targetRect != Rect.zero;
 
+    // Oversized-target rule (mirrors EmptyStateTipTour): a target that
+    // spans most of the usable height has no meaningful spotlight — a
+    // near-full-screen cutout just dims thin margins and leaves nowhere
+    // to place the card. Treat it as targetless: even full dim, no
+    // cutout, card bottom-anchored.
+    final mqPadding = MediaQuery.of(context).padding;
+    final usableHeight =
+        screenSize.height - mqPadding.top - mqPadding.bottom;
+    final isOversized = isTargetFound &&
+        usableHeight > 0 &&
+        targetRect.height >= usableHeight * 0.7;
+    // Draw a real spotlight cutout + adjacent card only for a found,
+    // reasonably-sized target.
+    final spotlightActive = isTargetFound && !isOversized;
+
     // Check if target is off-screen (above or below visible area)
     final isOffScreen = isTargetFound &&
         (targetRect.bottom < 0 || targetRect.top > screenSize.height);
 
     // Use previous rect as animation start, then update for next step
     final beginRect = _previousRect == Rect.zero ? targetRect : _previousRect;
-    final endRect = isTargetFound ? targetRect : Rect.zero;
+    final endRect = spotlightActive ? targetRect : Rect.zero;
 
     // Continuously re-measure the target rect while the tour is visible.
     // Async data loads (e.g. profile) can shift widgets after the initial
@@ -231,18 +246,26 @@ class _AppTourOverlayState extends ConsumerState<AppTourOverlay>
     // and scrolls the description if it would exceed this estimate, so the
     // dots + Next/Got it footer are ALWAYS rendered on every step.
     const estimatedCardHeight = 260.0;
-    final safeBottom = MediaQuery.of(context).padding.bottom;
-    final safeTop = MediaQuery.of(context).padding.top;
+    final safeBottom = mqPadding.bottom;
+    final safeTop = mqPadding.top;
 
-    final rawTop = isTargetFound
-        ? _tooltipTop(
-            spotlightRect: targetRect,
-            cardHeight: estimatedCardHeight,
-            screenHeight: screenSize.height,
-            position: step.position,
-            spotlightPadding: spotlightPadding,
-          )
-        : (screenSize.height - estimatedCardHeight) / 2;
+    final double rawTop;
+    if (spotlightActive) {
+      rawTop = _tooltipTop(
+        spotlightRect: targetRect,
+        cardHeight: estimatedCardHeight,
+        screenHeight: screenSize.height,
+        position: step.position,
+        spotlightPadding: spotlightPadding,
+      );
+    } else if (isOversized) {
+      // Oversized target → bottom-anchor the card (the clamp below keeps
+      // it fully on-screen above the bottom safe area).
+      rawTop = screenSize.height - estimatedCardHeight - safeBottom - 24.0;
+    } else {
+      // Target genuinely not found → centered card with a plain full dim.
+      rawTop = (screenSize.height - estimatedCardHeight) / 2;
+    }
     // Hard clamp so the card (and its dots + Next button footer) is always
     // fully on-screen regardless of how tall the description renders.
     final maxTop =

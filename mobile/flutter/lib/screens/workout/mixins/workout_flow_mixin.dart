@@ -125,6 +125,11 @@ mixin WorkoutFlowMixin<T extends StatefulWidget> on State<T> {
     });
     fetchMediaForExercise(exercises[0]);
     showCoachTipIfNeeded();
+    // Active phase is now on screen — fire the tier tour that
+    // `triggerWorkoutTour()` deferred while warmup was up. No-op if the
+    // tour was already seen or another tour is visible (both handled
+    // inside WorkoutTourService.maybeShowForTier).
+    triggerWorkoutTour();
   }
 
   /// Handle warmup skip
@@ -1065,6 +1070,18 @@ mixin WorkoutFlowMixin<T extends StatefulWidget> on State<T> {
   /// `ref.listen(workoutUiModeProvider, ...)` that calls
   /// [WorkoutTourService.abortIfTierTourRunning] then re-invokes this).
   void triggerWorkoutTour() {
+    // The tier tour spotlights active-phase controls (exercise card, set
+    // table, RIR bar, rest timer, swap/AI chips) — none of which exist
+    // during the warmup or stretch phases. Firing it then would render
+    // the tour against the warmup screen, find no targets, and burn the
+    // one-time `tour_seen_<tier>` flag without the user ever seeing the
+    // real tour. Only fire once the active phase is on screen;
+    // `handleWarmupComplete()` re-invokes this the moment warmup ends.
+    if (currentPhase != WorkoutPhase.active) {
+      debugPrint(
+          '🔍 [WorkoutTour] Deferring tour — phase is $currentPhase, not active');
+      return;
+    }
     final tier = ref.read(workoutUiModeProvider).mode;
     WorkoutTourService.maybeShowForTier(ref, tier);
   }

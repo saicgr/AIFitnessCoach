@@ -16,7 +16,8 @@ import 'package:fitwiz/core/constants/branding.dart';
 /// framed as transformation, not a sequence of feature ads.
 ///
 /// Two CTAs:
-///   - Primary: "Build My Plan" → /pre-auth-quiz (new user funnel)
+///   - Primary: "Build My Plan" → /onboarding-why → /pre-auth-quiz (new
+///     user funnel; the why screen is the v6 emotional anchor)
 ///   - Secondary: "I have an account" → /sign-in?returning=true
 class IntroScreen extends StatefulWidget {
   const IntroScreen({super.key});
@@ -50,7 +51,10 @@ class _IntroScreenState extends State<IntroScreen>
 
   void _onGetStarted() {
     HapticFeedback.mediumImpact();
-    context.push('/pre-auth-quiz');
+    // Onboarding conversion v6: the "What's your why" emotional anchor now
+    // leads the funnel. If its remote kill-switch is off, that screen
+    // forwards itself straight into /pre-auth-quiz.
+    context.push('/onboarding-why');
   }
 
   void _onSignIn() {

@@ -255,7 +255,14 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen>
           // `widgets/tooltips/tours/discover_tour.dart`. The overlay
           // uses `Positioned.fill` so the painter can dim the whole
           // screen and ring the highlighted target.
-          DiscoverTour.overlay(),
+          //
+          // Gated on `!_isFirstEver`: on a true cold install (exactly when
+          // this first-run tour runs) `CacheFirstView` paints a skeleton,
+          // and the step-1/2 anchors (`discoverRisingStars`,
+          // `discoverNearYou`) live inside the real content. Mounting the
+          // tour only after the skeleton is replaced means steps 1-2 get
+          // a real spotlight on the first frame instead of a blank dim.
+          if (!_isFirstEver) DiscoverTour.overlay(),
 
           // Floating iOS 26 Liquid Glass board-tab bar. Keeps the
           // XP/Volume/Streaks tabs in the thumb zone above the

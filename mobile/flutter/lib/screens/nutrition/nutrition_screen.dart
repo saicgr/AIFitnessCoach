@@ -117,6 +117,17 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
   /// after first run (the vast majority of the app's life) no key exists.
   bool _nutritionTourActive = false;
 
+  /// Completes once [_resolveNutritionTourActive] has decided whether the
+  /// first-run tour will run. The weekly-check-in flow awaits this so it
+  /// can never race the tour: if the tour is going to show, the check-in
+  /// defers; if not, it shows immediately.
+  Future<void>? _tourResolution;
+
+  /// Set when the weekly check-in is due but was deferred because the
+  /// first-run tour is still on screen. The tour's `onDismissed` callback
+  /// consumes this to show the check-in once the tour is genuinely gone.
+  bool _weeklyCheckinPendingAfterTour = false;
+
   /// Sparse set of `yyyy-MM-dd` (local) keys for days with at least one
   /// food log. Drives the dot indicator under each day cell in the date
   /// strip. Refreshed on init + after every successful log.
@@ -146,7 +157,7 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
     // network refresh that follows is stale-while-revalidate.
     _hydrateFromDisk();
     _loadData();
-    _resolveNutritionTourActive();
+    _tourResolution = _resolveNutritionTourActive();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(posthogServiceProvider).capture(eventName: 'nutrition_screen_viewed');
     });
@@ -175,7 +186,26 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
   /// Resolve whether the first-run `nutrition_v1` tour still needs to run.
   /// Only then are the tooltip-anchor GlobalKeys attached (see
   /// [_nutritionTourActive]). Once seen, this stays false forever.
+  ///
+  /// Suppressed (but NOT marked seen) when the screen is deep-linked to
+  /// immediately open the log-meal sheet / camera / barcode / check-in —
+  /// otherwise the tour spotlight renders on top of that sheet and
+  /// overshadows it (e.g. tapping + in Nutrition from Home on first run).
+  /// The `has_seen_` flag stays unset, so the tour still runs the next
+  /// time the user opens Nutrition without a deep link.
+  /// True when this screen was opened to auto-present a sheet (a meal type,
+  /// the camera, the barcode scanner, or a reminder check-in). Both the
+  /// first-run tour and the weekly check-in suppress themselves in this
+  /// case so neither lands on top of that auto-opened sheet.
+  bool get _deepLinkedToSheet =>
+      widget.initialMeal != null ||
+      widget.autoOpenCamera ||
+      widget.autoOpenBarcode ||
+      (widget.openCheckinLogId != null &&
+          widget.openCheckinLogId!.isNotEmpty);
+
   Future<void> _resolveNutritionTourActive() async {
+    if (_deepLinkedToSheet) return;
     final sp = await SharedPreferences.getInstance();
     final seen =
         sp.getBool('has_seen_empty_tour_${TooltipIds.nutrition}') ?? false;
@@ -292,6 +322,19 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
     final target = widget.initialTab;
     if (target >= 0 && target < _tabController.length && _tabController.index != target) {
       _tabController.animateTo(target);
+    }
+    // First-run tour was suppressed if the initial visit deep-linked
+    // straight into the log-meal sheet (see _resolveNutritionTourActive).
+    // When the user later returns to Nutrition WITHOUT a deep link, give
+    // the still-unseen tour a chance to run instead of losing it for the
+    // whole session.
+    if (!_nutritionTourActive &&
+        widget.initialMeal == null &&
+        !widget.autoOpenCamera &&
+        !widget.autoOpenBarcode &&
+        (widget.openCheckinLogId == null ||
+            widget.openCheckinLogId!.isEmpty)) {
+      _tourResolution = _resolveNutritionTourActive();
     }
   }
 
@@ -430,15 +473,30 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
         return;
       }
 
-      // Defer if the first-run nutrition tour hasn't been seen yet —
-      // otherwise the bottom-sheet barrier scrims the spotlight tooltip
-      // and the two overlays collide. The tour auto-marks itself seen
-      // after a 1s impression, so the next visit gets the check-in.
-      final sp = await SharedPreferences.getInstance();
-      final tourSeen =
-          sp.getBool('has_seen_empty_tour_${TooltipIds.nutrition}') ?? false;
-      if (!tourSeen) {
-        debugPrint('[NutritionScreen] Deferring weekly check-in — nutrition tour not yet seen');
+      // Never show the check-in over a sheet this screen auto-opened
+      // from a deep link — that sheet owns the screen on this visit.
+      if (_deepLinkedToSheet) {
+        debugPrint('[NutritionScreen] Skipping weekly check-in — screen deep-linked to a sheet');
+        return;
+      }
+
+      // Defer if the first-run nutrition tour is still on screen —
+      // otherwise the check-in's bottom-sheet barrier scrims the
+      // spotlight tooltip and the two overlays collide. Awaiting
+      // `_tourResolution` first closes the race where preferences load
+      // before the tour has even decided whether to run. The check-in
+      // is re-triggered by the tour's `onDismissed` callback (see
+      // `_onNutritionTourDismissed`) once the user closes the tour.
+      //
+      // NOTE: this gates on whether the tour is *visible*, not on the
+      // persisted `has_seen_` flag — the tour auto-marks that flag after
+      // a 1s impression but stays on screen until the user clicks
+      // through it, so the flag alone let the check-in surface on top.
+      await _tourResolution;
+      if (!mounted) return;
+      if (_nutritionTourActive) {
+        _weeklyCheckinPendingAfterTour = true;
+        debugPrint('[NutritionScreen] Deferring weekly check-in — first-run tour still on screen');
         return;
       }
 
@@ -451,6 +509,24 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
       }
     } else {
       debugPrint('[NutritionScreen] Weekly check-in not due. Enabled: ${prefs.weeklyCheckinEnabled}, Days since: ${prefs.daysSinceLastCheckin}');
+    }
+  }
+
+  /// Called when the user actively dismisses the first-run tour (X / final
+  /// Next / scrim tap). Drops the tour overlay from the tree and, if the
+  /// weekly check-in was deferred while the tour was up, shows it now.
+  void _onNutritionTourDismissed() {
+    if (mounted) {
+      setState(() => _nutritionTourActive = false);
+    } else {
+      _nutritionTourActive = false;
+    }
+    if (_weeklyCheckinPendingAfterTour) {
+      _weeklyCheckinPendingAfterTour = false;
+      // Re-run the full due/dismiss-count check — `_checkAndShowWeeklyCheckin`
+      // re-reads preferences and applies its own 500ms settle delay so the
+      // sheet opens after the tour overlay has finished tearing down.
+      _checkAndShowWeeklyCheckin();
     }
   }
 
@@ -696,9 +772,10 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
                         controller: _tabController,
                         children: [
                           // Daily Tab — anchor for step 1 of `nutrition_v1`
-                          // (Log a meal). The tab as a whole is haloed so
-                          // the spotlight follows whichever meal row is on
-                          // screen.
+                          // (Log a meal). The whole tab is the anchor; the
+                          // tour treats an anchor this large as targetless
+                          // (no spotlight cutout) and renders the step as a
+                          // clean bottom-anchored card above the tab pill.
                           _tourAnchor(
                             TooltipAnchors.nutritionLogMeal,
                             DailyTab(
@@ -799,7 +876,8 @@ class _NutritionScreenState extends ConsumerState<NutritionScreen>
       // First-run spotlight tour. Anchors + copy live in
       // `widgets/tooltips/tours/nutrition_tour.dart`. Mounted only while the
       // tour is pending — same gate as its anchor keys (see _tourAnchor).
-      if (_nutritionTourActive) NutritionTour.overlay(),
+      if (_nutritionTourActive)
+        NutritionTour.overlay(onDismissed: _onNutritionTourDismissed),
       ]),
       floatingActionButton: null,
     );

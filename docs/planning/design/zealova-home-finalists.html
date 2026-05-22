@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Zealova home — 3 finalists (01 · 09 · 10)</title>
+<style>
+  :root {
+    --accent:#EC8B2C; --accent-deep:#D2741A; --accent-tint:#FDF1E3;
+    --protein:#8B5CF6; --carbs:#2BB6C4; --fat:#E0883C;
+    --train:#EC8B2C; --fuel:#3FA66B; --move:#3E8FD0;
+    --ink:#1A1A1C; --ink-2:#6B6B70; --ink-3:#9A9AA0;
+    --line:#ECECEE; --surface:#F6F6F7;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-font-smoothing:antialiased; }
+  body {
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",sans-serif;
+    background:radial-gradient(1300px 760px at 50% -4%, #2c2c32 0%, transparent 58%), #111114;
+    min-height:100vh; padding:46px 24px 80px;
+  }
+  .head { text-align:center; }
+  .head h1 { color:#ededf2; font-size:23px; font-weight:800; }
+  .head p { color:#9a9aa3; font-size:13.5px; max-width:680px; margin:8px auto 0; line-height:1.6; }
+  .head p b { color:#d7d7dd; }
+  .grid { display:flex; flex-wrap:wrap; gap:46px 38px; justify-content:center; margin-top:34px; }
+  .cell { width:366px; display:flex; flex-direction:column; align-items:center; }
+
+  .phone { width:366px; height:760px; border-radius:52px; position:relative; overflow:hidden; background:#fff;
+    box-shadow:0 0 0 12px #1d1d20, 0 0 0 14px #3a3a3f, 0 34px 66px -20px rgba(0,0,0,.7); }
+  .island { position:absolute; top:11px; left:50%; transform:translateX(-50%); width:112px; height:32px; background:#000; border-radius:19px; z-index:50; }
+  .sb { position:absolute; top:0; left:0; right:0; height:50px; z-index:40; display:flex; align-items:flex-end; justify-content:space-between; padding:0 27px 5px; font-size:14px; font-weight:600; color:var(--ink); }
+  .sb .r { display:flex; gap:5px; align-items:center; }
+  .scr { position:absolute; inset:0; padding-top:50px; overflow:hidden; }
+  .pad { padding:0 16px; }
+
+  /* header */
+  .hd { display:flex; align-items:flex-start; justify-content:space-between; padding:6px 16px 10px; }
+  .hd .gs { font-size:13px; color:var(--ink-2); font-weight:500; }
+  .hd .gl { font-size:23px; font-weight:800; color:var(--ink); letter-spacing:-.5px; }
+  .hd-r { display:flex; align-items:center; gap:6px; padding-top:3px; }
+  .streak { display:flex; align-items:center; gap:6px; background:var(--surface); border:1px solid var(--line); border-radius:999px; padding:4px 9px 4px 5px; }
+  .sr { width:21px; height:21px; border-radius:50%; background:conic-gradient(var(--accent) 0 64%,#E4E4E6 64% 100%); display:flex; align-items:center; justify-content:center; }
+  .sr span { width:14px; height:14px; border-radius:50%; background:#fff; display:flex; align-items:center; justify-content:center; font-size:8.5px; font-weight:800; }
+  .streak .l { font-size:10px; font-weight:700; color:var(--ink); line-height:1.15; }
+  .streak .l small { font-weight:500; color:var(--ink-3); }
+  .streak .f { font-size:11px; font-weight:800; color:var(--accent-deep); }
+  .ib { width:29px; height:29px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:var(--ink-2); }
+
+  /* banner */
+  .bn { margin:0 16px 12px; background:linear-gradient(135deg,#fff,var(--accent-tint) 150%); border:1px solid #F2DFC7; border-radius:13px; padding:8px 10px; display:flex; align-items:center; gap:9px; }
+  .bn-i { flex:0 0 30px; width:30px; height:30px; border-radius:9px; background:var(--accent-tint); border:1px solid #F2DFC7; display:flex; align-items:center; justify-content:center; font-size:15px; }
+  .bn-b { flex:1; min-width:0; }
+  .bn-t { font-size:12px; font-weight:800; color:var(--ink); }
+  .bn-s { font-size:10px; color:var(--ink-2); }
+  .bn-cta { font-size:10.5px; font-weight:800; color:#fff; background:var(--accent); padding:5px 9px; border-radius:999px; }
+  .bn-x { width:20px; height:20px; border-radius:50%; background:var(--surface); color:var(--ink-3); display:flex; align-items:center; justify-content:center; font-size:9px; font-weight:700; }
+
+  .sl { font-size:9.5px; font-weight:800; letter-spacing:.7px; color:var(--ink-3); text-transform:uppercase; padding:0 17px; margin-bottom:7px; display:flex; justify-content:space-between; }
+  .sl .lk { color:var(--accent-deep); }
+
+  /* quick actions */
+  .qa { display:flex; justify-content:space-between; padding:0 12px; }
+  .qi { display:flex; flex-direction:column; align-items:center; gap:4px; flex:1; }
+  .qt { width:42px; height:42px; border-radius:13px; background:var(--surface); border:1px solid var(--line); display:flex; align-items:center; justify-content:center; font-size:17px; }
+  .qi.p .qt { background:var(--accent); border-color:var(--accent); }
+  .ql { font-size:9px; font-weight:600; color:var(--ink-2); }
+
+  /* coach strip */
+  .coach { background:#fff; border:1px solid #F2DFC7; border-radius:13px; padding:8px 8px 8px 10px; display:flex; align-items:center; gap:9px; }
+  .cav { width:26px; height:26px; border-radius:50%; background:linear-gradient(145deg,var(--accent),var(--accent-deep)); color:#fff; display:flex; align-items:center; justify-content:center; font-size:11px; flex:0 0 26px; }
+  .ctx { flex:1; font-size:10.5px; font-weight:600; color:var(--ink); line-height:1.3; }
+  .ctx b { font-weight:800; }
+  .cc { width:29px; height:29px; border-radius:9px; background:var(--accent); color:#fff; display:flex; align-items:center; justify-content:center; flex:0 0 29px; }
+
+  /* workout hero */
+  .wo { height:124px; border-radius:17px; position:relative; overflow:hidden; background:linear-gradient(180deg,rgba(20,12,2,.05),rgba(20,12,2,.78)),linear-gradient(125deg,#E89A3E,#C96E18); }
+  .wo.sm { height:100px; }
+  .wo-f { position:absolute; right:0; bottom:-10px; font-size:90px; opacity:.15; filter:grayscale(1); transform:rotate(-8deg); }
+  .wo-bg { position:absolute; top:9px; left:11px; background:rgba(255,255,255,.22); color:#fff; font-size:8.5px; font-weight:800; padding:3px 7px; border-radius:999px; }
+  .wo-b { position:absolute; left:12px; right:12px; bottom:11px; }
+  .wo-n { color:#fff; font-size:18px; font-weight:800; }
+  .wo-m { color:rgba(255,255,255,.92); font-size:9.5px; font-weight:700; margin-top:1px; }
+  .wo-p { position:absolute; right:12px; bottom:11px; width:40px; height:40px; border-radius:50%; background:#fff; display:flex; align-items:center; justify-content:center; }
+  .wo-p::after { content:""; width:0; height:0; border-left:12px solid var(--accent-deep); border-top:8px solid transparent; border-bottom:8px solid transparent; margin-left:3px; }
+
+  /* nutrition */
+  .nut { background:#fff; border:1px solid var(--line); border-radius:15px; padding:12px; }
+  .nut-t { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:9px; }
+  .nut-l { font-size:9.5px; font-weight:800; letter-spacing:.4px; color:var(--ink-3); }
+  .nut-k b { font-size:16px; font-weight:800; color:var(--ink); }
+  .nut-k span { font-size:9.5px; color:var(--ink-3); font-weight:600; }
+  .mc { margin-bottom:7px; } .mc:last-child { margin-bottom:0; }
+  .mr { display:flex; justify-content:space-between; font-size:10px; margin-bottom:3px; }
+  .mr .n { font-weight:700; color:var(--ink); } .mr .v { font-weight:600; color:var(--ink-3); }
+  .bar { height:5.5px; border-radius:99px; background:#E7E8EA; overflow:hidden; }
+  .bar i { display:block; height:100%; border-radius:99px; }
+
+  /* rings */
+  .ring { border-radius:50%; display:flex; align-items:center; justify-content:center; flex:0 0 auto; }
+  .ring .h { border-radius:50%; background:#fff; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+
+  /* score breakdown row (01) */
+  .brk { }
+  .brk-row { margin-bottom:9px; }
+  .brk-row:last-child { margin-bottom:0; }
+  .brk-top { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:4px; }
+  .brk-l { font-size:10px; font-weight:800; color:var(--ink); }
+  .brk-l b { font-size:8px; font-weight:700; color:var(--ink-3); }
+  .brk-v { font-size:9px; font-weight:700; color:var(--ink-2); }
+
+  /* nav */
+  .nav { position:absolute; left:13px; right:13px; bottom:14px; z-index:45; height:60px; background:rgba(255,255,255,.93); backdrop-filter:blur(16px) saturate(1.6); border:1px solid var(--line); border-radius:24px; display:flex; align-items:center; justify-content:space-around; box-shadow:0 13px 28px -12px rgba(0,0,0,.28); }
+  .ni { display:flex; flex-direction:column; align-items:center; gap:3px; flex:1; color:var(--ink-3); }
+  .ni .nl { font-size:8.5px; font-weight:700; }
+  .ni.on { color:var(--accent-deep); }
+  .hi { position:absolute; bottom:6px; left:50%; transform:translateX(-50%); width:114px; height:5px; border-radius:99px; background:#1a1a1c; opacity:.82; z-index:46; }
+
+  .cap { margin-top:14px; text-align:center; }
+  .cap .num { display:inline-block; font-size:10px; font-weight:800; color:var(--accent); background:#2a2118; border:1px solid #4a3a22; padding:3px 10px; border-radius:999px; margin-bottom:7px; }
+  .cap .n { font-size:15px; font-weight:800; color:#ededf2; }
+  .cap .d { font-size:12px; color:#9a9aa3; margin-top:5px; line-height:1.55; }
+</style>
+</head>
+<body>
+
+<div class="head">
+  <h1>Zealova home — 3 finalists</h1>
+  <p>01 · 09 · 10, polished with the real labelled nav. All ring-based, all
+  showing your <b>Today Score</b> (Train / Fuel / Move). No-ring options
+  dropped. Pick one — or one to blend.</p>
+</div>
+
+<div class="grid">
+
+<!-- ===================== FINALIST 01 ===================== -->
+<div class="cell">
+  <div class="phone">
+    <div class="island"></div>
+    <div class="sb"><span>12:52</span><span class="r">
+      <svg width="16" height="10" viewBox="0 0 17 11" fill="currentColor"><rect x="0" y="6" width="3" height="5" rx="1"/><rect x="4.5" y="4" width="3" height="7" rx="1"/><rect x="9" y="2" width="3" height="9" rx="1"/><rect x="13.5" y="0" width="3" height="11" rx="1"/></svg>
+      <svg width="15" height="10" viewBox="0 0 16 11" fill="currentColor"><path d="M8 2.2C10.4 2.2 12.6 3.1 14.3 4.7L15.7 3.2C13.6 1.2 10.9 0 8 0S2.4 1.2 .3 3.2L1.7 4.7C3.4 3.1 5.6 2.2 8 2.2Z"/></svg>
+      <svg width="25" height="11" viewBox="0 0 26 12"><rect x="1" y="1.5" width="21" height="9" rx="2.6" fill="none" stroke="currentColor" stroke-opacity=".4"/><rect x="3" y="3.5" width="16" height="5" rx="1.3" fill="currentColor"/></svg>
+    </span></div>
+    <div class="scr">
+      <div class="hd"><div><div class="gs">Good afternoon,</div><div class="gl">Sai</div></div>
+        <div class="hd-r"><div class="streak"><div class="sr"><span>2</span></div><div class="l">Lv 2<br><small>64%</small></div><div class="f">🔥3</div></div>
+          <div class="ib"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg></div></div></div>
+      <div class="bn"><div class="bn-i">🎁</div><div class="bn-b"><div class="bn-t">3 crates ready to open</div><div class="bn-s">Tap to claim your streak rewards</div></div><div class="bn-cta">Open all</div><div class="bn-x">✕</div></div>
+
+      <div class="sl">TODAY SCORE<span class="lk">How it works</span></div>
+      <div class="pad" style="margin-bottom:11px;">
+        <div style="background:#fff;border:1px solid var(--line);border-radius:17px;overflow:hidden;">
+          <div style="display:flex;gap:13px;align-items:center;padding:13px;">
+            <div class="ring" style="width:120px;height:120px;background:conic-gradient(var(--accent) 0 97deg,#ECECEE 97deg 360deg);">
+              <div class="h" style="width:94px;height:94px;">
+                <div style="font-size:38px;font-weight:850;color:var(--ink);letter-spacing:-2px;line-height:.95;">27</div>
+                <div style="font-size:8px;font-weight:800;color:var(--accent-deep);letter-spacing:.3px;">LEG DAY AHEAD</div>
+              </div>
+            </div>
+            <div class="brk" style="flex:1;">
+              <div class="brk-row"><div class="brk-top"><div class="brk-l">Train <b>50%</b></div><div class="brk-v">Not started</div></div><div class="bar"><i style="width:3%;background:var(--train)"></i></div></div>
+              <div class="brk-row"><div class="brk-top"><div class="brk-l">Fuel <b>35%</b></div><div class="brk-v">13/102g protein</div></div><div class="bar"><i style="width:42%;background:var(--fuel)"></i></div></div>
+              <div class="brk-row"><div class="brk-top"><div class="brk-l">Move <b>15%</b></div><div class="brk-v">7.4k / 10k</div></div><div class="bar"><i style="width:74%;background:var(--move)"></i></div></div>
+            </div>
+          </div>
+          <div style="background:linear-gradient(135deg,var(--accent-tint),#fff 130%);border-top:1px solid #F2DFC7;padding:9px 11px;display:flex;align-items:center;gap:8px;">
+            <div class="cav" style="width:22px;height:22px;flex:0 0 22px;font-size:10px;">✦</div>
+            <div style="flex:1;font-size:10.5px;font-weight:600;color:var(--ink);">Finish leg day to jump to <b style="font-weight:800;">77</b>.</div>
+            <div style="font-size:13px;color:var(--accent-deep);">›</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="qa" style="margin-bottom:12px;">
+        <div class="qi p"><div class="qt">✦</div><div class="ql">Coach</div></div><div class="qi"><div class="qt">🍽️</div><div class="ql">Log food</div></div><div class="qi"><div class="qt">📖</div><div class="ql">Scan menu</div></div><div class="qi"><div class="qt">💧</div><div class="ql">Water</div></div><div class="qi"><div class="qt">⚖️</div><div class="ql">Weight</div></div><div class="qi"><div class="qt">⋯</div><div class="ql">More</div></div>
+      </div>
+
+      <div class="sl">TODAY'S TRAINING<span class="lk">This week</span></div>
+      <div class="pad"><div class="wo"><div class="wo-f">🏋️</div><div class="wo-bg">▦ TODAY</div><div class="wo-b"><div class="wo-n">Birthday Blitz Lower</div><div class="wo-m">LEGS · 60 MIN · 7 EXERCISES</div></div><div class="wo-p"></div></div></div>
+    </div>
+    <div class="nav">
+      <div class="ni on"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20h14V9.5"/></svg><span class="nl">Home</span></div>
+      <div class="ni"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 9v6M4 10.5v3M17.5 9v6M20 10.5v3M6.5 12h11"/></svg><span class="nl">Workouts</span></div>
+      <div class="ni"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3v7a2 2 0 0 0 4 0V3M7 12v9M16 3c-1.6 0-2.8 2.2-2.8 5.5 0 2.2 1.1 3.3 2.8 3.5v9"/></svg><span class="nl">Nutrition</span></div>
+      <div class="ni"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M15.6 8.4l-2.1 5.1-5.1 2.1z"/></svg><span class="nl">Discover</span></div>
+      <div class="ni"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.6"/><path d="M5.5 20c0-3.7 3-6 6.5-6s6.5 2.3 6.5 6"/></svg><span class="nl">You</span></div>
+    </div>
+    <div class="hi"></div>
+  </div>
+  <div class="cap"><div class="num">FINALIST 01</div><div class="n">Single score ring</div>
+    <div class="d">Ring + breakdown in one card with a built-in coach line.
+    Bars (not Google's pills) + the coach footer = reads as Zealova.</div></div>
+</div>
+
+<!-- ===================== FINALIST 09 ===================== -->
+<div class="cell">
+  <div class="phone">
+    <div class="island"></div>
+    <div class="sb"><span>12:52</span><span class="r">
+      <svg width="16" height="10" viewBox="0 0 17 11" fill="currentColor"><rect x="0" y="6" width="3" height="5" rx="1"/><rect x="4.5" y="4" width="3" height="7" rx="1"/><rect x="9" y="2" width="3" height="9" rx="1"/><rect x="13.5" y="0" width="3" height="11" rx="1"/></svg>
+      <svg width="15" height="10" viewBox="0 0 16 11" fill="currentColor"><path d="M8 2.2C10.4 2.2 12.6 3.1 14.3 4.7L15.7 3.2C13.6 1.2 10.9 0 8 0S2.4 1.2 .3 3.2L1.7 4.7C3.4 3.1 5.6 2.2 8 2.2Z"/></svg>
+      <svg width="25" height="11" viewBox="0 0 26 12"><rect x="1" y="1.5" width="21" height="9" rx="2.6" fill="none" stroke="currentColor" stroke-opacity=".4"/><rect x="3" y="3.5" width="16" height="5" rx="1.3" fill="currentColor"/></svg>
+    </span></div>
+    <div class="scr">
+      <div class="hd"><div><div class="gs">Good afternoon,</div><div class="gl">Sai</div></div>
+        <div class="hd-r"><div class="streak"><div class="sr"><span>2</span></div><div class="l">Lv 2<br><small>64%</small></div><div class="f">🔥3</div></div>
+          <div class="ib"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg></div></div></div>
+      <div class="bn"><div class="bn-i">🎁</div><div class="bn-b"><div class="bn-t">3 crates ready to open</div><div class="bn-s">Tap to claim your streak rewards</div></div><div class="bn-cta">Open all</div><div class="bn-x">✕</div></div>
+
+      <div class="pad" style="display:flex;flex-direction:column;gap:9px;">
+        <div style="display:flex;gap:9px;">
+          <div style="flex:1.04;background:#fff;border:1px solid var(--line);border-radius:16px;padding:12px;display:flex;flex-direction:column;align-items:center;">
+            <div style="font-size:8.5px;font-weight:800;color:var(--ink-3);align-self:flex-start;letter-spacing:.4px;">TODAY SCORE</div>
+            <div class="ring" style="width:104px;height:104px;background:conic-gradient(var(--accent) 0 97deg,#ECECEE 97deg 360deg);margin:7px 0 5px;">
+              <div class="h" style="width:80px;height:80px;"><div style="font-size:31px;font-weight:850;color:var(--ink);letter-spacing:-1.5px;">27</div></div>
+            </div>
+            <div style="font-size:8.5px;font-weight:800;color:var(--accent-deep);">LEG DAY AHEAD</div>
+          </div>
+          <div style="flex:1;display:flex;flex-direction:column;gap:9px;">
+            <div style="flex:1;background:#fff;border:1px solid var(--line);border-radius:16px;padding:10px;">
+              <div style="font-size:8.5px;font-weight:800;color:var(--ink-3);">👟 STEPS</div>
+              <div style="font-size:21px;font-weight:850;color:var(--ink);margin-top:3px;">7,412</div>
+              <div class="bar" style="margin-top:6px;"><i style="width:74%;background:var(--move)"></i></div>
+            </div>
+            <div style="flex:1;background:#fff;border:1px solid var(--line);border-radius:16px;padding:10px;">
+              <div style="font-size:8.5px;font-weight:800;color:var(--ink-3);">🔥 ENERGY</div>
+              <div style="font-size:21px;font-weight:850;color:var(--ink);margin-top:3px;">486<small style="font-size:10px;color:var(--ink-3);font-weight:700;"> kcal</small></div>
+            </div>
+          </div>
+        </div>
+        <div class="wo" style="border-radius:16px;height:110px;"><div class="wo-f">🏋️</div><div class="wo-bg">▦ TODAY</div><div class="wo-b"><div class="wo-n">Birthday Blitz Lower</div><div class="wo-m">LEGS · 60 MIN · 7 EXERCISES</div></div><div class="wo-p"></div></div>
+        <div style="display:flex;gap:9px;">
+          <div style="flex:1.3;background:#fff;border:1px solid var(--line);border-radius:16px;padding:11px;">
+            <div class="nut-t" style="margin-bottom:8px;"><div class="nut-l">🍎 NUTRITION</div><div class="nut-k"><b>1,088</b> <span>left</span></div></div>
+            <div class="mc"><div class="bar"><i style="width:13%;background:var(--protein)"></i></div></div>
+            <div class="mc"><div class="bar"><i style="width:54%;background:var(--carbs)"></i></div></div>
+            <div class="mc"><div class="bar"><i style="width:30%;background:var(--fat)"></i></div></div>
+          </div>
+          <div style="flex:1;background:#fff;border:1px solid var(--line);border-radius:16px;padding:11px;">
+            <div style="font-size:8.5px;font-weight:800;color:var(--ink-3);">💧 WATER</div>
+            <div style="font-size:18px;font-weight:850;color:var(--ink);margin:3px 0 7px;">0<small style="font-size:9px;color:var(--ink-3);font-weight:700;"> / 10</small></div>
+            <div style="display:flex;gap:3px;">
+              <div style="flex:1;height:15px;border-radius:4px;background:var(--surface);border:1px solid var(--line);"></div><div style="flex:1;height:15px;border-radius:4px;background:var(--surface);border:1px solid var(--line);"></div><div style="flex:1;height:15px;border-radius:4px;background:var(--surface);border:1px solid var(--line);"></div><div style="flex:1;height:15px;border-radius:4px;background:var(--surface);border:1px solid var(--line);"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="nav">
+      <div class="ni on"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20h14V9.5"/></svg><span class="nl">Home</span></div>
+      <div class="ni"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 9v6M4 10.5v3M17.5 9v6M20 10.5v3M6.5 12h11"/></svg><span class="nl">Workouts</span></div>
+      <div class="ni"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3v7a2 2 0 0 0 4 0V3M7 12v9M16 3c-1.6 0-2.8 2.2-2.8 5.5 0 2.2 1.1 3.3 2.8 3.5v9"/></svg><span class="nl">Nutrition</span></div>
+      <div class="ni"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M15.6 8.4l-2.1 5.1-5.1 2.1z"/></svg><span class="nl">Discover</span></div>
+      <div class="ni"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.6"/><path d="M5.5 20c0-3.7 3-6 6.5-6s6.5 2.3 6.5 6"/></svg><span class="nl">You</span></div>
+    </div>
+    <div class="hi"></div>
+  </div>
+  <div class="cap"><div class="num">FINALIST 09</div><div class="n">Bento dashboard grid</div>
+    <div class="d">Score ring anchors a tile grid. Everything visible at once,
+    no scrolling. Most "tracker + coach" of the three.</div></div>
+</div>
+
+<!-- ===================== FINALIST 10 ===================== -->
+<div class="cell">
+  <div class="phone">
+    <div class="island"></div>
+    <div class="sb"><span>12:52</span><span class="r">
+      <svg width="16" height="10" viewBox="0 0 17 11" fill="currentColor"><rect x="0" y="6" width="3" height="5" rx="1"/><rect x="4.5" y="4" width="3" height="7" rx="1"/><rect x="9" y="2" width="3" height="9" rx="1"/><rect x="13.5" y="0" width="3" height="11" rx="1"/></svg>
+      <svg width="15" height="10" viewBox="0 0 16 11" fill="currentColor"><path d="M8 2.2C10.4 2.2 12.6 3.1 14.3 4.7L15.7 3.2C13.6 1.2 10.9 0 8 0S2.4 1.2 .3 3.2L1.7 4.7C3.4 3.1 5.6 2.2 8 2.2Z"/></svg>
+      <svg width="25" height="11" viewBox="0 0 26 12"><rect x="1" y="1.5" width="21" height="9" rx="2.6" fill="none" stroke="currentColor" stroke-opacity=".4"/><rect x="3" y="3.5" width="16" height="5" rx="1.3" fill="currentColor"/></svg>
+    </span></div>
+    <div class="scr">
+      <div class="hd" style="padding-top:12px;"><div><div class="gs">Thursday, May 21</div><div class="gl">Hi, Sai</div></div>
+        <div class="hd-r"><div class="streak"><div class="sr"><span>2</span></div><div class="l">Lv 2<br><small>64%</small></div><div class="f">🔥3</div></div>
+          <div class="ib"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg></div></div></div>
+      <div class="bn"><div class="bn-i">🎁</div><div class="bn-b"><div class="bn-t">3 crates ready to open</div><div class="bn-s">Tap to claim your streak rewards</div></div><div class="bn-cta">Open all</div><div class="bn-x">✕</div></div>
+
+      <div style="display:flex;flex-direction:column;align-items:center;margin:18px 0 6px;">
+        <div class="ring" style="width:188px;height:188px;background:conic-gradient(var(--accent) 0 97deg,#F0F0F1 97deg 360deg);">
+          <div class="h" style="width:162px;height:162px;">
+            <div style="font-size:9px;font-weight:800;color:var(--ink-3);letter-spacing:1.2px;">TODAY SCORE</div>
+            <div style="font-size:64px;font-weight:850;color:var(--ink);letter-spacing:-3px;line-height:.98;">27</div>
+            <div style="font-size:10px;font-weight:800;color:var(--accent-deep);">LEG DAY AHEAD</div>
+          </div>
+        </div>
+      </div>
+      <div style="text-align:center;font-size:12px;color:var(--ink-2);font-weight:500;padding:0 38px;line-height:1.5;margin:8px 0 18px;">
+        Finish today's workout to reach <b style="color:var(--ink);font-weight:800;">77</b>. That's the one move that matters right now.
+      </div>
+      <div class="pad"><div class="wo sm"><div class="wo-f">🏋️</div><div class="wo-bg">▦ TODAY</div><div class="wo-b"><div class="wo-n">Birthday Blitz Lower</div><div class="wo-m">LEGS · 60 MIN</div></div><div class="wo-p"></div></div></div>
+      <div class="pad" style="margin-top:10px;display:flex;gap:9px;">
+        <div style="flex:1;text-align:center;background:var(--surface);border-radius:13px;padding:10px;"><div style="font-size:9px;">🏋️</div><div style="font-size:14px;font-weight:850;color:var(--ink);margin-top:2px;">0%</div><div style="font-size:8px;font-weight:700;color:var(--ink-3);">TRAIN</div></div>
+        <div style="flex:1;text-align:center;background:var(--surface);border-radius:13px;padding:10px;"><div style="font-size:9px;">🍎</div><div style="font-size:14px;font-weight:850;color:var(--ink);margin-top:2px;">42%</div><div style="font-size:8px;font-weight:700;color:var(--ink-3);">FUEL</div></div>
+        <div style="flex:1;text-align:center;background:var(--surface);border-radius:13px;padding:10px;"><div style="font-size:9px;">👟</div><div style="font-size:14px;font-weight:850;color:var(--ink);margin-top:2px;">74%</div><div style="font-size:8px;font-weight:700;color:var(--ink-3);">MOVE</div></div>
+      </div>
+    </div>
+    <div class="nav">
+      <div class="ni on"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20h14V9.5"/></svg><span class="nl">Home</span></div>
+      <div class="ni"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 9v6M4 10.5v3M17.5 9v6M20 10.5v3M6.5 12h11"/></svg><span class="nl">Workouts</span></div>
+      <div class="ni"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3v7a2 2 0 0 0 4 0V3M7 12v9M16 3c-1.6 0-2.8 2.2-2.8 5.5 0 2.2 1.1 3.3 2.8 3.5v9"/></svg><span class="nl">Nutrition</span></div>
+      <div class="ni"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M15.6 8.4l-2.1 5.1-5.1 2.1z"/></svg><span class="nl">Discover</span></div>
+      <div class="ni"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.6"/><path d="M5.5 20c0-3.7 3-6 6.5-6s6.5 2.3 6.5 6"/></svg><span class="nl">You</span></div>
+    </div>
+    <div class="hi"></div>
+  </div>
+  <div class="cap"><div class="num">FINALIST 10</div><div class="n">Minimal / calm</div>
+    <div class="d">One big ring, one sentence telling you the single move that
+    matters. Calmest, most confident, most "premium".</div></div>
+</div>
+
+</div>
+
+<div class="head" style="margin-top:46px;">
+  <p style="max-width:720px;"><b>My pick of the three: 09 (bento grid).</b> You
+  told me you're a tracker <i>and</i> a coach — 09 is the only one that shows
+  the score, steps, energy, workout, nutrition and water all at once with no
+  scroll, which is exactly the "see it all" home you asked for early on. 01 is
+  the safe middle. 10 is the most beautiful but the most minimal — it hides
+  nutrition and water below the fold. Pick one and I'll lock the final spec
+  + the Flutter build plan.</p>
+</div>
+
+</body>
+</html>

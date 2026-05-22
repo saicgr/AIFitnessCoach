@@ -326,7 +326,8 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
 }
 
 
-/// Expandable nav item - shows icon only when unselected, icon + label when selected
+/// Nav item — icon over an always-visible label. Every tab is named (not
+/// just the selected one); the selected tab is accent-tinted.
 class _ExpandableNavItem extends StatelessWidget {
   final IconData icon;
   final IconData selectedIcon;
@@ -351,6 +352,7 @@ class _ExpandableNavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final color = isSelected ? accentColor : mutedColor;
     return GestureDetector(
       onTap: () {
         HapticFeedback.selectionClick();
@@ -358,51 +360,39 @@ class _ExpandableNavItem extends StatelessWidget {
       },
       behavior: HitTestBehavior.opaque,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 250),
+        duration: const Duration(milliseconds: 220),
         curve: Curves.easeOutCubic,
-        padding: EdgeInsets.symmetric(
-          horizontal: isSelected ? 14 : 10,
-          vertical: 8,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 5),
         decoration: BoxDecoration(
           color: isSelected
               ? accentColor.withValues(alpha: isDark ? 0.15 : 0.12)
               : Colors.transparent,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(16),
         ),
-        child: Row(
+        // Icon over an always-visible label so every tab is named. The icon
+        // still plays the spin + scale pop on selection.
+        child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Icon plays a spin + scale pop when newly selected — feels like
-            // the icon "snaps into place." Previously we had a multi-layer
-            // stack (cross-fade + quarter-rotation on outlined↔filled + color
-            // tween + label slide-in) which read as busy. This is the single
-            // distinctive icon animation users actually notice.
             _IconSpinPop(
               isSelected: isSelected,
               child: Icon(
                 isSelected ? selectedIcon : icon,
-                color: isSelected ? accentColor : mutedColor,
-                size: 22,
+                color: color,
+                size: 21,
               ),
             ),
-            // Animated label that expands when selected
-            AnimatedSize(
-              duration: const Duration(milliseconds: 250),
-              curve: Curves.easeOutCubic,
-              child: isSelected
-                  ? Padding(
-                      padding: const EdgeInsets.only(left: 6),
-                      child: Text(
-                        label,
-                        style: TextStyle(
-                          color: accentColor,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    )
-                  : const SizedBox.shrink(),
+            const SizedBox(height: 3),
+            Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: color,
+                fontSize: 9.5,
+                fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                height: 1.0,
+              ),
             ),
           ],
         ),

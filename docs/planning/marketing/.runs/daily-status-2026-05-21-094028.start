@@ -1,0 +1,11 @@
+mode: daily-status
+started: 2026-05-21T14:40:28Z
+trigger_phrase: Quick GEO status check (daily ritual). Today is 2026-05-21.
+commit:
+  - target_landscape: docs/planning/marketing/landscape/2026-05-21.md
+  - target_tool_uses_min: 25
+  - target_base_websearches: 22
+  - target_reddit_drafts: 25
+  - target_x_drafts: 25
+  - target_landscape_sections: 19
+  - eta_minutes: 10-15
