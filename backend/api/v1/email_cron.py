@@ -22,7 +22,7 @@ from core.supabase_client import get_supabase
 from core.config import get_settings
 from core.logger import get_logger
 from core.rate_limiter import limiter
-from core.timezone_utils import get_user_today
+from core.timezone_utils import get_user_today, _safe_zone
 from services.email_service import get_email_service
 from services.email_helpers import first_name, time_band
 from services.notification_suppression import should_suppress_notification
@@ -148,7 +148,13 @@ def _is_email_verified(supabase, user_id: str) -> bool:
         return True
 
 
-def _was_recently_sent(supabase, user_id: str, email_type: str, cooldown_days: int = DEFAULT_COOLDOWN_DAYS) -> bool:
+def _was_recently_sent(
+    supabase,
+    user_id: str,
+    email_type: str,
+    cooldown_days: int = DEFAULT_COOLDOWN_DAYS,
+    local_date: Optional[str] = None,
+) -> bool:
     """Return True if this email should be skipped for this user.
 
     "Skipped" combines several reasons into one gate — all ~24 email jobs
@@ -162,6 +168,12 @@ def _was_recently_sent(supabase, user_id: str, email_type: str, cooldown_days: i
          for unverified users. Transactional mail (verification reminder,
          billing / cancellation) always sends.
       4. This email_type was sent to this user within cooldown_days (dedup)
+      5. Local-date dedup: when `local_date` is supplied (jobs that bucket by
+         the user's own timezone, e.g. trial_ending / 7day_upsell), an exact
+         match on `email_send_log.sent_local_date` for the same email_type is
+         treated as already-sent. This closes the boundary re-send gap that
+         opens when a per-user local-date bucket is evaluated twice as the
+         local day rolls over relative to the cooldown window edge.
     """
     # 1 + 2. Global suppression (vacation + comeback). Cached per run.
     if _is_email_suppressed(supabase, user_id, email_type):
@@ -176,7 +188,7 @@ def _was_recently_sent(supabase, user_id: str, email_type: str, cooldown_days: i
     if not _is_transactional and not _is_email_verified(supabase, user_id):
         return True
 
-    # 3. Dedup window
+    # 4. Dedup window (time-based cooldown).
     cutoff = (datetime.now(timezone.utc) - timedelta(days=cooldown_days)).isoformat()
     result = supabase.client.table("email_send_log") \
         .select("id") \
@@ -185,17 +197,50 @@ def _was_recently_sent(supabase, user_id: str, email_type: str, cooldown_days: i
         .gte("sent_at", cutoff) \
         .limit(1) \
         .execute()
-    return bool(result.data)
+    if bool(result.data):
+        return True
+
+    # 5. Local-date dedup. Only applies to jobs that pass an explicit
+    # local_date. A NULL sent_local_date on an older row never matches an
+    # equality filter, so historical rows fall through to the cooldown guard
+    # above — which preserves their original behavior.
+    if local_date:
+        ld_result = supabase.client.table("email_send_log") \
+            .select("id") \
+            .eq("user_id", user_id) \
+            .eq("email_type", email_type) \
+            .eq("sent_local_date", local_date) \
+            .limit(1) \
+            .execute()
+        if bool(ld_result.data):
+            return True
+
+    return False
 
 
-def _log_email_sent(supabase, user_id: str, email_type: str, metadata: Dict = None):
-    """Record a successfully sent email for deduplication."""
+def _log_email_sent(
+    supabase,
+    user_id: str,
+    email_type: str,
+    metadata: Dict = None,
+    local_date: Optional[str] = None,
+):
+    """Record a successfully sent email for deduplication.
+
+    `local_date` (the recipient's local calendar day) is persisted on
+    `email_send_log.sent_local_date` so a subsequent `_was_recently_sent`
+    call with the same local_date recognizes the send and skips a re-email.
+    Left NULL for jobs that don't bucket by user-local date.
+    """
     try:
-        supabase.client.table("email_send_log").insert({
+        row: Dict[str, Any] = {
             "user_id": user_id,
             "email_type": email_type,
-            "metadata": metadata or {}
-        }).execute()
+            "metadata": metadata or {},
+        }
+        if local_date:
+            row["sent_local_date"] = local_date
+        supabase.client.table("email_send_log").insert(row).execute()
     except Exception as e:
         logger.error(f"❌ Failed to log email send: {e}", exc_info=True)
 
@@ -474,73 +519,107 @@ async def _job_trial_ending(supabase, email_svc) -> int:
     Send trial-ending warning to users whose trial expires in exactly 2 or 0 days (Day 5 and Day 7).
     Includes 25% discount offer. Gate: product_updates preference.
     Cooldown: 1 day (so Day 5 and Day 7 both trigger).
+
+    Timezone correctness: "expires in 2 days" / "expires today" is evaluated
+    against each user's OWN local calendar, not UTC. The DB query uses a wide
+    UTC window (±1 day around the UTC targets) purely as a cheap candidate
+    filter; the precise day match — and the local-date dedup key — is computed
+    per user from `users.timezone`. This prevents a user near a UTC boundary
+    from being bucketed into the wrong day (or re-emailed on a boundary roll).
     """
     email_type = "trial_ending"
     sent = 0
 
     try:
-        today = date.fromisoformat(get_user_today("UTC"))
-        target_dates = [
-            (today + timedelta(days=2)).isoformat(),  # Day 5 of trial (2 days left)
-            today.isoformat(),                         # Day 7 of trial (expires today)
-        ]
+        # Wide UTC candidate window: today-1 .. today+3. Per-user local logic
+        # below narrows this to the exact Day-5 / Day-7 match.
+        utc_today = date.fromisoformat(get_user_today("UTC"))
+        window_start = (utc_today - timedelta(days=1)).isoformat()
+        window_end = (utc_today + timedelta(days=3)).isoformat()
 
-        for target_date in target_dates:
-            subs_result = supabase.client.table("user_subscriptions") \
-                .select("user_id, tier, trial_end_date") \
-                .eq("is_trial", True) \
-                .eq("status", "trial") \
-                .gte("trial_end_date", f"{target_date}T00:00:00") \
-                .lt("trial_end_date", f"{target_date}T23:59:59") \
-                .execute()
+        subs_result = supabase.client.table("user_subscriptions") \
+            .select("user_id, tier, trial_end_date") \
+            .eq("is_trial", True) \
+            .eq("status", "trial") \
+            .gte("trial_end_date", f"{window_start}T00:00:00") \
+            .lt("trial_end_date", f"{window_end}T23:59:59") \
+            .execute()
 
-            if not subs_result.data:
+        if not subs_result.data:
+            return 0
+
+        user_ids = [s["user_id"] for s in subs_result.data]
+        users_result = supabase.client.table("users") \
+            .select("id, email, name, timezone") \
+            .in_("id", user_ids) \
+            .execute()
+        users_map = {u["id"]: u for u in (users_result.data or [])}
+
+        prefs_result = supabase.client.table("email_preferences") \
+            .select("user_id, product_updates") \
+            .in_("user_id", user_ids) \
+            .execute()
+        prefs_map = {p["user_id"]: p for p in (prefs_result.data or [])}
+
+        for sub in subs_result.data:
+            uid = sub["user_id"]
+            user = users_map.get(uid)
+            if not user:
+                continue
+            pref = prefs_map.get(uid, {})
+            if pref.get("product_updates") is False:
                 continue
 
-            user_ids = [s["user_id"] for s in subs_result.data]
-            users_result = supabase.client.table("users") \
-                .select("id, email, name, timezone") \
-                .in_("id", user_ids) \
-                .execute()
-            users_map = {u["id"]: u for u in (users_result.data or [])}
+            # Resolve the trial-end date and "today" in the USER's timezone.
+            user_tz = user.get("timezone") or "UTC"
+            user_today = date.fromisoformat(get_user_today(user_tz))
+            raw_end = sub.get("trial_end_date")
+            if not raw_end:
+                continue
+            try:
+                # trial_end_date is a timestamptz; interpret the moment in the
+                # user's local timezone to get the calendar day they perceive
+                # the trial as ending on.
+                end_dt = datetime.fromisoformat(str(raw_end).replace("Z", "+00:00"))
+                if end_dt.tzinfo is None:
+                    end_dt = end_dt.replace(tzinfo=timezone.utc)
+                trial_end_local = end_dt.astimezone(_safe_zone(user_tz)).date()
+            except Exception:
+                continue
 
-            prefs_result = supabase.client.table("email_preferences") \
-                .select("user_id, product_updates") \
-                .in_("user_id", user_ids) \
-                .execute()
-            prefs_map = {p["user_id"]: p for p in (prefs_result.data or [])}
+            days_rem = (trial_end_local - user_today).days
+            # Day 5 (2 days left) and Day 7 (expires today) only.
+            if days_rem not in (0, 2):
+                continue
 
-            for sub in subs_result.data:
-                uid = sub["user_id"]
-                user = users_map.get(uid)
-                if not user:
-                    continue
-                pref = prefs_map.get(uid, {})
-                if pref.get("product_updates") is False:
-                    continue
-                if _was_recently_sent(supabase, uid, email_type, cooldown_days=1):
-                    continue
+            # Local-date dedup keyed on the user's local "today" — a user is
+            # never re-emailed for the same local-date trial-ending period.
+            if _was_recently_sent(
+                supabase, uid, email_type, cooldown_days=1,
+                local_date=user_today.isoformat(),
+            ):
+                continue
 
-                stats = _get_user_stats(supabase, user)
+            stats = _get_user_stats(supabase, user)
 
-                # Fire once per day during morning band for billing urgency.
-                if stats.time_band != TimeBand.MORNING:
-                    continue
+            # Fire once per day during morning band for billing urgency.
+            if stats.time_band != TimeBand.MORNING:
+                continue
 
-                days_rem = (date.fromisoformat(target_date) - today).days
-                trial_end_str = target_date  # ISO date string
-
-                result = await email_svc.send_trial_ending(
-                    to_email=user["email"],
-                    first_name_value=first_name(user),
-                    stats=stats,
-                    days_remaining=days_rem,
-                    trial_end_date=trial_end_str,
-                    discount_percent=25,
+            result = await email_svc.send_trial_ending(
+                to_email=user["email"],
+                first_name_value=first_name(user),
+                stats=stats,
+                days_remaining=days_rem,
+                trial_end_date=trial_end_local.isoformat(),
+                discount_percent=25,
+            )
+            if result.get("success"):
+                _log_email_sent(
+                    supabase, uid, email_type, {"days_remaining": days_rem},
+                    local_date=user_today.isoformat(),
                 )
-                if result.get("success"):
-                    _log_email_sent(supabase, uid, email_type, {"days_remaining": days_rem})
-                    sent += 1
+                sent += 1
 
     except Exception as e:
         logger.error(f"❌ trial_ending job failed: {e}", exc_info=True)
@@ -633,16 +712,26 @@ async def _job_7day_upsell(supabase, email_svc) -> int:
     who have completed 3+ workouts.
     Gate: product_updates preference.
     Cooldown: 7 days.
+
+    Timezone correctness: "7 days post-signup" is counted in each user's OWN
+    local calendar, not UTC. The DB query uses a wide UTC `created_at` window
+    (±1 day around the UTC day-7 target) as a cheap candidate filter; the exact
+    7-local-day match — and the local-date dedup key — is computed per user
+    from `users.timezone`.
     """
     email_type = "7day_upsell"
     sent = 0
 
     try:
-        target_date = (date.fromisoformat(get_user_today("UTC")) - timedelta(days=7)).isoformat()
+        # Wide UTC candidate window around the day-7 target: signed up
+        # between 8 and 6 UTC days ago. Per-user local logic narrows this.
+        utc_today = date.fromisoformat(get_user_today("UTC"))
+        window_start = (utc_today - timedelta(days=8)).isoformat()
+        window_end = (utc_today - timedelta(days=6)).isoformat()
         users_result = supabase.client.table("users") \
-            .select("id, email, name, timezone") \
-            .gte("created_at", f"{target_date}T00:00:00") \
-            .lt("created_at", f"{target_date}T23:59:59") \
+            .select("id, email, name, timezone, created_at") \
+            .gte("created_at", f"{window_start}T00:00:00") \
+            .lt("created_at", f"{window_end}T23:59:59") \
             .execute()
 
         if not users_result.data:
@@ -658,8 +747,6 @@ async def _job_7day_upsell(supabase, email_svc) -> int:
             .execute()
         free_user_ids = {s["user_id"] for s in (subs_result.data or [])}
         # Users with no subscription row are also free tier
-        subbed_ids = {s["user_id"] for s in (subs_result.data or [])}
-        all_sub_ids = set()
         all_subs = supabase.client.table("user_subscriptions") \
             .select("user_id") \
             .in_("user_id", user_ids) \
@@ -682,7 +769,30 @@ async def _job_7day_upsell(supabase, email_svc) -> int:
             pref = prefs_map.get(uid, {})
             if pref.get("product_updates") is False:
                 continue
-            if _was_recently_sent(supabase, uid, email_type):
+
+            # Count days-since-signup in the user's local calendar.
+            user_tz = user.get("timezone") or "UTC"
+            user_today = date.fromisoformat(get_user_today(user_tz))
+            raw_created = user.get("created_at")
+            if not raw_created:
+                continue
+            try:
+                created_dt = datetime.fromisoformat(str(raw_created).replace("Z", "+00:00"))
+                if created_dt.tzinfo is None:
+                    created_dt = created_dt.replace(tzinfo=timezone.utc)
+                created_local = created_dt.astimezone(_safe_zone(user_tz)).date()
+            except Exception:
+                continue
+
+            # Exactly 7 local days post-signup.
+            if (user_today - created_local).days != 7:
+                continue
+
+            # Local-date dedup keyed on the user's local "today".
+            if _was_recently_sent(
+                supabase, uid, email_type,
+                local_date=user_today.isoformat(),
+            ):
                 continue
 
             stats = _get_user_stats(supabase, user)
@@ -699,7 +809,10 @@ async def _job_7day_upsell(supabase, email_svc) -> int:
                 free_workouts_remaining=0,
             )
             if result.get("success"):
-                _log_email_sent(supabase, uid, email_type)
+                _log_email_sent(
+                    supabase, uid, email_type,
+                    local_date=user_today.isoformat(),
+                )
                 sent += 1
 
     except Exception as e:

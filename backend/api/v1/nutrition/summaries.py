@@ -21,6 +21,10 @@ from api.v1.nutrition.models import (
 )
 
 from core.redis_cache import RedisCache
+# Cross-module invalidation: a target change alters aggregates rendered by the
+# Patterns tab and the home bootstrap payload, so both must be busted too.
+from api.v1.nutrition.food_patterns import invalidate_patterns_cache
+from api.v1.home.bootstrap_cache import invalidate_bootstrap_cache
 
 router = APIRouter()
 logger = get_logger(__name__)
@@ -30,15 +34,19 @@ _daily_summary_cache = RedisCache(prefix="nutrition_daily", ttl_seconds=60, max_
 
 
 async def invalidate_daily_summary_cache(user_id: str, date: str = None):
-    """Invalidate cached daily summary after a meal is logged/deleted.
-    If date is None, clears all dates for the user (uses prefix delete)."""
+    """Invalidate the cached daily summary after a meal is logged/deleted.
+
+    The cache key is ``{user_id}:{local_date}`` where ``local_date`` is the
+    USER's timezone-local date (see `get_daily_summary`). When no explicit
+    date is given we must NOT guess it from a UTC "today" — for any non-UTC
+    user that misses the real key, so a stale pre-log summary keeps serving
+    and a freshly-logged meal appears to vanish on the next refetch. So bust
+    EVERY cached date for this user via a prefix delete (keys are per-user,
+    they re-populate in one query)."""
     if date:
         await _daily_summary_cache.delete(f"{user_id}:{date}")
     else:
-        # Best-effort: clear today's cache at minimum
-        from core.timezone_utils import get_user_today
-        today = get_user_today("UTC")
-        await _daily_summary_cache.delete(f"{user_id}:{today}")
+        await _daily_summary_cache.delete_prefix(f"{user_id}:")
 
 @router.get("/summary/daily/{user_id}", response_model=DailyNutritionResponse)
 async def get_daily_summary(
@@ -242,6 +250,21 @@ async def update_nutrition_targets(user_id: str, request: UpdateNutritionTargets
             daily_carbs_target_g=request.daily_carbs_target_g,
             daily_fat_target_g=request.daily_fat_target_g,
         )
+
+        # Invalidate every cache whose payload bakes in the calorie/macro
+        # goals. Without this a changed target keeps rendering old totals /
+        # progress rings until each TTL lapses. All three helpers are
+        # user-scoped prefix deletes, so they bust every per-date / per-window
+        # variant. Best-effort: a cache miss here must not fail the write.
+        try:
+            await invalidate_daily_summary_cache(user_id)
+            await invalidate_patterns_cache(user_id)
+            await invalidate_bootstrap_cache(user_id)
+        except Exception as cache_exc:
+            logger.warning(
+                f"Target update cache invalidation failed for {user_id}: {cache_exc}",
+                exc_info=True,
+            )
 
         return NutritionTargetsResponse(
             user_id=user_id,

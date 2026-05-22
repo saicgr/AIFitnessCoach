@@ -56,15 +56,23 @@ _history_cache = RedisCache(prefix="patterns_history", ttl_seconds=120, max_size
 
 
 async def invalidate_patterns_cache(user_id: str) -> None:
-    """Call from food_logs.py after create/update/delete. Best-effort: we clear
-    the narrowest common keys (default day/week/month windows). Other keys
-    expire naturally via the 5-minute TTL — acceptable for patterns since the
-    aggregated signal doesn't flip meaningfully on a single log."""
+    """Call from food_logs.py after create/update/delete (and from any write
+    that changes nutrition aggregates, e.g. a target update).
+
+    Every Patterns cache key is user-scoped and prefixed ``{user_id}:`` — the
+    remainder embeds free-form variation (``days``/``min_logs`` for mood,
+    ``metric``/``range``/date-window for top-foods + macros, and pagination
+    ``limit``/``offset`` for history). Deleting only a couple of hardcoded
+    default keys leaves every other variant serving stale data. So bust the
+    whole per-user namespace for all four caches via a SCAN prefix delete;
+    keys re-populate in one query on the next read."""
     try:
-        # Delete common default keys for quick UI consistency after a log.
+        prefix = f"{user_id}:"
         await asyncio.gather(
-            _mood_cache.delete(f"{user_id}:90:3"),
-            _history_cache.delete(f"{user_id}:day::*"),
+            _mood_cache.delete_prefix(prefix),
+            _top_foods_cache.delete_prefix(prefix),
+            _macros_cache.delete_prefix(prefix),
+            _history_cache.delete_prefix(prefix),
             return_exceptions=True,
         )
     except Exception as exc:

@@ -149,6 +149,26 @@ async def invalidate_library_filter_options_cache() -> None:
     await _LIBRARY_REF_CACHE.delete(_FILTER_OPTIONS_KEY)
 
 
+async def invalidate_library_ref_cache() -> None:
+    """Invalidate ALL cached exercise-library reference data.
+
+    Clears every key under the `library_ref` cache prefix (currently the
+    filter-options payload, and anything added later). Call this after ANY
+    mutation to the exercise-library tables so the next request recomputes
+    the reference data instead of serving a stale snapshot.
+
+    NOTE: The exercise-library *list/reference* endpoints in this module are
+    all read-only (GET). The mutations that should trigger this invalidation
+    (create/update/delete of library or custom exercises) live in other
+    routers — e.g. `api/v1/custom_exercises.py`, `api/v1/exercises.py`,
+    `api/v1/exercises_endpoints.py`. Those endpoints should
+    `from api.v1.library.exercises import invalidate_library_ref_cache`
+    and `await` it after a successful write. The MV-refresh hook
+    (`refresh_exercise_library_cleaned()`, migration 2038) should call it too.
+    """
+    await _LIBRARY_REF_CACHE.delete_prefix("")
+
+
 @router.get("/exercises/equipment", response_model=List[Dict[str, Any]])
 async def get_equipment_types():
     """

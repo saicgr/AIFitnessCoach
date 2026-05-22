@@ -1065,18 +1065,29 @@ async def _job_progress_milestone_teaser(supabase, notif_svc, users: List[dict])
 
 
 async def _job_post_workout_nutrition(supabase, notif_svc, users: List[dict]) -> int:
-    """Remind user to eat 30-60 min after completing a workout."""
+    """Remind user to eat 30-60 min after completing a workout.
+
+    The 30-60 min window is computed per user in their local timezone via
+    `datetime.now(tz)`. `completed_at` is a UTC timestamptz, so an offset-aware
+    "now" minus a fixed delta yields a correct absolute-time window for every
+    user — unlike a naive `datetime.utcnow()`, whose `.isoformat()` has no
+    offset and can be misread by Postgres on the timestamptz comparison.
+    """
     sent = 0
-    now_utc = datetime.utcnow()
-    window_start = (now_utc - timedelta(minutes=60)).isoformat()
-    window_end = (now_utc - timedelta(minutes=30)).isoformat()
 
     for user in users:
         prefs = user.get("notification_preferences") or {}
         if not prefs.get("nutrition_reminders", True):
             continue
-        if _is_in_quiet_hours(prefs, _get_user_local_hour(user.get("timezone") or "UTC")):
+        tz_str = user.get("timezone") or "UTC"
+        if _is_in_quiet_hours(prefs, _get_user_local_hour(tz_str)):
             continue
+
+        # Per-user, tz-aware window. `now_local` carries the user's UTC offset,
+        # so the ISO strings below are unambiguous for the timestamptz compare.
+        now_local = datetime.now(_safe_zone(tz_str))
+        window_start = (now_local - timedelta(minutes=60)).isoformat()
+        window_end = (now_local - timedelta(minutes=30)).isoformat()
 
         user_id = str(user["id"])
         try:
@@ -1124,20 +1135,29 @@ async def _job_post_workout_nutrition(supabase, notif_svc, users: List[dict]) ->
 
 
 async def _job_coach_insight(supabase, notif_svc, users: List[dict]) -> int:
-    """Weekly 'Your coach noticed something' teaser, distributed across days."""
+    """Weekly 'Your coach noticed something' teaser, distributed across days.
+
+    Each user is assigned a fixed day-of-week slot (`hash(user_id) % 7`). The
+    "is it that user's day" check uses the day-of-year in the USER's local
+    timezone, not UTC — otherwise a user just past local midnight could be
+    evaluated against the previous (or next) calendar day and either miss
+    their slot or fire a day early.
+    """
     sent = 0
-    day_of_year = datetime.utcnow().timetuple().tm_yday
     for user in users:
         prefs = user.get("notification_preferences") or {}
         if _user_account_age_days(user) < 7:
             continue
+
+        tz_str = user.get("timezone") or "UTC"
+        # Day-of-year in the user's local calendar drives the weekly slot.
+        day_of_year = datetime.now(_safe_zone(tz_str)).timetuple().tm_yday
 
         # Distribute across week: each user fires on their "assigned" day
         user_day = hash(str(user["id"])) % 7
         if day_of_year % 7 != user_day:
             continue
 
-        tz_str = user.get("timezone") or "UTC"
         local_hour = _get_user_local_hour(tz_str)
         optimal_hour = _get_optimal_hour(user, "coach_insight", 10)
         if local_hour != optimal_hour:

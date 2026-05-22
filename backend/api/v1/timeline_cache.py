@@ -44,20 +44,19 @@ async def set_timeline_cache(user_id: str, date: str, payload: dict, days: int =
 async def invalidate_timeline_cache(user_id: str, date: Optional[str] = None):
     """Invalidate cached Timeline responses for a user.
 
+    Every Timeline cache key is user-scoped and prefixed ``{user_id}:`` — the
+    remainder embeds the date and the ``days`` window size. The old
+    implementation silently returned when ``date`` was None, leaving the
+    timeline stale for any write hook that didn't know the exact date; and
+    even with a date it only cleared four hardcoded window sizes. Bust the
+    whole per-user namespace via a SCAN prefix delete so every date + window
+    variant misses cache; keys re-populate in one query on the next read.
+
     Args:
         user_id: User to invalidate.
-        date: Optional YYYY-MM-DD. If supplied, invalidates the specific day
-            (and the surrounding 1/7-day windowed variants). If None,
-            falls back to deleting just the user's most-likely "today" key
-            — callers that don't know the exact date should pass it
-            explicitly so multi-day windows also get cleared.
+        date: Optional YYYY-MM-DD, accepted for signature compatibility with
+            existing callers but no longer required — all of the user's
+            Timeline keys are cleared regardless.
     """
-    if date is None:
-        logger.debug(f"[Timeline] invalidate called without date for user {user_id} — partial invalidation only")
-        return
-
-    # Clear the common windowed variants (1, 7, 14, 30 days) so any read
-    # that includes this date in its window misses cache.
-    for days in (1, 7, 14, 30):
-        await _timeline_cache.delete(make_timeline_cache_key(user_id, date, days))
-    logger.debug(f"[Timeline] Invalidated cache for user {user_id} on {date}")
+    await _timeline_cache.delete_prefix(f"{user_id}:")
+    logger.debug(f"[Timeline] Invalidated all cached Timeline variants for user {user_id}")

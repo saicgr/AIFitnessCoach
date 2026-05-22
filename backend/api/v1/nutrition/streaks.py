@@ -5,7 +5,7 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 
-from core.timezone_utils import resolve_timezone, get_user_today
+from core.timezone_utils import resolve_timezone, get_user_today, _safe_zone
 from core.auth import get_current_user
 from core.exceptions import safe_internal_error
 from core.logger import get_logger
@@ -49,16 +49,19 @@ async def get_nutrition_streak(user_id: str, current_user: dict = Depends(get_cu
         # background task was wired into logging endpoints.
         if not data.get("last_logged_date"):
             try:
-                import pytz
+                from zoneinfo import ZoneInfo
                 user_tz_result = db.client.table("users") \
                     .select("timezone") \
                     .eq("id", user_id) \
                     .maybe_single() \
                     .execute()
                 tz_str = (user_tz_result.data or {}).get("timezone") or "UTC"
-                tz = pytz.timezone(tz_str)
+                # Standardize on ZoneInfo via _safe_zone (the codebase-wide
+                # helper) instead of pytz — same behavior, no extra dependency,
+                # and a bad tz string degrades to UTC instead of raising.
+                tz = _safe_zone(tz_str)
                 today_local: date_type = datetime.now(tz).date()
-                cutoff_utc = (datetime.now(pytz.utc) - timedelta(days=90)).isoformat()
+                cutoff_utc = (datetime.now(ZoneInfo("UTC")) - timedelta(days=90)).isoformat()
                 logs_result = db.client.table("food_logs") \
                     .select("logged_at") \
                     .eq("user_id", user_id) \

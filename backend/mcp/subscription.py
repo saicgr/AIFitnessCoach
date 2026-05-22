@@ -33,16 +33,33 @@ async def is_mcp_eligible(user_id: str, *, use_cache: bool = True) -> bool:
       - product_id is in MCPConfig.YEARLY_PRODUCT_IDS
       - current_period_end (if set) is in the future
 
+    CACHE SAFETY (access-gate hardening):
+      A cached `True` is the only dangerous staleness — if a user downgrades
+      or cancels, a cached `True` would keep an access gate open until the
+      TTL elapsed. So a cached `True` is ALWAYS re-verified against the DB
+      before being returned; only the (fail-closed, harmless) `False` verdict
+      is ever served straight from cache. This makes every call gate-safe
+      regardless of `use_cache`, while still saving the DB round-trip for the
+      common not-eligible case and for non-gating reads.
+
     Args:
         user_id: Backend users.id (not auth_id).
-        use_cache: Set False on critical paths (e.g. token issuance) where
-                   a stale hit would be worse than the extra DB round-trip.
+        use_cache: Set False to skip the cache entirely (e.g. token issuance).
+                   With it True, a cached `False` may still be served, but a
+                   cached `True` is re-checked — see CACHE SAFETY above.
     """
     cache_key = f"v1:{user_id}"
     if use_cache:
         cached = await _eligibility_cache.get(cache_key)
         if cached is not None:
-            return bool(cached)
+            # A cached negative is safe to serve as-is (fail-closed). A cached
+            # positive must be re-verified — it could be stale after a
+            # downgrade/cancellation and would otherwise hold a gate open.
+            if not bool(cached):
+                return False
+            fresh = await _check_eligibility_db(user_id)
+            await _eligibility_cache.set(cache_key, fresh)
+            return fresh
 
     eligible = await _check_eligibility_db(user_id)
     await _eligibility_cache.set(cache_key, eligible)

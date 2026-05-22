@@ -12,7 +12,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from core.auth import get_current_user
 from core.db import get_supabase_db
 from core.exceptions import safe_internal_error
-from core.timezone_utils import user_today_date
+from core.timezone_utils import user_today_date, resolve_timezone, _safe_zone
 
 
 def _diabetes_parent():
@@ -65,7 +65,7 @@ from .diabetes_models import (
 router = APIRouter()
 
 @router.get("/a1c/{user_id}/estimated", response_model=EstimatedA1cResponse)
-async def calculate_estimated_a1c(user_id: str, days: int = 90, current_user: dict = Depends(get_current_user)):
+async def calculate_estimated_a1c(user_id: str, http_request: Request, days: int = 90, current_user: dict = Depends(get_current_user)):
     """Calculate estimated A1C from glucose readings."""
     glucose_to_a1c, classify_glucose_status = _diabetes_parent()
     if str(current_user["id"]) != str(user_id):
@@ -74,7 +74,10 @@ async def calculate_estimated_a1c(user_id: str, days: int = 90, current_user: di
 
     db = get_supabase_db()
 
-    start_date = datetime.now() - timedelta(days=days)
+    # Resolve the lookback window in the user's local timezone — "the last N
+    # days" must mean N of the user's calendar days, not N UTC days.
+    tz = _safe_zone(resolve_timezone(http_request, db, user_id))
+    start_date = datetime.now(tz) - timedelta(days=days)
 
     result = db.client.table("glucose_readings").select("glucose_mg_dl").eq(
         "user_id", user_id
@@ -222,16 +225,20 @@ async def log_carb_entry(request: LogCarbEntryRequest, current_user: dict = Depe
 
 
 @router.get("/carbs/{user_id}/daily", response_model=DailyCarbTotalResponse)
-async def get_daily_carb_total(user_id: str, date: Optional[str] = None, current_user: dict = Depends(get_current_user)):
+async def get_daily_carb_total(user_id: str, http_request: Request, date: Optional[str] = None, current_user: dict = Depends(get_current_user)):
     """Get total carbs for a day."""
     if str(current_user["id"]) != str(user_id):
         raise HTTPException(status_code=403, detail="Access denied")
     db = get_supabase_db()
 
+    # The day boundary is the user's local midnight, not UTC midnight — an
+    # explicit `date` is interpreted as a local date, and "today" is the
+    # user's current local day.
+    tz = _safe_zone(resolve_timezone(http_request, db, user_id))
     if date:
-        target_date = datetime.fromisoformat(date)
+        target_date = datetime.fromisoformat(date).replace(tzinfo=tz)
     else:
-        target_date = datetime.now()
+        target_date = datetime.now(tz)
 
     start = target_date.replace(hour=0, minute=0, second=0, microsecond=0)
     end = start + timedelta(days=1)
@@ -257,13 +264,16 @@ async def get_daily_carb_total(user_id: str, date: Optional[str] = None, current
 
 
 @router.get("/carbs/{user_id}/correlation", response_model=CarbCorrelationResponse)
-async def get_carb_glucose_correlation(user_id: str, days: int = 30, current_user: dict = Depends(get_current_user)):
+async def get_carb_glucose_correlation(user_id: str, http_request: Request, days: int = 30, current_user: dict = Depends(get_current_user)):
     """Get carb-to-glucose correlation analysis."""
     if str(current_user["id"]) != str(user_id):
         raise HTTPException(status_code=403, detail="Access denied")
     db = get_supabase_db()
 
-    start_date = datetime.now() - timedelta(days=days)
+    # Lookback window anchored to the user's local "now" so the N-day range
+    # matches their calendar rather than the server's UTC clock.
+    tz = _safe_zone(resolve_timezone(http_request, db, user_id))
+    start_date = datetime.now(tz) - timedelta(days=days)
 
     result = db.client.table("carb_entries").select(
         "carbs_grams,glucose_before,glucose_after"

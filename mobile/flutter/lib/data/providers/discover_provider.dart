@@ -73,12 +73,13 @@ class DiscoverSnapshotNotifier
       },
       onError: (e, st) {
         // Only fires when the NETWORK fetch fails. If a cached value was
-        // already emitted it stays on screen; otherwise surface a null data
-        // state so the screen renders its real empty-state UI (the old
-        // FutureProvider also returned null on failure — parity preserved).
+        // already emitted it stays on screen. Otherwise surface a real ERROR
+        // state (not `data(null)`) so the screen shows a distinct
+        // network-error UI with a retry — an empty-data state would wrongly
+        // read as "nothing here" when the truth is "couldn't load".
         if (!mounted) return;
         if (state.valueOrNull == null) {
-          state = const AsyncValue.data(null);
+          state = AsyncValue.error(e, st);
         }
       },
     );

@@ -9,6 +9,7 @@ from typing import Optional, List, Dict, Any
 from datetime import datetime, timedelta
 
 from core.db.base import BaseDB
+from core.timezone_utils import _safe_zone
 
 
 class ActivityDB(BaseDB):
@@ -104,6 +105,33 @@ class ActivityDB(BaseDB):
         result = query.order("activity_date", desc=True).limit(limit).execute()
         return result.data or []
 
+    def _resolve_user_timezone(self, user_id: str) -> str:
+        """Look up the user's IANA timezone from the users table.
+
+        The activity-summary date range must be expressed in the user's own
+        local calendar — "the last 7 days" means the last 7 of *their* days,
+        not 7 UTC days, otherwise a user east/west of UTC sees a window that
+        is off by one day near midnight. The DB layer has no request object,
+        so we read users.timezone directly. Falls back to "UTC" on any miss.
+        """
+        try:
+            result = (
+                self.client.table("users")
+                .select("timezone")
+                .eq("id", user_id)
+                .limit(1)
+                .execute()
+            )
+            if result.data:
+                tz = (result.data[0] or {}).get("timezone")
+                if tz:
+                    return tz
+        except Exception:
+            # Never let a timezone lookup failure break the summary — UTC is
+            # the same safe default the rest of the codebase uses.
+            pass
+        return "UTC"
+
     def get_activity_summary(
         self, user_id: str, days: int = 7
     ) -> Dict[str, Any]:
@@ -117,8 +145,12 @@ class ActivityDB(BaseDB):
         Returns:
             Dictionary with activity statistics
         """
-        end_date = datetime.utcnow().strftime("%Y-%m-%d")
-        start_date = (datetime.utcnow() - timedelta(days=days)).strftime("%Y-%m-%d")
+        # Resolve the date range in the user's local timezone so "today" and
+        # "N days ago" match the user's calendar, not the server's UTC clock.
+        tz = _safe_zone(self._resolve_user_timezone(user_id))
+        now_local = datetime.now(tz)
+        end_date = now_local.strftime("%Y-%m-%d")
+        start_date = (now_local - timedelta(days=days)).strftime("%Y-%m-%d")
 
         activities = self.list_daily_activity(
             user_id=user_id,

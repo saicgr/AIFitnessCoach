@@ -193,6 +193,20 @@ class RedisCache:
                 logger.debug(f"Redis DELETE error: {e}")
         self._local.pop(key, None)
 
+    async def delete_prefix(self, sub: str):
+        """Delete every cached key whose (un-prefixed) name starts with
+        `sub` — e.g. all dates for one user. Clears Redis (via SCAN) and the
+        in-memory fallback. Fail-soft."""
+        if _redis_available and _redis_client:
+            try:
+                pattern = f"{self._prefix}{sub}*"
+                async for k in _redis_client.scan_iter(match=pattern):
+                    await _redis_client.delete(k)
+            except Exception as e:
+                logger.debug(f"Redis DELETE-PREFIX error: {e}")
+        for k in [k for k in self._local if k.startswith(sub)]:
+            self._local.pop(k, None)
+
     def _local_get(self, key: str) -> Optional[Any]:
         """In-memory fallback get."""
         from datetime import datetime

@@ -122,6 +122,11 @@ async def log_hydration(
         except Exception:
             pass
 
+        # Bust the home bootstrap cache so the next bootstrap poll reflects
+        # this hydration entry (bootstrap aggregates the hydration summary).
+        from api.v1.home.bootstrap_cache import invalidate_bootstrap_cache
+        await invalidate_bootstrap_cache(data.user_id)
+
         # Log hydration entry
         await log_user_activity(
             user_id=data.user_id,
@@ -289,6 +294,14 @@ async def delete_hydration_log(
         if not result.data:
             raise HTTPException(status_code=404, detail="Hydration log not found")
 
+        # Bust the home bootstrap cache (it aggregates the hydration summary)
+        # so the next bootstrap poll reflects this deletion. user_id comes from
+        # the deleted row returned by Supabase.
+        deleted_user_id = result.data[0].get("user_id")
+        if deleted_user_id:
+            from api.v1.home.bootstrap_cache import invalidate_bootstrap_cache
+            await invalidate_bootstrap_cache(deleted_user_id)
+
         return {"status": "deleted", "id": log_id}
 
     except HTTPException:
@@ -345,6 +358,11 @@ async def update_hydration_goal(
             "hydration_goal_ml": data.daily_goal_ml,
             "updated_at": datetime.utcnow().isoformat(),
         }, on_conflict="user_id").execute()
+
+        # Bust the home bootstrap cache — its HydrationSummary.target_ml is
+        # derived from this goal, so a stale cache would show the old target.
+        from api.v1.home.bootstrap_cache import invalidate_bootstrap_cache
+        await invalidate_bootstrap_cache(user_id)
 
         return {"user_id": user_id, "daily_goal_ml": data.daily_goal_ml}
 

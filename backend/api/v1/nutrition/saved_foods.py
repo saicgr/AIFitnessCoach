@@ -552,7 +552,9 @@ async def relog_saved_food(
 
         # Invalidate daily summary cache so the next fetch returns fresh data
         from api.v1.nutrition.summaries import invalidate_daily_summary_cache
+        from api.v1.home.bootstrap_cache import invalidate_bootstrap_cache
         await invalidate_daily_summary_cache(user_id)
+        await invalidate_bootstrap_cache(user_id)
 
         # Update times_logged
         db.client.table("saved_foods")\

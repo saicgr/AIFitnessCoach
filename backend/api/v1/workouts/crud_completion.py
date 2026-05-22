@@ -51,6 +51,7 @@ from .crud_background_tasks import (
     _send_streak_celebration_if_milestone,
 )
 from .today import invalidate_today_workout_cache
+from api.v1.home.bootstrap_cache import invalidate_bootstrap_cache
 # Trophy + milestone post-completion check. Wired as a background task so a
 # failure inside the trophy logic never blocks the completion API response.
 from ..trophy_triggers import check_workout_completion_trophies
@@ -623,6 +624,11 @@ async def complete_workout(
             gym_profile_id,
             scheduled_date,
         )
+        # Bust the home bootstrap cache inline (awaited) — the bootstrap key
+        # embeds the user's LOCAL date so a targeted delete can't be
+        # reconstructed here; delete_prefix busts every variant. Done inline,
+        # not fire-and-forget, so the next bootstrap poll is guaranteed fresh.
+        await invalidate_bootstrap_cache(user_id)
 
         # N2 First-Workout-Done email — fire in background if this is the user's
         # first ever completed workout. Caller-side gate: count workout_logs,
@@ -931,6 +937,7 @@ async def uncomplete_workout(workout_id: str,
         scheduled_date = str(existing.get("scheduled_date", ""))[:10] or None
         gym_profile_id = existing.get("gym_profile_id")
         await invalidate_today_workout_cache(existing.get("user_id"), gym_profile_id, scheduled_date)
+        await invalidate_bootstrap_cache(existing.get("user_id"))
 
         return workout
 

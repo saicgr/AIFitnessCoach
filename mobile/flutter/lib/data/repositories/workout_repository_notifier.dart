@@ -47,9 +47,13 @@ class WorkoutsNotifier extends StateNotifier<AsyncValue<List<Workout>>> {
   /// Load workouts from SharedPreferences. Returns null if cache miss/expired.
   Future<List<Workout>?> _loadFromDiskCache() async {
     try {
+      // returnExpiredOnMiss: a stale week still paints instantly on cold
+      // start — `_initSilent()` refreshes it right after — instead of a
+      // blank carousel + spinner while the slow /workouts/ API runs.
       final cached = await DataCacheService.instance.getCachedList(
         DataCacheService.workoutListKey,
         userId: _userId,
+        returnExpiredOnMiss: true,
       );
       if (cached == null || cached.isEmpty) return null;
       return cached.map((m) => Workout.fromJson(m)).toList();
@@ -113,6 +117,15 @@ class WorkoutsNotifier extends StateNotifier<AsyncValue<List<Workout>>> {
         final dateB = b.scheduledDate ?? '';
         return dateA.compareTo(dateB);
       });
+      // Don't let an empty (flaky/stale) response wipe a good cached week —
+      // a silent background refresh that returns [] is almost always a server
+      // hiccup, not a real plan deletion. A genuinely-empty user has no prior
+      // cached data, so the empty result still applies for them.
+      final current = state.valueOrNull;
+      if (workouts.isEmpty && current != null && current.isNotEmpty) {
+        debugPrint('⚠️ [Workouts] Silent fetch returned empty — kept cached week');
+        return;
+      }
       // Update in-memory cache
       _workoutsInMemoryCache = workouts;
       state = AsyncValue.data(workouts);

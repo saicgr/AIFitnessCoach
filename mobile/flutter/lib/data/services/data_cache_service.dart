@@ -192,7 +192,13 @@ class DataCacheService {
 
   /// Get cached JSON data (returns null if expired or missing). Same userId
   /// rules as [cache].
-  Future<Map<String, dynamic>?> getCached(String key, {String? userId}) async {
+  ///
+  /// When [returnExpiredOnMiss] is true an *expired* entry is returned anyway
+  /// (and kept on disk) instead of yielding null — so a caller can paint
+  /// stale-but-useful data instantly while it refreshes, rather than render
+  /// an empty screen / spinner.
+  Future<Map<String, dynamic>?> getCached(String key,
+      {String? userId, bool returnExpiredOnMiss = false}) async {
     try {
       final p = await prefs;
       key = _scopedKey(key, userId);
@@ -206,6 +212,10 @@ class DataCacheService {
         // Check if this is a TTL envelope (has 'data' and 'cachedAt')
         if (decoded.containsKey('cachedAt') && decoded.containsKey('data')) {
           if (!_isValid(decoded, key)) {
+            if (returnExpiredOnMiss) {
+              debugPrint('⏰ [Cache] Expired — returned stale (caller opted in): $key');
+              return decoded['data'] as Map<String, dynamic>;
+            }
             debugPrint('⏰ [Cache] Expired: $key');
             await p.remove(key);
             return null;
@@ -225,8 +235,9 @@ class DataCacheService {
   }
 
   /// Get cached list of JSON objects (returns null if expired or missing).
-  /// Same userId rules as [cache].
-  Future<List<Map<String, dynamic>>?> getCachedList(String key, {String? userId}) async {
+  /// Same userId rules as [cache]. See [getCached] for [returnExpiredOnMiss].
+  Future<List<Map<String, dynamic>>?> getCachedList(String key,
+      {String? userId, bool returnExpiredOnMiss = false}) async {
     try {
       final p = await prefs;
       key = _scopedKey(key, userId);
@@ -241,6 +252,10 @@ class DataCacheService {
           decoded.containsKey('data')) {
         // TTL envelope
         if (!_isValid(decoded, key)) {
+          if (returnExpiredOnMiss) {
+            debugPrint('⏰ [Cache] Expired — returned stale (caller opted in): $key');
+            return (decoded['data'] as List).cast<Map<String, dynamic>>();
+          }
           debugPrint('⏰ [Cache] Expired: $key');
           await p.remove(key);
           return null;

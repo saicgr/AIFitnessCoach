@@ -311,6 +311,11 @@ class HydrationNotifier extends StateNotifier<HydrationState> {
   /// only applied when the epoch still matches (i.e. no newer load started).
   int _loadEpoch = 0;
 
+  /// When the last optimistic +water write happened. Used to reject a stale
+  /// server summary (lower total) that would wipe a just-logged drink before
+  /// the backend cache catches up.
+  DateTime? _lastOptimisticAddAt;
+
   /// Local calendar date the current [HydrationState.todaySummary] belongs to
   /// (yyyy-MM-dd, device tz). Used to detect a midnight/timezone rollover
   /// while the app is open (A12a) so stale water doesn't persist into the new
@@ -463,6 +468,20 @@ class HydrationNotifier extends StateNotifier<HydrationState> {
       final summary = await _repository.getDailySummary(userId, date: localDate);
       // Only apply if no newer load was started while we were awaiting
       if (_loadEpoch != epoch) return;
+      // Reject a stale/cached server payload: if a drink was logged in the
+      // last 90 s and the server total is LOWER than what's on screen, the
+      // response predates that write — keep local; the next refetch (after
+      // the backend cache busts) reconciles. A delete legitimately lowers the
+      // total but does not set `_lastOptimisticAddAt`, so it is unaffected.
+      final local = state.todaySummary;
+      final recentAdd = _lastOptimisticAddAt != null &&
+          DateTime.now().difference(_lastOptimisticAddAt!) <
+              const Duration(seconds: 90);
+      if (recentAdd && local != null && summary.totalMl < local.totalMl) {
+        debugPrint('💧 [Hydration] kept local total — server response stale');
+        state = state.copyWith(isLoading: false);
+        return;
+      }
       state = state.copyWith(
         isLoading: false,
         todaySummary: summary,
@@ -532,6 +551,7 @@ class HydrationNotifier extends StateNotifier<HydrationState> {
         entries: currentSummary.entries,
       ),
     );
+    _lastOptimisticAddAt = DateTime.now();
     return snapshot;
   }
 

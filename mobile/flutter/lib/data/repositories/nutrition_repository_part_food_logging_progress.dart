@@ -372,6 +372,12 @@ class NutritionNotifier extends StateNotifier<NutritionState> {
   /// also dropped it (so a later genuine re-log of the same id isn't hidden).
   final Set<String> _deletedTombstones = {};
 
+  /// Monotonic counter — each summary load increments it. A response whose
+  /// epoch no longer matches has been superseded by a newer load and is
+  /// dropped, so an out-of-order (stale) response never clobbers fresher
+  /// state.
+  int _summaryLoadEpoch = 0;
+
   NutritionNotifier(this._repository, this._ref) : super(const NutritionState()) {
     _connSub = Connectivity().onConnectivityChanged.listen((results) {
       final online = results.any((r) =>
@@ -530,24 +536,24 @@ class NutritionNotifier extends StateNotifier<NutritionState> {
     }
 
     final stopwatch = Stopwatch()..start();
+    final epoch = ++_summaryLoadEpoch;
+    // Snapshot what's on screen NOW so the merge below can protect a
+    // just-logged meal from a stale/cached server payload.
+    final localBefore = state.todaySummary;
     try {
       // Pass local date to avoid UTC mismatch on server (Render runs in UTC)
-      var summary = await _repository.getDailySummary(userId, date: localDate);
+      final raw = await _repository.getDailySummary(userId, date: localDate);
       debugPrint(
         '🥗 [NutritionProvider] loadTodaySummary network: ${stopwatch.elapsedMilliseconds}ms '
-        '(meals=${summary.meals.length}, kcal=${summary.totalCalories})',
+        '(meals=${raw.meals.length}, kcal=${raw.totalCalories})',
       );
-      // (A12c) Reconcile in place — if this refresh's request predated an
-      // optimistic delete, the server payload still contains the deleted
-      // meal. Drop any tombstoned id so the delete isn't resurrected.
-      if (_deletedTombstones.isNotEmpty && summary.meals.isNotEmpty) {
-        final kept = summary.meals
-            .where((m) => !_deletedTombstones.contains(m.id))
-            .toList();
-        if (kept.length != summary.meals.length) {
-          summary = _recomputeTotals(summary, kept);
-        }
-      }
+      // A newer load superseded this request — drop this (now stale) response
+      // instead of letting it overwrite fresher state.
+      if (epoch != _summaryLoadEpoch) return;
+      // Reconcile against what's on screen: drop optimistically-deleted meals
+      // a (possibly cached) server payload still carries (A12c), and re-add a
+      // just-logged local meal the payload omitted. Never blind-overwrite.
+      final summary = _mergeServerSummary(raw, localBefore);
       state = state.copyWith(
         isLoading: false,
         todaySummary: summary,
@@ -556,8 +562,8 @@ class NutritionNotifier extends StateNotifier<NutritionState> {
       _lastLoadedUserId = userId;
       _lastLoadTime = DateTime.now();
 
-      // (4) Persist to disk for next cold start. Fire-and-forget — never
-      // block the UI on disk I/O.
+      // (4) Persist the RECONCILED result to disk for next cold start.
+      // Fire-and-forget — never block the UI on disk I/O.
       unawaited(_NutritionDiskCache.write(userId, localDate, summary));
 
       // Check if protein goal was hit and award XP
@@ -566,6 +572,7 @@ class NutritionNotifier extends StateNotifier<NutritionState> {
       debugPrint(
         '🥗 [NutritionProvider] loadTodaySummary FAILED after ${stopwatch.elapsedMilliseconds}ms: $e',
       );
+      if (epoch != _summaryLoadEpoch) return;
       // (5) Only surface the error if we have nothing on screen.
       if (state.todaySummary == null) {
         state = state.copyWith(isLoading: false, error: e.toString());
@@ -631,8 +638,20 @@ class NutritionNotifier extends StateNotifier<NutritionState> {
       error: null,
       todaySummary: state.loadedSummaryDate == dateStr ? state.todaySummary : null,
     );
+    final epoch = ++_summaryLoadEpoch;
+    final localBefore = state.todaySummary;
     try {
-      final summary = await _repository.getDailySummary(userId, date: dateStr);
+      final raw = await _repository.getDailySummary(userId, date: dateStr);
+      // Superseded by a newer load — drop this response.
+      if (epoch != _summaryLoadEpoch) return;
+      // A raced response for a DIFFERENT date must never render as this date.
+      if (raw.date.isNotEmpty && raw.date != dateStr) return;
+      // Merge only against a local summary that is for the SAME date, so the
+      // recency re-add can't pull another day's meals in.
+      final summary = _mergeServerSummary(
+        raw,
+        localBefore?.date == dateStr ? localBefore : null,
+      );
       state = state.copyWith(
         isLoading: false,
         todaySummary: summary,
@@ -646,6 +665,7 @@ class NutritionNotifier extends StateNotifier<NutritionState> {
       // today-cold-start payload with stale data. Historical dates simply
       // re-fetch on revisit (typical usage is infrequent).
     } catch (e) {
+      if (epoch != _summaryLoadEpoch) return;
       state = state.copyWith(isLoading: false, error: e.toString());
     }
   }
@@ -708,10 +728,27 @@ class NutritionNotifier extends StateNotifier<NutritionState> {
 
     try {
       final logs = await _repository.getFoodLogs(userId, limit: limit);
-      state = state.copyWith(recentLogs: logs, loadedLogsDate: todayStr);
+      // Don't let an empty (stale/cached/flaky) response wipe logs still on
+      // screen when a just-written local row is present — keep last-good.
+      if (logs.isEmpty && _hasRecentLocalLog()) {
+        debugPrint(
+            '🥗 [NutritionProvider] loadRecentLogs: ignored empty response — recent local log present');
+      } else {
+        state = state.copyWith(recentLogs: logs, loadedLogsDate: todayStr);
+      }
     } catch (e) {
       debugPrint('Error loading recent food logs: $e');
     }
+  }
+
+  /// True when `recentLogs` holds a log written within the last 90 s — used
+  /// to reject an empty server response that would wipe a just-logged row.
+  /// An all-old `recentLogs` (or an empty one) returns false, so a genuine
+  /// "everything deleted" empty response is still accepted.
+  bool _hasRecentLocalLog() {
+    if (state.recentLogs.isEmpty) return false;
+    final cutoff = DateTime.now().subtract(const Duration(seconds: 90));
+    return state.recentLogs.any((l) => l.createdAt.isAfter(cutoff));
   }
 
   /// Force refresh all data (use after logging a meal, etc.)
@@ -1159,6 +1196,50 @@ class NutritionNotifier extends StateNotifier<NutritionState> {
       avgHealthScore: summary.avgHealthScore,
       meals: meals,
     );
+  }
+
+  /// Reconciles a freshly-fetched [server] summary against the [local]
+  /// summary currently on screen, so a stale or cached server payload never
+  /// makes a just-logged meal disappear:
+  ///  - drops meals optimistically deleted (tombstoned) that the payload
+  ///    still carries (a refetch whose request predated the delete);
+  ///  - re-adds a local meal the payload omitted IF it was logged in the last
+  ///    90 s — a just-logged meal the server cache predates. An OLDER meal the
+  ///    server omits is treated as a genuine delete and is NOT resurrected, so
+  ///    a truly empty day and cross-device deletes still reconcile correctly.
+  DailyNutritionSummary _mergeServerSummary(
+    DailyNutritionSummary server,
+    DailyNutritionSummary? local,
+  ) {
+    var meals = server.meals;
+    var changed = false;
+
+    if (_deletedTombstones.isNotEmpty) {
+      final kept =
+          meals.where((m) => !_deletedTombstones.contains(m.id)).toList();
+      if (kept.length != meals.length) {
+        meals = kept;
+        changed = true;
+      }
+    }
+
+    if (local != null && local.meals.isNotEmpty) {
+      final present = meals.map((m) => m.id).toSet();
+      final cutoff = DateTime.now().subtract(const Duration(seconds: 90));
+      final extras = <FoodLog>[
+        for (final m in local.meals)
+          if (!present.contains(m.id) &&
+              !_deletedTombstones.contains(m.id) &&
+              m.createdAt.isAfter(cutoff))
+            m,
+      ];
+      if (extras.isNotEmpty) {
+        meals = [...meals, ...extras];
+        changed = true;
+      }
+    }
+
+    return changed ? _recomputeTotals(server, meals) : server;
   }
 
   /// Update nutrition targets

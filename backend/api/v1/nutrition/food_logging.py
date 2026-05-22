@@ -320,7 +320,9 @@ async def log_food_from_image(
 
         # Invalidate daily summary cache so the next fetch returns fresh data
         from api.v1.nutrition.summaries import invalidate_daily_summary_cache
+        from api.v1.home.bootstrap_cache import invalidate_bootstrap_cache
         await invalidate_daily_summary_cache(user_id)
+        await invalidate_bootstrap_cache(user_id)
 
         # Background: update nutrition streak
         db = get_supabase_db()
@@ -613,7 +615,9 @@ async def log_food_from_text(body: LogTextRequest, background_tasks: BackgroundT
 
         # Invalidate daily summary cache so the next fetch returns fresh data
         from api.v1.nutrition.summaries import invalidate_daily_summary_cache
+        from api.v1.home.bootstrap_cache import invalidate_bootstrap_cache
         await invalidate_daily_summary_cache(body.user_id)
+        await invalidate_bootstrap_cache(body.user_id)
 
         # Background: update nutrition streak
         db = get_supabase_db()
@@ -884,7 +888,9 @@ async def log_food_direct(
 
         # Invalidate daily summary cache so the next fetch returns fresh data
         from api.v1.nutrition.summaries import invalidate_daily_summary_cache
+        from api.v1.home.bootstrap_cache import invalidate_bootstrap_cache
         await invalidate_daily_summary_cache(body.user_id)
+        await invalidate_bootstrap_cache(body.user_id)
 
         # Background: update nutrition streak
         background_tasks.add_task(
@@ -1166,7 +1172,9 @@ async def log_food_from_text_streaming(request: Request, body: LogTextRequest, c
 
             # Invalidate daily summary cache so the next fetch returns fresh data
             from api.v1.nutrition.summaries import invalidate_daily_summary_cache
+            from api.v1.home.bootstrap_cache import invalidate_bootstrap_cache
             await invalidate_daily_summary_cache(body.user_id)
+            await invalidate_bootstrap_cache(body.user_id)
 
             # Send the completed food log
             cache_hit = food_analysis.get("cache_hit", False) if food_analysis else False

@@ -10,7 +10,7 @@ Two dependency levels:
   Use for auth endpoints (google, email, signup) that handle user creation themselves.
 """
 from fastapi import Header, HTTPException, status, Depends
-from typing import Optional
+from typing import Any, Optional
 import asyncio
 import hashlib
 import logging
@@ -27,13 +27,48 @@ from core.supabase_client import get_supabase
 
 logger = logging.getLogger(__name__)
 
-# Redis-backed cache of verified identities, keyed by a SHA-256 of the access
-# token. A client polling /workouts/today every ~5s reuses the same JWT, so
-# this collapses ~720 verifications/hour into one. Shared across workers via
-# Redis; per-worker in-memory fallback if Redis is down. TTL is additionally
-# capped at the token's own `exp` so a cached entry never outlives the token.
+# Redis-backed cache of verified identities. A client polling /workouts/today
+# every ~5s reuses the same JWT, so this collapses ~720 verifications/hour into
+# one. Shared across workers via Redis; per-worker in-memory fallback if Redis
+# is down. TTL is additionally capped at the token's own `exp` so a cached
+# entry never outlives the token.
+#
+# KEY FORMAT: `f"{user_id}:{token_hash}"`. The leading user-id segment is what
+# makes revocation possible — a password change / forced sign-out / account
+# action can bust EVERY cached token for one user in a single call via
+# `_auth_user_cache.delete_prefix(f"{user_id}:")`. Keying by token_hash alone
+# (the old scheme) left no handle to invalidate by user, so a revoked token
+# kept hitting the fast path until its TTL elapsed.
+#
+# `user_id` here is the JWT `sub` claim (the Supabase auth id). It is used
+# rather than the backend `users.id` because it is recoverable from the token
+# itself via an unverified decode — so the cache GET can build the key WITHOUT
+# a DB round-trip, which is the entire point of the fast path. `sub` is a
+# stable, unique per-user identifier, so prefix-revocation works the same way.
 _auth_user_cache = RedisCache(prefix="auth_user", ttl_seconds=300, max_size=2000)
 _AUTH_CACHE_MAX_TTL = 300  # seconds
+
+
+def _auth_cache_key(user_id: Any, token_hash: str) -> str:
+    """Build the `{user_id}:{token_hash}` auth-cache key.
+
+    The user_id segment lets `delete_prefix(f"{user_id}:")` revoke every
+    cached identity for a user. user_id is coerced to str so a UUID value
+    produces a stable key. See module-level note on why this is the JWT `sub`.
+    """
+    return f"{user_id}:{token_hash}"
+
+
+async def invalidate_auth_cache_for_user(user_id: Any) -> None:
+    """Bust every cached verified-identity entry for one user.
+
+    Call this after a password change, a forced sign-out, or any action that
+    should immediately stop existing JWTs from being honored via the auth
+    cache. `user_id` must be the JWT `sub` (Supabase auth id) — the same value
+    the cache keys on. Without this the cached identity would keep serving the
+    fast path until its (≤5 min) TTL elapses.
+    """
+    await _auth_user_cache.delete_prefix(f"{user_id}:")
 
 
 def _decode_exp_unverified(token: str) -> Optional[int]:
@@ -41,6 +76,20 @@ def _decode_exp_unverified(token: str) -> Optional[int]:
     the auth-cache TTL so a cached identity never outlives its token."""
     try:
         return _pyjwt.decode(token, options={"verify_signature": False}).get("exp")
+    except Exception:
+        return None
+
+
+def _decode_sub_unverified(token: str) -> Optional[str]:
+    """Read the `sub` claim (Supabase auth id) WITHOUT signature verification.
+
+    Used only to build the auth-cache key on the fast path before the token is
+    cryptographically verified. A forged `sub` only ever produces a cache miss
+    (the verified identity stored under the real key won't be found), so
+    reading it unverified here is safe — it is never trusted as identity."""
+    try:
+        sub = _pyjwt.decode(token, options={"verify_signature": False}).get("sub")
+        return str(sub) if sub is not None else None
     except Exception:
         return None
 
@@ -346,7 +395,14 @@ async def get_current_user(
     token_hash = hashlib.sha256(token.encode()).hexdigest()
 
     # Fast path: identity verified within the cache window — no network, no DB.
-    cached_user = await _auth_user_cache.get(token_hash)
+    # The cache key is `{sub}:{token_hash}`. `sub` is read via an unverified
+    # decode so the key can be built without a DB round-trip; a forged `sub`
+    # just misses the cache (the entry was stored under the real `sub`). When
+    # the token has no `sub` we fall back to the token-hash-only key so the
+    # fast path still functions, just without per-user prefix revocation.
+    cache_sub = _decode_sub_unverified(token)
+    cache_key = _auth_cache_key(cache_sub, token_hash) if cache_sub else token_hash
+    cached_user = await _auth_user_cache.get(cache_key)
     if cached_user is not None:
         try:
             from core.sentry import set_user as _sentry_set_user
@@ -440,12 +496,16 @@ async def get_current_user(
         }
         # Cache the verified identity, TTL-capped so it never outlives the
         # token's own `exp`. Subsequent requests with this token skip both
-        # the verify and the DB lookup entirely.
+        # the verify and the DB lookup entirely. Key on the VERIFIED `sub`
+        # (supabase_auth_id) so `delete_prefix("{sub}:")` can revoke every
+        # cached token for this user on a password change / forced logout.
         exp = _decode_exp_unverified(token)
         ttl = _AUTH_CACHE_MAX_TTL
         if exp:
             ttl = max(1, min(_AUTH_CACHE_MAX_TTL, int(exp - _time.time())))
-        await _auth_user_cache.set(token_hash, user, ttl_override=ttl)
+        await _auth_user_cache.set(
+            _auth_cache_key(supabase_auth_id, token_hash), user, ttl_override=ttl
+        )
         return user
 
     except HTTPException:

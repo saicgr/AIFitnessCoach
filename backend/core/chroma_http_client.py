@@ -4,10 +4,17 @@ Replaces the heavy chromadb Python package (~150MB) with direct HTTP calls via h
 """
 import asyncio
 import logging
+import time
 import httpx
-from typing import List, Dict, Optional, Any
+from typing import List, Dict, Optional, Any, Tuple
 
 logger = logging.getLogger(__name__)
+
+# Max age (seconds) of a cached name->collection mapping. Without this, a
+# collection that is renamed or dropped-and-recreated upstream keeps resolving
+# to a stale collection id for the lifetime of the worker. 5 minutes bounds
+# that staleness while still collapsing the vast majority of repeated lookups.
+_COLLECTION_CACHE_TTL = 300
 
 
 class ChromaHTTPCollection:
@@ -184,15 +191,33 @@ class ChromaHTTPClient:
             },
             timeout=30.0,
         )
-        # Cache collection name -> ChromaHTTPCollection to avoid repeated lookups
-        self._collection_cache: Dict[str, ChromaHTTPCollection] = {}
+        # Cache collection name -> (cached_at, ChromaHTTPCollection) to avoid
+        # repeated lookups. Entries expire after _COLLECTION_CACHE_TTL so a
+        # renamed/recreated collection is not resolved to a stale id forever.
+        self._collection_cache: Dict[str, Tuple[float, ChromaHTTPCollection]] = {}
 
     # ── collection management ─────────────────────────────────────────────
+
+    def _cache_get(self, name: str) -> Optional["ChromaHTTPCollection"]:
+        """Return a cached collection if present AND not past its max age."""
+        entry = self._collection_cache.get(name)
+        if entry is None:
+            return None
+        cached_at, col = entry
+        if (time.monotonic() - cached_at) > _COLLECTION_CACHE_TTL:
+            # Stale — drop it so the next lookup re-resolves the id.
+            self._collection_cache.pop(name, None)
+            return None
+        return col
+
+    def _cache_put(self, name: str, col: "ChromaHTTPCollection") -> None:
+        """Store a collection with the current timestamp for TTL tracking."""
+        self._collection_cache[name] = (time.monotonic(), col)
 
     def get_or_create_collection(
         self, name: str, metadata: Optional[Dict] = None
     ) -> ChromaHTTPCollection:
-        cached = self._collection_cache.get(name)
+        cached = self._cache_get(name)
         if cached is not None:
             return cached
 
@@ -207,11 +232,11 @@ class ChromaHTTPClient:
         resp.raise_for_status()
         data = resp.json()
         col = ChromaHTTPCollection(data["id"], data["name"], self)
-        self._collection_cache[name] = col
+        self._cache_put(name, col)
         return col
 
     def get_collection(self, name: str) -> ChromaHTTPCollection:
-        cached = self._collection_cache.get(name)
+        cached = self._cache_get(name)
         if cached is not None:
             return cached
 
@@ -219,7 +244,7 @@ class ChromaHTTPClient:
         resp.raise_for_status()
         data = resp.json()
         col = ChromaHTTPCollection(data["id"], data["name"], self)
-        self._collection_cache[name] = col
+        self._cache_put(name, col)
         return col
 
     def delete_collection(self, name: str) -> None:

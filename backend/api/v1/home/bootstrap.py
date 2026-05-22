@@ -55,16 +55,19 @@ _db_executor = ThreadPoolExecutor(
     thread_name_prefix="home_bootstrap_db",
 )
 
-# Bootstrap response TTL. Jittered per-write (see _jittered_ttl) so that many
-# users' entries do NOT expire in lockstep — synchronized expiry causes a
-# coordinated DB burst ("cache stampede") every 30 min.
-_BOOTSTRAP_TTL_SECONDS = 1800          # 30 min nominal
-_BOOTSTRAP_TTL_JITTER = 0.15           # +/- 15%
-
-# Redis cache — 30 minute nominal TTL, invalidated explicitly on data changes.
-_bootstrap_cache = RedisCache(
-    prefix="home_bootstrap", ttl_seconds=_BOOTSTRAP_TTL_SECONDS, max_size=200
+# The bootstrap cache, its TTL, and `invalidate_bootstrap_cache` live in the
+# leaf module `bootstrap_cache.py` so write endpoints can import the
+# invalidator without a circular import (this module imports route siblings).
+from api.v1.home.bootstrap_cache import (  # noqa: E402
+    _BOOTSTRAP_TTL_SECONDS,
+    _bootstrap_cache,
+    invalidate_bootstrap_cache,  # re-exported for backward compatibility
 )
+
+# Jittered per-write (see _jittered_ttl) so that many users' entries do NOT
+# expire in lockstep — synchronized expiry causes a coordinated DB burst
+# ("cache stampede") every 30 min.
+_BOOTSTRAP_TTL_JITTER = 0.15           # +/- 15%
 
 # Per-key single-flight registry. When several concurrent requests miss the
 # cache for the SAME key, only the first one actually runs the 5 DB fetches;
@@ -149,23 +152,8 @@ class BootstrapResponse(BaseModel):
     gym_profile: GymProfileSummary = GymProfileSummary()
 
 
-# =============================================================================
-# Cache invalidation (call from other endpoints when data changes)
-# =============================================================================
-
-async def invalidate_bootstrap_cache(user_id: str, gym_profile_id: str = None):
-    """Invalidate cached bootstrap response after data changes.
-
-    Because the cache key includes today's date, we need to know which
-    date string was used. Since invalidation typically happens for "today",
-    we delete with a wildcard approach: try the most likely key.
-    If gym_profile_id is not provided, we attempt invalidation with 'none'.
-    """
-    today_str = datetime.utcnow().strftime("%Y-%m-%d")
-    profile_part = gym_profile_id or "none"
-    cache_key = f"{user_id}:{profile_part}:{today_str}"
-    await _bootstrap_cache.delete(cache_key)
-    logger.debug(f"[CACHE] Invalidated home_bootstrap for key={cache_key}")
+# `invalidate_bootstrap_cache` now lives in `bootstrap_cache.py` (imported and
+# re-exported above) so write endpoints avoid a circular import.
 
 
 # =============================================================================

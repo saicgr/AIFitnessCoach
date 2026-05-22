@@ -213,8 +213,10 @@ async def delete_food_log(log_id: str, current_user: dict = Depends(get_current_
 
         # Invalidate daily summary cache so the next fetch returns fresh data
         from api.v1.nutrition.summaries import invalidate_daily_summary_cache
+        from api.v1.home.bootstrap_cache import invalidate_bootstrap_cache
         user_id = log.get("user_id") or current_user.get("id") or current_user.get("sub")
         await invalidate_daily_summary_cache(user_id)
+        await invalidate_bootstrap_cache(user_id)
 
         await log_user_activity(
             user_id=user_id,
@@ -293,7 +295,9 @@ async def update_food_log(log_id: str, body: UpdateFoodLogRequest, current_user:
 
         # Invalidate daily summary cache so the next fetch returns fresh data
         from api.v1.nutrition.summaries import invalidate_daily_summary_cache
+        from api.v1.home.bootstrap_cache import invalidate_bootstrap_cache
         await invalidate_daily_summary_cache(user_id)
+        await invalidate_bootstrap_cache(user_id)
 
         # Determine edit actions for logging
         edit_actions = [e.edited_field for e in body.item_edits] if body.item_edits else []
@@ -465,7 +469,9 @@ async def copy_food_log(log_id: str, http_request: Request, meal_type: str = Que
 
         # Invalidate daily summary cache so the next fetch returns fresh data
         from api.v1.nutrition.summaries import invalidate_daily_summary_cache
+        from api.v1.home.bootstrap_cache import invalidate_bootstrap_cache
         await invalidate_daily_summary_cache(source["user_id"])
+        await invalidate_bootstrap_cache(source["user_id"])
 
         await log_user_activity(
             user_id=source["user_id"],

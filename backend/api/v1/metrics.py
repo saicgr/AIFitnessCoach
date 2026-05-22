@@ -7,9 +7,10 @@ from core.db import get_supabase_db
 import io
 
 import pandas as pd
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from core.auth import get_current_user
 from core.exceptions import safe_internal_error
+from core.timezone_utils import resolve_timezone, _safe_zone
 from fastapi.responses import StreamingResponse, JSONResponse
 from pydantic import BaseModel, Field
 from typing import Optional, List
@@ -725,6 +726,7 @@ async def get_grouped_body_measurements(user_id: str, limit: int = 300,
 @router.get("/body/export/{user_id}", tags=["body-measurements"])
 async def export_body_measurements(
     user_id: str,
+    http_request: Request,
     format: str = "csv",
     start_date: Optional[str] = None,
     end_date: Optional[str] = None,
@@ -793,7 +795,10 @@ async def export_body_measurements(
 
         df = pd.DataFrame(flat_rows) if flat_rows else pd.DataFrame(columns=["date", "type", "value", "unit", "notes"])
 
-        date_str = datetime.utcnow().strftime("%Y-%m-%d")
+        # Filename date stamps the export in the user's local calendar day so
+        # the file the user downloads matches the date on their device.
+        tz = _safe_zone(resolve_timezone(http_request, db, user_id))
+        date_str = datetime.now(tz).strftime("%Y-%m-%d")
 
         if format == "json":
             records = df.to_dict(orient="records")

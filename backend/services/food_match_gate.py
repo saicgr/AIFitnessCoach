@@ -33,6 +33,7 @@ that text transits to Gemini. This is a known trade-off accepted for
 disambiguation quality; disable Gemini via env var or `use_gemini=False` in
 environments where that is unacceptable.
 """
+import hashlib
 import re
 import time
 import unicodedata
@@ -40,6 +41,7 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, FrozenSet, Iterable, List, Optional, Set, Tuple
 
 from core.logger import get_logger
+from core.redis_cache import RedisCache
 
 logger = get_logger(__name__)
 
@@ -448,27 +450,45 @@ def _rank(scored: List[MatchScore]) -> List[MatchScore]:
 
 # ── Gemini batch validation (ambiguous-tier gate) ──────────────────────────
 
-# Cache: (query_lower, frozenset(candidate_names), region, prompt_version)
-#        -> (ts, accepted_idx).
-# prompt_version lets us invalidate all stale verdicts when the validator
-# rubric changes.
-_VALIDATE_CACHE: Dict[
-    Tuple[str, FrozenSet[str], Optional[str], str],
-    Tuple[float, Set[int]],
-] = {}
+# Redis-backed cache of Gemini validation verdicts, shared across all workers
+# (was a per-worker in-memory dict). Key is a hash of
+# (query_lower, sorted candidate_names, region, prompt_version); the
+# prompt_version salt stays embedded in the key so a rubric change invalidates
+# every stale verdict. TTL is enforced by Redis; eviction is Redis-managed too,
+# so the manual LRU sweep is gone. Falls back to a per-worker in-memory dict
+# when Redis is unavailable (RedisCache handles that transparently).
 _VALIDATE_TTL = 60 * 60 * 24 * 7  # 7 days
-_VALIDATE_CACHE_MAX = 5000  # Cap to prevent unbounded growth in long-lived workers
+# Bump this salt to invalidate every cached verdict when the validator rubric
+# (the gemini_batch_validate prompt) changes.
+_VALIDATE_PROMPT_VERSION = "v3"
+_VALIDATE_CACHE = RedisCache(
+    prefix="food_match_validate",
+    ttl_seconds=_VALIDATE_TTL,
+    max_size=5000,
+)
 
 
-def _cache_put(key, value):
-    """Insert with LRU-ish eviction: when at cap, drop the oldest 10%."""
-    _VALIDATE_CACHE[key] = value
-    if len(_VALIDATE_CACHE) > _VALIDATE_CACHE_MAX:
-        # Drop ~10% oldest entries by timestamp to amortize eviction cost.
-        stale_n = max(1, _VALIDATE_CACHE_MAX // 10)
-        oldest = sorted(_VALIDATE_CACHE.items(), key=lambda kv: kv[1][0])[:stale_n]
-        for k, _ in oldest:
-            _VALIDATE_CACHE.pop(k, None)
+def _validate_cache_key(
+    query: str,
+    cand_names: Tuple[str, ...],
+    region: Optional[str],
+) -> str:
+    """Deterministic Redis key from the verdict's identifying inputs.
+
+    Candidate order must not matter (Gemini validates the set), so names are
+    sorted before hashing. The prompt-version salt is part of the hashed
+    payload — a rubric bump changes every key, so stale verdicts are
+    unreachable rather than served.
+    """
+    payload = {
+        "q": query.strip().lower(),
+        "cands": sorted(cand_names),
+        "region": region,
+        "pv": _VALIDATE_PROMPT_VERSION,
+    }
+    return hashlib.sha256(
+        repr(sorted(payload.items())).encode("utf-8")
+    ).hexdigest()
 
 
 def _sanitize_for_prompt(text: str, max_len: int = 200) -> str:
@@ -502,17 +522,19 @@ async def gemini_batch_validate(
         (c.row.get("display_name") or c.row.get("name") or "").strip()
         for c in candidates
     )
-    # "v2" salt invalidates cached verdicts from before the stricter
-    # region/brand/protein rules were added to the validator prompt.
-    cache_key = (query.strip().lower(), frozenset(cand_names), region, "v3")
-    now = time.time()
-    cached = _VALIDATE_CACHE.get(cache_key)
-    if cached and (now - cached[0]) < _VALIDATE_TTL:
+    # Redis-backed verdict cache, shared across workers. The prompt-version
+    # salt is folded into the key so a rubric change invalidates stale
+    # verdicts. TTL is enforced by Redis itself.
+    cache_key = _validate_cache_key(query, cand_names, region)
+    cached = await _VALIDATE_CACHE.get(cache_key)
+    if cached is not None:
+        # Stored as a JSON list; restore the historical Set[int] return shape.
+        accepted_cached: Set[int] = set(cached)
         logger.debug(
             f"[FoodMatchGate] gemini_validate cache_hit q='{query}' "
-            f"accepted={sorted(cached[1])}"
+            f"accepted={sorted(accepted_cached)}"
         )
-        return cached[1]
+        return accepted_cached
 
     try:
         from google.genai import types
@@ -606,7 +628,10 @@ async def gemini_batch_validate(
             except ValueError:
                 continue
 
-    _cache_put(cache_key, (now, accepted))
+    # Persist the verdict. RedisCache values must be JSON-serializable, so the
+    # accepted-index Set is stored as a sorted list and restored to a Set on
+    # read above. TTL is the cache's configured _VALIDATE_TTL.
+    await _VALIDATE_CACHE.set(cache_key, sorted(accepted))
     logger.info(
         f"[FoodMatchGate] gemini_validate q='{query}' "
         f"candidates={len(candidates)} accepted={sorted(accepted)} "

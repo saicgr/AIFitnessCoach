@@ -52,13 +52,22 @@ _gym_profile_cache = RedisCache(prefix="gym_profile", ttl_seconds=30, max_size=2
 
 
 async def invalidate_today_workout_cache(user_id: str, gym_profile_id: str = None, date: str = None):
-    """Invalidate cached /today response after workout changes."""
-    cache_key = f"{user_id}:{gym_profile_id or 'none'}:{date or 'unknown'}"
-    await _today_workout_cache.delete(cache_key)
+    """Invalidate cached /today response after workout changes.
+
+    The /today cache key is ``{user_id}:{gym_profile_id or 'none'}:{date}``.
+    Callers frequently invalidate without knowing the exact profile or date
+    (e.g. a completion hook), and the old per-key delete composed
+    ``...:none:unknown`` — a key that never matches the real
+    ``...:{profile}:{today_str}`` entry, so a completed workout kept showing
+    "not started" for the full 30-minute TTL. Bust every profile + date
+    variant under this user via a SCAN prefix delete instead. The
+    ``gym_profile_id`` / ``date`` params are kept for signature compatibility
+    with existing callers but are no longer needed to target the key."""
+    await _today_workout_cache.delete_prefix(f"{user_id}:")
     # Also clear user/gym caches so next request picks up fresh data
     await _user_record_cache.delete(user_id)
     await _gym_profile_cache.delete(user_id)
-    logger.debug(f"[CACHE] Invalidated workout_today + user/gym caches for key={cache_key}")
+    logger.debug(f"[CACHE] Invalidated workout_today (all variants) + user/gym caches for user={user_id}")
 
 
 # =============================================================================

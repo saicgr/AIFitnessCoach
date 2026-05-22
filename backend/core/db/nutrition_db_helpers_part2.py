@@ -6,6 +6,12 @@ import logging
 import re
 logger = logging.getLogger(__name__)
 
+# Max age for a cached food-analysis row. The read helper bumps
+# last_accessed_at on every hit, so without this a hot stale row would serve
+# forever. After this window the row is treated as a miss and re-computed
+# (picking up any model/prompt improvements). See migration 2091.
+_FOOD_ANALYSIS_CACHE_TTL = timedelta(days=30)
+
 
 class NutritionDBPart2:
     """Second half of NutritionDB methods. Use as mixin."""
@@ -237,7 +243,7 @@ class NutritionDBPart2:
         try:
             result = (
                 self.client.table("food_analysis_cache")
-                .select("id, analysis_result, hit_count")
+                .select("id, analysis_result, hit_count, created_at")
                 .eq("query_hash", query_hash)
                 .maybe_single()
                 .execute()
@@ -245,6 +251,39 @@ class NutritionDBPart2:
 
             if result and result.data:
                 cache_entry = result.data
+
+                # TTL check: reject (and let the caller re-compute) any row
+                # older than _FOOD_ANALYSIS_CACHE_TTL. Without this, a row
+                # whose last_accessed_at keeps getting bumped on every hit
+                # would never expire and stale nutrition numbers would serve
+                # forever. created_at is guaranteed by migration 2091.
+                created_at_raw = cache_entry.get("created_at")
+                if created_at_raw:
+                    try:
+                        created_at = datetime.fromisoformat(
+                            str(created_at_raw).replace("Z", "+00:00")
+                        )
+                        # Compare in the same awareness as the stored value.
+                        now = (
+                            datetime.now(created_at.tzinfo)
+                            if created_at.tzinfo is not None
+                            else datetime.utcnow()
+                        )
+                        if now - created_at > _FOOD_ANALYSIS_CACHE_TTL:
+                            logger.info(
+                                f"Food analysis cache STALE (>{_FOOD_ANALYSIS_CACHE_TTL.days}d) "
+                                f"for hash {query_hash[:8]}... — re-computing"
+                            )
+                            return None
+                    except (ValueError, TypeError) as e:
+                        # Malformed created_at — treat as a miss so we
+                        # re-compute and overwrite with a fresh, valid row.
+                        logger.warning(
+                            f"Malformed created_at in food_analysis_cache "
+                            f"(hash {query_hash[:8]}...): {e} — re-computing"
+                        )
+                        return None
+
                 # Update hit stats (fire and forget)
                 try:
                     self.client.table("food_analysis_cache").update({
