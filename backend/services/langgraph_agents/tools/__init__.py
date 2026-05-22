@@ -86,6 +86,22 @@ from .health_tools import (
     HEALTH_TOOLS,
 )
 
+# === Phase F: menstrual-cycle agent tools ===
+# Read + action tools for the dedicated cycle agent (status / history /
+# symptoms, period & symptom logging, cycle-sync preferences, phase-based
+# workout & meal suggestions). Surfaced through chat action_data.
+from .cycle_tools import (
+    get_cycle_status,
+    get_cycle_history,
+    get_recent_symptoms,
+    log_cycle_symptom,
+    log_period_event,
+    set_cycle_sync_preference,
+    suggest_phase_workout,
+    suggest_phase_meals,
+    CYCLE_TOOLS,
+)
+
 from .base import get_vision_service, get_form_analysis_service
 
 # Registry of all available tools
@@ -126,6 +142,8 @@ ALL_TOOLS = [
     *WELLNESS_TOOLS,
     # === Phase B2: wearable health & activity snapshot ===
     *HEALTH_TOOLS,
+    # === Phase F: menstrual-cycle agent tools ===
+    *CYCLE_TOOLS,
 ]
 
 # Tool name to function mapping
@@ -173,6 +191,16 @@ __all__ = [
     # Phase B2: wearable health & activity
     "get_health_activity_summary",
     "HEALTH_TOOLS",
+    # Phase F: menstrual-cycle agent tools
+    "get_cycle_status",
+    "get_cycle_history",
+    "get_recent_symptoms",
+    "log_cycle_symptom",
+    "log_period_event",
+    "set_cycle_sync_preference",
+    "suggest_phase_workout",
+    "suggest_phase_meals",
+    "CYCLE_TOOLS",
     # Utilities
     "get_vision_service",
     "get_form_analysis_service",

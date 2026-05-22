@@ -59,5 +59,10 @@ class WorkoutAgentState(TypedDict):
     # Media classification (from media classifier)
     media_content_type: Optional[str]
 
+    # Cycle context (Phase F) — phase string + compact summary only, so
+    # workout advice respects cycle energy/recovery patterns. Never raw data.
+    cycle_phase: Optional[str]
+    cycle_context: Optional[Dict[str, Any]]
+
     # Error handling
     error: Optional[str]

@@ -40,6 +40,12 @@ async def get_daily_micronutrients(
 
     Returns vitamins, minerals, fatty acids, and other nutrients with
     floor/target/ceiling values and current intake.
+
+    When the user has opted in to cycle-sync nutrition
+    (`hormonal_profiles.cycle_sync_nutrition`), the highlighted/pinned
+    nutrients are re-prioritised by the current menstrual-cycle phase
+    (iron + magnesium emphasis during menstruation, etc.) on top of the
+    existing static/dynamic pinning. A no-op for everyone else.
     """
     try:
         db = get_supabase_db()
@@ -241,6 +247,53 @@ async def get_daily_micronutrients(
         else:
             # Static mode OR no logs yet → fall back to user's saved list.
             pinned = _static_pinned()
+
+        # ── Cycle-phase micronutrient emphasis (Phase H) ───────────────────
+        # When the user opted in to cycle-sync nutrition, surface the
+        # phase-relevant micronutrients (iron + magnesium during the bleed,
+        # magnesium + B6 in the luteal phase, etc.) at the FRONT of the
+        # pinned list so the most cycle-actionable nutrients lead. This
+        # layers over — never replaces — the static/dynamic pinning above,
+        # and is a no-op for any user who has not opted in.
+        try:
+            from services.cycle.cycle_nutrition import (
+                get_cycle_phase_if_synced,
+                emphasised_nutrients_for_phase,
+            )
+
+            cycle_phase = get_cycle_phase_if_synced(db.client, user_id, date)
+            emphasis_roots = emphasised_nutrients_for_phase(cycle_phase)
+            if emphasis_roots:
+                # Build the phase-emphasised NutrientProgress entries from
+                # the already-computed all_progress set, matching on the
+                # unit-suffix-stripped key (e.g. 'iron' -> 'iron_mg').
+                emphasis_order = {root: i for i, root in enumerate(emphasis_roots)}
+                emphasised: list[NutrientProgress] = []
+                for p in all_progress:
+                    if p.nutrient_key in MACRO_EXCLUDE:
+                        continue
+                    root = _strip_unit_suffix(p.nutrient_key)
+                    if root in emphasis_order or p.nutrient_key in emphasis_order:
+                        emphasised.append(
+                            p.model_copy(update={"pin_reason": "cycle_phase"})
+                        )
+                # Sort the emphasised picks by their phase-priority rank.
+                emphasised.sort(
+                    key=lambda x: emphasis_order.get(
+                        _strip_unit_suffix(x.nutrient_key),
+                        emphasis_order.get(x.nutrient_key, 999),
+                    )
+                )
+                # Prepend, drop any now-duplicate non-emphasised entries.
+                emphasised_keys = {p.nutrient_key for p in emphasised}
+                rest = [p for p in pinned if p.nutrient_key not in emphasised_keys]
+                pinned = emphasised + rest
+        except Exception as cycle_err:
+            # A cycle fault must never break the micronutrient summary.
+            logger.warning(
+                f"Cycle-phase micronutrient emphasis skipped for user {user_id}: {cycle_err}",
+                exc_info=True,
+            )
 
         return DailyMicronutrientSummary(
             date=date,

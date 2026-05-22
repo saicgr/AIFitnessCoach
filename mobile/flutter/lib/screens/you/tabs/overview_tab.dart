@@ -26,8 +26,11 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/providers/serious_mode_provider.dart';
 import '../../../core/theme/accent_color_provider.dart';
+import '../../../data/models/hormonal_health.dart';
+import '../../../data/providers/hormonal_health_provider.dart';
 import '../../../data/providers/xp_provider.dart';
 import '../../../data/services/api_client.dart';
+import '../../../data/services/haptic_service.dart';
 import '../../../data/services/health_service.dart';
 import '../../../data/services/you_overview_prewarmer.dart';
 import '../../../widgets/liquid_glass_action_bar.dart';
@@ -358,7 +361,12 @@ class _YouOverviewTabState extends ConsumerState<YouOverviewTab>
             padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
             child: WeightTrackingCard(),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 8),
+          // Permanent Cycle row — opens the dedicated /cycle experience.
+          // Self-hides when menstrual tracking is disabled (the row reads
+          // `hormonalProfileProvider`), so male / opted-out accounts see
+          // no entry, per the gender-gating table.
+          const _CycleHubRow(),
 
           // Hero XP tile — three rows (weekly XP + sparkline, level +
           // progress + reward preview, streak + nudge). Reads directly
@@ -945,6 +953,96 @@ class _HeadlineTile extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Permanent Cycle entry row for the You hub Overview tab.
+///
+/// Opens the dedicated `/cycle` experience. Reads [hormonalProfileProvider]
+/// and self-hides (`SizedBox.shrink`) when menstrual tracking is disabled —
+/// so male / opted-out accounts never see it, per the gender-gating table.
+class _CycleHubRow extends ConsumerWidget {
+  const _CycleHubRow();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final profileAsync = ref.watch(hormonalProfileProvider);
+    final enabled = profileAsync.value?.menstrualTrackingEnabled ?? false;
+    if (!enabled) return const SizedBox.shrink();
+
+    final prediction = ref.watch(cyclePredictionProvider).value;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final fg = isDark ? Colors.white : const Color(0xFF0A0A0A);
+    const accent = Color(0xFFE5567B); // cycle pink
+
+    String sub = 'Phase, calendar & fertility insights';
+    if (prediction != null && prediction.predictionsAvailable) {
+      final day = prediction.currentCycleDay;
+      final phase = prediction.currentPhase;
+      if (phase != null && day != null) {
+        sub = '${phase.displayName} · day $day';
+      }
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      child: GestureDetector(
+        onTap: () {
+          HapticService.light();
+          context.push('/cycle');
+        },
+        child: Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: isDark
+                ? Colors.white.withValues(alpha: 0.05)
+                : Colors.black.withValues(alpha: 0.03),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: accent.withValues(alpha: 0.22)),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(9),
+                decoration: BoxDecoration(
+                  color: accent.withValues(alpha: 0.16),
+                  borderRadius: BorderRadius.circular(11),
+                ),
+                child: const Icon(Icons.favorite_rounded,
+                    color: accent, size: 19),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Cycle',
+                      style: TextStyle(
+                        color: fg,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      sub,
+                      style: TextStyle(
+                        color: fg.withValues(alpha: 0.6),
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(Icons.chevron_right_rounded,
+                  color: fg.withValues(alpha: 0.35)),
+            ],
+          ),
         ),
       ),
     );

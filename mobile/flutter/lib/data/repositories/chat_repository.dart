@@ -23,6 +23,7 @@ import '../services/health_service.dart';
 import '../services/data_cache_service.dart';
 import '../services/recipe_notification_router.dart';
 import '../providers/audio_preferences_provider.dart';
+import '../providers/hormonal_health_provider.dart';
 import '../providers/today_workout_provider.dart';
 import '../providers/unified_state_provider.dart';
 import 'workout_repository.dart';
@@ -79,7 +80,18 @@ final chatMessagesProvider =
       ref.invalidate(aiBurnedCaloriesProvider(uid));
     }
   }
-  return ChatMessagesNotifier(repository, apiClient, workoutsNotifier, workoutRepository, user, themeNotifier, router, hydrationNotifier, nutritionNotifier, getAISettings, setAIGenerating, getUnifiedContext, offlineCoach, isOnline, getSoundPrefs, getAudioPrefs, refreshTodayWorkout);
+  // Phase F — the cycle agent's action tools mutate the backend; this
+  // callback invalidates the cycle providers so a live Cycle screen / home
+  // card repaints. Captures `ref` instead of holding notifier references.
+  void refreshCycleData() {
+    ref.invalidate(cyclePredictionProvider);
+    ref.invalidate(cyclePeriodsProvider);
+    ref.invalidate(cycleRawLogsProvider);
+    ref.invalidate(cycleAiInsightProvider);
+    ref.invalidate(hormonalProfileProvider);
+    ref.invalidate(todayHormoneLogProvider);
+  }
+  return ChatMessagesNotifier(repository, apiClient, workoutsNotifier, workoutRepository, user, themeNotifier, router, hydrationNotifier, nutritionNotifier, getAISettings, setAIGenerating, getUnifiedContext, offlineCoach, isOnline, getSoundPrefs, getAudioPrefs, refreshTodayWorkout, refreshCycleData);
 });
 
 /// A single decoded event off the `POST /chat/send-stream` SSE stream.

@@ -22,12 +22,20 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class WeightLog:
-    """Weight log entry."""
+    """Weight log entry.
+
+    `cycle_phase` is an optional cycle-aware annotation: when menstrual
+    tracking is enabled for the user, each weigh-in is tagged with the cycle
+    phase ("menstrual" / "follicular" / "ovulation" / "luteal") that fell on
+    its `logged_at` date. It stays None for users without cycle tracking, so
+    every cycle-aware code path below is a no-op for them.
+    """
     id: str
     user_id: str
     weight_kg: float
     logged_at: datetime
     source: str = "manual"
+    cycle_phase: Optional[str] = None
 
 
 @dataclass
@@ -120,6 +128,24 @@ class AdaptiveTDEEService:
     MIN_TDEE = 1000
     MAX_TDEE = 6000
 
+    # --- Cycle-aware tuning ----------------------------------------------
+    # Luteal-phase water retention spikes scale weight ~1-2 kg without any
+    # change in fat mass. A naive energy-balance read of a window that starts
+    # and ends in different cycle phases mistakes that water for stored
+    # energy. These constants down-weight the noisy weigh-ins and widen the
+    # confidence interval when a window is "cycle-contaminated".
+    #
+    # Phases whose weigh-ins carry transient water weight and so should count
+    # less toward the trend / energy-balance calculation.
+    CYCLE_NOISY_PHASES = ("luteal", "menstrual")
+    # Multiplier applied to a noisy-phase weigh-in's contribution (vs 1.0 for
+    # a clean follicular/ovulation reading). 0.4 keeps the point informative
+    # without letting luteal water dominate.
+    CYCLE_NOISY_WEIGHT = 0.4
+    # Extra ±calories added to the TDEE confidence interval when the analysis
+    # window is cycle-contaminated (start phase != end phase).
+    CYCLE_CONTAMINATION_UNCERTAINTY = 120
+
     def __init__(self):
         pass
 
@@ -202,6 +228,65 @@ class AdaptiveTDEEService:
 
         return filtered
 
+    def calculate_cycle_aware_ema_weight(
+        self,
+        weight_logs: List[WeightLog],
+        alpha: float = None
+    ) -> float:
+        """EMA weight that down-weights luteal/menstrual weigh-ins.
+
+        Identical to `calculate_ema_weight` for users without cycle tracking
+        (every `cycle_phase` is None → every blend factor is 1.0). When a
+        weigh-in is tagged with a noisy phase its EMA blend factor is scaled
+        by `CYCLE_NOISY_WEIGHT`, so transient luteal water retention nudges
+        the smoothed trend far less than a clean follicular reading.
+        """
+        if not weight_logs:
+            return 0.0
+        if len(weight_logs) == 1:
+            return weight_logs[0].weight_kg
+
+        alpha = alpha or self.EMA_ALPHA
+        sorted_logs = sorted(weight_logs, key=lambda x: x.logged_at)
+        filtered_logs = self._filter_outliers(sorted_logs)
+        if not filtered_logs:
+            return sorted_logs[-1].weight_kg
+
+        # No cycle tags at all → behave exactly like the plain EMA.
+        if not any(log.cycle_phase for log in filtered_logs):
+            return self.calculate_ema_weight(weight_logs, alpha)
+
+        ema = filtered_logs[0].weight_kg
+        for log in filtered_logs[1:]:
+            # A noisy-phase point contributes less new information; an
+            # untagged or clean point contributes fully.
+            phase_factor = (
+                self.CYCLE_NOISY_WEIGHT
+                if log.cycle_phase in self.CYCLE_NOISY_PHASES
+                else 1.0
+            )
+            effective_alpha = alpha * phase_factor
+            ema = effective_alpha * log.weight_kg + (1 - effective_alpha) * ema
+
+        return round(ema, 2)
+
+    def _is_cycle_contaminated(
+        self,
+        weight_logs: List[WeightLog]
+    ) -> bool:
+        """A window is "cycle-contaminated" when its first and last tagged
+        weigh-ins sit in different cycle phases — luteal water weight then
+        does not cancel start-to-end, so the energy-balance read is noisier.
+
+        No-op (returns False) for users without cycle tracking: with no phase
+        tags there is nothing to compare.
+        """
+        tagged = [log for log in sorted(weight_logs, key=lambda x: x.logged_at)
+                  if log.cycle_phase]
+        if len(tagged) < 2:
+            return False
+        return tagged[0].cycle_phase != tagged[-1].cycle_phase
+
     def calculate_tdee_with_confidence(
         self,
         food_logs: List[FoodLogSummary],
@@ -240,8 +325,11 @@ class AdaptiveTDEEService:
         start_weights = sorted_weights[:max(mid_point, 1)]
         end_weights = sorted_weights[mid_point:] if mid_point > 0 else sorted_weights
 
-        start_weight = self.calculate_ema_weight(start_weights)
-        end_weight = self.calculate_ema_weight(end_weights)
+        # Cycle-aware EMA: luteal/menstrual weigh-ins are down-weighted so
+        # transient water retention does not masquerade as stored energy.
+        # For users without cycle tracking this is identical to the plain EMA.
+        start_weight = self.calculate_cycle_aware_ema_weight(start_weights)
+        end_weight = self.calculate_cycle_aware_ema_weight(end_weights)
         weight_change_kg = end_weight - start_weight
 
         # Calculate average daily calorie intake
@@ -285,6 +373,17 @@ class AdaptiveTDEEService:
 
         # Calculate confidence interval based on data quality
         uncertainty = self._calculate_uncertainty(data_quality, len(food_logs), len(weight_logs))
+
+        # Cycle-contaminated window: the start and end weigh-ins sit in
+        # different cycle phases, so luteal water weight does not cancel
+        # start-to-end. Widen the confidence interval to reflect that the
+        # TDEE read is genuinely noisier (no-op without cycle tracking).
+        if self._is_cycle_contaminated(weight_logs):
+            uncertainty += self.CYCLE_CONTAMINATION_UNCERTAINTY
+            logger.info(
+                "Cycle-contaminated TDEE window — widening uncertainty by "
+                f"±{self.CYCLE_CONTAMINATION_UNCERTAINTY} kcal"
+            )
 
         return TDEECalculation(
             tdee=calculated_tdee,
@@ -377,8 +476,10 @@ class AdaptiveTDEEService:
 
         sorted_logs = sorted(weight_logs, key=lambda x: x.logged_at)
 
-        # Get smoothed current weight
-        smoothed = self.calculate_ema_weight(sorted_logs)
+        # Get smoothed current weight — cycle-aware so luteal water retention
+        # does not show up as a discouraging upward trend (no-op without
+        # cycle tracking).
+        smoothed = self.calculate_cycle_aware_ema_weight(sorted_logs)
         raw = sorted_logs[-1].weight_kg
 
         # Calculate weekly rate
@@ -410,6 +511,53 @@ class AdaptiveTDEEService:
             weekly_rate_kg=round(weekly_rate, 2),
             confidence=confidence
         )
+
+
+def tag_weight_logs_with_cycle_phase(
+    weight_logs: List[WeightLog],
+    period_starts: List[date],
+    period_ends: Optional[Dict[date, date]] = None,
+    cycle_length_default: int = 28,
+    period_length_default: int = 5,
+    luteal_length_override: Optional[int] = None,
+) -> List[WeightLog]:
+    """Annotate each weigh-in with the cycle phase on its `logged_at` date.
+
+    Only call this for users with menstrual tracking enabled — for everyone
+    else `weight_logs` should be passed through untouched so the entire
+    cycle-aware pathway stays a no-op.
+
+    Mutates and returns the same `WeightLog` objects (sets `.cycle_phase`).
+    A weigh-in that cannot be placed in any logged cycle (e.g. it predates
+    all period history) keeps `cycle_phase = None` and is treated as
+    phase-unknown — never down-weighted.
+
+    The phase math is delegated to `cycle_predictor.phase_on_date`, the single
+    source of truth, so the tag agrees with what the rest of the cycle
+    feature shows.
+    """
+    if not weight_logs or not period_starts:
+        return weight_logs
+
+    # Imported lazily so the TDEE service has no hard dependency on the
+    # cycle module for non-tracking users / other call sites.
+    from services.cycle.cycle_predictor import phase_on_date
+
+    for log in weight_logs:
+        try:
+            log_date = log.logged_at.date()
+        except AttributeError:
+            # logged_at already a date
+            log_date = log.logged_at
+        log.cycle_phase = phase_on_date(
+            log_date,
+            period_starts,
+            period_ends=period_ends,
+            cycle_length_default=cycle_length_default,
+            period_length_default=period_length_default,
+            luteal_length_override=luteal_length_override,
+        )
+    return weight_logs
 
 
 # Singleton instance

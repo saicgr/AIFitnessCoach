@@ -376,6 +376,44 @@ List<RouteBase> _utilityRoutes() => [
         builder: (context, state) => const HormonalHealthSettingsScreen(),
       ),
 
+      // Cycle — the dedicated period + fertility experience (Phase C).
+      // 3-tab layout (Today / Calendar / Insights). NOT a bottom-nav tab —
+      // reached from the Home cycle card, the You hub, and the legacy
+      // hormonal-health hub's cycle widget. `?tab=` picks the initial tab.
+      GoRoute(
+        path: '/cycle',
+        pageBuilder: (context, state) {
+          final tabParam = state.uri.queryParameters['tab'];
+          final tab = switch (tabParam) {
+            'calendar' => 1,
+            'insights' => 2,
+            _ => 0,
+          };
+          return CustomTransitionPage(
+            key: state.pageKey,
+            child: CycleScreen(initialTab: tab),
+            transitionDuration: const Duration(milliseconds: 400),
+            reverseTransitionDuration: const Duration(milliseconds: 300),
+            transitionsBuilder:
+                (context, animation, secondaryAnimation, child) {
+              return FadeTransition(
+                opacity: animation,
+                child: SlideTransition(
+                  position: Tween<Offset>(
+                    begin: const Offset(0.05, 0),
+                    end: Offset.zero,
+                  ).animate(CurvedAnimation(
+                    parent: animation,
+                    curve: Curves.easeOutCubic,
+                  )),
+                  child: child,
+                ),
+              );
+            },
+          );
+        },
+      ),
+
       // Kegel Session - Guided pelvic floor workout with timer
       GoRoute(
         path: '/kegel-session',

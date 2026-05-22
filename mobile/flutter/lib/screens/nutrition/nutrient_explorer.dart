@@ -54,6 +54,15 @@ class _NutrientExplorerTabState extends State<NutrientExplorerTab> {
 
     final summary = widget.summary!;
 
+    // Phase H (MacroFactor 1.15): nutrients the backend pinned BECAUSE of the
+    // user's current cycle phase carry `pin_reason == 'cycle_phase'`. Surface
+    // them as a distinct emphasis section so e.g. iron + magnesium stand out
+    // during menstruation. Empty for users without cycle tracking — the
+    // section then simply does not render.
+    final cyclePhaseNutrients = summary.pinned
+        .where((n) => n.pinReason == 'cycle_phase')
+        .toList();
+
     return RefreshIndicator(
       onRefresh: () async => widget.onRefresh(),
       color: teal,
@@ -70,6 +79,17 @@ class _NutrientExplorerTabState extends State<NutrientExplorerTab> {
             ).animate().fadeIn().scale(),
 
             const SizedBox(height: 16),
+
+            // Cycle-phase emphasis section — only when the backend pinned
+            // nutrients for the current cycle phase.
+            if (cyclePhaseNutrients.isNotEmpty) ...[
+              _CyclePhaseNutrientSection(
+                nutrients: cyclePhaseNutrients,
+                isDark: widget.isDark,
+                onNutrientTap: _showNutrientDetail,
+              ).animate().fadeIn(delay: 120.ms),
+              const SizedBox(height: 16),
+            ],
 
             // Category Filter Chips
             _CategoryFilterRow(
@@ -145,6 +165,113 @@ class _NutrientExplorerTabState extends State<NutrientExplorerTab> {
           userId: widget.userId,
           isDark: widget.isDark,
         ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────
+// Cycle-Phase Emphasis Section (Phase H — MacroFactor 1.15)
+// ─────────────────────────────────────────────────────────────────
+//
+// A visually distinct card that lifts the nutrients the backend prioritised
+// for the user's current cycle phase (tagged `pin_reason == 'cycle_phase'`)
+// out of the long alphabetical category lists, so phase-relevant nutrients
+// (iron + magnesium during menstruation, etc.) are seen first.
+
+class _CyclePhaseNutrientSection extends StatelessWidget {
+  final List<NutrientProgress> nutrients;
+  final bool isDark;
+  final void Function(NutrientProgress) onNutrientTap;
+
+  const _CyclePhaseNutrientSection({
+    required this.nutrients,
+    required this.isDark,
+    required this.onNutrientTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (nutrients.isEmpty) return const SizedBox.shrink();
+
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final textPrimary =
+        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    // Pink — the cycle feature's accent — distinguishes this from the
+    // ordinary vitamin / mineral category cards.
+    const accent = Color(0xFFE91E63);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: elevated,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: accent.withValues(alpha: 0.35)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: accent.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(Icons.favorite_rounded,
+                      size: 18, color: accent),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'PRIORITISED FOR YOUR CYCLE PHASE',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: accent,
+                          letterSpacing: 0.8,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Nutrients that matter most where you are in your cycle',
+                        style: TextStyle(fontSize: 11, color: textMuted),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          ...nutrients.map((nutrient) => _NutrientRow(
+                nutrient: nutrient,
+                categoryColor: accent,
+                isDark: isDark,
+                onTap: () => onNutrientTap(nutrient),
+              )),
+          const SizedBox(height: 8),
+          // Tiny disclaimer so phase emphasis never reads as medical advice.
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+            child: Text(
+              'Cycle-phase emphasis is general wellness guidance, not medical '
+              'advice.',
+              style: TextStyle(
+                fontSize: 10,
+                color: textPrimary.withValues(alpha: 0.45),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

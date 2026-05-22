@@ -178,6 +178,14 @@ class HormonalProfileBase(BaseModel):
     on_hormone_therapy: bool = False
     hormone_therapy_type: Optional[str] = None
 
+    # Cycle prediction tuning (migration 2089). Plain str/bool/int — the DB
+    # CHECK constraints enforce the allowed values; typed as str (not the
+    # TrackingMode enum) because that enum is defined later in this module.
+    tracking_mode: str = "tracking"          # tracking | ttc | pregnancy
+    bbt_unit: str = "fahrenheit"             # fahrenheit | celsius
+    luteal_length_days: Optional[int] = Field(None, ge=9, le=17)
+    has_menstrual_periods: bool = True       # False = IUD / post-menopausal symptom-only
+
 
 class HormonalProfileCreate(HormonalProfileBase):
     """Model for creating a hormonal profile."""
@@ -208,6 +216,11 @@ class HormonalProfileUpdate(BaseModel):
     thyroid_condition_type: Optional[ThyroidConditionType] = None
     on_hormone_therapy: Optional[bool] = None
     hormone_therapy_type: Optional[str] = None
+    # Cycle prediction tuning (migration 2089)
+    tracking_mode: Optional[str] = None
+    bbt_unit: Optional[str] = None
+    luteal_length_days: Optional[int] = Field(None, ge=9, le=17)
+    has_menstrual_periods: Optional[bool] = None
 
 
 class HormonalProfile(HormonalProfileBase):
@@ -540,3 +553,108 @@ class HormonalInsights(BaseModel):
     recommendations: List[HormonalRecommendation] = Field(default_factory=list)
     food_recommendations: Optional[HormonalFoodRecommendation] = None
     kegel_stats: Optional[KegelStats] = None
+
+
+# ============================================================================
+# CYCLE PERIOD + PREDICTION MODELS
+# ============================================================================
+
+class LhTestResult(str, Enum):
+    UNTESTED = "untested"
+    NEGATIVE = "negative"
+    POSITIVE = "positive"
+    PEAK = "peak"
+
+
+class PregnancyTestResult(str, Enum):
+    NOT_TAKEN = "not_taken"
+    NEGATIVE = "negative"
+    POSITIVE = "positive"
+
+
+class TrackingMode(str, Enum):
+    TRACKING = "tracking"
+    TTC = "ttc"
+    PREGNANCY = "pregnancy"
+
+
+class CyclePeriodBase(BaseModel):
+    """One observed menstrual period."""
+    start_date: date_type
+    end_date: Optional[date_type] = None
+
+
+class CyclePeriodCreate(CyclePeriodBase):
+    """Model for logging a period (start, optional end)."""
+    pass
+
+
+class CyclePeriodUpdate(BaseModel):
+    """Model for editing a logged period — all fields optional."""
+    start_date: Optional[date_type] = None
+    end_date: Optional[date_type] = None
+
+
+class CyclePeriod(CyclePeriodBase):
+    """Full period row with database fields."""
+    id: str
+    user_id: str
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class CycleStats(BaseModel):
+    """Aggregate statistics over a user's period history."""
+    periods_logged: int = 0
+    cycles_tracked: int = 0
+    avg_cycle_length: Optional[float] = None
+    min_cycle_length: Optional[int] = None
+    max_cycle_length: Optional[int] = None
+    cycle_length_stddev: Optional[float] = None
+    avg_period_length: Optional[float] = None
+    regularity: str = "unknown"  # regular | irregular | unknown
+
+
+class CyclePrediction(BaseModel):
+    """Full output of the deterministic cycle prediction engine.
+
+    Every date field is an estimate, not a guarantee — `confidence` and the
+    next-period window communicate uncertainty. Never use this as a
+    contraceptive method.
+    """
+    user_id: Optional[str] = None
+    predictions_available: bool
+    tracking_mode: str = "tracking"
+    today: date_type
+
+    # Current position in the cycle
+    current_cycle_day: Optional[int] = None
+    current_phase: Optional[CyclePhase] = None
+    days_until_next_phase: Optional[int] = None
+    next_phase: Optional[CyclePhase] = None
+    last_period_start: Optional[date_type] = None
+    in_period: bool = False
+
+    # Next-period forecast
+    next_period_date: Optional[date_type] = None
+    next_period_window_start: Optional[date_type] = None
+    next_period_window_end: Optional[date_type] = None
+    days_until_next_period: Optional[int] = None
+    period_late_by: Optional[int] = None
+    confidence: str = "low"  # low | medium | high
+
+    # Ovulation + fertile window
+    ovulation_date: Optional[date_type] = None
+    ovulation_status: str = "estimated"  # estimated | confirmed
+    fertile_window_start: Optional[date_type] = None
+    fertile_window_end: Optional[date_type] = None
+    peak_fertility_start: Optional[date_type] = None
+    peak_fertility_end: Optional[date_type] = None
+    conception_chance: Optional[str] = None  # high | low
+    cover_line_celsius: Optional[float] = None
+
+    stats: CycleStats = Field(default_factory=CycleStats)
+    notes: List[str] = Field(default_factory=list)

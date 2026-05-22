@@ -5,6 +5,7 @@ This package contains dedicated domain agents:
 - Workout Agent: Exercise modifications, workout guidance
 - Injury Agent: Injury tracking, recovery advice
 - Hydration Agent: Water intake tracking, hydration tips
+- Cycle Agent: Menstrual-cycle health, period/symptom logging
 - Coach Agent: General fitness coaching, app navigation
 - Plan Agent: Holistic weekly planning (workouts + nutrition + fasting)
 
@@ -19,6 +20,7 @@ from .nutrition_agent import NutritionAgentState, build_nutrition_agent_graph
 from .workout_agent import WorkoutAgentState, build_workout_agent_graph
 from .injury_agent import InjuryAgentState, build_injury_agent_graph
 from .hydration_agent import HydrationAgentState, build_hydration_agent_graph
+from .cycle_agent import CycleAgentState, build_cycle_agent_graph
 from .coach_agent import CoachAgentState, build_coach_agent_graph
 from .plan_agent import PlanAgentState, build_plan_agent_graph
 
@@ -43,6 +45,9 @@ __all__ = [
     # Hydration
     "HydrationAgentState",
     "build_hydration_agent_graph",
+    # Cycle
+    "CycleAgentState",
+    "build_cycle_agent_graph",
     # Coach
     "CoachAgentState",
     "build_coach_agent_graph",

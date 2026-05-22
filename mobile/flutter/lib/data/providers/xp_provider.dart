@@ -31,6 +31,9 @@ enum XPGoalType {
   stepsGoal,
   hydrationGoal,
   calorieGoal,
+  // Cycle tracking (Phase E) — earned for logging a cycle/period/symptom
+  // entry. Backend goal key `cycle_logged`; awards 50 XP, once per day.
+  cycleLogged,
 }
 
 // ============================================

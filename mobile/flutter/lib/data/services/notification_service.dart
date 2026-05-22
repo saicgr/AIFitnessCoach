@@ -112,6 +112,36 @@ class NotificationPrefsKeys {
   // Style preferences
   static const notificationEmoji = 'notif_emoji_enabled';
   static const notificationVibration = 'notif_vibration_enabled';
+  // ── Cycle tracking reminders (Phase E) ──────────────────────────
+  // Each cycle reminder type has its OWN toggle so the user has granular
+  // control (per project notification-control rule). All cycle reminders
+  // additionally respect the global quiet hours. The fertile-window and
+  // peak-fertility reminders are only scheduled in TTC tracking mode.
+  // `cycleRemindersMaster` is a feature-level on/off — it gates the whole
+  // cycle reminder group, mirroring how the feature itself is gated on
+  // `menstrual_tracking_enabled`.
+  static const cycleRemindersMaster = 'notif_cycle_reminders_master';
+  static const cyclePeriodApproaching = 'notif_cycle_period_approaching';
+  static const cyclePeriodStart = 'notif_cycle_period_start';
+  static const cycleFertileWindow = 'notif_cycle_fertile_window';
+  static const cyclePeakFertility = 'notif_cycle_peak_fertility';
+  static const cycleBbtReminder = 'notif_cycle_bbt_reminder';
+  static const cycleBbtReminderTime = 'notif_cycle_bbt_reminder_time';
+  static const cycleSymptomCheckin = 'notif_cycle_symptom_checkin';
+  static const cycleSymptomCheckinTime = 'notif_cycle_symptom_checkin_time';
+  static const cycleLatePeriodAlert = 'notif_cycle_late_period_alert';
+  static const cycleReminderTimeOfDay = 'notif_cycle_reminder_time_of_day';
+  // How many days before the predicted period the "approaching" reminder
+  // fires (1-5). Default 2.
+  static const cyclePeriodApproachingLeadDays =
+      'notif_cycle_period_approaching_lead_days';
+  // Cached cycle prediction (ISO dates) used to schedule the date-anchored
+  // cycle reminders. Written by the cycle providers; read at reschedule.
+  static const cycleNextPeriodDate = 'notif_cycle_next_period_date';
+  static const cycleFertileWindowStart = 'notif_cycle_fertile_window_start';
+  static const cyclePeakFertilityStart = 'notif_cycle_peak_fertility_start';
+  static const cyclePredictedLateDate = 'notif_cycle_predicted_late_date';
+  static const cycleTrackingMode = 'notif_cycle_tracking_mode';
   // Cached workout name for bundle templates
   static const cachedWorkoutName = 'notif_cached_workout_name';
   // Cached user context
@@ -256,6 +286,16 @@ class NotificationService {
       name: 'Schedule Reminders',
       description: 'Reminders for your scheduled activities, meals, and habits',
       color: Color(0xFF06B6D4), // Cyan
+    ),
+    // Cycle tracking reminders (period / fertility / BBT / symptom check-in).
+    // One channel for the whole feature so the OS groups them and the user
+    // has a single per-channel control in system settings; the in-app
+    // per-type toggles live in NotificationPreferences.
+    'cycle_reminder': _ChannelConfig(
+      id: 'cycle_reminder',
+      name: 'Cycle Reminders',
+      description: 'Period, fertility, and cycle-logging reminders',
+      color: Color(0xFFEC4899), // Pink — the cycle feature accent
     ),
   };
 
@@ -530,6 +570,20 @@ class NotificationPreferencesNotifier extends StateNotifier<NotificationPreferen
       // Style preferences
       notificationEmoji: _prefs.getBool(NotificationPrefsKeys.notificationEmoji) ?? true,
       notificationVibration: _prefs.getBool(NotificationPrefsKeys.notificationVibration) ?? true,
+      // Cycle tracking reminders (Phase E)
+      cycleRemindersMaster: _prefs.getBool(NotificationPrefsKeys.cycleRemindersMaster) ?? true,
+      cyclePeriodApproaching: _prefs.getBool(NotificationPrefsKeys.cyclePeriodApproaching) ?? true,
+      cyclePeriodStart: _prefs.getBool(NotificationPrefsKeys.cyclePeriodStart) ?? true,
+      cycleFertileWindow: _prefs.getBool(NotificationPrefsKeys.cycleFertileWindow) ?? true,
+      cyclePeakFertility: _prefs.getBool(NotificationPrefsKeys.cyclePeakFertility) ?? true,
+      cycleBbtReminder: _prefs.getBool(NotificationPrefsKeys.cycleBbtReminder) ?? false,
+      cycleBbtReminderTime: _prefs.getString(NotificationPrefsKeys.cycleBbtReminderTime) ?? '07:00',
+      cycleSymptomCheckin: _prefs.getBool(NotificationPrefsKeys.cycleSymptomCheckin) ?? false,
+      cycleSymptomCheckinTime: _prefs.getString(NotificationPrefsKeys.cycleSymptomCheckinTime) ?? '20:00',
+      cycleLatePeriodAlert: _prefs.getBool(NotificationPrefsKeys.cycleLatePeriodAlert) ?? true,
+      cycleReminderTimeOfDay: _prefs.getString(NotificationPrefsKeys.cycleReminderTimeOfDay) ?? '09:00',
+      cyclePeriodApproachingLeadDays: _prefs.getInt(NotificationPrefsKeys.cyclePeriodApproachingLeadDays) ?? 2,
+      cycleTrackingMode: _prefs.getString(NotificationPrefsKeys.cycleTrackingMode) ?? 'tracking',
     );
     // Schedule notifications on load
     _rescheduleNotifications();
@@ -968,6 +1022,143 @@ class NotificationPreferencesNotifier extends StateNotifier<NotificationPreferen
   Future<void> setNotificationVibration(bool value) async {
     await _prefs.setBool(NotificationPrefsKeys.notificationVibration, value);
     state = state.copyWith(notificationVibration: value);
+  }
+
+  // ─── Cycle Tracking Reminder Setters (Phase E) ──────────────────
+  // Each toggle reschedules the cycle reminders and syncs to the backend so
+  // the server-side cycle nudge jobs honour the user's choice. Cycle reminder
+  // payloads are content-free (event/type names only) — no symptom or cycle
+  // data is ever attached.
+
+  Future<void> setCycleRemindersMaster(bool value) async {
+    await _prefs.setBool(NotificationPrefsKeys.cycleRemindersMaster, value);
+    state = state.copyWith(cycleRemindersMaster: value);
+    await _rescheduleNotifications();
+    await _syncPreferencesToBackend();
+  }
+
+  Future<void> setCyclePeriodApproaching(bool value) async {
+    await _prefs.setBool(NotificationPrefsKeys.cyclePeriodApproaching, value);
+    state = state.copyWith(cyclePeriodApproaching: value);
+    await _rescheduleNotifications();
+    await _syncPreferencesToBackend();
+  }
+
+  Future<void> setCyclePeriodStart(bool value) async {
+    await _prefs.setBool(NotificationPrefsKeys.cyclePeriodStart, value);
+    state = state.copyWith(cyclePeriodStart: value);
+    await _rescheduleNotifications();
+    await _syncPreferencesToBackend();
+  }
+
+  Future<void> setCycleFertileWindow(bool value) async {
+    await _prefs.setBool(NotificationPrefsKeys.cycleFertileWindow, value);
+    state = state.copyWith(cycleFertileWindow: value);
+    await _rescheduleNotifications();
+    await _syncPreferencesToBackend();
+  }
+
+  Future<void> setCyclePeakFertility(bool value) async {
+    await _prefs.setBool(NotificationPrefsKeys.cyclePeakFertility, value);
+    state = state.copyWith(cyclePeakFertility: value);
+    await _rescheduleNotifications();
+    await _syncPreferencesToBackend();
+  }
+
+  Future<void> setCycleBbtReminder(bool value) async {
+    await _prefs.setBool(NotificationPrefsKeys.cycleBbtReminder, value);
+    state = state.copyWith(cycleBbtReminder: value);
+    await _rescheduleNotifications();
+    await _syncPreferencesToBackend();
+  }
+
+  Future<void> setCycleBbtReminderTime(String time) async {
+    await _prefs.setString(NotificationPrefsKeys.cycleBbtReminderTime, time);
+    state = state.copyWith(cycleBbtReminderTime: time);
+    await _rescheduleNotifications();
+    await _syncPreferencesToBackend();
+  }
+
+  Future<void> setCycleSymptomCheckin(bool value) async {
+    await _prefs.setBool(NotificationPrefsKeys.cycleSymptomCheckin, value);
+    state = state.copyWith(cycleSymptomCheckin: value);
+    await _rescheduleNotifications();
+    await _syncPreferencesToBackend();
+  }
+
+  Future<void> setCycleSymptomCheckinTime(String time) async {
+    await _prefs.setString(NotificationPrefsKeys.cycleSymptomCheckinTime, time);
+    state = state.copyWith(cycleSymptomCheckinTime: time);
+    await _rescheduleNotifications();
+    await _syncPreferencesToBackend();
+  }
+
+  Future<void> setCycleLatePeriodAlert(bool value) async {
+    await _prefs.setBool(NotificationPrefsKeys.cycleLatePeriodAlert, value);
+    state = state.copyWith(cycleLatePeriodAlert: value);
+    await _rescheduleNotifications();
+    await _syncPreferencesToBackend();
+  }
+
+  Future<void> setCycleReminderTimeOfDay(String time) async {
+    await _prefs.setString(NotificationPrefsKeys.cycleReminderTimeOfDay, time);
+    state = state.copyWith(cycleReminderTimeOfDay: time);
+    await _rescheduleNotifications();
+    await _syncPreferencesToBackend();
+  }
+
+  Future<void> setCyclePeriodApproachingLeadDays(int days) async {
+    final clamped = days.clamp(1, 5);
+    await _prefs.setInt(
+        NotificationPrefsKeys.cyclePeriodApproachingLeadDays, clamped);
+    state = state.copyWith(cyclePeriodApproachingLeadDays: clamped);
+    await _rescheduleNotifications();
+    await _syncPreferencesToBackend();
+  }
+
+  /// Update the cached cycle tracking mode. The TTC-only fertility reminders
+  /// are only scheduled when this is `ttc`; `pregnancy` pauses all cycle
+  /// prediction reminders. Called by the cycle screen / settings when the
+  /// mode toggle changes.
+  Future<void> setCycleTrackingMode(String mode) async {
+    await _prefs.setString(NotificationPrefsKeys.cycleTrackingMode, mode);
+    state = state.copyWith(cycleTrackingMode: mode);
+    await _rescheduleNotifications();
+  }
+
+  /// Refresh the cached cycle prediction dates the date-anchored reminders
+  /// schedule against, then reschedule. Called by the cycle providers
+  /// whenever a fresh `CyclePrediction` arrives (a new period logged, the
+  /// server prediction refreshed, etc.) so the reminders always track the
+  /// latest forecast. All dates are ISO `yyyy-MM-dd` strings interpreted in
+  /// the device's local timezone. Pass null for a field to clear it.
+  Future<void> updateCyclePredictionDates({
+    String? nextPeriodDate,
+    String? fertileWindowStart,
+    String? peakFertilityStart,
+    String? predictedLateDate,
+    String? trackingMode,
+  }) async {
+    Future<void> put(String key, String? value) async {
+      if (value == null || value.isEmpty) {
+        await _prefs.remove(key);
+      } else {
+        await _prefs.setString(key, value);
+      }
+    }
+
+    await put(NotificationPrefsKeys.cycleNextPeriodDate, nextPeriodDate);
+    await put(
+        NotificationPrefsKeys.cycleFertileWindowStart, fertileWindowStart);
+    await put(
+        NotificationPrefsKeys.cyclePeakFertilityStart, peakFertilityStart);
+    await put(NotificationPrefsKeys.cyclePredictedLateDate, predictedLateDate);
+    if (trackingMode != null && trackingMode.isNotEmpty) {
+      await _prefs.setString(
+          NotificationPrefsKeys.cycleTrackingMode, trackingMode);
+      state = state.copyWith(cycleTrackingMode: trackingMode);
+    }
+    await _rescheduleNotifications();
   }
 }
 

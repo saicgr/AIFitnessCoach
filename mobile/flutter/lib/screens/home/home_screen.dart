@@ -27,6 +27,7 @@ import '../../data/repositories/workout_repository.dart';
 import '../../data/providers/today_workout_provider.dart';
 import '../../data/providers/home_sections_provider.dart';
 import '../../data/providers/fasting_provider.dart';
+import 'widgets/cycle_setup_home_prompt.dart';
 import '../../data/services/deep_link_service.dart';
 import '../../data/services/health_service.dart';
 import '../../widgets/glass_sheet.dart';
@@ -43,6 +44,7 @@ import 'widgets/edit_tracking_sheet.dart';
 import 'widgets/stacked_banner_panel.dart';
 import '../../widgets/rating_prompt_banner.dart';
 import 'widgets/tile_factory.dart';
+import 'widgets/today_score_card.dart';
 import 'widgets/my_program_summary_card.dart';
 import 'widgets/hero_workout_card.dart';
 import '../../core/providers/week_start_provider.dart';
@@ -52,6 +54,7 @@ import 'widgets/home/home_timeline.dart';
 import 'widgets/swipeable_hero_section.dart' show HomeFocus, homeFocusProvider;
 import 'widgets/workout_category_pills.dart';
 import 'widgets/habits_section.dart';
+import 'widgets/cycle_status_card.dart';
 import 'widgets/body_metrics_section.dart';
 import 'widgets/achievements_section.dart';
 import '../../data/providers/consistency_provider.dart';
@@ -413,6 +416,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         return XPGoalType.hydrationGoal;
       case xp_provider.XPGoalType.calorieGoal:
         return XPGoalType.calorieGoal;
+      case xp_provider.XPGoalType.cycleLogged:
+        return XPGoalType.cycleLogged;
     }
   }
 
@@ -1021,6 +1026,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
                 const SliverToBoxAdapter(child: StackedBannerPanel()),
                 const SliverToBoxAdapter(child: RatingPromptBanner()),
 
+                // One-time cycle-tracking setup invitation for existing
+                // eligible users (Phase E). Self-collapses to zero height
+                // when the user is ineligible, already set up, or has
+                // dismissed it once.
+                const SliverToBoxAdapter(child: CycleSetupHomePrompt()),
+
                 // User-customizable sections, rendered in the order and
                 // visibility chosen via "My Space" (homeSectionsProvider).
                 ..._homeSectionSlivers(ref.watch(homeSectionsProvider)),
@@ -1114,6 +1125,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         return const HomeTimeline();
       case HomeSection.habits:
         return const HabitsSection();
+      case HomeSection.todayScore:
+        return const TodayScoreCard();
+      case HomeSection.cycle:
+        // Self-hides (returns SizedBox.shrink) unless menstrual tracking
+        // is enabled — no extra gate needed here.
+        return const CycleStatusCard();
     }
   }
 

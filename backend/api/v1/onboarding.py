@@ -290,12 +290,31 @@ async def save_conversation(request: Request, body: SaveConversationRequest,
 
 
 class ComputedGoalDateRequest(BaseModel):
-    """Pre-signup goal date calculation. No auth — payload is self-contained."""
+    """Pre-signup goal date calculation. No auth — payload is self-contained.
+
+    The optional `cycle_*` fields make the projection cycle-aware (Phase G,
+    MacroFactor request 1.19): a user weighing in during the luteal phase
+    carries ~1-2 kg of transient water weight, which a naive projection reads
+    as real progress (or regress) and lets the goal date jump around. When
+    `cycle_tracking_enabled` is true and the current weigh-in falls in a
+    water-retaining phase, the projection is anchored to the de-bloated
+    weight so the goal date stays stable through the period window.
+
+    All cycle fields are optional and default to the no-op values, so a
+    non-tracking caller (or any caller that omits them) gets the exact same
+    projection as before.
+    """
     weight_kg: float
     target_weight_kg: float
     weight_change_rate: Optional[str] = "moderate"  # slow|moderate|fast|aggressive
     activity_level: Optional[str] = "moderately_active"
     days_per_week: Optional[int] = 4
+    # --- Optional cycle-aware inputs (Phase G / 1.19) --------------------
+    cycle_tracking_enabled: Optional[bool] = False
+    # The cycle phase the current `weight_kg` was measured in, if known —
+    # "menstrual" / "follicular" / "ovulation" / "luteal". When this is a
+    # water-retaining phase the projection neutralises the bloat offset.
+    current_cycle_phase: Optional[str] = None
 
 
 class ComputedGoalDateResponse(BaseModel):
@@ -304,6 +323,7 @@ class ComputedGoalDateResponse(BaseModel):
     weekly_rate_kg: float
     total_change_kg: float
     direction: str  # 'lose' | 'gain' | 'maintain'
+    cycle_adjusted: bool = False  # true when a luteal water-weight offset was removed
 
 
 # Weekly rate map (kg/week). Mirrors the client-side projection math so
@@ -313,6 +333,16 @@ _WEEKLY_RATE_KG = {
     "moderate": 0.5,
     "fast": 0.75,
     "aggressive": 1.0,
+}
+
+# Estimated transient water-weight carried in the water-retaining cycle
+# phases. Luteal-phase retention runs ~1-2 kg; menstrual onset still carries
+# part of it. A conservative single estimate (mid-range) is subtracted from a
+# weigh-in taken in these phases before projecting the goal date, so the date
+# does not lurch when the user happens to weigh in mid-luteal. (Phase G, 1.19)
+_CYCLE_WATER_OFFSET_KG = {
+    "luteal": 1.0,
+    "menstrual": 0.7,
 }
 
 
@@ -328,7 +358,21 @@ async def computed_goal_date(request: Request, body: ComputedGoalDateRequest):
     """
     from datetime import date, timedelta
 
-    delta = body.target_weight_kg - body.weight_kg
+    # --- Cycle-aware baseline (Phase G, MacroFactor request 1.19) -----------
+    # If the user tracks their cycle and the current weigh-in was taken in a
+    # water-retaining phase, the measured weight is inflated by transient
+    # luteal/menstrual water. Project from the de-bloated weight instead so
+    # the goal date stays stable through the period window. Strict no-op when
+    # cycle tracking is off or the phase is not water-retaining.
+    effective_weight_kg = body.weight_kg
+    cycle_adjusted = False
+    if body.cycle_tracking_enabled and body.current_cycle_phase:
+        offset = _CYCLE_WATER_OFFSET_KG.get(body.current_cycle_phase.lower())
+        if offset:
+            effective_weight_kg = body.weight_kg - offset
+            cycle_adjusted = True
+
+    delta = body.target_weight_kg - effective_weight_kg
     if abs(delta) < 0.5:
         return ComputedGoalDateResponse(
             goal_date=date.today().isoformat(),
@@ -336,6 +380,7 @@ async def computed_goal_date(request: Request, body: ComputedGoalDateRequest):
             weekly_rate_kg=0.0,
             total_change_kg=0.0,
             direction="maintain",
+            cycle_adjusted=cycle_adjusted,
         )
 
     direction = "lose" if delta < 0 else "gain"
@@ -353,6 +398,7 @@ async def computed_goal_date(request: Request, body: ComputedGoalDateRequest):
         weekly_rate_kg=weekly_rate,
         total_change_kg=abs(delta),
         direction=direction,
+        cycle_adjusted=cycle_adjusted,
     )
 
 

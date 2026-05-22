@@ -14,12 +14,14 @@ from models.hormonal_health import (
     CyclePhaseInfo, CyclePhaseRecommendation, CyclePhase,
     HormonalRecommendation, HormonalInsights,
     HormoneSupportiveFood, HormonalFoodRecommendation,
-    HormoneGoal
+    HormoneGoal,
+    CyclePeriod, CyclePeriodCreate, CyclePeriodUpdate, CyclePrediction,
 )
 from core.supabase_client import get_supabase
 from core.auth import get_current_user
 from core.logger import get_logger
 from core.timezone_utils import user_today_date
+from services.cycle.cycle_predictor import predict_for_user
 
 logger = get_logger(__name__)
 from core.exceptions import safe_internal_error
@@ -357,64 +359,55 @@ async def get_cycle_phase(
     request: Request,
     current_user: dict = Depends(get_current_user),
 ):
-    """Get current cycle phase information for a user."""
+    """Get current cycle phase information for a user.
+
+    Backed by the deterministic prediction engine (services.cycle.cycle_predictor),
+    so the phase reflects the user's actual period history and any logged
+    BBT / cervical-mucus / LH signals — not a hardcoded day-number boundary.
+    The CyclePhaseInfo response shape is unchanged for backward compatibility.
+    """
     logger.info(f"[Hormonal] Getting cycle phase for user {user_id}")
 
     try:
         supabase = get_supabase().client
-        result = supabase.table("hormonal_profiles").select("*").eq("user_id", str(user_id)).execute()
+        profile_result = supabase.table("hormonal_profiles").select("*").eq("user_id", str(user_id)).execute()
+        profile = profile_result.data[0] if profile_result.data else None
+        tracking_enabled = bool(profile.get("menstrual_tracking_enabled")) if profile else False
 
-        if not result.data:
+        today = user_today_date(request, None, str(user_id))
+        prediction = predict_for_user(supabase, str(user_id), today)
+
+        if not prediction.get("predictions_available"):
             return CyclePhaseInfo(
                 user_id=str(user_id),
-                menstrual_tracking_enabled=False
+                menstrual_tracking_enabled=tracking_enabled,
             )
 
-        profile = result.data[0]
+        phase_value = prediction.get("current_phase")
+        phase_enum = CyclePhase(phase_value) if phase_value else None
+        next_phase_value = prediction.get("next_phase")
+        recommendations = get_phase_recommendations(phase_enum) if phase_enum else None
 
-        if not profile.get("menstrual_tracking_enabled") or not profile.get("last_period_start_date"):
-            return CyclePhaseInfo(
-                user_id=str(user_id),
-                menstrual_tracking_enabled=profile.get("menstrual_tracking_enabled", False)
-            )
-
-        last_period = date.fromisoformat(profile["last_period_start_date"])
-        cycle_length = profile.get("cycle_length_days", 28)
-        current_day, current_phase = calculate_cycle_phase(last_period, cycle_length, today=user_today_date(request, None, str(user_id)))
-
-        # Calculate days until next phase
-        phase_boundaries = {
-            CyclePhase.MENSTRUAL: 5,
-            CyclePhase.FOLLICULAR: 13,
-            CyclePhase.OVULATION: 16,
-            CyclePhase.LUTEAL: cycle_length
-        }
-
-        next_phases = {
-            CyclePhase.MENSTRUAL: CyclePhase.FOLLICULAR,
-            CyclePhase.FOLLICULAR: CyclePhase.OVULATION,
-            CyclePhase.OVULATION: CyclePhase.LUTEAL,
-            CyclePhase.LUTEAL: CyclePhase.MENSTRUAL
-        }
-
-        days_until_next = phase_boundaries[current_phase] - current_day + 1
-
-        # Get recommendations
-        recommendations = get_phase_recommendations(current_phase)
+        stats = prediction.get("stats") or {}
+        avg_cycle = stats.get("avg_cycle_length")
+        cycle_length = (
+            int(round(avg_cycle)) if avg_cycle
+            else (profile.get("cycle_length_days") if profile else None)
+        )
 
         return CyclePhaseInfo(
             user_id=str(user_id),
-            menstrual_tracking_enabled=True,
-            current_cycle_day=current_day,
-            current_phase=current_phase,
-            days_until_next_phase=days_until_next,
-            next_phase=next_phases[current_phase],
+            menstrual_tracking_enabled=tracking_enabled,
+            current_cycle_day=prediction.get("current_cycle_day"),
+            current_phase=phase_enum,
+            days_until_next_phase=prediction.get("days_until_next_phase"),
+            next_phase=CyclePhase(next_phase_value) if next_phase_value else None,
             cycle_length_days=cycle_length,
-            last_period_start_date=last_period,
+            last_period_start_date=prediction.get("last_period_start"),
             recommended_intensity=recommendations.workout_intensity if recommendations else None,
             avoid_exercises=recommendations.exercises_to_avoid if recommendations else [],
             recommended_exercises=recommendations.recommended_exercise_types if recommendations else [],
-            nutrition_focus=recommendations.nutrition_tips if recommendations else []
+            nutrition_focus=recommendations.nutrition_tips if recommendations else [],
         )
 
     except Exception as e:
@@ -447,6 +440,13 @@ async def log_period_start(
 
         period_start = period_date or user_today_date(request, None, str(user_id))
 
+        # Record the period in the canonical cycle_periods history table.
+        supabase.table("cycle_periods").upsert({
+            "user_id": str(user_id),
+            "start_date": period_start.isoformat(),
+            "updated_at": datetime.utcnow().isoformat(),
+        }, on_conflict="user_id,start_date").execute()
+
         # Update profile with new period start date
         result = supabase.table("hormonal_profiles").update({
             "last_period_start_date": period_start.isoformat(),
@@ -473,6 +473,157 @@ async def log_period_start(
         raise
     except Exception as e:
         logger.error(f"[Hormonal] Error logging period: {e}", exc_info=True)
+        raise safe_internal_error(e, "endpoint")
+
+
+# ============================================================================
+# CYCLE PERIODS (canonical history) + PREDICTION ENDPOINTS
+# ============================================================================
+
+def _sync_last_period(supabase, user_id: str) -> None:
+    """Keep hormonal_profiles.last_period_start_date pointed at the most recent
+    cycle_periods row. Predictions read cycle_periods directly now; this only
+    keeps legacy consumers (the photo-reminder filter, older clients) coherent.
+    """
+    try:
+        latest = supabase.table("cycle_periods").select("start_date").eq(
+            "user_id", user_id
+        ).order("start_date", desc=True).limit(1).execute()
+        if latest.data:
+            supabase.table("hormonal_profiles").update({
+                "last_period_start_date": latest.data[0]["start_date"],
+                "updated_at": datetime.utcnow().isoformat(),
+            }).eq("user_id", user_id).execute()
+    except Exception as e:  # non-fatal — the canonical data is in cycle_periods
+        logger.warning(f"[Hormonal] _sync_last_period failed for {user_id}: {e}")
+
+
+@router.get("/prediction/{user_id}", response_model=CyclePrediction)
+async def get_cycle_prediction(
+    user_id: UUID,
+    request: Request,
+    current_user: dict = Depends(get_current_user),
+):
+    """Full cycle prediction: current phase, next-period forecast with a
+    confidence window, ovulation (estimated or BBT-confirmed), fertile window,
+    and cycle statistics. All dates are estimates — never a contraceptive method.
+    """
+    logger.info(f"[Hormonal] Computing cycle prediction for user {user_id}")
+
+    try:
+        supabase = get_supabase().client
+        today = user_today_date(request, None, str(user_id))
+        prediction = predict_for_user(supabase, str(user_id), today)
+        prediction["user_id"] = str(user_id)
+        return prediction
+
+    except Exception as e:
+        logger.error(f"[Hormonal] Error computing prediction: {e}", exc_info=True)
+        raise safe_internal_error(e, "endpoint")
+
+
+@router.get("/periods/{user_id}", response_model=List[CyclePeriod])
+async def list_cycle_periods(
+    user_id: UUID,
+    limit: int = Query(24, ge=1, le=120),
+    current_user: dict = Depends(get_current_user),
+):
+    """List a user's logged periods, newest first."""
+    try:
+        supabase = get_supabase().client
+        result = supabase.table("cycle_periods").select("*").eq(
+            "user_id", str(user_id)
+        ).order("start_date", desc=True).limit(limit).execute()
+        return result.data or []
+
+    except Exception as e:
+        logger.error(f"[Hormonal] Error listing periods: {e}", exc_info=True)
+        raise safe_internal_error(e, "endpoint")
+
+
+@router.post("/periods/{user_id}", response_model=CyclePeriod)
+async def create_cycle_period(
+    user_id: UUID, period: CyclePeriodCreate,
+    current_user: dict = Depends(get_current_user),
+):
+    """Log a period (start date, optional end date). Upserts on start date so
+    re-logging the same day edits rather than duplicates."""
+    logger.info(f"[Hormonal] Logging period for user {user_id} starting {period.start_date}")
+
+    try:
+        if period.end_date and period.end_date < period.start_date:
+            raise HTTPException(status_code=400, detail="end_date cannot precede start_date")
+
+        supabase = get_supabase().client
+        period_data = {
+            "user_id": str(user_id),
+            "start_date": period.start_date.isoformat(),
+            "end_date": period.end_date.isoformat() if period.end_date else None,
+            "updated_at": datetime.utcnow().isoformat(),
+        }
+        result = supabase.table("cycle_periods").upsert(
+            period_data, on_conflict="user_id,start_date"
+        ).execute()
+        _sync_last_period(supabase, str(user_id))
+
+        logger.info(f"[Hormonal] Period logged for user {user_id}")
+        return result.data[0]
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"[Hormonal] Error logging period: {e}", exc_info=True)
+        raise safe_internal_error(e, "endpoint")
+
+
+@router.patch("/periods/{user_id}/{period_id}", response_model=CyclePeriod)
+async def update_cycle_period(
+    user_id: UUID, period_id: UUID, patch: CyclePeriodUpdate,
+    current_user: dict = Depends(get_current_user),
+):
+    """Edit a logged period (e.g. set its end date)."""
+    try:
+        update_data = {}
+        if patch.start_date is not None:
+            update_data["start_date"] = patch.start_date.isoformat()
+        if patch.end_date is not None:
+            update_data["end_date"] = patch.end_date.isoformat()
+        if not update_data:
+            raise HTTPException(status_code=400, detail="No fields to update")
+
+        supabase = get_supabase().client
+        result = supabase.table("cycle_periods").update(update_data).eq(
+            "id", str(period_id)
+        ).eq("user_id", str(user_id)).execute()
+
+        if not result.data:
+            raise HTTPException(status_code=404, detail="Period not found")
+        _sync_last_period(supabase, str(user_id))
+        return result.data[0]
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"[Hormonal] Error updating period: {e}", exc_info=True)
+        raise safe_internal_error(e, "endpoint")
+
+
+@router.delete("/periods/{user_id}/{period_id}")
+async def delete_cycle_period(
+    user_id: UUID, period_id: UUID,
+    current_user: dict = Depends(get_current_user),
+):
+    """Delete a logged period; predictions recompute from what remains."""
+    try:
+        supabase = get_supabase().client
+        supabase.table("cycle_periods").delete().eq(
+            "id", str(period_id)
+        ).eq("user_id", str(user_id)).execute()
+        _sync_last_period(supabase, str(user_id))
+        return {"message": "Period deleted"}
+
+    except Exception as e:
+        logger.error(f"[Hormonal] Error deleting period: {e}", exc_info=True)
         raise safe_internal_error(e, "endpoint")
 
 
@@ -803,3 +954,227 @@ async def get_hormone_trends(
     except Exception as e:
         logger.error(f"[Hormonal] Error getting trends: {e}", exc_info=True)
         raise safe_internal_error(e, "endpoint")
+
+
+# ============================================================================
+# AI PROACTIVE INSIGHT (Phase F)
+# ============================================================================
+#
+# A server-generated, proactive insight for the user's current cycle phase and
+# recent data. Deterministic + template-based (NO LLM) so it is cheap and fast;
+# cached per-user-per-day in memory. The cycle agent (the chat surface) handles
+# anything conversational — this endpoint just powers the inline insight card /
+# app-bar badge so the coach feels present without a chat round-trip.
+#
+# Safety: copy is general wellness only — never contraceptive advice, never a
+# diagnosis. Red-flag patterns surface a gentle "see a clinician" nudge.
+
+import random as _random
+from hashlib import md5 as _md5
+
+# In-memory per-day cache: {(user_id, iso_date): insight_dict}. Bounded by the
+# tiny key space (one entry per active user per day); cleared on process
+# restart, which is acceptable for a non-critical advisory surface.
+_AI_INSIGHT_CACHE: dict = {}
+
+# Variant pools — phrasing is rotated (seeded by user+date so it is stable
+# across a day's repeated fetches) so the copy reads human-written, per
+# feedback_dynamic_copy_not_robotic.md. >=4 variants per pattern.
+_PHASE_INSIGHT_POOL = {
+    "menstrual": [
+        "You're in your menstrual phase. Energy often dips here — gentle "
+        "movement and iron-rich meals tend to help.",
+        "Menstrual phase right now. Be kind to yourself: rest is productive, "
+        "and warm, comforting food can ease cramps.",
+        "It's your period week. Light walks, stretching and staying hydrated "
+        "usually take the edge off.",
+        "Menstrual phase. If you're tired, that's expected — lean into "
+        "lighter sessions and magnesium-rich foods.",
+    ],
+    "follicular": [
+        "You're in your follicular phase — energy is climbing. A great "
+        "stretch for progressive strength work.",
+        "Follicular phase: rising energy and quicker recovery. A good window "
+        "to push training intensity a little.",
+        "Your follicular phase is here. Fresh, lighter meals and harder "
+        "workouts both tend to feel good now.",
+        "Follicular phase. Motivation usually trends up — ride it with some "
+        "skill or strength progression.",
+    ],
+    "ovulation": [
+        "You're around ovulation — often a peak-energy window. A strong day "
+        "for heavier lifts or intervals.",
+        "Ovulation phase: many people feel their strongest here. Good timing "
+        "for a PR attempt if you're up for it.",
+        "Ovulation window. Energy and mood often peak — make the most of it "
+        "with a session you enjoy.",
+        "You're near ovulation. Antioxidant-rich foods and a high-intensity "
+        "session both pair well with this phase.",
+    ],
+    "luteal": [
+        "You're in your luteal phase. Cravings and a small energy taper are "
+        "normal — complex carbs help steady things.",
+        "Luteal phase right now. Moderate, steady workouts and magnesium-rich "
+        "foods tend to feel best as the period nears.",
+        "Your luteal phase is here. A slight calorie increase late in this "
+        "phase is normal, not a setback.",
+        "Luteal phase. If mood or energy dips, that's hormonal — gentler "
+        "training and good sleep go a long way.",
+    ],
+}
+
+_NO_DATA_INSIGHT = [
+    "Log your first period to unlock cycle predictions and phase-based tips.",
+    "Once you log a period, you'll get personalized phase insights here.",
+    "Start by logging a period — your cycle phase and tips will appear after.",
+    "Add a period log to see where you are in your cycle and what tends to help.",
+]
+
+
+def _seeded_choice(pool: list, seed_key: str):
+    """Pick a stable variant for a given seed (user_id + date) so the insight
+    text doesn't flicker across repeated fetches in the same day."""
+    if not pool:
+        return ""
+    idx = int(_md5(seed_key.encode()).hexdigest(), 16) % len(pool)
+    return pool[idx]
+
+
+@router.get("/ai-insight/{user_id}")
+async def get_cycle_ai_insight(
+    user_id: UUID,
+    request: Request,
+    current_user: dict = Depends(get_current_user),
+):
+    """Server-generated proactive cycle insight for the current phase/data.
+
+    Deterministic + template-based (no LLM), cached per user per day. Powers
+    the inline AI insight card and the app-bar "fresh insight" badge on the
+    Cycle screen. Always frames predictions as estimates; surfaces a gentle
+    clinician nudge when a red-flag pattern is present.
+    """
+    logger.info(f"[Hormonal] AI insight for user {user_id}")
+    try:
+        today = user_today_date(request, None, str(user_id))
+        cache_key = (str(user_id), today.isoformat())
+        cached = _AI_INSIGHT_CACHE.get(cache_key)
+        if cached is not None:
+            return cached
+
+        from services.cycle.cycle_context import build_cycle_context
+
+        supabase = get_supabase().client
+        ctx = build_cycle_context(supabase, str(user_id), today)
+
+        seed = f"{user_id}:{today.isoformat()}"
+        red_flags = ctx.get("red_flags") or []
+        phase = ctx.get("phase")
+        pred = ctx.get("prediction") or {}
+
+        # --- Headline insight text -----------------------------------------
+        if not ctx.get("available") or not pred.get("predictions_available"):
+            headline = _seeded_choice(_NO_DATA_INSIGHT, seed)
+        elif phase in _PHASE_INSIGHT_POOL:
+            headline = _seeded_choice(_PHASE_INSIGHT_POOL[phase], seed)
+        else:
+            headline = (
+                "Here's your cycle snapshot for today — log symptoms to make "
+                "it more personal."
+            )
+
+        # --- Data-grounded detail line -------------------------------------
+        detail_bits = []
+        if pred.get("predictions_available"):
+            day = pred.get("current_cycle_day")
+            conf = pred.get("confidence") or "low"
+            if day:
+                detail_bits.append(f"Cycle day {day}")
+            late_by = pred.get("period_late_by")
+            days_until = pred.get("days_until_next_period")
+            if late_by is not None:
+                detail_bits.append(
+                    f"period an estimated {late_by} days late"
+                )
+            elif days_until is not None:
+                detail_bits.append(
+                    f"next period estimated in ~{days_until} days"
+                )
+            detail_bits.append(f"{conf}-confidence estimate")
+
+        recent = ctx.get("recent_logs") or {}
+        if recent.get("avg_energy") is not None:
+            detail_bits.append(
+                f"avg logged energy {recent['avg_energy']}/10"
+            )
+
+        detail = ". ".join(detail_bits) + "." if detail_bits else ""
+
+        # --- Clinician nudge (gentle, never a diagnosis) -------------------
+        clinician_nudge = None
+        if red_flags:
+            clinician_nudge = (
+                "A pattern in your recent data ("
+                + "; ".join(red_flags)
+                + ") is worth mentioning to a doctor or gynecologist. This "
+                "is not a diagnosis — just a heads-up."
+            )
+
+        insight = {
+            "user_id": str(user_id),
+            "date": today.isoformat(),
+            "phase": phase,
+            "cycle_day": ctx.get("cycle_day"),
+            "headline": headline,
+            "detail": detail,
+            "clinician_nudge": clinician_nudge,
+            "has_red_flag": bool(red_flags),
+            "tracking_mode": ctx.get("tracking_mode"),
+            # Suggested-question chips for the chat surface, phase-aware.
+            "suggested_questions": _suggested_questions_for(phase, ctx.get("tracking_mode")),
+            "disclaimer": (
+                "Cycle predictions are estimates for general wellness — not a "
+                "contraceptive method and not medical advice."
+            ),
+            "generated_at": datetime.utcnow().isoformat(),
+        }
+
+        _AI_INSIGHT_CACHE[cache_key] = insight
+        return insight
+
+    except Exception as e:
+        logger.error(f"[Hormonal] Error generating AI insight: {e}", exc_info=True)
+        raise safe_internal_error(e, "endpoint")
+
+
+def _suggested_questions_for(phase: Optional[str], tracking_mode: Optional[str]) -> List[str]:
+    """Phase- and mode-aware suggested-question chips for the chat surface."""
+    base = {
+        "menstrual": [
+            "Why am I so tired this week?",
+            "What should I eat during my period?",
+            "Is it okay to work out on my period?",
+        ],
+        "follicular": [
+            "What workout should I do today?",
+            "Why do I feel more energetic?",
+            "Is my cycle normal?",
+        ],
+        "ovulation": [
+            "Am I in my fertile window?",
+            "What should I eat today?",
+            "Is this a good time to train hard?",
+        ],
+        "luteal": [
+            "Why am I craving carbs?",
+            "How do I handle PMS symptoms?",
+            "What should I eat this week?",
+        ],
+    }
+    questions = list(base.get(phase or "", [
+        "Where am I in my cycle?",
+        "Is my cycle normal?",
+        "What should I eat today?",
+    ]))
+    if tracking_mode == "ttc":
+        questions.insert(0, "When is my fertile window?")
+    return questions[:4]

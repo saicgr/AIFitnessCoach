@@ -15,6 +15,7 @@ from typing import List, Dict, Any, Optional
 from core.supabase_db import get_supabase_db
 from core.logger import get_logger
 from core.timezone_utils import get_user_today
+from services.cycle.cycle_predictor import predict_for_user
 
 logger = get_logger(__name__)
 
@@ -43,29 +44,25 @@ async def get_user_hormonal_context(user_id: str, timezone_str: str) -> dict:
             context["hormone_goals"] = profile.get("hormone_goals", [])
             context["primary_goal"] = profile.get("primary_goal")
 
-            if profile.get("menstrual_tracking_enabled") and profile.get("last_period_date"):
+            # Cycle phase from the deterministic prediction engine — reads the
+            # cycle_periods history (+ any logged BBT/LH signals), not the old
+            # single last-period column under a wrong name.
+            if profile.get("menstrual_tracking_enabled"):
                 try:
-                    last_period = date.fromisoformat(profile["last_period_date"])
-                    avg_cycle_length = profile.get("avg_cycle_length", 28)
                     today = date.fromisoformat(get_user_today(timezone_str))
-                    days_since_period = (today - last_period).days
-                    cycle_day = (days_since_period % avg_cycle_length) + 1
-                    context["cycle_day"] = cycle_day
-
-                    if cycle_day <= 5:
-                        context["cycle_phase"] = "menstrual"
-                        context["recommended_intensity"] = "light"
-                    elif cycle_day <= 13:
-                        context["cycle_phase"] = "follicular"
-                        context["recommended_intensity"] = "moderate_to_high"
-                    elif cycle_day <= 16:
-                        context["cycle_phase"] = "ovulation"
-                        context["recommended_intensity"] = "high"
-                    else:
-                        context["cycle_phase"] = "luteal"
-                        context["recommended_intensity"] = "moderate"
-
-                except (ValueError, TypeError) as e:
+                    prediction = predict_for_user(db.client, user_id, today)
+                    if prediction.get("predictions_available"):
+                        phase = prediction.get("current_phase")
+                        context["cycle_day"] = prediction.get("current_cycle_day")
+                        context["cycle_phase"] = phase
+                        intensity_by_phase = {
+                            "menstrual": "light",
+                            "follicular": "moderate_to_high",
+                            "ovulation": "high",
+                            "luteal": "moderate",
+                        }
+                        context["recommended_intensity"] = intensity_by_phase.get(phase)
+                except Exception as e:
                     logger.warning(f"[Hormonal Context] Failed to calculate cycle phase: {e}", exc_info=True)
 
         cutoff = (datetime.now() - timedelta(days=3)).date().isoformat()

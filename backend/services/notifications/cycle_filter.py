@@ -2,21 +2,25 @@
 Cycle-aware reminder filter.
 
 Progress-photo reminders can be misleading for menstruating users during
-their period because of water-retention fluctuation. When `users.cycle_aware_reminders`
-is opted-in AND today's local date falls within menstruation days 1–5 of
-the user's most recent cycle log, this filter returns False so the notification
-scheduler skips the photo reminder.
+their period because of water-retention fluctuation. When
+`users.cycle_aware_reminders` is opted-in AND the cycle prediction engine
+reports the user is currently in their period, this filter returns False so
+the notification scheduler skips the photo reminder.
 
 Opt-out (default) always returns True — no behaviour change for users who
-didn't enable the feature.
+didn't enable the feature. Any error fails open (reminder delivered).
+
+Source of truth is the `cycle_periods` table via
+services.cycle.cycle_predictor — the legacy `menstrual_cycle_logs` table is
+no longer read.
 """
 from __future__ import annotations
 
 import logging
-from datetime import date, timedelta
-from typing import Optional
+from datetime import date
 
 from core.supabase_client import get_supabase
+from services.cycle.cycle_predictor import predict_for_user
 
 logger = logging.getLogger("cycle_filter")
 
@@ -38,49 +42,16 @@ async def should_send_photo_reminder(
     if not user_row.data.get("cycle_aware_reminders"):
         return True
 
-    # Latest cycle log
-    latest = sb.client.table("menstrual_cycle_logs").select(
-        "cycle_start_date, cycle_length_days, period_length_days"
-    ).eq("user_id", user_id).order(
-        "cycle_start_date", desc=True
-    ).limit(1).execute()
-    if not latest or not latest.data:
-        # Opt-in but no log — fail open (deliver reminder).
+    # Opted in — ask the prediction engine whether today falls in the period.
+    try:
+        prediction = predict_for_user(sb.client, user_id, local_date)
+    except Exception as e:  # fail open — never silently drop a reminder
+        logger.warning(f"[cycle_filter] prediction failed for {user_id}: {e}")
         return True
 
-    row = latest.data[0]
-    cycle_start = _parse_date(row.get("cycle_start_date"))
-    cycle_len = int(row.get("cycle_length_days") or 28)
-    period_len = int(row.get("period_length_days") or 5)
-    if not cycle_start:
-        return True
-
-    # Project the latest logged cycle forward if today is past its nominal end.
-    # This handles the common case where the user logged cycle N weeks ago
-    # and has since started a new cycle without logging it.
-    days_since_start = (local_date - cycle_start).days
-    if days_since_start < 0:
-        # Log is in the future (time-zone edge case); treat as current cycle.
-        day_in_cycle = 1
-    else:
-        day_in_cycle = (days_since_start % cycle_len) + 1
-
-    if 1 <= day_in_cycle <= period_len:
+    if prediction.get("in_period"):
         logger.info(
-            f"[cycle_filter] skipping photo reminder for {user_id}: "
-            f"day {day_in_cycle} of cycle (period_len={period_len})"
+            f"[cycle_filter] skipping photo reminder for {user_id}: currently in period"
         )
         return False
     return True
-
-
-def _parse_date(value) -> Optional[date]:
-    """Coerce Supabase date string / date obj to a date."""
-    if value is None:
-        return None
-    if isinstance(value, date):
-        return value
-    try:
-        return date.fromisoformat(str(value)[:10])
-    except ValueError:
-        return None

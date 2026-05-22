@@ -312,6 +312,12 @@ async def nutrition_agent_node(state: NutritionAgentState) -> Dict[str, Any]:
     if state.get("rag_context_formatted"):
         context_parts.append(f"\nPrevious context:\n{state['rag_context_formatted']}")
 
+    # Cycle-aware nutrition: inject the phase-only cycle context block so
+    # "what should I eat today" respects cycle-driven hunger/energy patterns.
+    _cycle_ctx = state.get("cycle_context")
+    if _cycle_ctx and _cycle_ctx.get("prompt_block"):
+        context_parts.append(f"\n{_cycle_ctx['prompt_block']}")
+
     context = "\n".join(context_parts)
 
     # Create LLM with nutrition tools bound
@@ -508,6 +514,10 @@ async def nutrition_response_node(state: NutritionAgentState) -> Dict[str, Any]:
         for result in state.get("tool_results", []):
             if isinstance(result, dict) and result.get("success"):
                 context_parts.append(f"- {result.get('message', 'Action completed')[:200]}")
+
+    _cycle_ctx = state.get("cycle_context")
+    if _cycle_ctx and _cycle_ctx.get("prompt_block"):
+        context_parts.append(f"\n{_cycle_ctx['prompt_block']}")
 
     context = "\n".join(context_parts)
 

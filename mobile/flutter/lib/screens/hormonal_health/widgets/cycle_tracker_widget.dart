@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../../../data/models/hormonal_health.dart';
 
-/// Widget to display and track menstrual cycle phase
+/// Widget to display and track menstrual cycle phase.
+///
+/// Tapping the card opens the dedicated `/cycle` experience (Phase C).
 class CycleTrackerWidget extends StatelessWidget {
   final CyclePhaseInfo? cycleInfo;
   final VoidCallback? onLogPeriod;
@@ -24,7 +27,10 @@ class CycleTrackerWidget extends StatelessWidget {
     final cycleDay = cycleInfo!.currentCycleDay;
 
     return Card(
-      child: Padding(
+      child: InkWell(
+        onTap: () => context.push('/cycle'),
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -48,6 +54,9 @@ class CycleTrackerWidget extends StatelessWidget {
                     icon: const Icon(Icons.water_drop, size: 16),
                     label: const Text('Log Period'),
                   ),
+                Icon(Icons.chevron_right,
+                    size: 20,
+                    color: theme.colorScheme.onSurfaceVariant),
               ],
             ),
             const SizedBox(height: 16),
@@ -146,6 +155,7 @@ class CycleTrackerWidget extends StatelessWidget {
                 ),
             ],
           ],
+        ),
         ),
       ),
     );

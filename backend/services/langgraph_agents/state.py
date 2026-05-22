@@ -67,3 +67,10 @@ class FitnessCoachState(TypedDict):
 
     # Media classification (set by media classifier before agent routing)
     media_content_type: Optional[str]  # "food_plate", "food_menu", "exercise_form", etc.
+
+    # Menstrual-cycle context (Phase F). `cycle_phase` is the current estimated
+    # phase string; `cycle_context` is the compact context block from
+    # services.cycle.cycle_context.build_cycle_context — passed to the cycle
+    # agent in full and to the nutrition/workout agents as phase + summary only.
+    cycle_phase: Optional[str]
+    cycle_context: Optional[Dict[str, Any]]

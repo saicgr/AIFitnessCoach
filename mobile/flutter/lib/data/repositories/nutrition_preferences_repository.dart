@@ -653,7 +653,15 @@ class WeightTrend {
       };
 }
 
-/// Dynamic nutrition targets for a specific day
+/// Dynamic nutrition targets for a specific day.
+///
+/// Phase H (cycle-aware nutrition) adds the `cycleSync*` fields: when the
+/// user has opted into cycle-sync nutrition, the backend
+/// `/nutrition/.../dynamic-targets` endpoint layers a phase-specific calorie
+/// adjustment (e.g. a luteal-phase hunger bump) onto the base target and
+/// reports it here so the UI can surface *why* the target moved. All cycle
+/// fields default to a clean no-op (`cycleSyncApplied == false`) for users
+/// who do not track a cycle or have not opted in.
 class DynamicNutritionTargets {
   final int targetCalories;
   final int targetProteinG;
@@ -666,6 +674,23 @@ class DynamicNutritionTargets {
   final String adjustmentReason;
   final int calorieAdjustment;
 
+  // ── Cycle-aware target fields (Phase H — MacroFactor 1.6 / 1.16) ────────
+
+  /// True when a cycle-phase adjustment is layered onto the base target.
+  final bool cycleSyncApplied;
+
+  /// The cycle phase the adjustment is for — `menstrual` | `follicular` |
+  /// `ovulation` | `luteal`. Null when no cycle adjustment is applied.
+  final String? cyclePhase;
+
+  /// Signed kcal the cycle phase contributes to the calorie target
+  /// (e.g. `+200` for a luteal-phase hunger bump). 0 when not applied.
+  final int cycleCalorieAdjustment;
+
+  /// Human-readable reason for the cycle adjustment, surfaced verbatim in the
+  /// UI (e.g. "Higher hunger is typical in your luteal phase").
+  final String? cycleAdjustmentReason;
+
   const DynamicNutritionTargets({
     this.targetCalories = 2000,
     this.targetProteinG = 150,
@@ -677,9 +702,20 @@ class DynamicNutritionTargets {
     this.isRestDay = true,
     this.adjustmentReason = 'base_targets',
     this.calorieAdjustment = 0,
+    this.cycleSyncApplied = false,
+    this.cyclePhase,
+    this.cycleCalorieAdjustment = 0,
+    this.cycleAdjustmentReason,
   });
 
   factory DynamicNutritionTargets.fromJson(Map<String, dynamic> json) {
+    int asInt(Object? v, int fallback) {
+      if (v is int) return v;
+      if (v is num) return v.toInt();
+      if (v is String) return int.tryParse(v) ?? fallback;
+      return fallback;
+    }
+
     return DynamicNutritionTargets(
       targetCalories: json['target_calories'] as int? ?? 2000,
       targetProteinG: json['target_protein_g'] as int? ?? 150,
@@ -691,6 +727,11 @@ class DynamicNutritionTargets {
       isRestDay: json['is_rest_day'] as bool? ?? true,
       adjustmentReason: json['adjustment_reason'] as String? ?? 'base_targets',
       calorieAdjustment: json['calorie_adjustment'] as int? ?? 0,
+      cycleSyncApplied: json['cycle_sync_applied'] as bool? ?? false,
+      cyclePhase: json['cycle_phase'] as String?,
+      cycleCalorieAdjustment:
+          asInt(json['cycle_calorie_adjustment'], 0),
+      cycleAdjustmentReason: json['cycle_adjustment_reason'] as String?,
     );
   }
 
@@ -705,6 +746,10 @@ class DynamicNutritionTargets {
         'is_rest_day': isRestDay,
         'adjustment_reason': adjustmentReason,
         'calorie_adjustment': calorieAdjustment,
+        'cycle_sync_applied': cycleSyncApplied,
+        'cycle_phase': cyclePhase,
+        'cycle_calorie_adjustment': cycleCalorieAdjustment,
+        'cycle_adjustment_reason': cycleAdjustmentReason,
       };
 }
 

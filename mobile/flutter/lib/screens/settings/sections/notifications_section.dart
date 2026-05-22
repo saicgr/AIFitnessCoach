@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/theme_colors.dart';
+import '../../../data/providers/hormonal_health_provider.dart';
 import '../../../data/services/notification_service.dart';
 import '../widgets/widgets.dart';
 
@@ -649,6 +651,44 @@ class _NotificationsCardState extends ConsumerState<_NotificationsCard> {
                   ),
                 ),
                 Divider(height: 1, color: cardBorder, indent: 50),
+                // ─── Cycle Reminders (Phase E) ──────────────────────
+                // Shown only when cycle tracking is enabled
+                // (`menstrual_tracking_enabled`). The full per-type cycle
+                // reminder controls live on the dedicated Cycle settings
+                // screen — this row is the discoverable entry point so the
+                // notifications card stays compact.
+                if (ref.watch(hasHormonalTrackingProvider))
+                  InkWell(
+                    onTap: () => context.push('/settings/cycle'),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 12),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.favorite_outline,
+                              color: Color(0xFFEC4899), size: 22),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text('Cycle Reminders',
+                                    style: TextStyle(fontSize: 15)),
+                                Text(
+                                  'Period, fertility, and logging reminders',
+                                  style: TextStyle(
+                                      fontSize: 12, color: textMuted),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Icon(Icons.chevron_right, color: textMuted, size: 22),
+                        ],
+                      ),
+                    ),
+                  ),
+                if (ref.watch(hasHormonalTrackingProvider))
+                  Divider(height: 1, color: cardBorder, indent: 50),
                 // Guilt Notifications (moved here from the always-visible section)
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),

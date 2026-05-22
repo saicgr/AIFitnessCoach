@@ -80,4 +80,26 @@ class ApiConstants {
   static const String events = '/events';
   static const String timeline = '/timeline';
   static const String wellnessMood = '/wellness/mood';
+
+  // Hormonal / cycle tracking (Phase B — 2026-05-22).
+  // Base router prefix mounted by `backend/api/v1/hormonal_health.py`.
+  static const String hormonalHealth = '/hormonal-health';
+
+  /// `GET /hormonal-health/prediction/{user_id}` — full CyclePrediction.
+  static String cyclePrediction(String userId) =>
+      '$hormonalHealth/prediction/$userId';
+
+  /// `GET`/`POST /hormonal-health/periods/{user_id}` — period history CRUD.
+  static String cyclePeriods(String userId) =>
+      '$hormonalHealth/periods/$userId';
+
+  /// `PATCH`/`DELETE /hormonal-health/periods/{user_id}/{period_id}`.
+  static String cyclePeriod(String userId, String periodId) =>
+      '$hormonalHealth/periods/$userId/$periodId';
+
+  /// `GET /hormonal-health/ai-insight/{user_id}` — a server-generated
+  /// proactive cycle insight for the current phase/data, cached per day
+  /// (Phase F).
+  static String cycleAiInsight(String userId) =>
+      '$hormonalHealth/ai-insight/$userId';
 }

@@ -15,6 +15,7 @@ class AgentType(str, Enum):
     WORKOUT = "workout"      # Workout planning and modification specialist
     INJURY = "injury"        # Injury management and recovery specialist
     HYDRATION = "hydration"  # Hydration tracking specialist
+    CYCLE = "cycle"          # Menstrual-cycle health specialist
     PLAN = "plan"            # Holistic weekly planning specialist
 
 

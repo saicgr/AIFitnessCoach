@@ -25,6 +25,16 @@ extension NotificationServiceScheduled on NotificationService {
   static const int _afternoonNudgeId = 8002;
   static const int _eveningBundleId = 8003;
 
+  /// Cycle tracking reminder IDs (8100-8199). One fixed ID per reminder type
+  /// so a reschedule cleanly replaces the prior instance.
+  static const int _cyclePeriodApproachingId = 8100;
+  static const int _cyclePeriodStartId = 8101;
+  static const int _cycleFertileWindowId = 8102;
+  static const int _cyclePeakFertilityId = 8103;
+  static const int _cycleBbtReminderId = 8104;
+  static const int _cycleSymptomCheckinId = 8105;
+  static const int _cycleLatePeriodId = 8106;
+
   // ─────────────────────────────────────────────────────────────────
   // Template Rotation
   // ─────────────────────────────────────────────────────────────────
@@ -275,6 +285,12 @@ extension NotificationServiceScheduled on NotificationService {
     if (prefs.weeklySummary) {
       await scheduleWeeklySummary(prefs.weeklySummaryDay, prefs.weeklySummaryTime);
     }
+
+    // Cycle tracking reminders (Phase E). Independent of the frequency preset
+    // — they are gated by `cycleRemindersMaster` + the per-type toggles, and
+    // only fire when the cycle feature is set up. Scheduled against the
+    // cached `CyclePrediction` dates (written by the cycle providers).
+    await scheduleCycleReminders(prefs);
 
     debugPrint('✅ [Schedule] All notifications scheduled (preset: $preset)');
   }
@@ -940,6 +956,286 @@ extension NotificationServiceScheduled on NotificationService {
   }
 
   // ─────────────────────────────────────────────────────────────────
+  // Cycle Tracking Reminders (Phase E)
+  // ─────────────────────────────────────────────────────────────────
+  //
+  // Seven reminder types, all gated by `cycleRemindersMaster` + a per-type
+  // toggle, all scheduled in the user's LOCAL timezone (`tz.local`), and all
+  // SUPPRESSED when their fire time falls inside the global quiet hours.
+  //
+  //  1. period-approaching  — N days (default 2) before the predicted period
+  //  2. period-start        — on the predicted period start date
+  //  3. fertile-window-open — on the fertile window start date (TTC only)
+  //  4. peak-fertility      — on the peak fertility start date  (TTC only)
+  //  5. daily BBT-log       — every morning (repeats daily)
+  //  6. symptom check-in    — every evening (repeats daily)
+  //  7. late-period alert   — on the day the period becomes "late"
+  //
+  // Types 1-4 + 7 are anchored to the cached `CyclePrediction` dates
+  // (`cycleNextPeriodDate` etc., refreshed by `updateCyclePredictionDates`).
+  // Types 5-6 repeat daily and need no prediction.
+  //
+  // Privacy: payloads carry ONLY a type name + generic copy — never a
+  // predicted date, symptom, or any cycle data (see the plan's Privacy &
+  // Safety section). The body text is intentionally vague ("soon", "today").
+
+  /// Cancel every cycle reminder (IDs 8100-8199).
+  Future<void> cancelCycleReminders() async {
+    for (int id = 8100; id <= 8199; id++) {
+      await _localNotifications.cancel(id);
+    }
+    debugPrint('🩸 [Cycle] All cycle reminders cancelled');
+  }
+
+  /// AndroidNotificationDetails for the shared cycle reminder channel.
+  AndroidNotificationDetails _cycleAndroidDetails() {
+    final cfg = NotificationService._channelConfigs['cycle_reminder']!;
+    return AndroidNotificationDetails(
+      cfg.id,
+      cfg.name,
+      channelDescription: cfg.description,
+      importance: Importance.high,
+      priority: Priority.high,
+      icon: '@drawable/ic_launcher_monochrome',
+      color: cfg.color,
+    );
+  }
+
+  /// Parse an ISO `yyyy-MM-dd` string into a local-midnight DateTime, or null.
+  DateTime? _parseCycleDate(String? iso) {
+    if (iso == null || iso.isEmpty) return null;
+    final parsed = DateTime.tryParse(iso);
+    if (parsed == null) return null;
+    return DateTime(parsed.year, parsed.month, parsed.day);
+  }
+
+  /// True when (hour:minute) falls inside the user's quiet hours window.
+  /// Cycle reminders that would fire inside quiet hours are skipped entirely
+  /// rather than nudged to another time — a once-per-cycle reminder a few
+  /// hours off is fine, and silent-dropping keeps the logic simple + honest.
+  bool _isTimeInQuietHours(int hour, int minute, NotificationPreferences prefs) {
+    final cur = hour * 60 + minute;
+    final (qsH, qsM) = _parseTime(prefs.quietHoursStart);
+    final (qeH, qeM) = _parseTime(prefs.quietHoursEnd);
+    final start = qsH * 60 + qsM;
+    final end = qeH * 60 + qeM;
+    if (start > end) {
+      // Overnight window (e.g. 22:00 → 08:00).
+      return cur >= start || cur <= end;
+    }
+    return cur >= start && cur <= end;
+  }
+
+  /// Schedule a one-shot cycle reminder anchored to [date] at the cycle
+  /// reminder time-of-day. No-op when the date is null, already past, or the
+  /// fire time is inside quiet hours.
+  Future<void> _scheduleCycleDateReminder({
+    required int id,
+    required DateTime? date,
+    required String type,
+    required String title,
+    required String body,
+    required NotificationPreferences prefs,
+  }) async {
+    if (date == null) return;
+    final (hour, minute) = _parseTime(prefs.cycleReminderTimeOfDay);
+
+    if (_isTimeInQuietHours(hour, minute, prefs)) {
+      debugPrint('🩸 [Cycle] "$type" skipped — fire time in quiet hours');
+      return;
+    }
+
+    final fireAt = tz.TZDateTime(
+        tz.local, date.year, date.month, date.day, hour, minute);
+    if (fireAt.isBefore(tz.TZDateTime.now(tz.local))) {
+      debugPrint('🩸 [Cycle] "$type" skipped — $fireAt is in the past');
+      return;
+    }
+
+    await _localNotifications.zonedSchedule(
+      id,
+      title,
+      body,
+      fireAt,
+      NotificationDetails(
+        android: _cycleAndroidDetails(),
+        iOS: const DarwinNotificationDetails(),
+      ),
+      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+      // One-shot — NOT repeating: each cycle the providers refresh the
+      // prediction dates and this reschedules.
+      uiLocalNotificationDateInterpretation:
+          UILocalNotificationDateInterpretation.absoluteTime,
+      payload: _richPayload(type, title, body),
+    );
+    debugPrint('🩸 [Cycle] "$type" scheduled for $fireAt');
+  }
+
+  /// Schedule a daily-repeating cycle reminder at [time]. No-op when the
+  /// time is inside quiet hours.
+  Future<void> _scheduleCycleDailyReminder({
+    required int id,
+    required String time,
+    required String type,
+    required String title,
+    required String body,
+    required NotificationPreferences prefs,
+  }) async {
+    final (hour, minute) = _parseTime(time);
+    if (_isTimeInQuietHours(hour, minute, prefs)) {
+      debugPrint('🩸 [Cycle] daily "$type" skipped — time in quiet hours');
+      return;
+    }
+    await _localNotifications.zonedSchedule(
+      id,
+      title,
+      body,
+      _nextInstanceOfTime(hour, minute),
+      NotificationDetails(
+        android: _cycleAndroidDetails(),
+        iOS: const DarwinNotificationDetails(),
+      ),
+      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+      matchDateTimeComponents: DateTimeComponents.time, // repeat daily
+      uiLocalNotificationDateInterpretation:
+          UILocalNotificationDateInterpretation.absoluteTime,
+      payload: _richPayload(type, title, body),
+    );
+    debugPrint('🩸 [Cycle] daily "$type" scheduled for $time');
+  }
+
+  /// Schedule (or clear) all cycle tracking reminders from preferences +
+  /// the cached `CyclePrediction` dates. Always cancels first so a toggle
+  /// flip or a prediction refresh cleanly replaces prior instances.
+  Future<void> scheduleCycleReminders(NotificationPreferences prefs) async {
+    await cancelCycleReminders();
+
+    // Master gate. Also requires onboarding+paywall complete — handled by the
+    // caller (`scheduleAllNotifications` returns early before reaching here).
+    if (!prefs.cycleRemindersMaster) {
+      debugPrint('🩸 [Cycle] Cycle reminders master toggle OFF — skipping');
+      return;
+    }
+
+    // Pregnancy mode pauses ALL cycle prediction reminders (the cycle is
+    // paused). Daily BBT/symptom reminders also stop — they belong to the
+    // active tracking flow. Mirrors the predictor pausing in pregnancy mode.
+    final mode = prefs.cycleTrackingMode;
+    if (mode == 'pregnancy') {
+      debugPrint('🩸 [Cycle] Pregnancy mode — cycle reminders paused');
+      return;
+    }
+
+    final sharedPrefs = await SharedPreferences.getInstance();
+    final nextPeriod = _parseCycleDate(
+        sharedPrefs.getString(NotificationPrefsKeys.cycleNextPeriodDate));
+    final fertileStart = _parseCycleDate(
+        sharedPrefs.getString(NotificationPrefsKeys.cycleFertileWindowStart));
+    final peakStart = _parseCycleDate(
+        sharedPrefs.getString(NotificationPrefsKeys.cyclePeakFertilityStart));
+    final lateDate = _parseCycleDate(
+        sharedPrefs.getString(NotificationPrefsKeys.cyclePredictedLateDate));
+
+    final emoji = prefs.notificationEmoji;
+    String e(String s) => emoji ? s : '';
+
+    // 1. Period approaching — N days before the predicted period.
+    if (prefs.cyclePeriodApproaching && nextPeriod != null) {
+      final lead = prefs.cyclePeriodApproachingLeadDays.clamp(1, 5);
+      final approachDate = nextPeriod.subtract(Duration(days: lead));
+      final dayWord = lead == 1 ? 'tomorrow' : 'in a few days';
+      await _scheduleCycleDateReminder(
+        id: _cyclePeriodApproachingId,
+        date: approachDate,
+        type: 'cycle_period_approaching',
+        title: '${e('🩸 ')}Period coming up',
+        body: 'Your period is expected $dayWord. '
+            'A good time to prep and check in on how you feel.',
+        prefs: prefs,
+      );
+    }
+
+    // 2. Period start — on the predicted period start date.
+    if (prefs.cyclePeriodStart && nextPeriod != null) {
+      await _scheduleCycleDateReminder(
+        id: _cyclePeriodStartId,
+        date: nextPeriod,
+        type: 'cycle_period_start',
+        title: '${e('🩸 ')}Period day',
+        body: 'Your period may start today. Tap to log it when it does — '
+            'logging keeps your predictions accurate.',
+        prefs: prefs,
+      );
+    }
+
+    // 3 & 4. Fertility reminders — TTC mode only.
+    if (mode == 'ttc') {
+      if (prefs.cycleFertileWindow && fertileStart != null) {
+        await _scheduleCycleDateReminder(
+          id: _cycleFertileWindowId,
+          date: fertileStart,
+          type: 'cycle_fertile_window',
+          title: '${e('🌱 ')}Fertile window opening',
+          body: 'Your estimated fertile window is starting. '
+              'Remember, these dates are estimates.',
+          prefs: prefs,
+        );
+      }
+      if (prefs.cyclePeakFertility && peakStart != null) {
+        await _scheduleCycleDateReminder(
+          id: _cyclePeakFertilityId,
+          date: peakStart,
+          type: 'cycle_peak_fertility',
+          title: '${e('✨ ')}Peak fertility days',
+          body: 'Your estimated peak fertility days are here. '
+              'An estimate, not a guarantee.',
+          prefs: prefs,
+        );
+      }
+    }
+
+    // 5. Daily BBT log reminder — every morning.
+    if (prefs.cycleBbtReminder) {
+      await _scheduleCycleDailyReminder(
+        id: _cycleBbtReminderId,
+        time: prefs.cycleBbtReminderTime,
+        type: 'cycle_bbt_reminder',
+        title: '${e('🌡️ ')}Log your temperature',
+        body: 'Take your basal body temperature before getting up, '
+            'then log it to refine your cycle insights.',
+        prefs: prefs,
+      );
+    }
+
+    // 6. Symptom check-in — every evening.
+    if (prefs.cycleSymptomCheckin) {
+      await _scheduleCycleDailyReminder(
+        id: _cycleSymptomCheckinId,
+        time: prefs.cycleSymptomCheckinTime,
+        type: 'cycle_symptom_checkin',
+        title: '${e('📝 ')}How did today feel?',
+        body: 'Take a moment to log your energy, mood, and any symptoms.',
+        prefs: prefs,
+      );
+    }
+
+    // 7. Late-period alert — on the day the period becomes "late".
+    if (prefs.cycleLatePeriodAlert && lateDate != null) {
+      await _scheduleCycleDateReminder(
+        id: _cycleLatePeriodId,
+        date: lateDate,
+        type: 'cycle_late_period',
+        title: '${e('🩸 ')}Period running late?',
+        body: 'Your period has not been logged yet. '
+            'If it has started, tap to log it; if not, that is okay too.',
+        prefs: prefs,
+      );
+    }
+
+    debugPrint('🩸 [Cycle] Cycle reminders rescheduled (mode: $mode)');
+  }
+
+  // ─────────────────────────────────────────────────────────────────
   // Debug & Testing Methods
   // ─────────────────────────────────────────────────────────────────
 
@@ -1085,6 +1381,16 @@ extension NotificationServiceScheduled on NotificationService {
         return '/schedule';
       case 'daily_bundle':
         return '/home';
+      // Cycle tracking reminders (Phase E) — all deep-link into the Cycle
+      // screen so a tap lands on the logging surface.
+      case 'cycle_period_approaching':
+      case 'cycle_period_start':
+      case 'cycle_fertile_window':
+      case 'cycle_peak_fertility':
+      case 'cycle_bbt_reminder':
+      case 'cycle_symptom_checkin':
+      case 'cycle_late_period':
+        return '/cycle';
       default:
         return null;
     }

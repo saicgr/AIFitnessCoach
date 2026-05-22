@@ -9,6 +9,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/services/posthog_service.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/services/api_client.dart';
+import 'cycle_onboarding_sheet.dart';
 import 'pre_auth_quiz_screen.dart';
 
 /// Personal Info — name + date-of-birth, collected post-sign-in.
@@ -174,6 +175,15 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
         },
       );
 
+      // Optional cycle-tracking setup — offered right after the gender
+      // question per the cycle plan's gender-gating table. female → auto;
+      // non-binary / other / prefer-not-to-say → behind a gentle opt-in;
+      // male → never offered. The feature gate downstream is
+      // `menstrual_tracking_enabled`, never gender — this step just sets it.
+      if (mounted) {
+        await _maybeOfferCycleSetup(userId, quizData.gender);
+      }
+
       if (mounted) {
         context.go('/coach-selection');
       }
@@ -189,6 +199,63 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
       }
     } finally {
       if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  /// Offer the optional cycle-tracking setup step based on the user's gender.
+  ///
+  ///  * `female` → the setup sheet opens automatically.
+  ///  * `non_binary` / `other` / `prefer_not_to_say` → a gentle yes/no first
+  ///    ("Do you track a menstrual cycle?"); only a "yes" opens the sheet.
+  ///  * `male` (or unknown) → never offered.
+  ///
+  /// Skipping leaves `menstrual_tracking_enabled` off — the user can still
+  /// turn cycle tracking on later from Settings. No cycle data is sent to
+  /// analytics; only a content-free completion event name is emitted.
+  Future<void> _maybeOfferCycleSetup(String userId, String? gender) async {
+    final g = gender?.toLowerCase();
+    if (g == null || g == 'male') return; // never offered to male users
+
+    bool proceed = g == 'female';
+    if (!proceed) {
+      // Optional opt-in for non-binary / other / prefer-not-to-say.
+      final answer = await showDialog<bool>(
+        context: context,
+        builder: (ctx) {
+          final isDark = Theme.of(ctx).brightness == Brightness.dark;
+          return AlertDialog(
+            backgroundColor:
+                isDark ? AppColors.surface : AppColorsLight.surface,
+            title: const Text('Do you track a menstrual cycle?'),
+            content: const Text(
+              'Zealova can predict your cycle and adapt workouts and '
+              'nutrition around it. Entirely optional — you can change '
+              'this any time in Settings.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(false),
+                child: const Text('No thanks'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.of(ctx).pop(true),
+                child: const Text('Yes, set it up'),
+              ),
+            ],
+          );
+        },
+      );
+      proceed = answer == true;
+    }
+
+    if (!proceed || !mounted) return;
+
+    final completed = await CycleOnboardingSheet.show(context, userId: userId);
+    if (completed == true) {
+      // Content-free event name only — never any cycle data.
+      ref.read(posthogServiceProvider).capture(
+        eventName: 'cycle_onboarding_completed',
+      );
     }
   }
 

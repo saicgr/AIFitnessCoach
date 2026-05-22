@@ -290,6 +290,19 @@ class NutritionGoalsCard extends ConsumerWidget {
             ],
           ),
 
+          // Cycle-sync calorie adjustment banner (Phase H — MacroFactor 1.6).
+          // Surfaced only when the dynamic-targets response reports a
+          // cycle-phase adjustment so the user sees WHY the target moved.
+          if (dynamicTargets != null && dynamicTargets.cycleSyncApplied) ...[
+            const SizedBox(height: 6),
+            _CycleAdjustmentBanner(
+              phase: dynamicTargets.cyclePhase,
+              calorieAdjustment: dynamicTargets.cycleCalorieAdjustment,
+              reason: dynamicTargets.cycleAdjustmentReason,
+              isDark: isDark,
+            ),
+          ],
+
           // Goal weight / target date / weekly rate / goal badge (loss/gain goals only)
           if (prefs != null && (prefs.goalWeightKg != null || prefs.goalDate != null ||
               hasGoal ||
@@ -469,6 +482,113 @@ class NutritionGoalsCard extends ConsumerWidget {
     }
   }
 
+}
+
+/// A clearly-labeled banner explaining a cycle-phase calorie adjustment that
+/// has been layered onto the day's target. (Phase H — MacroFactor 1.6.)
+///
+/// Reads e.g. "+200 kcal · luteal phase" with the engine's reason underneath,
+/// so a user who opted into cycle-sync nutrition understands why today's
+/// target differs from the base.
+class _CycleAdjustmentBanner extends StatelessWidget {
+  /// `menstrual` | `follicular` | `ovulation` | `luteal` | null.
+  final String? phase;
+  final int calorieAdjustment;
+  final String? reason;
+  final bool isDark;
+
+  const _CycleAdjustmentBanner({
+    required this.phase,
+    required this.calorieAdjustment,
+    required this.reason,
+    required this.isDark,
+  });
+
+  /// Per-phase tint, matching the cycle-phase palette used app-wide.
+  Color get _phaseColor {
+    switch (phase) {
+      case 'menstrual':
+        return const Color(0xFFE57373);
+      case 'follicular':
+        return const Color(0xFF81C784);
+      case 'ovulation':
+        return const Color(0xFFFFD54F);
+      case 'luteal':
+        return const Color(0xFF64B5F6);
+      default:
+        return const Color(0xFF64B5F6);
+    }
+  }
+
+  String get _phaseLabel {
+    switch (phase) {
+      case 'menstrual':
+        return 'menstrual phase';
+      case 'follicular':
+        return 'follicular phase';
+      case 'ovulation':
+        return 'fertile window';
+      case 'luteal':
+        return 'luteal phase';
+      default:
+        return 'cycle phase';
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final color = _phaseColor;
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    final sign = calorieAdjustment >= 0 ? '+' : '';
+    // Headline: "+200 kcal · luteal phase". When the adjustment is 0 (phase
+    // detected but no calorie shift) just name the phase.
+    final headline = calorieAdjustment == 0
+        ? 'Synced to your $_phaseLabel'
+        : '$sign$calorieAdjustment kcal · $_phaseLabel';
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: isDark ? 0.16 : 0.10),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: color.withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.favorite_rounded, size: 14, color: color),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  headline,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: color,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                if (reason != null && reason!.trim().isNotEmpty) ...[
+                  const SizedBox(height: 1),
+                  Text(
+                    reason!.trim(),
+                    style: TextStyle(fontSize: 10, color: textMuted),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 /// Compact inline macro display for header area

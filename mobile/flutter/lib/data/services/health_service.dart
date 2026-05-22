@@ -708,7 +708,8 @@ class HealthService {
           value: value,
           unit: 'mg/dL',
           recordedAt: point.dateTo,
-          source: point.sourceName ?? 'Health Connect',
+          // `sourceName` is non-nullable in health 12.x.
+          source: point.sourceName,
           mealContext: _inferMealContext(point.dateTo),
         );
       }).toList()
@@ -738,7 +739,8 @@ class HealthService {
         return InsulinDose(
           units: value,
           deliveredAt: point.dateTo,
-          source: point.sourceName ?? 'Health Connect',
+          // `sourceName` is non-nullable in health 12.x.
+          source: point.sourceName,
           insulinType: 'unknown', // Health Connect doesn't differentiate
         );
       }).toList()
@@ -1072,4 +1074,353 @@ class HealthService {
     if (hour >= 19 && hour < 22) return 'after_dinner';
     return 'general';
   }
+
+  // ===========================================================================
+  // CYCLE TRACKING — menstruation flow + body/wrist temperature (Phase B)
+  // ---------------------------------------------------------------------------
+  // Added 2026-05-22 for the in-app Cycle tracker. Two data types:
+  //   * MENSTRUATION_FLOW — two-way: import period days logged in Apple Health
+  //     / Health Connect (other apps) AND export app-logged periods back so
+  //     nothing is logged twice across apps.
+  //   * BODY_TEMPERATURE  — read-only: feeds the BBT graph. On iOS this is
+  //     where the Apple Watch (Series 8+) sleeping *wrist* temperature lands
+  //     (HealthKit exposes it as a body-temperature sample); on Android any
+  //     wearable writing temperature to Health Connect surfaces here too.
+  //
+  // These are gated behind their OWN permission request (`requestCyclePermissions`)
+  // so a user who only wants steps/sleep is never asked for reproductive-health
+  // scope — and the general steps/sleep/weight flow is untouched. BODY_TEMPERATURE
+  // is in `_removedTypes` for the general request precisely so it is only ever
+  // requested when the cycle feature explicitly needs it.
+  // ===========================================================================
+
+  /// Health types the cycle tracker needs. MENSTRUATION_FLOW is read+write,
+  /// BODY_TEMPERATURE is read-only (BBT signal).
+  static const List<HealthDataType> cycleReadTypes = [
+    HealthDataType.MENSTRUATION_FLOW,
+    HealthDataType.BODY_TEMPERATURE,
+  ];
+
+  static const List<HealthDataType> cycleWriteTypes = [
+    HealthDataType.MENSTRUATION_FLOW,
+  ];
+
+  /// Request the cycle-specific health permissions (menstruation flow R/W +
+  /// body temperature read). Separate from [requestPermissions] so the
+  /// reproductive-health scope is only ever requested when the user opts into
+  /// the Cycle feature. Returns true when the grant succeeded.
+  Future<bool> requestCyclePermissions() async {
+    try {
+      await _ensureConfigured();
+
+      final permissions = cycleReadTypes.map((type) {
+        return cycleWriteTypes.contains(type)
+            ? HealthDataAccess.READ_WRITE
+            : HealthDataAccess.READ;
+      }).toList();
+
+      final granted = await _health.requestAuthorization(
+        cycleReadTypes,
+        permissions: permissions,
+      );
+      debugPrint('🩸 Cycle health permissions granted: $granted');
+
+      if (granted && Platform.isIOS) {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setBool('health_cycle_permissions_granted', true);
+      }
+      return granted;
+    } catch (e) {
+      debugPrint('❌ Error requesting cycle health permissions: $e');
+      return false;
+    }
+  }
+
+  /// Whether the cycle-specific health permissions have been granted.
+  Future<bool> hasCyclePermissions() async {
+    try {
+      await _ensureConfigured();
+      final hasAuth = await _health.hasPermissions(
+        cycleReadTypes,
+        permissions: cycleReadTypes
+            .map((t) => cycleWriteTypes.contains(t)
+                ? HealthDataAccess.READ_WRITE
+                : HealthDataAccess.READ)
+            .toList(),
+      );
+      if (hasAuth == true) return true;
+      // iOS routinely returns null for READ scopes — trust our stored flag.
+      if (hasAuth == null && Platform.isIOS) {
+        final prefs = await SharedPreferences.getInstance();
+        return prefs.getBool('health_cycle_permissions_granted') ?? false;
+      }
+      return false;
+    } catch (e) {
+      debugPrint('⚠️ Error checking cycle health permissions: $e');
+      return false;
+    }
+  }
+
+  /// Read raw body / wrist temperature samples (°C) over the last [days].
+  ///
+  /// On iOS this includes the Apple Watch sleeping *wrist* temperature
+  /// (HealthKit reports it as a body-temperature quantity). The cycle
+  /// predictor consumes Celsius directly — no conversion is applied here.
+  Future<List<CycleTemperatureSample>> getBodyTemperatureHistory({
+    int days = 120,
+  }) async {
+    try {
+      await _ensureConfigured();
+      final now = DateTime.now();
+      final start = now.subtract(Duration(days: days));
+
+      final raw = await _health.getHealthDataFromTypes(
+        startTime: start,
+        endTime: now,
+        types: const [HealthDataType.BODY_TEMPERATURE],
+      );
+      final data = _health.removeDuplicates(raw);
+
+      final out = <CycleTemperatureSample>[];
+      for (final point in data) {
+        final value = point.value;
+        if (value is! NumericHealthValue) continue;
+        out.add(CycleTemperatureSample(
+          dateTime: point.dateFrom,
+          celsius: value.numericValue.toDouble(),
+          source: point.sourceName,
+        ));
+      }
+      out.sort((a, b) => a.dateTime.compareTo(b.dateTime));
+      debugPrint('🌡️ Fetched ${out.length} body-temperature samples '
+          '(last $days days)');
+      return out;
+    } catch (e) {
+      debugPrint('❌ Error getting body temperature history: $e');
+      return [];
+    }
+  }
+
+  /// Read menstruation-flow samples logged in Apple Health / Health Connect
+  /// (by any app) over the last [days]. The returned [CyclePeriodDay]s are
+  /// per-day flow observations — group consecutive non-`none` days into a
+  /// period before pushing to the backend `/periods` endpoint.
+  Future<List<CyclePeriodDay>> getMenstruationFlowHistory({
+    int days = 365,
+  }) async {
+    try {
+      await _ensureConfigured();
+      final now = DateTime.now();
+      final start = now.subtract(Duration(days: days));
+
+      final raw = await _health.getHealthDataFromTypes(
+        startTime: start,
+        endTime: now,
+        types: const [HealthDataType.MENSTRUATION_FLOW],
+      );
+      final data = _health.removeDuplicates(raw);
+
+      final out = <CyclePeriodDay>[];
+      for (final point in data) {
+        final value = point.value;
+        if (value is! MenstruationFlowHealthValue) continue;
+        out.add(CyclePeriodDay(
+          date: DateTime(
+            point.dateFrom.year,
+            point.dateFrom.month,
+            point.dateFrom.day,
+          ),
+          flow: value.flow ?? MenstrualFlow.unspecified,
+          isCycleStart: value.isStartOfCycle ?? false,
+          source: point.sourceName,
+        ));
+      }
+      out.sort((a, b) => a.date.compareTo(b.date));
+      debugPrint('🩸 Fetched ${out.length} menstruation-flow days '
+          '(last $days days)');
+      return out;
+    } catch (e) {
+      debugPrint('❌ Error getting menstruation flow history: $e');
+      return [];
+    }
+  }
+
+  /// Map the app's `period_flow` enum string onto the `health` package's
+  /// [MenstrualFlow]. Unknown / `none` → `MenstrualFlow.none`.
+  static MenstrualFlow mapPeriodFlow(String? fitWizFlow) {
+    switch (fitWizFlow?.toLowerCase().trim()) {
+      case 'spotting':
+        return MenstrualFlow.spotting;
+      case 'light':
+        return MenstrualFlow.light;
+      case 'medium':
+        return MenstrualFlow.medium;
+      case 'heavy':
+        return MenstrualFlow.heavy;
+      case 'none':
+        return MenstrualFlow.none;
+      default:
+        return MenstrualFlow.unspecified;
+    }
+  }
+
+  /// Write one menstruation-flow day to Apple Health / Health Connect.
+  ///
+  /// [isStartOfCycle] must be true for Day 1 of bleeding so HealthKit /
+  /// Health Connect anchor the cycle correctly. [date] is treated as a
+  /// calendar day (the sample spans local-midnight → +1 day).
+  Future<bool> writeMenstruationFlow({
+    required DateTime date,
+    required MenstrualFlow flow,
+    required bool isStartOfCycle,
+  }) async {
+    try {
+      await _ensureConfigured();
+      final dayStart = DateTime(date.year, date.month, date.day);
+      final dayEnd = dayStart.add(const Duration(days: 1));
+
+      final success = await _health.writeMenstruationFlow(
+        flow: flow,
+        startTime: dayStart,
+        endTime: dayEnd,
+        isStartOfCycle: isStartOfCycle,
+        // App-logged period data is a manual user entry, not automatic.
+        recordingMethod: RecordingMethod.manual,
+      );
+      debugPrint('🩸 Wrote menstruation flow to Health: '
+          '${flow.name} on $dayStart (start=$isStartOfCycle), success: $success');
+      return success;
+    } catch (e) {
+      debugPrint('❌ Error writing menstruation flow to Health: $e');
+      return false;
+    }
+  }
+
+  /// Export an app-logged period to Apple Health / Health Connect.
+  ///
+  /// Writes one `MENSTRUATION_FLOW` sample per day from [startDate] through
+  /// [endDate] inclusive (or just the start day when [endDate] is null),
+  /// flagging the first day as the start of the cycle. This is the "export"
+  /// half of the two-way period sync — so a period logged in Zealova also
+  /// appears in Apple Health and is not re-imported as a duplicate.
+  ///
+  /// Returns the number of days successfully written.
+  Future<int> exportPeriodToHealth({
+    required DateTime startDate,
+    DateTime? endDate,
+    String periodFlow = 'medium',
+  }) async {
+    final start = DateTime(startDate.year, startDate.month, startDate.day);
+    final end = endDate == null
+        ? start
+        : DateTime(endDate.year, endDate.month, endDate.day);
+    if (end.isBefore(start)) {
+      debugPrint('⚠️ exportPeriodToHealth: endDate before startDate, skipping');
+      return 0;
+    }
+    final flow = mapPeriodFlow(periodFlow);
+    var written = 0;
+    for (var day = start;
+        !day.isAfter(end);
+        day = day.add(const Duration(days: 1))) {
+      final ok = await writeMenstruationFlow(
+        date: day,
+        flow: flow,
+        isStartOfCycle: day == start,
+      );
+      if (ok) written++;
+    }
+    debugPrint('🩸 Exported period $start..$end to Health ($written days)');
+    return written;
+  }
+
+  /// Import the periods recorded in Apple Health / Health Connect, collapsing
+  /// consecutive bleeding days into discrete periods.
+  ///
+  /// Returns a list of [CycleImportedPeriod] (`startDate` + optional
+  /// `endDate`) ready to be POSTed to `/hormonal-health/periods/{user_id}` by
+  /// the repository layer. A gap of more than [gapDays] non-bleeding days
+  /// ends a period; a `none`-flow day is treated as a non-bleeding day.
+  ///
+  /// This is the "import" half of the two-way period sync. The caller should
+  /// de-duplicate against already-known periods before writing.
+  Future<List<CycleImportedPeriod>> importPeriodsFromHealth({
+    int days = 365,
+    int gapDays = 1,
+  }) async {
+    final flowDays = await getMenstruationFlowHistory(days: days);
+    // Keep only actual bleeding days (drop explicit `none`).
+    final bleeding = flowDays
+        .where((d) => d.flow != MenstrualFlow.none)
+        .toList()
+      ..sort((a, b) => a.date.compareTo(b.date));
+    if (bleeding.isEmpty) return const [];
+
+    final periods = <CycleImportedPeriod>[];
+    DateTime runStart = bleeding.first.date;
+    DateTime runEnd = bleeding.first.date;
+
+    for (var i = 1; i < bleeding.length; i++) {
+      final day = bleeding[i].date;
+      final gap = day.difference(runEnd).inDays;
+      if (gap <= gapDays + 1 && gap > 0) {
+        // Same period — extend the run (small gaps tolerate a missed log).
+        runEnd = day;
+      } else if (gap == 0) {
+        // Duplicate same-day sample — ignore.
+        continue;
+      } else {
+        periods.add(CycleImportedPeriod(startDate: runStart, endDate: runEnd));
+        runStart = day;
+        runEnd = day;
+      }
+    }
+    periods.add(CycleImportedPeriod(startDate: runStart, endDate: runEnd));
+    debugPrint('🩸 Imported ${periods.length} periods from Health '
+        '(${bleeding.length} bleeding days)');
+    return periods;
+  }
+}
+
+// ===========================================================================
+// Cycle sync value types (Phase B)
+// ===========================================================================
+
+/// One body/wrist-temperature sample read from Apple Health / Health Connect.
+class CycleTemperatureSample {
+  final DateTime dateTime;
+
+  /// Temperature in Celsius (the cycle predictor's canonical unit).
+  final double celsius;
+  final String? source;
+
+  const CycleTemperatureSample({
+    required this.dateTime,
+    required this.celsius,
+    this.source,
+  });
+}
+
+/// One day's menstruation-flow observation read from the platform health store.
+class CyclePeriodDay {
+  final DateTime date;
+  final MenstrualFlow flow;
+  final bool isCycleStart;
+  final String? source;
+
+  const CyclePeriodDay({
+    required this.date,
+    required this.flow,
+    required this.isCycleStart,
+    this.source,
+  });
+}
+
+/// A period reconstructed from imported menstruation-flow days — ready to be
+/// pushed to the backend `/hormonal-health/periods/{user_id}` endpoint.
+class CycleImportedPeriod {
+  final DateTime startDate;
+  final DateTime? endDate;
+
+  const CycleImportedPeriod({required this.startDate, this.endDate});
 }

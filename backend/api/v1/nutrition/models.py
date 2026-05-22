@@ -489,6 +489,16 @@ class DynamicTargetsResponse(BaseModel):
     is_rest_day: bool = True
     adjustment_reason: Optional[str] = None
     calorie_adjustment: int = 0
+    # ── Cycle-phase-aware adjustment (Phase H) ───────────────────────────
+    # Populated only when the user has opted in to cycle-sync nutrition
+    # (hormonal_profiles.cycle_sync_nutrition) AND a cycle prediction is
+    # available. All fields stay at their no-op defaults otherwise, so the
+    # UI can simply check `cycle_phase is not None` to decide whether to
+    # render the "cycle adjustment" label.
+    cycle_sync_applied: bool = False
+    cycle_phase: Optional[str] = None
+    cycle_calorie_adjustment: int = 0
+    cycle_adjustment_reason: Optional[str] = None
 
 
 # ── Weight Tracking Models ───────────────────────────────────────

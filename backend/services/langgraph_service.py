@@ -26,6 +26,7 @@ from services.langgraph_agents.nutrition_agent import build_nutrition_agent_grap
 from services.langgraph_agents.workout_agent import build_workout_agent_graph
 from services.langgraph_agents.injury_agent import build_injury_agent_graph
 from services.langgraph_agents.hydration_agent import build_hydration_agent_graph
+from services.langgraph_agents.cycle_agent import build_cycle_agent_graph
 from services.langgraph_agents.coach_agent import build_coach_agent_graph
 
 from core.logger import get_logger
@@ -89,6 +90,7 @@ AGENT_MENTION_PATTERNS = {
     r"@workout\b": AgentType.WORKOUT,
     r"@injury\b": AgentType.INJURY,
     r"@hydration\b": AgentType.HYDRATION,
+    r"@cycle\b": AgentType.CYCLE,
     r"@coach\b": AgentType.COACH,
 }
 
@@ -163,6 +165,19 @@ DOMAIN_KEYWORDS = {
     ],
 }
 
+# Menstrual-cycle keywords. Kept separate from DOMAIN_KEYWORDS because cycle
+# routing is GATED — it only applies to users with cycle tracking enabled
+# (see `_cycle_tracking_enabled`). Without the gate, words like "period" and
+# "cycle" would mis-route generic messages for users who don't track a cycle.
+CYCLE_KEYWORDS = [
+    "period", "menstrual", "menstruation", "cramps", "pms", "ovulation",
+    "ovulating", "fertile", "fertile window", "luteal", "follicular",
+    "my cycle", "cycle day", "cycle sync", "bleeding", "spotting",
+    "tampon", "menstrual cycle", "ttc", "trying to conceive", "bbt",
+    "basal body temperature", "cervical mucus", "missed period",
+    "late period", "period started", "period due",
+]
+
 
 # ──────────────────────────────────────────────
 # Rate-limit / cost-protection constants
@@ -194,6 +209,7 @@ class LangGraphCoachService:
             AgentType.WORKOUT: build_workout_agent_graph(),
             AgentType.INJURY: build_injury_agent_graph(),
             AgentType.HYDRATION: build_hydration_agent_graph(),
+            AgentType.CYCLE: build_cycle_agent_graph(),
             AgentType.COACH: build_coach_agent_graph(),
         }
 
@@ -396,6 +412,93 @@ class LangGraphCoachService:
         """Infer which agent should handle based on intent."""
         return INTENT_TO_AGENT.get(intent, AgentType.COACH)
 
+    def _message_has_cycle_keywords(self, message: str) -> bool:
+        """True if the message contains a menstrual-cycle keyword.
+
+        Word-boundary matched so "period" doesn't match inside other words.
+        """
+        message_lower = message.lower()
+        for kw in CYCLE_KEYWORDS:
+            if re.search(r'\b' + re.escape(kw) + r'\b', message_lower):
+                return True
+        return False
+
+    async def _cycle_tracking_enabled(self, user_id: str) -> bool:
+        """Check whether the user has menstrual-cycle tracking turned on.
+
+        Cycle routing is GATED on this flag — without it, generic words like
+        "period" or "cycle" would mis-route messages for users who don't
+        track a cycle. Any DB failure resolves to False (cycle agent skipped),
+        so a transient error never hijacks routing.
+        """
+        try:
+            supabase = get_supabase().client
+            res = (
+                supabase.table("hormonal_profiles")
+                .select("menstrual_tracking_enabled")
+                .eq("user_id", str(user_id))
+                .maybe_single()
+                .execute()
+            )
+            if res and res.data:
+                return bool(res.data.get("menstrual_tracking_enabled"))
+            return False
+        except Exception as e:
+            logger.warning(f"[CycleGate] enabled-check failed for {user_id}: {e}")
+            return False
+
+    def _build_cycle_context_safe(
+        self, user_id: str, user_tz: Optional[str]
+    ) -> Optional[Dict[str, Any]]:
+        """Assemble the cycle context block, never raising.
+
+        Used to feed the cycle agent the full context and the nutrition /
+        workout agents a phase-only summary. Returns None on any failure or
+        when the user has no cycle data, so callers cleanly skip it.
+        """
+        try:
+            from datetime import date as _date
+            from core.timezone_utils import get_user_today
+            from services.cycle.cycle_context import build_cycle_context
+
+            tz = user_tz or "UTC"
+            try:
+                today = _date.fromisoformat(get_user_today(tz))
+            except Exception:
+                today = _date.today()
+
+            client = get_supabase().client
+            ctx = build_cycle_context(client, str(user_id), today)
+            return ctx if ctx and ctx.get("available") else None
+        except Exception as e:
+            logger.warning(f"[CycleContext] build failed for {user_id}: {e}")
+            return None
+
+    def _attach_cycle_context_summary(
+        self, base_state: Dict[str, Any], user_id: str, user_tz: Optional[str]
+    ) -> None:
+        """Attach a phase-only cycle summary to a nutrition / workout state.
+
+        These cross-domain agents receive ONLY the current phase string and a
+        compact human-readable summary — never the raw `hormone_logs` rows.
+        Mutates `base_state` in place; a no-op when the user has no cycle data.
+        """
+        ctx = self._build_cycle_context_safe(user_id, user_tz)
+        if not ctx:
+            base_state["cycle_phase"] = None
+            base_state["cycle_context"] = None
+            return
+        from services.cycle.cycle_context import format_cycle_context_for_prompt
+        base_state["cycle_phase"] = ctx.get("phase")
+        # Compact, prompt-ready block — phase + summary only.
+        base_state["cycle_context"] = {
+            "available": True,
+            "phase": ctx.get("phase"),
+            "cycle_day": ctx.get("cycle_day"),
+            "summary": ctx.get("summary"),
+            "prompt_block": format_cycle_context_for_prompt(ctx),
+        }
+
     def _infer_agent_from_keywords(self, message: str) -> Optional[AgentType]:
         """
         Fallback: Infer agent from keywords in message.
@@ -514,6 +617,7 @@ class LangGraphCoachService:
         has_multi_videos: bool = False,
         media_content_type: Optional[str] = None,
         agent_override: Optional[str] = None,
+        cycle_tracking_enabled: bool = False,
     ) -> AgentType:
         """
         Select the appropriate agent based on all available signals.
@@ -524,8 +628,13 @@ class LangGraphCoachService:
         2. Content-aware routing (media_content_type from classifier)
         3. Type-based fallbacks (video->Workout, image->Nutrition) when classifier unavailable
         4. Intent-based routing
-        5. Keyword-based routing
+        5a. Cycle keyword routing (GATED on `cycle_tracking_enabled`)
+        5b. Keyword-based routing
         6. Default to Coach
+
+        `cycle_tracking_enabled` gates cycle routing: when False, cycle
+        keywords are ignored so generic "period"/"cycle" words never hijack
+        routing for users who don't track a menstrual cycle.
         """
         # 0. Trusted caller override beats every other signal. The Pydantic
         # validator on ChatRequest.agent_override already guarantees the value
@@ -542,10 +651,18 @@ class LangGraphCoachService:
                     "falling through to classifier"
                 )
 
-        # 1. Explicit @mention takes priority
+        # 1. Explicit @mention takes priority — except @cycle, which still
+        # respects the cycle-tracking gate (a user who doesn't track a cycle
+        # should never be handed the cycle agent, even by an @mention).
         if mentioned_agent:
-            logger.info(f"Agent selection: @mention -> {mentioned_agent.value}")
-            return mentioned_agent
+            if mentioned_agent == AgentType.CYCLE and not cycle_tracking_enabled:
+                logger.info(
+                    "Agent selection: @cycle mention but cycle tracking "
+                    "disabled -> falling through"
+                )
+            else:
+                logger.info(f"Agent selection: @mention -> {mentioned_agent.value}")
+                return mentioned_agent
 
         # 2. Content-aware routing via media classifier
         if media_content_type and media_content_type != "unknown":
@@ -586,7 +703,14 @@ class LangGraphCoachService:
             logger.info(f"Agent selection: intent {intent.value} -> {agent_from_intent.value}")
             return agent_from_intent
 
-        # 5. Keyword-based routing
+        # 5a. Cycle keyword routing — GATED on cycle tracking being enabled.
+        # Checked before generic keyword routing so a cycle question doesn't
+        # get pulled into the nutrition/workout agent by an overlapping word.
+        if cycle_tracking_enabled and self._message_has_cycle_keywords(message):
+            logger.info("Agent selection: cycle keywords -> cycle")
+            return AgentType.CYCLE
+
+        # 5b. Keyword-based routing
         agent_from_keywords = self._infer_agent_from_keywords(message)
         if agent_from_keywords:
             logger.info(f"Agent selection: keywords -> {agent_from_keywords.value}")
@@ -788,6 +912,11 @@ class LangGraphCoachService:
             base_state["tool_messages"] = []
             base_state["messages"] = []
 
+            # Cycle-aware nutrition: pass ONLY the phase string + a compact
+            # text summary so "what should I eat today" comes back cycle-aware.
+            # Never the raw hormone_logs rows — only the digested summary.
+            self._attach_cycle_context_summary(base_state, request.user_id, user_tz)
+
         elif agent_type == AgentType.WORKOUT:
             base_state["current_workout"] = request.current_workout.model_dump() if request.current_workout else None
             base_state["workout_schedule"] = request.workout_schedule.model_dump() if request.workout_schedule else None
@@ -803,6 +932,10 @@ class LangGraphCoachService:
             base_state["tool_messages"] = []
             base_state["messages"] = []
 
+            # Cycle-aware workouts: pass ONLY the phase string + compact
+            # summary so workout advice respects energy/recovery patterns.
+            self._attach_cycle_context_summary(base_state, request.user_id, user_tz)
+
         elif agent_type == AgentType.INJURY:
             base_state["body_part"] = extraction_data.get("body_part")
             base_state["tool_calls"] = []
@@ -812,6 +945,18 @@ class LangGraphCoachService:
 
         elif agent_type == AgentType.HYDRATION:
             base_state["hydration_amount"] = extraction_data.get("hydration_amount")
+
+        elif agent_type == AgentType.CYCLE:
+            # The cycle agent gets the FULL cycle context block (prediction +
+            # recent-log digest + red flags). This stays inside the backend.
+            cycle_ctx = self._build_cycle_context_safe(request.user_id, user_tz)
+            base_state["cycle_context"] = cycle_ctx
+            base_state["cycle_phase"] = cycle_ctx.get("phase") if cycle_ctx else None
+            base_state["user_tz"] = user_tz or "UTC"
+            base_state["tool_calls"] = []
+            base_state["tool_results"] = []
+            base_state["tool_messages"] = []
+            base_state["messages"] = []
 
         elif agent_type == AgentType.COACH:
             base_state["current_workout"] = request.current_workout.model_dump() if request.current_workout else None
@@ -969,6 +1114,17 @@ class LangGraphCoachService:
                 media_content_type = None
             logger.info(f"Extracted intent: {intent.value}")
 
+            # Cycle-tracking gate: only hit the DB when the message actually
+            # mentions a cycle topic (or @cycle) — otherwise skip the read.
+            cycle_tracking_enabled = False
+            if (
+                mentioned_agent == AgentType.CYCLE
+                or self._message_has_cycle_keywords(cleaned_message)
+            ):
+                cycle_tracking_enabled = await self._cycle_tracking_enabled(
+                    request.user_id
+                )
+
             selected_agent = self._select_agent(
                 mentioned_agent, intent, cleaned_message, has_image,
                 has_video=has_video,
@@ -976,6 +1132,7 @@ class LangGraphCoachService:
                 has_multi_videos=has_multi_videos,
                 media_content_type=media_content_type,
                 agent_override=request.agent_override,
+                cycle_tracking_enabled=cycle_tracking_enabled,
             )
             logger.info(f"Selected agent: {selected_agent.value}")
 
@@ -1210,6 +1367,16 @@ class LangGraphCoachService:
             media_content_type = None
         logger.info(f"Extracted intent (stream): {intent.value}")
 
+        # Cycle-tracking gate (only hits the DB when a cycle topic is present).
+        cycle_tracking_enabled = False
+        if (
+            mentioned_agent == AgentType.CYCLE
+            or self._message_has_cycle_keywords(cleaned_message)
+        ):
+            cycle_tracking_enabled = await self._cycle_tracking_enabled(
+                request.user_id
+            )
+
         selected_agent = self._select_agent(
             mentioned_agent, intent, cleaned_message, has_image,
             has_video=has_video,
@@ -1217,6 +1384,7 @@ class LangGraphCoachService:
             has_multi_videos=has_multi_videos,
             media_content_type=media_content_type,
             agent_override=request.agent_override,
+            cycle_tracking_enabled=cycle_tracking_enabled,
         )
         logger.info(f"Selected agent (stream): {selected_agent.value}")
 

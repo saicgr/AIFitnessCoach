@@ -736,6 +736,54 @@ class XPNotifier extends StateNotifier<XPState> {
     }
   }
 
+  /// Mark a cycle entry logged (a period, BBT reading, or symptom check-in)
+  /// and award XP. (Phase E — cycle tracking gamification.)
+  ///
+  /// Awards 50 XP via the backend `cycle_logged` goal, idempotent per day —
+  /// the backend returns 0 XP on the second call so logging several cycle
+  /// entries in one day only earns the reward once. Also refreshes trophies
+  /// so the cycle-logging streak trophy progresses.
+  ///
+  /// Unlike the daily-goal helpers above this does NOT set a `DailyGoals`
+  /// flag: cycle logging is not part of the daily-goal crate, and the
+  /// backend's per-day idempotency is the single source of "already earned".
+  ///
+  /// [sourceId] — optional id of the saved entry (period/log id) for backend
+  /// dedup. [entryKind] — `period` | `bbt` | `symptom`, for analytics only;
+  /// it is a content-free label, never the symptom values themselves.
+  Future<void> markCycleLogged({String? sourceId, String? entryKind}) async {
+    debugPrint('[XPProvider] Cycle entry logged (kind: ${entryKind ?? 'n/a'})');
+
+    final xpAwarded =
+        await _repository.awardGoalXP('cycle_logged', sourceId: sourceId);
+    if (xpAwarded > 0) {
+      // Trigger the XP-earned overlay/celebration (same path as every other
+      // goal — the home screen listens on lastXPEarnedEvent).
+      state = state.copyWith(
+        lastXPEarnedEvent: XPEarnedAnimationEvent(
+          xpAmount: xpAwarded,
+          goalType: XPGoalType.cycleLogged,
+        ),
+      );
+      // PRIVACY: emit ONLY a content-free event — the XP amount and a
+      // generic entry-kind label. Never any cycle/symptom data (see the
+      // cycle plan's Privacy & Safety section).
+      _posthog.capture(
+        eventName: 'xp_earned',
+        properties: <String, Object>{
+          'xp_amount': xpAwarded,
+          'goal_type': 'cycle_logged',
+          if (entryKind != null) 'entry_kind': entryKind,
+        },
+      );
+    }
+
+    // Refresh trophies so the cycle-logging streak trophy advances, and
+    // refresh XP so the progress bar stays in sync.
+    await loadTrophies(userId: _currentUserId);
+    await loadUserXP(userId: _currentUserId, showLoading: false);
+  }
+
   /// Reset daily goals (for testing or day change)
   void resetDailyGoals() {
     state = state.copyWith(

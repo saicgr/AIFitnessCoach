@@ -183,19 +183,46 @@ class MenstrualCycleRepository {
   final ApiClient _client;
   MenstrualCycleRepository(this._client);
 
-  /// Simple Supabase table passthrough endpoints — wrapped via a dedicated
-  /// thin cycle router if/when we want it; for now we use the generic
-  /// /users/me settings POST + a new cycle-logs endpoint if added.
-  ///
-  /// NOTE: No backend router was added for cycle logs (out of scope of this
-  /// ship) — the toggle is written via `/users/me` settings update, and
-  /// cycle logs use the supabase-direct table inserts via a future `/cycle`
-  /// router. Current UI only exposes the opt-in toggle + single cycle log
-  /// form; writes round-trip through the standard users settings endpoint.
+  /// The cycle-aware photo-reminder opt-in toggle. Still round-trips through
+  /// the standard `/users/me` settings update — this is a user preference,
+  /// not period data.
   Future<void> setCycleAwareReminders(bool enabled) async {
     await _client.patch(
       '/users/me',
       data: {'cycle_aware_reminders': enabled},
+    );
+  }
+
+  /// Log a period start (Day 1 of bleeding) for the cycle-settings screen.
+  ///
+  /// As of Phase B (cycle tracking) this writes to the canonical
+  /// `cycle_periods` history table via `POST /hormonal-health/periods/{user_id}`
+  /// — NOT a direct `menstrual_cycle_logs` insert. That table is the single
+  /// source the prediction engine AND the backend photo-reminder
+  /// `cycle_filter` both read, so the cycle-settings screen and the reminder
+  /// filter now agree on one history. `menstrual_cycle_logs` is no longer
+  /// written.
+  ///
+  /// The backend upserts on `start_date`, so re-logging the same day edits
+  /// rather than duplicates, and it keeps `hormonal_profiles.last_period_
+  /// start_date` in sync for legacy consumers.
+  Future<void> logPeriod(
+    String userId, {
+    required DateTime startDate,
+    DateTime? endDate,
+  }) async {
+    String iso(DateTime d) {
+      final mm = d.month.toString().padLeft(2, '0');
+      final dd = d.day.toString().padLeft(2, '0');
+      return '${d.year}-$mm-$dd';
+    }
+
+    await _client.post(
+      '/hormonal-health/periods/$userId',
+      data: {
+        'start_date': iso(startDate),
+        if (endDate != null) 'end_date': iso(endDate),
+      },
     );
   }
 }

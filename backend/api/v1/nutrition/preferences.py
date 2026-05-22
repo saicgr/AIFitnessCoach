@@ -278,17 +278,89 @@ async def get_dynamic_nutrition_targets(
         if has_workout and adjust_for_training:
             target_carbs = int(base_carbs * 1.15)  # 15% more carbs for glycogen
 
+        target_fat = base_fat
+
+        # ── Cycle-phase-aware adjustment (Phase H) ─────────────────────────
+        # Layered LAST, on top of the training/fasting/rest adjustments, so
+        # the luteal calorie bump and the phase macro shift stack with the
+        # day-type logic above. Entirely a no-op unless the user opted in to
+        # `hormonal_profiles.cycle_sync_nutrition` and has a real prediction.
+        cycle_sync_applied = False
+        cycle_phase = None
+        cycle_calorie_adjustment = 0
+        cycle_adjustment_reason = None
+        try:
+            from services.cycle.cycle_nutrition import (
+                get_cycle_phase_if_synced,
+                adjust_calories_for_phase,
+                adjust_macro_split_for_phase,
+            )
+
+            cycle_phase = get_cycle_phase_if_synced(db.client, user_id, target_date)
+            if cycle_phase is not None:
+                cycle_sync_applied = True
+
+                # Calorie bump (luteal only). Layered on the already
+                # day-type-adjusted target.
+                target_calories, cycle_calorie_adjustment, cycle_cal_reason = (
+                    adjust_calories_for_phase(target_calories, cycle_phase)
+                )
+
+                # Phase-shifted macro split. Derive the *current* split
+                # from the (post-training-adjustment) macro grams so the
+                # phase delta layers over the user's real split, then
+                # re-apply the shifted split to the final calorie total.
+                cur_carb_kcal = target_carbs * 4
+                cur_protein_kcal = target_protein * 4
+                cur_fat_kcal = target_fat * 9
+                cur_total = cur_carb_kcal + cur_protein_kcal + cur_fat_kcal
+                if cur_total > 0:
+                    base_carb_pct = round(cur_carb_kcal * 100 / cur_total)
+                    base_protein_pct = round(cur_protein_kcal * 100 / cur_total)
+                    base_fat_pct = 100 - base_carb_pct - base_protein_pct
+                    (shift_carb_pct, shift_protein_pct, shift_fat_pct), macro_reason = (
+                        adjust_macro_split_for_phase(
+                            base_carb_pct, base_protein_pct, base_fat_pct, cycle_phase
+                        )
+                    )
+                    if macro_reason is not None:
+                        target_protein = int((target_calories * shift_protein_pct / 100) / 4)
+                        target_carbs = int((target_calories * shift_carb_pct / 100) / 4)
+                        target_fat = int((target_calories * shift_fat_pct / 100) / 9)
+                else:
+                    macro_reason = None
+
+                # Surface a single combined attribution string the UI can
+                # show as the "cycle adjustment" label.
+                cycle_adjustment_reason = cycle_cal_reason or macro_reason
+                if cycle_cal_reason and macro_reason and cycle_cal_reason != macro_reason:
+                    cycle_adjustment_reason = f"{cycle_cal_reason}; {macro_reason}"
+        except Exception as cycle_err:
+            # A cycle-tracking fault must never break the daily targets.
+            logger.warning(
+                f"Cycle-aware nutrition adjustment skipped for user {user_id}: {cycle_err}",
+                exc_info=True,
+            )
+            cycle_sync_applied = False
+            cycle_phase = None
+            cycle_calorie_adjustment = 0
+            cycle_adjustment_reason = None
+
         return DynamicTargetsResponse(
             target_calories=target_calories,
             target_protein_g=target_protein,
             target_carbs_g=target_carbs,
-            target_fat_g=base_fat,
+            target_fat_g=target_fat,
             target_fiber_g=base_fiber,
             is_training_day=has_workout,
             is_fasting_day=is_fasting_day,
             is_rest_day=not has_workout and not is_fasting_day,
             adjustment_reason=adjustment_reason,
             calorie_adjustment=calorie_adjustment,
+            cycle_sync_applied=cycle_sync_applied,
+            cycle_phase=cycle_phase,
+            cycle_calorie_adjustment=cycle_calorie_adjustment,
+            cycle_adjustment_reason=cycle_adjustment_reason,
         )
 
     except Exception as e:

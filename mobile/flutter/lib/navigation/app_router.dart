@@ -17,6 +17,7 @@ import '../screens/challenges/challenge_compare_screen.dart';
 import '../screens/auth/sign_in_screen.dart';
 import '../screens/auth/email_sign_in_screen.dart';
 import '../screens/chat/chat_screen.dart';
+import '../screens/cycle/cycle_screen.dart';
 import '../screens/features/feature_voting_screen.dart';
 import '../screens/coming_soon/coming_soon_screen.dart';
 import '../screens/home/home_screen.dart';

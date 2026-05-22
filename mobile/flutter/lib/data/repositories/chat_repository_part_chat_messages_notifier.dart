@@ -76,6 +76,9 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
   // week-strip checkmark flip immediately, instead of staying on the
   // pre-completion snapshot until the next manual refresh.
   final void Function() _refreshTodayWorkout;
+  // Phase F — invalidates the cycle providers after a cycle-agent action so
+  // a live Cycle screen / home card repaints with the new data.
+  final void Function() _refreshCycleData;
   bool _isLoading = false;
   Future<void>? _loadHistoryFuture;
 
@@ -316,7 +319,7 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
     'train like a fighter', 'want to fight',
   ];
 
-  ChatMessagesNotifier(this._repository, this._apiClient, this._workoutsNotifier, this._workoutRepository, this._user, this._themeNotifier, this._router, this._hydrationNotifier, this._nutritionNotifier, this._getAISettings, this._setAIGenerating, this._getUnifiedContext, this._offlineCoach, this._isOnline, this._getSoundPrefs, this._getAudioPrefs, this._refreshTodayWorkout)
+  ChatMessagesNotifier(this._repository, this._apiClient, this._workoutsNotifier, this._workoutRepository, this._user, this._themeNotifier, this._router, this._hydrationNotifier, this._nutritionNotifier, this._getAISettings, this._setAIGenerating, this._getUnifiedContext, this._offlineCoach, this._isOnline, this._getSoundPrefs, this._getAudioPrefs, this._refreshTodayWorkout, this._refreshCycleData)
       : super(const AsyncValue.data([])) {
     _instances.add(this);
     _restoreFromCache();
@@ -1266,8 +1269,65 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
           debugPrint('🛒 [Chat] Pending open_grocery_list for list $listId');
         }
         break;
+      // === CYCLE AGENT ACTIONS (Phase F) ===
+      // The cycle agent's action tools already wrote to the backend
+      // (`log_cycle_symptom` / `log_period_event` create the rows,
+      // `set_cycle_sync_preference` updates the profile). The frontend
+      // handler refreshes whichever cycle providers are mounted and, for
+      // the suggestion actions, deep-links into the relevant surface.
+      case 'log_cycle_symptom':
+      case 'log_period_event':
+      case 'set_cycle_sync_preference':
+      case 'suggest_phase_workout':
+      case 'suggest_phase_meals':
+        await _handleCycleAction(actionData);
+        break;
       default:
         debugPrint('🤖 [Chat] Unknown action: $action');
+    }
+  }
+
+  /// Handle cycle-agent `action_data` (Phase F).
+  ///
+  /// All five cycle actions arrive AFTER the agent's tool already mutated
+  /// the backend (symptom/period rows written, profile flag set). This
+  /// handler keeps the app in sync: it invalidates the cycle providers so
+  /// the Cycle screen / home card repaint with the new data, and for the
+  /// two `suggest_*` actions it routes the user to the right surface.
+  Future<void> _handleCycleAction(Map<String, dynamic> actionData) async {
+    final action = actionData['action'] as String?;
+    debugPrint('🩺 [Chat] Cycle action: $action');
+
+    // Invalidate the cycle providers so a live Cycle screen / home card
+    // repaints with the data the agent's tool just wrote. The callback
+    // captures `ref` in the provider factory — the notifier itself holds
+    // no Ref, mirroring `_refreshTodayWorkout`.
+    _refreshCycleData();
+
+    switch (action) {
+      case 'log_cycle_symptom':
+        debugPrint('🩺 [Chat] Cycle symptom logged — providers refreshed');
+        break;
+      case 'log_period_event':
+        debugPrint('🩺 [Chat] Period event logged — providers refreshed');
+        break;
+      case 'set_cycle_sync_preference':
+        // Profile flag (cycle_sync_workouts / cycle_sync_nutrition) was
+        // updated server-side; the profile invalidation above propagates it.
+        debugPrint('🩺 [Chat] Cycle sync preference updated');
+        break;
+      case 'suggest_phase_workout':
+        // The agent recommended a phase-appropriate session — open the
+        // Cycle screen so the user sees the phase guidance in context.
+        _router.push('/cycle');
+        break;
+      case 'suggest_phase_meals':
+        // Phase-aware nutrition guidance — route to the Cycle Insights tab
+        // where the phase nutrition context is surfaced.
+        _router.push('/cycle?tab=insights');
+        break;
+      default:
+        debugPrint('🩺 [Chat] Unhandled cycle action: $action');
     }
   }
 

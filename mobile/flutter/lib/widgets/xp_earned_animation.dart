@@ -15,6 +15,7 @@ enum XPGoalType {
   stepsGoal,
   hydrationGoal,
   calorieGoal,
+  cycleLogged,
 }
 
 extension XPGoalTypeExtension on XPGoalType {
@@ -39,6 +40,8 @@ extension XPGoalTypeExtension on XPGoalType {
         return Icons.water_drop_rounded;
       case XPGoalType.calorieGoal:
         return Icons.local_fire_department_rounded;
+      case XPGoalType.cycleLogged:
+        return Icons.favorite_rounded;
     }
   }
 
@@ -63,6 +66,8 @@ extension XPGoalTypeExtension on XPGoalType {
         return const Color(0xFF0EA5E9); // Sky blue
       case XPGoalType.calorieGoal:
         return AppColors.orange;
+      case XPGoalType.cycleLogged:
+        return const Color(0xFFEC4899); // Pink — the cycle feature accent
     }
   }
 
@@ -87,6 +92,8 @@ extension XPGoalTypeExtension on XPGoalType {
         return 'Hydration goal';
       case XPGoalType.calorieGoal:
         return 'Calorie goal';
+      case XPGoalType.cycleLogged:
+        return 'Cycle logged';
     }
   }
 }

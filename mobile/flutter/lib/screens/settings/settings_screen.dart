@@ -691,6 +691,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             ),
           ),
           _SettingsRow(
+            icon: Icons.bloodtype_outlined,
+            iconColor: const Color(0xFFE5567B),
+            title: 'Cycle Tracking',
+            value: 'Period, fertility & predictions',
+            route: '/settings/cycle',
+            sectionKeys: const [
+              'cycle', 'period', 'menstrual', 'fertility', 'ovulation',
+            ],
+          ),
+          _SettingsRow(
             icon: Icons.rocket_launch_rounded,
             iconColor: isDark ? AppColors.purple : AppColorsLight.purple,
             title: 'Coming Soon',

@@ -85,6 +85,32 @@ class NotificationPreferences {
   final bool notificationEmoji;
   final bool notificationVibration;
 
+  // ── Cycle tracking reminders (Phase E) ──────────────────────────
+  // `cycleRemindersMaster` gates the whole group; each sub-type has its own
+  // toggle. All cycle reminders respect the global quiet hours. The
+  // fertile-window + peak-fertility reminders are only meaningful (and only
+  // scheduled) in TTC mode — see `cycleTrackingMode`.
+  final bool cycleRemindersMaster;
+  final bool cyclePeriodApproaching;
+  final bool cyclePeriodStart;
+  final bool cycleFertileWindow;
+  final bool cyclePeakFertility;
+  final bool cycleBbtReminder;
+  final String cycleBbtReminderTime;
+  final bool cycleSymptomCheckin;
+  final String cycleSymptomCheckinTime;
+  final bool cycleLatePeriodAlert;
+  /// Default time-of-day for the date-anchored cycle reminders (period
+  /// approaching / start / fertile / peak / late). The user picks one time
+  /// that applies to all of them — keeps the settings UI compact.
+  final String cycleReminderTimeOfDay;
+  /// Days before the predicted period the "approaching" reminder fires (1-5).
+  final int cyclePeriodApproachingLeadDays;
+  /// The current cycle tracking mode (`tracking` | `ttc` | `pregnancy`).
+  /// Stored here so scheduling can decide whether to schedule the TTC-only
+  /// fertility reminders without reaching into the hormonal profile.
+  final String cycleTrackingMode;
+
   const NotificationPreferences({
     this.workoutReminders = true,
     this.nutritionReminders = true,
@@ -163,6 +189,21 @@ class NotificationPreferences {
     // Style preferences
     this.notificationEmoji = true,
     this.notificationVibration = true,
+    // Cycle tracking reminders (Phase E) — default ON when the cycle feature
+    // is enabled; the group is also gated by `cycleRemindersMaster`.
+    this.cycleRemindersMaster = true,
+    this.cyclePeriodApproaching = true,
+    this.cyclePeriodStart = true,
+    this.cycleFertileWindow = true,
+    this.cyclePeakFertility = true,
+    this.cycleBbtReminder = false,
+    this.cycleBbtReminderTime = '07:00',
+    this.cycleSymptomCheckin = false,
+    this.cycleSymptomCheckinTime = '20:00',
+    this.cycleLatePeriodAlert = true,
+    this.cycleReminderTimeOfDay = '09:00',
+    this.cyclePeriodApproachingLeadDays = 2,
+    this.cycleTrackingMode = 'tracking',
   });
 
   NotificationPreferences copyWith({
@@ -240,6 +281,20 @@ class NotificationPreferences {
     // Style preferences
     bool? notificationEmoji,
     bool? notificationVibration,
+    // Cycle tracking reminders (Phase E)
+    bool? cycleRemindersMaster,
+    bool? cyclePeriodApproaching,
+    bool? cyclePeriodStart,
+    bool? cycleFertileWindow,
+    bool? cyclePeakFertility,
+    bool? cycleBbtReminder,
+    String? cycleBbtReminderTime,
+    bool? cycleSymptomCheckin,
+    String? cycleSymptomCheckinTime,
+    bool? cycleLatePeriodAlert,
+    String? cycleReminderTimeOfDay,
+    int? cyclePeriodApproachingLeadDays,
+    String? cycleTrackingMode,
   }) {
     return NotificationPreferences(
       workoutReminders: workoutReminders ?? this.workoutReminders,
@@ -316,6 +371,24 @@ class NotificationPreferences {
       // Style preferences
       notificationEmoji: notificationEmoji ?? this.notificationEmoji,
       notificationVibration: notificationVibration ?? this.notificationVibration,
+      // Cycle tracking reminders (Phase E)
+      cycleRemindersMaster: cycleRemindersMaster ?? this.cycleRemindersMaster,
+      cyclePeriodApproaching:
+          cyclePeriodApproaching ?? this.cyclePeriodApproaching,
+      cyclePeriodStart: cyclePeriodStart ?? this.cyclePeriodStart,
+      cycleFertileWindow: cycleFertileWindow ?? this.cycleFertileWindow,
+      cyclePeakFertility: cyclePeakFertility ?? this.cyclePeakFertility,
+      cycleBbtReminder: cycleBbtReminder ?? this.cycleBbtReminder,
+      cycleBbtReminderTime: cycleBbtReminderTime ?? this.cycleBbtReminderTime,
+      cycleSymptomCheckin: cycleSymptomCheckin ?? this.cycleSymptomCheckin,
+      cycleSymptomCheckinTime:
+          cycleSymptomCheckinTime ?? this.cycleSymptomCheckinTime,
+      cycleLatePeriodAlert: cycleLatePeriodAlert ?? this.cycleLatePeriodAlert,
+      cycleReminderTimeOfDay:
+          cycleReminderTimeOfDay ?? this.cycleReminderTimeOfDay,
+      cyclePeriodApproachingLeadDays:
+          cyclePeriodApproachingLeadDays ?? this.cyclePeriodApproachingLeadDays,
+      cycleTrackingMode: cycleTrackingMode ?? this.cycleTrackingMode,
     );
   }
 
@@ -395,6 +468,22 @@ class NotificationPreferences {
         // Style preferences
         'notification_emoji': notificationEmoji,
         'notification_vibration': notificationVibration,
+        // Cycle tracking reminders (Phase E). Synced so the backend can also
+        // suppress its server-side cycle nudges per the user's choice — only
+        // CONTENT-FREE booleans / times leave the device, never cycle data.
+        'cycle_reminders_master': cycleRemindersMaster,
+        'cycle_period_approaching': cyclePeriodApproaching,
+        'cycle_period_start': cyclePeriodStart,
+        'cycle_fertile_window': cycleFertileWindow,
+        'cycle_peak_fertility': cyclePeakFertility,
+        'cycle_bbt_reminder': cycleBbtReminder,
+        'cycle_bbt_reminder_time': cycleBbtReminderTime,
+        'cycle_symptom_checkin': cycleSymptomCheckin,
+        'cycle_symptom_checkin_time': cycleSymptomCheckinTime,
+        'cycle_late_period_alert': cycleLatePeriodAlert,
+        'cycle_reminder_time_of_day': cycleReminderTimeOfDay,
+        'cycle_period_approaching_lead_days': cyclePeriodApproachingLeadDays,
+        'cycle_tracking_mode': cycleTrackingMode,
       };
 }
 

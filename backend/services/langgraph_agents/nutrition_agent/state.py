@@ -58,5 +58,10 @@ class NutritionAgentState(TypedDict):
     recent_favorites: Optional[List[Dict[str, Any]]]
     context_partial: bool
 
+    # Cycle context (Phase F) — phase string + compact summary only, so
+    # "what should I eat today" is cycle-aware. Never raw hormone_logs rows.
+    cycle_phase: Optional[str]
+    cycle_context: Optional[Dict[str, Any]]
+
     # Error handling
     error: Optional[str]

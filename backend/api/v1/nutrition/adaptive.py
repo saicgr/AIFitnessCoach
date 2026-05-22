@@ -1,6 +1,6 @@
 """Adaptive TDEE calculation endpoints."""
 from core.db import get_supabase_db
-from datetime import datetime, timedelta
+from datetime import datetime, date, timedelta
 from typing import Optional
 import uuid
 
@@ -15,6 +15,77 @@ from api.v1.nutrition.models import AdaptiveCalculationResponse
 
 router = APIRouter()
 logger = get_logger(__name__)
+
+# Hold the calorie target steady from 7 days before the predicted period
+# through the end of the period — the pre-period / period week (Phase G, 1.3).
+_PERIOD_HOLD_LEAD_DAYS = 7
+
+
+def _cycle_target_hold_note(db, user_id: str, today_str: str) -> Optional[str]:
+    """Return a recommendation note when the calorie target should be HELD
+    steady because the user is in their pre-period / period week.
+
+    Returns None — i.e. no hold, normal adaptive behaviour — for any user
+    without menstrual tracking enabled, without a usable cycle prediction,
+    or whose "today" falls outside the hold window. This keeps the whole
+    cycle-aware path a strict no-op for non-tracking users.
+
+    The note is surfaced on `AdaptiveCalculationResponse.recommendation` so
+    whatever turns the adaptive TDEE into a recommended calorie target sees
+    the hold signal (machine-readable prefix `CYCLE_HOLD:`).
+    """
+    # Gate on menstrual tracking — defensive: the table/column may be absent.
+    try:
+        profile_res = (
+            db.client.table("hormonal_profiles")
+            .select("menstrual_tracking_enabled")
+            .eq("user_id", user_id)
+            .execute()
+        )
+    except Exception as profile_err:  # noqa: BLE001
+        logger.warning(f"hormonal_profiles lookup failed (cycle hold off): {profile_err}")
+        return None
+    if not profile_res.data or not profile_res.data[0].get("menstrual_tracking_enabled"):
+        return None
+
+    try:
+        today = datetime.strptime(today_str, "%Y-%m-%d").date()
+    except ValueError:
+        return None
+
+    # Run the single prediction path used everywhere else in the feature.
+    try:
+        from services.cycle.cycle_predictor import predict_for_user
+
+        prediction = predict_for_user(db.client, user_id, today)
+    except Exception as pred_err:  # noqa: BLE001
+        logger.warning(f"Cycle prediction failed (cycle hold off): {pred_err}")
+        return None
+
+    if not prediction or not prediction.get("predictions_available"):
+        return None
+
+    next_period = prediction.get("next_period_date")
+    if isinstance(next_period, str):
+        try:
+            next_period = date.fromisoformat(next_period)
+        except ValueError:
+            next_period = None
+    if not isinstance(next_period, date):
+        return None
+
+    window_start = next_period - timedelta(days=_PERIOD_HOLD_LEAD_DAYS)
+    avg_period = prediction.get("stats", {}).get("avg_period_length") or 5
+    window_end = next_period + timedelta(days=int(round(avg_period)) - 1)
+
+    if window_start <= today <= window_end:
+        return (
+            "CYCLE_HOLD: Calorie target held steady through the pre-period and "
+            "period week. Luteal water retention can read as fat gain, so no "
+            "calorie cut is applied until the period ends."
+        )
+    return None
+
 
 @router.get("/adaptive/{user_id}", response_model=Optional[AdaptiveCalculationResponse])
 async def get_adaptive_calculation(user_id: str, current_user: dict = Depends(get_current_user)):
@@ -194,6 +265,20 @@ async def calculate_adaptive_tdee(
 
         confidence = "low" if quality_score < 0.4 else "medium" if quality_score < 0.7 else "high"
 
+        # --- Cycle-aware target hold (Phase G, MacroFactor request 1.3) -----
+        # If menstrual tracking is on and "today" sits in the pre-period /
+        # period week [predicted period - 7d .. period end], any adaptive
+        # adjustment that would MOVE the recommended calorie target is held:
+        # luteal water weight can read as fat gain and trigger a wrong cut.
+        # The hold is surfaced on the `recommendation` field so the consumer
+        # that turns this TDEE into a target knows not to apply a cut.
+        # No-op for users without menstrual tracking.
+        cycle_hold_recommendation: Optional[str] = None
+        try:
+            cycle_hold_recommendation = _cycle_target_hold_note(db, user_id, to_date_str)
+        except Exception as hold_err:  # noqa: BLE001
+            logger.warning(f"Cycle target-hold check failed (non-critical): {hold_err}")
+
         # Save calculation
         calc_data = {
             "user_id": user_id,
@@ -230,6 +315,7 @@ async def calculate_adaptive_tdee(
                     confidence_level=confidence,
                     days_logged=days_logged,
                     weight_entries=weight_entries,
+                    recommendation=cycle_hold_recommendation,
                 )
         except Exception as insert_err:
             logger.warning(f"Failed to persist adaptive calculation (non-critical): {insert_err}", exc_info=True)
@@ -249,10 +335,281 @@ async def calculate_adaptive_tdee(
             confidence_level=confidence,
             days_logged=days_logged,
             weight_entries=weight_entries,
+            recommendation=cycle_hold_recommendation,
         )
 
     except Exception as e:
         logger.error(f"Failed to calculate adaptive TDEE: {e}", exc_info=True)
+        raise safe_internal_error(e, "nutrition")
+
+
+# ─────────────────────────────────────────────────────────────────────
+# Cycle-aware adaptive TDEE — Phase G
+#
+# Luteal-phase water retention spikes body weight ~1-2 kg without any change
+# in fat mass. A naive adaptive-TDEE read of that water either cuts the
+# calorie target or shows a discouraging weight trend. This endpoint layers
+# the cycle-tracking prediction over the existing adaptive calculation:
+#
+#   * every weigh-in is tagged with the cycle phase on its logged date
+#     (so the frontend can overlay phase bands on the weight chart)        (1.1/1.8/1.18)
+#   * the EMA + energy-balance TDEE uses the cycle-aware service, which
+#     down-weights luteal/menstrual weigh-ins and widens the confidence
+#     interval on a cycle-contaminated window                              (1.2/1.4)
+#   * when an adaptive adjustment would MOVE the recommended calorie target
+#     and "today" sits inside [predicted period - 7 days .. period end],
+#     the target is HELD steady — no calorie cut during the period week    (1.3)
+#   * a "same point last cycle" comparison aligns the latest weigh-in with
+#     the cycle-day-matched weigh-in from the previous cycle                (1.11)
+#
+# Every cycle-aware behaviour here is a strict no-op for users without
+# menstrual tracking enabled — they get the plain adaptive numbers.
+# (The hold window is `_PERIOD_HOLD_LEAD_DAYS`, defined near the top.)
+# ─────────────────────────────────────────────────────────────────────
+
+
+@router.get("/adaptive/{user_id}/cycle-aware")
+async def get_cycle_aware_adaptive(
+    request: Request,
+    user_id: str,
+    days: int = Query(28, description="Number of days of weigh-ins to analyze"),
+    current_user: dict = Depends(get_current_user),
+):
+    """Cycle-aware adaptive TDEE + weight trend.
+
+    Returns the standard adaptive TDEE numbers plus, for menstrual-tracking
+    users, a cycle-phase-tagged weight series, a "hold the calorie target"
+    flag for the period week, and a same-point-last-cycle weight comparison.
+
+    For users without cycle tracking the cycle blocks come back null/false
+    and the numbers are identical to the plain adaptive calculation.
+    """
+    logger.info(f"Cycle-aware adaptive TDEE for user {user_id} over {days} days")
+
+    try:
+        db = get_supabase_db()
+        user_tz = resolve_timezone(request, db, user_id)
+        today_str = get_user_today(user_tz)
+        today = datetime.strptime(today_str, "%Y-%m-%d").date()
+        from_date_str = (today - timedelta(days=days)).strftime("%Y-%m-%d")
+
+        # --- Weigh-ins over the window --------------------------------------
+        weight_result = (
+            db.client.table("weight_logs")
+            .select("id, weight_kg, logged_at, source")
+            .eq("user_id", user_id)
+            .gte("logged_at", f"{from_date_str}T00:00:00")
+            .order("logged_at", desc=False)
+            .execute()
+        )
+        weight_rows = weight_result.data or []
+
+        # --- Is menstrual tracking enabled? ---------------------------------
+        # The single gate for every cycle-aware behaviour. Read defensively —
+        # the hormonal_profiles table / columns may not exist for this user.
+        tracking_enabled = False
+        profile: dict = {}
+        try:
+            profile_res = (
+                db.client.table("hormonal_profiles")
+                .select("*")
+                .eq("user_id", user_id)
+                .execute()
+            )
+            if profile_res.data:
+                profile = profile_res.data[0]
+                tracking_enabled = bool(profile.get("menstrual_tracking_enabled"))
+        except Exception as profile_err:  # noqa: BLE001
+            logger.warning(
+                f"hormonal_profiles lookup failed (cycle features off): {profile_err}"
+            )
+            tracking_enabled = False
+
+        # --- Build the cycle-aware service inputs ---------------------------
+        from services.adaptive_tdee_service import (
+            WeightLog,
+            get_adaptive_tdee_service,
+            tag_weight_logs_with_cycle_phase,
+        )
+
+        weight_logs = []
+        for row in weight_rows:
+            try:
+                logged_at = datetime.fromisoformat(
+                    str(row["logged_at"]).replace("Z", "+00:00")
+                )
+            except (ValueError, KeyError):
+                continue
+            weight_logs.append(
+                WeightLog(
+                    id=str(row.get("id", "")),
+                    user_id=user_id,
+                    weight_kg=float(row["weight_kg"]),
+                    logged_at=logged_at,
+                    source=row.get("source", "manual"),
+                )
+            )
+
+        prediction: Optional[dict] = None
+        period_starts: list = []
+        if tracking_enabled:
+            # Load the prediction once — used both for tagging and the
+            # period-hold window. predict_for_user reads cycle_periods.
+            try:
+                from services.cycle.cycle_predictor import predict_for_user
+
+                prediction = predict_for_user(db.client, user_id, today)
+            except Exception as pred_err:  # noqa: BLE001
+                logger.warning(f"Cycle prediction failed (cycle overlay off): {pred_err}")
+                prediction = None
+
+            # Tag every weigh-in with its cycle phase for the chart overlay.
+            try:
+                periods_res = (
+                    db.client.table("cycle_periods")
+                    .select("start_date, end_date")
+                    .eq("user_id", user_id)
+                    .order("start_date")
+                    .execute()
+                )
+                period_rows = periods_res.data or []
+                period_starts = [
+                    date.fromisoformat(r["start_date"])
+                    for r in period_rows
+                    if r.get("start_date")
+                ]
+                period_ends = {
+                    date.fromisoformat(r["start_date"]): date.fromisoformat(r["end_date"])
+                    for r in period_rows
+                    if r.get("start_date") and r.get("end_date")
+                }
+                if period_starts:
+                    tag_weight_logs_with_cycle_phase(
+                        weight_logs,
+                        period_starts,
+                        period_ends=period_ends,
+                        cycle_length_default=profile.get("cycle_length_days") or 28,
+                        period_length_default=profile.get("typical_period_duration_days") or 5,
+                        luteal_length_override=profile.get("luteal_length_days"),
+                    )
+            except Exception as tag_err:  # noqa: BLE001
+                logger.warning(f"Cycle phase tagging failed (overlay off): {tag_err}")
+
+        # --- Cycle-aware weight trend ---------------------------------------
+        svc = get_adaptive_tdee_service()
+        trend = svc.get_weight_trend(weight_logs) if len(weight_logs) >= 2 else None
+
+        # Phase-tagged series the frontend overlays onto the weight chart.
+        weight_series = [
+            {
+                "id": log.id,
+                "weight_kg": round(log.weight_kg, 2),
+                "logged_at": log.logged_at.isoformat(),
+                "logged_date": log.logged_at.date().isoformat(),
+                "source": log.source,
+                "cycle_phase": log.cycle_phase,  # None when tracking off
+            }
+            for log in weight_logs
+        ]
+
+        # --- Hold the calorie target during the period week (1.3) -----------
+        # When an adaptive adjustment would move the target, the frontend
+        # checks `hold_calorie_target`: if true, it must NOT apply the cut.
+        hold_calorie_target = False
+        hold_window_start: Optional[str] = None
+        hold_window_end: Optional[str] = None
+        hold_reason: Optional[str] = None
+        if tracking_enabled and prediction and prediction.get("predictions_available"):
+            next_period = prediction.get("next_period_date")
+            # predict() returns date objects; predict_for_user keeps them.
+            if isinstance(next_period, str):
+                try:
+                    next_period = date.fromisoformat(next_period)
+                except ValueError:
+                    next_period = None
+            if isinstance(next_period, date):
+                window_start = next_period - timedelta(days=_PERIOD_HOLD_LEAD_DAYS)
+                # Period end: stay held until bleeding finishes. Use the
+                # current in-period end if we're already bleeding, else the
+                # predicted period start + average period length.
+                avg_period = prediction.get("stats", {}).get("avg_period_length") or 5
+                window_end = next_period + timedelta(days=int(round(avg_period)) - 1)
+                hold_window_start = window_start.isoformat()
+                hold_window_end = window_end.isoformat()
+                if window_start <= today <= window_end:
+                    hold_calorie_target = True
+                    hold_reason = (
+                        "Calorie target held steady through the pre-period and "
+                        "period week — luteal water weight can read as fat gain, "
+                        "so no calorie cut is applied right now."
+                    )
+
+        # --- Same point last cycle comparison (1.11) ------------------------
+        same_point_last_cycle: Optional[dict] = None
+        if tracking_enabled and weight_logs and len(period_starts) >= 2:
+            latest = weight_logs[-1]
+            latest_date = latest.logged_at.date()
+            # Anchor cycle = latest period start on/before the latest weigh-in.
+            sorted_starts = sorted(period_starts)
+            anchor = None
+            anchor_idx = None
+            for i, s in enumerate(sorted_starts):
+                if s <= latest_date:
+                    anchor, anchor_idx = s, i
+            if anchor is not None and anchor_idx is not None and anchor_idx >= 1:
+                cycle_day = (latest_date - anchor).days  # 0-based offset
+                prev_start = sorted_starts[anchor_idx - 1]
+                target_date = prev_start + timedelta(days=cycle_day)
+                # Find the weigh-in nearest target_date (within ±3 days) in
+                # the previous cycle.
+                best = None
+                best_gap = 4
+                for log in weight_logs:
+                    gap = abs((log.logged_at.date() - target_date).days)
+                    if gap < best_gap:
+                        best, best_gap = log, gap
+                if best is not None:
+                    delta = round(latest.weight_kg - best.weight_kg, 2)
+                    same_point_last_cycle = {
+                        "cycle_day": cycle_day + 1,  # 1-based for display
+                        "current_weight_kg": round(latest.weight_kg, 2),
+                        "current_logged_date": latest_date.isoformat(),
+                        "last_cycle_weight_kg": round(best.weight_kg, 2),
+                        "last_cycle_logged_date": best.logged_at.date().isoformat(),
+                        "last_cycle_phase": best.cycle_phase,
+                        "delta_kg": delta,
+                        "comparison_gap_days": best_gap,
+                    }
+
+        return {
+            "user_id": user_id,
+            "period_start": from_date_str,
+            "period_end": today_str,
+            "cycle_tracking_enabled": tracking_enabled,
+            "current_cycle_phase": (
+                prediction.get("current_phase") if prediction else None
+            ),
+            "weight_trend": (
+                {
+                    "smoothed_weight_kg": trend.smoothed_weight,
+                    "raw_weight_kg": trend.raw_weight,
+                    "trend_direction": trend.trend_direction,
+                    "weekly_rate_kg": trend.weekly_rate_kg,
+                    "confidence": trend.confidence,
+                }
+                if trend
+                else None
+            ),
+            "weight_series": weight_series,
+            "hold_calorie_target": hold_calorie_target,
+            "hold_window_start": hold_window_start,
+            "hold_window_end": hold_window_end,
+            "hold_reason": hold_reason,
+            "same_point_last_cycle": same_point_last_cycle,
+        }
+
+    except Exception as e:
+        logger.error(f"Failed cycle-aware adaptive TDEE: {e}", exc_info=True)
         raise safe_internal_error(e, "nutrition")
 
 

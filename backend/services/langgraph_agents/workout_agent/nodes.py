@@ -301,6 +301,12 @@ async def workout_agent_node(state: WorkoutAgentState) -> Dict[str, Any]:
         beast_parts.append("Apply these preferences when creating or modifying workouts.")
         context_parts.extend(beast_parts)
 
+    # Cycle-aware workouts: inject the phase-only cycle context block so
+    # training advice respects cycle-driven energy and recovery patterns.
+    _cycle_ctx = state.get("cycle_context")
+    if _cycle_ctx and _cycle_ctx.get("prompt_block"):
+        context_parts.append(f"\n{_cycle_ctx['prompt_block']}")
+
     context = "\n".join(context_parts)
 
     # Detect if this is a workout CREATION request (not just a question)

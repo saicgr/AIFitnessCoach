@@ -16,6 +16,8 @@ enum HomeSection {
   weeklyReport,
   timeline,
   habits,
+  todayScore,
+  cycle,
 }
 
 /// The date the user is currently "viewing" on the unified home screen.
@@ -50,6 +52,10 @@ extension HomeSectionMeta on HomeSection {
         return 'timeline';
       case HomeSection.habits:
         return 'habits';
+      case HomeSection.todayScore:
+        return 'today_score';
+      case HomeSection.cycle:
+        return 'cycle';
     }
   }
 
@@ -71,6 +77,10 @@ extension HomeSectionMeta on HomeSection {
         return "Today's timeline";
       case HomeSection.habits:
         return 'Habits';
+      case HomeSection.todayScore:
+        return 'Today Score';
+      case HomeSection.cycle:
+        return 'Cycle';
     }
   }
 
@@ -92,6 +102,10 @@ extension HomeSectionMeta on HomeSection {
         return "The day's events on a time-ordered track";
       case HomeSection.habits:
         return 'Your daily habit cards & streaks';
+      case HomeSection.todayScore:
+        return 'Your Train, Fuel & Move ring for the day';
+      case HomeSection.cycle:
+        return 'Your cycle phase, day & next-period countdown';
     }
   }
 
@@ -114,8 +128,16 @@ extension HomeSectionMeta on HomeSection {
         return 'check';
       case HomeSection.habits:
         return 'spark';
+      case HomeSection.todayScore:
+        return 'activity';
+      case HomeSection.cycle:
+        return 'spark';
     }
   }
+
+  /// Core sections can be reordered but never hidden in "My Space" — the
+  /// Today Score is the home's anchor and is always present.
+  bool get isCore => this == HomeSection.todayScore;
 
   static HomeSection? fromStorageKey(String key) {
     for (final s in HomeSection.values) {
@@ -160,8 +182,12 @@ class HomeSectionsState {
 const List<HomeSection> _defaultOrder = [
   HomeSection.quickActions,
   HomeSection.weekStrip,
+  HomeSection.todayScore,
   HomeSection.workoutCard,
   HomeSection.nutritionCard,
+  // The Cycle card self-hides unless menstrual tracking is enabled, so it is
+  // safe to keep in the default order for everyone.
+  HomeSection.cycle,
   HomeSection.metricTrio,
   HomeSection.weeklyReport,
   HomeSection.timeline,
@@ -173,7 +199,8 @@ const HomeSectionsState _defaultState = HomeSectionsState(
   hidden: <HomeSection>{},
 );
 
-const String _kOrderKey = 'home_section_order_v1';
+// v2: re-ordered so the week strip sits above the Today Score.
+const String _kOrderKey = 'home_section_order_v2';
 const String _kHiddenKey = 'home_section_hidden_v1';
 
 /// Persists the user's "My Space" home-section layout (order + visibility)
@@ -199,8 +226,14 @@ class HomeSectionsNotifier extends StateNotifier<HomeSectionsState> {
           if (s != null && !order.contains(s)) order.add(s);
         }
       }
-      for (final s in _defaultOrder) {
-        if (!order.contains(s)) order.add(s);
+      // Append any section the saved layout didn't know about, at its
+      // intended default position — so a newly-shipped section (e.g. the
+      // Today Score) lands where the default wants it, not at the bottom.
+      for (var di = 0; di < _defaultOrder.length; di++) {
+        final s = _defaultOrder[di];
+        if (!order.contains(s)) {
+          order.insert(di < order.length ? di : order.length, s);
+        }
       }
 
       final hidden = <HomeSection>{};
@@ -208,6 +241,8 @@ class HomeSectionsNotifier extends StateNotifier<HomeSectionsState> {
         final s = HomeSectionMeta.fromStorageKey(key);
         if (s != null) hidden.add(s);
       }
+      // A core section must never end up hidden, even from a stale save.
+      hidden.removeWhere((s) => s.isCore);
 
       if (mounted) {
         state = HomeSectionsState(order: order, hidden: hidden);
@@ -243,6 +278,8 @@ class HomeSectionsNotifier extends StateNotifier<HomeSectionsState> {
   }
 
   void setVisible(HomeSection section, bool visible) {
+    // Core sections can be reordered but never hidden.
+    if (!visible && section.isCore) return;
     final next = Set<HomeSection>.from(state.hidden);
     if (visible) {
       next.remove(section);
@@ -261,7 +298,102 @@ class HomeSectionsNotifier extends StateNotifier<HomeSectionsState> {
     state = _defaultState;
     _persist();
   }
+
+  /// Apply a preset layout from the Discover tab. The Today Score (core) is
+  /// always kept visible regardless of the preset.
+  void applyPreset(HomeSectionPreset preset) {
+    final visible = <HomeSection>[...preset.visible];
+    if (!visible.contains(HomeSection.todayScore)) {
+      visible.insert(0, HomeSection.todayScore);
+    }
+    final order = <HomeSection>[...visible];
+    for (final s in HomeSection.values) {
+      if (!order.contains(s)) order.add(s);
+    }
+    final hidden = <HomeSection>{
+      for (final s in HomeSection.values)
+        if (!visible.contains(s) && !s.isCore) s,
+    };
+    state = HomeSectionsState(order: order, hidden: hidden);
+    _persist();
+  }
 }
+
+/// A named preset layout for the "Discover" tab of My Space.
+class HomeSectionPreset {
+  final String id;
+  final String name;
+  final String description;
+
+  /// Sections visible in this preset, in render order. The Today Score is
+  /// always shown regardless — it is the home's core anchor.
+  final List<HomeSection> visible;
+
+  const HomeSectionPreset({
+    required this.id,
+    required this.name,
+    required this.description,
+    required this.visible,
+  });
+}
+
+/// The preset layouts offered in My Space › Discover.
+const List<HomeSectionPreset> homeSectionPresets = [
+  HomeSectionPreset(
+    id: 'balanced',
+    name: 'Balanced',
+    description: 'Everything on, in the recommended order.',
+    visible: _defaultOrder,
+  ),
+  HomeSectionPreset(
+    id: 'essentials',
+    name: 'Essentials',
+    description: 'Just the score, your workout and nutrition.',
+    visible: [
+      HomeSection.quickActions,
+      HomeSection.todayScore,
+      HomeSection.workoutCard,
+      HomeSection.nutritionCard,
+    ],
+  ),
+  HomeSectionPreset(
+    id: 'training',
+    name: 'Training focus',
+    description: 'Built around your workouts and weekly progress.',
+    visible: [
+      HomeSection.quickActions,
+      HomeSection.todayScore,
+      HomeSection.weekStrip,
+      HomeSection.workoutCard,
+      HomeSection.weeklyReport,
+    ],
+  ),
+  HomeSectionPreset(
+    id: 'nutrition',
+    name: 'Nutrition focus',
+    description: 'Calories, macros and activity up top.',
+    visible: [
+      HomeSection.quickActions,
+      HomeSection.todayScore,
+      HomeSection.nutritionCard,
+      HomeSection.metricTrio,
+      HomeSection.timeline,
+    ],
+  ),
+  HomeSectionPreset(
+    id: 'tracker',
+    name: 'Tracker',
+    description: 'Every metric — steps, sleep, habits and reports.',
+    visible: [
+      HomeSection.quickActions,
+      HomeSection.todayScore,
+      HomeSection.metricTrio,
+      HomeSection.weeklyReport,
+      HomeSection.weekStrip,
+      HomeSection.habits,
+    ],
+  ),
+];
 
 final homeSectionsProvider =
     StateNotifierProvider<HomeSectionsNotifier, HomeSectionsState>(
