@@ -196,7 +196,7 @@ PODS:
   - GTMSessionFetcher/Core (3.5.0)
   - GTMSessionFetcher/Full (3.5.0):
     - GTMSessionFetcher/Core
-  - health (1.0.4):
+  - health (12.2.1):
     - Flutter
   - home_widget (0.0.1):
     - Flutter
@@ -562,7 +562,7 @@ SPEC CHECKSUMS:
   GoogleUtilities: 00c88b9a86066ef77f0da2fab05f65d7768ed8e1
   GTMAppAuth: f69bd07d68cd3b766125f7e072c45d7340dea0de
   GTMSessionFetcher: 5aea5ba6bd522a239e236100971f10cb71b96ab6
-  health: a4ddeac72091000e94776864d0028f6be31ec7a5
+  health: fe206e65f13a9b88623605fbd8af8f029e23dc35
   home_widget: f169fc41fd807b4d46ab6615dc44d62adbf9f64f
   image_cropper: 5f162dcf988100dc1513f9c6b7eb42cd6fbf9156
   image_picker_ios: e0ece4aa2a75771a7de3fa735d26d90817041326

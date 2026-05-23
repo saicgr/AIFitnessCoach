@@ -61,8 +61,12 @@ class _SectionedHeroAreaState extends ConsumerState<SectionedHeroArea> {
     final accentColorEnum = ref.watch(accentColorProvider);
     final accentColor = accentColorEnum.getColor(isDark);
     final isCalendarCollapsed = ref.watch(weekCalendarCollapsedProvider);
+    final isCalendarHidden = ref.watch(weekCalendarHiddenProvider);
 
-    final contentHeight = (currentFocus == HomeFocus.workout && isCalendarCollapsed)
+    // Hidden takes precedence — no strip rendered at all, content gets the
+    // full height back.
+    final contentHeight = (currentFocus == HomeFocus.workout &&
+            (isCalendarCollapsed || isCalendarHidden))
         ? _kContentHeightCollapsed
         : _kContentHeightExpanded;
 
@@ -88,7 +92,7 @@ class _SectionedHeroAreaState extends ConsumerState<SectionedHeroArea> {
           height: contentHeight,
           child: Column(
             children: [
-              if (currentFocus == HomeFocus.workout) ...[
+              if (currentFocus == HomeFocus.workout && !isCalendarHidden) ...[
                 _buildWeekCalendarStrip(isDark),
                 const SizedBox(height: 8),
               ],

@@ -29,6 +29,7 @@ import 'recipe_history_screen.dart';
 import 'recipe_schedule_screen.dart';
 import 'recipe_share_sheet.dart';
 import 'widgets/coach_review_sheet.dart';
+import '../../../widgets/glass_sheet.dart';
 
 class RecipeDetailScreen extends ConsumerStatefulWidget {
   final String recipeId;
@@ -634,15 +635,15 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen>
           icon: Icons.psychology_outlined,
           color: accent,
           onTap: () {
-            showModalBottomSheet(
+            showGlassSheet<void>(
               context: context,
-              isScrollControlled: true,
-              backgroundColor: surface,
-              builder: (_) => CoachReviewSheet(
-                subjectType: CoachReviewSubject.recipe,
-                subjectId: r.id,
-                userId: widget.userId,
-                isDark: widget.isDark,
+              builder: (_) => GlassSheet(
+                child: CoachReviewSheet(
+                  subjectType: CoachReviewSubject.recipe,
+                  subjectId: r.id,
+                  userId: widget.userId,
+                  isDark: widget.isDark,
+                ),
               ),
             );
           },
@@ -652,14 +653,14 @@ class _RecipeDetailScreenState extends ConsumerState<RecipeDetailScreen>
           icon: Icons.share_rounded,
           color: accent,
           onTap: () {
-            showModalBottomSheet(
+            showGlassSheet<void>(
               context: context,
-              isScrollControlled: true,
-              backgroundColor: surface,
-              builder: (_) => RecipeShareSheet(
-                recipeId: widget.recipeId,
-                userId: widget.userId,
-                isDark: widget.isDark,
+              builder: (_) => GlassSheet(
+                child: RecipeShareSheet(
+                  recipeId: widget.recipeId,
+                  userId: widget.userId,
+                  isDark: widget.isDark,
+                ),
               ),
             );
           },

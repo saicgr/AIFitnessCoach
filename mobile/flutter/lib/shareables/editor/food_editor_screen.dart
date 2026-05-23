@@ -10,6 +10,7 @@ import '../shareable_data.dart';
 import '../widgets/app_watermark.dart';
 import '../widgets/food_image.dart';
 import '../widgets/macro_viz.dart';
+import '../../widgets/glass_sheet.dart';
 import 'editor_layer.dart';
 import 'giphy_picker.dart';
 
@@ -186,10 +187,10 @@ class _FoodEditorScreenState extends State<FoodEditorScreen> {
   }
 
   Future<void> _pickEmoji(EditorLayer layer) async {
-    final picked = await showModalBottomSheet<String>(
+    final picked = await showGlassSheet<String>(
       context: context,
-      backgroundColor: const Color(0xFF15171C),
-      builder: (ctx) => SafeArea(
+      builder: (ctx) => GlassSheet(
+        opaque: true,
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Wrap(
@@ -265,10 +266,10 @@ class _FoodEditorScreenState extends State<FoodEditorScreen> {
       }
       final png = bytes.buffer.asUint8List();
       if (!mounted) return;
-      final action = await showModalBottomSheet<String>(
+      final action = await showGlassSheet<String>(
         context: context,
-        backgroundColor: const Color(0xFF15171C),
-        builder: (ctx) => SafeArea(
+        builder: (ctx) => GlassSheet(
+          opaque: true,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [

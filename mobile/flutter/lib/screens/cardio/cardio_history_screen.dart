@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/widgets/skeleton/skeleton.dart';
 import '../../data/models/cardio_log.dart';
 import '../../data/providers/cardio_providers.dart';
+import '../../widgets/glass_sheet.dart';
 import '../../data/providers/habit_provider.dart' show currentUserIdProvider;
 
 /// Cardio history screen — lists Strava/Peloton/Garmin/Apple Health/Fitbit
@@ -169,11 +170,11 @@ class _CardioHistoryScreenState extends ConsumerState<CardioHistoryScreen> {
   }
 
   void _openDetailSheet(BuildContext context, CardioLog log) {
-    showModalBottomSheet<void>(
+    showGlassSheet<void>(
       context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
-      builder: (_) => _CardioDetailSheet(log: log),
+      builder: (_) => GlassSheet(
+        child: _CardioDetailSheet(log: log),
+      ),
     );
   }
 }

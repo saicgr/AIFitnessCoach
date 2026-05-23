@@ -8,6 +8,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/theme_colors.dart';
 import '../../../core/widgets/skeleton/skeleton.dart';
 import '../../../widgets/app_snackbar.dart';
+import '../../../widgets/glass_sheet.dart';
 import '../../../data/providers/social_provider.dart';
 import '../../../data/providers/admin_provider.dart';
 import '../../../data/repositories/auth_repository.dart';
@@ -442,17 +443,15 @@ class _FeedTabState extends ConsumerState<FeedTab> {
   void _handleShare(Map<String, dynamic> activity) {
     HapticFeedback.lightImpact();
     ref.read(floatingNavBarVisibleProvider.notifier).state = false;
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      useRootNavigator: true,
-      barrierColor: Colors.black.withValues(alpha: 0.2),
-      builder: (context) => ActivityShareSheet(
-        userName: activity['user_name'] as String? ?? 'Someone',
-        activityType: activity['activity_type'] as String? ?? 'manual_post',
-        activityData: activity['activity_data'] as Map<String, dynamic>? ?? {},
-        timestamp: _parseTimestamp(activity['created_at']),
+      builder: (context) => GlassSheet(
+        child: ActivityShareSheet(
+          userName: activity['user_name'] as String? ?? 'Someone',
+          activityType: activity['activity_type'] as String? ?? 'manual_post',
+          activityData: activity['activity_data'] as Map<String, dynamic>? ?? {},
+          timestamp: _parseTimestamp(activity['created_at']),
+        ),
       ),
     ).then((_) {
       ref.read(floatingNavBarVisibleProvider.notifier).state = true;

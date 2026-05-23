@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../core/constants/app_colors.dart';
 import '../data/services/rating_prompt_service.dart';
+import 'glass_sheet.dart';
 
 /// Two-step rating prompt — the Cal AI / Realtor.com / Lose It pattern.
 ///
@@ -23,11 +24,12 @@ Future<void> showRatingPromptSheet(
   WidgetRef ref,
 ) async {
   HapticFeedback.lightImpact();
-  await showModalBottomSheet<void>(
+  await showGlassSheet<void>(
     context: context,
-    backgroundColor: Colors.transparent,
-    isScrollControlled: false,
-    builder: (sheetCtx) => _RatingPromptSheetBody(parentRef: ref),
+    builder: (sheetCtx) => GlassSheet(
+      showHandle: false,
+      child: _RatingPromptSheetBody(parentRef: ref),
+    ),
   );
 }
 
@@ -52,32 +54,13 @@ class _RatingPromptSheetBodyState extends State<_RatingPromptSheetBody> {
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary =
         isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    final surface = isDark ? AppColors.elevated : AppColorsLight.elevated;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: surface,
-        borderRadius:
-            const BorderRadius.vertical(top: Radius.circular(24)),
-      ),
+    return Padding(
       padding: const EdgeInsets.fromLTRB(24, 14, 24, 24),
-      child: SafeArea(
-        top: false,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Center(
-              child: Container(
-                width: 36,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: textSecondary.withValues(alpha: 0.25),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
             Center(
               child: Text(
                 '⭐',
@@ -158,8 +141,7 @@ class _RatingPromptSheetBodyState extends State<_RatingPromptSheetBody> {
                 ),
               ],
             ),
-          ],
-        ),
+        ],
       ),
     );
   }

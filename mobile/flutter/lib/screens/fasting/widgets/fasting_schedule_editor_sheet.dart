@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import '../../../core/theme/theme_colors.dart';
+import '../../../widgets/glass_sheet.dart';
 import '../../../data/models/fasting.dart';
 import '../../../data/providers/fasting_provider.dart';
 import '../../../data/repositories/auth_repository.dart';
@@ -98,42 +99,15 @@ class _FastingScheduleEditorSheetState
   void _pickForDay(int weekday) {
     HapticService.light();
     final colors = ThemeColors.of(context);
-    showModalBottomSheet<void>(
+    showGlassSheet<void>(
       context: context,
-      backgroundColor: Colors.transparent,
       builder: (sheetCtx) {
-        return ClipRRect(
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-            child: Container(
-              decoration: BoxDecoration(
-                color: colors.elevated,
-                borderRadius:
-                    const BorderRadius.vertical(top: Radius.circular(24)),
-                border: Border.all(color: colors.cardBorder),
-              ),
-              padding: EdgeInsets.fromLTRB(
-                20,
-                16,
-                20,
-                MediaQuery.of(sheetCtx).padding.bottom + 20,
-              ),
+        return GlassSheet(
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Center(
-                    child: Container(
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: colors.textMuted.withValues(alpha: 0.3),
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
                   Text(
                     _weekdayNames[weekday],
                     style: TextStyle(
@@ -178,8 +152,6 @@ class _FastingScheduleEditorSheetState
                   }),
                 ],
               ),
-            ),
-          ),
         );
       },
     );

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../../widgets/glass_sheet.dart';
 import 'giphy_service.dart';
 
 /// A GIPHY search sheet for the food editor. Opens trending GIFs, searches
@@ -12,14 +13,12 @@ class GiphyPicker extends StatefulWidget {
   /// Shows the picker; resolves to the selected GIF url, or null if
   /// dismissed.
   static Future<String?> pick(BuildContext context) {
-    return showModalBottomSheet<String>(
+    return showGlassSheet<String>(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: const Color(0xFF15171C),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      builder: (_) => const GlassSheet(
+        opaque: true,
+        child: GiphyPicker(),
       ),
-      builder: (_) => const GiphyPicker(),
     );
   }
 

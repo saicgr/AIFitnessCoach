@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/accent_color_provider.dart';
+import '../../widgets/glass_sheet.dart';
 import '../../data/models/program_template.dart';
 import '../../data/providers/habit_provider.dart' show currentUserIdProvider;
 import '../../data/repositories/program_template_repository.dart';
@@ -226,11 +227,9 @@ class _TemplateListScreenState extends ConsumerState<TemplateListScreen> {
   void _openScheduleSheet(ProgramTemplate template) {
     if (template.id == null) return;
     HapticService.light();
-    showModalBottomSheet<void>(
+    showGlassSheet<void>(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => _ScheduleSheet(template: template),
+      builder: (_) => GlassSheet(child: _ScheduleSheet(template: template)),
     );
   }
 }

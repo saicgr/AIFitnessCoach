@@ -7,6 +7,7 @@ import '../../../data/models/nutrition.dart';
 import '../../../data/providers/food_patterns_provider.dart';
 import '../../../data/repositories/nutrition_repository.dart';
 import '../../../data/services/api_client.dart';
+import '../../../widgets/glass_sheet.dart';
 
 const _kHidePostMealReviewKey = 'hide_post_meal_review';
 
@@ -26,25 +27,25 @@ Future<void> showPostMealReviewSheet(
   if (prefs.getBool(_kHidePostMealReviewKey) == true) return;
 
   if (!context.mounted) return;
-  showModalBottomSheet(
+  showGlassSheet<void>(
     context: context,
-    isScrollControlled: true,
     // Stickier: explicit Skip / Don't-show-again actions only — no tap-outside
     // or swipe-down dismissals. This keeps the sheet on screen long enough for
     // users to actually fill it in (live data showed 1/78 recent logs had mood
     // filled — mostly because the sheet was getting dismissed too easily).
     isDismissible: false,
     enableDrag: false,
-    backgroundColor: Colors.transparent,
-    barrierColor: Colors.black.withValues(alpha: 0.3),
-    builder: (context) => _PostMealReviewSheet(
-      foodNames: foodNames,
-      totalCalories: totalCalories,
-      isDark: isDark,
-      userId: userId,
-      foodLogId: foodLogId,
-      saveFuture: saveFuture,
-      getSavedLogId: getSavedLogId,
+    builder: (context) => GlassSheet(
+      showHandle: false,
+      child: _PostMealReviewSheet(
+        foodNames: foodNames,
+        totalCalories: totalCalories,
+        isDark: isDark,
+        userId: userId,
+        foodLogId: foodLogId,
+        saveFuture: saveFuture,
+        getSavedLogId: getSavedLogId,
+      ),
     ),
   );
 }
@@ -92,33 +93,12 @@ class _PostMealReviewSheetState extends ConsumerState<_PostMealReviewSheet> {
     final foodSummary = widget.foodNames.take(3).join(', ');
     final extraCount = widget.foodNames.length > 3 ? ' +${widget.foodNames.length - 3} more' : '';
 
-    return Container(
-      margin: const EdgeInsets.fromLTRB(8, 0, 8, 8),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
-        borderRadius: BorderRadius.circular(24),
-      ),
-      child: SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Drag handle
-              Center(
-                child: Container(
-                  width: 36,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: textMuted.withValues(alpha: 0.3),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
               // Success header
               Row(
                 children: [
@@ -368,9 +348,7 @@ class _PostMealReviewSheetState extends ConsumerState<_PostMealReviewSheet> {
               ),
             ],
           ),
-        ),
-      ),
-    );
+        );
   }
 
   Future<void> _saveMoodReview(Color teal) async {

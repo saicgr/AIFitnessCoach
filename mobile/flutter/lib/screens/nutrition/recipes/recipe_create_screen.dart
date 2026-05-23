@@ -21,6 +21,7 @@ import '../../../data/models/ingredient_analysis.dart';
 import '../../../data/models/recipe.dart';
 import '../../../data/repositories/nutrition_repository.dart';
 import '../../../data/repositories/recipe_repository.dart';
+import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/glass_back_button.dart';
 import '../../../widgets/nav_bar_hider_mixin.dart';
 
@@ -90,14 +91,13 @@ class _RecipeCreateScreenState extends ConsumerState<RecipeCreateScreen>
   }
 
   Future<void> _pickPhoto() async {
-    final source = await showModalBottomSheet<ImageSource>(
+    final source = await showGlassSheet<ImageSource>(
       context: context,
       builder: (ctx) {
         final isDark = widget.isDark;
-        final surface = isDark ? AppColors.elevated : AppColorsLight.elevated;
         final text = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-        return Container(
-          color: surface,
+        return GlassSheet(
+          opaque: true,
           padding: const EdgeInsets.symmetric(vertical: 16),
           child: Column(
             mainAxisSize: MainAxisSize.min,

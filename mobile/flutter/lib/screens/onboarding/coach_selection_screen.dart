@@ -24,6 +24,7 @@ import 'pre_auth_quiz_screen.dart';
 import 'widgets/coach_profile_card.dart';
 import 'widgets/foldable_quiz_scaffold.dart';
 import '../../data/models/ai_profile_payload.dart';
+import '../../widgets/glass_sheet.dart';
 
 part 'coach_selection_screen_ui.dart';
 
@@ -105,40 +106,16 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
     final surface = isDark ? AppColors.surface : AppColorsLight.surface;
     const exampleColor = Color(0xFFEC4899); // Pink for the example coach
 
-    showModalBottomSheet(
+    showGlassSheet<void>(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.85,
-        maxChildSize: 0.92,
-        minChildSize: 0.5,
-        builder: (context, scrollController) => Container(
-          decoration: BoxDecoration(
-            color: surface,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-          ),
-          child: Stack(
-            children: [
-              SingleChildScrollView(
-                controller: scrollController,
-                padding: const EdgeInsets.fromLTRB(24, 16, 24, 100),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Drag handle
-                    Center(
-                      child: Container(
-                        width: 36,
-                        height: 4,
-                        decoration: BoxDecoration(
-                          color: textSecondary.withValues(alpha: 0.3),
-                          borderRadius: BorderRadius.circular(2),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-
+      builder: (context) => GlassSheet(
+        child: Stack(
+          children: [
+            SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(24, 4, 24, 100),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                     // Title + subtitle
                     Row(
                       children: [
@@ -704,8 +681,7 @@ class _CoachSelectionScreenState extends ConsumerState<CoachSelectionScreen> {
             ],
           ),
         ),
-      ),
-    );
+      );
   }
 
   Future<void> _continue() async {

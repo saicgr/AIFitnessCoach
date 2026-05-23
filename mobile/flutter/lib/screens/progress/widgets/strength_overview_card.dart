@@ -10,6 +10,7 @@ import '../../../data/providers/scores_provider.dart';
 import '../../library/providers/muscle_group_images_provider.dart';
 import 'body_score_overlay.dart';
 import 'share_strength_sheet.dart';
+import '../../../widgets/glass_sheet.dart';
 
 part 'strength_overview_card_ui.dart';
 
@@ -561,40 +562,16 @@ class _StrengthOverviewCardState extends ConsumerState<StrengthOverviewCard> {
   void _showScoreInfoSheet(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    showModalBottomSheet(
+    showGlassSheet<void>(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: colorScheme.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
       builder: (context) {
-        return DraggableScrollableSheet(
-          initialChildSize: 0.7,
-          minChildSize: 0.3,
-          maxChildSize: 0.9,
-          expand: false,
-          builder: (context, scrollController) {
-        return SafeArea(
+        return GlassSheet(
           child: SingleChildScrollView(
-            controller: scrollController,
-            padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
+            padding: const EdgeInsets.fromLTRB(24, 4, 24, 24),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Drag handle
-                Center(
-                  child: Container(
-                    width: 36,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: colorScheme.outline.withValues(alpha: 0.3),
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
 
                 Text(
                   'How Strength Scores Work',
@@ -865,8 +842,6 @@ class _StrengthOverviewCardState extends ConsumerState<StrengthOverviewCard> {
               ],
             ),
           ),
-        );
-          },
         );
       },
     );

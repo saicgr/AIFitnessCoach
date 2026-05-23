@@ -1,10 +1,11 @@
 import 'dart:async';
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../core/constants/app_colors.dart';
 import '../core/providers/usage_tracking_provider.dart';
+import 'glass_sheet.dart';
+import 'main_shell.dart' show floatingNavBarVisibleProvider;
 
 /// Display names for known feature keys.
 const _featureDisplayNames = <String, String>{
@@ -19,16 +20,24 @@ void showUpgradePromptSheet(
   required String featureKey,
   String? featureName,
 }) {
-  showModalBottomSheet(
+  final container = ProviderScope.containerOf(context, listen: false);
+  container.read(floatingNavBarVisibleProvider.notifier).state = false;
+  showGlassSheet<void>(
     context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
-    builder: (ctx) => _UpgradePromptContent(
-      featureKey: featureKey,
-      featureName:
-          featureName ?? _featureDisplayNames[featureKey] ?? featureKey,
+    builder: (ctx) => GlassSheet(
+      child: _UpgradePromptContent(
+        featureKey: featureKey,
+        featureName:
+            featureName ?? _featureDisplayNames[featureKey] ?? featureKey,
+      ),
     ),
-  );
+  ).whenComplete(() {
+    Future.microtask(() {
+      try {
+        container.read(floatingNavBarVisibleProvider.notifier).state = true;
+      } catch (_) {}
+    });
+  });
 }
 
 class _UpgradePromptContent extends ConsumerStatefulWidget {
@@ -100,43 +109,11 @@ class _UpgradePromptContentState extends ConsumerState<_UpgradePromptContent> {
     final textTheme = Theme.of(context).textTheme;
     final hasCountdown = _timeUntilReset > Duration.zero;
 
-    return ClipRRect(
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
-        child: Container(
-          decoration: BoxDecoration(
-            color: isDark
-                ? Colors.black.withValues(alpha: 0.75)
-                : Colors.white.withValues(alpha: 0.85),
-            borderRadius:
-                const BorderRadius.vertical(top: Radius.circular(24)),
-            border: Border.all(
-              color: isDark
-                  ? Colors.white.withValues(alpha: 0.1)
-                  : Colors.black.withValues(alpha: 0.08),
-            ),
-          ),
-          child: SafeArea(
-            top: false,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+    return Padding(
+              padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Handle bar
-                  Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: isDark
-                          ? Colors.white.withValues(alpha: 0.2)
-                          : Colors.black.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-
                   // Lock icon
                   Container(
                     width: 64,
@@ -263,10 +240,6 @@ class _UpgradePromptContentState extends ConsumerState<_UpgradePromptContent> {
                   ),
                 ],
               ),
-            ),
-          ),
-        ),
-      ),
-    );
+            );
   }
 }

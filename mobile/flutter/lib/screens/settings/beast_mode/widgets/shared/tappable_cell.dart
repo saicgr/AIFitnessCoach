@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../../core/constants/app_colors.dart';
 import '../../../../../data/services/haptic_service.dart';
+import '../../../../../widgets/glass_sheet.dart';
+import '../../../../../widgets/main_shell.dart' show floatingNavBarVisibleProvider;
 import '../../beast_mode_constants.dart';
 
 /// Tappable monospace cell for editable table values.
@@ -88,53 +91,60 @@ class TappableBiasCell extends StatelessWidget {
   }
 
   void _showBiasDropdown(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    showModalBottomSheet(
+    final container = ProviderScope.containerOf(context, listen: false);
+    container.read(floatingNavBarVisibleProvider.notifier).state = false;
+    showGlassSheet<void>(
       context: context,
-      backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
       builder: (ctx) {
+        final isDark = Theme.of(ctx).brightness == Brightness.dark;
         final textPrimary =
             isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-        return Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Select Bias',
-                  style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: textPrimary)),
-              const SizedBox(height: 12),
-              ...kBiasOptions.map((bias) {
-                final isSelected = bias == current;
-                return ListTile(
-                  dense: true,
-                  title: Text(bias,
-                      style: TextStyle(
+        return GlassSheet(
+          opaque: true,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Select Bias',
+                    style: TextStyle(
                         fontSize: 14,
-                        color: isSelected ? AppColors.orange : textPrimary,
-                        fontWeight:
-                            isSelected ? FontWeight.w600 : FontWeight.normal,
-                      )),
-                  trailing: isSelected
-                      ? Icon(Icons.check, color: AppColors.orange, size: 18)
-                      : null,
-                  onTap: () {
-                    HapticService.selection();
-                    onSelected(bias);
-                    Navigator.pop(ctx);
-                  },
-                );
-              }),
-            ],
+                        fontWeight: FontWeight.w600,
+                        color: textPrimary)),
+                const SizedBox(height: 12),
+                ...kBiasOptions.map((bias) {
+                  final isSelected = bias == current;
+                  return ListTile(
+                    dense: true,
+                    title: Text(bias,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: isSelected ? AppColors.orange : textPrimary,
+                          fontWeight:
+                              isSelected ? FontWeight.w600 : FontWeight.normal,
+                        )),
+                    trailing: isSelected
+                        ? Icon(Icons.check, color: AppColors.orange, size: 18)
+                        : null,
+                    onTap: () {
+                      HapticService.selection();
+                      onSelected(bias);
+                      Navigator.pop(ctx);
+                    },
+                  );
+                }),
+              ],
+            ),
           ),
         );
       },
-    );
+    ).whenComplete(() {
+      Future.microtask(() {
+        try {
+          container.read(floatingNavBarVisibleProvider.notifier).state = true;
+        } catch (_) {}
+      });
+    });
   }
 }

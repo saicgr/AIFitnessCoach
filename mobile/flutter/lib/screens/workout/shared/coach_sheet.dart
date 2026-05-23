@@ -16,6 +16,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../data/models/chat_message.dart';
 import '../../../data/models/exercise.dart';
 import '../../../data/repositories/chat_repository.dart';
+import '../../../widgets/glass_sheet.dart';
 
 /// Default quick replies — balanced framing for general use.
 const kCoachQuickReplies = <String>[
@@ -39,13 +40,14 @@ Future<void> showCoachSheet({
   required WorkoutExercise exercise,
   List<String> quickReplies = kCoachQuickReplies,
 }) {
-  return showModalBottomSheet<void>(
+  return showGlassSheet<void>(
     context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
-    builder: (_) => CoachSheet(
-      exercise: exercise,
-      quickReplies: quickReplies,
+    builder: (_) => GlassSheet(
+      showHandle: false,
+      child: CoachSheet(
+        exercise: exercise,
+        quickReplies: quickReplies,
+      ),
     ),
   );
 }

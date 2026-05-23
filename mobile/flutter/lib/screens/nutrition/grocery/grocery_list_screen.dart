@@ -12,6 +12,7 @@ import '../../../core/widgets/skeleton/skeleton.dart';
 import '../../../data/models/grocery_list.dart';
 import '../../../data/repositories/recipe_repository.dart';
 import '../../../data/services/data_cache_service.dart';
+import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/pill_app_bar.dart';
 
 class GroceryListScreen extends ConsumerStatefulWidget {
@@ -155,26 +156,13 @@ class _GroceryListScreenState extends ConsumerState<GroceryListScreen> {
   /// into one sheet so the app bar reads clean.
   Future<void> _showMoreMenu(BuildContext ctx, Color muted, Color text) async {
     HapticFeedback.lightImpact();
-    await showModalBottomSheet<void>(
+    await showGlassSheet<void>(
       context: ctx,
-      backgroundColor: widget.isDark ? AppColors.elevated : AppColorsLight.elevated,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (sheetCtx) => SafeArea(
+      builder: (sheetCtx) => GlassSheet(
+        opaque: true,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const SizedBox(height: 8),
-            Container(
-              width: 36,
-              height: 4,
-              decoration: BoxDecoration(
-                color: muted.withValues(alpha: 0.3),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(height: 8),
             ListTile(
               leading: Icon(
                 _showStaples ? Icons.visibility_off : Icons.visibility,
@@ -232,15 +220,12 @@ class _GroceryListScreenState extends ConsumerState<GroceryListScreen> {
     final unitController = TextEditingController();
     Aisle? selectedAisle;
 
-    await showModalBottomSheet<void>(
+    await showGlassSheet<void>(
       context: context,
-      backgroundColor: bg,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
       builder: (sheetContext) {
-        return StatefulBuilder(
+        return GlassSheet(
+          opaque: true,
+          child: StatefulBuilder(
           builder: (context, setSheetState) => Padding(
             padding: EdgeInsets.only(
               left: 20,
@@ -392,6 +377,7 @@ class _GroceryListScreenState extends ConsumerState<GroceryListScreen> {
               ],
             ),
           ),
+        ),
         );
       },
     );

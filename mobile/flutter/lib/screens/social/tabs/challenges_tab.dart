@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../widgets/glass_sheet.dart';
 import '../../../core/services/posthog_service.dart';
 import '../../../core/widgets/skeleton/skeleton.dart';
 import '../../../widgets/app_snackbar.dart';
@@ -345,20 +346,20 @@ class _ChallengesTabState extends ConsumerState<ChallengesTab>
 
   void _handleCreateChallenge() {
     HapticFeedback.mediumImpact();
-    showModalBottomSheet(
+    showGlassSheet(
       context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
-      builder: (context) => CreateChallengeSheet(
-        onCreated: () {
-          // Invalidate challenge providers to refresh
-          if (_userId != null) {
-            ref.invalidate(challengesListProvider(_userId!));
-            ref.invalidate(userActiveChallengesProvider(_userId!));
-          }
-          // Switch to "My Challenges" tab
-          _challengeTabController.animateTo(0);
-        },
+      builder: (context) => GlassSheet(
+        child: CreateChallengeSheet(
+          onCreated: () {
+            // Invalidate challenge providers to refresh
+            if (_userId != null) {
+              ref.invalidate(challengesListProvider(_userId!));
+              ref.invalidate(userActiveChallengesProvider(_userId!));
+            }
+            // Switch to "My Challenges" tab
+            _challengeTabController.animateTo(0);
+          },
+        ),
       ),
     );
   }

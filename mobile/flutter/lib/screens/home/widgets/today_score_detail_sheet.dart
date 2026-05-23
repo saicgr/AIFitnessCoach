@@ -5,16 +5,15 @@ import '../../../core/theme/theme_colors.dart';
 import '../../../data/models/today_score.dart';
 import '../../../data/providers/today_score_provider.dart';
 import '../../../services/score_history_service.dart';
+import '../../../widgets/glass_sheet.dart';
 import 'score_colors.dart';
 import 'segmented_score_ring.dart';
 
 /// Open the Today Score breakdown as a modal bottom sheet.
 void showTodayScoreDetailSheet(BuildContext context) {
-  showModalBottomSheet<void>(
+  showGlassSheet<void>(
     context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
-    builder: (_) => const _TodayScoreDetailSheet(),
+    builder: (_) => const GlassSheet(child: _TodayScoreDetailSheet()),
   );
 }
 
@@ -39,30 +38,12 @@ class _TodayScoreDetailSheet extends ConsumerWidget {
             ))
         .toList();
 
-    return SafeArea(
-      top: false,
-      child: Container(
-        decoration: BoxDecoration(
-          color: c.background,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 10, 20, 28),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Center(
-                child: Container(
-                  width: 38,
-                  height: 5,
-                  decoration: BoxDecoration(
-                    color: c.textMuted.withValues(alpha: 0.4),
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 18),
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(20, 10, 20, 28),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
               Text(
                 'Today Score',
                 style: TextStyle(
@@ -113,9 +94,7 @@ class _TodayScoreDetailSheet extends ConsumerWidget {
                 const SizedBox(height: 14),
                 _howItWorks(c, score),
               ],
-            ],
-          ),
-        ),
+        ],
       ),
     );
   }

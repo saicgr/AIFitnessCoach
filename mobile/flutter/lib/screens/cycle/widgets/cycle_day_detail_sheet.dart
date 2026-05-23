@@ -16,6 +16,7 @@ import '../../hormonal_health/widgets/hormone_log_sheet.dart';
 import '../cycle_chat.dart';
 import '../cycle_visuals.dart';
 import 'cycle_calendar.dart';
+import '../../../widgets/glass_sheet.dart';
 
 /// Shows the day-detail sheet. [phase] is the predicted phase for [day].
 Future<void> showCycleDayDetailSheet(
@@ -26,32 +27,15 @@ Future<void> showCycleDayDetailSheet(
   required Color accent,
   required bool fahrenheit,
 }) {
-  final isDark = Theme.of(context).brightness == Brightness.dark;
-  return showModalBottomSheet<void>(
+  return showGlassSheet<void>(
     context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
-    barrierColor: Colors.black.withValues(alpha: 0.45),
-    builder: (_) => ClipRRect(
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-        child: Container(
-          decoration: BoxDecoration(
-            color: isDark
-                ? Colors.black.withValues(alpha: 0.55)
-                : Colors.white.withValues(alpha: 0.8),
-            borderRadius:
-                const BorderRadius.vertical(top: Radius.circular(28)),
-          ),
-          child: _CycleDayDetailBody(
-            day: day,
-            log: log,
-            phase: phase,
-            accent: accent,
-            fahrenheit: fahrenheit,
-          ),
-        ),
+    builder: (_) => GlassSheet(
+      child: _CycleDayDetailBody(
+        day: day,
+        log: log,
+        phase: phase,
+        accent: accent,
+        fahrenheit: fahrenheit,
       ),
     ),
   );
@@ -240,12 +224,11 @@ class _CycleDayDetailBody extends StatelessWidget {
                         ? null
                         : () {
                             Navigator.pop(context);
-                            showModalBottomSheet<bool>(
+                            showGlassSheet<bool>(
                               context: context,
-                              isScrollControlled: true,
-                              backgroundColor: Colors.transparent,
-                              builder: (_) =>
-                                  HormoneLogSheet(logDate: day),
+                              builder: (_) => GlassSheet(
+                                child: HormoneLogSheet(logDate: day),
+                              ),
                             );
                           },
                     icon: const Icon(Icons.edit_rounded, size: 16),

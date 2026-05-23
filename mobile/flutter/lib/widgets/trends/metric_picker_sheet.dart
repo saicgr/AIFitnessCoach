@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/theme/theme_colors.dart';
 import '../../data/providers/trend_series_provider.dart';
 import '../../data/services/haptic_service.dart';
+import '../glass_sheet.dart';
 
 /// =========================================================================
 /// Metric picker — sectioned, searchable, collapsible (Wave 1 redesign)
@@ -86,17 +87,14 @@ Future<void> showMetricPickerSheet({
   required Set<TrendMetric> exclude,
   required void Function(TrendMetric) onPicked,
 }) {
-  final colors = ThemeColors.of(context);
-  return showModalBottomSheet<void>(
+  return showGlassSheet<void>(
     context: context,
-    backgroundColor: colors.background,
-    isScrollControlled: true,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
-    ),
-    builder: (ctx) => _MetricPickerSheet(
-      exclude: exclude,
-      onPicked: onPicked,
+    builder: (ctx) => GlassSheet(
+      showHandle: false,
+      child: _MetricPickerSheet(
+        exclude: exclude,
+        onPicked: onPicked,
+      ),
     ),
   );
 }
@@ -197,15 +195,6 @@ class _MetricPickerSheetState extends State<_MetricPickerSheet> {
       builder: (ctx, scrollCtrl) {
         return Column(
           children: [
-            const SizedBox(height: 10),
-            Container(
-              width: 38,
-              height: 4,
-              decoration: BoxDecoration(
-                color: colors.cardBorder,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
             const SizedBox(height: 12),
             Text('Choose a metric',
                 style: TextStyle(

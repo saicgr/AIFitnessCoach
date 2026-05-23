@@ -173,7 +173,7 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
     final accentColor = ref.colors(context).accent;
 
     // Compact nav bar dimensions
-    const navBarHeight = 52.0;
+    const navBarHeight = 56.0;
     const fadeHeight = 36.0;
 
     // Clean pill bar colors
@@ -213,18 +213,18 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
               ),
             ),
           ),
-          // Centered compact pill nav bar — intrinsic width for tight fit
+          // Full-width pill nav bar — sits inside a proper screen bezel
+          // gutter so it reads as a balanced bar, not a cramped capsule.
           Positioned(
-            left: 0,
-            right: 0,
+            left: 28,
+            right: 28,
             bottom: bottomPadding + 10,
-            child: Center(
-              child: Container(
+            child: Container(
               height: navBarHeight,
               padding: const EdgeInsets.symmetric(horizontal: 6),
               decoration: BoxDecoration(
                 color: pillBarColor,
-                borderRadius: BorderRadius.circular(26),
+                borderRadius: BorderRadius.circular(28),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withValues(alpha: isDark ? 0.25 : 0.06),
@@ -234,89 +234,91 @@ class _FloatingNavBarWithAI extends ConsumerWidget {
                 ],
               ),
               child: Row(
-                mainAxisSize: MainAxisSize.min,
                 children: [
-                  const SizedBox(width: 4),
-                  _ExpandableNavItem(
-                    icon: Icons.home_outlined,
-                    selectedIcon: Icons.home_rounded,
-                    label: 'Home',
-                    isSelected: selectedIndex == 0,
-                    onTap: () => onItemTapped(0),
-                    accentColor: accentColor,
-                    mutedColor: iconMuted,
-                    isDark: isDark,
+                  Expanded(
+                    child: _ExpandableNavItem(
+                      icon: Icons.home_outlined,
+                      selectedIcon: Icons.home_rounded,
+                      label: 'Home',
+                      isSelected: selectedIndex == 0,
+                      onTap: () => onItemTapped(0),
+                      accentColor: accentColor,
+                      mutedColor: iconMuted,
+                      isDark: isDark,
+                    ),
                   ),
-                  const SizedBox(width: 8),
                   // GlobalKeys attached via KeyedSubtree instead of directly on
                   // the StatelessWidget — the nav bar is inside an
                   // AnimatedSlide/AnimatedOpacity that can hold two element
                   // trees mid-transition, and a GlobalKey mounted on the widget
                   // itself fires "Duplicate GlobalKey" during those frames.
                   // KeyedSubtree gives the key its own stable element boundary.
-                  KeyedSubtree(
-                    key: AppTourKeys.workoutNavKey,
-                    child: _ExpandableNavItem(
-                      icon: Icons.fitness_center_outlined,
-                      selectedIcon: Icons.fitness_center,
-                      label: 'Workout',
-                      isSelected: selectedIndex == 1,
-                      onTap: () => onItemTapped(1),
-                      accentColor: accentColor,
-                      mutedColor: iconMuted,
-                      isDark: isDark,
+                  Expanded(
+                    child: KeyedSubtree(
+                      key: AppTourKeys.workoutNavKey,
+                      child: _ExpandableNavItem(
+                        icon: Icons.fitness_center_outlined,
+                        selectedIcon: Icons.fitness_center,
+                        label: 'Workout',
+                        isSelected: selectedIndex == 1,
+                        onTap: () => onItemTapped(1),
+                        accentColor: accentColor,
+                        mutedColor: iconMuted,
+                        isDark: isDark,
+                      ),
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  KeyedSubtree(
-                    key: AppTourKeys.nutritionNavKey,
-                    child: _ExpandableNavItem(
-                      icon: Icons.restaurant_outlined,
-                      selectedIcon: Icons.restaurant,
-                      label: 'Nutrition',
-                      isSelected: selectedIndex == 2,
-                      onTap: () => onItemTapped(2),
-                      accentColor: accentColor,
-                      mutedColor: iconMuted,
-                      isDark: isDark,
+                  Expanded(
+                    child: KeyedSubtree(
+                      key: AppTourKeys.nutritionNavKey,
+                      child: _ExpandableNavItem(
+                        icon: Icons.restaurant_outlined,
+                        selectedIcon: Icons.restaurant,
+                        label: 'Nutrition',
+                        isSelected: selectedIndex == 2,
+                        onTap: () => onItemTapped(2),
+                        accentColor: accentColor,
+                        mutedColor: iconMuted,
+                        isDark: isDark,
+                      ),
                     ),
                   ),
-                  const SizedBox(width: 8),
                   // Discover tab (W2) — globe icon (world/community leaderboard)
-                  _ExpandableNavItem(
-                    icon: Icons.public_outlined,
-                    selectedIcon: Icons.public,
-                    label: 'Discover',
-                    isSelected: selectedIndex == 3,
-                    onTap: () => onItemTapped(3),
-                    accentColor: accentColor,
-                    mutedColor: iconMuted,
-                    isDark: isDark,
-                  ),
-                  const SizedBox(width: 8),
-                  KeyedSubtree(
-                    key: AppTourKeys.profileNavKey,
-                    // "You" hub — Strava/Nike pattern. Profile + all
-                    // gamification surfaces (trophies, XP, achievements,
-                    // skills, wrapped, rewards, inventory) collapse into
-                    // this single tab's top-tabs. Research (Material 3)
-                    // caps bottom nav at 5; we preserved that by renaming
-                    // rather than adding a 6th tab.
+                  Expanded(
                     child: _ExpandableNavItem(
-                      icon: Icons.stars_outlined,
-                      selectedIcon: Icons.stars_rounded,
-                      label: 'You',
-                      isSelected: selectedIndex == 4,
-                      onTap: () => onItemTapped(4),
+                      icon: Icons.public_outlined,
+                      selectedIcon: Icons.public,
+                      label: 'Discover',
+                      isSelected: selectedIndex == 3,
+                      onTap: () => onItemTapped(3),
                       accentColor: accentColor,
                       mutedColor: iconMuted,
                       isDark: isDark,
                     ),
                   ),
-                  const SizedBox(width: 4),
+                  Expanded(
+                    child: KeyedSubtree(
+                      key: AppTourKeys.profileNavKey,
+                      // "You" hub — Strava/Nike pattern. Profile + all
+                      // gamification surfaces (trophies, XP, achievements,
+                      // skills, wrapped, rewards, inventory) collapse into
+                      // this single tab's top-tabs. Research (Material 3)
+                      // caps bottom nav at 5; we preserved that by renaming
+                      // rather than adding a 6th tab.
+                      child: _ExpandableNavItem(
+                        icon: Icons.stars_outlined,
+                        selectedIcon: Icons.stars_rounded,
+                        label: 'You',
+                        isSelected: selectedIndex == 4,
+                        onTap: () => onItemTapped(4),
+                        accentColor: accentColor,
+                        mutedColor: iconMuted,
+                        isDark: isDark,
+                      ),
+                    ),
+                  ),
                 ],
               ),
-            ),
             ),
           ),
         ],
@@ -359,15 +361,19 @@ class _ExpandableNavItem extends StatelessWidget {
         onTap();
       },
       behavior: HitTestBehavior.opaque,
-      child: AnimatedContainer(
+      // Center the pill within an Expanded slot so the active-state fill
+      // hugs the icon/label instead of stretching the entire slot width.
+      child: Align(
+        alignment: Alignment.center,
+        child: AnimatedContainer(
         duration: const Duration(milliseconds: 220),
         curve: Curves.easeOutCubic,
-        padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 5),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
         decoration: BoxDecoration(
           color: isSelected
               ? accentColor.withValues(alpha: isDark ? 0.15 : 0.12)
               : Colors.transparent,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(14),
         ),
         // Icon over an always-visible label so every tab is named. The icon
         // still plays the spin + scale pop on selection.
@@ -396,6 +402,7 @@ class _ExpandableNavItem extends StatelessWidget {
             ),
           ],
         ),
+      ),
       ),
     );
   }

@@ -14,6 +14,7 @@ import 'package:flutter/material.dart';
 import '../../../core/services/pre_set_insight_engine.dart';
 import '../../../core/theme/accent_color_provider.dart';
 import '../../../core/utils/weight_utils.dart';
+import '../../../widgets/glass_sheet.dart';
 
 Future<void> showSessionDetailSheet({
   required BuildContext context,
@@ -23,16 +24,16 @@ Future<void> showSessionDetailSheet({
   required bool isTimed,
   String? exerciseName,
 }) {
-  return showModalBottomSheet(
+  return showGlassSheet<void>(
     context: context,
-    backgroundColor: Colors.transparent,
-    isScrollControlled: true,
-    builder: (ctx) => _SessionDetailSheet(
-      session: session,
-      useKg: useKg,
-      isBodyweight: isBodyweight,
-      isTimed: isTimed,
-      exerciseName: exerciseName,
+    builder: (ctx) => GlassSheet(
+      child: _SessionDetailSheet(
+        session: session,
+        useKg: useKg,
+        isBodyweight: isBodyweight,
+        isTimed: isTimed,
+        exerciseName: exerciseName,
+      ),
     ),
   );
 }
@@ -56,7 +57,6 @@ class _SessionDetailSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final accent = AccentColorScope.of(context).getColor(isDark);
-    final bg = isDark ? const Color(0xFF0A0A0A) : Colors.white;
     final fg = isDark ? Colors.white : const Color(0xFF0A0A0A);
 
     final sets = session.workingSets;
@@ -82,27 +82,12 @@ class _SessionDetailSheet extends StatelessWidget {
       dateLabel = session.dateIso;
     }
 
-    return Container(
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
-      ),
-      padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Center(
-            child: Container(
-              width: 40,
-              height: 4,
-              margin: const EdgeInsets.only(bottom: 14),
-              decoration: BoxDecoration(
-                color: fg.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          ),
           if (exerciseName != null)
             Text(
               exerciseName!,

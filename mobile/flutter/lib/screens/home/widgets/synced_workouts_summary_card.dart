@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/workout.dart';
 import '../../../data/services/haptic_service.dart';
+import '../../../widgets/glass_sheet.dart';
+import '../../../widgets/main_shell.dart' show floatingNavBarVisibleProvider;
 
 /// Single carousel slide that aggregates all Health-Connect / Apple-Health
 /// synced workouts for one day. Replaces the prior "one cyan card per synced
@@ -42,16 +45,24 @@ class SyncedWorkoutsSummaryCard extends StatelessWidget {
     return GestureDetector(
       onTap: () {
         HapticService.light();
-        showModalBottomSheet(
+        final container = ProviderScope.containerOf(context, listen: false);
+        container.read(floatingNavBarVisibleProvider.notifier).state = false;
+        showGlassSheet<void>(
           context: context,
-          backgroundColor: Colors.transparent,
-          isScrollControlled: true,
-          builder: (_) => _SyncedWorkoutsSheet(
-            date: date,
-            workouts: workouts,
-            isToday: isToday,
+          builder: (_) => GlassSheet(
+            child: _SyncedWorkoutsSheet(
+              date: date,
+              workouts: workouts,
+              isToday: isToday,
+            ),
           ),
-        );
+        ).whenComplete(() {
+          Future.microtask(() {
+            try {
+              container.read(floatingNavBarVisibleProvider.notifier).state = true;
+            } catch (_) {}
+          });
+        });
       },
       child: Container(
         decoration: BoxDecoration(

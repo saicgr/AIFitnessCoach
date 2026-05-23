@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/utils/default_weights.dart';
+import '../../../widgets/glass_sheet.dart';
 import '../../../data/models/exercise.dart';
 
 /// Represents a single set's data (current session)
@@ -347,15 +348,12 @@ class _ExerciseSetTrackerState extends State<ExerciseSetTracker> {
     HapticFeedback.selectionClick();
     final muscle = widget.exercise.muscleGroup;
     int draft = currentSeconds;
-    final picked = await showModalBottomSheet<int>(
+    final picked = await showGlassSheet<int>(
       context: context,
-      backgroundColor: AppColors.elevated,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
       builder: (sheetCtx) {
-        return StatefulBuilder(
+        return GlassSheet(
+          opaque: true,
+          child: StatefulBuilder(
           builder: (ctx, setSheetState) {
             void bump(int delta) {
               setSheetState(() {
@@ -459,6 +457,7 @@ class _ExerciseSetTrackerState extends State<ExerciseSetTracker> {
               ),
             );
           },
+        ),
         );
       },
     );

@@ -25,6 +25,7 @@ import 'share_artifact_card.dart';
 import 'report_message_sheet.dart';
 import 'voice_message_widget.dart';
 import 'chat_media_widgets.dart';
+import '../../../widgets/glass_sheet.dart';
 
 /// A single chat message bubble (user, assistant, system, or error)
 class ChatMessageBubble extends ConsumerWidget {
@@ -532,21 +533,13 @@ class ChatMessageBubble extends ConsumerWidget {
   }
 
   void _showMessageContextMenu(BuildContext context, WidgetRef ref, bool isUser) {
-    showModalBottomSheet(
+    showGlassSheet<void>(
       context: context,
-      backgroundColor: Colors.transparent,
       builder: (ctx) {
-        final isDark = Theme.of(ctx).brightness == Brightness.dark;
-        return Container(
-          decoration: BoxDecoration(
-            color: isDark ? AppColors.elevated : Colors.white,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-          ),
-          padding: const EdgeInsets.fromLTRB(0, 8, 0, 0),
-          child: SafeArea(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
+        return GlassSheet(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
                 ListTile(
                   leading: const Icon(Icons.copy, size: 20),
                   title: const Text('Copy'),
@@ -634,7 +627,6 @@ class ChatMessageBubble extends ConsumerWidget {
                 const SizedBox(height: 8),
               ],
             ),
-          ),
         );
       },
     );

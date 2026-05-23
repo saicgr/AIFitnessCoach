@@ -20,6 +20,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/api_constants.dart';
 import '../../core/theme/theme_colors.dart';
 import '../../data/services/api_client.dart';
+import '../../widgets/glass_sheet.dart';
 import '../../data/services/haptic_service.dart';
 
 class FoodLoggingRulesScreen extends ConsumerStatefulWidget {
@@ -468,15 +469,12 @@ class _FoodLoggingRulesScreenState
     final controller = TextEditingController(text: initial);
     final isEdit = ruleId != null;
 
-    await showModalBottomSheet<void>(
+    await showGlassSheet<void>(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: colors.elevated,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
       builder: (ctx) {
-        return Padding(
+        return GlassSheet(
+          opaque: true,
+          child: Padding(
           padding: EdgeInsets.only(
             left: 20,
             right: 20,
@@ -541,6 +539,7 @@ class _FoodLoggingRulesScreenState
               ),
             ],
           ),
+        ),
         );
       },
     );

@@ -2925,39 +2925,37 @@ class LoggedMealsSection extends StatelessWidget {
 
   void _showInflammationInfo(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    showModalBottomSheet(
+    showGlassSheet<void>(
       context: context,
-      backgroundColor: isDark ? const Color(0xFF1A1A1A) : Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.local_fire_department, color: Colors.orange),
-                const SizedBox(width: 8),
-                Text('Inflammation Score', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold,
-                  color: isDark ? Colors.white : Colors.black)),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Text('Rates how inflammatory a food is based on processing level, fat profile, sugar content, fiber, and antioxidant properties.',
-              style: TextStyle(fontSize: 14, color: isDark ? Colors.white70 : Colors.black87, height: 1.5)),
-            const SizedBox(height: 16),
-            _buildInfoRow('1-3', 'Anti-inflammatory', Colors.green),
-            _buildInfoRow('4-5', 'Neutral', Colors.teal),
-            _buildInfoRow('6-7', 'Mildly inflammatory', Colors.orange),
-            _buildInfoRow('8-10', 'Inflammatory', Colors.red),
-            const SizedBox(height: 16),
-            Text('Lower is better for reducing body inflammation and gut health.',
-              style: TextStyle(fontSize: 13, color: isDark ? Colors.white54 : Colors.black54, fontStyle: FontStyle.italic)),
-            const SizedBox(height: 8),
-          ],
+      builder: (context) => GlassSheet(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.local_fire_department, color: Colors.orange),
+                  const SizedBox(width: 8),
+                  Text('Inflammation Score', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold,
+                    color: isDark ? Colors.white : Colors.black)),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Text('Rates how inflammatory a food is based on processing level, fat profile, sugar content, fiber, and antioxidant properties.',
+                style: TextStyle(fontSize: 14, color: isDark ? Colors.white70 : Colors.black87, height: 1.5)),
+              const SizedBox(height: 16),
+              _buildInfoRow('1-3', 'Anti-inflammatory', Colors.green),
+              _buildInfoRow('4-5', 'Neutral', Colors.teal),
+              _buildInfoRow('6-7', 'Mildly inflammatory', Colors.orange),
+              _buildInfoRow('8-10', 'Inflammatory', Colors.red),
+              const SizedBox(height: 16),
+              Text('Lower is better for reducing body inflammation and gut health.',
+                style: TextStyle(fontSize: 13, color: isDark ? Colors.white54 : Colors.black54, fontStyle: FontStyle.italic)),
+              const SizedBox(height: 8),
+            ],
+          ),
         ),
       ),
     );
@@ -2987,37 +2985,35 @@ class LoggedMealsSection extends StatelessWidget {
 
   void _showUltraProcessedInfo(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    showModalBottomSheet(
+    showGlassSheet<void>(
       context: context,
-      backgroundColor: isDark ? const Color(0xFF1A1A1A) : Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.warning_amber_rounded, color: Colors.red),
-                const SizedBox(width: 8),
-                Text('Ultra-Processed Foods', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold,
-                  color: isDark ? Colors.white : Colors.black)),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Text('Ultra-processed foods (NOVA Group 4) contain industrial additives like emulsifiers, hydrogenated oils, artificial sweeteners, and protein isolates — substances not found in home cooking.',
-              style: TextStyle(fontSize: 14, color: isDark ? Colors.white70 : Colors.black87, height: 1.5)),
-            const SizedBox(height: 12),
-            Text('Research links regular consumption to increased inflammation, obesity, heart disease, and digestive issues.',
-              style: TextStyle(fontSize: 14, color: isDark ? Colors.white70 : Colors.black87, height: 1.5)),
-            const SizedBox(height: 12),
-            Text('Examples: soft drinks, instant noodles, packaged snacks, chicken nuggets, most breakfast cereals.',
-              style: TextStyle(fontSize: 13, color: isDark ? Colors.white54 : Colors.black54, fontStyle: FontStyle.italic)),
-            const SizedBox(height: 8),
-          ],
+      builder: (context) => GlassSheet(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.warning_amber_rounded, color: Colors.red),
+                  const SizedBox(width: 8),
+                  Text('Ultra-Processed Foods', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold,
+                    color: isDark ? Colors.white : Colors.black)),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Text('Ultra-processed foods (NOVA Group 4) contain industrial additives like emulsifiers, hydrogenated oils, artificial sweeteners, and protein isolates — substances not found in home cooking.',
+                style: TextStyle(fontSize: 14, color: isDark ? Colors.white70 : Colors.black87, height: 1.5)),
+              const SizedBox(height: 12),
+              Text('Research links regular consumption to increased inflammation, obesity, heart disease, and digestive issues.',
+                style: TextStyle(fontSize: 14, color: isDark ? Colors.white70 : Colors.black87, height: 1.5)),
+              const SizedBox(height: 12),
+              Text('Examples: soft drinks, instant noodles, packaged snacks, chicken nuggets, most breakfast cereals.',
+                style: TextStyle(fontSize: 13, color: isDark ? Colors.white54 : Colors.black54, fontStyle: FontStyle.italic)),
+              const SizedBox(height: 8),
+            ],
+          ),
         ),
       ),
     );
@@ -3305,17 +3301,12 @@ class _EditableFoodItemsListState extends State<_EditableFoodItemsList> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final sheetTextPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final sheetTextMuted = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
-    final bg = isDark ? const Color(0xFF1C1C1E) : Colors.white;
 
-    showModalBottomSheet(
+    showGlassSheet<void>(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: bg,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
       builder: (ctx) {
-        return StatefulBuilder(builder: (ctx, setSheetState) {
+        return GlassSheet(
+          child: StatefulBuilder(builder: (ctx, setSheetState) {
           bool isAnalyzing = false;
 
           Future<void> analyzeFood() async {
@@ -3357,21 +3348,11 @@ class _EditableFoodItemsListState extends State<_EditableFoodItemsList> {
           }
 
           return Padding(
-            padding: EdgeInsets.fromLTRB(20, 16, 20, MediaQuery.of(ctx).viewInsets.bottom + 20),
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Center(
-                  child: Container(
-                    width: 40, height: 4,
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade400,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
                 Text(
                   isSwap ? 'Swap $existingName' : 'Add Item',
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: sheetTextPrimary),
@@ -3524,7 +3505,8 @@ class _EditableFoodItemsListState extends State<_EditableFoodItemsList> {
               ],
             ),
           );
-        });
+        }),
+        );
       },
     );
   }

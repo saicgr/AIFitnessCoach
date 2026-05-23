@@ -8,6 +8,7 @@ import '../../core/services/posthog_service.dart';
 import '../../data/services/api_client.dart';
 import 'pre_auth_quiz_data.dart';
 import 'founder_note_sheet.dart';
+import '../../widgets/glass_sheet.dart';
 import '../../widgets/hold_to_confirm_button.dart';
 
 /// Commitment Pact Screen — Onboarding v5
@@ -94,35 +95,17 @@ class _CommitmentPactScreenState extends ConsumerState<CommitmentPactScreen> {
           eventName: 'onboarding_commitment_pact_skip_intent',
         );
 
-    final action = await showModalBottomSheet<String>(
+    final action = await showGlassSheet<String>(
       context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: false,
       builder: (sheetCtx) {
-        return Container(
-          decoration: BoxDecoration(
-            color: surface,
-            borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(20)),
-          ),
-          padding: const EdgeInsets.fromLTRB(24, 14, 24, 24),
-          child: SafeArea(
-            top: false,
+        return GlassSheet(
+          opaque: true,
+          padding: const EdgeInsets.fromLTRB(24, 0, 24, 12),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Center(
-                  child: Container(
-                    width: 36,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: textSecondary.withValues(alpha: 0.25),
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 18),
+                const SizedBox(height: 4),
                 Text(
                   'Skip the commitment?',
                   textAlign: TextAlign.center,
@@ -185,7 +168,6 @@ class _CommitmentPactScreenState extends ConsumerState<CommitmentPactScreen> {
                 ),
               ],
             ),
-          ),
         );
       },
     );

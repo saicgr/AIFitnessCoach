@@ -323,37 +323,25 @@ extension __ChatScreenStateExt on _ChatScreenState {
     ref.read(usageTrackingProvider.notifier).fetchLimits();
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    showModalBottomSheet(
+    final container = ProviderScope.containerOf(context, listen: false);
+    container.read(floatingNavBarVisibleProvider.notifier).state = false;
+    showGlassSheet<void>(
       context: context,
-      backgroundColor: isDark ? const Color(0xFF1C1C1E) : Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
       builder: (ctx) {
         // Use Consumer so the sheet rebuilds when fetchLimits() completes
-        return Consumer(
+        return GlassSheet(
+          child: Consumer(
           builder: (ctx, sheetRef, _) {
             final usageState = sheetRef.watch(usageTrackingProvider);
             final features = usageState.limits.entries.toList()
               ..sort((a, b) => a.key.compareTo(b.key));
 
             return Padding(
-              padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+              padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Center(
-                    child: Container(
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: isDark ? Colors.white24 : Colors.grey.shade300,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
                   Text(
                     "Today's Usage",
                     style: TextStyle(
@@ -480,9 +468,16 @@ extension __ChatScreenStateExt on _ChatScreenState {
               ),
             );
           },
+        ),
         );
       },
-    );
+    ).whenComplete(() {
+      Future.microtask(() {
+        try {
+          container.read(floatingNavBarVisibleProvider.notifier).state = true;
+        } catch (_) {}
+      });
+    });
   }
 
 
@@ -547,21 +542,16 @@ extension __ChatScreenStateExt on _ChatScreenState {
   void _showMiniMediaChoiceForAction(ChatQuickAction action) {
     final isVideo = action.mediaMode == ChatMediaMode.video;
 
-    showModalBottomSheet(
+    final container = ProviderScope.containerOf(context, listen: false);
+    container.read(floatingNavBarVisibleProvider.notifier).state = false;
+    showGlassSheet<void>(
       context: context,
-      backgroundColor: Colors.transparent,
       builder: (ctx) {
         final colors = ThemeColors.of(ctx);
-        final isDark = colors.isDark;
 
-        return Container(
-          decoration: BoxDecoration(
-            color: isDark ? AppColors.elevated : Colors.white,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-          ),
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-          child: SafeArea(
-            child: Column(
+        return GlassSheet(
+          padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
+          child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -639,10 +629,15 @@ extension __ChatScreenStateExt on _ChatScreenState {
                 const SizedBox(height: 12),
               ],
             ),
-          ),
         );
       },
-    );
+    ).whenComplete(() {
+      Future.microtask(() {
+        try {
+          container.read(floatingNavBarVisibleProvider.notifier).state = true;
+        } catch (_) {}
+      });
+    });
   }
 
 

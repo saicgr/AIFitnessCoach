@@ -13,6 +13,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/services/haptic_service.dart';
+import '../../../widgets/glass_sheet.dart';
 import 'set_rail.dart';
 import 'set_rail_overflow_row.dart';
 
@@ -23,13 +24,13 @@ Future<int?> showSetRailOverflowSheet({
   required List<RailSetSummary> sets,
   required int currentIndex,
 }) {
-  return showModalBottomSheet<int>(
+  return showGlassSheet<int>(
     context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
-    builder: (ctx) => SetRailOverflowSheet(
-      sets: sets,
-      currentIndex: currentIndex,
+    builder: (ctx) => GlassSheet(
+      child: SetRailOverflowSheet(
+        sets: sets,
+        currentIndex: currentIndex,
+      ),
     ),
   );
 }

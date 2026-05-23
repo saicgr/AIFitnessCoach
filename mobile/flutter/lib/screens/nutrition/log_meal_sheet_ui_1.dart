@@ -1878,11 +1878,9 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
           _isLoading = false;
           _showLoadingIndicator = false;
         });
-        await showModalBottomSheet<void>(
+        await showGlassSheet<void>(
           context: context,
-          isScrollControlled: true,
-          backgroundColor: Colors.transparent,
-          builder: (_) => MenuAnalysisSheet(
+          builder: (_) => GlassSheet(child: MenuAnalysisSheet(
             foodItems: initial,
             analysisType: type,
             isDark: widget.isDark,
@@ -1903,7 +1901,7 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
                 Navigator.of(context).pop();
               }
             },
-          ),
+          )),
         );
       }
 
@@ -2165,11 +2163,9 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
       final restaurantName = payload['restaurant_name'] as String?;
 
       if (!mounted) return;
-      showModalBottomSheet<void>(
+      showGlassSheet<void>(
         context: context,
-        isScrollControlled: true,
-        backgroundColor: Colors.transparent,
-        builder: (_) => MenuAnalysisSheet(
+        builder: (_) => GlassSheet(child: MenuAnalysisSheet(
           foodItems: foodItems,
           analysisType: analysisType,
           isDark: widget.isDark,
@@ -2192,7 +2188,7 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
               Navigator.of(context).pop(); // close LogMealSheet
             }
           },
-        ),
+        )),
       );
     } catch (e) {
       _loadingDelayTimer?.cancel();
@@ -2420,11 +2416,9 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
       const SnackBar(content: Text('Menu updated')),
     );
 
-    await showModalBottomSheet<void>(
+    await showGlassSheet<void>(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => MenuAnalysisSheet(
+      builder: (_) => GlassSheet(child: MenuAnalysisSheet(
         foodItems: refreshedItems,
         analysisType: refreshedType,
         isDark: widget.isDark,
@@ -2453,7 +2447,7 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
             Navigator.of(context).pop(); // close LogMealSheet
           }
         },
-      ),
+      )),
     );
   }
 

@@ -241,29 +241,15 @@ extension __SettingsScreenStateExt on _SettingsScreenState {
       ),
     ];
 
-    showModalBottomSheet(
+    showGlassSheet<void>(
       context: context,
-      backgroundColor: isDark ? AppColors.pureBlack : AppColorsLight.pureWhite,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) => SafeArea(
+      builder: (ctx) => GlassSheet(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Center(
-                child: Container(
-                  width: 36, height: 4,
-                  decoration: BoxDecoration(
-                    color: textMuted.withValues(alpha: 0.3),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
               Text('Tutorials & Hints', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: textPrimary)),
               const SizedBox(height: 4),
               Text('Replay the onboarding walkthrough, individual screen tours, or reset inline hints.', style: TextStyle(fontSize: 13, color: textMuted)),

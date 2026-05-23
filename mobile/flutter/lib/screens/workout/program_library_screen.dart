@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/accent_color_provider.dart';
+import '../../widgets/glass_sheet.dart';
 import '../../data/models/program_template.dart';
 import '../../data/repositories/program_template_repository.dart';
 import '../../data/services/haptic_service.dart';
@@ -310,11 +311,9 @@ class _ProgramLibraryScreenState extends ConsumerState<ProgramLibraryScreen> {
 
   void _openPreview(ProgramLibraryCard card) {
     HapticService.light();
-    showModalBottomSheet<void>(
+    showGlassSheet<void>(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => _ProgramPreviewSheet(card: card),
+      builder: (_) => GlassSheet(child: _ProgramPreviewSheet(card: card)),
     );
   }
 }

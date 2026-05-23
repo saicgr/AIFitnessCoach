@@ -877,26 +877,13 @@ class _FoodLibraryScreenState extends ConsumerState<FoodLibraryScreen>
         isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
-    final choice = await showModalBottomSheet<String>(
+    final choice = await showGlassSheet<String>(
       context: context,
-      backgroundColor: elevated,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) => SafeArea(
+      builder: (ctx) => GlassSheet(
+        opaque: true,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const SizedBox(height: 8),
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: textMuted.withValues(alpha: 0.4),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(height: 8),
             ListTile(
               leading: Icon(Icons.restaurant_menu_rounded, color: textPrimary),
               title: Text('Custom food',
@@ -937,14 +924,12 @@ class _FoodLibraryScreenState extends ConsumerState<FoodLibraryScreen>
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
 
-    final result = await showModalBottomSheet<CustomFoodResult>(
+    final result = await showGlassSheet<CustomFoodResult>(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: elevated,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      builder: (ctx) => GlassSheet(
+        opaque: true,
+        child: CustomFoodBuilderSheet(userId: _userId!),
       ),
-      builder: (ctx) => CustomFoodBuilderSheet(userId: _userId!),
     );
 
     if (result == null || !mounted) return;

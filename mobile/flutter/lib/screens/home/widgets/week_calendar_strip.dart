@@ -8,6 +8,10 @@ import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/services/haptic_service.dart';
 
 /// Persisted collapsed state for the week calendar strip.
+///
+/// Collapsed = strip shows a single-line summary of the selected date with
+/// an expand chevron. Hidden ([weekCalendarHiddenProvider]) is different —
+/// the strip isn't rendered at all.
 final weekCalendarCollapsedProvider =
     StateNotifierProvider<_CollapsedNotifier, bool>((ref) {
   return _CollapsedNotifier();
@@ -17,6 +21,33 @@ class _CollapsedNotifier extends StateNotifier<bool> {
   static const _key = 'week_calendar_collapsed';
 
   _CollapsedNotifier() : super(false) {
+    _load();
+  }
+
+  Future<void> _load() async {
+    final prefs = await SharedPreferences.getInstance();
+    state = prefs.getBool(_key) ?? false;
+  }
+
+  Future<void> toggle() async {
+    state = !state;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_key, state);
+  }
+}
+
+/// Persisted fully-hidden state — when true the week calendar strip is not
+/// rendered at all (no collapsed pill, nothing). The collapsed/expanded
+/// state is independent and remembered for when the strip is re-shown.
+final weekCalendarHiddenProvider =
+    StateNotifierProvider<_HiddenNotifier, bool>((ref) {
+  return _HiddenNotifier();
+});
+
+class _HiddenNotifier extends StateNotifier<bool> {
+  static const _key = 'week_calendar_hidden';
+
+  _HiddenNotifier() : super(false) {
     _load();
   }
 

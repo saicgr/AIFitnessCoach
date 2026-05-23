@@ -204,20 +204,14 @@ class _InputBarState extends State<_InputBar> {
     final colors = ThemeColors.of(context);
     final isDark = colors.isDark;
 
-    showModalBottomSheet(
+    showGlassSheet<void>(
       context: context,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => Container(
-        decoration: BoxDecoration(
-          color: isDark ? AppColors.elevated : Colors.white,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-        child: SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+      builder: (ctx) => GlassSheet(
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
               Text(
                 'Add Video',
                 style: TextStyle(
@@ -282,8 +276,7 @@ class _InputBarState extends State<_InputBar> {
             ],
           ),
         ),
-      ),
-    );
+      );
   }
 
   void _handleSend() {

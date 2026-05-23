@@ -95,6 +95,9 @@ class HomeWeekStrip extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Master visibility switch from the home overflow menu's "Hide day strip".
+    if (ref.watch(weekCalendarHiddenProvider)) return const SizedBox.shrink();
+
     final user = ref.watch(currentUserProvider).valueOrNull;
     if (user == null) return const SizedBox.shrink();
 

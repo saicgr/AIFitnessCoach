@@ -117,18 +117,12 @@ extension _MeasurementsTabStateUI on _MeasurementsTabState {
   void _showMetricPicker(
       BuildContext context, Color accent, Color textPrimary, bool isDark) {
     final state = ref.read(measurementsProvider);
-    showModalBottomSheet(
+    showGlassSheet<void>(
       context: context,
-      isScrollControlled: true,
-      backgroundColor:
-          isDark ? AppColors.elevated : AppColorsLight.elevated,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
       builder: (sheetCtx) {
-        return SafeArea(
+        return GlassSheet(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(8, 12, 8, 8),
+            padding: const EdgeInsets.fromLTRB(8, 4, 8, 8),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,

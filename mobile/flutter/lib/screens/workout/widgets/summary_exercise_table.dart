@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/workout_design.dart';
+import '../../../widgets/glass_sheet.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // DATA MODELS
@@ -517,31 +518,17 @@ void _showSetNotesSheet({
   final fg = isDark ? Colors.white : Colors.black87;
   final muted = isDark ? Colors.white60 : Colors.black54;
 
-  showModalBottomSheet<void>(
+  showGlassSheet<void>(
     context: context,
-    backgroundColor: bg,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-    ),
     builder: (ctx) {
-      return SafeArea(
+      return GlassSheet(
+        opaque: true,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Center(
-                child: Container(
-                  width: 36,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: muted.withValues(alpha: 0.4),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
               Row(
                 children: [
                   Icon(Icons.sticky_note_2_rounded, color: fg, size: 22),

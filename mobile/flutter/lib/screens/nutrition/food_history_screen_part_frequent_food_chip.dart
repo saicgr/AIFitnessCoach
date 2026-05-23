@@ -548,7 +548,6 @@ class _EditFoodLogSheetState extends ConsumerState<_EditFoodLogSheet> {
     final textPrimary = widget.isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary = widget.isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final textMuted = widget.isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    final bg = widget.isDark ? AppColors.elevated : AppColorsLight.elevated;
     // Use the user's selected accent color so the primary CTA reads as
     // "action" — a fixed teal button looked disabled in some themes.
     final accent = ref.watch(accentColorProvider).getColor(widget.isDark);
@@ -560,29 +559,10 @@ class _EditFoodLogSheetState extends ConsumerState<_EditFoodLogSheet> {
     final hasInflammation = widget.log.inflammationScore != null;
     final hasAiTip = widget.log.aiFeedback != null && widget.log.aiFeedback!.trim().isNotEmpty;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom + 16,
-      ),
-      child: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Drag handle
-            Container(
-              margin: const EdgeInsets.only(top: 12),
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: textMuted.withValues(alpha: 0.3),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-
+    return SingleChildScrollView(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
             // Header row: thumbnail (if present) + title + subtitle.
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 4),
@@ -724,8 +704,7 @@ class _EditFoodLogSheetState extends ConsumerState<_EditFoodLogSheet> {
             const SizedBox(height: 8),
           ],
         ),
-      ),
-    );
+      );
   }
 }
 

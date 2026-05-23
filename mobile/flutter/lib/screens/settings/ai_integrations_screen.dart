@@ -9,6 +9,7 @@ import '../../core/theme/accent_color_provider.dart';
 import '../../data/models/mcp_integration.dart';
 import '../../data/providers/mcp_integrations_provider.dart';
 import 'package:fitwiz/core/constants/branding.dart';
+import '../../widgets/glass_sheet.dart';
 
 /// "AI Integrations" settings screen.
 ///
@@ -154,16 +155,13 @@ class AiIntegrationsScreen extends ConsumerWidget {
   ) async {
     HapticFeedback.selectionClick();
 
-    final result = await showModalBottomSheet<_CreateFlowResult>(
+    final result = await showGlassSheet<_CreateFlowResult>(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (sheetContext) => _CreateConnectionSheet(
-        accent: accent,
-        isDark: isDark,
+      builder: (sheetContext) => GlassSheet(
+        child: _CreateConnectionSheet(
+          accent: accent,
+          isDark: isDark,
+        ),
       ),
     );
 
@@ -190,19 +188,18 @@ class AiIntegrationsScreen extends ConsumerWidget {
     }
 
     // Show the "Connection Ready" sheet with copy buttons.
-    await showModalBottomSheet<void>(
+    await showGlassSheet<void>(
       context: context,
-      isScrollControlled: true,
       isDismissible: false, // user must explicitly acknowledge
       enableDrag: false,
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (sheetContext) => _ConnectionReadySheet(
-        creation: created,
-        accent: accent,
-        isDark: isDark,
+      builder: (sheetContext) => GlassSheet(
+        opaque: true,
+        showHandle: false,
+        child: _ConnectionReadySheet(
+          creation: created,
+          accent: accent,
+          isDark: isDark,
+        ),
       ),
     );
   }

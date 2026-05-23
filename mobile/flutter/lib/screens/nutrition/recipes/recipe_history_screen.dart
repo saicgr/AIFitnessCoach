@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/accent_color_provider.dart';
 import '../../../core/widgets/skeleton/skeleton.dart';
+import '../../../widgets/glass_sheet.dart';
 import '../../../data/models/recipe_version.dart';
 import '../../../data/repositories/recipe_repository.dart';
 
@@ -76,9 +77,9 @@ class _RecipeHistoryScreenState extends ConsumerState<RecipeHistoryScreen> {
     try {
       final diff = await ref.read(recipeRepositoryProvider).diffVersions(widget.recipeId, a.versionNumber, b.versionNumber);
       if (!mounted) return;
-      showModalBottomSheet(
-        context: context, isScrollControlled: true,
-        builder: (_) => _DiffSheet(diff: diff, isDark: widget.isDark),
+      showGlassSheet(
+        context: context,
+        builder: (_) => GlassSheet(child: _DiffSheet(diff: diff, isDark: widget.isDark)),
       );
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Diff failed: $e')));

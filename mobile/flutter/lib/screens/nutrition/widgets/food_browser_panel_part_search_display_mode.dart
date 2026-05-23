@@ -257,21 +257,21 @@ class _CountrySearchPill extends StatelessWidget {
     final isDarkLocal = isDark;
     final defaultCountry = await search.FoodSearchService.getDefaultCountry();
     if (!context.mounted) return;
-    showModalBottomSheet<void>(
+    showGlassSheet<void>(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => _CountryPickerSheet(
-        selected: selected,
-        defaultCountry: defaultCountry,
-        onChanged: (code) {
-          onChanged(code);
-          Navigator.of(context).pop();
-        },
-        onSetDefault: (code) {
-          search.FoodSearchService.setDefaultCountry(code);
-        },
-        isDark: isDarkLocal,
+      builder: (_) => GlassSheet(
+        child: _CountryPickerSheet(
+          selected: selected,
+          defaultCountry: defaultCountry,
+          onChanged: (code) {
+            onChanged(code);
+            Navigator.of(context).pop();
+          },
+          onSetDefault: (code) {
+            search.FoodSearchService.setDefaultCountry(code);
+          },
+          isDark: isDarkLocal,
+        ),
       ),
     );
   }

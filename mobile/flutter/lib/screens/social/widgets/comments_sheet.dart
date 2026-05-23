@@ -8,6 +8,8 @@ import '../../../core/theme/theme_colors.dart';
 import '../../../data/providers/social_provider.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../widgets/app_snackbar.dart';
+import '../../../widgets/glass_sheet.dart';
+import '../../../widgets/main_shell.dart' show floatingNavBarVisibleProvider;
 
 /// Comments Sheet - Bottom sheet showing comments for an activity
 class CommentsSheet extends ConsumerStatefulWidget {
@@ -456,9 +458,11 @@ class _CommentsSheetState extends ConsumerState<CommentsSheet> {
     int index,
     bool isOwn,
   ) {
-    showModalBottomSheet(
+    final container = ProviderScope.containerOf(context, listen: false);
+    container.read(floatingNavBarVisibleProvider.notifier).state = false;
+    showGlassSheet<void>(
       context: context,
-      builder: (context) => SafeArea(
+      builder: (context) => GlassSheet(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -485,7 +489,13 @@ class _CommentsSheetState extends ConsumerState<CommentsSheet> {
           ],
         ),
       ),
-    );
+    ).whenComplete(() {
+      Future.microtask(() {
+        try {
+          container.read(floatingNavBarVisibleProvider.notifier).state = true;
+        } catch (_) {}
+      });
+    });
   }
 
   DateTime _parseTimestamp(dynamic timestamp) {

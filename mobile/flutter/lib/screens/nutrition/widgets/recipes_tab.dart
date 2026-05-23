@@ -40,6 +40,7 @@ import '../grocery/grocery_lists_index_screen.dart';
 import '../meal_planner/meal_planner_screen.dart';
 import '../../../widgets/main_shell.dart' show floatingNavBarVisibleProvider;
 import '../../../widgets/liquid_glass_action_bar.dart';
+import '../../../widgets/glass_sheet.dart';
 import 'recipe_search_bar.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -489,22 +490,17 @@ class _QuickActions extends ConsumerWidget {
   Future<void> _openFridgePicker(
       BuildContext context, WidgetRef ref, String userId, bool isDark) async {
     final accent = ref.read(accentColorProvider).getColor(isDark);
-    final source = await showModalBottomSheet<ImageSource>(
+    final source = await showGlassSheet<ImageSource>(
       context: context,
-      backgroundColor:
-          isDark ? AppColors.elevated : AppColorsLight.elevated,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
       builder: (ctx) {
         final text = isDark
             ? AppColors.textPrimary
             : AppColorsLight.textPrimary;
         final muted =
             isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-        return SafeArea(
+        return GlassSheet(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1460,23 +1456,12 @@ class _MyRecipesGridState extends ConsumerState<_MyRecipesGrid> {
   }
 
   void _showRecipeContextMenu(BuildContext context, WidgetRef ref, RecipeSummary s) {
-    final muted =
-        widget.isDark ? AppColors.textMuted : AppColorsLight.textMuted;
-    showModalBottomSheet(
+    showGlassSheet<void>(
       context: context,
-      builder: (ctx) => SafeArea(
+      builder: (ctx) => GlassSheet(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const SizedBox(height: 8),
-            Container(
-              width: 40, height: 4,
-              decoration: BoxDecoration(
-                color: muted.withValues(alpha: 0.3),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(height: 8),
             ListTile(
               leading: const Icon(Icons.open_in_new, size: 20),
               title: const Text('Open'),

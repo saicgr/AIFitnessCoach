@@ -104,6 +104,7 @@ class _OverflowMenuButton extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final iconColor = isDark ? Colors.white70 : Colors.black54;
     final weekCollapsed = ref.watch(weekCalendarCollapsedProvider);
+    final weekHidden = ref.watch(weekCalendarHiddenProvider);
     return PopupMenuButton<String>(
       tooltip: 'More',
       icon: Icon(Icons.more_vert, size: 22, color: iconColor),
@@ -121,6 +122,9 @@ class _OverflowMenuButton extends ConsumerWidget {
             break;
           case 'toggle_week':
             ref.read(weekCalendarCollapsedProvider.notifier).toggle();
+            break;
+          case 'toggle_week_hidden':
+            ref.read(weekCalendarHiddenProvider.notifier).toggle();
             break;
           case 'my_space':
             context.push('/settings/homescreen');
@@ -141,17 +145,39 @@ class _OverflowMenuButton extends ConsumerWidget {
             ],
           ),
         ),
+        // Collapse: show single-line summary pill instead of the 7-day strip.
+        // Only meaningful when the strip is visible at all.
+        if (!weekHidden)
+          PopupMenuItem<String>(
+            value: 'toggle_week',
+            child: Row(
+              children: [
+                Icon(
+                  weekCollapsed ? Icons.expand_more : Icons.expand_less,
+                  size: 20,
+                  color: iconColor,
+                ),
+                const SizedBox(width: 12),
+                Text(weekCollapsed
+                    ? 'Expand week strip'
+                    : 'Collapse week strip'),
+              ],
+            ),
+          ),
+        // Hide: remove the strip entirely (no collapsed pill either).
         PopupMenuItem<String>(
-          value: 'toggle_week',
+          value: 'toggle_week_hidden',
           child: Row(
             children: [
               Icon(
-                weekCollapsed ? Icons.expand_more : Icons.expand_less,
+                weekHidden
+                    ? Icons.visibility_outlined
+                    : Icons.visibility_off_outlined,
                 size: 20,
                 color: iconColor,
               ),
               const SizedBox(width: 12),
-              Text(weekCollapsed ? 'Expand week view' : 'Collapse week view'),
+              Text(weekHidden ? 'Show day strip' : 'Hide day strip'),
             ],
           ),
         ),

@@ -21,6 +21,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../widgets/glass_sheet.dart';
 import '../../../core/providers/sound_preferences_provider.dart';
 import '../../../core/theme/theme_colors.dart';
 import '../../../data/services/sound_service.dart';
@@ -279,21 +280,21 @@ class _SoundCategoryRow extends StatelessWidget {
     final soundService = SoundService();
     final hasCustom = soundService.getCustomSoundPath(category) != null;
 
-    await showModalBottomSheet<void>(
+    await showGlassSheet<void>(
       context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
       builder: (sheetCtx) {
-        return _SoundPickerSheet(
-          title: title,
-          options: options,
-          currentSound: currentSound,
-          category: category,
-          hasCustom: hasCustom,
-          accent: accent,
-          isDark: isDark,
-          onChanged: onChanged,
-          onPreview: onPreview,
+        return GlassSheet(
+          child: _SoundPickerSheet(
+            title: title,
+            options: options,
+            currentSound: currentSound,
+            category: category,
+            hasCustom: hasCustom,
+            accent: accent,
+            isDark: isDark,
+            onChanged: onChanged,
+            onPreview: onPreview,
+          ),
         );
       },
     );

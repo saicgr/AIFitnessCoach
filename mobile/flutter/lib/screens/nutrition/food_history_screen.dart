@@ -14,6 +14,7 @@ import '../../data/services/api_client.dart';
 import '../../data/services/food_search_service.dart';
 import 'widgets/food_report_dialog.dart';
 import 'widgets/food_search_bar.dart';
+import '../../widgets/glass_sheet.dart';
 import '../../core/services/posthog_service.dart';
 import 'widgets/portion_amount_input.dart';
 
@@ -375,11 +376,10 @@ class _FoodHistoryScreenState extends ConsumerState<FoodHistoryScreen> {
 
   void _editFoodLog(FoodLog log) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    showModalBottomSheet(
+    showGlassSheet<void>(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => _EditFoodLogSheet(
+      builder: (ctx) => GlassSheet(
+        child: _EditFoodLogSheet(
         log: log,
         isDark: isDark,
         onSave: (multiplier) async {
@@ -416,6 +416,7 @@ class _FoodHistoryScreenState extends ConsumerState<FoodHistoryScreen> {
             );
           }
         },
+      ),
       ),
     );
   }

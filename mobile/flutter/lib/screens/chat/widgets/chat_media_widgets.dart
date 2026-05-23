@@ -4,6 +4,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/theme_colors.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../screens/nutrition/menu_analysis_sheet.dart';
+import '../../../widgets/glass_sheet.dart';
 
 /// Overlay shown on top of a video thumbnail while it is uploading or being analyzed.
 class MediaUploadOverlay extends StatefulWidget {
@@ -199,15 +200,15 @@ class FoodAnalysisSummaryCard extends StatelessWidget {
   }
 
   void _openMenuSheet(BuildContext context, bool isDark) {
-    showModalBottomSheet(
+    showGlassSheet<void>(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => MenuAnalysisSheet(
-        foodItems: foodItems,
-        analysisType: 'plate',
-        isDark: isDark,
-        onLogItems: (selected) => onViewAll?.call(selected),
+      builder: (_) => GlassSheet(
+        child: MenuAnalysisSheet(
+          foodItems: foodItems,
+          analysisType: 'plate',
+          isDark: isDark,
+          onLogItems: (selected) => onViewAll?.call(selected),
+        ),
       ),
     );
   }

@@ -9,6 +9,7 @@ import '../../data/providers/trend_series_provider.dart';
 import '../../data/services/haptic_service.dart';
 import '../../widgets/pill_app_bar.dart';
 import '../../widgets/glass_sheet.dart';
+import '../../widgets/main_shell.dart' show floatingNavBarVisibleProvider;
 
 
 part 'diabetes_dashboard_screen_part_glucose_status.dart';
@@ -335,7 +336,6 @@ class _DiabetesDashboardScreenState
   void _showLogGlucoseSheet(BuildContext context, bool isDark) {
     final glucoseController = TextEditingController();
     final notesController = TextEditingController();
-    final nearBlack = isDark ? AppColors.nearBlack : AppColorsLight.nearWhite;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final textPrimary =
@@ -473,7 +473,6 @@ class _DiabetesDashboardScreenState
     final unitsController = TextEditingController();
     final notesController = TextEditingController();
     String selectedType = 'rapid';
-    final nearBlack = isDark ? AppColors.nearBlack : AppColorsLight.nearWhite;
     final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final textPrimary =

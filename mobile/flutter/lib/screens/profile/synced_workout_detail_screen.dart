@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/constants/app_colors.dart';
+import '../../widgets/glass_sheet.dart';
 import '../../core/constants/synced_workout_kinds.dart';
 import '../../core/theme/accent_color_provider.dart';
 import '../../data/models/workout.dart';
@@ -91,10 +92,9 @@ class _SyncedWorkoutDetailScreenState
 
   Future<void> _delete() async {
     HapticService.selection();
-    final confirmed = await showModalBottomSheet<bool>(
+    final confirmed = await showGlassSheet<bool>(
       context: context,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => _DeleteSheet(),
+      builder: (ctx) => GlassSheet(opaque: true, child: _DeleteSheet()),
     );
     if (confirmed != true || !mounted) return;
 

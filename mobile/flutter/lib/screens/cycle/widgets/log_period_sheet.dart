@@ -7,12 +7,9 @@
 /// prediction.
 library;
 
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/constants/app_colors.dart';
 import '../../../data/providers/xp_provider.dart';
 import '../../../core/providers/user_provider.dart';
 import '../../../core/theme/accent_color_provider.dart';
@@ -20,39 +17,35 @@ import '../../../data/models/hormonal_health.dart';
 import '../../../data/providers/hormonal_health_provider.dart';
 import '../../../data/repositories/hormonal_health_repository.dart';
 import '../../../data/services/haptic_service.dart';
+import '../../../widgets/glass_sheet.dart';
+import '../../../widgets/main_shell.dart' show floatingNavBarVisibleProvider;
 import '../cycle_visuals.dart';
 
 /// Shows the period-logging sheet. Returns true when a period was written.
-Future<bool?> showLogPeriodSheet(BuildContext context) {
-  final isDark = Theme.of(context).brightness == Brightness.dark;
-  return showModalBottomSheet<bool>(
-    context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
-    barrierColor: Colors.black.withValues(alpha: 0.45),
-    builder: (_) => Padding(
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom,
+///
+/// Uses the canonical [GlassSheet] so the look matches every other sheet in
+/// the app. Hides the floating bottom nav while the sheet is open so the
+/// primary CTA can never be covered by it; restores it on dismiss.
+Future<bool?> showLogPeriodSheet(BuildContext context) async {
+  final container = ProviderScope.containerOf(context, listen: false);
+  container.read(floatingNavBarVisibleProvider.notifier).state = false;
+  try {
+    return await showGlassSheet<bool>(
+      context: context,
+      builder: (_) => const GlassSheet(
+        showHandle: true,
+        child: _LogPeriodBody(),
       ),
-      child: ClipRRect(
-        borderRadius:
-            const BorderRadius.vertical(top: Radius.circular(28)),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: Container(
-            decoration: BoxDecoration(
-              color: isDark
-                  ? Colors.black.withValues(alpha: 0.55)
-                  : Colors.white.withValues(alpha: 0.8),
-              borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(28)),
-            ),
-            child: const _LogPeriodBody(),
-          ),
-        ),
-      ),
-    ),
-  );
+    );
+  } finally {
+    // Restore on next microtask — same pattern as NavBarHiderMixin to avoid
+    // touching provider state during a locked finalizeTree phase.
+    Future.microtask(() {
+      try {
+        container.read(floatingNavBarVisibleProvider.notifier).state = true;
+      } catch (_) {}
+    });
+  }
 }
 
 class _LogPeriodBody extends ConsumerStatefulWidget {
@@ -80,29 +73,15 @@ class _LogPeriodBodyState extends ConsumerState<_LogPeriodBody> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final fg = isDark ? Colors.white : const Color(0xFF0A0A0A);
     final accent = AccentColorScope.of(context).getColor(isDark);
-    final textMuted =
-        isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final open = _openPeriod;
 
-    return SafeArea(
-      top: false,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 10, 20, 24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: textMuted.withValues(alpha: 0.3),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
+    // No SafeArea / no drag handle here — GlassSheet provides both.
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
             Row(
               children: [
                 Icon(Icons.water_drop_rounded,
@@ -193,8 +172,7 @@ class _LogPeriodBodyState extends ConsumerState<_LogPeriodBody> {
                 label: Text(_saving ? 'Saving…' : 'Save period'),
               ),
             ),
-          ],
-        ),
+        ],
       ),
     );
   }

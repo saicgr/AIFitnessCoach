@@ -15,6 +15,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../core/constants/app_spacing.dart';
+import '../../widgets/glass_sheet.dart';
 import '../../core/theme/theme_colors.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -437,14 +438,14 @@ class _ExerciseSafetyAuditScreenState
     final repo = ref.read(_repoProvider);
     final notifier = ref.read(_auditProvider.notifier);
 
-    showModalBottomSheet<void>(
+    showGlassSheet<void>(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => _ReviewModal(
-        exercise: exercise,
-        repo: repo,
-        onSaved: () => notifier.removeExercise(exercise.exerciseId),
+      builder: (_) => GlassSheet(
+        child: _ReviewModal(
+          exercise: exercise,
+          repo: repo,
+          onSaved: () => notifier.removeExercise(exercise.exerciseId),
+        ),
       ),
     );
   }

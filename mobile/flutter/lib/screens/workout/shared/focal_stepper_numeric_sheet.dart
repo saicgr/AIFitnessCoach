@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../core/theme/accent_color_provider.dart';
+import '../../../widgets/glass_sheet.dart';
 
 /// Shows a modal keyboard sheet for precise editing of the focal-stepper
 /// value. Resolves to the clamped new value, or `null` when the user
@@ -20,17 +21,18 @@ Future<double?> showFocalStepperNumericSheet({
   required double max,
   required String label,
 }) {
-  return showModalBottomSheet<double>(
+  return showGlassSheet<double>(
     context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
-    builder: (ctx) => _NumericEditSheet(
-      initial: initial,
-      unit: unit,
-      integerOnly: integerOnly,
-      min: min,
-      max: max,
-      label: label,
+    builder: (ctx) => GlassSheet(
+      opaque: true,
+      child: _NumericEditSheet(
+        initial: initial,
+        unit: unit,
+        integerOnly: integerOnly,
+        min: min,
+        max: max,
+        label: label,
+      ),
     ),
   );
 }

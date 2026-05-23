@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../../data/services/pending_referral_service.dart';
+import '../../../widgets/glass_sheet.dart';
 import '../../onboarding/widgets/onboarding_theme.dart';
 
 /// Pre-auth chip shown on the sign-in screen: "Got a code from a friend?"
@@ -44,11 +45,11 @@ class _PreAuthReferralChipState extends State<PreAuthReferralChip> {
 
   Future<void> _openSheet() async {
     HapticFeedback.selectionClick();
-    final entered = await showModalBottomSheet<String>(
+    final entered = await showGlassSheet<String>(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => _ReferralCodeSheet(initial: _pendingCode),
+      builder: (ctx) => GlassSheet(
+        child: _ReferralCodeSheet(initial: _pendingCode),
+      ),
     );
     if (entered == null) return;
 

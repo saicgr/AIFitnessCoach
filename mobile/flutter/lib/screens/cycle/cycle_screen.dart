@@ -16,6 +16,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/providers/user_provider.dart';
+import '../../widgets/glass_sheet.dart';
 import '../../data/models/hormonal_health.dart';
 import '../../data/providers/hormonal_health_provider.dart';
 import '../../data/providers/cycle_reminder_sync_provider.dart';
@@ -94,11 +95,9 @@ class _CycleScreenState extends ConsumerState<CycleScreen>
   }
 
   Future<void> _openCheckIn() async {
-    final saved = await showModalBottomSheet<bool>(
+    final saved = await showGlassSheet<bool>(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => const HormoneLogSheet(),
+      builder: (_) => const GlassSheet(child: HormoneLogSheet()),
     );
     if (saved == true && mounted) {
       _showMicroInsight('check-in');
@@ -163,14 +162,10 @@ class _CycleScreenState extends ConsumerState<CycleScreen>
   Future<void> _showModeSheet(CycleTrackingMode current) async {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final fg = isDark ? Colors.white : const Color(0xFF0A0A0A);
-    final picked = await showModalBottomSheet<CycleTrackingMode>(
+    final picked = await showGlassSheet<CycleTrackingMode>(
       context: context,
-      backgroundColor:
-          isDark ? AppColors.surface : AppColorsLight.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (_) => SafeArea(
+      builder: (_) => GlassSheet(
+        opaque: true,
         child: Padding(
           padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
           child: Column(

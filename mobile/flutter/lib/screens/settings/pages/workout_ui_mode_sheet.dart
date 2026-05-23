@@ -19,21 +19,17 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/providers/workout_ui_mode_provider.dart';
 import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/services/haptic_service.dart';
+import '../../../widgets/glass_sheet.dart';
 
 /// Entry point — mirrors the codebase's `showReplayTutorialsSheet` style.
 /// Pass `context` from a ConsumerStatefulWidget's `build`.
 Future<void> showWorkoutUiModeSheet(BuildContext context) {
-  return showModalBottomSheet<void>(
+  return showGlassSheet<void>(
     context: context,
-    // Transparent + clipBehavior so the BackdropFilter inside renders the
-    // frosted-glass effect over whatever is behind the sheet.
-    backgroundColor: Colors.transparent,
-    isScrollControlled: true,
-    clipBehavior: Clip.antiAlias,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+    builder: (_) => const GlassSheet(
+      showHandle: false,
+      child: _WorkoutUiModeSheet(),
     ),
-    builder: (_) => const _WorkoutUiModeSheet(),
   );
 }
 
@@ -57,46 +53,12 @@ class _WorkoutUiModeSheet extends ConsumerWidget {
         // ignore: deprecated_member_use_from_same_package
         rawMode == WorkoutUiMode.simple ? WorkoutUiMode.easy : rawMode;
 
-    // Frosted-glass backdrop — matches the visual language used by the rest
-    // of the bottom sheets in this app (exercise_detail_sheet, etc.).
-    return ClipRRect(
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 22, sigmaY: 22),
-        child: Container(
-          decoration: BoxDecoration(
-            color: isDark
-                ? Colors.black.withValues(alpha: 0.55)
-                : Colors.white.withValues(alpha: 0.75),
-            borderRadius:
-                const BorderRadius.vertical(top: Radius.circular(24)),
-            border: Border(
-              top: BorderSide(
-                color: isDark
-                    ? Colors.white.withValues(alpha: 0.12)
-                    : Colors.black.withValues(alpha: 0.08),
-                width: 0.5,
-              ),
-            ),
-          ),
-          child: SafeArea(
-            child: Padding(
+    return Padding(
               padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Center(
-                    child: Container(
-                      width: 36,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: textMuted.withValues(alpha: 0.3),
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
                   Text(
                     'Workout Mode',
                     style: TextStyle(
@@ -138,11 +100,7 @@ class _WorkoutUiModeSheet extends ConsumerWidget {
                   const SizedBox(height: 4),
                 ],
               ),
-            ),
-          ),
-        ),
-      ),
-    );
+            );
   }
 
   Future<void> _pick(

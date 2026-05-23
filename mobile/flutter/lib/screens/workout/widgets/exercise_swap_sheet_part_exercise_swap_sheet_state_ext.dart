@@ -482,35 +482,16 @@ extension __ExerciseSwapSheetStateExt on _ExerciseSwapSheetState {
     final glassSurface =
         isDark ? AppColors.glassSurface : AppColorsLight.glassSurface;
 
-    showModalBottomSheet(
+    showGlassSheet<void>(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => Container(
-        constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(context).size.height * 0.75,
-        ),
-        decoration: BoxDecoration(
-          color: isDark ? AppColors.surface : Colors.white,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        ),
+      builder: (ctx) => GlassSheet(
+        maxHeightFraction: 0.75,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Handle
-            Container(
-              margin: const EdgeInsets.only(top: 12),
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: textMuted.withOpacity(0.3),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-
             // Exercise image
             Padding(
-              padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
+              padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
               child: Container(
                 height: 180,
                 width: double.infinity,

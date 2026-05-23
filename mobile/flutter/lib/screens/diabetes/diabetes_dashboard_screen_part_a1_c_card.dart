@@ -287,14 +287,12 @@ class _RecentReadingsCard extends StatelessWidget {
                 onPressed: () {
                   HapticService.light();
                   // Show all glucose readings in a sheet
-                  showModalBottomSheet(
+                  final container = ProviderScope.containerOf(context, listen: false);
+                  container.read(floatingNavBarVisibleProvider.notifier).state = false;
+                  showGlassSheet<void>(
                     context: context,
-                    isScrollControlled: true,
-                    backgroundColor: isDark ? AppColors.elevated : Colors.white,
-                    shape: const RoundedRectangleBorder(
-                      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-                    ),
-                    builder: (_) => DraggableScrollableSheet(
+                    builder: (_) => GlassSheet(
+                      child: DraggableScrollableSheet(
                       expand: false,
                       initialChildSize: 0.7,
                       maxChildSize: 0.9,
@@ -303,16 +301,21 @@ class _RecentReadingsCard extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Center(child: Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey.withValues(alpha: 0.3), borderRadius: BorderRadius.circular(2)))),
-                            const SizedBox(height: 16),
                             Text('All Blood Glucose Readings', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textPrimary)),
                             const SizedBox(height: 16),
                             Expanded(child: ListView(controller: controller, children: const [Center(child: Text('No additional readings available'))])),
                           ],
                         ),
                       ),
+                      ),
                     ),
-                  );
+                  ).whenComplete(() {
+                    Future.microtask(() {
+                      try {
+                        container.read(floatingNavBarVisibleProvider.notifier).state = true;
+                      } catch (_) {}
+                    });
+                  });
                 },
                 child: Text(
                   'See All',

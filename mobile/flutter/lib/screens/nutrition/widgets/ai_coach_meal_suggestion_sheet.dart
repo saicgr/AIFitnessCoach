@@ -1034,12 +1034,10 @@ class _AiCoachMealSuggestionSheetState
         );
     final library = _pillLibrary(_ctx, accent);
 
-    final picked = await showModalBottomSheet<_CoachPill>(
+    final picked = await showGlassSheet<_CoachPill>(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
       builder: (sheetCtx) {
-        return _MorePillsSheet(library: library, accent: accent);
+        return GlassSheet(child: _MorePillsSheet(library: library, accent: accent));
       },
     );
 

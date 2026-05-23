@@ -13,6 +13,7 @@ import 'package:intl/intl.dart';
 import '../../core/constants/app_colors.dart';
 import '../../data/services/api_client.dart';
 import '../../widgets/pill_app_bar.dart';
+import '../../widgets/glass_sheet.dart';
 import 'menu_analysis_sheet.dart';
 
 class MenuAnalysisHistoryScreen extends ConsumerStatefulWidget {
@@ -480,9 +481,9 @@ class _Card extends StatelessWidget {
 
     return GestureDetector(
       onTap: onTap,
-      onLongPress: () => showModalBottomSheet(
+      onLongPress: () => showGlassSheet(
         context: context,
-        builder: (_) => SafeArea(
+        builder: (_) => GlassSheet(
           child: Column(mainAxisSize: MainAxisSize.min, children: [
             ListTile(
               leading: Icon(isPinned ? Icons.push_pin : Icons.push_pin_outlined),

@@ -1,0 +1,2630 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zealova — Today Score circle compositions</title>
+<style>
+  :root{
+    --bg:#F7F6F2;
+    --card:#FFFFFF;
+    --ink:#16161A;
+    --muted:#7A7A82;
+    --line:#E8E6E0;
+    --train:#EC8B2C;
+    --nourish:#3FA66B;
+    --move:#3E8FD0;
+    --sleep:#8B5CF6;
+    --shadow:0 1px 2px rgba(20,20,30,.04), 0 8px 24px rgba(20,20,30,.04);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Inter",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+  header{padding:48px 32px 24px;max-width:1280px;margin:0 auto}
+  header h1{margin:0 0 6px;font-size:32px;letter-spacing:-0.02em}
+  header p{margin:0;color:var(--muted);font-size:15px;max-width:680px;line-height:1.5}
+  .legend{display:flex;gap:16px;margin-top:18px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .dot{width:10px;height:10px;border-radius:50%}
+  .grid{padding:8px 32px 96px;max-width:1280px;margin:0 auto;display:grid;grid-template-columns:1fr;gap:24px}
+  .variant{background:var(--card);border:1px solid var(--line);border-radius:24px;padding:24px;box-shadow:var(--shadow)}
+  .variant h2{margin:0 0 4px;font-size:20px;letter-spacing:-0.01em}
+  .variant .desc{margin:0 0 20px;color:var(--muted);font-size:14px;line-height:1.5;max-width:760px}
+  .states{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  .state{background:#FAFAF7;border:1px solid var(--line);border-radius:18px;padding:18px;display:flex;flex-direction:column;align-items:center}
+  .state .state-label{font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin-bottom:12px}
+  .svg-wrap{width:220px;height:220px;display:flex;align-items:center;justify-content:center;position:relative}
+  .svg-wrap svg{width:100%;height:100%;display:block}
+  .legend-grid{margin-top:14px;display:grid;grid-template-columns:1fr 1fr;gap:6px 14px;width:100%;max-width:240px}
+  .legend-row{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink)}
+  .legend-row .dot{flex:0 0 8px;height:8px}
+  .legend-row .pct{margin-left:auto;font-weight:600;font-variant-numeric:tabular-nums}
+  .hint{font-size:11px;color:var(--muted);margin-top:10px;text-align:center;font-style:italic}
+  .center-num{position:absolute;display:flex;flex-direction:column;align-items:center;pointer-events:none}
+  .center-num .eyebrow{font-size:9px;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted)}
+  .center-num .big{font-size:34px;font-weight:700;letter-spacing:-0.02em;line-height:1}
+  .center-num .small{font-size:10px;color:var(--muted);margin-top:2px}
+  .center-num.mini .big{font-size:22px}
+  .center-num.mini .eyebrow{font-size:8px}
+  @media (min-width:1024px){
+    .grid{grid-template-columns:1fr 1fr}
+  }
+  /* subtle entry anim */
+  .arc-fill,.dot-anim,.blade,.ring-fill{transition:all 600ms cubic-bezier(.2,.7,.2,1)}
+  /* load-fill animation for multi-circle Group B */
+  @keyframes fillIn {
+    from { stroke-dashoffset: var(--circ); }
+    to   { stroke-dashoffset: var(--target); }
+  }
+  .anim-fill { animation: fillIn 1100ms cubic-bezier(.2,.8,.2,1) both; }
+  /* gentle breathing scale for inner glyphs */
+  @keyframes breathe {
+    0%,100% { transform: scale(1); }
+    50%     { transform: scale(1.06); }
+  }
+  .breathe { animation: breathe 3.4s ease-in-out infinite; transform-origin:center; transform-box: fill-box; }
+  /* floating motion */
+  @keyframes floatY {
+    0%,100% { transform: translateY(0); }
+    50%     { transform: translateY(-3px); }
+  }
+  .float-y { animation: floatY 3.8s ease-in-out infinite; }
+  /* slow orbit (for satellites variant) */
+  @keyframes orbit {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+  }
+  .orbit-slow { animation: orbit 22s linear infinite; transform-origin: center; transform-box: fill-box; }
+  /* shimmer for highlighted pick */
+  @keyframes shimmer {
+    0% { box-shadow: 0 0 0 0 rgba(236,139,44,0.35); }
+    70% { box-shadow: 0 0 0 16px rgba(236,139,44,0); }
+    100% { box-shadow: 0 0 0 0 rgba(236,139,44,0); }
+  }
+  .pick-callout { animation: shimmer 2.4s ease-out infinite; }
+  /* pulse animation for variant 8 */
+  @keyframes sonarPulse{
+    0%{transform:scale(0.86);opacity:.9}
+    100%{transform:scale(1.0);opacity:.55}
+  }
+  .sonar-ring{transform-origin:center;animation:sonarPulse 2.6s ease-in-out infinite alternate}
+  .sonar-ring.r2{animation-delay:.2s}
+  .sonar-ring.r3{animation-delay:.4s}
+  .sonar-ring.r4{animation-delay:.6s}
+  /* orbit anim */
+  @keyframes orbitWobble{
+    0%{transform:translateY(0)}
+    100%{transform:translateY(-1px)}
+  }
+  .orbit-dot{animation:orbitWobble 1.8s ease-in-out infinite alternate}
+  footer{text-align:center;color:var(--muted);font-size:12px;padding:0 0 48px}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Today Score — circle compositions</h1>
+  <p>Two valid directions for displaying the four pillars (Train · Nourish · Move · Sleep). <strong>Group A</strong> = one unified circular object representing all four pillars at once (most compact, most ownable, most different from Oura/Whoop). <strong>Group B</strong> = four distinct circles, one per pillar, in creative arrangements (matches the 2026 industry convention more closely, most legible per-pillar). Each variant is rendered at three fill states so empty-state legibility is visible. Pick one (or a hybrid).</p>
+  <div class="legend">
+    <span><i class="dot" style="background:#EC8B2C"></i>Train</span>
+    <span><i class="dot" style="background:#3FA66B"></i>Nourish</span>
+    <span><i class="dot" style="background:#3E8FD0"></i>Move</span>
+    <span><i class="dot" style="background:#8B5CF6"></i>Sleep</span>
+  </div>
+</header>
+
+<section style="max-width:1280px;margin:0 auto;padding:24px 32px 0">
+  <h2 style="margin:0;font-size:22px;letter-spacing:-0.01em">Group A · Unified single composition</h2>
+  <p style="margin:6px 0 0;color:#7A7A82;font-size:14px">One circular object encodes all four pillars. Most ownable; lowest competitor overlap.</p>
+</section>
+
+<main class="grid">
+
+<!-- ============================================================ -->
+<!-- VARIANT 1 — QUADRANT RING                                    -->
+<!-- ============================================================ -->
+<section class="variant">
+  <h2>1. Quadrant ring</h2>
+  <p class="desc">One unified ring split into four 90° arc-segments. Each arc fills around its quadrant from a fixed start angle. Center holds the overall day %.<br><strong>Strengths</strong>: cleanest glance read, distinctive vs Oura/Whoop (they use 3 separate rings, not 4 segments of one), legible at small sizes.</p>
+  <div class="states" id="v1">
+    <!-- states injected by JS -->
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- VARIANT 2 — CONCENTRIC TREE RINGS                            -->
+<!-- ============================================================ -->
+<section class="variant">
+  <h2>2. Concentric tree rings</h2>
+  <p class="desc">Four nested rings of increasing radius. Inner ring = Train, outer = Sleep. Each ring fills clockwise from 12 o'clock. Organic, layered metaphor (cross-section of a healthy day).<br><strong>Strengths</strong>: completely novel for the category. <strong>Risk</strong>: inner rings are smaller, may need bolder strokes.</p>
+  <div class="states" id="v2"></div>
+</section>
+
+<!-- ============================================================ -->
+<!-- VARIANT 3 — PULSE-ORBIT DIAL                                 -->
+<!-- ============================================================ -->
+<section class="variant">
+  <h2>3. Pulse-orbit dial</h2>
+  <p class="desc">Single outline ring. Four colored satellite dots travel its perimeter; each dot's angular position = its pillar progress (0% at 12 o'clock, 100% back at 12). Cinematic, motion-driven.<br><strong>Strengths</strong>: dynamic, ownable. <strong>Risk</strong>: glance-reading exact % is harder.</p>
+  <div class="states" id="v3"></div>
+</section>
+
+<!-- ============================================================ -->
+<!-- VARIANT 4 — IRIS APERTURE                                    -->
+<!-- ============================================================ -->
+<section class="variant">
+  <h2>4. Iris aperture</h2>
+  <p class="desc">Four curved blade-arcs forming a closing iris (like a camera aperture). Blades extend toward the center as progress rises; pupil shrinks as the day fills. Empty = wide-open eye, full = closed eye.<br><strong>Strengths</strong>: visceral metaphor ("the day closes in on its goal"). <strong>Risk</strong>: blades overlap → individual % can be ambiguous.</p>
+  <div class="states" id="v4"></div>
+</section>
+
+<!-- ============================================================ -->
+<!-- VARIANT 5 — HALF-MOON STACK                                  -->
+<!-- ============================================================ -->
+<section class="variant">
+  <h2>5. Half-moon stack</h2>
+  <p class="desc">Four half-rings (180° each) nested concentrically with offset start angles — top, right, bottom, left. Creates an interlocking crescent pattern that turns into a flower when all four fill.<br><strong>Strengths</strong>: distinctive silhouette. <strong>Risk</strong>: asymmetric, slightly busier than a clean ring.</p>
+  <div class="states" id="v5"></div>
+</section>
+
+<!-- ============================================================ -->
+<!-- VARIANT 6 — SOLAR CORONA                                     -->
+<!-- ============================================================ -->
+<section class="variant">
+  <h2>6. Solar corona</h2>
+  <p class="desc">Central filled disc + four colored arcs floating at increasing radii like a sun's halo. Each arc's angular length = its pillar progress. Reads as one luminous celestial object.<br><strong>Strengths</strong>: warm, ownable. <strong>Risk</strong>: larger footprint than a single ring.</p>
+  <div class="states" id="v6"></div>
+</section>
+
+<!-- ============================================================ -->
+<!-- VARIANT 7 — WHEEL OF FORTUNE (RADIAL PIE)                    -->
+<!-- ============================================================ -->
+<section class="variant">
+  <h2>7. Wheel of fortune (radial pie)</h2>
+  <p class="desc">Four fixed 90° wedges that fill radially outward from the center instead of around their arc. Empty day = small pinwheel; full day = full pie. Each wedge's radius = its pillar progress.<br><strong>Strengths</strong>: progress visible at-glance via geometry, not just color. <strong>Risk</strong>: feels more "gauge" than "ring".</p>
+  <div class="states" id="v7"></div>
+</section>
+
+<!-- ============================================================ -->
+<!-- VARIANT 8 — PULSE RINGS (SONAR)                              -->
+<!-- ============================================================ -->
+<section class="variant">
+  <h2>8. Pulse rings (sonar)</h2>
+  <p class="desc">Central monogram + four concentric rippling rings. Each ring's saturation + amplitude = its pillar progress, gently pulsing like sonar.<br><strong>Strengths</strong>: alive, soothing. <strong>Risk</strong>: motion may be distracting in a list.</p>
+  <div class="states" id="v8"></div>
+</section>
+
+</main>
+
+<section style="max-width:1280px;margin:0 auto;padding:24px 32px 0">
+  <h2 style="margin:0;font-size:22px;letter-spacing:-0.01em">Group B · Multi-circle (one per pillar)</h2>
+  <p style="margin:6px 0 0;color:#7A7A82;font-size:13px"><strong>Heads up:</strong> every Group B variant except <strong>B1</strong> (and B12) makes the score card taller than the current home-screen slot. If preserving the existing compact footprint matters (it should — above-fold space is precious), pick from Group C below or from B1/B12.</p>
+  <p style="margin:6px 0 0;color:#7A7A82;font-size:14px">Four distinct circles, each owning one pillar. Matches the 2026 industry convention (Oura/Whoop/Bevel/Google Health all use multi-ring), but each variant arranges them in a way Zealova can own. Rings now load-animate on scroll.</p>
+  <div class="pick-callout" style="margin-top:18px;padding:14px 18px;border-radius:14px;background:linear-gradient(180deg,#FFF5E6,#FFEDD0);border:1px solid #F2C98A;display:flex;gap:14px;align-items:flex-start;max-width:780px">
+    <div style="font-size:22px;line-height:1">🏆</div>
+    <div>
+      <div style="font-size:13px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;color:#9B5A0F">Sai's pick</div>
+      <div style="font-size:14px;color:#16161A;margin-top:4px;line-height:1.5"><strong>B2 Diamond quartet</strong> — reads as one branded shape from a distance (glance test passes), per-pillar-legible up close, Train at top gives a workout-first hierarchy that matches Zealova's positioning, and it's distinctive enough that nobody will mistake it for Oura/Whoop. <strong>B1 (row)</strong> is the safe backup if we want max conventionality with a small twist. <strong>B12 (linked horizontal chain)</strong> is the fun outlier.</div>
+    </div>
+  </div>
+</section>
+
+<main class="grid">
+
+<!-- ============================================================ -->
+<!-- VARIANT B1 — FOUR PEER RINGS (CREATIVE ROW)                  -->
+<!-- ============================================================ -->
+<section class="variant">
+  <h2>B1. Four peer rings — row</h2>
+  <p class="desc">Four rings in a horizontal row. Each ring shows: a centered pillar glyph (barbell / leaf / shoe / moon), the % below the ring, and a hint line below that. Distinct from Oura/Whoop by replacing the bare center number with a meaningful glyph + by adding a faint inner companion ring for visual density.<br><strong>Strengths</strong>: maximum per-pillar legibility; matches the 2026 convention with a Zealova twist.</p>
+  <div class="states" id="vB1"></div>
+</section>
+
+<!-- ============================================================ -->
+<!-- VARIANT B2 — DIAMOND QUARTET                                 -->
+<!-- ============================================================ -->
+<section class="variant">
+  <h2>B2. Diamond quartet</h2>
+  <p class="desc">Four rings arranged in a diamond (top / right / bottom / left), forming a single visual cluster. A faint connecting outline links them. Train sits at top as the priority pillar; Sleep at bottom; Nourish and Move on the sides.<br><strong>Strengths</strong>: reads as one shape from a distance; per-pillar at close range.</p>
+  <div class="states" id="vB2"></div>
+</section>
+
+<!-- ============================================================ -->
+<!-- VARIANT B3 — CONSTELLATION                                   -->
+<!-- ============================================================ -->
+<section class="variant">
+  <h2>B3. Constellation</h2>
+  <p class="desc">Four rings of slightly varying sizes scattered like a constellation, connected by thin dotted lines. The arrangement is deliberate (not random) so it's always the same shape — recognisable as a Zealova mark over time.<br><strong>Strengths</strong>: brand-distinct; memorable. <strong>Risk</strong>: spatial layout is less rigid; needs careful tuning.</p>
+  <div class="states" id="vB3"></div>
+</section>
+
+<!-- ============================================================ -->
+<!-- VARIANT B4 — SATELLITES                                      -->
+<!-- ============================================================ -->
+<section class="variant">
+  <h2>B4. Satellites</h2>
+  <p class="desc">Central monogram disc with four pillar rings orbiting it at 12/3/6/9 o'clock positions. Visually centred, compact, and the central Z anchors the brand.<br><strong>Strengths</strong>: tight footprint; gravitational read.</p>
+  <div class="states" id="vB4"></div>
+</section>
+
+<!-- ============================================================ -->
+<!-- VARIANT B5 — ASYMMETRIC WEIGHTED STACK                       -->
+<!-- ============================================================ -->
+<section class="variant">
+  <h2>B5. Asymmetric weighted stack</h2>
+  <p class="desc">Four rings sized by their base weight in the Today score: Train (40%, biggest), Nourish (30%), Move (15%), Sleep (15%). Hierarchy is visible in the geometry itself — the app's priorities are legible at a glance.<br><strong>Strengths</strong>: communicates "what matters most today" without text. <strong>Risk</strong>: visually unbalanced; users may misread bigger = more done.</p>
+  <div class="states" id="vB5"></div>
+</section>
+
+<!-- ============================================================ -->
+<!-- VARIANT B6 — INTERLOCKING CHAIN                              -->
+<!-- ============================================================ -->
+<section class="variant">
+  <h2>B6. Interlocking chain</h2>
+  <p class="desc">Four rings interlocked in a 2×2 cluster (think Olympic rings but tighter). Each ring is independently fillable. The interlock metaphor reinforces "these four pillars are linked — slack one and the others suffer".<br><strong>Strengths</strong>: meaningful metaphor; visually rich.</p>
+  <div class="states" id="vB6"></div>
+</section>
+
+<!-- ============================================================ -->
+<!-- VARIANT B7 — BUBBLE CLUSTER                                  -->
+<!-- ============================================================ -->
+<section class="variant">
+  <h2>B7. Bubble cluster</h2>
+  <p class="desc">Four rings clustered organically with soft drop shadows — like bubbles floating together. Each gently bobs vertically out of phase. Friendly, soft, low-pressure feel.<br><strong>Strengths</strong>: emotional warmth. <strong>Risk</strong>: less rigorous-looking than the others.</p>
+  <div class="states" id="vB7"></div>
+</section>
+
+<!-- ============================================================ -->
+<!-- VARIANT B8 — CARD FAN                                        -->
+<!-- ============================================================ -->
+<section class="variant">
+  <h2>B8. Card fan</h2>
+  <p class="desc">Four rings on stacked, slightly rotated "cards" — like a fanned hand of playing cards. Train is the topmost card. Each card lifts slightly on hover.<br><strong>Strengths</strong>: tactile, gamified feel. <strong>Risk</strong>: extra chrome may compete with the rings themselves.</p>
+  <div class="states" id="vB8"></div>
+</section>
+
+<!-- ============================================================ -->
+<!-- VARIANT B9 — HONEYCOMB                                       -->
+<!-- ============================================================ -->
+<section class="variant">
+  <h2>B9. Honeycomb</h2>
+  <p class="desc">Four rings tightly packed in a hex arrangement (one on top, two middle, one bottom). Reads as a single dense cell cluster.<br><strong>Strengths</strong>: compact; mathematical. Works for widget sizes.</p>
+  <div class="states" id="vB9"></div>
+</section>
+
+<!-- ============================================================ -->
+<!-- VARIANT B10 — VERTICAL TIMELINE                              -->
+<!-- ============================================================ -->
+<section class="variant">
+  <h2>B10. Vertical timeline</h2>
+  <p class="desc">Four rings stacked vertically with a thin spine connecting them, plus a small progress bar to the right of each ring. Reads like a checklist made of circles.<br><strong>Strengths</strong>: highest information density. <strong>Risk</strong>: card takes more vertical space.</p>
+  <div class="states" id="vB10"></div>
+</section>
+
+<!-- ============================================================ -->
+<!-- VARIANT B11 — HERO + TRIO                                    -->
+<!-- ============================================================ -->
+<section class="variant">
+  <h2>B11. Hero + trio</h2>
+  <p class="desc">One large ring (Train, the priority pillar) anchors the left; three smaller satellite rings (Nourish · Move · Sleep) stack vertically on the right. Explicit hierarchy: training is the boss metric.<br><strong>Strengths</strong>: storytelling layout — "this is the headline, these are the supporting metrics". Matches Zealova's workout-first identity.</p>
+  <div class="states" id="vB11"></div>
+</section>
+
+<!-- ============================================================ -->
+<!-- VARIANT B12 — LINKED HORIZONTAL CHAIN                        -->
+<!-- ============================================================ -->
+<section class="variant">
+  <h2>B12. Linked horizontal chain</h2>
+  <p class="desc">Four rings in a row joined by short colored connector segments that change color as adjacent pillars fill. When all four are full, the whole chain becomes one continuous gradient bar.<br><strong>Strengths</strong>: rewarding "they all connect" moment at 100%. Playful + meaningful.</p>
+  <div class="states" id="vB12"></div>
+</section>
+
+<!-- ============================================================ -->
+<!-- VARIANT B13 — TRIPTYCH + KEYSTONE                            -->
+<!-- ============================================================ -->
+<section class="variant">
+  <h2>B13. Triptych + keystone</h2>
+  <p class="desc">Three rings in a row (Train · Nourish · Move) with Sleep as a slightly elevated "keystone" centered above — like an architectural arch. Sleep crowns the day, the other three are the foundation.<br><strong>Strengths</strong>: distinctive shape; sleep gets visual prominence without dominating.</p>
+  <div class="states" id="vB13"></div>
+</section>
+
+<!-- ============================================================ -->
+<!-- VARIANT B14 — GAUGE CLUSTER                                  -->
+<!-- ============================================================ -->
+<section class="variant">
+  <h2>B14. Gauge cluster (clock faces)</h2>
+  <p class="desc">Four small ring-gauges in a 2×2 grid, each rendered like a tachometer / clock face — tick marks around the rim, a small colored needle indicating progress. Mechanical, dashboard-like.<br><strong>Strengths</strong>: precise, "instrument panel" aesthetic. <strong>Risk</strong>: can feel cold or technical.</p>
+  <div class="states" id="vB14"></div>
+</section>
+
+</main>
+
+<section style="max-width:1280px;margin:0 auto;padding:24px 32px 0">
+  <h2 style="margin:0;font-size:22px;letter-spacing:-0.01em">Group C · Compact horizontal row variants</h2>
+  <p style="margin:6px 0 0;color:#7A7A82;font-size:14px">All Group C variants preserve the current short-height horizontal score-card footprint — 4 pillars in a row, ~120–140pt tall. The only thing that varies is the per-pillar visual treatment. This is the bucket to pick from if you don't want to push the home-screen layout taller.</p>
+  <div class="pick-callout" style="margin-top:18px;padding:14px 18px;border-radius:14px;background:linear-gradient(180deg,#FFF5E6,#FFEDD0);border:1px solid #F2C98A;display:flex;gap:14px;align-items:flex-start;max-width:820px">
+    <div style="font-size:22px;line-height:1">🏆</div>
+    <div>
+      <div style="font-size:13px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;color:#9B5A0F">Sai's revised pick (after the space callout)</div>
+      <div style="font-size:14px;color:#16161A;margin-top:4px;line-height:1.5"><strong>C3 Liquid-fill circle</strong> — each pillar is a circle that fills <em>bottom-up</em> with its accent color like water in a glass. Same horizontal footprint as B1, but genuinely no one else in the category does this — Oura/Whoop/Bevel/Google Health all use stroke-around-the-arc rings. The metaphor (filling up the day) is immediate and ownable. Empty state still reads (you see a faint circle outline with the glyph). Backup: <strong>C2 Concentric companion</strong> (today + yesterday in one ring) if information density matters more than uniqueness. Honest baseline: <strong>C1 Minimal numerical</strong> — safest, Oura-shaped — if we want zero risk.</div>
+    </div>
+  </div>
+</section>
+
+<main class="grid">
+
+<!-- ============================================================ -->
+<!-- VARIANT C1 — MINIMAL NUMERICAL                               -->
+<!-- ============================================================ -->
+<section class="variant">
+  <h2>C1. Minimal numerical (Oura-shaped baseline)</h2>
+  <p class="desc">Standard stroke-ring with a centered percentage. No glyph, no extra chrome. The "safe" choice that the entire industry uses. Included as a baseline to compare every other variant against.<br><strong>Strengths</strong>: zero learning curve. <strong>Risk</strong>: indistinguishable from Oura/Whoop.</p>
+  <div class="states" id="vC1"></div>
+</section>
+
+<!-- ============================================================ -->
+<!-- VARIANT C2 — CONCENTRIC COMPANION                            -->
+<!-- ============================================================ -->
+<section class="variant">
+  <h2>C2. Concentric companion (today + yesterday)</h2>
+  <p class="desc">Outer ring = today's progress. Faint inner ring = yesterday's value, for context. Glyph at center. Adds information density without breaking the row layout.<br><strong>Strengths</strong>: lets users see progress vs. yesterday at a glance, which is what Whoop/Oura users actually want.</p>
+  <div class="states" id="vC2"></div>
+</section>
+
+<!-- ============================================================ -->
+<!-- VARIANT C3 — LIQUID-FILL CIRCLE                              -->
+<!-- ============================================================ -->
+<section class="variant">
+  <h2>C3. Liquid-fill circle ★</h2>
+  <p class="desc">Each pillar is a circle (no stroke ring) that fills <em>bottom-up</em> with its accent color like water rising in a glass. The fill has a subtle wavy meniscus at the top that gently bobs. Empty state shows a faint outline + glyph.<br><strong>Strengths</strong>: unique — nobody in the category does this. Visceral "fill up your day" metaphor. Same footprint as B1.</p>
+  <div class="states" id="vC3"></div>
+</section>
+
+<!-- ============================================================ -->
+<!-- VARIANT C4 — HALF-ARC TOP                                    -->
+<!-- ============================================================ -->
+<section class="variant">
+  <h2>C4. Half-arc top + text bed</h2>
+  <p class="desc">Each pillar is a 180° top arc (semicircle gauge) with the percentage + label tucked into the flat bottom area. Frees vertical space and lets the label sit inside the arc's "bed".<br><strong>Strengths</strong>: most vertical-space-efficient of the row variants. Distinct semicircle silhouette.</p>
+  <div class="states" id="vC4"></div>
+</section>
+
+<!-- ============================================================ -->
+<!-- VARIANT C5 — DOT-CLUSTER RING                                -->
+<!-- ============================================================ -->
+<section class="variant">
+  <h2>C5. Dot-cluster ring (segmented)</h2>
+  <p class="desc">Instead of a continuous stroke, each ring is made of 12 dots around the perimeter. Dots light up sequentially as progress fills. Gamified, pixel-art feel.<br><strong>Strengths</strong>: rewarding micro-progress (each dot is a milestone). Playful.</p>
+  <div class="states" id="vC5"></div>
+</section>
+
+<!-- ============================================================ -->
+<!-- VARIANT C6 — RING + SPARKLINE                                -->
+<!-- ============================================================ -->
+<section class="variant">
+  <h2>C6. Ring + 7-day sparkline</h2>
+  <p class="desc">Each ring sits above a tiny 7-day sparkline showing the pillar's trend. Adds longitudinal context without leaving the home screen.<br><strong>Strengths</strong>: highest information density of any row variant. Whoop-graphics-card energy but in a tile-sized footprint.</p>
+  <div class="states" id="vC6"></div>
+</section>
+
+<!-- ============================================================ -->
+<!-- VARIANT C7 — SOFT GLOW RING                                  -->
+<!-- ============================================================ -->
+<section class="variant">
+  <h2>C7. Soft-glow ring (atmospheric)</h2>
+  <p class="desc">Standard stroke ring with a soft outer glow whose intensity matches progress. Filled pillars feel "alive"; empty ones recede. Atmospheric, warm.<br><strong>Strengths</strong>: emotional pull — completed pillars literally glow. Same shape as Oura but visually richer.</p>
+  <div class="states" id="vC7"></div>
+</section>
+
+<!-- ============================================================ -->
+<!-- VARIANT C8 — SQUIRCLE TOKENS                                 -->
+<!-- ============================================================ -->
+<section class="variant">
+  <h2>C8. Squircle tokens (Apple-style)</h2>
+  <p class="desc">Rings replaced with rounded-square (squircle) tokens, each holding a glyph + colored progress arc along the top edge. Same row footprint, very Apple/iOS native feel.<br><strong>Strengths</strong>: familiar to iOS users; clean. <strong>Risk</strong>: less ownable.</p>
+  <div class="states" id="vC8"></div>
+</section>
+
+<!-- ============================================================ -->
+<!-- VARIANT C9 — LIQUID-FILL + 7-DAY SPARKLINE                   -->
+<!-- ============================================================ -->
+<section class="variant">
+  <h2>C9. Liquid-fill + 7-day sparkline ★ (C3 × C6)</h2>
+  <p class="desc">Liquid-fill circle on top + 7-day weekly trend sparkline below with M T W T F S S day labels (today bold + colored). Combines C3's unique fill metaphor with C6's longitudinal context.<br><strong>Strengths</strong>: tells "today + this week's trajectory" in one tile. Best of both your favorites.</p>
+  <div class="states" id="vC9"></div>
+</section>
+
+<!-- ============================================================ -->
+<!-- VARIANT C10 — LIQUID-FILL INSIDE COMPANION RING              -->
+<!-- ============================================================ -->
+<section class="variant">
+  <h2>C10. Liquid-fill inside companion ring (C3 × C2)</h2>
+  <p class="desc">Outer dashed ring carries a small tick mark at yesterday's level. Inside the ring, liquid fills bottom-up to today's level. You see today vs yesterday as the relationship between the liquid line and the tick mark.<br><strong>Strengths</strong>: today + yesterday comparison built into the fill metaphor.</p>
+  <div class="states" id="vC10"></div>
+</section>
+
+<!-- ============================================================ -->
+<!-- VARIANT C11 — CONCENTRIC COMPANION + SPARKLINE               -->
+<!-- ============================================================ -->
+<section class="variant">
+  <h2>C11. Companion ring + sparkline (C2 × C6)</h2>
+  <p class="desc">Outer ring = today. Faint inner ring = yesterday. Tiny weekly sparkline tucked below. Three time horizons in one tile: today, yesterday, last 7 days.<br><strong>Strengths</strong>: maximum information density of any row variant. <strong>Risk</strong>: busiest visual.</p>
+  <div class="states" id="vC11"></div>
+</section>
+
+<!-- ============================================================ -->
+<!-- VARIANT C12 — LIQUID + GOAL THRESHOLD                        -->
+<!-- ============================================================ -->
+<section class="variant">
+  <h2>C12. Liquid-fill + goal threshold line</h2>
+  <p class="desc">Liquid-fill circle with a thin horizontal "goal" line drawn across at 80% — the threshold for a "win" day. When liquid rises above the line, the fill color saturates and a tiny ✓ appears. Clear "are you above goal?" read.<br><strong>Strengths</strong>: explicit goal feedback. Visceral.</p>
+  <div class="states" id="vC12"></div>
+</section>
+
+<!-- ============================================================ -->
+<!-- VARIANT C13 — TIDE CHART (MENISCUS = WEEKLY TREND)           -->
+<!-- ============================================================ -->
+<section class="variant">
+  <h2>C13. Tide chart (meniscus = weekly trend)</h2>
+  <p class="desc">Liquid-fill circle where the meniscus wave at the top of the liquid is actually a 7-day mini chart — each peak/trough = one day's completion height. Most differentiated visual in the file; risk is novelty cost.<br><strong>Strengths</strong>: signature visual. <strong>Risk</strong>: takes a second to understand the wave is data.</p>
+  <div class="states" id="vC13"></div>
+</section>
+
+<!-- ============================================================ -->
+<!-- VARIANT C14 — CALENDAR WEEK-DOT RING                         -->
+<!-- ============================================================ -->
+<section class="variant">
+  <h2>C14. Calendar week-dot ring</h2>
+  <p class="desc">Like C5 dot-cluster but each of 7 dots around the ring represents a day of this week. Each dot's saturation = that day's completion. Today's dot is bigger and pulses. Center holds today's %.<br><strong>Strengths</strong>: weekly streak visible in the ring itself.</p>
+  <div class="states" id="vC14"></div>
+</section>
+
+<!-- ============================================================ -->
+<!-- VARIANT C15 — LIQUID-FILL + DELTA CHIP                       -->
+<!-- ============================================================ -->
+<section class="variant">
+  <h2>C15. Liquid-fill + delta chip (today vs yesterday)</h2>
+  <p class="desc">Liquid-fill circle + a small pill chip floating bottom-right showing "+12%" or "−5%" change vs yesterday with an arrow. Lighter than a sparkline; more focused than a companion ring.<br><strong>Strengths</strong>: at-glance change number is the most actionable single bit of info.</p>
+  <div class="states" id="vC15"></div>
+</section>
+
+</main>
+
+<section style="max-width:1280px;margin:0 auto;padding:24px 32px 0">
+  <h2 style="margin:0;font-size:22px;letter-spacing:-0.01em">Group G · Creative ring treatments (compact row, % inside)</h2>
+  <p style="margin:6px 0 0;color:#7A7A82;font-size:14px">Inspired by your Whoop / Bevel reference — these go beyond the bare stroke ring with open-arc shapes, gradient sweeps, halo glows, beveled depth, and other visual textures. All keep the same compact horizontal row footprint, and all keep the <code>%</code> inside the ring as you requested.</p>
+</section>
+
+<main class="grid">
+
+<section class="variant">
+  <h2>G1. Open-arc gradient (Whoop-inspired) ★</h2>
+  <p class="desc">270° arc with a gap at the top, stroke sweeps from light to vivid color around the arc, soft halo behind. The arc shape itself is distinctive — not just a closed ring.</p>
+  <div class="states" id="vG1"></div>
+</section>
+
+<section class="variant">
+  <h2>G2. Neon glow ring</h2>
+  <p class="desc">Vibrant solid stroke with a multi-layer outer glow. Filled pillars genuinely "glow"; empty ones recede. Works beautifully in dark mode.</p>
+  <div class="states" id="vG2"></div>
+</section>
+
+<section class="variant">
+  <h2>G3. Beveled 3D ring</h2>
+  <p class="desc">Ring with depth — inner shadow + outer highlight creates a pressed-in / engraved feel. Tactile, premium, not flat.</p>
+  <div class="states" id="vG3"></div>
+</section>
+
+<section class="variant">
+  <h2>G4. Spiral progress (1.5 turns)</h2>
+  <p class="desc">Instead of a single ring, the progress draws as a 1.5-turn spiral going outward. Unusual, motion-friendly, signature visual.</p>
+  <div class="states" id="vG4"></div>
+</section>
+
+<section class="variant">
+  <h2>G5. Liquid glass orb (3D)</h2>
+  <p class="desc">A glassy 3D sphere with internal liquid fill rising bottom-up, plus highlights and reflections. The premium fit of C3 with depth + light.</p>
+  <div class="states" id="vG5"></div>
+</section>
+
+<section class="variant">
+  <h2>G6. Aurora gradient sweep</h2>
+  <p class="desc">Ring stroke uses a 4-stop gradient (light → mid → vivid → dark) sweeping around the arc, like an aurora. Most color-rich variant.</p>
+  <div class="states" id="vG6"></div>
+</section>
+
+<section class="variant">
+  <h2>G7. Notched bezel (watch face)</h2>
+  <p class="desc">Ring surrounded by tick marks like a watch bezel; major ticks every 25%. Precision-instrument aesthetic.</p>
+  <div class="states" id="vG7"></div>
+</section>
+
+<section class="variant">
+  <h2>G8. Spark ring</h2>
+  <p class="desc">Ring made of small sparks/particles around the perimeter that light up sequentially with progress. Filled = bright cluster of sparks; empty = dim dots.</p>
+  <div class="states" id="vG8"></div>
+</section>
+
+</main>
+
+<section style="max-width:1280px;margin:0 auto;padding:24px 32px 0">
+  <h2 style="margin:0;font-size:22px;letter-spacing:-0.01em">C2 fine-tunes · center content + comparator decisions</h2>
+  <p style="margin:6px 0 0;color:#7A7A82;font-size:14px">Six versions of the same compact-row ring layout, varying only what sits in the center and whether to keep an inner comparator ring. All at the partial-day fill state for direct comparison. Pick one to lock the final treatment.</p>
+</section>
+
+<main class="grid">
+
+<section class="variant">
+  <h2>F1. % in center, no comparator</h2>
+  <p class="desc">Classic Oura-shape. Reads "67% complete" — chore-flavored.</p>
+  <div class="states" id="vF1"></div>
+</section>
+
+<section class="variant">
+  <h2>F2. Number in center (no %), pillar name below ★</h2>
+  <p class="desc">Number reads as a score (positive framing). Pillar name below. Cleanest. Matches Oura/Whoop convention.</p>
+  <div class="states" id="vF2"></div>
+</section>
+
+<section class="variant">
+  <h2>F3. Glyph in center, number below</h2>
+  <p class="desc">Pillar identity is the centerpiece (icon-first). Number tucked below. More iconic, slightly less data-forward.</p>
+  <div class="states" id="vF3"></div>
+</section>
+
+<section class="variant">
+  <h2>F4. Number in center + faint background glyph</h2>
+  <p class="desc">Best of both: bold number forward, glyph as a 0.15-opacity watermark behind it for identity without competing.</p>
+  <div class="states" id="vF4"></div>
+</section>
+
+<section class="variant">
+  <h2>F5. Number + tiny delta text under pillar name</h2>
+  <p class="desc">No inner ring, but small text comparator: "+12% vs yesterday" under the pillar label. Comparator without visual complexity. <strong>Question</strong>: does this duplicate the coach hero's job?</p>
+  <div class="states" id="vF5"></div>
+</section>
+
+<section class="variant">
+  <h2>F6. Inner ring = 7-day average (not yesterday)</h2>
+  <p class="desc">If you want to keep an inner comparator ring, 7-day average is more useful than yesterday — smooths variance, answers "am I above/below my typical". Reads as "today vs your normal".</p>
+  <div class="states" id="vF6"></div>
+</section>
+
+</main>
+
+<section style="max-width:1280px;margin:0 auto;padding:24px 32px 0">
+  <h2 style="margin:0;font-size:22px;letter-spacing:-0.01em">Group D · Trend-first / full-card sparkline variants</h2>
+  <p style="margin:6px 0 0;color:#7A7A82;font-size:14px">What if the <em>trend</em> is the headline, not the snapshot? These variants make the sparkline (or its equivalent) the dominant element. Bigger sparkline area, more legible day labels, more honest week-at-a-glance. Some demote today's snapshot to a small chip; some combine both.</p>
+  <div class="pick-callout" style="margin-top:18px;padding:14px 18px;border-radius:14px;background:linear-gradient(180deg,#EEF7FF,#DDEEFF);border:1px solid #9BC2E0;display:flex;gap:14px;align-items:flex-start;max-width:880px;animation:none">
+    <div style="font-size:22px;line-height:1">🔍</div>
+    <div>
+      <div style="font-size:13px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;color:#1E4E7C">What 2026 user research says</div>
+      <div style="font-size:14px;color:#16161A;margin-top:4px;line-height:1.5">Whoop's redesign research → users wanted <em>coaching insights</em>, not more chart types. Oura's 2025 redesign pivoted to surfacing <em>one</em> metric the body needs most right now. The dominant 2026 finding is that <strong>actionable intelligence beats raw data viz</strong>. Practical implication: today-snapshot wins above the fold, the AI coach hero matters more than ring shape, and trends belong on a tap-through screen — <em>not</em> hogging the home card.</div>
+    </div>
+  </div>
+</section>
+
+<main class="grid">
+
+<!-- ============================================================ -->
+<!-- VARIANT D1 — STACKED SPARKLINES (NO RINGS)                   -->
+<!-- ============================================================ -->
+<section class="variant">
+  <h2>D1. Stacked sparklines — full card</h2>
+  <p class="desc">Four horizontal sparkline rows, one per pillar. Each shows the 7-day trend at full card width with M T W T F S S labels, today highlighted. No rings at all — the trend IS the card. Today's % sits on the right.<br><strong>Strengths</strong>: most readable trend in the file. <strong>Risk</strong>: loses the at-glance "where am I today" hit.</p>
+  <div class="states" id="vD1"></div>
+</section>
+
+<!-- ============================================================ -->
+<!-- VARIANT D2 — STACKED AREA SPARKLINES + RING CHIP             -->
+<!-- ============================================================ -->
+<section class="variant">
+  <h2>D2. Area sparklines + mini-ring chip</h2>
+  <p class="desc">Same as D1 but each sparkline is filled (area chart) and gets a small ring chip on the left showing today's %. Compromise between snapshot and trend.<br><strong>Strengths</strong>: both reads in one card. Whoop's graphics-card energy in tile size.</p>
+  <div class="states" id="vD2"></div>
+</section>
+
+<!-- ============================================================ -->
+<!-- VARIANT D3 — MULTI-LINE OVERLAY                              -->
+<!-- ============================================================ -->
+<section class="variant">
+  <h2>D3. Multi-line overlay (all 4 in one chart)</h2>
+  <p class="desc">All four pillars plotted as colored lines on a single chart. Today's points highlighted. Reads the whole week as one image.<br><strong>Strengths</strong>: shows pillar correlations (sleep down → train down?). <strong>Risk</strong>: line cross-over can get visually noisy; hard to glance-read a single pillar.</p>
+  <div class="states" id="vD3"></div>
+</section>
+
+<!-- ============================================================ -->
+<!-- VARIANT D4 — GROUPED BAR (7 DAYS × 4 PILLARS)                -->
+<!-- ============================================================ -->
+<section class="variant">
+  <h2>D4. Grouped bars (7 days × 4 pillars)</h2>
+  <p class="desc">Each day gets a cluster of 4 short bars (one per pillar). Compact way to see "how was each day across all four pillars".<br><strong>Strengths</strong>: each day visible. <strong>Risk</strong>: tiny bars at this size; harder to read trend per pillar.</p>
+  <div class="states" id="vD4"></div>
+</section>
+
+<!-- ============================================================ -->
+<!-- VARIANT D5 — HEATMAP                                         -->
+<!-- ============================================================ -->
+<section class="variant">
+  <h2>D5. Heatmap (4 rows × 7 days)</h2>
+  <p class="desc">Each row = one pillar. Each cell = one day. Color saturation = that day's completion. Today's column outlined. Reads like a GitHub contribution chart.<br><strong>Strengths</strong>: most info-dense; pattern-spotting at a glance ("Mondays I always skip Move"). <strong>Risk</strong>: feels analytical / less emotional.</p>
+  <div class="states" id="vD5"></div>
+</section>
+
+<!-- ============================================================ -->
+<!-- VARIANT D6 — STREAM / RIBBON STACK                           -->
+<!-- ============================================================ -->
+<section class="variant">
+  <h2>D6. Stream / ribbon stack</h2>
+  <p class="desc">Four colored ribbons stacked vertically; each ribbon's thickness across the week = completion height. Reads as a flowing organic stream — the whole week's shape at once.<br><strong>Strengths</strong>: aesthetic, unique. <strong>Risk</strong>: per-pillar % requires inspection.</p>
+  <div class="states" id="vD6"></div>
+</section>
+
+<!-- ============================================================ -->
+<!-- VARIANT D7 — HYBRID: SNAPSHOT ROW + TREND STRIP              -->
+<!-- ============================================================ -->
+<section class="variant">
+  <h2>D7. Hybrid: snapshot row + trend strip ★ (best of both)</h2>
+  <p class="desc">Top half of the card = compact row of 4 liquid-fill circles (C3-style snapshot). Bottom half = a single shared "stream" sparkline strip showing this week's overall day-score trend. Both reads, single card, still compact.<br><strong>Strengths</strong>: matches Whoop's 3-dial + insight pattern, adds a week trend without taking 4 separate sparkline rows.</p>
+  <div class="states" id="vD7"></div>
+</section>
+
+</main>
+
+<footer>4 pillars · 8 unified + 6 multi-circle = 14 compositions · pick one to ship</footer>
+
+<script>
+// ============================================================
+//  SHARED CONFIG
+// ============================================================
+const PILLARS = [
+  { key:'train',   name:'Train',   color:'#EC8B2C', hint:'Add a plan' },
+  { key:'nourish', name:'Nourish', color:'#3FA66B', hint:'Protein low' },
+  { key:'move',    name:'Move',    color:'#3E8FD0', hint:'3.9k to go' },
+  { key:'sleep',   name:'Sleep',   color:'#8B5CF6', hint:'1h 43m under goal' },
+];
+const STATES = [
+  { label:'Empty (just woke up)', values:[0.00,0.00,0.00,0.78], dayPct:20, hints:['Start your day','Log breakfast','Get moving','Slept well'] },
+  { label:'Partial (mid-day)',    values:[0.00,0.32,0.56,0.78], dayPct:42, hints:['Add a plan','Protein low','3.9k to go','Restful night'] },
+  { label:'Complete',             values:[1.00,1.00,1.00,1.00], dayPct:100, hints:['Done','Hit macros','Goal met','Slept well'] },
+];
+
+const TRACK = '#E8E6E0';
+
+// ============================================================
+//  HELPERS
+// ============================================================
+function svg(content, viewBox='0 0 220 220'){
+  return `<svg viewBox="${viewBox}" xmlns="http://www.w3.org/2000/svg">${content}</svg>`;
+}
+function pillarLegend(values, hints){
+  return `<div class="legend-grid">${
+    PILLARS.map((p,i)=>{
+      const pct = Math.round(values[i]*100);
+      return `<div class="legend-row"><span class="dot" style="background:${p.color}"></span><span>${p.name}</span><span class="pct">${pct}%</span></div>`;
+    }).join('')
+  }</div><div class="hint">Tap any segment → its detail screen</div>`;
+}
+function centerOverlay(dayPct, mini){
+  return `<div class="center-num${mini?' mini':''}"><div class="eyebrow">Today</div><div class="big">${dayPct}%</div></div>`;
+}
+
+// ============================================================
+//  V1 — QUADRANT RING
+//  4 arcs of 90° each, starting at top (-90°). Each fills around its quadrant.
+// ============================================================
+function v1(values){
+  const cx=110, cy=110, r=80, stroke=16;
+  const circ = 2*Math.PI*r;
+  const arcLen = circ/4; // 90° each
+  let parts = [];
+  // background track (full circle)
+  parts.push(`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${TRACK}" stroke-width="${stroke}"/>`);
+  // 4 quadrants, each starting at a different rotation
+  PILLARS.forEach((p,i)=>{
+    const v = values[i];
+    const dash = arcLen * v;
+    const gap = circ - dash;
+    // rotation per quadrant: starts at top -90, next at right 0, bottom 90, left 180
+    const rot = -90 + i*90;
+    parts.push(`
+      <g transform="rotate(${rot} ${cx} ${cy})">
+        <circle class="arc-fill" cx="${cx}" cy="${cy}" r="${r}" fill="none"
+          stroke="${p.color}" stroke-width="${stroke}" stroke-linecap="butt"
+          stroke-dasharray="${dash} ${gap + (circ - arcLen)}" />
+      </g>`);
+  });
+  // segment dividers (tiny white gaps for definition)
+  for(let i=0;i<4;i++){
+    const angle = -90 + i*90;
+    const a = angle*Math.PI/180;
+    const x1 = cx + (r-stroke/2-2)*Math.cos(a);
+    const y1 = cy + (r-stroke/2-2)*Math.sin(a);
+    const x2 = cx + (r+stroke/2+2)*Math.cos(a);
+    const y2 = cy + (r+stroke/2+2)*Math.sin(a);
+    parts.push(`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#FAFAF7" stroke-width="3"/>`);
+  }
+  return svg(parts.join(''));
+}
+
+// ============================================================
+//  V2 — CONCENTRIC TREE RINGS
+//  4 nested rings, each fills clockwise from 12 o'clock.
+// ============================================================
+function v2(values){
+  const cx=110, cy=110;
+  const radii = [38, 56, 74, 92]; // inner→outer (Train, Nourish, Move, Sleep)
+  const stroke = 12;
+  let parts = [];
+  PILLARS.forEach((p,i)=>{
+    const r = radii[i];
+    const circ = 2*Math.PI*r;
+    const v = values[i];
+    const dash = circ * v;
+    const gap = circ - dash;
+    // track
+    parts.push(`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${TRACK}" stroke-width="${stroke}"/>`);
+    // fill (start at 12 o'clock)
+    parts.push(`
+      <g transform="rotate(-90 ${cx} ${cy})">
+        <circle class="ring-fill" cx="${cx}" cy="${cy}" r="${r}" fill="none"
+          stroke="${p.color}" stroke-width="${stroke}" stroke-linecap="round"
+          stroke-dasharray="${dash} ${gap}" />
+      </g>`);
+  });
+  parts.push(`<text x="${cx}" y="${cy+6}" text-anchor="middle" font-size="18" font-weight="700" fill="#16161A">Z</text>`);
+  return svg(parts.join(''));
+}
+
+// ============================================================
+//  V3 — PULSE-ORBIT DIAL
+//  Single outline ring + 4 colored dots whose angular position = progress.
+// ============================================================
+function v3(values){
+  const cx=110, cy=110, r=80;
+  let parts = [];
+  parts.push(`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${TRACK}" stroke-width="3"/>`);
+  // 4 satellite dots
+  PILLARS.forEach((p,i)=>{
+    const v = values[i];
+    // -90° (top) → -90 + v*360
+    const angle = (-90 + v*360) * Math.PI/180;
+    const x = cx + r*Math.cos(angle);
+    const y = cy + r*Math.sin(angle);
+    // trail arc from top to current pos (lighter shade)
+    const startAngle = -90 * Math.PI/180;
+    const largeArc = v > 0.5 ? 1 : 0;
+    const sx = cx + r*Math.cos(startAngle);
+    const sy = cy + r*Math.sin(startAngle);
+    if(v > 0.01){
+      parts.push(`<path d="M ${sx} ${sy} A ${r} ${r} 0 ${largeArc} 1 ${x} ${y}"
+        fill="none" stroke="${p.color}" stroke-width="3" stroke-opacity="0.35" stroke-linecap="round"/>`);
+    }
+    parts.push(`<circle class="orbit-dot" cx="${x}" cy="${y}" r="8" fill="${p.color}" stroke="#FFF" stroke-width="2"/>`);
+  });
+  return svg(parts.join(''));
+}
+
+// ============================================================
+//  V4 — IRIS APERTURE
+//  4 blade-arcs that close inward as progress rises.
+// ============================================================
+function v4(values){
+  const cx=110, cy=110;
+  const outerR = 95;
+  let parts = [];
+  // outer circle frame
+  parts.push(`<circle cx="${cx}" cy="${cy}" r="${outerR}" fill="none" stroke="${TRACK}" stroke-width="2"/>`);
+  // 4 blades — each is an arc from outerR inward, rotated 90° apart
+  PILLARS.forEach((p,i)=>{
+    const v = values[i];
+    // Blade extends from outerR toward center; "closure" depth = v * 70
+    const closure = v * 70;
+    const bladeR = outerR - closure;
+    // blade is a thick stroked arc 100° wide, rotated to its quadrant
+    const arcWidth = 100; // degrees
+    const half = arcWidth/2 * Math.PI/180;
+    const cAng = (i*90 - 90 + 45) * Math.PI/180; // center of blade
+    const startAng = cAng - half;
+    const endAng = cAng + half;
+    const sx1 = cx + outerR*Math.cos(startAng), sy1 = cy + outerR*Math.sin(startAng);
+    const ex1 = cx + outerR*Math.cos(endAng),   ey1 = cy + outerR*Math.sin(endAng);
+    const sx2 = cx + bladeR*Math.cos(endAng),   sy2 = cy + bladeR*Math.sin(endAng);
+    const ex2 = cx + bladeR*Math.cos(startAng), ey2 = cy + bladeR*Math.sin(startAng);
+    parts.push(`<path class="blade"
+      d="M ${sx1} ${sy1} A ${outerR} ${outerR} 0 0 1 ${ex1} ${ey1}
+         L ${sx2} ${sy2} A ${bladeR} ${bladeR} 0 0 0 ${ex2} ${ey2} Z"
+      fill="${p.color}" fill-opacity="${0.55 + v*0.4}" stroke="${p.color}" stroke-width="1"/>`);
+  });
+  // central pupil
+  const avg = (values.reduce((a,b)=>a+b,0)/4);
+  const pupilR = Math.max(6, 35 * (1-avg));
+  parts.push(`<circle cx="${cx}" cy="${cy}" r="${pupilR}" fill="#FAFAF7"/>`);
+  return svg(parts.join(''));
+}
+
+// ============================================================
+//  V5 — HALF-MOON STACK
+//  4 half-rings (180°), each starting at a different cardinal direction.
+// ============================================================
+function v5(values){
+  const cx=110, cy=110;
+  const radii = [42, 60, 78, 96];
+  const stroke = 12;
+  // starts: top, right, bottom, left → rotations
+  const starts = [-180, -90, 0, 90]; // half-arc start angles
+  let parts = [];
+  PILLARS.forEach((p,i)=>{
+    const r = radii[i];
+    const circ = 2*Math.PI*r;
+    const halfArc = circ/2;
+    const v = values[i];
+    const dash = halfArc * v;
+    const gap = circ - dash;
+    // track (only half visible)
+    parts.push(`
+      <g transform="rotate(${starts[i]} ${cx} ${cy})">
+        <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${TRACK}" stroke-width="${stroke}"
+          stroke-dasharray="${halfArc} ${circ}"/>
+        <circle class="ring-fill" cx="${cx}" cy="${cy}" r="${r}" fill="none"
+          stroke="${p.color}" stroke-width="${stroke}" stroke-linecap="round"
+          stroke-dasharray="${dash} ${gap}"/>
+      </g>`);
+  });
+  return svg(parts.join(''));
+}
+
+// ============================================================
+//  V6 — SOLAR CORONA
+//  Central disc + 4 floating arcs at increasing radii.
+// ============================================================
+function v6(values){
+  const cx=110, cy=110;
+  const discR = 30;
+  const arcRadii = [50, 64, 78, 92];
+  const arcStroke = 8;
+  let parts = [];
+  // central disc with subtle gradient
+  parts.push(`<defs>
+    <radialGradient id="sunCore" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FFE6B8"/>
+      <stop offset="100%" stop-color="#EC8B2C"/>
+    </radialGradient>
+  </defs>`);
+  parts.push(`<circle cx="${cx}" cy="${cy}" r="${discR}" fill="url(#sunCore)"/>`);
+  // 4 arcs at different radii, each angular length = progress
+  PILLARS.forEach((p,i)=>{
+    const r = arcRadii[i];
+    const v = values[i];
+    const arcDeg = v * 320; // max 320° leaves a clean opening
+    if(arcDeg < 2) return;
+    const startAng = -90 - arcDeg/2;
+    const endAng = -90 + arcDeg/2;
+    const sa = startAng*Math.PI/180, ea = endAng*Math.PI/180;
+    const sx = cx + r*Math.cos(sa), sy = cy + r*Math.sin(sa);
+    const ex = cx + r*Math.cos(ea), ey = cy + r*Math.sin(ea);
+    const largeArc = arcDeg > 180 ? 1 : 0;
+    parts.push(`<path d="M ${sx} ${sy} A ${r} ${r} 0 ${largeArc} 1 ${ex} ${ey}"
+      fill="none" stroke="${p.color}" stroke-width="${arcStroke}" stroke-linecap="round" stroke-opacity="0.92"/>`);
+  });
+  return svg(parts.join(''));
+}
+
+// ============================================================
+//  V7 — WHEEL OF FORTUNE (RADIAL PIE)
+//  4 fixed 90° wedges; each fills radially outward by progress.
+// ============================================================
+function v7(values){
+  const cx=110, cy=110;
+  const maxR = 92;
+  let parts = [];
+  // background frame
+  parts.push(`<circle cx="${cx}" cy="${cy}" r="${maxR}" fill="none" stroke="${TRACK}" stroke-width="2"/>`);
+  // 4 wedges
+  PILLARS.forEach((p,i)=>{
+    const v = values[i];
+    const r = Math.max(8, maxR * v);
+    const startDeg = -90 + i*90;
+    const endDeg = startDeg + 90;
+    const sa = startDeg*Math.PI/180, ea = endDeg*Math.PI/180;
+    const sx = cx + r*Math.cos(sa), sy = cy + r*Math.sin(sa);
+    const ex = cx + r*Math.cos(ea), ey = cy + r*Math.sin(ea);
+    parts.push(`<path d="M ${cx} ${cy} L ${sx} ${sy} A ${r} ${r} 0 0 1 ${ex} ${ey} Z"
+      fill="${p.color}" fill-opacity="0.85"/>`);
+  });
+  // crisp center dot
+  parts.push(`<circle cx="${cx}" cy="${cy}" r="4" fill="#FAFAF7" stroke="#16161A" stroke-width="1"/>`);
+  return svg(parts.join(''));
+}
+
+// ============================================================
+//  V8 — PULSE RINGS (SONAR)
+//  4 concentric pulsing rings; saturation + scale anchored to progress.
+// ============================================================
+function v8(values){
+  const cx=110, cy=110;
+  const radii = [32, 50, 70, 92];
+  let parts = [];
+  PILLARS.forEach((p,i)=>{
+    const r = radii[i];
+    const v = values[i];
+    const opacity = 0.18 + v*0.65;
+    const stroke = 4 + v*8;
+    parts.push(`<circle class="sonar-ring r${i+1}" cx="${cx}" cy="${cy}" r="${r}"
+      fill="none" stroke="${p.color}" stroke-width="${stroke}" stroke-opacity="${opacity}"/>`);
+  });
+  parts.push(`<circle cx="${cx}" cy="${cy}" r="14" fill="#16161A"/>`);
+  parts.push(`<text x="${cx}" y="${cy+5}" text-anchor="middle" font-size="14" font-weight="700" fill="#FAFAF7">Z</text>`);
+  return svg(parts.join(''));
+}
+
+// ============================================================
+//  GROUP B — MULTI-CIRCLE (ONE PER PILLAR)
+//  Each function returns SVG showing 4 distinct circles, one per pillar.
+//  Each pillar circle is a ring with stroke-dasharray fill from 12 o'clock.
+// ============================================================
+
+// Helper: render one pillar ring with optional glyph in center (with load animation)
+function pillarRing(cx, cy, r, stroke, color, value, glyph, delayMs){
+  const circ = 2*Math.PI*r;
+  const target = circ * (1 - value);
+  const style = `--circ:${circ}; --target:${target}; animation-delay:${delayMs||0}ms; stroke-dasharray:${circ}; stroke-dashoffset:${target};`;
+  return `
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${TRACK}" stroke-width="${stroke}"/>
+    <g transform="rotate(-90 ${cx} ${cy})">
+      <circle class="anim-fill" cx="${cx}" cy="${cy}" r="${r}" fill="none"
+        stroke="${color}" stroke-width="${stroke}" stroke-linecap="round"
+        style="${style}"/>
+    </g>
+    ${glyph ? `<g class="breathe" transform="translate(${cx} ${cy})" fill="${color}" font-size="${r*0.7}" text-anchor="middle" dominant-baseline="central" font-weight="700" opacity="0.92">${glyph}</g>` : ''}
+  `;
+}
+
+// tiny inline glyph paths (very small SVG shapes per pillar)
+function glyphFor(key, size){
+  const s = size || 16;
+  if(key==='train'){
+    // barbell
+    return `<g transform="scale(${s/24}) translate(-12 -12)">
+      <rect x="2" y="10" width="4" height="4" rx="1"/>
+      <rect x="6" y="8" width="2" height="8" rx="0.6"/>
+      <rect x="8" y="11" width="8" height="2"/>
+      <rect x="16" y="8" width="2" height="8" rx="0.6"/>
+      <rect x="18" y="10" width="4" height="4" rx="1"/>
+    </g>`;
+  }
+  if(key==='nourish'){
+    // leaf
+    return `<g transform="scale(${s/24}) translate(-12 -12)">
+      <path d="M4 14c0-6 4-10 16-10 0 12-6 16-12 16-2 0-4-2-4-6z"/>
+      <path d="M6 18 L14 8" stroke="#FAFAF7" stroke-width="1" fill="none"/>
+    </g>`;
+  }
+  if(key==='move'){
+    // shoe
+    return `<g transform="scale(${s/24}) translate(-12 -12)">
+      <path d="M3 16 L3 12 C 3 9 6 8 9 9 L 14 11 L 19 12 C 21 12.5 21 15 21 16 L 21 18 C 21 19 20 19 19 19 L 5 19 C 4 19 3 18 3 16 Z"/>
+    </g>`;
+  }
+  if(key==='sleep'){
+    // crescent moon
+    return `<g transform="scale(${s/24}) translate(-12 -12)">
+      <path d="M19 14a8 8 0 1 1 -9 -9 6 6 0 0 0 9 9z"/>
+    </g>`;
+  }
+  return '';
+}
+
+// B1 — Four peer rings (row)
+function vB1(values){
+  // 4 rings spaced across a wide viewBox
+  const w = 360, h = 200;
+  const spacing = w/4;
+  const r = 36, stroke = 7;
+  let parts = [];
+  PILLARS.forEach((p,i)=>{
+    const cx = spacing/2 + i*spacing;
+    const cy = 80;
+    // faint inner companion ring (Zealova twist — adds density vs Oura's bare ring)
+    parts.push(`<circle cx="${cx}" cy="${cy}" r="${r-12}" fill="none" stroke="${p.color}" stroke-width="1" stroke-opacity="0.18"/>`);
+    parts.push(pillarRing(cx, cy, r, stroke, p.color, values[i], glyphFor(p.key, 16), i*140));
+    // label + percentage
+    parts.push(`<text x="${cx}" y="${cy+r+22}" text-anchor="middle" font-size="12" font-weight="600" fill="#16161A">${p.name}</text>`);
+    parts.push(`<text x="${cx}" y="${cy+r+38}" text-anchor="middle" font-size="11" fill="#7A7A82">${Math.round(values[i]*100)}%</text>`);
+  });
+  return svg(parts.join(''), `0 0 ${w} ${h}`);
+}
+
+// B2 — Diamond quartet (top/right/bottom/left)
+function vB2(values){
+  const cx=110, cy=110;
+  const r=28, stroke=7;
+  const offsets = [ {x:0,y:-60,key:0}, {x:60,y:0,key:1}, {x:0,y:60,key:2}, {x:-60,y:0,key:3} ];
+  // pillars assignment: top=Train, right=Nourish, bottom=Move, left=Sleep
+  let parts = [];
+  // connecting diamond outline
+  const pts = offsets.map(o=>`${cx+o.x},${cy+o.y}`).join(' ');
+  parts.push(`<polygon points="${pts}" fill="none" stroke="${TRACK}" stroke-width="1" stroke-dasharray="3 3"/>`);
+  offsets.forEach((o,i)=>{
+    const px = cx+o.x, py = cy+o.y;
+    const p = PILLARS[i];
+    parts.push(pillarRing(px, py, r, stroke, p.color, values[i], glyphFor(p.key, 14), i*140));
+    // small label outside the diamond
+    const lx = px + Math.sign(o.x)*16, ly = py + Math.sign(o.y)*16;
+    const tx = o.x === 0 ? px : px + Math.sign(o.x)*(r+18);
+    const ty = o.y === 0 ? py + 4 : py + Math.sign(o.y)*(r+18);
+    parts.push(`<text x="${tx}" y="${ty}" text-anchor="middle" font-size="10" font-weight="600" fill="#16161A">${Math.round(values[i]*100)}%</text>`);
+  });
+  return svg(parts.join(''));
+}
+
+// B3 — Constellation (organic scatter)
+function vB3(values){
+  const positions = [
+    {x:60,  y:50, r:24, key:0}, // Train
+    {x:150, y:75, r:30, key:1}, // Nourish
+    {x:80,  y:140,r:26, key:2}, // Move
+    {x:165, y:160,r:22, key:3}, // Sleep
+  ];
+  const stroke = 6;
+  let parts = [];
+  // connecting lines first (under rings)
+  for(let i=0;i<positions.length-1;i++){
+    const a = positions[i], b = positions[i+1];
+    parts.push(`<line x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" stroke="#C9C7BF" stroke-width="0.8" stroke-dasharray="2 3"/>`);
+  }
+  positions.forEach((pos,i)=>{
+    const p = PILLARS[i];
+    parts.push(pillarRing(pos.x, pos.y, pos.r, stroke, p.color, values[i], glyphFor(p.key, 13), i*140));
+    parts.push(`<text x="${pos.x}" y="${pos.y+pos.r+12}" text-anchor="middle" font-size="9" font-weight="600" fill="#16161A">${p.name} ${Math.round(values[i]*100)}%</text>`);
+  });
+  return svg(parts.join(''));
+}
+
+// B4 — Satellites (central Z + 4 orbiting rings)
+function vB4(values){
+  const cx=110, cy=110;
+  const orbitR = 64;
+  const ringR = 22, stroke = 6;
+  let parts = [];
+  // central disc with monogram
+  parts.push(`<circle cx="${cx}" cy="${cy}" r="22" fill="#16161A"/>`);
+  parts.push(`<text x="${cx}" y="${cy+5}" text-anchor="middle" font-size="18" font-weight="700" fill="#FAFAF7">Z</text>`);
+  // faint orbit guide
+  parts.push(`<circle cx="${cx}" cy="${cy}" r="${orbitR}" fill="none" stroke="${TRACK}" stroke-width="1" stroke-dasharray="2 3"/>`);
+  // 4 satellites at 12/3/6/9 — wrapped in slow orbit
+  parts.push(`<g class="orbit-slow" style="transform-origin:${cx}px ${cy}px">`);
+  const angles = [-90, 0, 90, 180];
+  angles.forEach((deg,i)=>{
+    const a = deg * Math.PI/180;
+    const sx = cx + orbitR*Math.cos(a);
+    const sy = cy + orbitR*Math.sin(a);
+    const p = PILLARS[i];
+    parts.push(pillarRing(sx, sy, ringR, stroke, p.color, values[i], glyphFor(p.key, 12), i*140));
+    const lx = cx + (orbitR+ringR+8)*Math.cos(a);
+    const ly = cy + (orbitR+ringR+8)*Math.sin(a);
+    parts.push(`<text x="${lx}" y="${ly+3}" text-anchor="middle" font-size="9" font-weight="600" fill="#16161A">${Math.round(values[i]*100)}%</text>`);
+  });
+  parts.push(`</g>`);
+  return svg(parts.join(''));
+}
+
+// B5 — Asymmetric weighted stack
+function vB5(values){
+  // sizes by base weight: Train 40, Nourish 30, Move 15, Sleep 15
+  const w = 220, h = 200;
+  const layouts = [
+    {cx:80,  cy:90,  r:46, key:0}, // Train (biggest)
+    {cx:155, cy:75,  r:36, key:1}, // Nourish
+    {cx:150, cy:150, r:22, key:2}, // Move (small)
+    {cx:60,  cy:165, r:22, key:3}, // Sleep (small)
+  ];
+  const stroke = 7;
+  let parts = [];
+  layouts.forEach((L,i)=>{
+    const p = PILLARS[i];
+    parts.push(pillarRing(L.cx, L.cy, L.r, stroke, p.color, values[i], glyphFor(p.key, L.r*0.5), i*140));
+    parts.push(`<text x="${L.cx}" y="${L.cy+L.r+12}" text-anchor="middle" font-size="9" font-weight="600" fill="#16161A">${p.name} ${Math.round(values[i]*100)}%</text>`);
+  });
+  return svg(parts.join(''), `0 0 ${w} ${h}`);
+}
+
+// B6 — Interlocking chain (2x2 with overlap)
+function vB6(values){
+  const r=34, stroke=7, overlap=14;
+  // 2x2 cluster around center 110,110 with overlap
+  const positions = [
+    {cx:110-r+overlap, cy:110-r+overlap, key:0}, // TL Train
+    {cx:110+r-overlap, cy:110-r+overlap, key:1}, // TR Nourish
+    {cx:110-r+overlap, cy:110+r-overlap, key:2}, // BL Move
+    {cx:110+r-overlap, cy:110+r-overlap, key:3}, // BR Sleep
+  ];
+  let parts = [];
+  // tracks first
+  positions.forEach((pos,i)=>{
+    parts.push(`<circle cx="${pos.cx}" cy="${pos.cy}" r="${r}" fill="none" stroke="${TRACK}" stroke-width="${stroke}"/>`);
+  });
+  // fills (so they layer over tracks)
+  positions.forEach((pos,i)=>{
+    const p = PILLARS[i];
+    const circ = 2*Math.PI*r;
+    const dash = circ * values[i];
+    const gap = circ - dash;
+    parts.push(`
+      <g transform="rotate(-90 ${pos.cx} ${pos.cy})">
+        <circle cx="${pos.cx}" cy="${pos.cy}" r="${r}" fill="none"
+          stroke="${p.color}" stroke-width="${stroke}" stroke-linecap="round"
+          stroke-dasharray="${dash} ${gap}" class="ring-fill"/>
+      </g>`);
+    parts.push(`<text x="${pos.cx}" y="${pos.cy+4}" text-anchor="middle" font-size="11" font-weight="700" fill="#16161A">${Math.round(values[i]*100)}%</text>`);
+  });
+  return svg(parts.join(''));
+}
+
+// ============================================================
+//  GROUP B EXTRAS — B7..B14
+// ============================================================
+
+// Helper: animated ring with CSS custom prop for fillIn animation
+function animPillarRing(cx, cy, r, stroke, color, value, glyph, delayMs){
+  const circ = 2*Math.PI*r;
+  const target = circ * (1 - value);
+  const style = `--circ:${circ}; --target:${target}; animation-delay:${delayMs||0}ms; stroke-dasharray:${circ}; stroke-dashoffset:${target};`;
+  return `
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${TRACK}" stroke-width="${stroke}"/>
+    <g transform="rotate(-90 ${cx} ${cy})">
+      <circle class="anim-fill" cx="${cx}" cy="${cy}" r="${r}" fill="none"
+        stroke="${color}" stroke-width="${stroke}" stroke-linecap="round"
+        style="${style}"/>
+    </g>
+    ${glyph ? `<g class="breathe" transform="translate(${cx} ${cy})" fill="${color}" font-size="${r*0.7}" text-anchor="middle" dominant-baseline="central" font-weight="700" opacity="0.92">${glyph}</g>` : ''}
+  `;
+}
+
+// B7 — Bubble cluster
+function vB7(values){
+  const positions = [
+    {cx:80,  cy:80,  r:34, key:0, delay:0},
+    {cx:145, cy:75,  r:30, key:1, delay:120},
+    {cx:75,  cy:150, r:28, key:2, delay:240},
+    {cx:155, cy:155, r:32, key:3, delay:360},
+  ];
+  const stroke = 7;
+  let parts = [];
+  parts.push(`<defs>
+    <filter id="bubbleShadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="2"/>
+      <feOffset dx="0" dy="2"/>
+      <feComponentTransfer><feFuncA type="linear" slope="0.18"/></feComponentTransfer>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>`);
+  positions.forEach((pos,i)=>{
+    const p = PILLARS[i];
+    parts.push(`<g class="float-y" style="animation-delay:${i*220}ms" filter="url(#bubbleShadow)">
+      ${animPillarRing(pos.cx, pos.cy, pos.r, stroke, p.color, values[i], glyphFor(p.key, 14), pos.delay)}
+    </g>`);
+    parts.push(`<text x="${pos.cx}" y="${pos.cy+pos.r+12}" text-anchor="middle" font-size="9" font-weight="600" fill="#16161A">${Math.round(values[i]*100)}%</text>`);
+  });
+  return svg(parts.join(''));
+}
+
+// B8 — Card fan
+function vB8(values){
+  // 4 cards rotated and offset; ring centered on each card
+  const angles = [-12, -4, 4, 12];
+  const stroke = 7, r = 24;
+  let parts = [];
+  angles.forEach((deg,i)=>{
+    const offsetX = 110 + (i - 1.5)*32;
+    const offsetY = 110;
+    const p = PILLARS[i];
+    parts.push(`<g transform="rotate(${deg} ${offsetX} ${offsetY})">
+      <rect x="${offsetX-30}" y="${offsetY-44}" width="60" height="88" rx="10"
+        fill="#FFF" stroke="${TRACK}" stroke-width="1"
+        filter="drop-shadow(0 3px 6px rgba(0,0,0,0.08))"/>
+      ${animPillarRing(offsetX, offsetY-8, r, stroke, p.color, values[i], glyphFor(p.key, 11), i*120)}
+      <text x="${offsetX}" y="${offsetY+30}" text-anchor="middle" font-size="9" font-weight="700" fill="#16161A">${Math.round(values[i]*100)}%</text>
+    </g>`);
+  });
+  return svg(parts.join(''));
+}
+
+// B9 — Honeycomb (1 top, 2 middle, 1 bottom)
+function vB9(values){
+  const r=30, stroke=7;
+  const positions = [
+    {cx:110, cy:55,  key:0}, // top — Train
+    {cx:73,  cy:115, key:1}, // mid-left — Nourish
+    {cx:147, cy:115, key:2}, // mid-right — Move
+    {cx:110, cy:175, key:3}, // bottom — Sleep
+  ];
+  let parts = [];
+  positions.forEach((pos,i)=>{
+    const p = PILLARS[i];
+    parts.push(animPillarRing(pos.cx, pos.cy, r, stroke, p.color, values[i], glyphFor(p.key, 12), i*100));
+    parts.push(`<text x="${pos.cx}" y="${pos.cy+4}" text-anchor="middle" font-size="11" font-weight="700" fill="#16161A">${Math.round(values[i]*100)}%</text>`);
+  });
+  return svg(parts.join(''));
+}
+
+// B10 — Vertical timeline
+function vB10(values){
+  const w=220, h=240;
+  const r=18, stroke=6;
+  const cx = 50;
+  const spacing = 52;
+  let parts = [];
+  // spine
+  parts.push(`<line x1="${cx}" y1="${30}" x2="${cx}" y2="${30 + 3*spacing}" stroke="${TRACK}" stroke-width="2" stroke-dasharray="2 3"/>`);
+  PILLARS.forEach((p,i)=>{
+    const cy = 30 + i*spacing;
+    parts.push(animPillarRing(cx, cy, r, stroke, p.color, values[i], glyphFor(p.key, 10), i*120));
+    // mini bar to the right
+    const barX = cx+38, barY = cy-2, barW = 130, barH = 5;
+    parts.push(`<rect x="${barX}" y="${barY}" width="${barW}" height="${barH}" rx="2.5" fill="${TRACK}"/>`);
+    parts.push(`<rect x="${barX}" y="${barY}" width="${barW*values[i]}" height="${barH}" rx="2.5" fill="${p.color}"/>`);
+    parts.push(`<text x="${barX}" y="${barY-3}" font-size="9" font-weight="700" fill="#16161A">${p.name}</text>`);
+    parts.push(`<text x="${barX+barW}" y="${barY-3}" text-anchor="end" font-size="9" font-weight="700" fill="#7A7A82">${Math.round(values[i]*100)}%</text>`);
+  });
+  return svg(parts.join(''), `0 0 ${w} ${h}`);
+}
+
+// B11 — Hero + trio
+function vB11(values){
+  const w=260, h=220;
+  let parts = [];
+  // hero: Train, big, left
+  const heroCx = 80, heroCy = 110, heroR = 56, heroStroke = 10;
+  parts.push(animPillarRing(heroCx, heroCy, heroR, heroStroke, PILLARS[0].color, values[0], glyphFor('train', 26), 0));
+  parts.push(`<text x="${heroCx}" y="${heroCy+heroR+18}" text-anchor="middle" font-size="11" font-weight="700" fill="#16161A">Train · ${Math.round(values[0]*100)}%</text>`);
+  // 3 satellites on right, vertically stacked
+  const sR = 22, sStroke = 6;
+  const xRight = 195;
+  [1,2,3].forEach((idx,n)=>{
+    const cy = 50 + n*60;
+    const p = PILLARS[idx];
+    parts.push(animPillarRing(xRight, cy, sR, sStroke, p.color, values[idx], glyphFor(p.key, 11), 200 + n*120));
+    parts.push(`<text x="${xRight+sR+8}" y="${cy-2}" font-size="9" font-weight="700" fill="#16161A">${p.name}</text>`);
+    parts.push(`<text x="${xRight+sR+8}" y="${cy+10}" font-size="9" font-weight="700" fill="#7A7A82">${Math.round(values[idx]*100)}%</text>`);
+  });
+  return svg(parts.join(''), `0 0 ${w} ${h}`);
+}
+
+// B12 — Linked horizontal chain
+function vB12(values){
+  const w = 360, h = 160;
+  const r = 28, stroke = 7;
+  const spacing = 80;
+  const startX = 60;
+  const cy = 78;
+  let parts = [];
+  // connectors between adjacent rings; connector saturation tied to min of two neighbours
+  for(let i=0;i<3;i++){
+    const x1 = startX + i*spacing + r;
+    const x2 = startX + (i+1)*spacing - r;
+    const c1 = PILLARS[i].color, c2 = PILLARS[i+1].color;
+    const connectorStrength = Math.min(values[i], values[i+1]);
+    parts.push(`<defs>
+      <linearGradient id="connect${i}" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" stop-color="${c1}"/>
+        <stop offset="100%" stop-color="${c2}"/>
+      </linearGradient>
+    </defs>`);
+    parts.push(`<rect x="${x1}" y="${cy-3}" width="${x2-x1}" height="6" rx="3"
+      fill="${TRACK}"/>`);
+    parts.push(`<rect x="${x1}" y="${cy-3}" width="${(x2-x1)*connectorStrength}" height="6" rx="3"
+      fill="url(#connect${i})" style="transition:width 800ms ease-out"/>`);
+  }
+  PILLARS.forEach((p,i)=>{
+    const cx = startX + i*spacing;
+    parts.push(animPillarRing(cx, cy, r, stroke, p.color, values[i], glyphFor(p.key, 14), i*150));
+    parts.push(`<text x="${cx}" y="${cy+r+16}" text-anchor="middle" font-size="9" font-weight="600" fill="#16161A">${p.name}</text>`);
+    parts.push(`<text x="${cx}" y="${cy+r+28}" text-anchor="middle" font-size="9" font-weight="700" fill="#7A7A82">${Math.round(values[i]*100)}%</text>`);
+  });
+  return svg(parts.join(''), `0 0 ${w} ${h}`);
+}
+
+// B13 — Triptych + keystone
+function vB13(values){
+  const w=260, h=200;
+  const r=26, stroke=7;
+  let parts = [];
+  // keystone Sleep top center, but original PILLARS index 3 = Sleep
+  // bottom row: Train (left), Nourish (center), Move (right)
+  const positions = [
+    {cx:60,  cy:140, key:0}, // Train
+    {cx:130, cy:140, key:1}, // Nourish
+    {cx:200, cy:140, key:2}, // Move
+    {cx:130, cy:58,  key:3, isKeystone:true}, // Sleep keystone
+  ];
+  // faint arch outline
+  parts.push(`<path d="M 60 140 Q 130 30 200 140" fill="none" stroke="${TRACK}" stroke-width="1" stroke-dasharray="3 4"/>`);
+  positions.forEach((pos,i)=>{
+    const p = PILLARS[i];
+    const radius = pos.isKeystone ? r+4 : r;
+    parts.push(animPillarRing(pos.cx, pos.cy, radius, stroke, p.color, values[i], glyphFor(p.key, 13), i*120));
+    parts.push(`<text x="${pos.cx}" y="${pos.cy+radius+12}" text-anchor="middle" font-size="9" font-weight="700" fill="#16161A">${p.name} ${Math.round(values[i]*100)}%</text>`);
+  });
+  return svg(parts.join(''), `0 0 ${w} ${h}`);
+}
+
+// B14 — Gauge cluster (clock faces)
+function vB14(values){
+  const r=34, stroke=4;
+  const positions = [
+    {cx:72,  cy:72,  key:0},
+    {cx:148, cy:72,  key:1},
+    {cx:72,  cy:148, key:2},
+    {cx:148, cy:148, key:3},
+  ];
+  let parts = [];
+  positions.forEach((pos,i)=>{
+    const p = PILLARS[i];
+    // outer ring
+    parts.push(`<circle cx="${pos.cx}" cy="${pos.cy}" r="${r}" fill="#FAFAF7" stroke="${p.color}" stroke-width="1.5"/>`);
+    // tick marks
+    for(let t=0;t<12;t++){
+      const a = (t*30 - 90) * Math.PI/180;
+      const x1 = pos.cx + (r-2)*Math.cos(a);
+      const y1 = pos.cy + (r-2)*Math.sin(a);
+      const x2 = pos.cx + (r-6)*Math.cos(a);
+      const y2 = pos.cy + (r-6)*Math.sin(a);
+      parts.push(`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${p.color}" stroke-width="${t%3===0?1.5:0.8}" stroke-opacity="0.6"/>`);
+    }
+    // needle
+    const needleAngle = (-90 + values[i]*270) * Math.PI/180; // sweep 270°
+    const nx = pos.cx + (r-9)*Math.cos(needleAngle);
+    const ny = pos.cy + (r-9)*Math.sin(needleAngle);
+    parts.push(`<line x1="${pos.cx}" y1="${pos.cy}" x2="${nx}" y2="${ny}" stroke="${p.color}" stroke-width="2.5" stroke-linecap="round" style="transition:all 900ms cubic-bezier(.2,.7,.2,1)"/>`);
+    parts.push(`<circle cx="${pos.cx}" cy="${pos.cy}" r="3" fill="${p.color}"/>`);
+    // % below the dial
+    parts.push(`<text x="${pos.cx}" y="${pos.cy+r-2}" text-anchor="middle" font-size="9" font-weight="700" fill="#16161A">${Math.round(values[i]*100)}%</text>`);
+  });
+  return svg(parts.join(''));
+}
+
+// ============================================================
+//  GROUP C — COMPACT HORIZONTAL ROW VARIANTS
+//  All Group C variants render 4 pillars in a horizontal row at ~120pt
+//  card height, preserving the existing TodayScoreCard footprint.
+// ============================================================
+
+const ROW_W = 360, ROW_H = 140;
+const ROW_SPACING = ROW_W / 4;
+
+// C1 — Minimal numerical (Oura-shaped baseline)
+function vC1(values){
+  const r = 30, stroke = 6;
+  let parts = [];
+  PILLARS.forEach((p,i)=>{
+    const cx = ROW_SPACING/2 + i*ROW_SPACING;
+    const cy = 56;
+    const circ = 2*Math.PI*r;
+    const target = circ * (1 - values[i]);
+    parts.push(`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${TRACK}" stroke-width="${stroke}"/>`);
+    parts.push(`<g transform="rotate(-90 ${cx} ${cy})">
+      <circle class="anim-fill" cx="${cx}" cy="${cy}" r="${r}" fill="none"
+        stroke="${p.color}" stroke-width="${stroke}" stroke-linecap="round"
+        style="--circ:${circ}; --target:${target}; animation-delay:${i*120}ms; stroke-dasharray:${circ}; stroke-dashoffset:${target};"/>
+    </g>`);
+    parts.push(`<text x="${cx}" y="${cy+5}" text-anchor="middle" font-size="16" font-weight="700" fill="#16161A">${Math.round(values[i]*100)}</text>`);
+    parts.push(`<text x="${cx}" y="${cy+r+18}" text-anchor="middle" font-size="11" font-weight="600" fill="#16161A">${p.name}</text>`);
+    parts.push(`<text x="${cx}" y="${cy+r+32}" text-anchor="middle" font-size="9" fill="#7A7A82">${p.hint}</text>`);
+  });
+  return svg(parts.join(''), `0 0 ${ROW_W} ${ROW_H}`);
+}
+
+// C2 — Concentric companion (today + yesterday)
+function vC2(values){
+  const rOuter = 32, rInner = 22, stroke = 5;
+  const yesterday = [0.42, 0.78, 0.51, 0.83]; // mock comparison data
+  let parts = [];
+  PILLARS.forEach((p,i)=>{
+    const cx = ROW_SPACING/2 + i*ROW_SPACING;
+    const cy = 56;
+    const cO = 2*Math.PI*rOuter;
+    const cI = 2*Math.PI*rInner;
+    const tO = cO * (1 - values[i]);
+    const tI = cI * (1 - yesterday[i]);
+    // outer track + fill (today)
+    parts.push(`<circle cx="${cx}" cy="${cy}" r="${rOuter}" fill="none" stroke="${TRACK}" stroke-width="${stroke}"/>`);
+    parts.push(`<g transform="rotate(-90 ${cx} ${cy})">
+      <circle class="anim-fill" cx="${cx}" cy="${cy}" r="${rOuter}" fill="none"
+        stroke="${p.color}" stroke-width="${stroke}" stroke-linecap="round"
+        style="--circ:${cO}; --target:${tO}; animation-delay:${i*120}ms; stroke-dasharray:${cO}; stroke-dashoffset:${tO};"/>
+    </g>`);
+    // inner faint ring (yesterday)
+    parts.push(`<circle cx="${cx}" cy="${cy}" r="${rInner}" fill="none" stroke="${TRACK}" stroke-width="2"/>`);
+    parts.push(`<g transform="rotate(-90 ${cx} ${cy})">
+      <circle class="anim-fill" cx="${cx}" cy="${cy}" r="${rInner}" fill="none"
+        stroke="${p.color}" stroke-width="2" stroke-linecap="round" stroke-opacity="0.4"
+        style="--circ:${cI}; --target:${tI}; animation-delay:${i*120 + 200}ms; stroke-dasharray:${cI}; stroke-dashoffset:${tI};"/>
+    </g>`);
+    // glyph in center
+    parts.push(`<g transform="translate(${cx} ${cy})" fill="${p.color}">${glyphFor(p.key, 12)}</g>`);
+    parts.push(`<text x="${cx}" y="${cy+rOuter+16}" text-anchor="middle" font-size="11" font-weight="700" fill="#16161A">${Math.round(values[i]*100)}%</text>`);
+    parts.push(`<text x="${cx}" y="${cy+rOuter+30}" text-anchor="middle" font-size="9" fill="#7A7A82">vs ${Math.round(yesterday[i]*100)}% yesterday</text>`);
+  });
+  return svg(parts.join(''), `0 0 ${ROW_W} ${ROW_H}`);
+}
+
+// C3 — Liquid-fill circle (BOTTOM-UP fill inside the disc)
+function vC3(values){
+  const r = 32;
+  let parts = [];
+  parts.push(`<defs>
+    <clipPath id="liquidClip0"><circle cx="${ROW_SPACING/2 + 0*ROW_SPACING}" cy="56" r="${r}"/></clipPath>
+    <clipPath id="liquidClip1"><circle cx="${ROW_SPACING/2 + 1*ROW_SPACING}" cy="56" r="${r}"/></clipPath>
+    <clipPath id="liquidClip2"><circle cx="${ROW_SPACING/2 + 2*ROW_SPACING}" cy="56" r="${r}"/></clipPath>
+    <clipPath id="liquidClip3"><circle cx="${ROW_SPACING/2 + 3*ROW_SPACING}" cy="56" r="${r}"/></clipPath>
+  </defs>`);
+  PILLARS.forEach((p,i)=>{
+    const cx = ROW_SPACING/2 + i*ROW_SPACING;
+    const cy = 56;
+    // empty circle outline
+    parts.push(`<circle cx="${cx}" cy="${cy}" r="${r}" fill="${p.color}" fill-opacity="0.10" stroke="${p.color}" stroke-width="1.5" stroke-opacity="0.5"/>`);
+    // liquid fill — rectangle clipped to circle, starting at bottom
+    const fillH = (2*r) * values[i];
+    const fillTop = (cy + r) - fillH;
+    parts.push(`<g clip-path="url(#liquidClip${i})">
+      <rect x="${cx-r}" y="${fillTop}" width="${2*r}" height="${fillH+2}" fill="${p.color}" fill-opacity="0.78">
+        <animate attributeName="y" from="${cy+r}" to="${fillTop}" dur="1100ms" begin="${i*150}ms" fill="freeze"/>
+        <animate attributeName="height" from="0" to="${fillH+2}" dur="1100ms" begin="${i*150}ms" fill="freeze"/>
+      </rect>
+      <!-- meniscus wave -->
+      ${values[i] > 0.03 && values[i] < 0.98 ? `
+      <path d="M ${cx-r} ${fillTop} Q ${cx-r/2} ${fillTop-2.5} ${cx} ${fillTop} T ${cx+r} ${fillTop} L ${cx+r} ${fillTop+5} L ${cx-r} ${fillTop+5} Z"
+        fill="${p.color}" fill-opacity="0.92">
+        <animateTransform attributeName="transform" type="translate" values="0 0; 2 -0.5; 0 0; -2 -0.5; 0 0" dur="3.4s" repeatCount="indefinite"/>
+      </path>` : ''}
+    </g>`);
+    // glyph
+    parts.push(`<g transform="translate(${cx} ${cy})" fill="#FAFAF7" fill-opacity="0.95">${glyphFor(p.key, 16)}</g>`);
+    // label below
+    parts.push(`<text x="${cx}" y="${cy+r+18}" text-anchor="middle" font-size="11" font-weight="700" fill="#16161A">${p.name}</text>`);
+    parts.push(`<text x="${cx}" y="${cy+r+32}" text-anchor="middle" font-size="9" fill="#7A7A82">${Math.round(values[i]*100)}%</text>`);
+  });
+  return svg(parts.join(''), `0 0 ${ROW_W} ${ROW_H}`);
+}
+
+// C4 — Half-arc top + text bed
+function vC4(values){
+  const r = 36, stroke = 8;
+  let parts = [];
+  PILLARS.forEach((p,i)=>{
+    const cx = ROW_SPACING/2 + i*ROW_SPACING;
+    const cy = 70;
+    // background half-arc
+    parts.push(`<path d="M ${cx-r} ${cy} A ${r} ${r} 0 0 1 ${cx+r} ${cy}" fill="none" stroke="${TRACK}" stroke-width="${stroke}" stroke-linecap="round"/>`);
+    // progress half-arc
+    const arcLen = Math.PI * r;
+    const target = arcLen * (1 - values[i]);
+    parts.push(`<path class="anim-fill" d="M ${cx-r} ${cy} A ${r} ${r} 0 0 1 ${cx+r} ${cy}"
+      fill="none" stroke="${p.color}" stroke-width="${stroke}" stroke-linecap="round"
+      style="--circ:${arcLen}; --target:${target}; animation-delay:${i*120}ms; stroke-dasharray:${arcLen}; stroke-dashoffset:${target};"/>`);
+    // text in the half-circle "bed"
+    parts.push(`<text x="${cx}" y="${cy-6}" text-anchor="middle" font-size="14" font-weight="700" fill="#16161A">${Math.round(values[i]*100)}%</text>`);
+    parts.push(`<text x="${cx}" y="${cy+12}" text-anchor="middle" font-size="9" font-weight="600" fill="${p.color}">${p.name}</text>`);
+  });
+  return svg(parts.join(''), `0 0 ${ROW_W} ${ROW_H}`);
+}
+
+// C5 — Dot-cluster ring (12 dots around perimeter)
+function vC5(values){
+  const r = 28, dotR = 2.8;
+  const dotCount = 12;
+  let parts = [];
+  PILLARS.forEach((p,i)=>{
+    const cx = ROW_SPACING/2 + i*ROW_SPACING;
+    const cy = 56;
+    const lit = Math.round(values[i] * dotCount);
+    for(let d=0; d<dotCount; d++){
+      const a = (-90 + (d/dotCount)*360) * Math.PI/180;
+      const dx = cx + r*Math.cos(a);
+      const dy = cy + r*Math.sin(a);
+      const active = d < lit;
+      parts.push(`<circle cx="${dx}" cy="${dy}" r="${dotR}" fill="${active?p.color:TRACK}"
+        opacity="${active?1:0.6}"
+        style="transition:fill 400ms ${i*120 + d*40}ms ease, opacity 400ms ${i*120 + d*40}ms ease"/>`);
+    }
+    // center glyph
+    parts.push(`<g transform="translate(${cx} ${cy})" fill="${p.color}">${glyphFor(p.key, 14)}</g>`);
+    parts.push(`<text x="${cx}" y="${cy+r+18}" text-anchor="middle" font-size="11" font-weight="700" fill="#16161A">${p.name}</text>`);
+    parts.push(`<text x="${cx}" y="${cy+r+32}" text-anchor="middle" font-size="9" fill="#7A7A82">${lit}/${dotCount}</text>`);
+  });
+  return svg(parts.join(''), `0 0 ${ROW_W} ${ROW_H}`);
+}
+
+// shared 7-day mock history (M..S, today last) — used by C6, C9, C11, C13, C14
+const DAY_LABELS = ['M','T','W','T','F','S','S'];
+const WEEK_HISTORY = (values)=>([
+  [0.40,0.30,0.60,0.80,0.50,0.70,values[0]],
+  [0.70,0.55,0.62,0.40,0.85,0.90,values[1]],
+  [0.50,0.70,0.55,0.60,0.80,0.62,values[2]],
+  [0.60,0.72,0.70,0.80,0.70,0.82,values[3]],
+]);
+
+// C6 — Ring + 7-day sparkline (now with day labels)
+function vC6(values){
+  const r = 22, stroke = 5;
+  const hist = WEEK_HISTORY(values);
+  let parts = [];
+  PILLARS.forEach((p,i)=>{
+    const cx = ROW_SPACING/2 + i*ROW_SPACING;
+    const cy = 40;
+    const circ = 2*Math.PI*r;
+    const target = circ * (1 - values[i]);
+    parts.push(`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${TRACK}" stroke-width="${stroke}"/>`);
+    parts.push(`<g transform="rotate(-90 ${cx} ${cy})">
+      <circle class="anim-fill" cx="${cx}" cy="${cy}" r="${r}" fill="none"
+        stroke="${p.color}" stroke-width="${stroke}" stroke-linecap="round"
+        style="--circ:${circ}; --target:${target}; animation-delay:${i*120}ms; stroke-dasharray:${circ}; stroke-dashoffset:${target};"/>
+    </g>`);
+    parts.push(`<text x="${cx}" y="${cy+4}" text-anchor="middle" font-size="11" font-weight="700" fill="#16161A">${Math.round(values[i]*100)}</text>`);
+    // sparkline
+    const sx = cx - 32, sy = cy + r + 8, sw = 64, sh = 18;
+    const series = hist[i];
+    const path = series.map((v,k)=>{
+      const x = sx + (k/(series.length-1))*sw;
+      const y = sy + sh - v*sh;
+      return `${k===0?'M':'L'} ${x.toFixed(1)} ${y.toFixed(1)}`;
+    }).join(' ');
+    // area fill under line
+    const areaPath = path + ` L ${sx+sw} ${sy+sh} L ${sx} ${sy+sh} Z`;
+    parts.push(`<path d="${areaPath}" fill="${p.color}" fill-opacity="0.10"/>`);
+    parts.push(`<path d="${path}" fill="none" stroke="${p.color}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>`);
+    const lastX = sx + sw, lastY = sy + sh - series[series.length-1]*sh;
+    parts.push(`<circle cx="${lastX}" cy="${lastY}" r="2.4" fill="${p.color}" stroke="#FAFAF7" stroke-width="1"/>`);
+    // day labels
+    DAY_LABELS.forEach((d,k)=>{
+      const dx = sx + (k/(DAY_LABELS.length-1))*sw;
+      const isToday = k === DAY_LABELS.length-1;
+      parts.push(`<text x="${dx}" y="${sy+sh+9}" text-anchor="middle" font-size="7"
+        font-weight="${isToday?'700':'500'}" fill="${isToday?p.color:'#A6A6AC'}">${d}</text>`);
+    });
+    parts.push(`<text x="${cx}" y="${sy+sh+22}" text-anchor="middle" font-size="9" font-weight="600" fill="#16161A">${p.name}</text>`);
+  });
+  return svg(parts.join(''), `0 0 ${ROW_W} ${ROW_H+24}`);
+}
+
+// C7 — Soft-glow ring
+function vC7(values){
+  const r = 30, stroke = 6;
+  let parts = [];
+  parts.push(`<defs>
+    ${PILLARS.map((p,i)=>`
+      <filter id="glow${i}" x="-50%" y="-50%" width="200%" height="200%">
+        <feGaussianBlur stdDeviation="${2 + values[i]*5}"/>
+      </filter>
+    `).join('')}
+  </defs>`);
+  PILLARS.forEach((p,i)=>{
+    const cx = ROW_SPACING/2 + i*ROW_SPACING;
+    const cy = 56;
+    const circ = 2*Math.PI*r;
+    const target = circ * (1 - values[i]);
+    // soft glow halo
+    parts.push(`<circle cx="${cx}" cy="${cy}" r="${r+2}" fill="none" stroke="${p.color}"
+      stroke-width="${stroke*1.4}" filter="url(#glow${i})" opacity="${0.15 + values[i]*0.5}"/>`);
+    parts.push(`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${TRACK}" stroke-width="${stroke}"/>`);
+    parts.push(`<g transform="rotate(-90 ${cx} ${cy})">
+      <circle class="anim-fill" cx="${cx}" cy="${cy}" r="${r}" fill="none"
+        stroke="${p.color}" stroke-width="${stroke}" stroke-linecap="round"
+        style="--circ:${circ}; --target:${target}; animation-delay:${i*120}ms; stroke-dasharray:${circ}; stroke-dashoffset:${target};"/>
+    </g>`);
+    parts.push(`<g transform="translate(${cx} ${cy})" fill="${p.color}">${glyphFor(p.key, 13)}</g>`);
+    parts.push(`<text x="${cx}" y="${cy+r+18}" text-anchor="middle" font-size="11" font-weight="700" fill="#16161A">${p.name}</text>`);
+    parts.push(`<text x="${cx}" y="${cy+r+32}" text-anchor="middle" font-size="9" fill="#7A7A82">${Math.round(values[i]*100)}%</text>`);
+  });
+  return svg(parts.join(''), `0 0 ${ROW_W} ${ROW_H}`);
+}
+
+// C8 — Squircle tokens (Apple-style)
+function vC8(values){
+  const size = 56;
+  let parts = [];
+  PILLARS.forEach((p,i)=>{
+    const cx = ROW_SPACING/2 + i*ROW_SPACING;
+    const cy = 56;
+    const x = cx - size/2, y = cy - size/2;
+    // squircle (rounded square) background
+    parts.push(`<rect x="${x}" y="${y}" width="${size}" height="${size}" rx="16" ry="16"
+      fill="${p.color}" fill-opacity="0.10" stroke="${p.color}" stroke-width="1" stroke-opacity="0.4"/>`);
+    // progress bar along the top edge
+    const barW = size * values[i];
+    parts.push(`<rect x="${x}" y="${y}" width="${barW}" height="4" rx="2" ry="2" fill="${p.color}"
+      style="transition:width 900ms cubic-bezier(.2,.7,.2,1) ${i*120}ms"/>`);
+    // glyph centered
+    parts.push(`<g transform="translate(${cx} ${cy+2})" fill="${p.color}">${glyphFor(p.key, 22)}</g>`);
+    // % bottom right corner inside the squircle
+    parts.push(`<text x="${x+size-6}" y="${y+size-6}" text-anchor="end" font-size="10" font-weight="700" fill="${p.color}">${Math.round(values[i]*100)}%</text>`);
+    // label outside, below
+    parts.push(`<text x="${cx}" y="${cy+size/2+18}" text-anchor="middle" font-size="11" font-weight="600" fill="#16161A">${p.name}</text>`);
+  });
+  return svg(parts.join(''), `0 0 ${ROW_W} ${ROW_H}`);
+}
+
+// Shared helper: liquid-fill body inside a circle (used by C3, C9, C10, C12, C13, C15)
+function liquidFillCircle(cx, cy, r, color, value, idSuffix, opts){
+  opts = opts || {};
+  const fillH = (2*r) * value;
+  const fillTop = (cy + r) - fillH;
+  const showWave = value > 0.03 && value < 0.98 && !opts.suppressWave;
+  let s = '';
+  s += `<defs><clipPath id="lc${idSuffix}"><circle cx="${cx}" cy="${cy}" r="${r}"/></clipPath></defs>`;
+  s += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${color}" fill-opacity="${opts.outlineFillOpacity||0.10}" stroke="${color}" stroke-width="${opts.strokeWidth||1.5}" stroke-opacity="${opts.strokeOpacity!==undefined?opts.strokeOpacity:0.5}" ${opts.dashed?`stroke-dasharray="3 3"`:''}/>`;
+  s += `<g clip-path="url(#lc${idSuffix})">`;
+  s += `<rect x="${cx-r}" y="${fillTop}" width="${2*r}" height="${fillH+2}" fill="${color}" fill-opacity="${opts.fillOpacity||0.78}">
+    <animate attributeName="y" from="${cy+r}" to="${fillTop}" dur="1100ms" begin="${opts.delay||0}ms" fill="freeze"/>
+    <animate attributeName="height" from="0" to="${fillH+2}" dur="1100ms" begin="${opts.delay||0}ms" fill="freeze"/>
+  </rect>`;
+  if(showWave){
+    s += `<path d="M ${cx-r} ${fillTop} Q ${cx-r/2} ${fillTop-2.5} ${cx} ${fillTop} T ${cx+r} ${fillTop} L ${cx+r} ${fillTop+5} L ${cx-r} ${fillTop+5} Z"
+      fill="${color}" fill-opacity="0.92">
+      <animateTransform attributeName="transform" type="translate" values="0 0; 2 -0.5; 0 0; -2 -0.5; 0 0" dur="3.4s" repeatCount="indefinite"/>
+    </path>`;
+  }
+  s += `</g>`;
+  return s;
+}
+
+// C9 — Liquid-fill + 7-day sparkline
+function vC9(values){
+  const r = 22;
+  const hist = WEEK_HISTORY(values);
+  let parts = [];
+  PILLARS.forEach((p,i)=>{
+    const cx = ROW_SPACING/2 + i*ROW_SPACING;
+    const cy = 38;
+    parts.push(liquidFillCircle(cx, cy, r, p.color, values[i], `c9${i}`, {delay:i*150}));
+    parts.push(`<g transform="translate(${cx} ${cy})" fill="#FAFAF7" fill-opacity="0.95">${glyphFor(p.key, 12)}</g>`);
+    // sparkline below
+    const sx = cx - 30, sy = cy + r + 8, sw = 60, sh = 16;
+    const series = hist[i];
+    const path = series.map((v,k)=>{
+      const x = sx + (k/(series.length-1))*sw;
+      const y = sy + sh - v*sh;
+      return `${k===0?'M':'L'} ${x.toFixed(1)} ${y.toFixed(1)}`;
+    }).join(' ');
+    const areaPath = path + ` L ${sx+sw} ${sy+sh} L ${sx} ${sy+sh} Z`;
+    parts.push(`<path d="${areaPath}" fill="${p.color}" fill-opacity="0.10"/>`);
+    parts.push(`<path d="${path}" fill="none" stroke="${p.color}" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>`);
+    const lastX = sx + sw, lastY = sy + sh - series[series.length-1]*sh;
+    parts.push(`<circle cx="${lastX}" cy="${lastY}" r="2.2" fill="${p.color}" stroke="#FAFAF7" stroke-width="1"/>`);
+    DAY_LABELS.forEach((d,k)=>{
+      const dx = sx + (k/(DAY_LABELS.length-1))*sw;
+      const isToday = k === DAY_LABELS.length-1;
+      parts.push(`<text x="${dx}" y="${sy+sh+9}" text-anchor="middle" font-size="7" font-weight="${isToday?'700':'500'}" fill="${isToday?p.color:'#A6A6AC'}">${d}</text>`);
+    });
+    parts.push(`<text x="${cx}" y="${sy+sh+22}" text-anchor="middle" font-size="9" font-weight="700" fill="#16161A">${p.name} ${Math.round(values[i]*100)}%</text>`);
+  });
+  return svg(parts.join(''), `0 0 ${ROW_W} ${ROW_H+24}`);
+}
+
+// C10 — Liquid-fill inside dashed companion ring (yesterday tick)
+function vC10(values){
+  const r = 30;
+  const yesterday = [0.42, 0.78, 0.51, 0.83];
+  let parts = [];
+  PILLARS.forEach((p,i)=>{
+    const cx = ROW_SPACING/2 + i*ROW_SPACING;
+    const cy = 56;
+    // dashed outer "yesterday" ring
+    parts.push(liquidFillCircle(cx, cy, r, p.color, values[i], `c10${i}`, {dashed:true, delay:i*140, strokeOpacity:0.7}));
+    // yesterday's tick — a horizontal line across the disc at yesterday's fill height
+    const yY = (cy + r) - (2*r)*yesterday[i];
+    // chord length at this height
+    const dyAbs = Math.abs(yY - cy);
+    const chordHalf = Math.sqrt(Math.max(0, r*r - dyAbs*dyAbs));
+    parts.push(`<line x1="${cx-chordHalf}" y1="${yY}" x2="${cx+chordHalf}" y2="${yY}"
+      stroke="#16161A" stroke-width="1" stroke-dasharray="2 2" opacity="0.55"/>`);
+    parts.push(`<text x="${cx+chordHalf+4}" y="${yY+3}" font-size="7" fill="#7A7A82">y'day</text>`);
+    parts.push(`<g transform="translate(${cx} ${cy})" fill="#FAFAF7" fill-opacity="0.95">${glyphFor(p.key, 14)}</g>`);
+    parts.push(`<text x="${cx}" y="${cy+r+16}" text-anchor="middle" font-size="11" font-weight="700" fill="#16161A">${p.name}</text>`);
+    parts.push(`<text x="${cx}" y="${cy+r+30}" text-anchor="middle" font-size="9" fill="#7A7A82">${Math.round(values[i]*100)}% · y'day ${Math.round(yesterday[i]*100)}%</text>`);
+  });
+  return svg(parts.join(''), `0 0 ${ROW_W} ${ROW_H}`);
+}
+
+// C11 — Companion ring + sparkline
+function vC11(values){
+  const rOuter = 22, rInner = 13, stroke = 4;
+  const yesterday = [0.42, 0.78, 0.51, 0.83];
+  const hist = WEEK_HISTORY(values);
+  let parts = [];
+  PILLARS.forEach((p,i)=>{
+    const cx = ROW_SPACING/2 + i*ROW_SPACING;
+    const cy = 36;
+    const cO = 2*Math.PI*rOuter, cI = 2*Math.PI*rInner;
+    const tO = cO * (1 - values[i]), tI = cI * (1 - yesterday[i]);
+    parts.push(`<circle cx="${cx}" cy="${cy}" r="${rOuter}" fill="none" stroke="${TRACK}" stroke-width="${stroke}"/>`);
+    parts.push(`<g transform="rotate(-90 ${cx} ${cy})">
+      <circle class="anim-fill" cx="${cx}" cy="${cy}" r="${rOuter}" fill="none" stroke="${p.color}" stroke-width="${stroke}" stroke-linecap="round"
+        style="--circ:${cO}; --target:${tO}; animation-delay:${i*120}ms; stroke-dasharray:${cO}; stroke-dashoffset:${tO};"/>
+    </g>`);
+    parts.push(`<circle cx="${cx}" cy="${cy}" r="${rInner}" fill="none" stroke="${TRACK}" stroke-width="2"/>`);
+    parts.push(`<g transform="rotate(-90 ${cx} ${cy})">
+      <circle class="anim-fill" cx="${cx}" cy="${cy}" r="${rInner}" fill="none" stroke="${p.color}" stroke-width="2" stroke-linecap="round" stroke-opacity="0.45"
+        style="--circ:${cI}; --target:${tI}; animation-delay:${i*120+200}ms; stroke-dasharray:${cI}; stroke-dashoffset:${tI};"/>
+    </g>`);
+    parts.push(`<text x="${cx}" y="${cy+3}" text-anchor="middle" font-size="9" font-weight="700" fill="#16161A">${Math.round(values[i]*100)}</text>`);
+    // sparkline
+    const sx = cx - 28, sy = cy + rOuter + 8, sw = 56, sh = 14;
+    const series = hist[i];
+    const path = series.map((v,k)=>{
+      const x = sx + (k/(series.length-1))*sw;
+      const y = sy + sh - v*sh;
+      return `${k===0?'M':'L'} ${x.toFixed(1)} ${y.toFixed(1)}`;
+    }).join(' ');
+    parts.push(`<path d="${path}" fill="none" stroke="${p.color}" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" opacity="0.85"/>`);
+    DAY_LABELS.forEach((d,k)=>{
+      const dx = sx + (k/(DAY_LABELS.length-1))*sw;
+      const isToday = k === DAY_LABELS.length-1;
+      parts.push(`<text x="${dx}" y="${sy+sh+8}" text-anchor="middle" font-size="6.5" font-weight="${isToday?'700':'500'}" fill="${isToday?p.color:'#A6A6AC'}">${d}</text>`);
+    });
+    parts.push(`<text x="${cx}" y="${sy+sh+22}" text-anchor="middle" font-size="9" font-weight="700" fill="#16161A">${p.name}</text>`);
+  });
+  return svg(parts.join(''), `0 0 ${ROW_W} ${ROW_H+24}`);
+}
+
+// C12 — Liquid + goal threshold (80%)
+function vC12(values){
+  const r = 30;
+  const GOAL = 0.80;
+  let parts = [];
+  PILLARS.forEach((p,i)=>{
+    const cx = ROW_SPACING/2 + i*ROW_SPACING;
+    const cy = 56;
+    parts.push(liquidFillCircle(cx, cy, r, p.color, values[i], `c12${i}`, {delay:i*140}));
+    // goal line drawn across the circle at GOAL height
+    const goalY = (cy + r) - (2*r)*GOAL;
+    const dyAbs = Math.abs(goalY - cy);
+    const chordHalf = Math.sqrt(Math.max(0, r*r - dyAbs*dyAbs));
+    parts.push(`<line x1="${cx-chordHalf-3}" y1="${goalY}" x2="${cx+chordHalf+3}" y2="${goalY}"
+      stroke="#16161A" stroke-width="1.2" stroke-dasharray="3 2"/>`);
+    parts.push(`<text x="${cx+chordHalf+6}" y="${goalY+3}" font-size="7" font-weight="700" fill="#16161A">goal</text>`);
+    // checkmark if above goal
+    if(values[i] >= GOAL){
+      parts.push(`<circle cx="${cx+r-2}" cy="${cy-r+4}" r="7" fill="#16A34A" stroke="#FAFAF7" stroke-width="1.5"/>`);
+      parts.push(`<path d="M ${cx+r-5} ${cy-r+4} L ${cx+r-3} ${cy-r+6} L ${cx+r+2} ${cy-r+1}" fill="none" stroke="#FAFAF7" stroke-width="1.8" stroke-linecap="round"/>`);
+    }
+    parts.push(`<g transform="translate(${cx} ${cy})" fill="#FAFAF7" fill-opacity="0.95">${glyphFor(p.key, 14)}</g>`);
+    parts.push(`<text x="${cx}" y="${cy+r+16}" text-anchor="middle" font-size="11" font-weight="700" fill="#16161A">${p.name}</text>`);
+    parts.push(`<text x="${cx}" y="${cy+r+30}" text-anchor="middle" font-size="9" fill="#7A7A82">${Math.round(values[i]*100)}% ${values[i] >= GOAL ? '· above goal' : ''}</text>`);
+  });
+  return svg(parts.join(''), `0 0 ${ROW_W} ${ROW_H}`);
+}
+
+// C13 — Tide chart (meniscus = weekly trend)
+function vC13(values){
+  const r = 30;
+  const hist = WEEK_HISTORY(values);
+  let parts = [];
+  PILLARS.forEach((p,i)=>{
+    const cx = ROW_SPACING/2 + i*ROW_SPACING;
+    const cy = 56;
+    const series = hist[i];
+    const avg = series.reduce((a,b)=>a+b,0)/series.length;
+    const baseY = (cy + r) - (2*r)*avg;
+    // outline
+    parts.push(`<defs><clipPath id="c13clip${i}"><circle cx="${cx}" cy="${cy}" r="${r}"/></clipPath></defs>`);
+    parts.push(`<circle cx="${cx}" cy="${cy}" r="${r}" fill="${p.color}" fill-opacity="0.10" stroke="${p.color}" stroke-width="1.5" stroke-opacity="0.5"/>`);
+    parts.push(`<g clip-path="url(#c13clip${i})">`);
+    // build a wavy line whose peaks/troughs reflect each day's value
+    let waveD = `M ${cx-r} ${baseY}`;
+    const segments = series.length;
+    for(let k=0; k<segments; k++){
+      const dayX = cx - r + ((k+1)/segments)*(2*r);
+      const dayY = (cy + r) - (2*r)*series[k];
+      const prevX = cx - r + (k/segments)*(2*r);
+      const prevY = k===0 ? baseY : (cy + r) - (2*r)*series[k-1];
+      const midX = (prevX + dayX)/2;
+      waveD += ` Q ${midX} ${(prevY+dayY)/2 - 2} ${dayX.toFixed(1)} ${dayY.toFixed(1)}`;
+    }
+    waveD += ` L ${cx+r} ${cy+r} L ${cx-r} ${cy+r} Z`;
+    parts.push(`<path d="${waveD}" fill="${p.color}" fill-opacity="0.72"/>`);
+    parts.push(`</g>`);
+    // markers for each day in the wave
+    series.forEach((v,k)=>{
+      const dx = cx - r + ((k+0.5)/segments)*(2*r);
+      const dy = (cy + r) - (2*r)*v;
+      // clamp inside circle
+      const dyClamped = Math.max(cy - r + 2, Math.min(cy + r - 2, dy));
+      const isToday = k === series.length-1;
+      parts.push(`<circle cx="${dx.toFixed(1)}" cy="${dyClamped.toFixed(1)}" r="${isToday?2.4:1.4}" fill="${isToday?'#FAFAF7':p.color}" stroke="${isToday?p.color:'none'}" stroke-width="${isToday?1.2:0}"/>`);
+    });
+    parts.push(`<g transform="translate(${cx} ${cy-r+10})" fill="${p.color}" fill-opacity="0.92">${glyphFor(p.key, 10)}</g>`);
+    parts.push(`<text x="${cx}" y="${cy+r+16}" text-anchor="middle" font-size="11" font-weight="700" fill="#16161A">${p.name}</text>`);
+    parts.push(`<text x="${cx}" y="${cy+r+30}" text-anchor="middle" font-size="9" fill="#7A7A82">${Math.round(values[i]*100)}% · wave = 7-day trend</text>`);
+  });
+  return svg(parts.join(''), `0 0 ${ROW_W} ${ROW_H+8}`);
+}
+
+// C14 — Calendar week-dot ring (7 dots = 7 days)
+function vC14(values){
+  const r = 28;
+  const hist = WEEK_HISTORY(values);
+  let parts = [];
+  PILLARS.forEach((p,i)=>{
+    const cx = ROW_SPACING/2 + i*ROW_SPACING;
+    const cy = 56;
+    const series = hist[i];
+    // outline ring
+    parts.push(`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${TRACK}" stroke-width="1.2"/>`);
+    series.forEach((v,k)=>{
+      const a = (-90 + (k/series.length)*360) * Math.PI/180;
+      const dx = cx + r*Math.cos(a);
+      const dy = cy + r*Math.sin(a);
+      const isToday = k === series.length-1;
+      const dotR = isToday ? 5 : 3.6;
+      parts.push(`<circle cx="${dx}" cy="${dy}" r="${dotR}" fill="${p.color}" fill-opacity="${0.25 + v*0.7}"/>`);
+      if(isToday){
+        parts.push(`<circle cx="${dx}" cy="${dy}" r="${dotR+3}" fill="none" stroke="${p.color}" stroke-width="1.2" opacity="0.55">
+          <animate attributeName="r" values="${dotR+1};${dotR+5};${dotR+1}" dur="2.4s" repeatCount="indefinite"/>
+          <animate attributeName="opacity" values="0.6;0.0;0.6" dur="2.4s" repeatCount="indefinite"/>
+        </circle>`);
+      }
+      // day initial inside the dot (for today only — others are too small)
+      if(isToday){
+        parts.push(`<text x="${dx}" y="${dy+2}" text-anchor="middle" font-size="6" font-weight="700" fill="#FAFAF7">${DAY_LABELS[k]}</text>`);
+      }
+    });
+    // center % + glyph
+    parts.push(`<g transform="translate(${cx} ${cy-5})" fill="${p.color}">${glyphFor(p.key, 11)}</g>`);
+    parts.push(`<text x="${cx}" y="${cy+8}" text-anchor="middle" font-size="11" font-weight="700" fill="#16161A">${Math.round(values[i]*100)}%</text>`);
+    parts.push(`<text x="${cx}" y="${cy+r+18}" text-anchor="middle" font-size="9" font-weight="700" fill="#16161A">${p.name}</text>`);
+  });
+  return svg(parts.join(''), `0 0 ${ROW_W} ${ROW_H}`);
+}
+
+// C15 — Liquid + delta chip (today vs yesterday)
+function vC15(values){
+  const r = 30;
+  const yesterday = [0.42, 0.78, 0.51, 0.83];
+  let parts = [];
+  PILLARS.forEach((p,i)=>{
+    const cx = ROW_SPACING/2 + i*ROW_SPACING;
+    const cy = 56;
+    parts.push(liquidFillCircle(cx, cy, r, p.color, values[i], `c15${i}`, {delay:i*140}));
+    parts.push(`<g transform="translate(${cx} ${cy})" fill="#FAFAF7" fill-opacity="0.95">${glyphFor(p.key, 14)}</g>`);
+    // delta chip
+    const delta = Math.round((values[i] - yesterday[i])*100);
+    const up = delta >= 0;
+    const chipFill = up ? '#16A34A' : '#E5544D';
+    const chipText = (up?'+':'') + delta + '%';
+    const chipW = 36, chipH = 16;
+    const chipX = cx + r - 4, chipY = cy + r - 6;
+    parts.push(`<rect x="${chipX}" y="${chipY-chipH/2}" width="${chipW}" height="${chipH}" rx="${chipH/2}" ry="${chipH/2}" fill="${chipFill}"/>`);
+    // arrow
+    const ax = chipX + 6;
+    if(up){
+      parts.push(`<path d="M ${ax-3} ${chipY+2} L ${ax} ${chipY-3} L ${ax+3} ${chipY+2} Z" fill="#FAFAF7"/>`);
+    } else {
+      parts.push(`<path d="M ${ax-3} ${chipY-2} L ${ax} ${chipY+3} L ${ax+3} ${chipY-2} Z" fill="#FAFAF7"/>`);
+    }
+    parts.push(`<text x="${chipX+chipW-4}" y="${chipY+3}" text-anchor="end" font-size="9" font-weight="700" fill="#FAFAF7">${chipText}</text>`);
+    parts.push(`<text x="${cx}" y="${cy+r+18}" text-anchor="middle" font-size="11" font-weight="700" fill="#16161A">${p.name}</text>`);
+    parts.push(`<text x="${cx}" y="${cy+r+32}" text-anchor="middle" font-size="9" fill="#7A7A82">${Math.round(values[i]*100)}% today</text>`);
+  });
+  return svg(parts.join(''), `0 0 ${ROW_W} ${ROW_H}`);
+}
+
+// ============================================================
+//  GROUP G — CREATIVE RING TREATMENTS (compact row, % inside)
+// ============================================================
+
+// helper: lighten/darken a hex color
+function shade(hex, percent){
+  const n = parseInt(hex.slice(1), 16);
+  let r = (n >> 16) & 0xff, g = (n >> 8) & 0xff, b = n & 0xff;
+  r = Math.max(0, Math.min(255, r + Math.round(255 * percent)));
+  g = Math.max(0, Math.min(255, g + Math.round(255 * percent)));
+  b = Math.max(0, Math.min(255, b + Math.round(255 * percent)));
+  return '#' + ((1<<24) | (r<<16) | (g<<8) | b).toString(16).slice(1);
+}
+
+// G1 — Open-arc gradient (270° arc with gap at top, gradient sweep + halo)
+function vG1(values){
+  const r = 30, stroke = 7;
+  // Arc spans 270°: from 135° (bottom-left) clockwise to 45° (top-right)
+  // (with mathematical convention where 0°=right, 90°=down)
+  const startA = 135, endA = 135 + 270; // 135° to 405° (= 45°)
+  const arcLen = (270/360) * 2*Math.PI*r;
+  let parts = [];
+  // gradient defs
+  parts.push(`<defs>${PILLARS.map((p,i)=>`
+    <linearGradient id="g1grad${i}" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="${shade(p.color, 0.18)}"/>
+      <stop offset="60%" stop-color="${p.color}"/>
+      <stop offset="100%" stop-color="${shade(p.color, -0.15)}"/>
+    </linearGradient>
+    <radialGradient id="g1halo${i}" cx="50%" cy="50%" r="55%">
+      <stop offset="40%" stop-color="${p.color}" stop-opacity="0"/>
+      <stop offset="100%" stop-color="${p.color}" stop-opacity="0.22"/>
+    </radialGradient>
+  `).join('')}</defs>`);
+  PILLARS.forEach((p,i)=>{
+    const cx = ROW_SPACING/2 + i*ROW_SPACING, cy = 56;
+    // halo backdrop
+    parts.push(`<circle cx="${cx}" cy="${cy}" r="${r+10}" fill="url(#g1halo${i})"/>`);
+    // background track arc
+    const sa = startA*Math.PI/180, ea = (startA+270)*Math.PI/180;
+    const sx = cx + r*Math.cos(sa), sy = cy + r*Math.sin(sa);
+    const ex = cx + r*Math.cos(ea), ey = cy + r*Math.sin(ea);
+    parts.push(`<path d="M ${sx.toFixed(2)} ${sy.toFixed(2)} A ${r} ${r} 0 1 1 ${ex.toFixed(2)} ${ey.toFixed(2)}"
+      fill="none" stroke="${TRACK}" stroke-width="${stroke}" stroke-linecap="round"/>`);
+    // gradient progress arc
+    const progLen = arcLen * values[i];
+    const target = arcLen - progLen;
+    parts.push(`<path d="M ${sx.toFixed(2)} ${sy.toFixed(2)} A ${r} ${r} 0 1 1 ${ex.toFixed(2)} ${ey.toFixed(2)}"
+      fill="none" stroke="url(#g1grad${i})" stroke-width="${stroke}" stroke-linecap="round"
+      class="anim-fill"
+      style="--circ:${arcLen}; --target:${target}; animation-delay:${i*120}ms; stroke-dasharray:${arcLen}; stroke-dashoffset:${target};"/>`);
+    // % in center
+    parts.push(`<text x="${cx}" y="${cy+6}" text-anchor="middle" font-size="16" font-weight="700" fill="#16161A">${Math.round(values[i]*100)}%</text>`);
+    parts.push(`<text x="${cx}" y="${cy+r+18}" text-anchor="middle" font-size="10" font-weight="700" letter-spacing="0.08em" text-transform="uppercase" fill="${p.color}">${p.name.toUpperCase()}</text>`);
+  });
+  return svg(parts.join(''), `0 0 ${ROW_W} ${ROW_H}`);
+}
+
+// G2 — Neon glow ring
+function vG2(values){
+  const r = 30, stroke = 7;
+  let parts = [];
+  parts.push(`<defs>${PILLARS.map((p,i)=>`
+    <filter id="g2glow${i}" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="${3 + values[i]*4}" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  `).join('')}</defs>`);
+  PILLARS.forEach((p,i)=>{
+    const cx = ROW_SPACING/2 + i*ROW_SPACING, cy = 56;
+    const circ = 2*Math.PI*r;
+    const target = circ * (1 - values[i]);
+    // background track
+    parts.push(`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${TRACK}" stroke-width="${stroke}"/>`);
+    // glow layer (blurred behind)
+    parts.push(`<g transform="rotate(-90 ${cx} ${cy})" filter="url(#g2glow${i})">
+      <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${p.color}" stroke-width="${stroke*1.4}" stroke-linecap="round"
+        stroke-dasharray="${circ}" stroke-dashoffset="${target}" opacity="0.7"/>
+    </g>`);
+    // crisp top layer
+    parts.push(`<g transform="rotate(-90 ${cx} ${cy})">
+      <circle class="anim-fill" cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${p.color}" stroke-width="${stroke}" stroke-linecap="round"
+        style="--circ:${circ}; --target:${target}; animation-delay:${i*120}ms; stroke-dasharray:${circ}; stroke-dashoffset:${target};"/>
+    </g>`);
+    parts.push(`<text x="${cx}" y="${cy+6}" text-anchor="middle" font-size="16" font-weight="700" fill="#16161A">${Math.round(values[i]*100)}%</text>`);
+    parts.push(`<text x="${cx}" y="${cy+r+18}" text-anchor="middle" font-size="10" font-weight="700" letter-spacing="0.08em" fill="${p.color}">${p.name.toUpperCase()}</text>`);
+  });
+  return svg(parts.join(''), `0 0 ${ROW_W} ${ROW_H}`);
+}
+
+// G3 — Beveled 3D ring
+function vG3(values){
+  const r = 30, stroke = 9;
+  let parts = [];
+  parts.push(`<defs>${PILLARS.map((p,i)=>`
+    <linearGradient id="g3bevel${i}" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="${shade(p.color, 0.25)}"/>
+      <stop offset="50%" stop-color="${p.color}"/>
+      <stop offset="100%" stop-color="${shade(p.color, -0.25)}"/>
+    </linearGradient>
+    <filter id="g3inset${i}">
+      <feGaussianBlur stdDeviation="1.5" result="b"/>
+      <feOffset dx="0" dy="1" result="o"/>
+      <feComposite in="o" in2="SourceAlpha" operator="arithmetic" k2="-1" k3="1" result="comp"/>
+      <feColorMatrix in="comp" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 0.35 0"/>
+    </filter>
+  `).join('')}</defs>`);
+  PILLARS.forEach((p,i)=>{
+    const cx = ROW_SPACING/2 + i*ROW_SPACING, cy = 56;
+    const circ = 2*Math.PI*r;
+    const target = circ * (1 - values[i]);
+    // recessed channel
+    parts.push(`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#E0DED7" stroke-width="${stroke}" filter="url(#g3inset${i})"/>`);
+    parts.push(`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${TRACK}" stroke-width="${stroke-2}"/>`);
+    // beveled fill
+    parts.push(`<g transform="rotate(-90 ${cx} ${cy})">
+      <circle class="anim-fill" cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="url(#g3bevel${i})" stroke-width="${stroke-2}" stroke-linecap="round"
+        style="--circ:${circ}; --target:${target}; animation-delay:${i*120}ms; stroke-dasharray:${circ}; stroke-dashoffset:${target};"/>
+    </g>`);
+    parts.push(`<text x="${cx}" y="${cy+6}" text-anchor="middle" font-size="16" font-weight="700" fill="#16161A">${Math.round(values[i]*100)}%</text>`);
+    parts.push(`<text x="${cx}" y="${cy+r+18}" text-anchor="middle" font-size="10" font-weight="700" letter-spacing="0.08em" fill="${p.color}">${p.name.toUpperCase()}</text>`);
+  });
+  return svg(parts.join(''), `0 0 ${ROW_W} ${ROW_H}`);
+}
+
+// G4 — Spiral progress (1.5 turns going outward)
+function vG4(values){
+  const rMin = 14, rMax = 30, turns = 1.5;
+  let parts = [];
+  PILLARS.forEach((p,i)=>{
+    const cx = ROW_SPACING/2 + i*ROW_SPACING, cy = 56;
+    // track spiral (faint)
+    let trackD = `M ${cx} ${cy - rMin}`;
+    const steps = 60;
+    for(let s=1; s<=steps; s++){
+      const t = s/steps;
+      const rad = rMin + (rMax - rMin) * t;
+      const ang = (-90 + 360*turns*t) * Math.PI/180;
+      const x = cx + rad*Math.cos(ang);
+      const y = cy + rad*Math.sin(ang);
+      trackD += ` L ${x.toFixed(2)} ${y.toFixed(2)}`;
+    }
+    parts.push(`<path d="${trackD}" fill="none" stroke="${TRACK}" stroke-width="2.2" stroke-linecap="round"/>`);
+    // progress spiral
+    const progSteps = Math.max(1, Math.round(steps * values[i]));
+    let progD = `M ${cx} ${cy - rMin}`;
+    for(let s=1; s<=progSteps; s++){
+      const t = s/steps;
+      const rad = rMin + (rMax - rMin) * t;
+      const ang = (-90 + 360*turns*t) * Math.PI/180;
+      const x = cx + rad*Math.cos(ang);
+      const y = cy + rad*Math.sin(ang);
+      progD += ` L ${x.toFixed(2)} ${y.toFixed(2)}`;
+    }
+    parts.push(`<path d="${progD}" fill="none" stroke="${p.color}" stroke-width="3.5" stroke-linecap="round"
+      style="filter:drop-shadow(0 0 3px ${p.color}66);"/>`);
+    // small dot at the end of the spiral
+    const tEnd = values[i];
+    const radEnd = rMin + (rMax - rMin) * tEnd;
+    const angEnd = (-90 + 360*turns*tEnd) * Math.PI/180;
+    const xEnd = cx + radEnd*Math.cos(angEnd);
+    const yEnd = cy + radEnd*Math.sin(angEnd);
+    parts.push(`<circle cx="${xEnd.toFixed(2)}" cy="${yEnd.toFixed(2)}" r="3.5" fill="${p.color}" stroke="#FAFAF7" stroke-width="1.5"/>`);
+    // % at exact center (no glyph)
+    parts.push(`<text x="${cx}" y="${cy+5}" text-anchor="middle" font-size="13" font-weight="700" fill="#16161A">${Math.round(values[i]*100)}%</text>`);
+    parts.push(`<text x="${cx}" y="${cy+rMax+18}" text-anchor="middle" font-size="10" font-weight="700" letter-spacing="0.08em" fill="${p.color}">${p.name.toUpperCase()}</text>`);
+  });
+  return svg(parts.join(''), `0 0 ${ROW_W} ${ROW_H}`);
+}
+
+// G5 — Liquid glass orb (3D with internal fill)
+function vG5(values){
+  const r = 30;
+  let parts = [];
+  parts.push(`<defs>${PILLARS.map((p,i)=>`
+    <radialGradient id="g5orb${i}" cx="35%" cy="30%" r="65%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.85"/>
+      <stop offset="40%" stop-color="${shade(p.color, 0.20)}" stop-opacity="0.45"/>
+      <stop offset="100%" stop-color="${shade(p.color, -0.20)}" stop-opacity="0.75"/>
+    </radialGradient>
+    <clipPath id="g5clip${i}"><circle cx="${ROW_SPACING/2 + i*ROW_SPACING}" cy="56" r="${r}"/></clipPath>
+    <radialGradient id="g5hilite${i}" cx="35%" cy="20%" r="40%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/>
+    </radialGradient>
+  `).join('')}</defs>`);
+  PILLARS.forEach((p,i)=>{
+    const cx = ROW_SPACING/2 + i*ROW_SPACING, cy = 56;
+    // base orb gradient
+    parts.push(`<circle cx="${cx}" cy="${cy}" r="${r}" fill="${p.color}" fill-opacity="0.10"/>`);
+    // liquid fill (clipped to orb)
+    const fillH = (2*r) * values[i];
+    const fillTop = (cy + r) - fillH;
+    parts.push(`<g clip-path="url(#g5clip${i})">
+      <rect x="${cx-r}" y="${fillTop}" width="${2*r}" height="${fillH+2}" fill="${p.color}" fill-opacity="0.78">
+        <animate attributeName="y" from="${cy+r}" to="${fillTop}" dur="1100ms" begin="${i*150}ms" fill="freeze"/>
+        <animate attributeName="height" from="0" to="${fillH+2}" dur="1100ms" begin="${i*150}ms" fill="freeze"/>
+      </rect>
+      ${values[i]>0.03 && values[i]<0.98 ? `<path d="M ${cx-r} ${fillTop} Q ${cx-r/2} ${fillTop-2.5} ${cx} ${fillTop} T ${cx+r} ${fillTop} L ${cx+r} ${fillTop+5} L ${cx-r} ${fillTop+5} Z"
+        fill="${p.color}" fill-opacity="0.92">
+        <animateTransform attributeName="transform" type="translate" values="0 0; 2 -0.5; 0 0; -2 -0.5; 0 0" dur="3.4s" repeatCount="indefinite"/>
+      </path>` : ''}
+    </g>`);
+    // 3D depth: top highlight + outer ring
+    parts.push(`<circle cx="${cx}" cy="${cy}" r="${r}" fill="url(#g5orb${i})"/>`);
+    parts.push(`<ellipse cx="${cx-r*0.25}" cy="${cy-r*0.5}" rx="${r*0.55}" ry="${r*0.30}" fill="url(#g5hilite${i})"/>`);
+    parts.push(`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${shade(p.color, -0.20)}" stroke-width="1.5" stroke-opacity="0.55"/>`);
+    // % in center, shadowed for legibility
+    parts.push(`<text x="${cx}" y="${cy+6}" text-anchor="middle" font-size="16" font-weight="700" fill="#FAFAF7" stroke="#16161A" stroke-width="0.4">${Math.round(values[i]*100)}%</text>`);
+    parts.push(`<text x="${cx}" y="${cy+r+18}" text-anchor="middle" font-size="10" font-weight="700" letter-spacing="0.08em" fill="${p.color}">${p.name.toUpperCase()}</text>`);
+  });
+  return svg(parts.join(''), `0 0 ${ROW_W} ${ROW_H}`);
+}
+
+// G6 — Aurora gradient sweep (4-stop angular gradient via path segments)
+function vG6(values){
+  const r = 30, stroke = 7;
+  let parts = [];
+  parts.push(`<defs>${PILLARS.map((p,i)=>`
+    <linearGradient id="g6aurora${i}" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="${shade(p.color, 0.30)}"/>
+      <stop offset="35%" stop-color="${p.color}"/>
+      <stop offset="65%" stop-color="${shade(p.color, -0.10)}"/>
+      <stop offset="100%" stop-color="${shade(p.color, -0.28)}"/>
+    </linearGradient>
+    <radialGradient id="g6glow${i}" cx="50%" cy="50%" r="65%">
+      <stop offset="55%" stop-color="${p.color}" stop-opacity="0"/>
+      <stop offset="100%" stop-color="${p.color}" stop-opacity="0.18"/>
+    </radialGradient>
+  `).join('')}</defs>`);
+  PILLARS.forEach((p,i)=>{
+    const cx = ROW_SPACING/2 + i*ROW_SPACING, cy = 56;
+    const circ = 2*Math.PI*r;
+    const target = circ * (1 - values[i]);
+    parts.push(`<circle cx="${cx}" cy="${cy}" r="${r+8}" fill="url(#g6glow${i})"/>`);
+    parts.push(`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${TRACK}" stroke-width="${stroke}"/>`);
+    parts.push(`<g transform="rotate(-90 ${cx} ${cy})">
+      <circle class="anim-fill" cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="url(#g6aurora${i})" stroke-width="${stroke}" stroke-linecap="round"
+        style="--circ:${circ}; --target:${target}; animation-delay:${i*120}ms; stroke-dasharray:${circ}; stroke-dashoffset:${target};"/>
+    </g>`);
+    parts.push(`<text x="${cx}" y="${cy+6}" text-anchor="middle" font-size="16" font-weight="700" fill="#16161A">${Math.round(values[i]*100)}%</text>`);
+    parts.push(`<text x="${cx}" y="${cy+r+18}" text-anchor="middle" font-size="10" font-weight="700" letter-spacing="0.08em" fill="${p.color}">${p.name.toUpperCase()}</text>`);
+  });
+  return svg(parts.join(''), `0 0 ${ROW_W} ${ROW_H}`);
+}
+
+// G7 — Notched bezel (watch face)
+function vG7(values){
+  const r = 30, stroke = 6, bezelR = r + 7;
+  let parts = [];
+  PILLARS.forEach((p,i)=>{
+    const cx = ROW_SPACING/2 + i*ROW_SPACING, cy = 56;
+    const circ = 2*Math.PI*r;
+    const target = circ * (1 - values[i]);
+    // tick marks bezel
+    for(let t=0; t<24; t++){
+      const a = (-90 + t*15) * Math.PI/180;
+      const outerR = bezelR;
+      const innerR = bezelR - (t%6===0 ? 5 : 3);
+      const x1 = cx + outerR*Math.cos(a), y1 = cy + outerR*Math.sin(a);
+      const x2 = cx + innerR*Math.cos(a), y2 = cy + innerR*Math.sin(a);
+      const isMajor = t%6===0;
+      parts.push(`<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="${p.color}" stroke-width="${isMajor?1.6:0.9}" stroke-opacity="${isMajor?0.85:0.45}"/>`);
+    }
+    // background
+    parts.push(`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${TRACK}" stroke-width="${stroke}"/>`);
+    // progress
+    parts.push(`<g transform="rotate(-90 ${cx} ${cy})">
+      <circle class="anim-fill" cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${p.color}" stroke-width="${stroke}" stroke-linecap="round"
+        style="--circ:${circ}; --target:${target}; animation-delay:${i*120}ms; stroke-dasharray:${circ}; stroke-dashoffset:${target};"/>
+    </g>`);
+    parts.push(`<text x="${cx}" y="${cy+6}" text-anchor="middle" font-size="15" font-weight="700" fill="#16161A">${Math.round(values[i]*100)}%</text>`);
+    parts.push(`<text x="${cx}" y="${cy+bezelR+14}" text-anchor="middle" font-size="10" font-weight="700" letter-spacing="0.08em" fill="${p.color}">${p.name.toUpperCase()}</text>`);
+  });
+  return svg(parts.join(''), `0 0 ${ROW_W} ${ROW_H}`);
+}
+
+// G8 — Spark ring (perimeter particles)
+function vG8(values){
+  const r = 30, dotR = 2.4;
+  const dotCount = 24;
+  let parts = [];
+  PILLARS.forEach((p,i)=>{
+    const cx = ROW_SPACING/2 + i*ROW_SPACING, cy = 56;
+    const lit = Math.round(values[i] * dotCount);
+    for(let d=0; d<dotCount; d++){
+      const a = (-90 + (d/dotCount)*360) * Math.PI/180;
+      const dx = cx + r*Math.cos(a);
+      const dy = cy + r*Math.sin(a);
+      const active = d < lit;
+      if(active){
+        // glowing spark with halo
+        parts.push(`<circle cx="${dx}" cy="${dy}" r="${dotR+1.5}" fill="${p.color}" opacity="0.30"/>`);
+        parts.push(`<circle cx="${dx}" cy="${dy}" r="${dotR}" fill="${p.color}"
+          style="filter:drop-shadow(0 0 2px ${p.color});"/>`);
+      } else {
+        parts.push(`<circle cx="${dx}" cy="${dy}" r="${dotR-0.6}" fill="${TRACK}" opacity="0.7"/>`);
+      }
+    }
+    parts.push(`<text x="${cx}" y="${cy+6}" text-anchor="middle" font-size="16" font-weight="700" fill="#16161A">${Math.round(values[i]*100)}%</text>`);
+    parts.push(`<text x="${cx}" y="${cy+r+18}" text-anchor="middle" font-size="10" font-weight="700" letter-spacing="0.08em" fill="${p.color}">${p.name.toUpperCase()}</text>`);
+  });
+  return svg(parts.join(''), `0 0 ${ROW_W} ${ROW_H}`);
+}
+
+// ============================================================
+//  C2 FINE-TUNES — F1..F6
+// ============================================================
+
+// shared base ring renderer
+function fineRing(cx, cy, r, stroke, color, value, delayMs){
+  const circ = 2*Math.PI*r;
+  const target = circ * (1 - value);
+  return `
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${TRACK}" stroke-width="${stroke}"/>
+    <g transform="rotate(-90 ${cx} ${cy})">
+      <circle class="anim-fill" cx="${cx}" cy="${cy}" r="${r}" fill="none"
+        stroke="${color}" stroke-width="${stroke}" stroke-linecap="round"
+        style="--circ:${circ}; --target:${target}; animation-delay:${delayMs||0}ms; stroke-dasharray:${circ}; stroke-dashoffset:${target};"/>
+    </g>`;
+}
+
+// F1 — % in center
+function vF1(values){
+  const r = 30, stroke = 6;
+  let parts = [];
+  PILLARS.forEach((p,i)=>{
+    const cx = ROW_SPACING/2 + i*ROW_SPACING, cy = 56;
+    parts.push(fineRing(cx, cy, r, stroke, p.color, values[i], i*120));
+    parts.push(`<text x="${cx}" y="${cy+5}" text-anchor="middle" font-size="14" font-weight="700" fill="#16161A">${Math.round(values[i]*100)}%</text>`);
+    parts.push(`<text x="${cx}" y="${cy+r+18}" text-anchor="middle" font-size="11" font-weight="600" fill="#16161A">${p.name}</text>`);
+  });
+  return svg(parts.join(''), `0 0 ${ROW_W} ${ROW_H}`);
+}
+
+// F2 — Number in center, name below ★
+function vF2(values){
+  const r = 30, stroke = 6;
+  let parts = [];
+  PILLARS.forEach((p,i)=>{
+    const cx = ROW_SPACING/2 + i*ROW_SPACING, cy = 56;
+    parts.push(fineRing(cx, cy, r, stroke, p.color, values[i], i*120));
+    parts.push(`<text x="${cx}" y="${cy+6}" text-anchor="middle" font-size="18" font-weight="700" fill="#16161A">${Math.round(values[i]*100)}</text>`);
+    parts.push(`<text x="${cx}" y="${cy+r+18}" text-anchor="middle" font-size="11" font-weight="600" fill="#16161A">${p.name}</text>`);
+  });
+  return svg(parts.join(''), `0 0 ${ROW_W} ${ROW_H}`);
+}
+
+// F3 — Glyph in center, number below
+function vF3(values){
+  const r = 30, stroke = 6;
+  let parts = [];
+  PILLARS.forEach((p,i)=>{
+    const cx = ROW_SPACING/2 + i*ROW_SPACING, cy = 56;
+    parts.push(fineRing(cx, cy, r, stroke, p.color, values[i], i*120));
+    parts.push(`<g transform="translate(${cx} ${cy})" fill="${p.color}">${glyphFor(p.key, 20)}</g>`);
+    parts.push(`<text x="${cx}" y="${cy+r+15}" text-anchor="middle" font-size="14" font-weight="700" fill="#16161A">${Math.round(values[i]*100)}</text>`);
+    parts.push(`<text x="${cx}" y="${cy+r+30}" text-anchor="middle" font-size="10" font-weight="600" fill="#7A7A82">${p.name}</text>`);
+  });
+  return svg(parts.join(''), `0 0 ${ROW_W} ${ROW_H+8}`);
+}
+
+// F4 — Number in center, faint glyph watermark behind
+function vF4(values){
+  const r = 30, stroke = 6;
+  let parts = [];
+  PILLARS.forEach((p,i)=>{
+    const cx = ROW_SPACING/2 + i*ROW_SPACING, cy = 56;
+    parts.push(fineRing(cx, cy, r, stroke, p.color, values[i], i*120));
+    // faint background glyph
+    parts.push(`<g transform="translate(${cx} ${cy})" fill="${p.color}" opacity="0.16">${glyphFor(p.key, 30)}</g>`);
+    // bold number in front
+    parts.push(`<text x="${cx}" y="${cy+6}" text-anchor="middle" font-size="18" font-weight="700" fill="#16161A">${Math.round(values[i]*100)}</text>`);
+    parts.push(`<text x="${cx}" y="${cy+r+18}" text-anchor="middle" font-size="11" font-weight="600" fill="#16161A">${p.name}</text>`);
+  });
+  return svg(parts.join(''), `0 0 ${ROW_W} ${ROW_H}`);
+}
+
+// F5 — Number in center + tiny delta text under name
+function vF5(values){
+  const r = 28, stroke = 6;
+  const yesterday = [0.42, 0.78, 0.51, 0.83];
+  let parts = [];
+  PILLARS.forEach((p,i)=>{
+    const cx = ROW_SPACING/2 + i*ROW_SPACING, cy = 52;
+    parts.push(fineRing(cx, cy, r, stroke, p.color, values[i], i*120));
+    parts.push(`<text x="${cx}" y="${cy+6}" text-anchor="middle" font-size="17" font-weight="700" fill="#16161A">${Math.round(values[i]*100)}</text>`);
+    parts.push(`<text x="${cx}" y="${cy+r+16}" text-anchor="middle" font-size="11" font-weight="600" fill="#16161A">${p.name}</text>`);
+    const delta = Math.round((values[i]-yesterday[i])*100);
+    const up = delta >= 0;
+    parts.push(`<text x="${cx}" y="${cy+r+30}" text-anchor="middle" font-size="9" font-weight="600" fill="${up?'#16A34A':'#E5544D'}">${up?'▲':'▼'} ${Math.abs(delta)}% vs y'day</text>`);
+  });
+  return svg(parts.join(''), `0 0 ${ROW_W} ${ROW_H+10}`);
+}
+
+// F6 — Inner ring = 7-day average
+function vF6(values){
+  const rO = 30, rI = 20, stroke = 5;
+  const hist = WEEK_HISTORY(values);
+  let parts = [];
+  PILLARS.forEach((p,i)=>{
+    const cx = ROW_SPACING/2 + i*ROW_SPACING, cy = 56;
+    // outer = today
+    parts.push(fineRing(cx, cy, rO, stroke, p.color, values[i], i*120));
+    // inner = 7-day average
+    const series = hist[i];
+    const avg = series.reduce((a,b)=>a+b,0)/series.length;
+    const cI = 2*Math.PI*rI;
+    const tI = cI * (1 - avg);
+    parts.push(`<circle cx="${cx}" cy="${cy}" r="${rI}" fill="none" stroke="${TRACK}" stroke-width="2"/>`);
+    parts.push(`<g transform="rotate(-90 ${cx} ${cy})">
+      <circle class="anim-fill" cx="${cx}" cy="${cy}" r="${rI}" fill="none"
+        stroke="${p.color}" stroke-width="2" stroke-linecap="round" stroke-opacity="0.45"
+        style="--circ:${cI}; --target:${tI}; animation-delay:${i*120+200}ms; stroke-dasharray:${cI}; stroke-dashoffset:${tI};"/>
+    </g>`);
+    parts.push(`<text x="${cx}" y="${cy+5}" text-anchor="middle" font-size="13" font-weight="700" fill="#16161A">${Math.round(values[i]*100)}</text>`);
+    parts.push(`<text x="${cx}" y="${cy+rO+16}" text-anchor="middle" font-size="11" font-weight="600" fill="#16161A">${p.name}</text>`);
+    parts.push(`<text x="${cx}" y="${cy+rO+30}" text-anchor="middle" font-size="9" fill="#7A7A82">7-day avg ${Math.round(avg*100)}</text>`);
+  });
+  return svg(parts.join(''), `0 0 ${ROW_W} ${ROW_H+8}`);
+}
+
+// ============================================================
+//  GROUP D — TREND-FIRST / FULL-CARD SPARKLINE VARIANTS
+// ============================================================
+
+const FULL_W = 380, FULL_H = 200;
+
+// Helper: draw labeled sparkline at given rect
+function sparkAt(sx, sy, sw, sh, series, color, opts){
+  opts = opts || {};
+  let s = '';
+  const path = series.map((v,k)=>{
+    const x = sx + (k/(series.length-1))*sw;
+    const y = sy + sh - v*sh;
+    return `${k===0?'M':'L'} ${x.toFixed(1)} ${y.toFixed(1)}`;
+  }).join(' ');
+  if(opts.area){
+    s += `<path d="${path} L ${sx+sw} ${sy+sh} L ${sx} ${sy+sh} Z" fill="${color}" fill-opacity="${opts.areaOpacity||0.15}"/>`;
+  }
+  s += `<path d="${path}" fill="none" stroke="${color}" stroke-width="${opts.strokeWidth||1.8}" stroke-linecap="round" stroke-linejoin="round"/>`;
+  // baseline
+  if(opts.baseline){
+    s += `<line x1="${sx}" y1="${sy+sh}" x2="${sx+sw}" y2="${sy+sh}" stroke="${TRACK}" stroke-width="0.8"/>`;
+  }
+  // points
+  series.forEach((v,k)=>{
+    const x = sx + (k/(series.length-1))*sw;
+    const y = sy + sh - v*sh;
+    const isToday = k === series.length-1;
+    if(isToday){
+      s += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3" fill="${color}" stroke="#FAFAF7" stroke-width="1.4"/>`;
+    } else if(opts.dotsAll){
+      s += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="1.4" fill="${color}" opacity="0.5"/>`;
+    }
+  });
+  // day labels
+  if(opts.dayLabels !== false){
+    DAY_LABELS.forEach((d,k)=>{
+      const x = sx + (k/(DAY_LABELS.length-1))*sw;
+      const isToday = k === DAY_LABELS.length-1;
+      s += `<text x="${x}" y="${sy+sh+11}" text-anchor="middle" font-size="8" font-weight="${isToday?'700':'500'}" fill="${isToday?color:'#A6A6AC'}">${d}</text>`;
+    });
+  }
+  return s;
+}
+
+// D1 — Stacked sparklines (no rings)
+function vD1(values){
+  const hist = WEEK_HISTORY(values);
+  const padX = 40, padR = 64;
+  const rowH = 32, rowGap = 6;
+  const sparkX = padX + 70, sparkY0 = 16, sparkW = FULL_W - sparkX - padR;
+  let parts = [];
+  PILLARS.forEach((p,i)=>{
+    const y = sparkY0 + i*(rowH + rowGap);
+    // label
+    parts.push(`<text x="${padX}" y="${y+rowH/2+3}" font-size="11" font-weight="700" fill="${p.color}">${p.name}</text>`);
+    // sparkline
+    parts.push(sparkAt(sparkX, y, sparkW, rowH-8, hist[i], p.color, {area:true, dayLabels: i===PILLARS.length-1}));
+    // today %
+    parts.push(`<text x="${FULL_W - padR + 56}" y="${y+rowH/2+3}" text-anchor="end" font-size="13" font-weight="700" fill="#16161A">${Math.round(values[i]*100)}%</text>`);
+  });
+  return svg(parts.join(''), `0 0 ${FULL_W} ${FULL_H}`);
+}
+
+// D2 — Stacked area sparklines + mini-ring chip
+function vD2(values){
+  const hist = WEEK_HISTORY(values);
+  const padX = 12, padR = 60;
+  const rowH = 34, rowGap = 6;
+  const ringR = 12, ringStroke = 3;
+  let parts = [];
+  PILLARS.forEach((p,i)=>{
+    const y = 18 + i*(rowH + rowGap);
+    // ring chip on left
+    const cx = padX + ringR + 2, cy = y + rowH/2 - 2;
+    const circ = 2*Math.PI*ringR;
+    const target = circ * (1 - values[i]);
+    parts.push(`<circle cx="${cx}" cy="${cy}" r="${ringR}" fill="none" stroke="${TRACK}" stroke-width="${ringStroke}"/>`);
+    parts.push(`<g transform="rotate(-90 ${cx} ${cy})">
+      <circle class="anim-fill" cx="${cx}" cy="${cy}" r="${ringR}" fill="none" stroke="${p.color}" stroke-width="${ringStroke}" stroke-linecap="round"
+        style="--circ:${circ}; --target:${target}; animation-delay:${i*100}ms; stroke-dasharray:${circ}; stroke-dashoffset:${target};"/>
+    </g>`);
+    // pillar name
+    parts.push(`<text x="${cx + ringR + 8}" y="${cy - 2}" font-size="10" font-weight="700" fill="${p.color}">${p.name}</text>`);
+    parts.push(`<text x="${cx + ringR + 8}" y="${cy + 9}" font-size="9" font-weight="600" fill="#7A7A82">${Math.round(values[i]*100)}%</text>`);
+    // sparkline area
+    const sparkX = cx + ringR + 56, sparkW = FULL_W - sparkX - padR;
+    parts.push(sparkAt(sparkX, y+2, sparkW, rowH-12, hist[i], p.color, {area:true, areaOpacity:0.20, dayLabels: i===PILLARS.length-1, strokeWidth:1.6}));
+  });
+  return svg(parts.join(''), `0 0 ${FULL_W} ${FULL_H}`);
+}
+
+// D3 — Multi-line overlay
+function vD3(values){
+  const hist = WEEK_HISTORY(values);
+  const padX = 30, padR = 30, padT = 22, padB = 30;
+  const sparkX = padX, sparkY = padT;
+  const sparkW = FULL_W - padX - padR;
+  const sparkH = FULL_H - padT - padB;
+  let parts = [];
+  // grid lines
+  for(let g=0; g<=4; g++){
+    const gy = sparkY + (g/4)*sparkH;
+    parts.push(`<line x1="${sparkX}" y1="${gy}" x2="${sparkX+sparkW}" y2="${gy}" stroke="${TRACK}" stroke-width="0.6"/>`);
+  }
+  // each pillar line
+  PILLARS.forEach((p,i)=>{
+    parts.push(sparkAt(sparkX, sparkY, sparkW, sparkH, hist[i], p.color, {dayLabels:false, strokeWidth:1.8, dotsAll:false}));
+  });
+  // day labels
+  DAY_LABELS.forEach((d,k)=>{
+    const x = sparkX + (k/(DAY_LABELS.length-1))*sparkW;
+    const isToday = k === DAY_LABELS.length-1;
+    parts.push(`<text x="${x}" y="${sparkY+sparkH+14}" text-anchor="middle" font-size="9" font-weight="${isToday?'700':'500'}" fill="${isToday?'#16161A':'#A6A6AC'}">${d}</text>`);
+  });
+  // legend (top)
+  PILLARS.forEach((p,i)=>{
+    const lx = padX + i*(sparkW/4);
+    parts.push(`<circle cx="${lx+6}" cy="10" r="3.5" fill="${p.color}"/>`);
+    parts.push(`<text x="${lx+14}" y="13" font-size="9" font-weight="600" fill="#16161A">${p.name} ${Math.round(values[i]*100)}%</text>`);
+  });
+  return svg(parts.join(''), `0 0 ${FULL_W} ${FULL_H}`);
+}
+
+// D4 — Grouped bars (7 days × 4 pillars)
+function vD4(values){
+  const hist = WEEK_HISTORY(values);
+  const padX = 30, padR = 30, padT = 24, padB = 30;
+  const chartW = FULL_W - padX - padR;
+  const chartH = FULL_H - padT - padB;
+  const dayCount = 7, pillarCount = 4;
+  const groupW = chartW / dayCount;
+  const barGap = 1.5;
+  const barW = (groupW - 12) / pillarCount - barGap;
+  let parts = [];
+  for(let d=0; d<dayCount; d++){
+    const gx = padX + d*groupW + 6;
+    PILLARS.forEach((p,i)=>{
+      const v = hist[i][d];
+      const barH = v * chartH;
+      const bx = gx + i*(barW + barGap);
+      const by = padT + chartH - barH;
+      parts.push(`<rect x="${bx}" y="${by}" width="${barW}" height="${barH}" rx="1.5" fill="${p.color}" fill-opacity="${d===dayCount-1?0.95:0.6}"/>`);
+    });
+    // day label
+    const isToday = d === dayCount-1;
+    parts.push(`<text x="${gx + (groupW-12)/2}" y="${padT+chartH+12}" text-anchor="middle" font-size="9" font-weight="${isToday?'700':'500'}" fill="${isToday?'#16161A':'#A6A6AC'}">${DAY_LABELS[d]}</text>`);
+  }
+  // legend
+  PILLARS.forEach((p,i)=>{
+    const lx = padX + i*(chartW/4);
+    parts.push(`<rect x="${lx}" y="6" width="8" height="8" rx="2" fill="${p.color}"/>`);
+    parts.push(`<text x="${lx+12}" y="14" font-size="9" font-weight="600" fill="#16161A">${p.name}</text>`);
+  });
+  return svg(parts.join(''), `0 0 ${FULL_W} ${FULL_H}`);
+}
+
+// D5 — Heatmap
+function vD5(values){
+  const hist = WEEK_HISTORY(values);
+  const padX = 70, padR = 16, padT = 12, padB = 22;
+  const cellsW = FULL_W - padX - padR;
+  const cellsH = FULL_H - padT - padB;
+  const dayCount = 7, pillarCount = 4;
+  const cellW = cellsW / dayCount;
+  const cellH = cellsH / pillarCount;
+  let parts = [];
+  PILLARS.forEach((p,i)=>{
+    const y = padT + i*cellH;
+    parts.push(`<text x="${padX-8}" y="${y+cellH/2+3}" text-anchor="end" font-size="11" font-weight="700" fill="${p.color}">${p.name}</text>`);
+    for(let d=0; d<dayCount; d++){
+      const v = hist[i][d];
+      const x = padX + d*cellW;
+      const isToday = d === dayCount-1;
+      parts.push(`<rect x="${x+2}" y="${y+2}" width="${cellW-4}" height="${cellH-4}" rx="4"
+        fill="${p.color}" fill-opacity="${0.10 + v*0.75}"
+        stroke="${isToday ? '#16161A' : 'transparent'}" stroke-width="${isToday ? 1.4 : 0}"/>`);
+      if(v >= 0.8){
+        parts.push(`<text x="${x+cellW/2}" y="${y+cellH/2+3}" text-anchor="middle" font-size="9" font-weight="700" fill="#FAFAF7">${Math.round(v*100)}</text>`);
+      }
+    }
+  });
+  // day labels
+  DAY_LABELS.forEach((d,k)=>{
+    const x = padX + k*cellW + cellW/2;
+    const isToday = k === DAY_LABELS.length-1;
+    parts.push(`<text x="${x}" y="${FULL_H - 6}" text-anchor="middle" font-size="9" font-weight="${isToday?'700':'500'}" fill="${isToday?'#16161A':'#A6A6AC'}">${d}</text>`);
+  });
+  return svg(parts.join(''), `0 0 ${FULL_W} ${FULL_H}`);
+}
+
+// D6 — Stream / ribbon stack
+function vD6(values){
+  const hist = WEEK_HISTORY(values);
+  const padX = 16, padR = 60, padT = 16, padB = 22;
+  const sw = FULL_W - padX - padR;
+  const sh = FULL_H - padT - padB;
+  let cursor = padT;
+  let parts = [];
+  PILLARS.forEach((p,i)=>{
+    const ribH = sh/4;
+    const pts = hist[i];
+    let topPath = '', botPath = '';
+    pts.forEach((v,k)=>{
+      const x = padX + (k/(pts.length-1))*sw;
+      const yTop = cursor + ribH*(1-v)/2;
+      const yBot = cursor + ribH - ribH*(1-v)/2;
+      topPath += `${k===0?'M':'L'} ${x.toFixed(1)} ${yTop.toFixed(1)} `;
+      botPath = `L ${x.toFixed(1)} ${yBot.toFixed(1)} ` + botPath;
+    });
+    parts.push(`<path d="${topPath} ${botPath} Z" fill="${p.color}" fill-opacity="0.78"/>`);
+    // label on the right
+    parts.push(`<text x="${padX + sw + 8}" y="${cursor+ribH/2+3}" font-size="10" font-weight="700" fill="${p.color}">${p.name}</text>`);
+    parts.push(`<text x="${padX + sw + 8}" y="${cursor+ribH/2+15}" font-size="9" font-weight="600" fill="#7A7A82">${Math.round(values[i]*100)}%</text>`);
+    cursor += ribH;
+  });
+  // day labels
+  DAY_LABELS.forEach((d,k)=>{
+    const x = padX + (k/(DAY_LABELS.length-1))*sw;
+    const isToday = k === DAY_LABELS.length-1;
+    parts.push(`<text x="${x}" y="${FULL_H - 4}" text-anchor="middle" font-size="9" font-weight="${isToday?'700':'500'}" fill="${isToday?'#16161A':'#A6A6AC'}">${d}</text>`);
+  });
+  return svg(parts.join(''), `0 0 ${FULL_W} ${FULL_H}`);
+}
+
+// D7 — Hybrid: 4 liquid discs + shared weekly stream
+function vD7(values){
+  const hist = WEEK_HISTORY(values);
+  // top half — 4 small liquid discs
+  const r = 22;
+  let parts = [];
+  PILLARS.forEach((p,i)=>{
+    const cx = (FULL_W/4)/2 + i*(FULL_W/4);
+    const cy = 38;
+    parts.push(liquidFillCircle(cx, cy, r, p.color, values[i], `d7${i}`, {delay:i*120}));
+    parts.push(`<g transform="translate(${cx} ${cy})" fill="#FAFAF7" fill-opacity="0.95">${glyphFor(p.key, 11)}</g>`);
+    parts.push(`<text x="${cx}" y="${cy+r+12}" text-anchor="middle" font-size="9" font-weight="700" fill="#16161A">${p.name} ${Math.round(values[i]*100)}%</text>`);
+  });
+  // divider
+  parts.push(`<line x1="20" y1="100" x2="${FULL_W-20}" y2="100" stroke="${TRACK}" stroke-width="0.8"/>`);
+  parts.push(`<text x="20" y="118" font-size="9" font-weight="700" fill="#7A7A82" letter-spacing="0.06em">THIS WEEK</text>`);
+  // bottom half — shared multi-line trend
+  const sparkX = 20, sparkY = 124, sparkW = FULL_W - 40, sparkH = 50;
+  // background grid
+  for(let g=0; g<=2; g++){
+    const gy = sparkY + (g/2)*sparkH;
+    parts.push(`<line x1="${sparkX}" y1="${gy}" x2="${sparkX+sparkW}" y2="${gy}" stroke="${TRACK}" stroke-width="0.5"/>`);
+  }
+  PILLARS.forEach((p,i)=>{
+    parts.push(sparkAt(sparkX, sparkY, sparkW, sparkH, hist[i], p.color, {dayLabels:false, strokeWidth:1.5}));
+  });
+  // day labels
+  DAY_LABELS.forEach((d,k)=>{
+    const x = sparkX + (k/(DAY_LABELS.length-1))*sparkW;
+    const isToday = k === DAY_LABELS.length-1;
+    parts.push(`<text x="${x}" y="${sparkY+sparkH+12}" text-anchor="middle" font-size="9" font-weight="${isToday?'700':'500'}" fill="${isToday?'#16161A':'#A6A6AC'}">${d}</text>`);
+  });
+  return svg(parts.join(''), `0 0 ${FULL_W} ${FULL_H}`);
+}
+
+// ============================================================
+//  RENDER
+// ============================================================
+const RENDERERS = { v1, v2, v3, v4, v5, v6, v7, v8,
+                    vB1, vB2, vB3, vB4, vB5, vB6, vB7, vB8, vB9, vB10, vB11, vB12, vB13, vB14,
+                    vC1, vC2, vC3, vC4, vC5, vC6, vC7, vC8, vC9, vC10, vC11, vC12, vC13, vC14, vC15,
+                    vD1, vD2, vD3, vD4, vD5, vD6, vD7,
+                    vF1, vF2, vF3, vF4, vF5, vF6,
+                    vG1, vG2, vG3, vG4, vG5, vG6, vG7, vG8 };
+const CENTER_OVERLAY = { v1:true, v2:false, v3:true, v4:false, v5:true, v6:false, v7:true, v8:false,
+                         vB1:false, vB2:false, vB3:false, vB4:false, vB5:false, vB6:false,
+                         vB7:false, vB8:false, vB9:false, vB10:false, vB11:false, vB12:false, vB13:false, vB14:false,
+                         vC1:false, vC2:false, vC3:false, vC4:false, vC5:false, vC6:false, vC7:false, vC8:false,
+                         vC9:false, vC10:false, vC11:false, vC12:false, vC13:false, vC14:false, vC15:false,
+                         vD1:false, vD2:false, vD3:false, vD4:false, vD5:false, vD6:false, vD7:false,
+                         vF1:false, vF2:false, vF3:false, vF4:false, vF5:false, vF6:false,
+                         vG1:false, vG2:false, vG3:false, vG4:false, vG5:false, vG6:false, vG7:false, vG8:false };
+
+Object.keys(RENDERERS).forEach(key=>{
+  const container = document.getElementById(key);
+  if(!container) return;
+  STATES.forEach(state=>{
+    const svgMarkup = RENDERERS[key](state.values);
+    const overlay = CENTER_OVERLAY[key] ? centerOverlay(state.dayPct, false) : '';
+    const stateDiv = document.createElement('div');
+    stateDiv.className = 'state';
+    stateDiv.innerHTML = `
+      <div class="state-label">${state.label}</div>
+      <div class="svg-wrap">${svgMarkup}${overlay}</div>
+      ${pillarLegend(state.values, state.hints)}
+    `;
+    container.appendChild(stateDiv);
+  });
+});
+</script>
+</body>
+</html>

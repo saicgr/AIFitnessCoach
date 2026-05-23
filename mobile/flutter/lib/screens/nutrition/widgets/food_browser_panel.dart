@@ -14,6 +14,7 @@ import '../../../core/constants/country_codes.dart';
 import '../food_history_screen.dart';
 import 'companion_picker_sheet.dart';
 import 'food_report_dialog.dart';
+import '../../../widgets/glass_sheet.dart';
 import 'food_source_indicator.dart';
 import 'score_explain_sheet.dart';
 import '../../../data/models/companion_suggestion.dart';
@@ -294,18 +295,18 @@ class _FoodBrowserPanelState extends ConsumerState<FoodBrowserPanel> {
       if (!mounted) return;
       setState(() => _logStates.remove(key));
 
-      final result = await showModalBottomSheet<CompanionPickerResult>(
+      final result = await showGlassSheet<CompanionPickerResult>(
         context: context,
-        isScrollControlled: true,
-        backgroundColor: Colors.transparent,
-        builder: (_) => CompanionPickerSheet(
-          primaryName: primaryName,
-          primaryCalories: log.totalCalories,
-          primaryImageUrl: log.imageUrl,
-          primarySourceType: log.sourceType,
-          primaryItem: log.foodItems.isNotEmpty ? log.foodItems.first : null,
-          sameLogSiblings: siblings,
-          companions: companions,
+        builder: (_) => GlassSheet(
+          child: CompanionPickerSheet(
+            primaryName: primaryName,
+            primaryCalories: log.totalCalories,
+            primaryImageUrl: log.imageUrl,
+            primarySourceType: log.sourceType,
+            primaryItem: log.foodItems.isNotEmpty ? log.foodItems.first : null,
+            sameLogSiblings: siblings,
+            companions: companions,
+          ),
         ),
       );
 

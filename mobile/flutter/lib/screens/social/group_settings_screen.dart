@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/theme_colors.dart';
+import '../../widgets/glass_sheet.dart';
 import '../../data/providers/social_provider.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../widgets/app_loading.dart';
@@ -171,12 +172,12 @@ class _GroupSettingsScreenState extends ConsumerState<GroupSettingsScreen>
       return;
     }
 
-    final selectedIds = await showModalBottomSheet<List<String>>(
+    final selectedIds = await showGlassSheet<List<String>>(
       context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
-      builder: (context) => _AddMembersSheet(
-        availableFriends: availableFriends,
+      builder: (context) => GlassSheet(
+        child: _AddMembersSheet(
+          availableFriends: availableFriends,
+        ),
       ),
     );
 

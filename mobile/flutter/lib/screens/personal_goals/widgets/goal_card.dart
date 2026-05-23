@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/goal_unit.dart';
 import '../../../data/services/personal_goals_service.dart';
 import '../../../data/services/goal_social_service.dart';
+import '../../../widgets/glass_sheet.dart';
+import '../../../widgets/main_shell.dart' show floatingNavBarVisibleProvider;
 import 'friend_avatars_row.dart';
 
 /// A card displaying a personal weekly goal with progress
@@ -33,8 +36,8 @@ class GoalCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
+    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
     final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
     final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
@@ -66,18 +69,14 @@ class GoalCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       onLongPress: onDelete != null ? () {
-        showModalBottomSheet(
+        final container = ProviderScope.containerOf(context, listen: false);
+        container.read(floatingNavBarVisibleProvider.notifier).state = false;
+        showGlassSheet<void>(
           context: context,
-          backgroundColor: elevated,
-          shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-          ),
-          builder: (ctx) => SafeArea(
+          builder: (ctx) => GlassSheet(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const SizedBox(height: 8),
-                Container(width: 36, height: 4, decoration: BoxDecoration(color: textMuted.withValues(alpha: 0.3), borderRadius: BorderRadius.circular(2))),
                 ListTile(
                   leading: const Icon(Icons.delete_outline, color: Colors.red),
                   title: Text('Delete Goal', style: TextStyle(color: textPrimary)),
@@ -87,11 +86,16 @@ class GoalCard extends StatelessWidget {
                     onDelete!();
                   },
                 ),
-                const SizedBox(height: 8),
               ],
             ),
           ),
-        );
+        ).whenComplete(() {
+          Future.microtask(() {
+            try {
+              container.read(floatingNavBarVisibleProvider.notifier).state = true;
+            } catch (_) {}
+          });
+        });
       } : null,
       child: Container(
         padding: const EdgeInsets.all(16),

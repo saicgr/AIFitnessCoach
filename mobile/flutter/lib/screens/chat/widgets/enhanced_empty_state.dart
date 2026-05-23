@@ -6,6 +6,7 @@ import '../../../core/theme/theme_colors.dart';
 import '../../../data/models/coach_persona.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../widgets/coach_avatar.dart';
+import '../../../widgets/glass_sheet.dart';
 
 class EnhancedEmptyState extends StatelessWidget {
   final CoachPersona coach;
@@ -145,21 +146,20 @@ class EnhancedEmptyState extends StatelessWidget {
     bool isDark,
   ) {
     HapticService.selection();
-    showModalBottomSheet<void>(
+    showGlassSheet<void>(
       context: context,
-      backgroundColor: Colors.transparent,
-      barrierColor: Colors.black.withOpacity(isDark ? 0.55 : 0.35),
-      isScrollControlled: true,
       builder: (sheetContext) {
-        return _SuggestionsSheet(
-          coach: coach,
-          colors: colors,
-          isDark: isDark,
-          suggestions: _suggestions,
-          onSuggestionTap: (text) {
-            Navigator.of(sheetContext).pop();
-            onSuggestionTap(text);
-          },
+        return GlassSheet(
+          child: _SuggestionsSheet(
+            coach: coach,
+            colors: colors,
+            isDark: isDark,
+            suggestions: _suggestions,
+            onSuggestionTap: (text) {
+              Navigator.of(sheetContext).pop();
+              onSuggestionTap(text);
+            },
+          ),
         );
       },
     );

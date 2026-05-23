@@ -18,6 +18,7 @@ import 'package:video_compress/video_compress.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/theme_colors.dart';
 import '../../../data/services/haptic_service.dart';
+import '../../../widgets/glass_sheet.dart';
 
 /// Supported media types for chat uploads
 enum ChatMediaType { image, video, document }
@@ -623,22 +624,12 @@ class MediaPickerHelper {
     // the picker returns.
     bool pickingInProgress = false;
 
-    showModalBottomSheet<void>(
+    showGlassSheet<void>(
       context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
       builder: (ctx) {
         final colors = ThemeColors.of(ctx);
-        final isDark = colors.isDark;
-
-        return Container(
-          decoration: BoxDecoration(
-            color: isDark ? AppColors.elevated : Colors.white,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-          ),
-          padding: EdgeInsets.fromLTRB(
-            20, 20, 20, 20 + MediaQuery.of(ctx).viewPadding.bottom,
-          ),
+        return GlassSheet(
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
           child: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,

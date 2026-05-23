@@ -16,6 +16,7 @@ import '../../core/constants/app_colors.dart';
 import '../../screens/nutrition/grocery/grocery_list_screen.dart';
 import '../repositories/nutrition_repository.dart';
 import 'api_client.dart';
+import '../../widgets/glass_sheet.dart';
 
 class RecipeNotificationActionData {
   final String action;     // 'log_recipe' | 'open_grocery_list'
@@ -77,11 +78,11 @@ class RecipeNotificationRouter {
   static Future<void> _showConfirmLogSheet(
       BuildContext context, WidgetRef ref, RecipeNotificationActionData data) async {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    await showModalBottomSheet<void>(
+    await showGlassSheet<void>(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
-      builder: (sheetCtx) => _ConfirmLogSheet(data: data, isDark: isDark),
+      builder: (sheetCtx) => GlassSheet(
+        child: _ConfirmLogSheet(data: data, isDark: isDark),
+      ),
     );
   }
 }

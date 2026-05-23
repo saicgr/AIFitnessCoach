@@ -11,6 +11,7 @@ import '../../data/services/data_cache_service.dart';
 import '../../data/services/api_client.dart';
 import '../../data/services/haptic_service.dart';
 import '../../widgets/pill_app_bar.dart';
+import '../../widgets/glass_sheet.dart';
 
 class MyWrappedScreen extends ConsumerStatefulWidget {
   const MyWrappedScreen({super.key});
@@ -675,27 +676,14 @@ class _MyWrappedScreenState extends ConsumerState<MyWrappedScreen> {
   }
 
   void _showPersonalityInfo(BuildContext context, Color textPrimary, Color textMuted, Color accent) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    showModalBottomSheet(
+    showGlassSheet<void>(
       context: context,
-      backgroundColor: isDark ? AppColors.pureBlack : AppColorsLight.pureWhite,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) => SafeArea(
+      builder: (ctx) => GlassSheet(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Container(
-                width: 36, height: 4,
-                decoration: BoxDecoration(
-                  color: textMuted.withValues(alpha: 0.3),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              const SizedBox(height: 20),
               Icon(Icons.psychology_outlined, size: 40, color: accent),
               const SizedBox(height: 12),
               Text(

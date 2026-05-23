@@ -2150,15 +2150,15 @@ Future<DateTime?> _showMonthYearPicker({
   required DateTime latest,
   required Color accent,
 }) {
-  return showModalBottomSheet<DateTime>(
+  return showGlassSheet<DateTime>(
     context: context,
-    backgroundColor: Colors.transparent,
-    isScrollControlled: true,
-    builder: (ctx) => _MonthYearPickerSheet(
-      initial: initial,
-      earliest: earliest,
-      latest: latest,
-      accent: accent,
+    builder: (ctx) => GlassSheet(
+      child: _MonthYearPickerSheet(
+        initial: initial,
+        earliest: earliest,
+        latest: latest,
+        accent: accent,
+      ),
     ),
   );
 }

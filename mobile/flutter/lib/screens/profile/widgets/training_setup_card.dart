@@ -7,6 +7,7 @@ import '../../../core/providers/variation_provider.dart';
 import '../../../data/models/user.dart';
 import '../../../data/providers/gym_profile_provider.dart';
 import '../../../widgets/glass_sheet.dart';
+import '../../../widgets/main_shell.dart' show floatingNavBarVisibleProvider;
 import '../../home/widgets/edit_gym_profile_sheet.dart';
 
 /// Unified card displaying equipment and workout preferences with edit capability.
@@ -487,15 +488,13 @@ class _VarietyRow extends ConsumerWidget {
   }
 
   void _showVariationSlider(BuildContext context, WidgetRef ref, int currentPercentage) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    showModalBottomSheet(
+    final container = ProviderScope.containerOf(context, listen: false);
+    container.read(floatingNavBarVisibleProvider.notifier).state = false;
+    showGlassSheet<void>(
       context: context,
-      backgroundColor: isDark ? const Color(0xFF1a1a1a) : Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => SafeArea(
-        child: Padding(
+      builder: (context) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        return GlassSheet(
           padding: const EdgeInsets.all(16),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -529,9 +528,15 @@ class _VarietyRow extends ConsumerWidget {
               const SizedBox(height: 16),
             ],
           ),
-        ),
-      ),
-    );
+        );
+      },
+    ).whenComplete(() {
+      Future.microtask(() {
+        try {
+          container.read(floatingNavBarVisibleProvider.notifier).state = true;
+        } catch (_) {}
+      });
+    });
   }
 
   Widget _buildChip(String label, int value, int current, BuildContext context, WidgetRef ref) {

@@ -10,6 +10,7 @@ import '../../data/models/ai_suggested_food.dart';
 import '../../data/models/nutrition.dart';
 import '../../data/repositories/nutrition_repository.dart';
 import '../../data/services/haptic_service.dart';
+import '../../widgets/glass_sheet.dart';
 
 /// A4 — Create a custom food, with an optional "AI fill" path.
 ///
@@ -556,10 +557,10 @@ class _CustomFoodBuilderSheetState
   Future<void> _pickEmoji() async {
     HapticService.light();
     final theme = ThemeColors.of(context);
-    final chosen = await showModalBottomSheet<String>(
+    final chosen = await showGlassSheet<String>(
       context: context,
-      backgroundColor: theme.elevated,
-      builder: (ctx) => Padding(
+      builder: (ctx) => GlassSheet(
+        opaque: true,
         padding: const EdgeInsets.all(16),
         child: Wrap(
           spacing: 8,

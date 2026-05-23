@@ -18,6 +18,7 @@ import '../doc/card_palette.dart';
 import '../shareable_data.dart';
 import 'card_editor_controller.dart';
 import 'card_video_export_screen.dart';
+import '../../widgets/glass_sheet.dart';
 
 class CardEditorScreen extends StatefulWidget {
   final CardDoc initialDoc;
@@ -207,18 +208,22 @@ class _CardEditorScreenState extends State<CardEditorScreen> {
   }
 
   void _editBackground() {
-    showModalBottomSheet<void>(
+    showGlassSheet<void>(
       context: context,
-      backgroundColor: const Color(0xFF1A1C22),
-      builder: (_) => _BackgroundSheet(controller: _c, data: widget.data),
+      builder: (_) => GlassSheet(
+        opaque: true,
+        child: _BackgroundSheet(controller: _c, data: widget.data),
+      ),
     );
   }
 
   void _openLayers() {
-    showModalBottomSheet<void>(
+    showGlassSheet<void>(
       context: context,
-      backgroundColor: const Color(0xFF1A1C22),
-      builder: (_) => _LayersSheet(controller: _c),
+      builder: (_) => GlassSheet(
+        opaque: true,
+        child: _LayersSheet(controller: _c),
+      ),
     );
   }
 }

@@ -19,6 +19,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/accent_color_provider.dart';
 import '../../../data/models/timeline_entry.dart';
+import '../../../widgets/glass_sheet.dart';
 import '../../../data/providers/timeline_provider.dart';
 import 'timeline_summary_card.dart';
 import 'timeline_entry_tile.dart';
@@ -168,14 +169,11 @@ class _TimelineSectionState extends ConsumerState<TimelineSection> {
       days.every((d) => d.entries.isEmpty);
 
   void _openDetailSheet(BuildContext context, TimelineEntry entry) {
-    showModalBottomSheet<void>(
+    showGlassSheet<void>(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      builder: (_) => GlassSheet(
+        child: TimelineEntryDetailSheet(entry: entry),
       ),
-      builder: (_) => TimelineEntryDetailSheet(entry: entry),
     );
   }
 }

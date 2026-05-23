@@ -9,6 +9,7 @@ import '../../../core/theme/theme_colors.dart';
 import '../../../data/providers/chat_quick_action_provider.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../widgets/glass_sheet.dart';
+import '../../../widgets/main_shell.dart' show floatingNavBarVisibleProvider;
 
 class ChatQuickPills extends ConsumerStatefulWidget {
   final void Function(String prompt) onSendPrompt;
@@ -41,21 +42,16 @@ class _ChatQuickPillsState extends ConsumerState<ChatQuickPills> {
   void _showMiniMediaChoice(ChatQuickAction action) {
     final isVideo = action.mediaMode == ChatMediaMode.video;
 
-    showModalBottomSheet(
+    final container = ProviderScope.containerOf(context, listen: false);
+    container.read(floatingNavBarVisibleProvider.notifier).state = false;
+    showGlassSheet<void>(
       context: context,
-      backgroundColor: Colors.transparent,
       builder: (ctx) {
         final colors = ThemeColors.of(ctx);
-        final isDark = colors.isDark;
 
-        return Container(
-          decoration: BoxDecoration(
-            color: isDark ? AppColors.elevated : Colors.white,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-          ),
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-          child: SafeArea(
-            child: Column(
+        return GlassSheet(
+          padding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
+          child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -130,10 +126,15 @@ class _ChatQuickPillsState extends ConsumerState<ChatQuickPills> {
                 const SizedBox(height: 12),
               ],
             ),
-          ),
         );
       },
-    );
+    ).whenComplete(() {
+      Future.microtask(() {
+        try {
+          container.read(floatingNavBarVisibleProvider.notifier).state = true;
+        } catch (_) {}
+      });
+    });
   }
 
   void _showMoreSheet() {

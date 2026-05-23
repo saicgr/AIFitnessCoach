@@ -11,6 +11,7 @@ import '../../../data/models/custom_exercise.dart';
 import '../../../data/services/api_client.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../widgets/segmented_tab_bar.dart';
+import '../../../widgets/glass_sheet.dart';
 
 part 'create_exercise_sheet_part_dashed_border_painter.dart';
 
@@ -688,17 +689,11 @@ class _CreateExerciseSheetState extends ConsumerState<CreateExerciseSheet>
   }
 
   void _showImageSourceSheet() {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    showModalBottomSheet(
+    showGlassSheet<void>(
       context: context,
-      backgroundColor: isDark ? AppColors.elevated : AppColorsLight.pureWhite,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (ctx) => SafeArea(
+      builder: (ctx) => GlassSheet(
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 16),
+          padding: const EdgeInsets.symmetric(vertical: 8),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [

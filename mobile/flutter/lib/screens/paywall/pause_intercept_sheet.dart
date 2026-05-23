@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
+import '../../widgets/glass_sheet.dart';
 import '../../core/services/posthog_service.dart';
 import '../../data/services/api_client.dart';
 
@@ -23,11 +24,9 @@ class PauseInterceptSheet extends ConsumerStatefulWidget {
 
   static Future<PauseInterceptResult> show(
       BuildContext context, String userId) async {
-    final result = await showModalBottomSheet<PauseInterceptResult>(
+    final result = await showGlassSheet<PauseInterceptResult>(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => PauseInterceptSheet(userId: userId),
+      builder: (_) => GlassSheet(child: PauseInterceptSheet(userId: userId)),
     );
     return result ?? PauseInterceptResult.dismissed;
   }

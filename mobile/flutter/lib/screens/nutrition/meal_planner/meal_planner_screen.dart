@@ -19,6 +19,7 @@ import '../../../widgets/glass_back_button.dart';
 import '../../../widgets/nav_bar_hider_mixin.dart';
 import '../grocery/grocery_list_screen.dart';
 import '../recipes/widgets/coach_review_sheet.dart';
+import '../../../widgets/glass_sheet.dart';
 
 class MealPlannerScreen extends ConsumerStatefulWidget {
   final String userId;
@@ -145,12 +146,13 @@ class _MealPlannerScreenState extends ConsumerState<MealPlannerScreen>
             builder: (context, constraints) {
               final coachBtn = OutlinedButton.icon(
                 onPressed: () {
-                  showModalBottomSheet(
-                    context: context, isScrollControlled: true,
-                    backgroundColor: surface,
-                    builder: (_) => CoachReviewSheet(
-                      subjectType: CoachReviewSubject.mealPlan,
-                      subjectId: _plan!.id, userId: widget.userId, isDark: isDark,
+                  showGlassSheet<void>(
+                    context: context,
+                    builder: (_) => GlassSheet(
+                      child: CoachReviewSheet(
+                        subjectType: CoachReviewSubject.mealPlan,
+                        subjectId: _plan!.id, userId: widget.userId, isDark: isDark,
+                      ),
                     ),
                   );
                 },

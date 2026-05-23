@@ -9,6 +9,7 @@ import '../../../core/widgets/skeleton/skeleton.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/repositories/measurements_repository.dart';
 import '../../../data/services/haptic_service.dart';
+import '../../../widgets/glass_sheet.dart';
 
 part 'measurements_tab_ui.dart';
 
@@ -324,21 +325,15 @@ class _MeasurementsTabState extends ConsumerState<MeasurementsTab> {
     String unitFor(MeasurementType t) =>
         t == MeasurementType.weight ? 'kg' : (t == MeasurementType.bodyFat ? '%' : 'cm');
 
-    showModalBottomSheet(
+    showGlassSheet<void>(
       context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
       builder: (sheetContext) {
-        return StatefulBuilder(
+        return GlassSheet(
+          child: StatefulBuilder(
           builder: (ctx, setSheetState) {
             final colorScheme = Theme.of(ctx).colorScheme;
             return Padding(
-              padding: EdgeInsets.only(
-                left: 20, right: 20, top: 20,
-                bottom: MediaQuery.of(ctx).viewInsets.bottom + 20,
-              ),
+              padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -434,6 +429,7 @@ class _MeasurementsTabState extends ConsumerState<MeasurementsTab> {
               ),
             );
           },
+        ),
         );
       },
     );

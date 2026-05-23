@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/workout.dart';
+import '../../../widgets/glass_sheet.dart';
 
 /// Mutable data class backing each editable set row.
 class _EditableSet {
@@ -53,15 +54,10 @@ class EditSetSheet extends StatefulWidget {
     required Color accentColor,
     required Function(List<Map<String, dynamic>> sets) onSave,
   }) async {
-    await showModalBottomSheet(
+    await showGlassSheet<void>(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => DraggableScrollableSheet(
-        initialChildSize: 0.75,
-        minChildSize: 0.4,
-        maxChildSize: 0.95,
-        builder: (context, scrollController) => EditSetSheet(
+      builder: (_) => GlassSheet(
+        child: EditSetSheet(
           exerciseName: exerciseName,
           initialSets: initialSets,
           isDark: isDark,
@@ -320,62 +316,36 @@ class _EditSetSheetState extends State<EditSetSheet> {
     final isDark = widget.isDark;
     final accent = widget.accentColor;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.nearBlack : Colors.white,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        border: Border.all(
-          color: isDark
-              ? Colors.white.withValues(alpha: 0.08)
-              : Colors.grey.shade200,
-        ),
-      ),
-      child: Form(
-        key: _formKey,
-        child: Column(
-          children: [
-            // Drag handle
-            Center(
-              child: Container(
-                margin: const EdgeInsets.only(top: 12, bottom: 8),
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: isDark
-                      ? Colors.white.withValues(alpha: 0.2)
-                      : Colors.grey.shade300,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
+    return Form(
+      key: _formKey,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Header
+          _buildHeader(isDark),
+
+          const SizedBox(height: 4),
+
+          // Column headers
+          _buildColumnHeaders(isDark),
+
+          // Set list
+          Flexible(
+            child: ListView.builder(
+              shrinkWrap: true,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              itemCount: _sets.length,
+              itemBuilder: (context, index) =>
+                  _buildSetRow(index, isDark),
             ),
+          ),
 
-            // Header
-            _buildHeader(isDark),
+          // Add set button
+          _buildAddSetButton(isDark, accent),
 
-            const SizedBox(height: 4),
-
-            // Column headers
-            _buildColumnHeaders(isDark),
-
-            // Set list
-            Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                itemCount: _sets.length,
-                itemBuilder: (context, index) =>
-                    _buildSetRow(index, isDark),
-              ),
-            ),
-
-            // Add set button
-            _buildAddSetButton(isDark, accent),
-
-            // Save button
-            _buildSaveButton(isDark, accent),
-
-            SizedBox(height: MediaQuery.of(context).padding.bottom + 8),
-          ],
-        ),
+          // Save button
+          _buildSaveButton(isDark, accent),
+        ],
       ),
     );
   }

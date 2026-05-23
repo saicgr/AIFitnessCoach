@@ -4,6 +4,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/constants/app_colors.dart';
+import '../../../widgets/glass_sheet.dart';
 
 /// Soft pre-permission sheet shown at the start of the user's first workout.
 ///
@@ -28,13 +29,15 @@ class WorkoutPermissionsPrimeSheet extends StatelessWidget {
     if (prefs.getBool(prefsKey) ?? false) return;
     if (!context.mounted) return;
 
-    await showModalBottomSheet<void>(
+    await showGlassSheet<void>(
       context: context,
-      isScrollControlled: true,
       isDismissible: false,
       enableDrag: false,
-      backgroundColor: Colors.transparent,
-      builder: (_) => const WorkoutPermissionsPrimeSheet(),
+      builder: (_) => const GlassSheet(
+        opaque: true,
+        showHandle: false,
+        child: WorkoutPermissionsPrimeSheet(),
+      ),
     );
 
     // Only mark shown after the user explicitly dismissed, not on route pop.

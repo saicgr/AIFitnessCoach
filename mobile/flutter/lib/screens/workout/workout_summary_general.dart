@@ -18,6 +18,7 @@ import '../../data/models/workout.dart';
 import '../../widgets/heart_rate_chart.dart';
 import '../library/providers/muscle_group_images_provider.dart';
 import 'widgets/summary_exercise_table.dart';
+import '../../widgets/glass_sheet.dart';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // MAIN WIDGET
@@ -1337,40 +1338,15 @@ class _ExerciseTableSection extends StatelessWidget {
   void _showExerciseSheet(
       BuildContext context, String name, String? libraryId) {
     final isDarkSheet = Theme.of(context).brightness == Brightness.dark;
-    showModalBottomSheet(
+    showGlassSheet<void>(
       context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (_) => Container(
-        constraints: BoxConstraints(
-          maxHeight: MediaQuery.of(context).size.height * 0.4,
-        ),
-        decoration: BoxDecoration(
-          color: isDarkSheet ? AppColors.glassSurface : Colors.white,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-          border: Border.all(
-            color: isDarkSheet
-                ? AppColors.cardBorder
-                : AppColorsLight.cardBorder,
-          ),
-        ),
+      builder: (_) => GlassSheet(
+        maxHeightFraction: 0.4,
         padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Center(
-              child: Container(
-                width: 36,
-                height: 4,
-                decoration: BoxDecoration(
-                  color:
-                      isDarkSheet ? AppColors.textMuted : Colors.grey.shade300,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
             Text(
               name,
               style: TextStyle(

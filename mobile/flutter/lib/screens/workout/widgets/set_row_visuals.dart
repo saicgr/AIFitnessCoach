@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/copy/training_explainers.dart';
 import '../../../core/theme/accent_color_provider.dart';
+import '../../../widgets/glass_sheet.dart';
 
 /// Shared visual helpers for the active-workout set rows.
 ///
@@ -312,15 +313,11 @@ class SetRowVisuals {
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
     final accent = AccentColorScope.of(context).getColor(isDark);
 
-    return showModalBottomSheet<void>(
+    return showGlassSheet<void>(
       context: context,
-      backgroundColor: bg,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
       builder: (sheetContext) {
-        return SafeArea(
+        return GlassSheet(
+          opaque: true,
           child: Padding(
             padding: EdgeInsets.fromLTRB(
               20,

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/animations/app_animations.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../widgets/glass_sheet.dart';
 import '../../../core/widgets/skeleton/skeleton.dart';
 import '../../../core/theme/theme_colors.dart';
 import '../../../data/repositories/auth_repository.dart';
@@ -83,11 +84,10 @@ class _MessagesTabState extends ConsumerState<MessagesTab> {
                     child: OutlinedButton.icon(
                       onPressed: () {
                         HapticFeedback.lightImpact();
-                        showModalBottomSheet(
+                        showGlassSheet(
                           context: context,
-                          isScrollControlled: true,
-                          useSafeArea: true,
-                          builder: (context) => GroupCreateSheet(
+                          builder: (context) => GlassSheet(
+                            child: GroupCreateSheet(
                             onCreated: (conversation) {
                               ref.invalidate(conversationsProvider(userId));
                               final conversationId = conversation['id'] as String? ?? '';
@@ -110,6 +110,7 @@ class _MessagesTabState extends ConsumerState<MessagesTab> {
                               }
                             },
                           ),
+                        ),
                         );
                       },
                       icon: const Icon(Icons.group_add_rounded, size: 18),

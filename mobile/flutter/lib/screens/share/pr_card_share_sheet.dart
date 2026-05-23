@@ -15,6 +15,7 @@ import 'package:flutter/rendering.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../data/models/timeline_entry.dart';
+import '../../widgets/glass_sheet.dart';
 
 class PRCardShareSheet extends StatefulWidget {
   final TimelineEntry entry;
@@ -34,14 +35,15 @@ class PRCardShareSheet extends StatefulWidget {
     required TimelineAchievement achievement,
     String? userName,
   }) {
-    return showModalBottomSheet<void>(
+    return showGlassSheet<void>(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => PRCardShareSheet(
-        entry: entry,
-        achievement: achievement,
-        userName: userName,
+      builder: (_) => GlassSheet(
+        showHandle: false,
+        child: PRCardShareSheet(
+          entry: entry,
+          achievement: achievement,
+          userName: userName,
+        ),
       ),
     );
   }
@@ -56,23 +58,11 @@ class _PRCardShareSheetState extends State<PRCardShareSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Padding(
+    return Padding(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Center(
-              child: Container(
-                width: 36,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.4),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
             RepaintBoundary(
               key: _captureKey,
               child: _PRCardCanvas(
@@ -105,7 +95,6 @@ class _PRCardShareSheetState extends State<PRCardShareSheet> {
             ),
           ],
         ),
-      ),
     );
   }
 

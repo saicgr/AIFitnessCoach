@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/services/haptic_service.dart';
+import '../../../widgets/glass_sheet.dart';
+import '../../../widgets/main_shell.dart' show floatingNavBarVisibleProvider;
 import 'event_workout_coming_soon_sheet.dart';
 
 /// Profile card previewing the upcoming Event-Based Workout feature.
@@ -24,12 +27,18 @@ class EventBasedWorkoutCard extends StatelessWidget {
     return GestureDetector(
       onTap: () {
         HapticService.selection();
-        showModalBottomSheet(
+        final container = ProviderScope.containerOf(context, listen: false);
+        container.read(floatingNavBarVisibleProvider.notifier).state = false;
+        showGlassSheet<void>(
           context: context,
-          isScrollControlled: true,
-          backgroundColor: Colors.transparent,
-          builder: (_) => const EventWorkoutComingSoonSheet(),
-        );
+          builder: (_) => const GlassSheet(child: EventWorkoutComingSoonSheet()),
+        ).whenComplete(() {
+          Future.microtask(() {
+            try {
+              container.read(floatingNavBarVisibleProvider.notifier).state = true;
+            } catch (_) {}
+          });
+        });
       },
       child: Container(
         decoration: BoxDecoration(

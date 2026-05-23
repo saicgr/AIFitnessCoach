@@ -14,6 +14,7 @@ import 'dart:ui';
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/theme_colors.dart';
 import '../../widgets/glass_sheet.dart';
+import '../../widgets/main_shell.dart' show floatingNavBarVisibleProvider;
 import '../../data/models/chat_message.dart';
 import '../../data/models/coach_persona.dart';
 import '../../data/models/live_chat_session.dart';
@@ -974,14 +975,12 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
     }
 
     // No active workout — never silently no-op. Surface a clear CTA.
-    showModalBottomSheet<void>(
+    showGlassSheet<void>(
       context: context,
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
+      opaque: true,
       builder: (sheetCtx) {
-        return SafeArea(
+        return GlassSheet(
+          opaque: true,
           child: Padding(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
             child: Column(

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/services/api_client.dart';
+import '../../../widgets/glass_sheet.dart';
 import '../../../data/services/food_search_service.dart';
 import '../../../widgets/glass_sheet.dart';
 
@@ -60,13 +61,10 @@ void _showReportConfirmation(BuildContext context, String? reportId) {
   final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
   final surface = isDark ? AppColors.elevated : AppColorsLight.elevated;
 
-  showModalBottomSheet<void>(
+  showGlassSheet<void>(
     context: context,
-    backgroundColor: surface,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-    ),
-    builder: (sheetContext) => SafeArea(
+    builder: (sheetContext) => GlassSheet(
+      opaque: true,
       child: Padding(
         padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
         child: Column(

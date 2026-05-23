@@ -16,6 +16,7 @@ import 'widgets/posture_findings_card.dart';
 import 'widgets/retune_proposal_sheet.dart';
 import 'widgets/score_ring.dart';
 import 'widgets/share_body_analyzer_sheet.dart';
+import '../../widgets/glass_sheet.dart';
 
 class BodyAnalyzerScreen extends ConsumerStatefulWidget {
   const BodyAnalyzerScreen({super.key});
@@ -213,12 +214,9 @@ class _BodyAnalyzerScreenState extends ConsumerState<BodyAnalyzerScreen> {
       final proposal =
           await repo.createRetuneProposal(bodyAnalyzerSnapshotId: snap.id);
       if (!mounted) return;
-      await showModalBottomSheet(
+      await showGlassSheet<void>(
         context: context,
-        isScrollControlled: true,
-        useSafeArea: true,
-        backgroundColor: Colors.transparent,
-        builder: (_) => RetuneProposalSheet(proposal: proposal),
+        builder: (_) => GlassSheet(child: RetuneProposalSheet(proposal: proposal)),
       );
     } catch (e) {
       if (mounted) {
@@ -232,13 +230,9 @@ class _BodyAnalyzerScreenState extends ConsumerState<BodyAnalyzerScreen> {
   }
 
   void _share(BodyAnalyzerSnapshot snap) {
-    showModalBottomSheet(
+    showGlassSheet<void>(
       context: context,
-      useSafeArea: true,
-      backgroundColor: Theme.of(context).brightness == Brightness.dark
-          ? AppColors.nearBlack
-          : AppColorsLight.nearWhite,
-      builder: (_) => ShareBodyAnalyzerSheet(snapshot: snap),
+      builder: (_) => GlassSheet(child: ShareBodyAnalyzerSheet(snapshot: snap)),
     );
   }
 

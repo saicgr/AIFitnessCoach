@@ -8,6 +8,7 @@ import '../../../data/repositories/auth_repository.dart';
 import '../../../data/repositories/measurements_repository.dart';
 import '../../../data/services/haptic_service.dart';
 import 'measurement_value_pill.dart';
+import '../../../widgets/glass_sheet.dart';
 
 /// Anatomical anchor (x, y) for each body-part pill, expressed as a fraction
 /// of the body panel's width and height.
@@ -375,35 +376,16 @@ class _MoreDerivedDropdown extends StatelessWidget {
   }
 
   void _showSheet(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final cardBorder =
-        isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-
-    showModalBottomSheet(
+    showGlassSheet<void>(
       context: context,
-      backgroundColor: isDark ? AppColors.nearBlack : AppColorsLight.nearWhite,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
       builder: (sheetCtx) {
-        return SafeArea(
+        return GlassSheet(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  width: 40,
-                  height: 4,
-                  margin: const EdgeInsets.only(bottom: 14),
-                  decoration: BoxDecoration(
-                    color: cardBorder,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                  alignment: Alignment.center,
-                ),
                 const Text(
                   'More metrics',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
@@ -422,14 +404,7 @@ class _MoreDerivedDropdown extends StatelessWidget {
           ),
         );
       },
-    ).then((_) {
-      // Center the handle inside the drag grabber — the Container above has
-      // alignment:center but padding pushes it left on some builds; this is
-      // harmless if already centred.
-    });
-    // Suppress lint about unused elevated.
-    // ignore: unused_local_variable
-    final _ = elevated;
+    );
   }
 }
 

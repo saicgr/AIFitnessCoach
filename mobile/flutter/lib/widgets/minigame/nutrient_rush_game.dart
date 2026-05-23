@@ -7,6 +7,7 @@ import '../../data/services/leaderboard_service.dart';
 import '../../data/services/api_client.dart';
 import '../../data/repositories/auth_repository.dart';
 import 'nutrient_rush_model.dart';
+import '../glass_sheet.dart';
 
 // =============================================================================
 // Nutrient Rush — an immersive, optional fitness-themed arcade mini-game.
@@ -1493,17 +1494,15 @@ class _NutrientRushGameState extends State<NutrientRushGame>
     final uid = widget.userId;
     if (service == null || uid == null) return;
     HapticService.light();
-    showModalBottomSheet<void>(
+    showGlassSheet<void>(
       context: context,
-      backgroundColor: const Color(0xF21A1A1A),
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (_) => _HighScoresSheet(
-        service: service,
-        userId: uid,
-        accentColor: widget.accentColor,
+      builder: (_) => GlassSheet(
+        opaque: true,
+        child: _HighScoresSheet(
+          service: service,
+          userId: uid,
+          accentColor: widget.accentColor,
+        ),
       ),
     );
   }

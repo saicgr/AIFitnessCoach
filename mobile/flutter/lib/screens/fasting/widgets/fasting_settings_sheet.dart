@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/fasting.dart';
+import '../../../widgets/glass_sheet.dart';
 import '../../../data/providers/fasting_provider.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/services/haptic_service.dart';
@@ -596,11 +597,11 @@ class _FastingSettingsSheetState extends ConsumerState<FastingSettingsSheet> {
     return GestureDetector(
       onTap: () {
         HapticService.light();
-        showModalBottomSheet<void>(
+        showGlassSheet<void>(
           context: context,
-          isScrollControlled: true,
-          backgroundColor: Colors.transparent,
-          builder: (_) => FastingScheduleEditorSheet(preferences: prefs),
+          builder: (_) => GlassSheet(
+            child: FastingScheduleEditorSheet(preferences: prefs),
+          ),
         );
       },
       behavior: HitTestBehavior.opaque,

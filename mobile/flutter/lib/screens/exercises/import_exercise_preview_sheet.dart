@@ -18,6 +18,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/providers/custom_exercises_provider.dart';
 import '../../core/theme/accent_color_provider.dart';
+import '../../widgets/glass_sheet.dart';
 import '../../data/models/custom_exercise.dart';
 
 /// Canonical body-part values accepted by the backend.
@@ -94,15 +95,14 @@ Future<bool> showImportExercisePreviewSheet(
   required bool duplicate,
   required bool ragIndexed,
 }) async {
-  final saved = await showModalBottomSheet<bool>(
+  final saved = await showGlassSheet<bool>(
     context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
-    useSafeArea: true,
-    builder: (_) => ImportExercisePreviewSheet(
-      exercise: exercise,
-      duplicate: duplicate,
-      ragIndexed: ragIndexed,
+    builder: (_) => GlassSheet(
+      child: ImportExercisePreviewSheet(
+        exercise: exercise,
+        duplicate: duplicate,
+        ragIndexed: ragIndexed,
+      ),
     ),
   );
   return saved == true;

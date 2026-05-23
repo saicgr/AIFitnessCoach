@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../core/constants/app_colors.dart';
 import '../../../../../data/providers/beast_mode_provider.dart';
+import '../../../../../widgets/glass_sheet.dart';
+import '../../../../../widgets/main_shell.dart' show floatingNavBarVisibleProvider;
 
 class TemplateEditorSheet extends StatefulWidget {
   final WorkoutTemplate? existing;
@@ -13,16 +16,21 @@ class TemplateEditorSheet extends StatefulWidget {
   });
 
   static void show(BuildContext context, WorkoutTemplate? existing, BeastModeConfigNotifier notifier) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    showModalBottomSheet(
+    final container = ProviderScope.containerOf(context, listen: false);
+    container.read(floatingNavBarVisibleProvider.notifier).state = false;
+    showGlassSheet<void>(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: isDark ? AppColors.elevated : AppColorsLight.elevated,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      builder: (_) => GlassSheet(
+        opaque: true,
+        child: TemplateEditorSheet(existing: existing, notifier: notifier),
       ),
-      builder: (_) => TemplateEditorSheet(existing: existing, notifier: notifier),
-    );
+    ).whenComplete(() {
+      Future.microtask(() {
+        try {
+          container.read(floatingNavBarVisibleProvider.notifier).state = true;
+        } catch (_) {}
+      });
+    });
   }
 
   @override
@@ -66,7 +74,7 @@ class _TemplateEditorSheetState extends State<TemplateEditorSheet> {
     final cardBorder = isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
 
     return Padding(
-      padding: EdgeInsets.fromLTRB(16, 16, 16, MediaQuery.of(context).viewInsets.bottom + 16),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,

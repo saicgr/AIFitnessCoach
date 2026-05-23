@@ -14,6 +14,7 @@ import '../../data/services/api_client.dart';
 import '../../data/services/last_used_service.dart';
 import '../../data/services/plan_share_service.dart';
 import '../../widgets/common/last_used_badge.dart';
+import '../../widgets/glass_sheet.dart';
 import 'package:fitwiz/core/constants/branding.dart';
 
 enum _Period {
@@ -38,14 +39,9 @@ class SharePlanPeriodSheet extends ConsumerStatefulWidget {
   const SharePlanPeriodSheet({super.key});
 
   static Future<void> show(BuildContext context) {
-    return showModalBottomSheet(
+    return showGlassSheet<void>(
       context: context,
-      backgroundColor: Theme.of(context).cardColor,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      isScrollControlled: false,
-      builder: (_) => const SharePlanPeriodSheet(),
+      builder: (_) => const GlassSheet(child: SharePlanPeriodSheet()),
     );
   }
 
@@ -109,24 +105,12 @@ class _SharePlanPeriodSheetState extends ConsumerState<SharePlanPeriodSheet> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 14, 20, 22),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                margin: const EdgeInsets.only(bottom: 14),
-                decoration: BoxDecoration(
-                  color: theme.dividerColor,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 4, 20, 22),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
             Text(
               'What would you like to share?',
               style: theme.textTheme.titleMedium
@@ -166,8 +150,7 @@ class _SharePlanPeriodSheetState extends ConsumerState<SharePlanPeriodSheet> {
             ],
           ],
         ),
-      ),
-    );
+      );
   }
 }
 

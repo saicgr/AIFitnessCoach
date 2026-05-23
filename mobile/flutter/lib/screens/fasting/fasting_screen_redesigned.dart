@@ -8,6 +8,7 @@ import '../../core/widgets/line_icon.dart';
 import '../../data/providers/trend_series_provider.dart';
 import '../../data/models/fasting.dart';
 import '../../data/providers/fasting_provider.dart';
+import '../../widgets/glass_sheet.dart';
 import '../../data/providers/guest_mode_provider.dart';
 import '../../data/providers/guest_usage_limits_provider.dart';
 import '../../data/repositories/auth_repository.dart';
@@ -1531,11 +1532,9 @@ class _FastingScreenRedesignedState
   /// Open the edit-past-fast sheet (Task I).
   void _showEditFastSheet(FastingRecord record) {
     HapticService.light();
-    showModalBottomSheet<void>(
+    showGlassSheet<void>(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => FastingEditSheet(record: record),
+      builder: (_) => GlassSheet(child: FastingEditSheet(record: record)),
     );
   }
 
@@ -1587,22 +1586,19 @@ class _FastingScreenRedesignedState
   /// no mood data.
   void _showEndFastDialog(BuildContext context, String userId) {
     HapticService.light();
-    showModalBottomSheet<void>(
+    showGlassSheet<void>(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: ThemeColors.of(context).elevated,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (sheetCtx) => FastingMoodCheckInSheet(
-        onSubmit: (result) {
-          Navigator.of(sheetCtx).pop();
-          _endFast(
-            userId,
-            moodAfter: result.mood?.value,
-            energyLevel: result.energyLevel,
-          );
-        },
+      builder: (sheetCtx) => GlassSheet(
+        child: FastingMoodCheckInSheet(
+          onSubmit: (result) {
+            Navigator.of(sheetCtx).pop();
+            _endFast(
+              userId,
+              moodAfter: result.mood?.value,
+              energyLevel: result.energyLevel,
+            );
+          },
+        ),
       ),
     );
   }

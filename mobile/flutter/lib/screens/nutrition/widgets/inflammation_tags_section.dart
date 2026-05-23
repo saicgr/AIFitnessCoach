@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../widgets/glass_sheet.dart';
+import '../../../widgets/main_shell.dart' show floatingNavBarVisibleProvider;
 
 class InflammationTagsSection extends StatelessWidget {
   final int? inflammationScore;
@@ -166,20 +169,13 @@ class InflammationTagsSection extends StatelessWidget {
     final color = _inflammationColor(score);
     final drivers = _driversFor(score);
     final mechanism = _mechanismFor(score);
-    showModalBottomSheet(
+    final container = ProviderScope.containerOf(context, listen: false);
+    container.read(floatingNavBarVisibleProvider.notifier).state = false;
+    showGlassSheet<void>(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: isDark ? const Color(0xFF1A1A1A) : Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => SingleChildScrollView(
-        padding: EdgeInsets.only(
-          left: 24,
-          right: 24,
-          top: 24,
-          bottom: 24 + MediaQuery.of(context).viewInsets.bottom,
-        ),
+      builder: (context) => GlassSheet(
+        child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -327,7 +323,14 @@ class InflammationTagsSection extends StatelessWidget {
           ],
         ),
       ),
-    );
+      ),
+    ).whenComplete(() {
+      Future.microtask(() {
+        try {
+          container.read(floatingNavBarVisibleProvider.notifier).state = true;
+        } catch (_) {}
+      });
+    });
   }
 
   /// Plain-English drivers for the score bucket. These are the chemistry/
@@ -395,16 +398,15 @@ class InflammationTagsSection extends StatelessWidget {
   }
 
   void _showUltraProcessedInfo(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    showModalBottomSheet(
+    final container = ProviderScope.containerOf(context, listen: false);
+    container.read(floatingNavBarVisibleProvider.notifier).state = false;
+    showGlassSheet<void>(
       context: context,
-      backgroundColor: isDark ? const Color(0xFF1A1A1A) : Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
+      builder: (context) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        return GlassSheet(
+          padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
+          child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -452,7 +454,14 @@ class InflammationTagsSection extends StatelessWidget {
             const SizedBox(height: 8),
           ],
         ),
-      ),
-    );
+        );
+      },
+    ).whenComplete(() {
+      Future.microtask(() {
+        try {
+          container.read(floatingNavBarVisibleProvider.notifier).state = true;
+        } catch (_) {}
+      });
+    });
   }
 }

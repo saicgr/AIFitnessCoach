@@ -8,6 +8,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/services/posthog_service.dart';
 import 'demo_tasks_screen.dart';
 import 'pre_auth_quiz_data.dart';
+import '../../widgets/glass_sheet.dart';
 
 /// Workout Showcase — Onboarding v5
 ///
@@ -354,23 +355,12 @@ class _WorkoutShowcaseScreenState
   Future<void> _openProgressionSheet(BuildContext ctx) async {
     HapticFeedback.lightImpact();
     final isDark = Theme.of(ctx).brightness == Brightness.dark;
-    final picked = await showModalBottomSheet<_DemoProgression>(
+    final picked = await showGlassSheet<_DemoProgression>(
       context: ctx,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
       builder: (sheetCtx) {
-        return Container(
-          decoration: BoxDecoration(
-            color: isDark
-                ? AppColors.elevated
-                : AppColorsLight.elevated,
-            borderRadius:
-                const BorderRadius.vertical(top: Radius.circular(24)),
-          ),
-          child: SafeArea(
-            top: false,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+        return GlassSheet(
+          opaque: true,
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -496,8 +486,6 @@ class _WorkoutShowcaseScreenState
                   }),
                 ],
               ),
-            ),
-          ),
         );
       },
     );

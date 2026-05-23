@@ -88,17 +88,8 @@ void showChatBottomSheetWithContainer(
   // Hide nav bar while sheet is open
   container.read(floatingNavBarVisibleProvider.notifier).state = false;
 
-  showModalBottomSheet(
+  showGlassSheet<void>(
     context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
-    useRootNavigator: true,
-    barrierColor: GlassSheetStyle.barrierColor(),
-    // Use a very fast animation to appear instantly
-    transitionAnimationController: AnimationController(
-      duration: const Duration(milliseconds: 1),
-      vsync: Navigator.of(context),
-    ),
     builder: (sheetContext) => GlassSheet(
       child: UncontrolledProviderScope(
         container: container,

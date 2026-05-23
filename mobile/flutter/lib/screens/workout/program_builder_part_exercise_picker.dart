@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/theme/accent_color_provider.dart';
+import '../../widgets/glass_sheet.dart';
 import '../../data/models/program_template.dart';
 import '../../data/repositories/library_repository.dart';
 import '../../data/services/haptic_service.dart';
@@ -41,13 +42,13 @@ class ProgramBuilderExercisePicker extends ConsumerStatefulWidget {
     required String dayName,
     Set<String> existingNames = const {},
   }) {
-    return showModalBottomSheet<ProgramExercise>(
+    return showGlassSheet<ProgramExercise>(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => ProgramBuilderExercisePicker(
-        dayName: dayName,
-        existingNames: existingNames,
+      builder: (_) => GlassSheet(
+        child: ProgramBuilderExercisePicker(
+          dayName: dayName,
+          existingNames: existingNames,
+        ),
       ),
     );
   }

@@ -9,6 +9,7 @@ import '../../data/repositories/program_template_repository.dart';
 import '../../data/services/haptic_service.dart';
 import 'program_builder_part_exercise_picker.dart';
 import 'program_builder_part_template_meta.dart';
+import '../../widgets/glass_sheet.dart';
 import 'program_library_screen.dart';
 import 'template_list_screen.dart';
 
@@ -613,12 +614,13 @@ class _ProgramTemplateBuilderScreenState
     // Candidate destinations: any other day in the cycle.
     final targets = draft.days.where((d) => d.dayIndex != from.dayIndex).toList();
     if (targets.isEmpty) return;
-    final target = await showModalBottomSheet<ProgramDay>(
+    final target = await showGlassSheet<ProgramDay>(
       context: context,
-      backgroundColor: Colors.transparent,
-      builder: (_) => _CopyDayTargetSheet(
-        sourceName: from.isRest ? 'Day ${from.dayIndex + 1}' : from.dayName,
-        targets: targets,
+      builder: (_) => GlassSheet(
+        child: _CopyDayTargetSheet(
+          sourceName: from.isRest ? 'Day ${from.dayIndex + 1}' : from.dayName,
+          targets: targets,
+        ),
       ),
     );
     if (target == null || !mounted) return;
