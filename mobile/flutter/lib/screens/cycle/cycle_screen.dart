@@ -16,7 +16,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/constants/app_colors.dart';
 import '../../core/providers/user_provider.dart';
+import '../../widgets/floating_tab_bar.dart';
 import '../../widgets/glass_sheet.dart';
+import '../../widgets/nav_bar_hider_mixin.dart';
 import '../../data/models/hormonal_health.dart';
 import '../../data/providers/hormonal_health_provider.dart';
 import '../../data/providers/cycle_reminder_sync_provider.dart';
@@ -35,6 +37,8 @@ import 'widgets/cycle_phase_ring.dart';
 import 'widgets/cycle_suggested_chips.dart';
 import 'widgets/cycle_temperature_chart.dart';
 import 'widgets/log_period_sheet.dart';
+import 'widgets/today_cycle_length_sparkline.dart';
+import 'widgets/today_fertility_window_strip.dart';
 
 part 'cycle_screen_ui.dart';
 
@@ -54,19 +58,24 @@ class CycleScreen extends ConsumerStatefulWidget {
 }
 
 class _CycleScreenState extends ConsumerState<CycleScreen>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, NavBarHiderMixin {
   late final TabController _tabController;
+  int _selectedTab = 0;
 
   @override
   void initState() {
     super.initState();
+    _selectedTab = widget.initialTab.clamp(0, 2);
     _tabController = TabController(
       length: 3,
       vsync: this,
-      initialIndex: widget.initialTab.clamp(0, 2),
+      initialIndex: _selectedTab,
     );
     _tabController.addListener(() {
-      if (mounted) setState(() {});
+      if (!mounted) return;
+      if (_tabController.index != _selectedTab) {
+        setState(() => _selectedTab = _tabController.index);
+      }
     });
   }
 
@@ -125,9 +134,15 @@ class _CycleScreenState extends ConsumerState<CycleScreen>
     ref.invalidate(cycleAiInsightProvider);
     final messenger = ScaffoldMessenger.of(context);
     messenger.clearSnackBars();
+    final mqBottom = MediaQuery.of(context).viewPadding.bottom;
     messenger.showSnackBar(
       SnackBar(
         behavior: SnackBarBehavior.floating,
+        margin: EdgeInsets.only(
+          left: 16,
+          right: 16,
+          bottom: kFloatingTabBarHeight + mqBottom + 24,
+        ),
         backgroundColor: _accent,
         content: Row(
           children: [
@@ -402,29 +417,52 @@ class _CycleScreenState extends ConsumerState<CycleScreen>
                 ],
               ),
             ),
-            // ── Tab bar ─────────────────────────────────────────────────
-            TabBar(
-              controller: _tabController,
-              labelColor: _accent,
-              unselectedLabelColor: fg.withValues(alpha: 0.5),
-              indicatorColor: _accent,
-              indicatorSize: TabBarIndicatorSize.label,
-              labelStyle: const TextStyle(
-                  fontSize: 13, fontWeight: FontWeight.w800),
-              tabs: const [
-                Tab(text: 'Today'),
-                Tab(text: 'Calendar'),
-                Tab(text: 'Insights'),
-              ],
-            ),
-            // ── Tab bodies ──────────────────────────────────────────────
+            // ── Tab bodies + bottom-docked floating tab bar ────────────
             Expanded(
-              child: TabBarView(
-                controller: _tabController,
+              child: Stack(
                 children: [
-                  buildTodayTab(),
-                  buildCalendarTab(),
-                  buildInsightsTab(),
+                  Positioned.fill(
+                    child: TabBarView(
+                      controller: _tabController,
+                      children: [
+                        buildTodayTab(),
+                        buildCalendarTab(),
+                        buildInsightsTab(),
+                      ],
+                    ),
+                  ),
+                  Positioned(
+                    left: 0,
+                    right: 0,
+                    // Hidden main floating nav (see NavBarHiderMixin) means
+                    // we sit just above the safe-area inset with a small gap.
+                    bottom:
+                        MediaQuery.of(context).viewPadding.bottom + 14,
+                    child: Center(
+                      child: FloatingTabBar(
+                        mode: FloatingTabBarMode.viewSwitcher,
+                        accentColor: _accent,
+                        selectedIndex: _selectedTab,
+                        items: const [
+                          FloatingTabItem(
+                              label: 'Today',
+                              icon: Icons.today_rounded),
+                          FloatingTabItem(
+                              label: 'Calendar',
+                              icon: Icons.calendar_month_rounded),
+                          FloatingTabItem(
+                              label: 'Insights',
+                              icon: Icons.insights_rounded),
+                        ],
+                        onTap: (i) {
+                          if (_tabController.index != i) {
+                            _tabController.animateTo(i);
+                          }
+                          setState(() => _selectedTab = i);
+                        },
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),

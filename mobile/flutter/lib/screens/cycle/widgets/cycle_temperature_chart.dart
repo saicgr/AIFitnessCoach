@@ -22,6 +22,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 
 import '../../../data/models/hormonal_health.dart';
 import '../../../data/services/haptic_service.dart';
+import '../../../widgets/charts/cycle_phase_chart_overlay.dart';
 import '../cycle_visuals.dart';
 
 /// One BBT reading projected onto the chart's day axis.
@@ -156,13 +157,16 @@ class _CycleTemperatureChartState extends State<CycleTemperatureChart> {
           ),
           const SizedBox(height: 14),
           if (!hasData)
-            _EmptyState(fg: fg, accent: widget.accent)
+            _EmptyChartShell(
+              fg: fg,
+              accent: widget.accent,
+              prediction: widget.prediction,
+              isDark: isDark,
+            )
           else
             _buildChart(context, windowed, fg, isDark),
-          if (hasData) ...[
-            const SizedBox(height: 10),
-            _Legend(fg: fg),
-          ],
+          const SizedBox(height: 10),
+          _Legend(fg: fg),
         ],
       ),
     );
@@ -754,53 +758,120 @@ class _Legend extends StatelessWidget {
   }
 }
 
-// ── Empty state ──────────────────────────────────────────────────────────
+// ── Empty chart shell (Oura-style — phase bands + baseline + overlay) ───
 
-class _EmptyState extends StatelessWidget {
+/// When no BBT samples exist, we still render the chart chrome (phase-band
+/// background + faint baseline) and overlay a compact educational message
+/// + CTA on top. This avoids the "come back later" placeholder feel; the
+/// user sees an empty-but-real chart they understand how to fill.
+class _EmptyChartShell extends StatelessWidget {
   final Color fg;
   final Color accent;
-  const _EmptyState({required this.fg, required this.accent});
+  final CyclePrediction? prediction;
+  final bool isDark;
+
+  const _EmptyChartShell({
+    required this.fg,
+    required this.accent,
+    required this.prediction,
+    required this.isDark,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 16),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: fg.withValues(alpha: 0.08),
-        ),
-      ),
-      child: Column(
+    // Anchor the overlay to a 35-day window ending today so phase bands
+    // align with the visible chart even though we have no temperature data.
+    final today = CycleDates.dateOnly(DateTime.now());
+    final rangeStart = today.subtract(const Duration(days: 28));
+    final rangeEnd = today.add(const Duration(days: 6));
+
+    return SizedBox(
+      height: 200,
+      child: Stack(
         children: [
-          Icon(Icons.thermostat_rounded,
-              size: 34, color: accent.withValues(alpha: 0.7)),
-          const SizedBox(height: 10),
-          Text(
-            'Add basal temperature to unlock this chart',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: fg,
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
+          // Phase-band background — no-ops cleanly when prediction is null
+          // or has no anchor.
+          if (CyclePhaseChartOverlay.canRender(prediction))
+            CyclePhaseChartOverlay(
+              prediction: prediction,
+              rangeStart: rangeStart,
+              rangeEnd: rangeEnd,
+              bandOpacity: isDark ? 0.18 : 0.12,
+            ),
+          // Faint baseline across the vertical center.
+          Positioned.fill(
+            child: IgnorePointer(
+              child: CustomPaint(
+                painter: _BaselinePainter(
+                  color: fg.withValues(alpha: 0.18),
+                ),
+              ),
             ),
           ),
-          const SizedBox(height: 6),
-          Text(
-            'Take your temperature first thing each morning and log it in '
-            'the daily check-in. After ovulation it rises ~0.5°F — once a '
-            'few readings are in, this chart shows the shift and confirms '
-            'ovulation for you.',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: fg.withValues(alpha: 0.55),
-              fontSize: 11,
-              height: 1.4,
+          // Educational overlay — slightly smaller than the original
+          // placeholder so the shell behind it stays visible.
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 18),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.thermostat_rounded,
+                      size: 26, color: accent.withValues(alpha: 0.85)),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Log basal temperature to fill this chart',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: fg,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Take it first thing each morning. After ovulation it '
+                    'rises ~0.5°F — a few readings confirm the shift.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: fg.withValues(alpha: 0.6),
+                      fontSize: 10,
+                      height: 1.35,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ],
       ),
     ).animate().fadeIn(duration: 360.ms);
   }
+}
+
+/// Faint horizontal baseline through the vertical center of the chart shell.
+class _BaselinePainter extends CustomPainter {
+  final Color color;
+  const _BaselinePainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 1
+      ..style = PaintingStyle.stroke;
+    final y = size.height / 2;
+    // Dashed line.
+    const dash = 6.0;
+    const gap = 4.0;
+    double x = 0;
+    while (x < size.width) {
+      canvas.drawLine(
+          Offset(x, y), Offset((x + dash).clamp(0, size.width), y), paint);
+      x += dash + gap;
+    }
+  }
+
+  @override
+  bool shouldRepaint(_BaselinePainter old) => old.color != color;
 }

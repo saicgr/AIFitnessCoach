@@ -42,6 +42,9 @@ extension _CycleScreenUi on _CycleScreenState {
               }
               final bbtSamples = _bbtSamples(rawLogsAsync.value, prediction);
               final hasBbt = bbtSamples.isNotEmpty;
+              final periods =
+                  ref.watch(cyclePeriodsProvider).value ?? const [];
+              final cycleLengths = _cycleLengthsFromPeriods(periods);
               return Column(
                 children: [
                   // Phase ring is always the anchor.
@@ -55,36 +58,46 @@ extension _CycleScreenUi on _CycleScreenState {
                     ),
                     const SizedBox(height: 14),
                   ],
-                  // Adaptive headline: temperature chart leads when BBT
-                  // data exists; otherwise the phase ribbon (above) leads
-                  // and the chart drops below the AI insight.
-                  if (hasBbt) ...[
-                    CycleTemperatureChart(
-                      samples: bbtSamples,
-                      prediction: prediction,
-                      accent: accent,
-                      fahrenheit: _fahrenheit,
-                      onDayTap: (s) => _openDayDetailFromSample(s, prediction),
-                      onAskCoach: (s) => openCycleChat(
-                        context,
-                        cycleDaySeed(s.date,
-                            cycleDay: s.cycleDay,
-                            phase: cyclePhaseForDate(prediction, s.date)),
-                      ),
-                    ),
-                    const SizedBox(height: 14),
-                  ],
+                  // ── New longitudinal graph trio (Oura-style). ──────────
+                  // "This cycle" BBT chart — now renders chrome even on
+                  // empty BBT state (educational empty overlay over the
+                  // phase bands + baseline). Always shown.
+                  CycleTemperatureChart(
+                    samples: bbtSamples,
+                    prediction: prediction,
+                    accent: accent,
+                    fahrenheit: _fahrenheit,
+                    onDayTap: hasBbt
+                        ? (s) => _openDayDetailFromSample(s, prediction)
+                        : null,
+                    onAskCoach: hasBbt
+                        ? (s) => openCycleChat(
+                              context,
+                              cycleDaySeed(s.date,
+                                  cycleDay: s.cycleDay,
+                                  phase: cyclePhaseForDate(
+                                      prediction, s.date)),
+                            )
+                        : null,
+                  ),
+                  const SizedBox(height: 14),
+                  // "Fertility window" 28-day mini timeline — always
+                  // renders, low-confidence caption when prediction is
+                  // uncertain.
+                  TodayFertilityWindowStrip(
+                    prediction: prediction,
+                    accent: accent,
+                  ),
+                  const SizedBox(height: 14),
+                  // "Last 3 cycles" sparkline — taps into Insights tab.
+                  TodayCycleLengthSparkline(
+                    cycleLengths: cycleLengths,
+                    accent: accent,
+                    onTap: () => _tabController.animateTo(2),
+                  ),
+                  const SizedBox(height: 14),
                   CycleAiInsightCard(accent: accent),
                   const SizedBox(height: 14),
-                  if (!hasBbt) ...[
-                    CycleTemperatureChart(
-                      samples: const [],
-                      prediction: prediction,
-                      accent: accent,
-                      fahrenheit: _fahrenheit,
-                    ),
-                    const SizedBox(height: 14),
-                  ],
                   _CyclePhaseGuidanceCard(
                     prediction: prediction,
                     accent: accent,
@@ -300,8 +313,12 @@ extension _CycleScreenUi on _CycleScreenState {
 // Small shared widgets for the Cycle screen
 // ===========================================================================
 
+/// Padding the scroll views reserve at the bottom so the floating tab bar
+/// (docked at `viewPadding.bottom + 14`) doesn't occlude the last row.
 double _bottomInset(BuildContext context) =>
-    MediaQuery.of(context).viewPadding.bottom + 90;
+    kFloatingTabBarHeight +
+    MediaQuery.of(context).viewPadding.bottom +
+    24;
 
 class _QuickLogButton extends StatelessWidget {
   final IconData icon;
