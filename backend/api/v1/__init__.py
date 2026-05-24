@@ -72,6 +72,7 @@ from api.v1 import chat_reports  # Chat message reporting for AI coach feedback 
 from api.v1 import live_chat  # Live chat support with human agents
 from api.v1 import body_analyzer  # Body Analyzer + program retune proposals
 from api.v1 import audio_coach  # Daily personalised audio brief
+from api.v1.coach import daily_insight as coach_daily_insight  # Home daily-score Gemini insight + Ask-Coach pillar-stat insight
 from api.v1 import inflammation  # Food inflammation analysis from barcode scans
 from api.v1 import admin  # Admin backend for live chat management and support
 from api.v1 import habits  # Simple habit tracking (not eating outside, no doordash, etc.)
@@ -507,6 +508,7 @@ router.include_router(body_analyzer.router, prefix="/body-analyzer", tags=["Body
 
 # Audio Coach — daily personalised TTS brief
 router.include_router(audio_coach.router, prefix="/audio-coach", tags=["Audio Coach"])
+router.include_router(coach_daily_insight.router, prefix="/coach", tags=["Coach Daily Insight"])
 
 # Public plan / period share tokens (Hevy-style multi-day grid links)
 router.include_router(plan_share_link.router, prefix="/plans", tags=["Plan Sharing"])
