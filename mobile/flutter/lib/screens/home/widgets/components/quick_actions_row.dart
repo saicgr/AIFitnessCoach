@@ -363,6 +363,12 @@ class CompactQuickActionsRow extends ConsumerWidget {
 
     // De-boxed (Round 4 / Task C): no outer panel, no per-tile card —
     // just colored icon chips with labels on the plain home background.
+    //
+    // Single-row mode is HORIZONTALLY SCROLLABLE with a small "peek" of the
+    // next chip past the viewport edge to signal scrollability (Oura-style),
+    // and the More chip is PINNED at the right edge via a Stack so it stays
+    // reachable without scrolling. Two-row "expanded" mode keeps the existing
+    // 2x6 layout — it's the deliberate "show me everything" toggle.
     return Padding(
       // 16pt to match the week strip below it + the home-screen standard
       // (kHomeHPad) so the two rows share the same left/right edges.
@@ -376,7 +382,86 @@ class CompactQuickActionsRow extends ConsumerWidget {
                 buildRow(6, 12),
               ],
             )
-          : buildRow(0, 6),
+          : _ScrollableQuickRow(
+              slotIds: slotIds,
+              isDark: isDark,
+            ),
+    );
+  }
+}
+
+/// Horizontally scrollable quick-actions row with a pinned More chip on the
+/// right. Default state shows 5 user-configured slots + a peek of the 6th to
+/// signal scrollability; deeper configurations (slots 6+) become reachable
+/// by horizontal scroll. The More chip stays anchored to the right edge so
+/// users never lose the "all actions" affordance.
+class _ScrollableQuickRow extends ConsumerWidget {
+  final List<String> slotIds;
+  final bool isDark;
+  const _ScrollableQuickRow({required this.slotIds, required this.isDark});
+
+  /// Width reserved for the pinned More chip + a small left fade.
+  static const double _morePinnedWidth = 64;
+
+  /// Approximate width of one chip cell (icon + label). Tuned so 5 chips +
+  /// half-peek of a 6th fits on a 390pt-wide iPhone (390 - 32pt padding = 358;
+  /// 358 / 5.5 ≈ 65pt per chip; with pinned-more reservation we land at ~64pt).
+  static const double _chipWidth = 64;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return SizedBox(
+      height: 72, // chip + label + breathing room; matches buildRow's natural h.
+      child: Stack(
+        children: [
+          // Scrollable cells. Right padding leaves room for the pinned More
+          // chip so content can never underlap it (except as an intended fade).
+          Positioned.fill(
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.only(right: _morePinnedWidth),
+              itemCount: slotIds.length,
+              itemBuilder: (context, i) {
+                return SizedBox(
+                  width: _chipWidth,
+                  child: _buildHomeSlot(slotIds[i], isDark, context, ref),
+                );
+              },
+            ),
+          ),
+          // Left-edge fade under the More chip so the scrollable content
+          // dissolves cleanly behind it instead of looking clipped.
+          Positioned(
+            right: _morePinnedWidth - 4,
+            top: 0,
+            bottom: 0,
+            width: 18,
+            child: IgnorePointer(
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                    colors: [
+                      Colors.transparent,
+                      Theme.of(context).scaffoldBackgroundColor,
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+          // Pinned More chip — never scrolls, always reachable.
+          Positioned(
+            right: 0,
+            top: 0,
+            bottom: 0,
+            width: _morePinnedWidth - 6,
+            child: _MoreActionsButton(isDark: isDark),
+          ),
+        ],
+      ),
     );
   }
 }

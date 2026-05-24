@@ -504,6 +504,25 @@ class _PresetThumbnail extends StatelessWidget {
         );
       case HomeSection.quickActions:
         return _dotRow(5, muted, 5);
+      case HomeSection.coachHero:
+        // Sparkle + 2 thin lines — visual stand-in for the coach insight card.
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 9,
+              height: 9,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: c.accent.withValues(alpha: 0.55),
+              ),
+            ),
+            const SizedBox(height: 3),
+            _MiniBar(muted),
+            const SizedBox(height: 2),
+            _MiniBar(muted),
+          ],
+        );
       case HomeSection.habits:
         return _dotRow(6, muted, 5);
       case HomeSection.metricTrio:

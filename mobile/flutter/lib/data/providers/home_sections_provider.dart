@@ -10,12 +10,13 @@ import 'package:shared_preferences/shared_preferences.dart';
 enum HomeSection {
   quickActions,
   weekStrip,
+  coachHero, // NEW (2026-05-22) — Gemini-backed daily insight hero card
   workoutCard,
   nutritionCard,
   metricTrio,
   weeklyReport,
   timeline,
-  habits,
+  habits, // Kept in enum so users who customized it still see it; not in default order anymore (moved to Profile)
   todayScore,
   cycle,
 }
@@ -40,6 +41,8 @@ extension HomeSectionMeta on HomeSection {
         return 'quick_actions';
       case HomeSection.weekStrip:
         return 'week_strip';
+      case HomeSection.coachHero:
+        return 'coach_hero';
       case HomeSection.workoutCard:
         return 'workout_card';
       case HomeSection.nutritionCard:
@@ -65,6 +68,8 @@ extension HomeSectionMeta on HomeSection {
         return 'Quick actions';
       case HomeSection.weekStrip:
         return 'Week strip';
+      case HomeSection.coachHero:
+        return 'Coach insight';
       case HomeSection.workoutCard:
         return "Today's workout";
       case HomeSection.nutritionCard:
@@ -90,6 +95,8 @@ extension HomeSectionMeta on HomeSection {
         return 'The six-icon shortcut row';
       case HomeSection.weekStrip:
         return 'Your seven-day workout streak ring';
+      case HomeSection.coachHero:
+        return 'A daily nudge from your AI coach';
       case HomeSection.workoutCard:
         return 'Launch card for the day’s session';
       case HomeSection.nutritionCard:
@@ -116,6 +123,8 @@ extension HomeSectionMeta on HomeSection {
         return 'spark';
       case HomeSection.weekStrip:
         return 'check';
+      case HomeSection.coachHero:
+        return 'spark';
       case HomeSection.workoutCard:
         return 'workout';
       case HomeSection.nutritionCard:
@@ -136,8 +145,10 @@ extension HomeSectionMeta on HomeSection {
   }
 
   /// Core sections can be reordered but never hidden in "My Space" — the
-  /// Today Score is the home's anchor and is always present.
-  bool get isCore => this == HomeSection.todayScore;
+  /// Today Score is the home's anchor and is always present. The Coach Hero
+  /// is also core (2026-05-22) since the AI insight is the home's main moat.
+  bool get isCore =>
+      this == HomeSection.todayScore || this == HomeSection.coachHero;
 
   static HomeSection? fromStorageKey(String key) {
     for (final s in HomeSection.values) {
@@ -178,10 +189,12 @@ class HomeSectionsState {
       );
 }
 
-/// v27 default — every section visible, in the approved order.
+/// v28 default — coach hero hoisted above the score card (2026-05-22),
+/// Habits row moved off home into Profile (was at the bottom).
 const List<HomeSection> _defaultOrder = [
   HomeSection.quickActions,
   HomeSection.weekStrip,
+  HomeSection.coachHero,
   HomeSection.todayScore,
   HomeSection.workoutCard,
   HomeSection.nutritionCard,
@@ -191,7 +204,8 @@ const List<HomeSection> _defaultOrder = [
   HomeSection.metricTrio,
   HomeSection.weeklyReport,
   HomeSection.timeline,
-  HomeSection.habits,
+  // Habits moved to Profile screen — existing users who customized it back
+  // in still see it (the enum + extension methods still handle it).
 ];
 
 const HomeSectionsState _defaultState = HomeSectionsState(
@@ -199,8 +213,11 @@ const HomeSectionsState _defaultState = HomeSectionsState(
   hidden: <HomeSection>{},
 );
 
-// v2: re-ordered so the week strip sits above the Today Score.
-const String _kOrderKey = 'home_section_order_v2';
+// v3: coach hero inserted above the Today Score; habits moved to Profile.
+// Bumping the key forces a one-time migration to the new default for existing
+// users so they pick up the coach hero in the right slot without it landing
+// at the bottom.
+const String _kOrderKey = 'home_section_order_v3';
 const String _kHiddenKey = 'home_section_hidden_v1';
 
 /// Persists the user's "My Space" home-section layout (order + visibility)

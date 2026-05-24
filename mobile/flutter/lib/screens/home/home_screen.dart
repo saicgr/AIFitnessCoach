@@ -45,6 +45,8 @@ import 'widgets/stacked_banner_panel.dart';
 import '../../widgets/rating_prompt_banner.dart';
 import 'widgets/tile_factory.dart';
 import 'widgets/today_score_card.dart';
+import 'widgets/coach_hero_card.dart';
+import 'widgets/score_change_announcement_sheet.dart';
 import 'widgets/my_program_summary_card.dart';
 import 'widgets/hero_workout_card.dart';
 import '../../core/providers/week_start_provider.dart';
@@ -247,6 +249,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
     // Auto-refresh when screen becomes visible
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _autoRefreshIfNeeded();
+      // One-shot: explain the v2 score redesign (Sleep added as 4th
+      // contributor). No-op after the first show. See
+      // score_change_announcement_sheet.dart.
+      if (mounted) {
+        maybeShowScoreChangeAnnouncement(context);
+      }
     });
   }
 
@@ -1111,6 +1119,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         );
       case HomeSection.weekStrip:
         return const HomeWeekStrip();
+      case HomeSection.coachHero:
+        return const CoachHeroCard();
       case HomeSection.workoutCard:
         return const HomeWorkoutCard();
       case HomeSection.nutritionCard:

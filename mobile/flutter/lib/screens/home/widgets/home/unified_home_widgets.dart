@@ -18,7 +18,9 @@ import '../../../../data/providers/today_workout_provider.dart';
 import '../../../../data/repositories/hydration_repository.dart';
 import '../../../../data/repositories/nutrition_repository.dart';
 import '../../../../data/repositories/workout_repository.dart';
+import '../../../../data/providers/sleep_score_provider.dart';
 import '../../../../data/services/api_client.dart';
+import '../score_colors.dart';
 import '../../../../data/services/haptic_service.dart';
 import '../../../../data/services/health_service.dart';
 import '../../../../data/services/image_url_cache.dart';
@@ -1198,7 +1200,10 @@ class HomeMetricTrio extends ConsumerWidget {
 
     final steps = activity?.steps ?? 0;
     final burned = (activity?.caloriesBurned ?? 0).round();
-    final sleepMin = activity?.sleepMinutes;
+
+    // Sleep tile shows the live computed sleep score + duration + bedtime
+    // from the shared sleepScoreProvider — matches the Sleep detail screen.
+    final sleepAsync = ref.watch(sleepScoreProvider);
 
     return Padding(
       padding: kHomeHPad,
@@ -1212,23 +1217,18 @@ class HomeMetricTrio extends ConsumerWidget {
               label: 'ACTIVITY',
               value: _fmt(steps),
               sub: '$burned kcal burned',
-              // `go` not `push` — /profile is a shell nav tab.
-              onTap: () => context.go('/profile'),
+              onTap: () {
+                try {
+                  context.push('/neat');
+                } catch (_) {
+                  context.go('/profile');
+                }
+              },
             ),
           ),
           const SizedBox(width: 9),
           Expanded(
-            child: _MetricTile(
-              c: c,
-              iconName: 'sleep',
-              tint: AppColors.macroProtein,
-              label: 'SLEEP',
-              value: sleepMin != null
-                  ? '${sleepMin ~/ 60}h ${sleepMin % 60}m'
-                  : 'No data',
-              sub: 'last night',
-              onTap: () => context.go('/profile'),
-            ),
+            child: _SleepTile(c: c, sleepAsync: sleepAsync),
           ),
         ],
       ),
@@ -1237,6 +1237,91 @@ class HomeMetricTrio extends ConsumerWidget {
 
   String _fmt(int n) =>
       n >= 1000 ? '${(n / 1000).toStringAsFixed(1)}k' : '$n';
+}
+
+/// Sleep tile — primary line shows the 0-100 score + tier label, secondary
+/// shows duration + bedtime. Reuses the shared `sleepScoreProvider` so the
+/// home tile and the Sleep detail screen never disagree.
+class _SleepTile extends StatelessWidget {
+  final ThemeColors c;
+  final AsyncValue<SleepScoreSnapshot?> sleepAsync;
+  const _SleepTile({required this.c, required this.sleepAsync});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        try {
+          context.push('/health/sleep');
+        } catch (_) {
+          context.go('/profile');
+        }
+      },
+      behavior: HitTestBehavior.opaque,
+      child: sleepAsync.when(
+        data: (snapshot) => _content(snapshot),
+        loading: () => _MetricTile(
+          c: c,
+          iconName: 'sleep',
+          tint: AppColors.macroProtein,
+          label: 'SLEEP',
+          value: '…',
+          sub: 'last night',
+          onTap: null,
+        ),
+        error: (_, __) => _MetricTile(
+          c: c,
+          iconName: 'sleep',
+          tint: AppColors.macroProtein,
+          label: 'SLEEP',
+          value: 'No data',
+          sub: 'last night',
+          onTap: null,
+        ),
+      ),
+    );
+  }
+
+  Widget _content(SleepScoreSnapshot? snapshot) {
+    final score = snapshot?.score;
+    final summary = snapshot?.summary;
+
+    if (score == null || (summary?.totalMinutes ?? 0) == 0) {
+      return _MetricTile(
+        c: c,
+        iconName: 'sleep',
+        tint: AppColors.macroProtein,
+        label: 'SLEEP',
+        value: 'No data',
+        sub: 'last night',
+        onTap: null,
+      );
+    }
+
+    final tier = tierFor(score.total);
+    final totalMin = summary!.totalMinutes;
+    final h = totalMin ~/ 60;
+    final m = totalMin % 60;
+    final bed = summary.bedTime;
+    final bedString = bed != null
+        ? '${bed.hour > 12 ? bed.hour - 12 : (bed.hour == 0 ? 12 : bed.hour)}:'
+            '${bed.minute.toString().padLeft(2, '0')}'
+            '${bed.hour >= 12 ? 'pm' : 'am'}'
+        : '';
+    final sub = bedString.isNotEmpty
+        ? '${h}h ${m}m · $bedString'
+        : '${h}h ${m}m last night';
+
+    return _MetricTile(
+      c: c,
+      iconName: 'sleep',
+      tint: tier.color,
+      label: 'SLEEP',
+      value: '${score.total} / ${tier.label}',
+      sub: sub,
+      onTap: null,
+    );
+  }
 }
 
 /// Combined "Connect Apple Health" prompt — shown in place of the metric trio
@@ -1336,7 +1421,9 @@ class _MetricTile extends StatelessWidget {
   final String label;
   final String value;
   final String sub;
-  final VoidCallback onTap;
+  /// Optional — when null the tile renders without ink/feedback so an outer
+  /// GestureDetector (e.g. _SleepTile) can own the tap behavior.
+  final VoidCallback? onTap;
   const _MetricTile({
     required this.c,
     required this.iconName,
