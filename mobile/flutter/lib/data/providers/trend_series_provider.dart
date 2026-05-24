@@ -17,6 +17,7 @@ import '../repositories/trends_repository.dart';
 import '../services/activity_service.dart';
 import '../services/api_client.dart';
 import '../../widgets/trends/trend_correlation.dart';
+import 'pillar_history_provider.dart';
 
 /// =========================================================================
 /// Trends — unified data layer (Phase G6, rebuilt G8)
@@ -59,6 +60,12 @@ enum TrendSource {
   habits,
   wellbeing,
   neat,
+  /// Daily pillar score (0..1 completion fraction) recomputed client-side
+  /// from existing per-day history endpoints by `pillarHistoryProvider`.
+  /// Added 2026-05-22 to surface the four Today-Score pillars (Train,
+  /// Nourish, Move, Sleep) in Custom Trends without standing up a new
+  /// backend route.
+  pillarHistory,
 }
 
 /// High-level grouping used purely for the metric-picker UI so the now-large
@@ -436,7 +443,21 @@ enum TrendMetric {
   neatTotalSteps('NEAT Steps', TrendSource.neat, TrendCategory.activity,
       unitOverride: 'steps', seriesField: 'total_steps', color: 0xFFE0823D),
   neatActiveHours('Active Hours', TrendSource.neat, TrendCategory.activity,
-      unitOverride: 'h', seriesField: 'active_hours', color: 0xFFE0A93D);
+      unitOverride: 'h', seriesField: 'active_hours', color: 0xFFE0A93D),
+
+  // ── Today-Score pillars (pillar_history_provider) ────────────────────────
+  // Each entry surfaces a 0-100 daily completion fraction for one pillar of
+  // the Today Score, recomputed client-side from existing per-day history.
+  pillarTrain('Train score', TrendSource.pillarHistory, TrendCategory.workout,
+      unitOverride: '/100', metricKey: 'train', color: 0xFFEC8B2C),
+  pillarNourish('Nourish score', TrendSource.pillarHistory,
+      TrendCategory.nutrition,
+      unitOverride: '/100', metricKey: 'nourish', color: 0xFF3FA66B),
+  pillarMove('Move score', TrendSource.pillarHistory, TrendCategory.activity,
+      unitOverride: '/100', metricKey: 'move', color: 0xFF3E8FD0),
+  pillarSleep('Sleep score', TrendSource.pillarHistory,
+      TrendCategory.wellbeing,
+      unitOverride: '/100', metricKey: 'sleep', color: 0xFF8B5CF6);
 
   const TrendMetric(
     this.displayName,
@@ -617,6 +638,11 @@ Duration _ttlFor(TrendMetric metric) {
     case TrendSource.flexibility:
     case TrendSource.habits:
       return const Duration(hours: 12);
+    case TrendSource.pillarHistory:
+      // Pillar history is recomputed on-device from other providers' caches —
+      // a 1-hour TTL keeps the trend chart responsive without forcing a full
+      // re-fetch every time the user opens Custom Trends.
+      return const Duration(hours: 1);
   }
 }
 
@@ -762,6 +788,10 @@ Future<TrendSeries> _fetchTrendSeries(Ref ref, TrendSeriesKey key) async {
     case TrendSource.neat:
       points = await _fetchWaveOneSeries(ref, userId, metric, range);
       unit = metric.unitOverride ?? '';
+      break;
+    case TrendSource.pillarHistory:
+      points = await _fetchPillarHistorySeries(ref, metric, range);
+      unit = metric.unitOverride ?? '/100';
       break;
   }
 
@@ -1338,6 +1368,7 @@ Future<List<TrendPoint>> _fetchWaveOneSeries(
     case TrendSource.hydration:
     case TrendSource.readiness:
     case TrendSource.strength:
+    case TrendSource.pillarHistory:
       return const [];
   }
 
@@ -1593,3 +1624,40 @@ final trendEventsProvider = FutureProvider.family
     TrendEventKind.period: periodDays,
   });
 });
+
+/// Pillar history series — recomputes past-day completion for one of the four
+/// Today-Score pillars (Train / Nourish / Move / Sleep) by delegating to
+/// [pillarHistoryProvider]. Returns 0-100 values (completion × 100) so the
+/// chart reads on the same axis as Oura/Whoop pillar scores.
+Future<List<TrendPoint>> _fetchPillarHistorySeries(
+  Ref ref,
+  TrendMetric metric,
+  TrendRange range,
+) async {
+  // Map TrendMetric → PillarKind. Anything else is a programming error.
+  final PillarKind kind;
+  switch (metric.metricKey) {
+    case 'train':
+      kind = PillarKind.train;
+      break;
+    case 'nourish':
+      kind = PillarKind.nourish;
+      break;
+    case 'move':
+      kind = PillarKind.move;
+      break;
+    case 'sleep':
+      kind = PillarKind.sleep;
+      break;
+    default:
+      return const [];
+  }
+  final days = range.days == 0 ? 365 : range.days;
+  final history = await ref.read(
+    pillarHistoryProvider(PillarHistoryKey(kind: kind, days: days)).future,
+  );
+  return [
+    for (final d in history)
+      TrendPoint(date: d.date, value: (d.completion * 100).clamp(0, 100)),
+  ];
+}

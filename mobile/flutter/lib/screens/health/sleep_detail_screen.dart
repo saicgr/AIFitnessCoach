@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/constants/app_colors.dart';
@@ -15,6 +16,7 @@ import '../../widgets/trends/trend_chart.dart';
 import 'widgets/sleep_coaching.dart';
 import 'widgets/sleep_hypnogram.dart';
 import 'widgets/sleep_score.dart';
+import '../pillar/widgets/ask_coach_button.dart';
 
 /// Dedicated Sleep detail screen — route `/health/sleep`.
 ///
@@ -77,6 +79,12 @@ class _SleepDetailScreenState extends ConsumerState<SleepDetailScreen> {
                       fontWeight: FontWeight.w800,
                       color: textPrimary,
                     ),
+                  ),
+                  const Spacer(),
+                  // Ask Coach — opens chat with this pillar prefilled.
+                  AskCoachButton(
+                    contextLabel: 'Sleep · last night',
+                    statSnapshot: const {'pillar': 'sleep'},
                   ),
                 ],
               ),
@@ -168,6 +176,24 @@ class _SleepDetailScreenState extends ConsumerState<SleepDetailScreen> {
           ),
         const SizedBox(height: 12),
         _SleepGoalCard(isDark: isDark),
+        const SizedBox(height: 16),
+        // Custom Trends — routes to the existing builder with Sleep
+        // pre-selected via TrendMetric.pillarSleep. Lets users overlay
+        // Sleep against other metrics (Train, Nourish, Move, weight, etc.).
+        Center(
+          child: OutlinedButton.icon(
+            icon: const Icon(Icons.auto_graph_rounded, size: 16),
+            label: const Text('Custom Trends'),
+            onPressed: () {
+              try {
+                context.push('/trends/custom',
+                    extra: TrendMetric.pillarSleep);
+              } catch (_) {
+                context.push('/trends/custom');
+              }
+            },
+          ),
+        ),
       ],
     );
   }
