@@ -46,6 +46,19 @@ class CoachAgentState(TypedDict):
     # numbers).
     health_context: Optional[str]
 
+    # Cardio activity context (SLICE_COACH) — compact prompt string of the
+    # user's recent cardio picture (sessions, VO2max, training-load ACWR,
+    # PRs, and optionally a THIS-session focus line). Pre-fetched by the
+    # endpoint that invokes the agent (e.g. /coach/cardio-insight). None
+    # when the user has no cardio history — the coach must then answer
+    # generally and never invent pace/distance numbers.
+    cardio_context: Optional[str]
+
+    # Surface bias — identifies WHICH UI surface invoked the coach so the
+    # prompt can add a one-sentence emphasis (e.g. cardio_auto_insight asks
+    # for a single 1-2 sentence insight). Optional; absence = no bias.
+    source: Optional[str]
+
     # Response generation
     ai_response: str
     final_response: str

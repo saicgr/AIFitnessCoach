@@ -832,17 +832,81 @@ def _build_coach_response_prompt(state: CoachAgentState):
             "numbers."
         )
 
+    # === Cardio activity context (SLICE_COACH) ===
+    # Sibling to health_context. Same "cite only what's here" rule applies —
+    # never invent pace, distance, VO2max, or training-load numbers.
+    cardio_context = state.get("cardio_context")
+    if cardio_context:
+        context_parts.append(
+            f"\nCARDIO CONTEXT:\n{cardio_context}\n"
+            "Answer cardio (running / cycling / rowing / swimming / VO2max / "
+            "training-load / race / pace) questions using ONLY the numbers "
+            "above. Never invent paces, distances, or PRs."
+        )
+
     context = "\n".join(context_parts)
 
     ai_settings = state.get("ai_settings")
     base_system_prompt = get_coach_system_prompt(ai_settings)
+
+    # === Source-bias (SLICE_COACH) ===
+    # The UI surface that invoked the coach can request a specific reply
+    # shape. Each case adds ONE emphasis sentence — keep them surgical so the
+    # base persona prompt stays in charge of voice.
+    # NB: written as an if/elif chain (not `match`) because the backend
+    # runs on Python 3.9 — keep this as the SINGLE source→bias dispatch.
+    _src = state.get("source")
+    if _src == "cardio_auto_insight":
+        source_bias = (
+            "\n\nMODE — CARDIO AUTO-INSIGHT: Return ONE 1-2 sentence "
+            "insight that notes what's notable about THIS session vs the "
+            "history in CARDIO CONTEXT. Never generic. Examples: 'Same "
+            "route as last Tuesday, 7% faster. Hill at km 2 was your "
+            "strongest split.' or 'Longest run since March — keep an eye "
+            "on recovery this week.' If nothing is notable, reply with "
+            "an empty string."
+        )
+    elif _src == "cardio_detail":
+        source_bias = (
+            "\n\nFOCUS — CARDIO DETAIL: The user is on a cardio session "
+            "detail screen. Reference the THIS session line if present "
+            "and keep the reply concrete and short."
+        )
+    elif _src == "training_load":
+        source_bias = (
+            "\n\nFOCUS — TRAINING LOAD: Center the reply on the user's "
+            "ACWR and weekly volume trend; flag overreaching risk only "
+            "when ACWR > 1.5."
+        )
+    elif _src == "race_predictor":
+        source_bias = (
+            "\n\nFOCUS — RACE PREDICTOR: Discuss predicted race paces "
+            "and how recent sessions support or contradict them."
+        )
+    elif _src == "refuel":
+        source_bias = (
+            "\n\nFOCUS — REFUEL: Tie carbohydrate and protein guidance "
+            "to the most recent cardio duration / intensity."
+        )
+    elif _src == "vo2max":
+        source_bias = (
+            "\n\nFOCUS — VO2MAX: Anchor the reply on the user's VO2max "
+            "and its trend; suggest one concrete drill to improve it."
+        )
+    elif _src == "cardio_pr":
+        source_bias = (
+            "\n\nFOCUS — CARDIO PR: Celebrate the PR briefly and place "
+            "it in the context of recent sessions."
+        )
+    else:
+        source_bias = ""
 
     system_prompt = f"""{base_system_prompt}
 
 CONTEXT:
 {context}
 
-Reply to the user's message in your own voice. Stay in character — your persona is defined above."""
+Reply to the user's message in your own voice. Stay in character — your persona is defined above.{source_bias}"""
 
     conversation_history = [
         {"role": msg["role"], "content": msg["content"]}
@@ -926,11 +990,71 @@ async def coach_response_node(state: CoachAgentState) -> Dict[str, Any]:
             "numbers."
         )
 
+    # === Cardio activity context (SLICE_COACH) — mirrors
+    # `_build_coach_response_prompt`; edit both together. ===
+    cardio_context = state.get("cardio_context")
+    if cardio_context:
+        context_parts.append(
+            f"\nCARDIO CONTEXT:\n{cardio_context}\n"
+            "Answer cardio (running / cycling / rowing / swimming / VO2max / "
+            "training-load / race / pace) questions using ONLY the numbers "
+            "above. Never invent paces, distances, or PRs."
+        )
+
     context = "\n".join(context_parts)
 
     # Get personalized system prompt
     ai_settings = state.get("ai_settings")
     base_system_prompt = get_coach_system_prompt(ai_settings)
+
+    # === Source-bias (SLICE_COACH) — mirrors `_build_coach_response_prompt`.
+    # NB: written as an if/elif chain (not `match`) because the backend
+    # runs on Python 3.9 — keep this as the SINGLE source→bias dispatch.
+    _src = state.get("source")
+    if _src == "cardio_auto_insight":
+        source_bias = (
+            "\n\nMODE — CARDIO AUTO-INSIGHT: Return ONE 1-2 sentence "
+            "insight that notes what's notable about THIS session vs the "
+            "history in CARDIO CONTEXT. Never generic. Examples: 'Same "
+            "route as last Tuesday, 7% faster. Hill at km 2 was your "
+            "strongest split.' or 'Longest run since March — keep an eye "
+            "on recovery this week.' If nothing is notable, reply with "
+            "an empty string."
+        )
+    elif _src == "cardio_detail":
+        source_bias = (
+            "\n\nFOCUS — CARDIO DETAIL: The user is on a cardio session "
+            "detail screen. Reference the THIS session line if present "
+            "and keep the reply concrete and short."
+        )
+    elif _src == "training_load":
+        source_bias = (
+            "\n\nFOCUS — TRAINING LOAD: Center the reply on the user's "
+            "ACWR and weekly volume trend; flag overreaching risk only "
+            "when ACWR > 1.5."
+        )
+    elif _src == "race_predictor":
+        source_bias = (
+            "\n\nFOCUS — RACE PREDICTOR: Discuss predicted race paces "
+            "and how recent sessions support or contradict them."
+        )
+    elif _src == "refuel":
+        source_bias = (
+            "\n\nFOCUS — REFUEL: Tie carbohydrate and protein guidance "
+            "to the most recent cardio duration / intensity."
+        )
+    elif _src == "vo2max":
+        source_bias = (
+            "\n\nFOCUS — VO2MAX: Anchor the reply on the user's VO2max "
+            "and its trend; suggest one concrete drill to improve it."
+        )
+    elif _src == "cardio_pr":
+        source_bias = (
+            "\n\nFOCUS — CARDIO PR: Celebrate the PR briefly and place "
+            "it in the context of recent sessions."
+        )
+    else:
+        source_bias = ""
 
     # NB: prior suffix said "friendly, helpful coaching advice. Be personable,
     # encouraging…" — this flatly contradicted drill-sergeant/scientist/
@@ -942,7 +1066,7 @@ async def coach_response_node(state: CoachAgentState) -> Dict[str, Any]:
 CONTEXT:
 {context}
 
-Reply to the user's message in your own voice. Stay in character — your persona is defined above."""
+Reply to the user's message in your own voice. Stay in character — your persona is defined above.{source_bias}"""
 
     conversation_history = [
         {"role": msg["role"], "content": msg["content"]}
