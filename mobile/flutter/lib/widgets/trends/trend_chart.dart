@@ -113,6 +113,12 @@ class TrendChart extends StatefulWidget {
   /// Chart drawing height.
   final double height;
 
+  /// Optional decorative layer painted BEHIND the fl_chart LineChart (e.g. the
+  /// cycle-phase column overlay). The host passes a widget that fills the
+  /// plot area; the chart simply stacks it under the LineChart. No-op when
+  /// null — keeps the legacy single-series host screens unchanged.
+  final Widget? behindLayer;
+
   const TrendChart({
     super.key,
     required this.primary,
@@ -121,6 +127,7 @@ class TrendChart extends StatefulWidget {
     this.accent,
     this.showBuiltInChrome = true,
     this.height = 260,
+    this.behindLayer,
   });
 
   @override
@@ -209,7 +216,17 @@ class _TrendChartState extends State<TrendChart> {
           },
           child: SizedBox(
             height: widget.height,
-            child: _buildChart(colors),
+            child: widget.behindLayer == null
+                ? _buildChart(colors)
+                : Stack(
+                    children: [
+                      // Decorative layer (e.g. CyclePhaseChartOverlay). It
+                      // already wraps itself in a Positioned.fill and is
+                      // IgnorePointer, so it never blocks chart gestures.
+                      widget.behindLayer!,
+                      _buildChart(colors),
+                    ],
+                  ),
           ),
         ),
         if (_windowSpan < 0.999) ...[

@@ -6,8 +6,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/theme/theme_colors.dart';
 import '../../core/widgets/skeleton/skeleton.dart';
+import '../../data/providers/hormonal_health_provider.dart';
 import '../../data/providers/trend_series_provider.dart';
 import '../../data/services/haptic_service.dart';
+import '../../widgets/charts/cycle_phase_chart_overlay.dart';
 import '../../widgets/glass_back_button.dart';
 import '../../widgets/trends/metric_picker_sheet.dart';
 import '../../widgets/trends/trend_ai_insight_card.dart';
@@ -28,6 +30,11 @@ import '../../widgets/trends/trend_correlation.dart';
 
 /// SharedPreferences key for the user's saved custom-trend metric sets.
 const String _kSavedTrendsPrefsKey = 'custom_trends_saved_v2';
+
+/// SharedPreferences key for the cycle-phases overlay toggle. Once a user
+/// turns it off explicitly it stays off across sessions (otherwise it
+/// defaults ON for users with cycle tracking enabled).
+const String _kCyclePhasesOnPrefsKey = 'custom_trend_cycle_phases_on';
 
 /// Max overlay metrics on top of the primary.
 const int _kMaxOverlays = 4;
@@ -93,6 +100,23 @@ class _CustomTrendScreenState extends ConsumerState<CustomTrendScreen> {
   /// Which event overlays are currently toggled on.
   final Set<TrendEventKind> _activeEvents = {};
 
+  /// Whether the cycle-phases background overlay is on. LOCAL state (not a
+  /// Riverpod provider) so toggling never invalidates any data fetches — pure
+  /// presentation flag layered on top of the already-cached prediction.
+  ///
+  /// Starts null while we resolve the persisted value; once resolved it is
+  /// either the user's explicit choice or, on a first ever open, defaults to
+  /// `true` for users with hormonal tracking enabled (else `false`).
+  bool? _cyclePhasesOn;
+
+  /// "Compare to last cycle" dashed overlay — when on, the primary series is
+  /// duplicated and shifted backward by `avgCycleLength` days, rendered as a
+  /// dashed overlay so the user can read this-cycle vs last-cycle at a
+  /// glance (MacroFactor 1.11). Only enabled when the range covers ≥2
+  /// cycles; below threshold a disabled hint is shown instead. LOCAL state
+  /// for the same provider-storm reason as [_cyclePhasesOn].
+  bool _compareLastCycleOn = false;
+
   List<_SavedTrend> _saved = const [];
 
   /// CacheFirstView screen key — drives the skeleton-on-true-first-open
@@ -124,6 +148,22 @@ class _CustomTrendScreenState extends ConsumerState<CustomTrendScreen> {
     _primary = widget.initialMetric ?? TrendMetric.weight;
     _loadSaved();
     _resolveFirstEver();
+    _loadCyclePhasesPref();
+  }
+
+  /// Reads the persisted cycle-phases toggle. When unset (never toggled
+  /// before), defers to the build-time default — leaves [_cyclePhasesOn] null
+  /// here so the build can apply `hasHormonalTracking` as the seed default.
+  Future<void> _loadCyclePhasesPref() async {
+    final prefs = await SharedPreferences.getInstance();
+    final stored = prefs.getBool(_kCyclePhasesOnPrefsKey);
+    if (!mounted) return;
+    setState(() => _cyclePhasesOn = stored);
+  }
+
+  Future<void> _persistCyclePhasesPref(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_kCyclePhasesOnPrefsKey, value);
   }
 
   /// Reads whether the Trends screen has been opened before. On a first-ever
@@ -276,6 +316,14 @@ class _CustomTrendScreenState extends ConsumerState<CustomTrendScreen> {
 
   // ── 1. Chart card ───────────────────────────────────────────────────────
 
+  /// Resolved cycle-phases flag — the user's persisted choice if any, else
+  /// ON when they have hormonal tracking enabled, else OFF. Single source
+  /// of truth used everywhere in this build to avoid drift.
+  bool _resolveCyclePhasesOn(bool hasHormonalTracking) {
+    if (!hasHormonalTracking) return false;
+    return _cyclePhasesOn ?? true;
+  }
+
   Widget _chartCard(ThemeColors colors) {
     final primaryAsync =
         ref.watch(trendSeriesProvider(TrendSeriesKey(_primary, _range)));
@@ -353,10 +401,18 @@ class _CustomTrendScreenState extends ConsumerState<CustomTrendScreen> {
       if (value != null) overlayData.add((index: i, series: value));
     }
 
+    // Cycle-phases overlay subsumes the Period event band — painting both
+    // shades the same calendar days twice, so suppress the period layer
+    // whenever the cycle-phases overlay is on. The pill itself is also
+    // hidden in `_eventOverlaySection` for the same reason.
+    final hasHormonalTracking = ref.watch(hasHormonalTrackingProvider);
+    final cyclePhasesOn = _resolveCyclePhasesOn(hasHormonalTracking);
+
     final events = <TrendEventLayer>[];
     final ev = eventsAsync?.valueOrNull;
     if (ev != null) {
       for (final kind in _activeEvents) {
+        if (cyclePhasesOn && kind == TrendEventKind.period) continue;
         events.add(TrendEventLayer(
           label: kind.label,
           color: _eventColor(colors, kind),
@@ -365,18 +421,64 @@ class _CustomTrendScreenState extends ConsumerState<CustomTrendScreen> {
       }
     }
 
+    // Cycle prediction — read ONCE per build (cache-first provider, no fetch
+    // storm). Drives both the overlay widget and the cache fingerprint so the
+    // chart rebuilds when the prediction refreshes.
+    final prediction = cyclePhasesOn
+        ? ref.watch(cyclePredictionProvider).valueOrNull
+        : null;
+    final avgCycleLength = prediction?.stats.avgCycleLength?.round();
+    // Coarse mode for long ranges (≥1Y): drop follicular/ovulation/luteal so
+    // the overlay stays signal, not mush.
+    final coarseOverlay = _range.days >= 365 || _range.days == 0;
+
+    Widget? behindLayer;
+    if (cyclePhasesOn &&
+        CyclePhaseChartOverlay.canRender(prediction,
+            avgCycleLength: avgCycleLength)) {
+      final rangeStart = _range.startDate() ??
+          (primary.points.isNotEmpty
+              ? primary.points.first.date
+              : DateTime.now().subtract(const Duration(days: 365)));
+      final rangeEnd = DateTime.now();
+      behindLayer = CyclePhaseChartOverlay(
+        prediction: prediction,
+        rangeStart: rangeStart,
+        rangeEnd: rangeEnd,
+        // Custom Trends chart reserves ~40px on the left for value labels and
+        // ~26px on the bottom for date labels — mirror those insets so the
+        // bands line up with the plot area, not the axis gutters.
+        leftPadding: 40,
+        bottomPadding: 26,
+        coarse: coarseOverlay,
+        darkModeBandOpacity: 0.20,
+        avgCycleLength: avgCycleLength,
+      );
+    }
+
     // Cache key: a stable fingerprint of every input that affects the chart.
     // `points.length` + the metric/range/event identity is enough — the
     // underlying series objects are immutable, so a same-length series for
     // the same (metric, range) is the same data.
     final key = StringBuffer()
       ..write('${_primary.name}:${primary.points.length}:${primary.unit}')
-      ..write('|brightness=${colors.isDark}');
+      ..write('|brightness=${colors.isDark}')
+      ..write('|cyclePhases=$cyclePhasesOn')
+      ..write('|compareLast=$_compareLastCycleOn')
+      // Stable fingerprint for the cycle prediction — `nextPeriodDate` flips
+      // whenever the backend recomputes (new period logged, stats updated),
+      // forcing the cached chart widget to rebuild. Null when no prediction.
+      ..write('|pred=${prediction?.nextPeriodDate?.toIso8601String() ?? 'none'}'
+          ':${prediction?.lastPeriodStart?.toIso8601String() ?? 'none'}');
     for (final o in overlayData) {
       key.write('|ov${o.index}:${_overlays[o.index].name}'
           ':${o.series.points.length}');
     }
     for (final kind in _activeEvents) {
+      // Mirror the suppression above — if period is hidden, exclude it from
+      // the key too, otherwise toggling the (hidden) period flag would
+      // needlessly invalidate the cache.
+      if (cyclePhasesOn && kind == TrendEventKind.period) continue;
       key.write('|ev${kind.name}:${ev?.count(kind) ?? -1}');
     }
     final keyStr = key.toString();
@@ -398,6 +500,45 @@ class _CustomTrendScreenState extends ConsumerState<CustomTrendScreen> {
         ),
     ];
 
+    // Compare-to-last-cycle: clone the primary's points shifted backward by
+    // `avgCycleLength` days, render as a dashed violet overlay. Same metric +
+    // unit so the comparison is honest (the chart still normalises when ANY
+    // overlay is present; here that just superimposes the two cycles' shapes
+    // on a shared 0-100 index, which is exactly what cycle-vs-cycle
+    // comparison needs).
+    if (_compareLastCycleOn && prediction != null) {
+      final avg = prediction.stats.avgCycleLength?.round();
+      final cycleLen = (avg != null && avg >= 21) ? avg : 28;
+      // Guard the range gate again at render time — toggling the range below
+      // the threshold while the chip stayed on must not render a phantom.
+      final rangeOk = _range.days == 0 || _range.days >= 2 * cycleLen;
+      if (rangeOk) {
+        final shifted = <TrendPoint>[
+          for (final p in primary.points)
+            TrendPoint(
+              date: p.date.subtract(Duration(days: cycleLen)),
+              value: p.value,
+            ),
+        ];
+        // Only render when at least one shifted point overlaps the visible
+        // window — otherwise it's invisible chart chrome (edge case from the
+        // plan: "skip render when no overlap with visible window").
+        final rangeStartGate = _range.startDate();
+        final hasOverlap = shifted.any((p) => rangeStartGate == null
+            ? true
+            : !p.date.isBefore(rangeStartGate));
+        if (shifted.isNotEmpty && hasOverlap) {
+          chartOverlays.add(TrendChartSeries(
+            id: '${_primary.name}__prev_cycle',
+            label: '${primary.metric.displayName} · last cycle',
+            unit: primary.unit,
+            points: shifted,
+            color: const Color(0xFF8A6FE0),
+          ));
+        }
+      }
+    }
+
     final chart = TrendChart(
       showBuiltInChrome: false,
       accent: colors.accent,
@@ -410,6 +551,7 @@ class _CustomTrendScreenState extends ConsumerState<CustomTrendScreen> {
       ),
       overlays: chartOverlays,
       events: events,
+      behindLayer: behindLayer,
     );
     _cachedChart = chart;
     _cachedChartKey = keyStr;
@@ -718,6 +860,8 @@ class _CustomTrendScreenState extends ConsumerState<CustomTrendScreen> {
 
   Widget _eventOverlaySection(ThemeColors colors) {
     final eventsAsync = ref.watch(trendEventsProvider(_range));
+    final hasHormonalTracking = ref.watch(hasHormonalTrackingProvider);
+    final cyclePhasesOn = _resolveCyclePhasesOn(hasHormonalTracking);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -728,10 +872,140 @@ class _CustomTrendScreenState extends ConsumerState<CustomTrendScreen> {
           runSpacing: 8,
           children: [
             for (final kind in TrendEventKind.values)
-              _eventChip(colors, kind, eventsAsync.valueOrNull),
+              // Hide the Period pill while cycle phases is on — they paint
+              // the same dates. The pill comes back the moment the user
+              // toggles cycle phases off.
+              if (!(cyclePhasesOn && kind == TrendEventKind.period))
+                _eventChip(colors, kind, eventsAsync.valueOrNull),
+            // Cycle phases pill — only for users with hormonal tracking.
+            if (hasHormonalTracking)
+              _cyclePhasesChip(colors, cyclePhasesOn),
+            // Compare-to-last-cycle pill — only for tracking users; disabled
+            // when the range is too short to contain two cycles.
+            if (hasHormonalTracking) _compareLastCycleChip(colors),
           ],
         ),
       ],
+    );
+  }
+
+  /// Pill for the dashed "compare to last cycle" overlay. When the current
+  /// range covers fewer than 2 cycles, renders as a disabled hint instead.
+  Widget _compareLastCycleChip(ThemeColors colors) {
+    final prediction = ref.watch(cyclePredictionProvider).valueOrNull;
+    final avg = prediction?.stats.avgCycleLength?.round();
+    // Need a usable cycle length AND a range that spans ≥2 cycles. `All`
+    // (days==0) is always wide enough.
+    final cycleLen = (avg != null && avg >= 21) ? avg : 28;
+    final enabled = _range.days == 0 || _range.days >= 2 * cycleLen;
+    final active = enabled && _compareLastCycleOn;
+    const color = Color(0xFF8A6FE0); // violet — distinct from period rose
+    if (!enabled) {
+      // Disabled hint pill — communicates the gate instead of silently
+      // hiding the affordance.
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: colors.surface,
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(color: colors.cardBorder),
+        ),
+        child: Text(
+          'Compare last cycle · needs ≥ 2 cycles in range',
+          style: TextStyle(
+              fontSize: 11.5,
+              fontStyle: FontStyle.italic,
+              color: colors.textMuted),
+        ),
+      );
+    }
+    return GestureDetector(
+      onTap: () {
+        HapticService.light();
+        setState(() => _compareLastCycleOn = !_compareLastCycleOn);
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: active
+              ? color.withValues(alpha: 0.18)
+              : colors.elevated,
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(
+            color: active ? color : colors.cardBorder,
+            width: active ? 1.5 : 1,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Tiny dashed line swatch — communicates the dashed overlay style.
+            CustomPaint(
+              size: const Size(14, 3),
+              painter: _LineSwatchPainter(color: color, dashed: true),
+            ),
+            const SizedBox(width: 7),
+            Text('Compare last cycle',
+                style: TextStyle(
+                    fontSize: 12.5,
+                    fontWeight:
+                        active ? FontWeight.w700 : FontWeight.w600,
+                    color: active
+                        ? colors.textPrimary
+                        : colors.textMuted)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Toggle pill for the cycle-phases background overlay. Shaped identically
+  /// to [_eventChip] so it slots into the same row visually.
+  Widget _cyclePhasesChip(ThemeColors colors, bool active) {
+    const color = Color(0xFFE06FA8); // rose — matches Period swatch palette
+    return GestureDetector(
+      onTap: () {
+        HapticService.light();
+        setState(() => _cyclePhasesOn = !active);
+        // Persist explicitly: once the user toggles off it stays off across
+        // sessions (otherwise the default re-asserts).
+        _persistCyclePhasesPref(!active);
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: active
+              ? color.withValues(alpha: 0.18)
+              : colors.elevated,
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(
+            color: active ? color : colors.cardBorder,
+            width: active ? 1.5 : 1,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 10,
+              height: 10,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: active ? 0.9 : 0.45),
+                borderRadius: BorderRadius.circular(3),
+              ),
+            ),
+            const SizedBox(width: 7),
+            Text('Cycle phases',
+                style: TextStyle(
+                    fontSize: 12.5,
+                    fontWeight:
+                        active ? FontWeight.w700 : FontWeight.w600,
+                    color: active
+                        ? colors.textPrimary
+                        : colors.textMuted)),
+          ],
+        ),
+      ),
     );
   }
 

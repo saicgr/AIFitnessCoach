@@ -54,6 +54,23 @@ class CyclePhaseChartOverlay extends StatelessWidget {
   /// the visual focus.
   final double bandOpacity;
 
+  /// When non-null AND `Theme.of(context).brightness == Brightness.dark`, this
+  /// value is used in place of [bandOpacity]. Dark surfaces eat low-alpha
+  /// fills — callers can bump to ~0.20 for legibility without affecting light
+  /// theme.
+  final double? darkModeBandOpacity;
+
+  /// When true, paint ONLY menstrual phase bands (drop follicular / fertile /
+  /// luteal). Used by long-range trend charts (≥1Y) where four phase bands
+  /// per cycle compresses into visual mush; the menstrual-only mode keeps the
+  /// overlay legible as a "period markers backdrop".
+  final bool coarse;
+
+  /// Optional per-user cycle length (days). When provided, [canRender] uses it
+  /// to gate a stale prediction: if `lastPeriodStart` is older than
+  /// `2 * avgCycleLength`, no overlay is drawn (no logs in >2 cycles).
+  final int? avgCycleLength;
+
   const CyclePhaseChartOverlay({
     super.key,
     required this.prediction,
@@ -64,19 +81,47 @@ class CyclePhaseChartOverlay extends StatelessWidget {
     this.topPadding = 0,
     this.bottomPadding = 0,
     this.bandOpacity = 0.13,
+    this.darkModeBandOpacity,
+    this.coarse = false,
+    this.avgCycleLength,
   });
 
   /// True when a meaningful overlay can be drawn for [prediction].
-  static bool canRender(CyclePrediction? prediction) {
-    return prediction != null && prediction.lastPeriodStart != null;
+  ///
+  /// Also no-ops when [prediction.lastPeriodStart] is older than
+  /// `2 * avgCycleLength` days (i.e. the user has not logged a period in more
+  /// than two cycles). Without this gate, [_buildBands] would happily tile
+  /// fictional phase bands into the present off a long-stale anchor.
+  static bool canRender(
+    CyclePrediction? prediction, {
+    int? avgCycleLength,
+  }) {
+    if (prediction == null || prediction.lastPeriodStart == null) return false;
+    final cycleLen = (avgCycleLength != null && avgCycleLength >= 21)
+        ? avgCycleLength
+        : 28;
+    final today = DateTime.now();
+    final daysSince = today.difference(prediction.lastPeriodStart!).inDays;
+    if (daysSince > 2 * cycleLen) return false;
+    return true;
   }
 
   @override
   Widget build(BuildContext context) {
-    if (!canRender(prediction)) return const SizedBox.shrink();
+    if (!canRender(prediction, avgCycleLength: avgCycleLength)) {
+      return const SizedBox.shrink();
+    }
 
-    final bands = _buildBands(prediction!, rangeStart, rangeEnd);
+    final bands = _buildBands(prediction!, rangeStart, rangeEnd,
+        coarse: coarse);
     if (bands.isEmpty) return const SizedBox.shrink();
+
+    // Bump opacity in dark mode if the caller provided a value — low-alpha
+    // fills wash out on dark surfaces.
+    final effectiveOpacity = (darkModeBandOpacity != null &&
+            Theme.of(context).brightness == Brightness.dark)
+        ? darkModeBandOpacity!
+        : bandOpacity;
 
     return Positioned.fill(
       child: IgnorePointer(
@@ -91,7 +136,7 @@ class CyclePhaseChartOverlay extends StatelessWidget {
             rightPadding: rightPadding,
             topPadding: topPadding,
             bottomPadding: bottomPadding,
-            bandOpacity: bandOpacity,
+            bandOpacity: effectiveOpacity,
           ),
         ),
       ),
@@ -125,8 +170,9 @@ class CyclePhaseChartOverlay extends StatelessWidget {
   static List<_PhaseBand> _buildBands(
     CyclePrediction p,
     DateTime rangeStart,
-    DateTime rangeEnd,
-  ) {
+    DateTime rangeEnd, {
+    bool coarse = false,
+  }) {
     final anchor = _dateOnly(p.lastPeriodStart!);
     final start = _dateOnly(rangeStart);
     final end = _dateOnly(rangeEnd);
@@ -164,11 +210,16 @@ class CyclePhaseChartOverlay extends StatelessWidget {
 
         _addBand(bands, CyclePhase.menstrual, cycleStart, menstrualEnd,
             start, end);
-        _addBand(bands, CyclePhase.follicular, menstrualEnd, fertileStart,
-            start, end);
-        _addBand(bands, CyclePhase.ovulation, fertileStart, fertileEnd,
-            start, end);
-        _addBand(bands, CyclePhase.luteal, fertileEnd, cycleEnd, start, end);
+        // Coarse mode (≥1Y ranges): only menstrual bands. Four bands per
+        // cycle compress to unreadable mush on wide ranges; the menstrual-
+        // only mode keeps the overlay legible as period markers.
+        if (!coarse) {
+          _addBand(bands, CyclePhase.follicular, menstrualEnd, fertileStart,
+              start, end);
+          _addBand(bands, CyclePhase.ovulation, fertileStart, fertileEnd,
+              start, end);
+          _addBand(bands, CyclePhase.luteal, fertileEnd, cycleEnd, start, end);
+        }
       }
       k++;
     }
