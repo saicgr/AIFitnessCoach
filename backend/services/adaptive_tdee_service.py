@@ -13,11 +13,270 @@ This service provides:
 
 from dataclasses import dataclass, field
 from datetime import datetime, date, timedelta
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Literal
 import logging
 from statistics import stdev, mean
 
 logger = logging.getLogger(__name__)
+
+
+# ---------------------------------------------------------------------------
+# Cycle-aware TDEE hold (Phase E / MacroFactor request 1.3)
+# ---------------------------------------------------------------------------
+# When a menstrual-tracking user enters the pre-period / period / post-period
+# window, freeze the daily calorie target to the value it held at window
+# entry. Luteal water retention can read as fat gain — a naive adaptive cut
+# during that week is wrong. Snapshot includes the baked-in cycle calorie
+# delta so the caller never double-applies a live luteal bump on top.
+_HOLD_LEAD_DAYS = 7        # window opens 7 days before predicted period
+_HOLD_TRAILING_DAYS = 3    # window closes 3 days after end of period
+
+
+@dataclass
+class HoldResult:
+    """Outcome of `compute_tdee_hold`.
+
+    `is_held=True` means the caller MUST return `frozen_calorie_target` and
+    `frozen_cycle_calorie_delta` instead of any live-recomputed values; the
+    snapshot already includes whatever luteal bump was active at entry.
+
+    `is_held=False` with `hold_skipped_reason` set explains WHY no hold is
+    in force ('tracking_off', 'consent_off',
+    'insufficient_prediction_confidence', 'outside_window') so the API can
+    surface it for UI explanation.
+    """
+    is_held: bool
+    hold_window_start: Optional[date] = None
+    hold_window_end: Optional[date] = None
+    hold_reason: Optional[Literal["pre_period", "menstrual", "post_period"]] = None
+    hold_skipped_reason: Optional[str] = None
+    frozen_calorie_target: Optional[int] = None
+    frozen_cycle_calorie_delta: int = 0
+
+
+def _coerce_date(value) -> Optional[date]:
+    """Coerce dict prediction fields (date | str | None) to a date."""
+    if isinstance(value, date) and not isinstance(value, datetime):
+        return value
+    if isinstance(value, datetime):
+        return value.date()
+    if isinstance(value, str):
+        try:
+            return date.fromisoformat(value)
+        except ValueError:
+            return None
+    return None
+
+
+def _classify_hold_window(
+    today: date,
+    next_period_start: Optional[date],
+    last_period_start: Optional[date],
+    last_period_end: Optional[date],
+    avg_period_length: int,
+) -> tuple[Optional[Literal["pre_period", "menstrual", "post_period"]], Optional[date], Optional[date]]:
+    """Decide which (if any) hold window `today` falls inside.
+
+    Returns (reason, window_start, window_end). Reason None == outside any
+    window. We classify in priority order:
+      1. currently bleeding → "menstrual"
+      2. <= 3 days after a logged period end → "post_period"
+      3. <= 7 days before predicted next period start → "pre_period"
+
+    The menstrual branch covers both "user is in their period right now"
+    (last period start with no end yet, today within avg_period_length days
+    of start) and "user has a logged ongoing period spanning today".
+    """
+    # --- 1. Currently menstruating -----------------------------------------
+    if last_period_start is not None:
+        # Use the explicit end if present; otherwise estimate from average.
+        eff_end = last_period_end
+        if eff_end is None:
+            eff_end = last_period_start + timedelta(days=max(avg_period_length, 1) - 1)
+        if last_period_start <= today <= eff_end:
+            # Menstrual window = the actual period span. Add the 3-day
+            # post-period trail so re-entry on day-end+1 still maps to the
+            # same snapshot row (handled by hold_window_start key).
+            return (
+                "menstrual",
+                last_period_start - timedelta(days=_HOLD_LEAD_DAYS),
+                eff_end + timedelta(days=_HOLD_TRAILING_DAYS),
+            )
+
+    # --- 2. Post-period (<= 3 days after a known period end) ----------------
+    if last_period_start is not None and last_period_end is not None:
+        days_since_end = (today - last_period_end).days
+        if 0 < days_since_end <= _HOLD_TRAILING_DAYS:
+            return (
+                "post_period",
+                last_period_start - timedelta(days=_HOLD_LEAD_DAYS),
+                last_period_end + timedelta(days=_HOLD_TRAILING_DAYS),
+            )
+
+    # --- 3. Pre-period (<= 7 days before predicted next period) -------------
+    if next_period_start is not None:
+        days_until = (next_period_start - today).days
+        if 0 <= days_until <= _HOLD_LEAD_DAYS:
+            window_end = next_period_start + timedelta(
+                days=max(avg_period_length, 1) - 1 + _HOLD_TRAILING_DAYS
+            )
+            return (
+                "pre_period",
+                next_period_start - timedelta(days=_HOLD_LEAD_DAYS),
+                window_end,
+            )
+
+    return None, None, None
+
+
+def compute_tdee_hold(
+    *,
+    db_client,
+    user_id: str,
+    today: date,
+    prediction: Optional[dict],
+    menstrual_tracking_enabled: bool,
+    cycle_sync_nutrition_enabled: bool,
+    current_calorie_target: int,
+    current_cycle_calorie_delta: int,
+    has_menstrual_periods: bool = True,
+    has_pcos: bool = False,
+) -> HoldResult:
+    """Compute the cycle-aware calorie-target hold for `today`.
+
+    Snapshot semantics:
+      * Entering a hold window for the first time → INSERT a row into
+        `tdee_hold_snapshots` capturing the live `current_calorie_target`
+        AND `current_cycle_calorie_delta` (the luteal bump baked into it).
+      * Already inside a hold window with a snapshot row → return the
+        frozen values from that row, NEVER the live values. This is what
+        prevents double-applying the luteal bump.
+      * Predicted period date shifts while inside a window → the existing
+        row is NOT mutated. Window start/end stay anchored to the original
+        entry. The next cycle's hold gets its own row.
+
+    No-ops (returns `is_held=False`) for:
+      * menstrual_tracking_enabled = False ('tracking_off')
+      * cycle_sync_nutrition_enabled = False ('consent_off')
+      * no prediction / low confidence / PCOS / not has_menstrual_periods
+        ('insufficient_prediction_confidence')
+      * today outside any window ('outside_window')
+    """
+    if not menstrual_tracking_enabled:
+        return HoldResult(is_held=False, hold_skipped_reason="tracking_off")
+    if not cycle_sync_nutrition_enabled:
+        return HoldResult(is_held=False, hold_skipped_reason="consent_off")
+    if not has_menstrual_periods:
+        return HoldResult(
+            is_held=False, hold_skipped_reason="insufficient_prediction_confidence"
+        )
+    if has_pcos:
+        # PCOS prediction confidence is unreliable — never auto-freeze.
+        return HoldResult(
+            is_held=False, hold_skipped_reason="insufficient_prediction_confidence"
+        )
+    if not prediction or not prediction.get("predictions_available"):
+        return HoldResult(
+            is_held=False, hold_skipped_reason="insufficient_prediction_confidence"
+        )
+    if prediction.get("confidence") == "low":
+        return HoldResult(
+            is_held=False, hold_skipped_reason="insufficient_prediction_confidence"
+        )
+
+    next_period_start = _coerce_date(prediction.get("next_period_date"))
+    last_period_start = _coerce_date(prediction.get("last_period_start"))
+    # period_ends is not directly on the prediction — derive last_period_end
+    # from in_period / current_phase + avg_period_length.
+    avg_period_length = int(round(
+        (prediction.get("stats") or {}).get("avg_period_length") or 5
+    ))
+    last_period_end: Optional[date] = None
+    if last_period_start is not None:
+        # If the user is currently in_period and avg gives an estimated end,
+        # use it; otherwise assume the last period has already ended.
+        candidate_end = last_period_start + timedelta(days=max(avg_period_length, 1) - 1)
+        last_period_end = candidate_end
+
+    reason, window_start, window_end = _classify_hold_window(
+        today,
+        next_period_start,
+        last_period_start,
+        last_period_end,
+        avg_period_length,
+    )
+    if reason is None:
+        return HoldResult(is_held=False, hold_skipped_reason="outside_window")
+
+    snapshot_phase = prediction.get("current_phase")
+
+    # --- Snapshot read / insert ------------------------------------------------
+    # Try to fetch an existing snapshot for this window first. If none
+    # exists, insert one capturing the live target + baked-in delta.
+    frozen_target = current_calorie_target
+    frozen_delta = current_cycle_calorie_delta
+    try:
+        existing = (
+            db_client.table("tdee_hold_snapshots")
+            .select("calorie_target_at_entry, cycle_calorie_delta_at_entry, "
+                    "hold_window_start_date, hold_window_end_date, hold_reason")
+            .eq("user_id", str(user_id))
+            .eq("hold_window_start_date", window_start.isoformat())
+            .limit(1)
+            .execute()
+        )
+        rows = existing.data or []
+        if rows:
+            row = rows[0]
+            frozen_target = int(row.get("calorie_target_at_entry") or current_calorie_target)
+            frozen_delta = int(row.get("cycle_calorie_delta_at_entry") or 0)
+            # Preserve the ORIGINAL window from the snapshot, not a freshly
+            # recomputed one — predictions shift between requests, the hold
+            # must not.
+            stored_start = _coerce_date(row.get("hold_window_start_date")) or window_start
+            stored_end = _coerce_date(row.get("hold_window_end_date")) or window_end
+            stored_reason = row.get("hold_reason") or reason
+            return HoldResult(
+                is_held=True,
+                hold_window_start=stored_start,
+                hold_window_end=stored_end,
+                hold_reason=stored_reason,
+                frozen_calorie_target=frozen_target,
+                frozen_cycle_calorie_delta=frozen_delta,
+            )
+
+        # Insert a new snapshot row.
+        try:
+            db_client.table("tdee_hold_snapshots").insert({
+                "user_id": str(user_id),
+                "hold_window_start_date": window_start.isoformat(),
+                "hold_window_end_date": window_end.isoformat(),
+                "hold_reason": reason,
+                "calorie_target_at_entry": int(current_calorie_target),
+                "cycle_calorie_delta_at_entry": int(current_cycle_calorie_delta),
+                "snapshot_phase": snapshot_phase,
+            }).execute()
+        except Exception as insert_err:  # noqa: BLE001
+            # A concurrent request may have raced us to the insert — fall
+            # back to the live values and let the next request hit the row.
+            logger.warning(
+                f"tdee_hold_snapshots insert failed (using live values): {insert_err}"
+            )
+    except Exception as read_err:  # noqa: BLE001
+        # Defensive: any DB fault degrades to the live values rather than
+        # killing the response. Same pattern as the rest of this module.
+        logger.warning(
+            f"tdee_hold_snapshots read failed (using live values): {read_err}"
+        )
+
+    return HoldResult(
+        is_held=True,
+        hold_window_start=window_start,
+        hold_window_end=window_end,
+        hold_reason=reason,
+        frozen_calorie_target=int(current_calorie_target),
+        frozen_cycle_calorie_delta=int(current_cycle_calorie_delta),
+    )
 
 
 @dataclass

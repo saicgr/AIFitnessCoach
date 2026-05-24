@@ -428,6 +428,7 @@ async def get_cycle_aware_adaptive(
         # --- Build the cycle-aware service inputs ---------------------------
         from services.adaptive_tdee_service import (
             WeightLog,
+            compute_tdee_hold,
             get_adaptive_tdee_service,
             tag_weight_logs_with_cycle_phase,
         )
@@ -513,36 +514,100 @@ async def get_cycle_aware_adaptive(
         ]
 
         # --- Hold the calorie target during the period week (1.3) -----------
-        # When an adaptive adjustment would move the target, the frontend
-        # checks `hold_calorie_target`: if true, it must NOT apply the cut.
-        hold_calorie_target = False
-        hold_window_start: Optional[str] = None
-        hold_window_end: Optional[str] = None
-        hold_reason: Optional[str] = None
-        if tracking_enabled and prediction and prediction.get("predictions_available"):
-            next_period = prediction.get("next_period_date")
-            # predict() returns date objects; predict_for_user keeps them.
-            if isinstance(next_period, str):
-                try:
-                    next_period = date.fromisoformat(next_period)
-                except ValueError:
-                    next_period = None
-            if isinstance(next_period, date):
-                window_start = next_period - timedelta(days=_PERIOD_HOLD_LEAD_DAYS)
-                # Period end: stay held until bleeding finishes. Use the
-                # current in-period end if we're already bleeding, else the
-                # predicted period start + average period length.
-                avg_period = prediction.get("stats", {}).get("avg_period_length") or 5
-                window_end = next_period + timedelta(days=int(round(avg_period)) - 1)
-                hold_window_start = window_start.isoformat()
-                hold_window_end = window_end.isoformat()
-                if window_start <= today <= window_end:
-                    hold_calorie_target = True
-                    hold_reason = (
-                        "Calorie target held steady through the pre-period and "
-                        "period week — luteal water weight can read as fat gain, "
-                        "so no calorie cut is applied right now."
-                    )
+        # Single source of truth: `compute_tdee_hold` snapshots the live
+        # calorie target (with the luteal bump already baked in) on entry to
+        # the hold window and returns the frozen pair every day inside it.
+        # The legacy text-only `recommendation` signal is intentionally
+        # dropped here — the structured `hold_*` fields are the contract.
+        #
+        # Inputs we need:
+        #   * the current daily calorie target (from users)
+        #   * the LIVE cycle_calorie_delta the luteal bump would apply right
+        #     now (so the snapshot bakes it in correctly at entry)
+        #   * the cycle_sync_nutrition consent toggle (separate from the
+        #     menstrual_tracking_enabled gate — users can track but opt out
+        #     of nutrition adjustment)
+        cycle_sync_nutrition_enabled = bool(
+            profile.get("cycle_sync_nutrition")
+        )
+        has_menstrual_periods = bool(
+            profile.get("has_menstrual_periods", True)
+        )
+        has_pcos = bool(profile.get("has_pcos", False))
+
+        current_calorie_target = 0
+        try:
+            user_res = (
+                db.client.table("users")
+                .select("daily_calorie_target")
+                .eq("id", user_id)
+                .limit(1)
+                .execute()
+            )
+            if user_res.data:
+                current_calorie_target = int(
+                    user_res.data[0].get("daily_calorie_target") or 0
+                )
+        except Exception as user_err:  # noqa: BLE001
+            logger.warning(
+                f"daily_calorie_target lookup failed (hold uses 0): {user_err}"
+            )
+
+        # Live luteal bump that WOULD apply right now — baked into the
+        # snapshot on entry so the caller never double-applies it.
+        live_cycle_calorie_delta = 0
+        try:
+            from services.cycle.cycle_nutrition import adjust_calories_for_phase
+
+            current_phase = (
+                prediction.get("current_phase") if prediction else None
+            )
+            if cycle_sync_nutrition_enabled and current_phase:
+                _, live_cycle_calorie_delta, _ = adjust_calories_for_phase(
+                    current_calorie_target, current_phase
+                )
+        except Exception as bump_err:  # noqa: BLE001
+            logger.warning(
+                f"Live luteal-bump computation failed (delta=0): {bump_err}"
+            )
+
+        hold = compute_tdee_hold(
+            db_client=db.client,
+            user_id=user_id,
+            today=today,
+            prediction=prediction,
+            menstrual_tracking_enabled=tracking_enabled,
+            cycle_sync_nutrition_enabled=cycle_sync_nutrition_enabled,
+            current_calorie_target=current_calorie_target,
+            current_cycle_calorie_delta=live_cycle_calorie_delta,
+            has_menstrual_periods=has_menstrual_periods,
+            has_pcos=has_pcos,
+        )
+
+        hold_calorie_target = hold.is_held
+        hold_window_start = (
+            hold.hold_window_start.isoformat() if hold.hold_window_start else None
+        )
+        hold_window_end = (
+            hold.hold_window_end.isoformat() if hold.hold_window_end else None
+        )
+        hold_reason = hold.hold_reason  # structured enum, not a paragraph
+        hold_skipped_reason = hold.hold_skipped_reason
+        # "May 26"-style label for client display; None when no hold.
+        hold_until_label = (
+            hold.hold_window_end.strftime("%b %-d")
+            if hold.hold_window_end and hold.is_held
+            else None
+        )
+
+        # When held: REPLACE the target + delta with the frozen pair so the
+        # response is a single source of truth (no double-bump possible).
+        if hold.is_held:
+            daily_calorie_target = hold.frozen_calorie_target
+            cycle_calorie_delta = hold.frozen_cycle_calorie_delta
+        else:
+            daily_calorie_target = current_calorie_target
+            cycle_calorie_delta = live_cycle_calorie_delta
 
         # --- Same point last cycle comparison (1.11) ------------------------
         same_point_last_cycle: Optional[dict] = None
@@ -601,10 +666,17 @@ async def get_cycle_aware_adaptive(
                 else None
             ),
             "weight_series": weight_series,
+            "daily_calorie_target": daily_calorie_target,
+            "cycle_calorie_delta": cycle_calorie_delta,
             "hold_calorie_target": hold_calorie_target,
+            "hold_window_start_date": hold_window_start,
+            "hold_window_end_date": hold_window_end,
+            # Back-compat alias: previous clients read `hold_window_start`.
             "hold_window_start": hold_window_start,
             "hold_window_end": hold_window_end,
             "hold_reason": hold_reason,
+            "hold_skipped_reason": hold_skipped_reason,
+            "hold_until_label": hold_until_label,
             "same_point_last_cycle": same_point_last_cycle,
         }
 
