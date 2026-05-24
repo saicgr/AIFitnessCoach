@@ -175,5 +175,78 @@ List<RouteBase> _mainShellRoutes() => [
         builder: (context, state) => const FastingGuideScreen(),
       ),
 
+      // ── Per-pillar detail screens (Home redesign §6) ──────────────────
+      // /pillar/<train|nourish|move|sleep>. Invalid kinds fall back to
+      // a 404-style notice rather than crashing the router.
+      GoRoute(
+        path: '/pillar/:kind',
+        builder: (context, state) {
+          final raw = state.pathParameters['kind'];
+          final kind = _pillarKindFromPath(raw);
+          if (kind == null) {
+            return Scaffold(
+              appBar: AppBar(title: const Text('Not found')),
+              body: Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Text(
+                    'Unknown pillar "$raw" — valid values are train, nourish, move, sleep.',
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+            );
+          }
+          return PillarDetailScreen(kind: kind);
+        },
+      ),
 
+      // Full-screen interactive chart. Accepts:
+      //   :id              — chart identity (echoed in Ask-Coach context)
+      //   ?pillar=         — train | nourish | move | sleep (required)
+      //   ?days=           — initial range in days (default 30)
+      //   ?title=          — display title (URL-encoded)
+      GoRoute(
+        path: '/chart/:id',
+        builder: (context, state) {
+          final id = state.pathParameters['id'] ?? 'chart';
+          final pillarRaw = state.uri.queryParameters['pillar'];
+          final kind = _pillarKindFromPath(pillarRaw);
+          final title = state.uri.queryParameters['title'] ?? 'Chart';
+          if (kind == null) {
+            return Scaffold(
+              appBar: AppBar(title: const Text('Not found')),
+              body: const Center(child: Text('Missing or invalid ?pillar=…')),
+            );
+          }
+          return Consumer(
+            builder: (context, ref, _) => FullScreenChartScreen(
+              chartId: id,
+              title: title,
+              pillarKind: kind,
+              loadData: (days) async => await ref.read(pillarHistoryProvider(
+                PillarHistoryKey(kind: kind, days: days),
+              ).future),
+            ),
+          );
+        },
+      ),
 ];
+
+/// Maps a `/pillar/:kind` path segment to the typed enum. Returns null when
+/// the segment is missing or doesn't match a known pillar — the route then
+/// renders a 404-style fallback instead of crashing.
+PillarKind? _pillarKindFromPath(String? raw) {
+  switch (raw) {
+    case 'train':
+      return PillarKind.train;
+    case 'nourish':
+      return PillarKind.nourish;
+    case 'move':
+      return PillarKind.move;
+    case 'sleep':
+      return PillarKind.sleep;
+    default:
+      return null;
+  }
+}
