@@ -17,6 +17,7 @@ import '../../widgets/delete_account_flow.dart';
 import '../../widgets/app_snackbar.dart';
 import '../../widgets/dismissed_banners_section.dart';
 import '../../widgets/glass_sheet.dart';
+import '../home/widgets/habits_section.dart';
 import '../settings/sections/logout_section.dart';
 import '../workouts/widgets/exercise_preferences_card.dart';
 import 'widgets/nutrition_fasting_card.dart';
@@ -633,6 +634,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               // Placed directly below FITNESS because privacy belongs adjacent
               // to the data it controls.
               const PrivacySection(),
+              const SizedBox(height: 24),
+
+              // HABITS — moved off Home (2026-05-22) because empty 30-day
+              // grids on day 1 read as churn risk. The widget is self-
+              // contained (its own header + View All affordance) and persists
+              // user ordering via SharedPreferences `habit_order_{userId}`.
+              const HabitsSection(),
               const SizedBox(height: 24),
               // Reports, Stats, Wrapped, Trophies, Achievements, Rewards,
               // Inventory, Leaderboard, Skills — all moved to the You hub's

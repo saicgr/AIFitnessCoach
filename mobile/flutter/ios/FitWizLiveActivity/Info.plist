@@ -2,8 +2,28 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>CFBundleDisplayName</key>
+	<string>Zealova Live Activity</string>
+	<!--
+		iOS 26 simulator regression — `simctl install` fails with
+		"Invalid placeholder attributes / Failed to create app extension
+		placeholder" when the WidgetKit/Live Activity extension's Info.plist
+		does not declare these keys explicitly:
+
+		- NSExtensionAttributes (even an empty dict is enough; iOS 26's
+		  placeholder validator refuses extensions where the key is missing).
+		- NSExtensionPrincipalClass — WidgetKit extensions auto-discover the
+		  principal Widget bundle via @main; this key is allowed to be empty
+		  but must be PRESENT for the iOS 26 sim installer to build the
+		  placeholder bundle. Production devices were unaffected.
+
+		Adding both unblocks `flutter run` on iOS 26 simulators without
+		changing runtime behaviour. Cleared once Apple fixes the sim regression.
+	-->
 	<key>NSExtension</key>
 	<dict>
+		<key>NSExtensionAttributes</key>
+		<dict/>
 		<key>NSExtensionPointIdentifier</key>
 		<string>com.apple.widgetkit-extension</string>
 	</dict>
