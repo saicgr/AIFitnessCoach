@@ -823,6 +823,7 @@ Guidelines:
         image_base64: Optional[str] = None,
         mime_type: str = "image/jpeg",
         s3_key: Optional[str] = None,
+        user_message: Optional[str] = None,
     ) -> str:
         """
         Classify what media content shows. Lightweight Gemini Vision call (~10 tokens output).
@@ -832,26 +833,52 @@ Guidelines:
         Returns one of: food_plate, food_menu, food_buffet, exercise_form,
         progress_photo, app_screenshot, nutrition_label, document,
         gym_equipment, unknown
+
+        `user_message` is the text the user typed alongside the image. Passing
+        it lets Gemini disambiguate hybrid images — e.g. a phone screenshot
+        of a DoorDash menu shouldn't be `app_screenshot` if the user is asking
+        "what should I eat", that's clearly a `food_menu` recommendation.
         """
         import time as _time
         start = _time.time()
+
+        user_text_hint = ""
+        if user_message and user_message.strip():
+            # Truncate aggressively — only the gist matters for routing, not
+            # the full essay.
+            snippet = user_message.strip().replace("\n", " ")[:240]
+            user_text_hint = (
+                f"\n\nThe user typed alongside this image: \"{snippet}\"\n"
+                "Use this text as context to disambiguate. Examples:\n"
+                "  - menu image + 'what should I eat / recommend / which is best' → food_menu\n"
+                "  - plate image + 'log this' → food_plate\n"
+                "  - screenshot + 'log my macros from yesterday' → app_screenshot\n"
+                "  - bottle/box label + 'how many calories' → nutrition_label"
+            )
 
         classify_prompt = (
             "Look at this image/frame. Classify what it shows as ONE of these categories. "
             "Respond with ONLY the category name, nothing else.\n\n"
             "Categories:\n"
             "- food_plate: A plate, bowl, or serving of food/drink\n"
-            "- food_menu: A restaurant or cafe menu (printed or digital)\n"
+            "- food_menu: A menu listing dishes/items with names and prices. INCLUDES food"
+            " delivery app screenshots (DoorDash, Uber Eats, Grubhub, Postmates, Deliveroo),"
+            " restaurant websites, printed menus, cafe boards, and in-restaurant digital menus."
+            " ANY image whose primary content is a list of dishes you could order is food_menu —"
+            " do NOT classify it as app_screenshot just because it's on a phone.\n"
             "- food_buffet: A buffet spread or multiple dishes laid out on a table\n"
             "- exercise_form: A person performing a physical exercise or workout movement\n"
             "- progress_photo: A body/physique photo, mirror selfie, or before/after comparison\n"
-            "- app_screenshot: A screenshot from a phone app (fitness tracker, MyFitnessPal, etc.)\n"
+            "- app_screenshot: A screenshot from a FITNESS- or NUTRITION-TRACKING app showing"
+            " ALREADY-LOGGED data with calorie/macro numbers (MyFitnessPal log, Apple Health,"
+            " Cronometer, Lose It!, etc.). NOT for food delivery apps — those are food_menu.\n"
             "- nutrition_label: A nutrition facts label on food packaging\n"
             "- document: A text document, handwritten note, printed paper, or PDF\n"
             "- gym_equipment: Gym equipment or machines with no person exercising\n"
             "- pantry_photo: An open fridge, pantry, or refrigerator interior showing groceries on hand\n"
             "- recipe_handwritten: A handwritten or printed recipe card / cookbook page\n"
             "- unknown: Cannot determine or none of the above"
+            + user_text_hint
         )
 
         try:

@@ -721,14 +721,24 @@ class LangGraphCoachService:
         return AgentType.COACH
 
     async def _classify_media(self, request: ChatRequest) -> Optional[str]:
-        """Classify media content for intelligent routing. Returns content type string."""
+        """Classify media content for intelligent routing. Returns content type string.
+
+        Threads the user's typed message into the classifier so hybrid images
+        (e.g. a DoorDash menu screenshot — both `app_screenshot` and
+        `food_menu`) resolve to the category that matches user intent.
+        """
         try:
             from services.vision_service import VisionService
             vision = VisionService()
 
+            user_message = getattr(request, "message", None) or ""
+
             # Direct base64 image
             if request.image_base64:
-                return await vision.classify_media_content(image_base64=request.image_base64)
+                return await vision.classify_media_content(
+                    image_base64=request.image_base64,
+                    user_message=user_message,
+                )
 
             # S3-stored media references (plural or singular)
             refs = []
@@ -742,12 +752,15 @@ class LangGraphCoachService:
 
                 # For video, extract first keyframe and classify that
                 if first_ref.media_type == "video":
-                    return await self._classify_video_media(first_ref, vision)
+                    return await self._classify_video_media(
+                        first_ref, vision, user_message=user_message
+                    )
 
                 # For images, classify directly via S3
                 return await vision.classify_media_content(
                     s3_key=first_ref.s3_key,
                     mime_type=first_ref.mime_type,
+                    user_message=user_message,
                 )
 
             return None
@@ -755,7 +768,7 @@ class LangGraphCoachService:
             logger.warning(f"Media classification failed (falling back to type-based): {e}", exc_info=True)
             return None
 
-    async def _classify_video_media(self, media_ref, vision) -> Optional[str]:
+    async def _classify_video_media(self, media_ref, vision, user_message: str = "") -> Optional[str]:
         """Extract first keyframe from video and classify it."""
         try:
             import tempfile
@@ -776,6 +789,7 @@ class LangGraphCoachService:
                     return await vision.classify_media_content(
                         image_data=frame_bytes,
                         mime_type=frame_mime,
+                        user_message=user_message,
                     )
             finally:
                 os.unlink(tmp_path)
