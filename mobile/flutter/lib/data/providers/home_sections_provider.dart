@@ -11,6 +11,7 @@ enum HomeSection {
   quickActions,
   weekStrip,
   coachHero, // NEW (2026-05-22) — Gemini-backed daily insight hero card
+  strainCoach, // NEW (2026-05-24, P5 §12) — daily intensity recommendation
   workoutCard,
   nutritionCard,
   metricTrio,
@@ -43,6 +44,8 @@ extension HomeSectionMeta on HomeSection {
         return 'week_strip';
       case HomeSection.coachHero:
         return 'coach_hero';
+      case HomeSection.strainCoach:
+        return 'strain_coach';
       case HomeSection.workoutCard:
         return 'workout_card';
       case HomeSection.nutritionCard:
@@ -70,6 +73,8 @@ extension HomeSectionMeta on HomeSection {
         return 'Week strip';
       case HomeSection.coachHero:
         return 'Coach insight';
+      case HomeSection.strainCoach:
+        return 'Strain Coach';
       case HomeSection.workoutCard:
         return "Today's workout";
       case HomeSection.nutritionCard:
@@ -97,6 +102,8 @@ extension HomeSectionMeta on HomeSection {
         return 'Your seven-day workout streak ring';
       case HomeSection.coachHero:
         return 'A daily nudge from your AI coach';
+      case HomeSection.strainCoach:
+        return "Today's intensity call: rest / light / moderate / hard";
       case HomeSection.workoutCard:
         return 'Launch card for the day’s session';
       case HomeSection.nutritionCard:
@@ -125,6 +132,8 @@ extension HomeSectionMeta on HomeSection {
         return 'check';
       case HomeSection.coachHero:
         return 'spark';
+      case HomeSection.strainCoach:
+        return 'flame';
       case HomeSection.workoutCard:
         return 'workout';
       case HomeSection.nutritionCard:
@@ -189,12 +198,14 @@ class HomeSectionsState {
       );
 }
 
-/// v28 default — coach hero hoisted above the score card (2026-05-22),
-/// Habits row moved off home into Profile (was at the bottom).
+/// v29 default — Strain Coach card inserted between Coach Hero and Today
+/// Score (2026-05-24, P5 §12). v28: coach hero hoisted above the score
+/// card. Habits row moved off home into Profile.
 const List<HomeSection> _defaultOrder = [
   HomeSection.quickActions,
   HomeSection.weekStrip,
   HomeSection.coachHero,
+  HomeSection.strainCoach,
   HomeSection.todayScore,
   HomeSection.workoutCard,
   HomeSection.nutritionCard,
@@ -217,10 +228,11 @@ const HomeSectionsState _defaultState = HomeSectionsState(
   hidden: <HomeSection>{HomeSection.weekStrip},
 );
 
+// v4 order: Strain Coach inserted between Coach Hero and Today Score (P5).
 // v3 order: coach hero inserted above the Today Score; habits moved to Profile.
 // v2 hidden: weekStrip hidden by default. Bumping each key forces a one-time
 // migration to the new default for existing users.
-const String _kOrderKey = 'home_section_order_v3';
+const String _kOrderKey = 'home_section_order_v4';
 const String _kHiddenKey = 'home_section_hidden_v2';
 
 /// Persists the user's "My Space" home-section layout (order + visibility)

@@ -768,6 +768,242 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
     debugPrint('📢 [Chat] System notification added: $message');
   }
 
+  /// Plan §1c.5 — append a local assistant turn that mirrors the same
+  /// Gemini insight the user already saw on the card. The [intent] is a
+  /// stable key (e.g. `insight:<uuid>`) so reopening the chat later
+  /// dedupes via the same marker. This turn is NOT persisted to the
+  /// backend chat_history — it's a synthetic mirror of the daily insight
+  /// that already lives in `coach_daily_insights`. If the user replies,
+  /// the reply round-trip persists naturally and the seeded coach turn
+  /// becomes anchored context for the conversation.
+  void appendSeededCoachTurn({
+    required String content,
+    required String intent,
+    String? sourceSurface,
+  }) {
+    final seeded = ChatMessage(
+      role: 'assistant',
+      content: content,
+      intent: intent,
+      // Source tag distinguishes a seeded turn from an organic one — the
+      // existing chat-history dedup migration in this notifier already
+      // uses `source` to filter auto-coach-tips, so we reuse the slot.
+      source: sourceSurface == null ? 'seeded_insight' : 'seeded_$sourceSurface',
+      createdAt: DateTime.now().toIso8601String(),
+    );
+    final currentMessages = state.valueOrNull ?? [];
+    state = AsyncValue.data([...currentMessages, seeded]);
+    debugPrint('🤖 [Chat] Seeded coach turn ($intent / $sourceSurface)');
+  }
+
+  /// Plan §1c.2 — entry point for chip-driven workout-card actions
+  /// dispatched from the chat screen. Wraps [_processActionData] so the
+  /// chip strip in `chat_screen.dart` doesn't need a private accessor.
+  ///
+  /// Side effect: emits a small coach confirmation turn after the
+  /// dispatch so the user sees "Done — water logged, +1 cup" instead of
+  /// a silent state flip. Confirmation copy lives in the kind switch
+  /// below so it stays close to the dispatch path.
+  Future<void> dispatchWorkoutCardAction(
+    String kind,
+    Map<String, dynamic> payload,
+  ) async {
+    final actionData = <String, dynamic>{
+      'action': kind,
+      ...payload,
+    };
+    debugPrint('🎯 [Chat] dispatchWorkoutCardAction kind=$kind payload=$payload');
+    await _handleWorkoutCardChipAction(kind, actionData);
+  }
+
+  /// Direct chip→handler routing for the 14 workout-card / morning-brief
+  /// action kinds listed in plan §1c.2 + §1e. Each handler dispatches
+  /// through an EXISTING surface (no new endpoints) per plan rules.
+  ///
+  /// Confirmation turn is appended on success; failure surfaces an error
+  /// toast rather than a silent no-op per `feedback_no_silent_fallbacks`.
+  Future<void> _handleWorkoutCardChipAction(
+    String kind,
+    Map<String, dynamic> actionData,
+  ) async {
+    Future<void> confirm(String text) async {
+      // Append as an assistant turn so it threads into the conversation
+      // naturally (vs a system banner). source tag keeps it dedupable.
+      final msg = ChatMessage(
+        role: 'assistant',
+        content: text,
+        source: 'chip_action_confirm',
+        createdAt: DateTime.now().toIso8601String(),
+      );
+      final current = state.valueOrNull ?? [];
+      state = AsyncValue.data([...current, msg]);
+    }
+
+    try {
+      switch (kind) {
+        case 'log_water_now':
+          {
+            final userId = await _apiClient.getUserId();
+            if (userId == null) throw StateError('no user');
+            // 8oz cup = ~237 ml.
+            final ok = await _hydrationNotifier.logHydration(
+              userId: userId,
+              drinkType: 'water',
+              amountMl: 237,
+            );
+            if (!ok) throw StateError('logHydration returned false');
+            await confirm('Done, +1 cup logged (8oz water).');
+            break;
+          }
+        case 'log_breakfast':
+        case 'log_pre_workout_snack':
+        case 'log_post_workout_meal':
+          {
+            // The chat already has a log-meal sheet flow; from here we
+            // navigate to the nutrition tab with a hint so the user
+            // lands in the right place. The actual sheet open is owned
+            // by the nutrition screen (it accepts a `prefill_slot`
+            // query param). No silent fallback — if the route is not
+            // registered, GoRouter throws and we surface the error.
+            final slot = kind == 'log_breakfast'
+                ? 'breakfast'
+                : kind == 'log_pre_workout_snack'
+                    ? 'pre_workout'
+                    : 'post_workout';
+            _router.push('/nutrition?slot=$slot');
+            await confirm('Opening meal log…');
+            break;
+          }
+        case 'plan_tomorrow_meals':
+          _router.push('/nutrition');
+          await confirm('Pulling up tomorrow’s plan…');
+          break;
+        case 'start_wind_down':
+          // Wind-down state is owned by the home workout card; routing
+          // back to /home triggers its resolver to re-render in
+          // windDown mode. No dedicated endpoint exists today.
+          _router.push('/home');
+          await confirm('Wind down it is. Lights low, screens off in 30.');
+          break;
+        case 'start_workout_now':
+          {
+            final wid = actionData['workout_id'] as String?;
+            if (wid != null && wid.isNotEmpty) {
+              _router.push('/workout/$wid');
+            } else {
+              _router.push('/workouts');
+            }
+            await confirm('Opening your session.');
+            break;
+          }
+        case 'reschedule_to_tomorrow':
+          {
+            // Reuses the existing `_handleWorkoutModified` path which
+            // already invalidates today/upcoming workout providers.
+            final wid = actionData['workout_id'] as String?;
+            final reschedulePayload = {
+              'action': 'reschedule',
+              'workout_id': wid,
+              'target_date_offset_days': 1,
+            };
+            await _handleWorkoutModified(reschedulePayload);
+            await confirm('Moved to tomorrow.');
+            break;
+          }
+        case 'add_bonus_workout':
+          _router.push('/workouts');
+          await confirm('Pick a bonus session from the list.');
+          break;
+        case 'mark_rest_day':
+          {
+            final wid = actionData['workout_id'] as String?;
+            final skipPayload = {
+              'action': 'delete_workout',
+              'workout_id': wid,
+              'skip_reason': 'coach_recommended_rest',
+            };
+            await _handleWorkoutModified(skipPayload);
+            await confirm('Today is a rest day, banked.');
+            break;
+          }
+        case 'delay_workout_until_fast_ends':
+          // No backend endpoint exists yet to reschedule against the
+          // fasting timer; surface the suggestion as a coach turn so
+          // the user makes the decision. Matches the rule: no silent
+          // degradation, but no fake server work either.
+          await confirm(
+            'When your fast ends, give it 30 minutes and then start. '
+            'Tap the workout card to begin then.',
+          );
+          break;
+        case 'accept_pr_target':
+          {
+            final wid = actionData['workout_id'] as String?;
+            if (wid != null && wid.isNotEmpty) {
+              _router.push('/workout/$wid');
+            } else {
+              _router.push('/workouts');
+            }
+            await confirm('PR target locked, lift smart.');
+            break;
+          }
+        case 'swap_to_lighter_variant':
+        case 'swap_to_bodyweight_variant':
+          // Real variant swap — POSTs to the backend
+          // `/workouts/{id}/swap-variant` endpoint owned by
+          // services/workout/variant_generator. On success we invalidate
+          // the home today-workout cache so the card flips state, then
+          // route to the NEW variant workout's detail screen and emit a
+          // confirmation coach turn. NO silent fallback — backend errors
+          // surface as the catch block's error turn.
+          {
+            final wid = actionData['workout_id'] as String?;
+            if (wid == null || wid.isEmpty) {
+              throw StateError('swap_variant: missing workout_id');
+            }
+            final intensity = kind == 'swap_to_bodyweight_variant'
+                ? 'bodyweight'
+                : 'deload';
+            debugPrint(
+              '🏋️ [Chat] swap-variant POST workout=$wid intensity=$intensity',
+            );
+            final resp =
+                await _apiClient.swapWorkoutVariant(wid, intensity);
+            final newId = resp['workout_id'] as String?;
+            if (newId == null || newId.isEmpty) {
+              throw StateError('swap_variant: backend returned no workout_id');
+            }
+            final newName = (resp['name'] as String?)?.trim();
+            // Refresh the home card so it picks up the new variant.
+            // (No standalone workoutCardContextProvider exists yet — the
+            // today-workout refresh callback covers the home surface.)
+            _refreshTodayWorkout();
+            _router.push('/workout/$newId');
+            // Coach copy kept <14 words per score_coach_line.dart pattern.
+            if (kind == 'swap_to_bodyweight_variant') {
+              await confirm(
+                newName != null && newName.isNotEmpty
+                    ? 'Swapped to bodyweight — you’re on the $newName.'
+                    : 'Swapped to a bodyweight version. Opening it now.',
+              );
+            } else {
+              await confirm(
+                newName != null && newName.isNotEmpty
+                    ? 'Swapped to a lighter version — you’re on the $newName.'
+                    : 'Swapped to a lighter version. Opening it now.',
+              );
+            }
+            break;
+          }
+        default:
+          debugPrint('🎯 [Chat] Unhandled workout-card chip kind: $kind');
+      }
+    } catch (e) {
+      debugPrint('🎯 [Chat] chip action $kind failed: $e');
+      await confirm("That didn't go through. Try again from the card.");
+    }
+  }
+
   /// Send a message through the offline AI coach (local Gemma model).
   Future<void> _sendOfflineMessage(String message, String userId) async {
     _isLoading = true;

@@ -316,6 +316,22 @@ class XPRepository {
     }
   }
 
+  /// P5 §13 — spend one XP streak freeze.
+  /// Returns the remaining banked freezes on success, or null on error.
+  Future<int?> useStreakFreeze() async {
+    try {
+      final response = await _client.post('/xp/use-freeze');
+      final data = response.data;
+      if (data is Map && data['freezes_available'] is num) {
+        return (data['freezes_available'] as num).toInt();
+      }
+      return null;
+    } catch (e) {
+      debugPrint('Error using XP streak freeze: $e');
+      rethrow;
+    }
+  }
+
   /// Get user's login streak info
   Future<LoginStreakInfo> getLoginStreak() async {
     try {

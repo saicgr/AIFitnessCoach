@@ -145,15 +145,28 @@ List<RouteBase> _mainShellRoutes() => [
 
       // Chat (full screen overlay)
       // Supports deep link: fitwiz://chat?prompt=X
+      //
+      // Plan §1c.5 additional query params:
+      //   ?source=coach_hero|workout_card|pillar_stat
+      //   ?insight_id=<uuid>      // seeded coach turn key — dedupe per day
+      //   ?mode=<workout-card-mode> // drives the chip set under the turn
+      //   ?workout_id=<uuid>      // scopes action_data payloads
+      //   ?context=<urlencoded label> (pillar_stat only)
       GoRoute(
         path: '/chat',
         builder: (context, state) {
           final extra = state.extra as Map<String, dynamic>?;
+          final qp = state.uri.queryParameters;
           // Support both extra data and query parameters (deep links)
           final initialMessage = extra?['initialMessage'] as String?
-              ?? state.uri.queryParameters['prompt'];
+              ?? qp['prompt'];
           return ChatScreen(
             initialMessage: initialMessage,
+            source: qp['source'],
+            insightId: qp['insight_id'],
+            cardMode: qp['mode'],
+            workoutId: qp['workout_id'],
+            contextLabel: qp['context'],
           );
         },
       ),

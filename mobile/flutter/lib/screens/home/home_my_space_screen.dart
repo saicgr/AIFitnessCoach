@@ -504,6 +504,16 @@ class _PresetThumbnail extends StatelessWidget {
         );
       case HomeSection.quickActions:
         return _dotRow(5, muted, 5);
+      case HomeSection.strainCoach:
+        // Small flame-tinted chip — visual stand-in for the intensity pill.
+        return Container(
+          height: 9,
+          width: 28,
+          decoration: BoxDecoration(
+            color: const Color(0xFFE89A3E).withValues(alpha: 0.6),
+            borderRadius: BorderRadius.circular(999),
+          ),
+        );
       case HomeSection.coachHero:
         // Sparkle + 2 thin lines — visual stand-in for the coach insight card.
         return Column(

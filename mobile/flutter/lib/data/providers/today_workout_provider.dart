@@ -13,6 +13,7 @@ import '../repositories/auth_repository.dart' show authStateProvider;
 import '../../core/providers/wearable_provider.dart';
 import '../local/database.dart';
 import '../local/database_provider.dart';
+import '../models/workout.dart';
 import '../repositories/workout_repository.dart';
 import '../services/data_cache_service.dart';
 import '../services/wearable_service.dart';
@@ -1163,6 +1164,71 @@ class TodayWorkoutNotifier extends StateNotifier<AsyncValue<TodayWorkoutResponse
     }
   }
 }
+
+/// Family of today/upcoming workout fetches keyed by `daysOffset` from today.
+///
+/// `daysOffset: 0` → today (semantically identical to the legacy
+/// `todayWorkoutProvider`'s top-of-state today workout).
+/// `daysOffset: 1` → tomorrow.
+///
+/// Uses the standalone `getWorkoutsByDate` repo path (no caching / no
+/// generation polling) so it's safe to spin up on demand for the workout
+/// card's wind-down mode without touching today's state machine.
+///
+/// Returns null when the date has no scheduled workout, the user isn't
+/// authenticated, or the network call fails.
+final todayWorkoutFamilyProvider = FutureProvider.autoDispose
+    .family<TodayWorkoutSummary?, int>((ref, daysOffset) async {
+  // daysOffset == 0 — reuse the live today provider's data so we don't
+  // double-fetch /today (which carries generation state we mustn't churn).
+  if (daysOffset == 0) {
+    final today = ref.watch(todayWorkoutProvider).valueOrNull;
+    return today?.todayWorkout ?? today?.nextWorkout;
+  }
+  try {
+    final repository = ref.read(workoutRepositoryProvider);
+    final userId = await repository.getCurrentUserId();
+    if (userId == null) return null;
+    final target = DateTime.now().add(Duration(days: daysOffset));
+    final dateStr =
+        '${target.year}-${target.month.toString().padLeft(2, '0')}-${target.day.toString().padLeft(2, '0')}';
+    // Fetch a small window via the existing workouts list endpoint and pick
+    // the first workout whose scheduledDate matches. Keeps the family
+    // implementation independent of any tomorrow-specific backend route.
+    final workouts = await repository.getWorkouts(userId);
+    Workout? match;
+    for (final w in workouts) {
+      if (w.scheduledDate == null) continue;
+      final ds = w.scheduledDate!.split('T').first;
+      if (ds == dateStr) {
+        match = w;
+        break;
+      }
+    }
+    if (match == null) return null;
+    return TodayWorkoutSummary.fromJson({
+      'id': match.id,
+      'name': match.name ?? 'Workout',
+      'type': match.type ?? 'strength',
+      'difficulty': match.difficulty ?? 'medium',
+      'duration_minutes':
+          match.durationMinutes ?? match.estimatedDurationMinutes ?? 45,
+      'exercise_count': match.exercises.length,
+      'primary_muscles': <String>[],
+      'scheduled_date': dateStr,
+      'is_today': daysOffset == 0,
+      'is_completed': match.isCompleted ?? false,
+      'exercises': match.exercises.map((e) => e.toJson()).toList(),
+      'generation_method': match.generationMethod,
+    });
+  } catch (e) {
+    debugPrint('⚠️ [TodayWorkoutFamily] daysOffset=$daysOffset error: $e');
+    return null;
+  }
+});
+
+/// Tomorrow's scheduled workout — convenience alias.
+final tomorrowWorkoutProvider = todayWorkoutFamilyProvider(1);
 
 /// Provider to track if the quick start was used
 /// This helps with analytics and can be used to show different UI states

@@ -5,7 +5,7 @@ Provides endpoints for storing and retrieving daily activity data
 from Health Connect (Android) / Apple Health (iOS).
 """
 from core.db import get_supabase_db
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
 from pydantic import BaseModel, Field
 from typing import Optional, List
 from datetime import date, datetime
@@ -220,7 +220,7 @@ def row_to_activity_response(row: dict) -> DailyActivityResponse:
 
 
 @router.post("/sync", response_model=DailyActivityResponse)
-async def sync_daily_activity(input: DailyActivityInput, current_user: dict = Depends(get_current_user)):
+async def sync_daily_activity(input: DailyActivityInput, background_tasks: BackgroundTasks, current_user: dict = Depends(get_current_user)):
     """
     Sync daily activity data from Health Connect / Apple Health.
 
@@ -266,6 +266,18 @@ async def sync_daily_activity(input: DailyActivityInput, current_user: dict = De
         raise safe_internal_error(ValueError("Failed to sync activity data"), "activity")
 
     logger.info(f"Successfully synced activity for {input.activity_date}")
+
+    # User-history RAG (§1b.9) — index this night's sleep into the
+    # `user_sleep_history` Chroma collection. Best-effort BackgroundTask;
+    # only fires when sleep_minutes > 0 so daytime step-only syncs skip.
+    try:
+        if (input.sleep_minutes or 0) > 0:
+            from services.chroma.user_history_collection import (
+                refresh_sleep_night_from_da_row as _uh_refresh_sleep,
+            )
+            background_tasks.add_task(_uh_refresh_sleep, input.user_id, result)
+    except Exception as _e:
+        logger.warning(f"[user_history_rag] sleep hook skipped: {_e}")
 
     # Log activity sync (wrapped to never prevent response delivery)
     try:

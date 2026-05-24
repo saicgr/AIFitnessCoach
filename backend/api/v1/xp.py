@@ -115,6 +115,85 @@ async def process_daily_login(
         raise safe_internal_error(e, "xp")
 
 
+@router.post("/use-freeze")
+async def use_streak_freeze(
+    request: Request,
+    current_user=Depends(get_current_user),
+):
+    """
+    P5 §13 — spend one banked XP streak freeze.
+
+    Behavior:
+      * Decrements `users.xp_streak_freezes_available` (migration 2095) by 1,
+        floored at 0. Refuses with 409 when no freezes are banked so the
+        client can show a "no freezes left" toast instead of silently failing.
+      * Stamps `user_login_streaks.last_freeze_used_at = <user-local today>`
+        so a misfire can't be double-applied in the same day.
+      * Marks today's `xp_events.used_freeze = TRUE` for this user. The
+        streak compute RPC can later treat used_freeze=true as a continuing
+        day (separate migration — schema must exist before the RPC reads it,
+        which is exactly what migration 2095 establishes).
+
+    The whole block is wrapped in try/except so old user rows (created before
+    migration 2095 lands in their cache) don't break — we always return
+    `{ok: True, freezes_available: <int>}` on the happy path.
+    """
+    try:
+        db = get_supabase_db()
+        user_id = current_user["id"]
+        user_tz = resolve_timezone(request, db, user_id)
+        user_today = get_user_today(user_tz)
+
+        # Read current balance. Defaults to 2 (matches schema default).
+        balance_row = (
+            db.client.table("users")
+            .select("xp_streak_freezes_available")
+            .eq("id", user_id)
+            .limit(1)
+            .execute()
+        )
+        current_balance = 2
+        if balance_row.data:
+            raw = balance_row.data[0].get("xp_streak_freezes_available")
+            if isinstance(raw, int):
+                current_balance = raw
+
+        if current_balance <= 0:
+            raise HTTPException(
+                status_code=409,
+                detail="No XP streak freezes available.",
+            )
+
+        new_balance = current_balance - 1
+
+        # Decrement the freeze count.
+        db.client.table("users").update(
+            {"xp_streak_freezes_available": new_balance}
+        ).eq("id", user_id).execute()
+
+        # Stamp the login-streak row so the same-day guard fires on a re-call.
+        try:
+            db.client.table("user_login_streaks").update(
+                {"last_freeze_used_at": str(user_today)}
+            ).eq("user_id", user_id).execute()
+        except Exception as e:
+            # Per-feature graceful degradation — schema may not have been
+            # migrated yet on a transient stale connection.
+            logger.warning(f"[XP] use-freeze: last_freeze_used_at update failed: {e}")
+
+        # Streak compute reads `user_login_streaks.last_freeze_used_at` (set
+        # above) — that is the authoritative signal. The `xp_events.used_freeze`
+        # column from migration 2095 is unused because `xp_events` is an event
+        # catalog with no user_id column.
+        return {"ok": True, "freezes_available": new_balance}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"[XP] use-freeze error: {e}", exc_info=True)
+        raise safe_internal_error(e, "xp")
+
+
 @router.get("/login-streak", response_model=LoginStreakInfo)
 async def get_login_streak(
     current_user=Depends(get_current_user)

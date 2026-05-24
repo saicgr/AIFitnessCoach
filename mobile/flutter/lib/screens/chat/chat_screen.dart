@@ -16,7 +16,9 @@ import '../../core/theme/theme_colors.dart';
 import '../../widgets/glass_sheet.dart';
 import '../../widgets/main_shell.dart' show floatingNavBarVisibleProvider;
 import '../../data/models/chat_message.dart';
+import '../../data/providers/daily_coach_insight_provider.dart';
 import '../../data/models/coach_persona.dart';
+import 'widgets/suggested_reply_chips.dart';
 import '../../data/models/live_chat_session.dart';
 import '../../data/providers/live_chat_provider.dart';
 import '../../data/providers/xp_provider.dart';
@@ -77,9 +79,27 @@ const _formVideoActions = {'check_form', 'compare_form'};
 class ChatScreen extends ConsumerStatefulWidget {
   final String? initialMessage;
 
+  // ── Plan §1c.5 deep-link payload ─────────────────────────────────
+  // When the user opens chat from a home card (coach hero / workout
+  // card / pillar stat), the router forwards the source + insight_id
+  // + card mode + workout id so chat can: (a) seed the same coach turn
+  // the card showed, (b) render the suggested-reply chips matching the
+  // card's mode, and (c) scope any chip-fired action_data to the right
+  // workout.
+  final String? source;
+  final String? insightId;
+  final String? cardMode;
+  final String? workoutId;
+  final String? contextLabel;
+
   const ChatScreen({
     super.key,
     this.initialMessage,
+    this.source,
+    this.insightId,
+    this.cardMode,
+    this.workoutId,
+    this.contextLabel,
   });
 
   @override
@@ -233,7 +253,101 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
         // Fire-and-forget so first paint is not blocked on a network round-trip.
         unawaited(ref.read(chatMessagesProvider.notifier).loadHistory());
       }
+      // Plan §1c.5 — seed the same coach turn the card showed when chat
+      // was opened with ?insight_id=...&source=... Done AFTER loadHistory
+      // kicks off so the synthetic turn appends to whatever the server
+      // already has (the seeded turn lives in local state until the user
+      // sends a reply that persists it).
+      if (widget.insightId != null && widget.insightId!.isNotEmpty) {
+        _seedInsightCoachTurn();
+      }
     });
+  }
+
+  /// Build the chip strip rendered below a seeded coach turn. Maps the
+  /// home card's `mode` (from the deep link) to the §1c.5 chip set, then
+  /// wires each chip's tap to either send a user turn, fire a workout-card
+  /// action, or deep-link a literal route. The strip is built once per
+  /// render but the chips list itself is `const`-shaped and cheap.
+  Widget _buildSuggestedChipsStrip() {
+    // Compose the action payload once — workout_id is the most useful
+    // scope for any chip-fired action. Other chips read what they need.
+    final payload = <String, dynamic>{
+      if (widget.workoutId != null && widget.workoutId!.isNotEmpty)
+        'workout_id': widget.workoutId,
+      if (widget.insightId != null) 'insight_id': widget.insightId,
+      if (widget.source != null) 'source_surface': widget.source,
+    };
+    // Mode resolution: explicit cardMode wins; coach_hero falls back to a
+    // morning/evening flavour based on current hour so the brief surfaces
+    // its action chips even when only the source was passed.
+    String? mode = widget.cardMode;
+    if (mode == null && widget.source == 'coach_hero') {
+      final h = DateTime.now().hour;
+      if (h >= 5 && h <= 10) {
+        mode = 'morning_brief';
+      } else if (h >= 20 && h <= 21) {
+        mode = 'evening_recap';
+      }
+    }
+    final chips = chipsForWorkoutMode(mode, extraPayload: payload);
+    return SuggestedReplyChips(
+      chips: chips,
+      onMessageTap: (label) {
+        _textController.text = label;
+        _sendMessage();
+      },
+      onActionTap: (kind, p) {
+        // Fire-and-forget; the notifier appends its own confirmation turn.
+        unawaited(
+          ref.read(chatMessagesProvider.notifier)
+              .dispatchWorkoutCardAction(kind, p),
+        );
+      },
+      onRouteTap: (route) {
+        try {
+          context.push(route);
+        } catch (_) {
+          // Bad route is dev-time noise; surface a snack so QA notices.
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Route not registered: $route')),
+            );
+          }
+        }
+      },
+    );
+  }
+
+  /// Insert ONE local coach turn keyed by [widget.insightId] at the
+  /// bottom of today's chat (in chronological order — newest at bottom).
+  /// Dedupe: if any existing message in state already carries this
+  /// insightId in `intent`, skip. We piggy-back on `intent` because
+  /// `ChatMessage` doesn't yet expose a dedicated insight_id field —
+  /// the backend migration 2098 added the columns but the client model
+  /// still ships them inside the existing intent slot until the next
+  /// codegen-safe model bump.
+  void _seedInsightCoachTurn() {
+    try {
+      final insight = ref.read(dailyCoachInsightProvider).valueOrNull;
+      if (insight == null) return;
+      final notifier = ref.read(chatMessagesProvider.notifier);
+      final existing = ref.read(chatMessagesProvider).valueOrNull ?? [];
+      final marker = 'insight:${widget.insightId}';
+      final alreadySeeded = existing.any((m) => m.intent == marker);
+      if (alreadySeeded) return;
+      final headline = insight.headline.trim();
+      final body = insight.body.trim();
+      final content = [headline, body].where((s) => s.isNotEmpty).join('\n\n');
+      if (content.isEmpty) return;
+      notifier.appendSeededCoachTurn(
+        content: content,
+        intent: marker,
+        sourceSurface: widget.source,
+      );
+    } catch (e) {
+      debugPrint('🤖 [Chat] seedInsightCoachTurn failed: $e');
+    }
   }
 
   @override
@@ -595,14 +709,35 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
                             )
                           : bubble;
 
+                      // Plan §1c.5 — render the suggested-reply chip
+                      // strip directly below the seeded coach turn so
+                      // the conversation reads "card spoke, you answer."
+                      // The marker we look for is the same one
+                      // `_seedInsightCoachTurn` stamps in `intent`.
+                      Widget? chipsStrip;
+                      final isSeededInsightTurn = widget.insightId != null &&
+                          widget.insightId!.isNotEmpty &&
+                          message.intent == 'insight:${widget.insightId}';
+                      if (isSeededInsightTurn) {
+                        chipsStrip = _buildSuggestedChipsStrip();
+                      }
+
+                      Widget body = wrappedBubble;
+                      if (chipsStrip != null) {
+                        body = Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [wrappedBubble, chipsStrip],
+                        );
+                      }
+
                       if (dateSeparator != null) {
                         // Column renders top-to-bottom even inside a reversed ListView.
                         // Separator above, bubble below.
                         return Column(
-                          children: [dateSeparator, wrappedBubble],
+                          children: [dateSeparator, body],
                         );
                       }
-                      return wrappedBubble;
+                      return body;
                     },
                   );
                 },

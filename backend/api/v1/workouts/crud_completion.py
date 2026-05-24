@@ -292,6 +292,16 @@ async def complete_workout(
         # response under 1s instead of waiting on embedding API + ChromaDB.
         background_tasks.add_task(index_workout_to_rag, workout)
 
+        # User-history RAG (§1b.9) — index this completed workout into the
+        # `user_workout_history` Chroma collection so the coach's prompt
+        # assembler can do semantic recall against it later. Best-effort,
+        # background task — Chroma failure must not block completion.
+        try:
+            from services.chroma.user_history_collection import index_workout as _uh_index
+            background_tasks.add_task(_uh_index, user_id, updated)
+        except Exception as _e:
+            logger.warning(f"[user_history_rag] hook skipped: {_e}")
+
         # Performance Comparison
         performance_comparison: Optional[PerformanceComparisonInfo] = None
         # Hoisted out of the try-block so it remains defined even if the

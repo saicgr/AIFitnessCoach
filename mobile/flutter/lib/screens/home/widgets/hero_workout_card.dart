@@ -25,7 +25,14 @@ import '../../../core/services/posthog_service.dart';
 import '../../../shareables/shareable_sheet.dart';
 import '../../../shareables/adapters/workout_adapter.dart';
 import '../../../data/providers/consistency_provider.dart';
+import '../../../data/providers/workout_card_state_provider.dart';
 import '../../settings/sections/social_privacy_section.dart' show publicShareLinksProvider;
+import '../../pillar/widgets/ask_coach_button.dart';
+// `workout_card_mode.dart` defines its own `CyclePhase` enum (with an
+// `unknown` member) used by the pure resolver. The hero card already
+// references the `hormonal_health.dart` `CyclePhase` for the phase chip
+// rendering, so import the resolver under a prefix to avoid the clash.
+import 'workout_card/workout_card_mode.dart' show WorkoutCardMode;
 
 
 part 'hero_workout_card_part_completed_workout_hero_card.dart';
@@ -34,6 +41,8 @@ part 'hero_workout_card_part_stat_chip.dart';
 part 'hero_workout_card_ui.dart';
 
 part 'hero_workout_card_ext.dart';
+
+part 'hero_workout_card_modes.dart';
 
 
 /// Hero workout card - Gravl-inspired design with background image
@@ -445,6 +454,18 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final workout = widget.workout;
+
+    // P3a — resolve the smart `WorkoutCardMode`. Modes whose UI diverges
+    // from the default render (live session, wind-down, recovery-lighter,
+    // luteal, equipment, fasting, pre-workout fuel, comeback, PR, body
+    // ask rest, refuel, bonus, yesterday-missed, vacation, error, loading)
+    // get a tailored render via `buildSmartCardOverride`. Default happy-path
+    // modes (`scheduledNotStarted`, `completedToday`, `noPlan`,
+    // `nextWorkoutInFuture`, `nothingScheduled`, `restDayWithCoach`) fall
+    // through to the existing, shipped, polished layout below.
+    final smartMode = ref.watch(workoutCardModeProvider);
+    final smartOverride = buildSmartCardOverride(context, smartMode);
+    if (smartOverride != null) return smartOverride;
 
     // Get accent color from provider
     final accentColorEnum = ref.watch(accentColorProvider);

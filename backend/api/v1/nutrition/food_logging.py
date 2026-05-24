@@ -318,6 +318,19 @@ async def log_food_from_image(
         food_log_id = created_log.get('id') if created_log else "unknown"
         logger.info(f"Successfully logged food from image as {food_log_id}")
 
+        # User-history RAG (§1b.9) — refresh the day's nutrition doc in
+        # the `user_nutrition_history` Chroma collection. Best-effort
+        # BackgroundTask; Chroma failures never block the log response.
+        try:
+            from services.chroma.user_history_collection import (
+                refresh_nutrition_day_from_db as _uh_refresh_nutrition,
+            )
+            _day_iso = (created_log.get('logged_at') or '')[:10] if created_log else None
+            if _day_iso and user_id:
+                background_tasks.add_task(_uh_refresh_nutrition, user_id, _day_iso)
+        except Exception as _e:
+            logger.warning(f"[user_history_rag] image hook skipped: {_e}")
+
         # Invalidate daily summary cache so the next fetch returns fresh data
         from api.v1.nutrition.summaries import invalidate_daily_summary_cache
         from api.v1.home.bootstrap_cache import invalidate_bootstrap_cache
@@ -613,6 +626,17 @@ async def log_food_from_text(body: LogTextRequest, background_tasks: BackgroundT
 
         logger.info(f"Successfully logged food from text as {food_log_id}")
 
+        # User-history RAG (§1b.9) — refresh today's nutrition doc.
+        try:
+            from services.chroma.user_history_collection import (
+                refresh_nutrition_day_from_db as _uh_refresh_nutrition,
+            )
+            _day_iso = (created_log.get('logged_at') or '')[:10] if created_log else None
+            if _day_iso and body.user_id:
+                background_tasks.add_task(_uh_refresh_nutrition, body.user_id, _day_iso)
+        except Exception as _e:
+            logger.warning(f"[user_history_rag] text hook skipped: {_e}")
+
         # Invalidate daily summary cache so the next fetch returns fresh data
         from api.v1.nutrition.summaries import invalidate_daily_summary_cache
         from api.v1.home.bootstrap_cache import invalidate_bootstrap_cache
@@ -850,6 +874,17 @@ async def log_food_direct(
 
         food_log_id = created_log.get('id') if created_log else "unknown"
         logger.info(f"Successfully logged food directly as {food_log_id}")
+
+        # User-history RAG (§1b.9) — refresh today's nutrition doc.
+        try:
+            from services.chroma.user_history_collection import (
+                refresh_nutrition_day_from_db as _uh_refresh_nutrition,
+            )
+            _day_iso = (created_log.get('logged_at') or '')[:10] if created_log else None
+            if _day_iso and body.user_id:
+                background_tasks.add_task(_uh_refresh_nutrition, body.user_id, _day_iso)
+        except Exception as _e:
+            logger.warning(f"[user_history_rag] direct hook skipped: {_e}")
 
         # Persist any pre-save per-field edits made in the Log Meal sheet.
         # Done after the food_log row exists so the FK points somewhere.

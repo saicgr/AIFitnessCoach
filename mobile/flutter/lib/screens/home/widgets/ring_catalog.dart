@@ -17,6 +17,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/providers/auth_provider.dart';
+import '../../../data/services/health_service.dart' show healthSyncProvider;
 
 /// All rings the home screen knows how to render. Order = catalogue order
 /// (not display order — display order lives in [RingVisibilityNotifier]).
@@ -208,7 +209,12 @@ class RingVisibilityNotifier extends StateNotifier<List<RingKind>> {
     try {
       final prefs = await SharedPreferences.getInstance();
       final raw = prefs.getString(_ringOrderKey(_userId));
-      if (raw == null || raw.isEmpty) return;
+      if (raw == null || raw.isEmpty) {
+        // First load — no persisted order. Apply the wearable auto-enable
+        // migration before the user sees the rings. See _maybeAutoEnableRecovery.
+        await _maybeAutoEnableRecovery(prefs);
+        return;
+      }
       final decoded = jsonDecode(raw);
       if (decoded is! List) return;
       final ids = decoded.whereType<String>();
@@ -220,8 +226,47 @@ class RingVisibilityNotifier extends StateNotifier<List<RingKind>> {
       // Defensive: guarantee all core rings remain in the list.
       final withCore = _ensureCorePresent(kinds);
       state = withCore;
+      // Even with a persisted order, run the one-time auto-enable migration
+      // — covers users who upgrade with an existing default order that
+      // predates the Recovery ring.
+      await _maybeAutoEnableRecovery(prefs);
     } catch (_) {
       // Persistence is best-effort — keep defaults on any error.
+    }
+  }
+
+  /// One-time auto-enable: for users with connected wearable HRV/RHR data,
+  /// add the Recovery ring to their visible list so they don't have to dig
+  /// into Customize to find it. Guarded by a `home_rings_wearable_autoenable_v1`
+  /// SharedPreferences flag so it only runs once per user.
+  ///
+  /// Plan §7. Reads `healthSyncProvider.isConnected` as the proxy for "user
+  /// has wearable signals available" — more precise per-signal detection
+  /// (HRV vs RHR specifically) would require touching the health-service
+  /// API and is out of scope; this catches the >95% case for Apple
+  /// Watch / Health Connect users.
+  Future<void> _maybeAutoEnableRecovery(SharedPreferences prefs) async {
+    const flagKey = 'home_rings_wearable_autoenable_v1';
+    try {
+      if (prefs.getBool(flagKey) == true) return;
+
+      // Read health-sync state synchronously — by the time _load runs the
+      // provider is already initialized for the existing home screen.
+      final syncState = _ref.read(healthSyncProvider);
+      if (!syncState.isConnected) {
+        // Don't burn the migration flag — the user may connect later.
+        return;
+      }
+
+      // Mark the migration done first so a transient state error doesn't
+      // double-fire on the next launch.
+      await prefs.setBool(flagKey, true);
+
+      if (state.contains(RingKind.recovery)) return;
+      state = [...state, RingKind.recovery];
+      await _persist();
+    } catch (_) {
+      // Best-effort. Worst case: user manually adds via Customize sheet.
     }
   }
 

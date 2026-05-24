@@ -11,6 +11,7 @@ import 'manage_gym_profiles_sheet.dart';
 import '../../../core/providers/user_provider.dart';
 import '../../../widgets/glass_sheet.dart';
 import '../../../widgets/app_tour/app_tour_controller.dart';
+import 'streak_explainer_sheet.dart';
 import 'week_calendar_strip.dart';
 
 /// Clean, minimal header for the "Minimalist" home screen preset.
@@ -219,6 +220,9 @@ class _LevelStreakPill extends ConsumerStatefulWidget {
   ConsumerState<_LevelStreakPill> createState() => _LevelStreakPillState();
 }
 
+// Imported above; declared down here so the diff stays local. The streak
+// explainer sheet lives in widgets/streak_explainer_sheet.dart.
+
 class _LevelStreakPillState extends ConsumerState<_LevelStreakPill> {
   // Source of truth for streak = the XP login streak (same as the XP Goals
   // screen's "Login Streak" banner), read directly from xpProvider. Prior
@@ -263,63 +267,66 @@ class _LevelStreakPillState extends ConsumerState<_LevelStreakPill> {
       ),
     );
 
-    return GestureDetector(
-      onTap: () {
-        HapticService.light();
-        // Level ring + streak pill → XP Goals screen (level progress +
-        // login streak + daily/weekly/monthly goals).
-        context.push('/xp-goals');
-      },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        padding: showStreak
-            ? const EdgeInsets.only(right: 10)
-            : EdgeInsets.zero,
-        decoration: showStreak
-            ? BoxDecoration(
+    // Two distinct chips with explicit tap-targets — the previous unified
+    // pill rendered `3 · 5🔥` which users couldn't decode (was 3 the level?
+    // the streak? the score?). Now: level ring tappable to /xp-goals;
+    // streak chip labeled "5d 🔥" tappable to a new explainer sheet that
+    // shows the streak rule + remaining freezes.
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Level chip — the existing CustomPaint ring tappable on its own.
+        GestureDetector(
+          onTap: () {
+            HapticService.light();
+            context.push('/xp-goals');
+          },
+          behavior: HitTestBehavior.opaque,
+          child: levelRing,
+        ),
+        if (showStreak) ...[
+          const SizedBox(width: 6),
+          // Streak chip — labeled "Nd 🔥" so the number reads as days.
+          GestureDetector(
+            onTap: () {
+              HapticService.light();
+              showStreakExplainerSheet(context);
+            },
+            behavior: HitTestBehavior.opaque,
+            child: Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
                 color: isDark
                     ? Colors.white.withValues(alpha: 0.06)
                     : Colors.black.withValues(alpha: 0.04),
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(999),
                 border: Border.all(
-                  color: accent.withValues(alpha: 0.25),
+                  color: const Color(0xFFEC8B2C).withValues(alpha: 0.32),
                   width: 1,
                 ),
-              )
-            : null,
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            levelRing,
-            if (showStreak) ...[
-              const SizedBox(width: 6),
-              Text(
-                '•',
-                style: TextStyle(
-                  color: isDark
-                      ? Colors.white.withValues(alpha: 0.35)
-                      : Colors.black.withValues(alpha: 0.3),
-                  fontWeight: FontWeight.w700,
-                  fontSize: 13,
-                  height: 1,
-                ),
               ),
-              const SizedBox(width: 6),
-              const Text('🔥', style: TextStyle(fontSize: 13)),
-              const SizedBox(width: 2),
-              Text(
-                '$streakDays',
-                style: TextStyle(
-                  color: isDark ? Colors.white : const Color(0xFF0A0A0A),
-                  fontWeight: FontWeight.w800,
-                  fontSize: 13,
-                  height: 1,
-                ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    '${streakDays}d',
+                    style: TextStyle(
+                      color:
+                          isDark ? Colors.white : const Color(0xFF0A0A0A),
+                      fontWeight: FontWeight.w800,
+                      fontSize: 12,
+                      height: 1,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  const Text('🔥', style: TextStyle(fontSize: 12)),
+                ],
               ),
-            ],
-          ],
-        ),
-      ),
+            ),
+          ),
+        ],
+      ],
     );
   }
 }

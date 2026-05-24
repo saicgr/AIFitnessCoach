@@ -1042,6 +1042,38 @@ class ApiClient with WidgetsBindingObserver {
     );
   }
 
+  /// Swap a workout to a lighter / moderate / bodyweight variant.
+  ///
+  /// POSTs to `/workouts/{workoutId}/swap-variant` with
+  /// `{ "target_intensity": <kind> }` and returns the parsed JSON body
+  /// `{ workout_id, source_workout_id, target_intensity, name,
+  ///    duration_minutes, exercise_count, cached }`.
+  ///
+  /// Surfaces backend errors directly (no silent fallback). Callers
+  /// should catch `DioException` and render an error coach turn so the
+  /// user knows the swap didn't happen — never pretend success.
+  Future<Map<String, dynamic>> swapWorkoutVariant(
+    String workoutId,
+    String targetIntensity,
+  ) async {
+    final res = await _dio.post<dynamic>(
+      '/workouts/$workoutId/swap-variant',
+      data: <String, dynamic>{
+        'target_intensity': targetIntensity,
+      },
+    );
+    final body = res.data;
+    if (body is Map<String, dynamic>) {
+      return body;
+    }
+    if (body is Map) {
+      return Map<String, dynamic>.from(body);
+    }
+    throw StateError(
+      'swapWorkoutVariant: unexpected response shape ${body.runtimeType}',
+    );
+  }
+
   /// Upload file using multipart form data
   Future<Response<dynamic>> uploadFile(
     String path,

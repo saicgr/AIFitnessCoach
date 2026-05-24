@@ -46,6 +46,8 @@ from .exercise_tips import router as exercise_tips_router
 from .quick_adjust import router as quick_adjust_router
 from .set_note_media import router as set_note_media_router
 from .share_link import router as share_link_router
+from .card_context import router as card_context_router
+from .swap_variant import router as swap_variant_router
 
 # Create the combined router
 router = APIRouter()
@@ -63,6 +65,17 @@ router.include_router(quick_router)
 
 # Batch upcoming workout retrieval (offline pre-caching) - must come before CRUD
 router.include_router(batch_generation_router)
+
+# Home workout card context — static `/card-context` path; must be registered
+# BEFORE crud_router because crud_router owns the dynamic `/{workout_id}`
+# route that would otherwise swallow `card-context` as an id.
+router.include_router(card_context_router)
+
+# Workout variant swap (deload / moderate / bodyweight) — POST
+# `/{workout_id}/swap-variant`. Registered BEFORE crud_router so the
+# nested PUT/DELETE/GET `/{workout_id}` handlers in crud don't shadow
+# the swap path. Same precedence pattern as card_context above.
+router.include_router(swap_variant_router)
 
 # CRUD operations (basic CRUD) - has /{workout_id} which would match "today" and "quick"
 router.include_router(crud_router)

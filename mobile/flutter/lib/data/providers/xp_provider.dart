@@ -166,6 +166,12 @@ final xpCurrentStreakProvider = Provider<int>((ref) {
   return ref.watch(xpProvider).currentStreak;
 });
 
+/// P5 §13 — banked XP streak freezes (mirrors `users.xp_streak_freezes_available`
+/// per migration 2095). Defaults to 2 for a brand-new user.
+final xpFreezesAvailableProvider = Provider<int>((ref) {
+  return ref.watch(xpProvider).xpFreezesAvailable;
+});
+
 /// Whether user has logged in today
 final hasLoggedInTodayProvider = Provider<bool>((ref) {
   return ref.watch(xpProvider).hasLoggedInToday;

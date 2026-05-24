@@ -31,6 +31,28 @@ String? coachLineFor(TodayScore score, {DateTime? now}) {
 /// (matches the server-side Gemini path, which has full prompt branching).
 enum CoachTimeBucket { morning, midday, afternoon, evening, late }
 
+/// Plan P3e surface for the expanded coach hero pools. Picked by
+/// `coachHeadline` / `coachBody` when [CoachHeroSurface.morningBrief] or
+/// [CoachHeroSurface.eveningRecap] is passed so the deterministic fallback
+/// can render a multi-line brief without an API call.
+///
+/// Edge cases:
+///   * `morningBriefOnboarding` covers the <3-days-of-history degrade rule —
+///     a fixed onboarding ask, no motivational fluff.
+///   * `morningBrief` / `eveningRecap` produce bullet-formatted bodies
+///     joined with `\n• ` so the card renders them as a real brief.
+///   * Single-line surfaces (home / late) keep the existing pools.
+enum CoachHeroSurface {
+  /// Default — single-line behaviour (existing pools).
+  home,
+  /// Rich 3-5 line morning brief (5-10 AM bucket).
+  morningBrief,
+  /// Rich evening recap (8-10 PM bucket).
+  eveningRecap,
+  /// Low-history degrade — connect/setup ask.
+  morningBriefOnboarding,
+}
+
 CoachTimeBucket _timeBucket(DateTime now) {
   final h = now.hour;
   if (h < 5) return CoachTimeBucket.late; // 0–4: still up / wee hours
@@ -42,14 +64,50 @@ CoachTimeBucket _timeBucket(DateTime now) {
 }
 
 /// Headline (1 short sentence, ≤8 words) for the coach hero card.
+///
+/// [surface] picks one of the rich-brief pools when the card is in
+/// expanded mode. The body emitted by [coachBody] must be called with the
+/// matching surface or the two will diverge.
 String? coachHeadline(
   TodayScore score, {
   String? firstName,
   String? workoutName,
   DateTime? now,
+  CoachHeroSurface surface = CoachHeroSurface.home,
 }) {
-  if (score.isSetupState) return null;
+  if (score.isSetupState && surface != CoachHeroSurface.morningBriefOnboarding) {
+    return null;
+  }
   final t = now ?? DateTime.now();
+
+  // Expanded-surface overlays — these win over the leverage / time pools so
+  // morning_brief / evening_recap pairs read coherently (the same template
+  // index drives both headline and body).
+  if (surface == CoachHeroSurface.morningBrief) {
+    final pool = _morningHeadlines;
+    return _interpolate(pool[_dailyIndex(pool.length, t)],
+        name: firstName,
+        workout: workoutName,
+        reach: score.score,
+        kind: ContributorKind.train);
+  }
+  if (surface == CoachHeroSurface.eveningRecap) {
+    final pool = _eveningRecapHeadlines;
+    return _interpolate(pool[_dailyIndex(pool.length, t)],
+        name: firstName,
+        workout: workoutName,
+        reach: score.score,
+        kind: ContributorKind.sleep);
+  }
+  if (surface == CoachHeroSurface.morningBriefOnboarding) {
+    final pool = _morningOnboardingHeadlines;
+    return _interpolate(pool[_dailyIndex(pool.length, t)],
+        name: firstName,
+        workout: workoutName,
+        reach: 0,
+        kind: ContributorKind.train);
+  }
+
   final ctx = _leverageContext(score, now: t);
 
   // Time-aware overlay — runs FIRST on the morning + late buckets where the
@@ -86,15 +144,48 @@ String? coachHeadline(
       name: firstName, workout: workoutName, reach: ctx.reach, kind: ctx.kind);
 }
 
-/// Body (1-2 sentences) for the coach hero card.
+/// Body (1-2 sentences, or a multi-line brief) for the coach hero card.
+///
+/// When [surface] is morningBrief / eveningRecap / morningBriefOnboarding,
+/// the returned string contains `\n` line breaks (and `• ` bullet prefixes
+/// for bullet rows). The card widget splits on `\n` and renders bullets.
 String? coachBody(
   TodayScore score, {
   String? firstName,
   String? workoutName,
   DateTime? now,
+  CoachHeroSurface surface = CoachHeroSurface.home,
 }) {
-  if (score.isSetupState) return null;
+  if (score.isSetupState && surface != CoachHeroSurface.morningBriefOnboarding) {
+    return null;
+  }
   final t = now ?? DateTime.now();
+
+  if (surface == CoachHeroSurface.morningBrief) {
+    final pool = _morningExpandedBodies;
+    return _interpolate(pool[_dailyIndex(pool.length, t)],
+        name: firstName,
+        workout: workoutName,
+        reach: score.score,
+        kind: ContributorKind.train);
+  }
+  if (surface == CoachHeroSurface.eveningRecap) {
+    final pool = _eveningRecapBodies;
+    return _interpolate(pool[_dailyIndex(pool.length, t)],
+        name: firstName,
+        workout: workoutName,
+        reach: score.score,
+        kind: ContributorKind.sleep);
+  }
+  if (surface == CoachHeroSurface.morningBriefOnboarding) {
+    final pool = _morningOnboardingBodies;
+    return _interpolate(pool[_dailyIndex(pool.length, t)],
+        name: firstName,
+        workout: workoutName,
+        reach: 0,
+        kind: ContributorKind.train);
+  }
+
   final ctx = _leverageContext(score, now: t);
 
   // Same time-aware overlay as the headline so the pair reads coherently.
@@ -371,6 +462,55 @@ const List<String> _latePool = [
   'Recovery is the lever now.',
   '{name}, tomorrow starts tonight.',
   'Sleep is the highest-leverage move.',
+];
+
+// ── Expanded morning brief (plan §1e) ────────────────────────────────
+// Multi-line bodies — split on `\n` by the card, bullets keep "• " prefix.
+// Variant pool of 4+ per pool per `feedback_dynamic_copy_not_robotic`.
+// Edge cases:
+//   * {workout} falls back to "today's session" when unknown.
+//   * {reach} is the CURRENT day score, not a projected reach, so the line
+//     "you're at {reach}" never lies when called from the deterministic
+//     fallback (no leverage projection is possible without an LLM here).
+
+const List<String> _morningExpandedBodies = [
+  'Open with water, then food.\n• Water: 16oz now, overnight loss is real.\n• Breakfast: 30g protein within 60 min.\n• {workout} on the calendar.',
+  'A simple morning shape.\n• Hydrate, then a quick protein bite.\n• Move first, then desk.\n• {workout} is the headline.',
+  'Three to anchor the day.\n• Water in, screens out for ten.\n• Protein-forward breakfast.\n• {workout} when you have a window.',
+  'Start with the basics.\n• 16oz water before coffee.\n• Eat in the next hour.\n• Plan around {workout}.',
+];
+
+// ── Expanded evening recap (plan §1e) ────────────────────────────────
+
+const List<String> _eveningRecapHeadlines = [
+  'Recap time, {name}.',
+  '{name}, day report.',
+  'How today landed, {name}.',
+  '{name}, end-of-day pulse.',
+];
+
+const List<String> _eveningRecapBodies = [
+  'Today: a solid run on the basics.\nThis week: keep the streak alive one more night.\nTonight: bed at your usual time.',
+  'Today: you put in the work.\nThis week: momentum is on your side.\nTonight: screens off by 10:30.',
+  'Today: plan held together.\nThis week: training cadence is steady.\nTonight: wind down 30 min earlier than last night.',
+  'Today: enough done to bank.\nThis week: a few more reps to go.\nTonight: protect sleep, the rest follows.',
+];
+
+// ── Morning brief — onboarding (low-history degrade, plan §1e) ───────
+// Functional asks only: connect / set / build. No "you got this" filler.
+
+const List<String> _morningOnboardingHeadlines = [
+  'Morning, {name}.',
+  'Welcome in, {name}.',
+  'First steps, {name}.',
+  '{name}, three to unlock today.',
+];
+
+const List<String> _morningOnboardingBodies = [
+  'Three things to start real coaching:\n• Connect Health for sleep and recovery.\n• Set nutrition targets.\n• Build your first week of plan.\nOnce these are in, I can actually coach you.',
+  'A quick setup unlocks the full picture:\n• Connect Health.\n• Set calorie and protein targets.\n• Build a first week plan.\nThen the home screen starts pulling in real data.',
+  'Three setup steps:\n• Health connection for sleep.\n• Calorie and protein targets.\n• A starter week of workouts.\nKnocking these out means tomorrow opens informed.',
+  'Lock in the inputs:\n• Connect a Health source.\n• Nutrition targets in settings.\n• A first plan to follow.\nReal coaching starts the moment these land.',
 ];
 
 const List<String> _lateBodies = [

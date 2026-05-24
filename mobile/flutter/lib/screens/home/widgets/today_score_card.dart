@@ -21,6 +21,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/theme_colors.dart';
 import '../../../data/models/today_score.dart';
+import '../../../data/providers/pillar_history_provider.dart';
 import '../../../data/providers/today_score_provider.dart';
 import '../../../services/score_history_service.dart';
 import 'customize_rings_sheet.dart';
@@ -29,6 +30,11 @@ import 'home/unified_home_widgets.dart' show kHomeHPad;
 import 'ring_catalog.dart';
 import 'score_colors.dart';
 import 'today_score_detail_sheet.dart';
+import 'today_score_setup_card.dart';
+import '../../../widgets/health_connect_sheet.dart';
+import '../../../data/services/health_service.dart' show healthSyncProvider;
+import '../../../core/animations/celebration_animations.dart';
+import '../../../data/services/haptic_service.dart';
 
 class TodayScoreCard extends ConsumerWidget {
   const TodayScoreCard({super.key});
@@ -46,6 +52,20 @@ class TodayScoreCard extends ConsumerWidget {
       if (prev?.score != next.score) {
         ref.read(scoreHistoryProvider.notifier).record(next.score);
       }
+      // Celebrate any pillar that just crossed into "complete" (< 1.0 → 1.0).
+      // Once-per-pillar-per-day so an animation doesn't re-fire on rebuild.
+      if (prev != null) {
+        for (final kind in ContributorKind.values) {
+          final prevC = prev.contributor(kind);
+          final nextC = next.contributor(kind);
+          if (!nextC.applicable) continue;
+          final crossedToComplete =
+              prevC.completion < 1.0 && nextC.completion >= 1.0;
+          if (crossedToComplete) {
+            _maybeCelebrateRing(context, ref, kind);
+          }
+        }
+      }
     });
 
     return Padding(
@@ -60,8 +80,12 @@ class TodayScoreCard extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             _Header(score: score),
-            if (score.isSetupState)
-              _SetupState(c: c)
+            // Brand-new + low-data users (0-1 pillar applicable) see a
+            // productive 4-step checklist instead of a row of empty rings.
+            // Once ≥2 pillars apply, the ring row takes over — the rings
+            // alone tell a coherent story past that point.
+            if (score.isSetupState || score.applicableContributors.length <= 1)
+              const TodayScoreSetupCard()
             else
               _RingRow(score: score, visibleRings: visibleRings),
           ],
@@ -82,11 +106,13 @@ class _Header extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final c = ThemeColors.of(context);
-    final history = ref.watch(scoreHistoryProvider);
-    final delta = history.todayDelta;
+    // history + composite-delta no longer surfaced in the header — momentum
+    // moved to per-ring chips (item 5 of v2 polish plan). Side-effect record
+    // still fires via the ref.listen on TodayScoreCard at the parent level.
+    final syncState = ref.watch(healthSyncProvider);
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 14, 12, 6),
+      padding: const EdgeInsets.fromLTRB(16, 10, 12, 4),
       child: Row(
         children: [
           Text(
@@ -98,22 +124,21 @@ class _Header extends ConsumerWidget {
               color: c.textPrimary,
             ),
           ),
-          if (!score.isSetupState) ...[
-            const SizedBox(width: 8),
-            Text(
-              '${score.score}',
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
-                color: c.textSecondary,
-              ),
-            ),
-          ],
-          if (delta != 0 && !score.isSetupState) ...[
-            const SizedBox(width: 8),
-            _MomentumBadge(delta: delta),
-          ],
+          // Removed composite score number from the header — users couldn't
+          // decode "Today 10" (the weighted average is opaque), and the rings
+          // themselves communicate completion. Momentum lives on the rings
+          // now (per-pillar delta chips, item 5 of the v2 polish plan).
+          // _MomentumBadge against the composite is gone with the number.
           const Spacer(),
+          // Last-sync indicator — only shown when health is connected AND we
+          // have a timestamp. Tap → showHealthConnectSheet to manage sync.
+          if (syncState.isConnected && syncState.lastSyncTime != null) ...[
+            _LastSyncChip(
+              lastSync: syncState.lastSyncTime!,
+              syncing: syncState.isSyncing,
+            ),
+            const SizedBox(width: 8),
+          ],
           _CustomizePill(),
         ],
       ),
@@ -121,26 +146,42 @@ class _Header extends ConsumerWidget {
   }
 }
 
-class _MomentumBadge extends StatelessWidget {
-  final int delta;
-  const _MomentumBadge({required this.delta});
+// _MomentumBadge removed — per-ring momentum chips replace the composite
+// delta. See item 5 of the v2 polish plan + the new per-pillar _DeltaChip
+// implementation in _RingCell.
+
+/// Tiny "Synced 3m ago" chip next to the Edit pill — only renders when
+/// Health is connected AND we have a real timestamp. Tap → opens the
+/// existing Health Connect sheet so users can manage sync from one place.
+class _LastSyncChip extends ConsumerWidget {
+  final DateTime lastSync;
+  final bool syncing;
+  const _LastSyncChip({required this.lastSync, required this.syncing});
+
+  String _humanize(DateTime t) {
+    final diff = DateTime.now().difference(t);
+    if (diff.inSeconds < 60) return 'Just now';
+    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
+    if (diff.inHours < 24) return '${diff.inHours}h ago';
+    return '${diff.inDays}d ago';
+  }
 
   @override
-  Widget build(BuildContext context) {
-    final up = delta > 0;
-    final color = up ? const Color(0xFF2C8A54) : const Color(0xFFC26A4A);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Text(
-        '${up ? '▲' : '▼'} ${delta.abs()}',
-        style: TextStyle(
-          fontSize: 10,
-          fontWeight: FontWeight.w800,
-          color: color,
+  Widget build(BuildContext context, WidgetRef ref) {
+    final c = ThemeColors.of(context);
+    final label = syncing ? 'Syncing…' : 'Synced ${_humanize(lastSync)}';
+    return GestureDetector(
+      onTap: () => showHealthConnectSheet(context, ref),
+      behavior: HitTestBehavior.opaque,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 4),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 10,
+            fontWeight: FontWeight.w600,
+            color: c.textMuted,
+          ),
         ),
       ),
     );
@@ -255,8 +296,60 @@ class _RingRow extends ConsumerWidget {
   }
 }
 
-/// Single ring cell — G1 painter + label + percentage.
-class _RingCell extends StatelessWidget {
+// ──────────────────────────────────────────────────────────────────────
+//  Ring-100% celebration — fires once per pillar per day when a ring
+//  transitions from < 1.0 to ≥ 1.0 completion. Confetti overlay +
+//  HapticService.success(). Guard set is in-memory (cleared on app
+//  restart, which is fine — the user wouldn't want a re-celebration
+//  on cold start anyway).
+// ──────────────────────────────────────────────────────────────────────
+
+final Set<String> _celebratedThisSession = <String>{};
+
+void _maybeCelebrateRing(BuildContext context, WidgetRef ref,
+    ContributorKind kind) {
+  final today = DateTime.now();
+  final key = '${today.year}-${today.month}-${today.day}|${kind.name}';
+  if (_celebratedThisSession.contains(key)) return;
+  _celebratedThisSession.add(key);
+
+  // Haptic first — Apple guidance recommends haptic precede the visual
+  // by ~16ms so the sensory feedback feels in-sync.
+  HapticService.success();
+
+  // Confetti via an Overlay insert. Auto-removes on completion.
+  final overlayState = Overlay.maybeOf(context);
+  if (overlayState == null) return;
+  late OverlayEntry entry;
+  entry = OverlayEntry(builder: (_) {
+    return Positioned.fill(
+      child: IgnorePointer(
+        child: ConfettiOverlay(
+          particleCount: 60,
+          duration: const Duration(milliseconds: 2200),
+          onComplete: () {
+            entry.remove();
+          },
+        ),
+      ),
+    );
+  });
+  overlayState.insert(entry);
+}
+
+/// Health rings whose unavailable state means "no Health Connect / no
+/// wearable data" — these get an inline `Connect` chip instead of bare `—`
+/// so the user has a one-tap path to fix it.
+const _healthRingKinds = <RingKind>{
+  RingKind.sleep,
+  RingKind.hrv,
+  RingKind.recovery,
+  RingKind.heartRate,
+};
+
+/// Single ring cell — G1 painter + label + percentage (or Connect chip when
+/// the ring is a health ring with no data).
+class _RingCell extends ConsumerWidget {
   final double width;
   final double ringSize;
   final RingSpec spec;
@@ -272,12 +365,16 @@ class _RingCell extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final c = ThemeColors.of(context);
     final isUnavailable = data.applicable == false;
     final progress = data.completion.clamp(0.0, 1.0);
+    final bool showConnectChip =
+        isUnavailable && _healthRingKinds.contains(spec.kind);
     // Show just the integer score, no '%' suffix (Oura/Whoop convention —
-    // reads as "Train 67" not "Train 67 percent done").
+    // reads as "Train 67" not "Train 67 percent done"). When unavailable,
+    // health rings show a Connect chip in place of '—' (see _ConnectChip
+    // below); other unavailable rings keep the dash.
     final pctText = isUnavailable ? '—' : '${(progress * 100).round()}';
 
     return GestureDetector(
@@ -312,15 +409,21 @@ class _RingCell extends StatelessWidget {
                 Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
-                      pctText,
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,
-                        color: isUnavailable ? c.textMuted : c.textPrimary,
-                        letterSpacing: -0.2,
+                    if (showConnectChip)
+                      _ConnectChip(
+                        accent: spec.color,
+                        onTap: () => showHealthConnectSheet(context, ref),
+                      )
+                    else
+                      Text(
+                        pctText,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                          color: isUnavailable ? c.textMuted : c.textPrimary,
+                          letterSpacing: -0.2,
+                        ),
                       ),
-                    ),
                   ],
                 ),
               ],
@@ -338,7 +441,122 @@ class _RingCell extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
+            if (!isUnavailable) _PillarDeltaChip(ringKind: spec.kind, current: progress),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Tiny momentum chip rendered under a ring label showing today's delta vs
+/// yesterday's same-pillar completion (e.g. `▲5` green, `▼3` orange).
+///
+/// Only renders for the four core pillars (Train / Nourish / Move / Sleep)
+/// — optional rings (HRV, Cycle, Weight, Hydration, etc.) don't have a
+/// `PillarKind` mapping, so they get nothing. Renders nothing when delta is
+/// zero so the row stays clean on neutral days.
+class _PillarDeltaChip extends ConsumerWidget {
+  final RingKind ringKind;
+  final double current; // 0..1 current completion
+
+  const _PillarDeltaChip({required this.ringKind, required this.current});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final pillar = _ringToPillar(ringKind);
+    if (pillar == null) return const SizedBox.shrink();
+
+    final historyAsync = ref.watch(
+      pillarHistoryProvider(PillarHistoryKey(kind: pillar, days: 2)),
+    );
+    final history = historyAsync.maybeWhen(
+      data: (h) => h,
+      orElse: () => const <PillarDayScore>[],
+    );
+    if (history.isEmpty) return const SizedBox.shrink();
+
+    // Find yesterday's entry; skip if pillar didn't apply yesterday.
+    final now = DateTime.now();
+    final yesterday = DateTime(now.year, now.month, now.day)
+        .subtract(const Duration(days: 1));
+    PillarDayScore? prev;
+    for (final p in history) {
+      if (p.date.year == yesterday.year &&
+          p.date.month == yesterday.month &&
+          p.date.day == yesterday.day) {
+        prev = p;
+        break;
+      }
+    }
+    if (prev == null) return const SizedBox.shrink();
+
+    final delta = (current * 100).round() - (prev.completion * 100).round();
+    if (delta == 0) return const SizedBox.shrink();
+
+    final isUp = delta > 0;
+    final color = isUp ? const Color(0xFF3FA66B) : const Color(0xFFEC8B2C);
+    final label = isUp ? '▲${delta.abs()}' : '▼${delta.abs()}';
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 3),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 9,
+          fontWeight: FontWeight.w800,
+          color: color,
+          letterSpacing: 0.2,
+        ),
+      ),
+    );
+  }
+
+  static PillarKind? _ringToPillar(RingKind k) {
+    switch (k) {
+      case RingKind.train:
+        return PillarKind.train;
+      case RingKind.nourish:
+        return PillarKind.nourish;
+      case RingKind.move:
+        return PillarKind.move;
+      case RingKind.sleep:
+        return PillarKind.sleep;
+      default:
+        return null;
+    }
+  }
+}
+
+/// Inline Connect chip — rendered IN PLACE OF the `—` for unavailable
+/// health rings (Sleep/HRV/Recovery/HeartRate) so the user has a one-tap
+/// path to fix the empty state instead of staring at a dash that looks
+/// like a UI bug.
+class _ConnectChip extends StatelessWidget {
+  final Color accent;
+  final VoidCallback onTap;
+  const _ConnectChip({required this.accent, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        decoration: BoxDecoration(
+          color: accent.withValues(alpha: 0.14),
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(color: accent.withValues(alpha: 0.32), width: 0.6),
+        ),
+        child: Text(
+          'Connect',
+          style: TextStyle(
+            fontSize: 10.5,
+            fontWeight: FontWeight.w700,
+            color: accent,
+            letterSpacing: 0.2,
+          ),
         ),
       ),
     );
@@ -396,61 +614,7 @@ class _CustomizeCell extends StatelessWidget {
   }
 }
 
-// ──────────────────────────────────────────────────────────────────────
-//  Setup state
-// ──────────────────────────────────────────────────────────────────────
-
-class _SetupState extends StatelessWidget {
-  final ThemeColors c;
-  const _SetupState({required this.c});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 10, 16, 18),
-      child: Row(
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: c.accent.withValues(alpha: 0.14),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(Icons.flag_outlined, size: 20, color: c.accent),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Finish setup to unlock your score',
-                  style: TextStyle(
-                    fontSize: 13.5,
-                    fontWeight: FontWeight.w800,
-                    color: c.textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  'Add a workout plan, set nutrition targets, or connect '
-                  'Health to start scoring your day.',
-                  style: TextStyle(
-                    fontSize: 11.5,
-                    height: 1.35,
-                    color: c.textSecondary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
+// _SetupState removed — replaced by TodayScoreSetupCard (4-step checklist).
 
 // ──────────────────────────────────────────────────────────────────────
 //  Ring data resolution — maps a RingKind to its current score completion

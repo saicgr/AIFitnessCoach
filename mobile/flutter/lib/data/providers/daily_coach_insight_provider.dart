@@ -33,6 +33,10 @@ class CoachCta {
 /// as a fallback). `isFallback` flags whether the server actually generated
 /// this — a small UI indicator can be shown when true.
 class DailyCoachInsight {
+  /// Server-persisted insight id (UUID). Null on the deterministic
+  /// fallback path (the row isn't persisted there). Plan §1c.5 — the
+  /// chat seeded coach turn keys on this to dedupe across reopen.
+  final String? insightId;
   final String headline;
   final String body;
   final CoachCta? ctaPrimary;
@@ -41,6 +45,7 @@ class DailyCoachInsight {
   final bool isFallback;
 
   const DailyCoachInsight({
+    this.insightId,
     required this.headline,
     required this.body,
     this.ctaPrimary,
@@ -51,6 +56,7 @@ class DailyCoachInsight {
 
   factory DailyCoachInsight.fromJson(Map<String, dynamic> json) {
     return DailyCoachInsight(
+      insightId: json['insight_id'] as String?,
       headline: (json['headline'] as String?) ?? '',
       body: (json['body'] as String?) ?? '',
       ctaPrimary: json['cta_primary'] is Map<String, dynamic>

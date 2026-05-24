@@ -202,6 +202,15 @@ class XPState {
   // Daily crates state
   final DailyCratesState? dailyCrates;
 
+  // P5 §13 — XP streak freezes. Banked count (matches users.xp_streak_freezes_available
+  // server column, migration 2095). Defaults to 2 so a brand-new user sees
+  // the same starting balance the nutrition streak ships with.
+  final int xpFreezesAvailable;
+
+  // Last local-date a freeze was applied (yyyy-MM-dd). Guards a double-tap
+  // on the "Use freeze" button from spending two freezes in the same day.
+  final String? xpLastFreezeUsedDate;
+
   const XPState({
     this.userXp,
     this.allTrophies = const [],
@@ -237,6 +246,10 @@ class XPState {
     this.consumables,
     // Daily crates
     this.dailyCrates,
+    // P5 §13 — XP streak freezes (default mirrors nutrition_streak_freeze
+    // starting balance of 2).
+    this.xpFreezesAvailable = 2,
+    this.xpLastFreezeUsedDate,
   });
 
   XPState copyWith({
@@ -280,6 +293,9 @@ class XPState {
     UserConsumables? consumables,
     // Daily crates
     DailyCratesState? dailyCrates,
+    // P5 §13 — XP streak freezes
+    int? xpFreezesAvailable,
+    String? xpLastFreezeUsedDate,
   }) {
     return XPState(
       userXp: userXp ?? this.userXp,
@@ -320,6 +336,10 @@ class XPState {
       consumables: consumables ?? this.consumables,
       // Daily crates
       dailyCrates: dailyCrates ?? this.dailyCrates,
+      // P5 §13 — XP streak freezes
+      xpFreezesAvailable: xpFreezesAvailable ?? this.xpFreezesAvailable,
+      xpLastFreezeUsedDate:
+          xpLastFreezeUsedDate ?? this.xpLastFreezeUsedDate,
     );
   }
 

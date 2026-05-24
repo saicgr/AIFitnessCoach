@@ -236,6 +236,26 @@ def _collect_snapshot(sb, user_id: str, local_date_iso: str) -> Dict[str, Any]:
     except Exception as e:
         logger.warning(f"[daily_insight] users lookup failed: {e}")
 
+    # --- Cycle phase (plan §10) ---------------------------------------
+    # Source of truth: the `user_current_cycle_phase` VIEW
+    # (backend/migrations/121_hormonal_health_kegel.sql:587). It exposes
+    # `current_phase` ∈ {menstrual, follicular, ovulation, luteal, NULL}.
+    # NULL means the user does not have menstrual tracking enabled or
+    # hasn't logged a period start — treat as no signal and omit the field.
+    # Wrapped so a missing/empty view never 500s the insight.
+    try:
+        cp = sb.client.table("user_current_cycle_phase").select(
+            "current_phase"
+        ).eq("user_id", user_id).maybe_single().execute()
+        if cp and cp.data:
+            phase = cp.data.get("current_phase")
+            if phase in ("menstrual", "follicular", "ovulation", "luteal"):
+                snapshot["cycle_phase"] = phase
+    except Exception as e:
+        # Phantom view / RLS / table-missing on a non-female-tracking user
+        # all funnel here — silent skip is correct.
+        logger.debug(f"[daily_insight] cycle phase lookup skipped: {e}")
+
     return snapshot, next_workout
 
 
@@ -529,8 +549,24 @@ async def daily_insight(
         local_date_iso = local_date.isoformat()
 
         # ---- Validate source + stat_context --------------------------------
-        if source not in ("home", "pillar_stat"):
-            raise HTTPException(400, "source must be 'home' or 'pillar_stat'")
+        # Plan P3e expanded the surface vocabulary. Each one routes to a
+        # different branch in daily_insight_prompt.py. All share the same
+        # cost cap + cache row shape; only `pillar_stat` carries a
+        # stat_context, the others use stat_context=NULL as the cache key.
+        _ALLOWED_SOURCES = {
+            "home",
+            "pillar_stat",
+            "morning_brief",
+            "evening_recap",
+            "morning_brief_onboarding",
+            "nutrition_card_morning",
+            "workout_card",
+        }
+        if source not in _ALLOWED_SOURCES:
+            raise HTTPException(
+                400,
+                f"source must be one of {sorted(_ALLOWED_SOURCES)}",
+            )
         stat_context = context if source == "pillar_stat" else None
         if source == "pillar_stat" and not stat_context:
             raise HTTPException(400, "context query param required for source=pillar_stat")
@@ -589,6 +625,8 @@ async def daily_insight(
             "goals": snapshot.get("goal"),
             "user_local_tz": tz_resolved,
             "time_of_day_bucket": _time_of_day_bucket(now_local),
+            # Plan §10 — null when the user has no cycle tracking enabled.
+            "cycle_phase": snapshot.get("cycle_phase"),
         }
         if source == "pillar_stat":
             ctx["pillar_stat_context"] = stat_context

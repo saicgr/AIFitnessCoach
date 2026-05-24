@@ -195,4 +195,59 @@ extension XPNotifierExt on XPNotifier {
     ]);
   }
 
+  // =========================================================================
+  // P5 §13 — XP streak freeze
+  // =========================================================================
+
+  /// Spend one banked XP-streak freeze to protect today's streak. Mirrors the
+  /// nutrition freeze pattern at `nutrition_preferences_provider.dart:610`
+  /// — optimistic local decrement + backend POST + refresh from server.
+  ///
+  /// No-op when:
+  ///  * no freezes are banked (`xpFreezesAvailable == 0`)
+  ///  * a freeze was already applied today (defensive double-tap guard;
+  ///    the backend also enforces this via `last_freeze_used_at`).
+  Future<void> useFreeze() async {
+    if (state.xpFreezesAvailable <= 0) {
+      debugPrint('🧊 [XPProvider] useFreeze() called with 0 freezes available — no-op');
+      return;
+    }
+    final today = DateTime.now();
+    final todayKey =
+        '${today.year.toString().padLeft(4, '0')}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
+    if (state.xpLastFreezeUsedDate == todayKey) {
+      debugPrint('🧊 [XPProvider] freeze already used today — no-op');
+      return;
+    }
+    try {
+      debugPrint('🧊 [XPProvider] Using XP streak freeze');
+      // Optimistic update so the sheet's count drops immediately.
+      state = state.copyWith(
+        xpFreezesAvailable: state.xpFreezesAvailable - 1,
+        xpLastFreezeUsedDate: todayKey,
+      );
+      // Hit the new POST /xp/use-freeze endpoint. Backend decrements
+      // users.xp_streak_freezes_available, stamps last_freeze_used_at, marks
+      // today's xp_events.used_freeze=true so the streak compute treats today
+      // as a continuing day.
+      final resp = await _repository.useStreakFreeze();
+      // Server is the source of truth — accept its remaining count.
+      if (resp != null) {
+        state = state.copyWith(
+          xpFreezesAvailable: resp,
+          xpLastFreezeUsedDate: todayKey,
+        );
+      }
+      // Refresh the login streak so the home header reflects the bridged day.
+      await processDailyLogin();
+      debugPrint('✅ [XPProvider] XP streak freeze applied');
+    } catch (e) {
+      debugPrint('❌ [XPProvider] useFreeze error: $e');
+      // Roll back the optimistic decrement.
+      state = state.copyWith(
+        xpFreezesAvailable: state.xpFreezesAvailable + 1,
+      );
+    }
+  }
+
 }
