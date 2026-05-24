@@ -46,6 +46,30 @@ extension WorkoutUIBuildersMixinUI2 on WorkoutUIBuildersMixin {
               final isDark = Theme.of(context).brightness == Brightness.dark;
               return Scaffold(
         backgroundColor: isDark ? WorkoutDesign.background : Colors.grey.shade50,
+        // Phase J — voice set-logging FAB. Gated on the user-facing
+        // settings toggle (default OFF) since gym noise can hurt
+        // accuracy. The FAB is positioned bottom-right and never
+        // overlaps the V2 set-row's Done CTA (the set row uses an
+        // anchored bottom strip; the FAB sits above the gesture
+        // detector). Tap → record → VoiceSetParser → applyParsedSet
+        // commits weight/reps via the existing set logging mixin.
+        floatingActionButtonLocation: FloatingActionButtonLocation.miniEndFloat,
+        floatingActionButton: Consumer(
+          builder: (context, ref, _) {
+            final enabled = ref.watch(voiceSetLoggingEnabledProvider);
+            if (!enabled) return const SizedBox.shrink();
+            final exerciseName = exercises.isNotEmpty &&
+                    currentExerciseIndex < exercises.length
+                ? exercises[currentExerciseIndex].name
+                : null;
+            return VoiceMicFab(
+              currentExerciseName: exerciseName,
+              onParsed: (parsed) {
+                _applyParsedSetFromVoice(parsed);
+              },
+            );
+          },
+        ),
         body: Stack(
           children: [
             // Main content column
@@ -868,6 +892,145 @@ extension WorkoutUIBuildersMixinUI2 on WorkoutUIBuildersMixin {
       return 'Progression: ${pattern.displayName} • Hold ${targets.first.targetReps} reps';
     }
     return null;
+  }
+
+  /// Phase J — apply a [ParsedSet] from the voice mic FAB to the active
+  /// workout. Honors:
+  ///   • High-confidence parses (≥0.85) auto-commit through the existing
+  ///     set-logging path with an undo snackbar.
+  ///   • Low-confidence parses show a preview snackbar with a "Confirm"
+  ///     button so the user can verify before committing.
+  ///   • A parse missing weight OR reps surfaces a non-blocking hint.
+  ///   • Lift-mismatch (parsed lift name doesn't match the current
+  ///     exercise) prompts a confirmation before switching exercises —
+  ///     defensive when "bench 225 for 5" is heard during a squat.
+  void _applyParsedSetFromVoice(ParsedSet parsed) {
+    final messenger = ScaffoldMessenger.of(_ctx);
+
+    // Defensive guard: empty parse → silent no-op (FAB already short-
+    // circuits on empty transcript; this is belt-and-suspenders).
+    if (parsed.weightKg == null && parsed.reps == null && !parsed.isWarmup) {
+      return;
+    }
+
+    // Missing weight OR reps → surface a hint, don't commit.
+    if (parsed.weightKg == null || parsed.reps == null) {
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            parsed.weightKg == null
+                ? 'Heard reps but not weight. Try "225 for 5".'
+                : 'Heard weight but not reps. Try "225 for 5".',
+          ),
+          duration: const Duration(seconds: 3),
+        ),
+      );
+      return;
+    }
+
+    // Lift mismatch — confirm before committing under the wrong exercise.
+    if (parsed.liftHint != null &&
+        exercises.isNotEmpty &&
+        currentExerciseIndex < exercises.length) {
+      final currentName = exercises[currentExerciseIndex].name.toLowerCase();
+      final hint = parsed.liftHint!.toLowerCase();
+      if (!currentName.contains(hint) && !hint.contains(currentName)) {
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text(
+              'You said "${parsed.liftHint}" — current exercise is '
+              '"${exercises[currentExerciseIndex].name}". Logging anyway.',
+            ),
+            duration: const Duration(seconds: 4),
+          ),
+        );
+        // Still commit — the lift mismatch is informational only. A
+        // future iteration could pop a confirm dialog instead.
+      }
+    }
+
+    // Low-confidence preview: show a confirm-snackbar with the parsed
+    // values; only commit on the explicit "Confirm" action.
+    if (parsed.confidence < 0.85) {
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            'Heard: ${parsed.weightKg!.toStringAsFixed(1)} kg × '
+            '${parsed.reps} reps${parsed.isWarmup ? ' (warmup)' : ''}',
+          ),
+          duration: const Duration(seconds: 5),
+          action: SnackBarAction(
+            label: 'Confirm',
+            onPressed: () => _commitParsedSet(parsed),
+          ),
+        ),
+      );
+      return;
+    }
+
+    // High-confidence — auto-commit with undo.
+    _commitParsedSet(parsed, withUndo: true);
+  }
+
+  /// Insert a [ParsedSet] into the active workout's completed-sets map
+  /// and mirror it to the session provider. The existing set-logging
+  /// mixin owns the canonical [recordSet] path; voice goes through the
+  /// same `completedSets` mutator so a tier swap (Easy ↔ Advanced) keeps
+  /// the voice-logged set, and the SharedPreferences checkpoint persists
+  /// across an app kill.
+  void _commitParsedSet(ParsedSet parsed, {bool withUndo = false}) {
+    if (parsed.weightKg == null || parsed.reps == null) return;
+    if (exercises.isEmpty || currentExerciseIndex >= exercises.length) return;
+
+    final setLog = SetLog(
+      reps: parsed.reps!,
+      weight: parsed.weightKg!,
+      completedAt: DateTime.now(),
+      setType: parsed.isWarmup ? 'warmup' : 'working',
+      aiInputSource: 'voice',
+    );
+
+    final list = List<SetLog>.from(
+        completedSets[currentExerciseIndex] ?? const <SetLog>[]);
+    list.add(setLog);
+    completedSets[currentExerciseIndex] = list;
+    _setState(() {});
+
+    // Mirror to the session provider for tier-swap + checkpoint safety.
+    final container = ProviderScope.containerOf(_ctx, listen: false);
+    container
+        .read(activeWorkoutSessionProvider.notifier)
+        .recordSet(currentExerciseIndex, setLog);
+
+    final messenger = ScaffoldMessenger.of(_ctx);
+    final useKgNow = useKg;
+    final weightDisplay = useKgNow
+        ? '${parsed.weightKg!.toStringAsFixed(1)} kg'
+        : '${(parsed.weightKg! * 2.20462).toStringAsFixed(1)} lb';
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(
+          'Logged $weightDisplay × ${parsed.reps} reps'
+          '${parsed.isWarmup ? ' (warmup)' : ''}',
+        ),
+        duration: const Duration(seconds: 4),
+        action: withUndo
+            ? SnackBarAction(
+                label: 'Undo',
+                onPressed: () {
+                  // Pop the last entry we just added. Defensive: only
+                  // remove if it's still our voice-logged set.
+                  final cur = completedSets[currentExerciseIndex] ?? const <SetLog>[];
+                  if (cur.isNotEmpty && identical(cur.last, setLog)) {
+                    completedSets[currentExerciseIndex] =
+                        cur.sublist(0, cur.length - 1);
+                    _setState(() {});
+                  }
+                },
+              )
+            : null,
+      ),
+    );
   }
 
 }

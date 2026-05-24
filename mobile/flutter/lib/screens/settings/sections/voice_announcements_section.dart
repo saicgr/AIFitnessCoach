@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/providers/tts_provider.dart';
+import '../../../data/providers/voice_set_logging_provider.dart';
 import '../widgets/section_header.dart';
 
 /// The voice announcements section for configuring TTS settings.
@@ -70,6 +71,42 @@ class _VoiceAnnouncementsCard extends ConsumerWidget {
                         .read(voiceAnnouncementsProvider.notifier)
                         .setEnabled(value);
                   },
+          ),
+          Divider(height: 1, color: cardBorder, indent: 50),
+
+          // Phase J — voice set-logging FAB toggle. Default OFF. The
+          // FAB appears in the V2 active-workout scaffold only when
+          // this is on; gym noise can reduce accuracy so it's opt-in
+          // with a "headphones recommended" subtitle.
+          Consumer(
+            builder: (context, ref, _) {
+              final enabled = ref.watch(voiceSetLoggingEnabledProvider);
+              return SwitchListTile(
+                secondary: Icon(
+                  Icons.mic_none,
+                  color: enabled ? cyan : textSecondary,
+                  size: 22,
+                ),
+                title: const Text(
+                  'Voice set-logging',
+                  style: TextStyle(fontSize: 15),
+                ),
+                subtitle: Text(
+                  enabled
+                      ? 'Mic FAB on active workout — "225 for 5"'
+                      : 'Off — best with headphones; gym noise reduces accuracy',
+                  style: TextStyle(fontSize: 12, color: textMuted),
+                ),
+                value: enabled,
+                activeColor: cyan,
+                onChanged: (value) async {
+                  HapticFeedback.selectionClick();
+                  await ref
+                      .read(voiceSetLoggingEnabledProvider.notifier)
+                      .setEnabled(value);
+                },
+              );
+            },
           ),
           Divider(height: 1, color: cardBorder, indent: 50),
 
