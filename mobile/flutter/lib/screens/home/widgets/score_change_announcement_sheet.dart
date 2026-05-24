@@ -9,29 +9,44 @@
 /// One-shot: persisted under `score_change_v2_seen` in SharedPreferences.
 /// First call to [maybeShowScoreChangeAnnouncement] after that returns
 /// immediately without showing anything.
+///
+/// Uses the app's shared [GlassSheet] + [showGlassSheet] so it matches every
+/// other bottom sheet — glassmorphic, covers the floating Liquid Glass nav
+/// bar (which is itself an overlay), and respects the standard barrier.
 library;
+
+import 'dart:ui' show ImageFilter;
 
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/theme/theme_colors.dart';
-import '../../../widgets/liquid_glass_action_bar.dart';
+import '../../../widgets/glass_sheet.dart';
 import 'score_colors.dart';
 
 const String _kSeenKey = 'score_change_v2_seen';
 
 /// Show the sheet if it hasn't been shown to this device yet. Call once from
-/// the home screen's `initState` (post-frame so the sheet can use context).
+/// the home screen's `didChangeDependencies` (post-frame so the sheet can
+/// use context).
 Future<void> maybeShowScoreChangeAnnouncement(BuildContext context) async {
   try {
     final prefs = await SharedPreferences.getInstance();
     if (prefs.getBool(_kSeenKey) == true) return;
     if (!context.mounted) return;
-    await showModalBottomSheet<void>(
+    await showGlassSheet<void>(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => const _ScoreChangeSheet(),
+      // Enable drag/dismiss — this is informational, not blocking.
+      isDismissible: true,
+      enableDrag: true,
+      // Use our custom translucent panel rather than the shared GlassSheet
+      // widget. The shared one uses Colors.white.withValues(alpha: 0.7) for
+      // legibility on most prompt sheets, which reads as ~opaque. The
+      // announcement is purely informational and benefits from a stronger
+      // see-through effect (matches the iOS Control Center frosted look),
+      // so we override the surface tint + crank up the blur for this sheet
+      // only — no global GlassSheetStyle change.
+      builder: (_) => const _TranslucentGlassPanel(child: _ScoreChangeBody()),
     );
     // Persist after the sheet returns so an interrupted first-show (e.g.
     // the user backgrounded the app mid-sheet) gets another chance.
@@ -41,123 +56,172 @@ Future<void> maybeShowScoreChangeAnnouncement(BuildContext context) async {
   }
 }
 
-class _ScoreChangeSheet extends StatelessWidget {
-  const _ScoreChangeSheet();
+/// Custom translucent panel — bigger blur + lower surface alpha than the
+/// shared [GlassSheet] so background content actually reads through. Keeps
+/// the standard rounded-top corners + drag handle so it still matches the
+/// app's sheet shape.
+class _TranslucentGlassPanel extends StatelessWidget {
+  final Widget child;
+  const _TranslucentGlassPanel({required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    // Heavier blur than the shared GlassSheet (24 vs 12) + lower alpha for
+    // a real Control-Center-style frosted glass effect.
+    final surface = isDark
+        ? Colors.black.withValues(alpha: 0.32)
+        : Colors.white.withValues(alpha: 0.42);
+    final border = isDark
+        ? Colors.white.withValues(alpha: 0.16)
+        : Colors.white.withValues(alpha: 0.55);
+
+    return ClipRRect(
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+        child: Container(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.9,
+          ),
+          decoration: BoxDecoration(
+            color: surface,
+            borderRadius:
+                const BorderRadius.vertical(top: Radius.circular(28)),
+            border: Border(
+              top: BorderSide(color: border, width: 0.5),
+            ),
+          ),
+          child: SafeArea(
+            top: false,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Standard drag handle so dismiss is discoverable.
+                Padding(
+                  padding: const EdgeInsets.only(top: 12, bottom: 4),
+                  child: Container(
+                    width: 48,
+                    height: 5,
+                    decoration: BoxDecoration(
+                      color: (isDark ? Colors.white : Colors.black)
+                          .withValues(alpha: 0.45),
+                      borderRadius: BorderRadius.circular(3),
+                    ),
+                  ),
+                ),
+                Flexible(child: child),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ScoreChangeBody extends StatelessWidget {
+  const _ScoreChangeBody();
 
   @override
   Widget build(BuildContext context) {
     final c = ThemeColors.of(context);
-    // Lift the sheet above the floating Liquid Glass nav bar so it doesn't
-    // clip the tab bar (which is rendered as an overlay, not a Scaffold
-    // bottomNavigationBar, so MediaQuery padding doesn't account for it).
-    final safeBottom = MediaQuery.of(context).viewPadding.bottom;
-    final bottomGap = safeBottom + kLiquidGlassActionBarHeight + 12;
-    return SafeArea(
-      top: false,
-      bottom: false,
-      child: Container(
-        margin: EdgeInsets.fromLTRB(12, 0, 12, bottomGap),
-        decoration: BoxDecoration(
-          color: c.elevated,
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: c.cardBorder),
-        ),
-        padding: const EdgeInsets.fromLTRB(20, 22, 20, 20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Sparkle eyebrow
-            Row(
-              children: [
-                Container(
-                  width: 24,
-                  height: 24,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: LinearGradient(
-                      colors: [c.accent, c.accent.withValues(alpha: 0.70)],
-                    ),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 6, 20, 24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Sparkle eyebrow
+          Row(
+            children: [
+              Container(
+                width: 24,
+                height: 24,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                    colors: [c.accent, c.accent.withValues(alpha: 0.70)],
                   ),
-                  child:
-                      const Icon(Icons.auto_awesome, size: 13, color: Colors.white),
                 ),
-                const SizedBox(width: 8),
-                Text(
-                  'WHAT\'S NEW',
+                child: const Icon(Icons.auto_awesome,
+                    size: 13, color: Colors.white),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'WHAT\'S NEW',
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 1.1,
+                  color: c.accent,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Sleep now counts toward your daily score.',
+            style: TextStyle(
+              fontSize: 19,
+              fontWeight: FontWeight.w800,
+              height: 1.2,
+              letterSpacing: -0.3,
+              color: c.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'We added Sleep as a fourth pillar alongside Train, '
+            'Nourish, and Move. Your day score now reflects all four, '
+            'so a poor night shows up as a lower number and a solid '
+            'night helps it climb. Tap any ring to dig in.',
+            style: TextStyle(
+              fontSize: 13.5,
+              height: 1.5,
+              color: c.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 18),
+          // Pillar legend — four colored dots + labels so the user can match
+          // what they're about to see on the score card.
+          Wrap(
+            spacing: 14,
+            runSpacing: 8,
+            children: const [
+              _LegendChip(label: 'Train', color: kTrainColor, weight: 40),
+              _LegendChip(label: 'Nourish', color: kFuelColor, weight: 30),
+              _LegendChip(label: 'Move', color: kMoveColor, weight: 15),
+              _LegendChip(label: 'Sleep', color: kSleepColor, weight: 15),
+            ],
+          ),
+          const SizedBox(height: 22),
+          Row(
+            children: [
+              const Spacer(),
+              FilledButton(
+                onPressed: () => Navigator.of(context).maybePop(),
+                style: FilledButton.styleFrom(
+                  backgroundColor: c.accent,
+                  foregroundColor: c.accentContrast,
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 22, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                ),
+                child: const Text(
+                  'Got it',
                   style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 1.1,
-                    color: c.accent,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'Sleep now counts toward your daily score.',
-              style: TextStyle(
-                fontSize: 19,
-                fontWeight: FontWeight.w800,
-                height: 1.2,
-                letterSpacing: -0.3,
-                color: c.textPrimary,
               ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'We added Sleep as a fourth pillar alongside Train, '
-              'Nourish, and Move. Your day score now reflects all four — '
-              'so a poor night shows up as a lower number, and a solid '
-              'night helps it climb. Tap any ring to dig in.',
-              style: TextStyle(
-                fontSize: 13.5,
-                height: 1.5,
-                color: c.textSecondary,
-              ),
-            ),
-            const SizedBox(height: 18),
-            // Pillar legend — four colored dots + labels in one row so the
-            // user can match what they're about to see on the score card.
-            Wrap(
-              spacing: 14,
-              runSpacing: 8,
-              children: const [
-                _LegendChip(label: 'Train', color: kTrainColor, weight: 40),
-                _LegendChip(label: 'Nourish', color: kFuelColor, weight: 30),
-                _LegendChip(label: 'Move', color: kMoveColor, weight: 15),
-                _LegendChip(label: 'Sleep', color: kSleepColor, weight: 15),
-              ],
-            ),
-            const SizedBox(height: 22),
-            Row(
-              children: [
-                const Spacer(),
-                FilledButton(
-                  onPressed: () => Navigator.of(context).maybePop(),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: c.accent,
-                    foregroundColor: c.accentContrast,
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 22, vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                  ),
-                  child: const Text(
-                    'Got it',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
+            ],
+          ),
+        ],
       ),
     );
   }

@@ -26,6 +26,21 @@ String? coachLineFor(TodayScore score, {DateTime? now}) {
   return body;
 }
 
+/// Time-of-day bucket in the user's local time. Drives tone branching in the
+/// deterministic fallback so the message reads differently morning vs evening
+/// (matches the server-side Gemini path, which has full prompt branching).
+enum CoachTimeBucket { morning, midday, afternoon, evening, late }
+
+CoachTimeBucket _timeBucket(DateTime now) {
+  final h = now.hour;
+  if (h < 5) return CoachTimeBucket.late; // 0–4: still up / wee hours
+  if (h < 11) return CoachTimeBucket.morning; // 5–10
+  if (h < 14) return CoachTimeBucket.midday; // 11–13
+  if (h < 18) return CoachTimeBucket.afternoon; // 14–17
+  if (h < 22) return CoachTimeBucket.evening; // 18–21
+  return CoachTimeBucket.late; // 22–23
+}
+
 /// Headline (1 short sentence, ≤8 words) for the coach hero card.
 String? coachHeadline(
   TodayScore score, {
@@ -34,13 +49,39 @@ String? coachHeadline(
   DateTime? now,
 }) {
   if (score.isSetupState) return null;
-  final ctx = _leverageContext(score, now: now);
+  final t = now ?? DateTime.now();
+  final ctx = _leverageContext(score, now: t);
+
+  // Time-aware overlay — runs FIRST on the morning + late buckets where the
+  // generic leverage-driven headline reads off-tone (e.g. "lift first" at
+  // 11pm is silly). Mid-day / afternoon / evening fall through to the
+  // existing leverage-driven pool.
+  final bucket = _timeBucket(t);
+  if (bucket == CoachTimeBucket.morning) {
+    final pool = _morningHeadlines;
+    final template = pool[_dailyIndex(pool.length, t)];
+    return _interpolate(template,
+        name: firstName,
+        workout: workoutName,
+        reach: ctx?.reach ?? score.score,
+        kind: ctx?.kind ?? ContributorKind.train);
+  }
+  if (bucket == CoachTimeBucket.late) {
+    final pool = _latePool;
+    final template = pool[_dailyIndex(pool.length, t)];
+    return _interpolate(template,
+        name: firstName,
+        workout: workoutName,
+        reach: ctx?.reach ?? score.score,
+        kind: ctx?.kind ?? ContributorKind.sleep);
+  }
+
   if (ctx == null) {
-    return _allDoneHeadlines[_dailyIndex(_allDoneHeadlines.length, now)]
+    return _allDoneHeadlines[_dailyIndex(_allDoneHeadlines.length, t)]
         .replaceAll('{name}', _safeName(firstName));
   }
   final pool = _headlinePoolFor(ctx.kind);
-  final template = pool[_dailyIndex(pool.length, now)];
+  final template = pool[_dailyIndex(pool.length, t)];
   return _interpolate(template,
       name: firstName, workout: workoutName, reach: ctx.reach, kind: ctx.kind);
 }
@@ -53,12 +94,35 @@ String? coachBody(
   DateTime? now,
 }) {
   if (score.isSetupState) return null;
-  final ctx = _leverageContext(score, now: now);
+  final t = now ?? DateTime.now();
+  final ctx = _leverageContext(score, now: t);
+
+  // Same time-aware overlay as the headline so the pair reads coherently.
+  final bucket = _timeBucket(t);
+  if (bucket == CoachTimeBucket.morning) {
+    final pool = _morningBodies;
+    final template = pool[_dailyIndex(pool.length, t)];
+    return _interpolate(template,
+        name: firstName,
+        workout: workoutName,
+        reach: ctx?.reach ?? score.score,
+        kind: ctx?.kind ?? ContributorKind.train);
+  }
+  if (bucket == CoachTimeBucket.late) {
+    final pool = _lateBodies;
+    final template = pool[_dailyIndex(pool.length, t)];
+    return _interpolate(template,
+        name: firstName,
+        workout: workoutName,
+        reach: ctx?.reach ?? score.score,
+        kind: ctx?.kind ?? ContributorKind.sleep);
+  }
+
   if (ctx == null) {
-    return _allDoneBodies[_dailyIndex(_allDoneBodies.length, now)];
+    return _allDoneBodies[_dailyIndex(_allDoneBodies.length, t)];
   }
   final pool = _bodyPoolFor(ctx.kind);
-  final template = pool[_dailyIndex(pool.length, now)];
+  final template = pool[_dailyIndex(pool.length, t)];
   return _interpolate(template,
       name: firstName, workout: workoutName, reach: ctx.reach, kind: ctx.kind);
 }
@@ -269,4 +333,53 @@ const List<String> _allDoneBodies = [
   'All four contributors at goal.',
   'Day complete. Tomorrow\'s your reset.',
   'You did everything the plan asked for.',
+];
+
+// ── Time-aware overlays (morning + late) ─────────────────────────────
+// These run BEFORE the leverage-driven pools so the message reads naturally
+// at the edges of the day. Use {workout} when available; the {reach} token
+// is still substituted from the current score.
+
+const List<String> _morningHeadlines = [
+  'Good morning, {name}.',
+  '{name}, fresh slate.',
+  'Morning, {name}. Day\'s open.',
+  '{name}, here\'s your setup.',
+  'Hey {name}, easy start?',
+  'Morning hit list, {name}.',
+  '{name}, plan\'s ready.',
+  'Up early, {name}? Let\'s go.',
+];
+
+const List<String> _morningBodies = [
+  'Plan today around {workout}. Hit it and you\'re at {reach}.',
+  'You\'ve got {workout} on deck. Knock it out and the day climbs to {reach}.',
+  'Open with hydration, then food. {workout} is the lever — land it for {reach}.',
+  'Start protein early so Nourish isn\'t the lever later. {workout} closes the day.',
+  'Get your steps in before the desk traps you. {workout} for {reach}.',
+  'Easy meal first, {workout} second. That puts the day at {reach}.',
+  'Set the tone: hit your protein and your workout. Lands {reach}.',
+  '{workout} is today\'s headline. Everything else flows from there.',
+];
+
+const List<String> _latePool = [
+  '{name}, wind down soon.',
+  'Late hour, {name}.',
+  '{name}, tomorrow\'s on the line.',
+  'Bed pays you back, {name}.',
+  '{name}, screen off, lights down.',
+  'Recovery is the lever now.',
+  '{name}, tomorrow starts tonight.',
+  'Sleep is the highest-leverage move.',
+];
+
+const List<String> _lateBodies = [
+  'Sleep is the highest-leverage move right now. Aim for goal length tonight.',
+  'Get to bed at your usual time and tomorrow opens with momentum.',
+  'Tonight\'s sleep is on tomorrow\'s scorecard. Wind down within 30 minutes.',
+  'Screens off, lights down. A goal-length night protects the whole next day.',
+  'Skip the late scroll — Sleep is one of your four pillars now.',
+  'The Sleep ring rewards consistency. Same bedtime as last night, please.',
+  'Anything you do now costs you Sleep. Bed first, list tomorrow.',
+  'You\'ve done enough today. The smart move is rest.',
 ];

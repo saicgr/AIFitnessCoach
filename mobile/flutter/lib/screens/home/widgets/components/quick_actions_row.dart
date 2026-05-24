@@ -340,9 +340,17 @@ class CompactQuickActionsRow extends ConsumerWidget {
     final order = ref.watch(quickActionOrderProvider);
     final expanded = ref.watch(quickActionsExpandedProvider);
 
-    // First 5 (single-row) or first 11 (two-row) slot IDs; "More" is appended
-    // by this widget and is never part of the user's order list.
-    final slotIds = homeQuickActionSlotIds(order, expanded: expanded);
+    // Two-row expanded mode keeps the historical 11-cap (slot 12 = More)
+    // because it's laid out as a fixed 2×6 grid. Single-row scrollable mode
+    // shows EXACTLY 6 user-configured slots + a trailing More chip — never
+    // more, never less. 5 fit fully on a 390pt iPhone with the 6th peeking,
+    // scroll right to reveal the 6th + More.
+    final slotIds = expanded
+        ? homeQuickActionSlotIds(order, expanded: true)
+        : order
+            .where((id) => quickActionRegistry.containsKey(id))
+            .take(6)
+            .toList();
 
     // Lay the slots out 6-per-row. The final slot is always the "More" tile.
     final List<Widget> tiles = [
@@ -390,82 +398,49 @@ class CompactQuickActionsRow extends ConsumerWidget {
   }
 }
 
-/// Horizontally scrollable quick-actions row with a pinned More chip on the
-/// right. Default state shows 5 user-configured slots + a peek of the 6th to
-/// signal scrollability; deeper configurations (slots 6+) become reachable
-/// by horizontal scroll. The More chip stays anchored to the right edge so
-/// users never lose the "all actions" affordance.
+/// Horizontally scrollable quick-actions row.
+///
+/// All configured slots + the More chip live in a single horizontal
+/// `ListView`. The first 5 chips fit on a 390pt iPhone; the rest (plus More
+/// as the last cell) become reachable by scrolling. No pinned overlay, no
+/// fade — just clean scroll behaviour so the user never sees a seam.
+///
+/// Honors `feedback_quick_actions_layout.md` — More is still always present,
+/// just as the last item in the scroll instead of a pinned chip.
 class _ScrollableQuickRow extends ConsumerWidget {
   final List<String> slotIds;
   final bool isDark;
   const _ScrollableQuickRow({required this.slotIds, required this.isDark});
 
-  /// Width reserved for the pinned More chip + a small left fade.
-  static const double _morePinnedWidth = 64;
-
-  /// Approximate width of one chip cell (icon + label). Tuned so 5 chips +
-  /// half-peek of a 6th fits on a 390pt-wide iPhone (390 - 32pt padding = 358;
-  /// 358 / 5.5 ≈ 65pt per chip; with pinned-more reservation we land at ~64pt).
+  /// Width per chip cell — tuned so the user's 5 configured slots
+  /// (Coach / Log Food / Scan Menu / Water / Weight by default) are FULLY
+  /// visible and the 6th cell (the trailing More chip) peeks ~60% past the
+  /// right edge of the viewport (Oura's scroll-affordance pattern). On a
+  /// 390pt iPhone (358pt usable after the 16pt outer padding on each side),
+  /// 64pt cells render 5 full chips + ~38pt of More peeking. On iPhone SE
+  /// (288pt usable) we get 4 full + ~32pt peek of the 5th.
   static const double _chipWidth = 64;
 
-  /// Row height — must clear the chip cell's intrinsic min height:
-  /// 4 + 40 (icon chip) + 5 + 24 (label, 2-line height) + 4 = 77pt.
-  /// 80 gives a 3pt cushion + matches the buildRow path's natural feel.
+  /// Row height must clear the chip cell's intrinsic min:
+  /// 4 + 40 (icon chip) + 5 + 24 (2-line label) + 4 = 77pt. 80 = 3pt cushion.
   static const double _rowHeight = 80;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final cellCount = slotIds.length + 1; // +1 for the trailing More chip
     return SizedBox(
       height: _rowHeight,
-      child: Stack(
-        children: [
-          // Scrollable cells. Right padding leaves room for the pinned More
-          // chip so content can never underlap it (except as an intended fade).
-          Positioned.fill(
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              physics: const BouncingScrollPhysics(),
-              padding: const EdgeInsets.only(right: _morePinnedWidth),
-              itemCount: slotIds.length,
-              itemBuilder: (context, i) {
-                return SizedBox(
-                  width: _chipWidth,
-                  child: _buildHomeSlot(slotIds[i], isDark, context, ref),
-                );
-              },
-            ),
-          ),
-          // Left-edge fade under the More chip so the scrollable content
-          // dissolves cleanly behind it instead of looking clipped.
-          Positioned(
-            right: _morePinnedWidth - 4,
-            top: 0,
-            bottom: 0,
-            width: 18,
-            child: IgnorePointer(
-              child: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.centerLeft,
-                    end: Alignment.centerRight,
-                    colors: [
-                      Colors.transparent,
-                      Theme.of(context).scaffoldBackgroundColor,
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-          // Pinned More chip — never scrolls, always reachable.
-          Positioned(
-            right: 0,
-            top: 0,
-            bottom: 0,
-            width: _morePinnedWidth - 6,
-            child: _MoreActionsButton(isDark: isDark),
-          ),
-        ],
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        // No outer horizontal padding here — the parent already adds 16pt.
+        itemCount: cellCount,
+        itemBuilder: (context, i) {
+          final child = i == slotIds.length
+              ? _MoreActionsButton(isDark: isDark)
+              : _buildHomeSlot(slotIds[i], isDark, context, ref);
+          return SizedBox(width: _chipWidth, child: child);
+        },
       ),
     );
   }

@@ -276,7 +276,9 @@ class _RingCell extends StatelessWidget {
     final c = ThemeColors.of(context);
     final isUnavailable = data.applicable == false;
     final progress = data.completion.clamp(0.0, 1.0);
-    final pctText = isUnavailable ? '—' : '${(progress * 100).round()}%';
+    // Show just the integer score, no '%' suffix (Oura/Whoop convention —
+    // reads as "Train 67" not "Train 67 percent done").
+    final pctText = isUnavailable ? '—' : '${(progress * 100).round()}';
 
     return GestureDetector(
       onTap: onTap,
@@ -297,7 +299,12 @@ class _RingCell extends StatelessWidget {
                       progress: progress,
                       color: spec.color,
                       trackColor: c.cardBorder,
-                      goalTickAt: isUnavailable ? null : 1.0,
+                      // Goal-tick removed — it was always at 100% (= the end
+                      // of the arc), so it duplicated the progress arc's
+                      // rounded cap without adding meaning. If we later want
+                      // to mark yesterday's score or a stretch goal, this
+                      // is where it'd be wired back in.
+                      goalTickAt: null,
                       isZero: !isUnavailable && progress == 0,
                     ),
                   ),

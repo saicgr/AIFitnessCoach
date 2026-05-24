@@ -77,27 +77,31 @@ class G1RingPainter extends CustomPainter {
     final Rect arcRect = Rect.fromCircle(center: center, radius: r);
 
     // 1) Halo backdrop ----------------------------------------------------
-    // Mock: radialGradient cx=50% cy=50% r=55% — 40% transparent → 100% at 0.22 alpha.
-    // We approximate that two-stop ramp with a 3-stop Flutter RadialGradient
-    // so the inner ~40% is fully transparent before fading up.
+    // Tightened from the original 0.22 alpha + r+10 outer halo, which was
+    // making the rings read "puffy" on the actual device. Now: a much subtler
+    // radial wash that only kicks in at the very edge so the ring stays
+    // visually crisp at the typical 84pt home-card size.
     final Paint haloPaint = Paint()
       ..shader = RadialGradient(
         colors: [
           color.withValues(alpha: 0.0),
           color.withValues(alpha: 0.0),
-          color.withValues(alpha: 0.22),
+          color.withValues(alpha: 0.10),
         ],
-        stops: const [0.0, 0.40, 1.0],
+        stops: const [0.0, 0.62, 1.0],
       ).createShader(
-        Rect.fromCircle(center: center, radius: r + 10),
+        Rect.fromCircle(center: center, radius: r + 4),
       );
-    canvas.drawCircle(center, r + 10, haloPaint);
+    canvas.drawCircle(center, r + 4, haloPaint);
 
     // 2) Full-circle ghost outline ---------------------------------------
+    // The Whoop/Bevel ghost ring effect — a thin full-circle outline at low
+    // alpha that gives the ring depth without competing with the progress
+    // arc. Drawn UNDER the track so the open-arc gap reads clearly.
     final Paint ghostPaint = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.2
-      ..color = color.withValues(alpha: 0.14);
+      ..strokeWidth = 1.0
+      ..color = color.withValues(alpha: 0.16);
     canvas.drawCircle(center, r, ghostPaint);
 
     // 3) 270° track arc ---------------------------------------------------
@@ -151,52 +155,62 @@ class G1RingPainter extends CustomPainter {
     }
   }
 
-  /// Fills the 270° arc band area with 45° diagonal hatch lines (3pt spacing,
-  /// 1pt thick, `color.withOpacity(0.55)`). Clipped to a ring band of width
-  /// [kG1Stroke] around radius r, and further clipped to the 270° sector so
-  /// the hatch doesn't bleed into the top gap.
+  /// Fills the 270° arc band area with 45° diagonal hatch lines.
+  ///
+  /// Old impl used a wedge-sector + ring intersect that was geometrically
+  /// correct but Path.combine was clipping the hatch to only one quadrant on
+  /// device (visible in the user's first-launch screenshot). This rewrite
+  /// builds the band as an explicit horseshoe path — outer arc, inline-line,
+  /// inner reverse-arc, close — which clips reliably on Skia.
   void _paintZeroHatch(Canvas canvas, Offset center, double r) {
-    canvas.save();
-
-    // Build a ring-band clip (outer radius - inner radius == kG1Stroke).
-    final Path ring = Path()
-      ..addOval(Rect.fromCircle(center: center, radius: r + kG1Stroke / 2))
-      ..addOval(Rect.fromCircle(center: center, radius: r - kG1Stroke / 2))
-      ..fillType = PathFillType.evenOdd;
-
-    // Sector clip for the 270° span. Built as a wedge from the centre.
     final double startRad = kG1StartAngleDeg * math.pi / 180.0;
     final double sweepRad = kG1SweepDeg * math.pi / 180.0;
-    final Path sector = Path()
-      ..moveTo(center.dx, center.dy)
-      ..lineTo(
-        center.dx + (r + kG1Stroke) * math.cos(startRad),
-        center.dy + (r + kG1Stroke) * math.sin(startRad),
-      )
+    final double endRad = startRad + sweepRad;
+    final double outerR = r + kG1Stroke / 2;
+    final double innerR = r - kG1Stroke / 2;
+
+    // Horseshoe band path. forceMoveTo=true on the first arc so the path
+    // starts cleanly at the outer-start point; the inner reverse arc + close
+    // seal the band.
+    final Path band = Path()
       ..arcTo(
-        Rect.fromCircle(center: center, radius: r + kG1Stroke),
+        Rect.fromCircle(center: center, radius: outerR),
         startRad,
         sweepRad,
+        true,
+      )
+      ..lineTo(
+        center.dx + innerR * math.cos(endRad),
+        center.dy + innerR * math.sin(endRad),
+      )
+      ..arcTo(
+        Rect.fromCircle(center: center, radius: innerR),
+        endRad,
+        -sweepRad,
         false,
       )
       ..close();
 
-    // Intersect ring ∩ sector.
-    final Path clip = Path.combine(PathOperation.intersect, ring, sector);
-    canvas.clipPath(clip);
+    canvas.save();
+    canvas.clipPath(band);
 
     final Paint hatchPaint = Paint()
       ..color = color.withValues(alpha: 0.55)
       ..strokeWidth = 1.0
       ..style = PaintingStyle.stroke;
 
-    final double diag = (r + kG1Stroke) * 2;
+    // Walk 45° diagonals across the bounding box of the band. Inflating by
+    // the band height ensures the lines extend past every edge.
+    final Rect bbox = band.getBounds().inflate(outerR);
     const double spacing = 3.0;
-    // Walk lines across a square that bounds the ring, drawing 45° diagonals.
-    for (double d = -diag; d <= diag; d += spacing) {
-      final Offset p1 = Offset(center.dx + d, center.dy - diag);
-      final Offset p2 = Offset(center.dx + d + diag * 2, center.dy + diag);
-      canvas.drawLine(p1, p2, hatchPaint);
+    for (double d = bbox.left - bbox.height;
+        d <= bbox.right + bbox.height;
+        d += spacing) {
+      canvas.drawLine(
+        Offset(d, bbox.top),
+        Offset(d + bbox.height, bbox.bottom),
+        hatchPaint,
+      );
     }
 
     canvas.restore();

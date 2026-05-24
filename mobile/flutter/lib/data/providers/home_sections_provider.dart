@@ -210,15 +210,18 @@ const List<HomeSection> _defaultOrder = [
 
 const HomeSectionsState _defaultState = HomeSectionsState(
   order: _defaultOrder,
-  hidden: <HomeSection>{},
+  // Week strip is hidden by default (2026-05-23). The 7-day streak ring is
+  // already represented by the Today Score and the date strip on detail
+  // screens; surfacing it on home again competed with the score card for
+  // attention. Users who want it back can re-enable from My Space.
+  hidden: <HomeSection>{HomeSection.weekStrip},
 );
 
-// v3: coach hero inserted above the Today Score; habits moved to Profile.
-// Bumping the key forces a one-time migration to the new default for existing
-// users so they pick up the coach hero in the right slot without it landing
-// at the bottom.
+// v3 order: coach hero inserted above the Today Score; habits moved to Profile.
+// v2 hidden: weekStrip hidden by default. Bumping each key forces a one-time
+// migration to the new default for existing users.
 const String _kOrderKey = 'home_section_order_v3';
-const String _kHiddenKey = 'home_section_hidden_v1';
+const String _kHiddenKey = 'home_section_hidden_v2';
 
 /// Persists the user's "My Space" home-section layout (order + visibility)
 /// to SharedPreferences and exposes it to `home_screen.dart`.
@@ -231,7 +234,12 @@ class HomeSectionsNotifier extends StateNotifier<HomeSectionsState> {
     try {
       final prefs = await SharedPreferences.getInstance();
       final savedOrder = prefs.getStringList(_kOrderKey);
-      final savedHidden = prefs.getStringList(_kHiddenKey) ?? const [];
+      // Distinguish "user has never persisted under this key" (null) from
+      // "user explicitly cleared their hides" (empty list). The null case
+      // must fall back to `_defaultState.hidden` (e.g. weekStrip hidden by
+      // default in v2) instead of starting from an empty set, otherwise
+      // bumping the storage-key version effectively un-hides everything.
+      final savedHiddenRaw = prefs.getStringList(_kHiddenKey);
 
       // Rebuild the order: take saved keys that still map to a real section,
       // then append any section the saved layout didn't know about (e.g. a
@@ -254,6 +262,12 @@ class HomeSectionsNotifier extends StateNotifier<HomeSectionsState> {
       }
 
       final hidden = <HomeSection>{};
+      // If the user has never written to the current hidden-key version,
+      // seed from the new default; otherwise honor what they persisted.
+      if (savedHiddenRaw == null) {
+        hidden.addAll(_defaultState.hidden);
+      }
+      final savedHidden = savedHiddenRaw ?? const <String>[];
       for (final key in savedHidden) {
         final s = HomeSectionMeta.fromStorageKey(key);
         if (s != null) hidden.add(s);

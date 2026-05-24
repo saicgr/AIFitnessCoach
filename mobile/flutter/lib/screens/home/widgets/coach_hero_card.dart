@@ -141,7 +141,10 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
     );
   }
 
-  Widget _eyebrow(ThemeColors c, bool isFallback) {
+  Widget _eyebrow(ThemeColors c, bool _) {
+    // OFFLINE chip removed — was a dev-debug indicator visible to end users.
+    // The deterministic fallback should read as a normal coach voice; no need
+    // to surface "the server is down" to the user.
     return Row(
       children: [
         Container(
@@ -166,25 +169,6 @@ class _CoachHeroCardState extends ConsumerState<CoachHeroCard> {
             color: c.accent,
           ),
         ),
-        if (isFallback) ...[
-          const SizedBox(width: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-            decoration: BoxDecoration(
-              color: c.textMuted.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: Text(
-              'OFFLINE',
-              style: TextStyle(
-                fontSize: 8,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 0.8,
-                color: c.textMuted,
-              ),
-            ),
-          ),
-        ],
       ],
     );
   }
