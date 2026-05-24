@@ -2821,12 +2821,127 @@ extension __LogMealSheetStateExt1 on _LogMealSheetState {
       }
     } catch (e) {
       debugPrint('❌ [LogMeal] Barcode scan error | error=$e');
-      setState(() {
-        _isLoading = false;
-        _hasScanned = false;
-        _error = e.toString();
-      });
+      final friendly = _friendlyBarcodeError(e);
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _hasScanned = false;
+          _error = friendly;
+        });
+        _showBarcodeNotFoundRecovery(friendly);
+      }
     }
+  }
+
+  /// Map a barcode lookup failure to copy a user can act on. The Dio raw
+  /// exception ("DioException [bad response]: 404 …") is hostile UX —
+  /// pick a short sentence per real cause and let the recovery sheet
+  /// offer the next step.
+  String _friendlyBarcodeError(Object e) {
+    if (e is DioException) {
+      final code = e.response?.statusCode;
+      if (code == 404) {
+        return "We couldn't find that product in our food database. You can log it manually instead.";
+      }
+      if (code == 400) {
+        return "That barcode didn't look valid. Try scanning again with the whole code in frame.";
+      }
+      if (code == 503 || code == 502 || code == 504) {
+        return "The food database is temporarily unavailable. Please try again shortly.";
+      }
+      if (code == 401 || code == 403) {
+        return "Your session expired while scanning. Sign back in and try again.";
+      }
+      if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout ||
+          e.type == DioExceptionType.sendTimeout ||
+          e.type == DioExceptionType.connectionError) {
+        return "Network hiccup. Check your connection and try the scan again.";
+      }
+    }
+    return "Barcode scan failed. Please try again or log this food manually.";
+  }
+
+  /// Bottom sheet shown after a failed barcode scan that lets the user
+  /// jump straight into manual logging instead of staring at a red error
+  /// box.
+  void _showBarcodeNotFoundRecovery(String message) {
+    if (!mounted) return;
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (sheetCtx) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Material(
+              color: Theme.of(sheetCtx).colorScheme.surface,
+              borderRadius: BorderRadius.circular(20),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 22, 20, 16),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.qr_code_scanner_outlined,
+                          color: Theme.of(sheetCtx).colorScheme.primary,
+                        ),
+                        const SizedBox(width: 10),
+                        const Expanded(
+                          child: Text(
+                            'Barcode scan',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      message,
+                      style: const TextStyle(fontSize: 15, height: 1.35),
+                    ),
+                    const SizedBox(height: 18),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () => Navigator.pop(sheetCtx),
+                            child: const Text('Try again'),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: FilledButton(
+                            onPressed: () {
+                              Navigator.pop(sheetCtx);
+                              if (mounted) {
+                                setState(() {
+                                  _error = null;
+                                  _sourceType = 'text';
+                                  _inputType = 'text';
+                                });
+                              }
+                            },
+                            child: const Text('Log manually'),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
   }
 
 

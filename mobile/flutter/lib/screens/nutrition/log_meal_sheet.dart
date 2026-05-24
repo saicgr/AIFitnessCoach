@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/cupertino.dart' show CupertinoIcons;
+import 'package:dio/dio.dart' show DioException, DioExceptionType;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'dart:typed_data';
