@@ -15,6 +15,7 @@ import '../../data/services/health_goals_service.dart';
 import '../../data/services/health_service.dart';
 import '../../widgets/date_strip.dart';
 import '../../widgets/glass_back_button.dart';
+import '../../widgets/metric_detail/metric_card_chrome.dart';
 import '../home/widgets/score_colors.dart';
 import 'full_screen_chart_screen.dart';
 import 'widgets/ask_coach_button.dart';
@@ -1175,26 +1176,22 @@ Widget _emptyChartText(String msg, bool isDark) {
   );
 }
 
+// Phase A.5 — `_Card` and `_CardHeader` were extracted to
+// `lib/widgets/metric_detail/metric_card_chrome.dart` so the new cardio
+// detail screens (race predictor / training load / VO2max) and any
+// future metric detail can reuse the same chrome without duplicating
+// the ~50 LOC of styling. These thin private wrappers preserve every
+// call site in this file (`_Card(isDark: ..., child: ...)`) with byte-
+// identical output, so the pillar screens render pixel-for-pixel the
+// same as before — no visual regression risk.
 class _Card extends StatelessWidget {
   final Widget child;
   final bool isDark;
   const _Card({required this.child, required this.isDark});
 
   @override
-  Widget build(BuildContext context) {
-    final elevated = isDark ? AppColors.elevated : AppColorsLight.elevated;
-    final cardBorder =
-        isDark ? AppColors.cardBorder : AppColorsLight.cardBorder;
-    return Container(
-      decoration: BoxDecoration(
-        color: elevated,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: cardBorder, width: 1),
-      ),
-      padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
-      child: child,
-    );
-  }
+  Widget build(BuildContext context) =>
+      MetricCardChrome(isDark: isDark, child: child);
 }
 
 class _CardHeader extends StatelessWidget {
@@ -1210,33 +1207,10 @@ class _CardHeader extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    final textPrimary =
-        isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
-    return Row(
-      children: [
-        Container(
-          width: 32,
-          height: 32,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.18),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Icon(icon, color: color, size: 16),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Text(
-            title,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
-              color: textPrimary,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
+  Widget build(BuildContext context) => MetricCardHeader(
+        icon: icon,
+        color: color,
+        title: title,
+        isDark: isDark,
+      );
 }
