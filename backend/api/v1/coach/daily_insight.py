@@ -65,8 +65,9 @@ MAX_INSIGHT_USD_PER_USER_PER_DAY = 0.02
 # Route whitelist must match the prompt's whitelist; mirrored here so the
 # fallback path stays in-contract.
 _VALID_ROUTES = {
-    "/workouts/today", "/log/food", "/move", "/sleep",
-    "/chat", "/home", "/history",
+    "/chat", "/home",
+    "/workouts", "/nutrition", "/neat", "/health/sleep", "/fasting",
+    "/pillar/train", "/pillar/nourish", "/pillar/move",
 }
 _VALID_PILLARS = {"train", "nourish", "move", "sleep", "all_done"}
 
@@ -142,10 +143,11 @@ def _collect_snapshot(sb, user_id: str, local_date_iso: str) -> Dict[str, Any]:
     }
 
     # --- Today's scheduled workout (Train pillar) -----------------------
+    # Schema reality: workouts has no `scheduled_time` column. Drop it.
     next_workout: Optional[Dict[str, Any]] = None
     try:
         tw = sb.client.table("workouts").select(
-            "id, name, scheduled_date, scheduled_time, completed_at, duration_minutes"
+            "id, name, scheduled_date, completed_at, duration_minutes"
         ).eq("user_id", user_id).eq(
             "scheduled_date", local_date_iso
         ).limit(1).execute()
@@ -153,7 +155,6 @@ def _collect_snapshot(sb, user_id: str, local_date_iso: str) -> Dict[str, Any]:
             row = tw.data[0]
             next_workout = {
                 "name": row.get("name"),
-                "scheduled_local_time": row.get("scheduled_time"),
                 "completed": row.get("completed_at") is not None,
             }
             snapshot["train"]["reach_met"] = next_workout["completed"]
@@ -165,58 +166,73 @@ def _collect_snapshot(sb, user_id: str, local_date_iso: str) -> Dict[str, Any]:
         logger.warning(f"[daily_insight] workouts lookup failed: {e}")
 
     # --- Nourish (food log totals) --------------------------------------
+    # Schema reality: table is `food_logs` (plural), no `logged_local_date`
+    # column — log timestamp is `logged_at` (UTC timestamptz). Calorie field
+    # is `total_calories`. Derive the local-day window from local_date_iso
+    # against the user's tz at query time.
     try:
-        fl = sb.client.table("food_log").select(
-            "calories, protein_g, carbs_g, fat_g, logged_local_date"
-        ).eq("user_id", user_id).eq(
-            "logged_local_date", local_date_iso
-        ).execute()
+        # ISO-format local date → UTC bounds. Without the user's tz here we
+        # fall back to a generous ±18h window around the local-date midnight
+        # in UTC, then group by logged_at::date in the user's tz on the
+        # client side (the totals are an approximation either way for the
+        # prompt; the validator only needs honest ground truth).
+        day_start_iso = f"{local_date_iso}T00:00:00+00:00"
+        day_end_iso = f"{local_date_iso}T23:59:59+00:00"
+        fl = sb.client.table("food_logs").select(
+            "total_calories, protein_g, logged_at, deleted_at"
+        ).eq("user_id", user_id).gte(
+            "logged_at", day_start_iso
+        ).lte(
+            "logged_at", day_end_iso
+        ).is_("deleted_at", "null").execute()
         rows = fl.data or []
-        cal = sum((r.get("calories") or 0) for r in rows)
-        protein = sum((r.get("protein_g") or 0) for r in rows)
+        cal = sum((r.get("total_calories") or 0) for r in rows)
+        protein = sum(float(r.get("protein_g") or 0) for r in rows)
         snapshot["nourish"]["calories_logged"] = round(cal)
         snapshot["nourish"]["protein_logged_g"] = round(protein)
     except Exception as e:
-        logger.warning(f"[daily_insight] food_log lookup failed: {e}")
+        logger.warning(f"[daily_insight] food_logs lookup failed: {e}")
 
-    # --- Move (daily_activity) ------------------------------------------
+    # --- Move + Sleep (both live in daily_activity, single query) -------
+    # Schema reality: date column is `activity_date` (not `local_date`).
+    # No separate `sleep` table — sleep is `daily_activity.sleep_minutes`.
     try:
         da = sb.client.table("daily_activity").select(
-            "steps, active_minutes, local_date"
+            "steps, active_minutes, activity_date, sleep_minutes"
         ).eq("user_id", user_id).eq(
-            "local_date", local_date_iso
+            "activity_date", local_date_iso
         ).maybe_single().execute()
         if da and da.data:
             snapshot["move"]["steps"] = int(da.data.get("steps") or 0)
             snapshot["move"]["active_minutes"] = int(da.data.get("active_minutes") or 0)
+            sleep_min = int(da.data.get("sleep_minutes") or 0)
+            if sleep_min > 0:
+                snapshot["sleep"]["total_minutes"] = sleep_min
+                snapshot["sleep"]["total_hours"] = round(sleep_min / 60.0, 1)
+            else:
+                # No sleep recorded today → not applicable so the prompt /
+                # leverage picker skips it. Matches the client-side
+                # sleepScoreProvider returning null on disconnected health.
+                snapshot["sleep"]["applicable"] = False
     except Exception as e:
         logger.warning(f"[daily_insight] daily_activity lookup failed: {e}")
 
-    # --- Sleep (last night) ---------------------------------------------
-    try:
-        sl = sb.client.table("sleep").select(
-            "total_minutes, local_date"
-        ).eq("user_id", user_id).eq(
-            "local_date", local_date_iso
-        ).maybe_single().execute()
-        if sl and sl.data:
-            mins = int(sl.data.get("total_minutes") or 0)
-            snapshot["sleep"]["total_minutes"] = mins
-            snapshot["sleep"]["total_hours"] = round(mins / 60.0, 1)
-    except Exception as e:
-        logger.warning(f"[daily_insight] sleep lookup failed: {e}")
-
     # --- User goal --------------------------------------------------------
+    # Schema reality: users.daily_calorie_target / daily_protein_target_g
+    # (not the non-prefixed versions). No step_goal or sleep_goal_hours
+    # columns — those defaults are baked in client-side via healthGoalsProvider
+    # (10k steps / 480 min sleep) so we hard-code matching defaults here.
     try:
         u = sb.client.table("users").select(
-            "primary_goal, protein_target_g, calorie_target, step_goal, sleep_goal_hours"
+            "primary_goal, daily_protein_target_g, daily_calorie_target"
         ).eq("id", user_id).maybe_single().execute()
         if u and u.data:
             snapshot["goal"] = u.data.get("primary_goal")
-            snapshot["nourish"]["calorie_target"] = u.data.get("calorie_target")
-            snapshot["nourish"]["protein_target_g"] = u.data.get("protein_target_g")
-            snapshot["move"]["step_target"] = u.data.get("step_goal")
-            snapshot["sleep"]["target_hours"] = u.data.get("sleep_goal_hours")
+            snapshot["nourish"]["calorie_target"] = u.data.get("daily_calorie_target")
+            snapshot["nourish"]["protein_target_g"] = u.data.get("daily_protein_target_g")
+        # Defaults matched to the client (lib/data/services/health_goals_service.dart).
+        snapshot["move"]["step_target"] = 10000
+        snapshot["sleep"]["target_hours"] = 8.0
     except Exception as e:
         logger.warning(f"[daily_insight] users lookup failed: {e}")
 
@@ -550,9 +566,12 @@ async def daily_insight(
                 logger.warning(f"[daily_insight] cache read failed (continuing): {e}")
 
         # ---- Assemble snapshot + context ----------------------------------
+        # Schema reality: users.first_name doesn't exist. Just `name` (full).
+        # _first_name() already handles the split — it prefers first_name if
+        # present, then splits `name`, then falls back to email-prefix.
         try:
             user_row_resp = sb.client.table("users").select(
-                "first_name, name, email"
+                "name, email"
             ).eq("id", user_id).maybe_single().execute()
             user_row = (user_row_resp.data if user_row_resp else {}) or {}
         except Exception:

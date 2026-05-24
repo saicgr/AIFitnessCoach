@@ -56,13 +56,16 @@ _SHARED_RULES = """STYLE RULES (HARD, violations are rejected):
 - Output PLAIN JSON only. No ```json fences. No commentary before/after.
 
 ROUTE WHITELIST (cta_primary.route / cta_secondary.route must be one of):
-    /workouts/today  : open today's scheduled workout
-    /log/food        : open the food log entry surface
-    /move            : open the Move pillar (steps / active minutes)
-    /sleep           : open the Sleep pillar / last night detail
-    /chat            : open Ask-Coach chat
+    /chat            : open Ask-Coach chat (use as primary for most home insights)
     /home            : return to the home dashboard
-    /history         : open workout/log history
+    /workouts        : open the workouts list (today's session lives here)
+    /nutrition       : open the nutrition tab (food log + macros)
+    /neat            : open NEAT / steps / activity dashboard
+    /health/sleep    : open the sleep detail screen
+    /fasting         : open the fasting timer / log
+    /pillar/train    : open the Train pillar detail (score + 7-day trend)
+    /pillar/nourish  : open the Nourish pillar detail
+    /pillar/move     : open the Move pillar detail
 
 LEADING_PILLAR RULES:
 - "train"     when today's workout is incomplete and it is past morning.

@@ -173,31 +173,37 @@ DailyCoachInsight _buildClientFallback(Ref ref) {
 }
 
 (CoachCta, CoachCta) _defaultCtasFor(ContributorKind? kind) {
+  // Primary CTA is ALWAYS "Chat with coach" — this IS the coach card, so
+  // talking to the coach should be the first action. Secondary CTA stays
+  // context-aware. All routes must be real `app_router` paths (verified
+  // 2026-05-23) — previous defaults like /workouts/today and /sleep-detail
+  // didn't exist and would silently route to chat via the navigate-fallback.
+  const chat = CoachCta(label: 'Chat with coach', route: '/chat');
   switch (kind) {
     case ContributorKind.train:
       return (
-        const CoachCta(label: 'Start workout', route: '/workouts/today'),
-        const CoachCta(label: 'See plan', route: '/workouts/today'),
+        chat,
+        const CoachCta(label: 'Open workouts', route: '/workouts'),
       );
     case ContributorKind.fuel:
       return (
-        const CoachCta(label: 'Log meal', route: '/nutrition/log'),
-        const CoachCta(label: 'See plan', route: '/nutrition'),
+        chat,
+        const CoachCta(label: 'Log meal', route: '/nutrition'),
       );
     case ContributorKind.move:
       return (
+        chat,
         const CoachCta(label: 'Add walk', route: '/neat'),
-        const CoachCta(label: 'See plan', route: '/neat'),
       );
     case ContributorKind.sleep:
       return (
-        const CoachCta(label: 'Sleep tonight', route: '/sleep-detail'),
-        const CoachCta(label: 'See plan', route: '/sleep-detail'),
+        chat,
+        const CoachCta(label: 'Sleep details', route: '/health/sleep'),
       );
     case null:
       return (
-        const CoachCta(label: 'Open today', route: '/'),
-        const CoachCta(label: 'See plan', route: '/workouts/today'),
+        chat,
+        const CoachCta(label: 'Open home', route: '/home'),
       );
   }
 }
