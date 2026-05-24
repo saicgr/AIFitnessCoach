@@ -13,6 +13,7 @@ import '../models/today_score.dart';
 import '../../services/today_score_service.dart';
 import 'today_workout_provider.dart';
 import 'nutrition_preferences_provider.dart';
+import 'sleep_score_provider.dart';
 import '../repositories/nutrition_repository.dart';
 import '../services/health_service.dart';
 import '../services/health_goals_service.dart';
@@ -51,6 +52,15 @@ final todayScoreProvider = Provider<TodayScore>((ref) {
       ref.watch(healthGoalsProvider).valueOrNull?.stepGoal ?? 10000;
   final healthConnected = ref.watch(healthSyncProvider).isConnected;
 
+  // ---- Sleep -------------------------------------------------------------
+  // Sleep score comes from the shared sleepScoreProvider so the home tile
+  // and the Today contributor never drift. The snapshot is null when health
+  // is disconnected (Sleep contributor renormalizes out then).
+  final sleepSnapshot = ref.watch(sleepScoreProvider).valueOrNull;
+  final sleepAvailable = sleepSnapshot?.score != null;
+  final sleepScore = sleepSnapshot?.score?.total ?? 0;
+  final sleepMinutes = sleepSnapshot?.summary.totalMinutes ?? 0;
+
   return computeTodayScore(TodayScoreInputs(
     hasPlan: hasPlan,
     hasWorkoutScheduledToday: hasWorkoutScheduledToday,
@@ -67,5 +77,8 @@ final todayScoreProvider = Provider<TodayScore>((ref) {
     healthConnected: healthConnected,
     steps: steps,
     stepGoal: stepGoal,
+    sleepAvailable: sleepAvailable,
+    sleepScore: sleepScore,
+    sleepMinutes: sleepMinutes,
   ));
 });

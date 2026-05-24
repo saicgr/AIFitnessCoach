@@ -16,21 +16,34 @@ library;
 /// that actually apply are counted, and their weights renormalize to 100% —
 /// see [TodayScore.contributors] / [computeTodayScore].
 enum ContributorKind {
-  /// Did you do today's prescribed training. Base weight 50%.
+  /// Did you do today's prescribed training. Base weight 40%.
   train,
 
-  /// Are you on target for calories + protein. Base weight 35%.
+  /// Are you on target for calories + protein. Base weight 30%.
+  /// Internal name kept as `fuel` to avoid wide refactor; user-facing label
+  /// is "Nourish" (see [ContributorKindMeta.label]).
   fuel,
 
   /// Steps vs your daily goal (from Health Connect / Apple Health). Base 15%.
   move,
+
+  /// Sleep score from the health-service sleep aggregation. Base 15%.
+  /// Applicable only when Health Connect / HealthKit is linked and provides
+  /// a sleep summary; not counted as a zero otherwise.
+  sleep,
 }
 
 /// Base (full-training-day) weight for each contributor. They sum to 1.0.
+///
+/// Adding Sleep as a 4th contributor (2026-05-22) split off weight from Train
+/// (50→40) and Fuel/Nourish (35→30) while keeping Train as the heaviest pillar
+/// — Zealova is workout-first, so 40% on Train preserves that asymmetry vs
+/// Oura/Whoop's recovery-heavy weighting.
 const Map<ContributorKind, double> kBaseContributorWeights = {
-  ContributorKind.train: 0.50,
-  ContributorKind.fuel: 0.35,
+  ContributorKind.train: 0.40,
+  ContributorKind.fuel: 0.30,
   ContributorKind.move: 0.15,
+  ContributorKind.sleep: 0.15,
 };
 
 extension ContributorKindMeta on ContributorKind {
@@ -40,9 +53,11 @@ extension ContributorKindMeta on ContributorKind {
       case ContributorKind.train:
         return 'Train';
       case ContributorKind.fuel:
-        return 'Fuel';
+        return 'Nourish';
       case ContributorKind.move:
         return 'Move';
+      case ContributorKind.sleep:
+        return 'Sleep';
     }
   }
 
@@ -105,8 +120,9 @@ class TodayScore {
   /// The composite score, 0–100.
   final int score;
 
-  /// Always three entries, in Train / Fuel / Move order. Inapplicable ones
-  /// are still present (so the UI can show "Rest day" etc.) but contribute 0.
+  /// Always four entries, in Train / Nourish (internal `fuel`) / Move / Sleep
+  /// order. Inapplicable ones are still present (so the UI can show "Rest day"
+  /// etc.) but contribute 0.
   final List<ScoreContributor> contributors;
 
   /// True when nothing applies today (brand-new user: no plan, no targets,

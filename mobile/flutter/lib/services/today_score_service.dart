@@ -67,6 +67,20 @@ class TodayScoreInputs {
   final int steps;
   final int stepGoal;
 
+  // ---- Sleep ---------------------------------------------------------------
+
+  /// Whether last-night's sleep summary is available (Health Connect /
+  /// HealthKit linked AND a sleep summary was logged). When false the Sleep
+  /// contributor is `applicable: false` and renormalizes out — not zeroed.
+  final bool sleepAvailable;
+
+  /// Last night's sleep score (0-100) from [computeSleepScore]. Only
+  /// meaningful when [sleepAvailable] is true.
+  final int sleepScore;
+
+  /// Minutes asleep last night — used only for the status text.
+  final int sleepMinutes;
+
   const TodayScoreInputs({
     this.hasPlan = false,
     this.hasWorkoutScheduledToday = false,
@@ -83,6 +97,9 @@ class TodayScoreInputs {
     this.healthConnected = false,
     this.steps = 0,
     this.stepGoal = 0,
+    this.sleepAvailable = false,
+    this.sleepScore = 0,
+    this.sleepMinutes = 0,
   });
 }
 
@@ -117,11 +134,22 @@ TodayScore computeTodayScore(TodayScoreInputs i, {DateTime? now}) {
       ? (i.steps / i.stepGoal).clamp(0.0, 1.0)
       : 0.0;
 
+  // --- Sleep --------------------------------------------------------------
+  // Only applicable when last-night sleep data exists. Score / 100 = completion
+  // — the underlying sleep score is itself a 0-100 fraction of "a healthy
+  // night", so dividing here keeps the contributor on the same 0-1 scale as
+  // the others.
+  final sleepApplicable = i.sleepAvailable;
+  final double sleepCompletion = sleepApplicable
+      ? (i.sleepScore / 100.0).clamp(0.0, 1.0)
+      : 0.0;
+
   // --- Renormalize --------------------------------------------------------
   double applicableWeightSum = 0.0;
   if (trainApplicable) applicableWeightSum += ContributorKind.train.baseWeight;
   if (fuelApplicable) applicableWeightSum += ContributorKind.fuel.baseWeight;
   if (moveApplicable) applicableWeightSum += ContributorKind.move.baseWeight;
+  if (sleepApplicable) applicableWeightSum += ContributorKind.sleep.baseWeight;
 
   final bool isSetupState = applicableWeightSum <= 0.0;
 
@@ -151,8 +179,15 @@ TodayScore computeTodayScore(TodayScoreInputs i, {DateTime? now}) {
     effectiveWeight: effWeight(ContributorKind.move, moveApplicable),
     statusText: _moveStatus(i),
   );
+  final sleep = ScoreContributor(
+    kind: ContributorKind.sleep,
+    applicable: sleepApplicable,
+    completion: sleepCompletion,
+    effectiveWeight: effWeight(ContributorKind.sleep, sleepApplicable),
+    statusText: _sleepStatus(i),
+  );
 
-  final contributors = [train, fuel, move];
+  final contributors = [train, fuel, move, sleep];
   final double raw =
       contributors.fold(0.0, (sum, c) => sum + c.points); // 0–100
   final int score = isSetupState ? 0 : raw.round().clamp(0, 100);
@@ -200,6 +235,18 @@ String _moveStatus(TodayScoreInputs i) {
   final remaining = i.stepGoal - i.steps;
   if (remaining <= 0) return 'Step goal hit';
   return '${_thousands(remaining)} steps to go';
+}
+
+String _sleepStatus(TodayScoreInputs i) {
+  if (!i.sleepAvailable) return 'Connect Health to count sleep';
+  if (i.sleepScore >= 85) return 'Slept well';
+  if (i.sleepScore >= 70) return 'Solid night';
+  if (i.sleepMinutes > 0) {
+    final h = i.sleepMinutes ~/ 60;
+    final m = i.sleepMinutes % 60;
+    return '${h}h ${m}m last night';
+  }
+  return 'No sleep recorded';
 }
 
 /// Format an int with thousands separators ("2588" → "2,588").
