@@ -408,10 +408,15 @@ class _ScrollableQuickRow extends ConsumerWidget {
   /// 358 / 5.5 ≈ 65pt per chip; with pinned-more reservation we land at ~64pt).
   static const double _chipWidth = 64;
 
+  /// Row height — must clear the chip cell's intrinsic min height:
+  /// 4 + 40 (icon chip) + 5 + 24 (label, 2-line height) + 4 = 77pt.
+  /// 80 gives a 3pt cushion + matches the buildRow path's natural feel.
+  static const double _rowHeight = 80;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return SizedBox(
-      height: 72, // chip + label + breathing room; matches buildRow's natural h.
+      height: _rowHeight,
       child: Stack(
         children: [
           // Scrollable cells. Right padding leaves room for the pinned More

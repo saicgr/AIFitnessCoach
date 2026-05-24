@@ -15,6 +15,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/theme/theme_colors.dart';
+import '../../../widgets/liquid_glass_action_bar.dart';
 import 'score_colors.dart';
 
 const String _kSeenKey = 'score_change_v2_seen';
@@ -46,10 +47,16 @@ class _ScoreChangeSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = ThemeColors.of(context);
+    // Lift the sheet above the floating Liquid Glass nav bar so it doesn't
+    // clip the tab bar (which is rendered as an overlay, not a Scaffold
+    // bottomNavigationBar, so MediaQuery padding doesn't account for it).
+    final safeBottom = MediaQuery.of(context).viewPadding.bottom;
+    final bottomGap = safeBottom + kLiquidGlassActionBarHeight + 12;
     return SafeArea(
       top: false,
+      bottom: false,
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 12),
+        margin: EdgeInsets.fromLTRB(12, 0, 12, bottomGap),
         decoration: BoxDecoration(
           color: c.elevated,
           borderRadius: BorderRadius.circular(24),
