@@ -2,15 +2,23 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../data/models/cardio_pr.dart';
 import '../../../widgets/glass_sheet.dart';
+import '../../cardio/cardio_pr_history_sheet.dart';
 
-/// Shows a bottom sheet displaying trophies and achievements earned from the workout
+/// Shows a bottom sheet displaying trophies and achievements earned from the workout.
+///
+/// `cardioPrs` is purely additive — if non-null and non-empty, a new
+/// "Cardio Achievements" section appears beneath the strength PR section.
+/// First-time activity items render with a "First time!" orange badge
+/// instead of the standard ALL-TIME ribbon.
 Future<void> showTrophiesEarnedSheet(
   BuildContext context, {
   required List<Map<String, dynamic>> newPRs,
   required Map<String, dynamic>? achievements,
   required int totalWorkouts,
   required int? currentStreak,
+  List<CardioPersonalRecord>? cardioPrs,
 }) async {
   HapticFeedback.mediumImpact();
 
@@ -23,6 +31,7 @@ Future<void> showTrophiesEarnedSheet(
         achievements: achievements,
         totalWorkouts: totalWorkouts,
         currentStreak: currentStreak,
+        cardioPrs: cardioPrs,
       ),
     ),
   );
@@ -33,12 +42,14 @@ class _TrophiesEarnedSheet extends StatelessWidget {
   final Map<String, dynamic>? achievements;
   final int totalWorkouts;
   final int? currentStreak;
+  final List<CardioPersonalRecord>? cardioPrs;
 
   const _TrophiesEarnedSheet({
     required this.newPRs,
     required this.achievements,
     required this.totalWorkouts,
     required this.currentStreak,
+    this.cardioPrs,
   });
 
   @override
@@ -146,6 +157,57 @@ class _TrophiesEarnedSheet extends StatelessWidget {
                         const SizedBox(height: 24),
                       ],
 
+                      // Cardio Achievements Section (additive — only renders
+                      // when the caller passes a non-empty list)
+                      if (cardioPrs != null && cardioPrs!.isNotEmpty) ...[
+                        _buildSectionHeader(
+                          context,
+                          icon: Icons.directions_run_rounded,
+                          title: 'Cardio Achievements',
+                          subtitle: '${cardioPrs!.length} new cardio ${cardioPrs!.length == 1 ? "PR" : "PRs"}',
+                          color: AppColors.cyan,
+                        ),
+                        const SizedBox(height: 12),
+                        ...cardioPrs!.asMap().entries.map((entry) {
+                          final pr = entry.value;
+                          final index = entry.key;
+                          return _buildCardioPrCard(context, pr, elevated, cardBorder)
+                              .animate(delay: Duration(milliseconds: 175 + (index * 50)))
+                              .fadeIn()
+                              .slideX(begin: 0.1);
+                        }),
+                        const SizedBox(height: 8),
+                        Align(
+                          alignment: Alignment.center,
+                          child: TextButton.icon(
+                            onPressed: () {
+                              // Capture a root navigator BEFORE popping so
+                              // we can route the next sheet via the same
+                              // context-independent navigator state. Avoids
+                              // the use_build_context_synchronously warning
+                              // and is safer than relying on the popped
+                              // sheet's BuildContext after the frame ends.
+                              final navState = Navigator.of(context, rootNavigator: true);
+                              final ctx = navState.context;
+                              navState.maybePop();
+                              Future.microtask(() {
+                                showCardioPrHistorySheet(ctx);
+                              });
+                            },
+                            icon: Icon(Icons.timeline_rounded,
+                                size: 18, color: AppColors.cyan),
+                            label: Text(
+                              'View all cardio PRs',
+                              style: TextStyle(
+                                color: AppColors.cyan,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                      ],
+
                       // New Achievements Section
                       if (newAchievements.isNotEmpty) ...[
                         _buildSectionHeader(
@@ -181,8 +243,10 @@ class _TrophiesEarnedSheet extends StatelessWidget {
                           .fadeIn()
                           .slideY(begin: 0.1),
 
-                      // Empty state if nothing earned
-                      if (newPRs.isEmpty && newAchievements.isEmpty) ...[
+                      // Empty state if nothing earned (strength PR, cardio PR, OR achievement)
+                      if (newPRs.isEmpty &&
+                          newAchievements.isEmpty &&
+                          (cardioPrs == null || cardioPrs!.isEmpty)) ...[
                         const SizedBox(height: 20),
                         _buildEmptyState(context, elevated),
                       ],
@@ -393,6 +457,214 @@ class _TrophiesEarnedSheet extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  /// Cardio PR card — parallels `_buildPRCard` but renders sport-aware
+  /// styling + a "First time!" orange badge for `is_first_time_activity`
+  /// (instead of the gold ALL-TIME ribbon used for strength PRs).
+  Widget _buildCardioPrCard(
+    BuildContext context,
+    CardioPersonalRecord pr,
+    Color elevated,
+    Color cardBorder,
+  ) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textPrimary = isDark ? AppColors.textPrimary : AppColorsLight.textPrimary;
+    final textSecondary = isDark ? AppColors.textSecondary : AppColorsLight.textSecondary;
+    final sportColor = _cardioSportColor(pr.sport);
+    final delta = pr.formatDelta();
+    final isFirstTime = pr.isFirstTimeActivity;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            sportColor.withOpacity(0.15),
+            sportColor.withOpacity(0.05),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: sportColor.withOpacity(0.3)),
+      ),
+      child: Row(
+        children: [
+          // Sport icon — colored chip (no gold trophy here; gold is reserved
+          // for the all-time strength PR card).
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: sportColor.withOpacity(0.18),
+              shape: BoxShape.circle,
+              border: Border.all(color: sportColor.withOpacity(0.4), width: 1.5),
+            ),
+            child: Icon(
+              _cardioSportIcon(pr.sport),
+              color: sportColor,
+              size: 24,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        '${_cardioSportLabel(pr.sport)} · ${pr.kindLabel}',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: textPrimary,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    if (isFirstTime)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: AppColors.orange.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          'FIRST TIME!',
+                          style: TextStyle(
+                            fontSize: 9,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.orange,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      )
+                    else
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: sportColor.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          'NEW PR',
+                          style: TextStyle(
+                            fontSize: 9,
+                            fontWeight: FontWeight.bold,
+                            color: sportColor,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Text(
+                      pr.formatValue(),
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: sportColor,
+                      ),
+                    ),
+                    if (delta != null) ...[
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: AppColors.green.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.arrow_upward, size: 12, color: AppColors.green),
+                            const SizedBox(width: 2),
+                            Text(
+                              delta,
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.green,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+                if (pr.celebrationMessage != null) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    pr.celebrationMessage!,
+                    style: TextStyle(fontSize: 12, color: textSecondary),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  IconData _cardioSportIcon(String sport) {
+    switch (sport) {
+      case 'running':
+        return Icons.directions_run_rounded;
+      case 'cycling':
+        return Icons.directions_bike_rounded;
+      case 'walking':
+        return Icons.directions_walk_rounded;
+      case 'hiking':
+        return Icons.terrain_rounded;
+      case 'rowing':
+        return Icons.rowing_rounded;
+      case 'swimming':
+        return Icons.pool_rounded;
+      case 'elliptical':
+      case 'stairs':
+        return Icons.stairs_rounded;
+      case 'skiing':
+      case 'snowboarding':
+        return Icons.downhill_skiing_rounded;
+      default:
+        return Icons.favorite_rounded;
+    }
+  }
+
+  Color _cardioSportColor(String sport) {
+    switch (sport) {
+      case 'running':
+        return AppColors.orange;
+      case 'cycling':
+        return AppColors.cyan;
+      case 'walking':
+        return AppColors.green;
+      case 'hiking':
+        return const Color(0xFF8D6E63);
+      case 'rowing':
+        return AppColors.purple;
+      case 'swimming':
+        return const Color(0xFF26C6DA);
+      default:
+        return AppColors.cyan;
+    }
+  }
+
+  String _cardioSportLabel(String sport) {
+    if (sport.isEmpty) return sport;
+    return sport[0].toUpperCase() + sport.substring(1);
   }
 
   Widget _buildAchievementCard(

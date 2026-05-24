@@ -16,6 +16,8 @@ import '../../core/providers/sound_preferences_provider.dart';
 import '../../core/utils/weight_utils.dart';
 import '../../widgets/lottie_animations.dart';
 import '../../data/models/workout.dart';
+import '../../data/models/cardio_pr.dart';
+import '../../data/repositories/cardio_pr_repository.dart';
 import '../../data/repositories/workout_repository.dart';
 import '../../data/services/api_client.dart';
 import '../../data/services/challenges_service.dart';
@@ -145,6 +147,11 @@ class _WorkoutCompleteScreenState extends ConsumerState<WorkoutCompleteScreen> {
   Map<String, dynamic>? _achievements;
   bool _isLoadingAchievements = true;
   List<Map<String, dynamic>> _newPRs = [];
+  // Cardio PRs achieved during/just-after THIS workout. Fetched on init via
+  // CardioPrRepository.listAll() and filtered client-side to records with
+  // achieved_at within the last 5 minutes. Empty list means nothing new —
+  // the trophies sheet hides the cardio section in that case.
+  List<dynamic> _newCardioPRs = [];
   bool _showExerciseProgress = false;
   Map<String, List<Map<String, dynamic>>> _exerciseProgressData = {};
   final Map<String, bool> _expandedExercises = {};

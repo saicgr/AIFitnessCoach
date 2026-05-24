@@ -249,6 +249,10 @@ extension _WorkoutCompleteScreenStateUI1 on _WorkoutCompleteScreenState {
         achievements: _achievements,
         totalWorkouts: totalWorkouts,
         currentStreak: streak > 0 ? streak : 1, // At least 1 day
+        // Cardio PRs from the post-insert enrichment pipeline. Empty
+        // list when no cardio PRs landed in the last 5 min — the sheet
+        // hides the cardio section in that case.
+        cardioPrs: _newCardioPRs.cast<CardioPersonalRecord>(),
       ),
       child: Container(
         padding: const EdgeInsets.all(14),

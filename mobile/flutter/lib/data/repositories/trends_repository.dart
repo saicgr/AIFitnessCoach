@@ -183,6 +183,44 @@ class TrendsRepository {
     required int days,
   }) =>
       _fetchDailySeries('/neat/score/$userId/trends', days: days);
+
+  // ── Cardio metric snapshots (Wave-2 SLICE_TRENDS) ───────────────────────
+
+  /// The 13 metric_keys persisted by `cardio_metric_snapshot_job` and read by
+  /// the new `/trends/cardio-series` endpoint. Boolean tags
+  /// (e.g. is_hill_workout) are deliberately excluded — Wave-1 trends infra
+  /// is numeric-only.
+  static const Set<String> cardioMetricSnapshotKeys = {
+    'race_predicted_5k_sec',
+    'race_predicted_10k_sec',
+    'race_predicted_half_sec',
+    'race_predicted_marathon_sec',
+    'training_load_acute',
+    'training_load_chronic',
+    'training_load_acwr',
+    'cardio_weekly_distance_m',
+    'cardio_longest_run_m',
+    'cardio_fastest_mile_sec',
+    'cardio_pace_avg_sec_per_km',
+    'cardio_weather_temp_at_run_c',
+    'refuel_carbs_recommended_g',
+  };
+
+  /// Per-day history for one cardio snapshot metric. Returns `daily_series`
+  /// rows of `{date, value}` from `cardio_metric_snapshots`. Returns null on
+  /// transport error and an empty list when the user has no logged history.
+  Future<List<Map<String, dynamic>>?> getCardioSnapshotSeries({
+    required String metricKey,
+    required int days,
+  }) {
+    assert(cardioMetricSnapshotKeys.contains(metricKey),
+        'Unknown cardio snapshot metric: $metricKey');
+    return _fetchDailySeries(
+      '/trends/cardio-series',
+      days: days,
+      extraQuery: {'metric': metricKey},
+    );
+  }
 }
 
 /// Riverpod provider for [TrendsRepository].

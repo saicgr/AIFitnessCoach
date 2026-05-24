@@ -20,6 +20,7 @@ Future<void> showPRFullCelebration({
   required DetectedPR pr,
   required String workoutName,
   List<Map<String, dynamic>>? progressData,
+  Widget? historySparkline,
 }) {
   // Trigger epic haptic pattern
   HapticService.multiPrAchievement();
@@ -34,6 +35,7 @@ Future<void> showPRFullCelebration({
         pr: pr,
         workoutName: workoutName,
         progressData: progressData,
+        historySparkline: historySparkline,
       );
     },
     transitionBuilder: (context, animation, secondaryAnimation, child) {
@@ -55,11 +57,18 @@ class PRFullCelebrationScreen extends StatefulWidget {
   final String workoutName;
   final List<Map<String, dynamic>>? progressData;
 
+  /// Optional 6-month best-1RM sparkline rendered below the PR card.
+  /// Composer builds this from `/exercise-history/{exerciseId}/best-1rm?days=180`
+  /// using fl_chart. If null, the celebration renders exactly as before
+  /// (purely additive — preserves all existing functionality).
+  final Widget? historySparkline;
+
   const PRFullCelebrationScreen({
     super.key,
     required this.pr,
     required this.workoutName,
     this.progressData,
+    this.historySparkline,
   });
 
   @override
@@ -200,6 +209,57 @@ class _PRFullCelebrationScreenState extends State<PRFullCelebrationScreen>
                       .animate()
                       .fadeIn(delay: 400.ms, duration: 400.ms)
                       .slideY(begin: 0.2, end: 0),
+
+                // Optional 6-month best-1RM sparkline (Wave 3 addition).
+                // Composer wires this in; null = legacy behavior unchanged.
+                if (_showContent && widget.historySparkline != null) ...[
+                  const SizedBox(height: 24),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: Container(
+                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.05),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: const Color(0xFFFFD700).withOpacity(0.2),
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Row(
+                            children: [
+                              Icon(
+                                Icons.show_chart,
+                                size: 14,
+                                color: Color(0xFFFFD700),
+                              ),
+                              SizedBox(width: 6),
+                              Text(
+                                '6-MONTH BEST 1RM',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFFFFD700),
+                                  letterSpacing: 1.2,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          SizedBox(
+                            height: 72,
+                            child: widget.historySparkline!,
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                      .animate()
+                      .fadeIn(delay: 550.ms, duration: 400.ms)
+                      .slideY(begin: 0.15, end: 0),
+                ],
 
                 const Spacer(),
 

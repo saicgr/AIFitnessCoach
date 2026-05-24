@@ -78,6 +78,13 @@ dependencies:
   geolocator: ^13.0.2
   # google_maps_flutter: ^2.9.0  # Removed for v1 — re-add when Maps API key is configured
 
+  # OSM-based map for HealthKit GPS route rendering (iOS-only render path).
+  # iOS GPS re-add — Google Play scope declaration pending; Android map UI
+  # hidden via Platform.isIOS gate in route_map.dart. No API key required
+  # (free OSM tile server with attribution).
+  flutter_map: ^7.0.2
+  latlong2: ^0.9.1
+
   # Firebase / Notifications
   firebase_core: ^3.8.1
   firebase_messaging: ^15.1.6

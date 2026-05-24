@@ -50,7 +50,7 @@
 		<key>UIApplicationSupportsIndirectInputEvents</key>
 		<true/>
 		<key>NSHealthShareUsageDescription</key>
-		<string>Zealova needs access to your health data to sync measurements like weight, body fat, and heart rate from Apple Health.</string>
+		<string>Zealova needs access to your health data to sync measurements like weight, body fat, heart rate, VO2 max, and outdoor workout routes (GPS) from Apple Health.</string>
 		<key>NSHealthUpdateUsageDescription</key>
 		<string>Zealova saves the workouts, body measurements, meals, and hydration you log to Apple Health.</string>
 		<key>LSApplicationQueriesSchemes</key>

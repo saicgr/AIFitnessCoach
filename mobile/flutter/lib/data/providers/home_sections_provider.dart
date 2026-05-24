@@ -20,6 +20,7 @@ enum HomeSection {
   habits, // Kept in enum so users who customized it still see it; not in default order anymore (moved to Profile)
   todayScore,
   cycle,
+  readiness, // NEW — Recovery readiness traffic-light + intensity prescription
 }
 
 /// The date the user is currently "viewing" on the unified home screen.
@@ -62,6 +63,8 @@ extension HomeSectionMeta on HomeSection {
         return 'today_score';
       case HomeSection.cycle:
         return 'cycle';
+      case HomeSection.readiness:
+        return 'readiness';
     }
   }
 
@@ -91,6 +94,8 @@ extension HomeSectionMeta on HomeSection {
         return 'Today Score';
       case HomeSection.cycle:
         return 'Cycle';
+      case HomeSection.readiness:
+        return 'Recovery readiness';
     }
   }
 
@@ -120,6 +125,8 @@ extension HomeSectionMeta on HomeSection {
         return 'Your Train, Fuel & Move ring for the day';
       case HomeSection.cycle:
         return 'Your cycle phase, day & next-period countdown';
+      case HomeSection.readiness:
+        return 'Hooper-Index recovery score with intensity prescription';
     }
   }
 
@@ -150,6 +157,8 @@ extension HomeSectionMeta on HomeSection {
         return 'activity';
       case HomeSection.cycle:
         return 'spark';
+      case HomeSection.readiness:
+        return 'flame';
     }
   }
 

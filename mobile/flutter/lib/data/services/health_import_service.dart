@@ -1,11 +1,15 @@
 import 'dart:convert';
+import 'dart:io' show Platform;
 import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
 import 'package:health/health.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../core/constants/api_constants.dart';
+import 'api_client.dart';
 import 'health_service.dart';
+import 'health_export_service.dart' show HealthExportService;
 
 // ---------------------------------------------------------------------------
 // PendingWorkoutImport - model for a workout discovered in Health Connect /
@@ -437,6 +441,24 @@ class HealthImportService {
         if (point.value is! WorkoutHealthValue) continue;
         final duration = point.dateTo.difference(point.dateFrom).inSeconds;
         if (duration < 60) continue; // skip sub-1m noise
+        // SLICE_HEALTH_EXPORT loopback guard — workouts we previously
+        // wrote back to Apple Health / Health Connect are stamped with
+        // the Zealova source tag in the workout title. Skip those so
+        // they don't re-enter the import pipeline (loop prevention).
+        // Tag lookup is a cheap string match; see
+        // `HealthExportService.isZealovaTaggedTitle`.
+        final workoutValue = point.value as WorkoutHealthValue;
+        final title = workoutValue.totalEnergyBurnedUnit.toString() == ''
+            ? null
+            : null; // health 12.x WorkoutHealthValue has no `name`/`title`
+        // Some platforms expose the title via metadata; fall back to a
+        // sourceName check (Zealova-written records also carry our app
+        // source name).
+        final src = point.sourceName ?? '';
+        if (HealthExportService.isZealovaTaggedTitle(title ?? src) ||
+            src.toLowerCase().contains('zealova')) {
+          continue;
+        }
         final import_ = PendingWorkoutImport.fromHealthDataPoint(point);
         final alreadyTracked = await _tracker.isTracked(import_.uuid);
         if (!alreadyTracked) {
@@ -760,4 +782,156 @@ class HealthImportService {
 
   // _average / _peak / _buildSplits removed 2026-05-07 along with the
   // distance / vitals enrichment they fed (Google Play minimum scope).
+
+  // -------------------------------------------------------------------------
+  // iOS GPS re-add (SLICE_GPS, 2026-05-24)
+  //
+  // iOS-only: re-adds HKWorkoutRoute polyline capture + HKQuantityTypeIdentifier
+  // VO2Max import. Both are deliberately gated behind `Platform.isIOS` —
+  // Google Play scope declaration for ACTIVITY_RECOGNITION + foreground GPS
+  // is still pending, so on Android we hard no-op rather than ship a broken
+  // permission prompt.
+  //
+  // Version gate (health package 12.2.1):
+  //   The `health` plugin enum does NOT expose `WORKOUT_ROUTE` or `VO2MAX`
+  //   members. Verified via:
+  //     grep -E "WORKOUT_ROUTE|VO2MAX" \
+  //       ~/.pub-cache/hosted/pub.dev/health-12.2.1/lib/src/heath_data_types.dart
+  //     → no matches
+  //   So we cannot ask the plugin to pull these series directly. The
+  //   helpers below scaffold the upload + DB write paths so that when:
+  //     (a) we bump health to a version that exposes the enum, OR
+  //     (b) we add a native HKHealthStore channel for routes,
+  //   the rest of the slice (UI widget, S3 endpoint, cardio_metrics
+  //   schema) is already wired and only the fetch needs swapping in.
+  //   Until then `_fetchRoutePolylineIos` returns [] and `importVo2MaxFromIos`
+  //   returns 0 — callers degrade gracefully (RouteMap renders the indoor
+  //   empty state; VO2max trend remains backed by the existing in-app
+  //   estimator).
+  // -------------------------------------------------------------------------
+
+  /// Fetch the recorded GPS polyline for an Apple Health workout and POST it
+  /// to the backend so it can be persisted to S3 + linked on cardio_logs.
+  ///
+  /// Returns the S3 key on success, or null on Android / unsupported plugin
+  /// version / empty route / network failure. Never throws — failure is a
+  /// degraded view, not a blocking error.
+  ///
+  /// [cardioLogId] is the already-created `cardio_logs.id` row that this
+  /// route belongs to. The polyline endpoint links the upload to that row.
+  Future<String?> fetchAndUploadRouteIfIos({
+    required ApiClient apiClient,
+    required String cardioLogId,
+    required PendingWorkoutImport workout,
+  }) async {
+    if (!Platform.isIOS) {
+      // Android intentionally skipped — see header comment.
+      return null;
+    }
+
+    final polyline = await _fetchRoutePolylineIos(workout);
+    if (polyline.length < 2) {
+      // No route or single point — nothing to upload.
+      return null;
+    }
+
+    try {
+      final response = await apiClient.post<Map<String, dynamic>>(
+        '${ApiConstants.apiBaseUrl}/cardio-logs/$cardioLogId/route',
+        data: <String, dynamic>{
+          'polyline': polyline
+              .map((p) => <double>[p.$1, p.$2])
+              .toList(growable: false),
+          'source': 'apple_health',
+        },
+      );
+      final key = response.data?['route_polyline_s3_key'] as String?;
+      debugPrint(
+          '🗺️  [HealthImport] route uploaded for log=$cardioLogId key=$key '
+          'points=${polyline.length}');
+      return key;
+    } catch (e) {
+      debugPrint('❌ [HealthImport] route upload failed for $cardioLogId: $e');
+      return null;
+    }
+  }
+
+  /// iOS-only: fetch the HKWorkoutRoute polyline for the workout window.
+  ///
+  /// Returns a list of (lat, lng) records. Empty list = no route recorded
+  /// (indoor activity) OR plugin version doesn't expose WORKOUT_ROUTE yet
+  /// (current state — see version-gate comment above).
+  Future<List<(double, double)>> _fetchRoutePolylineIos(
+    PendingWorkoutImport workout,
+  ) async {
+    // health 12.2.1 does NOT expose HealthDataType.WORKOUT_ROUTE. When we
+    // bump the plugin (or add a native channel), swap the body for a real
+    // HKWorkoutRoute → CLLocation series fetch over [workout.startTime,
+    // workout.endTime]. Until then return empty so RouteMap shows the
+    // indoor empty state instead of a broken render.
+    return const [];
+  }
+
+  /// iOS-only: import VO2max samples from Apple Health into the existing
+  /// `cardio_metrics` table (NOT a new table — migration 082 schema).
+  ///
+  /// Posts each sample with `source = 'health_kit'` (the value enforced by
+  /// the `cardio_metrics_source_check` CHECK constraint — `'apple_health'`
+  /// is NOT in the allowed set) and `measured_at = sample.startTime`.
+  ///
+  /// Returns the number of samples imported, or 0 on Android / unsupported
+  /// plugin version / no new samples. Never throws.
+  Future<int> importVo2MaxFromIos({
+    required ApiClient apiClient,
+    int days = 30,
+  }) async {
+    if (!Platform.isIOS) return 0;
+
+    final samples = await _fetchVo2MaxSamplesIos(days: days);
+    if (samples.isEmpty) return 0;
+
+    int written = 0;
+    for (final sample in samples) {
+      try {
+        await apiClient.post<Map<String, dynamic>>(
+          '${ApiConstants.apiBaseUrl}/cardio/metrics',
+          data: <String, dynamic>{
+            'vo2_max_estimate': sample.vo2Max,
+            'measured_at': sample.measuredAt.toUtc().toIso8601String(),
+            // 'health_kit' is the value the cardio_metrics CHECK constraint
+            // allows for HealthKit-sourced rows. Migration 082, line 23.
+            'source': 'health_kit',
+          },
+        );
+        written++;
+      } catch (e) {
+        debugPrint('⚠️  [HealthImport] vo2max sample failed: $e');
+      }
+    }
+    debugPrint(
+        '🫁 [HealthImport] imported $written / ${samples.length} VO2max samples');
+    return written;
+  }
+
+  /// iOS-only: fetch VO2max samples from Apple Health.
+  ///
+  /// Returns the per-sample (value, timestamp) pairs. Empty when no samples
+  /// exist OR when the plugin version doesn't expose VO2MAX yet (current
+  /// state — see version-gate comment above).
+  Future<List<_Vo2MaxSample>> _fetchVo2MaxSamplesIos({int days = 30}) async {
+    // health 12.2.1 does NOT expose HealthDataType.VO2MAX. When we bump
+    // the plugin (or add a native channel via HKQuantityTypeIdentifier
+    // .vo2Max), swap the body for a real fetch. Until then return empty
+    // so the VO2max trend chart stays backed by the in-app estimator.
+    return const [];
+  }
+}
+
+/// Lightweight record-style holder for a single VO2max sample read off
+/// Apple Health. Kept private to this file — callers only see the
+/// aggregated "samples written" count returned by [importVo2MaxFromIos].
+class _Vo2MaxSample {
+  final double vo2Max;
+  final DateTime measuredAt;
+  const _Vo2MaxSample(this.vo2Max, this.measuredAt);
 }

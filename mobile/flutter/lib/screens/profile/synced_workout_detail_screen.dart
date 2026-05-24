@@ -11,7 +11,12 @@ import '../../core/theme/accent_color_provider.dart';
 import '../../data/models/workout.dart';
 import '../../data/providers/health_import_provider.dart';
 import '../../data/repositories/workout_repository.dart';
+import '../../data/services/api_client.dart';
 import '../../data/services/haptic_service.dart';
+import '../../widgets/cardio/auto_tag_chips.dart';
+import '../../widgets/cardio/export_workout_button.dart';
+import '../../widgets/cardio/refuel_window_card.dart';
+import '../../widgets/cardio/sleep_correlation_card.dart';
 import '../../widgets/charts/workout_metric_chart.dart';
 import '../../widgets/nav_bar_hider_mixin.dart';
 import '../../widgets/pill_app_bar.dart';
@@ -202,6 +207,35 @@ class _SyncedWorkoutDetailScreenState
       appBar: PillAppBar(
         title: primaryTitle,
         actions: [
+          // GPX/TCX/FIT export — only when the underlying cardio_log_id
+          // is linked so the backend can produce the file. PopupMenuButton
+          // is rendered as a custom action via PillAppBar's action API.
+          if (metadata['cardio_log_id'] is String)
+            PillAppBarAction(
+              icon: Icons.ios_share,
+              onTap: () {
+                // Tap delegate — the export button is the popup, but
+                // PillAppBar wants a tap callback. Show a quick action sheet.
+                showModalBottomSheet<void>(
+                  context: context,
+                  showDragHandle: true,
+                  builder: (sheetCtx) => SafeArea(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: ExportWorkoutButton(
+                            cardioLogId: metadata['cardio_log_id'] as String,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
           PillAppBarAction(
             icon: Icons.delete_outline_rounded,
             onTap: _delete,
@@ -219,6 +253,18 @@ class _SyncedWorkoutDetailScreenState
                 child: _KindChip(kind: kind, palette: palette),
               ),
             ),
+          // Auto-tags surfaced when SLICE_AUTOTAGS persisted them on the
+          // underlying cardio_log/cardio_session row and the import
+          // pipeline forwarded them into Workout.generationMetadata.
+          if ((metadata['tags'] as List?)?.isNotEmpty == true)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 6, 16, 0),
+              child: AutoTagChips(
+                tags: (metadata['tags'] as List)
+                    .whereType<String>()
+                    .toList(growable: false),
+              ),
+            ),
           _HeroBanner(
             kind: kind,
             workout: _workout,
@@ -226,10 +272,26 @@ class _SyncedWorkoutDetailScreenState
           ),
           const SizedBox(height: 8),
           _SourceRow(metadata: metadata),
+          // Coach's take — italic 1-2 sentence insight from the AI coach
+          // about THIS session vs the user's recent cardio history. Only
+          // fires when the import pipeline has linked a cardio_log_id;
+          // silently absent otherwise. Cached server-side per-row.
+          if (metadata['cardio_log_id'] is String)
+            _CoachInsightLine(
+              cardioLogId: metadata['cardio_log_id'] as String,
+              palette: palette,
+            ),
           const SizedBox(height: 16),
           if (_enriching) const _EnrichingBanner(),
           if (!_enriching && !hasAnyDetail)
             _SparseDataBanner(metadata: metadata),
+          // Dedup banner — surfaced when SLICE_DEDUP marked this row as
+          // a hidden duplicate of a higher-priority source (e.g. Strava
+          // primary, Apple Health hidden). The banner lets the user
+          // jump to the primary OR unlink the group from Settings →
+          // Manage duplicate imports.
+          if (metadata['is_hidden_duplicate'] == true)
+            const _DedupHiddenBanner(),
           _HeartRateSection(metadata: metadata, palette: palette),
           _HeartRateZonesStrip(metadata: metadata),
           _PaceSpeedSection(metadata: metadata, palette: palette),
@@ -245,6 +307,16 @@ class _SyncedWorkoutDetailScreenState
             onNotes: _saveNotes,
           ),
           _ActivityInfoCard(workout: _workout, metadata: metadata),
+          // Refuel card — ACSM-style post-workout hydration + carbs +
+          // protein. Renders only when the cardio_log_id is linked AND
+          // the calorie burn was ≥200 kcal (service-side gate).
+          if (metadata['cardio_log_id'] is String)
+            RefuelWindowCard(
+              cardioLogId: metadata['cardio_log_id'] as String,
+            ),
+          // Sleep × pace correlation insight (Pearson r over 30d paired).
+          // Shows only when ≥20 paired sessions accumulated.
+          const SleepCorrelationCard(),
         ],
       ),
     );
@@ -1993,5 +2065,127 @@ _MetricDisplay? _formatMetricByKey(
       return _MetricDisplay('${(z4 + z5).round()}%', 'in Z4+');
   }
   return null;
+}
+
+
+// ──────────────────────────────────────────────────────────────────────────
+// Dedup banner — when SLICE_DEDUP has flagged this session as a hidden
+// duplicate of a higher-priority source row, surface a one-line banner
+// with a CTA into Settings → Manage duplicate imports.
+// ──────────────────────────────────────────────────────────────────────────
+class _DedupHiddenBanner extends StatelessWidget {
+  const _DedupHiddenBanner();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.3),
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.merge_type,
+            size: 18,
+            color: Theme.of(context).colorScheme.onSurface
+                .withValues(alpha: 0.7),
+          ),
+          const SizedBox(width: 8),
+          const Expanded(
+            child: Text(
+              'Duplicate of another import — primary source preferred.',
+              style: TextStyle(fontSize: 13, height: 1.3),
+            ),
+          ),
+          TextButton(
+            onPressed: () => GoRouter.of(context)
+                .push('/settings/manage-duplicate-imports'),
+            child: const Text('Manage'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ──────────────────────────────────────────────────────────────────────────
+// Coach's-take line — fetches the Mode-1 cardio insight from the backend
+// coach agent once on mount. Renders an italic 1-2 sentence line below
+// the source row. Silently absent on empty/error/204. Cached server-side
+// per cardio_log_id + updated_at, so re-opening the screen is free.
+// ──────────────────────────────────────────────────────────────────────────
+class _CoachInsightLine extends ConsumerStatefulWidget {
+  final String cardioLogId;
+  final KindPalette palette;
+
+  const _CoachInsightLine({required this.cardioLogId, required this.palette});
+
+  @override
+  ConsumerState<_CoachInsightLine> createState() => _CoachInsightLineState();
+}
+
+class _CoachInsightLineState extends ConsumerState<_CoachInsightLine> {
+  String? _insight;
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetch();
+  }
+
+  Future<void> _fetch() async {
+    try {
+      final api = ref.read(apiClientProvider);
+      final res = await api.get<Map<String, dynamic>>(
+        '/coach/cardio-insight/${widget.cardioLogId}',
+      );
+      if (!mounted) return;
+      setState(() {
+        _insight = (res.data?['insight'] as String?)?.trim();
+        _loading = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _insight = null;
+        _loading = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_loading || (_insight == null || _insight!.isEmpty)) {
+      return const SizedBox.shrink();
+    }
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.auto_awesome, size: 14, color: widget.palette.fg),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              'Coach: $_insight',
+              style: TextStyle(
+                fontSize: 13,
+                fontStyle: FontStyle.italic,
+                height: 1.35,
+                color: widget.palette.fg.withValues(alpha: 0.85),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 

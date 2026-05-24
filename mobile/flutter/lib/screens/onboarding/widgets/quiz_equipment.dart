@@ -2,8 +2,13 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/constants/api_constants.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/theme/accent_color_provider.dart';
+import '../../../data/services/api_client.dart';
 import '../../../widgets/glass_sheet.dart';
+import '../../workout/widgets/equipment_snap_flow.dart';
 import 'onboarding_theme.dart';
 
 /// One-tap equipment preset that replaces the user's current selection.
@@ -379,6 +384,15 @@ class _QuizEquipmentState extends State<QuizEquipment> {
             _buildEnvironmentSection(context, t),
             const SizedBox(height: 12),
           ],
+          // Snap-your-gym tile: opens the existing EquipmentSnapFlow in
+          // identify mode, then maps identified canonical equipment names
+          // into the onboarding preset IDs. Only shown when the parent
+          // opted into preset/replace semantics — same gate as the preset
+          // row so legacy callers (edit screens) stay unaffected.
+          if (widget.onPresetSelected != null) ...[
+            _buildSnapGymTile(context, t),
+            const SizedBox(height: 12),
+          ],
           // Quick-preset chips: one tap to pick a common combo. Hidden
           // when the parent didn't opt in via [onPresetSelected].
           if (widget.onPresetSelected != null) ...[
@@ -421,6 +435,245 @@ class _QuizEquipmentState extends State<QuizEquipment> {
           ),
         ],
       ),
+    );
+  }
+
+  /// Maps a snap-flow canonical equipment name (e.g. `lat_pulldown`,
+  /// `dumbbell`, `barbell_back_squat_rack`) to the onboarding preset ID
+  /// space (`dumbbells`, `barbell`, `squat_rack`, …). Anything machine-y
+  /// (lat pulldown, leg press, cable column, smith machine, etc.) maps
+  /// to `full_gym`. Unmatched canonicals are dropped — the user can
+  /// always add them manually below.
+  static const Map<String, String> _canonicalToOnboardingId = {
+    'bodyweight': 'bodyweight',
+    'dumbbell': 'dumbbells',
+    'dumbbells': 'dumbbells',
+    'barbell': 'barbell',
+    'olympic_barbell': 'barbell',
+    'ez_bar': 'barbell',
+    'flat_bench': 'bench',
+    'bench': 'bench',
+    'adjustable_bench': 'bench',
+    'incline_bench': 'bench',
+    'squat_rack': 'squat_rack',
+    'power_rack': 'squat_rack',
+    'rack': 'squat_rack',
+    'resistance_band': 'resistance_bands',
+    'resistance_bands': 'resistance_bands',
+    'pull_up_bar': 'pull_up_bar',
+    'kettlebell': 'kettlebell',
+    'medicine_ball': 'medicine_ball',
+    'trx': 'trx',
+    'suspension_trainer': 'trx',
+    // Machine-class canonicals → imply a full-gym setup.
+    'cable_machine': 'cable_machine',
+    'cable_crossover': 'cable_machine',
+    'lat_pulldown': 'full_gym',
+    'seated_row_machine': 'full_gym',
+    'leg_press': 'full_gym',
+    'leg_extension': 'full_gym',
+    'leg_curl': 'full_gym',
+    'smith_machine': 'full_gym',
+    'hack_squat': 'full_gym',
+    'chest_press_machine': 'full_gym',
+    'shoulder_press_machine': 'full_gym',
+    'pec_deck': 'full_gym',
+    'preacher_curl_bench': 'full_gym',
+  };
+
+  Future<void> _launchSnapFlow(BuildContext context, WidgetRef ref) async {
+    HapticFeedback.selectionClick();
+    try {
+      // identify mode pops with null and writes the snapped equipment
+      // server-side; we then GET the list and translate canonicals.
+      await showEquipmentSnapFlow(
+        context,
+        ref,
+        mode: SnapMode.identify,
+      );
+    } catch (e) {
+      // Most commonly: camera permission denied — the snap flow handles
+      // its own user-facing prompt, but if anything escapes, we show a
+      // toast and silently fall back to the presets/manual grid.
+      if (!mounted || !context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Couldn't open the camera. Pick your equipment below."),
+          duration: const Duration(seconds: 3),
+        ),
+      );
+      return;
+    }
+
+    if (!mounted) return;
+
+    // After the snap flow closes, fetch the user's snapped equipment list
+    // and union the mapped IDs into the current selection. The user can
+    // still deselect any false positive in the grid below — that
+    // satisfies the "confirmation step" requirement (the grid IS the
+    // confirm UI) and preserves the existing Skip behavior.
+    try {
+      final api = ref.read(apiClientProvider);
+      final userId = await api.getUserId();
+      if (userId == null || userId.isEmpty) return;
+      final resp = await api.get(
+        '${ApiConstants.apiBaseUrl}/users/$userId/snapped-equipment',
+        queryParameters: {'limit': 100},
+      );
+      final data = resp.data;
+      if (data is! Map) return;
+      final items = (data['items'] as List? ?? const [])
+          .whereType<Map>()
+          .toList();
+      if (items.isEmpty) {
+        // Nothing came back — surface a gentle toast so the user knows
+        // why the grid didn't update, and falls through to manual.
+        if (!mounted || !context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('No equipment identified. Pick from the list below.'),
+            duration: Duration(seconds: 3),
+          ),
+        );
+        return;
+      }
+      final ids = <String>{};
+      // Always include bodyweight — every gym includes the user.
+      ids.add('bodyweight');
+      for (final item in items) {
+        final canonical = (item['canonical_name'] ?? '').toString().toLowerCase();
+        final mapped = _canonicalToOnboardingId[canonical];
+        if (mapped != null) ids.add(mapped);
+      }
+      // If full_gym got added, collapse to just full_gym (matches how the
+      // Full Gym preset behaves — see `_hasFullGym`).
+      final selection = ids.contains('full_gym') ? ['full_gym'] : ids.toList();
+      if (!mounted || !context.mounted) return;
+      widget.onPresetSelected?.call(selection);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Identified ${selection.length} ${selection.length == 1 ? "item" : "items"}. Tap any to deselect.',
+          ),
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      // Don't block onboarding — keep the user moving via the manual grid.
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Couldn't load identified equipment. Pick from the list below."),
+          duration: Duration(seconds: 3),
+        ),
+      );
+    }
+  }
+
+  Widget _buildSnapGymTile(BuildContext context, OnboardingTheme t) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final accent = AccentColorScope.of(context).getColor(isDark);
+    return Consumer(
+      builder: (context, ref, _) {
+        return GestureDetector(
+          onTap: () => _launchSnapFlow(context, ref),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(14),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      accent.withValues(alpha: 0.18),
+                      accent.withValues(alpha: 0.06),
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: accent.withValues(alpha: 0.45),
+                    width: 1.5,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 38,
+                      height: 38,
+                      decoration: BoxDecoration(
+                        color: accent.withValues(alpha: 0.20),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(
+                        Icons.camera_alt_rounded,
+                        color: accent,
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Row(
+                            children: [
+                              const Text(
+                                '\u{1F4F8} Snap your gym',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: accent.withValues(alpha: 0.20),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(
+                                  'Recommended',
+                                  style: TextStyle(
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.w700,
+                                    color: accent,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'Take a few photos and our AI identifies your equipment.',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: t.textSecondary,
+                              height: 1.3,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Icon(
+                      Icons.chevron_right,
+                      color: t.textSecondary,
+                      size: 20,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ).animate().fadeIn(delay: 120.ms).slideY(begin: 0.05);
+      },
     );
   }
 

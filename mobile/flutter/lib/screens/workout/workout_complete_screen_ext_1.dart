@@ -476,6 +476,35 @@ extension __WorkoutCompleteScreenStateExt1 on _WorkoutCompleteScreenState {
         _isLoadingAchievements = false;
       });
     }
+    // Cardio PRs run on a parallel pipeline (BackgroundTasks from
+    // /cardio-logs insert via cardio_pr_service). They land independently
+    // of the strength achievements endpoint; fetch them with a short
+    // retry to give the background job ~3s to finish writing.
+    unawaited(_loadRecentCardioPrs());
+  }
+
+  /// Fetch cardio PRs achieved within the last 5 minutes (i.e. likely
+  /// from THIS workout's cardio block, if any). Empty list → trophies
+  /// sheet hides the cardio section. Tolerates 404 / empty silently.
+  Future<void> _loadRecentCardioPrs() async {
+    try {
+      final repo = ref.read(cardioPrRepositoryProvider);
+      // Tiny retry — background enrichment can take ~1-3s after insert.
+      List<CardioPersonalRecord> recent = const [];
+      final cutoff = DateTime.now().subtract(const Duration(minutes: 5));
+      for (var attempt = 0; attempt < 3; attempt++) {
+        final all = await repo.listAll();
+        recent = all.where((pr) => pr.achievedAt.isAfter(cutoff)).toList();
+        if (recent.isNotEmpty) break;
+        await Future.delayed(Duration(milliseconds: 800 * (attempt + 1)));
+      }
+      if (!mounted) return;
+      setState(() {
+        _newCardioPRs = recent;
+      });
+    } catch (e) {
+      debugPrint('🏃 [CardioPR] post-workout fetch error: $e');
+    }
   }
 
 

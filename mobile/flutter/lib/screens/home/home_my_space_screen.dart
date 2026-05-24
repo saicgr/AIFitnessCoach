@@ -571,6 +571,31 @@ class _PresetThumbnail extends StatelessWidget {
             borderRadius: BorderRadius.circular(3),
           ),
         );
+      case HomeSection.readiness:
+        // Recovery Readiness preview — green traffic-light dot + a thin
+        // intensity-bar; visually compact in the editor strip.
+        return Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 11,
+              height: 11,
+              decoration: const BoxDecoration(
+                color: Color(0xFF4CAF50),
+                shape: BoxShape.circle,
+              ),
+            ),
+            const SizedBox(width: 4),
+            Container(
+              width: 28,
+              height: 6,
+              decoration: BoxDecoration(
+                color: muted,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ],
+        );
     }
   }
 

@@ -66,6 +66,12 @@ enum TrendSource {
   /// Nourish, Move, Sleep) in Custom Trends without standing up a new
   /// backend route.
   pillarHistory,
+
+  /// Wave-2 cardio derived metrics persisted daily into
+  /// `public.cardio_metric_snapshots` by `cardio_metric_snapshot_job` and
+  /// read via `/trends/cardio-series?metric=<key>`. Each [TrendMetric] of
+  /// this source carries its server-side `metric_key` in [TrendMetric.metricKey].
+  cardioMetricSnapshot,
 }
 
 /// High-level grouping used purely for the metric-picker UI so the now-large
@@ -457,7 +463,66 @@ enum TrendMetric {
       unitOverride: '/100', metricKey: 'move', color: 0xFF3E8FD0),
   pillarSleep('Sleep score', TrendSource.pillarHistory,
       TrendCategory.wellbeing,
-      unitOverride: '/100', metricKey: 'sleep', color: 0xFF8B5CF6);
+      unitOverride: '/100', metricKey: 'sleep', color: 0xFF8B5CF6),
+
+  // ── Cardio metric snapshots (Wave-2 SLICE_TRENDS) ───────────────────────
+  // 13 derived cardio metrics persisted daily by `cardio_metric_snapshot_job`.
+  // Each metric resolves through `/trends/cardio-series?metric=<metric_key>`
+  // and renders inside the existing "Cardio" category in the picker. Boolean
+  // tags (e.g. is_hill_workout) are intentionally NOT registered — the trend
+  // infra is numeric-only.
+  racePredicted5k('Race 5K predicted', TrendSource.cardioMetricSnapshot,
+      TrendCategory.cardio,
+      unitOverride: 's', metricKey: 'race_predicted_5k_sec',
+      color: 0xFF3DC97A),
+  racePredicted10k('Race 10K predicted', TrendSource.cardioMetricSnapshot,
+      TrendCategory.cardio,
+      unitOverride: 's', metricKey: 'race_predicted_10k_sec',
+      color: 0xFF3DA5E0),
+  racePredictedHalf('Race Half predicted', TrendSource.cardioMetricSnapshot,
+      TrendCategory.cardio,
+      unitOverride: 's', metricKey: 'race_predicted_half_sec',
+      color: 0xFF8A6FE0),
+  racePredictedMarathon('Race Marathon predicted',
+      TrendSource.cardioMetricSnapshot, TrendCategory.cardio,
+      unitOverride: 's', metricKey: 'race_predicted_marathon_sec',
+      color: 0xFFB05CD6),
+  trainingLoadAcute('Training Load (Acute)',
+      TrendSource.cardioMetricSnapshot, TrendCategory.cardio,
+      unitOverride: 'TRIMP', metricKey: 'training_load_acute',
+      color: 0xFFE0823D),
+  trainingLoadChronic('Training Load (Chronic)',
+      TrendSource.cardioMetricSnapshot, TrendCategory.cardio,
+      unitOverride: 'TRIMP', metricKey: 'training_load_chronic',
+      color: 0xFFE0A93D),
+  trainingLoadAcwr('Training Load (ACWR)',
+      TrendSource.cardioMetricSnapshot, TrendCategory.cardio,
+      unitOverride: 'ratio', metricKey: 'training_load_acwr',
+      color: 0xFFD6675C),
+  cardioWeeklyDistance('Weekly Distance', TrendSource.cardioMetricSnapshot,
+      TrendCategory.cardio,
+      unitOverride: 'm', metricKey: 'cardio_weekly_distance_m',
+      color: 0xFF3DC97A),
+  cardioLongestRun('Longest Run (7d)', TrendSource.cardioMetricSnapshot,
+      TrendCategory.cardio,
+      unitOverride: 'm', metricKey: 'cardio_longest_run_m',
+      color: 0xFF6FBF4F),
+  cardioFastestMile('Fastest Mile (7d)', TrendSource.cardioMetricSnapshot,
+      TrendCategory.cardio,
+      unitOverride: 's', metricKey: 'cardio_fastest_mile_sec',
+      color: 0xFF4FBF7A),
+  cardioPaceAvg('Avg Pace', TrendSource.cardioMetricSnapshot,
+      TrendCategory.cardio,
+      unitOverride: 's/km', metricKey: 'cardio_pace_avg_sec_per_km',
+      color: 0xFF00D9C0),
+  cardioWeatherTemp('Avg Run Temperature',
+      TrendSource.cardioMetricSnapshot, TrendCategory.cardio,
+      unitOverride: '°C', metricKey: 'cardio_weather_temp_at_run_c',
+      color: 0xFFE0A93D),
+  refuelCarbsRecommended('Refuel Carbs (Recommended)',
+      TrendSource.cardioMetricSnapshot, TrendCategory.cardio,
+      unitOverride: 'g', metricKey: 'refuel_carbs_recommended_g',
+      color: 0xFFEC8B2C);
 
   const TrendMetric(
     this.displayName,
@@ -643,6 +708,10 @@ Duration _ttlFor(TrendMetric metric) {
       // a 1-hour TTL keeps the trend chart responsive without forcing a full
       // re-fetch every time the user opens Custom Trends.
       return const Duration(hours: 1);
+    case TrendSource.cardioMetricSnapshot:
+      // Snapshots are written once per day by the cron job — a 3-hour TTL
+      // matches the other cardio sources.
+      return const Duration(hours: 3);
   }
 }
 
@@ -792,6 +861,10 @@ Future<TrendSeries> _fetchTrendSeries(Ref ref, TrendSeriesKey key) async {
     case TrendSource.pillarHistory:
       points = await _fetchPillarHistorySeries(ref, metric, range);
       unit = metric.unitOverride ?? '/100';
+      break;
+    case TrendSource.cardioMetricSnapshot:
+      points = await _fetchCardioSnapshotSeries(ref, metric, range);
+      unit = metric.unitOverride ?? '';
       break;
   }
 
@@ -1369,6 +1442,7 @@ Future<List<TrendPoint>> _fetchWaveOneSeries(
     case TrendSource.readiness:
     case TrendSource.strength:
     case TrendSource.pillarHistory:
+    case TrendSource.cardioMetricSnapshot:
       return const [];
   }
 
@@ -1624,6 +1698,41 @@ final trendEventsProvider = FutureProvider.family
     TrendEventKind.period: periodDays,
   });
 });
+
+/// Cardio metric-snapshot series — reads `/trends/cardio-series?metric=<key>`
+/// for one of the 13 Wave-2 derived cardio metrics. Every metric is a numeric
+/// per-day series of `{date, value}`; missing days are simply absent (the chart
+/// honours the gap rather than fabricating zeros).
+Future<List<TrendPoint>> _fetchCardioSnapshotSeries(
+  Ref ref,
+  TrendMetric metric,
+  TrendRange range,
+) async {
+  final key = metric.metricKey;
+  if (key == null) return const [];
+  final repo = ref.read(trendsRepositoryProvider);
+  final rows = await repo.getCardioSnapshotSeries(
+    metricKey: key,
+    days: range.days,
+  );
+  if (rows == null) return const [];
+  final out = <TrendPoint>[];
+  for (final row in rows) {
+    final dateStr = row['date'] as String?;
+    final date = dateStr == null ? null : DateTime.tryParse(dateStr);
+    if (date == null) continue;
+    final raw = row['value'];
+    double? v;
+    if (raw is num) {
+      v = raw.toDouble();
+    } else if (raw is String) {
+      v = double.tryParse(raw.trim());
+    }
+    if (v == null) continue;
+    out.add(TrendPoint(date: date, value: v));
+  }
+  return out;
+}
 
 /// Pillar history series — recomputes past-day completion for one of the four
 /// Today-Score pillars (Train / Nourish / Move / Sleep) by delegating to

@@ -46,6 +46,7 @@ import '../../widgets/rating_prompt_banner.dart';
 import 'widgets/tile_factory.dart';
 import 'widgets/today_score_card.dart';
 import 'widgets/coach_hero_card.dart';
+import 'widgets/readiness_tile.dart';
 import 'widgets/strain_coach_card.dart';
 import 'widgets/score_change_announcement_sheet.dart';
 import 'widgets/my_program_summary_card.dart';
@@ -1144,6 +1145,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
         // Self-hides (returns SizedBox.shrink) unless menstrual tracking
         // is enabled — no extra gate needed here.
         return const CycleStatusCard();
+      case HomeSection.readiness:
+        // SLICE_READINESS Recovery Readiness tile. Self-hides on
+        // calibration window (<14d) and after a "Building baseline"
+        // empty state period.
+        return const ReadinessTile();
     }
   }
 

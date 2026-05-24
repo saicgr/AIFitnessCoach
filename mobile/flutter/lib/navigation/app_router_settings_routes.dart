@@ -159,4 +159,26 @@ List<RouteBase> _settingsRoutes() => [
         builder: (context, state) => const AiIntegrationsScreen(),
       ),
 
+      // Manage Duplicate Imports — SLICE_DEDUP screen, surfaces dedup
+      // groups across Strava / Apple Health / Garmin imports.
+      GoRoute(
+        path: '/settings/manage-duplicate-imports',
+        builder: (context, state) => const ManageDuplicateImportsScreen(),
+      ),
+
+      // Cardio detail screens (Wave 2 + 3) — pushed from cardio profile
+      // tiles, Custom Trends cards, AskCoach deeplinks.
+      GoRoute(
+        path: '/cardio/race-predictor',
+        builder: (context, state) => const RacePredictorDetailScreen(),
+      ),
+      GoRoute(
+        path: '/cardio/training-load',
+        builder: (context, state) => const TrainingLoadScreen(),
+      ),
+      GoRoute(
+        path: '/cardio/vo2max',
+        builder: (context, state) => const Vo2MaxDetailScreen(),
+      ),
+
 ];

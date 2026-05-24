@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../../core/animations/app_animations.dart';
 import '../../../core/constants/app_colors.dart';
@@ -85,6 +86,18 @@ class DataManagementSection extends ConsumerWidget {
               title: 'Import ${Branding.appName} Data',
               subtitle: 'Restore from a ${Branding.appName} backup ZIP',
               onTap: () => showImportDialog(context, ref),
+            ),
+            // SLICE_DEDUP — surface the cross-source dedup management
+            // screen here so users can re-pick a primary or unlink a
+            // false-positive group across Strava / Apple Health / Garmin
+            // imports.
+            SettingItemData(
+              icon: Icons.merge_type,
+              title: 'Manage duplicate imports',
+              subtitle:
+                  'Re-pick the primary source when the same workout was synced twice',
+              onTap: () => GoRouter.of(context)
+                  .push('/settings/manage-duplicate-imports'),
             ),
           ],
         ),
