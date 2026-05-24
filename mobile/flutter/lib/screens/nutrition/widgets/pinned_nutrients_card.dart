@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../data/models/hormonal_health.dart';
 import '../../../data/models/micronutrients.dart';
+import '../../../data/providers/hormonal_health_provider.dart';
+import '../../cycle/cycle_visuals.dart';
 
-class PinnedNutrientsCard extends StatefulWidget {
+class PinnedNutrientsCard extends ConsumerStatefulWidget {
   final List<NutrientProgress> pinned;
   final bool isDark;
   final VoidCallback? onEdit;
@@ -15,10 +19,10 @@ class PinnedNutrientsCard extends StatefulWidget {
   });
 
   @override
-  State<PinnedNutrientsCard> createState() => _PinnedNutrientsCardState();
+  ConsumerState<PinnedNutrientsCard> createState() => _PinnedNutrientsCardState();
 }
 
-class _PinnedNutrientsCardState extends State<PinnedNutrientsCard> {
+class _PinnedNutrientsCardState extends ConsumerState<PinnedNutrientsCard> {
   // Minimised by default — the card otherwise takes ~90 dp of vertical space
   // before users ever interact with it. Tap the header to toggle.
   bool _expanded = false;
@@ -30,6 +34,16 @@ class _PinnedNutrientsCardState extends State<PinnedNutrientsCard> {
     final teal = isDark ? AppColors.teal : AppColorsLight.teal;
     final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
 
+    // Phase D — surface the phase-emphasised nutrients as a small strip at
+    // the top of the micronutrient card. Derived client-side from the
+    // existing cycle-prediction provider — no new HTTP call. Renders only
+    // when tracking is on AND the current phase is known.
+    final tracksCycle = ref.watch(hasHormonalTrackingProvider);
+    final prediction =
+        tracksCycle ? ref.watch(cyclePredictionProvider).value : null;
+    final phase = prediction?.currentPhase;
+    final phaseFocus = tracksCycle ? _focusNutrientsFor(phase) : const <String>[];
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
@@ -40,6 +54,12 @@ class _PinnedNutrientsCardState extends State<PinnedNutrientsCard> {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
+          if (phaseFocus.isNotEmpty)
+            _PhaseFocusStrip(
+              phase: phase,
+              nutrients: phaseFocus,
+              isDark: isDark,
+            ),
           // Header row — tap anywhere toggles expand/collapse.
           // Sentence case label, no count badge, no always-visible edit icon.
           // Edit pencil only appears when expanded (Task #6 cleanup).
@@ -203,6 +223,90 @@ class _CompactNutrientChip extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Phase D — phase-emphasised micronutrient mapping. Mirrors the static map
+/// in `backend/services/cycle/cycle_nutrition.py:emphasised_nutrients_for_phase`
+/// so the strip renders without a new HTTP call. Edit both sides together.
+List<String> _focusNutrientsFor(CyclePhase? phase) {
+  switch (phase) {
+    case CyclePhase.menstrual:
+      return const ['Iron', 'Magnesium'];
+    case CyclePhase.follicular:
+      return const ['Folate', 'B6'];
+    case CyclePhase.ovulation:
+      return const ['Zinc', 'Vitamin E'];
+    case CyclePhase.luteal:
+      return const ['Magnesium', 'B6'];
+    case null:
+      return const [];
+  }
+}
+
+/// Phase D — "Focus this phase: A · B" strip at the top of the micronutrient
+/// card (~36dp tall). Uses the canonical per-phase color for the leading
+/// sparkle so it reads as part of the cycle system, not generic chrome.
+class _PhaseFocusStrip extends StatelessWidget {
+  final CyclePhase? phase;
+  final List<String> nutrients;
+  final bool isDark;
+
+  const _PhaseFocusStrip({
+    required this.phase,
+    required this.nutrients,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final phaseColor = CyclePhaseColors.of(phase);
+    final textMuted = isDark ? AppColors.textMuted : AppColorsLight.textMuted;
+    return Padding(
+      padding: const EdgeInsets.only(top: 4, bottom: 4),
+      child: SizedBox(
+        height: 28,
+        child: Row(
+          children: [
+            Icon(Icons.auto_awesome, size: 12, color: phaseColor),
+            const SizedBox(width: 6),
+            Text(
+              'Focus this phase:',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: textMuted,
+              ),
+            ),
+            const SizedBox(width: 6),
+            Expanded(
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: nutrients.length,
+                separatorBuilder: (_, __) => const SizedBox(width: 4),
+                itemBuilder: (_, i) => Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: phaseColor.withValues(alpha: isDark ? 0.18 : 0.12),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    nutrients[i],
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: phaseColor,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

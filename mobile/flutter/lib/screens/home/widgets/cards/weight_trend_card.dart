@@ -103,6 +103,16 @@ class CycleAwareWeightData {
   /// The cycle day both the current and last-cycle weigh-ins share.
   final int? samePointCycleDay;
 
+  /// Phase D — adaptive calorie delta applied for the current cycle phase
+  /// (e.g. +200 kcal during luteal). Positive = bump, negative = cut, null
+  /// when no phase-aware adjustment is in effect.
+  final int? cycleCalorieDelta;
+
+  /// Current cycle phase string the backend reports (lowercase: "luteal",
+  /// "menstrual", "follicular", "ovulation"). Paired with [cycleCalorieDelta]
+  /// for the home calorie-card chip.
+  final String? cyclePhase;
+
   const CycleAwareWeightData({
     this.weightSeries = const [],
     this.cycleAwareChangeKg,
@@ -111,6 +121,8 @@ class CycleAwareWeightData {
     this.holdWindowLabel,
     this.samePointLastCycleKg,
     this.samePointCycleDay,
+    this.cycleCalorieDelta,
+    this.cyclePhase,
   });
 
   bool get hasSeries => weightSeries.isNotEmpty;
@@ -166,6 +178,19 @@ class CycleAwareWeightData {
           cmpMap['weight_kg'] ?? cmpMap['same_point_last_cycle_kg']),
       samePointCycleDay:
           _asInt(cmpMap['cycle_day'] ?? cmpMap['same_point_cycle_day']),
+      // Phase D — cycle calorie delta + phase live at the top of the same
+      // response. Tolerate nested or flat keys for both.
+      cycleCalorieDelta: _asInt(json['cycle_calorie_delta'] ??
+          (json['cycle_adjustment'] is Map
+              ? (json['cycle_adjustment'] as Map)['calorie_delta']
+              : null)),
+      cyclePhase: (json['cycle_phase'] ??
+              json['current_phase'] ??
+              (json['cycle_adjustment'] is Map
+                  ? (json['cycle_adjustment'] as Map)['phase']
+                  : null))
+          ?.toString()
+          .toLowerCase(),
     );
   }
 }
@@ -820,6 +845,13 @@ class _TargetHeldMarker extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = const Color(0xFF64B5F6); // luteal blue
+    // Phase D — surface the hold as a tight one-liner directly under the
+    // weight-change number. When the backend supplies a window label (e.g.
+    // "until May 26") splice it inline; otherwise use the static copy.
+    final label = (windowLabel.isNotEmpty &&
+            windowLabel.toLowerCase() != 'period week')
+        ? 'Target held $windowLabel — luteal water smoothing'
+        : 'Target held — luteal water smoothing';
     return Padding(
       padding: const EdgeInsets.only(top: 8),
       child: Container(
@@ -834,8 +866,7 @@ class _TargetHeldMarker extends StatelessWidget {
             const SizedBox(width: 6),
             Expanded(
               child: Text(
-                'Calorie target held for your $windowLabel — water weight is '
-                'expected, not fat gain.',
+                label,
                 style: TextStyle(fontSize: 11, color: color),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,

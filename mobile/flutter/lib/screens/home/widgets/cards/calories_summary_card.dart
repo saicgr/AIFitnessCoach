@@ -4,9 +4,11 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/theme/theme_colors.dart';
 import '../../../../data/models/home_layout.dart';
+import '../../../../data/providers/hormonal_health_provider.dart';
 import '../../../../data/providers/nutrition_preferences_provider.dart';
 import '../../../../data/repositories/nutrition_repository.dart';
 import '../../../../data/services/haptic_service.dart';
+import 'weight_trend_card.dart' show cycleAwareWeightProvider;
 
 /// Compact "Today's Calories" tile — calories consumed vs target with a
 /// progress bar. Tapping it opens the nutrition dashboard.
@@ -34,6 +36,17 @@ class CaloriesSummaryCard extends ConsumerWidget {
 
     final summary = ref.watch(nutritionProvider).todaySummary;
     final calorieTarget = ref.watch(nutritionPreferencesProvider).currentCalorieTarget;
+
+    // Phase D — surface the cycle-phase calorie delta (e.g. +200 luteal) as
+    // a compact chip below the progress bar. Reuses the existing
+    // cycle-aware adaptive provider — no new HTTP call. Gated on tracking.
+    final tracksCycle = ref.watch(hasHormonalTrackingProvider);
+    final cycleAware =
+        tracksCycle ? ref.watch(cycleAwareWeightProvider).value : null;
+    final cycleDelta = cycleAware?.cycleCalorieDelta;
+    final cyclePhase = cycleAware?.cyclePhase;
+    final showCycleChip =
+        tracksCycle && cycleDelta != null && cycleDelta > 0 && cyclePhase != null;
     final consumed = summary?.totalCalories ?? 0;
     final remaining = calorieTarget - consumed;
     final progress = calorieTarget > 0
@@ -129,8 +142,55 @@ class CaloriesSummaryCard extends ConsumerWidget {
                 color: textMuted,
               ),
             ),
+            if (showCycleChip) ...[
+              const SizedBox(height: 6),
+              _CyclePhaseDeltaChip(
+                delta: cycleDelta,
+                phase: cyclePhase,
+                isDark: isDark,
+              ),
+            ],
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Phase D — compact muted chip showing the phase-aware calorie delta
+/// active on the home calorie card (e.g. "+200 cal · luteal phase"). Sits
+/// alongside the target so the user sees WHY today's number moved.
+class _CyclePhaseDeltaChip extends StatelessWidget {
+  final int delta;
+  final String phase;
+  final bool isDark;
+
+  const _CyclePhaseDeltaChip({
+    required this.delta,
+    required this.phase,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    // Soft luteal blue — same accent used by the weight-trend target-held
+    // marker so the two annotations read as one cycle-aware system.
+    const accent = Color(0xFF64B5F6);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: accent.withValues(alpha: isDark ? 0.16 : 0.10),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        '+$delta cal · $phase phase',
+        style: const TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: accent,
+        ),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
       ),
     );
   }

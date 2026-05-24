@@ -5,10 +5,13 @@ import 'package:go_router/go_router.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/theme/accent_color_provider.dart';
+import '../../../data/models/hormonal_health.dart';
 import '../../../data/models/workout.dart';
 import '../../../data/repositories/workout_repository.dart';
+import '../../../data/providers/hormonal_health_provider.dart';
 import '../../../data/providers/today_workout_provider.dart';
 import '../../../data/providers/quick_workout_provider.dart';
+import '../../cycle/cycle_visuals.dart';
 import '../../../data/services/haptic_service.dart';
 import '../../../data/services/api_client.dart';
 import '../../../data/services/image_url_cache.dart';
@@ -449,6 +452,22 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
 
     final dateLabel = _getScheduledDateLabel(workout.scheduledDate);
 
+    // Phase D — phase chip on the day card. Reuses the existing
+    // `cyclePhaseProvider` (wraps `GET /cycle-phase/{user_id}`), so no new
+    // HTTP call. When the endpoint hasn't loaded yet, fall back to deriving
+    // intensity locally from the cached `cyclePredictionProvider` using the
+    // same hardcoded mapping the backend uses.
+    final tracksCycle = ref.watch(hasHormonalTrackingProvider);
+    final phaseInfo =
+        tracksCycle ? ref.watch(cyclePhaseProvider).valueOrNull : null;
+    final prediction =
+        tracksCycle ? ref.watch(cyclePredictionProvider).valueOrNull : null;
+    final CyclePhase? phaseToday = phaseInfo?.currentPhase ?? prediction?.currentPhase;
+    final String? phaseIntensity = phaseInfo?.recommendedIntensity ??
+        _localIntensityFor(phaseToday);
+    final bool showPhaseChip =
+        tracksCycle && dateLabel == 'TODAY' && phaseToday != null;
+
     final cardContent = Container(
       constraints: const BoxConstraints(minHeight: 280),
       decoration: BoxDecoration(
@@ -613,6 +632,18 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
                       ),
                     ],
                   ),
+
+                  // Phase D — phase chip on the day card. Reuses cycle
+                  // colours from CyclePhaseColors. Only on TODAY when cycle
+                  // tracking is on AND a phase is known.
+                  if (showPhaseChip) ...[
+                    const SizedBox(height: 8),
+                    _PhaseRecommendationChip(
+                      phase: phaseToday,
+                      intensity: phaseIntensity,
+                      isDark: isDark,
+                    ),
+                  ],
 
                   // Flexible top gap — the card has a fixed 296pt height and
                   // a description-bearing workout pushes the natural Column
@@ -1052,6 +1083,94 @@ class _HeroWorkoutCardState extends ConsumerState<HeroWorkoutCard> {
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
         child: cardContent,
+      ),
+    );
+  }
+}
+
+/// Phase D — local fallback for the phase→intensity mapping the backend
+/// returns at `GET /cycle-phase/{user_id}.recommended_intensity`. Used when
+/// the endpoint hasn't responded yet so the chip can render off the cached
+/// `cyclePredictionProvider.currentPhase`. Must stay in sync with the
+/// backend mapping in `services/cycle/cycle_workouts.py`.
+String? _localIntensityFor(CyclePhase? phase) {
+  switch (phase) {
+    case CyclePhase.menstrual:
+      return 'low intensity';
+    case CyclePhase.follicular:
+      return 'moderate intensity';
+    case CyclePhase.ovulation:
+      return 'high intensity recommended';
+    case CyclePhase.luteal:
+      return 'moderate-to-low intensity';
+    case null:
+      return null;
+  }
+}
+
+/// Compact "{phase} · {intensity}" chip on the today day-card. Phase-tinted
+/// using `CyclePhaseColors` so it reads as part of the cycle system.
+class _PhaseRecommendationChip extends StatelessWidget {
+  final CyclePhase phase;
+  final String? intensity;
+  final bool isDark;
+
+  const _PhaseRecommendationChip({
+    required this.phase,
+    required this.intensity,
+    required this.isDark,
+  });
+
+  String get _phaseLabel {
+    switch (phase) {
+      case CyclePhase.menstrual:
+        return 'Menstrual';
+      case CyclePhase.follicular:
+        return 'Follicular';
+      case CyclePhase.ovulation:
+        return 'Ovulation';
+      case CyclePhase.luteal:
+        return 'Luteal';
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final color = CyclePhaseColors.of(phase);
+    final text = (intensity != null && intensity!.isNotEmpty)
+        ? '$_phaseLabel · $intensity'
+        : _phaseLabel;
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        decoration: BoxDecoration(
+          color: isDark
+              ? Colors.black.withValues(alpha: 0.6)
+              : Colors.white.withValues(alpha: 0.92),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: color.withValues(alpha: 0.55), width: 1),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.favorite, size: 11, color: color),
+            const SizedBox(width: 6),
+            Flexible(
+              child: Text(
+                text,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.3,
+                  color: isDark ? Colors.white : Colors.black87,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
