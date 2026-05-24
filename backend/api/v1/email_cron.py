@@ -946,7 +946,16 @@ async def _job_weekly_summary(supabase, email_svc) -> int:
     Cooldown: 7 days.
     """
     email_type = "weekly_summary"
+    cardio_email_type = "cardio_digest"
     sent = 0
+    cardio_sent = 0
+
+    # Lazy imports — only needed when we actually have an opted-in cohort.
+    from services import cardio_digest_service as cardio_svc
+    try:
+        import resend as _resend  # noqa: WPS433
+    except ImportError:
+        _resend = None
 
     try:
         # Pool: everyone who's opted into weekly summary (we send even to quiet weeks
@@ -968,9 +977,59 @@ async def _job_weekly_summary(supabase, email_svc) -> int:
         for user in (users_result.data or []):
             uid = user["id"]
             user_tz = user.get("timezone") or "UTC"
+            user_today = date.fromisoformat(get_user_today(user_tz))
+
+            # ─── Section: Sunday morning cardio digest (SLICE_DIGEST) ──
+            # Independent of the Monday weekly summary block below — fires
+            # on Sunday only, in the user-local morning band. Reuses the
+            # same opt-in flag (weekly_summary preference) plus the shared
+            # _was_recently_sent gate (covers vacation + comeback + cooldown).
+            if user_today.weekday() == 6 and user.get("email"):
+                try:
+                    tb = time_band(user_tz)
+                except Exception:
+                    tb = None
+                if (
+                    tb == TimeBand.MORNING
+                    and _resend is not None
+                    and email_svc.is_configured()
+                    and not _was_recently_sent(supabase, uid, cardio_email_type)
+                ):
+                    try:
+                        cardio_summary = cardio_svc.compute_weekly_cardio_summary(
+                            supabase, uid, user_tz,
+                        )
+                    except Exception as e:
+                        cardio_summary = None
+                        logger.warning(f"[cardio_digest] compute failed for {uid}: {e}")
+                    if cardio_summary is not None:
+                        copy = cardio_svc.format_digest_copy(
+                            cardio_summary,
+                            user_first_name=first_name(user),
+                            user_email=user.get("email"),
+                            variant_salt=f"{uid}:{user_today.isoformat()}",
+                        )
+                        try:
+                            _resend.Emails.send({
+                                "from": email_svc.from_email,
+                                "to": [user["email"]],
+                                "subject": copy["email_subject"],
+                                "html": copy["email_body_html"],
+                            })
+                            _log_email_sent(supabase, uid, cardio_email_type, {
+                                "km_this_week": cardio_summary.km_this_week,
+                                "delta_pct": cardio_summary.delta_pct,
+                                "session_count": cardio_summary.session_count,
+                                "is_first_week": cardio_summary.is_first_week,
+                            })
+                            cardio_sent += 1
+                        except Exception as e:
+                            logger.error(
+                                f"[cardio_digest] send failed for {uid}: {e}",
+                                exc_info=True,
+                            )
 
             # Send only on Monday (user-local) — weekly cadence.
-            user_today = date.fromisoformat(get_user_today(user_tz))
             if user_today.weekday() != 0:
                 continue
 
@@ -1025,8 +1084,10 @@ async def _job_weekly_summary(supabase, email_svc) -> int:
         logger.error(f"❌ weekly_summary job failed: {e}", exc_info=True)
         raise
 
-    logger.info(f"🎯 weekly_summary: {sent} emails sent")
-    return sent
+    logger.info(
+        f"🎯 weekly_summary: {sent} emails sent · cardio_digest: {cardio_sent} emails sent"
+    )
+    return sent + cardio_sent
 
 
 # ─── Job: Comeback Celebration (N3) ─────────────────────────────────────────

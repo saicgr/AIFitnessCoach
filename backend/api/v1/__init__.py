@@ -29,6 +29,7 @@ from api.v1 import workout_history  # Manual workout history import for AI learn
 from api.v1 import workout_history_file  # File-upload import (Hevy/Strong/Fitbod/Nippard/etc.)
 from api.v1 import workout_export  # Per-format reverse-direction export (Hevy/Strong/Fitbod/JSON/Parquet/XLSX/PDF/TCX/GPX)
 from api.v1 import cardio_logs  # Cardio session logging + bulk import (Strava/Peloton/Garmin/etc.)
+from api.v1 import cardio_autotag_endpoints  # Cardio vibe-tag recompute + summary (migration 2094)
 from api.v1 import exercise_preferences  # Staple exercises and variation control
 from api.v1 import training_intensity  # Percentage-based 1RM training
 from api.v1 import layouts  # Home screen layout customization
@@ -73,6 +74,7 @@ from api.v1 import live_chat  # Live chat support with human agents
 from api.v1 import body_analyzer  # Body Analyzer + program retune proposals
 from api.v1 import audio_coach  # Daily personalised audio brief
 from api.v1.coach import daily_insight as coach_daily_insight  # Home daily-score Gemini insight + Ask-Coach pillar-stat insight
+from api.v1.user import history_snapshot as user_history_snapshot  # Rich history snapshot (yesterday + 7d + 30d + PRs + open loops)
 from api.v1 import inflammation  # Food inflammation analysis from barcode scans
 from api.v1 import admin  # Admin backend for live chat management and support
 from api.v1 import habits  # Simple habit tracking (not eating outside, no doordash, etc.)
@@ -255,6 +257,7 @@ router.include_router(workout_export.router, tags=["Workout Export"])
 
 # Cardio session logs — sibling to workout_history for cardio imports (Strava/Peloton/Garmin).
 router.include_router(cardio_logs.router, tags=["Cardio Logs"])
+router.include_router(cardio_autotag_endpoints.router, tags=["Cardio Auto-Tags"])
 
 # Exercise preferences: staple exercises, variation control, week comparison
 router.include_router(exercise_preferences.router, tags=["Exercise Preferences"])
@@ -509,6 +512,13 @@ router.include_router(body_analyzer.router, prefix="/body-analyzer", tags=["Body
 # Audio Coach — daily personalised TTS brief
 router.include_router(audio_coach.router, prefix="/audio-coach", tags=["Audio Coach"])
 router.include_router(coach_daily_insight.router, prefix="/coach", tags=["Coach Daily Insight"])
+from api.v1 import coach_insight_endpoints as _coach_insight_endpoints  # SLICE_COACH: cardio auto-insight
+router.include_router(_coach_insight_endpoints.router, prefix="/coach", tags=["Coach Cardio Insight"])
+
+# Rich user history snapshot — yesterday + 7d patterns + 30d trends + PRs +
+# open loops + wins. Pure SQL aggregation, 30 min in-process TTL cache.
+# Powers the workout-card resolver, coach brief prompts, and pillar momentum chips.
+router.include_router(user_history_snapshot.router, prefix="/user", tags=["User History"])
 
 # Public plan / period share tokens (Hevy-style multi-day grid links)
 router.include_router(plan_share_link.router, prefix="/plans", tags=["Plan Sharing"])
@@ -533,3 +543,41 @@ router.include_router(ai_tools_physique.router, tags=["AI Tools"])
 # AI Form Check — public unauthenticated video lift analysis (keyframe
 # extraction + Gemini Vision). Own per-IP rate limit (3 / 24h).
 router.include_router(ai_tools_form_check.router, tags=["AI Tools"])
+
+# SLICE_REFUEL — post-cardio recovery prescription (ACSM water/carbs/protein).
+# Read-only on-demand endpoint, no insert-path hooks (later agent owns wiring).
+from . import cardio_refuel; router.include_router(cardio_refuel.router, prefix="/cardio-refuel", tags=["cardio"])
+
+# SLICE_RACE — Riegel/Cameron race-time predictor (5K/10K/half/marathon).
+from . import race_predictor_endpoints; router.include_router(race_predictor_endpoints.router, tags=["Cardio Prediction"])
+
+# SLICE_CARDIO_PR — cardio PR list + per-kind history (reads from personal_records, sport IS NOT NULL).
+from . import cardio_pr_endpoints; router.include_router(cardio_pr_endpoints.router, tags=["Cardio PRs"])
+
+# SLICE_TRAINING_LOAD — Banister TRIMP + acute/chronic/ACWR live computation.
+from . import training_load_endpoints; router.include_router(training_load_endpoints.router, tags=["Training Load"])
+
+# SLICE_AUTOTAGS — POST /cardio-logs/{id}/recompute-tags + GET tags-summary.
+from . import cardio_autotag_endpoints; router.include_router(cardio_autotag_endpoints.router, tags=["Cardio Tags"])
+
+# SLICE_VO2MAX — GET /vo2max/history + /vo2max/latest (reads cardio_metrics).
+from . import vo2max_endpoints; router.include_router(vo2max_endpoints.router, prefix="/vo2max", tags=["VO2max"])
+
+# SLICE_GPS — POST /cardio-logs/{id}/route (S3 polyline upload).
+from . import cardio_route; router.include_router(cardio_route.router, tags=["Cardio Route"])
+
+# SLICE_TRENDS — GET /trends/cardio-series?metric=<key>&days=<n> (reads
+# cardio_metric_snapshots; allowlisted metric keys only).
+from . import trends_cardio; router.include_router(trends_cardio.router, prefix="/trends", tags=["Trends"])
+
+# SLICE_PHASE — GET /cardio/phase-recommendation?date=... gated on cycle
+# tracking + non-pregnant + non-menopausal + non-hormonal-contraceptive.
+from . import cardio_phase_endpoints; router.include_router(cardio_phase_endpoints.router, tags=["Cardio Phase"])
+
+# SLICE_SLEEP — GET /cardio-correlation/sleep-pace (Pearson over 30d paired
+# sleep+pace; 204 when n<20). Frontend renders via TrendAiInsightCard wrapper.
+from . import cardio_correlation_endpoints; router.include_router(cardio_correlation_endpoints.router, tags=["Cardio Correlation"])
+
+# SLICE_GPX_EXPORT — GET /cardio-logs/{id}/export?format=gpx|tcx|fit. Returns
+# StreamingResponse with Content-Disposition for share-sheet filename.
+from . import cardio_exports; router.include_router(cardio_exports.router, tags=["Cardio Exports"])

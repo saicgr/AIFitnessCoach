@@ -1745,6 +1745,141 @@ async def update_contribute_food_data(
         raise safe_internal_error(e, "users")
 
 
+# =============================================================================
+# Cross-device user preferences (week_starts_sunday + distance_unit)
+# Migration 2094 added both columns. PATCH endpoint lets the Flutter app
+# persist Settings toggles so they sync across devices on the same account.
+# =============================================================================
+
+class UserPreferencesPayload(BaseModel):
+    """Partial update for cross-device user preferences.
+
+    Both fields optional — null preserves the existing DB value (no-op for
+    that field). Distance unit is validated against {"mi","km"}; anything
+    else returns 422 via FastAPI's validation layer.
+    """
+    week_starts_sunday: Optional[bool] = None
+    distance_unit: Optional[str] = None
+
+
+class UserPreferencesResponse(BaseModel):
+    week_starts_sunday: Optional[bool] = None
+    distance_unit: Optional[str] = None
+
+
+@router.get("/me/preferences", response_model=UserPreferencesResponse)
+async def get_my_preferences(
+    current_user: dict = Depends(get_current_user),
+) -> UserPreferencesResponse:
+    """Read the current user's cross-device preferences.
+
+    Returns nulls for fields not yet set — caller is expected to fall back
+    to its own local default in that case.
+    """
+    user_id = current_user.get("id") or current_user.get("user_id")
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Auth missing")
+    try:
+        db = get_supabase_db()
+        res = (
+            db.client.table("users")
+            .select("week_starts_sunday,distance_unit")
+            .eq("id", user_id)
+            .limit(1)
+            .execute()
+        )
+        rows = res.data or []
+        if not rows:
+            raise HTTPException(status_code=404, detail="User not found")
+        row = rows[0]
+        return UserPreferencesResponse(
+            week_starts_sunday=row.get("week_starts_sunday"),
+            distance_unit=row.get("distance_unit"),
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(
+            f"GET /me/preferences failed for user {user_id}: {e}",
+            exc_info=True,
+        )
+        raise safe_internal_error(e, "users")
+
+
+@router.patch("/me/preferences", response_model=UserPreferencesResponse)
+async def update_my_preferences(
+    body: UserPreferencesPayload,
+    current_user: dict = Depends(get_current_user),
+) -> UserPreferencesResponse:
+    """Update cross-device user preferences (idempotent partial PATCH).
+
+    - week_starts_sunday: bool|null. Null → no-op for this field.
+    - distance_unit: "mi"|"km"|null. Null → no-op. Any other string → 422.
+
+    Returns the FULL post-update preference dict (so the client doesn't have
+    to issue a second GET to confirm what's now persisted)."""
+    user_id = current_user.get("id") or current_user.get("user_id")
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Auth missing")
+
+    # Build partial update — only include fields the caller explicitly set.
+    update_data: dict = {}
+    if body.week_starts_sunday is not None:
+        update_data["week_starts_sunday"] = bool(body.week_starts_sunday)
+    if body.distance_unit is not None:
+        unit = body.distance_unit.strip().lower()
+        if unit not in {"mi", "km"}:
+            raise HTTPException(
+                status_code=422,
+                detail="distance_unit must be 'mi' or 'km'",
+            )
+        update_data["distance_unit"] = unit
+
+    db = get_supabase_db()
+    try:
+        if update_data:
+            upd_res = (
+                db.client.table("users")
+                .update(update_data)
+                .eq("id", user_id)
+                .execute()
+            )
+            if not (upd_res.data or []):
+                # Update affected zero rows → user row doesn't exist.
+                raise HTTPException(status_code=404, detail="User not found")
+            logger.info(
+                "[PATCH /me/preferences] user %s updated: %s",
+                user_id,
+                list(update_data.keys()),
+            )
+
+        # Always re-read post-update (or read-only no-op) so the response
+        # mirrors current persisted state.
+        read_res = (
+            db.client.table("users")
+            .select("week_starts_sunday,distance_unit")
+            .eq("id", user_id)
+            .limit(1)
+            .execute()
+        )
+        rows = read_res.data or []
+        if not rows:
+            raise HTTPException(status_code=404, detail="User not found")
+        row = rows[0]
+        return UserPreferencesResponse(
+            week_starts_sunday=row.get("week_starts_sunday"),
+            distance_unit=row.get("distance_unit"),
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(
+            f"PATCH /me/preferences failed for user {user_id}: {e}",
+            exc_info=True,
+        )
+        raise safe_internal_error(e, "users")
+
+
 @router.delete("/me/contributed-foods")
 async def delete_contributed_foods(current_user: dict = Depends(get_current_user)):
     """Phase-2 §D1 (privacy): permanently delete this user's contributed

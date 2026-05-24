@@ -633,5 +633,317 @@ def map_recovery_to_tier(recovery_score: Optional[int]) -> Optional[Dict[str, An
     return None
 
 
+# =============================================================================
+# Cardio Readiness Extension (Migration 2094) — RHR delta + weekly TRIMP
+# =============================================================================
+#
+# Three optional signals added on top of the subjective Hooper Index when the
+# user has wearable / cardio history:
+#
+# 1. _compute_rhr_delta — today's resting HR vs the user's 28-day baseline,
+#    expressed as a percentage. +5% or more is an established overreaching /
+#    illness early-warning signal in HRV literature (Buchheit 2014). Returns
+#    None when we have fewer than 14 days of RHR readings (calibration).
+#
+# 2. _compute_weekly_trimp — sum of TRIMP over the last 7 days using the same
+#    Banister formula as `training_load_service`. Imported, not reimplemented,
+#    so the two views never drift.
+#
+# 3. _classify_cardio_load_state — coarse 3-bucket label for the tile:
+#    undertrained / balanced / overreaching. Driven by ACWR thresholds when
+#    available, else weekly-TRIMP volume floors. Returns None during
+#    calibration (no chronic baseline).
+#
+# All three are wired into `compute_readiness` (a thin orchestrator over the
+# existing `ReadinessService.calculate_readiness`) which writes the five new
+# columns to `readiness_scores`. The original ReadinessService API is
+# untouched — callers that don't need the cardio extension keep working.
+
+# Number of days of RHR history required before we surface a baseline.
+_RHR_BASELINE_DAYS = 28
+_RHR_MIN_HISTORY_DAYS = 14
+
+# RHR delta threshold above which the Hooper-derived readiness score is
+# penalised (overreaching / illness signal).
+_RHR_PENALTY_DELTA_PCT = 5.0
+_RHR_PENALTY_FACTOR = 0.90  # ~10% lower readiness score
+
+# Weekly TRIMP floor (below this → undertrained when no ACWR available).
+# 150 = roughly 30 min/day of Z2 cardio across the week.
+_WEEKLY_TRIMP_UNDERTRAINED_FLOOR = 150.0
+
+
+def _compute_rhr_delta(db, user_id: str) -> Optional[Dict[str, Any]]:
+    """Compute today's resting-HR delta vs the user's 28-day baseline.
+
+    Pulls resting-HR readings from `cardio_metrics` (the canonical source —
+    see migration 2094 docstring + project memory `cardio_metrics`).
+
+    Returns ``{baseline_bpm, today_bpm, delta_pct}`` when at least
+    ``_RHR_MIN_HISTORY_DAYS`` (14) distinct days of RHR readings are on file,
+    else ``None`` (calibration). Today's value is the most recent reading;
+    baseline averages everything inside the last 28 days that is NOT today
+    (so today doesn't get compared to itself when there's a single sample).
+
+    All exceptions are swallowed — the readiness write path must not 500 on
+    a missing/empty cardio_metrics table for users without wearables.
+    """
+    try:
+        cutoff = (datetime.now(tz=None) - timedelta(days=_RHR_BASELINE_DAYS + 1)).date().isoformat()
+        res = (
+            db.client.table("cardio_metrics")
+            .select("resting_hr, measured_at")
+            .eq("user_id", user_id)
+            .gte("measured_at", cutoff)
+            .order("measured_at", desc=True)
+            .execute()
+        )
+        rows = res.data or []
+    except Exception as e:  # pragma: no cover - defensive
+        logger.warning(f"[Readiness] _compute_rhr_delta cardio_metrics query failed: {e}")
+        rows = []
+
+    # Bucket by day; keep the latest reading per day to avoid weighting a
+    # noisy wearable that ships multiple samples on the same day.
+    by_day: Dict[date, int] = {}
+    for r in rows:
+        rhr = r.get("resting_hr")
+        if rhr is None or rhr <= 0:
+            continue
+        when = r.get("measured_at")
+        d: Optional[date] = None
+        if isinstance(when, str):
+            try:
+                v = when.replace("Z", "+00:00")
+                d = datetime.fromisoformat(v).date() if ("T" in when or " " in when) else date.fromisoformat(when)
+            except Exception:
+                d = None
+        elif isinstance(when, datetime):
+            d = when.date()
+        elif isinstance(when, date):
+            d = when
+        if d is None:
+            continue
+        # Order desc → first hit per day wins (= latest reading per day).
+        by_day.setdefault(d, int(rhr))
+
+    # Fallback to users.resting_heart_rate as a single-sample today value
+    # when cardio_metrics is empty.
+    if not by_day:
+        try:
+            ures = (
+                db.client.table("users")
+                .select("resting_heart_rate")
+                .eq("id", user_id)
+                .limit(1)
+                .execute()
+            )
+            if ures.data and ures.data[0].get("resting_heart_rate"):
+                by_day[date.today()] = int(ures.data[0]["resting_heart_rate"])
+        except Exception:
+            pass
+
+    if len(by_day) < _RHR_MIN_HISTORY_DAYS:
+        return None
+
+    today = date.today()
+    today_bpm = by_day.get(today) or by_day[max(by_day)]
+    baseline_samples = [v for d, v in by_day.items() if d != today]
+    if not baseline_samples:
+        return None
+    baseline_bpm = sum(baseline_samples) / len(baseline_samples)
+    if baseline_bpm <= 0:
+        return None
+    delta_pct = (today_bpm - baseline_bpm) / baseline_bpm * 100.0
+    return {
+        "baseline_bpm": round(baseline_bpm, 1),
+        "today_bpm": int(today_bpm),
+        "delta_pct": round(delta_pct, 2),
+    }
+
+
+def _compute_weekly_trimp(db, user_id: str) -> Optional[float]:
+    """Sum TRIMP across the last 7 days using `training_load_service`.
+
+    Reuses the same Banister TRIMP math + cardio_logs/cardio_sessions row
+    layout, so this number always matches what the training-load timeline
+    surfaces. Returns ``None`` when the service surfaces no cardio history
+    (so the UI can show "no cardio this week" cleanly vs a misleading 0).
+    """
+    try:
+        # Local import — avoids a top-of-module circular when training_load
+        # ever imports readiness (it does not today, but keeps it future-safe).
+        from services.training_load_service import compute_training_load_history
+
+        history = compute_training_load_history(db, user_id, days=7)
+    except Exception as e:  # pragma: no cover - defensive
+        logger.warning(f"[Readiness] _compute_weekly_trimp failed: {e}")
+        return None
+
+    if not history:
+        return None
+    total = sum(p.daily_trimp for p in history)
+    # When the last 7 days are all zero AND the user has never logged
+    # cardio, surface None (calibration) rather than 0.0.
+    if total <= 0:
+        return None
+    return round(total, 2)
+
+
+def _classify_cardio_load_state(
+    weekly_trimp: Optional[float],
+    baseline_acwr: Optional[float],
+) -> Optional[str]:
+    """Map weekly TRIMP + ACWR onto a 3-bucket cardio-load state.
+
+    Returns one of ``undertrained`` | ``balanced`` | ``overreaching``,
+    or ``None`` when there is not enough data to classify.
+
+    ACWR is the primary driver when available (matches the more nuanced
+    training_load_service classifier, just compressed from 4→3 buckets):
+        acwr < 0.8                       -> undertrained
+        0.8 <= acwr <= 1.3               -> balanced
+        acwr > 1.3                       -> overreaching   (loading + overreaching merged)
+
+    Falls back to weekly_trimp volume thresholds when ACWR is unavailable
+    (calibration window): trimp below the floor → undertrained, else balanced.
+    """
+    if baseline_acwr is not None:
+        if baseline_acwr < 0.8:
+            return "undertrained"
+        if baseline_acwr <= 1.3:
+            return "balanced"
+        return "overreaching"
+
+    if weekly_trimp is None:
+        return None
+    if weekly_trimp < _WEEKLY_TRIMP_UNDERTRAINED_FLOOR:
+        return "undertrained"
+    return "balanced"
+
+
+def compute_readiness(
+    db,
+    user_id: str,
+    check_in: ReadinessCheckIn,
+    *,
+    scheduled_workout_type: Optional[str] = None,
+    objective_sleep_minutes: Optional[int] = None,
+    objective_recovery_score: Optional[int] = None,
+    persist: bool = False,
+    score_date: Optional[date] = None,
+) -> Dict[str, Any]:
+    """Compute readiness + cardio extension fields in one pass.
+
+    Thin orchestrator over `ReadinessService.calculate_readiness` that ALSO:
+      - Computes RHR delta, weekly TRIMP, and cardio_load_state.
+      - Applies a ~10% readiness penalty when RHR delta is +5% or higher
+        (overreaching / illness early-warning signal).
+      - Optionally upserts the resulting row into `readiness_scores`,
+        populating the new migration-2094 columns alongside the existing
+        Hooper fields.
+
+    Returns a dict with the full ReadinessResult fields PLUS:
+      rhr_baseline_bpm, rhr_today_bpm, rhr_delta_pct, weekly_trimp,
+      cardio_load_state.
+
+    Backward-compat: callers that need only the Hooper score should keep
+    using `ReadinessService.calculate_readiness` directly — this function
+    is purely additive and never required.
+    """
+    # 1. Base readiness from existing service (subjective + optional objective).
+    base = readiness_service.calculate_readiness(
+        check_in,
+        scheduled_workout_type=scheduled_workout_type,
+        objective_sleep_minutes=objective_sleep_minutes,
+        objective_recovery_score=objective_recovery_score,
+    )
+
+    # 2. Cardio extension signals (best-effort — None when missing).
+    rhr = _compute_rhr_delta(db, user_id) if db is not None else None
+    weekly_trimp = _compute_weekly_trimp(db, user_id) if db is not None else None
+
+    baseline_acwr: Optional[float] = None
+    try:
+        if db is not None:
+            from services.training_load_service import current_state
+
+            state = current_state(db, user_id)
+            baseline_acwr = state.acwr
+    except Exception as e:  # pragma: no cover - defensive
+        logger.warning(f"[Readiness] training-load current_state failed: {e}")
+
+    cardio_load_state = _classify_cardio_load_state(weekly_trimp, baseline_acwr)
+
+    # 3. RHR-elevation penalty — drop the Hooper-derived score ~10% when
+    # today's RHR is +5% or more above baseline (early overreaching signal).
+    readiness_score = base.readiness_score
+    if rhr and rhr["delta_pct"] >= _RHR_PENALTY_DELTA_PCT:
+        readiness_score = max(0, min(100, round(readiness_score * _RHR_PENALTY_FACTOR)))
+        # Reclassify level + intensity after the penalty so the
+        # downstream prescription stays consistent.
+        readiness_level = readiness_service.classify_readiness_level(readiness_score)
+        recommended_intensity = readiness_service.get_recommended_intensity(
+            readiness_level, scheduled_workout_type
+        )
+    else:
+        readiness_level = base.readiness_level
+        recommended_intensity = base.recommended_intensity
+
+    result: Dict[str, Any] = {
+        "hooper_index": base.hooper_index,
+        "readiness_score": readiness_score,
+        "readiness_level": readiness_level.value,
+        "recommended_intensity": recommended_intensity.value,
+        "ai_workout_recommendation": base.ai_workout_recommendation,
+        "ai_insight": base.ai_insight,
+        "component_analysis": base.component_analysis,
+        "objective_sleep_minutes": base.objective_sleep_minutes,
+        "objective_recovery_score": base.objective_recovery_score,
+        "blended": base.blended,
+        # Cardio extension fields (migration 2094)
+        "rhr_baseline_bpm": rhr["baseline_bpm"] if rhr else None,
+        "rhr_today_bpm": rhr["today_bpm"] if rhr else None,
+        "rhr_delta_pct": rhr["delta_pct"] if rhr else None,
+        "weekly_trimp": weekly_trimp,
+        "cardio_load_state": cardio_load_state,
+    }
+
+    # 4. Optional persistence — upsert into readiness_scores with both the
+    # Hooper columns and the new cardio-extension columns.
+    if persist and db is not None:
+        try:
+            sd = (score_date or date.today()).isoformat()
+            record_data = {
+                "user_id": user_id,
+                "score_date": sd,
+                "sleep_quality": check_in.sleep_quality,
+                "fatigue_level": check_in.fatigue_level,
+                "stress_level": check_in.stress_level,
+                "muscle_soreness": check_in.muscle_soreness,
+                "mood": check_in.mood,
+                "energy_level": check_in.energy_level,
+                "hooper_index": result["hooper_index"],
+                "readiness_score": result["readiness_score"],
+                "readiness_level": result["readiness_level"],
+                "ai_workout_recommendation": result["ai_workout_recommendation"],
+                "recommended_intensity": result["recommended_intensity"],
+                "ai_insight": result["ai_insight"],
+                "rhr_baseline_bpm": result["rhr_baseline_bpm"],
+                "rhr_today_bpm": result["rhr_today_bpm"],
+                "rhr_delta_pct": result["rhr_delta_pct"],
+                "weekly_trimp": result["weekly_trimp"],
+                "cardio_load_state": result["cardio_load_state"],
+                "submitted_at": datetime.now().isoformat(),
+            }
+            db.client.table("readiness_scores").upsert(
+                record_data, on_conflict="user_id,score_date"
+            ).execute()
+        except Exception as e:
+            logger.error(f"[Readiness] compute_readiness persist failed: {e}")
+
+    return result
+
+
 # Singleton instance
 readiness_service = ReadinessService()

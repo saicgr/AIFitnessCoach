@@ -314,6 +314,15 @@ async def run_weekly_wrapped_cron(request: Request):
         else:
             errors += 1
 
+    # ── Cardio digest push (SLICE_DIGEST) ───────────────────────────
+    # Sunday MORNING (local 7am) cardio recap. Independent of the
+    # 19:00 Wrapped push above — they're separate notifications on the
+    # same day. Per-user dedup is per-week-start via a memory cache
+    # (we don't have a schema column yet) plus FCM idempotency.
+    cardio_sent, cardio_skipped, cardio_errors = await _send_cardio_digest_push(
+        db, users, notif_svc
+    )
+
     result = {
         "ok": True,
         "sent": sent,
@@ -324,6 +333,137 @@ async def run_weekly_wrapped_cron(request: Request):
         "skipped_no_activity": skipped_no_activity,
         "errors": errors,
         "scanned": len(users),
+        "cardio_digest_sent": cardio_sent,
+        "cardio_digest_skipped": cardio_skipped,
+        "cardio_digest_errors": cardio_errors,
     }
     logger.info(f"[WeeklyWrapped] cron complete: {result}")
     return result
+
+
+# ── Cardio digest push helper (SLICE_DIGEST) ───────────────────────────────
+
+# Per-process dedup of cardio_digest pushes per (user_id, week_start). The
+# hourly cron may fire twice during the same Sunday-morning hour in DST
+# transitions; this avoids a duplicate push without requiring a schema
+# migration. The set is cleared every Monday in-process (best-effort).
+_CARDIO_PUSH_SENT_THIS_WEEK: set[str] = set()
+_CARDIO_PUSH_LAST_RESET: Optional[date] = None
+
+
+def _reset_cardio_dedup_if_new_week(today_utc: date) -> None:
+    global _CARDIO_PUSH_LAST_RESET
+    # Reset on Monday UTC — covers all timezones' Sunday recap cycles.
+    if today_utc.weekday() == 0 and _CARDIO_PUSH_LAST_RESET != today_utc:
+        _CARDIO_PUSH_SENT_THIS_WEEK.clear()
+        _CARDIO_PUSH_LAST_RESET = today_utc
+
+
+async def _send_cardio_digest_push(db, users: list, notif_svc) -> tuple[int, int, int]:
+    """Sunday-morning cardio digest push. Skips zero-cardio weeks,
+    honors notification prefs + quiet hours + vacation mode.
+    Deeplink: /profile/cardio-summary.
+    """
+    from services import cardio_digest_service as cardio_svc
+    from services.notification_suppression import should_suppress_notification
+
+    _reset_cardio_dedup_if_new_week(date.today())
+
+    sent = 0
+    skipped = 0
+    errors = 0
+
+    for user in users:
+        user_id = str(user["id"])
+        tz_str = user.get("timezone") or "UTC"
+        fcm_token = user.get("fcm_token")
+        if not fcm_token:
+            skipped += 1
+            continue
+
+        prefs = user.get("notification_preferences") or {}
+        if isinstance(prefs, list):
+            prefs = prefs[0] if prefs else {}
+
+        # Reuse the same opt-ins as Wrapped — cardio digest is part of the
+        # weekly-summary family from the user's perspective.
+        if not prefs.get("weekly_summary_enabled", True):
+            skipped += 1
+            continue
+        if not prefs.get("push_notifications_enabled", True):
+            skipped += 1
+            continue
+        if not prefs.get("push_weekly_summary", True):
+            skipped += 1
+            continue
+
+        local_now = _user_local_now(tz_str)
+        # Sunday morning band (7am local) — fixed; not user-configurable
+        # because cardio digest is a new product surface, not the
+        # configurable 19:00 Wrapped push.
+        if local_now.weekday() != _SUNDAY_WEEKDAY:
+            skipped += 1
+            continue
+        if local_now.hour != 7:
+            skipped += 1
+            continue
+        if _is_in_quiet_hours(prefs, local_now.hour):
+            skipped += 1
+            continue
+
+        # Vacation / comeback suppression (per
+        # feedback_user_notification_control).
+        if should_suppress_notification(user, "cardio_digest", channel="push"):
+            skipped += 1
+            continue
+
+        week_start, _ = _last_complete_week(local_now.date())
+        dedup_key = f"{user_id}:{week_start.isoformat()}"
+        if dedup_key in _CARDIO_PUSH_SENT_THIS_WEEK:
+            skipped += 1
+            continue
+
+        try:
+            summary = cardio_svc.compute_weekly_cardio_summary(db, user_id, tz_str)
+        except Exception as e:
+            logger.warning(f"[CardioDigestPush] compute failed for {user_id}: {e}")
+            errors += 1
+            continue
+
+        if summary is None:
+            # No cardio this week — skip silently.
+            skipped += 1
+            continue
+
+        first_name = (user.get("name") or "").strip().split()[0] if user.get("name") else None
+        copy = cardio_svc.format_digest_copy(
+            summary,
+            user_first_name=first_name,
+            user_email=user.get("email"),
+            variant_salt=dedup_key,
+        )
+
+        try:
+            ok = await notif_svc.send_notification(
+                fcm_token=fcm_token,
+                title=copy["push_title"],
+                body=copy["push_body"],
+                notification_type=notif_svc.TYPE_WEEKLY_SUMMARY,
+                data={
+                    "type": "cardio_digest",
+                    "deeplink": "/profile/cardio-summary",
+                    "week_start": week_start.isoformat(),
+                },
+            )
+        except Exception as e:
+            logger.error(f"[CardioDigestPush] FCM send failed for {user_id}: {e}", exc_info=True)
+            errors += 1
+            continue
+
+        if ok:
+            _CARDIO_PUSH_SENT_THIS_WEEK.add(dedup_key)
+            sent += 1
+        else:
+            errors += 1
+
+    return sent, skipped, errors
