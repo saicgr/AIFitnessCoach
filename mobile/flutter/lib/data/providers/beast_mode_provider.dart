@@ -444,7 +444,9 @@ class BeastModeConfigNotifier extends StateNotifier<BeastModeConfig> {
   Future<void> fetchAndMerge() async {
     try {
       final apiClient = _ref.read(apiClientProvider);
-      final response = await apiClient.get('/api/v1/beast-mode/config');
+      // baseUrl already carries `/api/v1`; do not re-add it (Dio 5.9 string-
+      // concats baseUrl + path, which would yield `/api/v1/api/v1/...` 404s).
+      final response = await apiClient.get('/beast-mode/config');
       if (response.data != null) {
         Map<String, dynamic> parsed;
         try {

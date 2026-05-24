@@ -98,7 +98,7 @@ class TimezoneState {
 
   const TimezoneState({
     this.timezone = 'UTC',
-    this.isLoading = false,
+    this.isLoading = true,
     this.error,
   });
 
@@ -142,7 +142,7 @@ class TimezoneNotifier extends StateNotifier<TimezoneState> {
       // First try to get from user profile
       final authState = _ref.read(authStateProvider);
       if (authState.user?.timezone != null && authState.user!.timezone!.isNotEmpty) {
-        state = TimezoneState(timezone: authState.user!.timezone!);
+        state = TimezoneState(timezone: authState.user!.timezone!, isLoading: false);
         debugPrint('🕐 [Timezone] Loaded from user profile: ${state.timezone}');
         return;
       }
@@ -151,7 +151,7 @@ class TimezoneNotifier extends StateNotifier<TimezoneState> {
       final prefs = await SharedPreferences.getInstance();
       final savedTimezone = prefs.getString(_timezoneKey);
       if (savedTimezone != null && savedTimezone.isNotEmpty) {
-        state = TimezoneState(timezone: savedTimezone);
+        state = TimezoneState(timezone: savedTimezone, isLoading: false);
         debugPrint('🕐 [Timezone] Loaded from local storage: ${state.timezone}');
         // Sync to backend if user is logged in but doesn't have timezone set
         if (authState.user != null) {
@@ -162,14 +162,14 @@ class TimezoneNotifier extends StateNotifier<TimezoneState> {
 
       // Finally, detect from device and auto-sync to backend
       final deviceTimezone = await _detectDeviceTimezone();
-      state = TimezoneState(timezone: deviceTimezone);
+      state = TimezoneState(timezone: deviceTimezone, isLoading: false);
       debugPrint('🕐 [Timezone] Detected from device: ${state.timezone}');
 
       // Auto-sync detected timezone to backend and local storage
       await _autoSyncTimezone(deviceTimezone);
     } catch (e) {
       debugPrint('❌ [Timezone] Init error: $e');
-      state = TimezoneState(timezone: 'UTC', error: e.toString());
+      state = TimezoneState(timezone: 'UTC', isLoading: false, error: e.toString());
     }
   }
 
@@ -281,7 +281,7 @@ class TimezoneNotifier extends StateNotifier<TimezoneState> {
       // Refresh user to get updated data
       await _ref.read(authStateProvider.notifier).refreshUser();
 
-      state = TimezoneState(timezone: timezone);
+      state = TimezoneState(timezone: timezone, isLoading: false);
       debugPrint('✅ [Timezone] Updated to: $timezone');
     } catch (e) {
       debugPrint('❌ [Timezone] Update error: $e');
@@ -293,7 +293,7 @@ class TimezoneNotifier extends StateNotifier<TimezoneState> {
   Future<void> refresh() async {
     final authState = _ref.read(authStateProvider);
     if (authState.user?.timezone != null && authState.user!.timezone!.isNotEmpty) {
-      state = TimezoneState(timezone: authState.user!.timezone!);
+      state = TimezoneState(timezone: authState.user!.timezone!, isLoading: false);
     }
   }
 }

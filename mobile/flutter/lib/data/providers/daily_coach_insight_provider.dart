@@ -9,6 +9,7 @@
 library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' show Supabase;
 
 import '../models/today_score.dart';
 import '../services/api_client.dart';
@@ -91,14 +92,30 @@ class _InsightArgs {
 
 /// Daily coach insight for today, in the user's local timezone. Watching this
 /// provider also schedules a refresh when the day rolls over.
+///
+/// Gates the network call on TWO preconditions:
+///   1. The timezone provider has finished initialising (otherwise the request
+///      would go out with `tz=UTC` from the default state and the server caches
+///      the wrong day's insight).
+///   2. A Supabase session exists (otherwise we'd 401 immediately and burn a
+///      retry — Dio's auth interceptor only attaches a token when there is
+///      one to attach).
+/// When either gate is closed we return the deterministic client fallback so
+/// the hero card always renders something. Riverpod re-fires the provider
+/// when `timezoneProvider` settles, so the real fetch happens then.
 final dailyCoachInsightProvider =
     FutureProvider.autoDispose<DailyCoachInsight>((ref) async {
-  final tz = ref.watch(timezoneProvider).timezone;
-  // Today in the user's local tz — server keys cache by this date.
+  final tzState = ref.watch(timezoneProvider);
+  if (tzState.isLoading) {
+    return _buildClientFallback(ref);
+  }
+  if (Supabase.instance.client.auth.currentSession == null) {
+    return _buildClientFallback(ref);
+  }
   final localDate = DateTime.now();
   final args = _InsightArgs(
     localDate: DateTime(localDate.year, localDate.month, localDate.day),
-    tz: tz,
+    tz: tzState.timezone,
   );
   return _fetchInsight(ref, args);
 });
@@ -108,12 +125,16 @@ final dailyCoachInsightProvider =
 final dailyCoachInsightRefreshProvider =
     FutureProvider.autoDispose
         .family<DailyCoachInsight, DateTime>((ref, date) async {
-  final tz = ref.watch(timezoneProvider).timezone;
+  final tzState = ref.watch(timezoneProvider);
+  if (tzState.isLoading ||
+      Supabase.instance.client.auth.currentSession == null) {
+    return _buildClientFallback(ref);
+  }
   return _fetchInsight(
     ref,
     _InsightArgs(
       localDate: DateTime(date.year, date.month, date.day),
-      tz: tz,
+      tz: tzState.timezone,
       refresh: true,
     ),
   );
@@ -122,8 +143,14 @@ final dailyCoachInsightRefreshProvider =
 Future<DailyCoachInsight> _fetchInsight(Ref ref, _InsightArgs args) async {
   final api = ref.read(apiClientProvider);
   try {
+    // NOTE: path is `/coach/daily-insight`, NOT `/api/v1/coach/daily-insight`.
+    // The api client's baseUrl already carries `/api/v1`, and Dio 5.9.x
+    // merges via plain `baseUrl + path` string concat (then `Uri.normalizePath()`
+    // which does NOT collapse repeated segments). Passing `/api/v1/...` here
+    // produces `/api/v1/api/v1/...` 404s — verified empirically against
+    // dio-5.9.2/lib/src/options.dart line 631.
     final res = await api.get<Map<String, dynamic>>(
-      '/api/v1/coach/daily-insight',
+      '/coach/daily-insight',
       queryParameters: {
         'date': args.dateString,
         'tz': args.tz,

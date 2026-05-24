@@ -112,6 +112,38 @@ class SecurityHeadersMiddleware:
         await self.app(scope, receive, send_with_headers)
 
 
+class _PathPrefixDedupMiddleware:
+    """Strip accidental `/api/v1/api/v1/...` duplication in request paths.
+
+    A small number of clients (background widget refresh, retried Workmanager
+    jobs) produce double-prefixed URLs when Dio's baseUrl + relative-path
+    merge double-stamps `/api/v1/`. Rather than chasing every caller, normalize
+    at the edge so the route table still matches. Logs each rewrite at INFO so
+    the source can still be traced.
+    """
+
+    _DUP = "/api/v1/api/v1/"
+
+    def __init__(self, app: ASGIApp):
+        self.app = app
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send):
+        if scope["type"] == "http":
+            raw_path = scope.get("raw_path") or scope.get("path", "").encode()
+            try:
+                path_str = scope.get("path", "")
+                if path_str.startswith(self._DUP):
+                    fixed = "/api/v1/" + path_str[len(self._DUP):]
+                    logger.info(
+                        f"[PathDedup] Rewrote doubled prefix: {path_str} -> {fixed}"
+                    )
+                    scope = {**scope, "path": fixed, "raw_path": fixed.encode()}
+            except Exception:
+                # Never break the request on a normalisation hiccup.
+                pass
+        await self.app(scope, receive, send)
+
+
 class BodySizeLimitMiddleware:
     """Pure ASGI middleware that rejects requests whose Content-Length exceeds `max_bytes`.
 
@@ -938,6 +970,11 @@ app.add_middleware(SlowAPIMiddleware)
 # full server-side time the client experiences (incl. gzip, rate limiting,
 # logging). Pure-ASGI => negligible overhead, no TaskGroup, no SSE breakage.
 app.add_middleware(MetricsMiddleware)
+
+# Normalise accidental `/api/v1/api/v1/...` doubled prefixes at the very edge
+# so the rewrite is visible in LoggingMiddleware and route matching succeeds.
+# Added LAST => outermost layer, fires before every other middleware.
+app.add_middleware(_PathPrefixDedupMiddleware)
 
 # Include API routes
 app.include_router(v1_router, prefix="/api")
